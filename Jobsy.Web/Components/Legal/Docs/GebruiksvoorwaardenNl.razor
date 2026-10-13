@@ -1,0 +1,271 @@
+@using Jobsy.Core.Legal
+@using Jobsy.Core.Localization
+@using Jobsy.Core.Privacy
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject LegalIdentityProvider LegalIdentity
+
+@* Official Dutch gebruiksvoorwaarden for candidates (D3). B1 Dutch, "je"; ages and the waiver
+   sentence come from one source, never typed twice. *@
+<LegalDocument DocumentId="@LegalDocumentIds.TermsCandidate"
+               Title="@Culture["Legal.Usage"]"
+               Lead="@Culture["Terms.Candidate.Lead"]"
+               Eyebrow="@Culture["Legal.Eyebrow.Terms"]"
+               EyebrowEmoji="📜"
+               Sections="Sections">
+    <Switch>
+        <TermsAudienceSwitch Active="TermsAudience.Candidate" />
+    </Switch>
+</LegalDocument>
+
+@code {
+    private string? _supportEmail;
+    private IReadOnlyList<LegalSection>? _sections;
+
+    private static int ParentalConsentAge => CandidateConsentRules.ParentalConsentAge;
+
+    /// <summary>
+    /// The one waiver sentence of the platform (D7). The official body is Dutch, so this always reads
+    /// the nl value; the checkout reuses the same key in the reader's language.
+    /// </summary>
+    private static string WaiverCheckbox => UiStrings.Get("Terms.Waiver.Checkbox", JobsyLanguages.Default);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var legal = await LegalIdentity.GetAsync();
+        _supportEmail = legal.SupportEmail ?? legal.PrivacyContact;
+    }
+
+    private IReadOnlyList<LegalSection> Sections => _sections ??= BuildSections();
+
+    private IReadOnlyList<LegalSection> BuildSections() =>
+    [
+        new LegalSection
+        {
+            Id = "wie",
+            Number = "1",
+            TitleKey = "Terms.Sec.wie-is-lobsy.Title",
+            SummaryKey = "Terms.Sec.wie-is-lobsy.Summary",
+            AliasIds = ["wie-is-lobsy"],
+            Body = @<text>
+                <p>
+                    Lobsy helpt je werk te vinden dicht bij huis. Hieronder staan onze gegevens, zodat je
+                    weet met wie je te maken hebt.
+                </p>
+                <LegalIdentityCard />
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "voor-wie",
+            Number = "2",
+            TitleKey = "Terms.Sec.voor-wie.Title",
+            SummaryKey = "Terms.Sec.voor-wie.Summary",
+            Body = @<text>
+                <p>
+                    Deze voorwaarden gelden voor iedereen die Lobsy gebruikt als werkzoekende of bezoeker:
+                    vacatures bekijken, liken, solliciteren, tests doen en de chatbot gebruiken. Gebruik je
+                    Lobsy of stuur je een sollicitatie? Dan ga je akkoord met deze voorwaarden en met de
+                    <a href="/privacy">@Culture["Legal.Privacy"]</a>.
+                </p>
+                <AgeRulesText />
+                <p>
+                    Ben je werkgever? Dan gelden de
+                    <a href="/algemene-voorwaarden">@Culture["Legal.Terms"]</a>.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "wat",
+            Number = "3",
+            TitleKey = "Terms.Sec.wat.Title",
+            SummaryKey = "Terms.Sec.wat.Summary",
+            AliasIds = ["dienst"],
+            Body = @<text>
+                <ul>
+                    <li>Lobsy helpt je vacatures in de buurt te vinden, onder meer op reistijd.</li>
+                    <li>Lobsy is <strong>geen</strong> werkgever en geen uitzendbureau. We sluiten geen contract met je.</li>
+                    <li>Een sollicitatie via Lobsy gaat naar de werkgever. Die beslist over selectie en arbeidsvoorwaarden.</li>
+                    <li>Lonen, reistijden en afstanden die je ziet, zijn schattingen of informatie van de werkgever. Ze kunnen afwijken van de praktijk.</li>
+                </ul>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "account",
+            Number = "4",
+            TitleKey = "Terms.Sec.account.Title",
+            SummaryKey = "Terms.Sec.account.Summary",
+            Body = @<text>
+                <ul>
+                    <li>Je vult gegevens in die kloppen, zoals je geboortedatum. Die hebben we nodig voor je loon per leeftijd.</li>
+                    <li>Je gebruikt Lobsy niet om anderen te misleiden, te pesten of te schaden.</li>
+                    <li>Je houdt je inloggegevens voor jezelf.</li>
+                </ul>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "solliciteren",
+            Number = "5",
+            TitleKey = "Terms.Sec.solliciteren.Title",
+            SummaryKey = "Terms.Sec.solliciteren.Summary",
+            AliasIds = ["matchscores"],
+            Body = @<text>
+                <p>
+                    Als je solliciteert, deel je gegevens met die werkgever: hoe je reist, een schatting van
+                    je reistijd, je uren en dagdelen en je motivatie als je die schrijft. Je krijgt van ons
+                    een bevestiging, bijvoorbeeld per e-mail.
+                </p>
+                <p>
+                    Soms kun je niet solliciteren. Dat gebeurt als de taken in de vacature volgens de regels
+                    voor werk door jongeren niet bij jouw leeftijd passen.
+                </p>
+                <h3>Matchpercentages</h3>
+                <ul>
+                    <li>Een matchpercentage is een schatting. Het verandert als jij of de werkgever gegevens aanpast.</li>
+                    <li>Een percentage is geen garantie op een gesprek, een baan of een loon.</li>
+                    <li>Reistijd, uren en dagdelen kunnen in de praktijk anders uitpakken.</li>
+                    <li>Bij een lage score zie je een waarschuwing. Je mag dan nog steeds solliciteren; de werkgever beslist.</li>
+                </ul>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "bedenktijd",
+            Number = "6",
+            TitleKey = "Terms.Sec.bedenktijd.Title",
+            SummaryKey = "Terms.Sec.bedenktijd.Summary",
+            Body = @<text>
+                <p>
+                    Lobsy is gratis. Sommige extra’s kosten geld, zoals de uitgebreide test met analyse.
+                    Je ziet de prijs (inclusief btw) en wat je krijgt vóór je betaalt.
+                </p>
+                <p>
+                    Normaal heb je bij online kopen 14 dagen bedenktijd. Bij de uitgebreide test start de
+                    analyse meteen. Daarom vragen we je vooraf met een vinkje:
+                    “@WaiverCheckbox” Zonder dat vinkje kun je niet betalen.
+                </p>
+                <p>Je krijgt een bevestiging per e-mail met de prijs en deze keuze.</p>
+                <p>
+                    Ben je jonger dan @ParentalConsentAge? Dan heb je eerst toestemming van je ouder of
+                    voogd nodig voor de tests.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "ai",
+            Number = "7",
+            TitleKey = "Terms.Sec.ai.Title",
+            SummaryKey = "Terms.Sec.ai.Summary",
+            Body = @<text>
+                <p>
+                    Lobsy kan een chatbot en andere AI-functies aanbieden: vragen over vacatures of
+                    solliciteren, een oefengesprek, of hulp bij het beoordelen van teksten.
+                </p>
+                <ul>
+                    <li><strong>Geen advies op maat:</strong> antwoorden zijn algemeen. Het is geen juridisch, financieel of loopbaanadvies.</li>
+                    <li><strong>Geen garantie:</strong> AI kan fouten maken of iets missen. Controleer belangrijke dingen zelf in de vacature.</li>
+                    <li><strong>Geen toezegging van werk:</strong> de chatbot kan geen baan of gesprek beloven.</li>
+                    <li><strong>Afspraken maak je met de werkgever:</strong> over salaris, uren en startdatum, niet met de bot.</li>
+                    <li><strong>Deel geen geheimen:</strong> geen wachtwoorden, bankgegevens of BSN in de chat.</li>
+                    <li><strong>We bewaren gesprekken:</strong> om de dienst te leveren, te beveiligen en te verbeteren. Hoe lang, staat in de <a href="/privacy#bewaren">@Culture["Legal.Privacy"]</a>.</li>
+                </ul>
+                <p>
+                    Zegt de chatbot iets anders dan de vacature of de wet? Dan geldt de vacature, de
+                    werkgever en de wet — niet het chatantwoord.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "melden",
+            Number = "8",
+            TitleKey = "Terms.Sec.melden.Title",
+            SummaryKey = "Terms.Sec.melden.Summary",
+            Body = @<text>
+                <TermsReportingText Audience="TermsAudience.Candidate" SupportEmail="@_supportEmail" />
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "gebruik",
+            Number = "9",
+            TitleKey = "Terms.Sec.gebruik.Title",
+            SummaryKey = "Terms.Sec.gebruik.Summary",
+            Body = @<text>
+                <p>Dit mag niet:</p>
+                <ul>
+                    <li>Lobsy gebruiken voor iets illegaals, discriminerends of frauduleus.</li>
+                    <li>Gegevens automatisch verzamelen (scrapen) of onze interfaces misbruiken zonder toestemming.</li>
+                    <li>Virussen verspreiden of de beveiliging omzeilen.</li>
+                    <li>Rechten of de privacy van anderen schenden.</li>
+                </ul>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "beschikbaar",
+            Number = "10",
+            TitleKey = "Terms.Sec.beschikbaar.Title",
+            SummaryKey = "Terms.Sec.beschikbaarheid.Summary",
+            AliasIds = ["beschikbaarheid"],
+            Body = @<text>
+                <p>
+                    Lobsy kan even niet werken door onderhoud, een storing of een wijziging. We doen ons
+                    best, maar we beloven geen foutloze of ononderbroken dienst.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "aansprakelijkheid",
+            Number = "11",
+            TitleKey = "Terms.Sec.aansprakelijkheid.Title",
+            SummaryKey = "Terms.Sec.aansprakelijkheid.Candidate.Summary",
+            Body = @<text>
+                <p>
+                    Lobsy is gratis voor werkzoekenden. We doen ons best, maar we beloven geen baan en geen
+                    match. Je wettelijke rechten als consument blijven altijd gelden.
+                </p>
+                <p>
+                    We zijn niet aansprakelijk voor keuzes van werkgevers, voor een kans die je misloopt,
+                    voor onjuiste vacature-informatie van een werkgever, of voor schade doordat je vertrouwt
+                    op een chatbotantwoord, een matchpercentage of een reistijdschatting. Gaat er iets mis
+                    door opzet of grove schuld van Lobsy? Dan geldt die uitsluiting niet.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "einde",
+            Number = "12",
+            TitleKey = "Terms.Sec.einde.Title",
+            SummaryKey = "Terms.Sec.einde.Summary",
+            AliasIds = ["beeindiging"],
+            Body = @<text>
+                <p>
+                    Je kunt altijd stoppen met Lobsy. Wij mogen je toegang beperken of stoppen als je deze
+                    voorwaarden schendt of Lobsy misbruikt. Wil je dat we je gegevens verwijderen? Dat regelen
+                    we volgens de <a href="/privacy#rechten">@Culture["Legal.Privacy"]</a>.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "wijzigingen",
+            Number = "13",
+            TitleKey = "Terms.Sec.wijzigingen.Title",
+            SummaryKey = "Terms.Sec.wijzigingen.Summary",
+            Body = @<text>
+                <p>
+                    We kunnen deze voorwaarden aanpassen. De actuele versie staat altijd op deze pagina, en
+                    onderaan zie je wat er is veranderd. Op deze voorwaarden geldt Nederlands recht.
+                </p>
+            </text>
+        }
+    ];
+}

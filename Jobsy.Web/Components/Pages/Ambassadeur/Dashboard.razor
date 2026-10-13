@@ -1,5 +1,7 @@
 @page "/ambassadeur"
 @attribute [Authorize(Roles = "Ambassadeur")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @inject NavigationManager Nav
 
 @code {

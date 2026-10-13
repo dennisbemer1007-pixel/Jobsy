@@ -26,7 +26,8 @@ public record DeviceSessionRefreshResponse(
     int SessionVersion,
     string? SessionToken,
     Guid? UserId = null,
-    bool MfaVerified = false);
+    bool MfaVerified = false,
+    bool IsTestAccount = false);
 
 public record DeviceSessionListItemDto(
     Guid Id,

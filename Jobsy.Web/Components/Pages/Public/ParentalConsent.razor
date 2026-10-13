@@ -1,0 +1,112 @@
+@page "/toestemming"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.WebUtilities
+@using Jobsy.Web.Localization
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Consent.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section" aria-labelledby="consent-title">
+    <div class="pub-card">
+        @if (_done)
+        {
+            <h1 id="consent-title">@Culture["Consent.Success"]</h1>
+        }
+        else if (!_valid)
+        {
+            <h1 id="consent-title">@Culture["Consent.Title"]</h1>
+            <p>@Culture["Consent.Invalid"]</p>
+        }
+        else
+        {
+            <h1 id="consent-title">@_heading</h1>
+            <p>@Culture["Consent.LineWhat"]</p>
+            <p>@Culture["Consent.LineTests"]</p>
+            <p>@Culture["Consent.LineWithdraw"]</p>
+            <form method="post" action="/toestemming/confirm" class="login-form" data-enhance="false">
+                <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                <input type="hidden" name="t" value="@_token" />
+                <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
+                    @Culture["Consent.Submit"]
+                </button>
+            </form>
+        }
+    </div>
+</section>
+
+@code {
+    private string _token = "";
+    private bool _valid;
+    private bool _done;
+    private string _heading = "";
+    private string _antiforgeryFieldName = "";
+    private string _antiforgeryToken = "";
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? "";
+            _done = string.Equals(http.Request.Query["done"], "1", StringComparison.Ordinal);
+        }
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _token = query.TryGetValue("t", out var t) ? t.FirstOrDefault() ?? "" : "";
+
+        if (_done || string.IsNullOrWhiteSpace(_token))
+        {
+            _valid = false;
+            if (!_done)
+            {
+                _heading = Culture["Consent.Invalid"];
+            }
+            return;
+        }
+
+        var apiBase = (Configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
+        var client = HttpClientFactory.CreateClient();
+        try
+        {
+            var preview = await client.GetFromJsonAsync<PreviewDto>(
+                $"{apiBase}/api/parental-consent/preview?token={Uri.EscapeDataString(_token)}");
+            _valid = preview?.Valid == true;
+            if (_valid)
+            {
+                _heading = string.IsNullOrWhiteSpace(preview!.ChildFirstName)
+                    ? Culture["Consent.HeadingFallback"]
+                    : string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                        Culture["Consent.HeadingNamed"], preview.ChildFirstName);
+            }
+        }
+        catch
+        {
+            _valid = false;
+        }
+    }
+
+    private sealed class PreviewDto
+    {
+        [JsonPropertyName("valid")]
+        public bool Valid { get; set; }
+
+        [JsonPropertyName("childFirstName")]
+        public string? ChildFirstName { get; set; }
+    }
+}

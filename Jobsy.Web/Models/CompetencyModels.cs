@@ -1,4 +1,7 @@
+using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
+using Jobsy.Core.Reports.Culture;
+using Jobsy.Core.Reports.Values;
 
 namespace Jobsy.Web.Models;
 
@@ -119,6 +122,7 @@ public sealed class CandidateCultureState
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public CulturePersonalityScoreSet? Scores { get; set; }
+    public CulturePersonalityScoreSet? PreviewScores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public List<string> MatchTags { get; set; } = [];
     public decimal DeepAnalysisPriceEuro { get; set; }
@@ -132,6 +136,7 @@ public sealed class CandidateValuesState
     public string Status { get; set; } = "Draft";
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public SchwartzValuesScoreSet? Scores { get; set; }
+    public SchwartzValuesScoreSet? PreviewScores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
     public List<string> MatchTags { get; set; } = [];
     public decimal DeepAnalysisPriceEuro { get; set; }
@@ -162,6 +167,7 @@ public sealed class CompanyCultureState
     public Dictionary<string, int> Answers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     public CulturePersonalityScoreSet? Scores { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+    public string Source { get; set; } = "Full";
 }
 
 public sealed class RiasecScoreSet
@@ -209,11 +215,13 @@ public sealed class CandidateMatchedVacancy
 public sealed class CareerOccupationMatchModel
 {
     public string Title { get; set; } = "";
-    public int Percent { get; set; }
+    public decimal Percent { get; set; }
     public string Band { get; set; } = "";
     public string Why { get; set; } = "";
     public List<string> Keys { get; set; } = [];
     public List<string> SearchKeys { get; set; } = [];
+    public string? EscoId { get; set; }
+    public bool NoScore { get; set; }
 }
 
 public sealed class CareerCompassModel
@@ -249,6 +257,10 @@ public sealed class DeepAnalysisState
 
     /// <summary>Populated only for a completed Competence deep analysis; null otherwise.</summary>
     public CompetenceDeepReport? CompetenceReport { get; set; }
+
+    public CareerDeepReport? CareerReport { get; set; }
+    public CultureDeepReport? CultureReport { get; set; }
+    public ValuesDeepReport? ValuesReport { get; set; }
 }
 
 public sealed class DeepAnalysisQuestionItem
@@ -272,6 +284,41 @@ public sealed class DeepAnalysisCheckout
     public string Kind { get; set; } = "Competence";
 }
 
+public sealed class DeepTestCheckoutStatus
+{
+    public string Status { get; set; } = "pending";
+    public string Kind { get; set; } = "Competence";
+    public string TestSlug { get; set; } = "competence";
+    public int TotalCents { get; set; }
+    public DateTime? PaidAtUtc { get; set; }
+    public string? InvoiceNumber { get; set; }
+    public Guid? InvoiceId { get; set; }
+    public bool IsStub { get; set; }
+    public string? PaymentMethod { get; set; }
+    public Guid CheckoutId { get; set; }
+}
+
+public sealed class DeepPayClientException : Exception
+{
+    public DeepPayClientException(string code, string message) : base(message)
+    {
+        Code = code;
+    }
+
+    public string Code { get; }
+}
+
+/// <summary>Thrown when a candidate test save endpoint returns a structured error code.</summary>
+public sealed class TestSaveClientException : Exception
+{
+    public TestSaveClientException(string code, string message) : base(message)
+    {
+        Code = code;
+    }
+
+    public string Code { get; }
+}
+
 public sealed class RoleFitCheckState
 {
     public bool IsUnlocked { get; set; }
@@ -284,6 +331,56 @@ public sealed class RoleFitCheckState
     public RoleFitCheckResult? LastResult { get; set; }
     public string InsightsStatus { get; set; } = "Ready";
     public bool NeedsRecheck { get; set; }
+}
+
+public sealed class CandidateDnaSummary
+{
+    public WhoAmIStorySummary? WhoAmI { get; set; }
+    public int ProfileCompletenessPercent { get; set; }
+    public CandidateDnaCompetencySummary? Competencies { get; set; }
+    public CandidateDnaCareerSummary? CareerInterests { get; set; }
+    public CandidateDnaCultureSummary? Culture { get; set; }
+    public CandidateDnaValuesSummary? Values { get; set; }
+}
+
+public sealed class CandidateDnaCompetencySummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public CompetencyScoreSet? Scores { get; set; }
+    public CompetencyScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
+}
+
+public sealed class CandidateDnaCultureSummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public CulturePersonalityScoreSet? Scores { get; set; }
+    public CulturePersonalityScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
+}
+
+public sealed class CandidateDnaValuesSummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public SchwartzValuesScoreSet? Scores { get; set; }
+    public SchwartzValuesScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
+}
+
+public sealed class CandidateDnaCareerSummary
+{
+    public string Status { get; set; } = "Draft";
+    public int AnsweredCount { get; set; }
+    public int QuestionCount { get; set; }
+    public RiasecScoreSet? Scores { get; set; }
+    public RiasecScoreSet? PreviewScores { get; set; }
+    public bool DeepCompleted { get; set; }
 }
 
 public sealed class CandidateKompasState
@@ -428,4 +525,28 @@ public sealed class TrainingOfferAdmin
     public string? ExternalPath { get; set; }
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }
+    public string Type { get; set; } = "Cursus";
+    public int? DurationValue { get; set; }
+    public string? DurationUnit { get; set; }
+    public string Delivery { get; set; } = "Online";
+    public string? Location { get; set; }
+    public bool IsFree { get; set; }
+    public bool IsPartner { get; set; }
+    public string? AffiliateCode { get; set; }
+    public bool ShowInPassport { get; set; }
+}
+
+public sealed class PassportCourseCard
+{
+    public Guid OfferId { get; set; }
+    public string Title { get; set; } = "";
+    public string ProviderName { get; set; } = "";
+    public string Type { get; set; } = "Cursus";
+    public int? DurationValue { get; set; }
+    public string? DurationUnit { get; set; }
+    public string Delivery { get; set; } = "Online";
+    public string? Location { get; set; }
+    public bool IsFree { get; set; }
+    public bool IsPartner { get; set; }
+    public string Rel { get; set; } = "noopener";
 }

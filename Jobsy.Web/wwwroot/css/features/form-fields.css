@@ -1,0 +1,438 @@
+/* Shared form field tokens — mobile-first, all roles. */
+:root {
+    --form-field-gap: 1.125rem;
+    --form-section-gap: 1.625rem;
+    --form-input-pad-y: 0.75rem;
+    --form-input-pad-x: 0.875rem;
+    --form-input-min-h: 3.25rem;
+    --form-label-weight: 600;
+    --form-value-weight: 500;
+    --form-label-color: var(--text);
+    --form-value-color: var(--text);
+    --form-muted-label: var(--muted);
+    --form-placeholder-color: color-mix(in srgb, var(--muted) 88%, var(--text));
+    --form-card-pad: 1rem 1.125rem;
+    --form-card-radius: var(--radius-sm, 8px);
+}
+
+/* Readable filled values; placeholders stay softer */
+.jobsy-form-value,
+.ob-wizard .ob-wizard__content input:not([type="checkbox"]):not([type="radio"]),
+.ob-fields input:not([type="checkbox"]):not([type="radio"]),
+.profile-form input:not([type="checkbox"]):not([type="radio"]),
+.login-form input:not([type="checkbox"]):not([type="radio"]),
+.admin-filter-input,
+.admin-settings-input,
+.filter-bar__search,
+textarea:not(.code-input) {
+    color: var(--form-value-color);
+    font-weight: var(--form-value-weight);
+}
+
+.jobsy-form-value::placeholder,
+.ob-wizard .ob-wizard__content input::placeholder,
+.ob-fields input::placeholder,
+.profile-form input::placeholder,
+.profile-form textarea::placeholder,
+.login-form input::placeholder,
+.login-form textarea::placeholder,
+.admin-filter-input::placeholder,
+.filter-bar__search::placeholder {
+    color: var(--form-placeholder-color);
+    font-weight: 400;
+    opacity: 1;
+}
+
+/* Native date/month pickers — keep OS calendar, readable filled value */
+.jobsy-date-field__input,
+input.jobsy-date-field__input[type="date"],
+input.jobsy-date-field__input[type="month"] {
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--surface);
+    color: var(--form-value-color);
+    font: inherit;
+    font-weight: var(--form-value-weight);
+    line-height: 1.4;
+    -webkit-appearance: auto;
+    appearance: auto;
+}
+
+.jobsy-date-field__input:focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.jobsy-date-field__input:disabled {
+    opacity: 0.65;
+}
+
+/* Candidate onboarding + discovery personal step */
+.ob-wizard .ob-wizard__content label,
+.ob-fields label,
+.ob-wizard__start-date {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-block: var(--form-field-gap);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: var(--form-label-weight);
+    color: var(--form-label-color);
+    line-height: 1.35;
+}
+
+.ob-wizard .ob-wizard__content input:not([type="checkbox"]):not([type="radio"]),
+.ob-fields input:not([type="checkbox"]):not([type="radio"]),
+.ob-wizard .ob-wizard__content select,
+.ob-fields select {
+    color: var(--form-value-color);
+    font-weight: var(--form-value-weight);
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+    line-height: 1.4;
+}
+
+.ob-wizard fieldset,
+.ob-fields fieldset {
+    margin-block: var(--form-section-gap);
+}
+
+.ob-wizard__section {
+    margin-block: var(--form-section-gap) 0.75rem;
+}
+
+.ob-wizard__section-title,
+.ob-wizard fieldset > legend.ob-wizard__section-title {
+    margin-block-end: 0.65rem;
+    color: var(--form-label-color);
+    font-weight: 700;
+}
+
+.ob-wizard__start-option {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.ob-wizard__start-option[aria-checked="false"]:not(.is-selected) {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+}
+
+.ob-wizard__start-option.is-selected,
+.ob-wizard__start-option[aria-checked="true"] {
+    border: 2px solid var(--brand);
+    background: var(--accent-soft);
+    color: var(--brand);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+
+.ob-wizard__start-option:not(.is-selected)[aria-checked="false"]:focus {
+    outline: 2px solid color-mix(in srgb, var(--brand) 35%, transparent);
+    outline-offset: 2px;
+}
+
+.ob-wizard__presets button.is-selected,
+.ob-wizard__transport button.is-selected,
+.ob-wizard__education-grid button.is-selected,
+.ob-wizard__dream-grid button.is-selected {
+    border: 2px solid var(--brand);
+    background: var(--accent-soft);
+    color: var(--brand);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+
+.journey-step .ob-wizard__start-options {
+    margin-block: var(--form-section-gap);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.ob-wizard:not(.journey-step) .ob-wizard__start-options,
+.profile-page--candidate .ob-wizard__start-options {
+    margin-block: var(--form-section-gap);
+    padding: var(--form-card-pad);
+    border: 1px solid var(--border);
+    border-radius: var(--form-card-radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.ob-wizard__presets-field {
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.ob-wizard__preset-required {
+    margin: 0.65rem 0 0;
+    padding: 0;
+}
+
+.ob-wizard__availability-summary {
+    margin-block: var(--form-section-gap);
+    padding: 1rem 1.125rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.ob-wizard__availability-summary dl {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.ob-wizard__availability-summary dl div {
+    padding-block: 0.35rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.ob-wizard__availability-summary dt {
+    color: var(--form-muted-label);
+    font-size: var(--text-xs, 0.75rem);
+    font-weight: 600;
+    text-transform: none;
+}
+
+.ob-wizard__availability-summary dd {
+    margin: 0.15rem 0 0;
+    color: var(--form-value-color);
+    font-size: var(--text-md, 1rem);
+    font-weight: var(--form-value-weight);
+    line-height: 1.4;
+}
+
+.ob-wizard__birth-date {
+    margin-block: var(--form-field-gap);
+}
+
+.month-year {
+    display: block;
+    inline-size: 100%;
+}
+
+/* Candidate profile (paspoort data tab) */
+.profile-page--candidate label:not(.profile-toggle):not(.availability-matrix__cell):not(.checkbox-row) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-block: var(--form-field-gap);
+    font-weight: var(--form-label-weight);
+    color: var(--form-label-color);
+    line-height: 1.35;
+}
+
+.profile-page--candidate .profile-form input:not([type="checkbox"]):not([type="radio"]),
+.profile-page--candidate .profile-form select,
+.profile-page--candidate .profile-form textarea,
+.profile-page--candidate .jobsy-date-field__input {
+    color: var(--form-value-color);
+    font-weight: var(--form-value-weight);
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+    line-height: 1.4;
+}
+
+.profile-page--candidate .profile-accordion__body {
+    gap: var(--form-field-gap);
+    padding-block: 0.35rem 0.75rem;
+}
+
+.profile-page--candidate fieldset.ob-wizard__start-options {
+    margin-block: var(--form-section-gap);
+    padding: 1rem 1.05rem;
+    border-radius: var(--radius-sm, 8px);
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.profile-page--candidate .profile-employer-card {
+    padding: 1rem 1.05rem;
+    gap: 0.85rem;
+}
+
+.profile-page--candidate .profile-employer-card__dates {
+    gap: 0.75rem 1rem;
+}
+
+/* Employer / admin login-style forms */
+.login-form label {
+    gap: 0.5rem;
+    margin-block: var(--form-field-gap);
+    font-weight: var(--form-label-weight);
+    color: var(--form-label-color);
+}
+
+.login-form input:not([type="checkbox"]):not([type="radio"]),
+.login-form select,
+.login-form textarea {
+    color: var(--form-value-color);
+    font-weight: var(--form-value-weight);
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+}
+
+.admin-filter-input.jobsy-date-field__input,
+.admin-settings-input.jobsy-date-field__input {
+    max-width: 100%;
+}
+
+/* Discovery journey personal block (outside .ob-wizard shell) */
+.journey-body .ob-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-block: var(--form-field-gap);
+    font-weight: var(--form-label-weight);
+    color: var(--form-label-color);
+    line-height: 1.35;
+}
+
+.journey-body .ob-fields input:not([type="checkbox"]):not([type="radio"]),
+.journey-body .ob-fields select {
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+    line-height: 1.4;
+}
+
+.journey-body .ob-fields fieldset {
+    margin-block: var(--form-section-gap);
+    padding: var(--form-card-pad);
+    border: 1px solid var(--border);
+    border-radius: var(--form-card-radius);
+    background: var(--surface);
+}
+
+/* Generic profile + employer edit forms */
+.profile-form {
+    gap: var(--form-field-gap);
+}
+
+.profile-form label:not(.profile-toggle):not(.availability-matrix__cell):not(.checkbox-row) {
+    gap: 0.5rem;
+    margin-block: 0;
+    font-weight: var(--form-label-weight);
+    color: var(--form-label-color);
+    line-height: 1.35;
+}
+
+.profile-form input:not([type="checkbox"]):not([type="radio"]),
+.profile-form select,
+.profile-form textarea {
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+    line-height: 1.4;
+}
+
+.detail-card .profile-form,
+.vacancy-form,
+.employer-form-stack {
+    padding-block: 0.25rem;
+}
+
+/* Onboarding / discovery review & summary rows */
+.ob-wizard__summary-head {
+    margin-block: var(--form-section-gap) 0.75rem;
+    padding: var(--form-card-pad);
+    border: 1px solid var(--border);
+    border-radius: var(--form-card-radius);
+    background: var(--surface);
+}
+
+.ob-wizard__fine-tune {
+    margin-block: var(--form-section-gap);
+    padding: 1.125rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--form-field-gap);
+}
+
+.ob-wizard__fine-tune label {
+    margin-block: 0;
+}
+
+/* Admin filter bars */
+.filter-bar label,
+.admin-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-weight: var(--form-label-weight);
+    color: var(--form-label-color);
+}
+
+.admin-filter-input,
+.filter-bar__search {
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+    line-height: 1.4;
+}
+
+/* Localized date display (nl dd-MM-yyyy) + hidden native picker */
+.jobsy-date-field--localized {
+    position: relative;
+    inline-size: 100%;
+}
+
+.jobsy-date-field__display-btn {
+    position: relative;
+    box-sizing: border-box;
+    inline-size: 100%;
+    min-block-size: var(--form-input-min-h);
+    padding: var(--form-input-pad-y) var(--form-input-pad-x);
+    padding-inline-end: 2.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--surface);
+    color: var(--form-value-color);
+    font: inherit;
+    font-weight: var(--form-value-weight);
+    line-height: 1.4;
+    text-align: start;
+    cursor: pointer;
+}
+
+.jobsy-date-field__display-btn:focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+}
+
+.jobsy-date-field__display-text {
+    display: block;
+}
+
+.jobsy-date-field__calendar-icon {
+    position: absolute;
+    inset-inline-end: 0.875rem;
+    inset-block-start: 50%;
+    translate: 0 -50%;
+    inline-size: 1.25rem;
+    block-size: 1.25rem;
+    opacity: 0.72;
+    pointer-events: none;
+    background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f2d5c'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+}
+
+.jobsy-date-field__input--native {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

@@ -64,7 +64,7 @@ public class CoreFunctionalFlowE2ETests
             "88880001_0001",
             RegistrationScope.BranchOnly,
             "E2E Manager",
-            "manager.e2e@jobsy.local",
+            "manager.e2e@employer.test",
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: "SM-DIRECT1",
@@ -86,8 +86,19 @@ public class CoreFunctionalFlowE2ETests
         var regRow = await db.CompanyRegistrations.SingleAsync(r => r.Id == submit.RegistrationId);
         Assert.NotNull(regRow.ContactEmailVerifiedAt);
         Assert.Equal(direct.UserId, company.ReferredBySalesManagerUserId);
+        // Upline + rate snapshots are frozen at registration attribution; commission window
+        // (CommissionStartsAtUtc) still opens only on first purchase activation.
         Assert.Equal(upline.UserId, company.CommissionIndirectSalesManagerUserId);
-        Assert.NotNull(company.FirstYearStartedAt);
+        Assert.Null(company.CommissionStartsAtUtc);
+        Assert.NotNull(company.SalesAttributedAtUtc);
+        Assert.False(company.HasReceivedWelcomeToken);
+        Assert.Equal(0m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
+
+        // Verification unlocks welcome token + publishing.
+        var verification = CreateVerification(db, registration);
+        await verification.MarkVerifiedAsync(
+            company.Id, CompanyVerificationMethod.BusinessEmail, activated.UserId, null);
+        await db.Entry(company).ReloadAsync();
         Assert.True(company.HasReceivedWelcomeToken);
         Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
 
@@ -104,7 +115,7 @@ public class CoreFunctionalFlowE2ETests
         var idealCheckout = await payments.CreateTokenPurchaseCheckoutAsync(company.Id, 5);
         Assert.Equal(MolliePaymentMethods.Ideal, idealCheckout.PaymentMethod);
 
-        // ── 3. Spend welcome token, then "no tokens, no action" ───────────────
+        // ── 3. Plain publish is free; paid add-ons still need tokens ───────────
         var products = CreateProducts(db);
         var vacancy1 = await SeedDraftVacancyAsync(db, company.Id, "Welkomst vacature");
         var firstPublish = await products.PublishAsync(
@@ -113,19 +124,18 @@ public class CoreFunctionalFlowE2ETests
             actorUserId: activated.UserId,
             allowPendingApproval: false);
         Assert.True(firstPublish.Succeeded, firstPublish.ErrorMessage);
-        Assert.Equal(0m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
-        // SM referral grants a free start-highlight on the first publish.
+        Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(company.Id));
         Assert.False(company.PendingStartHighlightBonus);
 
-        var vacancy2 = await SeedDraftVacancyAsync(db, company.Id, "Blocked vacature");
+        var vacancy2 = await SeedDraftVacancyAsync(db, company.Id, "Highlight vacature");
         var blocked = await products.PublishAsync(
             vacancy2,
-            new VacancyPublishOptions(),
+            new VacancyPublishOptions(Highlight: true),
             actorUserId: activated.UserId,
             allowPendingApproval: false);
         Assert.False(blocked.Succeeded);
         Assert.True(blocked.InsufficientTokens);
-        Assert.Equal(0m, blocked.Balance);
+        Assert.Equal(1m, blocked.Balance);
         Assert.True(blocked.RequiredTokens >= 1m);
         Assert.Contains("token", blocked.ErrorMessage, StringComparison.OrdinalIgnoreCase);
         Assert.Equal(VacancyStatus.Draft, vacancy2.Status);
@@ -143,7 +153,7 @@ public class CoreFunctionalFlowE2ETests
             PreferencesJson = """{"preferredTransport":"Fiets","maxTravelMinutes":45}"""
         });
 
-        // Highlight / PushBom / Extend also blocked on empty balance (separate active listing).
+        // Highlight / PushBom blocked on low balance; extend stays free.
         var activeNoTokens = await SeedDraftVacancyAsync(db, company.Id, "Active no tokens");
         activeNoTokens.Status = VacancyStatus.Active;
         activeNoTokens.PublishedAtUtc = DateTime.UtcNow;
@@ -153,8 +163,8 @@ public class CoreFunctionalFlowE2ETests
         Assert.True(highlightBlocked.InsufficientTokens, highlightBlocked.ErrorMessage);
         var pushBlocked = await products.PushBomAsync(activeNoTokens, activated.UserId);
         Assert.True(pushBlocked.InsufficientTokens, pushBlocked.ErrorMessage);
-        var extendBlocked = await products.ExtendAsync(activeNoTokens, activated.UserId);
-        Assert.True(extendBlocked.InsufficientTokens, extendBlocked.ErrorMessage);
+        var extendOk = await products.ExtendAsync(activeNoTokens, activated.UserId);
+        Assert.True(extendOk.Succeeded, extendOk.ErrorMessage);
 
         // In-context top-up quote: Exact Match + bulk packs (mirrors GET top-up-quote).
         var balance = await new TokenLedgerService(db).GetBalanceAsync(company.Id);
@@ -184,7 +194,7 @@ public class CoreFunctionalFlowE2ETests
             company.Id,
             vacancy2.Id,
             PendingTokenActionKind.Publish,
-            optionHighlight: false,
+            optionHighlight: true,
             optionPushBom: false,
             optionExtend: false,
             requiredTokens: required,
@@ -229,7 +239,7 @@ public class CoreFunctionalFlowE2ETests
             Math.Round(purchaseExVat * 0.05m, 2, MidpointRounding.AwayFromZero),
             expectedIndirect);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(expectedDirect, await commissions.GetBalanceExVatAsync(direct.UserId));
         Assert.Equal(expectedIndirect, await commissions.GetBalanceExVatAsync(upline.UserId));
 
@@ -265,7 +275,6 @@ public class CoreFunctionalFlowE2ETests
         var custom = await platform.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 5));
@@ -291,7 +300,6 @@ public class CoreFunctionalFlowE2ETests
         await platform.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 30));
@@ -340,9 +348,16 @@ public class CoreFunctionalFlowE2ETests
             CommissionIndirectSalesManagerUserId = upline.UserId,
             CommissionDirectRateSnapshot = SalesCommissionRules.DefaultDirectCommissionRate,
             CommissionIndirectRateSnapshot = SalesCommissionRules.DefaultIndirectCommissionRate,
+            CommissionYear2RateSnapshot = SalesCommissionRules.DefaultYear2DirectCommissionRate,
+            CommissionYear3RateSnapshot = SalesCommissionRules.DefaultYear3DirectCommissionRate,
             CommissionDurationDaysSnapshot = SalesCommissionRules.DefaultCommissionDurationDays,
             CommissionTermsSnapshottedAtUtc = started,
-            FirstYearStartedAt = started
+            CommissionStartsAtUtc = started,
+            FirstYearStartedAt = started,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -371,7 +386,7 @@ public class CoreFunctionalFlowE2ETests
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
         Assert.NotNull(result);
 
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(direct.UserId));
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(upline.UserId));
     }
@@ -393,7 +408,11 @@ public class CoreFunctionalFlowE2ETests
             KvkNumber = "66660001",
             Address = "Delft",
             Location = new GeoPoint(52.01, 4.36),
-            PreferredPaymentMethod = MolliePaymentMethods.CreditCard
+            PreferredPaymentMethod = MolliePaymentMethods.CreditCard,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancy = await SeedDraftVacancyAsync(db, companyId, "Highlight me");
         vacancy.Status = VacancyStatus.Active;
@@ -439,12 +458,13 @@ public class CoreFunctionalFlowE2ETests
         // UI contract: login explains timeout; client script preserves opt-in form drafts.
         var root = FindRepoRoot();
         var loginSource = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Login.razor"));
-        var uiStrings = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStrings.cs"));
-        var idleJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "sessionIdle.js"));
+        var uiStrings = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStrings.cs"))
+            + File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Localization", "UiStringsAuth.cs"));
+        var idleJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-extras.js"));
 
         Assert.Contains("session-expired", loginSource, StringComparison.Ordinal);
         Assert.Contains("Login.ErrorSessionExpired", uiStrings, StringComparison.Ordinal);
-        Assert.Contains("form drafts", uiStrings, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("data-clear-drafts", loginSource, StringComparison.Ordinal);
         Assert.Contains("data-session-draft", idleJs, StringComparison.Ordinal);
         Assert.Contains("saveCriticalDrafts", idleJs, StringComparison.Ordinal);
         Assert.Contains("sessionStorage", idleJs, StringComparison.Ordinal);
@@ -565,15 +585,17 @@ public class CoreFunctionalFlowE2ETests
         new SalesManagerInviteService(
             db,
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance),
+            new PlatformFeatureService(db, Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()), new ConfigurationBuilder().Build()),
             NullLogger<SalesManagerInviteService>.Instance);
 
     private static CompanyRegistrationService CreateRegistrationService(JobsyDbContext db)
     {
-        EnsurePaidPublishPeriod(db, exposeActivationLinks: true);
+        EnsurePaidPublishPeriod(db);
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            Options.Create(new JobsyFeatureOptions()),
             config);
 
         return new CompanyRegistrationService(
@@ -585,19 +607,48 @@ public class CoreFunctionalFlowE2ETests
             NullLogger<CompanyRegistrationService>.Instance);
     }
 
+    private static CompanyVerificationService CreateVerification(
+        JobsyDbContext db,
+        CompanyRegistrationService registration)
+    {
+        var features = CreateFeatures(db);
+        var ledger = new TokenLedgerService(db);
+        var products = new VacancyProductService(
+            db,
+            ledger,
+            new SalesCommercialService(db, ledger),
+            new VacancyCategoryService(db),
+            new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            features,
+            new MockRoutingService(),
+            new UserNotificationService(db),
+            new CandidateActionTokenService(db),
+            NullLogger<VacancyProductService>.Instance);
+        return new CompanyVerificationService(
+            db,
+            registration,
+            products,
+            discovery: null,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new UserNotificationService(db),
+            features,
+            NullLogger<CompanyVerificationService>.Instance);
+    }
+
     private static IPlatformFeatureService CreateFeatures(JobsyDbContext db)
     {
-        EnsurePaidPublishPeriod(db, exposeActivationLinks: true);
+        EnsurePaidPublishPeriod(db);
         return new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            Options.Create(new JobsyFeatureOptions()),
             new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["PublicWebBaseUrl"] = "http://localhost:5201"
             }).Build());
     }
 
-    private static void EnsurePaidPublishPeriod(JobsyDbContext db, bool exposeActivationLinks = true)
+    private static void EnsurePaidPublishPeriod(JobsyDbContext db)
     {
         var row = db.PlatformFeatureSettings.Local.FirstOrDefault()
                   ?? db.PlatformFeatureSettings.FirstOrDefault();
@@ -606,7 +657,6 @@ public class CoreFunctionalFlowE2ETests
             db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
             {
                 Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-                ExposeRegistrationActivationLinks = exposeActivationLinks,
                 FreePublishUntil = null,
                 UpdatedAtUtc = DateTime.UtcNow
             });
@@ -614,7 +664,6 @@ public class CoreFunctionalFlowE2ETests
         else
         {
             row.FreePublishUntil = null;
-            row.ExposeRegistrationActivationLinks = exposeActivationLinks;
         }
 
         db.SaveChanges();
@@ -643,7 +692,7 @@ public class CoreFunctionalFlowE2ETests
     {
         var companySettings = new PlatformCompanySettingsService(db);
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var commercial = new SalesCommercialService(db, tokens);
         var revenueShare = new RevenueShareService(db, tokens, commissions, commercial);
         var features = CreateFeatures(db);
@@ -655,7 +704,7 @@ public class CoreFunctionalFlowE2ETests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             revenueShare,
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             pending,
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);

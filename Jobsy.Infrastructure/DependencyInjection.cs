@@ -1,15 +1,34 @@
+using Jobsy.Core.Careers;
+using Jobsy.Core.Admin;
+using Jobsy.Core.Diagnostics;
+using Jobsy.Core.Email;
+using Jobsy.Core.Enums;
+using Jobsy.Core.Geo;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
+using Jobsy.Core.Reminders;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
+using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
+using Jobsy.Infrastructure.Ops;
+using Jobsy.Infrastructure.Reminders;
+using Jobsy.Infrastructure.Sales;
+using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.LenderRegistration;
+using Jobsy.Infrastructure.Services.OpenAi;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure;
 
@@ -18,7 +37,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration,
-        IHostEnvironment? environment = null)
+        IHostEnvironment? environment = null,
+        bool isWebRuntime = false)
     {
         var connectionString = ResolveJobsyConnectionString(configuration);
         var isDev = environment?.IsDevelopment() ?? true;
@@ -59,20 +79,68 @@ public static class DependencyInjection
         services.AddJobsyDataProtection(connectionString, isDev, configuration);
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
+        services.AddSingleton<IIbanProtector>(sp =>
+        {
+            var protector = new IbanProtector(sp.GetRequiredService<Microsoft.AspNetCore.DataProtection.IDataProtectionProvider>());
+            IbanEfProtection.Configure(protector);
+            return protector;
+        });
+        services.AddScoped<IPersonalDataAccessLogger, PersonalDataAccessLogger>();
+        services.AddScoped<IAdminAuditLog, AdminAuditLog>();
+        services.Configure<SystemAdminOptions>(configuration.GetSection(SystemAdminOptions.SectionName));
+        services.AddSingleton<ISystemAdminSettings, SystemAdminSettings>();
+        services.AddScoped<SystemAdminLoginNotifier>();
+        services.AddScoped<IPlatformErrorLog, PlatformErrorLog>();
+        services.AddSingleton<AdminAuditAppendOnlyInterceptor>();
+        services.AddScoped<IApplicationStatusRecorder, ApplicationStatusRecorder>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddScoped<ISupportAccessService, SupportAccessService>();
         services.AddSingleton<ICandidateInsightsQueue, CandidateInsightsQueue>();
         services.AddSingleton<ICultureFitRefineQueue, CultureFitRefineQueue>();
+        services.AddSingleton<IProactiveVacancyInstantMatchQueue, ProactiveVacancyInstantMatchQueue>();
         services.AddScoped<ICandidateMatchSnapshotService, CandidateMatchSnapshotService>();
         services.AddScoped<ICandidateInsightsComputer, CandidateInsightsComputer>();
         services.AddScoped<ICandidateKompasService, CandidateKompasService>();
         services.AddScoped<ICandidateVacancyCultureFitService, CandidateVacancyCultureFitService>();
         services.AddHostedService<CandidateInsightsWorker>();
         services.AddHostedService<CultureFitRefineWorker>();
+        services.AddHostedService<ProactiveVacancyInstantMatchWorker>();
 
         services.AddOptions<JobsyFeatureOptions>()
             .Bind(configuration.GetSection(JobsyFeatureOptions.SectionName));
 
         services.AddOptions<OpenAiOptions>()
             .Bind(configuration.GetSection(OpenAiOptions.SectionName));
+
+        services.AddOptions<OccupationDayInLifeOptions>()
+            .Bind(configuration.GetSection(OccupationDayInLifeOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                var raw = configuration[OccupationDayInLifeOptions.EnabledKey];
+                if (!string.IsNullOrWhiteSpace(raw) && bool.TryParse(raw, out var enabled))
+                {
+                    options.Enabled = enabled;
+                }
+
+                if (string.IsNullOrWhiteSpace(options.Model)
+                    || options.Model.Contains("mistral", StringComparison.OrdinalIgnoreCase))
+                {
+                    options.Model = OccupationDayInLifeOptions.DefaultModel;
+                }
+
+                options.Model = options.Model.Trim();
+                options.DelayMilliseconds = Math.Clamp(options.DelayMilliseconds, 0, 10_000);
+                options.MaxComposeRetries = Math.Clamp(options.MaxComposeRetries, 2, 5);
+            });
+
+        services.AddOptions<AiOptions>()
+            .Bind(configuration.GetSection(AiOptions.SectionName));
+
+        services.AddOptions<MistralOptions>()
+            .Bind(configuration.GetSection(MistralOptions.SectionName))
+            .PostConfigure(options => MistralOptions.ApplyKeyAlias(options, key => configuration[key]));
+
+        services.AddScoped<IOpenAiEndpointResolver, OpenAiEndpointResolver>();
 
         services.AddOptions<CursorCloudOptions>()
             .Bind(configuration.GetSection(CursorCloudOptions.SectionName))
@@ -111,6 +179,8 @@ public static class DependencyInjection
                 }
             });
 
+        services.Configure<LegalOptions>(configuration.GetSection(LegalOptions.SectionName));
+
         services.AddOptions<MailOptions>()
             .Bind(configuration.GetSection(MailOptions.SectionName))
             .PostConfigure(options =>
@@ -134,14 +204,38 @@ public static class DependencyInjection
                     }
                 }
             });
+        services.AddSingleton<IPostConfigureOptions<MailOptions>, MailOptionsLegalIdentityPostConfigure>();
 
-        services.AddDbContext<JobsyDbContext>(options =>
+        services.AddOptions<LettermintOptions>()
+            .Bind(configuration.GetSection(LettermintOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                if (string.IsNullOrWhiteSpace(options.ApiKey))
+                {
+                    var alt = configuration["LETTERMINT_API_KEY"];
+                    if (!string.IsNullOrWhiteSpace(alt))
+                    {
+                        options.ApiKey = alt.Trim();
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(options.BaseUrl))
+                {
+                    options.BaseUrl = LettermintOptions.DefaultBaseUrl;
+                }
+            });
+
+        services.AddDbContext<JobsyDbContext>((sp, options) =>
+        {
             options.UseNpgsql(connectionString, npgsql =>
             {
                 npgsql.UseNetTopologySuite();
                 npgsql.MigrationsAssembly(typeof(JobsyDbContext).Assembly.FullName);
-            }));
+            });
+            options.AddInterceptors(sp.GetRequiredService<AdminAuditAppendOnlyInterceptor>());
+        });
 
+        services.AddTransient<AiRouteLoggingHandler>();
         var openAiBaseUrl = configuration.GetSection(OpenAiOptions.SectionName)["BaseUrl"]
             ?? "https://api.openai.com/v1/";
         services.AddHttpClient("OpenAI", client =>
@@ -151,7 +245,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
 
         services.AddHttpClient("IntegrationProbe", client =>
         {
@@ -159,7 +253,7 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
 
         var cursorBaseUrl = configuration.GetSection(CursorCloudOptions.SectionName)["BaseUrl"]
             ?? "https://api.cursor.com";
@@ -178,15 +272,43 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(20);
         });
 
+        services.AddHttpClient(LettermintEmailSender.HttpClientName, (sp, client) =>
+        {
+            var configured = sp.GetRequiredService<IOptions<LettermintOptions>>().Value.BaseUrl;
+            var baseUrl = string.IsNullOrWhiteSpace(configured)
+                ? LettermintEmailSender.DefaultApiBase
+                : configured.Trim();
+            if (!baseUrl.EndsWith('/'))
+            {
+                baseUrl += "/";
+            }
+
+            client.BaseAddress = new Uri(baseUrl);
+            client.Timeout = TimeSpan.FromSeconds(20);
+        });
+
         services.AddScoped<IRoutingService, MockRoutingService>();
         services.AddHttpClient(OsrmRoutingService.OsrmClientName, client =>
             OsrmRoutingService.ConfigureClient(client, TimeSpan.FromSeconds(8)));
         services.AddHttpClient(OsrmRoutingService.TransitClientName, client =>
             OsrmRoutingService.ConfigureClient(client, TimeSpan.FromSeconds(12)));
         services.AddScoped<IExactRoutingService, OsrmRoutingService>();
+        services.AddHttpClient(ValhallaIsochroneService.HttpClientName, client =>
+            ValhallaIsochroneService.ConfigureClient(client, TimeSpan.FromSeconds(6)));
+        var isochroneBase = configuration["Routing:IsochroneBaseUrl"];
+        if (string.Equals(isochroneBase, "mock", StringComparison.OrdinalIgnoreCase)
+            || environment?.IsEnvironment("Testing") == true)
+        {
+            services.AddScoped<IIsochroneService, MockIsochroneService>();
+        }
+        else
+        {
+            services.AddScoped<IIsochroneService, ValhallaIsochroneService>();
+        }
         services.AddScoped<ISalaryService, SalaryService>();
         services.AddScoped<ICompanyAuthorizationService, CompanyAuthorizationService>();
         services.AddScoped<ICompanyApiKeyService, CompanyApiKeyService>();
+        services.AddScoped<IOneTimeLinkService, OneTimeLinkService>();
         services.AddScoped<IUserLookupService, UserLookupService>();
         services.AddScoped<ITokenLedgerService, TokenLedgerService>();
         services.AddScoped<ITokenPurchaseInvoiceService, TokenPurchaseInvoiceService>();
@@ -207,6 +329,18 @@ public static class DependencyInjection
         services.AddScoped<ICandidateMetricsQueryService, CandidateMetricsQueryService>();
         services.AddScoped<IDashboardRefreshService, DashboardRefreshService>();
 
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.PublishRequestsTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.ApplicationsOverdueTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.VacanciesExpiringTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.LowTokensTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.NoManagerTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.TakeoversTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.TokenRequestsTodoSource>();
+        services.AddScoped<ITodoSource, Jobsy.Infrastructure.Services.Werkgever.Todo.InsightsRequestsTodoSource>();
+        services.AddScoped<IWerkgeverDashboardService, Jobsy.Infrastructure.Services.Werkgever.WerkgeverDashboardService>();
+        services.AddScoped<ITokenRequestService, TokenRequestService>();
+        services.AddScoped<IWerkgeverTokenSummaryService, Jobsy.Infrastructure.Services.Werkgever.WerkgeverTokenSummaryService>();
+
         services.AddHttpClient(MolliePaymentService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
@@ -226,21 +360,62 @@ public static class DependencyInjection
 
         // Real Mollie when API key is configured; Development falls back to stub without a key.
         services.AddScoped<MolliePaymentStub>();
+        services.AddScoped<IMollieApiClient, MollieApiClient>();
         services.AddScoped<IPaymentService, MolliePaymentService>();
+        services.AddScoped<IDeepTestPaymentService, DeepTestPaymentService>();
+        services.AddScoped<IConsumerInvoiceService, ConsumerInvoiceService>();
 
         // Live KVK when API key is configured (Admin Integraties or Kvk__ApiKey); otherwise demo stub.
         services.AddScoped<KvkServiceStub>();
-        services.AddScoped<IKvkService, KvkHandelsregisterService>();
+        services.AddScoped<IKvkUsageCounter, KvkUsageCounter>();
+        services.AddScoped<IKvkService>(sp => new KvkHandelsregisterService(
+            sp.GetRequiredService<JobsyDbContext>(),
+            sp.GetRequiredService<IIntegrationCredentialService>(),
+            sp.GetRequiredService<IHttpClientFactory>(),
+            sp.GetRequiredService<KvkServiceStub>(),
+            sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<KvkHandelsregisterService>>(),
+            sp.GetRequiredService<Microsoft.Extensions.Caching.Memory.IMemoryCache>(),
+            sp.GetRequiredService<IKvkUsageCounter>()));
         services.AddScoped<IKvkVerificationRetryService, KvkVerificationRetryService>();
         services.AddScoped<EmailServiceStub>();
-        services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<SmtpEmailService>();
+        services.AddScoped<IEmailService>(sp =>
+        {
+            var inner = sp.GetRequiredService<SmtpEmailService>();
+            var domain = sp.GetRequiredService<IConfiguration>()["TestAccounts:EmailDomain"] ?? "lobsy.nl";
+            return new TestAccountMailGuard(
+                inner,
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILogger<TestAccountMailGuard>>(),
+                domain);
+        });
+        services.AddScoped<IEmailPreferenceService, EmailPreferenceService>();
+        services.AddSingleton<IMailUnsubscribeTokenService, MailUnsubscribeTokenService>();
+        services.AddScoped<IEmailLanguageResolver, EmailLanguageResolver>();
+        services.AddScoped<ITransactionalMailer, TransactionalMailer>();
         services.AddScoped<IEmailCatalogService, EmailCatalogService>();
+        services.AddHostedService<MailLegalFooterWarningHostedService>();
         services.AddSingleton<WebPushVapidKeyProvider>();
         services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<WebPushVapidKeyProvider>());
         services.Configure<Jobsy.Core.Options.WebPushOptions>(configuration.GetSection(Jobsy.Core.Options.WebPushOptions.SectionName));
         services.AddScoped<IWebPushSubscriptionService, WebPushSubscriptionService>();
         services.AddScoped<IPushNotificationService, WebPushNotificationService>();
+        services.AddOptions<WhatsAppReminderOptions>()
+            .Bind(configuration.GetSection(WhatsAppReminderOptions.SectionName))
+            .PostConfigure(options =>
+            {
+                options.PhoneNumberId ??= Environment.GetEnvironmentVariable("WHATSAPP_PHONE_NUMBER_ID");
+                options.AccessToken ??= Environment.GetEnvironmentVariable("WHATSAPP_ACCESS_TOKEN");
+            });
+        services.AddHttpClient(WhatsAppReminderChannel.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+        services.AddScoped<IReminderChannel, EmailReminderChannel>();
+        services.AddScoped<IReminderChannel, WebPushReminderChannel>();
+        services.AddScoped<IReminderChannel, WhatsAppReminderChannel>();
+        services.AddScoped<ComebackReminderService>();
         services.AddScoped<IDeviceSessionService, DeviceSessionService>();
+        services.AddScoped<IMfaTrustedDeviceService, MfaTrustedDeviceService>();
         services.AddScoped<PushNotificationServiceStub>();
         services.AddScoped<IIntegrationHealthService, IntegrationHealthStub>();
         services.AddScoped<IIntegrationCredentialService>(sp => new IntegrationCredentialService(
@@ -248,19 +423,96 @@ public static class DependencyInjection
             sp.GetRequiredService<ISecretProtector>(),
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<MailOptions>>(),
             sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<KvkOptions>>(),
-            sp.GetRequiredService<IMemoryCache>()));
+            sp.GetRequiredService<IMemoryCache>(),
+            sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<LettermintOptions>>(),
+            sp.GetRequiredService<ILegalIdentity>()));
+        services.AddScoped<IAdminFinanceSummaryService, AdminFinanceSummaryService>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.KvkFailedRegistrationsSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.PendingTakeoversSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.ModerationFlaggedVacanciesSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.PendingSalesManagerApplicationsSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.OpenPayoutsSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.NewFeedbackSource>();
+        services.AddScoped<IAdminTodoSource, Jobsy.Infrastructure.Services.AdminTodo.ReferenceMisuseSource>();
+        services.AddScoped<IAdminTodoService, Jobsy.Infrastructure.Services.AdminTodo.AdminTodoService>();
         services.AddScoped<IPlatformFeatureService, PlatformFeatureService>();
+        services.AddSingleton<ISmsSender, SmsSenderStub>();
+        services.AddScoped<IPhoneVerificationService, PhoneVerificationService>();
+        services.AddScoped<PassportPartnerService>();
+        services.AddScoped<IPassportPartnerService>(sp => sp.GetRequiredService<PassportPartnerService>());
+        services.AddScoped<PassportPartnerConsentJob>();
+        services.AddHostedService<PassportPartnerConsentHostedService>();
+        services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Infrastructure.Features.FeatureFlags>();
+        services.AddSingleton<Jobsy.Core.Interfaces.ICandidateApplyRateLimitProvider, CandidateApplyRateLimitProvider>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
-        services.AddScoped<IAboutPageSettingsService, AboutPageSettingsService>();
+        services.AddScoped<ILegalIdentity, LegalIdentityService>();
+        services.AddScoped<IPublicCompanyQuery, PublicCompanyQuery>();
+        services.AddScoped<IContentReportService, ContentReportService>();
         services.AddScoped<IMarketingFlyerSettingsService, MarketingFlyerSettingsService>();
         services.AddScoped<IMarketingFlyerPdfService, MarketingFlyerPdfService>();
         services.AddScoped<IRegionHostService, RegionHostService>();
         services.AddScoped<CompanyRegistrationService>();
         services.AddScoped<ICompanyRegistrationService>(sp => sp.GetRequiredService<CompanyRegistrationService>());
+        services.AddScoped<ICompanyAccessRequestService, CompanyAccessRequestService>();
+        services.AddScoped<ICompanyVerificationService, CompanyVerificationService>();
+        services.Configure<CompanyVerificationSettings>(configuration.GetSection(CompanyVerificationSettings.SectionName));
+        services.AddSingleton<IStubLetterStore, Jobsy.Infrastructure.Services.Letters.StubLetterStore>();
+        services.AddScoped<Jobsy.Infrastructure.Services.Letters.StubLetterService>();
+        services.AddScoped<Jobsy.Infrastructure.Services.Letters.PingenLetterService>();
+        services.AddHttpClient(Jobsy.Infrastructure.Services.Letters.PingenLetterService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        });
+        services.AddScoped<ILetterService>(sp =>
+        {
+            var settings = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<CompanyVerificationSettings>>().Value;
+            if (settings.LetterProvider == LetterProviderKind.Pingen
+                && !string.IsNullOrWhiteSpace(settings.PingenClientId)
+                && !string.IsNullOrWhiteSpace(settings.PingenClientSecret)
+                && !string.IsNullOrWhiteSpace(settings.PingenOrganisationId))
+            {
+                return sp.GetRequiredService<Jobsy.Infrastructure.Services.Letters.PingenLetterService>();
+            }
+
+            return sp.GetRequiredService<Jobsy.Infrastructure.Services.Letters.StubLetterService>();
+        });
+        services.AddScoped<ICompanyVerificationFlowService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationFlowService>();
+        services.AddScoped<IVestigingSuggestionService, VestigingSuggestionService>();
+        services.AddScoped<IEmployerOnboardingStatusService, EmployerOnboardingStatusService>();
+        services.AddScoped<ICompanyVerificationAdminService, Jobsy.Infrastructure.Services.Verification.CompanyVerificationAdminService>();
+        services.AddScoped<IRegistrationReferralResolver, DefaultRegistrationReferralResolver>();
+        services.AddSingleton<NominatimPace>();
+        services.AddSingleton<GeoLookupCache>();
+        var nominatimAgent = GeoOptions.UserAgent(configuration["Geo:ContactEmail"]);
+        services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(8);
+            client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", nominatimAgent);
+        });
         services.AddScoped<ISalesManagerInviteService, SalesManagerInviteService>();
         services.AddScoped<ISalesManagerApplicationService, SalesManagerApplicationService>();
         services.AddScoped<ISalesManagerOnboardingService, SalesManagerOnboardingService>();
+        services.AddScoped<ISalesPayoutProfileService, SalesPayoutProfileService>();
         services.AddScoped<IAmbassadeurInviteService, AmbassadeurInviteService>();
+        services.AddScoped<ISchoolStaffInviteService, SchoolStaffInviteService>();
+        services.AddScoped<IPupilCodeService, PupilCodeService>();
+        services.AddScoped<ISchoolScopeService, SchoolScopeService>();
+        services.AddScoped<ISchoolCodeListPdfService, SchoolCodeListPdfService>();
+        services.AddScoped<ISchoolPortalService, SchoolPortalService>();
+        services.AddScoped<ITeacherPortalService, TeacherPortalService>();
+        services.AddScoped<ISchoolAggregateSnapshotter, SchoolAggregateSnapshotter>();
+        services.AddScoped<ISchoolRetentionService, SchoolRetentionService>();
+        services.AddScoped<ISchoolReportingService, SchoolReportingService>();
+        services.AddSingleton<IPupilStoryRenderer, PupilStoryRenderer>();
+        services.AddSingleton<IPupilQuestionBank, PupilQuestionBank>();
+        services.AddSingleton<IPupilQuestionSetRegistry, PupilQuestionSetRegistry>();
+        services.AddScoped<IPupilResultBuilder, PupilResultBuilder>();
+        services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
+        services.AddScoped<IPupilPortalService, PupilPortalService>();
+        services.AddSingleton<IPupilReportPdfService, PupilReportPdfService>();
+        services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
+        services.AddHostedService<TestWindowAutoCloser>();
+        services.AddHostedService<SchoolRetentionHostedService>();
         services.AddScoped<IAmbassadeurOnboardingService, AmbassadeurOnboardingService>();
         services.AddScoped<IAmbassadeurSettingsService, AmbassadeurSettingsService>();
         services.AddScoped<IAmbassadeurAttributionService, AmbassadeurAttributionService>();
@@ -271,34 +523,82 @@ public static class DependencyInjection
             sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
+        services.AddScoped<IPassportPdfService, Jobsy.Infrastructure.Services.Passport.PassportPdfService>();
+        services.AddScoped<IPassportDnaReader, Jobsy.Infrastructure.Services.Passport.PassportDnaReader>();
         services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
         {
-            // Keep well under JobsyApiClient's 20s budget so GET /who-am-i can
-            // fall back to the local story before the Blazor circuit times out.
-            client.Timeout = TimeSpan.FromSeconds(8);
+            // One attempt is 12s. Stay under the 20s API client budget.
+            client.Timeout = TimeSpan.FromSeconds(14);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<IWhoAmIGenerationService, WhoAmIGenerationService>();
         services.AddScoped<IWhoAmIService, WhoAmIService>();
         services.AddScoped<ICvTextExtractor, CvTextExtractor>();
         services.AddScoped<ICvExtractionService, CvExtractionService>();
+        services.AddHttpClient(Services.CandidateExternalVacancies.ExternalVacancyUrlFetchService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(15);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddScoped<IExternalVacancyUrlFetchService, Services.CandidateExternalVacancies.ExternalVacancyUrlFetchService>();
+        services.AddScoped<IExternalVacancyExtractionService, Services.CandidateExternalVacancies.ExternalVacancyExtractionService>();
+        services.AddScoped<IExternalVacancyMatchService, Services.CandidateExternalVacancies.ExternalVacancyMatchService>();
+        services.AddScoped<IExternalVacancyContactFinder, Services.CandidateExternalVacancies.ExternalVacancyContactFinder>();
+        services.AddScoped<IExternalVacancyApplicationLetterPdfBuilder, Services.CandidateExternalVacancies.ExternalVacancyApplicationLetterPdfBuilder>();
+        services.AddScoped<IExternalVacancySuppressionService, Services.CandidateExternalVacancies.ExternalVacancySuppressionService>();
+        services.AddScoped<IExternalVacancyEmployerInviteService, Services.CandidateExternalVacancies.ExternalVacancyEmployerInviteService>();
+        services.AddScoped<ICandidateExternalVacancyService, Services.CandidateExternalVacancies.CandidateExternalVacancyService>();
+        services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyOutboundMetricsService,
+            Services.CandidateExternalVacancies.ExternalVacancyOutboundMetricsService>();
+        services.AddScoped<IExternalVacancyEmployerOnboardingService,
+            Services.CandidateExternalVacancies.ExternalVacancyEmployerOnboardingService>();
+        services.AddScoped<IExternalVacancyTravelEstimator,
+            Services.CandidateExternalVacancies.ExternalVacancyTravelEstimator>();
+        services.AddScoped<Services.CandidateExternalVacancies.IExternalVacancyReminderService,
+            Services.CandidateExternalVacancies.ExternalVacancyReminderService>();
+        services.AddOptions<UploadScanOptions>()
+            .Bind(configuration.GetSection(UploadScanOptions.SectionName));
+        // ClamAV stays off until UploadScan:Enabled. No AI body logger on this client.
+        services.AddHttpClient(UploadMalwareScanner.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(130);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        });
+        services.AddSingleton<IUploadMalwareScanner, UploadMalwareScanner>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
+        services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
+        // KB-FALLBACK(D): paspoort 06 absent — no down-rank / "Staat lager".
+        services.AddSingleton<Jobsy.Core.Rules.KandidaatBanen.IKbDislikeSource>(
+            Jobsy.Core.Rules.KandidaatBanen.KbNoDislikeSource.Instance);
         services.AddHttpClient(CultureFitAiService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(12);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICultureFitAiService, CultureFitAiService>();
         services.AddScoped<IResearchConsentGate, ResearchConsentGate>();
         services.AddScoped<IAssessmentResearchService, AssessmentResearchService>();
         services.AddScoped<ICandidateCompetencyService, CandidateCompetencyService>();
         services.AddScoped<ICandidateCulturePersonalityService, CandidateCulturePersonalityService>();
         services.AddScoped<ICandidateValuesService, CandidateValuesService>();
+        services.AddScoped<IAssessmentAdjustmentService, AssessmentAdjustmentService>();
+        services.AddScoped<IAssessmentRetakeService, AssessmentRetakeService>();
+        services.AddScoped<AssessmentSaveGuard>();
         services.AddScoped<ICompanyCultureService, CompanyCultureService>();
+        services.AddScoped<ICompanyProfileExtrasService, CompanyProfileExtrasService>();
+        services.AddScoped<ICompanyEngagementService, CompanyEngagementService>();
+        services.AddScoped<ILenderRegistrationProvider, WaadiKvkProvider>();
+        services.AddScoped<ILenderRegistrationProvider, WttaNauProvider>();
+        services.AddScoped<ILenderRegistrationProvider, AdminManualLenderProvider>();
+        services.AddScoped<ILenderRegistrationCheck, LenderRegistrationCheckService>();
         services.AddScoped<ICandidateCareerInterestService, CandidateCareerInterestService>();
         services.AddHttpClient(CareerCompassGenerationService.HttpClientName, client =>
         {
@@ -306,10 +606,24 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICareerCompassGenerationService, CareerCompassGenerationService>();
+        services.AddHttpClient(OccupationDayInLifeOpenAiWriter.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(45);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
+        services.AddScoped<IOccupationDayInLifeWriter, OccupationDayInLifeOpenAiWriter>();
+        services.AddScoped<IOccupationDayInLifeTranslator, OccupationDayInLifeTranslator>();
+        services.AddScoped<OccupationDayInLifeReader>();
+        services.AddScoped<IOccupationDayInLifeReader>(sp => sp.GetRequiredService<OccupationDayInLifeReader>());
+        services.AddScoped<OccupationDayInLifeGenerator>();
+        services.AddSingleton<OccupationDayInLifeBatchRunner>();
         services.AddScoped<ICareerPathPlanGenerationService, CareerPathPlanGenerationService>();
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();
+        services.AddScoped<CareerGenerationGuard>();
         services.AddScoped<ICandidateOnboardingService, CandidateOnboardingService>();
         services.AddHttpClient(CareerPathPlanGenerationService.HttpClientName, client =>
         {
@@ -317,14 +631,14 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddHttpClient(RoleFitCheckService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
         services.AddScoped<ITrainingUpskillService, TrainingUpskillService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
@@ -335,15 +649,48 @@ public static class DependencyInjection
         }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
         {
             AllowAutoRedirect = false
-        });
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<ICompetenceDeepReportAiService, OpenAiCompetenceDeepReportAiService>();
         services.AddScoped<ICompetenceDeepReportService, CompetenceDeepReportService>();
+        services.AddScoped<IKindDeepReportService, KindDeepReportService>();
+        services.AddScoped<IAssessmentNormService, AssessmentNormService>();
         services.AddScoped<IAssessmentReportPdfService, AssessmentReportPdfService>();
+        services.AddScoped<ISampleAssessmentReportPdfService, SampleAssessmentReportPdfService>();
+        services.AddHostedService<AssessmentNormSnapshotHostedService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.Configure<Jobsy.Core.Options.ProactiveMatchingOptions>(
+            configuration.GetSection(Jobsy.Core.Options.ProactiveMatchingOptions.SectionName));
+        services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();
+        services.AddScoped<IProactiveVacancyShortlistService, ProactiveVacancyShortlistService>();
+        services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
+        services.AddScoped<IEmployerPhase2Service, Jobsy.Infrastructure.Services.EmployerPhase2.EmployerPhase2Service>();
+        services.AddScoped<IMaqqieHoursService, Jobsy.Infrastructure.Services.EmployerPhase2.MaqqieHoursService>();
+        services.AddScoped<IMaqqieHoursExporter, Jobsy.Infrastructure.Services.EmployerPhase2.FileMaqqieHoursExporter>();
+        services.Configure<Jobsy.Infrastructure.Services.EmployerPhase2.MaqqieHoursOptions>(
+            configuration.GetSection("MaqqieHours"));
         services.AddScoped<ICandidateMapImageService, OsmTileMapImageService>();
         services.AddHttpClient("OsmTiles", OsmTileMapImageService.ConfigureHttpClient);
         services.AddScoped<ICommissionLedgerService, CommissionLedgerService>();
+        services.AddScoped<ISalesBeneficiaryService, SalesBeneficiaryService>();
+        services.AddScoped<ISalesWalletReadService, SalesWalletReadService>();
+        services.AddScoped<ISalesPayoutRequestService, SalesPayoutRequestService>();
+        services.AddScoped<ISalesWalletPortalService, SalesWalletPortalService>();
+        services.Configure<SalesPayoutProviderOptions>(
+            configuration.GetSection(SalesPayoutProviderOptions.SectionName));
+        services.AddScoped<ISalesPayoutProvider, BankTransferPayoutProvider>();
+        services.AddScoped<ISalesPayoutRunService, SalesPayoutRunService>();
+        services.AddHostedService<SalesPayoutRunHostedService>();
+        services.AddScoped<SalesEmployerReadService>();
+        services.AddScoped<ISalesEmployerReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());
+        services.AddScoped<ISalesEmployerPortalReadService>(sp => sp.GetRequiredService<SalesEmployerReadService>());
+        services.AddScoped<ISalesDashboardReadService, SalesDashboardReadService>();
+        services.AddScoped<ISalesCorrectionService, SalesCorrectionService>();
+        services.AddScoped<ISalesParkedBalanceService, SalesParkedBalanceService>();
+        services.AddScoped<ISalesAttributionResolver, SalesAttributionResolver>();
+        services.AddScoped<ISalesLinkClickService, SalesLinkClickService>();
+        services.AddScoped<ISalesAttributionAdminService, SalesAttributionAdminService>();
+        services.AddScoped<ISalesFunnelReadService, SalesFunnelReadService>();
         services.AddScoped<IRevenueShareService, RevenueShareService>();
         services.AddScoped<ISupplierOnboardingPaymentService, SupplierOnboardingPaymentService>();
         services.AddScoped<ISelfBillingInvoiceService, SelfBillingInvoiceService>();
@@ -354,6 +701,9 @@ public static class DependencyInjection
             sp.GetRequiredService<IDashboardCache>(),
             sp.GetRequiredService<IDashboardLiveOverlay>()));
         services.AddScoped<ISalesCommercialService, SalesCommercialService>();
+        services.AddScoped<ISalesPriceQuote, SalesPriceQuoteService>();
+        services.AddScoped<ISalesMaterialsPdfService, SalesMaterialsPdfService>();
+        services.AddScoped<ISalesLinkToolkitService, SalesLinkToolkitService>();
         services.AddScoped<IPartnerAffiliateService, PartnerAffiliateService>();
         services.AddScoped<IVacancyCategoryService, VacancyCategoryService>();
         services.AddScoped<IPartnerFlyerPdfService, PartnerFlyerPdfService>();
@@ -368,6 +718,7 @@ public static class DependencyInjection
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
+        services.AddScoped<ReferenceConfirmationService>();
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
         services.AddScoped<IFeedbackService, FeedbackService>();
@@ -389,14 +740,35 @@ public static class DependencyInjection
         services.AddHostedService<AtsVacancyHealthHostedService>();
         services.AddHostedService<FeedbackAutomationPollHostedService>();
         services.AddHostedService<DataRetentionHostedService>();
+        services.AddHostedService<IbanEncryptionMigrationHostedService>();
+        services.AddHostedService<SalesCommissionBackfillHostedService>();
+        services.AddHostedService<WhoAmIStoryBackfillHostedService>();
+        services.AddHostedService<CareerCompassDeepResetHostedService>();
         services.AddHostedService<TalentContactRefundHostedService>();
         services.AddHostedService<UnconfirmedRegistrationCleanupHostedService>();
+        services.AddHostedService<UnverifiedCompanyReminderHostedService>();
+        services.AddHostedService<UnverifiedCompanyCleanupHostedService>();
+        services.AddHostedService<AccessRequestEscalationHostedService>();
         services.AddHostedService<DraftVacancyCleanupHostedService>();
+        services.AddHostedService<CareerPlanArchiveCleanupHostedService>();
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
+        services.AddHostedService<Jobs.ExternalVacancyReminderHostedService>();
+        services.AddHostedService<Jobs.ProactiveMatchingHostedService>();
+        services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();
         services.AddHostedService<TokenCheckoutReconcileHostedService>();
+        services.AddHostedService<DeepTestCheckoutReconcileHostedService>();
         services.AddHostedService<KvkVerificationRetryHostedService>();
+        services.AddHostedService<VestigingSuggestionHostedService>();
+
+        services.AddSingleton<ITestAccountsRuntime>(sp =>
+            TestAccountsRuntimeFactory.Create(
+                sp.GetRequiredService<IConfiguration>(),
+                sp.GetRequiredService<IHostEnvironment>(),
+                sp.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>()
+                    .CreateLogger("TestAccountsRuntime"),
+                isWebRuntime: isWebRuntime));
 
         return services;
     }

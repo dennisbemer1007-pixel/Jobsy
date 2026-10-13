@@ -1,0 +1,56 @@
+@namespace Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+
+<div class="ent-data-table-wrap">
+    @if (Loading)
+    {
+        <p class="ent-data-table__state">@Culture["EntUi.Loading"]</p>
+    }
+    else if (Empty)
+    {
+        <p class="ent-data-table__state">@(EmptyText ?? Culture["EntUi.Empty"])</p>
+    }
+    else
+    {
+        <table class="ent-data-table data-table">
+            <thead>
+                <tr>
+                    @if (ShowCheckbox)
+                    {
+                        <th class="ent-data-table__check" scope="col">
+                            <input type="checkbox" checked="@AllSelected" @onchange="OnToggleAll"
+                                   aria-label="@Culture["EntUi.Selected"]" />
+                        </th>
+                    }
+                    @Header
+                    @if (ShowRowActions)
+                    {
+                        <th scope="col"><span class="visually-hidden">@Culture["EntUi.Actions"]</span></th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @Rows
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool Empty { get; set; }
+    [Parameter] public string? EmptyText { get; set; }
+    [Parameter] public bool ShowCheckbox { get; set; }
+    [Parameter] public bool AllSelected { get; set; }
+    [Parameter] public EventCallback<bool> AllSelectedChanged { get; set; }
+    [Parameter] public bool ShowRowActions { get; set; }
+    [Parameter] public RenderFragment? Header { get; set; }
+    [Parameter] public RenderFragment? Rows { get; set; }
+
+    private async Task OnToggleAll(ChangeEventArgs e)
+    {
+        var value = e.Value is bool b && b || string.Equals(e.Value?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        AllSelected = value;
+        await AllSelectedChanged.InvokeAsync(value);
+    }
+}

@@ -15,14 +15,22 @@ public class AtsPipelineTests
     public void Validation_allows_missing_location_but_rejects_error_titles()
     {
         Assert.False(AtsListingValidation.TryValidateForReview(
-            "404 Not Found", "Acme", "Den Haag", new string('x', 80), out _));
+            "404 Not Found", "Acme", new string('x', 80), out _));
         // Location / salary may be empty at intake — admin completes in ATS module.
         Assert.True(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", null, new string('x', 80), out _));
-        Assert.True(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", "Naaldwijk", new string('x', 80), out _));
+            "Kassamedewerker", "Acme", "Wat ga je doen als kassamedewerker? Solliciteer vandaag nog.", out _));
         Assert.False(AtsListingValidation.TryValidateForReview(
-            "Kassamedewerker", "Acme", "Naaldwijk", "kort", out var shortReason));
+            "Veelgestelde vragen", "HagaZiekenhuis", "Bekijk de veelgestelde vragen over werken bij ons ziekenhuis.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Aanmelden", "HagaZiekenhuis", "Error: Javascript is required to view this page in the browser.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Locaties waar wij zorg verlenen", "HagaZiekenhuis", new string('x', 80), out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Dit zijn onze zorgverleners", "HagaZiekenhuis", "Wat ga je doen? Solliciteer vandaag nog bij ons team.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Waar bent u naar op zoek?", "HagaZiekenhuis", "Bekijk de vacatures en solliciteer op een functie.", out _));
+        Assert.False(AtsListingValidation.TryValidateForReview(
+            "Kassamedewerker", "Acme", "kort", out var shortReason));
         Assert.Contains("tekst", shortReason!, StringComparison.OrdinalIgnoreCase);
         Assert.True(AtsListingValidation.IsDemoListing("Kassamedewerker (demo)", "https://x/demo-abc", null));
     }
@@ -295,7 +303,11 @@ public class AtsPipelineTests
             Name = "Demo",
             KvkNumber = "12345678",
             Address = "A",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         var vacancyId = Guid.NewGuid();
         db.Vacancies.Add(new Vacancy

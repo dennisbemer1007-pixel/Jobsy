@@ -1,9 +1,13 @@
+using Jobsy.Core.Admin;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Sales;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,13 +21,16 @@ namespace Jobsy.Infrastructure.Jobs;
 public sealed class DataRetentionHostedService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<DataRetentionHostedService> _logger;
 
     public DataRetentionHostedService(
         IServiceScopeFactory scopeFactory,
+        IConfiguration configuration,
         ILogger<DataRetentionHostedService> logger)
     {
         _scopeFactory = scopeFactory;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -56,6 +63,32 @@ public sealed class DataRetentionHostedService : BackgroundService
         var logCutoff = now.AddDays(-PrivacyConstants.PlatformLogRetentionDays);
         var logsRemoved = await db.PlatformLogs
             .Where(l => l.CreatedAt < logCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var accessLogDays = _configuration.GetValue(
+            "Privacy:PersonalDataAccessLogRetentionDays",
+            PrivacyConstants.PersonalDataAccessLogRetentionDays);
+        if (accessLogDays < 30)
+        {
+            accessLogDays = PrivacyConstants.PersonalDataAccessLogRetentionDays;
+        }
+
+        var accessLogCutoff = now.AddDays(-accessLogDays);
+        var accessLogsRemoved = await db.PersonalDataAccessLogs
+            .Where(l => l.OccurredAt < accessLogCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var auditDays = _configuration.GetValue(
+            "Privacy:AdminAuditRetentionDays",
+            PrivacyConstants.AdminAuditRetentionDays);
+        if (auditDays < 30)
+        {
+            auditDays = PrivacyConstants.AdminAuditRetentionDays;
+        }
+
+        var auditCutoff = now.AddDays(-auditDays);
+        var auditRemoved = await db.AdminAuditEvents
+            .Where(e => e.OccurredAtUtc < auditCutoff)
             .ExecuteDeleteAsync(cancellationToken);
 
         var regCutoff = now.AddDays(-PrivacyConstants.CancelledRegistrationRetentionDays);
@@ -138,17 +171,70 @@ public sealed class DataRetentionHostedService : BackgroundService
                         || (t.UsedAtUtc != null && t.UsedAtUtc < tokenCutoff))
             .ExecuteDeleteAsync(cancellationToken);
 
+        var oneTimeLinks = scope.ServiceProvider.GetRequiredService<IOneTimeLinkService>();
+        var oneTimeLinksRemoved = await oneTimeLinks.PurgeExpiredAsync(cancellationToken);
+
         var staleScreenshotCount = await PurgeStaleFeedbackScreenshotsAsync(db, now, cancellationToken);
 
-        if (logsRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
-            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + dirtyActionUrls.Count
-            + withdrawnWithSnapshots.Count + staleScreenshotCount > 0)
+        var clickCutoff = SalesClock.Today().AddMonths(-PrivacyConstants.SalesLinkClickRetentionMonths);
+        var salesClicksRemoved = await db.SalesLinkClickDailies
+            .Where(c => c.Date < clickCutoff)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        var salesAppsCleared = await SalesManagerApplicationService.ApplyRetentionAsync(
+            db, now, cancellationToken);
+
+        var (reportsPurged, reportEmailsCleared) = await ContentReportService.ApplyRetentionAsync(
+            db, now, cancellationToken);
+
+        if (logsRemoved + accessLogsRemoved + auditRemoved + regsRemoved + clicksRemoved + sharesRemoved + impressionsRemoved + visitsRemoved
+            + unverifiedAppsRemoved + notificationsRemoved + tokensRemoved + oneTimeLinksRemoved + dirtyActionUrls.Count
+            + withdrawnWithSnapshots.Count + staleScreenshotCount + salesClicksRemoved + salesAppsCleared
+            + reportsPurged + reportEmailsCleared > 0)
         {
             _logger.LogInformation(
-                "Retention purge: logs={Logs}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}",
-                logsRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
-                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, dirtyActionUrls.Count,
-                withdrawnWithSnapshots.Count, staleScreenshotCount);
+                "Retention purge: logs={Logs}, personalDataAccessLogs={AccessLogs}, adminAudit={Audit}, registrations={Regs}, clicks={Clicks}, shares={Shares}, impressions={Impressions}, visits={Visits}, unverifiedApps={UnverifiedApps}, notifications={Notifications}, actionTokens={Tokens}, oneTimeLinks={OneTimeLinks}, scrubbedActionUrls={Scrubbed}, scrubbedWithdrawnApps={WithdrawnScrubbed}, feedbackScreenshots={Screenshots}, salesLinkClicks={SalesClicks}, salesApplications={SalesApps}, contentReports={Reports}, contentReportEmails={ReportEmails}",
+                logsRemoved, accessLogsRemoved, auditRemoved, regsRemoved, clicksRemoved, sharesRemoved, impressionsRemoved, visitsRemoved,
+                unverifiedAppsRemoved, notificationsRemoved, tokensRemoved, oneTimeLinksRemoved, dirtyActionUrls.Count,
+                withdrawnWithSnapshots.Count, staleScreenshotCount, salesClicksRemoved, salesAppsCleared,
+                reportsPurged, reportEmailsCleared);
+        }
+
+        try
+        {
+            var audit = scope.ServiceProvider.GetRequiredService<IAdminAuditLog>();
+            await audit.WriteAsync(
+                new AdminAuditEntry(
+                    Action: AdminAuditKeys.PrivacyRetentionRun,
+                    TargetType: AdminAuditKeys.TargetTypes.Retention,
+                    TargetId: "data-retention",
+                    TargetLabel: "Data retention",
+                    DetailsJson: System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, int>
+                    {
+                        ["platformLogs"] = logsRemoved,
+                        ["personalDataAccessLogs"] = accessLogsRemoved,
+                        ["adminAuditEvents"] = auditRemoved,
+                        ["registrations"] = regsRemoved,
+                        ["clicks"] = clicksRemoved,
+                        ["shares"] = sharesRemoved,
+                        ["impressions"] = impressionsRemoved,
+                        ["visits"] = visitsRemoved,
+                        ["unverifiedApps"] = unverifiedAppsRemoved,
+                        ["notifications"] = notificationsRemoved,
+                        ["actionTokens"] = tokensRemoved,
+                        ["withdrawnScrubbed"] = withdrawnWithSnapshots.Count,
+                        ["feedbackScreenshots"] = staleScreenshotCount,
+                        ["contentReports"] = reportsPurged,
+                        ["contentReportEmails"] = reportEmailsCleared
+                    }),
+                    Result: AdminAuditKeys.Results.Success,
+                    ActorKind: AdminAuditKeys.ActorKinds.System,
+                    ActorRole: "system"),
+                cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "Failed to write privacy.retention.run audit event.");
         }
     }
 

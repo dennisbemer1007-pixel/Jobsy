@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Services;
 using Jobsy.Web.Auth;
@@ -9,17 +10,67 @@ namespace Jobsy.Tests;
 public class CandidateOnboardingWizardTests
 {
     [Fact]
+    public void Catalog_mini_question_ids_sum_to_twenty_distinct_catalog_items()
+    {
+        Assert.Equal(20, OnboardingWizardCatalog.TotalMiniQuestionCount);
+        Assert.Equal(5, OnboardingWizardCatalog.CompetencyQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.CareerQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.CultureQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.ValuesQuestionIds.Length);
+
+        Assert.Equal(
+            OnboardingWizardCatalog.CompetencyQuestionIds.Length,
+            OnboardingWizardCatalog.CompetencyQuestionIds.Distinct().Count());
+        Assert.Equal(
+            OnboardingWizardCatalog.CareerQuestionIds.Length,
+            OnboardingWizardCatalog.CareerQuestionIds.Distinct().Count());
+        Assert.Equal(
+            OnboardingWizardCatalog.CultureQuestionIds.Length,
+            OnboardingWizardCatalog.CultureQuestionIds.Distinct().Count());
+        Assert.Equal(
+            OnboardingWizardCatalog.ValuesQuestionIds.Length,
+            OnboardingWizardCatalog.ValuesQuestionIds.Distinct().Count());
+
+        foreach (var id in OnboardingWizardCatalog.CompetencyQuestionIds)
+        {
+            Assert.Contains(CompetencyTestCatalog.Questions, q => q.Id == id);
+        }
+
+        foreach (var id in OnboardingWizardCatalog.CareerQuestionIds)
+        {
+            Assert.Contains(CareerTestCatalog.Questions, q => q.Id == id);
+        }
+
+        foreach (var id in OnboardingWizardCatalog.CultureQuestionIds)
+        {
+            Assert.Contains(CulturePersonalityCatalog.Questions, q => q.Id == id);
+        }
+
+        foreach (var id in OnboardingWizardCatalog.ValuesQuestionIds)
+        {
+            Assert.Contains(SchwartzValuesCatalog.Questions, q => q.Id == id);
+        }
+    }
+
+    [Fact]
     public void Catalog_mini_question_ids_cover_each_dimension()
     {
         Assert.Equal(5, OnboardingWizardCatalog.CompetencyQuestionIds.Length);
-        Assert.Equal(6, OnboardingWizardCatalog.CareerQuestionIds.Length);
+        Assert.Equal(5, OnboardingWizardCatalog.CareerQuestionIds.Length);
         Assert.Equal(5, OnboardingWizardCatalog.CultureQuestionIds.Length);
         Assert.Equal(5, OnboardingWizardCatalog.ValuesQuestionIds.Length);
         Assert.Equal(10, OnboardingWizardCatalog.StepCount);
+        Assert.Equal(4, OnboardingWizardCatalog.Phases.Length);
+        Assert.Equal(Enumerable.Range(1, 10), OnboardingWizardCatalog.Phases.SelectMany(p => Enumerable.Range(p.FirstStep, p.StepCount)));
+        Assert.Equal(1, OnboardingWizardCatalog.MapV1Step(1));
+        Assert.Equal(2, OnboardingWizardCatalog.MapV1Step(2));
+        Assert.Equal(4, OnboardingWizardCatalog.MapV1Step(3));
+        Assert.Equal(10, OnboardingWizardCatalog.MapV1Step(10));
 
         Assert.Contains(1, OnboardingWizardCatalog.CompetencyQuestionIds);
         Assert.Contains(21, OnboardingWizardCatalog.CompetencyQuestionIds);
         Assert.Contains(22, OnboardingWizardCatalog.CareerQuestionIds);
+        Assert.DoesNotContain(10, OnboardingWizardCatalog.CareerQuestionIds);
         Assert.Equal(
             [
                 CulturePersonalityCatalog.Autonomy,
@@ -34,7 +85,7 @@ public class CandidateOnboardingWizardTests
     [Fact]
     public void Impression_library_and_education_line_are_reviewable()
     {
-        Assert.Contains("21 vragen", OnboardingImpressionLibrary.ResultLabel, StringComparison.Ordinal);
+        Assert.Contains("20 vragen", OnboardingImpressionLibrary.ResultLabel, StringComparison.Ordinal);
         Assert.Equal(
             "HAVO – E&M",
             OnboardingWizardCatalog.FormatEducationLine("HAVO", "E&M"));
@@ -60,7 +111,11 @@ public class CandidateOnboardingWizardTests
     {
         var answers = new Dictionary<int, int>
         {
-            [1] = 5, [6] = 4, [11] = 3, [16] = 5, [21] = 4
+            [1] = 5,
+            [6] = 4,
+            [11] = 3,
+            [16] = 5,
+            [21] = 4
         };
         var json = CompetencyTestCatalog.SerializeAnswers(answers);
         var provisional = ProvisionalAssessmentScores.ResolveCompetency(
@@ -80,7 +135,11 @@ public class CandidateOnboardingWizardTests
     {
         var valuesAnswers = new Dictionary<int, int>
         {
-            [1] = 5, [6] = 4, [11] = 3, [16] = 2, [21] = 5
+            [1] = 5,
+            [6] = 4,
+            [11] = 3,
+            [16] = 2,
+            [21] = 5
         };
         var valuesJson = SchwartzValuesCatalog.SerializeAnswers(valuesAnswers);
         var values = ProvisionalAssessmentScores.ResolveValues(
@@ -90,7 +149,11 @@ public class CandidateOnboardingWizardTests
 
         var cultureAnswers = new Dictionary<int, int>
         {
-            [1] = 5, [3] = 4, [5] = 5, [7] = 3, [11] = 4
+            [1] = 5,
+            [3] = 4,
+            [5] = 5,
+            [7] = 3,
+            [11] = 4
         };
         var cultureJson = CulturePersonalityCatalog.SerializeAnswers(cultureAnswers);
         var culture = ProvisionalAssessmentScores.ResolveCulture(
@@ -125,7 +188,9 @@ public class CandidateOnboardingWizardTests
     {
         Assert.Equal("/candidate/start", AuthRedirects.CandidateHowToPath);
         Assert.Equal("/candidate/hoe-werkt-lobsy", AuthRedirects.CandidateHowToGuidePath);
-        Assert.Equal("/candidate/start", AuthRedirects.CandidatePostLoginUrl(true));
+        Assert.Equal(FeatureRoutes.CandidateWizardStartPath, AuthRedirects.CandidatePostLoginUrl(true));
+        var off = new FeatureFlagSnapshot(true, false);
+        Assert.Equal("/candidate/start", AuthRedirects.CandidatePostLoginUrl(true, off));
 
         var incomplete = new User
         {
@@ -168,21 +233,34 @@ public class CandidateOnboardingWizardTests
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
         Assert.Contains("@page \"/candidate/start\"", wizard, StringComparison.Ordinal);
-        Assert.Contains("LikertScaleQuestion", wizard, StringComparison.Ordinal);
+        Assert.Contains("GratisDnaMerge.TryMergeAsync", wizard, StringComparison.Ordinal);
+        Assert.Contains("TryAutoAdvanceEmptyMiniStepAsync", wizard, StringComparison.Ordinal);
+        Assert.Contains("OnboardingMiniTest", wizard, StringComparison.Ordinal);
+        Assert.Contains("PersonalStep", wizard, StringComparison.Ordinal);
+        var mini = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Onboarding/OnboardingMiniTest.razor"));
+        Assert.Contains("TestQuestionFlow", mini, StringComparison.Ordinal);
+        Assert.Contains("Compact", mini, StringComparison.Ordinal);
         Assert.Contains("SaveOnboardingDreamJobAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("CompleteMyOnboardingAsync", wizard, StringComparison.Ordinal);
         Assert.Contains("lobsyPwaInstall", wizard, StringComparison.Ordinal);
         Assert.Contains("Onboarding.Later", wizard, StringComparison.Ordinal);
+        Assert.Null(typeof(OnboardingWizardCatalog).GetField("PopularDreamJobChips"));
+        Assert.Null(typeof(OnboardingWizardCatalog).GetMethod("DreamChipsForRiasec"));
 
         var layout = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/MainLayout.razor"));
         Assert.Contains("candidate/start", layout, StringComparison.Ordinal);
+        Assert.Contains("candidate/ontdekkingsreis", layout, StringComparison.Ordinal);
+        Assert.Contains("<GratisDnaMerge", layout, StringComparison.Ordinal);
 
-        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
+        var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateHomePanel.razor"));
         Assert.Contains("CandidateOnboardingResumeCard", home, StringComparison.Ordinal);
 
         var migration = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/Migrations/20260926153316_SyncOnboardingModelSnapshot.cs"));
         Assert.Contains("CandidateOnboardings", migration, StringComparison.Ordinal);
         Assert.Contains("AvailableFromDate", migration, StringComparison.Ordinal);
+
+        var v2Migration = File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Data/Migrations/20260927080000_AddOnboardingWizardVersion.cs"));
+        Assert.Contains("AddOnboardingWizardVersion", v2Migration, StringComparison.Ordinal);
 
         var library = File.ReadAllText(Path.Combine(root, "Jobsy.Core/Rules/OnboardingImpressionLibrary.cs"));
         Assert.Contains("OnboardingImpressionLibrary", library, StringComparison.Ordinal);

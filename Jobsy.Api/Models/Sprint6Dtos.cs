@@ -16,7 +16,39 @@ public record AdminCompanyDetailDto(
     int ApplicationCount,
     decimal TokenBalance,
     Guid? SalesManagerUserId = null,
-    string? SalesManagerName = null);
+    string? SalesManagerName = null,
+    int BranchCount = 0,
+    string? RegionName = null,
+    string? DomainHostname = null,
+    string? EnterpriseManagerName = null,
+    string KvkVerificationStatus = "Verified",
+    string Status = "active",
+    int? InactiveDays = null,
+    DateTime? CustomerSinceUtc = null,
+    decimal GoodwillBalance = 0,
+    string? PackageLabel = null,
+    Guid? PendingTakeoverId = null,
+    string? PendingTakeoverApplicant = null,
+    DateTime? PendingTakeoverAtUtc = null,
+    Guid? PendingTakeoverTargetCompanyId = null,
+    int KvkVerificationAttempts = 0,
+    DateTime? KvkLastVerificationAttemptAtUtc = null);
+
+/// <summary>Paged admin companies response (only when page/pageSize query params are set).</summary>
+public record AdminCompaniesPageDto(
+    IReadOnlyList<AdminCompanyDetailDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount);
+
+public record AdminKvkIssueDto(
+    Guid Id,
+    string Source,
+    string Name,
+    string KvkNumber,
+    string Status,
+    int Attempts,
+    DateTime? LastAttemptAtUtc);
 
 public record AdminUserDetailDto(
     Guid Id,
@@ -28,7 +60,106 @@ public record AdminUserDetailDto(
     string? CompanyType,
     bool IsEarlyAdapter,
     bool IsActive,
-    IReadOnlyList<Guid> MembershipCompanyIds);
+    IReadOnlyList<Guid> MembershipCompanyIds,
+    string MfaStatus = "not-enrolled",
+    string? PhoneNumber = null,
+    DateTime? TermsAcceptedAt = null,
+    DateTime? LastActiveAtUtc = null,
+    DateTime? AuthenticatorEnrolledAtUtc = null,
+    int ActiveSessionCount = 0,
+    IReadOnlyList<string>? MembershipCompanyNames = null,
+    int TrustedDeviceCount = 0,
+    bool IsTestAccount = false);
+
+/// <summary>Paginated, masked admin users overview (prompt 05).</summary>
+public record AdminUsersPageDto(
+    AdminUsersAggregateDto Aggregates,
+    IReadOnlyList<AdminUserDetailDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount,
+    bool Masked);
+
+public record AdminUsersAggregateDto(
+    IReadOnlyDictionary<string, int> ByRole,
+    IReadOnlyList<AdminUsersCompanyCountDto> TopCompanies,
+    int ActiveCount,
+    int InactiveCount,
+    IReadOnlyList<AdminUsersWeekBucketDto> ByRegistrationWeek);
+
+public record AdminUsersCompanyCountDto(Guid? CompanyId, string CompanyName, int Count);
+
+public record AdminUsersWeekBucketDto(string WeekStartUtc, int Count);
+
+public record AdminUserSessionDto(
+    Guid Id,
+    string DeviceName,
+    DateTime LastUsedAtUtc,
+    DateTime CreatedAtUtc,
+    DateTime ExpiresAtUtc,
+    bool IsCurrent);
+
+public record AdminReasonRequest(string Reason);
+
+public record AdminBulkUsersRequest(IReadOnlyList<Guid> UserIds, string Reason);
+
+public record AdminBulkUserResultDto(Guid UserId, bool Ok, string? SkipReason = null);
+
+public record AdminBulkUsersResponseDto(
+    int Succeeded,
+    int Skipped,
+    IReadOnlyList<AdminBulkUserResultDto> Results);
+
+public record AdminSearchHitDto(string Id, string Label, string? Sublabel, string Href);
+
+public record AdminSearchResultDto(
+    IReadOnlyList<AdminSearchHitDto> Users,
+    IReadOnlyList<AdminSearchHitDto> Organisations,
+    IReadOnlyList<AdminSearchHitDto> Vacancies,
+    IReadOnlyList<AdminSearchHitDto> Invoices,
+    IReadOnlyList<AdminSearchHitDto>? Correlations = null);
+
+/// <summary>Admin applications without company/vacancy filter: aggregates only.</summary>
+public record AdminApplicationsAggregateDto(
+    int TotalCount,
+    IReadOnlyDictionary<string, int> ByStatus,
+    IReadOnlyList<AdminApplicationsCompanyCountDto> TopCompanies);
+
+public record AdminApplicationsCompanyCountDto(Guid CompanyId, string CompanyName, int Count);
+
+public record PersonalDataAccessLogItemDto(
+    Guid Id,
+    DateTime OccurredAt,
+    Guid ActorUserId,
+    string ActorRole,
+    Guid? SubjectUserId,
+    Guid? SubjectCompanyId,
+    string Resource,
+    string Action,
+    string? Reason,
+    Guid? SupportAccessGrantId,
+    string CorrelationId,
+    string? ActorName = null,
+    string? ActorEmailMasked = null,
+    string? ActorCompanyName = null,
+    string? SubjectName = null,
+    string? SubjectEmailMasked = null,
+    string? SubjectRole = null,
+    string? SubjectCompanyName = null);
+
+public record PersonalDataAccessLogPageDto(
+    IReadOnlyList<PersonalDataAccessLogItemDto> Items,
+    int Page,
+    int PageSize,
+    int TotalCount);
+
+public record SupportAccessRequestBody(
+    Guid? SubjectUserId,
+    Guid? SubjectCompanyId,
+    SupportAccessScope Scope,
+    string? Reason,
+    string? TicketReference,
+    int DurationMinutes = 60);
 
 public record AdminVacancyDetailDto(
     Guid Id,
@@ -47,7 +178,11 @@ public record AdminVacancyDetailDto(
     int ApplicationCount,
     int LikeCount,
     bool IsExtended,
-    string CreatedVia = "Manual");
+    string CreatedVia = "Manual",
+    bool ContentModerationPassed = true,
+    DateTime? ClosedAtUtc = null,
+    string? DescriptionExcerpt = null,
+    string Kind = "Regular");
 
 public record RegisterAdminCompanyRequest(
     string KvkNumber,
@@ -85,7 +220,30 @@ public record UpdateIntegrationCredentialRequest(
     string? FromAddress = null,
     bool ClearApiKey = false,
     bool ClearClientSecret = false,
-    bool UseEnvironmentCredentials = false);
+    bool UseEnvironmentCredentials = false,
+    string? SmallModel = null);
+
+public sealed record AiFeatureModelDto(string Feature, string Model);
+
+public sealed record AiProviderStatusDto(
+    string Provider,
+    string DisplayName,
+    bool ReadOnly,
+    bool FellBackToOpenAi,
+    bool InferenceInEu = false,
+    string? Model = null,
+    string? RegionCode = null,
+    bool Available = true,
+    string? EndpointHost = null,
+    IReadOnlyList<AiFeatureModelDto>? FeatureModels = null,
+    bool HideOpenAiProbe = false);
+
+public sealed record MailProviderStatusDto(
+    string Provider,
+    string DisplayName,
+    string RegionCode,
+    string? EndpointHost,
+    bool Available);
 
 public record IntegrationCredentialDto(
     string Key,
@@ -111,27 +269,82 @@ public record IntegrationCredentialDto(
     DateTime? LastPingAtUtc,
     DateTime? UpdatedAtUtc,
     bool IgnoresEnvironmentCredentials = false,
-    bool UsesEnvironmentCredentials = false);
+    bool UsesEnvironmentCredentials = false,
+    string? SmallModel = null,
+    bool LegalFooterMissing = false);
 
+/// <summary>Partial update: null fields keep the current value.</summary>
 public record UpdatePlatformFeatureRequest(
-    bool VacancyContentModerationEnabled,
-    bool AuthenticatorEnabled,
-    bool ExposeRegistrationActivationLinks,
-    string? PublicWebBaseUrl,
-    int InactiveCompanyDays = 120,
-    int SessionInactivityTimeoutMinutes = 30,
+    bool? VacancyContentModerationEnabled = null,
+    bool? AuthenticatorEnabled = null,
+    string? PublicWebBaseUrl = null,
+    int? InactiveCompanyDays = null,
+    int? SessionInactivityTimeoutMinutes = null,
     DateOnly? FreePublishUntil = null,
-    bool ClearFreePublishUntil = false);
+    bool ClearFreePublishUntil = false,
+    bool? SupportAccessNotifyAdmins = null,
+    bool? SupportAccessNotifySubject = null,
+    bool? CandidateInsightsEnabled = null,
+    int? CandidateInsightsUnlockDays = null,
+    bool? CandidateInsightsUnlockPerBranch = null,
+    bool? SchoolsEnabled = null,
+    bool? SchoolPerCodeResultsEnabled = null,
+    int? SchoolRetentionCutoffMonth = null,
+    int? SchoolRetentionCutoffDay = null,
+    string? Reason = null,
+    bool? AmbassadorsEnabled = null,
+    bool? EmployersEnabled = null,
+    bool? CandidatePassportEnabled = null,
+    bool? PassportPartnersEnabled = null,
+    bool? PassportPdfV2Enabled = null,
+    bool? PhoneVerificationEnabled = null,
+    bool? WhatsAppRemindersEnabled = null,
+    bool? CompactTestPdfEnabled = null,
+    bool? FreeCandidateTestsEnabled = null,
+    bool? HonestAdviceEnabled = null,
+    bool? FutureJobsForYouEnabled = null,
+    bool? EmployerPhase2Enabled = null,
+    bool? CandidateExternalVacanciesEnabled = null,
+    bool? ProactiveMatchingEnabled = null,
+    int? CandidateApplyPerMinuteLimit = null,
+    int? CandidateApplyPerHourLimit = null,
+    int? CandidateApplyPerDayLimit = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
     bool AuthenticatorEnabled,
-    bool ExposeRegistrationActivationLinks,
     string PublicWebBaseUrl,
     DateTime? UpdatedAtUtc,
     int InactiveCompanyDays = 120,
     int SessionInactivityTimeoutMinutes = 30,
-    DateOnly? FreePublishUntil = null);
+    DateOnly? FreePublishUntil = null,
+    bool SupportAccessNotifyAdmins = false,
+    bool SupportAccessNotifySubject = false,
+    bool CandidateInsightsEnabled = true,
+    int CandidateInsightsUnlockDays = 90,
+    bool CandidateInsightsUnlockPerBranch = false,
+    bool SchoolsEnabled = false,
+    bool SchoolPerCodeResultsEnabled = true,
+    int SchoolRetentionCutoffMonth = 7,
+    int SchoolRetentionCutoffDay = 31,
+    bool AmbassadorsEnabled = false,
+    bool EmployersEnabled = false,
+    bool CandidatePassportEnabled = true,
+    bool PassportPartnersEnabled = false,
+    bool PassportPdfV2Enabled = false,
+    bool PhoneVerificationEnabled = false,
+    bool WhatsAppRemindersEnabled = false,
+    bool CompactTestPdfEnabled = false,
+    bool WhatsAppRemindersConfigured = false,
+    bool FreeCandidateTestsEnabled = true,
+    bool HonestAdviceEnabled = false,
+    bool FutureJobsForYouEnabled = false,
+    bool EmployerPhase2Enabled = false,
+    bool CandidateExternalVacanciesEnabled = false,
+    bool ProactiveMatchingEnabled = false,
+    int CandidateApplyPerMinuteLimit = 5,
+    int CandidateApplyPerHourLimit = 30,
+    int CandidateApplyPerDayLimit = 100);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

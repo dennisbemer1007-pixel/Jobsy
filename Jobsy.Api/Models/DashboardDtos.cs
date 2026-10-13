@@ -23,7 +23,8 @@ public record CompanySummaryDto(
     string? KvkEstablishmentId = null,
     string KvkVerificationStatus = nameof(Jobsy.Core.Enums.KvkVerificationStatus.Verified),
     string? PreferredPaymentMethod = null,
-    bool RequireEmailVerificationForApplications = false);
+    bool RequireEmailVerificationForApplications = false,
+    string VerificationStatus = nameof(Jobsy.Core.Enums.CompanyVerificationStatus.Verified));
 
 public record UpdateBillingPreferenceRequest(string? PreferredPaymentMethod);
 
@@ -95,7 +96,20 @@ public record ApplicationDto(
     DateTime CreatedAt,
     string Status,
     DateTime? RespondedAt = null,
-    string? LocationLabel = null);
+    string? LocationLabel = null,
+    string? PictureUrl = null,
+    string? PictureKind = null,
+    IReadOnlyList<ApplicationTimelineStepDto>? Timeline = null,
+    string? NextStepKey = null,
+    bool LegacyNoHistory = false,
+    bool VacancyClosed = false);
+
+/// <summary>Candidate timeline step (no actor ids).</summary>
+public record ApplicationTimelineStepDto(
+    string Key,
+    string State,
+    DateTime? OccurredAtUtc,
+    string LabelKey);
 
 public record ApplyRequest(
     Guid VacancyId,
@@ -125,7 +139,8 @@ public record ApplyResultDto(
     bool RequiresSafetyNetConfirmation = false,
     int? MatchPercent = null,
     string? MatchBreakdownJson = null,
-    string? SafetyNetMessage = null);
+    string? SafetyNetMessage = null,
+    bool ConfirmationLoggedToStub = false);
 
 /// <summary>
 /// Revealed only after a successful (verified) application. Never included on public vacancy payloads.
@@ -190,7 +205,10 @@ public record MeProfileDto(
     DateTime? TestAiConsentAt = null,
     string? TestAiConsentVersion = null,
     DateTime? ParentalConsentAt = null,
-    string? ParentalConsentEmail = null);
+    string? ParentalConsentEmail = null,
+    bool EmailVerified = false,
+    bool PhoneVerified = false,
+    IReadOnlyList<DiplomaEvaluationFactDto>? DiplomaEvaluations = null);
 
 public record CandidateUploadedCvInfoDto(
     string FileName,
@@ -208,6 +226,8 @@ public record CandidateReferenceDto(
     string Phone);
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
+
+public record PhoneVerificationRequest(Guid ChallengeId, string? Code);
 public record RequestParentalConsentRequest(string? ParentEmail);
 
 public record UpdateCandidateProfileRequest(

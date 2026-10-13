@@ -27,7 +27,11 @@ public class RegionsControllerTests
             Name = "Org BV",
             KvkNumber = "12345678",
             Address = "Straat 1",
-            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.0)
+            Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.0),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         db.Regions.Add(new Region
@@ -78,7 +82,11 @@ public class RegionsControllerTests
                 Name = "Org BV",
                 KvkNumber = "12345678",
                 Address = "Straat 1",
-                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.0)
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.0, 4.0),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             },
             new Company
             {
@@ -87,7 +95,11 @@ public class RegionsControllerTests
                 KvkNumber = "12345678",
                 Address = "Straat 2",
                 ParentCompanyId = orgId,
-                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.1, 4.1)
+                Location = new Jobsy.Core.ValueObjects.GeoPoint(52.1, 4.1),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
         db.Regions.Add(new Region
         {

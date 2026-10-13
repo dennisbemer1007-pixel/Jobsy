@@ -1,0 +1,170 @@
+@page "/register/externe-sollicitatie"
+@layout Jobsy.Web.Components.Layout.WaPublicLayout
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Models
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+<PageTitle>@Culture["ExtVac.Employer.Title"] · Lobsy</PageTitle>
+
+<div class="kb-ext wa-wizard" data-testid="kb-ext-employer-register">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_invite is null)
+    {
+        <p class="state-message error" role="alert">@Culture["ExtVac.Employer.Invalid"]</p>
+    }
+    else
+    {
+        <nav class="kb-ext__stepper" aria-label="@Culture["ExtVac.Employer.Title"]">
+            <span class="kb-ext__step @StepClass(1)">@Culture["ExtVac.Employer.StepEmail"]</span>
+            <span class="kb-ext__step @StepClass(2)">@Culture["ExtVac.Employer.StepKvk"]</span>
+            <span class="kb-ext__step @StepClass(3)">@Culture["ExtVac.Employer.StepVacancy"]</span>
+            <span class="kb-ext__step @StepClass(4)">@Culture["ExtVac.Employer.StepDone"]</span>
+        </nav>
+
+        @if (_step == 1)
+        {
+            <div class="kb-ext__card">
+                <h1 class="kb-ext__title">@Culture["ExtVac.Employer.StepEmail"]</h1>
+                <p class="muted">@string.Format(Culture["ExtVac.Employer.Preview"], _invite.CandidateFirstName)</p>
+                <label class="kb-ext__method-title" for="ext-wg-email">E-mail</label>
+                <input id="ext-wg-email" type="email" @bind="_email" readonly />
+                <button type="button" class="kb-ext__btn" @onclick="() => _step = 2">@Culture["Common.Continue"]</button>
+            </div>
+        }
+        else if (_step == 2)
+        {
+            <div class="kb-ext__card">
+                <h1 class="kb-ext__title">@Culture["ExtVac.Employer.StepKvk"]</h1>
+                <KvkSearchField Label="@Culture["ExtVac.Employer.StepKvk"]"
+                                Placeholder="Bedrijfsnaam of KVK"
+                                SearchButtonLabel="Zoeken"
+                                OnSelected="OnKvkSelected" />
+                @if (!string.IsNullOrWhiteSpace(_selectedCompany))
+                {
+                    <p class="muted">@_selectedCompany</p>
+                    <button type="button" class="kb-ext__btn" @onclick="() => _step = 3">@Culture["Common.Continue"]</button>
+                }
+            </div>
+        }
+        else if (_step == 3)
+        {
+            <div class="kb-ext__card">
+                <h1 class="kb-ext__title">@Culture["ExtVac.Employer.StepVacancy"]</h1>
+                <p><strong>@_invite.VacancyTitle</strong></p>
+                <p class="muted">@_invite.CompanyName · @_invite.Place</p>
+                <blockquote class="muted">@_invite.MotivationPreview</blockquote>
+                @if (_invite.SharedFacts.Count > 0)
+                {
+                    <ul class="kb-ext__bullets">
+                        @foreach (var (label, value) in _invite.SharedFacts)
+                        {
+                            <li><strong>@label:</strong> @value</li>
+                        }
+                    </ul>
+                }
+                <p class="kb-ext__privacy">@Culture["ExtVac.Employer.AcceptHint"] @_tokenHint</p>
+                @if (_employersOn)
+                {
+                    <a class="kb-ext__btn" href="@RegisterHref">@Culture["ExtVac.Employer.RegisterCta"]</a>
+                }
+                else
+                {
+                    <p class="state-message">@Culture["ExtVac.Employer.EmployersOff"]</p>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="kb-ext__card" role="status">
+                <h1 class="kb-ext__title">@Culture["ExtVac.Employer.StepDone"]</h1>
+                <p>@Culture["ExtVac.Employer.AcceptHint"]</p>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "token")] public string? Token { get; set; }
+
+    private ExternalVacancyEmployerInviteDto? _invite;
+    private bool _loading = true;
+    private bool _employersOn;
+    private int _step = 1;
+    private string _email = "";
+    private string? _selectedCompany;
+    private string? _selectedKvk;
+    private string _tokenHint = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var flags = await FeatureFlags.GetAsync();
+        _employersOn = flags.EmployersEnabled;
+        _invite = await Api.GetExternalVacancyEmployerInviteAsync(Token ?? "");
+        if (_invite is not null)
+        {
+            _email = _invite.EmployerEmail;
+            await LoadTokenHintAsync();
+        }
+
+        _loading = false;
+    }
+
+    private async Task LoadTokenHintAsync()
+    {
+        try
+        {
+            var costs = await Api.GetTokenCostsAsync();
+            var publish = costs.FirstOrDefault(c =>
+                c.Reason.Contains("publish", StringComparison.OrdinalIgnoreCase)
+                || c.Reason.Contains("public", StringComparison.OrdinalIgnoreCase));
+            if (publish is not null && publish.CostTokens > 0)
+            {
+                _tokenHint = $"(±{publish.CostTokens:0.##} tokens)";
+            }
+        }
+        catch
+        {
+            _tokenHint = "";
+        }
+    }
+
+    private string StepClass(int n)
+        => _step > n ? "is-done" : _step == n ? "is-active" : "";
+
+    private void OnKvkSelected(KvkSearchHitItem hit)
+    {
+        _selectedCompany = $"{hit.Name} (KVK {hit.KvkNumber})";
+        _selectedKvk = hit.KvkNumber;
+    }
+
+    private string RegisterHref
+    {
+        get
+        {
+            var q = $"/register?email={Uri.EscapeDataString(_email)}";
+            if (!string.IsNullOrWhiteSpace(Token))
+            {
+                q += $"&extToken={Uri.EscapeDataString(Token)}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(_selectedKvk))
+            {
+                q += $"&kvk={Uri.EscapeDataString(_selectedKvk)}";
+            }
+
+            return q;
+        }
+    }
+}

@@ -16,7 +16,7 @@ public class CandidateTabStabilityPlaywrightTests
     /// <summary>Bottom-nav destinations for a candidate (search → saved → applications → career → profile).</summary>
     private static readonly string[] CandidateTabs =
     [
-        "/",
+        "/banenkaart",
         "/candidate/liked",
         "/candidate/applications",
         "/carriere",

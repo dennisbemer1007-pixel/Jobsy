@@ -1,0 +1,170 @@
+@namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<div class="tests-overview">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_loadFailed)
+    {
+        <div class="panel-inline-error" role="alert">
+            <p class="panel-inline-error__text">@Culture["Panel.ErrorInline"]</p>
+            <button type="button" class="btn btn-secondary" @onclick="RetryLoadAsync">@Culture["Panel.ErrorRetry"]</button>
+        </div>
+    }
+    else
+    {
+        <div class="tests-overview__head">
+            <h3 class="tests-overview__title">@Culture["Tests.OverviewTitle"]</h3>
+            <p class="tests-overview__progress muted">@Culture.Format("Tests.Progress", _doneCount, 4)</p>
+        </div>
+
+        <div class="test-tile-grid" role="list">
+            @foreach (var tile in _tiles)
+            {
+                <a class="test-tile test-tile--@tile.Accent"
+                   role="listitem"
+                   href="@tile.Href"
+                   aria-label="@($"{Culture[tile.TitleKey]} — {Culture[tile.StatusKey]}")">
+                    <span class="test-tile__accent" aria-hidden="true"></span>
+                    <span class="test-tile__title">@Culture[tile.TitleKey]</span>
+                    <span class="test-tile__status">
+                        <span class="test-tile__icon" aria-hidden="true">@tile.Icon</span>
+                        <span>@Culture[tile.StatusKey]</span>
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(tile.Outcome))
+                    {
+                        <span class="test-tile__outcome">@tile.Outcome</span>
+                    }
+                    else if (tile.Accent == "pending")
+                    {
+                        <span class="test-tile__meta muted">@Culture.Format("Tests.MetaFree", tile.FreeCount, tile.FreeMinutes)</span>
+                    }
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Active { get; set; }
+    [Parameter] public CandidateKompasState? Snapshot { get; set; }
+
+    private bool _loading = true;
+    private bool _loaded;
+    private bool _loadFailed;
+    private int _doneCount;
+    private readonly List<TileVm> _tiles = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Active)
+        {
+            return;
+        }
+
+        if (Snapshot is not null)
+        {
+            _loadFailed = false;
+            ApplySnapshot(Snapshot);
+            return;
+        }
+
+        if (!_loaded)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private void ApplySnapshot(CandidateKompasState kompas)
+    {
+        ApplyModel(TestsOverviewBuilder.FromKompas(kompas));
+        _loaded = true;
+        _loading = false;
+    }
+
+    private void ApplyModel(TestsOverviewBuilder.OverviewModel model)
+    {
+        _tiles.Clear();
+        foreach (var tile in model.Tiles)
+        {
+            _tiles.Add(new TileVm(
+                tile.TitleKey,
+                tile.Href,
+                tile.Accent,
+                tile.StatusKey,
+                tile.Icon,
+                tile.Outcome,
+                tile.FreeCount,
+                tile.FreeMinutes));
+        }
+
+        _doneCount = model.DoneCount;
+    }
+
+    private Task RetryLoadAsync()
+    {
+        _loaded = false;
+        return LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _loadFailed = false;
+        try
+        {
+            var result = await Api.GetMyKompasResultAsync();
+            if (result.TemporarilyUnavailable)
+            {
+                _loadFailed = true;
+                return;
+            }
+
+            if (result.Value is not null)
+            {
+                ApplySnapshot(result.Value);
+                return;
+            }
+
+            var competence = await Api.GetMyCompetenciesAsync();
+            var career = await Api.GetMyCareerInterestsAsync();
+            var culture = await Api.GetMyCultureAsync();
+            var values = await Api.GetMyValuesAsync();
+            var competenceDeep = await Api.GetDeepAnalysisAsync("competence");
+            var careerDeep = await Api.GetDeepAnalysisAsync("career");
+            var cultureDeep = await Api.GetDeepAnalysisAsync("culture");
+            var valuesDeep = await Api.GetDeepAnalysisAsync("values");
+            ApplyModel(TestsOverviewBuilder.Paint(
+                competence, career, culture, values,
+                competenceDeep, careerDeep, cultureDeep, valuesDeep));
+            _loaded = true;
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _loadFailed = true;
+        }
+        finally
+        {
+            _loading = false;
+            _loaded = true;
+        }
+    }
+
+    private sealed record TileVm(
+        string TitleKey,
+        string Href,
+        string Accent,
+        string StatusKey,
+        string Icon,
+        string? Outcome,
+        int FreeCount,
+        int FreeMinutes);
+}

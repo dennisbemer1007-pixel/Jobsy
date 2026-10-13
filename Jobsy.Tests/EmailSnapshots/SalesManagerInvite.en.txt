@@ -1,0 +1,33 @@
+KEY: SalesManagerInvite
+SUBJECT: You are invited as sales manager at Lobsy
+PREHEADER: Choose a password and get started.
+KIND: Essential
+--- TEXT ---
+Hello Alex,
+
+Welcome as sales manager
+========================
+
+You are invited as sales manager at Lobsy.
+
+1 Choose your password. 2 Enter your company details. 3 Sign the agreement.
+Then you get your own code.
+
+Sign in: https://lobsy.nl/login
+
+Team Lobsy
+
+You receive this email because of an action on Lobsy.
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Welcome as sales manager
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Sign in -> https://lobsy.nl/login
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

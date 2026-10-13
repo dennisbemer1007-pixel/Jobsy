@@ -1,0 +1,30 @@
+/* Stored honest advice. Normal flow, under the outlook, clear of the coach dock. */
+
+.honest-advice {
+  margin: 0.75rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--gold);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gold-soft) 42%, var(--surface));
+  max-inline-size: 100%;
+}
+
+.honest-advice h5 {
+  margin: 0 0 0.35rem;
+}
+
+.honest-advice p {
+  margin: 0.25rem 0;
+}
+
+.honest-advice__source {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .honest-advice {
+    padding: 0.75rem 0.85rem;
+  }
+}

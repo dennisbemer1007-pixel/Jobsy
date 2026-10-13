@@ -1,0 +1,97 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@implements IDisposable
+@inject IServiceProvider Services
+@inject IJSRuntime Js
+@inject CultureState Culture
+
+<div class="ll-coach" data-ll-coach>
+    @if (_hints?.ShouldShow(_hint) == true)
+    {
+        <div class="ll-coach__bubble" role="status">
+            <p>@_hint</p>
+            <ReadAloudButton Text="@_hint" SpeechKey="ll-coach-hint" PlayAria="@Culture["ReadAloud.Play"]" />
+            <button type="button" class="ll-coach__close" @onclick="Dismiss" aria-label="@Culture["Leerling.Coach.Close"]">×</button>
+        </div>
+    }
+    <div class="ll-coach__figure" aria-hidden="true">
+        <img src="/images/brand/mascot-coach.webp"
+             alt=""
+             width="72"
+             height="72"
+             decoding="async" />
+    </div>
+</div>
+
+@code {
+    private LeerlingCoachHint? _hints;
+    private string? _hint;
+    private bool _storageRequested;
+
+    protected override void OnInitialized()
+    {
+        _hints = Services.GetService<LeerlingCoachHint>();
+        if (_hints is null)
+        {
+            return;
+        }
+
+        _hint = _hints.Hint;
+        _hints.Changed += OnChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _storageRequested || _hints is null)
+        {
+            return;
+        }
+
+        _storageRequested = true;
+        try
+        {
+            var dismissed = await Js.InvokeAsync<string[]?>("lobsyLeerlingCoach.dismissed");
+            _hints.RememberDismissed(dismissed);
+        }
+        catch (Exception)
+        {
+            // No sessionStorage (tests, blocked storage). Still show a new hint.
+            _hints.MarkLoaded();
+        }
+    }
+
+    private void OnChanged()
+        => _ = InvokeAsync(() =>
+        {
+            _hint = _hints?.Hint;
+            StateHasChanged();
+        });
+
+    private async Task Dismiss()
+    {
+        var text = _hint;
+        _hints?.Dismiss(text);
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyLeerlingCoach.dismiss", text);
+        }
+        catch (Exception)
+        {
+            // The circuit set already hides this hint.
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_hints is not null)
+        {
+            _hints.Changed -= OnChanged;
+        }
+    }
+}

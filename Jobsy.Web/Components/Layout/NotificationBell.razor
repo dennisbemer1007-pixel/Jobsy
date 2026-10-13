@@ -2,16 +2,16 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 @inject NotificationUnreadStore UnreadStore
 @inject NavigationManager Navigation
-@inject CultureState Culture
-@implements IDisposable
 
 <AuthorizeView>
     <Authorized>
-        <div class="notification-bell" @onclick:stopPropagation="true">
+        <div class="notification-bell @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="notifications" @onclick:stopPropagation="true" @onkeydown="OnKeyDown">
             <button type="button"
+                    data-menu-trigger
                     class="notification-bell__toggle @(_unread > 0 ? "notification-bell__toggle--unread" : null)"
                     title="@(_unread > 0 ? $"{_unread} ongelezen bericht{(_unread == 1 ? "" : "en")}" : "Notificaties")"
                     aria-label="@($"Notificaties{(_unread > 0 ? $", {_unread} ongelezen" : "")}")"
@@ -24,8 +24,6 @@
                 }
             </button>
 
-            @if (_open)
-            {
                 <div class="header-dropdown-backdrop" @onclick="Close" aria-hidden="true"></div>
                 <div class="notification-bell__panel notification-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="Je notificaties">
                     <div class="notification-bell__header">
@@ -46,6 +44,7 @@
                             }
                             <button type="button"
                                     class="notification-bell__close"
+                                    data-menu-close
                                     aria-label="Sluiten"
                                     @onclick="Close">
                                 ×
@@ -95,13 +94,13 @@
                         </ul>
                     }
                 </div>
-            }
         </div>
     </Authorized>
 </AuthorizeView>
 
 @code {
     private bool _open;
+    private bool _forceClosed;
     private bool _loading;
     private bool _busy;
     private int _unread;
@@ -109,7 +108,7 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         UnreadStore.Changed += OnUnreadChanged;
         UnreadStore.EnsureStarted();
         _unread = UnreadStore.Unread;
@@ -125,13 +124,26 @@
     private async Task ToggleAsync()
     {
         _open = !_open;
+        _forceClosed = !_open;
         if (_open)
         {
             await LoadListAsync();
         }
     }
 
-    private void Close() => _open = false;
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            Close();
+        }
+    }
+
+    private void Close()
+    {
+        _open = false;
+        _forceClosed = true;
+    }
 
     private async Task LoadListAsync()
     {
@@ -227,11 +239,9 @@
         return local.ToString("dd MMM, HH:mm");
     }
 
-    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         UnreadStore.Changed -= OnUnreadChanged;
+        base.Dispose();
     }
 }

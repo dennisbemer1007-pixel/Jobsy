@@ -76,7 +76,7 @@ public class StaticAssetCacheTests
     [Fact]
     public void Maplibre_and_blazor_urls_are_cache_busted()
     {
-        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css?v=", home);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl-csp.js?v=", home);
         Assert.DoesNotContain("csp-worker.js", home);
@@ -85,15 +85,73 @@ public class StaticAssetCacheTests
         Assert.Contains("_framework/blazor.web.js?v=", app);
         Assert.Contains("js/app-core.js?v=", app);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("/lib/maplibre/maplibre-gl.css?v=", maps);
-        Assert.Contains("/lib/maplibre/maplibre-gl-csp.js?v=", maps);
-        Assert.Contains("function pathOnly(url)", maps);
-
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("/lib/maplibre/maplibre-gl.css?v=", bundle);
+        Assert.Contains("/lib/maplibre/maplibre-gl-csp.js?v=", bundle);
         Assert.Contains("function pathOnly(url)", bundle);
         Assert.Contains("maplibre-gl-csp.js", bundle);
+    }
+
+    [Fact]
+    public void App_core_cache_bust_includes_jobMap_version_tag()
+    {
+        var root = FindRepoRoot();
+        var bundle = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
+        var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "App.razor"));
+
+        var jobMapMatch = System.Text.RegularExpressions.Regex.Match(
+            bundle,
+            @"jobMap\.min\.js\?v=([^""'\s]+)");
+        Assert.True(jobMapMatch.Success, "app-core.js must load a versioned jobMap.min.js");
+        var jobMapTag = jobMapMatch.Groups[1].Value;
+        Assert.False(string.IsNullOrWhiteSpace(jobMapTag));
+
+        var appCoreMatch = System.Text.RegularExpressions.Regex.Match(
+            app,
+            @"js/app-core\.js\?v=([^""'\s]+)");
+        Assert.True(appCoreMatch.Success, "App.razor must version app-core.js");
+        var appCoreTag = appCoreMatch.Groups[1].Value;
+
+        // Prefer App.razor app-core ?v containing the jobMap tag so a jobMap-only bump
+        // cannot ship without a loader cache-bust. Temporary skew is allowed when
+        // asset-versions.json tracks both files (e.g. jobMap font fix ahead of an
+        // App.razor app-core bump in another PR).
+        if (!appCoreTag.Contains(jobMapTag, StringComparison.Ordinal))
+        {
+            var manifestPath = Path.Combine(root, "Jobsy.Tests", "asset-versions.json");
+            Assert.True(File.Exists(manifestPath), "jobMap ?v skew requires Jobsy.Tests/asset-versions.json");
+            var manifest = File.ReadAllText(manifestPath);
+            Assert.Contains("js/jobMap.min.js", manifest, StringComparison.Ordinal);
+            Assert.Contains("js/app-core.js", manifest, StringComparison.Ordinal);
+            Assert.Contains(jobMapTag, manifest, StringComparison.Ordinal);
+        }
+
+        // Prefer keeping app.min.css / banenkaart.css on the same ?v as app-core.
+        // Temporary skew is OK when asset-versions.json tracks the CSS files
+        // (e.g. cookie-map / filter-sheet bumps ahead of a shared app-core retag).
+        var appCssMatch = System.Text.RegularExpressions.Regex.Match(
+            app,
+            @"css/app\.min\.css\?v=([^""'\s]+)");
+        Assert.True(appCssMatch.Success, "App.razor must version app.min.css");
+        var banenkaartMatch = System.Text.RegularExpressions.Regex.Match(
+            app,
+            @"css/features/banenkaart\.css\?v=([^""'\s]+)");
+        Assert.True(banenkaartMatch.Success, "App.razor must version banenkaart.css");
+
+        if (!string.Equals(appCssMatch.Groups[1].Value, appCoreTag, StringComparison.Ordinal)
+            || !string.Equals(banenkaartMatch.Groups[1].Value, appCoreTag, StringComparison.Ordinal))
+        {
+            var manifestPath = Path.Combine(root, "Jobsy.Tests", "asset-versions.json");
+            Assert.True(File.Exists(manifestPath), "CSS/app-core ?v skew requires Jobsy.Tests/asset-versions.json");
+            var manifest = File.ReadAllText(manifestPath);
+            Assert.Contains("css/app.min.css", manifest, StringComparison.Ordinal);
+            Assert.Contains("css/features/banenkaart.css", manifest, StringComparison.Ordinal);
+            Assert.Contains("js/app-core.js", manifest, StringComparison.Ordinal);
+            Assert.Contains(appCssMatch.Groups[1].Value, manifest, StringComparison.Ordinal);
+            Assert.Contains(banenkaartMatch.Groups[1].Value, manifest, StringComparison.Ordinal);
+        }
+
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
     }
 
     private static HttpResponse PrepareResponse(string fileName, string? query)

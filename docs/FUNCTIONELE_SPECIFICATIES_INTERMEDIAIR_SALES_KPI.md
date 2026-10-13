@@ -22,7 +22,7 @@ Intermediair-beheer met flexibele adresweergave, salesmanager-tracking met reven
 ## 2. Salesmanager: tracking, hiërarchie & revenue-share
 
 ### Rol & hiërarchie (één wervingslaag)
-- **Admin** maakt initiële (tier-0) salesmanagers aan via `/admin/sales-managers`.
+- **Admin** maakt initiële (tier-0) salesmanagers aan via `/admin/gebruikers/sales`.
 - Actieve tier-0 salesmanagers dienen aanbevelingen in (`/salesmanager/referrals`) met trackingcode + korte motivatie.
 - **Admin-goedkeuring is verplicht** vóór accountprovisioning; goedgekeurde kandidaten krijgen een eigen trackingcode na onboarding.
 - Doorverwezen (tier-1) salesmanagers **kunnen zelf geen** nieuwe salesmanagers aanbevelen (`CanRecruitSalesManagers = false`).
@@ -33,7 +33,7 @@ Intermediair-beheer met flexibele adresweergave, salesmanager-tracking met reven
 - Gekoppelde ondernemers krijgen nav **“Mijn Saldo & Tracking”** (`HasSalesReferral` claim) → tokens-pagina met statusuitleg.
 
 ### Revenue-share bij tokenaankoop (referred companies)
-Percentages zijn **Admin-configureerbaar** (`/admin/sales`); defaults hieronder. Directe/indirecte SM-commissie lopen maximaal **1 jaar** vanaf `Company.FirstYearStartedAt`.
+Percentages zijn **Admin-configureerbaar** (`/admin/financien/prijzen`); defaults hieronder. Directe/indirecte SM-commissie lopen maximaal **1 jaar** vanaf `Company.FirstYearStartedAt`.
 
 | Ontvanger | Default % | Bestemming |
 |-----------|-----------|------------|
@@ -46,7 +46,7 @@ Volledige logging in `RevenueShareLogs` (+ commissieledger / tokenledger), idemp
 
 ### Admin
 - Bedrijvengrid: kolom **Salesmanager**.
-- Aanbevelingen reviewen op `/admin/sales-managers`; commissietarieven op `/admin/sales`.
+- Aanbevelingen reviewen op `/admin/gebruikers/sales`; commissietarieven op `/admin/financien/prijzen`.
 
 ## 3. KPI: gemiddelde doorlooptijd vacatures
 

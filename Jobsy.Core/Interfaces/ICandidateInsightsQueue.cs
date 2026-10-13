@@ -1,6 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Jobsy.Core.Interfaces;
 
 /// <summary>Deduplicated in-process queue of candidate userIds needing insight recompute.</summary>
+[SuppressMessage(
+    "Naming",
+    "CA1711:Identifiers should not have incorrect suffix",
+    Justification = "Domain work-queue (Channel-backed), same naming as ICultureFitRefineQueue; not System.Collections.Queue.")]
 public interface ICandidateInsightsQueue
 {
     /// <summary>Enqueue a user; no-op if already queued.</summary>

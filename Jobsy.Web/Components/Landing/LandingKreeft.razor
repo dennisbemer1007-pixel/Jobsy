@@ -1,0 +1,51 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+
+<section class="pub-landing__kreeft" id="kreeft">
+    <div class="pub-landing__wave" aria-hidden="true"></div>
+    <div class="pub-landing__wrap">
+        <div class="pub-landing__eyebrow">@LandingText.For("Landing.Kreeft.Eyebrow", Variant)</div>
+        <h2 class="pub-landing__h2">@LandingText.For("Landing.Kreeft.Title", Variant)</h2>
+        <p class="pub-landing__lead">@LandingText.For("Landing.Kreeft.Lead", Variant)</p>
+        <div class="pub-landing__kgrid">
+            <div class="pub-landing__story">
+                <h3>@LandingText.For("Landing.Kreeft.StoryTitle", Variant)</h3>
+                <p>@LandingText.For("Landing.Kreeft.Story1", Variant)</p>
+                <p>@LandingText.For("Landing.Kreeft.Story2", Variant)</p>
+                <div class="pub-landing__story-scene">
+                    <LobsyMascot Pose="MascotPose.Celebrating" Size="MascotSize.Large" Alt="" />
+                    <div class="pub-landing__bubble pub-landing__bubble--story">@LandingText.For("Landing.Kreeft.Bubble", Variant)</div>
+                </div>
+            </div>
+            <div class="pub-landing__tiles">
+                @foreach (var t in Tiles)
+                {
+                    <div class="pub-landing__tile">
+                        <LandingMiniScene Kind="@t.Kind" />
+                        <div class="pub-landing__tile-body">
+                            <h4>@LandingText.For(t.TitleKey, Variant)</h4>
+                            <p>@LandingText.For(t.BodyKey, Variant)</p>
+                            <span class="pub-landing__lnk">@string.Format(LandingText.For("Landing.Kreeft.InLobsy", Variant), LandingText.For(t.LinkKey, Variant))</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+
+    private static readonly (string Kind, string TitleKey, string BodyKey, string LinkKey)[] Tiles =
+    [
+        ("dive", "Landing.Kreeft.T1Title", "Landing.Kreeft.T1Body", "Landing.Kreeft.T1Link"),
+        ("antenna", "Landing.Kreeft.T2Title", "Landing.Kreeft.T2Body", "Landing.Kreeft.T2Link"),
+        ("rock", "Landing.Kreeft.T3Title", "Landing.Kreeft.T3Body", "Landing.Kreeft.T3Link"),
+        ("claw", "Landing.Kreeft.T4Title", "Landing.Kreeft.T4Body", "Landing.Kreeft.T4Link"),
+        ("grow", "Landing.Kreeft.T5Title", "Landing.Kreeft.T5Body", "Landing.Kreeft.T5Link"),
+        ("path", "Landing.Kreeft.T6Title", "Landing.Kreeft.T6Body", "Landing.Kreeft.T6Link"),
+    ];
+}

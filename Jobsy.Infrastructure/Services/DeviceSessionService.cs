@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
@@ -33,8 +34,10 @@ public sealed class DeviceSessionService : IDeviceSessionService
     public async Task<DeviceSessionCreateResult> CreateAsync(
         Guid userId,
         string? userAgent,
-        CancellationToken cancellationToken = default,
-        bool mfaVerified = false)
+        bool mfaVerified = false,
+        string? authMethod = null,
+        string? authTenantId = null,
+        CancellationToken cancellationToken = default)
     {
         var raw = DeviceRefreshToken.Generate();
         var now = DateTime.UtcNow;
@@ -49,7 +52,9 @@ public sealed class DeviceSessionService : IDeviceSessionService
             ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime),
             MfaVerifiedUntilUtc = mfaVerified ? now.AddDays(30) : null,
             UserAgent = Truncate(userAgent, 512),
-            DeviceName = DeviceNameFormatter.FromUserAgent(userAgent)
+            DeviceName = DeviceNameFormatter.FromUserAgent(userAgent),
+            AuthMethod = Truncate(authMethod, 40),
+            AuthTenantId = Truncate(authTenantId, 64)
         };
         _db.UserDeviceSessions.Add(session);
         await _db.SaveChangesAsync(cancellationToken);
@@ -86,77 +91,86 @@ public sealed class DeviceSessionService : IDeviceSessionService
 
         try
         {
-        var session = await _db.UserDeviceSessions
-            .FirstOrDefaultAsync(
-                s => s.RefreshTokenHash == hash || s.PreviousRefreshTokenHash == hash,
-                cancellationToken);
+            var session = await _db.UserDeviceSessions
+                .FirstOrDefaultAsync(
+                    s => s.RefreshTokenHash == hash || s.PreviousRefreshTokenHash == hash,
+                    cancellationToken);
 
-        if (session is null)
-        {
-            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel)
+            if (session is null)
             {
-                await rel.RollbackAsync(cancellationToken);
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel)
+                {
+                    await rel.RollbackAsync(cancellationToken);
+                }
+
+                return null;
             }
 
-            return null;
-        }
-
-        if (session.RevokedAtUtc is not null)
-        {
-            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel2)
+            if (session.RevokedAtUtc is not null)
             {
-                await rel2.RollbackAsync(cancellationToken);
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel2)
+                {
+                    await rel2.RollbackAsync(cancellationToken);
+                }
+
+                return null;
             }
 
-            return null;
-        }
-
-        if (session.ExpiresAtUtc <= now)
-        {
-            session.RevokedAtUtc = now;
-            session.RevokedReason = DeviceSessionRules.RevokeReasonExpired;
-            await _db.SaveChangesAsync(cancellationToken);
-            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel3)
+            if (session.ExpiresAtUtc <= now)
             {
-                await rel3.CommitAsync(cancellationToken);
+                session.RevokedAtUtc = now;
+                session.RevokedReason = DeviceSessionRules.RevokeReasonExpired;
+                await _db.SaveChangesAsync(cancellationToken);
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel3)
+                {
+                    await rel3.CommitAsync(cancellationToken);
+                }
+
+                return null;
             }
 
-            return null;
-        }
+            var matchedCurrent = string.Equals(session.RefreshTokenHash, hash, StringComparison.Ordinal);
+            var matchedPrevious = !matchedCurrent
+                && string.Equals(session.PreviousRefreshTokenHash, hash, StringComparison.Ordinal)
+                && session.PreviousTokenGraceUntilUtc is DateTime grace
+                && grace > now;
 
-        var matchedCurrent = string.Equals(session.RefreshTokenHash, hash, StringComparison.Ordinal);
-        var matchedPrevious = !matchedCurrent
-            && string.Equals(session.PreviousRefreshTokenHash, hash, StringComparison.Ordinal)
-            && session.PreviousTokenGraceUntilUtc is DateTime grace
-            && grace > now;
-
-        if (!matchedCurrent && !matchedPrevious)
-        {
-            // Token reuse outside the grace window → revoke the whole family.
-            await RevokeFamilyInternalAsync(
-                session.FamilyId,
-                DeviceSessionRules.RevokeReasonTokenReuse,
-                cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
-            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel4)
+            if (!matchedCurrent && !matchedPrevious)
             {
-                await rel4.CommitAsync(cancellationToken);
+                // Token reuse outside the grace window → revoke the whole family.
+                await RevokeFamilyInternalAsync(
+                    session.FamilyId,
+                    DeviceSessionRules.RevokeReasonTokenReuse,
+                    cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel4)
+                {
+                    await rel4.CommitAsync(cancellationToken);
+                }
+
+                _logger.LogWarning(
+                    "Device refresh token reuse detected; revoked family {FamilyId} for user {UserId}",
+                    session.FamilyId,
+                    session.UserId);
+                return null;
             }
 
-            _logger.LogWarning(
-                "Device refresh token reuse detected; revoked family {FamilyId} for user {UserId}",
-                session.FamilyId,
-                session.UserId);
-            return null;
-        }
-
-        string newRaw;
-        if (matchedPrevious)
-        {
-            // Concurrent tab/request still holding the pre-rotation token: return the same
-            // newly issued token without rotating again (avoids false theft detection).
-            if (!_cache.TryGetValue(CurrentTokenCacheKey(session.Id), out newRaw!)
-                || string.IsNullOrWhiteSpace(newRaw))
+            string newRaw;
+            if (matchedPrevious)
+            {
+                // Concurrent tab/request still holding the pre-rotation token: return the same
+                // newly issued token without rotating again (avoids false theft detection).
+                if (!_cache.TryGetValue(CurrentTokenCacheKey(session.Id), out newRaw!)
+                    || string.IsNullOrWhiteSpace(newRaw))
+                {
+                    newRaw = DeviceRefreshToken.Generate();
+                    session.PreviousRefreshTokenHash = session.RefreshTokenHash;
+                    session.PreviousTokenGraceUntilUtc = now.Add(DeviceSessionRules.RotationGraceWindow);
+                    session.RefreshTokenHash = DeviceRefreshToken.Hash(newRaw);
+                    CacheCurrentToken(session.Id, newRaw);
+                }
+            }
+            else
             {
                 newRaw = DeviceRefreshToken.Generate();
                 session.PreviousRefreshTokenHash = session.RefreshTokenHash;
@@ -164,99 +178,118 @@ public sealed class DeviceSessionService : IDeviceSessionService
                 session.RefreshTokenHash = DeviceRefreshToken.Hash(newRaw);
                 CacheCurrentToken(session.Id, newRaw);
             }
-        }
-        else
-        {
-            newRaw = DeviceRefreshToken.Generate();
-            session.PreviousRefreshTokenHash = session.RefreshTokenHash;
-            session.PreviousTokenGraceUntilUtc = now.Add(DeviceSessionRules.RotationGraceWindow);
-            session.RefreshTokenHash = DeviceRefreshToken.Hash(newRaw);
-            CacheCurrentToken(session.Id, newRaw);
-        }
 
-        session.ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime);
-        if (now - session.LastUsedAtUtc >= DeviceSessionRules.LastUsedWriteThrottle)
-        {
-            session.LastUsedAtUtc = now;
-        }
-
-        if (!string.IsNullOrWhiteSpace(userAgent))
-        {
-            session.UserAgent = Truncate(userAgent, 512);
-            session.DeviceName = DeviceNameFormatter.FromUserAgent(userAgent);
-        }
-
-        var user = await _db.Users
-            .Include(u => u.CompanyMemberships)
-            .FirstOrDefaultAsync(u => u.Id == session.UserId, cancellationToken);
-
-        if (user is null || !user.IsActive)
-        {
-            session.RevokedAtUtc = now;
-            session.RevokedReason = DeviceSessionRules.RevokeReasonAdminBlock;
-            await _db.SaveChangesAsync(cancellationToken);
-            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel5)
+            session.ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime);
+            if (now - session.LastUsedAtUtc >= DeviceSessionRules.LastUsedWriteThrottle)
             {
-                await rel5.CommitAsync(cancellationToken);
+                session.LastUsedAtUtc = now;
             }
 
-            return null;
-        }
-
-        var minVersion = await _db.PlatformFeatureSettings.AsNoTracking()
-            .Select(s => (int?)s.MinimumSessionVersion)
-            .FirstOrDefaultAsync(cancellationToken) ?? 0;
-
-        if (user.SessionVersion < minVersion)
-        {
-            await RevokeFamilyInternalAsync(
-                session.FamilyId,
-                DeviceSessionRules.RevokeReasonLogoutAll,
-                cancellationToken);
-            await _db.SaveChangesAsync(cancellationToken);
-            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel6)
+            if (!string.IsNullOrWhiteSpace(userAgent))
             {
-                await rel6.CommitAsync(cancellationToken);
+                session.UserAgent = Truncate(userAgent, 512);
+                session.DeviceName = DeviceNameFormatter.FromUserAgent(userAgent);
             }
 
-            return null;
-        }
+            var user = await _db.Users
+                .Include(u => u.CompanyMemberships)
+                .FirstOrDefaultAsync(u => u.Id == session.UserId, cancellationToken);
 
-        await _db.SaveChangesAsync(cancellationToken);
-        if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel7)
-        {
-            await rel7.CommitAsync(cancellationToken);
-        }
+            if (user is null || !user.IsActive)
+            {
+                session.RevokedAtUtc = now;
+                session.RevokedReason = DeviceSessionRules.RevokeReasonAdminBlock;
+                await _db.SaveChangesAsync(cancellationToken);
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel5)
+                {
+                    await rel5.CommitAsync(cancellationToken);
+                }
 
-        var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
-        if (user.CompanyId is Guid home && !companyIds.Contains(home))
-        {
-            companyIds.Insert(0, home);
-        }
+                return null;
+            }
 
-        var showHowTo = ShouldShowCandidateOnboarding(user);
-        var hasApps = await _db.Applications.AsNoTracking()
-            .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
-        var hasSales = user.CompanyId is Guid cid
-            && await _db.Companies.AsNoTracking()
-                .AnyAsync(c => c.Id == cid && c.ReferredBySalesManagerUserId != null, cancellationToken);
+            if (user.Role == UserRole.Admin)
+            {
+                var allowed = AdminLoginProviderPolicy.ParseAllowedTenants(
+                    _configuration["JobsyAuth:AdminAllowedEntraTenants"]);
+                var method = session.AuthMethod;
+                string? provider = null;
+                if (!string.IsNullOrWhiteSpace(method)
+                    && method.StartsWith("external:", StringComparison.OrdinalIgnoreCase))
+                {
+                    provider = method["external:".Length..];
+                }
 
-        return new DeviceSessionRotateResult(
-            user.Id,
-            session.Id,
-            newRaw,
-            session.ExpiresAtUtc,
-            user.Email,
-            user.FullName,
-            user.Role.ToString(),
-            user.CompanyId,
-            companyIds,
-            showHowTo,
-            hasApps,
-            hasSales,
-            user.SessionVersion,
-            CreateLocalSessionToken(user.Email, user.Id),
-            session.MfaVerifiedUntilUtc > now);
+                var methodDisallowed = !string.IsNullOrWhiteSpace(provider)
+                    && !AdminLoginProviderPolicy.IsAllowed(user.Role, provider, session.AuthTenantId, allowed);
+                var legacyWithoutMfa = string.IsNullOrWhiteSpace(method)
+                    && (session.MfaVerifiedUntilUtc is null || session.MfaVerifiedUntilUtc <= now);
+                if (methodDisallowed || legacyWithoutMfa)
+                {
+                    if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction relAdmin)
+                    {
+                        await relAdmin.RollbackAsync(cancellationToken);
+                    }
+
+                    return null;
+                }
+            }
+
+            var minVersion = await _db.PlatformFeatureSettings.AsNoTracking()
+                .Select(s => (int?)s.MinimumSessionVersion)
+                .FirstOrDefaultAsync(cancellationToken) ?? 0;
+
+            if (user.SessionVersion < minVersion)
+            {
+                await RevokeFamilyInternalAsync(
+                    session.FamilyId,
+                    DeviceSessionRules.RevokeReasonLogoutAll,
+                    cancellationToken);
+                await _db.SaveChangesAsync(cancellationToken);
+                if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel6)
+                {
+                    await rel6.CommitAsync(cancellationToken);
+                }
+
+                return null;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            if (tx is Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction rel7)
+            {
+                await rel7.CommitAsync(cancellationToken);
+            }
+
+            var companyIds = user.CompanyMemberships.Select(m => m.CompanyId).Distinct().ToList();
+            if (user.CompanyId is Guid home && !companyIds.Contains(home))
+            {
+                companyIds.Insert(0, home);
+            }
+
+            var showHowTo = await ResolveShowCandidateHowToAsync(user, cancellationToken);
+            var hasApps = await _db.Applications.AsNoTracking()
+                .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
+            var hasSales = user.CompanyId is Guid cid
+                && await _db.Companies.AsNoTracking()
+                    .AnyAsync(c => c.Id == cid && c.ReferredBySalesManagerUserId != null, cancellationToken);
+
+            return new DeviceSessionRotateResult(
+                user.Id,
+                session.Id,
+                newRaw,
+                session.ExpiresAtUtc,
+                user.Email,
+                user.FullName,
+                user.Role.ToString(),
+                user.CompanyId,
+                companyIds,
+                showHowTo,
+                hasApps,
+                hasSales,
+                user.SessionVersion,
+                CreateLocalSessionToken(user.Email, user.Id),
+                session.MfaVerifiedUntilUtc > now,
+                user.IsTestAccount);
         }
         finally
         {
@@ -414,7 +447,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
         DeviceSessionCreateResult? device = null;
         if (handoff.RememberDevice)
         {
-            device = await CreateAsync(user.Id, userAgent ?? handoff.UserAgent, cancellationToken);
+            device = await CreateAsync(user.Id, userAgent ?? handoff.UserAgent, cancellationToken: cancellationToken);
         }
         else
         {
@@ -427,7 +460,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
             companyIds.Insert(0, home);
         }
 
-        var showHowTo = ShouldShowCandidateOnboarding(user);
+        var showHowTo = await ResolveShowCandidateHowToAsync(user, cancellationToken);
         var hasApps = await _db.Applications.AsNoTracking()
             .AnyAsync(a => a.CandidateUserId == user.Id, cancellationToken);
         var hasSales = user.CompanyId is Guid cid
@@ -531,6 +564,33 @@ public sealed class DeviceSessionService : IDeviceSessionService
         => string.IsNullOrWhiteSpace(value)
             ? null
             : value.Length <= max ? value.Trim() : value.Trim()[..max];
+
+    /// <summary>
+    /// Paspoort ON: not ready when <see cref="CandidateOnboarding.CompletedAtUtc"/> is null
+    /// (feeds <see cref="FeatureRoutes.HomeFor"/> via ShowCandidateHowTo).
+    /// Paspoort OFF: classic how-to heuristic.
+    /// </summary>
+    private async Task<bool> ResolveShowCandidateHowToAsync(User user, CancellationToken cancellationToken)
+    {
+        if (user.Role != UserRole.Candidate)
+        {
+            return false;
+        }
+
+        var passportOn = await _db.PlatformFeatureSettings.AsNoTracking()
+            .Select(s => (bool?)s.CandidatePassportEnabled)
+            .FirstOrDefaultAsync(cancellationToken) ?? true;
+        if (passportOn)
+        {
+            var completedAt = await _db.CandidateOnboardings.AsNoTracking()
+                .Where(o => o.UserId == user.Id)
+                .Select(o => o.CompletedAtUtc)
+                .FirstOrDefaultAsync(cancellationToken);
+            return !CandidateLanding.IsPassportReady(completedAt);
+        }
+
+        return ShouldShowCandidateOnboarding(user);
+    }
 
     /// <summary>
     /// New candidates without how-to/wizard completion see <c>/candidate/start</c>.

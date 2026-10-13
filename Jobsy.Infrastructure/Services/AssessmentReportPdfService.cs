@@ -1,8 +1,14 @@
 using System.Globalization;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports;
+using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
+using Jobsy.Core.Reports.Culture;
+using Jobsy.Core.Reports.Values;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +42,9 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
     private readonly IPlatformCompanySettingsService _companySettings;
     private readonly ICareerCompassGenerationService _careerCompass;
     private readonly IMemoryCache _cache;
+    private readonly ILegalIdentity _legal;
+    private readonly IFeatureFlags _features;
+    private readonly IKindDeepReportService _kindReports;
 
     static AssessmentReportPdfService()
     {
@@ -46,19 +55,55 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         JobsyDbContext db,
         IPlatformCompanySettingsService companySettings,
         ICareerCompassGenerationService careerCompass,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        ILegalIdentity legal,
+        IFeatureFlags features,
+        IKindDeepReportService kindReports)
     {
         _db = db;
         _companySettings = companySettings;
         _careerCompass = careerCompass;
         _cache = cache;
+        _legal = legal;
+        _features = features;
+        _kindReports = kindReports;
     }
+
+    private static DateTime ToAmsterdam(DateTime utc)
+    {
+        var instant = utc.Kind == DateTimeKind.Utc ? utc : DateTime.SpecifyKind(utc, DateTimeKind.Utc);
+        foreach (var id in new[] { "Europe/Amsterdam", "W. Europe Standard Time" })
+        {
+            try
+            {
+                return TimeZoneInfo.ConvertTimeFromUtc(instant, TimeZoneInfo.FindSystemTimeZoneById(id));
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return instant;
+    }
+
+    public Task<AssessmentReportPdf?> TryRenderAsync(
+        Guid userId,
+        AssessmentKind kind,
+        CancellationToken cancellationToken = default)
+        => TryRenderAsync(userId, kind, lang: null, cancellationToken);
 
     public async Task<AssessmentReportPdf?> TryRenderAsync(
         Guid userId,
         AssessmentKind kind,
+        string? lang,
         CancellationToken cancellationToken = default)
     {
+        var reportLang = ReportLanguage.FromUi(lang);
+        var compact = await _features.IsEnabledAsync(PlatformFeature.CompactTestPdf, cancellationToken);
+        var compactTag = compact ? "1" : "0";
         var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
             .FirstOrDefaultAsync(
                 d => d.UserId == userId && d.Kind == kind && d.Status == CandidateDeepAnalysisStatuses.Completed,
@@ -75,60 +120,167 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             return null;
         }
 
-        var platform = await _companySettings.GetAsync(cancellationToken);
-        var brand = string.IsNullOrWhiteSpace(platform.CompanyName) ? "Lobsy" : platform.CompanyName.Trim();
+        var legal = await _legal.GetAsync(cancellationToken);
+        var brand = string.IsNullOrWhiteSpace(legal.TradeName) ? legal.DisplayName : legal.TradeName.Trim();
         var logo = _companySettings.GetBrandLogoPng();
-        var culture = CultureInfo.GetCultureInfo("nl-NL");
-        var generated = (deep.ReportGeneratedAtUtc ?? deep.CompletedAtUtc ?? DateTime.UtcNow)
-            .ToLocalTime()
+        var culture = ReportLanguage.IsEnglish(reportLang)
+            ? CultureInfo.GetCultureInfo("en-GB")
+            : CultureInfo.GetCultureInfo("nl-NL");
+        var generated = ToAmsterdam(deep.ReportGeneratedAtUtc ?? deep.CompletedAtUtc ?? DateTime.UtcNow)
             .ToString("d MMMM yyyy", culture);
 
         var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson, kind);
         var domainScores = DeepAnalysisCatalog.ScoreDomains(answers, kind);
+        var employersOn = await _features.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
 
         byte[] bytes;
         if (kind == AssessmentKind.Career)
         {
-            var careerRow = await _db.CandidateCareerInterests
-                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-            var compass = CareerCompassJson.TryDeserialize(careerRow?.CompassJson);
-            if (compass is not { HasOccupations: true })
+            var careerDeep = CareerDeepReportJson.Deserialize(deep.ReportJson);
+            var careerStale = deep.ReportVersion < CareerDeepReportJson.CurrentReportVersion || careerDeep is null;
+            if (careerStale)
             {
-                compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
-                if (careerRow is not null)
+                try
                 {
-                    careerRow.CompassJson = CareerCompassJson.Serialize(compass);
-                    careerRow.UpdatedAtUtc = DateTime.UtcNow;
-                    await _db.SaveChangesAsync(cancellationToken);
+                    careerDeep = await _kindReports.GetCareerAsync(userId, cancellationToken) ?? careerDeep;
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    careerDeep ??= CareerDeepReportJson.Deserialize(deep.ReportJson);
+                    _ = ex;
                 }
             }
 
-            bytes = RenderCareer(brand, logo, user.FullName, generated, compass);
+            if (careerDeep is not null)
+            {
+                var education = EducationLabel(user);
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{careerDeep.ReportVersion}:{careerDeep.GeneratedAtUtc:O}:p8:fit:{education}:c{compactTag}";
+                if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
+                {
+                    cached = RenderCareerDeep(brand, logo, user.FullName, generated, careerDeep, reportLang, education, compact, lang);
+                    _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
+                }
+
+                bytes = cached;
+            }
+            else
+            {
+                var careerRow = await _db.CandidateCareerInterests
+                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+                var compass = CareerCompassJson.TryDeserialize(careerRow?.CompassJson);
+                if (compass is not { HasOccupations: true })
+                {
+                    var riasec = DeepAnalysisCatalog.ToRiasecScores(
+                        DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Career));
+                    var scoresKey = CareerCompassBuilder.ScoresKey(riasec);
+                    var attemptAt = DateTime.UtcNow;
+                    if (CareerCompassAttempt.TryBegin(userId, careerRow?.CompassJson, scoresKey, attemptAt))
+                    {
+                        try
+                        {
+                            compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                            compass = compass with { ScoresFingerprint = scoresKey, ModelAttemptUtc = attemptAt };
+                            if (careerRow is not null)
+                            {
+                                careerRow.CompassJson = CareerCompassJson.Serialize(compass);
+                                careerRow.UpdatedAtUtc = attemptAt;
+                                await _db.SaveChangesAsync(cancellationToken);
+                            }
+                        }
+                        finally
+                        {
+                            CareerCompassAttempt.End(userId, scoresKey);
+                        }
+                    }
+                    else
+                    {
+                        compass = CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true);
+                    }
+                }
+
+                if (!employersOn)
+                {
+                    compass = compass with
+                    {
+                        PracticalNotes = CareerCompassBuilder.NotesForCandidate(compass.PracticalNotes, false)
+                    };
+                }
+
+                bytes = RenderCareer(brand, logo, user.FullName, generated, compass, EducationLabel(user));
+            }
         }
         else if (kind == AssessmentKind.Culture)
         {
-            var scoreLines = domainScores
-                .Select(s => $"{LabelCulture(s.Domain)}: {s.Percent}%")
-                .ToList();
-            var tags = CulturePersonalityCatalog.ParseTags(deep.TagsJson)
-                .Select(FriendlyTag)
-                .Where(t => !string.IsNullOrWhiteSpace(t))
-                .ToList();
-            var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
-            bytes = RenderCulture(brand, logo, user.FullName, generated, scoreLines, tags, advice);
+            var cultureDeep = CultureDeepReportJson.Deserialize(deep.ReportJson);
+            if (cultureDeep is not null)
+            {
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{cultureDeep.ReportVersion}:{cultureDeep.GeneratedAtUtc:O}:p8:e{employersOn}:c{compactTag}";
+                if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
+                {
+                    cached = RenderCultureDeep(brand, logo, user.FullName, generated, cultureDeep, reportLang, employersOn, compact, lang);
+                    _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
+                }
+
+                bytes = cached;
+            }
+            else
+            {
+                var scoreLines = domainScores
+                    .Select(s => $"{DeepReportCatalog.CultureLabel(s.Domain, reportLang)}: {s.Percent}%")
+                    .ToList();
+                var tags = CulturePersonalityCatalog.ParseTags(deep.TagsJson)
+                    .Select(t => DeepReportCatalog.CultureLabel(t, reportLang))
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToList();
+                // Never use CareerAdviceParagraphs here (prints "Werk dat bij je past").
+                var advice = CultureLegacyAdvice(domainScores, reportLang);
+                bytes = RenderCulture(brand, logo, user.FullName, generated, scoreLines, tags, advice, reportLang);
+            }
+        }
+        else if (kind == AssessmentKind.Values)
+        {
+            var valuesDeep = ValuesDeepReportJson.Deserialize(deep.ReportJson);
+            if (valuesDeep is not null)
+            {
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{valuesDeep.ReportVersion}:{valuesDeep.GeneratedAtUtc:O}:p7:e{employersOn}:c{compactTag}";
+                if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
+                {
+                    cached = RenderValuesDeep(brand, logo, user.FullName, generated, valuesDeep, reportLang, employersOn, compact, lang);
+                    _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
+                }
+
+                bytes = cached;
+            }
+            else
+            {
+                var scoreLines = domainScores
+                    .Select(s => $"{DeepReportCatalog.ValueLabel(s.Domain, reportLang)}: {s.Percent}%")
+                    .ToList();
+                var advice = ValuesLegacyAdvice(domainScores, reportLang);
+                bytes = RenderScoreReport(
+                    brand,
+                    logo,
+                    user.FullName,
+                    generated,
+                    DeepReportCatalog.Get("title.values", reportLang),
+                    ReportLanguage.IsEnglish(reportLang)
+                        ? "This report summarises your work values from the extended test — without clinical language."
+                        : "Dit rapport vat je waarden op werk samen uit de uitgebreide test — zonder klinische taal.",
+                    scoreLines,
+                    [],
+                    advice,
+                    AccentTeal);
+            }
         }
         else
         {
-            // The 9-page rich report is built only from a stored CompetenceDeepReport (no AI on
-            // download) and cached by report version/generation time; legacy rows without a
-            // stored report fall back to the older fixed-score summary below.
             var report = CompetenceDeepReportJson.Deserialize(deep.ReportJson);
             if (report is not null)
             {
-                var cacheKey = $"deep-pdf:{userId}:{kind}:{report.ReportVersion}:{report.GeneratedAtUtc:O}";
+                var cacheKey = $"deep-pdf:{userId}:{kind}:{reportLang}:{report.ReportVersion}:{report.GeneratedAtUtc:O}:c{compactTag}";
                 if (!_cache.TryGetValue(cacheKey, out byte[]? cached) || cached is null)
                 {
-                    cached = RenderCompetenceDeep(brand, logo, user.FullName, generated, report);
+                    cached = RenderCompetenceDeep(brand, logo, user.FullName, generated, report, compact, lang);
                     _cache.Set(cacheKey, cached, DeepPdfCacheDuration);
                 }
 
@@ -148,14 +300,40 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     .Select(FriendlyTag)
                     .Where(t => !string.IsNullOrWhiteSpace(t))
                     .ToList();
-                var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores);
+                var advice = DeepAnalysisCatalog.CareerAdviceParagraphs(domainScores, employersOn);
                 bytes = RenderCompetence(brand, logo, user.FullName, generated, scoreLines, tags, advice);
             }
         }
 
         var slug = AssessmentKindLabels.ToSlug(kind);
-        var date = DateTime.UtcNow.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-        return new AssessmentReportPdf($"Lobsy-{slug}-rapport-{date}.pdf", bytes);
+        var fileName = DeepReportCatalog.FileName(new AssessmentKindSlug(slug), reportLang, DateTime.UtcNow);
+        return new AssessmentReportPdf(fileName, bytes);
+    }
+
+    private static IReadOnlyList<string> CultureLegacyAdvice(
+        IReadOnlyList<DeepAnalysisDomainScore> scores, string lang)
+    {
+        var top = scores.OrderByDescending(s => s.Percent).Take(3)
+            .Select(s => DeepReportCatalog.CultureLabel(s.Domain, lang));
+        return
+        [
+            ReportLanguage.IsEnglish(lang)
+                ? $"You score highest on {string.Join(", ", top)}. Look for workplaces where those show up every week."
+                : $"Je scoort het hoogst op {string.Join(", ", top)}. Zoek werkplekken waar dat elke week zichtbaar is."
+        ];
+    }
+
+    private static IReadOnlyList<string> ValuesLegacyAdvice(
+        IReadOnlyList<DeepAnalysisDomainScore> scores, string lang)
+    {
+        var top = scores.OrderByDescending(s => s.Percent).Take(2)
+            .Select(s => DeepReportCatalog.ValueLabel(s.Domain, lang));
+        return
+        [
+            ReportLanguage.IsEnglish(lang)
+                ? $"Your top values are {string.Join(" and ", top)}. Use them when you choose roles and employers."
+                : $"Jouw topwaarden zijn {string.Join(" en ", top)}. Gebruik die bij het kiezen van rollen en werkgevers."
+        ];
     }
 
     internal static byte[] RenderCareer(
@@ -163,8 +341,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         byte[] logo,
         string fullName,
         string generated,
-        CareerCompassSnapshot compass)
+        CareerCompassSnapshot compass,
+        string? education = null)
     {
+        _ = education;
         return Document.Create(container =>
         {
             container.Page(page =>
@@ -189,11 +369,11 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     }
 
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandSuper),
-                        SoftMint, compass.SuperMatches, "Nog geen super-match boven 95%. Kijk bij sterke keus: daar zit vaak al iets dat heel dichtbij komt.");
+                        SoftMint, compass.SuperMatches, "Geen beroep in deze groep.");
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandStrong),
-                        SoftSky, compass.StrongChoices, "Nog geen sterke keus boven 85%. De verbreding hieronder blijft de moeite waard.");
+                        SoftSky, compass.StrongChoices, "Geen beroep in deze groep.");
                     WriteOccupationBand(col, CareerCompassBuilder.BandLabel(CareerCompassBuilder.BandBroaden),
-                        WarmSand, compass.Broadening, "Nog geen verbreding boven 75%. Zet je voorkeuren op de banenkaart en kijk welke taken je energie geven.");
+                        WarmSand, compass.Broadening, "Geen beroep in deze groep.");
 
                     col.Item().PaddingTop(8).Background(SoftSky).Padding(12).Column(box =>
                     {
@@ -201,6 +381,11 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                         box.Item().Text("Wat betekent dit voor jou?").FontSize(13).Bold().FontColor(BrandNavy);
                         foreach (var note in compass.PracticalNotes)
                         {
+                            if (note.Contains("Wat betekent dit voor jou", StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
                             box.Item().Text(note);
                         }
                     });
@@ -245,8 +430,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         byte[] logo,
         string fullName,
         string generated,
-        CompetenceDeepReport report)
+        CompetenceDeepReport report,
+        bool compact = false,
+        string? uiLang = null)
     {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Competence(brand, logo, fullName, generated, report, uiLang);
+        }
+
         return Document.Create(container =>
         {
             AddCompetenceDeepCoverPage(container, brand, logo, fullName, generated, report);
@@ -511,10 +703,10 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                     col.Item().Row(r =>
                     {
                         r.RelativeItem().Text(occupation.Title).FontSize(11).SemiBold().FontColor(BrandNavy);
-                        r.ConstantItem(50).AlignRight().Text($"{occupation.MatchPercent}%")
+                        r.ConstantItem(58).AlignRight().Text($"{CareerCompassBuilder.FormatPercent(occupation.MatchPercent)}%")
                             .FontColor(BrandDeep).Bold();
                     });
-                    col.Item().Element(e => ScoreBar(e, occupation.MatchPercent, null, AccentTeal));
+                    col.Item().Element(e => ScoreBar(e, (double)occupation.MatchPercent, null, AccentTeal));
                     col.Item().Text(occupation.Reason).FontSize(9).FontColor(Muted);
                 }
             });
@@ -645,18 +837,451 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         string generated,
         IReadOnlyList<string> scoreLines,
         IReadOnlyList<string> tags,
-        IReadOnlyList<string> advice)
+        IReadOnlyList<string> advice,
+        string? lang = null)
         => RenderScoreReport(
             brand,
             logo,
             fullName,
             generated,
-            "Jouw cultuur- & persoonlijkheidsrapport",
-            "Dit rapport vat je 150 antwoorden samen: hoe jij graag werkt (cultuurfit) en hoe jij in een team past — zonder moeilijke testtaal.",
+            DeepReportCatalog.Get("title.culture", lang),
+            ReportLanguage.IsEnglish(lang)
+                ? "This report summarises your 150 answers: how you like to work (culture fit) and how you show up in a team — without jargon."
+                : "Dit rapport vat je 150 antwoorden samen: hoe jij graag werkt (cultuurfit) en hoe jij in een team past — zonder moeilijke testtaal.",
             scoreLines,
             tags,
             advice,
             AccentTeal);
+
+    internal static byte[] RenderCareerDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        CareerDeepReport report,
+        string lang,
+        string? education = null,
+        bool compact = false,
+        string? uiLang = null)
+    {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Career(brand, logo, fullName, generated, report, lang, uiLang, education);
+        }
+
+        var title = DeepReportCatalog.Get("title.career", lang);
+        var en = ReportLanguage.IsEnglish(lang);
+        var top = string.Join(", ", report.Domains.OrderByDescending(d => d.Score).Take(3)
+            .Select(d => DeepReportCatalog.RiasecLabel(d.Domain, lang)));
+        var places = CareerDeepReportBuilder.TypicalPlaces(report, lang, education);
+        var jobs = CareerDeepReportBuilder.ShownOccupations(report, education);
+        var cover = report.Summary.Resolve(lang);
+        if (!string.IsNullOrWhiteSpace(top))
+        {
+            cover += en
+                ? $" Strongest directions: {top}."
+                : $" Sterkste richtingen: {top}.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(places))
+        {
+            cover += en
+                ? $" Jobs on the next pages: {places}."
+                : $" Beroepen op de volgende pagina's: {places}.";
+        }
+
+        return RenderExplicitPages(
+            brand, logo, fullName, generated, lang, title, cover,
+            [
+                col => WriteCareerScorePage(col, lang, report),
+                col =>
+                {
+                    Heading(col, DeepReportCatalog.Get("holland.title", lang));
+                    col.Item().Text(DeepReportCatalog.Format("holland.body", lang, report.HollandCode, top, places));
+                    col.Item().PaddingTop(8).Text(en
+                        ? "Read the letters as a direction. A higher score means that kind of work showed up more often in your answers."
+                        : "Lees de letters als een richting. Een hogere score betekent dat dat soort werk vaker in je antwoorden zat.").FontColor(Muted);
+                    foreach (var domain in report.Domains.OrderByDescending(d => d.Score))
+                    {
+                        col.Item().Text($"{DeepReportCatalog.RiasecLabel(domain.Domain, lang)}: {domain.Score}%");
+                    }
+                },
+                col =>
+                {
+                    Heading(col, en ? "Jobs that fit you" : "Beroepen die bij je passen");
+                    if (jobs.Count == 0)
+                    {
+                        col.Item().Text(en
+                            ? "Your answers do not point to one job yet. Use the directions above as a start."
+                            : "Je antwoorden wijzen nog niet naar één beroep. Gebruik de richtingen hierboven als start.").FontColor(Muted);
+                    }
+                    else
+                    {
+                        foreach (var o in jobs)
+                        {
+                            col.Item().Text($"{o.Title(lang)} — {CareerCompassBuilder.FormatPercent(o.MatchPercent, lang)}%").SemiBold();
+                            col.Item().Text(o.Reason(lang)).FontSize(9).FontColor(Muted);
+                        }
+                    }
+                },
+                col => WriteActionPage(col, lang, report.ActionPlan),
+                col => WriteStrengthPage(col, lang, report.StrengthKeys, report.PitfallKeys, "riasec"),
+                col =>
+                {
+                    Heading(col, en ? "How to read your scores" : "Zo lees je je scores");
+                    col.Item().Text(en
+                        ? "A higher percent means that direction showed up more often in your answers. It is a starting point, not a grade."
+                        : "Een hoger percentage betekent dat die richting vaker in je antwoorden zat. Het is een startpunt, geen cijfer.").FontColor(Muted);
+                    foreach (var domain in report.Domains.OrderByDescending(d => d.Score))
+                    {
+                        var label = DeepReportCatalog.RiasecLabel(domain.Domain, lang);
+                        col.Item().PaddingTop(6).Text($"{label}: {domain.Score}%").SemiBold();
+                        col.Item().Text(CareerScoreSense(domain.Domain, en)).FontSize(9).FontColor(Muted);
+                    }
+                },
+                col =>
+                {
+                    Heading(col, en ? "What you can do next" : "Wat je hiermee kunt doen");
+                    col.Item().Text(en
+                        ? "This week, talk to one person who does a job from your list. Ask what a normal Tuesday looks like, and which task they would skip if they could."
+                        : "Praat deze week met één persoon die een beroep uit jouw lijst doet. Vraag hoe een gewone dinsdag eruitziet, en welke taak die persoon zou overslaan als dat mocht.").FontColor(Muted);
+                    col.Item().PaddingTop(8).Text(en
+                        ? "Write down three tasks that gave you energy. Put them next to the jobs on the page before this one. Keep the job whose day looks most like those tasks."
+                        : "Schrijf drie taken op die je energie gaven. Leg ze naast de beroepen op de vorige pagina. Houd het beroep waarvan de dag het meest op die taken lijkt.").FontColor(Muted);
+                    if (!string.IsNullOrWhiteSpace(places))
+                    {
+                        col.Item().PaddingTop(8).Text(en
+                            ? $"Places and jobs to start with: {places}."
+                            : $"Plekken en beroepen om mee te beginnen: {places}.").FontColor(Muted);
+                    }
+
+                    col.Item().PaddingTop(8).Text(en
+                        ? "Your answers stay yours. A workplace only sees that a direction fits, not your raw scores."
+                        : "Je antwoorden blijven van jou. Een werkplek ziet alleen dat een richting past, niet je ruwe scores.").FontColor(Muted);
+                }
+            ]);
+    }
+
+    internal static byte[] RenderCultureDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        CultureDeepReport report,
+        string lang,
+        bool employersOn = true,
+        bool compact = false,
+        string? uiLang = null)
+    {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Culture(brand, logo, fullName, generated, report, lang, uiLang, employersOn);
+        }
+
+        var title = DeepReportCatalog.Get("title.culture", lang);
+        var en = ReportLanguage.IsEnglish(lang);
+        var cultureAxes = report.Domains
+            .Where(d => CulturePersonalityCatalog.CultureDimensionCodes.Contains(d.Domain, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+        var facets = report.Domains
+            .Where(d => CulturePersonalityCatalog.PersonalityFacetCodes.Contains(d.Domain, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+        if (cultureAxes.Count == 0)
+        {
+            cultureAxes = report.Domains;
+        }
+
+        return RenderExplicitPages(
+            brand, logo, fullName, generated, lang, title, report.Summary.Resolve(lang),
+            [
+                col => WriteScorePage(col, lang, cultureAxes.Select(d => (
+                    DeepReportCatalog.CultureLabel(d.Domain, lang), d.Score, d.NormMean))),
+                col =>
+                {
+                    if (employersOn)
+                    {
+                        Heading(col, en ? "Workplaces that fit you" : "Werkplekken die bij je passen");
+                        foreach (var e in report.Employers.Take(6))
+                        {
+                            col.Item().Text(DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)).SemiBold();
+                            col.Item().Text(DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)).FontSize(9).FontColor(Muted);
+                        }
+                    }
+                    else
+                    {
+                        Heading(col, en ? "How you like to work" : "Hoe jij graag werkt");
+                        col.Item().Text(en
+                            ? "Look for a place where these ways of working show up in a normal week."
+                            : "Zoek een plek waar deze manieren van werken in een gewone week zichtbaar zijn.").FontColor(Muted);
+                        foreach (var d in cultureAxes.Take(3))
+                        {
+                            col.Item().Text($"{DeepReportCatalog.CultureLabel(d.Domain, lang)} — {d.Score}%").SemiBold();
+                        }
+                    }
+                },
+                col =>
+                {
+                    Heading(col, en ? "How you show up in a team" : "Hoe jij in een team past");
+                    foreach (var d in facets)
+                    {
+                        col.Item().Text($"{DeepReportCatalog.CultureLabel(d.Domain, lang)} — {d.Score}%");
+                    }
+                },
+                col => WriteActionPage(col, lang, report.ActionPlan),
+                col => WriteStrengthPage(col, lang, report.StrengthKeys, report.PitfallKeys, "culture"),
+                col =>
+                {
+                    Heading(col, en ? "How to read your scores" : "Zo lees je je scores");
+                    col.Item().Text(en
+                        ? "A higher percent means that way of working showed up more often. It is a starting point, not a grade."
+                        : "Een hoger percentage betekent dat die manier van werken vaker in je antwoorden zat. Het is een startpunt, geen cijfer.").FontColor(Muted);
+                },
+                col =>
+                {
+                    Heading(col, en ? "What you can do next" : "Wat je hiermee kunt doen");
+                    col.Item().Text(en
+                        ? "Use this picture when you look at a workplace. Your answers stay yours."
+                        : "Gebruik dit beeld als je naar een werkplek kijkt. Je antwoorden blijven van jou.").FontColor(Muted);
+                }
+            ]);
+    }
+
+    internal static byte[] RenderValuesDeep(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        ValuesDeepReport report,
+        string lang,
+        bool employersOn = true,
+        bool compact = false,
+        string? uiLang = null)
+    {
+        if (compact)
+        {
+            return CompactDeepReportPdf.Values(brand, logo, fullName, generated, report, lang, uiLang, employersOn);
+        }
+
+        var title = DeepReportCatalog.Get("title.values", lang);
+        var en = ReportLanguage.IsEnglish(lang);
+        return RenderExplicitPages(
+            brand, logo, fullName, generated, lang, title, report.Summary.Resolve(lang),
+            [
+                col => WriteScorePage(col, lang, report.Domains.Select(d => (
+                    DeepReportCatalog.ValueLabel(d.Domain, lang), d.Score, d.NormMean))),
+                col =>
+                {
+                    Heading(col, DeepReportCatalog.Get("values.rank.title", lang));
+                    col.Item().Text(DeepReportCatalog.Get("values.rank.lead", lang)).FontColor(Muted).Italic();
+                    var rank = 1;
+                    foreach (var d in report.Domains)
+                    {
+                        col.Item().Text($"{rank}. {DeepReportCatalog.ValueLabel(d.Domain, lang)} — {d.Score}%").SemiBold();
+                        col.Item().Text(ChooseLine(d.Domain, lang)).FontSize(9).FontColor(Muted);
+                        rank++;
+                    }
+                },
+                col =>
+                {
+                    if (employersOn)
+                    {
+                        Heading(col, en ? "Workplaces that fit these values" : "Werkplekken die bij deze waarden passen");
+                        foreach (var e in report.Employers.Take(6))
+                        {
+                            col.Item().Text(DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)).SemiBold();
+                            col.Item().Text(DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)).FontSize(9).FontColor(Muted);
+                        }
+                    }
+                    else
+                    {
+                        Heading(col, en ? "What this means for your work" : "Wat dit voor je werk betekent");
+                        col.Item().Text(en
+                            ? "Use your top values when you choose tasks and a team. You do not need a company name for that."
+                            : "Gebruik je topwaarden als je taken en een team kiest. Daar heb je geen bedrijfsnaam voor nodig.").FontColor(Muted);
+                    }
+                },
+                col => WriteActionPage(col, lang, report.ActionPlan),
+                col => WriteStrengthPage(col, lang, report.StrengthKeys, report.PitfallKeys, "value"),
+                col =>
+                {
+                    Heading(col, en ? "How to read this and what is next" : "Zo lees je dit, en wat daarna");
+                    col.Item().Text(en
+                        ? "A higher percent means that value weighed more in your answers. Ask in a conversation how it shows up in a normal week."
+                        : "Een hoger percentage betekent dat die waarde zwaarder woog in je antwoorden. Vraag in een gesprek hoe dat in een gewone week zichtbaar is.").FontColor(Muted);
+                }
+            ]);
+    }
+
+    private static byte[] RenderExplicitPages(
+        string brand,
+        byte[] logo,
+        string fullName,
+        string generated,
+        string lang,
+        string title,
+        string summary,
+        IReadOnlyList<Action<ColumnDescriptor>> pages)
+    {
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.MarginHorizontal(28);
+                page.MarginVertical(24);
+                page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+                BrandHeader(page, brand, logo, title, fullName, generated, AccentTeal);
+                page.Content().PaddingTop(28).Column(col =>
+                {
+                    col.Spacing(10);
+                    col.Item().Text(title).FontSize(22).Bold().FontColor(BrandNavy);
+                    col.Item().Text(summary).FontSize(12);
+                    col.Item().PaddingTop(12).Text(DeepReportCatalog.Get("pdf.disclaimer", lang))
+                        .FontColor(Muted).Italic().FontSize(9);
+                });
+                BrandFooter(page, brand);
+            });
+
+            foreach (var body in pages)
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.MarginHorizontal(28);
+                    page.MarginVertical(24);
+                    page.DefaultTextStyle(x => x.FontSize(10).FontColor(Slate));
+                    BrandHeader(page, brand, logo, title, fullName, generated, AccentTeal);
+                    page.Content().PaddingTop(14).Column(col =>
+                    {
+                        col.Spacing(8);
+                        body(col);
+                    });
+                    BrandFooter(page, brand);
+                });
+            }
+        }).GeneratePdf();
+    }
+
+    private static void Heading(ColumnDescriptor col, string text)
+        => col.Item().Text(text).FontSize(14).Bold().FontColor(BrandNavy);
+
+    private static void WriteCareerScorePage(ColumnDescriptor col, string lang, CareerDeepReport report)
+    {
+        var en = ReportLanguage.IsEnglish(lang);
+        Heading(col, DeepReportCatalog.Get("pdf.overview", lang));
+        col.Item().Text(en
+            ? "Each line is how often that kind of work showed up in your 200 answers. A higher percent is a direction to explore, not a grade and not a promise of a job."
+            : "Elke regel laat zien hoe vaak dat soort werk in je 200 antwoorden zat. Een hoger percentage is een richting om te verkennen, geen cijfer en geen belofte van een baan.").FontColor(Muted);
+        foreach (var domain in report.Domains.OrderByDescending(d => d.Score))
+        {
+            var label = DeepReportCatalog.RiasecLabel(domain.Domain, lang);
+            var line = domain.NormMean is double n
+                ? $"{label}: {domain.Score}% (Ø {Math.Round(n)}%)"
+                : $"{label}: {domain.Score}%";
+            col.Item().PaddingTop(8).Text(line).SemiBold();
+            col.Item().Text(CareerScoreSense(domain.Domain, en));
+        }
+    }
+
+    internal static string CareerScoreSense(string domain, bool en)
+    {
+        var key = domain.Trim().ToUpperInvariant();
+        return key switch
+        {
+            "R" or "REALISTIC" => en
+                ? "This is work you can point at when the day is over: making, fixing, moving or being outside."
+                : "Dit is werk waar je aan het eind van de dag iets kunt aanwijzen: maken, repareren, verplaatsen of buiten zijn.",
+            "I" or "INVESTIGATIVE" => en
+                ? "This is work where you check, measure or find out why something happens before you change it."
+                : "Dit is werk waarbij je eerst nakijkt, meet of uitzoekt waarom iets gebeurt, en daarna pas iets verandert.",
+            "A" or "ARTISTIC" => en
+                ? "This is work where how something looks, sounds or is told may be your own."
+                : "Dit is werk waarbij hoe iets eruitziet, klinkt of verteld wordt van jou mag zijn.",
+            "S" or "SOCIAL" => en
+                ? "This is work with people: explaining, guiding or helping someone take the next step."
+                : "Dit is werk met mensen: uitleggen, begeleiden of iemand helpen met de volgende stap.",
+            "E" or "ENTERPRISING" => en
+                ? "This is work with a goal in sight: convincing someone, starting something or keeping a team moving."
+                : "Dit is werk met een doel in zicht: iemand overtuigen, iets starten of een team in beweging houden.",
+            "C" or "CONVENTIONAL" => en
+                ? "This is work with a clear order: lists, appointments, numbers and things in the right place."
+                : "Dit is werk met een duidelijke volgorde: lijsten, afspraken, cijfers en spullen op de juiste plek.",
+            _ => en
+                ? "Use this direction when you compare tasks. It is not a mark."
+                : "Gebruik deze richting als je taken vergelijkt. Het is geen cijfer."
+        };
+    }
+
+    private static void WriteScorePage(
+        ColumnDescriptor col,
+        string lang,
+        IEnumerable<(string Label, int Score, double? Norm)> domains)
+    {
+        Heading(col, DeepReportCatalog.Get("pdf.overview", lang));
+        col.Item().Text(DeepReportCatalog.Get("pdf.scores", lang)).FontSize(12).Bold().FontColor(BrandNavy);
+        foreach (var (label, score, norm) in domains)
+        {
+            var line = norm is double n
+                ? $"{label}: {score}% (Ø {Math.Round(n)}%)"
+                : $"{label}: {score}%";
+            col.Item().Text(line);
+        }
+    }
+
+    private static void WriteActionPage(ColumnDescriptor col, string lang, IReadOnlyList<DeepActionStep> plan)
+    {
+        Heading(col, DeepReportCatalog.Get("pdf.actionPlan", lang));
+        col.Item().Text(DeepReportCatalog.Get("action.lead", lang)).FontColor(Muted).Italic();
+        foreach (var step in plan.Take(3))
+        {
+            col.Item().Text(step.Title.Resolve(lang)).SemiBold();
+            col.Item().Text(step.Body.Resolve(lang)).FontSize(9).FontColor(Muted);
+        }
+    }
+
+    private static void WriteStrengthPage(
+        ColumnDescriptor col,
+        string lang,
+        IReadOnlyList<string> strengths,
+        IReadOnlyList<string> pitfalls,
+        string label)
+    {
+        Heading(col, DeepReportCatalog.Get("pdf.strengths", lang));
+        col.Item().Text(DeepReportCatalog.Get("strength.lead", lang)).FontColor(Muted).Italic();
+        foreach (var key in strengths.Take(3))
+        {
+            col.Item().Text("• " + StrengthSentence(key, label, lang));
+        }
+
+        foreach (var key in pitfalls.Take(3))
+        {
+            col.Item().Text("△ " + StrengthSentence(key, label, lang)).FontColor(AccentCoral);
+        }
+    }
+
+    internal static string ChooseLine(string domain, string lang)
+    {
+        var specific = $"values.choose.{domain}";
+        return DeepReportCatalog.TryGet(specific, lang, out var text)
+            ? text
+            : DeepReportCatalog.Get("values.choose", lang);
+    }
+
+    internal static string StrengthSentence(string key, string label, string lang)
+    {
+        if (DeepReportCatalog.TryGet(key, lang, out var text))
+        {
+            return text;
+        }
+
+        var code = key.Split('.').LastOrDefault() ?? key;
+        return label switch
+        {
+            "riasec" => DeepReportCatalog.RiasecLabel(code, lang),
+            "culture" => DeepReportCatalog.CultureLabel(code, lang),
+            _ => DeepReportCatalog.ValueLabel(code, lang)
+        };
+    }
 
     private static byte[] RenderScoreReport(
         string brand,
@@ -768,6 +1393,15 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         });
     }
 
+    private static string? EducationLabel(User user)
+    {
+        var prefs = MatchingProfileMapper.DeserializePrefs(user.PreferencesJson);
+        var label = string.Join(
+            " ",
+            (prefs.Educations ?? []).Append(prefs.EducationDirection ?? "").Where(item => !string.IsNullOrWhiteSpace(item)));
+        return string.IsNullOrWhiteSpace(label) ? null : label;
+    }
+
     private static void WriteOccupationBand(
         ColumnDescriptor col,
         string heading,
@@ -790,7 +1424,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
                 box.Item().Row(r =>
                 {
                     r.RelativeItem().Text($"{item.Title}").SemiBold();
-                    r.ConstantItem(42).AlignRight().Text($"{item.Percent}%").FontColor(BrandDeep).Bold();
+                    r.ConstantItem(58).AlignRight().Text($"{CareerCompassBuilder.FormatPercent(item.Percent)}%").FontColor(BrandDeep).Bold();
                 });
                 box.Item().Text(item.Why).FontSize(9).FontColor(Muted);
             }
@@ -812,7 +1446,7 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
             $"Resultaatgerichtheid: {row.ResultaatgerichtheidPercent}%",
             $"Stressbestendigheid: {row.StressbestendigheidPercent}%",
             $"Innovatie: {row.InnovatiePercent}%",
-            $"Extraversie: {row.ExtraversiePercent}%"
+            $"Energie van mensen: {row.ExtraversiePercent}%"
         ];
     }
 
@@ -829,14 +1463,6 @@ public sealed class AssessmentReportPdfService : IAssessmentReportPdfService
         "Nauwkeurig" => "Nauwkeurig werken",
         _ => domain
     };
-
-    private static string LabelCulture(string domain)
-        => CulturePersonalityCatalog.EverydayLabel(domain) switch
-        {
-            var label when !string.IsNullOrWhiteSpace(label) && label != "hoe jij graag werkt"
-                => char.ToUpperInvariant(label[0]) + label[1..],
-            _ => domain
-        };
 
     private static string FriendlyTag(string tag)
     {

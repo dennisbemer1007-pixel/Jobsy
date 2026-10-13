@@ -1,0 +1,109 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using System.Globalization
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Open)
+{
+    <div class="share-modal-backdrop test-result-sample-pdf__backdrop" @onclick="Close"></div>
+    <div class="test-result-sample-pdf"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="test-result-sample-pdf-title">
+        <header class="test-result-sample-pdf__header">
+            <div>
+                <h2 id="test-result-sample-pdf-title">
+                    @Culture.Format("TestResult.SamplePdf.Title", TestTitle)
+                </h2>
+                <p class="test-result-sample-pdf__sub">
+                    @Culture.Format("TestResult.SamplePdf.Pages", PreviewPageCount, TotalPages)
+                </p>
+            </div>
+            <div class="test-result-sample-pdf__header-actions">
+                <button type="button"
+                        class="btn-outline-brand"
+                        disabled="@(Busy || Loading)"
+                        @onclick="Download">
+                    @Culture["TestResult.SamplePdf.Download"]
+                </button>
+                <button type="button"
+                        class="share-modal__close"
+                        @onclick="Close"
+                        aria-label="@Culture["TestResult.SamplePdf.Close"]">×</button>
+            </div>
+        </header>
+
+        <div class="test-result-sample-pdf__body">
+            @if (Loading)
+            {
+                <p class="state-message">@Culture["Common.Loading"]</p>
+            }
+            else if (PagePngBase64.Count == 0)
+            {
+                <p class="state-message">@Culture["TestResult.SamplePdf.Fallback"]</p>
+            }
+            else
+            {
+                <div class="test-result-sample-pdf__pages">
+                    @for (var i = 0; i < PagePngBase64.Count; i++)
+                    {
+                        var png = PagePngBase64[i];
+                        var n = i + 1;
+                        var src = "data:image/png;base64," + png;
+                        <figure class="test-result-sample-pdf__page">
+                            <img src="@src"
+                                 alt="@Culture.Format("TestResult.SamplePdf.PageAlt", n)"
+                                 width="420"
+                                 height="594" />
+                        </figure>
+                    }
+                </div>
+            }
+        </div>
+
+        <footer class="test-result-sample-pdf__footer">
+            <p class="test-result-sample-pdf__footer-note">@Culture["TestResult.SamplePdf.FooterNote"]</p>
+            <button type="button"
+                    class="btn-gold"
+                    disabled="@Busy"
+                    aria-label="@Culture.Format("TestResult.Gold.StartAria", FormattedPrice)"
+                    @onclick="Start">
+                <span>@Culture["TestResult.Gold.Start"]</span>
+                <span class="btn-gold__meta">
+                    <span class="btn-gold__price">€ @FormattedPrice</span>
+                    <small>@Culture.Format("TestResult.Gold.Meta", QuestionCount, MinutesApprox)</small>
+                </span>
+            </button>
+            <button type="button"
+                    class="btn-outline-brand test-result-sample-pdf__download-mobile"
+                    disabled="@(Busy || Loading)"
+                    @onclick="Download">
+                @Culture["TestResult.SamplePdf.DownloadMobile"]
+            </button>
+        </footer>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string TestTitle { get; set; } = "";
+    [Parameter] public decimal PriceEuro { get; set; } = 2.99m;
+    [Parameter] public int QuestionCount { get; set; } = 150;
+    [Parameter] public int MinutesApprox { get; set; } = 20;
+    [Parameter] public int TotalPages { get; set; }
+    [Parameter] public IReadOnlyList<string> PagePngBase64 { get; set; } = Array.Empty<string>();
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnDownload { get; set; }
+    [Parameter] public EventCallback OnStart { get; set; }
+
+    private int PreviewPageCount => Math.Max(1, PagePngBase64.Count);
+
+    private string FormattedPrice =>
+        PriceEuro.ToString("0.00", CultureInfo.CurrentUICulture);
+
+    private Task Close() => OnClose.InvokeAsync();
+    private Task Download() => OnDownload.InvokeAsync();
+    private Task Start() => OnStart.InvokeAsync();
+}

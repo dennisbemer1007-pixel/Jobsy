@@ -1,0 +1,155 @@
+@namespace Jobsy.Web.Components.Pages.Candidate.DeepReport
+@using Jobsy.Core.Reports
+@using Jobsy.Core.Reports.Values
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+@if (Report is not null)
+{
+    var lang = ReportLanguage.FromUi(Culture.Language);
+    <article class="competence-report" aria-label="@DeepReportCatalog.Get("title.values", lang)">
+        <header class="competence-report__header">
+            <span class="test-status-badge test-status-badge--gold competence-report__badge">
+                <span aria-hidden="true">★</span>
+                @Culture["Test.Status.Extended"]
+            </span>
+        </header>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@DeepReportCatalog.Get("pdf.overview", lang)</h2>
+            <p class="competence-report__summary">@Report.Summary.Resolve(lang)</p>
+            <ScoreRadarChart AriaLabel="@DeepReportCatalog.Get("pdf.radar", lang)"
+                             Labels="@_labels"
+                             Values="@_scores"
+                             NormValues="@(Report.ComparisonAvailable ? _norms : null)"
+                             NormLegendLabel="@Culture["TestResult.Card.Radar.Sub.Lobsy"]" />
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@DeepReportCatalog.Get("values.rank.title", lang)</h2>
+            <p class="muted">@DeepReportCatalog.Get("values.rank.lead", lang)</p>
+            <ol>
+                @{ var i = 1; }
+                @foreach (var d in Report.Domains)
+                {
+                    <li>
+                        <strong>@i. @DeepReportCatalog.ValueLabel(d.Domain, lang)</strong> — @d.Score%
+                        <p class="muted">@ChooseLine(d.Domain, lang)</p>
+                    </li>
+                    i++;
+                }
+            </ol>
+        </section>
+
+        @if (_employersOn)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Card.Employers"]</h2>
+                <ul class="competence-norm-bars">
+                    @foreach (var e in Report.Employers)
+                    {
+                        <li class="competence-norm-bar">
+                            <div class="competence-norm-bar__row">
+                                <span>@DeepReportCatalog.Get($"org.{e.OrgTypeKey}", lang)</span>
+                            </div>
+                            <p class="muted">@DeepReportCatalog.Get($"org.{e.OrgTypeKey}.why", lang)</p>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+        else
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Values.WorkMeaning"]</h2>
+                <p>@Culture["TestResult.Values.WorkMeaningBody"]</p>
+            </section>
+        }
+
+        @if (Report.ComparisonAvailable)
+        {
+            <section class="competence-report__section">
+                <h2 class="test-detail__section-title">@Culture["TestResult.Card.Comparison"]</h2>
+                <p class="muted">@Culture["TestResult.Card.Comparison.Sub.Lobsy"]</p>
+            </section>
+        }
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["TestResult.Card.ActionPlan"]</h2>
+            @foreach (var step in Report.ActionPlan)
+            {
+                <h3>@step.Title.Resolve(lang)</h3>
+                <p>@step.Body.Resolve(lang)</p>
+            }
+        </section>
+
+        <section class="competence-report__section">
+            <h2 class="test-detail__section-title">@Culture["TestResult.Card.Strengths"]</h2>
+            <ul>
+                @foreach (var key in Report.StrengthKeys)
+                {
+                    <li>@Sentence(key, lang)</li>
+                }
+            </ul>
+            <ul>
+                @foreach (var key in Report.PitfallKeys)
+                {
+                    <li class="muted">△ @Sentence(key, lang)</li>
+                }
+            </ul>
+        </section>
+
+        <button type="button" class="btn btn-primary" disabled="@Busy" @onclick="OnDownloadPdf">
+            @Culture["Deep.DownloadPdf"]
+        </button>
+    </article>
+}
+
+@code {
+    [Parameter] public ValuesDeepReport? Report { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnDownloadPdf { get; set; }
+
+    private string[] _labels = [];
+    private int[] _scores = [];
+    private int[]? _norms;
+    private bool _employersOn;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = false;
+        }
+
+        if (Report is null) return;
+        var lang = ReportLanguage.FromUi(Culture.Language);
+        _labels = Report.Domains.Select(d => DeepReportCatalog.ValueLabel(d.Domain, lang)).ToArray();
+        _scores = Report.Domains.Select(d => d.Score).ToArray();
+        _norms = Report.ComparisonAvailable
+            ? Report.Domains.Select(d => (int)Math.Round(d.NormMean ?? 0)).ToArray()
+            : null;
+    }
+
+    private static string ChooseLine(string domain, string lang)
+    {
+        var specific = $"values.choose.{domain}";
+        return DeepReportCatalog.TryGet(specific, lang, out var text)
+            ? text
+            : DeepReportCatalog.Get("values.choose", lang);
+    }
+
+    private static string Sentence(string key, string lang)
+    {
+        if (DeepReportCatalog.TryGet(key, lang, out var text))
+        {
+            return text;
+        }
+
+        return DeepReportCatalog.ValueLabel(key.Split('.').Last(), lang);
+    }
+}

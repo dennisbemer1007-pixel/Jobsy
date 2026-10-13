@@ -12,7 +12,7 @@
         }
         html2canvasPromise = new Promise(function (resolve, reject) {
             var script = document.createElement("script");
-            script.src = "/lib/html2canvas/html2canvas.min.js";
+            script.src = "/lib/html2canvas/html2canvas.min.js?v=20261002-ch10";
             script.async = true;
             script.onload = function () {
                 if (window.html2canvas) {

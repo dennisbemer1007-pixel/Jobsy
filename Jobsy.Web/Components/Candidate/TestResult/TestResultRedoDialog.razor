@@ -1,0 +1,44 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Open)
+{
+    <div class="share-modal-backdrop" @onclick="Cancel"></div>
+    <div class="share-modal lobsy-dialog" role="dialog" aria-modal="true" aria-labelledby="test-result-redo-title">
+        <header class="share-modal__header">
+            <h2 id="test-result-redo-title">@Culture["TestResult.Redo.Title"]</h2>
+            <button type="button" class="share-modal__close" @onclick="Cancel" aria-label="@Culture["TestResult.Redo.Cancel"]">×</button>
+        </header>
+        <div class="share-modal__body">
+            <p>@Culture["TestResult.Redo.Lead"]</p>
+            <div class="test-result-redo__info">
+                @Culture.Format("TestResult.Redo.Info", Math.Max(0, RemainingAfter - 0))
+            </div>
+            <p class="test-result-redo__hint">@Culture["TestResult.Redo.Hint"]</p>
+            <div class="test-result-redo__actions">
+                <button type="button" class="login-submit" disabled="@Busy" @onclick="Confirm">@Culture["TestResult.Redo.Start"]</button>
+                @if (EditEnabled)
+                {
+                    <button type="button" class="btn-outline-brand" disabled="@Busy" @onclick="PreferEdit">@Culture["TestResult.Redo.PreferEdit"]</button>
+                }
+                <button type="button" class="test-result-actions__ghost" disabled="@Busy" @onclick="Cancel">@Culture["TestResult.Redo.Cancel"]</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool EditEnabled { get; set; }
+    /// <summary>Remaining adjustments after this retake would complete (remaining - 1, floored at 0).</summary>
+    [Parameter] public int RemainingAfter { get; set; }
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnPreferEdit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private Task Confirm() => OnConfirm.InvokeAsync();
+    private Task PreferEdit() => OnPreferEdit.InvokeAsync();
+    private Task Cancel() => OnCancel.InvokeAsync();
+}

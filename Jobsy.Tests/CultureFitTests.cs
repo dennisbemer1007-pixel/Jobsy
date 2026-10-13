@@ -75,7 +75,7 @@ public class CultureFitTests
     public void Create_form_and_map_wire_culture_ui()
     {
         var root = RepoRoot.Find();
-        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
+        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
         Assert.Contains("Employer.Culture.Legend", create, StringComparison.Ordinal);
         Assert.Contains("CulturePillars:", create, StringComparison.Ordinal);
 

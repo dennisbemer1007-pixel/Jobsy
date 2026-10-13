@@ -1,0 +1,31 @@
+KEY: SystemAdminLogin
+SUBJECT: Lobsy: break-glass administrator signed in
+PREHEADER: Sign-in at 2026-10-11 08:00 UTC.
+KIND: Essential
+--- TEXT ---
+Break-glass administrator signed in
+===================================
+
+The environment-provisioned system administrator signed in at 2026-10-11
+08:00 UTC.
+
+Method: password. IP address: 203.0.113.10.
+
+View audit log: https://lobsy.nl/admin/beveiliging
+
+Team Lobsy
+
+You get this email because you are a Lobsy administrator.
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Break-glass administrator signed in
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View audit log -> https://lobsy.nl/admin/beveiliging
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

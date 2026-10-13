@@ -20,10 +20,7 @@ public static class TokenVatPricing
 
     public static (int ExVatCents, int VatCents, int TotalCents) SplitInclVatCents(int totalCents)
     {
-        if (totalCents < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(totalCents));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(totalCents);
 
         if (totalCents == 0)
         {

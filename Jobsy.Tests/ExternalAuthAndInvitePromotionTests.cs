@@ -2,10 +2,14 @@ using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Security;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.TestSupport;
 using Jobsy.Web.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +17,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests;
 
@@ -41,7 +46,7 @@ public class ExternalAuthAndInvitePromotionTests
     }
 
     [Fact]
-    public async Task Ensure_external_second_login_skips_how_to_for_candidate()
+    public async Task Ensure_external_second_login_without_onboarding_is_not_passport_ready()
     {
         await using var db = CreateDb();
         db.Users.Add(new User
@@ -66,31 +71,33 @@ public class ExternalAuthAndInvitePromotionTests
         var body = Assert.IsType<EnsureExternalUserResponse>(ok.Value);
         Assert.False(body.IsNewUser);
         Assert.Equal("Candidate", body.Role);
-        Assert.False(body.ShowCandidateHowTo);
+        // Passport ON default: no CompletedAtUtc ⇒ not ready ⇒ ShowCandidateHowTo (→ ontdekkingsreis).
+        Assert.True(body.ShowCandidateHowTo);
     }
 
     [Fact]
-    public void CandidatePostLoginUrl_first_vs_returning()
+    public void CandidatePostLoginUrl_defaults_use_passport_home()
     {
         Assert.Equal(
-            AuthRedirects.CandidateHowToPath,
+            FeatureRoutes.CandidateWizardStartPath,
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: true));
         Assert.Equal(
-            AuthRedirects.BanenkaartPath,
+            FeatureRoutes.CandidatePassportPath,
             AuthRedirects.CandidatePostLoginUrl(showCandidateHowTo: false));
     }
 
     [Fact]
     public void ResolveCandidateReturnUrl_keeps_vacancy_deep_link()
     {
+        var on = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
         Assert.Equal(
             "/vacancies/abc",
-            AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true));
+            AuthRedirects.ResolveCandidateReturnUrl("/vacancies/abc", showCandidateHowTo: true, on));
         Assert.Equal(
-            AuthRedirects.CandidateHowToPath,
+            FeatureRoutes.CandidateWizardStartPath,
             AuthRedirects.ResolveCandidateReturnUrl("/home", showCandidateHowTo: true));
         Assert.Equal(
-            AuthRedirects.BanenkaartPath,
+            FeatureRoutes.CandidatePassportPath,
             AuthRedirects.ResolveCandidateReturnUrl("/", showCandidateHowTo: false));
         Assert.True(AuthRedirects.IsGenericPostLoginLanding("/banen"));
         Assert.False(AuthRedirects.IsGenericPostLoginLanding("/vacancies/1"));
@@ -108,7 +115,11 @@ public class ExternalAuthAndInvitePromotionTests
             KvkNumber = "12345678",
             Address = "Straat 1",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -150,7 +161,11 @@ public class ExternalAuthAndInvitePromotionTests
             KvkNumber = "12345678",
             Address = "Straat 1",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -217,16 +232,23 @@ public class ExternalAuthAndInvitePromotionTests
         var credentials = new IntegrationCredentialService(db, new PassthroughSecretProtector());
         return new AuthController(
             db, config, credentials,
-            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures()),
             new StubHostEnvironment { EnvironmentName = Environments.Development },
             new DeviceSessionService(
                 db,
                 config,
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance),
+            new MfaTrustedDeviceService(db),
             new Jobsy.Infrastructure.Services.EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Infrastructure.Services.EmailServiceStub>.Instance),
             new Jobsy.Api.Security.MfaChallengeService(
-                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())));
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
+            new AlwaysOnFeatures(),
+            new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
+            new StubSystemAdminSettings(),
+            SystemAdminTestDoubles.LoginNotifier(),
+            NullLogger<AuthController>.Instance);
     }
 
     private sealed class StubHostEnvironment : IHostEnvironment

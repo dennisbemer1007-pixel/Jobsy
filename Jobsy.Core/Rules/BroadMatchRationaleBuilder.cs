@@ -100,14 +100,47 @@ public static class BroadMatchRationaleBuilder
             return "Hoe jij graag werkt en in een team past, sluit aan bij deze functie.";
         }
 
-        if (input.CandidateValuesScores is { IsComplete: true }
-            && SchwartzValuesFitRules.Fit01(
-                input.CandidateValuesScores, input.VacancyTitle, input.VacancyDescription) >= 0.6)
+        if (input.CandidateValuesScores is { IsComplete: true })
         {
-            return "Jouw waarden en drijfveren sluiten aan bij wat deze vacature belooft.";
+            var companyOrInferred = input.CompanyValuesScores
+                ?? SchwartzValuesFitRules.InferVacancyDrivers(input.VacancyTitle, input.VacancyDescription);
+            if (SchwartzValuesFitRules.Fit01(input.CandidateValuesScores, companyOrInferred) >= 0.6)
+            {
+                if (input.CompanyValuesScores is not null)
+                {
+                    var highlight = TopCompanyValueLabel(input);
+                    return highlight is null
+                        ? "Jouw waarden sluiten aan bij wat dit bedrijf belangrijk vindt."
+                        : $"Past bij wat dit bedrijf belangrijk vindt: {highlight}.";
+                }
+
+                return "Jouw waarden en drijfveren sluiten aan bij wat deze vacature belooft.";
+            }
         }
 
         return null;
+    }
+
+    private static string? TopCompanyValueLabel(ProfileVacancyMatchInput input)
+    {
+        if (input.CompanyValuesScores is not { IsComplete: true } scores)
+        {
+            return null;
+        }
+
+        string? best = null;
+        var bestPct = -1;
+        foreach (var code in SchwartzValuesCatalog.CategoryCodes)
+        {
+            var pct = scores.Get(code);
+            if (pct > bestPct && pct >= CompanyValueCards.OneCardPercent)
+            {
+                bestPct = pct;
+                best = SchwartzValuesCatalog.EverydayLabel(code);
+            }
+        }
+
+        return best;
     }
 
     private static string? DescribeTransferable(ProfileVacancyMatchInput input, double experience01)

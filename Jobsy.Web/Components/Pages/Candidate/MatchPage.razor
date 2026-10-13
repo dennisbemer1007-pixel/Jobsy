@@ -1,8 +1,12 @@
 @page "/candidate/match"
+@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Components.Match
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @inject MatchVacancyService MatchVacancies
@@ -13,19 +17,31 @@
 @inject PersistentComponentState Persist
 @implements IDisposable
 
-<PageTitle>@Culture["Nav.Match"] · Lobsy</PageTitle>
+<PageTitle>@Culture["Match.DialogTitle"] · Lobsy</PageTitle>
 
-<div class="match-page match-page--shell @(_gate.IsProfileComplete ? null : "match-page--locked")">
+<div class="match-page match-page--shell @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ? null :"match-page--locked")"
+     data-testid="match-page">
     <header class="match-page__top">
-        <span class="match-page__title">Match</span>
+        <div class="match-page__brand">
+            <img class="match-page__mascot"
+                 src="/images/brand/mascot-128.png?v=20261004-13"
+                 width="40"
+                 height="40"
+                 alt=""
+                 aria-hidden="true" />
+            <div>
+                <h1 class="match-page__title">@Culture["Match.DialogTitle"]</h1>
+                @if (_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen && _deck.Count > 0 && !_deck.IsFinished)
+                {
+                    <p class="match-page__progress-text" aria-live="polite">
+                        @Culture.Format("Match.DialogProgress", _deck.Position, _deck.Count)
+                        <span> · @Culture["Kb.Match.NoWrongChoice"]</span>
+                    </p>
+                }
+            </div>
+        </div>
         <div class="match-page__top-actions">
-            <button type="button" class="match-page__icon-btn" title="Geschiedenis" @onclick="ShowHistoryHint">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="9"/>
-                    <path d="M12 7v5l3 2"/>
-                </svg>
-            </button>
-            <a class="match-page__icon-btn" href="/" title="@Culture["Discovery.BackToSearch"]" aria-label="@Culture["Discovery.BackToSearch"]">
+            <a class="match-page__icon-btn" href="@KbRoutes.Map" title="@Culture["Discovery.BackToSearch"]" aria-label="@Culture["Discovery.BackToSearch"]">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"/>
                     <path d="m20 20-3.5-3.5"/>
@@ -34,27 +50,53 @@
         </div>
     </header>
 
-    <section class="match-page__body @(_gate.IsProfileComplete ? "match-page__panel--swipe" : "match-page__panel--gate")"
-             aria-label="@(_gate.IsProfileComplete ? "Match swipen" : "Match ontgrendelen")">
+    @if (_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen && _deck.Count > 0 && !_deck.IsFinished)
+    {
+        var progressPct = (int)Math.Round(100.0 * _deck.Position / _deck.Count);
+        <div class="match-page__bar"
+             role="progressbar"
+             aria-valuemin="1"
+             aria-valuemax="@_deck.Count"
+             aria-valuenow="@_deck.Position">
+            <svg class="match-page__bar-svg" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true">
+                <rect class="match-page__bar-track" x="0" y="0" width="100" height="4" rx="2" />
+                <rect class="match-page__bar-fill" x="0" y="0" width="@progressPct" height="4" rx="2" />
+            </svg>
+        </div>
+    }
+
+    <section class="match-page__body @(_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen ?"match-page__panel--swipe" : "match-page__panel--gate")"
+             aria-label="@Culture["Match.DialogTitle"]">
         @if (_loading)
         {
-            <PageContentSkeleton Variant="match" LoadingLabel="Bezig met laden…" />
+            <PageContentSkeleton Variant="match" />
         }
-        else if (!_gate.IsProfileComplete)
+        else if (!_deck.Gate.IsProfileComplete)
         {
-            <MatchUnlockPanel Gate="_gate" />
+            <MatchUnlockPanel Gate="_deck.Gate" />
+        }
+        else if (!_deck.Gate.FitGateOpen)
+        {
+            <MatchUnlockPanel Gate="_deck.Gate" FitGateOnly="true" />
+        }
+        else if (_deck.IsFinished)
+        {
+            <div class="match-page__empty" data-testid="match-deck-done">
+                <h2>@Culture["Match.DeckDone"]</h2>
+                <div class="match-page__empty-actions">
+                    <a class="match-page__cta" href="@KbRoutes.Saved">@Culture["Kb.Match.ViewSaved"]</a>
+                    <a class="match-page__cta match-page__cta--ghost" href="@KbRoutes.Map">@Culture["Kb.Match.BackToMap"]</a>
+                </div>
+            </div>
         }
         else if (Current is null)
         {
             <div class="match-page__empty">
-                <h2>Geen passende matches</h2>
-                <p>Er liggen nu geen vacatures die bij jouw opleiding en reistijd passen.</p>
-                <p class="match-gate__hint">
-                    Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de banenkaart.
-                </p>
+                <h2>@Culture["Kb.Match.EmptyTitle"]</h2>
+                <p>@Culture["Kb.Match.EmptyLead"]</p>
                 <div class="match-page__empty-actions">
-                    <a class="match-page__cta" href="/">@Culture["Discovery.BackToSearch"]</a>
-                    <button type="button" class="match-page__cta match-page__cta--ghost" @onclick="ReloadDeckAsync">Opnieuw laden</button>
+                    <a class="match-page__cta" href="@KbRoutes.Map">@Culture["Discovery.BackToSearch"]</a>
+                    <button type="button" class="match-page__cta match-page__cta--ghost" @onclick="() => ReloadDeckAsync()">@Culture["Kb.Match.Reload"]</button>
                 </div>
             </div>
         }
@@ -77,6 +119,8 @@
                            OnSwipeComplete="HandleSwipeComplete" />
             </div>
 
+            <p class="match-page__swipe-hint">@Culture["Kb.Match.SwipeHint"]</p>
+
             @if (PeekAfterNext?.ImageUrl is { Length: > 0 } prefetchUrl)
             {
                 <img class="match-page__prefetch" src="@prefetchUrl" alt="" aria-hidden="true" />
@@ -92,34 +136,30 @@
 
 @code {
     private const string PersistKey = "candidateMatchDeck";
-    private readonly List<SwipeViewModel> _deck = [];
-    private MatchProfileGateViewModel _gate = new();
-    private int _index;
+    private readonly MatchDeck _deck = new();
+    private int _restoredIndex;
+    private List<Guid> _restoredVacancyIds = [];
     private bool _loading = true;
     private bool _restored;
+    private bool _heavyLoadStarted;
     private string? _toast;
     private CancellationTokenSource? _toastCts;
     private PersistingComponentStateSubscription _persistSubscription;
 
-    private SwipeViewModel? Current =>
-        _index >= 0 && _index < _deck.Count ? _deck[_index] : null;
-
-    private SwipeViewModel? PeekNext =>
-        _index + 1 < _deck.Count ? _deck[_index + 1] : null;
-
+    private SwipeViewModel? Current => _deck.Current;
+    private SwipeViewModel? PeekNext => _deck.PeekNext;
     private SwipeViewModel? PeekAfterNext =>
-        _index + 2 < _deck.Count ? _deck[_index + 2] : null;
+        _deck.Index + 2 < _deck.Count ? _deck.Items[_deck.Index + 2] : null;
 
     protected override void OnInitialized()
     {
         _persistSubscription = Persist.RegisterOnPersisting(PersistState);
         if (Persist.TryTakeFromJson<MatchPagePersistState>(PersistKey, out var saved) && saved is not null)
         {
-            _gate = saved.Gate ?? new();
-            _deck.Clear();
-            _deck.AddRange(saved.Deck ?? []);
-            _index = Math.Clamp(saved.Index, 0, Math.Max(0, _deck.Count));
-            _loading = false;
+            _deck.SetGate(saved.Gate ?? new());
+            _restoredVacancyIds = saved.VacancyIds ?? [];
+            _restoredIndex = Math.Max(0, saved.Index);
+            _loading = true;
             _restored = true;
         }
     }
@@ -128,78 +168,78 @@
     {
         Persist.PersistAsJson(PersistKey, new MatchPagePersistState
         {
-            Gate = _gate,
-            Deck = _deck.ToList(),
-            Index = _index
+            Gate = SlimGate(_deck.Gate),
+            VacancyIds = _deck.Items.Select(v => v.VacancyId).Where(id => id is Guid).Select(id => id!.Value).ToList(),
+            Index = _deck.Index
         });
         return Task.CompletedTask;
     }
 
-    protected override async Task OnInitializedAsync()
+    private static MatchProfileGateViewModel SlimGate(MatchProfileGateViewModel gate) => new()
     {
-        if (_restored)
+        IsAuthenticated = gate.IsAuthenticated,
+        ProfileBasicsFilled = gate.ProfileBasicsFilled,
+        HasEducationLevel = gate.HasEducationLevel,
+        WizardCompleted = gate.WizardCompleted,
+        CompetencyCompleted = gate.CompetencyCompleted,
+        CareerCompleted = gate.CareerCompleted,
+        CultureCompleted = gate.CultureCompleted,
+        ValuesCompleted = gate.ValuesCompleted,
+        HasProvisionalScores = gate.HasProvisionalScores,
+        IsProfileComplete = gate.IsProfileComplete,
+        CompletedCount = gate.CompletedCount,
+        RequiredCount = gate.RequiredCount,
+        PreferredTransport = gate.PreferredTransport,
+        MaxTravelMinutes = gate.MaxTravelMinutes
+    };
+
+    protected override Task OnInitializedAsync()
+        => Task.CompletedTask;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _heavyLoadStarted || !RendererInfo.IsInteractive)
         {
             return;
         }
 
-        await ReloadDeckAsync();
+        _heavyLoadStarted = true;
+        await ReloadDeckAsync(preserveProgress: _restored);
     }
 
     public void Dispose()
         => _persistSubscription.Dispose();
 
-    private async Task ReloadDeckAsync()
+    private async Task ReloadDeckAsync(bool preserveProgress = false)
     {
         _loading = true;
-        _deck.Clear();
-        _index = 0;
         await InvokeAsync(StateHasChanged);
 
-        _gate = await MatchProfile.RefreshAsync();
+        await _deck.LoadAsync(MatchProfile, MatchVacancies, take: 24, orderByMatch: false);
 
-        if (_gate.IsProfileComplete)
+        if (preserveProgress && _restoredVacancyIds.Count > 0)
         {
-            var items = await MatchVacancies.GetRelevantSwipeVacanciesAsync(_gate, take: 24);
-            foreach (var item in items)
-            {
-                _deck.Add(SwipeViewModel.FromVacancy(item, showMatchPercentage: true));
-            }
+            _deck.RestoreIndex(_restoredVacancyIds, _restoredIndex);
         }
 
-        _index = 0;
         _loading = false;
+        await InvokeAsync(StateHasChanged);
     }
 
-    private sealed class MatchPagePersistState
+    internal sealed class MatchPagePersistState
     {
         public MatchProfileGateViewModel? Gate { get; set; }
-        public List<SwipeViewModel>? Deck { get; set; }
+        public List<Guid>? VacancyIds { get; set; }
         public int Index { get; set; }
     }
 
     private void HandleReject(SwipeViewModel model)
-        => _ = ShowToastAsync("Overgeslagen");
+        => _ = ShowToastAsync(Culture["Kb.Match.Skipped"]);
 
     private void HandleInterest(SwipeViewModel model)
     {
-        if (model.VacancyId is Guid id)
-        {
-            _ = PersistLikeAsync(id);
-        }
-
-        _ = ShowToastAsync("Interesse genoteerd");
-    }
-
-    private async Task PersistLikeAsync(Guid vacancyId)
-    {
-        try
-        {
-            await Api.SetLikedAsync(vacancyId, liked: true);
-        }
-        catch
-        {
-            // Guest / network — swipe UX must stay instant.
-        }
+        _ = _deck.LikeAsync(Api, model);
+        _ = ShowToastAsync(Culture["Match.ToastLiked"]);
     }
 
     private void HandleMoreInfo(SwipeViewModel model)
@@ -212,14 +252,15 @@
 
     private void HandleSwipeComplete((SwipeViewModel Model, SwipeDirection Direction) result)
     {
-        if (_index < _deck.Count)
+        if (result.Direction == SwipeDirection.Left && result.Model.VacancyId is Guid id)
         {
-            _index++;
+            _deck.Defer(id);
+        }
+        else
+        {
+            _deck.Advance();
         }
     }
-
-    private void ShowHistoryHint()
-        => _ = ShowToastAsync("Geschiedenis volgt binnenkort");
 
     private async Task ShowToastAsync(string message)
     {
@@ -239,7 +280,6 @@
         }
         catch (TaskCanceledException)
         {
-            // replaced by a newer toast
         }
     }
 }

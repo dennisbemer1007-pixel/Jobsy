@@ -15,7 +15,7 @@ namespace Jobsy.Tests;
 public class PrepaidTokenCheckoutTests
 {
     [Fact]
-    public async Task Publish_without_tokens_and_no_pending_approval_returns_InsufficientTokens()
+    public async Task Publish_without_tokens_and_no_pending_approval_succeeds()
     {
         await using var db = CreateDb();
         var (_, vacancyId) = await SeedDraftVacancyAsync(db, tokenBalance: 0);
@@ -31,12 +31,9 @@ public class PrepaidTokenCheckoutTests
             actorUserId: null,
             allowPendingApproval: false);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.InsufficientTokens);
-        Assert.Equal(VacancyStatus.Draft, vacancy.Status);
-        Assert.True(result.RequiredTokens >= 1m);
+        Assert.True(result.Succeeded, result.ErrorMessage);
+        Assert.Equal(VacancyStatus.Active, vacancy.Status);
         Assert.Equal(0m, result.Balance);
-        Assert.Contains("tokens", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -50,7 +47,11 @@ public class PrepaidTokenCheckoutTests
             Name = "Exact Co",
             KvkNumber = "11112222",
             Address = "Test",
-            Location = new GeoPoint(52.0, 4.3)
+            Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -92,7 +93,8 @@ public class PrepaidTokenCheckoutTests
             CompanyId = companyId,
             VacancyId = vacancyId,
             ActionKind = PendingTokenActionKind.Publish,
-            RequiredTokens = 1m,
+            OptionHighlight = true,
+            RequiredTokens = 2m,
             Status = PendingTokenActionStatus.Pending,
             CreatedAt = DateTime.UtcNow
         });
@@ -109,7 +111,7 @@ public class PrepaidTokenCheckoutTests
             new TokenPurchaseInvoiceService(db, companySettings),
             new VatBufferTransferService(db, companySettings, NullLogger<VatBufferTransferService>.Instance),
             new FakeRevenueShare(),
-            new CommissionLedgerService(db),
+            new CommissionLedgerService(db, new AlwaysOnFeatures()),
             pending,
             new FakeHostEnvironment(),
             NullLogger<TokenPurchaseFulfillmentService>.Instance);
@@ -200,7 +202,11 @@ public class PrepaidTokenCheckoutTests
             Name = "Prepaid Co",
             KvkNumber = "12345678",
             Address = "Westland",
-            Location = new GeoPoint(51.99, 4.22)
+            Location = new GeoPoint(51.99, 4.22),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         db.Vacancies.Add(new Vacancy
@@ -245,7 +251,7 @@ public class PrepaidTokenCheckoutTests
     private sealed class FakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, false, false, "http://localhost:5201", DateTime.UtcNow, 120));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, false, "http://localhost:5201", DateTime.UtcNow, 120));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);

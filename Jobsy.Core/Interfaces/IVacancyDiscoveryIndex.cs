@@ -14,6 +14,12 @@ public interface IVacancyDiscoveryIndex
     /// <summary>Mark the snapshot stale so the next read (or the refresh job) rebuilds it.</summary>
     void Invalidate();
 
+    /// <summary>
+    /// Mark the snapshot stale after a company verification change so public channels
+    /// pick it up within one refresh cycle (≤ 60 s).
+    /// </summary>
+    Task InvalidateCompanyAsync(Guid companyId, CancellationToken cancellationToken = default);
+
     /// <summary>Rebuild the snapshot from the database.</summary>
     Task RefreshAsync(CancellationToken cancellationToken = default);
 

@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Web.Models;
 
 public class VacancyListItem
@@ -34,6 +36,7 @@ public class VacancyListItem
     public int ApplicationCount { get; set; }
     public int LikeCount { get; set; }
     public string? OfferedByLabel { get; set; }
+    public int? PublicMapRadiusKm { get; set; }
     public bool ShowClientAddressOnMap { get; set; }
     public Guid? IntermediaryCompanyId { get; set; }
     public string Kind { get; set; } = "Regular";
@@ -88,6 +91,7 @@ public class VacancyListItem
     public bool IsBroadMatch { get; set; }
     public string? MatchRationale { get; set; }
     public List<string> CulturePillars { get; set; } = [];
+    public List<VacancyEngagementBadge> EngagementItems { get; set; } = [];
     public int? CultureFitPercent { get; set; }
     public string? CultureFitBand { get; set; }
     public string? CultureFitLabel { get; set; }
@@ -99,6 +103,46 @@ public class VacancyListItem
     public int? BarrierMinExperienceYears { get; set; }
     public int? BarrierMinExperienceHours { get; set; }
     public List<string> BarrierHardChecks { get; set; } = [];
+    public bool RequestedHighlight { get; set; }
+    public bool RequestedPushBom { get; set; }
+    public bool RequestedExtend { get; set; }
+    public int NewApplicationCount { get; set; }
+    public bool HasPushBom { get; set; }
+    public int IncompleteFieldCount { get; set; }
+    public string? RequesterDisplayName { get; set; }
+
+    /// <summary>Employer-only preview of a non-public vacancy (noindex, no JSON-LD).</summary>
+    public bool IsPreview { get; set; }
+
+    /// <summary>Draft marked klaar — auto-publishes on company verification.</summary>
+    public bool PublishOnVerification { get; set; }
+
+    public string? FitGate { get; set; }
+    public int? FitPercent { get; set; }
+    public string? FitBand { get; set; }
+    public string? FitWhyLine { get; set; }
+    public List<string> FitWhyKinds { get; set; } = [];
+    public CandidateFitDimensionsModel? FitDimensions { get; set; }
+    /// <summary>Candidate-own-only. Localization key for "Staat lager: …".</summary>
+    public string? RankLowerReason { get; set; }
+
+    /// <summary>Candidate must tick "Beschikbaar voor werk" before a fit percent is shown.</summary>
+    public bool OpenForWorkRequired { get; set; }
+    public DateTime? ClosedAtUtc { get; set; }
+}
+
+public sealed class VacancyEngagementBadge
+{
+    public string ItemId { get; set; } = "";
+    public bool Checked { get; set; }
+}
+
+public sealed class CandidateFitDimensionsModel
+{
+    public int? Culture { get; set; }
+    public int? Values { get; set; }
+    public int? Competencies { get; set; }
+    public int? Interests { get; set; }
 }
 
 public sealed class WageByAgeItem
@@ -138,6 +182,9 @@ public sealed class MeProfile
     public string? TestAiConsentVersion { get; set; }
     public DateTime? ParentalConsentAt { get; set; }
     public string? ParentalConsentEmail { get; set; }
+    public bool EmailVerified { get; set; }
+    public bool PhoneVerified { get; set; }
+    public List<DiplomaEvaluationItem> DiplomaEvaluations { get; set; } = [];
 }
 
 public sealed class CandidateUploadedCvInfo
@@ -181,6 +228,39 @@ public sealed class CandidatePreferences
     public bool? ShowAddressOnCv { get; set; }
     public bool? NoWorkExperience { get; set; }
     public string? EducationDirection { get; set; }
+    public List<string> AvailabilityPresets { get; set; } = [];
+    public bool? AvailabilityPresetsOverridden { get; set; }
+    public List<CandidateLanguage> SpokenLanguages { get; set; } = [];
+    public string? DutchLevel { get; set; }
+    public List<string> EmployerPreferences { get; set; } = [];
+    public List<string> LearningGoals { get; set; } = [];
+    public List<string> Hobbies { get; set; } = [];
+    public SharedWorkPreferenceChoices? WorkPreferences { get; set; }
+    public bool? ShareEmployerPreferences { get; set; }
+    public string? WorkRegion { get; set; }
+    public bool? HasOwnCar { get; set; }
+    public List<string> ContractPreferences { get; set; } = [];
+}
+
+public sealed class SharedWorkPreferenceChoices
+{
+    public string? Indoor { get; set; }
+    public string? Outdoor { get; set; }
+    public string? PhysicalWork { get; set; }
+    public string? Pace { get; set; }
+}
+
+public sealed class CandidateLanguage
+{
+    public string Code { get; set; } = "";
+    public string? Level { get; set; }
+}
+
+public sealed class CandidatePrivatePreferences
+{
+    public List<string> Dislikes { get; set; } = [];
+    public List<string> CustomDislikes { get; set; } = [];
+    public DateTime? UpdatedAtUtc { get; set; }
 }
 
 public sealed class CandidateEmployerHistory
@@ -192,12 +272,60 @@ public sealed class CandidateEmployerHistory
     public string? StartMonth { get; set; }
     public string? EndMonth { get; set; }
     public string? Description { get; set; }
+
+    /// <summary>Null means a saved job with no end month is still the current job. A new empty row is false.</summary>
+    public bool? IsCurrent { get; set; }
+
+    /// <summary>ESCO id the candidate confirmed for this role. Cleared when the role text changes.</summary>
+    public string? EscoId { get; set; }
+
+    /// <summary>True after "Staat er niet bij". Not stored. A new role asks again.</summary>
+    public bool OccupationDismissed { get; set; }
+
+    public bool ShowsAsCurrent =>
+        IsCurrent == true
+        || (IsCurrent is null
+            && !string.IsNullOrWhiteSpace(EmployerName)
+            && string.IsNullOrWhiteSpace(EndMonth));
 }
 
 public sealed class CandidateCertificate
 {
     public string Name { get; set; } = string.Empty;
     public int? Year { get; set; }
+}
+
+/// <summary>Owner view of a foreign-diploma evaluation. The file itself is downloaded separately.</summary>
+public sealed class DiplomaEvaluationItem
+{
+    public Guid Id { get; set; }
+    public string? DiplomaTitle { get; set; }
+    public string IssuingBody { get; set; } = string.Empty;
+    public string? IssuingBodyOther { get; set; }
+    public string EquivalentLevelText { get; set; } = string.Empty;
+    public string? EquivalentLevelCode { get; set; }
+    public DateOnly EvaluationDate { get; set; }
+    public string ReferenceNumber { get; set; } = string.Empty;
+    public bool HasDocument { get; set; }
+    public string? DocumentFileName { get; set; }
+}
+
+public sealed class DiplomaEvaluationDraft
+{
+    public Guid? Id { get; set; }
+    public string DiplomaTitle { get; set; } = string.Empty;
+    public string IssuingBody { get; set; } = DiplomaEvaluationRules.BodyNuffic;
+    public string IssuingBodyOther { get; set; } = string.Empty;
+    public string EquivalentLevelText { get; set; } = string.Empty;
+    public string EquivalentLevelCode { get; set; } = string.Empty;
+    public string DateInput { get; set; } = string.Empty;
+    public string ReferenceNumber { get; set; } = string.Empty;
+    public bool HasDocument { get; set; }
+    public string? DocumentFileName { get; set; }
+    public bool RemoveDocument { get; set; }
+    public byte[]? PendingBytes { get; set; }
+    public string? PendingFileName { get; set; }
+    public string? PendingContentType { get; set; }
 }
 
 public sealed class VacancyProductActionResult
@@ -217,6 +345,63 @@ public sealed class OriginPoint
 {
     public double Latitude { get; set; }
     public double Longitude { get; set; }
+}
+
+/// <summary>
+/// Minimal public info for a closed vacancy (410). No company name, dates, contact or
+/// description — see <c>ClosedVacancyDto</c> on the API.
+/// </summary>
+public sealed class ClosedVacancyInfo
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? City { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string? CategoryLabel { get; set; }
+}
+
+/// <summary>One similar vacancy nearby on the closed-vacancy (410) page. Mirrors VacancyCardDto.</summary>
+public sealed class SimilarVacancyItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string? OfferedByLabel { get; set; }
+    public string Place { get; set; } = string.Empty;
+    public string? ThumbnailUrl { get; set; }
+    public string? LogoUrl { get; set; }
+    public decimal? HourlyWage { get; set; }
+    public bool WageVisible { get; set; }
+    public string[]? WorkTypes { get; set; }
+    public bool IsHighlighted { get; set; }
+    public int? TravelMinutes { get; set; }
+    public double? DistanceKm { get; set; }
+}
+
+/// <summary>
+/// Result of looking up a vacancy by id: either found (full payload), closed (410, minimal
+/// public data) or not found at all (404). The Web client maps the HTTP status to this instead
+/// of throwing, so the detail page can render each case without catching exceptions.
+/// </summary>
+public abstract class VacancyLookup
+{
+    public static VacancyLookup Found(VacancyListItem vacancy) => new FoundResult(vacancy);
+
+    public static VacancyLookup Closed(ClosedVacancyInfo info) => new ClosedResult(info);
+
+    public static VacancyLookup NotFound { get; } = new NotFoundResult();
+
+    public sealed class FoundResult(VacancyListItem vacancy) : VacancyLookup
+    {
+        public VacancyListItem Vacancy { get; } = vacancy;
+    }
+
+    public sealed class ClosedResult(ClosedVacancyInfo info) : VacancyLookup
+    {
+        public ClosedVacancyInfo Info { get; } = info;
+    }
+
+    public sealed class NotFoundResult : VacancyLookup;
 }
 
 public sealed class VacancyTravelResult
@@ -274,6 +459,7 @@ public sealed class MetricCount
     public string Period { get; set; } = string.Empty;
     public decimal Value { get; set; }
     public List<decimal>? Sparkline { get; set; }
+    public decimal? PreviousValue { get; set; }
 }
 
 public sealed class MetricDrilldownItem
@@ -335,6 +521,23 @@ public sealed class CandidateEngagementItem
     public string? Channel { get; set; }
     public string? ImageUrl { get; set; }
     public string? CompanyLogoUrl { get; set; }
+    public string? VacancyStatus { get; set; }
+    public DateOnly? EndDate { get; set; }
+    public DateTime? ClosedAtUtc { get; set; }
+    public string? LocationLabel { get; set; }
+    public int? HoursPerWeekMin { get; set; }
+    public int? HoursPerWeekMax { get; set; }
+    public Guid? CategoryId { get; set; }
+    public string? WorkTypeLabel { get; set; }
+    public bool HasApplied { get; set; }
+    public Guid? ApplicationId { get; set; }
+    public int? FitPercent { get; set; }
+    public string? FitBand { get; set; }
+    public string? WhyLineKey { get; set; }
+    public bool FitGateClosed { get; set; }
+    public string? SavedStateKind { get; set; }
+    public int? DaysUntilEnd { get; set; }
+    public string? SavedStateLabelKey { get; set; }
 }
 
 public sealed class VacancyMapViewResponse
@@ -357,4 +560,5 @@ public sealed class VacancyPinBootItem
     public uint HighlightRank { get; set; }
     public string? WorkType { get; set; }
     public string? MatchColorBand { get; set; }
+    public int? PublicMapRadiusKm { get; set; }
 }

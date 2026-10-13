@@ -5,29 +5,36 @@ namespace Jobsy.Web.Security;
 /// <c>'unsafe-inline'</c>). Style attributes stay <c>'unsafe-inline'</c> because
 /// Razor/MapLibre set CSS variables inline; <c>&lt;style&gt;</c> elements use the nonce.
 /// Image and connect hosts are allow-listed (no <c>https:</c> / <c>ws:</c> / <c>wss:</c>
-/// scheme wildcards). Blazor Server still needs <c>'unsafe-eval'</c> for the circuit.
+/// scheme wildcards). App code no longer calls <c>eval</c> via JS interop (prompt 07).
+/// Playwright CSP smoke on public surfaces reported no <c>securitypolicyviolation</c> events
+/// without <c>'unsafe-eval'</c>, so it is omitted (see <c>docs/csp-smoke-prompt07.log</c>).
 /// </summary>
 public static class JobsyContentSecurityPolicy
 {
     public const string OpenFreeMap = "https://tiles.openfreemap.org";
-    /// <summary>YouTube hqdefault thumbnails for click-to-load video posters only.</summary>
-    public const string YouTubeThumbnail = "https://i.ytimg.com";
 
-    public static string ForWeb(string nonce)
+    /// <param name="allowUnsafeEval">
+    /// CI/Playwright only: <c>WaitForFunctionAsync</c> evaluates predicates via <c>eval</c>.
+    /// Production and Acceptatie keep this false.
+    /// </param>
+    public static string ForWeb(string nonce, bool allowUnsafeEval = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(nonce);
         var n = $"'nonce-{nonce}'";
+        var scriptSrc = allowUnsafeEval
+            ? $"script-src 'self' {n} 'unsafe-eval';"
+            : $"script-src 'self' {n};";
         return string.Join(' ',
             "default-src 'self';",
             "base-uri 'self';",
             "frame-ancestors 'none';",
             "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com https://vimeo.com;",
             "object-src 'none';",
-            $"img-src 'self' data: blob: {OpenFreeMap} {YouTubeThumbnail};",
+            $"img-src 'self' data: blob: {OpenFreeMap};",
             $"font-src 'self' data: {OpenFreeMap};",
             $"style-src-elem 'self' {n};",
             "style-src-attr 'unsafe-inline';",
-            $"script-src 'self' {n} 'unsafe-eval';",
+            scriptSrc,
             "script-src-attr 'none';",
             "form-action 'self';",
             $"connect-src 'self' {OpenFreeMap};",

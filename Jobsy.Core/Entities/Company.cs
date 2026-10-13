@@ -24,10 +24,65 @@ public class Company
     public DateTime? KvkLastVerificationAttemptAtUtc { get; set; }
     public int KvkVerificationAttempts { get; set; }
 
+    /// <summary>
+    /// Whether the company has proven it is real on Lobsy (public visibility gate).
+    /// No C# initializer — every creation path sets this explicitly.
+    /// </summary>
+    public CompanyVerificationStatus VerificationStatus { get; set; }
+
+    /// <summary>How <see cref="VerificationStatus"/> was last set.</summary>
+    public CompanyVerificationMethod VerificationMethod { get; set; }
+
+    /// <summary>When the company first became <see cref="CompanyVerificationStatus.Verified"/>.</summary>
+    public DateTime? VerifiedAtUtc { get; set; }
+
+    /// <summary>When verification status or method last changed.</summary>
+    public DateTime? VerificationUpdatedAtUtc { get; set; }
+
+    /// <summary>
+    /// When a manual verification check was opened (06). Cleanup (day 60) skips while open.
+    /// </summary>
+    public DateTime? ManualVerificationOpenedAtUtc { get; set; }
+
+    /// <summary>
+    /// When a manual verification check was decided. Cleanup waits 7 more days after this.
+    /// </summary>
+    public DateTime? ManualVerificationClosedAtUtc { get; set; }
+
+    /// <summary>
+    /// Vacancies that went live automatically when this company was last verified (11 success banner).
+    /// </summary>
+    public int LastAutoPublishedVacancyCount { get; set; }
+
+    /// <summary>
+    /// Set by a "Verwijderen" decision on a content report (DSA notice and action, public-pages 06).
+    /// While filled, <c>/{kvk}</c> answers 404 and the sitemap drops the company paths.
+    /// </summary>
+    public DateTime? PublicPageBlockedAtUtc { get; set; }
+
     public string Address { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
+
+    /// <summary>
+    /// Company-level branches (max 4), stored like <see cref="Vacancy.WorkTypeLabels"/> via
+    /// <see cref="Rules.WorkTypeLabels.CombineStoredForCompany"/>. Root organisation only;
+    /// vestigingen inherit from the root.
+    /// </summary>
+    public string? WorkTypeLabels { get; set; }
+
     public GeoPoint Location { get; set; } = null!;
+
+    /// <summary>
+    /// How <see cref="Location"/> was obtained. Unknown → skip on the public map.
+    /// </summary>
+    public CompanyLocationSource LocationSource { get; set; } = CompanyLocationSource.Kvk;
+
     public CompanyType Type { get; set; } = CompanyType.Employer;
+
+    /// <summary>
+    /// True only for acceptatie CLI-seeded sample companies. Never set via API/UI.
+    /// </summary>
+    public bool IsTestData { get; set; }
 
     public Guid? ParentCompanyId { get; set; }
     public Company? ParentCompany { get; set; }
@@ -149,6 +204,22 @@ public class Company
 
     /// <summary>Start of the first-year partnership window (for token commission year 1/2).</summary>
     public DateTime? FirstYearStartedAt { get; set; }
+
+    /// <summary>
+    /// Commission window start on the organisation root (first credited purchase). Backfilled in 02.
+    /// </summary>
+    public DateTime? CommissionStartsAtUtc { get; set; }
+
+    public decimal? CommissionYear2RateSnapshot { get; set; }
+    public decimal? CommissionYear3RateSnapshot { get; set; }
+
+    /// <summary>When sales attribution was applied (salesmanager or ambassadeur).</summary>
+    public DateTime? SalesAttributedAtUtc { get; set; }
+
+    public SalesAttributionSource? SalesAttributionSource { get; set; }
+
+    /// <summary>Legal form from KvK when known; null = unknown (D4: name only, no place).</summary>
+    public CompanyLegalForm? LegalForm { get; set; }
 
     /// <summary>
     /// When true, the next published vacancy receives one free start-highlight

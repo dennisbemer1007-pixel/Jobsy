@@ -11,6 +11,7 @@ public interface IWhoAmIGenerationService
         CulturePersonalityScores culture,
         WhoAmIProfileHighlights? profile = null,
         SchwartzValuesScores? values = null,
+        IReadOnlyList<(string Code, int Score)>? competence = null,
         CancellationToken cancellationToken = default);
 }
 

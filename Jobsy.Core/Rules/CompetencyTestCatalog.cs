@@ -141,29 +141,19 @@ public static class CompetencyTestCatalog
     /// Extraversion is scored separately and does not change the four matching competencies.
     /// </summary>
     public static CompetencyScores? Score(IReadOnlyDictionary<int, int> answers)
+        => Score(answers, Questions);
+
+    /// <summary>Same math as <see cref="Score(IReadOnlyDictionary{int,int})"/> over an explicit item list (pupil bank).</summary>
+    public static CompetencyScores? Score(
+        IReadOnlyDictionary<int, int> answers,
+        IEnumerable<CompetencyQuestion> items)
     {
-        int? ScoreCategory(string category)
-        {
-            var items = Questions.Where(q => q.Category == category).ToList();
-            var scored = new List<int>();
-            foreach (var question in items)
-            {
-                if (!answers.TryGetValue(question.Id, out var raw) || !IsValidAnswer(raw))
-                {
-                    continue;
-                }
-
-                scored.Add(question.Reverse ? LikertMax + LikertMin - raw : raw);
-            }
-
-            return scored.Count == 0 ? null : LikertAnswerJson.ToPercent(scored);
-        }
-
-        var samenwerken = ScoreCategory(Samenwerken);
-        var resultaat = ScoreCategory(Resultaatgerichtheid);
-        var stress = ScoreCategory(Stressbestendigheid);
-        var innovatie = ScoreCategory(Innovatie);
-        var extraversie = ScoreCategory(Extraversie);
+        var list = items.Select(q => (q.Id, q.Category, q.Reverse)).ToList();
+        var samenwerken = LikertCategoryScorer.ScoreCategory(list, answers, Samenwerken);
+        var resultaat = LikertCategoryScorer.ScoreCategory(list, answers, Resultaatgerichtheid);
+        var stress = LikertCategoryScorer.ScoreCategory(list, answers, Stressbestendigheid);
+        var innovatie = LikertCategoryScorer.ScoreCategory(list, answers, Innovatie);
+        var extraversie = LikertCategoryScorer.ScoreCategory(list, answers, Extraversie);
         if (samenwerken is null && resultaat is null && stress is null && innovatie is null && extraversie is null)
         {
             return null;

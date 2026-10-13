@@ -1,0 +1,42 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<PassportPrivacyPromise />
+<h1 tabindex="-1">@Culture["Onboarding.Consent.Title"]</h1>
+<p class="ob-wizard__lead">@Culture["Onboarding.Consent.Lead"]</p>
+<ol class="ob-wizard__test-list">
+    @foreach (var tab in TestTabs)
+    {
+        <li>
+            <strong>@Culture[tab.Title]</strong>
+            <small>@Culture[tab.Lead]</small>
+        </li>
+    }
+</ol>
+<label class="ob-wizard__consent" role="switch" aria-checked="@(Draft.ConsentRequested ? "true" : "false")">
+    <input type="checkbox" checked="@Draft.ConsentRequested" @onchange="OnConsentChanged" />
+    @Culture["Onboarding.Consent.Check"]
+</label>
+<details>
+    <summary>@Culture["Onboarding.Consent.More"]</summary>
+    <p>@Culture["Onboarding.Consent.MoreText"]</p>
+</details>
+<p class="ob-wizard__hint"><span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span> @Culture["Onboarding.Consent.Private"]</p>
+
+@code {
+    public sealed record TestTab(int Step, string Title, string Lead);
+
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
+    /// <summary>Notifies the parent so buttons bound to <see cref="OnboardingProfileDraft.ConsentRequested"/> re-render.</summary>
+    [Parameter] public EventCallback<bool> ConsentChanged { get; set; }
+
+    private async Task OnConsentChanged(ChangeEventArgs args)
+    {
+        var value = args.Value is bool flag && flag;
+        Draft.ConsentRequested = value;
+        await ConsentChanged.InvokeAsync(value);
+    }
+}

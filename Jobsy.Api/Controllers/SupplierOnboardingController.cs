@@ -2,12 +2,14 @@ using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/companies/{companyId:guid}/onboarding")]
 [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class SupplierOnboardingController : ControllerBase
 {
     private readonly ISupplierOnboardingPaymentService _onboarding;
@@ -25,6 +27,7 @@ public class SupplierOnboardingController : ControllerBase
     }
 
     [HttpPost("checkout")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
     public async Task<ActionResult<SupplierOnboardingCheckoutResult>> CreateCheckout(
         Guid companyId,
         CancellationToken cancellationToken)
@@ -54,6 +57,7 @@ public class SupplierOnboardingController : ControllerBase
     }
 
     [HttpPost("complete")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRolesWithAdmin)]
     public async Task<ActionResult<SupplierOnboardingCompleteResult>> Complete(
         Guid companyId,
         [FromBody] CompleteOnboardingCheckoutRequest request,

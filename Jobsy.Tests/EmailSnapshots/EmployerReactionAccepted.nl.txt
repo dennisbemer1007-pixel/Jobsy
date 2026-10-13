@@ -1,0 +1,33 @@
+KEY: EmployerReactionAccepted
+SUBJECT: Goed nieuws over je sollicitatie bij Bakkerij De Gouden Korrel
+PREHEADER: Bakkerij De Gouden Korrel wil verder met je.
+KIND: Essential
+--- TEXT ---
+Hoi Alex,
+
+Bakkerij De Gouden Korrel wil verder met je
+===========================================
+
+Bakkerij De Gouden Korrel heeft je sollicitatie op Weekendhulp verkoop
+geaccepteerd. Ze nemen snel contact met je op. Houd je telefoon en je mail
+in de gaten.
+
+Bekijk je sollicitatie: https://lobsy.nl/candidate/applications
+
+Team Lobsy
+
+Je krijgt deze mail omdat je via Lobsy hebt gesolliciteerd.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Bakkerij De Gouden Korrel wil verder met je
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk je sollicitatie -> https://lobsy.nl/candidate/applications
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

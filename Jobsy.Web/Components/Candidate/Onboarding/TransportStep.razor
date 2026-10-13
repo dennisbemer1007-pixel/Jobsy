@@ -1,0 +1,103 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (ShowHeading)
+{
+    <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1>
+    <p class="ob-wizard__lead">@Culture["Onboarding.Step3.Lead"]</p>
+}
+else
+{
+    <h2 class="ob-wizard__subhead">@Culture["Onboarding.Step3.Title"]</h2>
+}
+<fieldset>
+    <legend>@Culture["Onboarding.Transport"]</legend>
+    <p class="ob-wizard__hint">@Culture["Onboarding.TransportMulti"]</p>
+    <div class="ob-wizard__transport">
+        @foreach (var transport in TransportOptions)
+        {
+            var isSelected = Selected.Contains(transport);
+            <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
+                    class="@(isSelected ?"is-selected" : null)"
+                    @onclick="() => SelectTransport.InvokeAsync(transport)">
+                @TransportLabel(transport)
+            </button>
+        }
+    </div>
+</fieldset>
+<fieldset>
+    <legend>@Culture["Onboarding.MaxTravel"] <strong>@Draft.MaxTravel @Culture["Onboarding.Minutes"]</strong></legend>
+    <div class="ob-wizard__transport">
+        @foreach (var minutes in TravelChoices)
+        {
+            var selected = Draft.MaxTravel == minutes;
+            <button type="button" aria-pressed="@(selected ? "true" : "false")"
+                    @onclick="() => SelectTravelTime.InvokeAsync(minutes)">
+                @minutes
+            </button>
+        }
+    </div>
+    <button type="button" class="ob-wizard__inline-link" @onclick="ShowCustomTravel">
+        @Culture["Onboarding.Other"]
+    </button>
+    @if (Draft.CustomTravel)
+    {
+        <input type="number" min="1" max="180"
+               @bind="Draft.MaxTravel" @bind:after="NotifyAsync" />
+    }
+</fieldset>
+@if (ShowDrivingLicenses)
+{
+    <fieldset>
+        <legend>@Culture["Profile.Licenses"]</legend>
+        <div class="ob-wizard__transport">
+            @foreach (var license in DrivingLicenseLabels.All)
+            {
+                var isSelected = Draft.DrivingLicenses.Contains(license);
+                <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
+                        class="@(isSelected ?"is-selected" : null)"
+                        @onclick="() => ToggleLicense.InvokeAsync(license)">
+                    @license
+                </button>
+            }
+        </div>
+    </fieldset>
+}
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public EventCallback<string> SelectTransport { get; set; }
+    [Parameter] public EventCallback<int> SelectTravelTime { get; set; }
+    [Parameter] public EventCallback ShowCustomTravel { get; set; }
+    [Parameter] public EventCallback<string> ToggleLicense { get; set; }
+    [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public bool ShowDrivingLicenses { get; set; }
+
+    private static readonly string[] TransportOptions = TransportLabels.Selectable;
+    private static readonly int[] TravelChoices = [10, 20, 30, 45];
+
+    private HashSet<string> Selected { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override void OnParametersSet()
+    {
+        Selected.Clear();
+        foreach (var mode in TransportLabels.SplitMany(Draft.Transport))
+        {
+            Selected.Add(mode);
+        }
+    }
+
+    private string TransportLabel(string transport) => transport switch
+    {
+        TransportLabels.Bike => Culture["Transport.Bike"],
+        TransportLabels.EBike => Culture["Transport.EBike"],
+        TransportLabels.Car => Culture["Transport.Car"],
+        TransportLabels.PublicTransport => Culture["Transport.Transit"],
+        TransportLabels.Walking => Culture["Transport.Walk"],
+        _ => transport
+    };
+
+    private Task NotifyAsync() => Draft.NotifyChangedAsync();
+}

@@ -61,18 +61,107 @@ window.jobsyMapLibre = (function () {
         }, { passive: false });
     }
 
+    function rewriteBasemapTextFonts(map) {
+        if (!map || typeof map.getStyle !== "function") {
+            return;
+        }
+        var style;
+        try {
+            style = map.getStyle();
+        } catch (e) {
+            return;
+        }
+        if (!style || !Array.isArray(style.layers)) {
+            return;
+        }
+        for (var i = 0; i < style.layers.length; i++) {
+            var layer = style.layers[i];
+            if (!layer || layer.type !== "symbol" || !layer.layout) {
+                continue;
+            }
+            var fonts = layer.layout["text-font"];
+            if (!fonts) {
+                continue;
+            }
+            var next = rewriteFontStack(fonts);
+            if (next) {
+                try {
+                    map.setLayoutProperty(layer.id, "text-font", next);
+                } catch (e) { }
+            }
+        }
+    }
+
+    /** Map Open Sans* glyph requests (404 on OpenFreeMap) onto Noto Sans stacks the server serves. */
+    function rewriteFontStack(fonts) {
+        var list = null;
+        if (Array.isArray(fonts)) {
+            list = fonts.slice();
+        } else if (typeof fonts === "string") {
+            list = [fonts];
+        } else {
+            return null;
+        }
+        var changed = false;
+        for (var i = 0; i < list.length; i++) {
+            var name = String(list[i] || "");
+            if (/open\s*sans/i.test(name)) {
+                changed = true;
+                if (/bold|black|semi|heavy/i.test(name)) {
+                    list[i] = "Noto Sans Bold";
+                } else {
+                    list[i] = "Noto Sans Regular";
+                }
+            }
+        }
+        return changed ? list : null;
+    }
+
+    var OSM_ATTRIBUTION =
+        '<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+
+    /** Desktop (≥1025px): expanded credit always visible. Mobile: compact "i" toggle. */
+    function preferCompactAttribution() {
+        try {
+            return !(window.matchMedia && window.matchMedia("(min-width: 1025px)").matches);
+        } catch (e) {
+            return true;
+        }
+    }
+
+    function syncAttributionCompact(map) {
+        if (!map || typeof map.getContainer !== "function") {
+            return;
+        }
+        var el = map.getContainer();
+        var attrib = el.querySelector(".maplibregl-ctrl-attrib");
+        if (!attrib) {
+            return;
+        }
+        var compact = preferCompactAttribution();
+        if (compact) {
+            attrib.classList.add("maplibregl-compact");
+            attrib.classList.remove("maplibregl-compact-show");
+        } else {
+            attrib.classList.remove("maplibregl-compact");
+            attrib.classList.add("maplibregl-compact-show");
+        }
+    }
+
     function hideChrome(map) {
         if (!map) {
             return;
         }
         var el = map.getContainer();
         el.classList.add("job-map--minimal");
+        // ODbL requires visible OSM attribution — only remove the MapLibre logo.
         var junk = el.querySelectorAll(
-            ".maplibregl-ctrl-attrib, .maplibregl-ctrl-logo, a.maplibregl-ctrl-logo, .maplibregl-compact"
+            ".maplibregl-ctrl-logo, a.maplibregl-ctrl-logo"
         );
         for (var i = 0; i < junk.length; i++) {
             junk[i].remove();
         }
+        syncAttributionCompact(map);
     }
 
     function findBuildingSourceLayer(map) {
@@ -260,7 +349,10 @@ window.jobsyMapLibre = (function () {
             style: spec.url,
             center: options.center,
             zoom: options.zoom,
-            attributionControl: false,
+            attributionControl: {
+                compact: preferCompactAttribution(),
+                customAttribution: OSM_ATTRIBUTION
+            },
             maplibreLogo: false,
             cooperativeGestures: false,
             fadeDuration: 0,
@@ -277,8 +369,8 @@ window.jobsyMapLibre = (function () {
             maxZoom: 19,
             minZoom: 4,
             locale: {
-                "AttributionControl.ToggleAttribution": "",
-                "Map.Title": ""
+                "AttributionControl.ToggleAttribution": "Kaartbronnen tonen",
+                "Map.Title": "Kaart"
             }
         });
 
@@ -299,13 +391,28 @@ window.jobsyMapLibre = (function () {
 
         map.on("load", function () {
             hideChrome(map);
+            rewriteBasemapTextFonts(map);
             if (spec.threeD) {
                 ensureBuildingsLayer(map);
             }
         });
         map.on("styledata", function () {
             hideChrome(map);
+            rewriteBasemapTextFonts(map);
         });
+
+        if (!map._jobsyAttribResizeBound) {
+            map._jobsyAttribResizeBound = true;
+            var onViewportChange = function () {
+                syncAttributionCompact(map);
+            };
+            window.addEventListener("resize", onViewportChange);
+            window.addEventListener("orientationchange", onViewportChange);
+            map.on("remove", function () {
+                window.removeEventListener("resize", onViewportChange);
+                window.removeEventListener("orientationchange", onViewportChange);
+            });
+        }
 
         return map;
     }
@@ -320,6 +427,7 @@ window.jobsyMapLibre = (function () {
         createMap: createMap,
         setStyle: setStyle,
         hideChrome: hideChrome,
-        lockTouch: lockTouch
+        lockTouch: lockTouch,
+        rewriteBasemapTextFonts: rewriteBasemapTextFonts
     };
 })();

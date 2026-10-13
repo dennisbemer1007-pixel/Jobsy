@@ -8,6 +8,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// <summary>Daily poll of enabled ATS whitelist sources.</summary>
 public sealed class AtsScrapeHostedService : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AtsScrapeHostedService> _logger;
 
@@ -17,6 +18,7 @@ public sealed class AtsScrapeHostedService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(AtsScrapeHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -27,6 +29,12 @@ public sealed class AtsScrapeHostedService : BackgroundService
         {
             try
             {
+                if (!await _employersGate.ShouldRunAsync(_scopeFactory, stoppingToken))
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(15), stoppingToken);
+                    continue;
+                }
+
                 await using var scope = _scopeFactory.CreateAsyncScope();
                 var scrape = scope.ServiceProvider.GetRequiredService<IAtsScrapeService>();
                 var report = await scrape.ScrapeAllEnabledAsync(stoppingToken);

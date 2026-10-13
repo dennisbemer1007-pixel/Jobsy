@@ -37,4 +37,11 @@ public class UserDeviceSession
 
     /// <summary>Human-readable label derived from the user-agent (e.g. "iPhone – Safari").</summary>
     public string? DeviceName { get; set; }
+
+    /// <summary>How this device session was created (e.g. local-registration, password+totp, external:google).</summary>
+    public string? AuthMethod { get; set; }
+
+    /// <summary>Entra tenant id when AuthMethod is external:entra.</summary>
+    public string? AuthTenantId { get; set; }
 }
+

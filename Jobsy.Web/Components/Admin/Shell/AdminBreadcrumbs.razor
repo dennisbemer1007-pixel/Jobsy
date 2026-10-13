@@ -1,0 +1,42 @@
+@using Jobsy.Web.Navigation
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<nav class="admin-breadcrumbs" aria-label="@Culture["AdminShell.Breadcrumb"]">
+    <ol class="admin-breadcrumbs__list">
+        @foreach (var crumb in _crumbs)
+        {
+            <li class="admin-breadcrumbs__item">
+                @if (crumb.IsCurrent || string.IsNullOrEmpty(crumb.Href))
+                {
+                    <span class="admin-breadcrumbs__current" aria-current="@(crumb.IsCurrent ? "page" : null)">@Label(crumb.LabelKey)</span>
+                }
+                else
+                {
+                    <a class="admin-breadcrumbs__link" href="@crumb.Href">@Label(crumb.LabelKey)</a>
+                }
+            </li>
+        }
+    </ol>
+</nav>
+
+@code {
+    [Parameter] public string? Detail { get; set; }
+
+    private IReadOnlyList<(string LabelKey, string? Href, bool IsCurrent)> _crumbs = [];
+
+    protected override void OnParametersSet()
+    {
+        var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+        _crumbs = AdminNav.Crumbs(path, Detail);
+    }
+
+    private string Label(string key)
+    {
+        // Detail crumbs may be plain text rather than a culture key.
+        var translated = Culture[key];
+        return string.Equals(translated, key, StringComparison.Ordinal) && !key.Contains('.', StringComparison.Ordinal)
+            ? key
+            : translated;
+    }
+}

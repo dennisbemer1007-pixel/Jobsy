@@ -1,0 +1,40 @@
+@namespace Jobsy.Web.Components.KandidaatBanen
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+<div class="kb-open-for-work" data-testid="open-for-work-prompt" role="note">
+    <p>@Culture["Kb.OpenForWork.Required"]</p>
+    <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="EnableAsync">
+        @Culture["Kb.OpenForWork.Button"]
+    </button>
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnEnabled { get; set; }
+
+    private bool _busy;
+    private string? _error;
+
+    private async Task EnableAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.UpdateMyProfileAsync(openForWork: true);
+            await OnEnabled.InvokeAsync();
+        }
+        catch (Exception)
+        {
+            _error = Culture["Common.Error.TryAgain"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -1,0 +1,46 @@
+@namespace Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="wa-guide" aria-label="@Culture["Wa.Guide.Label"]">
+    <div class="wa-guide__art">
+        <WaMascot Pose="Pose" />
+    </div>
+    <div class="wa-guide__bubble">
+        <p>@Speech</p>
+    </div>
+    <ol class="wa-steps" aria-label="@Culture["Wa.Steps.Label"]">
+        @for (var i = 1; i <= 5; i++)
+        {
+            var done = CurrentStep > i || (CurrentStep == i && DoneOnCurrent);
+            var on = CurrentStep == i && !DoneOnCurrent;
+            <li class="@(done ? "is-done" : null) @(on ? "is-on" : null)">
+                <span class="wa-steps__n" aria-hidden="true">
+                    @if (done)
+                    {
+                        <text>✓</text>
+                    }
+                    else
+                    {
+                        @i
+                    }
+                </span>
+                <span class="wa-steps__body">
+                    <strong>@Culture[$"Wa.Steps.{i}.Title"]</strong>
+                    <small>@Culture[$"Wa.Steps.{i}.Sub"]</small>
+                </span>
+                @if (i == 4)
+                {
+                    <span class="wa-steps__opt">@Culture["Wa.Steps.Optional"]</span>
+                }
+            </li>
+        }
+    </ol>
+</aside>
+
+@code {
+    [Parameter] public int CurrentStep { get; set; } = 1;
+    [Parameter] public string Speech { get; set; } = "";
+    [Parameter] public WaMascot.MascotPose Pose { get; set; } = WaMascot.MascotPose.Waving;
+    [Parameter] public bool DoneOnCurrent { get; set; }
+}

@@ -1,6 +1,9 @@
 @page "/candidate/shared"
+@* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Components.Shared
 @inject JobsyApiClient Api
@@ -10,7 +13,7 @@
 
 <PageTitle>@Culture["Saved.TabShared"] · Lobsy</PageTitle>
 
-<div class="panel-page">
+<div class="panel-page kb-shared">
     <header class="panel-header">
         <div>
             <h1>@Culture["Saved.Title"]</h1>
@@ -18,6 +21,7 @@
         </div>
     </header>
 
+    <CandidateJobListTabs />
     <CandidateSavedSubnav />
 
     @if (_loading)
@@ -26,19 +30,19 @@
     }
     else if (_groups.Count == 0)
     {
-        <p class="state-message">@Culture["Saved.EmptyShared"] <a href="/">@Culture["Saved.ToMap"]</a>.</p>
+        <p class="state-message">@Culture["Saved.EmptyShared"] <a href="/banenkaart">@Culture["Saved.ToMap"]</a>.</p>
     }
     else
     {
-        <div class="table-list">
+        <div class="table-list kb-shared__list">
             @foreach (var group in _groups)
             {
                 <a class="table-row table-row--link" href="@($"/vacancies/{group.VacancyId}")">
-                    <div>
+                    <div class="kb-shared__main">
                         <strong>@group.VacancyTitle</strong>
                         <span class="muted">@group.CompanyName · @SharedWithLabel(group.ShareCount)</span>
                     </div>
-                    <span class="muted">@group.LastSharedAt.ToLocalTime().ToString("dd-MM-yyyy")</span>
+                    <span class="muted kb-shared__date">@group.LastSharedAt.ToLocalTime().ToString("dd-MM-yyyy")</span>
                 </a>
             }
         </div>

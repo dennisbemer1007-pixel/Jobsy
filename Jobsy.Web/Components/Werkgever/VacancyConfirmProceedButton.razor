@@ -1,0 +1,17 @@
+@namespace Jobsy.Web.Components.Werkgever
+@inject CultureState Culture
+
+<button type="button"
+        class="@(DeleteMode ? "btn-compact btn-compact--danger" : "btn-compact btn-compact--primary")"
+        disabled="@Disabled"
+        data-testid="wg-vac-confirm-proceed"
+        @onclick="OnClick">
+    @(Busy ? Culture["Common.Busy"] : (DeleteMode ? Culture["WgVac.Delete"] : Culture["VacancyAction.Approve"]))
+</button>
+
+@code {
+    [Parameter] public bool DeleteMode { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+}

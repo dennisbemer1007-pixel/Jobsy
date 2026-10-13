@@ -1,0 +1,26 @@
+@using Jobsy.Core.Hosting
+@inject CultureState Culture
+
+<span class="admin-env-badge admin-env-badge--@CssModifier"
+      title="@TitleText">
+    <span class="admin-env-badge__dot" aria-hidden="true"></span>
+    <span class="admin-env-badge__label">@Label</span>
+</span>
+
+@code {
+    [Parameter, EditorRequired] public string Label { get; set; } = DeploymentEnvironment.Lokaal;
+
+    private string CssModifier => Label switch
+    {
+        DeploymentEnvironment.Acceptatie => "acceptatie",
+        DeploymentEnvironment.Productie => "productie",
+        _ => "lokaal"
+    };
+
+    private string TitleText => Label switch
+    {
+        DeploymentEnvironment.Acceptatie => Culture["AdminShell.EnvAcceptatieTitle"],
+        DeploymentEnvironment.Productie => Culture["AdminShell.EnvProductieTitle"],
+        _ => Culture["AdminShell.EnvLokaalTitle"]
+    };
+}

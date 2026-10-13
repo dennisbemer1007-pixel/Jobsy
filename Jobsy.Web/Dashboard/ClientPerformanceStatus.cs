@@ -39,10 +39,11 @@ public static class ClientPerformanceStatus
         _ => "ok"
     };
 
-    public static string LabelNl(ClientPerformanceBadge badge) => badge switch
+    public static string LabelNl(ClientPerformanceBadge badge, decimal? tokenBalance = null) => badge switch
     {
         ClientPerformanceBadge.ActionRequired => "Actie nodig",
-        ClientPerformanceBadge.LowTokens => "Laag saldo",
+        ClientPerformanceBadge.LowTokens when tokenBalance == 0m => "Geen tokens",
+        ClientPerformanceBadge.LowTokens => "Saldo bijna op",
         _ => "Actief"
     };
 }

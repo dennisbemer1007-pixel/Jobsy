@@ -34,7 +34,11 @@ public class TokenBillingVatBufferTests
             Name = "Test BV",
             KvkNumber = "123",
             Address = "Straat 1",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -61,7 +65,11 @@ public class TokenBillingVatBufferTests
             Name = "Test BV",
             KvkNumber = "123",
             Address = "Straat 1",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -81,7 +89,11 @@ public class TokenBillingVatBufferTests
             Name = "Betaal BV",
             KvkNumber = "999",
             Address = "Laan 2",
-            Location = new GeoPoint(51.9, 4.2)
+            Location = new GeoPoint(51.9, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.PlatformCompanySettings.Add(new PlatformCompanySettings
         {
@@ -116,7 +128,7 @@ public class TokenBillingVatBufferTests
         var env = new FakeHostEnvironment { EnvironmentName = Environments.Development };
 
         var fulfillment = new TokenPurchaseFulfillmentService(
-            db, ledger, payments, invoices, vatBuffer, revenueShare, new CommissionLedgerService(db), new FakePendingActions(), env,
+            db, ledger, payments, invoices, vatBuffer, revenueShare, new CommissionLedgerService(db, new AlwaysOnFeatures()), new FakePendingActions(), env,
             NullLogger<TokenPurchaseFulfillmentService>.Instance);
 
         var result = await fulfillment.TryFulfillPaidCheckoutAsync(checkoutId);
@@ -155,7 +167,7 @@ public class TokenBillingVatBufferTests
     private sealed class FakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, false, false, "http://localhost:5201", DateTime.UtcNow, 120));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, false, "http://localhost:5201", DateTime.UtcNow, 120));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(PlatformFeatureUpdate update, CancellationToken cancellationToken = default)
             => GetAsync(cancellationToken);

@@ -1,25 +1,31 @@
 @inherits LayoutComponentBase
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
-@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject Jobsy.Web.Branding.PlatformBrandingState Branding
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
-@inject ILogger<MainLayout> Logger
-@inject IHttpContextAccessor HttpContextAccessor
 @inject Jobsy.Web.Services.ApiCallTracker ApiCalls
+@inject AuthenticationStateProvider AuthState
+@inject IFeatureFlags FeatureFlags
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
+    <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
     @if (!_isMatchPage && !_isQuestionnairePage)
     {
         <header class="app-header">
             <div class="app-header__brand">
-                <a class="brand" href="/" aria-label="Lobsy">
+                <a class="brand" href="@_homeHref" aria-label="Lobsy">
                     <LobsyLogo Class="brand__logo" Alt="Lobsy" />
                     <span class="brand__text">
                         <span class="brand__name">Lobsy</span>
@@ -30,8 +36,10 @@
             <div class="app-header__actions">
                 <PageHelp />
                 <NotificationBell />
-                <TokenWalletChip />
-                <SalesWalletChip />
+                <FeatureVisible Feature="PlatformFeature.Employers">
+                    <TokenWalletChip />
+                    <SalesWalletChipV2 />
+                </FeatureVisible>
                 <LanguageSelector />
                 <AuthHeader />
             </div>
@@ -39,21 +47,17 @@
     }
 
     <main class="app-main">
-        <ErrorBoundary @ref="_errorBoundary">
-            <ChildContent>
-                @Body
-            </ChildContent>
-            <ErrorContent Context="ex">
-                @{
-                    LogCircuitError(ex);
-                }
-                <div class="panel-page circuit-error" role="alert">
-                    <h1>@Culture["Circuit.ErrorTitle"]</h1>
-                    <p class="login-lead">@Culture["Circuit.ErrorLead"]</p>
-                    <button type="button" class="login-submit" @onclick="RecoverFromError">@Culture["Circuit.ErrorRetry"]</button>
-                </div>
-            </ErrorContent>
-        </ErrorBoundary>
+        @if (ShowInstallBanner)
+        {
+            <PwaInstallBanner />
+        }
+        <CircuitErrorBoundary BoundaryTag="main">
+            @if (RendererInfo.IsInteractive)
+            {
+                <Jobsy.Web.Components.Employer.CompanyVerificationBanner />
+            }
+            @Body
+        </CircuitErrorBoundary>
         @if (!_isMatchPage && !_isQuestionnairePage)
         {
             <AppFooter />
@@ -64,12 +68,21 @@
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && _isCandidate)
     {
-        <PushPermissionBanner />
-        <PwaInstallBanner />
+        <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
+        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+        <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+    }
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    {
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
+    }
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    {
+        <GratisDnaMerge />
+        <PushPermissionBanner />
         <ConsentReacceptDialog />
     }
     else if (RendererInfo.IsInteractive)
@@ -85,73 +98,19 @@
     private bool _hasBottomNav;
     private bool _isMatchPage;
     private bool _isQuestionnairePage;
-    private ErrorBoundary? _errorBoundary;
-    private Exception? _loggedCircuitError;
+    private bool _isCandidate;
+    private bool _suppressInstallBanner;
 
-    private void RecoverFromError()
+    private bool ShowInstallBanner =>
+        RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage && !_suppressInstallBanner;
+    private string _homeHref = "/";
+
+    protected override void OnInitialized()
     {
-        _loggedCircuitError = null;
-        _errorBoundary?.Recover();
-    }
-
-    private void LogCircuitError(Exception ex)
-    {
-        if (ReferenceEquals(_loggedCircuitError, ex))
+        if (CultureRequest.HasExplicitChoice(HttpContextAccessor.HttpContext))
         {
-            return;
+            Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         }
-
-        _loggedCircuitError = ex;
-        var route = SafeRoute();
-        var userId = ResolveUserId();
-        // Never surface technical details in the UI — only log/Sentry.
-        Logger.LogError(
-            ex,
-            "Circuit error boundary at {Route} for user {UserId}: {ExceptionType}",
-            route,
-            userId,
-            ex.GetType().Name);
-        try
-        {
-            Sentry.SentrySdk.CaptureException(ex, scope =>
-            {
-                scope.SetTag("route", route);
-                scope.SetTag("boundary", "main");
-                if (!string.IsNullOrEmpty(userId))
-                {
-                    scope.User = new Sentry.SentryUser { Id = userId };
-                }
-            });
-        }
-        catch
-        {
-            // Sentry optional / not configured.
-        }
-    }
-
-    private string SafeRoute()
-    {
-        try
-        {
-            return new Uri(Navigation.Uri).PathAndQuery;
-        }
-        catch
-        {
-            return "/";
-        }
-    }
-
-    private string ResolveUserId()
-    {
-        var user = HttpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
-        {
-            return "";
-        }
-
-        return user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-               ?? user.FindFirst("sub")?.Value
-               ?? "";
     }
 
     protected override async Task OnInitializedAsync()
@@ -163,8 +122,42 @@
         RefreshFocusedFlags();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
+        await RefreshHomeHrefAsync();
         // Do not block first paint (or /home dashboards) on region/slogan HTTP.
         _ = HydrateHostBrandingAsync();
+    }
+
+    private async Task RefreshHomeHrefAsync()
+    {
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            _isCandidate = user.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+            if (!_isCandidate)
+            {
+                _homeHref = "/";
+                return;
+            }
+
+            var flags = await FeatureFlags.GetAsync();
+            if (!flags.CandidatePassportEnabled)
+            {
+                // Flag OFF: logo stays on "/" (LandingRedirectMiddleware → banenkaart).
+                _homeHref = "/";
+                return;
+            }
+
+            _homeHref = FeatureRoutes.HomeFor(
+                user,
+                flags,
+                passportReady: AuthRedirects.PassportReadyFromClaims(user));
+        }
+        catch
+        {
+            _homeHref = "/";
+        }
     }
 
     private async Task HydrateHostBrandingAsync()
@@ -183,6 +176,25 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            await Culture.InitializeAsync();
+            await Culture.SyncDocumentAsync();
+            StateHasChanged();
+        }
+
+        if (RendererInfo.IsInteractive)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.syncStickyFooters");
+            }
+            catch
+            {
+                // CSS fallbacks keep the coach tab usable when JS is blocked.
+            }
+        }
+
         if (_siteVisitRecorded)
         {
             return;
@@ -234,10 +246,6 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        // An error on one tab must never follow the user to the next route.
-        _loggedCircuitError = null;
-        _errorBoundary?.Recover();
-
         try
         {
             var path = new Uri(e.Location).AbsolutePath;
@@ -257,14 +265,21 @@
 
     private bool RefreshFocusedFlags()
     {
-        var path = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0]
-            .TrimStart('/');
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = relative.Split('?', '#')[0].TrimStart('/');
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
-        var questionnaire = IsQuestionnairePath(path);
+        var questionnaire = IsQuestionnairePath(path, relative);
+        var suppressInstall = SuppressesInstallBanner(path);
         var changed = false;
         if (_isMatchPage != match)
         {
             _isMatchPage = match;
+            changed = true;
+        }
+
+        if (_suppressInstallBanner != suppressInstall)
+        {
+            _suppressInstallBanner = suppressInstall;
             changed = true;
         }
 
@@ -282,13 +297,8 @@
         return changed;
     }
 
-    public static bool IsQuestionnairePath(string path)
+    public static bool SuppressesInstallBanner(string path)
     {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return false;
-        }
-
         path = path.TrimStart('/');
         return path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
@@ -296,8 +306,94 @@
                || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
                || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase);
+               || path.StartsWith("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsQuestionnairePath(string path)
+        => IsQuestionnairePath(path, path);
+
+    /// <summary>
+    /// Focus mode for questionnaires / classic start / journey-in-progress.
+    /// Overview (<c>/candidate/ontdekkingsreis</c> without <c>stap</c>) keeps the normal nav.
+    /// </summary>
+    public static bool IsQuestionnairePath(string path, string relativeUri)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        path = path.TrimStart('/');
+        path = path.TrimStart('/');
+        if (path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
+            || (path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase)
+                && !path.Equals("candidate/deep-analysis/checkout", StringComparison.OrdinalIgnoreCase))
+            || path.Equals("account/mfa", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("account/mfa/", StringComparison.OrdinalIgnoreCase))
+        {
+            // Intro/finish keep normal nav (?stap=intro|klaar).
+            if (HasTestShellNavQuery(relativeUri))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        if (path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase))
+        {
+            // Focus only while a journey screen is active (?stap=…).
+            return HasJourneyStepQuery(relativeUri);
+        }
+
+        return false;
+    }
+
+    private static bool HasJourneyStepQuery(string relativeUri)
+    {
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0) return false;
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0) query = query[..hash];
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase)) continue;
+            var value = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]);
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        return false;
+    }
+
+    /// <summary>Intro/finish of free tests use ?stap=intro|klaar and keep the normal bottom nav.</summary>
+    private static bool HasTestShellNavQuery(string relativeUri)
+    {
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0) return false;
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0) query = query[..hash];
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase)) continue;
+            var value = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]);
+            return value.Equals("intro", StringComparison.OrdinalIgnoreCase)
+                   || value.Equals("klaar", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return false;
     }
 
     private string HeaderTagline => Branding.ResolveTagline(RegionHost.Current?.Slogan, Culture["Brand.Tagline"]);

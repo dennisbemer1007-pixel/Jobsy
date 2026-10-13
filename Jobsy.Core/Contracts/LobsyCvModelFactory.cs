@@ -29,7 +29,9 @@ public static class LobsyCvModelFactory
         string? workplaceAddress = null,
         double? distanceKm = null,
         bool hasUploadedOwnCv = false,
-        LobsyCvWhoAmI? whoAmI = null)
+        IReadOnlyList<DiplomaEvaluationSharedFact>? diplomaEvaluations = null,
+        IReadOnlyList<string>? testHighlights = null,
+        DateTime? consentAcceptedAt = null)
     {
         // Home lat/lng retained in signature for call-site compatibility; never written to CV.
         _ = latitude;
@@ -43,7 +45,8 @@ public static class LobsyCvModelFactory
                 e.Years,
                 string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim(),
                 NormalizeMonth(e.StartMonth),
-                NormalizeMonth(e.EndMonth)))
+                NormalizeMonth(e.EndMonth),
+                string.IsNullOrWhiteSpace(e.EscoId) ? null : e.EscoId.Trim()))
             .ToList();
 
         var certificates = (preferences.Certificates ?? Array.Empty<CandidateCertificateDto>())
@@ -60,13 +63,13 @@ public static class LobsyCvModelFactory
             ? (estimatedTravelMinutes ?? preferences.MaxTravelMinutes)
             : null;
 
-        // Candidate home address/coords are NEVER placed on the CV (privacy).
+        // Street and coordinates stay off the CV. The city is the location the candidate expects to see.
         return new LobsyCvModel(
             FullName: fullName,
             Email: email,
             PhoneNumber: phoneNumber,
             WhatsAppContactAllowed: whatsAppContactAllowed,
-            City: null,
+            City: HomeAddressCity.From(preferences.HomeAddress),
             Address: null,
             Latitude: null,
             Longitude: null,
@@ -99,7 +102,13 @@ public static class LobsyCvModelFactory
             ReachTravelMinutes: reachMinutes,
             DistanceKm: distanceKm is > 0 ? distanceKm : null,
             HasUploadedOwnCv: hasUploadedOwnCv,
-            WhoAmI: whoAmI);
+            DiplomaEvaluations: ToDiplomaPdfEntries(diplomaEvaluations),
+            Languages: FormatLanguages(preferences),
+            TestHighlights: testHighlights is { Count: > 0 } ? testHighlights : null,
+            ConsentAcceptedAt: consentAcceptedAt,
+            EducationDirection: string.IsNullOrWhiteSpace(preferences.EducationDirection)
+                ? null
+                : preferences.EducationDirection.Trim());
     }
 
     public static LobsyCvModel FromApplicationSnapshot(
@@ -135,7 +144,7 @@ public static class LobsyCvModelFactory
         int? maxTravelMinutes = null,
         double? distanceKm = null,
         bool hasUploadedOwnCv = false,
-        LobsyCvWhoAmI? whoAmI = null)
+        string? diplomaEvaluationsJson = null)
     {
         // Candidate home fields kept for API compatibility; never rendered on CV.
         _ = city;
@@ -199,7 +208,7 @@ public static class LobsyCvModelFactory
             ReachTravelMinutes: reachMinutes,
             DistanceKm: distanceKm is > 0 ? distanceKm : null,
             HasUploadedOwnCv: hasUploadedOwnCv,
-            WhoAmI: whoAmI);
+            DiplomaEvaluations: ToDiplomaPdfEntries(DiplomaEvaluationRules.ParseSnapshot(diplomaEvaluationsJson)));
     }
 
     /// <summary>
@@ -239,7 +248,7 @@ public static class LobsyCvModelFactory
             application.SnapshotEducations,
             application.SnapshotCertificatesJson,
             application.CandidateEmployerCount,
-            application.MatchPercent,
+            matchPercent: null,
             vacancy.Title,
             display.DisplayName,
             application.ConsentVersion,
@@ -254,8 +263,25 @@ public static class LobsyCvModelFactory
             maxTravelMinutes: null,
             distanceKm: application.DistanceKm,
             hasUploadedOwnCv: application.HasUploadedCv,
-            whoAmI: WhoAmISnapshot.TryParse(application.SnapshotWhoAmIJson));
+            diplomaEvaluationsJson: application.SnapshotDiplomaEvaluationsJson);
     }
+
+    /// <summary>
+    /// Copies the candidate's text onto the PDF. The optional pick-list code is kept beside it
+    /// and is never used as the printed level.
+    /// </summary>
+    public static IReadOnlyList<LobsyCvDiplomaEvaluationEntry> ToDiplomaPdfEntries(
+        IEnumerable<DiplomaEvaluationSharedFact>? facts)
+        => (facts ?? [])
+            .Where(f => !string.IsNullOrWhiteSpace(f.EquivalentLevelText))
+            .Select(f => new LobsyCvDiplomaEvaluationEntry(
+                string.IsNullOrWhiteSpace(f.DiplomaTitle) ? null : f.DiplomaTitle.Trim(),
+                f.EquivalentLevelText.Trim(),
+                DiplomaEvaluationRules.DutchAttribution(f.IssuingBody, f.IssuingBodyOther),
+                f.EvaluationDate,
+                f.ReferenceNumber.Trim(),
+                string.IsNullOrWhiteSpace(f.EquivalentLevelCode) ? null : f.EquivalentLevelCode.Trim()))
+            .ToList();
 
     public static string SerializeCertificatesSnapshot(
         IEnumerable<CandidateCertificateDto>? certificates,
@@ -486,6 +512,120 @@ public static class LobsyCvModelFactory
         return sb.Length == 0 ? null : sb.ToString();
     }
 
+    /// <summary>
+    /// Talent-pool card line. Day-parts stay as on the CV. When none are set,
+    /// quick choices (Per direct) and hours are shown instead of an empty summary.
+    /// </summary>
+    public static string? FormatTalentPoolAvailability(
+        IReadOnlyDictionary<string, string[]>? availability,
+        bool flexibleTimes,
+        decimal? minHours,
+        decimal? maxHours,
+        IReadOnlyList<string>? presets)
+    {
+        if (HasDayParts(availability))
+        {
+            return FormatAvailability(availability, flexibleTimes);
+        }
+
+        var bits = new List<string>();
+        if (presets is not null)
+        {
+            foreach (var raw in presets)
+            {
+                if (PresetLabel(raw) is { } label && !bits.Contains(label, StringComparer.Ordinal))
+                {
+                    bits.Add(label);
+                }
+            }
+        }
+
+        if (bits.Count == 0 && flexibleTimes)
+        {
+            var detected = CandidateAvailabilityPresets.Detect(minHours, maxHours, true);
+            if (detected == CandidateAvailabilityPresets.Immediate)
+            {
+                bits.Add("Per direct");
+            }
+            else if (detected == CandidateAvailabilityPresets.Seasonal)
+            {
+                bits.Add("Seizoenswerk");
+            }
+            else
+            {
+                bits.Add("Tijden in overleg");
+            }
+        }
+
+        var hours = FormatHourSpan(minHours, maxHours);
+        if (hours is not null)
+        {
+            bits.Add(hours);
+        }
+
+        return bits.Count == 0 ? null : string.Join(" · ", bits);
+    }
+
+    private static bool HasDayParts(IReadOnlyDictionary<string, string[]>? availability)
+    {
+        if (availability is null)
+        {
+            return false;
+        }
+
+        foreach (var day in DayPartMatrix.DayCodes)
+        {
+            if (availability.TryGetValue(day, out var slots) && slots.Length > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string? PresetLabel(string? code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return null;
+        }
+
+        return code.Trim().ToLowerInvariant() switch
+        {
+            "direct" or "immediate" or "per direct" => "Per direct",
+            "school" => "Bijbaan naast school",
+            "weekend" => "Weekenden",
+            "evening" => "Avonden",
+            "office" => "Kantoordagen",
+            "holiday" => "Vakantiewerk",
+            "parttime" or "part-time" => "Parttime",
+            "fulltime" => "Fulltime",
+            "seasonal" or "seizoen" or "seizoenswerk" => "Seizoenswerk",
+            _ => null
+        };
+    }
+
+    private static string? FormatHourSpan(decimal? minHours, decimal? maxHours)
+    {
+        if (minHours is null && maxHours is null)
+        {
+            return null;
+        }
+
+        if (minHours is decimal min && maxHours is decimal max)
+        {
+            var a = TrimHours(min);
+            var b = TrimHours(max);
+            return a == b ? $"{a} uur" : $"{a}–{b} uur";
+        }
+
+        return $"{TrimHours((minHours ?? maxHours)!.Value)} uur";
+    }
+
+    private static string TrimHours(decimal hours)
+        => hours.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
     public static AvailabilityPayload ParseAvailabilityPayload(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -532,6 +672,46 @@ public static class LobsyCvModelFactory
             return AvailabilityPayload.Empty;
         }
     }
+
+    private static IReadOnlyList<string>? FormatLanguages(CandidatePreferencesDto preferences)
+    {
+        var lines = new List<string>();
+        if (!string.IsNullOrWhiteSpace(preferences.DutchLevel))
+        {
+            lines.Add($"Nederlands ({preferences.DutchLevel.Trim()})");
+        }
+
+        foreach (var language in preferences.SpokenLanguages ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(language.Code)
+                || language.Code.Equals("nl", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var name = LanguageName(language.Code);
+            lines.Add(string.IsNullOrWhiteSpace(language.Level)
+                ? name
+                : $"{name} ({language.Level.Trim()})");
+        }
+
+        return lines.Count == 0 ? null : lines;
+    }
+
+    private static string LanguageName(string code) => code.Trim().ToLowerInvariant() switch
+    {
+        "en" => "Engels",
+        "de" => "Duits",
+        "fr" => "Frans",
+        "pl" => "Pools",
+        "ro" => "Roemeens",
+        "ar" => "Arabisch",
+        "tr" => "Turks",
+        "es" => "Spaans",
+        "uk" => "Oekraïens",
+        "it" => "Italiaans",
+        _ => code.Trim().ToUpperInvariant()
+    };
 
     private static IReadOnlyDictionary<string, string[]>? NormalizeSlots(
         IReadOnlyDictionary<string, string[]>? availability)

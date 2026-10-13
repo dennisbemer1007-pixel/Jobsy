@@ -132,7 +132,7 @@ public class ExternalApiKeyIntegrationTests : IClassFixture<ExternalApiKeyWebApp
             SalaryTableId: ExternalApiKeyWebAppFactory.SalaryTableId);
 }
 
-public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Program>
+public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public static readonly Guid SalaryTableId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 
@@ -221,7 +221,11 @@ public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Program>
                 Name = "Own Co",
                 KvkNumber = "11111111",
                 Address = "A",
-                Location = new GeoPoint(52, 4)
+                Location = new GeoPoint(52, 4),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             },
             new Company
             {
@@ -229,7 +233,11 @@ public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Program>
                 Name = "Foreign Co",
                 KvkNumber = "22222222",
                 Address = "B",
-                Location = new GeoPoint(52.1, 4.1)
+                Location = new GeoPoint(52.1, 4.1),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
 
         db.Users.Add(new User

@@ -1,21 +1,29 @@
+using Microsoft.JSInterop;
+
 namespace Jobsy.Web.Services;
 
 /// <summary>
 /// Circuit-scoped unread notification count. Loads once, then refreshes on an
 /// interval — not on every page mount / NotificationBell remount.
+/// Skips polls while the tab is hidden (<c>jobsyPageVisible</c>).
 /// </summary>
 public sealed class NotificationUnreadStore : IAsyncDisposable
 {
     public static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(45);
 
     private readonly JobsyApiClient _api;
+    private readonly IJSRuntime _js;
     private readonly object _gate = new();
     private CancellationTokenSource? _cts;
     private PeriodicTimer? _timer;
     private bool _started;
     private int _unread;
 
-    public NotificationUnreadStore(JobsyApiClient api) => _api = api;
+    public NotificationUnreadStore(JobsyApiClient api, IJSRuntime js)
+    {
+        _api = api;
+        _js = js;
+    }
 
     public int Unread
     {
@@ -74,6 +82,11 @@ public sealed class NotificationUnreadStore : IAsyncDisposable
         {
             while (_timer is not null && await _timer.WaitForNextTickAsync(ct))
             {
+                if (!await PageIsVisibleAsync())
+                {
+                    continue;
+                }
+
                 await RefreshAsync(ct);
             }
         }
@@ -97,6 +110,18 @@ public sealed class NotificationUnreadStore : IAsyncDisposable
         catch
         {
             // Not signed in / transient — keep last known.
+        }
+    }
+
+    private async Task<bool> PageIsVisibleAsync()
+    {
+        try
+        {
+            return await _js.InvokeAsync<bool>("jobsyPageVisible");
+        }
+        catch
+        {
+            return true;
         }
     }
 

@@ -1,0 +1,51 @@
+@page "/werkgevers/binnenkort"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Auth
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["WgSoon.Title"] · Lobsy</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="googlebot" content="noindex, nofollow" />
+</HeadContent>
+
+@if (!_sendToCandidateShell)
+{
+<section class="pub-section" aria-labelledby="wg-soon-title">
+    <header class="pp-doc__hero">
+        <h1 id="wg-soon-title" class="pp-doc__title">@Culture[_forCandidate ? "WgSoon.CandidateTitle" : "WgSoon.Title"]</h1>
+        <p class="pp-doc__lead">@Culture[_forCandidate ? "WgSoon.CandidateLead" : "WgSoon.Lead"]</p>
+    </header>
+    <p class="inline-actions">
+        <a class="pub-btn pub-btn--primary" href="/">@Culture["WgSoon.CtaHome"]</a>
+    </p>
+</section>
+}
+
+@code {
+    private bool _forCandidate;
+    private bool _sendToCandidateShell;
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        var voor = http?.Request.Query["voor"].ToString();
+        var user = http?.User;
+        var isCandidate = user?.Identity?.IsAuthenticated == true
+            && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+        _forCandidate = string.Equals(voor, "kandidaat", StringComparison.OrdinalIgnoreCase) || isCandidate;
+        if (!isCandidate)
+        {
+            return;
+        }
+
+        _sendToCandidateShell = true;
+        Navigation.NavigateTo("/candidate/binnenkort", forceLoad: true);
+    }
+}

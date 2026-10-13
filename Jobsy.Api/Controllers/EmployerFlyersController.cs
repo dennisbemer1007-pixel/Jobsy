@@ -4,11 +4,13 @@ using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/employer-flyers")]
+[RequiresFeature(PlatformFeature.Employers)]
 public sealed class EmployerFlyersController : ControllerBase
 {
     private readonly IEmployerRaamflyerService _flyers;

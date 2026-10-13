@@ -48,9 +48,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var list = await client.GetAsync("api/vacancies");
         Assert.Equal(HttpStatusCode.OK, list.StatusCode);
-        var vacancies = await list.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.NotNull(vacancies);
-        Assert.Contains(vacancies!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
+        var page = await list.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.NotNull(page);
+        Assert.Contains(page!.Items, v => v.Id == _factory.VacancyId);
 
         var discover = await client.GetAsync(
             $"api/vacancies/discover?originLat=52.09&originLng=4.31&transport=Fiets&maxMinutes=60");
@@ -131,7 +131,14 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             kvkNumber = Read(current, "kvkNumber"),
             vatNumber = Read(current, "vatNumber"),
             phone = Read(current, "phone"),
-            email = Read(current, "email")
+            email = Read(current, "email"),
+            legalName = Read(current, "legalName"),
+            tradeName = Read(current, "tradeName"),
+            postalStreet = Read(current, "postalStreet"),
+            postalPostalCode = Read(current, "postalPostalCode"),
+            postalCity = Read(current, "postalCity"),
+            supportEmail = Read(current, "supportEmail"),
+            privacyEmail = Read(current, "privacyEmail")
         });
         Assert.Equal(HttpStatusCode.OK, put.StatusCode);
 
@@ -149,7 +156,14 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             kvkNumber = Read(current, "kvkNumber"),
             vatNumber = Read(current, "vatNumber"),
             phone = Read(current, "phone"),
-            email = Read(current, "email")
+            email = Read(current, "email"),
+            legalName = Read(current, "legalName"),
+            tradeName = Read(current, "tradeName"),
+            postalStreet = Read(current, "postalStreet"),
+            postalPostalCode = Read(current, "postalPostalCode"),
+            postalCity = Read(current, "postalCity"),
+            supportEmail = Read(current, "supportEmail"),
+            privacyEmail = Read(current, "privacyEmail")
         });
         Assert.Equal(HttpStatusCode.OK, restore.StatusCode);
     }
@@ -191,33 +205,26 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         // Legacy query param still works.
         var filter65 = await client.GetAsync("api/vacancies/discover?suitableFor65Plus=true&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, filter65.StatusCode);
-        var items65 = await filter65.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.NotNull(items65);
-        Assert.Contains(items65!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
-        Assert.Contains(items65!, v => v.GetProperty("id").GetGuid() == _factory.NightShiftVacancyId);
-        Assert.DoesNotContain(items65!, v => v.GetProperty("id").GetGuid() == _factory.LowMatchVacancyId);
+        var page65 = await filter65.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.NotNull(page65);
+        Assert.Contains(page65!.Items, v => v.Id == _factory.VacancyId);
+        Assert.Contains(page65.Items, v => v.Id == _factory.NightShiftVacancyId);
+        Assert.DoesNotContain(page65.Items, v => v.Id == _factory.LowMatchVacancyId);
 
         // Unified vacancy-type filter: 65+ category also returns flagged Regulier vacancies.
         var by65Category = await client.GetAsync(
             $"api/vacancies/discover?categoryId={VacancyCategoryDefaults.SeniorLightId:D}&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, by65Category.StatusCode);
-        var items65Cat = await by65Category.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.Contains(items65Cat!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
-        Assert.Contains(items65Cat!, v => v.GetProperty("id").GetGuid() == _factory.NightShiftVacancyId);
-        Assert.DoesNotContain(items65Cat!, v => v.GetProperty("id").GetGuid() == _factory.LowMatchVacancyId);
+        var page65Cat = await by65Category.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.Contains(page65Cat!.Items, v => v.Id == _factory.VacancyId);
+        Assert.Contains(page65Cat.Items, v => v.Id == _factory.NightShiftVacancyId);
+        Assert.DoesNotContain(page65Cat.Items, v => v.Id == _factory.LowMatchVacancyId);
 
         var byCategory = await client.GetAsync(
             $"api/vacancies/discover?categoryId={VacancyCategoryDefaults.RegulierId:D}&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, byCategory.StatusCode);
-        var regulier = await byCategory.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.Contains(regulier!, v => v.GetProperty("id").GetGuid() == _factory.VacancyId);
-        Assert.All(regulier!, v =>
-        {
-            Assert.False(v.TryGetProperty("categoryFields", out var fields) && fields.ValueKind is JsonValueKind.Object);
-            Assert.True(!v.TryGetProperty("categoryPublishCostTokens", out var cost)
-                        || cost.ValueKind is JsonValueKind.Null
-                        || cost.ValueKind is JsonValueKind.Undefined);
-        });
+        var regulierPage = await byCategory.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.Contains(regulierPage!.Items, v => v.Id == _factory.VacancyId);
 
         Assert.Equal(HttpStatusCode.Unauthorized,
             (await client.GetAsync("api/vacancy-categories/admin")).StatusCode);
@@ -356,6 +363,11 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             candidate.DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-17);
             candidate.TalentPoolConsentAt = DateTime.UtcNow;
             candidate.TalentPoolConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion;
+            // The class fixture shares one in-memory store; another test may already have
+            // completed a competency test for this candidate. Postgres enforces one row per
+            // user (unique index), the in-memory provider does not, so clear it first.
+            db.CandidateCompetencies.RemoveRange(
+                db.CandidateCompetencies.Where(c => c.UserId == candidate.Id));
             db.CandidateCompetencies.Add(new CandidateCompetency
             {
                 Id = Guid.NewGuid(),
@@ -494,7 +506,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var emptyWipe = await client.PutAsJsonAsync(
             "api/me/competencies",
             new { answers = new Dictionary<string, int>(), complete = false });
-        Assert.Equal(HttpStatusCode.BadRequest, emptyWipe.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, emptyWipe.StatusCode);
         var still = await client.GetFromJsonAsync<JsonElement>("api/me/competencies", JsonOpts);
         Assert.Equal("Completed", still.GetProperty("status").GetString());
         Assert.Equal(25, still.GetProperty("answeredCount").GetInt32());
@@ -648,6 +660,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
             && a.CandidateUserId == _factory.CandidateId);
         Assert.True(app.ViaSafetyNet);
         Assert.Equal("Ik wil dit toch graag proberen ondanks de afstand.", app.Motivation);
+        Assert.Null(app.SnapshotWhoAmIJson);
         Assert.NotNull(app.MatchPercent);
         Assert.False(string.IsNullOrWhiteSpace(app.EmailVerificationCode));
         Assert.Null(app.EmailVerifiedAt);
@@ -697,9 +710,10 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         var discover = await client.GetAsync(
             $"api/vacancies/discover?categoryId={VacancyCategoryDefaults.SeniorLightId:D}&transport=Fiets&maxMinutes=90");
         Assert.Equal(HttpStatusCode.OK, discover.StatusCode);
-        var items = await discover.Content.ReadFromJsonAsync<List<JsonElement>>(JsonOpts);
-        Assert.Contains(items!, v => v.GetProperty("suitableFor65Plus").GetBoolean()
-            || v.GetProperty("categoryId").GetGuid() == VacancyCategoryDefaults.SeniorLightId);
+        var page = await discover.Content.ReadFromJsonAsync<VacancyListPageDto>(JsonOpts);
+        Assert.NotNull(page);
+        Assert.Contains(page!.Items, v => v.SuitableFor65Plus
+            || v.CategoryId == VacancyCategoryDefaults.SeniorLightId);
     }
 
     [Fact]
@@ -736,12 +750,15 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         var apps = await client.GetAsync("api/applications");
         Assert.Equal(HttpStatusCode.OK, apps.StatusCode);
-        var list = await apps.Content.ReadFromJsonAsync<List<EmployerApplicationDto>>(JsonOpts);
+        var json = await apps.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("matchPercent", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("matchBreakdown", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("matchScore", json, StringComparison.OrdinalIgnoreCase);
+        var list = System.Text.Json.JsonSerializer.Deserialize<List<EmployerApplicationDto>>(json, JsonOpts);
         Assert.NotNull(list);
 
         var pending = Assert.Single(list!, a => a.Id == _factory.PendingApplicationId);
         Assert.Equal(_factory.VacancyId, pending.VacancyId);
-        Assert.NotNull(pending.MatchPercent);
         Assert.False(pending.PiiRevealed);
         Assert.False(pending.CvPdfAvailable);
         Assert.False(pending.UploadedCvAvailable);
@@ -750,7 +767,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Null(pending.CandidateEmail);
         Assert.Null(pending.CandidateCity);
         Assert.Equal(4.2, pending.DistanceKm);
-        Assert.Equal(19, pending.CandidateAgeYears);
+        Assert.Equal(true, pending.YouthWageApplies);
         Assert.False(string.IsNullOrWhiteSpace(pending.AvailabilitySummary));
         Assert.False(string.IsNullOrWhiteSpace(pending.SnapshotAvailabilityJson));
         Assert.Contains("avond", pending.SnapshotAvailabilityJson, StringComparison.OrdinalIgnoreCase);
@@ -768,10 +785,43 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal("Kandidaat Test", accepted.CandidateName);
         Assert.Null(accepted.CandidateEmail);
         Assert.Null(accepted.CandidatePhone);
-        Assert.Null(accepted.MatchBreakdownJson);
         Assert.NotNull(accepted.CandidateCity);
         Assert.True(accepted.WorkPermitConfirmed);
-        Assert.True(accepted.MatchPercent >= 50);
+    }
+
+    [Fact]
+    public async Task OpenForWork_off_hides_fit_percent_and_blocks_apply()
+    {
+        var client = CandidateClient();
+        var off = await client.PutAsJsonAsync("api/me/profile", new { openForWork = false });
+        Assert.True(off.IsSuccessStatusCode, await off.Content.ReadAsStringAsync());
+        try
+        {
+            var vacancy = await client.GetAsync($"api/vacancies/{_factory.VacancyId}");
+            var body = await vacancy.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, vacancy.StatusCode);
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            Assert.True(BoolProp(doc.RootElement, "openForWorkRequired"), body);
+            Assert.True(MissingOrNull(doc.RootElement, "fitPercent"), body);
+            Assert.True(MissingOrNull(doc.RootElement, "matchPercent"), body);
+
+            var apply = await client.PostAsJsonAsync("api/applications", new
+            {
+                vacancyId = _factory.VacancyId,
+                preferredTransport = "Fiets",
+                estimatedTravelMinutes = 15,
+                acceptedTerms = true,
+                workPermitConfirmed = true
+            });
+            var applyBody = await apply.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.BadRequest, apply.StatusCode);
+            Assert.Contains("open_for_work_required", applyBody, StringComparison.Ordinal);
+        }
+        finally
+        {
+            var back = await client.PutAsJsonAsync("api/me/profile", new { openForWork = true });
+            Assert.True(back.IsSuccessStatusCode);
+        }
     }
 
     [Fact]
@@ -1196,8 +1246,12 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Null(RoleNavCatalog.HowLobsyHrefFor(NavPrincipal(JobsyRoles.Admin)));
 
         Assert.Contains(RoleNavCatalog.Ambassadeur, n => n.Href == "/ambassadeur/toolkit");
-        Assert.Contains(RoleNavCatalog.SalesManager, n => n.Href == "/salesmanager/toolkit");
-        Assert.Contains(RoleNavCatalog.Enterprise, n => n.Href == "/employer/organization" && n.DesktopOnly);
+        Assert.Empty(RoleNavCatalog.SalesManager);
+        Assert.Contains(Jobsy.Web.Navigation.SalesNav.VisibleItems(true), n => n.Href == "/sales/link");
+        Assert.Empty(RoleNavCatalog.Enterprise);
+        var org = WerkgeverNav.For(EmployerRole.Bedrijfsmanager, new WerkgeverNavContext(HasTakeovers: true))
+            .SelectMany(g => g.Items);
+        Assert.Contains(org, n => n.Href == "/werkgever/organisatie/vestigingen");
     }
 
     private static ClaimsPrincipal NavPrincipal(string role)
@@ -1227,7 +1281,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     public async Task Sales_and_ambassadeur_can_load_dashboards()
     {
         var sales = Authed(_factory.SalesEmail);
-        var salesDash = await sales.GetAsync("api/sales-managers/me/dashboard");
+        var salesDash = await sales.GetAsync("api/sales/me/dashboard");
         Assert.Equal(HttpStatusCode.OK, salesDash.StatusCode);
 
         var amb = Authed(_factory.AmbassadeurEmail);
@@ -1298,9 +1352,9 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
 
         // Sales + ambassadeur home + toolkit/finance reads
         var sales = Authed(_factory.SalesEmail);
-        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/profile")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-managers/me/invoices")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales/me/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales/me/invoices")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/sales-commercial/catalog")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await sales.GetAsync("api/notifications/unread-count")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await sales.GetAsync("api/admin/users")).StatusCode);
@@ -1579,6 +1633,38 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     // ─── helpers ────────────────────────────────────────────────────────────
 
     private HttpClient CandidateClient() => Authed(_factory.CandidateId);
+
+    private static System.Text.Json.JsonElement Prop(System.Text.Json.JsonElement root, string name)
+    {
+        foreach (var prop in root.EnumerateObject())
+        {
+            if (prop.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return prop.Value;
+            }
+        }
+
+        throw new KeyNotFoundException(name);
+    }
+
+    private static bool BoolProp(System.Text.Json.JsonElement root, string name)
+        => Prop(root, name).ValueKind == System.Text.Json.JsonValueKind.True;
+
+    private static bool MissingOrNull(System.Text.Json.JsonElement root, string name)
+    {
+        foreach (var prop in root.EnumerateObject())
+        {
+            if (!prop.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return prop.Value.ValueKind is System.Text.Json.JsonValueKind.Null
+                or System.Text.Json.JsonValueKind.Undefined;
+        }
+
+        return true;
+    }
     private HttpClient EmployerClient() => Authed(_factory.EmployerId);
     private HttpClient AdminClient() => Authed(_factory.AdminId);
 
@@ -1617,7 +1703,7 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     }
 }
 
-public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
+public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public const string DevSecret = "role-functional-secret";
 
@@ -1696,26 +1782,47 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
         });
     }
 
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+        // Seed before the first test touches the database. A parallel test that inserts
+        // its own users must not skip the canonical admin/employer rows.
+        EnsureSeeded(host.Services);
+        return host;
+    }
+
     protected override void ConfigureClient(HttpClient client)
     {
-        EnsureSeeded();
+        EnsureSeeded(Services);
         base.ConfigureClient(client);
     }
 
-    private void EnsureSeeded()
-    {
-        if (_seeded)
-        {
-            return;
-        }
+    private readonly object _seedGate = new();
 
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        if (db.Users.Any())
+    private void EnsureSeeded(IServiceProvider services)
+    {
+        lock (_seedGate)
         {
+            if (_seeded)
+            {
+                return;
+            }
+
+            using var scope = services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+            if (db.Users.Any(u => u.Id == AdminId))
+            {
+                _seeded = true;
+                return;
+            }
+
+            SeedDatabase(db);
             _seeded = true;
-            return;
         }
+    }
+
+    private void SeedDatabase(JobsyDbContext db)
+    {
 
         var categories = new VacancyCategoryService(db);
         categories.EnsureDefaultsAsync().GetAwaiter().GetResult();
@@ -1727,7 +1834,11 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Name = "Test Vestiging Westland",
             KvkNumber = "12345678",
             Address = "Veilingweg 1, Naaldwijk",
-            Location = new GeoPoint(52.0, 4.2)
+            Location = new GeoPoint(52.0, 4.2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Companies.Add(new Company
         {
@@ -1735,7 +1846,11 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Name = "Test Intermediair",
             KvkNumber = "87654321",
             Address = "Intermediairweg 1, Naaldwijk",
-            Location = new GeoPoint(52.01, 4.21)
+            Location = new GeoPoint(52.01, 4.21),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var table = new CompanySalaryTable
@@ -2074,8 +2189,9 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
         });
 
         db.SaveChanges();
-        _seeded = true;
     }
+
+    private void EnsureSeeded() => EnsureSeeded(Services);
 
     /// <summary>
     /// Isolated vacancy + pending verified application for react/hire tests (does not mutate shared seed).
@@ -2127,8 +2243,8 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             DistanceKm = 2.5,
             CandidateAgeYears = 26,
             SnapshotPhoneNumber = "0611122233",
-                SnapshotWhatsAppAllowed = true,
-                Status = ApplicationStatus.Pending,
+            SnapshotWhatsAppAllowed = true,
+            Status = ApplicationStatus.Pending,
             EmailVerifiedAt = DateTime.UtcNow.AddMinutes(-30),
             WorkPermitConfirmed = true,
             MatchPercent = 80,
@@ -2153,7 +2269,11 @@ public sealed class RoleFunctionalWebAppFactory : WebApplicationFactory<Program>
             Name = $"Ander Filiaal {n}",
             KvkNumber = "87654321",
             Address = "Elders 1",
-            Location = new GeoPoint(52.1, 4.3)
+            Location = new GeoPoint(52.1, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {

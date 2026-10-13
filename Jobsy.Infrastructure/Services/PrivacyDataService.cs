@@ -1,4 +1,3 @@
-using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using Jobsy.Core.Contracts;
@@ -21,13 +20,19 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
     private readonly JobsyDbContext _db;
     private readonly IUserLookupService _users;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
+    private readonly IPlatformFeatureService _features;
 
-    public PrivacyDataService(JobsyDbContext db, IUserLookupService users, IEmailService email)
+    public PrivacyDataService(
+        JobsyDbContext db,
+        IUserLookupService users,
+        ITransactionalMailer mailer,
+        IPlatformFeatureService features)
     {
         _db = db;
         _users = users;
-        _email = email;
+        _mailer = mailer;
+        _features = features;
     }
 
     public async Task<object> ExportAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
@@ -62,6 +67,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 a.SnapshotAboutMe,
                 a.SnapshotWhoAmIJson,
                 a.SnapshotCertificatesJson,
+                a.SnapshotDiplomaEvaluationsJson,
                 a.SnapshotShowAddressOnCv,
                 a.CandidateCity,
                 a.CandidateAddress,
@@ -295,6 +301,8 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 p.PlanJson,
                 p.MatchPercent,
                 p.MatchSummary,
+                p.Status,
+                p.ArchivedAtUtc,
                 p.CreatedAtUtc,
                 p.UpdatedAtUtc,
                 StepProgress = p.StepProgress.Select(s => new
@@ -367,19 +375,242 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .Select(l => new { l.Provider })
             .ToListAsync(cancellationToken);
 
+        var trustedDevices = await _db.MfaTrustedDevices.AsNoTracking()
+            .Where(d => d.UserId == user.Id)
+            .Select(d => new
+            {
+                d.Id,
+                d.CreatedAtUtc,
+                d.ExpiresAtUtc,
+                d.LastUsedAtUtc,
+                d.UserAgentSummary,
+                d.RevokedAtUtc
+            })
+            .ToListAsync(cancellationToken);
+
+        string[] optedOutNames = [];
+        if (!string.IsNullOrWhiteSpace(user.Email))
+        {
+            var emailHash = EmailAddressHasher.Hash(user.Email);
+            var optedCategories = await _db.EmailOptOuts.AsNoTracking()
+                .Where(o => o.EmailHash == emailHash)
+                .Select(o => o.Category)
+                .ToListAsync(cancellationToken);
+            optedOutNames = optedCategories
+                .Select(c =>
+                {
+                    var hit = EmailPreferenceService.Catalog
+                        .FirstOrDefault(x => string.Equals(x.Key, c, StringComparison.OrdinalIgnoreCase));
+                    return string.IsNullOrWhiteSpace(hit.Key) ? c : hit.LabelNl;
+                })
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .ToArray();
+        }
+
+        _db.PlatformLogs.Add(new PlatformLog
+        {
+            Id = Guid.NewGuid(),
+            Level = PlatformLogLevel.Info,
+            Category = "privacy.export",
+            Message = $"Gegevensexport opgehaald voor gebruiker {user.Id}",
+            DetailsJson = JsonSerializer.Serialize(new { UserId = user.Id }),
+            CreatedAt = DateTime.UtcNow
+        });
+        await _db.SaveChangesAsync(cancellationToken);
+
+        var passportPartnerLinks = await _db.PassportPartnerCandidateLinks.AsNoTracking()
+            .Where(l => l.CandidateUserId == user.Id)
+            .Select(l => new
+            {
+                PartnerName = l.PassportPartner!.DisplayName,
+                Type = l.PassportPartner.Company == null
+                    ? null
+                    : l.PassportPartner.Company.Type == CompanyType.Intermediary ? "Uitzendbureau" : "Werkgever",
+                l.StartedAtUtc,
+                l.ConsentGivenAtUtc,
+                l.ContactConsentAtUtc,
+                l.ReconfirmDueAtUtc,
+                l.SuspendedAtUtc,
+                l.RevokedAtUtc,
+                l.RevokedReason
+            })
+            .ToListAsync(cancellationToken);
+        var passportPartnerLinkExport = passportPartnerLinks.Select(l => new
+        {
+            l.PartnerName,
+            l.Type,
+            l.StartedAtUtc,
+            l.ConsentGivenAtUtc,
+            l.ContactConsentAtUtc,
+            l.ReconfirmDueAtUtc,
+            l.SuspendedAtUtc,
+            l.RevokedAtUtc,
+            l.RevokedReason,
+            Status = l.RevokedAtUtc is not null
+                ? "revoked"
+                : l.SuspendedAtUtc is not null
+                    ? "suspended"
+                    : l.ConsentGivenAtUtc is not null
+                        ? "active"
+                        : "pending"
+        }).ToList();
+
+        var accessRows = await _db.PassportAccessLogs.AsNoTracking()
+            .Where(l => l.CandidateUserId == user.Id)
+            .OrderBy(l => l.OccurredAtUtc)
+            .Select(l => new { l.PassportPartnerId, l.Kind, l.OccurredAtUtc })
+            .ToListAsync(cancellationToken);
+        var accessPartnerIds = accessRows
+            .Where(l => l.PassportPartnerId != null)
+            .Select(l => l.PassportPartnerId!.Value)
+            .Distinct()
+            .ToList();
+        var accessPartnerNames = await _db.PassportPartners.AsNoTracking()
+            .Where(p => accessPartnerIds.Contains(p.Id))
+            .Select(p => new { p.Id, p.DisplayName })
+            .ToListAsync(cancellationToken);
+        var passportAccessLog = accessRows.Select(l => new
+        {
+            PartnerName = accessPartnerNames.FirstOrDefault(p => p.Id == l.PassportPartnerId)?.DisplayName,
+            Kind = l.Kind.ToString(),
+            l.OccurredAtUtc
+        }).ToList();
+
+        var reminderPreferenceExport = await _db.CandidateReminderPreferences.AsNoTracking()
+            .Where(p => p.UserId == user.Id)
+            .Select(p => new { p.EmailOptedInAtUtc, p.WhatsAppOptedInAtUtc, p.WhatsAppPhone })
+            .FirstOrDefaultAsync(cancellationToken);
+        var reminderSends = await _db.ComebackReminderLogs.AsNoTracking()
+            .Where(l => l.UserId == user.Id)
+            .OrderBy(l => l.SentAtUtc)
+            .Select(l => new { l.Kind, l.SentAtUtc, l.Channels })
+            .ToListAsync(cancellationToken);
+
+        var applicationIds = applications.Select(a => a.Id).ToList();
+        var statusHistoryRows = applicationIds.Count == 0
+            ? []
+            : await _db.ApplicationStatusHistories.AsNoTracking()
+                .Where(h => applicationIds.Contains(h.ApplicationId))
+                .OrderBy(h => h.OccurredAtUtc)
+                .ToListAsync(cancellationToken);
+        var statusHistory = statusHistoryRows.Select(h => new
+        {
+            h.ApplicationId,
+            Kind = h.Kind.ToString(),
+            FromStatus = h.FromStatus?.ToString(),
+            ToStatus = h.ToStatus?.ToString(),
+            h.OccurredAtUtc,
+            ActorKind = h.ActorKind.ToString()
+        }).ToList();
+
+        var uploadedCvRow = await _db.CandidateUploadedCvs.AsNoTracking()
+            .Where(c => c.UserId == user.Id)
+            .Select(c => new
+            {
+                c.FileName,
+                c.ContentType,
+                c.SizeBytes,
+                c.UploadedAtUtc,
+                c.ExtractedAtUtc,
+                c.FilledFieldsJson,
+                c.Content
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var applicationCvRows = applicationIds.Count == 0
+            ? []
+            : await _db.ApplicationUploadedCvs.AsNoTracking()
+                .Where(c => applicationIds.Contains(c.ApplicationId))
+                .Select(c => new
+                {
+                    c.ApplicationId,
+                    c.FileName,
+                    c.ContentType,
+                    c.SizeBytes,
+                    c.Content
+                })
+                .ToListAsync(cancellationToken);
+
+        var onboarding = await _db.CandidateOnboardings.AsNoTracking()
+            .Where(o => o.UserId == user.Id)
+            .Select(o => new
+            {
+                o.CurrentStep,
+                o.WizardVersion,
+                o.FinishReached,
+                o.StartedAtUtc,
+                o.CompletedAtUtc,
+                o.Source,
+                o.StepsJson,
+                o.UpdatedAtUtc
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var accessLog = await _db.PersonalDataAccessLogs.AsNoTracking()
+            .Where(l => l.SubjectUserId == user.Id)
+            .OrderBy(l => l.OccurredAt)
+            .Select(l => new
+            {
+                l.OccurredAt,
+                l.ActorRole,
+                l.Resource,
+                l.Action,
+                l.Reason
+            })
+            .ToListAsync(cancellationToken);
+
+        var ambassadeur = await _db.AmbassadeurProfiles.AsNoTracking()
+            .Where(p => p.UserId == user.Id)
+            .Select(p => new
+            {
+                p.CompanyName,
+                p.KvkNumber,
+                p.VatNumber,
+                p.Address,
+                p.PostalCode,
+                p.City,
+                p.Country,
+                p.Iban,
+                p.TrackingCode,
+                p.AgreementSignedAt,
+                p.AgreementVersion,
+                p.CreatedAt,
+                p.UpdatedAt
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
         return new
         {
+            Toelichting = "Dit bestand is voor jou. Het bevat de gegevens die Lobsy van je bewaart: je account, je tests, je sollicitaties en je bestanden. Bewaar het op een veilige plek. Wachtwoorden en beveiligingscodes staan er niet in.",
             ExportedAtUtc = DateTime.UtcNow,
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
+            ComebackReminders = new
+            {
+                reminderPreferenceExport?.EmailOptedInAtUtc,
+                reminderPreferenceExport?.WhatsAppOptedInAtUtc,
+                reminderPreferenceExport?.WhatsAppPhone,
+                Sends = reminderSends
+            },
             User = new
             {
                 user.Id,
                 user.Email,
                 user.FullName,
+                user.FirstName,
+                user.LastName,
+                user.PhoneNumber,
+                user.EmailVerifiedAtUtc,
+                user.PhoneVerifiedAtUtc,
+                user.WhatsAppContactAllowed,
                 Role = user.Role.ToString(),
                 user.CompanyId,
+                user.SchoolId,
                 user.DateOfBirth,
                 user.OpenForWork,
+                user.AvailableFromDate,
+                user.CandidateHowToCompletedAt,
+                user.LastLoginAtUtc,
+                user.IsEarlyAdapter,
                 HomeLocation = user.HomeLocation is null
                     ? null
                     : new { user.HomeLocation.Latitude, user.HomeLocation.Longitude },
@@ -392,23 +623,55 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 user.TestAiConsentVersion,
                 user.ParentalConsentAt,
                 user.ParentalConsentEmail,
+                user.ReminderEmailsEnabled,
                 user.IsActive
             },
-            UploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
-                .Where(c => c.UserId == user.Id)
-                .Select(c => new
+            DiplomaEvaluations = await ExportDiplomaEvaluationsAsync(user.Id, cancellationToken),
+            UploadedCv = uploadedCvRow is null
+                ? null
+                : new
                 {
-                    c.FileName,
-                    c.ContentType,
-                    c.SizeBytes,
-                    c.UploadedAtUtc,
-                    c.ExtractedAtUtc
-                })
-                .FirstOrDefaultAsync(cancellationToken),
+                    uploadedCvRow.FileName,
+                    uploadedCvRow.ContentType,
+                    uploadedCvRow.SizeBytes,
+                    uploadedCvRow.UploadedAtUtc,
+                    uploadedCvRow.ExtractedAtUtc,
+                    uploadedCvRow.FilledFieldsJson,
+                    BestandBase64 = uploadedCvRow.Content.Length == 0
+                        ? null
+                        : Convert.ToBase64String(uploadedCvRow.Content)
+                },
             References = await _db.CandidateReferences.AsNoTracking()
                 .Where(r => r.UserId == user.Id)
                 .OrderBy(r => r.SortOrder)
                 .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone, r.CreatedAtUtc })
+                .ToListAsync(cancellationToken),
+            ReferenceConfirmations = await _db.ReferenceConfirmations.AsNoTracking()
+                .Where(c => c.UserId == user.Id)
+                .Select(c => new
+                {
+                    c.RoleTitle,
+                    c.Status,
+                    c.CandidateConsentAtUtc,
+                    c.ConsentVersion,
+                    c.WorkedHere,
+                    c.PeriodText,
+                    c.DidWell,
+                    c.WorkAgain,
+                    c.ExtraText,
+                    c.ConfirmedAtUtc,
+                    c.DeclinedAtUtc,
+                    c.ShowOnPartnerPassport,
+                    c.ShareWorkedHere,
+                    c.SharePeriod,
+                    c.ShareDidWell,
+                    c.ShareWorkAgain,
+                    c.ShareExtra
+                })
+                .ToListAsync(cancellationToken),
+            ReferenceMisuseReports = await _db.ReferenceMisuseReports.AsNoTracking()
+                .Where(r => r.UserId == user.Id)
+                .Select(r => new { r.Message, r.CreatedAtUtc })
                 .ToListAsync(cancellationToken),
             Competencies = await _db.CandidateCompetencies.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
@@ -459,6 +722,15 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     c.FromOpenAi,
                     c.StoryGeneratedAtUtc,
                     c.UpdatedAtUtc
+                })
+                .FirstOrDefaultAsync(cancellationToken),
+            PrivatePreferences = await _db.CandidatePrivatePreferences.AsNoTracking()
+                .Where(p => p.UserId == user.Id)
+                .Select(p => new
+                {
+                    p.DislikesJson,
+                    p.CustomDislikesJson,
+                    p.UpdatedAtUtc
                 })
                 .FirstOrDefaultAsync(cancellationToken),
             CareerInterests = await _db.CandidateCareerInterests.AsNoTracking()
@@ -522,6 +794,36 @@ public sealed class PrivacyDataService : IPrivacyDataService
                     d.UpdatedAtUtc
                 })
                 .ToListAsync(cancellationToken),
+            AssessmentAdjustments = await _db.CandidateAssessmentAdjustments.AsNoTracking()
+                .Where(a => a.UserId == user.Id)
+                .OrderByDescending(a => a.AtUtc)
+                .Select(a => new
+                {
+                    Kind = a.Kind.ToString(),
+                    Variant = a.Variant.ToString(),
+                    Type = a.Type.ToString(),
+                    a.AtUtc,
+                    a.AttemptId
+                })
+                .ToListAsync(cancellationToken),
+            AssessmentAttempts = await _db.CandidateAssessmentAttempts.AsNoTracking()
+                .Where(a => a.UserId == user.Id)
+                .OrderByDescending(a => a.StartedAtUtc)
+                .Select(a => new
+                {
+                    a.Id,
+                    Kind = a.Kind.ToString(),
+                    Variant = a.Variant.ToString(),
+                    a.Status,
+                    a.AnswersJson,
+                    a.ScoresJson,
+                    a.ReportJson,
+                    a.ReportVersion,
+                    a.PreviousSnapshotJson,
+                    a.StartedAtUtc,
+                    a.CompletedAtUtc
+                })
+                .ToListAsync(cancellationToken),
             DeepAnalysisCheckouts = await _db.DeepAnalysisCheckouts.AsNoTracking()
                 .Where(c => c.UserId == user.Id)
                 .OrderByDescending(c => c.CreatedAtUtc)
@@ -529,11 +831,23 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 {
                     c.Id,
                     Kind = c.Kind.ToString(),
-                    c.PaymentId,
                     c.AmountEuro,
+                    c.TotalAmountCents,
                     Status = c.Status.ToString(),
                     c.CreatedAtUtc,
                     c.PaidAtUtc
+                })
+                .ToListAsync(cancellationToken),
+            ConsumerPurchaseInvoices = await _db.ConsumerPurchaseInvoices.AsNoTracking()
+                .Where(i => i.UserId == user.Id)
+                .OrderByDescending(i => i.IssuedAt)
+                .Select(i => new
+                {
+                    i.Id,
+                    i.InvoiceNumber,
+                    i.TotalAmountCents,
+                    i.IssuedAt,
+                    Kind = i.Kind.ToString()
                 })
                 .ToListAsync(cancellationToken),
             TalentContactRequests = await _db.TalentContactRequests.AsNoTracking()
@@ -555,6 +869,18 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 .ToListAsync(cancellationToken),
             CompanyMemberships = memberships,
             Applications = applications,
+            SollicitatieVerloop = statusHistory,
+            SollicitatieCvBestanden = applicationCvRows.Select(c => new
+            {
+                c.ApplicationId,
+                c.FileName,
+                c.ContentType,
+                c.SizeBytes,
+                BestandBase64 = c.Content.Length == 0 ? null : Convert.ToBase64String(c.Content)
+            }),
+            StartHulp = onboarding,
+            InzageLog = accessLog,
+            AmbassadeurProfiel = ambassadeur,
             Likes = likes,
             VacancyShares = shares,
             VacancyClicks = clicks,
@@ -603,6 +929,10 @@ public sealed class PrivacyDataService : IPrivacyDataService
             Apparaatsessies = deviceSessions,
             Pushabonnementen = pushSubscriptions,
             ExterneAanmeldingen = externalLogins,
+            VertrouwdeApparaten = trustedDevices,
+            AfgemeldeMails = optedOutNames.Length == 0
+                ? null
+                : string.Join(", ", optedOutNames),
             WieBenIkMomentopnamen = new
             {
                 Profiel = await _db.CandidateWhoAmIProfiles.AsNoTracking()
@@ -620,7 +950,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
                 Sollicitaties = applications
                     .Where(a => !string.IsNullOrWhiteSpace(a.SnapshotWhoAmIJson))
                     .Select(a => new { a.Id, a.VacancyId, a.SnapshotWhoAmIJson })
-            }
+            },
+            PassportPartnerLinks = passportPartnerLinkExport,
+            PassportAccessLog = passportAccessLog
         };
     }
 
@@ -686,16 +1018,13 @@ public sealed class PrivacyDataService : IPrivacyDataService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        var features = await _features.GetAsync(cancellationToken);
         var unsub = TransactionalEmails.AccountUnsubscribeVerification(
-            baseUrl: null,
+            features.PublicWebBaseUrl,
             user.FullName,
             verificationCode,
             UnsubscribeCodeTtlMinutes);
-        await _email.SendAsync(new EmailMessage(
-            user.Email,
-            unsub.Subject,
-            unsub.Html,
-            unsub.Category), cancellationToken);
+        await _mailer.SendAsync(unsub, user.Email, cancellationToken: cancellationToken);
 
         return new RequestUnsubscribeResponse(
             "Er is een verificatiecode naar je e-mail gestuurd.",
@@ -778,6 +1107,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.UserDeviceSessions.RemoveRange(deviceSessions);
         }
 
+        var trustedDevices = await _db.MfaTrustedDevices
+            .Where(d => d.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (trustedDevices.Count > 0)
+        {
+            _db.MfaTrustedDevices.RemoveRange(trustedDevices);
+        }
+
         var loginHandoffs = await _db.DeviceLoginHandoffs
             .Where(h => h.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -827,6 +1164,7 @@ public sealed class PrivacyDataService : IPrivacyDataService
             app.SnapshotHomeLatitude = null;
             app.SnapshotHomeLongitude = null;
             app.SnapshotCertificatesJson = null;
+            app.SnapshotDiplomaEvaluationsJson = null;
             app.SnapshotShowAddressOnCv = false;
             app.SnapshotDateOfBirth = null;
             app.Motivation = null;
@@ -912,6 +1250,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
             salesProfile.AgreementVersion = null;
             salesProfile.OnboardingCompletedAt = null;
             salesProfile.UpdatedAt = DateTime.UtcNow;
+        }
+
+        var selfBillingConsents = await _db.SalesSelfBillingConsents
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (selfBillingConsents.Count > 0)
+        {
+            _db.SalesSelfBillingConsents.RemoveRange(selfBillingConsents);
+        }
+
+        var ibanPendings = await _db.SalesIbanChangePendings
+            .Where(p => p.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (ibanPendings.Count > 0)
+        {
+            _db.SalesIbanChangePendings.RemoveRange(ibanPendings);
         }
 
         var partnerProfile = await _db.PartnerAffiliateProfiles
@@ -1075,6 +1429,54 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateActionTokens.RemoveRange(actionTokens);
         }
 
+        var oneTimeLinks = await _db.OneTimeLinks
+            .Where(l => l.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (oneTimeLinks.Count > 0)
+        {
+            _db.OneTimeLinks.RemoveRange(oneTimeLinks);
+        }
+
+        var phoneChallenges = await _db.PhoneVerificationChallenges
+            .Where(c => c.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (phoneChallenges.Count > 0)
+        {
+            _db.PhoneVerificationChallenges.RemoveRange(phoneChallenges);
+        }
+
+        var partnerLinks = await _db.PassportPartnerCandidateLinks
+            .Where(l => l.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (partnerLinks.Count > 0)
+        {
+            _db.PassportPartnerCandidateLinks.RemoveRange(partnerLinks);
+        }
+
+        var partnerLogs = await _db.PassportAccessLogs
+            .Where(l => l.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (partnerLogs.Count > 0)
+        {
+            _db.PassportAccessLogs.RemoveRange(partnerLogs);
+        }
+
+        var viewedLogs = await _db.PassportAccessLogs
+            .Where(l => l.ViewerUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var row in viewedLogs)
+        {
+            row.ViewerUserId = null;
+        }
+
+        var termsAccepted = await _db.PassportPartners
+            .Where(p => p.TermsAcceptedByUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var partner in termsAccepted)
+        {
+            partner.TermsAcceptedByUserId = null;
+        }
+
         var feedbackRows = await _db.PlatformFeedbacks
             .Where(f => f.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1097,7 +1499,24 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.FirstName = null;
         user.LastName = null;
         user.PhoneNumber = null;
+        user.PhoneVerifiedAtUtc = null;
+        user.PhoneVerifiedE164 = null;
+        user.EmailVerifiedAtUtc = null;
         user.WhatsAppContactAllowed = false;
+        var reminderPreference = await _db.CandidateReminderPreferences
+            .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        if (reminderPreference is not null)
+        {
+            _db.CandidateReminderPreferences.Remove(reminderPreference);
+        }
+
+        var reminderLogs = await _db.ComebackReminderLogs
+            .Where(l => l.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var reminderLog in reminderLogs)
+        {
+            reminderLog.UserId = null;
+        }
         user.DateOfBirth = null;
         user.HomeLocation = null;
         user.PreferencesJson = null;
@@ -1137,6 +1556,55 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (uploadedCvs.Count > 0)
         {
             _db.CandidateUploadedCvs.RemoveRange(uploadedCvs);
+        }
+
+        var diplomaEvaluations = await _db.CandidateDiplomaEvaluations
+            .Where(e => e.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (diplomaEvaluations.Count > 0)
+        {
+            _db.CandidateDiplomaEvaluations.RemoveRange(diplomaEvaluations);
+        }
+
+        var externalVacancies = await _db.CandidateExternalVacancies
+            .Where(v => v.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (externalVacancies.Count > 0)
+        {
+            _db.CandidateExternalVacancies.RemoveRange(externalVacancies);
+        }
+
+        var misuse = await _db.ReferenceMisuseReports
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (misuse.Count > 0)
+        {
+            _db.ReferenceMisuseReports.RemoveRange(misuse);
+        }
+
+        var consentLogs = await _db.ReferenceConfirmationConsentLogs
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (consentLogs.Count > 0)
+        {
+            _db.ReferenceConfirmationConsentLogs.RemoveRange(consentLogs);
+        }
+
+        var confirmations = await _db.ReferenceConfirmations
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (confirmations.Count > 0)
+        {
+            var confirmationIds = confirmations.Select(c => c.Id).ToList();
+            var tokens = await _db.ReferenceConfirmationTokens
+                .Where(t => confirmationIds.Contains(t.ReferenceConfirmationId))
+                .ToListAsync(cancellationToken);
+            if (tokens.Count > 0)
+            {
+                _db.ReferenceConfirmationTokens.RemoveRange(tokens);
+            }
+
+            _db.ReferenceConfirmations.RemoveRange(confirmations);
         }
 
         var references = await _db.CandidateReferences
@@ -1187,6 +1655,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateWhoAmIProfiles.RemoveRange(whoAmI);
         }
 
+        var privatePrefs = await _db.CandidatePrivatePreferences
+            .Where(p => p.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (privatePrefs.Count > 0)
+        {
+            _db.CandidatePrivatePreferences.RemoveRange(privatePrefs);
+        }
+
         var careers = await _db.CandidateCareerInterests
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1203,6 +1679,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateCareerStepProgress.RemoveRange(careerStepProgress);
         }
 
+        var careerGenerations = await _db.CandidateCareerGenerations
+            .Where(g => g.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (careerGenerations.Count > 0)
+        {
+            _db.CandidateCareerGenerations.RemoveRange(careerGenerations);
+        }
+
         var careerPlans = await _db.CandidateCareerPlans
             .Where(p => p.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1217,6 +1701,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (onboardings.Count > 0)
         {
             _db.CandidateOnboardings.RemoveRange(onboardings);
+        }
+
+        var proactiveSettings = await _db.CandidateProactiveMatchingSettings
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (proactiveSettings.Count > 0)
+        {
+            _db.CandidateProactiveMatchingSettings.RemoveRange(proactiveSettings);
+        }
+
+        var proactiveSuggestions = await _db.ProactiveMatchSuggestions
+            .Where(s => s.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (proactiveSuggestions.Count > 0)
+        {
+            _db.ProactiveMatchSuggestions.RemoveRange(proactiveSuggestions);
         }
 
         var roleFits = await _db.CandidateRoleFitChecks
@@ -1259,12 +1759,37 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateDeepAnalyses.RemoveRange(deepAnalyses);
         }
 
+        var adjustments = await _db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (adjustments.Count > 0)
+        {
+            _db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        var attempts = await _db.CandidateAssessmentAttempts
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (attempts.Count > 0)
+        {
+            _db.CandidateAssessmentAttempts.RemoveRange(attempts);
+        }
+
         var deepCheckouts = await _db.DeepAnalysisCheckouts
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);
         if (deepCheckouts.Count > 0)
         {
             _db.DeepAnalysisCheckouts.RemoveRange(deepCheckouts);
+        }
+
+        var consumerInvoices = await _db.ConsumerPurchaseInvoices
+            .Where(i => i.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var invoice in consumerInvoices)
+        {
+            // Fiscal retention: keep invoice, anonymise candidate link.
+            invoice.UserId = null;
         }
 
         var talentAsCandidate = await _db.TalentContactRequests
@@ -1337,6 +1862,33 @@ public sealed class PrivacyDataService : IPrivacyDataService
                ?? throw new UnauthorizedAccessException("Gebruiker niet gevonden.");
     }
 
+    private async Task<List<object>> ExportDiplomaEvaluationsAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var rows = await _db.CandidateDiplomaEvaluations.AsNoTracking()
+            .Where(e => e.UserId == userId)
+            .OrderBy(e => e.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+        return rows.Select(e => (object)new
+        {
+            e.Id,
+            e.DiplomaTitle,
+            e.IssuingBody,
+            e.IssuingBodyOther,
+            e.EquivalentLevelText,
+            e.EquivalentLevelCode,
+            e.EvaluationDate,
+            e.ReferenceNumber,
+            e.DocumentFileName,
+            e.DocumentContentType,
+            e.DocumentSizeBytes,
+            DocumentBase64 = e.DocumentContent is { Length: > 0 } bytes
+                ? Convert.ToBase64String(bytes)
+                : null,
+            e.CreatedAtUtc,
+            e.UpdatedAtUtc
+        }).ToList();
+    }
+
     private static string FormatUnsubscribeLogMessage(
         string prefix,
         string reasonCode,
@@ -1351,5 +1903,4 @@ public sealed class PrivacyDataService : IPrivacyDataService
             : $"{prefix}: {label} (user {userId})";
     }
 
-    private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 }

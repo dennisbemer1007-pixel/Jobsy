@@ -1,0 +1,35 @@
+{
+  "kvkNummer": "90123456",
+  "naam": "Groen & Zorg Thuiszorg B.V.",
+  "statutaireNaam": "Groen & Zorg Thuiszorg B.V.",
+  "rechtsvorm": "BV",
+  "uitgebreideRechtsvorm": "Besloten Vennootschap",
+  "sbiActiviteiten": [
+    { "sbiCode": "88101", "indHoofdactiviteit": "Ja" },
+    { "sbiCode": "88102", "indHoofdactiviteit": "Nee" }
+  ],
+  "_embedded": {
+    "hoofdvestiging": {
+      "vestigingsnummer": "000045678901",
+      "eersteHandelsnaam": "Hoofdvestiging Utrecht",
+      "websites": ["https://www.groenenzorg.nl/home"],
+      "adressen": [
+        {
+          "type": "bezoekadres",
+          "straatnaam": "Vondellaan",
+          "huisnummer": 12,
+          "postcode": "3521GE",
+          "plaats": "Utrecht",
+          "geoData": { "gpsLatitude": 52.078, "gpsLongitude": 5.125 }
+        },
+        {
+          "type": "postadres",
+          "straatnaam": "Postbus",
+          "huisnummer": 100,
+          "postcode": "3500AA",
+          "plaats": "Utrecht"
+        }
+      ]
+    }
+  }
+}

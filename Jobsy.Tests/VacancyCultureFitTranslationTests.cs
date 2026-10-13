@@ -73,15 +73,19 @@ public class VacancyCultureFitTranslationTests
         Assert.Contains("RefreshTravelAsync", detail, StringComparison.Ordinal);
         Assert.Contains("Exactly one full vacancy load", detail, StringComparison.Ordinal);
         Assert.Contains("Insights.Updating", detail, StringComparison.Ordinal);
-        // No second full LoadAsync after likes/age.
-        Assert.DoesNotContain("await LoadAsync(origin);", detail, StringComparison.Ordinal);
+        // No second full LoadAsync after likes/age. Errors 03 made the origin flow through so a
+        // closed vacancy's similar list can show travel time, so the guard is the condition that
+        // keeps the call to one: it only runs when nothing is loaded yet.
+        Assert.Contains("var alreadyLoaded = (_vacancy is not null && _vacancy.Id == Id)", detail, StringComparison.Ordinal);
+        Assert.Contains("if (!alreadyLoaded)", detail, StringComparison.Ordinal);
+        Assert.DoesNotContain("await LoadAsync(origin);\n                await LoadLikeAsync();", detail, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Training_offers_fetch_only_when_inputs_change()
     {
         var root = RepoRoot.Find();
-        var block = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TrainingOffersBlock.razor"));
+        var block = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/TrainingOffersBlock.razor"));
         Assert.Contains("_lastFetchKey", block, StringComparison.Ordinal);
         Assert.Contains("string.Equals(key, _lastFetchKey", block, StringComparison.Ordinal);
     }

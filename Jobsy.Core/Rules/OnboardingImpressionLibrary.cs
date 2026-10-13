@@ -6,7 +6,9 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class OnboardingImpressionLibrary
 {
-    public const string ResultLabel = "Eerste indruk · op basis van 21 vragen";
+    public const string ResultLabelKey = "Onboarding.Result.Label";
+
+    public const string ResultLabel = "Eerste indruk · op basis van 20 vragen";
 
     public static string StrengthSentence(string dimensionCode)
         => dimensionCode switch

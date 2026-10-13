@@ -9,13 +9,13 @@ public class RoleFitCheckTests
     public void Gate_copy_and_upsell_match_the_product_spec()
     {
         Assert.Equal(
-            "Ontgrendel de Functie-Fit Checker door eerst je korte competentie- en beroepentest in te vullen (ca. 3 minuten).",
+            "Ontgrendel de Functie-Fit Checker door eerst je korte test over hoe je werkt en de beroepentest in te vullen (ongeveer 3 minuten).",
             RoleFitCheckCopy.Locked);
         Assert.Contains("€ 2,99", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
         Assert.Contains("diepte-analyse", RoleFitCheckCopy.DeepUpsell, StringComparison.Ordinal);
         Assert.Equal(RoleFitCheckCopy.Locked, UiStringsNl("Fit.Locked"));
         Assert.Equal(RoleFitCheckCopy.DeepUpsell, UiStringsNl("Fit.DeepUpsell"));
-        Assert.Equal("Mijn DNA", UiStringsNl("Kompas.TabDna"));
+        Assert.Equal("Wie ik ben", UiStringsNl("Kompas.TabDna"));
         Assert.Equal("Profiel", UiStringsNl("Kompas.TabProfile"));
         Assert.Equal("Tests", UiStringsNl("Kompas.TabTests"));
         Assert.Equal("Functiefit", UiStringsNl("Kompas.TabFit"));
@@ -96,7 +96,7 @@ public class RoleFitCheckTests
     public void Pages_wire_tabs_and_gated_fit_checker()
     {
         var root = RepoRoot.Find();
-        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("CandidateKompasTabs.Fit", kompas, StringComparison.Ordinal);
         Assert.Contains("RoleFitCheckPanel", kompas, StringComparison.Ordinal);
         Assert.Contains("kompas-tab-fit", kompas, StringComparison.Ordinal);
@@ -106,7 +106,7 @@ public class RoleFitCheckTests
         var profile = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         Assert.Contains("<CandidateKompas", profile, StringComparison.Ordinal);
 
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/RoleFitCheckPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckPanel.razor"));
         Assert.Contains("Fit.Locked", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.DeepUpsell", panel, StringComparison.Ordinal);
         Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
@@ -118,9 +118,14 @@ public class RoleFitCheckTests
         Assert.Contains("Fit.CheckMyFit", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.NeedsRecheck", panel, StringComparison.Ordinal);
         Assert.Contains("Active", panel, StringComparison.Ordinal);
-        Assert.Contains("never auto-POST", panel, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("RoleFitCheckSession", panel, StringComparison.Ordinal);
         Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
+
+        var session = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckSession.cs"));
+        Assert.Contains("never auto-POST", session, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("GetMyRoleFitAsync", session, StringComparison.Ordinal);
+        Assert.Contains("EvaluateRoleFitAsync", session, StringComparison.Ordinal);
 
         var controller = File.ReadAllText(Path.Combine(root, "Jobsy.Api/Controllers/RoleFitCheckController.cs"));
         Assert.Contains("RequireCandidate", controller, StringComparison.Ordinal);
@@ -141,7 +146,7 @@ public class RoleFitCheckTests
         => Jobsy.Web.Localization.UiStrings.Get(key, "nl");
 
     private static string BuildMapHref(string query)
-        => "/?q=" + Uri.EscapeDataString(query);
+        => "/banenkaart?q=" + Uri.EscapeDataString(query);
 
     private static void AssertNoJargon(RoleFitCheckSnapshot snapshot)
     {

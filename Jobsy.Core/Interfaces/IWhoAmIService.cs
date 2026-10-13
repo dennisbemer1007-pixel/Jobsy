@@ -7,6 +7,8 @@ public interface IWhoAmIService
 {
     Task<WhoAmIStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default);
 
+    Task<WhoAmIStateDto> GetAsync(Guid userId, string? language, CancellationToken cancellationToken = default);
+
     Task<WhoAmIStateDto> SetIncludeOnCvAsync(
         Guid userId,
         bool includeOnCv,

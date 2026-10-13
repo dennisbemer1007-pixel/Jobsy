@@ -1,3 +1,5 @@
+using Jobsy.Core.Careers;
+
 namespace Jobsy.Core.Rules;
 
 /// <summary>
@@ -14,19 +16,14 @@ public static class CareerCompassBuilder
     public const string BandStrong = "strong";
     public const string BandBroaden = "broaden";
 
-    public static CareerCompassSnapshot Build(RiasecScores? scores, bool fromDeepAnalysis = false)
+    public static CareerCompassSnapshot Build(RiasecScores? scores, bool fromDeepAnalysis = false, string? education = null)
     {
         if (scores is not { IsComplete: true })
         {
             return CareerCompassSnapshot.Empty(fromDeepAnalysis);
         }
 
-        var ranked = Occupations
-            .Select(job => Score(job, scores))
-            .Where(m => m.Percent >= BroadenMin)
-            .OrderByDescending(m => m.Percent)
-            .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var ranked = Listed(scores, education);
 
         var strengths = CareerTestCatalog.RiasecCodes
             .Select(code => (Code: code, Percent: scores.Get(code), Label: TypeLabel(code)))
@@ -42,7 +39,8 @@ public static class CareerCompassBuilder
             ranked,
             PracticalNotes(scores, strengths, fromDeepAnalysis),
             fromDeepAnalysis,
-            fromOpenAi: false);
+            fromOpenAi: false,
+            ScoresKey(scores));
     }
 
     public static string TypeLabel(string code) => code switch
@@ -58,11 +56,406 @@ public static class CareerCompassBuilder
 
     public static string BandLabel(string band) => band switch
     {
-        BandSuper => "Super-match — meer dan 95% (de kernfit)",
-        BandStrong => "Sterke keus — meer dan 85% (uitstekende alternatieven)",
-        BandBroaden => "Handige verbreding — meer dan 75% (doorgroeirichtingen)",
+        BandSuper => "Past het best",
+        BandStrong => "Past goed",
+        BandBroaden => "Ook de moeite",
         _ => "Richting om te bekijken"
     };
+
+    /// <summary>
+    /// Drops lines that point at vacancies or the job map. The RIASEC list itself stays unchanged.
+    /// </summary>
+    public static IReadOnlyList<string> NotesForCandidate(IReadOnlyList<string> notes, bool employersOn)
+    {
+        if (employersOn)
+        {
+            return notes;
+        }
+
+        return notes.Where(note => !MentionsEmployerSurface(note)).ToList();
+    }
+
+    public static bool MentionsEmployerSurface(string? note)
+    {
+        if (string.IsNullOrWhiteSpace(note))
+        {
+            return false;
+        }
+
+        return note.Contains("vacature", StringComparison.OrdinalIgnoreCase)
+               || note.Contains("banenkaart", StringComparison.OrdinalIgnoreCase)
+               || note.Contains("job map", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Every listable occupation (high or medium confidence, with a sourced profile), scored and ordered.</summary>
+    public static IReadOnlyList<CareerOccupationMatch> Ranked(RiasecScores scores)
+        => OccupationCatalog.Shared.Listable
+            .Select(job => Score(job, scores))
+            .OrderByDescending(m => m.Percent)
+            .ThenByDescending(CommonRank)
+            .ThenByDescending(TierRank)
+            .ThenBy(m => m.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    /// <summary>
+    /// The one job list for the report, the coach, the action plan, the PDF, /carriere and the competence report.
+    /// Top 8–12 by profile match. A tier comes from the shown percent, so equal percents share a tier.
+    /// Leadership stays out when Enterprising is not a top-3 direction.
+    /// At most two jobs per ISCO unit group. Only high and medium confidence.
+    /// </summary>
+    public static IReadOnlyList<CareerOccupationMatch> Listed(RiasecScores scores, string? education = null)
+    {
+        var catalog = OccupationCatalog.Shared;
+        var gate = CareerEducationGate.MaxIscoLevel(education);
+        var allowLead = EnterprisingInTop3(scores);
+        var jobs = new List<CareerOccupationMatch>();
+        foreach (var job in Ranked(scores))
+        {
+            var occupation = catalog.Get(job.EscoId);
+            if (occupation is null)
+            {
+                continue;
+            }
+
+            if (!allowLead && OccupationCatalog.IsLeadership(occupation))
+            {
+                continue;
+            }
+
+            if (!CareerEducationGate.Passes(occupation.IscoLevel, gate))
+            {
+                continue;
+            }
+
+            jobs.Add(job);
+        }
+
+        ApplyLevelSwaps(jobs, scores, gate);
+        if (gate.MaxLevel is < 4)
+        {
+            jobs = PreferCommonJobs(jobs, scores);
+        }
+
+        jobs = TakeDiverse(jobs, perIsco: 2, take: CareerCompassSanitize.MaxCatalogueJobs);
+        jobs = CareerCompassSanitize.OrderForEducation(jobs, education);
+        return CareerCompassSanitize.AssignPercentBands(jobs);
+    }
+
+    /// <summary>
+    /// For mbo, vmbo, havo and vwo: keep common CBS titles, and prefer those whose main
+    /// direction is in the candidate's top 3. Niche titles fill the list only when fewer
+    /// than 8 common jobs remain.
+    /// </summary>
+    private static List<CareerOccupationMatch> PreferCommonJobs(List<CareerOccupationMatch> jobs, RiasecScores scores)
+    {
+        var top = CareerTestCatalog.RiasecCodes
+            .Select(code => (Code: code, Score: scores.Get(code)))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Code, StringComparer.Ordinal)
+            .Take(3)
+            .Select(x => x.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        int Bucket(CareerOccupationMatch job)
+        {
+            if (CommonRank(job) == 0)
+            {
+                return 2;
+            }
+
+            return top.Contains(PrimaryCode(job.Title)) ? 0 : 1;
+        }
+
+        var ordered = jobs
+            .OrderBy(Bucket)
+            .ThenByDescending(job => job.Percent)
+            .ThenByDescending(TierRank)
+            .ThenBy(job => job.Title, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var common = ordered.Where(job => Bucket(job) < 2).ToList();
+        var picked = TakeDiverse(common, perIsco: 2, take: CareerCompassSanitize.MaxCatalogueJobs);
+        if (picked.Count >= 8)
+        {
+            return picked;
+        }
+
+        var seen = picked
+            .Select(job => job.EscoId ?? job.Title)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var catalog = OccupationCatalog.Shared;
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var job in picked)
+        {
+            var isco = catalog.Get(job.EscoId)?.Isco ?? "";
+            counts.TryGetValue(isco, out var seenCount);
+            counts[isco] = seenCount + 1;
+        }
+
+        foreach (var job in ordered)
+        {
+            var key = job.EscoId ?? job.Title;
+            if (!seen.Add(key))
+            {
+                continue;
+            }
+
+            var isco = catalog.Get(job.EscoId)?.Isco ?? "";
+            counts.TryGetValue(isco, out var seenCount);
+            if (isco.Length > 0 && seenCount >= 2)
+            {
+                continue;
+            }
+
+            counts[isco] = seenCount + 1;
+            picked.Add(job);
+            if (picked.Count == CareerCompassSanitize.MaxCatalogueJobs)
+            {
+                break;
+            }
+        }
+
+        return picked;
+    }
+
+    /// <summary>1 when the official Dutch title is in the CBS index, otherwise 0.</summary>
+    internal static int CommonRank(CareerOccupationMatch job)
+    {
+        var occupation = string.IsNullOrWhiteSpace(job.EscoId)
+            ? OccupationCatalog.Shared.Resolve(job.Title)
+            : OccupationCatalog.Shared.Get(job.EscoId);
+        return occupation is not null && OccupationCatalog.Shared.IsCommonDutchTitle(occupation) ? 1 : 0;
+    }
+
+    /// <summary>Tighter sourced link ranks higher: exact, narrow, close, then broad.</summary>
+    internal static int TierRank(CareerOccupationMatch job)
+    {
+        var occupation = string.IsNullOrWhiteSpace(job.EscoId)
+            ? OccupationCatalog.Shared.Resolve(job.Title)
+            : OccupationCatalog.Shared.Get(job.EscoId);
+        return occupation?.Tier switch
+        {
+            "exact" => 4,
+            "narrow" => 3,
+            "close" => 2,
+            "broad" => 1,
+            _ => 0
+        };
+    }
+
+    private static void ApplyLevelSwaps(List<CareerOccupationMatch> jobs, RiasecScores scores, CareerEducationGate.Result gate)
+    {
+        if (!gate.SubstituteLowerOffice)
+        {
+            return;
+        }
+
+        var catalog = OccupationCatalog.Shared;
+        foreach (var swap in catalog.LevelSwaps)
+        {
+            var from = jobs.FindIndex(job => string.Equals(job.EscoId, swap.FromId, StringComparison.OrdinalIgnoreCase));
+            if (from < 0)
+            {
+                continue;
+            }
+
+            jobs.RemoveAt(from);
+            if (jobs.Any(job => string.Equals(job.EscoId, swap.ToId, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            var target = catalog.Get(swap.ToId);
+            if (target is null || !target.IsListable || !CareerEducationGate.Passes(target.IscoLevel, gate))
+            {
+                continue;
+            }
+
+            if (!EnterprisingInTop3(scores) && OccupationCatalog.IsLeadership(target))
+            {
+                continue;
+            }
+
+            jobs.Insert(Math.Min(from, jobs.Count), Score(target, scores));
+        }
+    }
+
+    private static List<CareerOccupationMatch> TakeDiverse(List<CareerOccupationMatch> jobs, int perIsco, int take)
+    {
+        var catalog = OccupationCatalog.Shared;
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var picked = new List<CareerOccupationMatch>(take);
+        foreach (var job in jobs)
+        {
+            var isco = catalog.Get(job.EscoId)?.Isco ?? "";
+            counts.TryGetValue(isco, out var seen);
+            if (isco.Length > 0 && seen >= perIsco)
+            {
+                continue;
+            }
+
+            counts[isco] = seen + 1;
+            picked.Add(job);
+            if (picked.Count == take)
+            {
+                break;
+            }
+        }
+
+        return picked;
+    }
+
+    /// <summary>Teamleider, voorman and ploegleider need Enterprising in the top 3.</summary>
+    public static bool IsLeadershipTitle(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return false;
+        }
+
+        var fold = title.ToLowerInvariant();
+        return fold.Contains("teamleider", StringComparison.Ordinal)
+               || fold.Contains("leidinggevende", StringComparison.Ordinal)
+               || fold.Contains("ploegleider", StringComparison.Ordinal)
+               || fold.Contains("voorman", StringComparison.Ordinal);
+    }
+
+    public static bool EnterprisingInTop3(RiasecScores scores)
+    {
+        var top = CareerTestCatalog.RiasecCodes
+            .Select(code => (Code: code, Score: scores.Get(code)))
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Code, StringComparer.Ordinal)
+            .Take(3);
+        return top.Any(x => string.Equals(x.Code, CareerTestCatalog.Enterprising, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Profile-match percent for a title that resolves to an occupation with a sourced profile.
+    /// Null when the title does not resolve, or when that occupation has no sourced profile.
+    /// <paramref name="education"/> does not change the number: the education gate only decides what is listed.
+    /// </summary>
+    public static decimal? CatalogueFit(string title, RiasecScores scores, string? education = null)
+    {
+        _ = education;
+        var occupation = OccupationCatalog.Shared.Resolve(title);
+        // Low confidence and occupations without a profile have no percent. Callers show "Geen score".
+        return occupation is { IsListable: true, Oi: { Count: 6 } oi } ? ProfileMatch(oi, scores) : null;
+    }
+
+    /// <summary>The job's strongest sourced letters, or empty when the title has no profile.</summary>
+    public static IReadOnlyList<(string Code, int Weight)> WeightsFor(string title)
+    {
+        var occupation = OccupationCatalog.Shared.Resolve(title);
+        if (occupation?.Oi is not { Count: 6 } oi)
+        {
+            return [];
+        }
+
+        var letters = new List<(string Code, int Weight)>(6);
+        for (var i = 0; i < CareerTestCatalog.RiasecCodes.Length && i < oi.Count; i++)
+        {
+            var weight = (int)Math.Round((oi[i] - 1d) * 100d, MidpointRounding.AwayFromZero);
+            if (weight > 0)
+            {
+                letters.Add((CareerTestCatalog.RiasecCodes[i], weight));
+            }
+        }
+
+        return letters
+            .OrderByDescending(weight => weight.Weight)
+            .ThenBy(weight => weight.Code, StringComparer.Ordinal)
+            .Take(3)
+            .ToList();
+    }
+
+    /// <summary>Primary direction of a resolved catalogue title. Empty when the title has no profile.</summary>
+    public static string PrimaryCode(string title)
+        => TopCode(OccupationCatalog.Shared.Resolve(title)?.Oi);
+
+    private static string TopCode(IReadOnlyList<double>? oi)
+    {
+        if (oi is not { Count: >= 6 })
+        {
+            return "";
+        }
+
+        var best = 0;
+        for (var i = 1; i < 6; i++)
+        {
+            if (oi[i] > oi[best])
+            {
+                best = i;
+            }
+        }
+
+        return oi[best] <= 1d ? "" : CareerTestCatalog.RiasecCodes[best];
+    }
+
+    /// <summary>Holland letters for role-fit helpers. Null when the title has no sourced profile.</summary>
+    internal static CareerOccupation? WeightedOccupation(string title)
+    {
+        var weights = WeightsFor(title);
+        if (weights.Count == 0)
+        {
+            return null;
+        }
+
+        var occupation = OccupationCatalog.Shared.Resolve(title);
+        return new CareerOccupation(occupation?.Nl ?? title.Trim(), weights.ToArray());
+    }
+
+    /// <summary>Short workplace phrases for the top directions, used when fewer than three jobs survived.</summary>
+    public static string TypicalEnvironments(IEnumerable<string> domainCodes, string? lang)
+    {
+        var en = string.Equals(lang, "en", StringComparison.OrdinalIgnoreCase);
+        var phrases = new List<string>();
+        foreach (var code in domainCodes)
+        {
+            if (phrases.Count == 3)
+            {
+                break;
+            }
+
+            var phrase = EnvironmentPhrase(code, en);
+            if (phrase.Length == 0 || phrases.Contains(phrase, StringComparer.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            phrases.Add(phrase);
+        }
+
+        return string.Join(", ", phrases);
+    }
+
+    private static string EnvironmentPhrase(string code, bool en)
+    {
+        var key = code.Trim();
+        if (key.Length == 1)
+        {
+            key = key.ToUpperInvariant() switch
+            {
+                "R" => CareerTestCatalog.Realistic,
+                "I" => CareerTestCatalog.Investigative,
+                "A" => CareerTestCatalog.Artistic,
+                "S" => CareerTestCatalog.Social,
+                "E" => CareerTestCatalog.Enterprising,
+                "C" => CareerTestCatalog.Conventional,
+                _ => key
+            };
+        }
+
+        return key.ToUpperInvariant() switch
+        {
+            "REALISTIC" => en ? "a workplace, warehouse, kitchen or outdoors" : "werkplaats, magazijn, keuken of buiten",
+            "INVESTIGATIVE" => en ? "measuring, quality checks or figuring something out" : "meten, kwaliteit of uitzoeken",
+            "ARTISTIC" => en ? "a shop floor, styling or presentation" : "winkel, styling of presentatie",
+            "SOCIAL" => en ? "care, hospitality or a shop floor with people" : "zorg, horeca of een winkelvloer",
+            "ENTERPRISING" => en ? "sales or a team that is on the move" : "verkoop of een ploeg in beweging",
+            "CONVENTIONAL" => en ? "planning, a till or administration" : "planning, kassa of administratie",
+            _ => ""
+        };
+    }
 
     public static string Band(int percent)
     {
@@ -118,40 +511,168 @@ public static class CareerCompassBuilder
         }
 
         // Whole-word only: "sociale" is Dutch, "Social" as type name is jargon.
+        // ISCO, ESCO and gradient are the same: a candidate never needs those names.
+        if (text.Contains("O*NET", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         return System.Text.RegularExpressions.Regex.IsMatch(
             text,
-            @"\b(Social|Artistic|DISC)\b",
+            @"\b(Social|Artistic|DISC|ISCO|ESCO|gradient)\b",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
     }
 
-    internal static CareerOccupationMatch Score(CareerOccupation job, RiasecScores scores)
+    internal static CareerOccupationMatch Score(Occupation job, RiasecScores scores)
     {
-        var weightSum = 0;
-        var weighted = 0.0;
-        foreach (var (code, weight) in job.Weights)
-        {
-            if (weight <= 0)
-            {
-                continue;
-            }
+        var topCode = TopCode(job.Oi);
+        var top = string.IsNullOrEmpty(topCode)
+            ? "werk dat bij je past"
+            : TypeLabel(topCode).ToLowerInvariant();
+        var percent = job.Oi is { Count: 6 } oi ? ProfileMatch(oi, scores) : 0;
+        var noScore = job.NoScore;
+        return new CareerOccupationMatch(
+            job.Nl,
+            percent,
+            "",
+            noScore
+                ? OccupationCopy.NoScoreSentence
+                : $"Dit werk vraagt vooral {top} — en dat sluit aan bij hoe jij scoort.",
+            CareerOccupationKeys.FromTitle(job.Nl),
+            job.Id,
+            job.Confidence,
+            job.Onet,
+            noScore);
+    }
 
-            weightSum += weight;
-            weighted += scores.Get(code) / 100.0 * weight;
+    /// <summary>Six letter scores joined, so a stored compass can be checked against the profile.</summary>
+    public static string ScoresKey(RiasecScores scores)
+        => string.Join('|',
+            scores.Realistic,
+            scores.Investigative,
+            scores.Artistic,
+            scores.Social,
+            scores.Enterprising,
+            scores.Conventional);
+
+    /// <summary>Shown percent, up to two decimals, invariant so the fact sheet and the screen match.</summary>
+    public static string FormatPercent(decimal percent)
+        => percent.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>Dutch, Polish and Romanian use a decimal comma. English and Arabic keep a dot.</summary>
+    public static string FormatPercent(decimal percent, string? lang)
+    {
+        var code = Jobsy.Core.Localization.JobsyLanguages.Normalize(lang);
+        if (code is "nl" or "pl" or "ro")
+        {
+            return percent.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
         }
 
-        var percent = weightSum <= 0
-            ? 0
-            : (int)Math.Clamp(Math.Round(100 * weighted / weightSum, MidpointRounding.AwayFromZero), 0, 100);
-        var top = job.Weights
-            .OrderByDescending(w => w.Weight)
-            .Select(w => TypeLabel(w.Code).ToLowerInvariant())
-            .First();
-        return new CareerOccupationMatch(
-            job.Title,
-            percent,
-            Band(percent),
-            $"Dit werk vraagt vooral {top} — en dat sluit aan bij hoe jij scoort.",
-            CareerOccupationKeys.FromTitle(job.Title));
+        return FormatPercent(percent);
+    }
+
+    /// <summary>
+    /// Keeps a stored "why" only when the title and the percent are the same.
+    /// A stored sentence must not cite a different percent than the one on screen.
+    /// </summary>
+    public static CareerCompassSnapshot CopyReasons(CareerCompassSnapshot built, CareerCompassSnapshot? stored)
+    {
+        if (stored is not { HasOccupations: true })
+        {
+            return built;
+        }
+
+        var jobs = built.AllOccupations.Select(job =>
+        {
+            var previous = stored.AllOccupations.FirstOrDefault(other =>
+                string.Equals(CareerOccupationKeys.Fold(other.Title), CareerOccupationKeys.Fold(job.Title), StringComparison.Ordinal));
+            if (previous is null || previous.Percent != job.Percent || string.IsNullOrWhiteSpace(previous.Why))
+            {
+                return job;
+            }
+
+            return job with { Why = previous.Why };
+        }).ToList();
+
+        return CareerCompassHierarchy.FromOccupations(
+            built.Strengths,
+            jobs,
+            built.PracticalNotes,
+            built.FromDeepAnalysis,
+            built.FromOpenAi,
+            built.ScoresFingerprint,
+            built.ModelAttemptUtc);
+    }
+
+    /// <summary>
+    /// Job-fit percent (0–100). It is a weighted mean of the candidate's own letter scores,
+    /// so it never exceeds their highest letter and never drops below their lowest.
+    ///
+    /// Steps:
+    /// 1. Weight each letter with w = OI − 1 (0..6), straight from the sourced profile.
+    /// 2. percent = round(Σ w·score / Σ w, 2 decimals), midpoint away from zero, clamped to 0..100.
+    /// 3. Letters with w = 0 do not pull the result.
+    ///
+    /// Two decimals stay, because rounding to a whole number hid real differences
+    /// (the run-14 profile put many realistic jobs on 63 or 64). The same profile still shows the same percent.
+    ///
+    /// Worked example. Profile R66 I38 A37 S64 E43 C62.
+    /// Tuinbouwmedewerker OI [7, 1.97, 1.59, 1.66, 2.09, 3.35].
+    /// Weights [6, 0.97, 0.59, 0.66, 1.09, 2.35], sum of weights 11.66.
+    /// Σ w·score = 6×66 + 0.97×38 + 0.59×37 + 0.66×64 + 1.09×43 + 2.35×62 = 689.5.
+    /// 689.5 / 11.66 = 59.133… → 59.13.
+    /// </summary>
+    public static decimal ProfileMatch(IReadOnlyList<double> oi, RiasecScores scores)
+        => MatchMath(oi, scores).Percent;
+
+    /// <summary>
+    /// The terms behind <see cref="ProfileMatch"/>. The explanation text is built from this,
+    /// so the shown percent and the worked example cannot drift apart.
+    /// </summary>
+    public static ProfileMatchMath MatchMath(IReadOnlyList<double> oi, RiasecScores scores)
+    {
+        var terms = new List<ProfileMatchTerm>(6);
+        decimal used = 0m;
+        decimal sum = 0m;
+        if (oi.Count >= 6)
+        {
+            for (var i = 0; i < 6; i++)
+            {
+                var level = decimal.Round((decimal)oi[i], 2, MidpointRounding.AwayFromZero);
+                var weight = level - 1m;
+                var score = scores.Get(CareerTestCatalog.RiasecCodes[i]);
+                var counts = weight > 0m;
+                var product = counts ? weight * score : 0m;
+                if (counts)
+                {
+                    used += weight;
+                    sum += product;
+                }
+
+                terms.Add(new ProfileMatchTerm(
+                    CareerTestCatalog.RiasecCodes[i],
+                    score,
+                    level,
+                    counts ? weight : 0m,
+                    product));
+            }
+        }
+
+        var percent = 0m;
+        if (used > 0m)
+        {
+            percent = decimal.Round(sum / used, 2, MidpointRounding.AwayFromZero);
+            if (percent < 0m)
+            {
+                percent = 0m;
+            }
+            else if (percent > 100m)
+            {
+                percent = 100m;
+            }
+        }
+
+        return new ProfileMatchMath(percent, used, sum, terms);
     }
 
     private static IReadOnlyList<string> PracticalNotes(
@@ -159,10 +680,10 @@ public static class CareerCompassBuilder
         IReadOnlyList<string> strengths,
         bool fromDeepAnalysis)
     {
-        var top = CareerTestCatalog.RiasecCodes
-            .Select(code => (Code: code, Percent: scores.Get(code)))
-            .OrderByDescending(x => x.Percent)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
+        var top = RiasecRanking.Rank(
+                scores.Realistic, scores.Investigative, scores.Artistic,
+                scores.Social, scores.Enterprising, scores.Conventional)
+            .Select(x => (Code: x.Code, Percent: x.Value))
             .First();
 
         var workplace = top.Code switch
@@ -198,7 +719,7 @@ public static class CareerCompassBuilder
         };
 
         var platform = fromDeepAnalysis
-            ? "Zo zet je dit in op Lobsy: open de banenkaart. Vacatures die bij jouw richting horen scoren hoger. Filter op hoge match en bewaar wat voelt als ‘dit is het’. Werkgevers zien geen ruwe antwoorden — alleen dat je past."
+            ? "Zo zet je dit in op Lobsy: open de banenkaart. Vacatures die bij jouw richting horen scoren hoger. Filter op hoge match en bewaar wat voelt als ‘dit is het’. Werkgevers zien geen ruwe antwoorden, alleen dat je past."
             : "Zo zet je dit in op Lobsy: vul daarna de uitgebreide beroepentest (200 vragen) in voor een scherper rapport. Tot die tijd weegt de banenkaart al mee wat je hier hebt aangegeven.";
 
         var lines = new List<string>
@@ -223,64 +744,38 @@ public static class CareerCompassBuilder
         _ => string.Join(", ", items.Take(items.Count - 1)) + " en " + items[^1]
     };
 
-    /// <summary>
-    /// Fallback labour-market catalog (general Dutch occupations). Not live Lobsy vacancies.
-    /// OpenAI is the primary source after the paid 150-item test.
-    /// </summary>
-    public static readonly IReadOnlyList<CareerOccupation> Occupations =
-    [
-        new("Medewerker tuinbouw / kas", W(CareerTestCatalog.Realistic, 100)),
-        new("Magazijnmedewerker / orderpicker", W(CareerTestCatalog.Realistic, 80), W(CareerTestCatalog.Conventional, 40)),
-        new("Productiemedewerker", W(CareerTestCatalog.Realistic, 90), W(CareerTestCatalog.Conventional, 30)),
-        new("Onderhoudsmonteur", W(CareerTestCatalog.Realistic, 90), W(CareerTestCatalog.Investigative, 30)),
-        new("Medewerker bouw / afbouw", W(CareerTestCatalog.Realistic, 100)),
-        new("Medewerker schoonmaak", W(CareerTestCatalog.Realistic, 70), W(CareerTestCatalog.Conventional, 40)),
-        new("Kwaliteitscontroleur", W(CareerTestCatalog.Investigative, 90), W(CareerTestCatalog.Conventional, 40)),
-        new("Teelttechnisch medewerker", W(CareerTestCatalog.Investigative, 70), W(CareerTestCatalog.Realistic, 50)),
-        new("Lab- of meetassistent", W(CareerTestCatalog.Investigative, 100)),
-        new("Winkelstylist / visuele presentatie", W(CareerTestCatalog.Artistic, 90), W(CareerTestCatalog.Enterprising, 30)),
-        new("Bloemist / groenpresentatie", W(CareerTestCatalog.Artistic, 80), W(CareerTestCatalog.Realistic, 40)),
-        new("Content- of seizoensmaker", W(CareerTestCatalog.Artistic, 80), W(CareerTestCatalog.Enterprising, 30)),
-        new("Helpende zorg", W(CareerTestCatalog.Social, 100)),
-        new("Activiteitenbegeleider", W(CareerTestCatalog.Social, 90), W(CareerTestCatalog.Artistic, 30)),
-        new("Medewerker horeca / bediening", W(CareerTestCatalog.Social, 70), W(CareerTestCatalog.Enterprising, 40)),
-        new("Gastvrouw / gastheer", W(CareerTestCatalog.Social, 80), W(CareerTestCatalog.Enterprising, 40)),
-        new("Begeleider nieuwe collega’s", W(CareerTestCatalog.Social, 80), W(CareerTestCatalog.Enterprising, 30)),
-        new("Verkoopmedewerker winkel", W(CareerTestCatalog.Enterprising, 80), W(CareerTestCatalog.Social, 50)),
-        new("Teamleider winkel of horeca", W(CareerTestCatalog.Enterprising, 90), W(CareerTestCatalog.Social, 40)),
-        new("Medewerker verkoop binnendienst", W(CareerTestCatalog.Enterprising, 70), W(CareerTestCatalog.Conventional, 40)),
-        new("Administratief medewerker", W(CareerTestCatalog.Conventional, 100)),
-        new("Planningsmedewerker", W(CareerTestCatalog.Conventional, 80), W(CareerTestCatalog.Enterprising, 30)),
-        new("Kassamedewerker", W(CareerTestCatalog.Conventional, 70), W(CareerTestCatalog.Social, 40)),
-        new("Orderadministrator", W(CareerTestCatalog.Conventional, 90), W(CareerTestCatalog.Realistic, 20)),
-        new("Verpleegkundige / zorgmedewerker", W(CareerTestCatalog.Social, 100)),
-        new("Docent / leraar", W(CareerTestCatalog.Social, 70), W(CareerTestCatalog.Artistic, 40)),
-        new("ICT-beheerder", W(CareerTestCatalog.Investigative, 70), W(CareerTestCatalog.Conventional, 50)),
-        new("Softwareontwikkelaar", W(CareerTestCatalog.Investigative, 80), W(CareerTestCatalog.Conventional, 40)),
-        new("Chauffeur", W(CareerTestCatalog.Realistic, 80), W(CareerTestCatalog.Conventional, 30)),
-        new("Elektricien", W(CareerTestCatalog.Realistic, 80), W(CareerTestCatalog.Investigative, 40)),
-        new("Kok", W(CareerTestCatalog.Realistic, 60), W(CareerTestCatalog.Artistic, 50)),
-        new("Receptionist", W(CareerTestCatalog.Conventional, 60), W(CareerTestCatalog.Social, 50)),
-        new("HR-medewerker", W(CareerTestCatalog.Social, 60), W(CareerTestCatalog.Conventional, 50)),
-        new("Marketingmedewerker", W(CareerTestCatalog.Enterprising, 70), W(CareerTestCatalog.Artistic, 50)),
-        new("Boekhouder / administrateur", W(CareerTestCatalog.Conventional, 100)),
-        new("Dierenverzorger", W(CareerTestCatalog.Realistic, 50), W(CareerTestCatalog.Social, 50))
-    ];
-
-    private static (string Code, int Weight) W(string code, int weight) => (code, weight);
 }
+
+public readonly record struct ProfileMatchTerm(
+    string Code,
+    int Score,
+    decimal Oi,
+    decimal Weight,
+    decimal Product);
+
+public readonly record struct ProfileMatchMath(
+    decimal Percent,
+    decimal WeightSum,
+    decimal ProductSum,
+    IReadOnlyList<ProfileMatchTerm> Terms);
 
 public sealed record CareerOccupation(string Title, params (string Code, int Weight)[] Weights);
 
 public sealed record CareerOccupationMatch(
     string Title,
-    int Percent,
+    decimal Percent,
     string Band,
     string Why,
-    IReadOnlyList<string>? Keys = null)
+    IReadOnlyList<string>? Keys = null,
+    string? EscoId = null,
+    string Confidence = "",
+    IReadOnlyList<string>? OnetCodes = null,
+    bool NoScore = false)
 {
     public IReadOnlyList<string> SearchKeys =>
         Keys is { Count: > 0 } keys ? keys : CareerOccupationKeys.FromTitle(Title);
+
+    public IReadOnlyList<string> Onet => OnetCodes ?? [];
 }
 
 public sealed record CareerCompassSnapshot(
@@ -290,13 +785,15 @@ public sealed record CareerCompassSnapshot(
     IReadOnlyList<CareerOccupationMatch> Broadening,
     IReadOnlyList<string> PracticalNotes,
     bool FromDeepAnalysis,
-    bool FromOpenAi = false)
+    bool FromOpenAi = false,
+    string ScoresFingerprint = "",
+    DateTime? ModelAttemptUtc = null)
 {
+    /// <summary>UI key for the incomplete-test prompt. The sentence lives in localization.</summary>
+    public const string EmptyNoteKey = "Tests.CareerCompass.Empty";
+
     public static CareerCompassSnapshot Empty(bool fromDeepAnalysis = false)
-        => new([], [], [], [],
-        [
-            "Rond de beroepentest af. Daarna laten we in gewone taal zien welk werk bij je past, en hoe je dat op de banenkaart gebruikt."
-        ], fromDeepAnalysis);
+        => new([], [], [], [], [], fromDeepAnalysis);
 
     public bool HasOccupations =>
         SuperMatches.Count > 0 || StrongChoices.Count > 0 || Broadening.Count > 0;

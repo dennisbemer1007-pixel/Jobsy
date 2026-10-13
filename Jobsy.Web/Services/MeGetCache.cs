@@ -15,8 +15,8 @@ public sealed class MeGetCache
     public async Task<MeGetResult<T>> GetOrCreateAsync<T>(
         string key,
         Func<CancellationToken, Task<MeGetResult<T>>> factory,
-        CancellationToken ct = default,
-        TimeSpan? ttl = null)
+        TimeSpan? ttl = null,
+        CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
         if (_entries.TryGetValue(key, out var existing)

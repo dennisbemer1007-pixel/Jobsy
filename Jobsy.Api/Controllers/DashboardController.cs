@@ -3,12 +3,14 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/dashboard")]
 [Authorize(Policy = JobsyPolicies.RequireDashboardAccess)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class DashboardController : ControllerBase
 {
     private readonly IDashboardRefreshService _refresh;

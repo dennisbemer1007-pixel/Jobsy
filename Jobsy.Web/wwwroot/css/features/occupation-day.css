@@ -1,0 +1,287 @@
+/* Day in the life — warm coral and cream, tokens only. */
+
+.day-life {
+  max-width: 40rem;
+  margin-inline: auto;
+  padding-block-end: 7rem;
+}
+
+.day-life__card {
+  padding: 1.25rem 1.15rem 1.4rem;
+  border: 1px solid color-mix(in srgb, var(--coral) 22%, var(--border));
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, var(--coral-soft) 0%, var(--surface) 7.5rem);
+  box-shadow: var(--shadow);
+}
+
+.day-life__hello {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-block-end: 1rem;
+}
+
+.day-life__mascot {
+  width: 96px;
+  height: 96px;
+  flex: none;
+  object-fit: contain;
+  background: transparent;
+}
+
+.day-life__mascot--tip {
+  width: 72px;
+  height: 72px;
+}
+
+.day-life__speech {
+  position: relative;
+  margin: 0;
+  padding: 0.75rem 0.95rem;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--coral) 35%, var(--border));
+  color: var(--text);
+  font-weight: 700;
+  line-height: 1.4;
+  box-shadow: var(--shadow);
+}
+
+.day-life__speech::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -7px;
+  bottom: 1.1rem;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border-inline-start: 1px solid color-mix(in srgb, var(--coral) 35%, var(--border));
+  border-block-end: 1px solid color-mix(in srgb, var(--coral) 35%, var(--border));
+  transform: rotate(45deg);
+}
+
+[dir="rtl"] .day-life__speech::before {
+  transform: rotate(-45deg);
+}
+
+.day-life h1 {
+  margin: 0 0 0.35rem;
+  color: var(--brand);
+  font-size: 1.65rem;
+  line-height: 1.2;
+}
+
+.day-life__disclaimer,
+.day-life__lead,
+.day-life__varies {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.day-life__timeline {
+  list-style: none;
+  margin: 0.25rem 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.day-life__block {
+  position: relative;
+  margin-inline-start: 0.65rem;
+  padding: 0.85rem 0.95rem 0.95rem;
+  padding-inline-start: 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--pearl-shine, var(--surface));
+}
+
+.day-life__block::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -0.72rem;
+  top: 1.15rem;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--coral);
+  box-shadow: 0 0 0 4px var(--coral-soft);
+}
+
+.day-life__block + .day-life__block::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -0.42rem;
+  bottom: calc(100% + 0.15rem);
+  width: 2px;
+  height: 0.7rem;
+  background: color-mix(in srgb, var(--coral) 45%, var(--border));
+}
+
+.day-life__chip {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 0.4rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--coral-soft);
+  color: var(--coral-deep);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.day-life__block p,
+.day-life__notes,
+.day-life__fit p {
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.day-life__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.day-life__section {
+  margin: 0 0 1.15rem;
+}
+
+.day-life__section h2,
+.day-life__notes-title {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+  color: var(--brand);
+}
+
+.day-life__cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.day-life__pill {
+  margin: 0;
+  max-width: 100%;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--coral) 28%, var(--border));
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.day-life__pill--skill {
+  background: var(--coral-soft);
+  color: var(--coral-deep);
+  border-color: transparent;
+}
+
+.day-life__notes {
+  margin: 0 0 1rem;
+  padding-inline-start: 1.15rem;
+}
+
+.day-life__notes li + li {
+  margin-block-start: 0.25rem;
+}
+
+.day-life__fit {
+  margin-block-start: 0.4rem;
+  padding: 1rem 1rem 1.05rem;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--coral-soft) 70%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--coral) 24%, var(--border));
+}
+
+.day-life__tip {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+  margin-block-end: 0.85rem;
+}
+
+.day-life__tip .day-life__speech {
+  flex: 1;
+  font-weight: 600;
+}
+
+.day-life__fit h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  color: var(--brand);
+}
+
+.day-life__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-block-start: 0.85rem;
+}
+
+.day-life__cta {
+  background: var(--coral);
+  color: var(--surface);
+  border-color: var(--coral);
+}
+
+.day-life__cta:hover {
+  background: var(--coral-deep);
+  border-color: var(--coral-deep);
+  color: var(--surface);
+}
+
+.day-life__back {
+  margin: 1rem 0 0;
+}
+
+.day-life__back a {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .day-life {
+    padding-block-end: 9rem;
+  }
+
+  .day-life__hello,
+  .day-life__tip {
+    align-items: flex-start;
+  }
+
+  .day-life__actions .career-btn {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 720px) {
+  .day-life {
+    max-width: 46rem;
+  }
+
+  .day-life__card {
+    padding: 1.5rem 1.6rem 1.6rem;
+  }
+
+  .day-life__facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1.25rem;
+    align-items: start;
+  }
+
+  .day-life__actions .career-btn {
+    flex: 1 1 0;
+  }
+}

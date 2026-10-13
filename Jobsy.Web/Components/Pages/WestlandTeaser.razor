@@ -1,8 +1,11 @@
+@* /lancering is a legacy alias for the Westland teaser; keep for bookmarks/printed links. *@
 @page "/westland"
 @page "/lancering"
 @layout TeaserLayout
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Microsoft.Extensions.Configuration
 @inject IConfiguration Config
 
@@ -207,9 +210,11 @@
             }
         </div>
         <p class="wl-finale__fine">
-            <a href="/">Naar de banenkaart</a>
+            <a href="/banenkaart">Naar de banenkaart</a>
             ·
             <a href="/wie-zijn-wij">Meer over Lobsy</a>
+            ·
+            <a href="/ontdek">Eerst je werk-DNA ontdekken? Doe de gratis test</a>
         </p>
     </section>
 </div>

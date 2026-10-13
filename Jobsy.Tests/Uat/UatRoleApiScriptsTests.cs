@@ -45,7 +45,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/integrations/health")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/sales/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await c.GetAsync("api/ambassadeurs/me/dashboard")).StatusCode);
         Assert.Equal(
             HttpStatusCode.Unauthorized,
@@ -74,7 +74,7 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/applications")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/integrations/health")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/sales/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.GetAsync("api/ambassadeurs/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await c.PostAsJsonAsync("api/tokens/grant", new { companyId = _factory.CompanyId, amount = 1, note = "x" })).StatusCode);
     }
@@ -167,16 +167,16 @@ public sealed class UatRoleApiScriptsTests : IClassFixture<RoleFunctionalWebAppF
     public async Task Sales_and_ambassadeur_own_dashboards_forbidden_cross_role()
     {
         var sm = await Authed(_factory.SalesEmail);
-        Assert.Equal(HttpStatusCode.OK, (await sm.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await sm.GetAsync("api/sales/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await sm.GetAsync("api/vacancies/manage")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await sm.GetAsync("api/ambassadeurs/me/dashboard")).StatusCode);
 
         var am = await Authed(_factory.AmbassadeurEmail);
         Assert.Equal(HttpStatusCode.OK, (await am.GetAsync("api/ambassadeurs/me/dashboard")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await am.GetAsync("api/sales-managers/me/dashboard")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await am.GetAsync("api/sales/me/dashboard")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await am.GetAsync("api/vacancies/manage")).StatusCode);
 
-        var payout = await sm.GetAsync("api/sales-managers/me/payouts/preview");
+        var payout = await sm.GetAsync("api/sales/me/payouts/preview");
         Assert.Equal(HttpStatusCode.OK, payout.StatusCode);
         var json = await payout.Content.ReadFromJsonAsync<JsonElement>(Json);
         if (json.TryGetProperty("iban", out var iban) && iban.ValueKind == JsonValueKind.String)

@@ -143,7 +143,7 @@ public class CandidateInsightsOnWriteApiTests : IClassFixture<CandidateInsightsO
     }
 }
 
-public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Program>
+public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid CandidateId { get; } = Guid.Parse("d1000000-0000-0000-0000-000000000020");
     public string CandidateEmail => "insights-kandidaat@jobsy.local";
@@ -315,8 +315,10 @@ public sealed class CandidateInsightsOnWriteFactory : WebApplicationFactory<Prog
             CulturePersonalityScores culture,
             WhoAmIProfileHighlights? profile = null,
             SchwartzValuesScores? values = null,
+            IReadOnlyList<(string Code, int Score)>? competence = null,
             CancellationToken cancellationToken = default)
         {
+            _ = competence;
             Interlocked.Increment(ref WhoAmICalls);
             // Worker/write path may call this; GETs must keep WhoAmICalls at 0.
             return Task.FromResult(new WhoAmIGeneratedStory(

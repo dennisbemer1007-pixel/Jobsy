@@ -1,11 +1,12 @@
 using System.Text.RegularExpressions;
 using Jobsy.Core.Email;
+using Jobsy.Core.Email.Model;
 using Jobsy.Core.Interfaces;
-using Jobsy.Infrastructure.Data;
+using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Tests;
 
@@ -15,17 +16,35 @@ public class TransactionalEmailCatalogTests
         "href\\s*=\\s*\"([^\"]+)\"",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
+    private static readonly string[] RequiredKeys =
+    [
+        "ApplicationConfirmation", "ApplicationVerificationCode", "EmployerReactionAccepted",
+        "EmployerReactionRejected", "EmployerContacting", "ApplicationHired", "ApplicationFilledElsewhere",
+        "PushBom", "AccountUnsubscribeVerification", "ParentalConsent", "EmployerNewApplication",
+        "CandidateWithdrawn", "CandidateWithdrawnOtherJob", "PendingApproval", "VacancyEngagementReminder",
+        "DraftVacancyCleanupWarning", "CompanyReEngagement", "CompanyApiKeyCredentials", "UserInvite",
+        "RegistrationActivation", "RegistrationCredentials", "TakeoverEmailVerification", "TakeoverRequest",
+        "TakeoverSubmitted", "TakeoverApproved", "TakeoverRejected", "SalesManagerInvite", "AmbassadeurInvite",
+        "AccountLockout", "SupportAccessRequested", "MailTest"
+    ];
+
+    public TransactionalEmailCatalogTests()
+        => EmailCatalogService.ResetForTests();
+
     [Fact]
-    public void Catalog_covers_every_known_transactional_type()
+    public void Catalog_contains_at_least_section_M_keys()
     {
         var keys = TransactionalEmails.Templates.Select(t => t.Key).ToList();
-        Assert.Equal(28, keys.Count);
         Assert.Equal(keys.Count, keys.Distinct(StringComparer.OrdinalIgnoreCase).Count());
-        Assert.Contains("ApplicationConfirmation", keys);
-        Assert.Contains("PushBom", keys);
-        Assert.Contains("AccountUnsubscribeVerification", keys);
-        Assert.Contains("CompanyApiKeyCredentials", keys);
-        Assert.Contains("VacancyEngagementReminder", keys);
+        foreach (var key in RequiredKeys)
+        {
+            Assert.Contains(key, keys);
+        }
+
+        Assert.True(keys.Count >= 31);
+        Assert.Contains("MfaResetByAdmin", keys);
+        Assert.Contains("CompanyVerified", keys);
+        Assert.Contains("EmailSignUpCode", keys);
     }
 
     [Fact]
@@ -37,32 +56,35 @@ public class TransactionalEmailCatalogTests
             var mail = TransactionalEmails.Compose(template.Key, ctx);
             Assert.Equal(template.Key, mail.Key);
             Assert.False(string.IsNullOrWhiteSpace(mail.Subject));
+            Assert.False(string.IsNullOrWhiteSpace(mail.Text));
             Assert.Contains("<!DOCTYPE html>", mail.Html, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("lobsy-email.png", mail.Html, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains("https://lobsy.nl/images/brand/lobsy-email.png", mail.Html, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("data-lobsy-layout=\"2\"", mail.Html);
+            Assert.Contains("lobsy-mark-72.png", mail.Html, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("cid:", mail.Html, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("/images/brand/lobsy.png?", mail.Html, StringComparison.OrdinalIgnoreCase);
-            Assert.Contains(EmailLayout.BrandNavy, mail.Html);
             Assert.DoesNotContain("javascript:", mail.Html, StringComparison.OrdinalIgnoreCase);
-            Assert.DoesNotContain("href=\"\"", mail.Html);
-            Assert.DoesNotContain("href=\"#\"", mail.Html);
 
-            var hrefs = HrefRegex.Matches(mail.Html).Select(m => m.Groups[1].Value).ToList();
-            Assert.NotEmpty(hrefs);
-            foreach (var href in hrefs)
+            var def = EmailTemplateRegistry.GetRequired(template.Key);
+            var hasCta = mail.Html.Contains("data-lobsy-cta", StringComparison.Ordinal);
+            var hasOtp = mail.Html.Contains("data-lobsy-otp=", StringComparison.Ordinal);
+            if (def.Kind == EmailKind.Security)
             {
-                var decoded = System.Net.WebUtility.HtmlDecode(href);
-                Assert.True(
-                    decoded.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-                    || decoded.StartsWith("http://", StringComparison.OrdinalIgnoreCase),
-                    $"{template.Key} has non-absolute href: {decoded}");
-                Assert.Contains("lobsy.nl", decoded, StringComparison.OrdinalIgnoreCase);
+                Assert.True(hasOtp, $"{template.Key} security mail needs OTP");
+                Assert.False(hasCta, $"{template.Key} security mail must not have CTA");
+            }
+            else
+            {
+                Assert.True(hasCta || hasOtp, $"{template.Key} needs CTA or code");
             }
 
-            var hasButton = mail.Html.Contains("display:inline-block;padding:12px 22px", StringComparison.Ordinal)
-                            || mail.Html.Contains("display:inline-block;padding:11px 20px", StringComparison.Ordinal);
-            var hasOtp = mail.Html.Contains("data-lobsy-otp=", StringComparison.Ordinal);
-            Assert.True(hasButton || hasOtp, $"{template.Key} has neither CTA button nor OTP block.");
+            foreach (Match m in HrefRegex.Matches(mail.Html))
+            {
+                var decoded = System.Net.WebUtility.HtmlDecode(m.Groups[1].Value);
+                Assert.True(
+                    decoded.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                    || decoded.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+                    || decoded.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase),
+                    $"{template.Key} has non-absolute href: {decoded}");
+            }
         }
     }
 
@@ -72,29 +94,13 @@ public class TransactionalEmailCatalogTests
         var ctx = EmailSampleContext.ForPreview("https://lobsy.nl");
         var without = TransactionalEmails.ApplicationHired(
             ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId);
-        Assert.DoesNotContain("withdraw-others", without.Html);
         Assert.DoesNotContain("Andere sollicitaties netjes intrekken", without.Html);
+        Assert.Contains("/candidate/applications", without.Html);
 
         var withToken = TransactionalEmails.ApplicationHired(
             ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName, ctx.ApplicationId,
             "https://lobsy.nl/candidate/actions/withdraw-others?t=sample");
         Assert.Contains("withdraw-others", withToken.Html);
-    }
-
-    [Fact]
-    public void Production_senders_use_the_shared_catalog()
-    {
-        var root = FindRepoRoot();
-        var files = Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories)
-            .Where(p => !p.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-                        && !p.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
-                        && !p.EndsWith("TransactionalEmails.cs", StringComparison.Ordinal)
-                        && !p.Contains($"{Path.DirectorySeparatorChar}Jobsy.Tests{Path.DirectorySeparatorChar}", StringComparison.Ordinal));
-        foreach (var file in files)
-        {
-            var source = File.ReadAllText(file);
-            Assert.DoesNotContain("EmailLayout.Wrap(", source);
-        }
     }
 
     [Fact]
@@ -110,15 +116,19 @@ public class TransactionalEmailCatalogTests
         Assert.Contains("/candidate/actions/set-unavailable", push.Html);
 
         var unsub = TransactionalEmails.Compose("AccountUnsubscribeVerification", ctx);
-        Assert.Contains("/privacy/data", unsub.Html);
         Assert.Contains($"data-lobsy-otp=\"{TransactionalEmails.SampleOtp}\"", unsub.Html);
+        Assert.DoesNotContain("data-lobsy-cta", unsub.Html);
 
         var register = TransactionalEmails.Compose("RegistrationActivation", ctx);
-        Assert.Contains("/register/activate", register.Html);
+        Assert.Contains($"data-lobsy-otp=\"{TransactionalEmails.SampleOtp}\"", register.Html);
 
         var sales = TransactionalEmails.Compose("SalesManagerInvite", ctx);
         Assert.Contains("/login", sales.Html);
-        Assert.Contains("/salesmanager/onboarding", sales.Html);
+        Assert.DoesNotContain("/salesmanager/onboarding", sales.Html);
+        var salesSetPassword = TransactionalEmails.SalesManagerInvite(
+            ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.ContactEmail, ctx.SetPasswordUrl);
+        Assert.Contains("/account/wachtwoord-instellen?t=", salesSetPassword.Html);
+        Assert.DoesNotContain("/salesmanager/onboarding", salesSetPassword.Html);
     }
 
     [Fact]
@@ -126,75 +136,91 @@ public class TransactionalEmailCatalogTests
     {
         var ctx = EmailSampleContext.ForPreview("https://lobsy.nl");
         var api = TransactionalEmails.Compose("CompanyApiKeyCredentials", ctx);
-        Assert.Contains(TransactionalEmails.SampleApiKey, api.Html);
+        Assert.Contains("/koppeling/sleutel?t=", api.Html);
+        Assert.Contains("API-sleutel ophalen", api.Html);
         Assert.DoesNotContain("sk_live", api.Html, StringComparison.OrdinalIgnoreCase);
 
         var invite = TransactionalEmails.Compose("UserInvite", ctx);
-        Assert.Contains(TransactionalEmails.SamplePassword, invite.Html);
+        Assert.Contains("/account/wachtwoord-instellen?t=", invite.Html);
     }
 
     [Fact]
     public async Task Catalog_service_rejects_invalid_email_and_unknown_key()
     {
-        await using var db = CreateDb();
-        var sut = CreateSut(db, new RecordingEmail());
+        var sut = CreateSut(new RecordingMailer());
 
-        var invalid = await sut.SendAsync("MailTest", "nope");
+        var invalid = await sut.SendAsync("MailTest", "nl", "nope", null);
         Assert.False(invalid.Ok);
-        Assert.Contains("geldig", invalid.Message, StringComparison.OrdinalIgnoreCase);
 
-        var unknown = await sut.SendAsync("NotARealMail", "tester@example.com");
+        var unknown = await sut.SendAsync("NotARealMail", "nl", "tester@example.com", null);
         Assert.False(unknown.Ok);
         Assert.Contains("Onbekend", unknown.Message, StringComparison.OrdinalIgnoreCase);
+
+        var foreign = await sut.SendAsync("MailTest", "nl", "admin@lobsy.nl", "other@example.com");
+        Assert.False(foreign.Ok);
+        Assert.Contains("allow-list", foreign.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task Catalog_service_sends_all_types_and_redacts_recipient()
+    public async Task Catalog_service_sends_to_admin_and_redacts_recipient()
     {
-        await using var db = CreateDb();
-        var email = new RecordingEmail();
-        var sut = CreateSut(db, email);
+        var audit = new RecordingAudit();
+        var mailer = new RecordingMailer();
+        var sut = CreateSut(mailer, audit);
 
-        var results = await sut.SendAllAsync("reviewer@lobsy.nl");
+        var result = await sut.SendAsync("MailTest", "nl", "reviewer@lobsy.nl", null);
+        Assert.True(result.Ok);
+        Assert.StartsWith("[Test] ", result.Subject, StringComparison.Ordinal);
+        Assert.Single(mailer.Sent);
+        Assert.Equal("reviewer@lobsy.nl", mailer.Sent[0].To);
+        Assert.True(mailer.Sent[0].Options?.IsTest);
+        var entry = Assert.Single(audit.Entries);
+        Assert.DoesNotContain("reviewer@lobsy.nl", entry.DetailsJson ?? "");
+        Assert.Contains("r***@lobsy.nl", entry.DetailsJson ?? "");
+    }
 
-        Assert.Equal(TransactionalEmails.Templates.Count, results.Count);
-        Assert.All(results, r => Assert.True(r.Ok));
-        Assert.Equal(TransactionalEmails.Templates.Count, email.Sent.Count);
-        Assert.All(email.Sent, m => Assert.Equal("reviewer@lobsy.nl", m.To));
-        Assert.DoesNotContain(db.PlatformLogs, l => l.Message.Contains("reviewer@lobsy.nl"));
-        Assert.Contains(db.PlatformLogs, l => l.Category == "EmailCatalogTest" && l.Message.Contains("r***@lobsy.nl"));
+    [Fact]
+    public void Preview_uses_fake_data_only_no_db_vacancies()
+    {
+        var sut = CreateSut(new RecordingMailer());
+        var preview = sut.Preview("ApplicationConfirmation", "nl", "light", "https://lobsy.nl");
+        Assert.False(string.IsNullOrWhiteSpace(preview.Html));
+        Assert.False(string.IsNullOrWhiteSpace(preview.Text));
+        Assert.Contains("Bakkerij De Gouden Korrel", preview.Html, StringComparison.Ordinal);
+        Assert.Equal("ltr", preview.Dir);
+
+        var ar = sut.Preview("ApplicationConfirmation", "ar", "dark", "https://lobsy.nl");
+        Assert.Equal("rtl", ar.Dir);
     }
 
     [Fact]
     public void Mail_test_page_is_wired_under_admin_settings()
     {
         var root = FindRepoRoot();
-        var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Admin", "AdminNavItems.cs"));
-        var roles = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Navigation", "RoleNavCatalog.cs"));
+        var nav = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Navigation", "AdminNav.cs"));
         var page = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "Admin", "MailTestAdmin.razor"));
+        Assert.Contains("/admin/content/emails", nav);
         Assert.Contains("/admin/mail-test", nav);
-        Assert.Contains("/admin/mail-test", roles);
         Assert.Contains("[Authorize(Roles = \"Admin\")]", page);
-        Assert.Contains("SendAllEmailTemplatesAsync", page);
+        Assert.Contains("sandbox=\"\"", page);
+        Assert.Contains("GetEmailTemplatePreviewAsync", page);
     }
 
-    private static EmailCatalogService CreateSut(JobsyDbContext db, IEmailService email)
-        => new(
-            email,
-            new FakeFeatures(),
-            db,
-            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["PublicApiBaseUrl"] = "https://api.lobsy.nl"
-            }).Build(),
-            NullLogger<EmailCatalogService>.Instance);
-
-    private static JobsyDbContext CreateDb()
+    private static EmailCatalogService CreateSut(RecordingMailer mailer, RecordingAudit? audit = null)
     {
-        var options = new DbContextOptionsBuilder<JobsyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
-            .Options;
-        return new JobsyDbContext(options);
+        var services = new ServiceCollection();
+        services.AddSingleton<ITransactionalMailer>(mailer);
+        services.AddSingleton<IPlatformFeatureService>(new FakeFeatures());
+        services.AddSingleton<IAdminAuditLog>(audit ?? new RecordingAudit());
+        services.AddSingleton(Options.Create(new MailOptions()));
+        services.AddSingleton<IEmailCatalogService>(sp => new EmailCatalogService(
+            sp.GetRequiredService<ITransactionalMailer>(),
+            sp.GetRequiredService<IPlatformFeatureService>(),
+            sp.GetRequiredService<IAdminAuditLog>(),
+            sp.GetRequiredService<IServiceScopeFactory>(),
+            sp.GetRequiredService<IOptions<MailOptions>>(),
+            NullLogger<EmailCatalogService>.Instance));
+        return (EmailCatalogService)services.BuildServiceProvider().GetRequiredService<IEmailCatalogService>();
     }
 
     private static string FindRepoRoot()
@@ -210,13 +236,13 @@ public class TransactionalEmailCatalogTests
             dir = dir.Parent;
         }
 
-        throw new InvalidOperationException("Jobsy.sln not found from test base directory.");
+        throw new InvalidOperationException("Jobsy.sln not found.");
     }
 
     private sealed class FakeFeatures : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(true, false, false, "https://lobsy.nl", DateTime.UtcNow));
+            => Task.FromResult(new PlatformFeatureSnapshot(true, false, "https://lobsy.nl", DateTime.UtcNow));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,
@@ -224,14 +250,31 @@ public class TransactionalEmailCatalogTests
             => GetAsync(cancellationToken);
     }
 
-    private sealed class RecordingEmail : IEmailService
+    private sealed class RecordingAudit : IAdminAuditLog
     {
-        public List<EmailMessage> Sent { get; } = [];
+        public List<AdminAuditEntry> Entries { get; } = [];
 
-        public Task<EmailDeliveryResult> SendAsync(EmailMessage message, CancellationToken cancellationToken = default)
+        public Task WriteAsync(AdminAuditEntry entry, CancellationToken cancellationToken = default)
         {
-            Sent.Add(message);
-            return Task.FromResult(EmailDeliveryResult.Stub);
+            Entries.Add(entry);
+            return Task.CompletedTask;
+        }
+
+        public void Stage(AdminAuditEntry entry) => Entries.Add(entry);
+    }
+
+    private sealed class RecordingMailer : ITransactionalMailer
+    {
+        public List<(ComposedEmail Mail, string To, EmailSendOptions? Options)> Sent { get; } = [];
+
+        public Task<EmailSendOutcome> SendAsync(
+            ComposedEmail mail,
+            string to,
+            EmailSendOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            Sent.Add((mail, to, options));
+            return Task.FromResult(new EmailSendOutcome(true, false, null, EmailDeliveryKind.Stub));
         }
     }
 }

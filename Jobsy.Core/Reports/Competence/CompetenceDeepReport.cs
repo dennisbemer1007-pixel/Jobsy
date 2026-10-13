@@ -90,7 +90,7 @@ public sealed class CompetenceDeepOccupation
 {
     public string Title { get; set; } = "";
 
-    public int MatchPercent { get; set; }
+    public decimal MatchPercent { get; set; }
 
     public string Reason { get; set; } = "";
 }

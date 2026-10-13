@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Services;
@@ -31,6 +32,7 @@ internal static class HaaglandenVacanciesSeeder
         if (await db.PlatformLogs.AnyAsync(l =>
                 l.Category == "Seed" && l.Message == SeedMarker))
         {
+            await ReassignSeedPhotosAsync(db, logger);
             return;
         }
 
@@ -45,6 +47,7 @@ internal static class HaaglandenVacanciesSeeder
                 CreatedAt = DateTime.UtcNow
             });
             await db.SaveChangesAsync();
+            await ReassignSeedPhotosAsync(db, logger);
             return;
         }
 
@@ -81,6 +84,57 @@ internal static class HaaglandenVacanciesSeeder
             vacancies.Length);
     }
 
+    private static async Task ReassignSeedPhotosAsync(JobsyDbContext db, ILogger logger)
+    {
+        var seedIds = new List<Guid>(225);
+        foreach (var city in Cities)
+        {
+            for (var i = 1; i <= city.VacancyCount; i++)
+            {
+                seedIds.Add(VacancyId(city.Region, i));
+            }
+        }
+
+        var vacancies = await db.Vacancies
+            .Where(v => seedIds.Contains(v.Id))
+            .OrderBy(v => v.CompanyId)
+            .ThenBy(v => v.Id)
+            .ToListAsync();
+        if (vacancies.Count == 0)
+        {
+            return;
+        }
+
+        var changed = 0;
+        var indexWithinCompany = new Dictionary<Guid, int>();
+        foreach (var v in vacancies)
+        {
+            if (!indexWithinCompany.TryGetValue(v.CompanyId, out var idx))
+            {
+                idx = 0;
+            }
+
+            indexWithinCompany[v.CompanyId] = idx + 1;
+            var next = MockVacancyMedia.SeedImageUrlForCompany(v.CompanyId, idx, v.WorkTypes);
+            if (!string.Equals(v.ImageUrl, next, StringComparison.Ordinal)
+                && (string.IsNullOrWhiteSpace(v.ImageUrl)
+                    || VacancyImageUrls.IsLocalVacancyFallbackPhoto(v.ImageUrl)
+                    || VacancyImageUrls.IsLocalVacancySvg(v.ImageUrl)
+                    || VacancyImageUrls.IsPicsum(v.ImageUrl)
+                    || VacancyImageUrls.IsBrokenUnsplash(v.ImageUrl)))
+            {
+                v.ImageUrl = next;
+                changed++;
+            }
+        }
+
+        if (changed > 0)
+        {
+            await db.SaveChangesAsync();
+            logger.LogInformation("Haaglanden seed photo reassignment: {Count} ImageUrl updates.", changed);
+        }
+    }
+
     private static async Task EnsureCompaniesAsync(JobsyDbContext db)
     {
         foreach (var city in Cities)
@@ -105,7 +159,11 @@ internal static class HaaglandenVacanciesSeeder
                     Address = c.Address,
                     LogoUrl = null,
                     Type = CompanyType.Employer,
-                    Location = new GeoPoint(c.Lat, c.Lng)
+                    Location = new GeoPoint(c.Lat, c.Lng),
+                    VerificationStatus = CompanyVerificationStatus.Verified,
+                    VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                    VerifiedAtUtc = DateTime.UtcNow,
+                    VerificationUpdatedAtUtc = DateTime.UtcNow
                 });
 
                 db.TokenTransactions.Add(new TokenTransaction
@@ -130,15 +188,15 @@ internal static class HaaglandenVacanciesSeeder
         IReadOnlyDictionary<Guid, Guid> salaryByCompany)
     {
         var list = new List<Vacancy>(225);
+        var indexWithinCompany = new Dictionary<Guid, int>();
 
         foreach (var city in Cities)
         {
             for (var i = 0; i < city.VacancyCount; i++)
             {
-                var role = Roles[i % Roles.Length];
                 // Rotate roles with a city offset so the same index differs per city.
                 var roleOffset = (city.Region * 17 + i * 3) % Roles.Length;
-                role = Roles[roleOffset];
+                var role = Roles[roleOffset];
 
                 var area = city.Areas[i % city.Areas.Length];
                 var companyN = (i % city.Companies.Length) + 1;
@@ -156,6 +214,13 @@ internal static class HaaglandenVacanciesSeeder
                 var education = PickEducation(role, i);
                 salaryByCompany.TryGetValue(companyId, out var salaryTableId);
 
+                if (!indexWithinCompany.TryGetValue(companyId, out var companyIdx))
+                {
+                    companyIdx = 0;
+                }
+
+                indexWithinCompany[companyId] = companyIdx + 1;
+
                 list.Add(new Vacancy
                 {
                     Id = vacancyId,
@@ -172,7 +237,7 @@ internal static class HaaglandenVacanciesSeeder
                     RequiredTransport = transport,
                     WorkTypes = role.WorkType,
                     WorkTypeLabels = string.Join(", ", WorkTypeLabels.Expand(role.WorkType).Take(2)),
-                    ImageUrl = MockVacancyMedia.ImageUrl(vacancyId, role.WorkType),
+                    ImageUrl = MockVacancyMedia.SeedImageUrlForCompany(companyId, companyIdx, role.WorkType),
                     IsHighlighted = highlight,
                     HighlightedUntil = highlight
                         ? DateTime.UtcNow.AddDays(VacancyProductRules.HighlightDays)
@@ -190,6 +255,7 @@ internal static class HaaglandenVacanciesSeeder
             }
         }
 
+        MockVacancyMedia.EnsureUniqueSeedPhotos(list);
         return list.ToArray();
     }
 
@@ -238,8 +304,7 @@ internal static class HaaglandenVacanciesSeeder
             $"Bekijk ook de vacaturevideo voor een indruk van het werk en de sfeer.\n\n" +
             $"Wie zoeken wij?\n{role.Profile} {soft} {licenseLine} " +
             $"Bereikbaarheid: {area.TravelHint}. " +
-            $"Solliciteer via Jobsy — we reageren doorgaans binnen één werkdag. " +
-            $"(Haaglanden banenkaart testdata #{city.Region}-{index + 1}.)";
+            $"Je kunt direct solliciteren. We reageren doorgaans binnen één werkdag.";
     }
 
     private static string? PickLicense(RoleSpec role, int index, int region)

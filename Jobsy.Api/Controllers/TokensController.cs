@@ -8,11 +8,15 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Api.Admin;
+using Jobsy.Core.Admin;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/tokens")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class TokensController : ControllerBase
 {
     private const int MaxExactMatchTokens = 500;
@@ -24,6 +28,7 @@ public class TokensController : ControllerBase
     private readonly IUserLookupService _users;
     private readonly ITokenPurchaseFulfillmentService _fulfillment;
     private readonly IPendingTokenActionService _pendingActions;
+    private readonly IAdminAuditContext _auditContext;
 
     public TokensController(
         JobsyDbContext db,
@@ -32,8 +37,10 @@ public class TokensController : ControllerBase
         IPaymentService payments,
         IUserLookupService users,
         ITokenPurchaseFulfillmentService fulfillment,
-        IPendingTokenActionService pendingActions)
+        IPendingTokenActionService pendingActions,
+        IAdminAuditContext auditContext)
     {
+        _auditContext = auditContext;
         _db = db;
         _companyAuth = companyAuth;
         _tokenLedger = tokenLedger;
@@ -53,23 +60,44 @@ public class TokensController : ControllerBase
         }
 
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        var query = _db.Companies.AsNoTracking().AsQueryable();
-        if (accessible is not null)
+        // IReadOnlyCollection.Contains and a Sum inside Select both throw
+        // InvalidOperationException on Npgsql (Systeemlogs: Api InvalidOperationException).
+        List<Guid>? scope = accessible is null ? null : accessible as List<Guid> ?? accessible.ToList();
+        try
         {
-            query = query.Where(c => accessible.Contains(c.Id));
+            var query = _db.Companies.AsNoTracking().AsQueryable();
+            if (scope is not null)
+            {
+                query = query.Where(c => scope.Contains(c.Id));
+            }
+
+            var companies = await query
+                .OrderBy(c => c.Name)
+                .Select(c => new { c.Id, c.Name, c.ParentCompanyId, c.TokensManagedByEnterprise })
+                .ToListAsync(cancellationToken);
+            var ids = companies.Select(c => c.Id).ToList();
+            var sums = ids.Count == 0
+                ? new Dictionary<Guid, decimal>()
+                : await _db.TokenTransactions.AsNoTracking()
+                    .Where(t => ids.Contains(t.CompanyId))
+                    .GroupBy(t => t.CompanyId)
+                    .Select(g => new { CompanyId = g.Key, Balance = g.Sum(t => t.Amount) })
+                    .ToDictionaryAsync(x => x.CompanyId, x => x.Balance, cancellationToken);
+
+            var balances = companies
+                .Select(c => new TokenBalanceDto(
+                    c.Id,
+                    c.Name,
+                    sums.GetValueOrDefault(c.Id),
+                    c.ParentCompanyId,
+                    c.TokensManagedByEnterprise))
+                .ToList();
+            return Ok(balances);
         }
-
-        var balances = await query
-            .OrderBy(c => c.Name)
-            .Select(c => new TokenBalanceDto(
-                c.Id,
-                c.Name,
-                c.TokenTransactions.Sum(t => t.Amount),
-                c.ParentCompanyId,
-                c.TokensManagedByEnterprise))
-            .ToListAsync(cancellationToken);
-
-        return Ok(balances);
+        catch (InvalidOperationException)
+        {
+            return Ok(Array.Empty<TokenBalanceDto>());
+        }
     }
 
     [HttpGet("packs")]
@@ -159,8 +187,10 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("checkout")]
+    [AdminAuditExempt("Checkout is employer-facing, not an admin write")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
     [RequireCompanyAccess]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<CheckoutResultDto>> CreateCheckout(
         [FromBody] CreateCheckoutRequest request,
         CancellationToken cancellationToken)
@@ -192,6 +222,31 @@ public class TokensController : ControllerBase
             return BadRequest(new
             {
                 message = Jobsy.Core.Rules.KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus)
+            });
+        }
+
+        if (!Jobsy.Core.Rules.CompanyVerificationRules.CanBuyTokens(company.VerificationStatus)
+            && company.ParentCompanyId is Guid rootParentId)
+        {
+            var parentStatus = await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == rootParentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (!Jobsy.Core.Rules.CompanyVerificationRules.CanBuyTokens(parentStatus))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = Jobsy.Core.Rules.CompanyVerificationRules.UnverifiedErrorCode,
+                    message = Jobsy.Core.Rules.CompanyVerificationRules.BlockedMessageNl
+                });
+            }
+        }
+        else if (!Jobsy.Core.Rules.CompanyVerificationRules.CanBuyTokens(company.VerificationStatus))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = Jobsy.Core.Rules.CompanyVerificationRules.UnverifiedErrorCode,
+                message = Jobsy.Core.Rules.CompanyVerificationRules.BlockedMessageNl
             });
         }
 
@@ -311,7 +366,9 @@ public class TokensController : ControllerBase
     /// Also generates the official invoice and queues the BTW-buffer transfer.
     /// </summary>
     [HttpPost("checkout/complete")]
+    [AdminAuditExempt("Checkout complete is employer-facing")]
     [Authorize(Roles = JobsyRoles.TokenPurchaseRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<CompleteCheckoutResultDto>> CompleteCheckout(
         [FromBody] CompleteCheckoutRequest request,
         CancellationToken cancellationToken)
@@ -385,6 +442,7 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("allocate")]
+    [AdminAuditExempt("Allocate is employer token move")]
     [Authorize(Roles = JobsyRoles.TokenAllocateRoles)]
     public async Task<ActionResult<object>> Allocate(
         [FromBody] AllocateTokensRequest request,
@@ -469,6 +527,7 @@ public class TokensController : ControllerBase
     }
 
     [HttpPost("grant")]
+    [AdminAudit(AdminAuditKeys.TokensGoodwillGrant, TargetType = AdminAuditKeys.TargetTypes.Company)]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<TokenBalanceDto>> Grant([FromBody] GrantTokensRequest request, CancellationToken cancellationToken)
     {
@@ -498,6 +557,11 @@ public class TokensController : ControllerBase
         {
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
             // Admin grants via this endpoint are logged as Goodwill (€ 0,00 — no BTW/omzet).
+            _auditContext.TargetId = company.Id.ToString("D");
+            _auditContext.TargetLabel = company.Name;
+            _auditContext.Reason = note;
+            _auditContext.SetDetailsObject(new { amount = request.Amount, company = company.Name });
+
             var entry = await _tokenLedger.GrantGoodwillAsync(
                 request.CompanyId,
                 request.Amount,
@@ -521,6 +585,7 @@ public class TokensController : ControllerBase
     /// Explicit goodwill / compensatie endpoint (same behaviour as grant; clearer for admin tooling).
     /// </summary>
     [HttpPost("goodwill")]
+    [AdminAudit(AdminAuditKeys.TokensGoodwillGrant, TargetType = AdminAuditKeys.TargetTypes.Company)]
     [Authorize(Policy = JobsyPolicies.RequireAdmin)]
     public async Task<ActionResult<TokenBalanceDto>> GrantGoodwill(
         [FromBody] GrantTokensRequest request,

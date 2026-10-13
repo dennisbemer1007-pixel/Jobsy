@@ -8,7 +8,7 @@ window.jobMap = (function () {
     let originMarker = null;
     let travelRingLayers = [];
     let travelRingGeo = null;
-    let travelOptions = { maxMinutes: 30, transport: "Fiets", radiusKm: 15 };
+    let travelOptions = { maxMinutes: 20, transport: "Fiets", radiusKm: 15 };
     let activeClusterPopup = null;
     let openCallback = null;
     let outsideClickCloserBound = false;
@@ -30,7 +30,47 @@ window.jobMap = (function () {
     let deferMapReveal = false;
     let detailCache = {};
     let pinsUrl = null;
+    let pinsBaseUrl = null;
     let pinsFetchGen = 0;
+    let viewportPinsBound = false;
+    let viewportListDotNet = null;
+    /** Localized map UI strings from VacancyDiscovery (nl fallbacks). */
+    let uiLabels = {
+        vacanciesAtPlace: "{count} banen",
+        vacancyAtPlace: "1 baan",
+        vacanciesAtPlaceWithPlace: "{count} banen in {place}",
+        vacancyAtPlaceWithPlace: "1 baan in {place}",
+        vacanciesInView: "{count} vacatures in beeld",
+        prevVacancy: "Vorige vacature",
+        nextVacancy: "Volgende vacature",
+        vacancyOf: "Vacature {current} van {total}",
+        close: "Sluiten",
+        apply: "Solliciteer",
+        viewJob: "Bekijk deze baan",
+        whyPrefix: "Waarom:",
+        travelFromHome: "{minutes} min {mode} van huis",
+        save: "Bewaar",
+        saved: "Bewaard",
+        fitPercent: "{percent}% past bij jou",
+        fitGate: "Maak je paspoort af",
+        hoursSingle: "{hours} uur",
+        hoursRange: "{min}–{max} uur",
+        passportHref: "/profiel",
+        featured: "Uitgelicht",
+        unavailableTitle: "Vacature niet beschikbaar",
+        unavailableHint: "Probeer het opnieuw of open de vacaturepagina.",
+        retry: "Opnieuw proberen",
+        view: "Bekijk",
+        pagerNav: "Vacatures op deze locatie",
+        canSave: false
+    };
+    let selectedClusterKey = null;
+    let clusterUiState = null;
+    let clusterSheetEl = null;
+    let clusterChipEl = null;
+    let clusterEscapeBound = false;
+    let isochroneCache = {};
+    let isochroneLabelMarkers = [];
 
     // Fallback only when the index has no pins. Prefer the precomputed view from #jobsy-map-boot.
     const NL_CENTER = [52.15, 5.2913];
@@ -54,6 +94,22 @@ window.jobMap = (function () {
     const PIN_LAYER_UNCLUSTERED = "jobsy-pins-unclustered";
     const PIN_LAYER_UNCLUSTERED_GLYPH = "jobsy-pins-unclustered-glyph";
     const PIN_LAYER_SELECTED = "jobsy-pins-selected";
+    const PIN_SOURCE_AGENCY_AREAS = "jobsy-agency-areas";
+    const PIN_LAYER_AGENCY_AREAS_FILL = "jobsy-agency-areas-fill";
+    const PIN_LAYER_AGENCY_AREAS_LINE = "jobsy-agency-areas-line";
+    const PIN_LAYER_CLUSTER_AGENCY_BADGE = "jobsy-pins-cluster-agency-badge";
+    const AGENCY_PIN_MIN_ZOOM = CLUSTER_OPTS.disableClusteringAtZoom;
+    const AGENCY_PIN_COLOR = "#4f46e5";
+    const AGENCY_LABEL = "via uitzendbureau";
+    const UNCLUSTERED_PIN_FILTER = [
+        "all",
+        ["!", ["has", "point_count"]],
+        [
+            "any",
+            ["!=", ["get", "agency"], 1],
+            [">=", ["zoom"], AGENCY_PIN_MIN_ZOOM]
+        ]
+    ];
 
     // On-road cruise km/h. Keep in sync with TravelReach.SpeedKmPerHour.
     const CRUISE_KM_H = {
@@ -76,6 +132,26 @@ window.jobMap = (function () {
         OV: "OV",
         Lopend: "lopen"
     };
+
+    function transportVerb(mode) {
+        const t = canonicalTransport(mode);
+        if (t === "Auto") return (uiLabels && uiLabels.transportCar) || TRANSPORT_LABEL.Auto;
+        if (t === "OV") return (uiLabels && uiLabels.transportTransit) || TRANSPORT_LABEL.OV;
+        if (t === "Lopend") return (uiLabels && uiLabels.transportWalk) || TRANSPORT_LABEL.Lopend;
+        return (uiLabels && uiLabels.transportBike) || TRANSPORT_LABEL.Fiets;
+    }
+
+    function travelFallbackVerb() {
+        return (uiLabels && uiLabels.transportDefault) || "reistijd";
+    }
+
+    function vacancyFallbackTitle() {
+        return (uiLabels && uiLabels.vacancyFallback) || "Vacature";
+    }
+
+    function noVacanciesLabel() {
+        return (uiLabels && uiLabels.noVacancies) || "Geen vacatures";
+    }
 
     function canonicalTransport(t) {
         const raw = String(t || "").trim();
@@ -150,7 +226,8 @@ window.jobMap = (function () {
     }
 
     function isNarrowViewport() {
-        return (window.innerWidth || 0) <= 768;
+        // DS breakpoints: mobile layout below 900px (file 03).
+        return (window.innerWidth || 0) < 900;
     }
 
     // Center-anchored pins: 34px job / 44px cluster. Tip sits on the top of the marker.
@@ -285,7 +362,7 @@ window.jobMap = (function () {
         if (v.travelMinutes == null) {
             return "<p class=\"map-popup__travel map-popup__travel--empty\" aria-hidden=\"true\"></p>";
         }
-        const transport = String(v.transportLabel || TRANSPORT_LABEL[canonicalTransport(v.transport)] || "reistijd");
+        const transport = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
         return (
             "<p class=\"map-popup__travel\">" +
                 specIcon("travel") +
@@ -439,25 +516,164 @@ window.jobMap = (function () {
         });
     }
 
-    function buildPopupHtml(v) {
-        const hasImage = !!v.imageUrl;
-        const mediaClass = hasImage
-            ? "map-popup__media"
-            : "map-popup__media map-popup__media--logo-only";
+    function buildingIconHtml() {
+        return "<svg class=\"map-popup__co-icon\" viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" aria-hidden=\"true\" focusable=\"false\">" +
+            "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"1\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+            "<path d=\"M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+            "</svg>";
+    }
 
-        const badges = [];
-        if (v.highlighted) {
-            badges.push(
-                "<span class=\"map-popup__badge map-popup__badge--featured\">" +
-                escapeHtml(String(v.featuredLabel || "Uitgelicht")) +
+    function sparkIconHtml() {
+        return "<svg class=\"map-popup__why-icon\" viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" aria-hidden=\"true\" focusable=\"false\">" +
+            "<path d=\"M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\"/>" +
+            "</svg>";
+    }
+
+    function heartIconHtml(filled) {
+        if (filled) {
+            return "<svg class=\"map-popup__heart-icon\" viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" aria-hidden=\"true\" focusable=\"false\">" +
+                "<path fill=\"currentColor\" d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z\"/>" +
+                "</svg>";
+        }
+        return "<svg class=\"map-popup__heart-icon\" viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" aria-hidden=\"true\" focusable=\"false\">" +
+            "<path fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z\"/>" +
+            "</svg>";
+    }
+
+    function hoursMetaText(v) {
+        const min = v.minHoursPerWeek != null ? Number(v.minHoursPerWeek) : NaN;
+        const max = v.maxHoursPerWeek != null ? Number(v.maxHoursPerWeek) : NaN;
+        const fmt = function (n) {
+            return Number.isInteger(n) ? String(n) : String(n).replace(".", ",");
+        };
+        if (Number.isFinite(min) && Number.isFinite(max)) {
+            if (min === max) {
+                return labelFormat(uiLabels.hoursSingle || "{hours} uur", { hours: fmt(min) });
+            }
+            return labelFormat(uiLabels.hoursRange || "{min}–{max} uur", { min: fmt(min), max: fmt(max) });
+        }
+        if (Number.isFinite(min)) {
+            return labelFormat(uiLabels.hoursSingle || "{hours} uur", { hours: fmt(min) });
+        }
+        if (Number.isFinite(max)) {
+            return labelFormat(uiLabels.hoursSingle || "{hours} uur", { hours: fmt(max) });
+        }
+        return "";
+    }
+
+    function metaRowHtml(v) {
+        const parts = [];
+        if (v.travelMinutes != null && v.travelMinutes !== "") {
+            const mode = String(v.transportLabel || transportVerb(v.transport) || travelFallbackVerb());
+            parts.push(
+                "<span class=\"map-popup__meta-item map-popup__meta-item--travel\">" +
+                    "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\" focusable=\"false\">" +
+                        "<circle cx=\"6\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                        "<circle cx=\"18\" cy=\"16\" r=\"3.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                        "<path d=\"M6 16l4-7h5l3 7M10 9 8.5 6H7M15 9l-3 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>" +
+                    "</svg>" +
+                    "<span>" + escapeHtml(String(v.travelMinutes)) + " min</span>" +
+                    "<span class=\"map-popup__meta-mode\" hidden>" + escapeHtml(mode) + "</span>" +
                 "</span>"
             );
         }
-        const badgesHtml = badges.length > 0
-            ? "<div class=\"map-popup__badges\">" + badges.join("") + "</div>"
-            : "";
+        const hours = hoursMetaText(v);
+        if (hours) {
+            parts.push(
+                "<span class=\"map-popup__meta-item\">" +
+                    "<svg class=\"map-popup__spec-icon\" viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\" focusable=\"false\">" +
+                        "<circle cx=\"12\" cy=\"12\" r=\"8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\"/>" +
+                        "<path d=\"M12 8v4l3 2\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\"/>" +
+                    "</svg>" +
+                    "<span>" + escapeHtml(hours) + "</span></span>"
+            );
+        }
+        if (v.wageLabel) {
+            parts.push("<span class=\"map-popup__meta-item\">" + escapeHtml(String(v.wageLabel)) + "</span>");
+        } else if (v.wage != null && v.wage !== "") {
+            parts.push("<span class=\"map-popup__meta-item\">€ " + escapeHtml(formatWage(v.wage)) + "</span>");
+        }
+        if (!parts.length) {
+            return "";
+        }
+        return "<div class=\"map-popup__meta\">" + parts.join("") + "</div>";
+    }
 
+    function agencyPopupLineHtml(v) {
+        if (!isAgencyPin(v)) {
+            return "";
+        }
+        return (
+            "<p class=\"map-popup__agency\">" +
+                "<span class=\"map-popup__agency-glyph\" aria-hidden=\"true\">◆</span>" +
+                "<span>" + escapeHtml(AGENCY_LABEL) + "</span>" +
+            "</p>"
+        );
+    }
+
+    function companyLineHtml(v, detailHref) {
+        const agencyLine = agencyPopupLineHtml(v);
+        if (agencyLine && v.company) {
+            const companyHref = v.companyHref ? String(v.companyHref) : detailHref;
+            return agencyLine +
+                "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
+                    (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
+                    buildingIconHtml() +
+                    "<b>" + escapeHtml(v.company || "") + "</b>" +
+                "</a>";
+        }
+        if (agencyLine) {
+            return agencyLine;
+        }
+        if (v.offeredBy) {
+            return (
+                "<p class=\"map-popup__company map-popup__company--via\">" +
+                    buildingIconHtml() +
+                    "<span>" + escapeHtml(String(v.offeredBy)) + "</span>" +
+                "</p>"
+            );
+        }
+        const companyHref = v.companyHref ? String(v.companyHref) : detailHref;
+        return (
+            "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
+                (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
+                buildingIconHtml() +
+                "<b>" + escapeHtml(v.company || "") + "</b>" +
+            "</a>"
+        );
+    }
+
+    function whyLineHtml(v) {
+        if (!v.fitWhyLine) {
+            return "";
+        }
+        const prefix = uiLabels.whyPrefix || "Waarom:";
+        return (
+            "<p class=\"map-popup__why\">" +
+                sparkIconHtml() +
+                "<span>" + escapeHtml(prefix) + " " + escapeHtml(String(v.fitWhyLine)) + "</span>" +
+            "</p>"
+        );
+    }
+
+    function heartButtonHtml(v) {
+        const liked = !!v.liked;
+        const label = liked
+            ? (uiLabels.saved || "Bewaard")
+            : (uiLabels.save || "Bewaar");
+        return (
+            "<button type=\"button\" class=\"map-popup__heart" + (liked ? " is-saved" : "") + "\" " +
+                "data-save-job=\"" + escapeAttr(v.id) + "\" " +
+                "aria-pressed=\"" + (liked ? "true" : "false") + "\" " +
+                "aria-label=\"" + escapeAttr(label) + "\" title=\"" + escapeAttr(label) + "\">" +
+                heartIconHtml(liked) +
+            "</button>"
+        );
+    }
+
+    function buildPopupHtml(v) {
         let mediaInner = "";
+        let mediaClassFinal = "map-popup__media";
         const photoSrc = v.imageUrl ? String(v.imageUrl) : "";
         const logoSrc = v.logoUrl ? String(v.logoUrl) : "";
         // Work-type SVG placeholders look empty next to a real company logo — prefer the logo.
@@ -468,75 +684,73 @@ window.jobMap = (function () {
                 : "";
             mediaInner +=
                 "<img class=\"map-popup__photo\" src=\"" + escapeAttr(photoSrc) +
-                "\" alt=\"\" width=\"160\" height=\"252\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\"" + fb + " />";
+                "\" alt=\"\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\"" + fb + " />";
         } else if (logoSrc) {
+            mediaClassFinal = "map-popup__media map-popup__media--logo-only";
             mediaInner +=
                 "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
-                escapeAttr(v.company) + " logo\" width=\"96\" height=\"96\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
+                escapeAttr(v.company) + " logo\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
+        } else {
+            mediaClassFinal = "map-popup__media map-popup__media--empty";
+            mediaInner =
+                "<span class=\"map-popup__media-empty\" aria-hidden=\"true\">" +
+                    "<svg viewBox=\"0 0 24 24\" focusable=\"false\"><path fill=\"currentColor\" d=\"M12 1a5 5 0 0 0-5 5v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 7V6a3 3 0 1 1 6 0v2H9zm3 5a1.75 1.75 0 1 1 0 3.5A1.75 1.75 0 0 1 12 13z\"/></svg>" +
+                "</span>";
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
-        const applyHref = detailHref + "#apply";
-        const companyHref = v.companyHref
-            ? String(v.companyHref)
-            : detailHref;
-        const wage = wageInlineHtml(v);
+        const viewLabel = escapeHtml(uiLabels.viewJob || "Bekijk deze baan");
 
         return (
-            "<div class=\"map-popup\">" +
-                typeChipHtml(v) +
-                wageInfoHtml(v) +
+            "<div class=\"map-popup map-popup--calm\">" +
                 "<div class=\"map-popup__main\">" +
-                    badgesHtml +
-                    "<a class=\"" + mediaClass + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                    "<a class=\"" + mediaClassFinal + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         mediaInner +
                     "</a>" +
                     "<div class=\"map-popup__body\">" +
-                        "<div class=\"map-popup__header\">" +
-                            "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
-                                escapeHtml(v.title) +
-                            "</a>" +
-                            (v.address
-                                ? "<p class=\"map-popup__address\">" + escapeHtml(v.address) + "</p>"
-                                : "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>") +
-                            travelLineHtml(v) +
-                            matchLineHtml(v) +
-                            cultureFitHtml(v) +
-                            pushBomStatusHtml(v) +
-                        "</div>" +
-                        (wage || "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>") +
-                        specsHtml(v) +
-                        "<div class=\"map-popup__footer\">" +
-                            "<div class=\"map-popup__footer-meta\">" +
-                                "<a class=\"map-popup__company map-popup__cta\" href=\"" + escapeAttr(companyHref) + "\"" +
-                                    (companyHref === detailHref ? " data-job-id=\"" + escapeAttr(v.id) + "\"" : "") + ">" +
-                                    escapeHtml(v.company) +
-                                "</a>" +
-                                (v.offeredBy
-                                    ? "<p class=\"map-popup__offered-by\">" + escapeHtml(String(v.offeredBy)) + "</p>"
-                                    : "") +
-                            "</div>" +
-                            "<a class=\"map-popup__apply map-popup__cta\" href=\"" + applyHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">Solliciteer</a>" +
-                        "</div>" +
+                        "<a class=\"map-popup__title map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                            escapeHtml(v.title || vacancyFallbackTitle()) +
+                        "</a>" +
+                        companyLineHtml(v, detailHref) +
+                        matchLineHtml(v) +
+                        metaRowHtml(v) +
                     "</div>" +
+                "</div>" +
+                whyLineHtml(v) +
+                "<div class=\"map-popup__actions\">" +
+                    "<a class=\"map-popup__view map-popup__cta\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
+                        viewLabel + " <span aria-hidden=\"true\">›</span>" +
+                    "</a>" +
+                    heartButtonHtml(v) +
                 "</div>" +
             "</div>"
         );
     }
 
     function matchLineHtml(v) {
+        if (v.fitGate === "closed") {
+            const href = String(uiLabels.passportHref || "/profiel");
+            const label = String(v.fitGateLabel || uiLabels.fitGate || "Maak je paspoort af");
+            return (
+                "<p class=\"map-popup__match kb-fit kb-fit--gate\">" +
+                    "<a class=\"map-popup__gate-link\" href=\"" + escapeAttr(href) + "\">" +
+                        escapeHtml(label) +
+                    "</a>" +
+                "</p>"
+            );
+        }
         if (v.matchPercent == null || v.matchPercent === "") {
             return "";
         }
         const band = String(v.matchColorBand || "orange");
+        const text = labelFormat(uiLabels.fitPercent || "{percent}% past bij jou", {
+            percent: String(v.matchPercent)
+        });
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
-                "<span class=\"match-score match-score--" + escapeHtml(band) + "\">" +
-                    escapeHtml(String(v.matchPercent)) + "% Match" +
+                "<span class=\"map-popup__fit-pill match-score--" + escapeHtml(band) + "\">" +
+                    escapeHtml(text) +
                 "</span>" +
-                "<button type=\"button\" class=\"map-popup__match-help competency-help\" " +
-                    "data-job-id=\"" + escapeAttr(v.id) + "\" " +
-                    "title=\"Waarom deze match?\" aria-label=\"Waarom deze match?\">?</button>" +
             "</p>"
         );
     }
@@ -599,18 +813,134 @@ window.jobMap = (function () {
             });
     }
 
+    function labelFormat(template, vars) {
+        let out = String(template || "");
+        Object.keys(vars || {}).forEach(function (key) {
+            out = out.split("{" + key + "}").join(String(vars[key]));
+        });
+        return out;
+    }
+
+    function clusterPlaceLabel(jobs) {
+        for (let i = 0; i < (jobs || []).length; i++) {
+            const j = jobs[i];
+            const place = (j && (j.place || j.city || "")) || "";
+            if (place) {
+                return String(place);
+            }
+            const addr = j && j.address ? String(j.address) : "";
+            if (addr) {
+                const parts = addr.split(",");
+                const last = parts[parts.length - 1].trim();
+                if (last) {
+                    return last;
+                }
+            }
+        }
+        return "";
+    }
+
+    function clusterTitleText(total, place) {
+        const n = Math.max(0, Number(total) || 0);
+        if (n === 1) {
+            return place
+                ? labelFormat(uiLabels.vacancyAtPlaceWithPlace || "1 baan in {place}", { place: place })
+                : (uiLabels.vacancyAtPlace || "1 baan");
+        }
+        return place
+            ? labelFormat(uiLabels.vacanciesAtPlaceWithPlace, { count: n, place: place })
+            : labelFormat(uiLabels.vacanciesAtPlace, { count: n });
+    }
+
+    function travelFromHomeText(job) {
+        if (!job || job.travelMinutes == null || job.travelMinutes === "") {
+            return "";
+        }
+        const mode = String(job.transportLabel || transportVerb(job.transport || (travelOptions && travelOptions.transport)) || travelFallbackVerb());
+        return labelFormat(uiLabels.travelFromHome || "{minutes} min {mode} van huis", {
+            minutes: String(job.travelMinutes),
+            mode: mode
+        });
+    }
+
+    function buildClusterDotsHtml(total, current) {
+        const n = Math.max(1, Number(total) || 1);
+        const cur = Math.min(Math.max(1, Number(current) || 1), n);
+        if (n <= 1) {
+            return "<div class=\"map-cluster-card__dots\" data-cluster-dots hidden></div>";
+        }
+        let html = "<div class=\"map-cluster-card__dots\" data-cluster-dots aria-hidden=\"true\">";
+        for (let i = 1; i <= n; i++) {
+            html += "<i" + (i === cur ? " class=\"is-on\"" : "") + "></i>";
+        }
+        return html + "</div>";
+    }
+
+    function buildClusterChromeHtml(total, place) {
+        const title = clusterTitleText(total, place);
+        const pagerHidden = total <= 1 ? " hidden" : "";
+        return (
+            "<div class=\"map-cluster-card\" data-cluster-card>" +
+                "<div class=\"map-cluster-card__grab\" aria-hidden=\"true\"></div>" +
+                "<div class=\"map-cluster-card__chrome\">" +
+                    "<div class=\"map-cluster-card__heading\">" +
+                        "<span class=\"map-cluster-card__title\" data-cluster-title>" + escapeHtml(title) + "</span>" +
+                        "<p class=\"map-cluster-card__sub\" data-cluster-travel></p>" +
+                    "</div>" +
+                    "<div class=\"map-cluster-card__pager\" role=\"navigation\" aria-label=\"" +
+                        escapeAttr(uiLabels.pagerNav) + "\"" + pagerHidden + ">" +
+                        "<button type=\"button\" class=\"map-cluster-card__nav\" data-cluster-prev aria-label=\"" +
+                            escapeAttr(uiLabels.prevVacancy) + "\">‹</button>" +
+                        "<span class=\"map-cluster-card__counter\" data-cluster-counter aria-live=\"polite\">1 / " +
+                            total + "</span>" +
+                        "<button type=\"button\" class=\"map-cluster-card__nav\" data-cluster-next aria-label=\"" +
+                            escapeAttr(uiLabels.nextVacancy) + "\">›</button>" +
+                    "</div>" +
+                    "<button type=\"button\" class=\"map-cluster-card__close\" data-cluster-close aria-label=\"" +
+                        escapeAttr(uiLabels.close || "Sluiten") + "\">×</button>" +
+                "</div>" +
+                "<div class=\"map-cluster-card__body\" data-cluster-body>" +
+                    "<div class=\"map-cluster-card__viewport\" data-cluster-viewport></div>" +
+                    buildClusterDotsHtml(total, 1) +
+                "</div>" +
+            "</div>"
+        );
+    }
+
+    /** Pin-data card inside the fixed frame (no shimmer skeleton). */
+    function buildClusterPinHtml(job) {
+        if (!job) {
+            return "<div class=\"map-popup\"><div class=\"map-popup__main\"><div class=\"map-popup__body\">" +
+                "<p class=\"map-popup__company\">" + escapeHtml(noVacanciesLabel()) + "</p></div></div></div>";
+        }
+        if (job._detailLoaded) {
+            return buildPopupHtml(job);
+        }
+        if (job._unavailable) {
+            return unavailablePopupHtml(job.id);
+        }
+        const pinView = Object.assign({}, job, {
+            title: job.title || vacancyFallbackTitle(),
+            company: job.company || "",
+            address: job.address || "",
+            imageUrl: job.imageUrl || null,
+            logoUrl: job.logoUrl || null
+        });
+        return buildPopupHtml(pinView);
+    }
+
+    /** @deprecated kept for static guards / single-pin callers — cluster paging never uses this. */
     function buildClusterPagerHtml(current, pageCount) {
         if (pageCount <= 1) {
             return "";
         }
-
         return (
-            "<div class=\"map-popup__pager\" role=\"navigation\" aria-label=\"Vacatures op deze locatie\">" +
+            "<div class=\"map-popup__pager\" role=\"navigation\" aria-label=\"" + escapeAttr(uiLabels.pagerNav) + "\">" +
                 "<button type=\"button\" class=\"map-popup__pager-nav\" data-cluster-page=\"" + (current - 1) + "\"" +
-                    (current <= 1 ? " disabled" : "") + " aria-label=\"Vorige vacature\">‹</button>" +
-                "<span class=\"map-popup__pager-status\">" + current + " van " + pageCount + "</span>" +
+                    (current <= 1 ? " disabled" : "") + " aria-label=\"" + escapeAttr(uiLabels.prevVacancy) + "\">‹</button>" +
+                "<span class=\"map-popup__pager-status\">" + current + " / " + pageCount + "</span>" +
                 "<button type=\"button\" class=\"map-popup__pager-nav\" data-cluster-page=\"" + (current + 1) + "\"" +
-                    (current >= pageCount ? " disabled" : "") + " aria-label=\"Volgende vacature\">›</button>" +
+                    (current >= pageCount ? " disabled" : "") + " aria-label=\"" + escapeAttr(uiLabels.nextVacancy) + "\">›</button>" +
             "</div>"
         );
     }
@@ -621,79 +951,209 @@ window.jobMap = (function () {
         const pageCount = Math.max(1, Math.ceil(total / CLUSTER_PAGE_SIZE));
         const current = Math.min(Math.max(1, page || 1), pageCount);
         const job = jobOverride || jobs[current - 1];
-        if (!job) {
-            return "<div class=\"map-popup\"><div class=\"map-popup__main\"><div class=\"map-popup__body\">" +
-                "<p class=\"map-popup__company\">Geen vacatures</p></div></div></div>";
-        }
-
-        const body = job._detailLoaded ? buildPopupHtml(job) : skeletonPopupHtml(job);
-        return buildClusterPagerHtml(current, pageCount) + body;
+        return buildClusterChromeHtml(pageCount, clusterPlaceLabel(jobs)) +
+            "<div class=\"map-cluster-card__viewport-legacy\">" + buildClusterPinHtml(job) + "</div>";
     }
 
     let clusterPageGen = 0;
 
-    function renderClusterPage(popup, childMarkers, page) {
-        if (!popup || !childMarkers) {
-            return;
+    function resolveJobFromCache(job) {
+        if (!job || !job.id) {
+            return Promise.resolve(job);
         }
-        const jobs = clusterJobsFromMarkers(childMarkers);
-        const pageCount = Math.max(1, jobs.length);
-        const current = Math.min(Math.max(1, page || 1), pageCount);
-        const job = jobs[current - 1];
-        const gen = ++clusterPageGen;
-        applyPopupOptions(popup, job);
-        popup.setHTML(buildClusterSingleHtml(childMarkers, current, job));
-        if (typeof popup.update === "function") {
-            popup.update();
+        const key = String(job.id);
+        const cached = detailCache[key];
+        if (!cached) {
+            return Promise.resolve(job);
         }
-        syncFeaturedPopupClass(popup, job);
-        bindClusterPopupInteractions(popup, childMarkers);
-
-        if (!job) {
-            return;
-        }
-
-        const pageIds = [job.id];
-        const next = jobs[current];
-        if (next && next.id) {
-            pageIds.push(next.id);
-        }
-        fetchVacancyCards(pageIds).then(function (cards) {
-            if (gen !== clusterPageGen || popup !== activeClusterPopup) {
-                return;
-            }
-            const card = cards[0];
+        return Promise.resolve(cached).then(function (card) {
             if (!card) {
-                popup.setHTML(buildClusterPagerHtml(current, pageCount) + unavailablePopupHtml(job.id));
-                bindClusterPopupInteractions(popup, childMarkers);
-                return;
+                return Object.assign({}, job, { _unavailable: true });
             }
-            const full = mapCardToPopup(card, job);
-            // Keep pin data on the marker so paging back stays filled.
-            childMarkers.forEach(function (marker) {
-                if (marker.options && marker.options.jobData && String(marker.options.jobData.id) === String(job.id)) {
-                    marker.options.jobData = full;
-                }
-            });
-            applyPopupOptions(popup, full);
-            popup.setHTML(buildClusterSingleHtml(childMarkers, current, full));
-            if (typeof popup.update === "function") {
-                popup.update();
-            }
-            syncFeaturedPopupClass(popup, full);
-            bindClusterPopupInteractions(popup, childMarkers);
+            return mapCardToPopup(card, job);
         });
     }
 
-    function bindClusterPopupInteractions(popup, childMarkers) {
-        const popupEl = popup.getElement();
-        if (!popupEl) {
+    function prefetchClusterCards(jobs) {
+        const ids = (jobs || []).map(function (j) { return j && j.id; }).filter(Boolean);
+        const batches = [];
+        for (let i = 0; i < ids.length; i += 25) {
+            batches.push(ids.slice(i, i + 25));
+        }
+        return Promise.all(batches.map(function (batch) {
+            return fetchVacancyCards(batch);
+        }));
+    }
+
+    function preloadClusterImages(jobs, fromPage) {
+        const start = Math.max(0, (fromPage || 1) - 1);
+        for (let i = start; i < Math.min(jobs.length, start + 3); i++) {
+            const j = jobs[i];
+            if (!j || !j.imageUrl) {
+                continue;
+            }
+            try {
+                const img = new Image();
+                img.decoding = "async";
+                img.src = String(j.imageUrl);
+            } catch (e) { }
+        }
+    }
+
+    function updateClusterChrome(state) {
+        if (!state || !state.root) {
             return;
         }
+        const total = state.pageCount;
+        const current = state.page;
+        const counter = state.root.querySelector("[data-cluster-counter]");
+        const prev = state.root.querySelector("[data-cluster-prev]");
+        const next = state.root.querySelector("[data-cluster-next]");
+        const title = state.root.querySelector("[data-cluster-title]");
+        const travel = state.root.querySelector("[data-cluster-travel]");
+        const dots = state.root.querySelector("[data-cluster-dots]");
+        const pager = state.root.querySelector(".map-cluster-card__pager");
+        if (counter) {
+            counter.textContent = current + " / " + total;
+            counter.setAttribute("aria-label", labelFormat(uiLabels.vacancyOf, {
+                current: current,
+                total: total
+            }));
+        }
+        if (pager) {
+            if (total <= 1) {
+                pager.setAttribute("hidden", "");
+            } else {
+                pager.removeAttribute("hidden");
+            }
+        }
+        if (prev) {
+            if (current <= 1) {
+                prev.setAttribute("disabled", "");
+            } else {
+                prev.removeAttribute("disabled");
+            }
+        }
+        if (next) {
+            if (current >= total) {
+                next.setAttribute("disabled", "");
+            } else {
+                next.removeAttribute("disabled");
+            }
+        }
+        if (title) {
+            title.textContent = clusterTitleText(total, clusterPlaceLabel(state.jobs));
+        }
+        if (travel) {
+            const job = state.jobs && state.jobs[current - 1];
+            const text = travelFromHomeText(job);
+            travel.textContent = text;
+            travel.hidden = !text;
+        }
+        if (dots) {
+            if (total <= 1) {
+                dots.setAttribute("hidden", "");
+                dots.innerHTML = "";
+            } else {
+                dots.removeAttribute("hidden");
+                let html = "";
+                for (let i = 1; i <= total; i++) {
+                    html += "<i" + (i === current ? " class=\"is-on\"" : "") + "></i>";
+                }
+                dots.innerHTML = html;
+            }
+        }
+        syncSheetChromeOffset();
+    }
 
-        bindWageInfoInteractions(popupEl);
+    function syncSheetChromeOffset() {
+        if (!map) {
+            return;
+        }
+        const pane = map.getContainer().closest(".map-pane") || map.getContainer();
+        if (!pane) {
+            return;
+        }
+        const sheet = pane.querySelector(".map-cluster-sheet");
+        const h = sheet && sheet.offsetParent !== null ? sheet.offsetHeight : 0;
+        pane.style.setProperty("--map-cluster-sheet-h", h + "px");
+    }
 
-        popupEl.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
+    function setHeartButtonState(btn, liked) {
+        if (!btn) {
+            return;
+        }
+        const on = !!liked;
+        btn.classList.toggle("is-saved", on);
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        const label = on ? (uiLabels.saved || "Bewaard") : (uiLabels.save || "Bewaar");
+        btn.setAttribute("aria-label", label);
+        btn.setAttribute("title", label);
+        btn.innerHTML = heartIconHtml(on);
+    }
+
+    function fetchLikedStatus(id) {
+        if (!id || !uiLabels.canSave) {
+            return Promise.resolve(false);
+        }
+        return fetch("/api/vacancies/" + encodeURIComponent(String(id)) + "/like", {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        }).then(function (res) {
+            if (!res.ok) {
+                return false;
+            }
+            return res.json().then(function (body) {
+                return !!(body && (body.liked === true || body.Liked === true));
+            }).catch(function () { return false; });
+        }).catch(function () { return false; });
+    }
+
+    function toggleLiked(id, nextLiked) {
+        const url = "/api/vacancies/" + encodeURIComponent(String(id)) + "/like";
+        return fetch(url, {
+            method: nextLiked ? "POST" : "DELETE",
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        }).then(function (res) {
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = "/login?returnUrl=" +
+                    encodeURIComponent("/vacancies/" + String(id));
+                return null;
+            }
+            if (!res.ok) {
+                throw new Error("like-failed");
+            }
+            return res.json().then(function (body) {
+                return !!(body && (body.liked === true || body.Liked === true));
+            });
+        });
+    }
+
+    function rememberJobLiked(id, liked, childMarkers) {
+        if (!id || !clusterUiState || !clusterUiState.jobs) {
+            return;
+        }
+        clusterUiState.jobs.forEach(function (job, idx) {
+            if (job && String(job.id) === String(id)) {
+                clusterUiState.jobs[idx] = Object.assign({}, job, { liked: !!liked });
+            }
+        });
+        (childMarkers || []).forEach(function (marker) {
+            if (marker.options && marker.options.jobData &&
+                String(marker.options.jobData.id) === String(id)) {
+                marker.options.jobData = Object.assign({}, marker.options.jobData, { liked: !!liked });
+            }
+        });
+    }
+
+    function bindClusterSlideInteractions(root, childMarkers) {
+        if (!root) {
+            return;
+        }
+        bindWageInfoInteractions(root);
+        bindMatchHelpClicks(root);
+        root.querySelectorAll(".map-popup__cta, a.map-popup__media").forEach(function (cta) {
             if (cta.dataset.boundNav) {
                 return;
             }
@@ -705,51 +1165,477 @@ window.jobMap = (function () {
                 }
             });
         });
-
-        popupEl.querySelectorAll("[data-retry-card]").forEach(function (btn) {
+        root.querySelectorAll("[data-retry-card]").forEach(function (btn) {
             if (btn.dataset.boundRetry) {
                 return;
             }
             btn.dataset.boundRetry = "1";
             btn.addEventListener("click", function (ev) {
                 stopEvent(ev);
-                const jobs = clusterJobsFromMarkers(childMarkers);
                 const id = btn.getAttribute("data-retry-card");
-                let page = 1;
-                for (let i = 0; i < jobs.length; i++) {
-                    if (String(jobs[i].id) === String(id)) {
-                        page = i + 1;
-                        break;
-                    }
-                }
                 delete detailCache[String(id || "")];
-                renderClusterPage(popup, childMarkers, page);
+                if (clusterUiState) {
+                    const page = clusterUiState.page;
+                    fetchVacancyCard(id).then(function () {
+                        if (clusterUiState && clusterUiState.page === page) {
+                            renderClusterPage(activeClusterPopup, childMarkers, page, 0, true);
+                        }
+                    });
+                }
             });
         });
-
-        popupEl.querySelectorAll("[data-cluster-page]").forEach(function (btn) {
+        root.querySelectorAll("[data-save-job]").forEach(function (btn) {
+            if (btn.dataset.boundSave) {
+                return;
+            }
+            btn.dataset.boundSave = "1";
+            const id = btn.getAttribute("data-save-job");
+            if (uiLabels.canSave) {
+                fetchLikedStatus(id).then(function (liked) {
+                    if (!btn.isConnected) {
+                        return;
+                    }
+                    setHeartButtonState(btn, liked);
+                    rememberJobLiked(id, liked, childMarkers);
+                });
+            }
             btn.addEventListener("click", function (ev) {
                 stopEvent(ev);
-                if (btn.disabled || btn.getAttribute("disabled") != null) {
+                if (!uiLabels.canSave) {
+                    window.location.href = "/login?returnUrl=" +
+                        encodeURIComponent("/vacancies/" + String(id || ""));
                     return;
                 }
-                const nextPage = parseInt(btn.getAttribute("data-cluster-page") || "0", 10);
-                const jobs = clusterJobsFromMarkers(childMarkers);
-                const pageCount = Math.max(1, jobs.length);
-                if (!nextPage || nextPage < 1 || nextPage > pageCount) {
+                if (btn.dataset.saveBusy === "1") {
                     return;
                 }
-                renderClusterPage(popup, childMarkers, nextPage);
+                const next = btn.getAttribute("aria-pressed") !== "true";
+                btn.dataset.saveBusy = "1";
+                setHeartButtonState(btn, next);
+                toggleLiked(id, next).then(function (liked) {
+                    if (liked == null) {
+                        return;
+                    }
+                    setHeartButtonState(btn, liked);
+                    rememberJobLiked(id, liked, childMarkers);
+                }).catch(function () {
+                    setHeartButtonState(btn, !next);
+                }).finally(function () {
+                    delete btn.dataset.saveBusy;
+                });
             });
         });
     }
 
+    function setClusterSlideHtml(viewport, html, direction, replaceInPlace) {
+        if (!viewport) {
+            return;
+        }
+        const incoming = document.createElement("div");
+        incoming.className = "map-cluster-card__slide is-active";
+        incoming.innerHTML = html;
+
+        const current = viewport.querySelector(".map-cluster-card__slide.is-active") ||
+            viewport.querySelector(".map-cluster-card__slide");
+
+        if (!current || replaceInPlace || !direction) {
+            viewport.innerHTML = "";
+            viewport.appendChild(incoming);
+            return incoming;
+        }
+
+        const leaveClass = direction > 0 ? "is-leave-to-start" : "is-leave-to-end";
+        const enterClass = direction > 0 ? "is-enter-from-end" : "is-enter-from-start";
+        incoming.className = "map-cluster-card__slide " + enterClass;
+        viewport.appendChild(incoming);
+
+        const reduce = prefersReducedMotion();
+        const run = function () {
+            current.classList.add("is-animating", leaveClass);
+            current.classList.remove("is-active");
+            incoming.classList.add("is-animating", "is-active");
+            incoming.classList.remove(enterClass);
+        };
+
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () { requestAnimationFrame(run); });
+        } else {
+            run();
+        }
+
+        const cleanup = function () {
+            if (current.parentNode === viewport) {
+                viewport.removeChild(current);
+            }
+            incoming.classList.remove("is-animating");
+        };
+        if (reduce) {
+            setTimeout(cleanup, 130);
+        } else {
+            incoming.addEventListener("transitionend", cleanup, { once: true });
+            setTimeout(cleanup, 280);
+        }
+        return incoming;
+    }
+
+    function renderClusterPage(popup, childMarkers, page, direction, replaceInPlace) {
+        if (!clusterUiState) {
+            return;
+        }
+        const state = clusterUiState;
+        const jobs = state.jobs;
+        const pageCount = state.pageCount;
+        const current = Math.min(Math.max(1, page || 1), pageCount);
+        const job = jobs[current - 1];
+        const gen = ++clusterPageGen;
+        state.page = current;
+        updateClusterChrome(state);
+
+        const paint = function (resolved, inPlace) {
+            if (gen !== clusterPageGen || !clusterUiState || clusterUiState !== state) {
+                return;
+            }
+            if (resolved && resolved.id) {
+                childMarkers.forEach(function (marker) {
+                    if (marker.options && marker.options.jobData &&
+                        String(marker.options.jobData.id) === String(resolved.id)) {
+                        marker.options.jobData = resolved;
+                    }
+                });
+                jobs[current - 1] = resolved;
+            }
+            const html = buildClusterPinHtml(resolved || job);
+            const slide = setClusterSlideHtml(state.viewport, html, direction || 0, !!inPlace || !!replaceInPlace);
+            bindClusterSlideInteractions(slide || state.viewport, childMarkers);
+            preloadClusterImages(jobs, current);
+            if (popup && typeof popup.update === "function" && !state.docked) {
+                try { popup.update(); } catch (e) { }
+            }
+        };
+
+        // Prefer synchronous cache hit so paging never awaits.
+        const key = job && job.id != null ? String(job.id) : "";
+        const cached = key && detailCache[key];
+        if (cached && cached.then === undefined) {
+            // unlikely — detailCache stores promises
+        }
+        if (cached) {
+            Promise.resolve(cached).then(function (card) {
+                if (gen !== clusterPageGen) {
+                    return;
+                }
+                if (card === null) {
+                    paint(Object.assign({}, job, { _unavailable: true }), replaceInPlace);
+                    return;
+                }
+                if (card && typeof card === "object" && card.id != null) {
+                    paint(mapCardToPopup(card, job), replaceInPlace);
+                    return;
+                }
+                paint(job, true);
+            });
+            return;
+        }
+
+        paint(job, true);
+        resolveJobFromCache(job).then(function (resolved) {
+            if (gen !== clusterPageGen) {
+                return;
+            }
+            if (resolved && resolved._detailLoaded) {
+                paint(resolved, true);
+            }
+        });
+    }
+
+    function bindClusterPopupInteractions(popup, childMarkers) {
+        const state = clusterUiState;
+        if (!state || !state.root) {
+            return;
+        }
+        const root = state.root;
+        if (root.dataset.clusterChromeBound === "1") {
+            return;
+        }
+        root.dataset.clusterChromeBound = "1";
+
+        const prev = root.querySelector("[data-cluster-prev]");
+        const next = root.querySelector("[data-cluster-next]");
+        const closeBtn = root.querySelector("[data-cluster-close]");
+        const viewport = state.viewport;
+
+        function go(delta, focusBtn) {
+            const target = state.page + delta;
+            if (target < 1 || target > state.pageCount) {
+                return;
+            }
+            renderClusterPage(popup, childMarkers, target, delta, false);
+            if (focusBtn && typeof focusBtn.focus === "function") {
+                focusBtn.focus();
+            }
+        }
+
+        if (prev) {
+            prev.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                go(-1, prev);
+            });
+        }
+        if (next) {
+            next.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                go(1, next);
+            });
+        }
+        if (closeBtn) {
+            closeBtn.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                closeActivePopup();
+            });
+        }
+
+        // Optional swipe on content viewport
+        if (viewport) {
+            let startX = 0;
+            let startY = 0;
+            let tracking = false;
+            viewport.addEventListener("touchstart", function (ev) {
+                if (!ev.touches || ev.touches.length !== 1) {
+                    return;
+                }
+                tracking = true;
+                startX = ev.touches[0].clientX;
+                startY = ev.touches[0].clientY;
+            }, { passive: true });
+            viewport.addEventListener("touchend", function (ev) {
+                if (!tracking || !ev.changedTouches || !ev.changedTouches.length) {
+                    tracking = false;
+                    return;
+                }
+                tracking = false;
+                const dx = ev.changedTouches[0].clientX - startX;
+                const dy = ev.changedTouches[0].clientY - startY;
+                if (Math.abs(dx) < Math.abs(dy) || Math.abs(dx) < viewport.clientWidth * 0.3) {
+                    return;
+                }
+                go(dx < 0 ? 1 : -1, null);
+            }, { passive: true });
+        }
+    }
+
+    function ensureClusterChip(count) {
+        const pane = map && map.getContainer() ? map.getContainer().closest(".map-pane") : null;
+        if (!pane) {
+            return null;
+        }
+        let chip = pane.querySelector(".map-cluster-chip");
+        if (!chip) {
+            chip = document.createElement("button");
+            chip.type = "button";
+            chip.className = "map-cluster-chip";
+            chip.addEventListener("click", function (ev) {
+                stopEvent(ev);
+                closeActivePopup();
+            });
+            pane.appendChild(chip);
+        }
+        chip.innerHTML = "<span>" + escapeHtml(labelFormat(uiLabels.vacanciesInView, { count: count })) +
+            "</span><span class=\"map-cluster-chip__chevron\" aria-hidden=\"true\">▾</span>";
+        chip.hidden = false;
+        clusterChipEl = chip;
+        return chip;
+    }
+
+    function setClusterOpenChrome(open, visibleCount) {
+        const pane = map && map.getContainer() ? map.getContainer().closest(".map-pane") : null;
+        if (pane) {
+            pane.classList.toggle("is-cluster-open", !!open);
+        }
+        if (open) {
+            ensureClusterChip(visibleCount || 0);
+        } else if (clusterChipEl) {
+            clusterChipEl.hidden = true;
+        }
+    }
+
+    function clearSelectedCluster() {
+        selectedClusterKey = null;
+        if (!map) {
+            return;
+        }
+        try {
+            if (map.getSource("jobsy-selected-cluster")) {
+                map.getSource("jobsy-selected-cluster").setData({
+                    type: "FeatureCollection",
+                    features: []
+                });
+            }
+        } catch (e) { }
+    }
+
+    function ensureSelectedClusterLayers() {
+        if (!map) {
+            return;
+        }
+        const sourceId = "jobsy-selected-cluster";
+        const haloId = sourceId + "-halo";
+        const circleId = sourceId + "-circle";
+        const countId = sourceId + "-count";
+        try {
+            if (!map.getSource(sourceId)) {
+                map.addSource(sourceId, {
+                    type: "geojson",
+                    data: { type: "FeatureCollection", features: [] }
+                });
+            }
+            if (!map.getLayer(haloId)) {
+                map.addLayer({
+                    id: haloId,
+                    type: "circle",
+                    source: sourceId,
+                    paint: {
+                        "circle-color": "#f54a1b",
+                        "circle-radius": 25,
+                        "circle-opacity": 0.28,
+                        "circle-blur": 0.45
+                    }
+                });
+            }
+            if (!map.getLayer(circleId)) {
+                map.addLayer({
+                    id: circleId,
+                    type: "circle",
+                    source: sourceId,
+                    paint: {
+                        "circle-color": "#f54a1b",
+                        "circle-radius": 18,
+                        "circle-stroke-width": 2,
+                        "circle-stroke-color": "#ffffff"
+                    }
+                });
+            }
+            if (!map.getLayer(countId)) {
+                map.addLayer({
+                    id: countId,
+                    type: "symbol",
+                    source: sourceId,
+                    layout: {
+                        "text-field": ["get", "count"],
+                        "text-size": 14,
+                        "text-font": ["Noto Sans Bold"],
+                        "text-allow-overlap": true
+                    },
+                    paint: { "text-color": "#ffffff" }
+                });
+            }
+        } catch (e) { }
+    }
+
+    function setSelectedCluster(lngLat, count) {
+        if (!map || !lngLat) {
+            return;
+        }
+        ensureSelectedClusterLayers();
+        selectedClusterKey = String(lngLat[0]) + "," + String(lngLat[1]);
+        try {
+            map.getSource("jobsy-selected-cluster").setData({
+                type: "FeatureCollection",
+                features: [{
+                    type: "Feature",
+                    geometry: { type: "Point", coordinates: lngLat },
+                    properties: { count: String(count || "") }
+                }]
+            });
+        } catch (e) { }
+    }
+
+    function panClusterAboveSheet(lngLat) {
+        if (!map || !lngLat || !isNarrowViewport()) {
+            return;
+        }
+        try {
+            const p = map.project(lngLat);
+            const focus = mapFocusRect();
+            const container = map.getContainer().getBoundingClientRect();
+            const y = container.top + p.y;
+            const x = container.left + p.x;
+            let dx = 0;
+            let dy = 0;
+            if (y > focus.bottom - 24) {
+                dy = y - (focus.top + focus.height * 0.45);
+            } else if (y < focus.top + 24) {
+                dy = y - (focus.top + 40);
+            }
+            if (x < focus.left + 20) {
+                dx = x - (focus.left + 40);
+            } else if (x > focus.right - 20) {
+                dx = x - (focus.right - 40);
+            }
+            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                map.panBy([dx, dy], { duration: prefersReducedMotion() ? 0 : 280 });
+            }
+        } catch (e) { }
+    }
+
+    function onClusterEscape(ev) {
+        if (ev && ev.key === "Escape") {
+            closeActivePopup();
+        }
+    }
+
+    function bindClusterEscape() {
+        if (clusterEscapeBound) {
+            return;
+        }
+        clusterEscapeBound = true;
+        document.addEventListener("keydown", onClusterEscape);
+    }
+
+    function unbindClusterEscape() {
+        if (!clusterEscapeBound) {
+            return;
+        }
+        clusterEscapeBound = false;
+        document.removeEventListener("keydown", onClusterEscape);
+    }
+
+    function createDockedClusterController(html) {
+        const pane = map.getContainer().closest(".map-pane") || map.getContainer();
+        const root = document.createElement("div");
+        root.className = "map-cluster-sheet";
+        root.innerHTML = html;
+        pane.appendChild(root);
+        clusterSheetEl = root;
+        return {
+            docked: true,
+            getElement: function () { return root; },
+            remove: function () {
+                if (root.parentNode) {
+                    root.parentNode.removeChild(root);
+                }
+                if (clusterSheetEl === root) {
+                    clusterSheetEl = null;
+                }
+            },
+            setHTML: function () { /* chrome is fixed — paging mutates viewport only */ },
+            update: function () { },
+            setLngLat: function () { },
+            on: function () { return this; }
+        };
+    }
+
     function eventTargetInsidePopup(ev, popup) {
-        if (!popup || !ev) {
+        if (!ev) {
+            return false;
+        }
+        const target = ev.target || ev.srcElement;
+        if (target && target.closest && target.closest(".map-cluster-sheet, .map-cluster-chip")) {
+            return true;
+        }
+        if (!popup) {
             return false;
         }
         const popupEl = typeof popup.getElement === "function" ? popup.getElement() : null;
-        const target = ev.target || ev.srcElement;
         return !!(popupEl && target && popupEl.contains(target));
     }
 
@@ -759,11 +1645,31 @@ window.jobMap = (function () {
             target.closest(".map-popup__wage-info, .map-popup__wage-popover"));
     }
 
+    function clearSelectedPinVisual() {
+        if (selectedId != null && map && map.getSource(PIN_SOURCE)) {
+            try {
+                map.setFeatureState({ source: PIN_SOURCE, id: String(selectedId) }, { selected: false });
+            } catch (e) { }
+        }
+        selectedId = null;
+        refreshAgencyAreas();
+    }
+
     function closeActivePopup() {
         if (activeClusterPopup) {
-            activeClusterPopup.remove();
+            try { activeClusterPopup.remove(); } catch (e) { }
             activeClusterPopup = null;
         }
+        if (clusterSheetEl && clusterSheetEl.parentNode) {
+            try { clusterSheetEl.parentNode.removeChild(clusterSheetEl); } catch (e) { }
+            clusterSheetEl = null;
+        }
+        clusterUiState = null;
+        clearSelectedCluster();
+        setClusterOpenChrome(false);
+        unbindClusterEscape();
+        syncSheetChromeOffset();
+        clearSelectedPinVisual();
     }
 
     function closePopupsIfClickOutside(ev) {
@@ -894,6 +1800,10 @@ window.jobMap = (function () {
         popup.on("close", function () {
             if (activeClusterPopup === popup) {
                 activeClusterPopup = null;
+                clusterUiState = null;
+                clearSelectedCluster();
+                setClusterOpenChrome(false);
+                unbindClusterEscape();
             }
         });
         // MapLibre may already be open before the listener is attached.
@@ -913,20 +1823,35 @@ window.jobMap = (function () {
         const container = map.getContainer();
         const mapRect = container.getBoundingClientRect();
         let top = mapRect.top;
+        let bottom = mapRect.bottom;
         const pane = container.closest(".map-pane");
         if (pane) {
             const carousel = pane.querySelector(".highlight-carousel--map");
-            if (carousel && carousel.offsetParent !== null) {
+            if (carousel && carousel.offsetParent !== null && !pane.classList.contains("is-cluster-open")) {
                 const cr = carousel.getBoundingClientRect();
                 if (cr.bottom > top && cr.top < mapRect.bottom) {
                     top = Math.max(top, cr.bottom);
+                }
+            }
+            const chip = pane.querySelector(".map-cluster-chip");
+            if (chip && !chip.hidden && chip.offsetParent !== null) {
+                const chipRect = chip.getBoundingClientRect();
+                if (chipRect.bottom > top) {
+                    top = Math.max(top, chipRect.bottom);
+                }
+            }
+            const sheet = pane.querySelector(".map-cluster-sheet");
+            if (sheet && sheet.offsetParent !== null) {
+                const sr = sheet.getBoundingClientRect();
+                if (sr.top < bottom && sr.top > mapRect.top) {
+                    bottom = Math.min(bottom, sr.top);
                 }
             }
         }
         const pad = 12;
         const left = mapRect.left + pad;
         const right = mapRect.right - pad;
-        const bottom = mapRect.bottom - pad;
+        bottom -= pad;
         top += pad;
         return {
             left: left,
@@ -986,6 +1911,20 @@ window.jobMap = (function () {
         }
     }
 
+    function agencyRadiusKm(raw) {
+        if (!raw) {
+            return 0;
+        }
+        const km = raw.publicMapRadiusKm != null ? raw.publicMapRadiusKm
+            : (raw.PublicMapRadiusKm != null ? raw.PublicMapRadiusKm : 0);
+        const n = Number(km);
+        return n === 5 || n === 10 ? n : (n > 0 ? 2 : 0);
+    }
+
+    function isAgencyPin(raw) {
+        return agencyRadiusKm(raw) > 0;
+    }
+
     function normalizePin(raw) {
         if (!raw) {
             return null;
@@ -996,6 +1935,7 @@ window.jobMap = (function () {
         }
         const lat = Number(raw.lat != null ? raw.lat : raw.Lat);
         const lng = Number(raw.lng != null ? raw.lng : raw.Lng);
+        const radiusKm = agencyRadiusKm(raw);
         const colour = raw.categoryColor || raw.colour || raw.Colour || null;
         const matchPercent = raw.matchPercent != null ? raw.matchPercent
             : (raw.MatchPercent != null ? raw.MatchPercent : null);
@@ -1011,6 +1951,8 @@ window.jobMap = (function () {
             lng: lng,
             categoryColor: colour,
             colour: colour,
+            publicMapRadiusKm: radiusKm > 0 ? radiusKm : null,
+            agency: radiusKm > 0,
             matchPercent: matchPercent,
             workType: workType,
             workTypes: workTypes || (workType ? [workType] : []),
@@ -1021,15 +1963,21 @@ window.jobMap = (function () {
     }
 
     function skeletonPopupHtml(pin) {
+        // Same structure as buildPopupHtml so the sheet does not jump when filled.
         return (
-            "<div class=\"map-popup map-popup--loading map-popup--skeleton\">" +
+            "<div class=\"map-popup map-popup--calm map-popup--loading map-popup--skeleton\" aria-busy=\"true\">" +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"map-popup__media map-popup__media--logo-only map-popup__shimmer\" aria-hidden=\"true\"></div>" +
                     "<div class=\"map-popup__body\">" +
-                        "<p class=\"map-popup__title map-popup__shimmer-line\">Laden…</p>" +
-                        "<p class=\"map-popup__address map-popup__address--empty\">&nbsp;</p>" +
-                        "<p class=\"map-popup__wage map-popup__wage--empty\">&nbsp;</p>" +
+                        "<p class=\"map-popup__title map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<p class=\"map-popup__company map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<p class=\"map-popup__match map-popup__shimmer-line\">&nbsp;</p>" +
+                        "<div class=\"map-popup__meta map-popup__shimmer-line\">&nbsp;</div>" +
                     "</div>" +
+                "</div>" +
+                "<div class=\"map-popup__actions\">" +
+                    "<span class=\"map-popup__view map-popup__shimmer-line\" aria-hidden=\"true\">&nbsp;</span>" +
+                    "<span class=\"map-popup__heart map-popup__shimmer-line\" aria-hidden=\"true\">&nbsp;</span>" +
                 "</div>" +
             "</div>"
         );
@@ -1037,18 +1985,24 @@ window.jobMap = (function () {
 
     function unavailablePopupHtml(id) {
         return (
-            "<div class=\"map-popup\">" +
+            "<div class=\"map-popup map-popup--calm\">" +
                 "<div class=\"map-popup__main\">" +
-                    "<div class=\"map-popup__body\">" +
-                        "<p class=\"map-popup__title\">Vacature niet beschikbaar</p>" +
-                        "<p class=\"map-popup__address\">Probeer het opnieuw of open de vacaturepagina.</p>" +
-                        "<div class=\"map-popup__footer\">" +
-                            "<button type=\"button\" class=\"map-popup__apply\" data-retry-card=\"" +
-                                escapeAttr(String(id || "")) + "\">Opnieuw proberen</button>" +
-                            "<a class=\"map-popup__company map-popup__cta\" href=\"/vacancies/" +
-                                encodeURIComponent(String(id || "")) + "\">Bekijk</a>" +
-                        "</div>" +
+                    "<div class=\"map-popup__media map-popup__media--empty\" aria-hidden=\"true\">" +
+                        "<span class=\"map-popup__media-empty\">" +
+                            "<svg viewBox=\"0 0 24 24\" focusable=\"false\"><path fill=\"currentColor\" d=\"M12 1a5 5 0 0 0-5 5v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 7V6a3 3 0 1 1 6 0v2H9zm3 5a1.75 1.75 0 1 1 0 3.5A1.75 1.75 0 0 1 12 13z\"/></svg>" +
+                        "</span>" +
                     "</div>" +
+                    "<div class=\"map-popup__body\">" +
+                        "<p class=\"map-popup__title\">" + escapeHtml(uiLabels.unavailableTitle) + "</p>" +
+                        "<p class=\"map-popup__company\">" + escapeHtml(uiLabels.unavailableHint) + "</p>" +
+                    "</div>" +
+                "</div>" +
+                "<div class=\"map-popup__actions\">" +
+                    "<button type=\"button\" class=\"map-popup__view\" data-retry-card=\"" +
+                        escapeAttr(String(id || "")) + "\">" + escapeHtml(uiLabels.retry) + "</button>" +
+                    "<a class=\"map-popup__heart map-popup__cta\" href=\"/vacancies/" +
+                        encodeURIComponent(String(id || "")) + "\" aria-label=\"" +
+                        escapeAttr(uiLabels.view) + "\">" + escapeHtml(uiLabels.view) + "</a>" +
                 "</div>" +
             "</div>"
         );
@@ -1061,7 +2015,7 @@ window.jobMap = (function () {
         const workTypes = Array.isArray(card.workTypes) ? card.workTypes : [];
         const thumb = card.thumbnailUrl || card.imageUrl || null;
         return Object.assign({}, pin, {
-            title: card.title || pin.title || "Vacature",
+            title: card.title || pin.title || vacancyFallbackTitle(),
             company: card.companyName || pin.company || "",
             companyHref: card.kvkNumber && card.vestigingsnummer
                 ? "/" + card.kvkNumber + "/" + card.vestigingsnummer
@@ -1078,7 +2032,13 @@ window.jobMap = (function () {
             travelMinutes: card.travelMinutes != null ? card.travelMinutes : pin.travelMinutes,
             matchPercent: card.matchPercent != null ? card.matchPercent : pin.matchPercent,
             matchColorBand: card.matchColorBand || pin.matchColorBand,
+            fitGate: card.fitGate || pin.fitGate || null,
+            fitWhyLine: card.fitWhyLine || pin.fitWhyLine || null,
+            rankLowerReason: card.rankLowerReason || pin.rankLowerReason || null,
             wage: card.hourlyWage != null && card.wageVisible !== false ? card.hourlyWage : null,
+            minHoursPerWeek: card.minHoursPerWeek != null ? card.minHoursPerWeek : pin.minHoursPerWeek,
+            maxHoursPerWeek: card.maxHoursPerWeek != null ? card.maxHoursPerWeek : pin.maxHoursPerWeek,
+            liked: pin.liked === true,
             _detailLoaded: true
         });
     }
@@ -1086,6 +2046,53 @@ window.jobMap = (function () {
     /** @deprecated use fetchVacancyCard — kept as alias for tests/guards */
     function fetchVacancyDetail(id) {
         return fetchVacancyCard(id);
+    }
+
+    function sleepMs(ms) {
+        return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    }
+
+    /** Retry-After seconds → ms; default 700, cap 1500. */
+    function retryAfterMs(res) {
+        const raw = res && res.headers && res.headers.get
+            ? res.headers.get("Retry-After")
+            : null;
+        let ms = 700;
+        if (raw != null && String(raw).trim() !== "") {
+            const sec = Number(raw);
+            if (Number.isFinite(sec) && sec >= 0) {
+                ms = Math.round(sec * 1000);
+            }
+        }
+        return Math.max(0, Math.min(1500, ms || 700));
+    }
+
+    function isRetryableStatus(status) {
+        return status === 429 || status >= 500;
+    }
+
+    function fetchJsonWithOneRetry(url) {
+        const opts = {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" }
+        };
+        return fetch(url, opts).then(function (res) {
+            if (res.ok) {
+                return res.json();
+            }
+            if (!isRetryableStatus(res.status)) {
+                throw new Error("http " + res.status);
+            }
+            // Keep callers on skeleton while we wait Retry-After, then retry once.
+            return sleepMs(retryAfterMs(res)).then(function () {
+                return fetch(url, opts).then(function (retryRes) {
+                    if (!retryRes.ok) {
+                        throw new Error("http " + retryRes.status);
+                    }
+                    return retryRes.json();
+                });
+            });
+        });
     }
 
     function fetchVacancyCard(id) {
@@ -1096,16 +2103,9 @@ window.jobMap = (function () {
         if (detailCache[key]) {
             return detailCache[key];
         }
-        detailCache[key] = fetch("/api/vacancies/" + encodeURIComponent(key) + "/card", {
-            credentials: "same-origin",
-            headers: { Accept: "application/json" }
-        })
-            .then(function (res) {
-                if (!res.ok) {
-                    throw new Error("card " + res.status);
-                }
-                return res.json();
-            })
+        detailCache[key] = fetchJsonWithOneRetry(
+            "/api/vacancies/" + encodeURIComponent(key) + "/card"
+        )
             .then(function (card) {
                 return card;
             })
@@ -1125,16 +2125,9 @@ window.jobMap = (function () {
         const missing = list.filter(function (id) { return !detailCache[id]; });
         const batch = missing.length === 0
             ? Promise.resolve([])
-            : fetch("/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(","), {
-                credentials: "same-origin",
-                headers: { Accept: "application/json" }
-            })
-                .then(function (res) {
-                    if (!res.ok) {
-                        throw new Error("cards " + res.status);
-                    }
-                    return res.json();
-                })
+            : fetchJsonWithOneRetry(
+                "/api/vacancies/cards?ids=" + missing.map(encodeURIComponent).join(",")
+            )
                 .then(function (rows) {
                     (Array.isArray(rows) ? rows : []).forEach(function (card) {
                         if (card && card.id != null) {
@@ -1159,12 +2152,142 @@ window.jobMap = (function () {
 
     let pinsAbort = null;
     let pinsEtag = null;
+    /** Last successful pins JSON body — redraw from this on HTTP 304. */
+    let pinsCachedPayload = null;
     let pinsReloadTimer = null;
+    /** How many MapLibre instances this module created (boot + Blazor should stay at 1). */
+    let mapCreateCount = 0;
+    /** In-memory pins by filter state (transport stripped — rings are client-side). */
+    const pinsByFilterKey = Object.create(null);
+    let pinsNetworkFetchCount = 0;
+
+    function stripViewportParams(url) {
+        return String(url || "")
+            .replace(/([?&])(minLat|minLng|maxLat|maxLng|zoom)=[^&]*/gi, "$1")
+            .replace(/[?&]+$/g, "")
+            .replace(/\?&/g, "?");
+    }
+
+    function readViewportBounds() {
+        if (!map || typeof map.getZoom !== "function") {
+            return null;
+        }
+        var z = Math.round(map.getZoom() * 10) / 10;
+        var minLat;
+        var minLng;
+        var maxLat;
+        var maxLng;
+        try {
+            if (typeof map.unproject === "function" && typeof map.getContainer === "function") {
+                var host = map.getContainer();
+                var w = host && host.clientWidth ? host.clientWidth : 0;
+                var h = host && host.clientHeight ? host.clientHeight : 0;
+                if (w > 0 && h > 0) {
+                    var nw = map.unproject([0, 0]);
+                    var se = map.unproject([w, h]);
+                    minLat = Math.min(nw.lat, se.lat);
+                    maxLat = Math.max(nw.lat, se.lat);
+                    minLng = Math.min(nw.lng, se.lng);
+                    maxLng = Math.max(nw.lng, se.lng);
+                }
+            }
+            if (!Number.isFinite(minLat) && typeof map.getBounds === "function") {
+                var b = map.getBounds();
+                var sw = b.getSouthWest();
+                var ne = b.getNorthEast();
+                minLat = sw.lat;
+                minLng = sw.lng;
+                maxLat = ne.lat;
+                maxLng = ne.lng;
+            }
+        } catch (eBounds) {
+            return null;
+        }
+        if (!Number.isFinite(minLat) || !Number.isFinite(minLng)
+            || !Number.isFinite(maxLat) || !Number.isFinite(maxLng)) {
+            return null;
+        }
+        return {
+            minLat: minLat,
+            minLng: minLng,
+            maxLat: maxLat,
+            maxLng: maxLng,
+            zoom: z
+        };
+    }
+
+    function viewportQueryString() {
+        var box = readViewportBounds();
+        if (!box) {
+            return "";
+        }
+        return "&minLat=" + encodeURIComponent(String(box.minLat))
+            + "&minLng=" + encodeURIComponent(String(box.minLng))
+            + "&maxLat=" + encodeURIComponent(String(box.maxLat))
+            + "&maxLng=" + encodeURIComponent(String(box.maxLng))
+            + "&zoom=" + encodeURIComponent(String(box.zoom));
+    }
+
+    /** Filter cache key: filter state only (no transport, no viewport bbox). */
+    function pinsFilterKey(url) {
+        if (!url) {
+            return "";
+        }
+        try {
+            const u = new URL(url, window.location.origin);
+            u.searchParams.delete("transport");
+            u.searchParams.delete("minLat");
+            u.searchParams.delete("minLng");
+            u.searchParams.delete("maxLat");
+            u.searchParams.delete("maxLng");
+            u.searchParams.delete("zoom");
+            const keys = Array.prototype.slice.call(u.searchParams.keys()).sort();
+            const parts = [];
+            for (let i = 0; i < keys.length; i++) {
+                const k = keys[i];
+                const vals = u.searchParams.getAll(k).slice().sort();
+                for (let j = 0; j < vals.length; j++) {
+                    parts.push(k + "=" + vals[j]);
+                }
+            }
+            return u.pathname + "?" + parts.join("&");
+        } catch (e) {
+            return String(url).replace(/([?&])transport=[^&]*/gi, "$1").replace(/[?&]$/, "");
+        }
+    }
+
+    function rememberPinsFilter(url, payload, etag) {
+        const key = pinsFilterKey(url);
+        if (!key) {
+            return;
+        }
+        const pins = (Array.isArray(payload) ? payload : []).map(normalizePin).filter(Boolean);
+        pinsByFilterKey[key] = {
+            payload: payload,
+            pins: pins,
+            etag: etag || null
+        };
+    }
 
     function fetchPins(url) {
         if (!url) {
             return Promise.resolve([]);
         }
+        pinsBaseUrl = stripViewportParams(String(url));
+        const viewportQs = viewportQueryString();
+        pinsUrl = pinsBaseUrl + viewportQs;
+        const filterKey = pinsFilterKey(pinsUrl);
+        const cached = !viewportQs && filterKey ? pinsByFilterKey[filterKey] : null;
+        if (cached && cached.pins) {
+            // Transport-only changes reuse the same pin set; travel rings update separately.
+            pinsCachedPayload = cached.payload;
+            if (cached.etag) {
+                pinsEtag = cached.etag;
+            }
+            setVacancies(cached.pins);
+            return Promise.resolve(cached.pins);
+        }
+
         const gen = ++pinsFetchGen;
         if (pinsAbort) {
             try { pinsAbort.abort(); } catch (e) { }
@@ -1174,7 +2297,8 @@ window.jobMap = (function () {
         if (pinsEtag) {
             headers["If-None-Match"] = pinsEtag;
         }
-        return fetch(url, {
+        pinsNetworkFetchCount += 1;
+        return fetch(pinsUrl, {
             credentials: "same-origin",
             headers: headers,
             signal: pinsAbort ? pinsAbort.signal : undefined
@@ -1184,7 +2308,8 @@ window.jobMap = (function () {
                     return null;
                 }
                 if (res.status === 304) {
-                    return null;
+                    // Server says unchanged — redraw from the payload we kept with the ETag.
+                    return pinsCachedPayload;
                 }
                 if (!res.ok) {
                     throw new Error("pins " + res.status);
@@ -1193,13 +2318,20 @@ window.jobMap = (function () {
                 if (etag) {
                     pinsEtag = etag;
                 }
-                return res.json();
+                return res.json().then(function (body) {
+                    pinsCachedPayload = body;
+                    rememberPinsFilter(pinsUrl, body, etag);
+                    return body;
+                });
             })
             .then(function (data) {
-                if (gen !== pinsFetchGen || !data) {
+                if (gen !== pinsFetchGen || data == null) {
                     return;
                 }
                 const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
+                if (!pinsByFilterKey[filterKey]) {
+                    rememberPinsFilter(pinsUrl, data, pinsEtag);
+                }
                 setVacancies(pins);
             })
             .catch(function (err) {
@@ -1243,41 +2375,22 @@ window.jobMap = (function () {
 
     let recordForRetry = null;
 
+    function afterFirstPaint(fn) {
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(fn);
+            });
+        } else {
+            setTimeout(fn, 0);
+        }
+    }
+
     function openVacancyPopup(record) {
         if (!map || !record) {
             return;
         }
-        closeActivePopup();
-        recordForRetry = record;
-        let v = normalizePin(record.options.jobData) || record.options.jobData;
-        record.options.jobData = v;
-        const opts = Object.assign({}, jobPopupOptions(isFeaturedVacancy(v)));
-        const needsDetail = !v._detailLoaded || !v.title;
-        activeClusterPopup = popupFromOpts(
-            opts,
-            [record.lng, record.lat],
-            needsDetail ? skeletonPopupHtml(v) : buildPopupHtml(v));
-        syncFeaturedPopupClass(activeClusterPopup, v);
-        if (needsDetail) {
-            fetchVacancyCard(v.id).then(function (card) {
-                if (!activeClusterPopup || !record) {
-                    return;
-                }
-                if (card) {
-                    const full = mapCardToPopup(card, v);
-                    record.options.jobData = full;
-                    activeClusterPopup.setHTML(buildPopupHtml(full));
-                    syncFeaturedPopupClass(activeClusterPopup, full);
-                    bindSinglePopupEl(activeClusterPopup, full);
-                } else {
-                    activeClusterPopup.setHTML(unavailablePopupHtml(v.id));
-                    bindSinglePopupEl(activeClusterPopup, v);
-                }
-            });
-            return;
-        }
-        bindSinglePopupEl(activeClusterPopup, v);
-        notifyOpen(v.id);
+        // Same docked card as a cluster (one item, no pager) — file 03.
+        openClusterList([record], [record.lng, record.lat]);
     }
 
     function openClusterList(childMarkers, lngLat) {
@@ -1287,26 +2400,102 @@ window.jobMap = (function () {
 
         closeActivePopup();
 
-        const firstJob = clusterJobsFromMarkers(childMarkers)[0];
-        const opts = Object.assign({}, clusterPopupOptions(isFeaturedVacancy(firstJob)));
+        const jobs = clusterJobsFromMarkers(childMarkers);
+        const pageCount = Math.max(1, jobs.length);
+        const firstJob = jobs[0];
         const ll = lngLat || [childMarkers[0].lng, childMarkers[0].lat];
-        activeClusterPopup = popupFromOpts(opts, ll, skeletonPopupHtml(firstJob || {}));
-        syncFeaturedPopupClass(activeClusterPopup, firstJob);
-        centerPopupInView(activeClusterPopup);
-        renderClusterPage(activeClusterPopup, childMarkers, 1);
+        // Fixed-size chrome + skeleton card so the sheet appears on the same tap frame.
+        const chromeHtml = buildClusterChromeHtml(pageCount, clusterPlaceLabel(jobs));
+        const skeletonCard = skeletonPopupHtml(firstJob || {});
+        const sheetHtml = chromeHtml.replace(
+            "data-cluster-viewport\"></div>",
+            "data-cluster-viewport\">" + skeletonCard + "</div>");
+        const visibleCount = Object.keys(markersById).length;
+
+        setSelectedCluster(ll, pageCount);
+        setClusterOpenChrome(true, visibleCount);
+        bindClusterEscape();
+
+        // Always docked (pin + cluster) — file 03 one docked popup.
+        activeClusterPopup = createDockedClusterController(sheetHtml);
+        try {
+            const el = activeClusterPopup.getElement();
+            if (el && el.classList) {
+                el.classList.add("map-popup--docked");
+            }
+        } catch (e) { }
+
+        const root = activeClusterPopup.getElement();
+        const cardRoot = root.querySelector("[data-cluster-card]") || root;
+        clusterUiState = {
+            jobs: jobs,
+            page: 1,
+            pageCount: pageCount,
+            childMarkers: childMarkers,
+            root: cardRoot,
+            viewport: cardRoot.querySelector("[data-cluster-viewport]"),
+            docked: true,
+            lngLat: ll
+        };
+
+        const gen = ++clusterPageGen;
+
+        // Fill content + start fly/ease only after the skeleton has painted.
+        afterFirstPaint(function () {
+            if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
+                return;
+            }
+            bindClusterPopupInteractions(activeClusterPopup, childMarkers);
+            updateClusterChrome(clusterUiState);
+            renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
+            panClusterAboveSheet(ll);
+
+            prefetchClusterCards(jobs).then(function () {
+                if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
+                    return;
+                }
+                updateClusterChrome(clusterUiState);
+                renderClusterPage(activeClusterPopup, childMarkers, clusterUiState.page, 0, true);
+            });
+
+            if (firstJob && firstJob.id) {
+                fetchVacancyCard(firstJob.id).then(function (card) {
+                    if (!clusterUiState || clusterUiState.childMarkers !== childMarkers) {
+                        return;
+                    }
+                    if (card && clusterUiState.page === 1) {
+                        const full = mapCardToPopup(card, firstJob);
+                        jobs[0] = full;
+                        childMarkers.forEach(function (marker) {
+                            if (marker.options && marker.options.jobData &&
+                                String(marker.options.jobData.id) === String(firstJob.id)) {
+                                marker.options.jobData = full;
+                            }
+                        });
+                        renderClusterPage(activeClusterPopup, childMarkers, 1, 0, true);
+                    }
+                });
+            }
+        });
     }
 
     function ringMinutes(maxMinutes) {
         const max = Math.max(5, Number(maxMinutes) || 30);
-        if (max <= 10) return [max];
-        if (max <= 20) return [Math.round(max / 2), max];
-        const step = max <= 40 ? 10 : Math.max(10, Math.round(max / 3 / 5) * 5);
+        // Always show 3 areas. For a chosen max ≤30, show 10/20/30.
+        if (max <= 30) {
+            return [10, 20, 30];
+        }
+        const step = max <= 60 ? 15 : Math.max(10, Math.round(max / 3 / 5) * 5);
         const rings = [];
         for (let m = step; m < max; m += step) {
             rings.push(m);
         }
         rings.push(max);
         return rings.slice(-3);
+    }
+
+    function chosenRingMinutes() {
+        return Math.max(5, Number(travelOptions.maxMinutes) || 30);
     }
 
     function metersPerMinute(transport) {
@@ -1323,6 +2512,10 @@ window.jobMap = (function () {
             }
         });
         travelRingLayers = [];
+        (isochroneLabelMarkers || []).forEach(function (m) {
+            try { if (m && typeof m.remove === "function") m.remove(); } catch (e) { }
+        });
+        isochroneLabelMarkers = [];
     }
 
     function clearTravelRings() {
@@ -1422,90 +2615,327 @@ window.jobMap = (function () {
     }
 
     function eachTravelRing(lat, lng, fn) {
-        const minutes = ringMinutes(travelOptions.maxMinutes);
-        const cap = maxRingRadiusMeters();
-        minutes.forEach(function (mins, index) {
-            const radius = ringRadiusForMinutes(mins);
-            if (radius < 40) {
-                return;
-            }
-            if (index > 0 && radius >= cap - 1 && ringRadiusForMinutes(minutes[index - 1]) >= cap - 1) {
-                return;
-            }
-            fn(mins, index, radius, index === minutes.length - 1);
-        });
+        const mins = chosenRingMinutes();
+        const radius = ringRadiusForMinutes(mins);
+        if (radius >= 40) {
+            fn(mins, 0, radius, true);
+        }
     }
 
     function buildTravelRingFeatures(lat, lng) {
         const features = [];
-        eachTravelRing(lat, lng, function (mins, index, radius, outer) {
+        const chosen = chosenRingMinutes();
+        eachTravelRing(lat, lng, function (mins, index, radius, isChosen) {
             features.push({
                 type: "Feature",
-                properties: { index: index, outer: outer ? 1 : 0 },
+                properties: {
+                    index: index,
+                    minutes: mins,
+                    chosen: isChosen || mins === chosen ? 1 : 0,
+                    outer: isChosen ? 1 : 0
+                },
                 geometry: { type: "Polygon", coordinates: circlePolygon(lat, lng, radius) }
             });
+        });
+        // Largest first so fills stack darkest inside when sorted by paint.
+        features.sort(function (a, b) {
+            return (b.properties.minutes || 0) - (a.properties.minutes || 0);
         });
         return features;
     }
 
-    function placeTravelRingLabels(lat, lng) {
+    function isochroneCacheKey(lat, lng, mode, minutes) {
+        return lat.toFixed(3) + "|" + lng.toFixed(3) + "|" + mode + "|" + minutes.join(",");
+    }
+
+    function fetchIsochrones(lat, lng) {
+        const mode = canonicalTransport(travelOptions.transport || "Fiets");
+        const minutes = [chosenRingMinutes()];
+        const key = isochroneCacheKey(lat, lng, mode, minutes);
+        if (isochroneCache[key]) {
+            return Promise.resolve(isochroneCache[key]);
+        }
+        // OV: no transit isochrones on the public Valhalla instance.
+        if (mode === "OV") {
+            isochroneCache[key] = Promise.resolve(null);
+            return isochroneCache[key];
+        }
+        const url = "/api/travel/isochrones?lat=" + encodeURIComponent(lat) +
+            "&lng=" + encodeURIComponent(lng) +
+            "&mode=" + encodeURIComponent(mode) +
+            "&minutes=" + encodeURIComponent(minutes.join(","));
+        isochroneCache[key] = fetch(url, {
+            credentials: "same-origin",
+            headers: { Accept: "application/geo+json, application/json" }
+        }).then(function (res) {
+            if (!res.ok) {
+                return null;
+            }
+            return res.json();
+        }).then(function (fc) {
+            if (!fc || !Array.isArray(fc.features) || !fc.features.length) {
+                return null;
+            }
+            return fc;
+        }).catch(function () {
+            return null;
+        });
+        return isochroneCache[key];
+    }
+
+    function featuresFromIsochroneFc(fc) {
+        const chosen = chosenRingMinutes();
+        const features = (fc.features || []).map(function (f, index) {
+            const mins = Number((f.properties && (f.properties.minutes != null
+                ? f.properties.minutes
+                : f.properties.contour)) || 0);
+            return {
+                type: "Feature",
+                properties: {
+                    index: index,
+                    minutes: mins,
+                    chosen: mins === chosen ? 1 : 0,
+                    outer: mins === chosen ? 1 : 0
+                },
+                geometry: f.geometry
+            };
+        }).filter(function (f) {
+            return f.geometry && f.properties.minutes > 0;
+        });
+        features.sort(function (a, b) {
+            return (b.properties.minutes || 0) - (a.properties.minutes || 0);
+        });
+        return features;
+    }
+
+    function transportIconChar(transport) {
+        const t = canonicalTransport(transport);
+        if (t === "Auto") return "🚗";
+        if (t === "Lopend") return "🚶";
+        if (t === "OV") return "🚌";
+        return "🚲";
+    }
+
+    function labelBearingForMinutes(mins, index) {
+        // Mockup bearings ≈ 30° (10), 190° (20), 160° (30).
+        if (mins <= 10) return 30;
+        if (mins <= 20) return 190;
+        if (index === 0) return 160;
+        return 125;
+    }
+
+    function pointOnRingEdge(lat, lng, mins, index, feature) {
+        const bearing = labelBearingForMinutes(mins, index);
+        if (feature && feature.geometry && feature.geometry.type === "Polygon") {
+            const ring = feature.geometry.coordinates && feature.geometry.coordinates[0];
+            if (ring && ring.length > 8) {
+                // Pick the vertex closest to the preferred bearing from origin.
+                let best = null;
+                let bestDiff = 1e9;
+                for (let i = 0; i < ring.length; i++) {
+                    const c = ring[i];
+                    const dLng = (c[0] - lng) * Math.cos(lat * Math.PI / 180);
+                    var dLat = c[1] - lat;
+                    var ang = Math.atan2(dLng, dLat) * 180 / Math.PI;
+                    if (ang < 0) ang += 360;
+                    var diff = Math.abs(ang - bearing);
+                    if (diff > 180) diff = 360 - diff;
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        best = c;
+                    }
+                }
+                if (best) {
+                    return best;
+                }
+            }
+        }
+        return destinationLngLat(lat, lng, ringRadiusForMinutes(mins), bearing);
+    }
+
+    function placeTravelRingLabels(lat, lng, features) {
         clearTravelRingLabels();
-        if (!map) {
+        if (!map || typeof maplibregl === "undefined" || !maplibregl.Marker) {
             return;
         }
         const transport = canonicalTransport(travelOptions.transport || "Fiets");
-        const labelVerb = TRANSPORT_LABEL[transport] || "reistijd";
-        const labelFeatures = [];
-        eachTravelRing(lat, lng, function (mins, index, radius) {
-            // East-southeast keeps labels off the featured carousel and zoom stack.
-            const labelLngLat = destinationLngLat(lat, lng, radius, 125);
-            const effectiveMins = Math.max(1, Math.round(radius / metersPerMinute(transport)));
-            labelFeatures.push({
-                type: "Feature",
-                properties: { label: effectiveMins + " min " + labelVerb },
-                geometry: { type: "Point", coordinates: labelLngLat }
-            });
+        const labelVerb = transportVerb(transport) || travelFallbackVerb();
+        const chosen = chosenRingMinutes();
+        const list = features || buildTravelRingFeatures(lat, lng);
+        list.forEach(function (feature, index) {
+            const mins = Number(feature.properties && feature.properties.minutes) || 0;
+            if (!mins) {
+                return;
+            }
+            const isChosen = !!feature.properties.chosen || mins === chosen;
+            const ll = pointOnRingEdge(lat, lng, mins, index, feature);
+            const el = document.createElement("div");
+            el.className = "map-iso-label" + (isChosen ? " map-iso-label--chosen" : "");
+            el.setAttribute("title", mins + " min " + labelVerb);
+            el.setAttribute("aria-label", mins + " min " + labelVerb);
+            if (isChosen) {
+                el.innerHTML = "<span class=\"map-iso-label__icon\" aria-hidden=\"true\">" +
+                    transportIconChar(transport) + "</span>" + mins + " min";
+            } else {
+                el.textContent = mins + " min";
+            }
+            try {
+                const marker = new maplibregl.Marker({ element: el, anchor: "center" })
+                    .setLngLat(ll)
+                    .addTo(map);
+                isochroneLabelMarkers.push(marker);
+            } catch (e) { }
         });
-        const sourceId = "jobsy-travel-ring-labels";
-        const layerId = sourceId + "-text";
-        const data = { type: "FeatureCollection", features: labelFeatures };
+    }
+
+    function readCssToken(name, fallback) {
+        try {
+            const v = getComputedStyle(document.documentElement).getPropertyValue(name);
+            if (v && v.trim()) {
+                return v.trim();
+            }
+        } catch (e) { }
+        return fallback;
+    }
+
+    function ringBrandColors() {
+        const brand = readCssToken("--brand", "#0f2d5c");
+        const brandDeep = readCssToken("--brand-deep", brand);
+        return { fill: brand, line: brandDeep || brand };
+    }
+
+    function setIsoMode(mode) {
+        try {
+            const host = map && map.getContainer ? map.getContainer() : null;
+            if (!host) {
+                return;
+            }
+            host.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+            const pane = host.closest ? host.closest(".map-pane") : null;
+            if (pane) {
+                pane.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+            }
+            if (typeof onIsoModeChange === "function") {
+                onIsoModeChange(mode === "real" ? "real" : "approx");
+            }
+            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
+                openCallback.invokeMethodAsync("OnIsoModeChanged", mode === "real" ? "real" : "approx");
+            }
+        } catch (e) { }
+    }
+
+    let onIsoModeChange = null;
+
+    function ensureTravelRingLayers(sourceId) {
+        const fillId = sourceId + "-fill";
+        const haloId = sourceId + "-halo";
+        const lineId = sourceId + "-line";
+        const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
+        const colors = ringBrandColors();
+
+        if (!map.getLayer(fillId)) {
+            map.addLayer({
+                id: fillId,
+                type: "fill",
+                source: sourceId,
+                paint: {
+                    "fill-color": colors.fill,
+                    "fill-opacity": [
+                        "match", ["get", "minutes"],
+                        10, 0.12,
+                        20, 0.09,
+                        30, 0.06,
+                        45, 0.05,
+                        0.08
+                    ]
+                }
+            }, beforeId);
+        }
+        if (!map.getLayer(haloId)) {
+            map.addLayer({
+                id: haloId,
+                type: "line",
+                source: sourceId,
+                paint: {
+                    "line-color": "#ffffff",
+                    "line-width": [
+                        "case",
+                        ["==", ["get", "chosen"], 1],
+                        4.5,
+                        3
+                    ],
+                    "line-opacity": 0.85
+                }
+            }, beforeId);
+        }
+        if (!map.getLayer(lineId)) {
+            map.addLayer({
+                id: lineId,
+                type: "line",
+                source: sourceId,
+                paint: {
+                    "line-color": colors.line,
+                    "line-width": [
+                        "case",
+                        ["==", ["get", "chosen"], 1],
+                        2.5,
+                        1.5
+                    ],
+                    "line-opacity": 1,
+                    "line-dasharray": [
+                        "case",
+                        [">=", ["get", "minutes"], 30],
+                        ["literal", [2, 2]],
+                        ["literal", [1, 0]]
+                    ]
+                }
+            }, beforeId);
+        } else {
+            try {
+                map.setPaintProperty(lineId, "line-color", colors.line);
+                map.setPaintProperty(fillId, "fill-color", colors.fill);
+            } catch (e) { }
+        }
+        // Rings must never capture clicks.
+        [fillId, haloId, lineId].forEach(function (id) {
+            try {
+                map.on("click", id, function (ev) {
+                    if (ev && ev.originalEvent && typeof ev.originalEvent.stopPropagation === "function") {
+                        /* allow click-through by not stopping — MapLibre still hits top layer */
+                    }
+                });
+                map.setLayoutProperty(id, "visibility", "visible");
+            } catch (e) { }
+        });
+        return [fillId, haloId, lineId];
+    }
+
+    function applyTravelRingData(features, lat, lng) {
+        if (!features.length) {
+            clearTravelRings();
+            return;
+        }
+        const sourceId = "jobsy-travel-rings";
+        const data = { type: "FeatureCollection", features: features };
         try {
             if (map.getSource(sourceId)) {
                 map.getSource(sourceId).setData(data);
             } else {
                 map.addSource(sourceId, { type: "geojson", data: data });
             }
-            if (!map.getLayer(layerId)) {
-                map.addLayer({
-                    id: layerId,
-                    type: "symbol",
-                    source: sourceId,
-                    layout: {
-                        "text-field": ["get", "label"],
-                        "text-size": 12,
-                        "text-allow-overlap": true,
-                        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"]
-                    },
-                    paint: {
-                        "text-color": "#0f2d5c",
-                        "text-halo-color": "#ffffff",
-                        "text-halo-width": 1.5
-                    }
-                });
-            }
-            travelRingLayers.push({
-                remove: function () {
-                    try {
-                        if (map.getLayer(layerId)) {
-                            map.removeLayer(layerId);
-                        }
-                        if (map.getSource(sourceId)) {
-                            map.removeSource(sourceId);
-                        }
-                    } catch (e) { }
+            const ids = ensureTravelRingLayers(sourceId);
+            travelRingGeo = { sourceId: sourceId, ids: ids };
+            ringRedrawTries = 0;
+            placeTravelRingLabels(lat, lng, features);
+            try {
+                const pinSrc = map.getSource(PIN_SOURCE);
+                if (pinSrc && typeof pinSrc.setData === "function") {
+                    pinSrc.setData(pinsGeoJson());
                 }
-            });
-        } catch (e) { }
+            } catch (e) { }
+        } catch (e) {
+            scheduleTravelRingRedraw();
+        }
     }
 
     function drawTravelRings(lat, lng) {
@@ -1517,76 +2947,35 @@ window.jobMap = (function () {
             return;
         }
 
-        const features = buildTravelRingFeatures(lat, lng);
-        if (!features.length) {
+        // Circles first, swap isochrones when they arrive (no flash).
+        const circleFeatures = buildTravelRingFeatures(lat, lng);
+        if (!circleFeatures.length) {
             clearTravelRings();
             return;
         }
+        applyTravelRingData(circleFeatures, lat, lng);
+        setIsoMode("approx");
 
-        const sourceId = "jobsy-travel-rings";
-        const fillId = sourceId + "-fill";
-        const haloId = sourceId + "-halo";
-        const lineId = sourceId + "-line";
-
-        try {
-            const data = { type: "FeatureCollection", features: features };
-            if (map.getSource(sourceId)) {
-                map.getSource(sourceId).setData(data);
-            } else {
-                map.addSource(sourceId, {
-                    type: "geojson",
-                    data: data
-                });
+        const drawGen = ++ringRedrawTries;
+        fetchIsochrones(lat, lng).then(function (fc) {
+            if (!map || !lastOrigin || Math.abs(lastOrigin.lat - lat) > 1e-7 ||
+                Math.abs(lastOrigin.lng - lng) > 1e-7) {
+                return;
             }
-
-            if (!map.getLayer(fillId)) {
-                map.addLayer({
-                    id: fillId,
-                    type: "fill",
-                    source: sourceId,
-                    paint: {
-                        "fill-color": "#0d6efd",
-                        "fill-opacity": 0.16
-                    }
-                });
+            if (!fc) {
+                try { console.info("[lobsy] isochrone fallback: circles"); } catch (e) { }
+                setIsoMode("approx");
+                return;
             }
-            if (!map.getLayer(haloId)) {
-                map.addLayer({
-                    id: haloId,
-                    type: "line",
-                    source: sourceId,
-                    paint: {
-                        "line-color": "#ffffff",
-                        "line-width": 5,
-                        "line-opacity": 0.72
-                    }
-                });
+            const isoFeatures = featuresFromIsochroneFc(fc);
+            if (!isoFeatures.length) {
+                setIsoMode("approx");
+                return;
             }
-            if (!map.getLayer(lineId)) {
-                map.addLayer({
-                    id: lineId,
-                    type: "line",
-                    source: sourceId,
-                    paint: {
-                        "line-color": "#0d6efd",
-                        "line-width": [
-                            "case",
-                            ["==", ["get", "outer"], 1],
-                            3.2,
-                            2.4
-                        ],
-                        "line-opacity": 0.95
-                    }
-                });
-            }
-            travelRingGeo = { sourceId: sourceId, ids: [fillId, haloId, lineId] };
-            ringRedrawTries = 0;
-        } catch (e) {
-            scheduleTravelRingRedraw();
-            return;
-        }
-
-        placeTravelRingLabels(lat, lng);
+            applyTravelRingData(isoFeatures, lat, lng);
+            setIsoMode("real");
+            ringRedrawTries = Math.min(ringRedrawTries, drawGen);
+        });
     }
 
     function ringBounds(lat, lng, radiusM) {
@@ -1607,8 +2996,13 @@ window.jobMap = (function () {
         const pane = container && container.closest ? container.closest(".map-pane") : null;
         if (pane) {
             const carousel = pane.querySelector(".highlight-carousel--map");
-            if (carousel && carousel.offsetParent !== null && carousel.offsetHeight > 0) {
+            if (carousel && carousel.offsetParent !== null && carousel.offsetHeight > 0
+                && !pane.classList.contains("is-cluster-open")) {
                 padding.top = Math.max(padding.top, carousel.offsetHeight + 28);
+            }
+            const sheet = pane.querySelector(".map-cluster-sheet");
+            if (sheet && sheet.offsetParent !== null && sheet.offsetHeight > 0) {
+                padding.bottom = Math.max(padding.bottom, sheet.offsetHeight + 20);
             }
         }
         const locate = container ? container.querySelector(".job-map-locate") : null;
@@ -1919,11 +3313,21 @@ window.jobMap = (function () {
     }
 
     function pinsGeoJson() {
+        const origin = lastOrigin;
+        const outerM = origin ? maxRingRadiusMeters() : 0;
         return {
             type: "FeatureCollection",
             features: Object.keys(markersById).map(function (id) {
                 const record = markersById[id];
                 const v = record.options.jobData || {};
+                const agency = isAgencyPin(v) ? 1 : 0;
+                let outside = 0;
+                if (origin && outerM > 0) {
+                    const d = haversineMeters(origin.lat, origin.lng, record.lat, record.lng);
+                    if (d > outerM * 1.02) {
+                        outside = 1;
+                    }
+                }
                 return {
                     type: "Feature",
                     id: id,
@@ -1931,15 +3335,97 @@ window.jobMap = (function () {
                     properties: {
                         id: String(id),
                         featured: isFeaturedVacancy(v) ? 1 : 0,
+                        agency: agency,
+                        radiusKm: agency ? agencyRadiusKm(v) : 0,
                         workType: workTypeOf(v) || "",
-                        glyph: workTypeGlyph(workTypeOf(v)),
-                        colour: v.categoryColor || v.colour || "",
+                        glyph: agency ? "◆" : workTypeGlyph(workTypeOf(v)),
+                        colour: agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
-                        matchBand: v.matchColorBand || "orange"
+                        matchBand: v.matchColorBand || "orange",
+                        outside: outside
                     }
                 };
             })
         };
+    }
+
+    function agencyAreasGeoJson() {
+        if (selectedId == null) {
+            return { type: "FeatureCollection", features: [] };
+        }
+        const record = markersById[selectedId];
+        if (!record) {
+            return { type: "FeatureCollection", features: [] };
+        }
+        const v = record.options.jobData || {};
+        const km = agencyRadiusKm(v);
+        if (km <= 0) {
+            return { type: "FeatureCollection", features: [] };
+        }
+        return {
+            type: "FeatureCollection",
+            features: [{
+                type: "Feature",
+                properties: { radiusKm: km, pinId: String(selectedId) },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: circlePolygon(record.lat, record.lng, km * 1000)
+                }
+            }]
+        };
+    }
+
+    function refreshAgencyAreas() {
+        if (!map || !map.isStyleLoaded || !map.isStyleLoaded()) {
+            return;
+        }
+        ensureAgencyAreaLayers();
+        const source = map.getSource(PIN_SOURCE_AGENCY_AREAS);
+        if (source && typeof source.setData === "function") {
+            source.setData(agencyAreasGeoJson());
+        }
+    }
+
+    function haversineMeters(lat1, lng1, lat2, lng2) {
+        const toRad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * toRad;
+        const dLng = (lng2 - lng1) * toRad;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function ensureAgencyAreaLayers() {
+        if (!map) {
+            return;
+        }
+        if (!map.getSource(PIN_SOURCE_AGENCY_AREAS)) {
+            const beforeId = map.getLayer(PIN_LAYER_CLUSTERS) ? PIN_LAYER_CLUSTERS : undefined;
+            map.addSource(PIN_SOURCE_AGENCY_AREAS, {
+                type: "geojson",
+                data: agencyAreasGeoJson()
+            });
+            map.addLayer({
+                id: PIN_LAYER_AGENCY_AREAS_FILL,
+                type: "fill",
+                source: PIN_SOURCE_AGENCY_AREAS,
+                paint: {
+                    "fill-color": AGENCY_PIN_COLOR,
+                    "fill-opacity": 0.12
+                }
+            }, beforeId);
+            map.addLayer({
+                id: PIN_LAYER_AGENCY_AREAS_LINE,
+                type: "line",
+                source: PIN_SOURCE_AGENCY_AREAS,
+                paint: {
+                    "line-color": AGENCY_PIN_COLOR,
+                    "line-width": 2,
+                    "line-opacity": 0.55
+                }
+            }, beforeId);
+        }
     }
 
     function ensurePinImages() {
@@ -1979,7 +3465,53 @@ window.jobMap = (function () {
                 cluster: true,
                 clusterRadius: CLUSTER_OPTS.clusterRadius,
                 clusterMaxZoom: CLUSTER_OPTS.clusterMaxZoom,
+                clusterProperties: {
+                    agency_sum: ["+", ["get", "agency"]]
+                },
                 promoteId: "id"
+            });
+        }
+        const PIN_LAYER_CLUSTER_HALO = PIN_LAYER_CLUSTERS + "-halo";
+        const PIN_LAYER_CLUSTER_HIT = PIN_LAYER_CLUSTERS + "-hit";
+        const PIN_LAYER_UNCLUSTERED_HIT = PIN_LAYER_UNCLUSTERED + "-hit";
+        const legacyAgencyPinLabelLayer = ["jobsy-pins", "agency-label"].join("-");
+        const legacyClusterAgencyLabelLayer = ["jobsy-pins-cluster", "agency-label"].join("-");
+        [PIN_LAYER_CLUSTER_AGENCY_BADGE, legacyAgencyPinLabelLayer, legacyClusterAgencyLabelLayer]
+            .forEach(function (legacyId) {
+                try {
+                    if (map.getLayer(legacyId)) {
+                        map.removeLayer(legacyId);
+                    }
+                } catch (eLegacy) { }
+            });
+        if (!map.getLayer(PIN_LAYER_CLUSTER_HALO)) {
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_HALO,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: ["has", "point_count"],
+                paint: {
+                    "circle-color": "#16a34a",
+                    "circle-radius": [
+                        "step", ["get", "point_count"],
+                        20, 10, 22, 30, 25
+                    ],
+                    "circle-opacity": 0.22,
+                    "circle-blur": 0.4
+                }
+            });
+        }
+        if (!map.getLayer(PIN_LAYER_CLUSTER_HIT)) {
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_HIT,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: ["has", "point_count"],
+                paint: {
+                    "circle-color": "#000000",
+                    "circle-radius": 22,
+                    "circle-opacity": 0
+                }
             });
         }
         if (!map.getLayer(PIN_LAYER_CLUSTERS)) {
@@ -1989,15 +3521,10 @@ window.jobMap = (function () {
                 source: PIN_SOURCE,
                 filter: ["has", "point_count"],
                 paint: {
-                    "circle-color": [
-                        "case",
-                        [">=", ["get", "point_count"], 10], "#16a34a",
-                        [">=", ["get", "point_count"], 4], "#22c55e",
-                        "#4ade80"
-                    ],
+                    "circle-color": "#16a34a",
                     "circle-radius": [
                         "step", ["get", "point_count"],
-                        16, 4, 20, 10, 26
+                        15, 10, 17, 30, 20
                     ],
                     "circle-stroke-width": 2,
                     "circle-stroke-color": "#ffffff"
@@ -2010,63 +3537,142 @@ window.jobMap = (function () {
                 filter: ["has", "point_count"],
                 layout: {
                     "text-field": ["get", "point_count_abbreviated"],
-                    "text-size": 12,
-                    "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"]
+                    "text-size": 13,
+                    "text-font": ["Noto Sans Bold"],
+                    "text-allow-overlap": true
                 },
                 paint: { "text-color": "#ffffff" }
+            });
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_AGENCY_BADGE,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["all", ["has", "point_count"], [">", ["get", "agency_sum"], 0]],
+                layout: {
+                    "text-field": ["concat", "◆", ["to-string", ["get", "agency_sum"]]],
+                    "text-size": 10,
+                    "text-offset": [1.15, 1.15],
+                    "text-font": ["Noto Sans Bold"],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true
+                },
+                paint: {
+                    "text-color": AGENCY_PIN_COLOR,
+                    "text-halo-color": "#ffffff",
+                    "text-halo-width": 1.5
+                }
+            });
+            map.addLayer({
+                id: PIN_LAYER_UNCLUSTERED_HIT,
+                type: "circle",
+                source: PIN_SOURCE,
+                filter: UNCLUSTERED_PIN_FILTER,
+                paint: {
+                    "circle-color": "#000000",
+                    "circle-radius": 22,
+                    "circle-opacity": 0
+                }
             });
             map.addLayer({
                 id: PIN_LAYER_UNCLUSTERED,
                 type: "circle",
                 source: PIN_SOURCE,
-                filter: ["!", ["has", "point_count"]],
+                filter: UNCLUSTERED_PIN_FILTER,
                 paint: {
                     "circle-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["get", "agency"], 1], AGENCY_PIN_COLOR,
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [
                             "case",
-                            ["all", ["!=", ["get", "colour"], ""], ["!=", ["get", "colour"], null]],
+                            // Avoid literal null in the style (MapLibre warns); empty string means "no colour".
+                            ["all", ["has", "colour"], ["!=", ["get", "colour"], ""]],
                             ["get", "colour"],
-                            "#7c3aed"
+                            "#16a34a"
                         ]
                     ],
                     "circle-radius": [
                         "case",
-                        ["==", ["feature-state", "selected"], true], 11,
-                        ["==", ["get", "featured"], 1], 10,
-                        8
+                        ["==", ["feature-state", "selected"], true], 10,
+                        ["==", ["get", "agency"], 1], 8,
+                        ["==", ["get", "featured"], 1], 8,
+                        7
                     ],
-                    "circle-stroke-width": [
-                        "case",
-                        ["==", ["feature-state", "selected"], true], 3,
-                        2
-                    ],
+                    "circle-stroke-width": 2,
                     "circle-stroke-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
                         "#ffffff"
                     ],
-                    "circle-opacity": 0.95
+                    "circle-opacity": [
+                        "case",
+                        ["==", ["get", "outside"], 1],
+                        0.35,
+                        0.95
+                    ]
                 }
             });
             map.addLayer({
                 id: PIN_LAYER_UNCLUSTERED_GLYPH,
                 type: "symbol",
                 source: PIN_SOURCE,
-                filter: ["!", ["has", "point_count"]],
+                filter: UNCLUSTERED_PIN_FILTER,
                 layout: {
                     "text-field": ["get", "glyph"],
-                    "text-size": 11,
+                    "text-size": 10,
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
+                },
+                paint: {
+                    "text-opacity": [
+                        "case",
+                        ["==", ["get", "outside"], 1],
+                        0.35,
+                        1
+                    ]
                 }
+            });
+        } else if (!map.getLayer(PIN_LAYER_CLUSTER_AGENCY_BADGE)) {
+            map.addLayer({
+                id: PIN_LAYER_CLUSTER_AGENCY_BADGE,
+                type: "symbol",
+                source: PIN_SOURCE,
+                filter: ["all", ["has", "point_count"], [">", ["get", "agency_sum"], 0]],
+                layout: {
+                    "text-field": ["concat", "◆", ["to-string", ["get", "agency_sum"]]],
+                    "text-size": 10,
+                    "text-offset": [1.15, 1.15],
+                    "text-font": ["Noto Sans Bold"],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true
+                },
+                paint: {
+                    "text-color": AGENCY_PIN_COLOR,
+                    "text-halo-color": "#ffffff",
+                    "text-halo-width": 1.5
+                }
+            });
+            [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_HIT, PIN_LAYER_UNCLUSTERED_GLYPH].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setFilter(layerId, UNCLUSTERED_PIN_FILTER);
+                    }
+                } catch (eFilter) { }
+            });
+            [PIN_LAYER_CLUSTERS, PIN_LAYER_CLUSTER_HALO].forEach(function (layerId) {
+                try {
+                    if (map.getLayer(layerId)) {
+                        map.setPaintProperty(layerId, "circle-color", "#16a34a");
+                    }
+                } catch (ePaint) { }
             });
         }
         if (!map._jobsyPinClicksBound) {
             map._jobsyPinClicksBound = true;
+            map.on("click", PIN_LAYER_CLUSTER_HIT, onClusterClick);
             map.on("click", PIN_LAYER_CLUSTERS, onClusterClick);
+            map.on("click", PIN_LAYER_UNCLUSTERED_HIT, onPinClick);
             map.on("click", PIN_LAYER_UNCLUSTERED, onPinClick);
             map.on("click", PIN_LAYER_UNCLUSTERED_GLYPH, onPinClick);
             map.on("mouseenter", PIN_LAYER_CLUSTERS, function () { map.getCanvas().style.cursor = "pointer"; });
@@ -2074,6 +3680,46 @@ window.jobMap = (function () {
             map.on("mouseenter", PIN_LAYER_UNCLUSTERED, function () { map.getCanvas().style.cursor = "pointer"; });
             map.on("mouseleave", PIN_LAYER_UNCLUSTERED, function () { map.getCanvas().style.cursor = ""; });
         }
+        muteBaseMapStyle();
+    }
+
+    function muteBaseMapStyle() {
+        if (!map || map._jobsyBaseMuted) {
+            return;
+        }
+        map._jobsyBaseMuted = true;
+        const style = map.getStyle && map.getStyle();
+        if (!style || !Array.isArray(style.layers)) {
+            return;
+        }
+        style.layers.forEach(function (layer) {
+            if (!layer || !layer.id || String(layer.id).indexOf("jobsy-") === 0) {
+                return;
+            }
+            try {
+                if (layer.type === "background" && map.getPaintProperty(layer.id, "background-color") != null) {
+                    map.setPaintProperty(layer.id, "background-color", "#eef1f4");
+                }
+                if (layer.type === "fill") {
+                    const id = String(layer.id).toLowerCase();
+                    if (id.indexOf("water") >= 0) {
+                        map.setPaintProperty(layer.id, "fill-color", "#c5d4e0");
+                    } else if (id.indexOf("park") >= 0 || id.indexOf("landuse") >= 0 || id.indexOf("grass") >= 0) {
+                        map.setPaintProperty(layer.id, "fill-color", "#e7ebe6");
+                        try { map.setPaintProperty(layer.id, "fill-opacity", 0.55); } catch (e) { }
+                    } else if (id.indexOf("building") >= 0) {
+                        map.setPaintProperty(layer.id, "fill-color", "#dde2e6");
+                    }
+                }
+                if (layer.type === "line") {
+                    const id = String(layer.id).toLowerCase();
+                    if (id.indexOf("road") >= 0 || id.indexOf("highway") >= 0 || id.indexOf("street") >= 0) {
+                        try { map.setPaintProperty(layer.id, "line-color", "#d5dbe2"); } catch (e) { }
+                        try { map.setPaintProperty(layer.id, "line-opacity", 0.85); } catch (e) { }
+                    }
+                }
+            } catch (e) { }
+        });
     }
 
     /**
@@ -2146,6 +3792,7 @@ window.jobMap = (function () {
         if (source && typeof source.setData === "function") {
             source.setData(pinsGeoJson());
         }
+        refreshAgencyAreas();
         if (selectedId != null) {
             highlight(selectedId);
         }
@@ -2179,6 +3826,7 @@ window.jobMap = (function () {
             lastFitPoints = openingPoints.slice();
         }
 
+        mapCreateCount += 1;
         map = window.jobsyMapLibre.createMap(el, {
             center: opening.center,
             zoom: opening.zoom,
@@ -2194,6 +3842,70 @@ window.jobMap = (function () {
             restoreOverlays();
         }
         window.addEventListener("resize", invalidate);
+        // Pane width can change without a window resize (e.g. after the mobile
+        // grid overflow fix shrinks .map-pane from ~662px to 390px). Keep the
+        // MapLibre canvas in sync with the visible pane.
+        if (typeof ResizeObserver === "function" && el) {
+            try {
+                if (map._resizeObserver) {
+                    try { map._resizeObserver.disconnect(); } catch (e0) { /* ignore */ }
+                }
+                map._resizeObserver = new ResizeObserver(function () {
+                    invalidate();
+                });
+                map._resizeObserver.observe(el);
+            } catch (eRo) { /* ignore */ }
+        }
+        // First layout pass after Blazor attach may still be mid-reflow.
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () { invalidate(); });
+        } else {
+            setTimeout(invalidate, 0);
+        }
+    }
+
+    /**
+     * Blazor interactive attach often replaces #job-map with a fresh empty host.
+     * Move the live MapLibre DOM into that host and rebind internals — do not
+     * dispose()/createMap a second instance (that raced pins ETag → empty map).
+     */
+    function adoptMapContainer(host) {
+        if (!map || !host) {
+            return false;
+        }
+        const old = typeof map.getContainer === "function" ? map.getContainer() : null;
+        if (!old) {
+            return false;
+        }
+        if (old === host) {
+            return !!host.isConnected;
+        }
+        if (!host.isConnected) {
+            return false;
+        }
+        try {
+            if (old.classList && host.classList) {
+                old.classList.forEach(function (cls) {
+                    if (cls) {
+                        host.classList.add(cls);
+                    }
+                });
+            }
+            while (old.firstChild) {
+                host.appendChild(old.firstChild);
+            }
+            if (map._resizeObserver) {
+                try { map._resizeObserver.unobserve(old); } catch (e1) { }
+                try { map._resizeObserver.observe(host); } catch (e2) { }
+            }
+            map._container = host;
+            if (typeof map.resize === "function") {
+                map.resize();
+            }
+            return !!(host.isConnected && map.getContainer() === host);
+        } catch (err) {
+            return false;
+        }
     }
 
     function bindMapRuntime() {
@@ -2223,18 +3935,22 @@ window.jobMap = (function () {
                 }
             };
         }
-        // Native MapLibre clusters update on zoom without rebuilding HTML markers.
+        // Prefetch card on touch/pointer before click so the popup fills faster.
         if (!zoomHandlerBound) {
             zoomHandlerBound = true;
-            map.on("pointerdown", function (ev) {
-                if (!ev || !ev.point) {
+            const prefetchAtPoint = function (ev) {
+                if (!ev || !ev.point || !map) {
                     return;
                 }
-                const feats = map.queryRenderedFeatures(ev.point, { layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH] });
+                const feats = map.queryRenderedFeatures(ev.point, {
+                    layers: [PIN_LAYER_UNCLUSTERED, PIN_LAYER_UNCLUSTERED_GLYPH]
+                });
                 if (feats && feats[0] && feats[0].properties && feats[0].properties.id) {
                     fetchVacancyCard(feats[0].properties.id);
                 }
-            });
+            };
+            map.on("pointerdown", prefetchAtPoint);
+            map.on("touchstart", prefetchAtPoint);
         }
         addLocateControl();
         bindOutsideClickCloser();
@@ -2244,12 +3960,12 @@ window.jobMap = (function () {
     function readBootPayload() {
         const node = document.getElementById("jobsy-map-boot");
         if (!node || !node.textContent) {
-            return { pins: [], view: null, preferFilledLocation: true };
+            return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
         try {
             const parsed = JSON.parse(node.textContent);
             if (Array.isArray(parsed)) {
-                return { pins: parsed, view: null, preferFilledLocation: true };
+                return { pins: parsed, view: null, preferFilledLocation: true, pinsUrl: null };
             }
             const pins = parsed && Array.isArray(parsed.pins) ? parsed.pins : [];
             let view = parsed ? readOpeningView(parsed.view) : null;
@@ -2260,16 +3976,51 @@ window.jobMap = (function () {
                     view = filled;
                 }
             }
-            return { pins: pins, view: view, preferFilledLocation: preferFilledLocation };
+            const bootPinsUrl = parsed && parsed.pinsUrl ? String(parsed.pinsUrl) : null;
+            return {
+                pins: pins,
+                view: view,
+                preferFilledLocation: preferFilledLocation,
+                pinsUrl: bootPinsUrl
+            };
         } catch (e) {
-            return { pins: [], view: null, preferFilledLocation: true };
+            return { pins: [], view: null, preferFilledLocation: true, pinsUrl: null };
         }
     }
 
-    // Paint the basemap immediately from a single jobMap.init after hydrate.
-    // Pre-circuit boot() was discarded when Blazor replaced #job-map (double tile load).
+    /**
+     * Start the map from #jobsy-map-boot before the Blazor circuit is up.
+     * Blazor jobMap.init reuses that MapLibre instance (same host or adoptMapContainer).
+     */
     function boot(elementId) {
-        return;
+        const id = elementId || "job-map";
+        if (typeof maplibregl === "undefined" || !window.jobsyMapLibre) {
+            return;
+        }
+        const el = document.getElementById(id);
+        if (!el) {
+            return;
+        }
+        if (map && typeof map.getContainer === "function") {
+            const host = map.getContainer();
+            if (host === el && el.isConnected) {
+                return;
+            }
+            // Boot map already exists on a prior host — adopt into current #job-map.
+            if (adoptMapContainer(el)) {
+                return;
+            }
+        }
+        const bootPayload = readBootPayload();
+        try {
+            init(id, bootPayload.pins || [], {
+                view: bootPayload.view,
+                preferFilledLocation: bootPayload.preferFilledLocation !== false,
+                pinsUrl: bootPayload.pinsUrl || null
+            });
+        } catch (_err) {
+            // Circuit init will retry.
+        }
     }
 
     function init(elementId, vacancies, options) {
@@ -2290,13 +4041,20 @@ window.jobMap = (function () {
         const preferFilledLocation = !options || options.preferFilledLocation !== false;
         const filledOrigin = preferFilledLocation ? readFilledOrigin() : null;
         const hasOrigin = !!(options && options.origin) || !!filledOrigin;
-        const live = !!(map && typeof map.getContainer === "function"
+        let live = !!(map && typeof map.getContainer === "function"
             && map.getContainer() === el && el.isConnected);
 
-        if (!live) {
-            if (map) {
+        if (!live && map) {
+            // Early boot map is still alive but Blazor swapped the #job-map node —
+            // attach handlers to the existing MapLibre instance instead of dispose+rebuild.
+            if (adoptMapContainer(el)) {
+                live = true;
+            } else {
                 dispose();
             }
+        }
+
+        if (!live) {
             deferMapReveal = hasOrigin;
             try {
                 createMapInstance(el, openingPoints, openingView, preferFilledLocation);
@@ -2306,52 +4064,78 @@ window.jobMap = (function () {
         }
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
+        viewportListDotNet = options && options.syncViewportList && options.dotNetRef
+            ? options.dotNetRef
+            : null;
+        if (options && options.labels && typeof options.labels === "object") {
+            uiLabels = Object.assign({}, uiLabels, options.labels);
+            uiLabels.canSave = options.labels.canSave === true || options.labels.canSave === "true";
+        }
         normalizeTravelOptions(options && options.travel);
         highlightSeed = options && Number.isFinite(Number(options.highlightSeed))
             ? (Number(options.highlightSeed) >>> 0)
             : 0;
-        pinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        const nextPinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
+        if (nextPinsUrl) {
+            pinsBaseUrl = stripViewportParams(nextPinsUrl);
+            pinsUrl = pinsBaseUrl + viewportQueryString();
+        }
 
         bindMapRuntime();
+        bindViewportPinsReload();
 
-        const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
-        if (seedPins.length > 0) {
-            setVacancies(seedPins);
-        } else {
-            // Prefer #jobsy-map-boot compact pins until HTTP pins arrive.
-            try {
-                const boot = readBootPayload();
-                if (boot && Array.isArray(boot.pins) && boot.pins.length) {
-                    setVacancies(boot.pins.map(normalizePin).filter(Boolean));
-                    if (!pinsUrl && boot.pinsUrl) {
-                        pinsUrl = String(boot.pinsUrl);
+        // Early boot() may already have painted pins — do not re-fetch (one pins request/load).
+        const alreadyPinned = live && Object.keys(markersById).length > 0;
+        if (!alreadyPinned) {
+            const seedPins = (vacancies || []).map(normalizePin).filter(Boolean);
+            if (seedPins.length > 0) {
+                setVacancies(seedPins);
+            } else {
+                // Prefer #jobsy-map-boot compact pins until HTTP pins arrive — never wait on the circuit.
+                try {
+                    const bootPayload = readBootPayload();
+                    if (!pinsUrl && bootPayload.pinsUrl) {
+                        pinsUrl = String(bootPayload.pinsUrl);
                     }
-                } else {
+                    if (bootPayload && Array.isArray(bootPayload.pins) && bootPayload.pins.length) {
+                        setVacancies(bootPayload.pins.map(normalizePin).filter(Boolean));
+                    } else {
+                        setVacancies([]);
+                    }
+                } catch (e) {
                     setVacancies([]);
                 }
-            } catch (e) {
-                setVacancies([]);
             }
-        }
-        // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
-        if (pinsUrl && window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === pinsUrl) {
-            const gen = ++pinsFetchGen;
-            Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
-                if (gen !== pinsFetchGen || !data) {
-                    if (pinsUrl) {
+            // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
+            // Match by filter key so Fiets/Auto prefetch URLs share one body.
+            if (pinsUrl && !viewportQueryString() && window.__jobsyPinsPrefetch
+                && pinsFilterKey(window.__jobsyPinsPrefetchUrl) === pinsFilterKey(pinsUrl)) {
+                const gen = ++pinsFetchGen;
+                Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
+                    if (gen !== pinsFetchGen || !data) {
+                        if (pinsUrl) {
+                            fetchPins(pinsUrl);
+                        }
+                        return;
+                    }
+                    rememberPinsFilter(pinsUrl, data, window.__jobsyPinsEtag || null);
+                    const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
+                    if (pins.length) {
+                        setVacancies(pins);
+                    } else if (pinsUrl) {
                         fetchPins(pinsUrl);
                     }
-                    return;
+                });
+            } else if (pinsUrl) {
+                fetchPins(pinsUrl);
+            }
+        } else if (!pinsUrl) {
+            try {
+                const bootPayload = readBootPayload();
+                if (bootPayload.pinsUrl) {
+                    pinsUrl = String(bootPayload.pinsUrl);
                 }
-                const pins = (Array.isArray(data) ? data : []).map(normalizePin).filter(Boolean);
-                if (pins.length) {
-                    setVacancies(pins);
-                } else if (pinsUrl) {
-                    fetchPins(pinsUrl);
-                }
-            });
-        } else if (pinsUrl) {
-            fetchPins(pinsUrl);
+            } catch (e) { }
         }
         var originApplied = false;
         if (options && options.origin) {
@@ -2488,7 +4272,9 @@ window.jobMap = (function () {
     }
 
     function reloadPins(url) {
-        pinsUrl = url ? String(url) : pinsUrl;
+        if (url) {
+            pinsBaseUrl = stripViewportParams(String(url));
+        }
         if (pinsReloadTimer) {
             clearTimeout(pinsReloadTimer);
             pinsReloadTimer = null;
@@ -2496,9 +4282,56 @@ window.jobMap = (function () {
         return new Promise(function (resolve) {
             pinsReloadTimer = setTimeout(function () {
                 pinsReloadTimer = null;
-                resolve(fetchPins(pinsUrl));
+                resolve(fetchPins(pinsBaseUrl || pinsUrl));
             }, 200);
         });
+    }
+
+    function notifyViewportList() {
+        if (!viewportListDotNet || !map) {
+            return;
+        }
+        try {
+            var box = readViewportBounds();
+            if (!box) {
+                return;
+            }
+            viewportListDotNet.invokeMethodAsync(
+                "OnMapViewportChanged",
+                box.minLat,
+                box.minLng,
+                box.maxLat,
+                box.maxLng,
+                box.zoom);
+        } catch (e) { /* circuit */ }
+    }
+
+    function bindViewportPinsReload() {
+        if (!map) {
+            return;
+        }
+        if (map._jobsyViewportPinsSchedule) {
+            try {
+                map.off("moveend", map._jobsyViewportPinsSchedule);
+                map.off("zoomend", map._jobsyViewportPinsSchedule);
+            } catch (eOff) { /* ignore */ }
+        }
+        viewportPinsBound = true;
+        var debounce = null;
+        function schedule() {
+            if (debounce) {
+                clearTimeout(debounce);
+            }
+            debounce = setTimeout(function () {
+                debounce = null;
+                reloadPins();
+                notifyViewportList();
+            }, 300);
+        }
+        map._jobsyViewportPinsSchedule = schedule;
+        map.on("moveend", schedule);
+        map.on("zoomend", schedule);
+        setTimeout(schedule, 80);
     }
 
     function ensureOriginMarker(la, ln) {
@@ -2645,6 +4478,7 @@ window.jobMap = (function () {
         if (id != null) {
             try { map.setFeatureState({ source: PIN_SOURCE, id: String(id) }, { selected: true }); } catch (e) { }
         }
+        refreshAgencyAreas();
     }
 
     function focus(id) {
@@ -2710,13 +4544,17 @@ window.jobMap = (function () {
 
     function dispose() {
         window.removeEventListener("resize", invalidate);
-        activeClusterPopup = null;
+        closeActivePopup();
         openCallback = null;
         clearTravelRings();
         lastOrigin = null;
         originMarker = null;
         clearRenderedMarkers();
         if (map) {
+            if (map._resizeObserver) {
+                try { map._resizeObserver.disconnect(); } catch (eRoDispose) { /* ignore */ }
+                map._resizeObserver = null;
+            }
             unbindOutsideClickCloser();
             map.remove();
             map = null;
@@ -2737,6 +4575,15 @@ window.jobMap = (function () {
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
+        viewportPinsBound = false;
+        // Stale If-None-Match after dispose+rebuild used to yield 304 with no body
+        // while markers were already cleared — empty map. Always drop etag + cache.
+        pinsEtag = null;
+        pinsCachedPayload = null;
+        if (pinsAbort) {
+            try { pinsAbort.abort(); } catch (e) { }
+            pinsAbort = null;
+        }
     }
 
     function escapeHtml(value) {
@@ -2772,6 +4619,81 @@ window.jobMap = (function () {
         focusCompany,
         dispose,
         invalidate,
-        isAlive
+        isAlive,
+        /** @internal Playwright / diagnostics */
+        __testGetMap: function () { return map; },
+        __testGetPinCount: function () { return Object.keys(markersById).length; },
+        __testGetAgencyAreaCount: function () {
+            return agencyAreasGeoJson().features.length;
+        },
+        __testGetAgencyPinCount: function () {
+            let n = 0;
+            Object.keys(markersById).forEach(function (id) {
+                const v = markersById[id].options.jobData || {};
+                if (isAgencyPin(v)) {
+                    n += 1;
+                }
+            });
+            return n;
+        },
+        __testAgencyLabel: function () { return AGENCY_LABEL; },
+        __testHasAgencyMapTextLabels: function () {
+            if (!map) {
+                return false;
+            }
+            const legacyPin = ["jobsy-pins", "agency-label"].join("-");
+            const legacyCluster = ["jobsy-pins-cluster", "agency-label"].join("-");
+            return !!(map.getLayer(legacyPin) || map.getLayer(legacyCluster));
+        },
+        __testGetMapCreateCount: function () { return mapCreateCount; },
+        __testGetPinsNetworkFetchCount: function () { return pinsNetworkFetchCount; },
+        __testViewportQueryString: function () { return viewportQueryString(); },
+        __testGetPinsUrl: function () {
+            return pinsBaseUrl ? pinsBaseUrl + viewportQueryString() : pinsUrl;
+        },
+        __testPinsFilterKey: pinsFilterKey,
+        __testClearPinsFilterCache: function () {
+            Object.keys(pinsByFilterKey).forEach(function (k) { delete pinsByFilterKey[k]; });
+            pinsNetworkFetchCount = 0;
+            pinsCachedPayload = null;
+            pinsEtag = null;
+        },
+        /** @internal Open the densest visible cluster for v3 popup tests. */
+        debugOpenLargestCluster: async function () {
+            if (!map || typeof map.queryRenderedFeatures !== "function") {
+                return false;
+            }
+            const layers = [PIN_LAYER_CLUSTERS + "-hit", PIN_LAYER_CLUSTERS].filter(function (id) {
+                return !!map.getLayer(id);
+            });
+            if (!layers.length) {
+                return false;
+            }
+            const feats = map.queryRenderedFeatures({ layers: layers }) || [];
+            if (!feats.length) {
+                return false;
+            }
+            feats.sort(function (a, b) {
+                return (Number(b.properties && b.properties.point_count) || 0) -
+                    (Number(a.properties && a.properties.point_count) || 0);
+            });
+            const f = feats[0];
+            const props = f.properties || {};
+            const source = map.getSource(PIN_SOURCE);
+            if (!source || typeof source.getClusterLeaves !== "function") {
+                return false;
+            }
+            lastClusterTapAt = Date.now();
+            const total = Math.max(Number(props.point_count) || 0, 2);
+            const leaves = await source.getClusterLeaves(props.cluster_id, total, 0);
+            const childMarkers = (leaves || [])
+                .map(function (leaf) { return markerByLeafId(leaf.properties && leaf.properties.id); })
+                .filter(Boolean);
+            if (!childMarkers.length) {
+                return false;
+            }
+            openClusterList(childMarkers, f.geometry.coordinates);
+            return true;
+        }
     };
 })();

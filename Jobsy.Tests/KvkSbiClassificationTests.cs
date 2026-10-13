@@ -24,4 +24,13 @@ public class KvkSbiClassificationTests
         Assert.False(KvkSbiClassification.IsIntermediary(["4711", "5610"]));
         Assert.False(KvkSbiClassification.IsIntermediary(null));
     }
+
+    [Fact]
+    public void Mixed_intermediary_helpers()
+    {
+        Assert.True(KvkSbiClassification.IsMixedIntermediary(["78", "4711"]));
+        Assert.False(KvkSbiClassification.IsMixedIntermediary(["7820"]));
+        Assert.True(KvkSbiClassification.IsMainActivityIntermediary(["7820", "4711"]));
+        Assert.False(KvkSbiClassification.IsMainActivityIntermediary(["4711", "7820"]));
+    }
 }

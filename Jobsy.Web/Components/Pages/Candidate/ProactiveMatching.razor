@@ -1,0 +1,360 @@
+@page "/candidate/proactive-matching"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Interfaces
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Navigation
+@attribute [RequiresFeature(PlatformFeature.ProactiveMatching)]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<PageTitle>@Culture["ProactiveMatching.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page proactive-page">
+    <header class="proactive-hero">
+        <p class="proactive-hero__eyebrow">@Culture["ProactiveMatching.Hero.Eyebrow"]</p>
+        <h1>@Culture["ProactiveMatching.Title"]</h1>
+        <p class="proactive-hero__lead">@Culture["ProactiveMatching.Lead"]</p>
+    </header>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error" role="alert">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_status))
+    {
+        <p class="state-message" role="status">@_status</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message" aria-busy="true">@Culture["Common.Loading"]</p>
+    }
+    else if (_settings is not null)
+    {
+        @if (!_settings.HasConsent)
+        {
+            <section class="proactive-card proactive-consent" aria-labelledby="pm-consent-title">
+                <h2 id="pm-consent-title" class="proactive-card__title">@Culture["ProactiveMatching.Consent.Title"]</h2>
+                <p class="proactive-consent__text">@Culture["ProactiveMatching.Consent.Body"]</p>
+                <ol class="proactive-consent__steps">
+                    <li>@Culture["ProactiveMatching.Consent.Step1"]</li>
+                    <li>@Culture["ProactiveMatching.Consent.Step2"]</li>
+                    <li>@Culture["ProactiveMatching.Consent.Step3"]</li>
+                </ol>
+                <p class="proactive-consent__muted">@Culture["ProactiveMatching.Consent.LineWithdraw"]</p>
+                <button class="login-submit proactive-consent__cta" type="button" disabled="@_busy" @onclick="AcceptConsentAsync">
+                    @Culture["ProactiveMatching.Consent.Submit"]
+                </button>
+            </section>
+        }
+        else
+        {
+            <section class="proactive-card proactive-form" aria-labelledby="pm-settings-title">
+                <h2 id="pm-settings-title" class="proactive-card__title">@Culture["ProactiveMatching.Settings.Title"]</h2>
+                <label class="proactive-toggle">
+                    <input type="checkbox"
+                           checked="@_enabled"
+                           disabled="@_busy"
+                           @onchange="OnEnabledChangedAsync" />
+                    <span>
+                        @Culture["ProactiveMatching.Settings.Enable"]
+                        <span class="proactive-toggle__hint">@Culture["ProactiveMatching.Settings.EnableHint"]</span>
+                    </span>
+                </label>
+                <label>
+                    @Culture["ProactiveMatching.Settings.Frequency"]
+                    <select @bind="_frequency" @bind:after="SaveSettingsFromUiAsync" disabled="@(_busy || !_enabled)">
+                        <option value="@ProactiveMatchingFrequency.Immediate">@Culture["ProactiveMatching.Settings.Frequency.Immediate"]</option>
+                        <option value="@ProactiveMatchingFrequency.Daily">@Culture["ProactiveMatching.Settings.Frequency.Daily"]</option>
+                        <option value="@ProactiveMatchingFrequency.Weekly">@Culture["ProactiveMatching.Settings.Frequency.Weekly"]</option>
+                    </select>
+                </label>
+                <div class="proactive-pause-row">
+                    <label>
+                        @Culture["ProactiveMatching.Settings.Pause"]
+                        <JobsyDateField @bind-Value="_pauseUntil"
+                                        Constraint="JobsyDateConstraint.NotPast"
+                                        Disabled="@(_busy || !_enabled)"
+                                        TestId="proactive-pause-until" />
+                        <span class="proactive-toggle__hint">@Culture["ProactiveMatching.Settings.PauseHint"]</span>
+                    </label>
+                    @if (_pauseUntil is not null || _settings.PausedUntilUtc is not null)
+                    {
+                        <button class="btn btn-secondary" type="button" disabled="@_busy" @onclick="ClearPauseAsync">
+                            @Culture["ProactiveMatching.Settings.ClearPause"]
+                        </button>
+                    }
+                </div>
+                <p class="proactive-limits">
+                    @Culture.Format(
+                        "ProactiveMatching.Settings.Limits",
+                        _settings.MinScorePercent,
+                        _settings.MaxNotificationsPerWeek)
+                </p>
+                <button class="login-submit" type="button" disabled="@_busy" @onclick="SaveSettingsFromUiAsync">
+                    @Culture["ProactiveMatching.Settings.Save"]
+                </button>
+            </section>
+        }
+
+        <section class="proactive-card" aria-labelledby="pm-suggestions-title">
+            <h2 id="pm-suggestions-title" class="proactive-card__title">@Culture["ProactiveMatching.Suggestions.Title"]</h2>
+            @if (_suggestions.Count == 0)
+            {
+                <p class="state-message">@Culture["ProactiveMatching.Suggestions.Empty"]</p>
+            }
+            else
+            {
+                <div class="proactive-suggestions">
+                    @foreach (var tip in _suggestions)
+                    {
+                        <article class="proactive-tip proactive-suggestion-card proactive-wow-card" data-testid="proactive-tip">
+                            <div class="proactive-tip__head">
+                                <div class="proactive-tip__title-wrap">
+                                    <h3 class="proactive-tip__title">@tip.Title</h3>
+                                    @if (!string.IsNullOrWhiteSpace(tip.CompanyLabel))
+                                    {
+                                        <p class="proactive-tip__company">@tip.CompanyLabel</p>
+                                    }
+                                </div>
+                                <span class="proactive-match-badge proactive-match-badge--candidate @(tip.MatchPercent >= 80 ? "proactive-match-badge--strong" : "")"
+                                      aria-label="@Culture.Format("ProactiveMatching.Suggestions.Match", tip.MatchPercent)">
+                                    <span class="proactive-match-badge__value">@tip.MatchPercent</span>
+                                    <span class="proactive-match-badge__suffix">%</span>
+                                    <span class="proactive-match-badge__label">match</span>
+                                </span>
+                            </div>
+                            @if (tip.SimilarVacancyCount > 1)
+                            {
+                                <p class="proactive-tip__grouped">
+                                    @Culture.Format("ProactiveMatching.Suggestions.Grouped", tip.SimilarVacancyCount)
+                                </p>
+                            }
+                            <div class="proactive-tip__why">
+                                <strong>@Culture["ProactiveMatching.Suggestions.Rationale"]</strong>
+                                @if (tip.MatchHighlights is { Count: > 0 } highlights)
+                                {
+                                    <ul class="proactive-tip__dna-chips" aria-label="@Culture["ProactiveMatching.Suggestions.Rationale"]">
+                                        @foreach (var chip in highlights)
+                                        {
+                                            <li class="proactive-chip proactive-tip__dna-chip">@chip</li>
+                                        }
+                                    </ul>
+                                    <p class="proactive-tip__why-text">@tip.Rationale</p>
+                                }
+                                else
+                                {
+                                    <p class="proactive-tip__why-text">@tip.Rationale</p>
+                                }
+                            </div>
+                            <div class="proactive-tip__actions proactive-tip__actions--primary">
+                                @if (VacancyHref(tip) is string href)
+                                {
+                                    <a class="btn btn-primary proactive-tip__view" href="@href">@Culture["ProactiveMatching.Suggestions.ViewVacancy"]</a>
+                                }
+                                @if (tip.Feedback is ProactiveMatchFeedback fb)
+                                {
+                                    <span class="proactive-tip__feedback-done">
+                                        @(fb == ProactiveMatchFeedback.Interested
+                                            ? Culture["ProactiveMatching.Feedback.Interested"]
+                                            : Culture["ProactiveMatching.Feedback.NotInterested"])
+                                    </span>
+                                }
+                                else
+                                {
+                                    <button class="proactive-feedback-btn proactive-feedback-btn--yes"
+                                            type="button"
+                                            disabled="@_feedbackBusy"
+                                            @onclick="() => FeedbackAsync(tip.Id, ProactiveMatchFeedback.Interested)">
+                                        @Culture["ProactiveMatching.Feedback.Interested"]
+                                    </button>
+                                    <button class="proactive-feedback-btn proactive-feedback-btn--no"
+                                            type="button"
+                                            disabled="@_feedbackBusy"
+                                            @onclick="() => FeedbackAsync(tip.Id, ProactiveMatchFeedback.NotInterested)">
+                                        @Culture["ProactiveMatching.Feedback.NotInterested"]
+                                    </button>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    private ProactiveMatchingSettingsDto? _settings;
+    private List<ProactiveMatchSuggestionDto> _suggestions = [];
+    private bool _loading = true;
+    private bool _busy;
+    private bool _feedbackBusy;
+    private bool _enabled;
+    private ProactiveMatchingFrequency _frequency = ProactiveMatchingFrequency.Daily;
+    private DateOnly? _pauseUntil;
+    private string? _error;
+    private string? _status;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _settings = await Api.GetProactiveMatchingSettingsAsync();
+            _suggestions = (await Api.ListProactiveMatchSuggestionsAsync())?.ToList() ?? [];
+            ApplySettings(_settings);
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplySettings(ProactiveMatchingSettingsDto? settings)
+    {
+        if (settings is null)
+        {
+            return;
+        }
+
+        _enabled = settings.Enabled;
+        _frequency = settings.Frequency;
+        _pauseUntil = settings.PausedUntilUtc is DateTime pause
+            ? DateOnly.FromDateTime(pause.ToUniversalTime())
+            : null;
+    }
+
+    private async Task AcceptConsentAsync()
+    {
+        _busy = true;
+        _error = null;
+        _status = null;
+        try
+        {
+            _settings = await Api.UpdateProactiveMatchingSettingsAsync(
+                new ProactiveMatchingSettingsUpdate(AcceptConsent: true));
+            ApplySettings(_settings);
+            _status = Culture["ProactiveMatching.Settings.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task OnEnabledChangedAsync(ChangeEventArgs e)
+    {
+        _enabled = e.Value is true;
+        await SaveSettingsFromUiAsync();
+    }
+
+    private Task SaveSettingsFromUiAsync() => SaveSettingsAsync(clearPause: false);
+
+    private async Task ClearPauseAsync()
+    {
+        _pauseUntil = null;
+        await SaveSettingsAsync(clearPause: true);
+    }
+
+    private async Task SaveSettingsAsync(bool clearPause)
+    {
+        if (_settings is null || !_settings.HasConsent)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        _status = null;
+        try
+        {
+            DateTime? pauseUtc = _pauseUntil is DateOnly d
+                ? d.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
+                : null;
+            var clear = clearPause || _pauseUntil is null && _settings.PausedUntilUtc is not null;
+
+            _settings = await Api.UpdateProactiveMatchingSettingsAsync(
+                new ProactiveMatchingSettingsUpdate(
+                    Enabled: _enabled,
+                    Frequency: _frequency,
+                    PausedUntilUtc: clear ? null : pauseUtc,
+                    ClearPause: clear ? true : null));
+            ApplySettings(_settings);
+            _status = Culture["ProactiveMatching.Settings.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            ApplySettings(_settings);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task FeedbackAsync(Guid id, ProactiveMatchFeedback feedback)
+    {
+        _feedbackBusy = true;
+        _error = null;
+        try
+        {
+            var updated = await Api.SubmitProactiveMatchFeedbackAsync(id, feedback);
+            if (updated is null)
+            {
+                _error = Culture["Common.Error"];
+                return;
+            }
+
+            var idx = _suggestions.FindIndex(s => s.Id == id);
+            if (idx >= 0)
+            {
+                _suggestions[idx] = updated;
+            }
+
+            _status = Culture["ProactiveMatching.Feedback.Done"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _feedbackBusy = false;
+        }
+    }
+
+    private static string? VacancyHref(ProactiveMatchSuggestionDto tip)
+    {
+        if (tip.VacancyId is Guid vid)
+        {
+            return $"/vacancies/{vid:D}";
+        }
+
+        if (tip.ExternalVacancyId is Guid ext)
+        {
+            return KbRoutes.ExternalVacancyDetail(ext);
+        }
+
+        return null;
+    }
+}

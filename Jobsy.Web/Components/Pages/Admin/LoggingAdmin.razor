@@ -1,79 +1,91 @@
-@page "/admin/logging"
+@page "/admin/beveiliging/systeemlogs"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Time
+@using Jobsy.Web.Admin
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Components.Shared
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject NavigationManager Nav
 @inject CultureState Culture
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Logging"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.SystemLogs"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Logging"]" Lead="@Culture["Admin.LoggingLead"]" ShowSettingsNav="true">
-    <div class="filter-bar">
-        <label>
-            Level
-            <select @bind="_level" @bind:after="ReloadAsync">
-                <option value="">Alle</option>
-                <option value="Info">Info</option>
-                <option value="Warning">Warning</option>
-                <option value="Error">Error</option>
-            </select>
-        </label>
-        <label>
-            Categorie
-            <input type="search" @bind="_category" @bind:event="oninput" placeholder="bijv. Unsubscribe, Privacy…" />
-        </label>
-        <label>
-            Van
-            <input type="date" @bind="_fromDate" />
-        </label>
-        <label>
-            Tot
-            <input type="date" @bind="_toDate" />
-        </label>
-        <button class="provider-btn" type="button" disabled="@_loading" @onclick="ReloadAsync">Filter</button>
-        <span class="muted">@_logs.Count logs</span>
-    </div>
+<AdminPageShell Title="@Culture["AdminNav.SystemLogs"]" Lead="@Culture["Admin.LoggingLead"]">
+    <BeveiligingTabs ActiveKey="logs" />
 
-    @if (_loading)
-    {
-        <p class="state-message">@Culture["Common.Loading"]</p>
-    }
-    else if (!string.IsNullOrEmpty(_error))
+    <AdminFilterBar Query="@_q" QueryChanged="OnQueryChanged" Placeholder="@Culture["AdminLogs.SearchPlaceholder"]">
+        <select class="admin-filter-select" @bind="_level" @bind:after="ReloadAsync">
+            <option value="">@Culture["AdminAudit.Filter.ResultAll"]</option>
+            <option value="Info">@Culture["AdminLogs.Level.Info"]</option>
+            <option value="Warning">@Culture["AdminLogs.Level.Warning"]</option>
+            <option value="Error">@Culture["AdminLogs.Level.Error"]</option>
+        </select>
+        <input type="search" class="admin-filter-input" @bind="_category" @bind:event="oninput"
+               placeholder="@Culture["AdminLogs.CategoryPlaceholder"]" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_fromFilterDate"
+                        ValueChanged="OnFromFilterChanged"
+                        TestId="admin-log-from-date" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_toFilterDate"
+                        ValueChanged="OnToFilterChanged"
+                        TestId="admin-log-to-date" />
+        <button class="btn-compact" type="button" disabled="@_loading" @onclick="FilterAsync">@Culture["Common.Filter"]</button>
+    </AdminFilterBar>
+
+    @if (!string.IsNullOrEmpty(_error))
     {
         <p class="state-message error">@_error</p>
     }
-    else if (_filtered.Count == 0)
-    {
-        <p class="state-message">Geen logs gevonden.</p>
-    }
-    else
-    {
-        <div class="table-scroll">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Datum</th>
-                        <th>Level</th>
-                        <th>Type / categorie</th>
-                        <th>Bericht</th>
+
+    <AdminDataTable Loading="_loading" Empty="@(_filtered.Count == 0)" EmptyText="@Culture["AdminLogs.Empty"]">
+        <Header>
+            <th scope="col">@Culture["AdminLogs.Col.Date"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Level"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Category"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Code"]</th>
+            <th scope="col">@Culture["AdminLogs.Col.Message"]</th>
+        </Header>
+        <Rows>
+            @foreach (var log in _filtered)
+            {
+                var code = SupportCodeDisplay.Find(log.Message);
+                var open = _openId == log.Id;
+                <tr class="admin-log-row @(open ? "is-open" : null)"
+                    @onclick="() => Toggle(log.Id)"
+                    @onclick:stopPropagation="true"
+                    @onkeydown="e => OnRowKey(e, log.Id)"
+                    tabindex="0"
+                    role="button"
+                    aria-expanded="@open"
+                    aria-label="@Culture["AdminLogs.OpenRow"]">
+                    <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(log.CreatedAt).ToString("dd-MM-yyyy HH:mm")</td>
+                    <td data-label="@Culture["AdminLogs.Col.Level"]">@LevelLabel(log.Level)</td>
+                    <td data-label="@Culture["AdminLogs.Col.Category"]">@CategoryLabel(log.Category)</td>
+                    <td class="admin-mono" data-label="@Culture["AdminLogs.Col.Code"]">@(code ?? "—")</td>
+                    <td data-label="@Culture["AdminLogs.Col.Message"]" title="@log.Message">@AdminActionLabels.LogMessage(log.Message, key => Culture[key])</td>
+                </tr>
+                @if (open)
+                {
+                    <tr class="admin-log-detail" @onclick:stopPropagation="true">
+                        <td colspan="5">
+                            <p class="admin-log-detail__label">@Culture["AdminLogs.Detail"]</p>
+                            <pre class="admin-log-detail__body">@(string.IsNullOrWhiteSpace(log.Detail) ? Culture["AdminLogs.NoDetail"] : log.Detail)</pre>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var log in _filtered)
-                    {
-                        <tr>
-                            <td>@log.CreatedAt.ToLocalTime().ToString("dd-MM-yyyy HH:mm")</td>
-                            <td>@log.Level</td>
-                            <td>@log.Category</td>
-                            <td>@log.Message</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                }
+            }
+        </Rows>
+    </AdminDataTable>
+    @if (_total > _pageSize)
+    {
+        <AdminPager Page="_pageNum" PageSize="_pageSize" TotalCount="_total"
+                    TotalPages="@LogPageCount()" PageChanged="OnPageChanged" />
     }
 </AdminPageShell>
 
@@ -81,34 +93,117 @@
     private List<PlatformLogItem> _logs = [];
     private string _level = "";
     private string _category = "";
-    private DateTime? _fromDate;
-    private DateTime? _toDate;
+    private string _q = "";
+    private DateOnly? _fromFilterDate;
+    private DateOnly? _toFilterDate;
+
+    private Task OnFromFilterChanged(DateOnly? value)
+    {
+        _fromFilterDate = value;
+        return Task.CompletedTask;
+    }
+
+    private Task OnToFilterChanged(DateOnly? value)
+    {
+        _toFilterDate = value;
+        return Task.CompletedTask;
+    }
     private bool _loading = true;
     private string? _error;
+    private int _pageNum = 1;
+    private int _pageSize = 50;
+    private int _total;
+    private Guid? _openId;
+
+    private void Toggle(Guid id)
+        => _openId = _openId == id ? null : id;
+
+    private void OnRowKey(KeyboardEventArgs e, Guid id)
+    {
+        if (e.Key is "Enter" or " ")
+        {
+            Toggle(id);
+        }
+    }
+
+    private string LevelLabel(string? level) => level switch
+    {
+        "Warning" => Culture["AdminLogs.Level.Warning"],
+        "Error" => Culture["AdminLogs.Level.Error"],
+        "Info" => Culture["AdminLogs.Level.Info"],
+        _ => level ?? ""
+    };
+
+    private int LogPageCount()
+        => Math.Max(1, (int)Math.Ceiling(_total / (double)Math.Max(1, _pageSize)));
+
+    private string CategoryLabel(string? category)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            return "";
+        }
+
+        var key = "Logs.Category." + category;
+        var label = Culture[key];
+        return string.Equals(label, key, StringComparison.Ordinal) ? category : label;
+    }
 
     private List<PlatformLogItem> _filtered =>
         string.IsNullOrWhiteSpace(_category)
             ? _logs
             : _logs.Where(l => l.Category.Contains(_category, StringComparison.OrdinalIgnoreCase)).ToList();
 
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
     public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
+    {
+        Culture.Changed -= OnCultureChanged;
+        _searchDebounce.Dispose();
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        var qs = QueryHelpers.ParseQuery(Nav.ToAbsoluteUri(Nav.Uri).Query);
-        if (qs.TryGetValue("level", out var level))
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("level", out var levelRaw) && !string.IsNullOrWhiteSpace(levelRaw))
         {
-            _level = level.ToString();
+            _level = levelRaw.ToString()!;
         }
 
+        await ReloadAsync();
+    }
+
+    private readonly DebouncedAction _searchDebounce = new();
+
+    private void OnQueryChanged(string value)
+    {
+        _q = value;
+        _ = _searchDebounce.RunAsync(300, async ct =>
+        {
+            await InvokeAsync(async () =>
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                _pageNum = 1;
+                await ReloadAsync();
+                StateHasChanged();
+            });
+        });
+    }
+
+    private async Task FilterAsync()
+    {
+        _pageNum = 1;
+        await ReloadAsync();
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        _pageNum = page;
         await ReloadAsync();
     }
 
@@ -118,18 +213,22 @@
         _error = null;
         try
         {
-            DateTime? from = _fromDate?.Date;
-            DateTime? to = _toDate?.Date.AddDays(1).AddTicks(-1);
-            _logs = (await Api.GetPlatformLogsAsync(
-                category: null,
+            var page = await Api.GetPlatformLogsPageAsync(
+                category: string.IsNullOrWhiteSpace(_category) ? null : _category,
                 level: string.IsNullOrWhiteSpace(_level) ? null : _level,
-                from: from,
-                to: to)).ToList();
+                from: _fromFilterDate?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+                to: _toFilterDate?.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc),
+                page: _pageNum,
+                pageSize: _pageSize,
+                q: string.IsNullOrWhiteSpace(_q) ? null : _q);
+            _logs = page.Items.ToList();
+            _total = page.Total;
         }
         catch (Exception ex)
         {
             _error = ex.Message;
             _logs = [];
+            _total = 0;
         }
         finally
         {

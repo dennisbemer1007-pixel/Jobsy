@@ -1,35 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="1.3.0" />
-    <PackageReference Include="MailKit" Version="4.17.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="9.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Abstractions" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+    <PackageReference Include="AngleSharp" />
+    <PackageReference Include="MailKit" />
+    <!-- DataProtection / Hosting / Http / Options come from FrameworkReference Microsoft.AspNetCore.App (NU1510 on net10). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.0" />
-    <PackageReference Include="QRCoder" Version="1.6.0" />
-    <PackageReference Include="QuestPDF" Version="2025.7.1" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
-    <PackageReference Include="WebPush" Version="1.0.12" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" />
+    <PackageReference Include="QRCoder" />
+    <PackageReference Include="QuestPDF" />
+    <PackageReference Include="SixLabors.ImageSharp" />
+    <PackageReference Include="WebPush" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\lobsy.png" LogicalName="Jobsy.Infrastructure.Assets.lobsy.png" />
-    <EmbeddedResource Include="Assets\lobsy-email.png" LogicalName="Jobsy.Infrastructure.Assets.lobsy-email.png" />
+    <EmbeddedResource Include="Assets\Fonts\NotoSansArabic-Regular.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Regular.ttf" />
+    <EmbeddedResource Include="Assets\Fonts\NotoSansArabic-Bold.ttf" LogicalName="Jobsy.Infrastructure.Assets.Fonts.NotoSansArabic-Bold.ttf" />
   </ItemGroup>
 
   <ItemGroup>

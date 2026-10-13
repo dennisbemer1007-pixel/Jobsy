@@ -3,22 +3,34 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using System.Globalization
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Reports
+@using Jobsy.Core.Reports.Career
+@using Jobsy.Core.Reports.Competence
+@using Jobsy.Core.Reports.Culture
+@using Jobsy.Core.Reports.Values
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Core.Options
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Web.Components.Pages.Candidate.DeepReport
+@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared
+@using Microsoft.Extensions.Options
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
+@inject IOptionsSnapshot<JobsyFeatureOptions> FeatureOptions
 @implements IDisposable
 
 <PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
 
 <div class="panel-page profile-page profile-page--candidate test-detail-page pb-28">
     <p class="test-detail__back">
-        <a href="/candidate/profile?tab=tests" class="test-detail__back-link">← @Culture["Tests.BackToOverview"]</a>
+        <a href="/candidate/profile?tab=tests" class="btn btn-ghost">← @Culture["Tests.BackToOverview"]</a>
     </p>
 
     @if (_loading)
@@ -28,7 +40,7 @@
     else if (_def is null)
     {
         <p class="state-message">@Culture["Tests.Unknown"]</p>
-        <a class="engagement-btn" href="/candidate/profile?tab=tests">@Culture["Tests.BackToOverview"]</a>
+        <a class="btn btn-primary" href="/candidate/profile?tab=tests">@Culture["Tests.BackToOverview"]</a>
     }
     else if (_freeDone || _deepCompleted)
     {
@@ -36,39 +48,66 @@
         {
             <div class="test-detail__pay-error" role="alert">
                 <p class="state-message error">@_payError</p>
-                <button type="button" class="engagement-btn" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
+                <button type="button" class="btn btn-primary" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
             </div>
         }
 
-        @if (!_deepCompleted && _def.Kind != AssessmentKind.Competence)
-        {
-            <button type="button"
-                    class="btn-gold"
-                    disabled="@_busy"
-                    @onclick="StartExtendedAsync">
-                @Culture["Tests.StartExtended"]
-            </button>
-            <p class="test-detail__price muted">
-                @Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))
-                @if (_def.Kind == AssessmentKind.Career)
+        <header class="test-result-header">
+            <div class="test-result-header__main">
+                <h1>@Culture[_def.TitleKey]</h1>
+                <p class="test-detail__status-row">
+                    <span class="test-status-badge test-status-badge--@(_deepCompleted ?"gold" : "success")">
+                        <span aria-hidden="true">@(_deepCompleted ? "★" : "✓")</span>
+                        @Culture[_deepCompleted ? "Test.Status.Extended" : "Test.Status.FreeDone"]
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(_completedMeta))
+                    {
+                        <span class="muted">@_completedMeta · @Culture.Format("TestResult.ScoresFromQuestions", _scoreBars.Count, _deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)</span>
+                    }
+                </p>
+            </div>
+            <div class="test-result-actions">
+                <div class="test-result-actions__btns">
+                    @if (_editModeEnabled)
+                    {
+                        <button type="button"
+                                class="btn-outline-brand"
+                                disabled="@(_busy || _adjustments.Remaining <= 0)"
+                                aria-describedby="test-result-quota"
+                                @onclick="BeginEditAsync">
+                            ✎ @Culture["TestResult.EditAnswers"]
+                        </button>
+                    }
+                    <button type="button"
+                            class="test-result-actions__ghost"
+                            disabled="@(_busy || _adjustments.Remaining <= 0)"
+                            aria-describedby="test-result-quota"
+                            @onclick="() => _redoOpen = true">
+                        ↻ @Culture["TestResult.Retake"]
+                    </button>
+                </div>
+                @if (_adjustments.Remaining <= 0)
                 {
-                    <span> · @Culture["Tests.WithPdf"]</span>
+                    <p id="test-result-quota" class="test-result-quota test-result-quota--zero" role="status">
+                        <span class="test-result-quota__icon" aria-hidden="true">ⓘ</span>
+                        @Culture.Format("TestResult.Quota.Zero", _adjustments.Max)
+                    </p>
                 }
-            </p>
-        }
-
-        <header class="test-detail__header">
-            <h1>@Culture[_def.TitleKey]</h1>
-            <p class="test-detail__status-row">
-                <span class="test-status-badge test-status-badge--@(_deepCompleted ? "gold" : "success")">
-                    <span aria-hidden="true">@(_deepCompleted ? "★" : "✓")</span>
-                    @Culture[_deepCompleted ? "Test.Status.Extended" : "Test.Status.FreeDone"]
-                </span>
-                @if (!string.IsNullOrWhiteSpace(_completedMeta))
+                else
                 {
-                    <span class="muted">@_completedMeta</span>
+                    <p id="test-result-quota" class="test-result-quota" role="status">
+                        <span aria-hidden="true">ⓘ</span>
+                        @if (_adjustments.Remaining == 1)
+                        {
+                            @Culture.Format("TestResult.Quota.LineOne", _adjustments.Max)
+                        }
+                        else
+                        {
+                            @Culture.Format("TestResult.Quota.Line", _adjustments.Remaining, _adjustments.Max)
+                        }
+                    </p>
                 }
-            </p>
+            </div>
         </header>
 
         @if (!string.IsNullOrWhiteSpace(_headline))
@@ -79,6 +118,7 @@
                 {
                     <p>@_headlineLead</p>
                 }
+                <ReadAloudButton Text="@ResultSpeech" SpeechKey="result-headline" />
             </article>
         }
 
@@ -124,25 +164,31 @@
             <section class="test-detail__compass" aria-label="@Culture["Kompas.Career"]">
                 <CareerCompassPanel Compass="_careerCompass"
                                     Competencies="_competencyScores"
-                                    CareerDirection="_riasecScores" />
+                                    CareerDirection="_riasecScores"
+                                    DreamTitle="@_dreamTitle"
+                                    GoalEvidence="@_goalEvidence"
+                                    EducationLabel="@_educationLabel" />
                 <p class="career-dash-link-row">
-                    <a class="engagement-btn" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
+                    <a class="btn btn-primary" href="/carriere">@Culture["CareerDash.OpenLink"]</a>
                 </p>
             </section>
         }
 
         <details class="test-detail__accordion">
             <summary>@Culture["Tests.WhatItMeans"]</summary>
-            <p class="login-lead">@Culture[_def.ScienceNoteKey]</p>
+            <div class="read-aloud-block">
+                <p class="login-lead">@ScienceNote</p>
+                <ReadAloudButton Text="@ScienceNote" SpeechKey="@($"means-{_def.ScienceNoteKey}")" />
+            </div>
             <p class="whoami-model muted">
                 @Culture["Tests.ModelLabel"]: @_def.ModelName.
                 <a href="@_def.ModelUrl" target="_blank" rel="noopener noreferrer">@Culture["Tests.MoreAboutModel"]</a>
             </p>
         </details>
 
-        @if (_def.Kind == AssessmentKind.Competence)
+        @if (_deepCompleted)
         {
-            @if (_deepCompleted && _competenceReport is not null)
+            @if (_def.Kind == AssessmentKind.Competence && _competenceReport is not null)
             {
                 <CompetenceDeepReportView Report="_competenceReport"
                                           CompletedAtUtc="@_deepState?.CompletedAtUtc"
@@ -150,25 +196,95 @@
                                           Busy="_busy"
                                           OnDownloadPdf="DownloadPdfAsync" />
             }
-            else if (_freeDone)
+            else if (_def.Kind == AssessmentKind.Career && _careerReport is not null)
             {
-                <CompetenceDeepTeaser PriceEuro="_priceEuro"
-                                      IsUnlockedNotCompleted="_deepUnlocked && !_deepCompleted"
-                                      Busy="_busy"
-                                      OnUnlock="StartExtendedAsync"
-                                      OnContinueTest="StartExtendedAsync" />
+                <CareerDeepReportView Report="_careerReport"
+                                     DreamTitle="@_dreamTitle"
+                                     GoalEvidence="@_goalEvidence"
+                                     EducationLabel="@_educationLabel"
+                                     Busy="_busy"
+                                     OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_def.Kind == AssessmentKind.Culture && _cultureReport is not null)
+            {
+                <CultureDeepReportView Report="_cultureReport" Busy="_busy" OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else if (_def.Kind == AssessmentKind.Values && _valuesReport is not null)
+            {
+                <ValuesDeepReportView Report="_valuesReport" Busy="_busy" OnDownloadPdf="DownloadPdfAsync" />
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="DownloadPdfAsync">
+                    @Culture["Deep.DownloadPdf"]
+                </button>
             }
         }
-        else if (_deepUnlocked && !_deepCompleted)
+        else
         {
-            <a class="login-submit" href="@_def.DeepStartHref">@Culture["Tests.ContinueExtended"]</a>
+            @if (_deepUnlocked && !_deepCompleted && (_deepState?.AnsweredCount ?? 0) > 0)
+            {
+                <p class="test-detail__resume">
+                    <a href="@_def.DeepStartHref">@Culture.Format("Tests.ResumeHint", _deepState!.AnsweredCount, _def.DeepQuestionCount)</a>
+                </p>
+            }
+            <TestResultLockedPreview Kind="_def.Kind"
+                                    TitleKey="@_def.TitleKey"
+                                    QuestionCount="_def.DeepQuestionCount"
+                                    PriceEuro="_priceEuro"
+                                    MinutesApprox="@TestDepthRules.MinutesFor(_def.Kind, TestDepthLevel.Bottom)"
+                                    Busy="_busy"
+                                    IsUnlockedNotCompleted="_deepUnlocked && !_deepCompleted"
+                                    DeepStartHref="@_def.DeepStartHref"
+                                    ProgressCurrent="@(_deepState?.AnsweredCount ?? 0)"
+                                    ProgressTotal="@_def.DeepQuestionCount"
+                                    ShowSamplePdf="_samplePdfEnabled"
+                                    ShowHeading="false"
+                                    FreeForTestAccount="@IsTestAccountMode"
+                                    FreeForEveryone="@IsEveryoneFreeMode"
+                                    OnStart="GoToOfferAsync"
+                                    OnSamplePdf="OpenSamplePdfAsync" />
         }
-        else if (_deepCompleted)
+
+        @if (_history.Count > 0)
         {
-            <button type="button" class="engagement-btn" disabled="@_busy" @onclick="DownloadPdfAsync">
-                @Culture["Deep.DownloadPdf"]
-            </button>
+            <section class="test-result-history" aria-labelledby="test-result-history-title">
+                <h2 id="test-result-history-title">@Culture["TestResult.History.Title"]</h2>
+                <ul>
+                    @foreach (var item in _history)
+                    {
+                        <li>
+                            <span>
+                                @(item.CompletedAtUtc is DateTime doneAt
+                                    ? Jobsy.Web.Services.LobsyTime.ToAmsterdam(doneAt).ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
+                                    : Jobsy.Web.Services.LobsyTime.ToAmsterdam(item.StartedAtUtc).ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL")))
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </section>
         }
+
+        <TestResultRedoDialog Open="_redoOpen"
+                              Busy="_busy"
+                              EditEnabled="_editModeEnabled"
+                              RemainingAfter="@(Math.Max(0, _adjustments.Remaining - 1))"
+                              OnConfirm="ConfirmRetakeAsync"
+                              OnPreferEdit="BeginEditAsync"
+                              OnCancel="() => _redoOpen = false" />
+
+        <TestResultSamplePdfDialog Open="_samplePdfOpen"
+                                   Busy="_busy"
+                                   Loading="_samplePdfLoading"
+                                   TestTitle="@Culture[_def.TitleKey]"
+                                   PriceEuro="_priceEuro"
+                                   QuestionCount="_def.DeepQuestionCount"
+                                   MinutesApprox="@TestDepthRules.MinutesFor(_def.Kind, TestDepthLevel.Bottom)"
+                                   TotalPages="_samplePdfTotalPages"
+                                   PagePngBase64="_samplePdfPages"
+                                   OnClose="CloseSamplePdf"
+                                   OnDownload="DownloadSamplePdfAsync"
+                                   OnStart="StartExtendedFromSampleAsync" />
     }
     else
     {
@@ -176,7 +292,7 @@
         {
             <div class="test-detail__pay-error" role="alert">
                 <p class="state-message error">@_payError</p>
-                <button type="button" class="engagement-btn" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
+                <button type="button" class="btn btn-primary" @onclick="ClearPayError">@Culture["Common.Retry"]</button>
             </div>
         }
 
@@ -197,7 +313,7 @@
         </section>
         <section class="test-detail__section">
             <h2>@Culture["Tests.WhyThis"]</h2>
-            <p>@Culture[_def.ScienceNoteKey]</p>
+            <p>@ScienceNote</p>
         </section>
         <section class="test-detail__section">
             <h2>@Culture["Tests.ScienceModel"]</h2>
@@ -211,32 +327,66 @@
         </section>
 
         <div class="test-detail__choices">
-            <button type="button"
-                    class="btn-gold btn-gold--split"
-                    disabled="@_busy"
-                    @onclick="StartExtendedAsync">
-                <span>@Culture["Tests.ExtendedLabel"]</span>
-                <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
-            </button>
-            <a class="btn-outline-brand btn-outline-brand--split" href="@_def.FreeStartHref">
+            <a class="btn btn-primary btn-outline-brand--split" href="@_def.FreeStartHref">
                 <span>@Culture["Tests.StartFree"]</span>
                 <span class="btn-outline-brand__meta">@Culture.Format("Tests.FreeMeta", _def.FreeQuestionCount)</span>
             </a>
+            @if (_paymentMode != "unavailable")
+            {
+                <button type="button"
+                        class="btn-gold btn-gold--split"
+                        disabled="@_busy"
+                        @onclick="GoToOfferAsync">
+                    <span>@(IsTestAccountMode
+                        ? Culture["Tests.StartExtendedFree"]
+                        : IsEveryoneFreeMode
+                            ? Culture["Tests.StartExtendedEveryoneFree"]
+                            : Culture["Tests.ExtendedLabel"])</span>
+                    @if (!SkipsPayment)
+                    {
+                        <span class="btn-gold__meta">@Culture.Format("Tests.ExtendedMeta", _def.DeepQuestionCount, FormatPrice(_priceEuro))</span>
+                    }
+                </button>
+            }
         </div>
-        <p class="test-detail__secure muted">
-            <span aria-hidden="true">🔒</span>
-            @Culture["Tests.SecureMollie"]
-        </p>
+        @if (_deepUnlocked && !_deepCompleted && (_deepState?.AnsweredCount ?? 0) > 0)
+        {
+            <p class="test-detail__resume">
+                <a href="@_def.DeepStartHref">@Culture.Format("Tests.ResumeHint", _deepState!.AnsweredCount, _def.DeepQuestionCount)</a>
+            </p>
+        }
+        @if (_paymentMode == "mollie")
+        {
+            <p class="test-detail__secure muted">
+                @Culture["DeepPay.SecureMollie"]
+            </p>
+        }
+        else if (_paymentMode == "stub")
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.StubHint"]</p>
+        }
+        else if (IsTestAccountMode)
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.TestAccountNote"]</p>
+        }
+        else if (IsEveryoneFreeMode)
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.EveryoneNote"]</p>
+        }
+        else if (_paymentMode == "unavailable")
+        {
+            <p class="test-detail__secure muted">@Culture["DeepPay.Err.payments_unavailable"]</p>
+        }
     }
 </div>
 
 @code {
     [Parameter] public string? TestKey { get; set; }
     [SupplyParameterFromQuery] public string? PaymentError { get; set; }
+    [SupplyParameterFromQuery] public string? Buy { get; set; }
 
     private const string PersistKeyPrefix = "candidateTestDetail:";
     private bool _loading = true;
-    private bool _restored;
     private bool _busy;
     private AssessmentTestDefinition? _def;
     private bool _freeDone;
@@ -244,17 +394,39 @@
     private bool _deepCompleted;
     private decimal _priceEuro = 2.99m;
     private string? _payError;
+    private string _paymentMode = "unavailable";
     private string? _headline;
     private string? _headlineLead;
+
+    private string ResultSpeech
+        => string.IsNullOrWhiteSpace(_headlineLead)
+            ? _headline ?? ""
+            : $"{_headline}. {_headlineLead}";
     private string? _completedMeta;
     private readonly List<ScoreBar> _scoreBars = [];
     private readonly List<ScoreBar> _personalityBars = [];
     private CareerCompassModel? _careerCompass;
     private RiasecScoreSet? _riasecScores;
+    private string? _dreamTitle;
+    private string? _goalEvidence;
+    private string? _educationLabel;
     private CompetencyScoreSet? _competencyScores;
     private DeepAnalysisState? _deepState;
     private CompetenceDeepReport? _competenceReport;
+    private CareerDeepReport? _careerReport;
+    private CultureDeepReport? _cultureReport;
+    private ValuesDeepReport? _valuesReport;
+    private bool _heavyLoadStarted;
     private PersistingComponentStateSubscription _persistSubscription;
+    private AssessmentAdjustmentState _adjustments = new() { Remaining = AssessmentAdjustmentRules.MaxAdjustments, Max = AssessmentAdjustmentRules.MaxAdjustments };
+    private List<AssessmentHistoryItem> _history = [];
+    private bool _redoOpen;
+    private bool _editModeEnabled;
+    private bool _samplePdfEnabled;
+    private bool _samplePdfOpen;
+    private bool _samplePdfLoading;
+    private int _samplePdfTotalPages;
+    private IReadOnlyList<string> _samplePdfPages = Array.Empty<string>();
 
     protected override void OnInitialized()
     {
@@ -264,24 +436,13 @@
             && saved is not null
             && string.Equals(saved.TestKey, TestKey, StringComparison.OrdinalIgnoreCase))
         {
+            // Slim DTO only — never restore CareerCompass / DeepState / reports
+            // (those blew past 100 KB HTML + hundreds of KB on the SignalR uplink).
             _freeDone = saved.FreeDone;
             _deepUnlocked = saved.DeepUnlocked;
             _deepCompleted = saved.DeepCompleted;
-            _priceEuro = saved.PriceEuro;
-            _headline = saved.Headline;
-            _headlineLead = saved.HeadlineLead;
-            _completedMeta = saved.CompletedMeta;
-            _scoreBars.Clear();
-            _scoreBars.AddRange(saved.ScoreBars ?? []);
-            _personalityBars.Clear();
-            _personalityBars.AddRange(saved.PersonalityBars ?? []);
-            _careerCompass = saved.CareerCompass;
-            _riasecScores = saved.RiasecScores;
-            _competencyScores = saved.CompetencyScores;
-            _deepState = saved.DeepState;
-            _competenceReport = saved.CompetenceReport;
-            _restored = true;
-            _loading = false;
+            _priceEuro = saved.PriceEuro > 0 ? saved.PriceEuro : _priceEuro;
+            _loading = true;
         }
     }
 
@@ -298,17 +459,7 @@
             FreeDone = _freeDone,
             DeepUnlocked = _deepUnlocked,
             DeepCompleted = _deepCompleted,
-            PriceEuro = _priceEuro,
-            Headline = _headline,
-            HeadlineLead = _headlineLead,
-            CompletedMeta = _completedMeta,
-            ScoreBars = _scoreBars.ToList(),
-            PersonalityBars = _personalityBars.ToList(),
-            CareerCompass = _careerCompass,
-            RiasecScores = _riasecScores,
-            CompetencyScores = _competencyScores,
-            DeepState = _deepState,
-            CompetenceReport = _competenceReport
+            PriceEuro = _priceEuro
         });
         return Task.CompletedTask;
     }
@@ -323,26 +474,78 @@
             _payError = Culture["Tests.PaymentFailed"];
         }
 
+        if (AssessmentKindLabels.TryParse(TestKey, out var kind))
+        {
+            var canonical = AssessmentKindLabels.ToSlug(kind);
+            if (!string.Equals(TestKey, canonical, StringComparison.Ordinal))
+            {
+                Navigation.NavigateTo(AssessmentTestCatalog.DetailHref(kind), replace: true);
+                return;
+            }
+        }
+
         _def = AssessmentTestCatalog.TryGetByKey(TestKey);
+        _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
+        if (string.Equals(Buy, "1", StringComparison.Ordinal))
+        {
+            await GoToOfferAsync();
+        }
         if (_def is null)
         {
             _loading = false;
-            return;
         }
 
-        if (_restored)
+        // Heavy report/career payloads load after the circuit is interactive
+        // (see OnAfterRenderAsync) so prerender HTML and StartCircuit stay small.
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _heavyLoadStarted || _def is null || !RendererInfo.IsInteractive)
         {
             return;
         }
+
+        _heavyLoadStarted = true;
+        await LoadHeavyStateAsync();
+    }
+
+    private async Task LoadHeavyStateAsync()
+    {
+        _loading = true;
+        await InvokeAsync(StateHasChanged);
 
         try
         {
-            var deep = await Api.GetDeepAnalysisAsync(_def.Key);
+            var deep = await Api.GetDeepAnalysisAsync(_def!.Key);
             _deepState = deep;
             _deepUnlocked = deep?.IsUnlocked == true;
             _deepCompleted = deep?.IsCompleted == true;
             _priceEuro = deep?.PriceEuro > 0 ? deep.PriceEuro : 2.99m;
             _competenceReport = deep?.CompetenceReport;
+            _careerReport = deep?.CareerReport;
+            _cultureReport = deep?.CultureReport;
+            _valuesReport = deep?.ValuesReport;
+            _editModeEnabled = FeatureOptions.Value.TestEditMode;
+            _samplePdfEnabled = FeatureOptions.Value.SamplePdf;
+
+            var variant = _deepCompleted ? "deep" : "quick";
+            _adjustments = await Api.GetAssessmentAdjustmentsAsync(_def.Key, variant)
+                           ?? new AssessmentAdjustmentState
+                           {
+                               Remaining = AssessmentAdjustmentRules.MaxAdjustments,
+                               Max = AssessmentAdjustmentRules.MaxAdjustments
+                           };
+            _history = (await Api.GetAssessmentHistoryAsync(_def.Key, variant)).ToList();
+
+            _headline = null;
+            _headlineLead = null;
+            _completedMeta = null;
+            _scoreBars.Clear();
+            _personalityBars.Clear();
+            _careerCompass = null;
+            _riasecScores = null;
+            _competencyScores = null;
 
             switch (_def.Kind)
             {
@@ -360,34 +563,28 @@
                     break;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Keep any payment query error; surface load failures without wiping completed results.
-            _payError ??= ex.Message;
+            _payError ??= Culture["Common.Error"];
         }
         finally
         {
             _loading = false;
+            await InvokeAsync(StateHasChanged);
         }
     }
 
-    private sealed class TestDetailPersistState
+    /// <summary>
+    /// Circuit-persist payload — flags only (&lt; 1 KB). Heavy models reload after interactivity.
+    /// </summary>
+    internal sealed class TestDetailPersistState
     {
         public string? TestKey { get; set; }
         public bool FreeDone { get; set; }
         public bool DeepUnlocked { get; set; }
         public bool DeepCompleted { get; set; }
         public decimal PriceEuro { get; set; }
-        public string? Headline { get; set; }
-        public string? HeadlineLead { get; set; }
-        public string? CompletedMeta { get; set; }
-        public List<ScoreBar>? ScoreBars { get; set; }
-        public List<ScoreBar>? PersonalityBars { get; set; }
-        public CareerCompassModel? CareerCompass { get; set; }
-        public RiasecScoreSet? RiasecScores { get; set; }
-        public CompetencyScoreSet? CompetencyScores { get; set; }
-        public DeepAnalysisState? DeepState { get; set; }
-        public CompetenceDeepReport? CompetenceReport { get; set; }
     }
 
     private async Task LoadCompetenceAsync()
@@ -403,11 +600,31 @@
         _headline = AssessmentOutcomeLines.Competence(
             scores.Samenwerken, scores.Resultaatgerichtheid, scores.Stressbestendigheid,
             scores.Innovatie, scores.Extraversie);
-        AddBar("Samenwerken", scores.Samenwerken);
-        AddBar("Resultaatgerichtheid", scores.Resultaatgerichtheid);
-        AddBar("Stressbestendigheid", scores.Stressbestendigheid);
-        AddBar("Innovatie", scores.Innovatie);
-        AddBar("Extraversie", scores.Extraversie);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Samenwerken, Culture.Language), scores.Samenwerken);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Resultaatgerichtheid, Culture.Language), scores.Resultaatgerichtheid);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Stressbestendigheid, Culture.Language), scores.Stressbestendigheid);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Innovatie, Culture.Language), scores.Innovatie);
+        AddBar(DimensionLabels.For(CompetencyTestCatalog.Extraversie, Culture.Language), scores.Extraversie);
+        if (_deepCompleted && _competenceReport?.Traits is { Count: > 0 } traits)
+        {
+            _scoreBars.Clear();
+            foreach (var trait in traits)
+            {
+                AddBar(string.IsNullOrWhiteSpace(trait.LabelNl) ? trait.Domain : trait.LabelNl, trait.Score);
+            }
+        }
+
+        _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
+        if (_deepCompleted && _scoreBars.Count > 0)
+        {
+            var top = _scoreBars[0];
+            var second = _scoreBars.Count > 1 ? _scoreBars[1].Percent : -1;
+            if (top.Percent > second && !string.IsNullOrWhiteSpace(top.Label))
+            {
+                _headline = AssessmentOutcomeLines.StrongestLine(top.Label, Culture.Language);
+            }
+        }
+
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
 
@@ -428,6 +645,24 @@
             // Optional for RoleFit insight inside CareerCompassPanel.
         }
 
+        try
+        {
+            var plan = await Api.GetCareerPathAsync();
+            _dreamTitle = plan?.DreamTitle;
+            var profile = await Api.GetMyProfileAsync();
+            var prefs = profile?.Preferences;
+            _goalEvidence = CareerPlanViewBuilder.EvidenceFrom(prefs);
+            _educationLabel = string.Join(
+                " ",
+                (prefs?.Educations ?? []).Append(prefs?.EducationDirection ?? "").Where(s => !string.IsNullOrWhiteSpace(s)));
+        }
+        catch
+        {
+            _dreamTitle = null;
+            _goalEvidence = null;
+            _educationLabel = null;
+        }
+
         var scores = state?.Scores;
         if (scores is null)
         {
@@ -442,13 +677,19 @@
             : topCodes.Count == 1
                 ? $"{RiasecRanking.FormatTopEqualOrLabel(topCodes)} past het best"
                 : RiasecRanking.FormatTopEqualOrLabel(topCodes);
-        _headlineLead = Culture["Tests.CareerResultLead"];
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social), scores.Social);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Conventional), scores.Conventional);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Enterprising), scores.Enterprising);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Realistic), scores.Realistic);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Investigative), scores.Investigative);
-        AddBar(CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic), scores.Artistic);
+        var leadCode = topCodes.Count > 0
+            ? topCodes[0]
+            : RiasecRanking.Rank(
+                scores.Realistic, scores.Investigative, scores.Artistic,
+                scores.Social, scores.Enterprising, scores.Conventional)
+                .FirstOrDefault().Code;
+        _headlineLead = Culture[CareerResultLeadKey(leadCode)];
+        AddBar(RiasecLabel(CareerTestCatalog.Social), scores.Social);
+        AddBar(RiasecLabel(CareerTestCatalog.Conventional), scores.Conventional);
+        AddBar(RiasecLabel(CareerTestCatalog.Enterprising), scores.Enterprising);
+        AddBar(RiasecLabel(CareerTestCatalog.Realistic), scores.Realistic);
+        AddBar(RiasecLabel(CareerTestCatalog.Investigative), scores.Investigative);
+        AddBar(RiasecLabel(CareerTestCatalog.Artistic), scores.Artistic);
         _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
@@ -466,6 +707,16 @@
         _headline = AssessmentOutcomeLines.Culture(
             scores.Autonomy, scores.Informal, scores.Collaboration,
             scores.Flexibility, scores.Innovation, scores.PeopleFirst);
+        var cultureTop = TopScoreCode(
+        [
+            (CulturePersonalityCatalog.Autonomy, scores.Autonomy),
+            (CulturePersonalityCatalog.Informal, scores.Informal),
+            (CulturePersonalityCatalog.Collaboration, scores.Collaboration),
+            (CulturePersonalityCatalog.Flexibility, scores.Flexibility),
+            (CulturePersonalityCatalog.Innovation, scores.Innovation),
+            (CulturePersonalityCatalog.PeopleFirst, scores.PeopleFirst)
+        ]);
+        _headlineLead = cultureTop is null ? null : Culture["Tests.CultureLead." + cultureTop];
         foreach (var code in CulturePersonalityCatalog.CultureDimensionCodes)
         {
             AddBar(CulturePersonalityCatalog.EverydayLabel(code), ScoreForCulture(scores, code));
@@ -494,6 +745,15 @@
         _headline = AssessmentOutcomeLines.Values(
             scores.Autonomy, scores.Connection, scores.Achievement,
             scores.Stability, scores.Impact);
+        var valuesTop = TopScoreCode(
+        [
+            (SchwartzValuesCatalog.Autonomy, scores.Autonomy),
+            (SchwartzValuesCatalog.Connection, scores.Connection),
+            (SchwartzValuesCatalog.Achievement, scores.Achievement),
+            (SchwartzValuesCatalog.Stability, scores.Stability),
+            (SchwartzValuesCatalog.Impact, scores.Impact)
+        ]);
+        _headlineLead = valuesTop is null ? null : Culture["Tests.ValuesLead." + valuesTop];
         AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Autonomy), scores.Autonomy);
         AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Connection), scores.Connection);
         AddBar(SchwartzValuesCatalog.EverydayLabel(SchwartzValuesCatalog.Achievement), scores.Achievement);
@@ -502,6 +762,36 @@
         _scoreBars.Sort((a, b) => b.Percent.CompareTo(a.Percent));
         _completedMeta = FormatCompleted(state?.CompletedAtUtc, _deepCompleted);
     }
+
+    private static string? TopScoreCode((string Code, int? Score)[] items)
+    {
+        var ranked = items
+            .Where(x => x.Score is not null)
+            .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Code, StringComparer.Ordinal)
+            .ToList();
+        if (ranked.Count == 0)
+        {
+            return null;
+        }
+
+        if (ranked.Count > 1 && ranked[0].Score == ranked[1].Score)
+        {
+            return null;
+        }
+
+        return ranked[0].Code;
+    }
+
+    private static string CareerResultLeadKey(string? code) => code switch
+    {
+        CareerTestCatalog.Realistic => "Tests.CareerResultLead.R",
+        CareerTestCatalog.Investigative => "Tests.CareerResultLead.I",
+        CareerTestCatalog.Artistic => "Tests.CareerResultLead.A",
+        CareerTestCatalog.Enterprising => "Tests.CareerResultLead.E",
+        CareerTestCatalog.Conventional => "Tests.CareerResultLead.C",
+        _ => "Tests.CareerResultLead.S"
+    };
 
     private void AddBar(string label, int? percent)
     {
@@ -540,10 +830,29 @@
         _ => null
     };
 
+    private bool IsTestAccountMode => _paymentMode == DeepTestFinanceRules.TestUnlockMethod;
+    private bool IsEveryoneFreeMode => _paymentMode == DeepTestFinanceRules.FreeForEveryoneMethod;
+    private bool SkipsPayment => DeepTestFinanceRules.SkipsCandidatePayment(_paymentMode);
+
+    private string ScienceNote
+        => SkipsPayment
+            ? TestAccountCopy.StripPrice(Culture[_def?.ScienceNoteKey ?? ""])
+            : Culture[_def?.ScienceNoteKey ?? ""];
+
+    private string RiasecLabel(string code)
+        => Culture[$"Career.Riasec.{code}"];
+
     private string FormatCompleted(DateTime? completedAtUtc, bool deep)
     {
+        if (deep)
+        {
+            completedAtUtc = _deepState?.ReportGeneratedAtUtc
+                ?? _deepState?.CompletedAtUtc
+                ?? completedAtUtc;
+        }
+
         var date = completedAtUtc is DateTime dt
-            ? dt.ToLocalTime().ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
+            ? Jobsy.Web.Services.LobsyTime.ToAmsterdam(dt).ToString("d MMM yyyy", CultureInfo.GetCultureInfo("nl-NL"))
             : null;
         var scan = deep ? Culture["Tests.ScanExtended"] : Culture["Tests.ScanQuick"];
         return string.IsNullOrWhiteSpace(date) ? scan : $"{date} · {scan}";
@@ -557,7 +866,29 @@
 
     private void ClearPayError() => _payError = null;
 
-    private async Task StartExtendedAsync()
+    private Task BeginEditAsync()
+    {
+        _redoOpen = false;
+        if (!_editModeEnabled || _def is null)
+        {
+            _payError = Culture["TestResult.Edit.FlagOff"];
+            return Task.CompletedTask;
+        }
+
+        if (_adjustments.Remaining <= 0)
+        {
+            _payError = Culture["TestResult.Limit.Dialog"];
+            return Task.CompletedTask;
+        }
+
+        var href = _deepCompleted
+            ? $"/candidate/deep-analysis/{_def.Key}?mode=edit"
+            : $"{_def.FreeStartHref}?mode=edit";
+        Navigation.NavigateTo(href);
+        return Task.CompletedTask;
+    }
+
+    private async Task ConfirmRetakeAsync()
     {
         if (_def is null)
         {
@@ -568,26 +899,48 @@
         _payError = null;
         try
         {
-            if (_deepUnlocked && !_deepCompleted)
-            {
-                Navigation.NavigateTo(_def.DeepStartHref);
-                return;
-            }
-
-            var checkout = await Api.StartDeepAnalysisCheckoutAsync(_def.Key);
-            Navigation.NavigateTo(checkout.CheckoutUrl);
+            var variant = _deepCompleted ? "deep" : "quick";
+            await Api.StartAssessmentRetakeAsync(_def.Key, variant);
+            _redoOpen = false;
+            Navigation.NavigateTo(_deepCompleted ? _def.DeepStartHref : _def.FreeStartHref);
         }
-        catch (Exception ex)
+        catch (AssessmentAdjustmentLimitClientException)
         {
-            _payError = string.IsNullOrWhiteSpace(ex.Message)
-                ? Culture["Tests.PaymentFailed"]
-                : ex.Message;
+            _payError = Culture["TestResult.Limit.Dialog"];
+            _adjustments = new AssessmentAdjustmentState { Used = AssessmentAdjustmentRules.MaxAdjustments, Remaining = 0, Max = AssessmentAdjustmentRules.MaxAdjustments };
+            _redoOpen = false;
+        }
+        catch (Exception)
+        {
+            _payError = Culture["Common.Error"];
         }
         finally
         {
             _busy = false;
         }
     }
+
+    private Task<Models.DeepAnalysisCheckout> StartDeepAnalysisCheckoutAsync(bool waiverAccepted)
+        => Api.StartDeepAnalysisCheckoutAsync(_def!.Key, waiverAccepted, Culture.Language);
+
+    private async Task GoToOfferAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
+        if (_paymentMode == "unavailable" && !_deepUnlocked)
+        {
+            _payError = Culture["DeepPay.Err.payments_unavailable"];
+            return;
+        }
+
+        Navigation.NavigateTo(_def.DeepStartHref);
+    }
+
+    private Task StartExtendedAsync() => GoToOfferAsync();
 
     private async Task DownloadPdfAsync()
     {
@@ -599,16 +952,88 @@
         _busy = true;
         try
         {
-            await Api.DownloadDeepAnalysisReportAsync(Js, _def.Key);
+            await Api.DownloadDeepAnalysisReportAsync(Js, _def.Key, Culture.Language);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _payError = ex.Message;
+            _payError = Culture["Common.Error"];
         }
         finally
         {
             _busy = false;
         }
+    }
+
+    private async Task OpenSamplePdfAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        _samplePdfOpen = true;
+        _samplePdfLoading = true;
+        _samplePdfPages = Array.Empty<string>();
+        _payError = null;
+        try
+        {
+            var preview = await Api.GetSampleAssessmentReportPreviewAsync(_def.Key, Culture.Language);
+            if (preview is null || preview.PagePngBase64.Count == 0)
+            {
+                // Fallback: open/download the PDF directly when image export is unavailable.
+                await Api.DownloadSampleAssessmentReportAsync(Js, _def.Key, Culture.Language);
+                _samplePdfOpen = false;
+                return;
+            }
+
+            _samplePdfPages = preview.PagePngBase64;
+            _samplePdfTotalPages = preview.TotalPages > 0
+                ? preview.TotalPages
+                : DeepReportCapabilities.For(_def.Kind).PdfPageCount;
+        }
+        catch (Exception)
+        {
+            _payError = Culture["Common.Error"];
+            _samplePdfOpen = false;
+        }
+        finally
+        {
+            _samplePdfLoading = false;
+        }
+    }
+
+    private void CloseSamplePdf()
+    {
+        _samplePdfOpen = false;
+        _samplePdfLoading = false;
+    }
+
+    private async Task DownloadSamplePdfAsync()
+    {
+        if (_def is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DownloadSampleAssessmentReportAsync(Js, _def.Key, Culture.Language);
+        }
+        catch (Exception)
+        {
+            _payError = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task StartExtendedFromSampleAsync()
+    {
+        _samplePdfOpen = false;
+        await StartExtendedAsync();
     }
 
     private sealed record ScoreBar(string Label, int Percent);

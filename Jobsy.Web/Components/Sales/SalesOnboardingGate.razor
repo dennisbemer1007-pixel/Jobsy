@@ -1,0 +1,55 @@
+@namespace Jobsy.Web.Components.Sales
+@inject NavigationManager Navigation
+@inject JobsyApiClient Api
+
+@if (_checking)
+{
+    <p class="state-message">…</p>
+}
+else if (_allowed)
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _checking = true;
+    private bool _allowed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var path = new Uri(Navigation.Uri).AbsolutePath;
+        if (IsExempt(path))
+        {
+            _allowed = true;
+            _checking = false;
+            return;
+        }
+
+        try
+        {
+            var dash = await Api.GetMySalesManagerDashboardAsync();
+            if (dash?.IsOnboardingComplete != true)
+            {
+                Navigation.NavigateTo("/sales/start", replace: true);
+                return;
+            }
+
+            _allowed = true;
+        }
+        catch
+        {
+            _allowed = true;
+        }
+        finally
+        {
+            _checking = false;
+        }
+    }
+
+    private static bool IsExempt(string path)
+        => path.StartsWith("/sales/start", StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith("/sales/hulp", StringComparison.OrdinalIgnoreCase)
+           || path.StartsWith("/sales/profiel", StringComparison.OrdinalIgnoreCase);
+}

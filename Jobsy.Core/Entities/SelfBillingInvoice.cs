@@ -32,6 +32,11 @@ public class SelfBillingInvoice
     /// <summary>e.g. "Verwerkt in aangifte 2026-Q1".</summary>
     public string? VatDeclarationStatusLabel { get; set; }
 
+    public Guid? SelfBillingConsentId { get; set; }
+    public SalesSelfBillingConsent? SelfBillingConsent { get; set; }
+
+    public Guid? SalesPayoutRequestId { get; set; }
+
     public ICollection<SelfBillingInvoiceLine> Lines { get; set; } = new List<SelfBillingInvoiceLine>();
     public ICollection<CommissionLedgerEntry> LinkedLedgerEntries { get; set; } = new List<CommissionLedgerEntry>();
 }

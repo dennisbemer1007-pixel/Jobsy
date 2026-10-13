@@ -1,6 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,10 +13,12 @@ namespace Jobsy.Api.Controllers;
 public class IntegrationsController : ControllerBase
 {
     private readonly IIntegrationHealthService _health;
+    private readonly IKvkUsageCounter _kvkUsage;
 
-    public IntegrationsController(IIntegrationHealthService health)
+    public IntegrationsController(IIntegrationHealthService health, IKvkUsageCounter kvkUsage)
     {
         _health = health;
+        _kvkUsage = kvkUsage;
     }
 
     [HttpGet("health")]
@@ -34,6 +37,21 @@ public class IntegrationsController : ControllerBase
         IntegrationKey key,
         CancellationToken cancellationToken)
         => Ok(await _health.TestConnectionAsync(key, cancellationToken));
+
+    [HttpGet("kvk/usage")]
+    public async Task<ActionResult<KvkUsageResponse>> GetKvkUsage(CancellationToken cancellationToken)
+    {
+        var summary = await _kvkUsage.GetSummaryAsync(cancellationToken);
+        var profilesToday = summary.BasisprofielToday + summary.VestigingenToday;
+        return Ok(new KvkUsageResponse(
+            summary.ZoekenToday,
+            summary.BasisprofielToday,
+            summary.VestigingenToday,
+            summary.ProfileCallsThisMonth,
+            summary.MonthlyProfileBudget,
+            summary.BudgetWarning,
+            $"Vandaag: {summary.ZoekenToday} zoekopdrachten · {profilesToday} profielen"));
+    }
 
     [HttpPost("health/{key}/send-test")]
     public async Task<ActionResult<SendTestMailResult>> SendTestMail(
@@ -57,3 +75,12 @@ public class IntegrationsController : ControllerBase
 }
 
 public sealed record SendTestMailRequest(string? To);
+
+public sealed record KvkUsageResponse(
+    int ZoekenToday,
+    int BasisprofielToday,
+    int VestigingenToday,
+    int ProfileCallsThisMonth,
+    int MonthlyProfileBudget,
+    bool BudgetWarning,
+    string TodaySummary);

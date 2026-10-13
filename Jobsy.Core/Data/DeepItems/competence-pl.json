@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "I probeer gladly a nowy way of wlubking jeśli the old vastloopt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "O) — 30 unique\n        (Openheid"
+ },
+ "2": {
+  "prompt": "I lees lub kijk out mezelf at about hoe ons field veriert.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "3": {
+  "prompt": "I bedenk meerdere rozwiązanies zanim I a choice maak.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "4": {
+  "prompt": "I blijf preferably at the method that we zawsze al gebruiken.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "5": {
+  "prompt": "I vind the leuk om a unknown system lub device out te proberen.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "6": {
+  "prompt": "I zie snel connections tussen losse details on the shop flolub.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "7": {
+  "prompt": "I stel vragen jeśli I the background of a zadanie nog nie snap.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "8": {
+  "prompt": "New ideas of współpracownicy wijs I zwykle meteen af.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "9": {
+  "prompt": "I experimenteer raczej klein dan that I wacht on a perfect plan.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "10": {
+  "prompt": "I vermijd zadania waarbij I iets moet leren that I nog nigdy deed.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "11": {
+  "prompt": "I haal inspiratie out hoe other zespółs hetzelfde wlubk aanpakken.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "12": {
+  "prompt": "Change in the schedule irriteert me mlube dan that the me scherp maakt.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "13": {
+  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "14": {
+  "prompt": "I durf a proposal te doen that nog nie in the hibook staat.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "15": {
+  "prompt": "I vind the prettig jeśli wlubk ook ruimte laat flub own invulling.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "16": {
+  "prompt": "I volg instructions letterlijk, ook jeśli a slimmere weg zichtbaar is.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "17": {
+  "prompt": "I raak nieuwsgierig jeśli iets technisch lub inhoudelijk djeśliferent werkt dan verwacht.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "18": {
+  "prompt": "I zoek bewust afwisseling in zadania zodat I alert blijf.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "19": {
+  "prompt": "I kan me inleven in a problem vanuit the perspectief of the klient.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "20": {
+  "prompt": "Abstracte uitleg bez concrete stappen vind I tijdverspilling.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "21": {
+  "prompt": "I pas my aanpak to jeśli the seizoensdruk lub the piek djeśliferent is dan vlubig jaar.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "22": {
+  "prompt": "I houd nie of brainstlubmen; zeg me gewoon wat I moet doen.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "23": {
+  "prompt": "I merk the snel jeśli a proces onnodig omslachtig is gewlubden.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "24": {
+  "prompt": "Chcęrouw verbeteringen totdat iemi djeśliferent ze lang heeft gebruikt.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "25": {
+  "prompt": "I leer gladly of mistakes dolub te kijken wat we volgende keer djeśliferent doen.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "26": {
+  "prompt": "I vind the leuk om a współpracownik a slimmere truc te laten zien.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "27": {
+  "prompt": "I blijf nadenken about hoe we kwaliteit i tempo beter kunnen combineren.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "28": {
+  "prompt": "I sluit me af flub feedback that my vaste routine ter discussie stelt.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "29": {
+  "prompt": "I zie kansen in nowy producten, teelten lub diensten of the vestiging.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Openheid"
+ },
+ "30": {
+  "prompt": "I voel me ongemakkelijk at zadania bez duidelijk volubbeeld.",
+  "example": "Example: a współpracownik suggests a nowy way to label lubders. You try it on a small scale first. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Openheid"
+ },
+ "31": {
+  "prompt": "I maak af wat I beloof, ook jeśli the dag tegenzit.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "C) — 30 unique\n        (Consciëntieusheid"
+ },
+ "32": {
+  "prompt": "Planuję my wlubk zodat deadlines haalbaar blijven.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "33": {
+  "prompt": "I controleer details zanim I iets jeśli klaar dolubgeef.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "34": {
+  "prompt": "I laat rommel lub half afgemaakt wlubk makkelijk liggen.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "35": {
+  "prompt": "I kom on tijd i geef the dolub jeśli I te laat dreig te his.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "36": {
+  "prompt": "I houd at wat er nog openstaat, bez that iemi erom hoeft te vragen.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "37": {
+  "prompt": "Pracuję netjes volgens afgesproken hygiëne, veiligheid lub kwaliteit.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "38": {
+  "prompt": "I stel lastige jobs out until the nie djeśliferent mlube kan.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "39": {
+  "prompt": "I ruim my werkplek on zodat the volgende ploeg er meteen mee verder kan.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "40": {
+  "prompt": "Kleine foutjes in cijfers lub labels vind I nie zo belangrijk.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "41": {
+  "prompt": "I houd me to pauze- i werktijden zoals we that hebben afgesproken.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "42": {
+  "prompt": "If niemi kijkt, sla I controles lub stappen about.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "43": {
+  "prompt": "I bereid me flub on a dienst, zodat I nie hoef te improviseren on basisdingen.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "44": {
+  "prompt": "I geef the eerlijk to jeśli I a mistake heb gemaakt.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "45": {
+  "prompt": "I verdeel grote zadania in stukken that I écht afkrijg.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "46": {
+  "prompt": "I begin to iets nieuws while the vlubige nog nie af is.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "47": {
+  "prompt": "I bewaar overzicht in bestellingen, lubders lub takenlijsten.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "48": {
+  "prompt": "I kom terug on a agreement, ook jeśli that a week eerder is gemaakt.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "49": {
+  "prompt": "Pracuję dolub until the job veilig i volledig is, nie until the klok toevallig stopt.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "50": {
+  "prompt": "Administratie lub afronden na the job laat Wolęably to a ier.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "51": {
+  "prompt": "I houd rekening z piekmomenten i start on tijd z volubbereiden.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "52": {
+  "prompt": "I raak the spolub kwijt jeśli er meerdere openstaie zadania his.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "53": {
+  "prompt": "I volg procedures ook jeśli ze saai his, bo ze schade volubkomen.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "54": {
+  "prompt": "I zeg ja tegen extra wlubk while I weet that I the nie netjes aankan.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "55": {
+  "prompt": "I check lub the klient lub współpracownik écht heeft wat er is beloofd.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "56": {
+  "prompt": "I houd materialen, gereedschap lub volubraad on peil.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "57": {
+  "prompt": "I documenteer wat nodig is zodat a vervanger verder kan.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "58": {
+  "prompt": "I vind the overdreven om dubbel te controleren at routinowyerk.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "59": {
+  "prompt": "I sluit my dienst af z a klubte check: wat is klaar, wat moet about.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Consciëntieusheid"
+ },
+ "60": {
+  "prompt": "I laat ieren the rommel opruimen that I tijdens the busyness heb verolubzaakt.",
+  "example": "Example: you check your wlubk once mlube zanim you hi it in. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Consciëntieusheid"
+ },
+ "61": {
+  "prompt": "I krijg energie of samenwerken z współpracownicy on the vloer.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "E) — 30 unique\n        (Extraversie"
+ },
+ "62": {
+  "prompt": "I spreek makkelijk people to, ook jeśli I ze nog nie ken.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "63": {
+  "prompt": "I voel me on my gemak in a drukke winkel, kas lub hlubecaruimte.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "64": {
+  "prompt": "I trek me preferably terug jeśli er a lot people om me heen his.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "65": {
+  "prompt": "I neem the wolubd in a klubte briefing lub overdracht.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "66": {
+  "prompt": "Pomagam gasten lub klienci gladly z a open, vriendelijke toon.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "67": {
+  "prompt": "I zoek aansluiting at the zespół tijdens pauzes.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "68": {
+  "prompt": "I vermijd gesprekken z klienci jeśli a współpracownik the ook kan doen.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "69": {
+  "prompt": "I kan a groep on sleeptouw nemen jeśli the atmosphere stil valt.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "70": {
+  "prompt": "Telefoneren lub baliewerk kost me onevenredig a lot moeite.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "71": {
+  "prompt": "I vertel duidelijk wat I nodig heb of ieren om verder te kunnen.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "72": {
+  "prompt": "Pracuję preferably the hele dienst bez meeting.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "73": {
+  "prompt": "I stel me flub to nowy współpracownicy in plaats of te wachten until zij komen.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "74": {
+  "prompt": "I houd the tempo erin dolub ieren mee te nemen in the actie.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "75": {
+  "prompt": "I durf a grap lub luchtige opmerking te maken om the spanning te breken.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "76": {
+  "prompt": "In groepsoverleg blijf I raczej stil, ook jeśli I iets relevants weet.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "77": {
+  "prompt": "I merk the jeśli a klient lub współpracownik aiacht nodig heeft i loop ernaartoe.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "78": {
+  "prompt": "I kan schakelen tussen kassa, vloer i meeting bez that I dichtklap.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "79": {
+  "prompt": "I vind the prettig om zichtbaar te his in the zespół.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "80": {
+  "prompt": "Onverwacht aangesproken wlubden haalt me out my concentratie.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "81": {
+  "prompt": "I bouw snel a werkrelatie on z uitzendkrachten lub seizoenscollega's.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "82": {
+  "prompt": "I laat raczej a e-mail lub appje gaan dan a gesprek of twee minuten.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "83": {
+  "prompt": "I kan a conflict on the vloer benoemen bez te verdwijnen.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "84": {
+  "prompt": "Netwerken lub kennismaken on a vestiging voelt jeśli a opgave.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "85": {
+  "prompt": "I houd of wlubk waarin contact z people a vast onderdeel is.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "86": {
+  "prompt": "I geef energie to the zespół jeśli the dienst lang duurt.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "87": {
+  "prompt": "I spreek makkelijk af wie wat doet, in plaats of te wachten.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "88": {
+  "prompt": "I vermijd overdrachten z a lot people erbij.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "89": {
+  "prompt": "I voel me thuis in a omgeving z a lot prikkels i beweging.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Extraversie"
+ },
+ "90": {
+  "prompt": "I doe alsof I busy ben om a extra klantgesprek te ontwijken.",
+  "example": "Example: in a busy shop you enjoy talking z klienci. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Extraversie"
+ },
+ "91": {
+  "prompt": "Pomagam a współpracownik ook jeśli the nie letterlijk my zadanie is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "A) — 30 unique\n        (Vriendelijkheid"
+ },
+ "92": {
+  "prompt": "I luister eerst to the ier zanim I my mening geef.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "93": {
+  "prompt": "I houd rekening z hoe my toon overkomt at klienci lub gasten.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "94": {
+  "prompt": "If iemi traag is, laat I merken that I daar little geduld flub heb.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "95": {
+  "prompt": "I zoek a rozwiązanie waar the zespół verder mee kan, nie alleen I.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "96": {
+  "prompt": "I geef complimenten jeśli iemi iets good heeft gedaan.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "97": {
+  "prompt": "I kan me inleven in a boze lub gestreste klient bez terug te bijten.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "98": {
+  "prompt": "I zet my own belang boven that of the zespół jeśli the schuurt.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "99": {
+  "prompt": "I deel kennis zodat ieren zelfstiiger wlubden.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "100": {
+  "prompt": "I maak denigrerende opmerkingen jeśli iemi a mistake maakt.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "101": {
+  "prompt": "I pas my tempo to jeśli a nowy współpracownik nog moet inwerken.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "102": {
+  "prompt": "I houd wrok jeśli iemi my wlubk heeft overgenomen lub bekritiseerd.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "103": {
+  "prompt": "I zeg the rustig jeśli I the ergens nie mee eens ben.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "104": {
+  "prompt": "I respecteer verschillende achtergronden i werkstijlen in the zespół.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "105": {
+  "prompt": "I bied hulp to zanim iemi erom hoeft te vragen.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "106": {
+  "prompt": "I trek me little to of hoe my gedrag the atmosphere beïnvloedt.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "107": {
+  "prompt": "I geef ruimte to stillere współpracownicy in meeting.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "108": {
+  "prompt": "I kan toegeven jeśli the ier a beter punt heeft.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "109": {
+  "prompt": "I behiel uitzendkrachten i vast personeel z dezelfde beleefdheid.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "110": {
+  "prompt": "I gebruik sarcastische opmerkingen om my zin dolub te drijven.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "111": {
+  "prompt": "I let erop that niemi buiten the groep valt tijdens the dienst.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "112": {
+  "prompt": "I laat a współpracownik bewust klem lopen jeśli we om dezelfde zadanie concurreren.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "113": {
+  "prompt": "I houd rekening z fysieke lub taalbarrières of ieren.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "114": {
+  "prompt": "I vind the zwak jeśli iemi om hulp vraagt at iets that I vanzelfsprekend vind.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "115": {
+  "prompt": "I sluit a conflict af z a duidelijke, respectvolle agreement.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "116": {
+  "prompt": "I bescherm the privacy of współpracownicy in gesprekken z derden.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "117": {
+  "prompt": "I zeg dankjewel flub wlubk that djeśliferent onzichtbaar blijft.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "118": {
+  "prompt": "I onderbreek ieren często bo my punt urgenter voelt.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "119": {
+  "prompt": "I zoek win-win jeśli roosters lub zadania botsen.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Vriendelijkheid"
+ },
+ "120": {
+  "prompt": "I speel people tegen elkaar out jeśli that my wlubk makkelijker maakt.",
+  "example": "Example: a zespółmate needs help i you step in bez being asked. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Vriendelijkheid"
+ },
+ "121": {
+  "prompt": "I blijf kalm jeśli the opeens busy wlubdt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "lage neuroticisme) — 30 unique\n        (EmotioneleStabiliteit"
+ },
+ "122": {
+  "prompt": "I herstel snel na a setback lub a mistake.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "123": {
+  "prompt": "I kan meerdere dingen tegelijk to bez in panic te raken.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "124": {
+  "prompt": "I pieker lang na about criticism, ook jeśli that al is opgelost.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "125": {
+  "prompt": "I houd overzicht jeśli the schedule last-minute wijzigt.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "126": {
+  "prompt": "I blijf beleefd jeśli a klient lub współpracownik scherp out the hoek komt.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "127": {
+  "prompt": "I slaap a incident af i begin the volgende dienst schoon.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "128": {
+  "prompt": "I raak snel of slag jeśli er iets unexpected gebeurt.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "129": {
+  "prompt": "I adem even dolub zanim I reageer in a spannend moment.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "130": {
+  "prompt": "I voel me snel persoonlijk aangevallen at gewone werkfeedback.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "131": {
+  "prompt": "I blijf functioneren jeśli er a stlubing, wachtrij lub teklubt is.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "132": {
+  "prompt": "I vermijd lastige gesprekken out angst that the out the hi loopt.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "133": {
+  "prompt": "I kan a mistake herstellen bez that the rest of the dienst instlubt.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "134": {
+  "prompt": "I houd my stem i lichaamstaal rustig onder tijdsdruk.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "135": {
+  "prompt": "I vraag om hulp jeśli the busy te hoog wlubdt, in plaats of vast te lopen.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "136": {
+  "prompt": "I neem spanning of wlubk mee to huis i kom er moeilijk vanaf.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "137": {
+  "prompt": "I blijf beslissen jeśli nie alle influbmatie perfect is.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "138": {
+  "prompt": "I accepteer that piekdagen hluben at this wlubk, bez te blokkeren.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "139": {
+  "prompt": "I kan a conflict laten liggen until the moment om the te bespreken.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "140": {
+  "prompt": "Kleine tegenvallers voelen at mij al snel jeśli a ramp.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "141": {
+  "prompt": "I blijf veilig wlubk ook jeśli I gehaast ben.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "142": {
+  "prompt": "I wlubd prikkelbaar jeśli I nie meteen controle about the situatie heb.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "143": {
+  "prompt": "I zet a setback om in a concrete volgende stap.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "144": {
+  "prompt": "I vermijd verantwolubdelijkheid out angst om the schuld te krijgen.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "145": {
+  "prompt": "I houd my aiacht at the zadanie, ook jeśli er om me heen rumoer is.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "146": {
+  "prompt": "I kan ja i nee zeggen bez daar uren about te twijfelen.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "147": {
+  "prompt": "I blijf vriendelijk to the kassa lub balie jeśli the rij lang is.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "148": {
+  "prompt": "I sluit me af lub bevries jeśli the busy oploopt.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "149": {
+  "prompt": "I zie a drukke dienst jeśli a uitdaging that I aankan.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "EmotioneleStabiliteit"
+ },
+ "150": {
+  "prompt": "I heb na a lastige dienst lang last of piekeren lub boosheid.",
+  "example": "Example: a sudden zmiana in the schedule happens; you stay calm i act. This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "EmotioneleStabiliteit"
+ }
+}

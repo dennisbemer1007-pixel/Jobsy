@@ -10,7 +10,8 @@ public class NotificationAndEngagementRulesTests
     {
         Assert.True(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Pending, DateTime.UtcNow));
         Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Pending, null));
-        Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Accepted, DateTime.UtcNow));
+        Assert.True(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Accepted, DateTime.UtcNow));
+        Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Hired, DateTime.UtcNow));
         Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Withdrawn, DateTime.UtcNow));
     }
 

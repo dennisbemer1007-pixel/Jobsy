@@ -35,6 +35,17 @@ public class TrainingOffer
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; }
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Passport curation: existing rows stay false until an admin opts in.</summary>
+    public TrainingOfferType Type { get; set; } = TrainingOfferType.Cursus;
+    public int? DurationValue { get; set; }
+    public TrainingDurationUnit? DurationUnit { get; set; }
+    public TrainingDeliveryMode Delivery { get; set; } = TrainingDeliveryMode.Online;
+    public string? Location { get; set; }
+    public bool IsFree { get; set; }
+    public bool IsPartner { get; set; }
+    public string? AffiliateCode { get; set; }
+    public bool ShowInPassport { get; set; }
 }
 
 public class TrainingClick

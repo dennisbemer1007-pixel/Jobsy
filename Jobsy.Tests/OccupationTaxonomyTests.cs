@@ -103,10 +103,10 @@ public class OccupationTaxonomyTests
         Assert.DoesNotContain(snapshot.SimilarRoles ?? [], role => role.Title.Contains("horeca", StringComparison.OrdinalIgnoreCase));
 
         var root = RepoRoot.Find();
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/RoleFitCheckPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckPanel.razor"));
         Assert.Contains("Fit.PathTitle", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.Dealbreaker", panel, StringComparison.Ordinal);
-        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
+        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
         Assert.Contains("VacancyHardCheckCatalog", create, StringComparison.Ordinal);
         var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
         Assert.Contains("Vacancy.PathTitle", detail, StringComparison.Ordinal);

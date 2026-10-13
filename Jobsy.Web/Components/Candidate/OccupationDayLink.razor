@@ -1,0 +1,59 @@
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Options
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IConfiguration Config
+
+@if (ResolvedId is not null)
+{
+    <p class="day-in-life-link">
+        <a href="@Href">@Culture.Format("Day.Link", ResolvedTitle)</a>
+    </p>
+}
+
+@code {
+    [Parameter] public string? EscoId { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? From { get; set; }
+
+    private string? ResolvedId
+    {
+        get
+        {
+            if (!OccupationDayInLifeGate.IsEnabled(Config[OccupationDayInLifeOptions.EnabledKey]))
+            {
+                return null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(EscoId) && OccupationCatalog.Shared.Get(EscoId) is { } known)
+            {
+                return known.Id;
+            }
+
+            return OccupationCatalog.Shared.Resolve(Title)?.Id;
+        }
+    }
+
+    private string ResolvedTitle
+    {
+        get
+        {
+            var title = OccupationCatalog.Shared.Get(ResolvedId)?.Nl;
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return title;
+            }
+
+            return string.IsNullOrWhiteSpace(Title) ? "dit beroep" : Title.Trim();
+        }
+    }
+
+    private string Href
+    {
+        get
+        {
+            var from = string.Equals(From, "fit", StringComparison.OrdinalIgnoreCase) ? "fit" : "tests";
+            return $"/candidate/beroep/{ResolvedId}/dag?from={from}";
+        }
+    }
+}

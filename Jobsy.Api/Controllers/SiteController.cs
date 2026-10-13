@@ -1,8 +1,10 @@
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Text.Json.Serialization;
 
 namespace Jobsy.Api.Controllers;
 
@@ -10,27 +12,41 @@ namespace Jobsy.Api.Controllers;
 [Route("api/site")]
 public class SiteController : ControllerBase
 {
-    private readonly IAboutPageSettingsService _aboutPage;
     private readonly IVacancyDiscoveryIndex _discovery;
     private readonly IPlatformCompanySettingsService _companySettings;
+    private readonly ILegalIdentity _legalIdentity;
+    private readonly IPublicCompanyQuery _publicCompanies;
+    private readonly IPlatformFeatureService _features;
 
     public SiteController(
-        IAboutPageSettingsService aboutPage,
         IVacancyDiscoveryIndex discovery,
-        IPlatformCompanySettingsService companySettings)
+        IPlatformCompanySettingsService companySettings,
+        ILegalIdentity legalIdentity,
+        IPublicCompanyQuery publicCompanies,
+        IPlatformFeatureService features)
     {
-        _aboutPage = aboutPage;
         _discovery = discovery;
         _companySettings = companySettings;
+        _legalIdentity = legalIdentity;
+        _publicCompanies = publicCompanies;
+        _features = features;
     }
 
-    /// <summary>Public “Wie zijn wij” page content.</summary>
-    [HttpGet("about")]
+    /// <summary>
+    /// Maintenance state for the Web host's 503 middleware (errors 05). Anonymous and allowed
+    /// through <see cref="Jobsy.Api.Security.MaintenanceApiMiddleware"/>, otherwise the Web host
+    /// could never learn the switch was flipped back off. The admin note is never returned.
+    /// </summary>
+    [HttpGet("status")]
     [AllowAnonymous]
-    public async Task<ActionResult<AboutPageDto>> GetAbout(CancellationToken cancellationToken)
+    [EnableRateLimiting("public-read")]
+    [ResponseCache(Duration = 5, Location = ResponseCacheLocation.Any)]
+    public async Task<ActionResult<SiteStatusDto>> GetStatus(CancellationToken cancellationToken)
     {
-        var snap = await _aboutPage.GetAsync(cancellationToken);
-        return Ok(ToDto(snap));
+        var snap = await _features.GetAsync(cancellationToken);
+        return Ok(new SiteStatusDto(
+            snap.MaintenanceEnabled,
+            snap.MaintenanceEnabled ? snap.MaintenanceExpectedEndUtc : null));
     }
 
     /// <summary>
@@ -43,6 +59,17 @@ public class SiteController : ControllerBase
     {
         var snap = await _companySettings.GetAsync(cancellationToken);
         return Ok(new SiteBrandingDto(snap.CompanyName, snap.Slogan));
+    }
+
+    /// <summary>Lobsy legal identity for privacy/footer pages. Empty fields omitted.</summary>
+    [HttpGet("legal")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<LegalIdentityDto>> GetLegal(CancellationToken cancellationToken)
+    {
+        var snap = await _legalIdentity.GetAsync(cancellationToken);
+        Response.Headers.CacheControl = "public, max-age=300";
+        return Ok(LegalIdentityDto.From(snap));
     }
 
     /// <summary>
@@ -61,39 +88,55 @@ public class SiteController : ControllerBase
             .Select(r => new SiteCrawlVacancyDto(r.Id, r.StartDate, r.EndDate))
             .ToList();
 
-        var companyPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var record in records)
-        {
-            var kvkPath = CompanyPublicPaths.TryBuildKvkPath(record.KvkNumber);
-            if (kvkPath is not null)
-            {
-                companyPaths.Add(kvkPath);
-            }
-
-            var vestigingPath = CompanyPublicPaths.TryBuildPath(record.KvkNumber, record.Vestigingsnummer);
-            if (vestigingPath is not null)
-            {
-                companyPaths.Add(vestigingPath);
-            }
-        }
-
-        return Ok(new SiteCrawlIndexDto(vacancies, companyPaths.OrderBy(p => p, StringComparer.Ordinal).ToList()));
+        var companyPaths = await _publicCompanies.GetSitemapCompanyPathsAsync(cancellationToken);
+        return Ok(new SiteCrawlIndexDto(vacancies, companyPaths));
     }
-
-    internal static AboutPageDto ToDto(AboutPageSnapshot snap) =>
-        new(snap.Title, snap.Lead, snap.BodyHtml, snap.UpdatedAtUtc);
 }
 
-public sealed record AboutPageDto(
-    string Title,
-    string Lead,
-    string BodyHtml,
-    DateTime? UpdatedAtUtc);
-
 public sealed record SiteBrandingDto(string CompanyName, string Slogan);
+
+public sealed record SiteStatusDto(bool Maintenance, DateTime? ExpectedEndUtc);
 
 public sealed record SiteCrawlIndexDto(
     IReadOnlyList<SiteCrawlVacancyDto> Vacancies,
     IReadOnlyList<string> CompanyPaths);
 
 public sealed record SiteCrawlVacancyDto(Guid Id, DateOnly StartDate, DateOnly EndDate);
+
+public sealed record LegalIdentityDto(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Name,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? TradeName,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Street,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PostalCode,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? City,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Country,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? KvkNumber,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? VatNumber,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PrivacyEmail,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SupportEmail,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? SchoolsEmail,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Phone = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PostalStreet = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PostalPostalCode = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? PostalCity = null)
+{
+    public static LegalIdentityDto From(LegalIdentitySnapshot snap) => new(
+        NullIfEmpty(snap.Name),
+        NullIfEmpty(snap.TradeName),
+        NullIfEmpty(snap.Street),
+        NullIfEmpty(snap.PostalCode),
+        NullIfEmpty(snap.City),
+        NullIfEmpty(snap.Country),
+        NullIfEmpty(snap.KvkNumber),
+        NullIfEmpty(snap.VatNumber),
+        NullIfEmpty(snap.PrivacyEmail),
+        NullIfEmpty(snap.SupportEmail),
+        NullIfEmpty(snap.SchoolsEmail),
+        NullIfEmpty(snap.Phone),
+        NullIfEmpty(snap.PostalStreet),
+        NullIfEmpty(snap.PostalPostalCode),
+        NullIfEmpty(snap.PostalCity));
+
+    private static string? NullIfEmpty(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+}

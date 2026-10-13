@@ -90,7 +90,7 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
         listing.LocationLabel = Truncate(locationLabel, 256);
         listing.Description = TruncateRequired(description, 20_000);
         if (!AtsListingValidation.TryValidateForReview(
-                listing.Title, listing.CompanyName, listing.LocationLabel, listing.Description, out var reason))
+                listing.Title, listing.CompanyName, listing.Description, out var reason))
         {
             throw new InvalidOperationException(reason ?? "Listing is onvolledig.");
         }
@@ -364,7 +364,11 @@ public sealed class AtsVacancyModerationService : IAtsVacancyModerationService
             KvkVerificationStatus = KvkVerificationStatus.Pending,
             Address = Truncate(listing.LocationLabel, 256) ?? listing.Source?.DefaultLocationLabel ?? "Nederland",
             Location = new GeoPoint(lat, lng),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         _db.Companies.Add(company);
         return company;

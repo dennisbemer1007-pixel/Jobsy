@@ -109,6 +109,41 @@ public class OsrmRoutingServiceTests
     }
 
     [Fact]
+    public async Task Disabled_transit_does_not_call_transitous()
+    {
+        var called = false;
+        var sut = CreateSut(request =>
+        {
+            called = true;
+            return Json(HttpStatusCode.OK, """{"itineraries":[]}""");
+        }, new Dictionary<string, string?> { ["Transit:Enabled"] = "false" });
+
+        var route = await sut.TryGetRouteAsync(51.51, 5.51, 51.62, 5.63, TransportMode.PublicTransport);
+
+        Assert.Null(route);
+        Assert.False(called);
+    }
+
+    [Theory]
+    [InlineData(null, true)]
+    [InlineData("", true)]
+    [InlineData("true", true)]
+    [InlineData("false", false)]
+    [InlineData("0", false)]
+    [InlineData("1", true)]
+    public void Transit_enabled_defaults_to_on(string? raw, bool expected)
+    {
+        var values = new Dictionary<string, string?>();
+        if (raw is not null)
+        {
+            values["Transit:Enabled"] = raw;
+        }
+
+        var config = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        Assert.Equal(expected, OsrmRoutingService.ReadTransitEnabled(config));
+    }
+
+    [Fact]
     public async Task Osrm_error_returns_null()
     {
         var sut = CreateSut(_ => Json(HttpStatusCode.BadRequest, """{"code":"InvalidQuery"}"""));
@@ -126,15 +161,26 @@ public class OsrmRoutingServiceTests
         Assert.DoesNotContain("_routing.GetRouteAsync", controller);
     }
 
-    private static OsrmRoutingService CreateSut(Func<HttpRequestMessage, HttpResponseMessage> responder)
+    private static OsrmRoutingService CreateSut(
+        Func<HttpRequestMessage, HttpResponseMessage> responder,
+        IReadOnlyDictionary<string, string?>? extra = null)
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
+        var values = new Dictionary<string, string?>
+        {
+            ["Routing:OsrmBaseUrl"] = "https://router.project-osrm.org",
+            ["Routing:TransitBaseUrl"] = "https://api.transitous.org",
+            ["Routing:TransitPlanPath"] = "/api/v5/plan"
+        };
+        if (extra is not null)
+        {
+            foreach (var pair in extra)
             {
-                ["Routing:OsrmBaseUrl"] = "https://router.project-osrm.org",
-                ["Routing:TransitBaseUrl"] = "https://api.transitous.org",
-                ["Routing:TransitPlanPath"] = "/api/v5/plan"
-            })
+                values[pair.Key] = pair.Value;
+            }
+        }
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
             .Build();
 
         return new OsrmRoutingService(

@@ -1,0 +1,72 @@
+@namespace Jobsy.Web.Components.Werkgever.Dashboard
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.Navigation
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<div class="wg-todo-item wg-todo-item--@Item.Severity.ToLowerInvariant()" data-kind="@Item.Kind">
+    <span class="wg-todo-item__icon" aria-hidden="true">@((MarkupString)IconFor(Item.Kind))</span>
+    <div class="wg-todo-item__body">
+        <p class="wg-todo-item__title">@Format(Item.TitleKey, Item.TitleArgs)</p>
+        @if (!string.IsNullOrWhiteSpace(Item.MetaKey))
+        {
+            <p class="wg-todo-item__meta">@Format(Item.MetaKey, Item.MetaArgs)</p>
+        }
+    </div>
+    @if (ShowAction && !string.IsNullOrWhiteSpace(Item.ActionKind))
+    {
+        <a class="btn-compact wg-todo-item__action" href="@Item.Href">@ActionLabel(Item.ActionKind)</a>
+    }
+    else if (MobileTap)
+    {
+        <a class="wg-todo-item__chevron" href="@Item.Href" aria-label="@Format(Item.TitleKey, Item.TitleArgs)">
+            <span aria-hidden="true">@((MarkupString)NavIcons.Chevron)</span>
+        </a>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public WerkgeverTodoItemDto Item { get; set; } = default!;
+    [Parameter] public bool ShowAction { get; set; } = true;
+    [Parameter] public bool MobileTap { get; set; }
+
+    private string Format(string key, IReadOnlyList<string>? args)
+    {
+        var text = Culture[key];
+        if (args is null || args.Count == 0)
+        {
+            return text;
+        }
+
+        try
+        {
+            return string.Format(System.Globalization.CultureInfo.CurrentCulture, text, args.Cast<object>().ToArray());
+        }
+        catch (FormatException)
+        {
+            return text;
+        }
+    }
+
+    private string ActionLabel(string action) => action switch
+    {
+        "Beoordelen" => Culture["WgTodo.Action.Beoordelen"],
+        "Bekijken" => Culture["WgTodo.Action.Bekijken"],
+        "Verlengen" => Culture["WgTodo.Action.Verlengen"],
+        "TokensVerdelen" => Culture["WgTodo.Action.TokensVerdelen"],
+        "TokensAanvragen" => Culture["WgTodo.Action.TokensAanvragen"],
+        "IemandUitnodigen" => Culture["WgTodo.Action.IemandUitnodigen"],
+        _ => action
+    };
+
+    private static string IconFor(string kind) => kind switch
+    {
+        "PublishRequests" => NavIcons.Flag,
+        "ApplicationsOverdue" => NavIcons.Clock,
+        "VacanciesExpiring" => NavIcons.Calendar,
+        "LowTokens" => NavIcons.Tokens,
+        "NoManager" => NavIcons.Users,
+        "Takeovers" => NavIcons.Branches,
+        _ => NavIcons.List
+    };
+}

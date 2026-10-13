@@ -3,17 +3,21 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Ai;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Diagnostics;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
-using Jobsy.Core.Options;
+using Jobsy.Core.Passport;
+using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -24,9 +28,9 @@ public sealed class AssistantChatService : IAssistantChatService
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-        private static readonly string[] SearchStopwords =
-    [
-        "ik", "zoek", "zoeken", "een", "de", "het", "vacature", "vacatures", "baan", "banen",
+    private static readonly string[] SearchStopwords =
+[
+    "ik", "zoek", "zoeken", "een", "de", "het", "vacature", "vacatures", "baan", "banen",
         "job", "jobs", "als", "voor", "naar", "op", "kaart", "toon", "tonen", "vind", "vinden",
         "show", "find", "search", "looking", "want", "wil", "graag", "bij", "met", "van",
         "in", "mijn", "me", "kan", "je", "jij", "mij", "please", "for", "the", "a", "an", "and",
@@ -38,35 +42,38 @@ public sealed class AssistantChatService : IAssistantChatService
         "lopen", "lopend", "loopafstand", "vandaan", "reistijd", "travel", "walking", "walk",
         "fiets", "fietsen", "bike", "cycling", "auto", "car", "rijden", "driving",
         "ov", "tram", "bus", "metro", "transit", "voet"
-    ];
+];
 
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
     private readonly IMetricsQueryService _metrics;
     private readonly ICandidateMetricsQueryService _candidateMetrics;
     private readonly ISalesManagerDashboardService _salesDashboard;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
+    private readonly IFeatureFlags _featureFlags;
     private readonly ILogger<AssistantChatService> _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public AssistantChatService(
         JobsyDbContext db,
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
         IMetricsQueryService metrics,
         ICandidateMetricsQueryService candidateMetrics,
         ISalesManagerDashboardService salesDashboard,
-        IOptions<OpenAiOptions> options,
-        ILogger<AssistantChatService> logger)
+        IOpenAiEndpointResolver openAi,
+        IFeatureFlags featureFlags,
+        ILogger<AssistantChatService> logger,
+        IPlatformErrorLog? platformLog = null)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
         _metrics = metrics;
         _candidateMetrics = candidateMetrics;
         _salesDashboard = salesDashboard;
-        _options = options.Value;
+        _openAi = openAi;
+        _featureFlags = featureFlags;
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<AssistantChatResult> ChatAsync(
@@ -78,7 +85,8 @@ public sealed class AssistantChatService : IAssistantChatService
         var lastUser = sanitized.LastOrDefault(m => m.Role == "user")?.Content?.Trim() ?? "";
         if (lastUser.Length == 0 && sanitized.Count == 0)
         {
-            return new AssistantChatResult(Greeting(context), UsedAi: false, []);
+            var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+            return new AssistantChatResult(Greeting(context, employersOn), UsedAi: false, []);
         }
 
         if (IsOffTopicOrForbidden(lastUser, context.Role))
@@ -93,24 +101,45 @@ public sealed class AssistantChatService : IAssistantChatService
             return scripted;
         }
 
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.AssistantChat, cancellationToken);
+        if (endpoint.Unavailable)
+        {
+            return new AssistantChatResult(AiUnavailableCopy.For(context.Language), UsedAi: false, []);
+        }
+
+        var apiKey = endpoint.ApiKey;
         if (!string.IsNullOrWhiteSpace(apiKey))
         {
             try
             {
-                var ai = await CompleteWithOpenAiAsync(context, sanitized, apiKey, cancellationToken);
+                using var aiCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                aiCts.CancelAfter(TimeSpan.FromSeconds(25));
+                var (ai, rejectedFacts) = await CompleteWithOpenAiAsync(
+                    context, sanitized, apiKey, endpoint.Model, endpoint.BaseUrl, aiCts.Token);
                 if (!string.IsNullOrWhiteSpace(ai))
                 {
-                    return new AssistantChatResult(ai.Trim(), UsedAi: true, []);
+                    return new AssistantChatResult(CandidateCoachPolish.Apply(StripMarkup(ai)), UsedAi: true, []);
                 }
+
+                if (rejectedFacts && string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
+                {
+                    return new AssistantChatResult(UnknownFactReply(context), UsedAi: false, []);
+                }
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Assistant reply timed out; local fallback is used.");
+                await LogChatFailureAsync("Assistant reply timed out.", cancellationToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 _logger.LogWarning(ex, "Assistant OpenAI call failed; falling back.");
+                await LogChatFailureAsync("Assistant reply failed.", cancellationToken);
             }
         }
 
-        return new AssistantChatResult(FallbackHelp(context), UsedAi: false, []);
+        var employersStillOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        return new AssistantChatResult(FallbackHelp(context, employersStillOn), UsedAi: false, []);
     }
 
     private async Task<AssistantChatResult?> TryScriptedAsync(
@@ -122,21 +151,82 @@ public sealed class AssistantChatService : IAssistantChatService
 
         if (string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
         {
+            var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
             if (LooksLikeHowLobsy(text))
             {
                 var lang = JobsyLanguages.Normalize(context.Language);
-                var reply = lang switch
-                {
-                    "en" => "As a candidate on Lobsy you: (1) browse the job map, (2) complete your profile, (3) like/share jobs, (4) apply, (5) track applications, (6) wait for the employer. I can open the how-to page for you.",
-                    "pl" => "Jako kandydat w Lobsy: (1) przeglądasz mapę ofert, (2) uzupełniasz profil, (3) lubisz/udostępniasz oferty, (4) aplikujesz, (5) śledzisz status, (6) czekasz na pracodawcę. Mogę otworzyć stronę z instrukcją.",
-                    "ro" => "Ca și candidat pe Lobsy: (1) vezi harta joburilor, (2) completezi profilul, (3) like/share, (4) aplici, (5) urmărești statusul, (6) aștepți angajatorul. Pot deschide ghidul.",
-                    "ar" => "كمترشح على Lobsy: (1) تستعرض خريطة الوظائف، (2) تكمل ملفك، (3) تعجب/تشارك، (4) تتقدم، (5) تتابع الطلبات، (6) تنتظر صاحب العمل. يمكنني فتح صفحة الشرح.",
-                    _ => "Als kandidaat op Lobsy: (1) bekijk de banenkaart, (2) vul je profiel, (3) like/deel vacatures, (4) solliciteer, (5) volg je sollicitaties, (6) wacht op de werkgever. Ik kan de uitlegpagina openen."
-                };
+                var reply = employersOn
+                    ? lang switch
+                    {
+                        "en" => "As a candidate on Lobsy you: (1) browse the job map, (2) complete your profile, (3) like/share jobs, (4) apply, (5) track applications, (6) wait for the employer. I can open the how-to page for you.",
+                        "pl" => "Jako kandydat w Lobsy: (1) przeglądasz mapę ofert, (2) uzupełniasz profil, (3) lubisz/udostępniasz oferty, (4) aplikujesz, (5) śledzisz status, (6) czekasz na pracodawcę. Mogę otworzyć stronę z instrukcją.",
+                        "ro" => "Ca și candidat pe Lobsy: (1) vezi harta joburilor, (2) completezi profilul, (3) like/share, (4) aplici, (5) urmărești statusul, (6) aștepți angajatorul. Pot deschide ghidul.",
+                        "ar" => "كمترشح على Lobsy: (1) تستعرض خريطة الوظائف، (2) تكمل ملفك، (3) تعجب/تشارك، (4) تتقدم، (5) تتابع الطلبات، (6) تنتظر صاحب العمل. يمكنني فتح صفحة الشرح.",
+                        _ => "Als kandidaat op Lobsy: (1) bekijk de banenkaart, (2) vul je profiel, (3) like/deel vacatures, (4) solliciteer, (5) volg je sollicitaties, (6) wacht op de werkgever. Ik kan de uitlegpagina openen."
+                    }
+                    : lang switch
+                    {
+                        "en" => "As a candidate on Lobsy you work on your passport, tests and career plan. Jobs and applications come later. Nothing goes to an employer.",
+                        "pl" => "Jako kandydat w Lobsy pracujesz nad paszportem, testami i planem kariery. Oferty i aplikacje pojawią się później. Nic nie trafia do pracodawcy.",
+                        "ro" => "Ca și candidat pe Lobsy lucrezi la pașaport, teste și planul de carieră. Joburile și candidaturile vin mai târziu. Nimic nu ajunge la un angajator.",
+                        "ar" => "كمترشح على Lobsy تعمل على جوازك واختباراتك وخطة مسارك. الوظائف والطلبات تأتي لاحقاً. لا شيء يذهب إلى صاحب عمل.",
+                        _ => "Als kandidaat op Lobsy werk je aan je paspoort, tests en loopbaanplan. Banen en sollicitaties komen later. Niets gaat naar een werkgever."
+                    };
                 return new AssistantChatResult(
                     reply,
                     false,
                     [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/hoe-werkt-lobsy", Label: "Hoe werkt Lobsy")]);
+            }
+
+            if (LooksLikeDiplomaQuestion(text))
+            {
+                return await CandidateDiplomaAsync(context, cancellationToken);
+            }
+
+            if (LooksLikeDreamQuestion(text))
+            {
+                return await CandidateDreamAsync(context, cancellationToken);
+            }
+
+            var profileFacts = await CandidateProfileFactsAsync(context, lastUser, cancellationToken);
+            if (profileFacts is not null)
+            {
+                return profileFacts;
+            }
+
+            if (LooksLikePassportHelp(text) && !CandidateJobAdvice.Handles(lastUser))
+            {
+                return await CandidatePassportHelpAsync(context, cancellationToken);
+            }
+
+            var jobAdvice = await CandidateJobAdviceAsync(context, lastUser, cancellationToken);
+            if (jobAdvice is not null)
+            {
+                return jobAdvice;
+            }
+
+            // Job advice claims strengths and certificates, but it only answers once the career
+            // test is complete. Until then, passport questions still use the stored tests and dream.
+            if (LooksLikePassportHelp(text))
+            {
+                return await CandidatePassportHelpAsync(context, cancellationToken);
+            }
+
+            if (!employersOn && (LooksLikeApplicationStatus(text) || IsVacancySearchIntent(text, DetectWorkType(text), ExtractJobSearchQuery(lastUser, DetectWorkType(text)))))
+            {
+                var lang = JobsyLanguages.Normalize(context.Language);
+                var soon = lang switch
+                {
+                    "en" => "Jobs and applications come later. Your passport, tests and career plan stay yours.",
+                    "pl" => "Oferty i aplikacje pojawią się później. Twój paszport, testy i plan kariery zostają twoje.",
+                    "ro" => "Joburile și candidaturile vin mai târziu. Pașaportul, testele și planul rămân ale tale.",
+                    "ar" => "الوظائف والطلبات تأتي لاحقاً. جوازك واختباراتك وخطة مسارك تبقى لك.",
+                    _ => "Banen en sollicitaties komen later. Je paspoort, tests en loopbaanplan blijven van jou."
+                };
+                return new AssistantChatResult(
+                    soon,
+                    false,
+                    [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/paspoort", Label: "Mijn paspoort")]);
             }
 
             if (LooksLikeApplicationStatus(text))
@@ -153,8 +243,9 @@ public sealed class AssistantChatService : IAssistantChatService
             var maxTravelMinutes = DetectMaxTravelMinutes(text);
             var transport = DetectTransport(text);
             var jobQuery = ExtractJobSearchQuery(lastUser, workType);
-            if (IsVacancySearchIntent(text, workType, jobQuery)
-                || (workType is not null && (maxTravelMinutes is not null || transport is not null)))
+            if (employersOn
+                && (IsVacancySearchIntent(text, workType, jobQuery)
+                    || (workType is not null && (maxTravelMinutes is not null || transport is not null))))
             {
                 return await CandidateVacancySearchAsync(
                     context, workType, jobQuery, maxTravelMinutes, transport, cancellationToken);
@@ -657,6 +748,134 @@ public sealed class AssistantChatService : IAssistantChatService
             ]);
     }
 
+    private async Task<AssistantChatResult> CandidatePassportHelpAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
+    {
+        var competency = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+        var values = await _db.CandidateValuesProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(v => v.UserId == context.UserId, cancellationToken);
+        var career = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+        var dream = await _db.CandidateCareerPlans.AsNoTracking()
+            .Where(p => p.UserId == context.UserId)
+            .Select(p => p.DreamTitle)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var lang = JobsyLanguages.Normalize(context.Language);
+        var en = lang == "en";
+        var sb = new StringBuilder();
+        var anyFact = false;
+        sb.AppendLine(en ? "From your passport and tests:" : "Vanuit je paspoort en tests:");
+
+        var competenceDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Competence, cancellationToken);
+        var deepTraits = competenceDeep is null
+            ? []
+            : StoredDeepScores.CompetenceTraits(competenceDeep.Status, competenceDeep.AnswersJson, competenceDeep.ReportJson);
+        if (deepTraits.Count > 0)
+        {
+            anyFact = true;
+            var label = DimensionLabels.For(deepTraits[0].Domain, lang);
+            sb.AppendLine(en
+                ? $"• Strongest competency: {label}"
+                : $"• Sterkste competentie: {label}");
+        }
+        else if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
+        {
+            var scores = new CompetencyScores(
+                competency.SamenwerkenPercent,
+                competency.ResultaatgerichtheidPercent,
+                competency.StressbestendigheidPercent,
+                competency.InnovatiePercent,
+                competency.ExtraversiePercent);
+            var top = OnboardingImpressionComposer.TopCompetencyItems(scores, 1);
+            if (top.Count > 0)
+            {
+                anyFact = true;
+                sb.AppendLine(en
+                    ? $"• Strongest competency: {top[0].Label}"
+                    : $"• Sterkste competentie: {top[0].Label}");
+            }
+        }
+
+        var riasec = await PreferredCareerScoresAsync(context.UserId, cancellationToken)
+            ?? CareerTestCatalog.CompletedScoresOrNull(
+                career?.Status,
+                career?.RealisticPercent,
+                career?.InvestigativePercent,
+                career?.ArtisticPercent,
+                career?.SocialPercent,
+                career?.EnterprisingPercent,
+                career?.ConventionalPercent);
+        if (riasec is { IsComplete: true })
+        {
+            var rankedRiasec = RiasecRanking.Rank(
+                riasec.Realistic, riasec.Investigative, riasec.Artistic,
+                riasec.Social, riasec.Enterprising, riasec.Conventional);
+            if (rankedRiasec.Count > 0)
+            {
+                anyFact = true;
+                var topCode = rankedRiasec[0].Code;
+                sb.AppendLine(en
+                    ? $"• Career direction: {CareerCompassBuilder.TypeLabel(topCode)}"
+                    : $"• Beroepsrichting: {CareerCompassBuilder.TypeLabel(topCode)}");
+            }
+        }
+
+        var valuesDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Values, cancellationToken);
+        var deepValues = valuesDeep is null
+            ? null
+            : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
+        if (deepValues is { IsComplete: true } || (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status)))
+        {
+            var ranked = DimensionRanking.Rank(
+                deepValues is { IsComplete: true }
+                    ? SchwartzValuesCatalog.CategoryCodes.Select(code => (code, (int?)deepValues.Get(code)))
+                    :
+                    [
+                        (SchwartzValuesCatalog.Autonomy, values!.AutonomyPercent),
+                        (SchwartzValuesCatalog.Connection, values.ConnectionPercent),
+                        (SchwartzValuesCatalog.Achievement, values.AchievementPercent),
+                        (SchwartzValuesCatalog.Stability, values.StabilityPercent),
+                        (SchwartzValuesCatalog.Impact, values.ImpactPercent)
+                    ],
+                DimensionRanking.ValueTieBreak);
+            if (ranked.Count > 0)
+            {
+                anyFact = true;
+                sb.AppendLine(en
+                    ? $"• Strongest value: {DimensionLabels.For(ranked[0].Code)}"
+                    : $"• Sterkste waarde: {DimensionLabels.For(ranked[0].Code)}");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(dream))
+        {
+            anyFact = true;
+            sb.AppendLine(en ? $"• Dream: {dream.Trim()}" : $"• Droom: {dream.Trim()}");
+        }
+
+        if (!anyFact)
+        {
+            sb.AppendLine(en
+                ? "I don’t see a finished test yet. Finish the free tests and I can name your strengths."
+                : "Ik zie nog geen afgeronde test. Rond de gratis tests af, dan noem ik je sterke punten.");
+        }
+
+        sb.AppendLine(en
+            ? "Jobs and applications stay off until employers are on. Nothing goes to an employer."
+            : "Banen en sollicitaties blijven uit tot werkgevers aan staan. Niets gaat naar een werkgever.");
+
+        return new AssistantChatResult(
+            sb.ToString().Trim(),
+            false,
+            [
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/candidate/paspoort", Label: en ? "My passport" : "Mijn paspoort"),
+                new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/carriere", Label: en ? "Career plan" : "Loopbaanplan")
+            ]);
+    }
+
     private async Task<AssistantChatResult> ManagerKpisAsync(
         AssistantChatContext context,
         string period,
@@ -740,7 +959,7 @@ public sealed class AssistantChatService : IAssistantChatService
         return new AssistantChatResult(
             reply,
             false,
-            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/admin/sales-managers", Label: "Salesmanagers")]);
+            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/admin/gebruikers/sales", Label: "Salesmanagers")]);
     }
 
     private async Task<(Guid Id, string Title, string Company, int Clicks)?> RankVacanciesByClicksAsync(
@@ -961,23 +1180,74 @@ Verbetervoorstellen:
             ]);
     }
 
-    private async Task<string?> CompleteWithOpenAiAsync(
+    private async Task<(string? Reply, bool RejectedFacts)> CompleteWithOpenAiAsync(
         AssistantChatContext context,
         IReadOnlyList<AssistantChatMessage> history,
         string apiKey,
+        string model,
+        string baseUrl,
         CancellationToken cancellationToken)
     {
         var lang = MockInterviewLabels.For(context.Language);
-        var facts = await BuildScopedFactsAsync(context, cancellationToken);
+        var (facts, sheet) = await BuildScopedFactsAsync(context, cancellationToken);
         var system = BuildSystemPrompt(context, lang.LanguageName, facts);
+        var prompts = sheet is null
+            ? new[] { system }
+            : new[] { system, system + "\n" + CandidateFactGuard.StrictAddendum };
+        string? rejected = null;
+        for (var attempt = 1; attempt <= prompts.Length; attempt++)
+        {
+            var reply = await RequestAssistantReplyAsync(
+                history,
+                prompts[attempt - 1],
+                apiKey,
+                model,
+                baseUrl,
+                cancellationToken);
+            if (string.IsNullOrWhiteSpace(reply))
+            {
+                continue;
+            }
+
+            if (!AssistantReplyGuard.Accepts(reply, facts))
+            {
+                rejected = "coach-rules";
+            }
+            else if (sheet is not null && CandidateFactGuard.RejectionReason(reply, sheet) is string reason)
+            {
+                rejected = reason;
+            }
+            else
+            {
+                return (reply, false);
+            }
+
+            await AiFactRejectionLog.WriteAsync(
+                _platformLog,
+                _logger,
+                "coach",
+                rejected,
+                attempt,
+                cancellationToken);
+        }
+
+        return (null, rejected is not null);
+    }
+
+    private async Task<string?> RequestAssistantReplyAsync(
+        IReadOnlyList<AssistantChatMessage> history,
+        string system,
+        string apiKey,
+        string model,
+        string baseUrl,
+        CancellationToken cancellationToken)
+    {
         var messages = new List<object> { new { role = "system", content = system } };
         foreach (var turn in history.TakeLast(MaxHistoryMessages))
         {
             messages.Add(new { role = turn.Role, content = turn.Content });
         }
 
-        var model = await ResolveModelAsync(cancellationToken);
-        var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
         var client = _httpClientFactory.CreateClient("IntegrationProbe");
         using var request = new HttpRequestMessage(
             HttpMethod.Post,
@@ -1001,17 +1271,78 @@ Verbetervoorstellen:
         return completion?.Choices?.FirstOrDefault()?.Message?.Content;
     }
 
-    private async Task<string> BuildScopedFactsAsync(AssistantChatContext context, CancellationToken cancellationToken)
+    private async Task<(string Facts, CandidateFactSheet? Sheet)> BuildScopedFactsAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
     {
         try
         {
             if (string.Equals(context.Role, JobsyRoles.Candidate, StringComparison.Ordinal))
             {
+                var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
                 var stats = await _candidateMetrics.GetSummaryAsync(context.UserId, "month", cancellationToken);
-                var apps = await _db.Applications.AsNoTracking()
-                    .CountAsync(a => a.CandidateUserId == context.UserId, cancellationToken);
-                return $"Candidate facts (own profile only): total applications={apps}; month metrics: "
-                       + string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}"));
+                var user = await _db.Users.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+                var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+                var dream = await _db.CandidateCareerPlans.AsNoTracking()
+                    .Where(p => p.UserId == context.UserId)
+                    .Select(p => p.DreamTitle)
+                    .FirstOrDefaultAsync(cancellationToken);
+                var sb = new StringBuilder();
+                sb.Append(employersOn
+                    ? "Candidate facts (own profile only): "
+                    : "Candidate facts (own profile only; employers OFF, do not suggest vacancies, applications or employer contact): ");
+                if (!employersOn)
+                {
+                    sb.Append("jobs and applications are hidden; ");
+                }
+                else
+                {
+                    var apps = await _db.Applications.AsNoTracking()
+                        .CountAsync(a => a.CandidateUserId == context.UserId, cancellationToken);
+                    sb.Append($"total applications={apps}; ");
+                }
+
+                var scoreLines = new List<string>();
+                var jobs = new List<string>();
+                var outlookLines = new List<string>();
+                var adviceLines = new List<string>();
+                AppendPreferenceFacts(sb, prefs, dream, user?.AvailableFromDate);
+                await AppendTestFactsAsync(sb, context.UserId, context.Language, prefs, scoreLines, jobs, outlookLines, adviceLines, cancellationToken);
+                sb.Append("month metrics: ");
+                sb.Append(string.Join("; ", stats.Select(m => $"{m.Key}={m.Value}")));
+                var work = WorkEntries(prefs);
+                var education = (prefs?.Educations ?? [])
+                    .Where(item => !string.IsNullOrWhiteSpace(item))
+                    .Select(item => item.Trim())
+                    .ToList();
+                if (!string.IsNullOrWhiteSpace(prefs?.EducationDirection))
+                {
+                    education.Add(prefs.EducationDirection.Trim());
+                }
+
+                var certificates = (prefs?.Certificates ?? [])
+                    .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+                    .Select(CandidateFactSheet.FormatCertificate)
+                    .ToList();
+                var confirmed = new List<string>();
+                if (!string.IsNullOrWhiteSpace(dream))
+                {
+                    confirmed.Add(dream.Trim());
+                    jobs.Add(dream.Trim());
+                }
+
+                if (!string.IsNullOrWhiteSpace(prefs?.PreferredTransport))
+                {
+                    confirmed.Add(prefs.PreferredTransport.Trim());
+                }
+
+                var sheet = CandidateFactSheet.Personal(work, education, certificates, jobs, scoreLines, confirmed);
+                sheet.RememberOutlook(outlookLines);
+                sheet.RememberHonestAdvice(adviceLines);
+                sb.AppendLine();
+                sb.Append(sheet.ToPrompt());
+                return (sb.ToString(), sheet);
             }
 
             if (string.Equals(context.Role, JobsyRoles.SalesManager, StringComparison.Ordinal))
@@ -1019,10 +1350,10 @@ Verbetervoorstellen:
                 var dash = await _salesDashboard.GetDashboardAsync(context.UserId, cancellationToken);
                 if (dash is null)
                 {
-                    return "Salesmanager facts: onboarding incomplete / no dashboard.";
+                    return ("Salesmanager facts: onboarding incomplete / no dashboard.", null);
                 }
 
-                return $"Salesmanager facts (own account only): tracking={dash.TrackingCode}; uninvoicedExVat={dash.UninvoicedExVat}; outstandingIssuedExVat={dash.OutstandingIssuedExVat}; suppliers={dash.Suppliers.Count}";
+                return ($"Salesmanager facts (own account only): tracking={dash.TrackingCode}; uninvoicedExVat={dash.UninvoicedExVat}; outstandingIssuedExVat={dash.OutstandingIssuedExVat}; suppliers={dash.Suppliers.Count}", null);
             }
 
             if (string.Equals(context.Role, JobsyRoles.Admin, StringComparison.Ordinal)
@@ -1043,7 +1374,7 @@ Verbetervoorstellen:
                     }
                 }
 
-                return sb.ToString();
+                return (sb.ToString(), null);
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -1051,7 +1382,348 @@ Verbetervoorstellen:
             _logger.LogDebug(ex, "Failed to build assistant scoped facts.");
         }
 
-        return "No extra facts.";
+        return ("No extra facts.", null);
+    }
+
+    private static List<string> WorkEntries(CandidatePreferencesDto? prefs)
+        => (prefs?.Employers ?? [])
+            .Select(CandidateFactSheet.FormatWorkEntry)
+            .Where(role => !string.IsNullOrWhiteSpace(role))
+            .Cast<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(4)
+            .ToList();
+
+    private async Task AppendTestFactsAsync(
+        StringBuilder sb,
+        Guid userId,
+        string? language,
+        CandidatePreferencesDto? prefs,
+        List<string> scoreLines,
+        List<string> jobs,
+        List<string> outlookLines,
+        List<string> adviceLines,
+        CancellationToken cancellationToken)
+    {
+        var lang = JobsyLanguages.Normalize(language);
+        var completed = new List<string>();
+        var competency = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var competenceDeep = await CompletedDeepAsync(userId, AssessmentKind.Competence, cancellationToken);
+        var deepTraits = competenceDeep is null
+            ? []
+            : StoredDeepScores.CompetenceTraits(competenceDeep.Status, competenceDeep.AnswersJson, competenceDeep.ReportJson);
+        if (deepTraits.Count > 0)
+        {
+            completed.Add(TestName(lang, "work"));
+            var line = string.Join(", ", deepTraits.Take(3).Select(trait =>
+                $"{DimensionLabels.For(trait.Domain, lang)} {trait.Score}%"));
+            sb.Append("competenceTop3=").Append(line).Append("; ");
+            scoreLines.Add("competenceTop3=" + line);
+        }
+        else if (competency is not null && CandidateCompetencyStatuses.IsCompleted(competency.Status))
+        {
+            completed.Add(TestName(lang, "work"));
+            var top = new (string Label, int Score)[]
+                {
+                    (DimensionLabels.For(CompetencyTestCatalog.Samenwerken, lang), competency.SamenwerkenPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Resultaatgerichtheid, lang), competency.ResultaatgerichtheidPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Stressbestendigheid, lang), competency.StressbestendigheidPercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Innovatie, lang), competency.InnovatiePercent ?? 0),
+                    (DimensionLabels.For(CompetencyTestCatalog.Extraversie, lang), competency.ExtraversiePercent ?? 0)
+                }
+                .Where(x => x.Label.Length > 0)
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .Take(3);
+            var line = string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%"));
+            sb.Append("competenceTop3=").Append(line).Append("; ");
+            scoreLines.Add("competenceTop3=" + line);
+        }
+
+        var career = await _db.CandidateCareerInterests.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var riasec = await PreferredCareerScoresAsync(userId, cancellationToken)
+            ?? CareerTestCatalog.CompletedScoresOrNull(
+                career?.Status,
+                career?.RealisticPercent,
+                career?.InvestigativePercent,
+                career?.ArtisticPercent,
+                career?.SocialPercent,
+                career?.EnterprisingPercent,
+                career?.ConventionalPercent);
+        if (riasec is { IsComplete: true })
+        {
+            completed.Add(TestName(lang, "career"));
+            var top = CareerTestCatalog.RiasecCodes
+                .Select(code => (Label: DimensionLabels.For(code, lang), Score: riasec.Get(code)))
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .Take(3);
+            var line = string.Join(", ", top.Select(x => $"{x.Label} {x.Score}%"));
+            sb.Append("directionsTop3=").Append(line).Append("; ");
+            scoreLines.Add("directionsTop3=" + line);
+        }
+
+        var culture = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        var cultureDeep = await CompletedDeepAsync(userId, AssessmentKind.Culture, cancellationToken);
+        var deepCulture = cultureDeep is null
+            ? null
+            : StoredDeepScores.Culture(cultureDeep.Status, cultureDeep.AnswersJson, cultureDeep.ReportJson);
+        if (deepCulture is { IsComplete: true } || (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status)))
+        {
+            completed.Add(TestName(lang, "culture"));
+            var topCulture = CulturePersonalityCatalog.CultureDimensionCodes
+                .Select(code => (
+                    Label: DimensionLabels.For(code, lang),
+                    Score: deepCulture is { IsComplete: true }
+                        ? deepCulture.Get(code)
+                        : ReadCultureScore(culture!, code)))
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .First();
+            sb.Append($"cultureTop={topCulture.Label} {topCulture.Score}%; ");
+            scoreLines.Add($"cultureTop={topCulture.Label} {topCulture.Score}%");
+        }
+
+        var values = await _db.CandidateValuesProfiles.AsNoTracking()
+            .FirstOrDefaultAsync(v => v.UserId == userId, cancellationToken);
+        var valuesDeep = await CompletedDeepAsync(userId, AssessmentKind.Values, cancellationToken);
+        var deepValues = valuesDeep is null
+            ? null
+            : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
+        if (deepValues is { IsComplete: true } || (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status)))
+        {
+            completed.Add(TestName(lang, "values"));
+            var topValue = SchwartzValuesCatalog.CategoryCodes
+                .Select(code => (
+                    Label: DimensionLabels.For(code, lang),
+                    Score: deepValues is { IsComplete: true } ? deepValues.Get(code) : ReadValueScore(values!, code)))
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.Label, StringComparer.OrdinalIgnoreCase)
+                .First();
+            sb.Append($"valuesTop={topValue.Label} {topValue.Score}%; ");
+            scoreLines.Add($"valuesTop={topValue.Label} {topValue.Score}%");
+        }
+
+        var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .Where(d => d.UserId == userId && d.Status == CandidateDeepAnalysisStatuses.Completed)
+            .Select(d => d.Kind)
+            .ToListAsync(cancellationToken);
+        var completedLine = completed.Count == 0 ? "none" : string.Join(", ", completed);
+        sb.Append("completedTests=").Append(completedLine).Append("; ");
+        scoreLines.Add("completedTests=" + completedLine);
+        var deepLine = deep.Count == 0
+            ? "deepTests=none (no extra long test; this does not mean completedTests is empty)"
+            : "deepTests=" + string.Join(",", deep.Select(kind => DeepTestName(lang, kind)));
+        sb.Append(deepLine).Append("; ");
+        scoreLines.Add(deepLine);
+
+        var education = await EducationLabelAsync(userId, cancellationToken);
+        if (riasec is { IsComplete: true })
+        {
+            var listed = CareerCompassBuilder.Listed(riasec, education).ToList();
+            if (listed.Count > 0)
+            {
+                sb.Append("topOccupations=")
+                    .Append(string.Join(", ", listed.Select(m => $"{OccupationTitles.ForChat(m.Title, lang)} {m.Percent}%")))
+                    .Append("; ");
+                jobs.AddRange(listed.Select(m => m.Title));
+            }
+
+            foreach (var job in listed)
+            {
+                var sourced = Jobsy.Core.Careers.OccupationOutlook.Shared.Get(job.EscoId);
+                if (!string.IsNullOrWhiteSpace(sourced.DemandLine))
+                {
+                    outlookLines.Add(sourced.DemandLine);
+                }
+
+                if (!string.IsNullOrWhiteSpace(sourced.AiLine))
+                {
+                    outlookLines.Add(sourced.AiLine);
+                }
+
+                var advice = Jobsy.Core.Careers.HonestAdviceService.Shared.Get(job.EscoId, lang);
+                if (advice is not null)
+                {
+                    adviceLines.Add(advice.Text);
+                }
+            }
+        }
+
+        foreach (var employer in prefs?.Employers ?? [])
+        {
+            var tip = Jobsy.Core.Careers.CurrentJobOutlook.TryCreate(employer, riasec, education);
+            outlookLines.AddRange(Jobsy.Core.Careers.CurrentJobOutlook.QuoteLines(tip));
+            if (!string.IsNullOrWhiteSpace(employer.EscoId))
+            {
+                var advice = Jobsy.Core.Careers.HonestAdviceService.Shared.Get(employer.EscoId, lang);
+                if (advice is not null)
+                {
+                    adviceLines.Add(advice.Text);
+                }
+            }
+            foreach (var job in tip?.Adjacent ?? [])
+            {
+                jobs.Add(job.Title);
+            }
+        }
+    }
+
+    private static string TestName(string lang, string key) => (lang, key) switch
+    {
+        ("en", "work") => "How you work",
+        ("en", "career") => "Job test",
+        ("en", "culture") => "Culture and personality",
+        ("en", "values") => "Values at work",
+        ("pl", "work") => "Jak pracujesz",
+        ("pl", "career") => "Test zawodów",
+        ("pl", "culture") => "Kultura i osobowość",
+        ("pl", "values") => "Wartości w pracy",
+        ("ro", "work") => "Cum lucrezi",
+        ("ro", "career") => "Testul de meserii",
+        ("ro", "culture") => "Cultură și personalitate",
+        ("ro", "values") => "Valori la muncă",
+        ("ar", "work") => "كيف تعمل",
+        ("ar", "career") => "اختبار المهن",
+        ("ar", "culture") => "الثقافة والشخصية",
+        ("ar", "values") => "قيم في العمل",
+        (_, "work") => "Test: hoe je werkt",
+        (_, "career") => "Beroepentest",
+        (_, "culture") => "Cultuur en persoonlijkheid",
+        _ => "Waarden op werk"
+    };
+
+    private static string DeepTestName(string lang, AssessmentKind kind)
+    {
+        var extra = lang switch
+        {
+            "en" => "long",
+            "pl" => "długi",
+            "ro" => "lung",
+            "ar" => "مطوّل",
+            _ => "uitgebreid"
+        };
+        var name = kind switch
+        {
+            AssessmentKind.Career => TestName(lang, "career"),
+            AssessmentKind.Culture => TestName(lang, "culture"),
+            AssessmentKind.Values => TestName(lang, "values"),
+            _ => TestName(lang, "work")
+        };
+        return extra + " " + name;
+    }
+
+    private static int ReadCultureScore(CandidateCulturePersonalityProfile row, string code)
+        => code switch
+        {
+            _ when string.Equals(code, CulturePersonalityCatalog.Autonomy, StringComparison.OrdinalIgnoreCase) => row.AutonomyPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Informal, StringComparison.OrdinalIgnoreCase) => row.InformalPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Collaboration, StringComparison.OrdinalIgnoreCase) => row.CollaborationPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Flexibility, StringComparison.OrdinalIgnoreCase) => row.FlexibilityPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.Innovation, StringComparison.OrdinalIgnoreCase) => row.InnovationPercent ?? 0,
+            _ when string.Equals(code, CulturePersonalityCatalog.PeopleFirst, StringComparison.OrdinalIgnoreCase) => row.PeopleFirstPercent ?? 0,
+            _ => 0
+        };
+
+    private static int ReadValueScore(CandidateValuesProfile row, string code)
+        => code switch
+        {
+            _ when string.Equals(code, SchwartzValuesCatalog.Autonomy, StringComparison.OrdinalIgnoreCase) => row.AutonomyPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Connection, StringComparison.OrdinalIgnoreCase) => row.ConnectionPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Achievement, StringComparison.OrdinalIgnoreCase) => row.AchievementPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Stability, StringComparison.OrdinalIgnoreCase) => row.StabilityPercent ?? 0,
+            _ when string.Equals(code, SchwartzValuesCatalog.Impact, StringComparison.OrdinalIgnoreCase) => row.ImpactPercent ?? 0,
+            _ => 0
+        };
+
+    private static void AppendPreferenceFacts(StringBuilder sb, CandidatePreferencesDto? prefs, string? dream, DateOnly? availableFrom)
+    {
+        if (!string.IsNullOrWhiteSpace(dream))
+        {
+            sb.Append($"dream={dream.Trim()}; ");
+        }
+
+        if (prefs is null)
+        {
+            return;
+        }
+
+        var city = HomeAddressCity.From(prefs.HomeAddress);
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            sb.Append($"city={city}; ");
+        }
+
+        if (!string.IsNullOrWhiteSpace(prefs.PreferredTransport))
+        {
+            sb.Append($"transport={prefs.PreferredTransport.Trim()}; ");
+        }
+
+        if (prefs.MaxTravelMinutes is int minutes)
+        {
+            sb.Append($"maxTravelMinutes={minutes}; ");
+        }
+
+        if (prefs.Educations is { Count: > 0 })
+        {
+            sb.Append($"education={string.Join(", ", prefs.Educations)}; ");
+        }
+
+        if (!string.IsNullOrWhiteSpace(prefs.EducationDirection))
+        {
+            sb.Append($"direction={prefs.EducationDirection.Trim()}; ");
+        }
+
+        var roles = (prefs.Employers ?? [])
+            .Select(CandidateFactSheet.FormatWorkEntry)
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Cast<string>();
+        var experience = string.Join(", ", roles);
+        sb.Append(experience.Length > 0 ? $"experience={experience}; " : "experience=none; ");
+        if (prefs.Certificates is { Count: > 0 })
+        {
+            var names = prefs.Certificates
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .Select(CandidateFactSheet.FormatCertificate);
+            var listed = string.Join(", ", names);
+            if (listed.Length > 0)
+            {
+                sb.Append($"certificates={listed}; ");
+            }
+        }
+        else
+        {
+            sb.Append("certificates=none; ");
+        }
+
+        if (prefs.MinHoursPerWeek is not null || prefs.MaxHoursPerWeek is not null)
+        {
+            sb.Append($"hoursPerWeek={prefs.MinHoursPerWeek?.ToString() ?? "?"}-{prefs.MaxHoursPerWeek?.ToString() ?? "?"}; ");
+        }
+
+        sb.Append(availableFrom is DateOnly from && from > DateOnly.FromDateTime(DateTime.UtcNow)
+            ? $"availableFrom={from:yyyy-MM-dd}; "
+            : "availability=per direct; ");
+    }
+
+    private static CandidatePreferencesDto? ParseAssistantPreferences(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<CandidatePreferencesDto>(json, JsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private static string BuildSystemPrompt(AssistantChatContext context, string languageName, string facts)
@@ -1060,7 +1732,9 @@ Verbetervoorstellen:
         var scope = role switch
         {
             JobsyRoles.Candidate =>
-                "You help a JOBSEEKER on Lobsy only: listen to their question and answer from their own profile data (applications, likes, shares, open-for-work, preferences) OR search vacancies by keywords that appear in vacancy title/description (e.g. chauffeur). Never invent vacancies. Never access other users’ data.",
+                "You help a JOBSEEKER on Lobsy only: answer from their own profile (preferences, experience, education, dream job, tests, career plan). " +
+                "If the scoped facts say employers are OFF, do not mention vacancies, applications, likes or employer contact, and do not claim you lack their preferences when the facts include them. " +
+                "Never invent vacancies. Never access other users’ data. Never send the candidate's data to an employer.",
             JobsyRoles.SalesManager =>
                 "You help a SALESMANAGER on Lobsy only: their referrals, commissions, invoices, onboarding, tracking code. Stay inside their account. No candidate personal NAW data of third parties.",
             JobsyRoles.Admin =>
@@ -1070,17 +1744,38 @@ Verbetervoorstellen:
         };
 
         return
-            $"You are Lobsy, a helpful lobster assistant. Reply in {languageName}. Be concise (max ~120 words). {scope} " +
+            $"You are Lobsy, a helpful lobster assistant. Reply in {languageName}, plain B1. " +
+            "Plain text only: no markdown, no **, no __, no # headings, and no lines that start with a dash. Maximum 5 short sentences. " +
+            $"{scope} " +
             "Answer using ONLY the scoped facts below and general Lobsy product knowledge. " +
+            "The Feitenlijst is the only source for this person's tests, work, education and certificates. " +
+            "Never mention an employer, sector, year, diploma or work experience that is not on that list. " +
+            "If it says werkervaring: geen or experience=none, say nothing about past work. " +
+            "If a personal fact is missing, say you do not know. Do not guess. " +
+            "Never say tests are missing when the facts list completed tests, scores or occupations. " +
+            "Zeg niet wat de persoon leuk vindt (dieren, planten, koken, you like, you enjoy, je werkt graag) tenzij het in de feiten staat. " +
+            "Gebruik nooit de woorden graag, leuk of fijn. " +
+            "Leg een beroep uit met alleen de richting van dat beroep, niet met een andere hoge score. " +
+            "Leg een score uit als testuitslag: 'je scoort' of 'uit je test blijkt'. Nooit 'je werkt graag' of 'you like'. " +
+            "Job lists and comparisons must use only topOccupations. Do not name Teamleider, leidinggevende, ploegleider or voorman unless that title is in topOccupations. " +
+            "You may compare catalogue jobs that are not on the candidate's own list. Explain them with the scores. Do not say you do not know those jobs. " +
+            "Zeg niet dat een opleiding is afgerond tenzij dat in de feiten staat. " +
+            "completedTests is the list of finished tests. deepTests=none means there is no extra long test, not that the person did nothing. " +
+            "Never use the words Riasec, RIASEC, Career-test, Holland, ISCO, ESCO, O*NET, gradient or werksterkte. Use only labels that appear in the facts. " +
+            "A sentence about demand until 2030 or about AI changing tasks may only be copied from the Vooruitblik lines. Do not invent another outlook. " +
+            "Honest advice about a job may only be copied from the Eerlijk advies lines. Do not invent another opinion about how AI changes that work. " +
             "If the user asks something outside Lobsy or outside their role permissions, politely refuse. " +
             $"Scoped facts:\n{facts}";
     }
 
-    private static string Greeting(AssistantChatContext context)
+    private static string Greeting(AssistantChatContext context, bool employersOn = true)
     {
         var lang = JobsyLanguages.Normalize(context.Language);
         return context.Role switch
         {
+            JobsyRoles.Candidate when !employersOn => lang == "en"
+                ? "Hi! I’m Lobsy. Ask me about your passport, tests or career plan. Jobs and applications come later."
+                : "Hoi! Ik ben Lobsy. Vraag me naar je paspoort, tests of loopbaanplan. Banen en sollicitaties komen later.",
             JobsyRoles.Candidate => lang == "en"
                 ? "Hi! I’m Lobsy. Ask me anything in your profile (applications, likes), or search vacancies by keyword (e.g. chauffeur)."
                 : "Hoi! Ik ben Lobsy. Stel me elke vraag binnen jouw profiel (sollicitaties, likes), of zoek vacatures op trefwoord (bijv. chauffeur).",
@@ -1096,32 +1791,88 @@ Verbetervoorstellen:
         };
     }
 
-    private static string FallbackHelp(AssistantChatContext context)
+    private static string UnknownFactReply(AssistantChatContext context)
+    {
+        var lang = JobsyLanguages.Normalize(context.Language);
+        return InLang(lang,
+            "Dat staat niet in je gegevens. Ik weet het niet en vul het niet in.",
+            "That is not in your details. I do not know and I will not guess.",
+            "Tego nie ma w twoich danych. Nie wiem i nie zgaduję.",
+            "Asta nu este în datele tale. Nu știu și nu ghicesc.",
+            "هذا ليس في بياناتك. لا أعرف ولن أخمن.");
+    }
+
+    private static string FallbackHelp(AssistantChatContext context, bool employersOn = true)
     {
         var lang = JobsyLanguages.Normalize(context.Language);
         return context.Role switch
         {
-            JobsyRoles.Candidate => lang == "en"
-                ? "I can search vacancies by keyword (e.g. “chauffeur”), explain how Lobsy works, or answer questions about your profile and applications."
-                : "Ik kan vacatures zoeken op trefwoord (bijv. “chauffeur”), uitleggen hoe Lobsy werkt, of vragen beantwoorden over jouw profiel en sollicitaties.",
-            JobsyRoles.SalesManager => lang == "en"
-                ? "Try asking about your commissions, referred suppliers, or invoices."
-                : "Probeer te vragen naar je commissies, doorverwezen leveranciers of facturen.",
-            JobsyRoles.Admin => lang == "en"
-                ? "Try asking how often Lobsy was visited today, which sales manager is most active, or for a KPI overview."
-                : "Probeer te vragen hoe vaak Lobsy vandaag is bezocht, welke salesmanager het meest actief is, of om een KPI-overzicht.",
-            _ => lang == "en"
-                ? "Try asking for your KPI overview, the vacancy with the fewest/most clicks, active vacancies, or tips for low traction."
-                : "Probeer te vragen naar je KPI-overzicht, de vacature met de minste/meeste clicks, actieve vacatures, of tips bij weinig tractie."
+            JobsyRoles.Candidate when !employersOn => InLang(lang,
+                "Ik leg uit hoe Lobsy werkt en antwoord vanuit je profiel: voorkeuren, ervaring, opleiding en je loopbaanplan. Banen komen later.",
+                "I can explain how Lobsy works and answer from your profile: preferences, experience, education and your career plan. Jobs come later.",
+                "Wyjaśniam, jak działa Lobsy, i odpowiadam z twojego profilu: preferencje, doświadczenie, nauka i plan kariery. Oferty przyjdą później.",
+                "Îți explic cum funcționează Lobsy și răspund din profilul tău: preferințe, experiență, studii și planul de carieră. Joburile vin mai târziu.",
+                "أشرح كيف يعمل لوبسي وأجيب من ملفك: تفضيلاتك وخبرتك ودراستك وخطة مسارك. الوظائف تأتي لاحقاً."),
+            JobsyRoles.Candidate => InLang(lang,
+                "Ik kan vacatures zoeken op trefwoord (bijv. chauffeur), uitleggen hoe Lobsy werkt, of vragen beantwoorden over jouw profiel en sollicitaties.",
+                "I can search vacancies by keyword (for example chauffeur), explain how Lobsy works, or answer questions about your profile and applications.",
+                "Mogę szukać ofert po słowie (na przykład kierowca), wyjaśnić jak działa Lobsy albo odpowiedzieć o twoim profilu i aplikacjach.",
+                "Pot căuta joburi după cuvânt (de exemplu șofer), explica cum funcționează Lobsy sau răspunde despre profilul și candidaturile tale.",
+                "يمكنني البحث عن وظائف بكلمة، أو شرح لوبسي، أو الإجابة عن ملفك وطلباتك."),
+            JobsyRoles.SalesManager => InLang(lang,
+                "Probeer te vragen naar je commissies, doorverwezen leveranciers of facturen.",
+                "Try asking about your commissions, referred suppliers, or invoices.",
+                "Zapytaj o prowizje, poleconych dostawców albo faktury.",
+                "Întreabă despre comisioane, furnizorii recomandați sau facturi.",
+                "اسأل عن عمولاتك أو الموردين المحالين أو الفواتير."),
+            JobsyRoles.Admin => InLang(lang,
+                "Probeer te vragen hoe vaak Lobsy vandaag is bezocht, welke salesmanager het meest actief is, of om een KPI-overzicht.",
+                "Try asking how often Lobsy was visited today, which sales manager is most active, or for a KPI overview.",
+                "Zapytaj, jak często dziś odwiedzano Lobsy, który opiekun sprzedaży jest najaktywniejszy, albo o przegląd KPI.",
+                "Întreabă cât de des a fost vizitat Lobsy azi, care manager de vânzări e cel mai activ, sau un rezumat KPI.",
+                "اسأل كم مرة زار الناس لوبسي اليوم، أو أي مدير مبيعات أنشط، أو ملخص المؤشرات."),
+            _ => InLang(lang,
+                "Probeer te vragen naar je KPI-overzicht, de vacature met de minste of meeste clicks, actieve vacatures, of tips bij weinig tractie.",
+                "Try asking for your KPI overview, the vacancy with the fewest or most clicks, active vacancies, or tips for low traction.",
+                "Zapytaj o przegląd KPI, ofertę z najmniejszą lub największą liczbą kliknięć, aktywne oferty albo wskazówki przy małym ruchu.",
+                "Întreabă despre rezumatul KPI, anunțul cu cele mai puține sau cele mai multe clicuri, anunțurile active sau sfaturi când e puțină tracțiune.",
+                "اسأل عن ملخص المؤشرات، أو الإعلان الأقل أو الأكثر نقراً، أو الإعلانات النشطة، أو نصائح عند قلة التفاعل.")
         };
     }
 
     private static string RefuseMessage(AssistantChatContext context)
     {
         var lang = JobsyLanguages.Normalize(context.Language);
-        return lang == "en"
-            ? "I can only help with Lobsy topics within your role. Please ask about jobs, applications, KPIs, or your account."
-            : "Ik help alleen met Lobsy-onderwerpen binnen jouw rol. Vraag gerust naar vacatures, sollicitaties, KPI’s of je account.";
+        return InLang(lang,
+            "Ik help alleen met Lobsy-onderwerpen binnen jouw rol. Vraag gerust naar je profiel, tests of je account.",
+            "I can only help with Lobsy topics within your role. Ask about your profile, tests, KPIs, or your account.",
+            "Pomagam tylko w tematach Lobsy w twojej roli. Pytaj o profil, testy, KPI albo konto.",
+            "Ajut doar cu subiecte Lobsy din rolul tău. Întreabă despre profil, teste, KPI sau cont.",
+            "أساعد فقط في مواضيع لوبسي ضمن دورك. اسأل عن ملفك أو اختباراتك أو المؤشرات أو حسابك.");
+    }
+
+    private static string InLang(string lang, string nl, string en, string pl, string ro, string ar)
+        => lang switch
+        {
+            "en" => en,
+            "pl" => pl,
+            "ro" => ro,
+            "ar" => ar,
+            _ => nl
+        };
+
+    /// <summary>Mistral often returns markdown. The bubble shows plain text.</summary>
+    public static string StripMarkup(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "";
+        }
+
+        var stripped = text.Replace("**", "", StringComparison.Ordinal).Replace("__", "", StringComparison.Ordinal);
+        stripped = Regex.Replace(stripped, @"(?m)^#{1,6}\s*", "");
+        stripped = Regex.Replace(stripped, @"(?m)^-\s+", "");
+        return stripped.Trim();
     }
 
     private static string RefuseNaw(AssistantChatContext context)
@@ -1195,31 +1946,371 @@ Verbetervoorstellen:
     /// </summary>
     private static bool IsVacancySearchIntent(string text, string? workType, string? jobQuery)
     {
-        var mentionsJobs = ContainsAny(text,
-            "vacature", "vacatures", "baan", "banen", "job", "jobs", "werk zoek", "zoek werk");
+        // Advice such as "dichter bij een baan in de zorg" or "which jobs suit me"
+        // is not a vacancy search. Require a search verb or the word vacature.
+        var explicitVacancy = ContainsAny(text, "vacature", "vacatures");
         var searchVerb = ContainsAny(text, "zoek", "search", "toon", "show", "vind", "find");
+        if (!explicitVacancy && !searchVerb)
+        {
+            return false;
+        }
+
+        if (explicitVacancy && searchVerb)
+        {
+            return true;
+        }
+
         var jobWord = !string.IsNullOrWhiteSpace(jobQuery)
                       || ContainsAny(text, "heftruck", "reachtruck", "chauffeur", "orderpicker", "barista", "plukker",
-                          "magazijnmedewerker", "kasmedewerker");
-
-        if (mentionsJobs && (searchVerb || jobWord || workType is not null))
-        {
-            return true;
-        }
-
-        if (searchVerb && (jobWord || workType is not null))
-        {
-            return true;
-        }
-
-        // Bare job title / sector: "chauffeur", "horeca vacatures"
-        if (jobWord || (workType is not null && mentionsJobs))
-        {
-            return true;
-        }
-
-        return false;
+                          "magazijnmedewerker", "kasmedewerker", "baan", "banen", "job", "jobs", "werk");
+        return jobWord || workType is not null;
     }
+
+    private async Task LogChatFailureAsync(string message, CancellationToken cancellationToken)
+    {
+        if (_platformLog is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _platformLog.WriteAsync(
+                "ai.chat",
+                message,
+                supportCode: null,
+                detail: null,
+                PlatformLogLevel.Warning,
+                cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Assistant failure log failed.");
+        }
+    }
+
+    private async Task<IReadOnlyList<(string Code, int Score)>> CompetenceTraitsAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var deep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .FirstOrDefaultAsync(
+                d => d.UserId == userId
+                     && d.Kind == AssessmentKind.Competence
+                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
+        if (deep is not null)
+        {
+            var report = CompetenceDeepReportJson.Deserialize(deep.ReportJson);
+            if (report?.Traits is { Count: > 0 })
+            {
+                return report.Traits
+                    .Select(trait => (trait.Domain, trait.Score))
+                    .ToList();
+            }
+
+            var answers = DeepAnalysisCatalog.ParseAnswersJson(deep.AnswersJson);
+            if (answers.Count > 0)
+            {
+                return DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Competence)
+                    .Select(domain => (domain.Domain, domain.Percent))
+                    .ToList();
+            }
+        }
+
+        var basic = await _db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (basic is null || !CandidateCompetencyStatuses.IsCompleted(basic.Status))
+        {
+            return [];
+        }
+
+        return
+        [
+            (CompetencyTestCatalog.Samenwerken, basic.SamenwerkenPercent ?? 0),
+            (CompetencyTestCatalog.Resultaatgerichtheid, basic.ResultaatgerichtheidPercent ?? 0),
+            (CompetencyTestCatalog.Stressbestendigheid, basic.StressbestendigheidPercent ?? 0),
+            (CompetencyTestCatalog.Innovatie, basic.InnovatiePercent ?? 0),
+            (CompetencyTestCatalog.Extraversie, basic.ExtraversiePercent ?? 0)
+        ];
+    }
+
+    private static int? WholeHours(decimal? hours)
+        => hours is decimal value ? (int)Math.Round(value, MidpointRounding.AwayFromZero) : null;
+
+    private async Task<CandidateDeepAnalysis?> CompletedDeepAsync(
+        Guid userId,
+        AssessmentKind kind,
+        CancellationToken cancellationToken)
+        => await _db.CandidateDeepAnalyses.AsNoTracking()
+            .FirstOrDefaultAsync(
+                d => d.UserId == userId
+                     && d.Kind == kind
+                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
+
+    private async Task<RiasecScores?> PreferredCareerScoresAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var deep = await CompletedDeepAsync(userId, AssessmentKind.Career, cancellationToken);
+        return deep is null ? null : StoredDeepScores.Career(deep.Status, deep.AnswersJson, deep.ReportJson);
+    }
+
+    private async Task<AssistantChatResult?> CandidateProfileFactsAsync(
+        AssistantChatContext context,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        if (!CandidateProfileFacts.Handles(question))
+        {
+            return null;
+        }
+
+        var lang = JobsyLanguages.Normalize(context.Language);
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+        var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+        var valuesDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Values, cancellationToken);
+        var valuesScores = valuesDeep is null
+            ? null
+            : StoredDeepScores.Values(valuesDeep.Status, valuesDeep.AnswersJson, valuesDeep.ReportJson);
+        if (valuesScores is not { IsComplete: true })
+        {
+            var values = await _db.CandidateValuesProfiles.AsNoTracking()
+                .FirstOrDefaultAsync(v => v.UserId == context.UserId, cancellationToken);
+            if (values is not null && CandidateCompetencyStatuses.IsCompleted(values.Status))
+            {
+                valuesScores = new SchwartzValuesScores(
+                    values.AutonomyPercent,
+                    values.ConnectionPercent,
+                    values.AchievementPercent,
+                    values.StabilityPercent,
+                    values.ImpactPercent);
+            }
+        }
+
+        var cultureDeep = await CompletedDeepAsync(context.UserId, AssessmentKind.Culture, cancellationToken);
+        var cultureScores = cultureDeep is null
+            ? null
+            : StoredDeepScores.Culture(cultureDeep.Status, cultureDeep.AnswersJson, cultureDeep.ReportJson);
+        if (cultureScores is not { IsComplete: true })
+        {
+            var culture = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+            if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
+            {
+                cultureScores = new CulturePersonalityScores(
+                    culture.AutonomyPercent,
+                    culture.InformalPercent,
+                    culture.CollaborationPercent,
+                    culture.FlexibilityPercent,
+                    culture.InnovationPercent,
+                    culture.PeopleFirstPercent,
+                    culture.OpennessPercent,
+                    culture.ConscientiousnessPercent,
+                    culture.ExtraversionPercent,
+                    culture.AgreeablenessPercent,
+                    culture.EmotionalStabilityPercent);
+            }
+        }
+
+        var valuesLine = valuesScores is { IsComplete: true }
+            ? DimensionRanking.Rank(
+                    SchwartzValuesCatalog.CategoryCodes.Select(code => (code, (int?)valuesScores.Get(code))),
+                    DimensionRanking.ValueTieBreak)
+                .Select(item => DimensionLabels.For(item.Code, lang))
+                .FirstOrDefault()
+            : null;
+        var cultureWords = PassportDnaWords.Culture(cultureScores, lang, 1);
+        var cultureLine = cultureWords.Count == 0 ? null : cultureWords[0];
+        var reply = CandidateProfileFacts.TryReply(
+            lang,
+            question,
+            WholeHours(prefs?.MinHoursPerWeek),
+            WholeHours(prefs?.MaxHoursPerWeek),
+            user?.AvailableFromDate,
+            DateOnly.FromDateTime(DateTime.UtcNow),
+            valuesLine,
+            cultureLine);
+        return string.IsNullOrWhiteSpace(reply)
+            ? null
+            : new AssistantChatResult(CandidateCoachPolish.Apply(reply), false, []);
+    }
+
+    private async Task<AssistantChatResult?> CandidateJobAdviceAsync(
+        AssistantChatContext context,
+        string question,
+        CancellationToken cancellationToken)
+    {
+        if (!CandidateJobAdvice.Handles(question))
+        {
+            return null;
+        }
+
+        var scores = await PreferredCareerScoresAsync(context.UserId, cancellationToken);
+        if (scores is not { IsComplete: true })
+        {
+            var career = await _db.CandidateCareerInterests.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UserId == context.UserId, cancellationToken);
+            scores = CareerTestCatalog.CompletedScoresOrNull(
+                career?.Status,
+                career?.RealisticPercent,
+                career?.InvestigativePercent,
+                career?.ArtisticPercent,
+                career?.SocialPercent,
+                career?.EnterprisingPercent,
+                career?.ConventionalPercent);
+        }
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+        var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+        var education = EducationText(prefs);
+        var work = WorkEntries(prefs);
+        var certificates = (prefs?.Certificates ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+            .Select(item => item.Name.Trim())
+            .ToList();
+        var competence = await CompetenceTraitsAsync(context.UserId, cancellationToken);
+        if (scores is not { IsComplete: true }
+            && !CandidateJobAdvice.LooksLikeWorkClaim(question)
+            && !CandidateJobAdvice.LooksLikeEmployerName(question))
+        {
+            return null;
+        }
+
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        var reply = CandidateJobAdvice.TryReply(
+            context.Language,
+            question,
+            scores,
+            education,
+            work.Count > 0,
+            work,
+            competence,
+            certificates,
+            employersOn);
+        return string.IsNullOrWhiteSpace(reply) ? null : new AssistantChatResult(reply, false, []);
+    }
+
+    private async Task<string?> EducationLabelAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var json = await _db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        return EducationText(ParseAssistantPreferences(json));
+    }
+
+    private static string? EducationText(CandidatePreferencesDto? prefs)
+    {
+        var parts = (prefs?.Educations ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .ToList();
+        if (!string.IsNullOrWhiteSpace(prefs?.EducationDirection))
+        {
+            parts.Add(prefs.EducationDirection.Trim());
+        }
+
+        return parts.Count == 0 ? null : string.Join(" ", parts);
+    }
+
+    private static bool LooksLikeDiplomaQuestion(string text) =>
+        ContainsAny(text,
+            "diploma", "welk diploma", "welke opleiding", "which diploma", "what diploma", "my diploma",
+            "dyplom", "jaki dyplom", "diplomă", "ce diplomă", "شهادة", "ما شهادتي");
+
+    private static bool LooksLikeDreamQuestion(string text) =>
+        ContainsAny(text,
+            "droombaan", "mijn droom", "dream job", "my dream", "wymarzon", "jobul visat", "وظيفة الأحلام", "وظيفة أحلام");
+
+    private async Task<AssistantChatResult> CandidateDiplomaAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
+    {
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == context.UserId, cancellationToken);
+        var prefs = user is null ? null : ParseAssistantPreferences(user.PreferencesJson);
+        var education = (prefs?.Educations ?? [])
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .ToList();
+        var lang = JobsyLanguages.Normalize(context.Language);
+        if (education.Count == 0)
+        {
+            var missing = lang switch
+            {
+                "en" => "That is not in your details.",
+                "pl" => "Tego nie ma w twoich danych.",
+                "ro" => "Asta nu este în datele tale.",
+                "ar" => "هذا ليس في بياناتك.",
+                _ => "Dat staat niet in je gegevens."
+            };
+            return new AssistantChatResult(missing, false, []);
+        }
+
+        var level = string.Join(", ", education);
+        var reply = lang switch
+        {
+            "en" => $"You have {level}",
+            "pl" => $"Masz {level}",
+            "ro" => $"Ai {level}",
+            "ar" => $"لديك {level}",
+            _ => $"Je hebt {level}"
+        };
+        return new AssistantChatResult(reply, false, []);
+    }
+
+    private async Task<AssistantChatResult> CandidateDreamAsync(
+        AssistantChatContext context,
+        CancellationToken cancellationToken)
+    {
+        var dream = await _db.CandidateCareerPlans.AsNoTracking()
+            .Where(p => p.UserId == context.UserId)
+            .Select(p => p.DreamTitle)
+            .FirstOrDefaultAsync(cancellationToken);
+        var lang = JobsyLanguages.Normalize(context.Language);
+        if (string.IsNullOrWhiteSpace(dream))
+        {
+            var empty = lang switch
+            {
+                "en" => "You have not chosen a dream job yet.",
+                "pl" => "Nie wybrałeś jeszcze wymarzonej pracy.",
+                "ro" => "Nu ai ales încă un job de vis.",
+                "ar" => "لم تختر بعد وظيفة الأحلام.",
+                _ => "Je hebt nog geen droombaan gekozen"
+            };
+            return new AssistantChatResult(
+                empty,
+                false,
+                [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/carriere", Label: lang == "en" ? "Career" : "Carrière")]);
+        }
+
+        var title = OccupationTitles.ForChat(dream.Trim(), lang);
+        var reply = lang switch
+        {
+            "en" => $"Your dream job is {title}.",
+            "pl" => $"Twoja wymarzona praca to {title}.",
+            "ro" => $"Jobul tău de vis este {title}.",
+            "ar" => $"وظيفة أحلامك هي {title}.",
+            _ => $"Je droombaan is {title}."
+        };
+        return new AssistantChatResult(
+            reply,
+            false,
+            [new AssistantChatAction(AssistantActionTypes.Navigate, Url: "/carriere", Label: lang == "en" ? "Career" : "Carrière")]);
+    }
+
+    private static bool LooksLikePassportHelp(string text) =>
+        ContainsAny(text,
+            "sterke punt", "sterktes", "strength", "competentie", "vaardigheid",
+            "volgens mijn test", "mijn test", "mijn tests", "waarden", "droombaan", "droom",
+            "loopbaan", "carriere", "carrière", "paspoort", "passport",
+            "wat kun je", "wat kan je", "wat kan lobsy", "what can you",
+            "voor mij doen", "wie ben ik", "who am i");
 
     private static bool LooksLikeCandidateProfile(string text) =>
         ContainsAny(text,
@@ -1493,44 +2584,8 @@ Verbetervoorstellen:
         return cleaned;
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        return !string.IsNullOrWhiteSpace(fromDb)
-            ? fromDb
-            : (string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim());
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl) ? "https://api.openai.com/v1/" : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

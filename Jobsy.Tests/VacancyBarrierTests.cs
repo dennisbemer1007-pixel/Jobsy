@@ -78,14 +78,14 @@ public class VacancyBarrierTests
     public void Pages_wire_vacancy_fit_checklist_and_employer_barrier()
     {
         var root = RepoRoot.Find();
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/RoleFitCheckPanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckPanel.razor"));
         Assert.Contains("Fit.CultureBlock", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.FormalBlock", panel, StringComparison.Ordinal);
         Assert.Contains("ShowUpskill", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.Step1", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.DirectTitle", panel, StringComparison.Ordinal);
 
-        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
+        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
         Assert.Contains("Employer.Barrier.High", create, StringComparison.Ordinal);
         Assert.Contains("BarrierRequirements", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Entities/Vacancy.cs")), StringComparison.Ordinal);
 

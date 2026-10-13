@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "I bepaal preferably zelf the volglubde of my zadania on a dienst.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Self-Direction / Stimulation) — 30\n        (Autonomy"
+ },
+ "2": {
+  "prompt": "I zoek gladly uitdagingen that me net buiten my comflubtzone trekken.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "3": {
+  "prompt": "Pracuję the best jeśli iemi precies zegt wat I stap flub stap moet doen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "4": {
+  "prompt": "I probeer nowy werkwijzen out jeśli the old method traag voelt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "5": {
+  "prompt": "I vind the belangrijk om own keuzes te maken about hoe I a job aanpak.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "6": {
+  "prompt": "Vaste routines geven me mlube calm dan steeds wisselende werkvlubmen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "7": {
+  "prompt": "I wlubd gemotiveerd dolub afwisseling i nowy verantwolubdelijkheden.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "8": {
+  "prompt": "I durf af te wijken of the hibook jeśli that veilig i slimmer is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "9": {
+  "prompt": "I voel me ongemakkelijk jeśli I zelf moet beslissen bez duidelijke leiding.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "10": {
+  "prompt": "I leer sneller jeśli I a zadanie zelf mag inrichten.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "11": {
+  "prompt": "I zoek actief to manieren om my wlubk interessanter te maken.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "12": {
+  "prompt": "I vermijd zadania waarbij I a lot moet improviseren.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "13": {
+  "prompt": "I stel volubstellen doen about hoe we processen kunnen verbeteren.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "14": {
+  "prompt": "I houd of rollen waarin I zelf prilubiteiten mag stellen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "15": {
+  "prompt": "Te a lot vrijheid maakt that I the overzicht verlies.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "16": {
+  "prompt": "I raak onrustig jeśli my wlubk te volubspelbaar wlubdt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "17": {
+  "prompt": "I pak gladly a nowy product, gereedschap lub system zelf out.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "18": {
+  "prompt": "I wacht raczej on goedkeuring dan that I zelf a besluit neem.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "19": {
+  "prompt": "I vind the leuk om współpracownicy te laten zien hoe I iets djeśliferent aanpak.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "20": {
+  "prompt": "I zoek wlubk waarin I kan groeien to mlube own regie.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "21": {
+  "prompt": "I vind the prima jeśli my zadania elk jaar hetzelfde blijven.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "22": {
+  "prompt": "I combineer ideas out verschillende jobs until a own aanpak.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "23": {
+  "prompt": "I wlubd energiek of a dag z onverwachte problemen om on te lossen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "24": {
+  "prompt": "I kies raczej flub bekende zadania dan flub iets that I nog nigdy deed.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "25": {
+  "prompt": "I neem little initiatief totdat iemi the expliciet vraagt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "26": {
+  "prompt": "I vind the belangrijk om my vakinhoudelijk te blijven ontwikkelen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "27": {
+  "prompt": "I raak geïrriteerd jeśli the schedule tussendolub veriert.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "28": {
+  "prompt": "I start raczej nie to iets nieuws totdat iemi the heeft goedgekeurd.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "29": {
+  "prompt": "I voel me thuis in a zespół that vertrouwen geeft om zelf te hielen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Autonomy"
+ },
+ "30": {
+  "prompt": "I volg raczej the stiaard dan that I tijd besteed to verbeterideeën.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Autonomy"
+ },
+ "31": {
+  "prompt": "Pomagam współpracownicy ook jeśli the nie strikt at my own zadanie holubt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Benevolence) — 30\n        (Connection"
+ },
+ "32": {
+  "prompt": "I let on hoe the z people om me heen gaat, nie alleen on the job.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "33": {
+  "prompt": "I houd me raczej afzijdig of persoonlijke gesprekken on the wlubk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "34": {
+  "prompt": "I zlubg that nowy współpracownicy zich snel welkom voelen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "35": {
+  "prompt": "I geef eerlijk compliment jeśli iemi the good doet.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "36": {
+  "prompt": "I vind zespółgevoel less belangrijk dan my own wynik.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "37": {
+  "prompt": "I bied to om a zware dienst about te nemen jeśli a współpracownik the nodig heeft.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "38": {
+  "prompt": "I luister rustig zanim I rozwiązanies proposal.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "39": {
+  "prompt": "I geef little om the atmosphere zolang the wlubk afkomt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "40": {
+  "prompt": "I los spanningen raczej on z a gesprek dan z zwijgen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "41": {
+  "prompt": "I denk mee z klienci lub gasten alsof the familie is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "42": {
+  "prompt": "I vind the lastig om empathie te tonen jeśli iemi emotioneel is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "43": {
+  "prompt": "I deel kennis gladly zodat the hele zespół beter wlubdt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "44": {
+  "prompt": "I check at współpracownicy lub the werkdruk haalbaar is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "45": {
+  "prompt": "Pracuję preferably alleen bez a lot contact.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "46": {
+  "prompt": "I verdedig a współpracownik jeśli iemi onterecht criticism geeft.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "47": {
+  "prompt": "I zie raczej nie wat er privé at współpracownicy speelt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "48": {
+  "prompt": "I geef constructieve feedback on a respectvolle manier.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "49": {
+  "prompt": "I vier successen of the zespół, nie alleen my own.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "50": {
+  "prompt": "I vind the overdreven om elke mistake z zachtheid te bespreken.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "51": {
+  "prompt": "I merk snel jeśli iemi zich buitengesloten voelt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "52": {
+  "prompt": "I bied hulp to bez that iemi the moet vragen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "53": {
+  "prompt": "I vind the lastig om współpracownicy te troosten jeśli the misgaat.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "54": {
+  "prompt": "Langdurige persoonlijke bien z współpracownicy zoek I nie on the wlubk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "55": {
+  "prompt": "I pas my tempo to jeśli a współpracownik extra uitleg nodig heeft.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "56": {
+  "prompt": "I kies eerder flub efficiëntie dan flub a warm gesprek.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "57": {
+  "prompt": "I zlubg that overdrachten tussen ploegen persoonlijk i duidelijk his.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "58": {
+  "prompt": "I vind respectvol omgaan z elkaar net zo belangrijk jeśli kwaliteit.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Connection"
+ },
+ "59": {
+  "prompt": "I zie the wlubk volubal jeśli zadania, nie jeśli relaties.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "60": {
+  "prompt": "I heb little behoefte om współpracownicy persoonlijk te steunen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Connection"
+ },
+ "61": {
+  "prompt": "I wil zien that my inzet meetbaar verschil maakt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "62": {
+  "prompt": "I stel mezelf hoge doelen i wlubk er actief to toe.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "63": {
+  "prompt": "I vind the prima om gemiddeld te presteren zolang the wlubk af is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "64": {
+  "prompt": "I ben trots jeśli I targets lub nlubmen overtreff.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "65": {
+  "prompt": "I zoek feedback om sneller beter te wlubden.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "66": {
+  "prompt": "I vermijd verantwolubdelijkheid flub belangrijke wynikaten.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "67": {
+  "prompt": "I houd my volubtgang at zodat I kan laten zien wat I heb bereikt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "68": {
+  "prompt": "I ga dolub jeśli the tegenzit until the job echt af is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "69": {
+  "prompt": "I laat promotie lub erkenning raczej to ieren.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "70": {
+  "prompt": "I wil the beste zespółlid his on my onderdeel.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "71": {
+  "prompt": "I leer nowy vaardigheden om competitiever te wlubden in my field.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "72": {
+  "prompt": "I vind competitie tussen współpracownicy ongezond.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "73": {
+  "prompt": "I neem extra zadania to jeśli that my groei versnelt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "74": {
+  "prompt": "I analyseer wat good ging na a drukke dag.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "75": {
+  "prompt": "I stel doelen raczej laag zodat I zeker slaag.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "76": {
+  "prompt": "I wil that my wlubk zichtbaar bijdraagt to the omzet lub kwaliteit.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "77": {
+  "prompt": "I zoek rollen waarin prestaties eerlijk wlubden beloond.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "78": {
+  "prompt": "Pracuję raczej bez sclubeblubden lub rankings.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "79": {
+  "prompt": "Planuję my week rond concrete wynikaten that I wil halen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "80": {
+  "prompt": "I voel me gemotiveerd dolub a lastig doel that net haalbaar is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "81": {
+  "prompt": "I geef snel on jeśli succes nie direct komt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "82": {
+  "prompt": "I vergelijk my prestaties raczej nie z eerdere maien.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "83": {
+  "prompt": "I neem leiding jeśli that nodig is om the wynik te redden.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "84": {
+  "prompt": "I vind the nie belangrijk om the beste te his.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "85": {
+  "prompt": "I zoek trainingen that my carrière volubuithelpen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "86": {
+  "prompt": "I vermijd zadania waar my prestatie openlijk wlubdt beolubdeeld.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "87": {
+  "prompt": "I zet dolub until a problem echt opgelost is, nie half.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "88": {
+  "prompt": "I wil that ieren my vakmanschap herkennen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Achievement"
+ },
+ "89": {
+  "prompt": "I kies raczej flub calm dan flub ambitieuze doelen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "90": {
+  "prompt": "Erkenning lub promotie motiveert mij nauwelijks.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Achievement"
+ },
+ "91": {
+  "prompt": "I voel me rustig jeśli agreements about uren i zadania helder his.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Security / Tradition) — 30\n        (Stability"
+ },
+ "92": {
+  "prompt": "Pracuję gladly volgens vaste procedures that bewezen veilig his.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "93": {
+  "prompt": "I vind regels i protocollen volubal belemmerend.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "94": {
+  "prompt": "I zoek a werkgever that langdurige zekerheid biedt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "95": {
+  "prompt": "I houd of a vast zespół i bekende gezichten on the vloer.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "96": {
+  "prompt": "I raak onrustig jeśli er little veriert in my wlubk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "97": {
+  "prompt": "I controleer raczej dubbel dan that I risico neem z onbekende stappen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "98": {
+  "prompt": "I waardeer tradities i vaste routines on the shop flolub.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "99": {
+  "prompt": "I vind volubspelbaarheid saai.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "100": {
+  "prompt": "I wil weten wat er of mij verwacht wlubdt vóór I begin.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "101": {
+  "prompt": "I voel me veilig z duidelijke hierarchy i verantwolubdelijkheden.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "102": {
+  "prompt": "I spring gladly of rol to rol bez vast patroon.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "103": {
+  "prompt": "Planuję financieel i praktisch z a vast inkomen in gedachten.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "104": {
+  "prompt": "I volg veiligheids- i kwaliteitsregels ook jeśli the busy is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "105": {
+  "prompt": "I neem raczej risico dan that I vasthoud to old gewoonten.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "106": {
+  "prompt": "I blijf gladly jaren at a betrouwbare werkgever.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "107": {
+  "prompt": "I vind the belangrijk that agreements tussen ploegen hetzelfde blijven.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "108": {
+  "prompt": "I wlubd ongeduldig of lange instructions i checklists.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "109": {
+  "prompt": "I vertrouw on ervaringen out the verleden om mistakes te volubkomen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "110": {
+  "prompt": "I voel me prettig in a lubganisatie z duidelijke waarden i gewoonten.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "111": {
+  "prompt": "I vind zmiana of beleid zwykle a verbetering.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "112": {
+  "prompt": "I maak me little zlubgen about waar I about a jaar sta in my functie.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "113": {
+  "prompt": "Pracuję the best z a vaste weekplanning.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "114": {
+  "prompt": "I accepteer onzekerheid about my rooster makkelijk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "115": {
+  "prompt": "I houd vast to agreements that the zespół al jaren good doen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "116": {
+  "prompt": "I vind the prima jeśli my zadania elk seizoen djeśliferent his.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "117": {
+  "prompt": "I meld problemen vroeg zodat the calm on the shop flolub bewaard blijft.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "118": {
+  "prompt": "I respecteer the manier waarop senilub współpracownicy the wlubk zawsze hebben gedaan.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Stability"
+ },
+ "119": {
+  "prompt": "I verwerp routines raczej dan that I ze volg.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "120": {
+  "prompt": "Vaste contracten i lange planningen boeien mij little.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Stability"
+ },
+ "121": {
+  "prompt": "I wil that my wlubk iets goeds doet flub the samenleving lub the milieu.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Universalism) — 30\n        (Impact"
+ },
+ "122": {
+  "prompt": "I kies raczej flub a bedrijf z eerlijke i duurzame praktijken.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "123": {
+  "prompt": "I vind the nie belangrijk lub my wlubk a groter doel dient.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "124": {
+  "prompt": "I let on verspilling i probeer that te verminderen on the shop flolub.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "125": {
+  "prompt": "I spreek współpracownicy to on onveilig lub oneerlijk gedrag.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "126": {
+  "prompt": "I focus alleen on my own zadania, nie on maatschappelijke thema's.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "127": {
+  "prompt": "Pomagam gladly klienci that kwetsbaar lub afhankelijk his.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "128": {
+  "prompt": "I vind the zinvol om lokale gemeenschappen te ondersteunen via my wlubk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "129": {
+  "prompt": "I vind idealisme on the wlubk często overdreven.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "130": {
+  "prompt": "I zoek wlubk that bijdraagt to gezondheid, zlubg lub onderwijs.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "131": {
+  "prompt": "I denk na about the ecologische voetafdruk of our processen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "132": {
+  "prompt": "I koop lub verkoop bez me busy te maken about herkomst lub impact.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "133": {
+  "prompt": "I neem verantwolubdelijkheid jeśli ons wlubk negatieve gevolgen heeft.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "134": {
+  "prompt": "I respecteer diversiteit i inclusie in the zespół.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "135": {
+  "prompt": "I vind ethische discussies on the shop flolub tijdverspilling.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "136": {
+  "prompt": "I meld misstien ook jeśli that ongemakkelijk is.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "137": {
+  "prompt": "I wil that our producten lub diensten niemi onnodig schaden.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "138": {
+  "prompt": "I laat maatschappelijke kwesties raczej to management about.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "139": {
+  "prompt": "I kies leveranciers lub partners that netjes z person i milieu omgaan.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "140": {
+  "prompt": "I vind winst belangrijker dan maatschappelijke bijdrage.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "141": {
+  "prompt": "I leg klienci raczej nie out hoe we veilig i eerlijk wlubk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "142": {
+  "prompt": "I zoek verbeteringen that zowel zespół jeśli buurt ten goede komen.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "143": {
+  "prompt": "I vind the nie nodig om na te denken about the lange termijn of ons wlubk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "144": {
+  "prompt": "I behiel iedereen gelijk, ongeacht background.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "145": {
+  "prompt": "I voel me trots jeśli ons bedrijf openheid geeft about impact.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "146": {
+  "prompt": "I negeer raczej signalen of unfairness dan that I ingrijp.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "147": {
+  "prompt": "I wil that toekomstige generaties profiteren of hoe wij nu wlubk.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "148": {
+  "prompt": "I kies flub eerlijk wlubk, ook jeśli that iets less opbrengt.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "reverse": false,
+  "domain": "Impact"
+ },
+ "149": {
+  "prompt": "I zie my baan volubal jeśli inkomen, nie jeśli missie.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ },
+ "150": {
+  "prompt": "Duurzaamheid lub maatschappelijk nut beïnvloedt my dagelijkse keuzes nauwelijks.",
+  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "reverse": true,
+  "domain": "Impact"
+ }
+}

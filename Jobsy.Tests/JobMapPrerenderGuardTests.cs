@@ -9,28 +9,28 @@ public class JobMapPrerenderGuardTests
     [Fact]
     public void Home_does_not_chain_map_assets_from_the_document()
     {
-        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Home.razor"));
+        var home = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "Banenkaart.razor"));
         Assert.Contains("InteractiveServerRenderMode(prerender: true)", home);
         Assert.DoesNotContain("images/maps/nl-preview.webp", home);
         Assert.DoesNotContain("prerender: false", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.min.js", home);
         Assert.DoesNotContain("/lib/leaflet/leaflet.css", home);
-        Assert.DoesNotContain("rel=\"preload\"", home);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", home);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl-csp.js", home);
         Assert.DoesNotContain("jobMap.min.js", home);
-        Assert.DoesNotContain("fetchpriority=\"high\"", home);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
+        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("lib/maplibre/maplibre-gl-csp.js", maps);
         Assert.Contains("jobMap.min.js", maps);
         Assert.Contains("ensure: ensure", maps);
         Assert.Contains("link.media = \"print\"", maps);
-        Assert.Contains("fetchpriority\", \"low\"", maps);
+        Assert.Contains("loadScriptsParallel", maps);
+        Assert.Contains("preloadScripts", maps);
+        Assert.Contains("fetchpriority\", \"high\"", maps);
+        Assert.Contains("jobMap.boot", maps);
+        Assert.Contains("jobsyMapLibre.min.js?v=", maps);
         Assert.DoesNotContain("warmDiscovery", maps);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", maps);
-        Assert.DoesNotContain("fetchpriority\", \"high\"", maps);
-        Assert.DoesNotContain("jobMap.boot", maps);
     }
 
     [Fact]
@@ -48,8 +48,14 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("function boot(", js);
         Assert.Contains("readBootPayload", js);
         Assert.Contains("jobsy-map-boot", js);
-        Assert.Contains("const live", js);
-        Assert.Contains("Paint the basemap immediately", js);
+        Assert.Contains("let live", js);
+        Assert.Contains("alreadyPinned", js);
+        Assert.Contains("adoptMapContainer", js);
+        Assert.Contains("pinsCachedPayload", js);
+        Assert.Contains("mapCreateCount", js);
+        Assert.Contains("__testGetMapCreateCount", js);
+        Assert.Contains("pinsEtag = null", js);
+        Assert.Contains("Start the map from #jobsy-map-boot", js);
         Assert.Contains("fitMapToVacancies", js);
         Assert.Contains("lockCamera", js);
         Assert.Contains("openingCamera", js);
@@ -110,7 +116,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("container.isConnected", js);
         Assert.Contains("isAlive", js[(js.LastIndexOf("return {", StringComparison.Ordinal))..]);
         Assert.Contains("maplibregl", js);
-        Assert.Contains("Solliciteer", js);
+        Assert.Contains("Bekijk deze baan", js);
+        Assert.Contains("map-popup--calm", js);
     }
 
     [Fact]
@@ -149,22 +156,26 @@ public class JobMapPrerenderGuardTests
         Assert.True(bindStart >= 0 && bindEnd > bindStart);
         var bindFn = js[bindStart..bindEnd];
         Assert.DoesNotContain("centerPopupInView", bindFn);
-        Assert.Contains(".job-map-popup--cluster .map-popup__main", css);
-        Assert.Contains("max-height: 252px", css);
         Assert.Contains("job-popup-featured-glow", css);
+        var banenkaart = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "banenkaart.css"));
+        Assert.Contains("max-height: min(60vh, 420px)", banenkaart);
+        Assert.Contains("height: auto", banenkaart);
         Assert.Contains(".job-map-popup--featured .map-popup::before", css);
         Assert.Contains("pointer-events: none", css[css.IndexOf(".job-map-popup--featured .map-popup::before", StringComparison.Ordinal)..]);
     }
 
     [Fact]
-    public void Job_map_uses_openfreemap_vector_styles_and_hides_attribution()
+    public void Job_map_uses_openfreemap_vector_styles_and_keeps_osm_attribution()
     {
         var helper = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "jobsyMapLibre.js"));
         Assert.Contains("https://tiles.openfreemap.org/styles/liberty", helper);
         Assert.DoesNotContain("https://tiles.openfreemap.org/styles/bright", helper);
         Assert.Contains("fill-extrusion", helper);
         Assert.Contains("pitch: 50", helper);
-        Assert.Contains("attributionControl: false", helper);
+        // ODbL: compact attribution with OpenStreetMap credit (desktop expands via syncAttributionCompact).
+        Assert.Contains("customAttribution", helper);
+        Assert.Contains("openstreetmap.org/copyright", helper);
+        Assert.Contains("preferCompactAttribution", helper);
         Assert.Contains("maplibreLogo: false", helper);
         Assert.Contains("cooperativeGestures: false", helper);
         Assert.Contains("dragPan: true", helper);
@@ -173,6 +184,13 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("3D / Bright", helper);
         Assert.Contains("syncStyleToggle", helper);
         Assert.Contains("return \"liberty\"", helper);
+        // Logo may be stripped; attribution must not be removed from the DOM.
+        var hideStart = helper.IndexOf("function hideChrome(map)", StringComparison.Ordinal);
+        var hideEnd = helper.IndexOf("function findBuildingSourceLayer", hideStart, StringComparison.Ordinal);
+        Assert.True(hideStart > 0 && hideEnd > hideStart);
+        var hideFn = helper[hideStart..hideEnd];
+        Assert.Contains("maplibregl-ctrl-logo", hideFn);
+        Assert.DoesNotContain("maplibregl-ctrl-attrib", hideFn);
 
         var createStart = helper.IndexOf("function createMap(container, options)", StringComparison.Ordinal);
         var createEnd = helper.IndexOf("return {", createStart, StringComparison.Ordinal);
@@ -187,7 +205,12 @@ public class JobMapPrerenderGuardTests
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains("maplibregl-ctrl-attrib", css);
-        Assert.Contains("display: none !important", css);
+        // Logo stays hidden; attribution rules must not force display:none on .maplibregl-ctrl-attrib.
+        var attribRuleStart = css.IndexOf(".job-map .maplibregl-ctrl-attrib,", StringComparison.Ordinal);
+        Assert.True(attribRuleStart >= 0);
+        var attribBlock = css[attribRuleStart..(attribRuleStart + 400)];
+        Assert.DoesNotContain("display: none !important", attribBlock);
+        Assert.Contains(".job-map .maplibregl-ctrl-logo", css);
         Assert.Contains("job-map-style-switch", css);
         Assert.Contains("maplibregl-ctrl-bottom-right", css);
         Assert.Contains("bottom: 58px", css);
@@ -195,6 +218,9 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("touch-action: none", css);
         Assert.Contains("#job-map", css);
         Assert.Contains("min-height: 55dvh", css);
+
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        Assert.DoesNotContain(".maplibregl-ctrl-attrib, .maplibregl-compact { display: none", app);
     }
 
     [Fact]
@@ -227,39 +253,39 @@ public class JobMapPrerenderGuardTests
     public void App_shell_does_not_load_unpkg_or_map_engine_on_every_page()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
+        var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
         Assert.DoesNotContain("unpkg.com", app);
         Assert.Contains("js/app-core.js", app);
         Assert.Contains("defer", app);
-        Assert.DoesNotContain("app-core.js?v=20260816-perf\" defer", app);
+        AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
         Assert.Contains("css/app.min.css", app);
+        Assert.Contains("css/critical.css", app);
+        Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("media=\"print\"", app);
         Assert.Contains("data-app-css", app);
         Assert.Contains("jobsyLogoFallback", app);
-        Assert.Contains("#job-map", app);
-        Assert.Contains("min-height: 55dvh", app);
-        Assert.Contains("--map-land:#f8f4f0", app);
-        Assert.Contains(".map-stage.is-live .job-map-placeholder", app);
-        Assert.Contains(".lobsy-watermarks { display: none; }", app);
-        Assert.Contains(".app-shell:has(.jobsy-discovery) .lobsy-watermarks", app);
-        Assert.Contains("maplibregl-ctrl-logo", app);
-        Assert.Contains(".jobsy-chrome { display: none; }", app);
+        Assert.Contains("#job-map", critical);
+        Assert.Contains("min-height: 55dvh", critical);
+        Assert.Contains("--map-land:#f8f4f0", critical);
+        Assert.Contains(".map-stage.is-live .job-map-placeholder", critical);
+        Assert.Contains(".lobsy-watermarks { display: none; }", critical);
+        Assert.Contains(".app-shell:has(.jobsy-discovery) .lobsy-watermarks", critical);
+        Assert.Contains("maplibregl-ctrl-logo", critical);
+        Assert.Contains(".jobsy-chrome { display: none; }", critical);
         Assert.DoesNotContain("lib/leaflet/leaflet.min.js", app);
         Assert.DoesNotContain("lib/leaflet/leaflet.css", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.js", app);
         Assert.DoesNotContain("lib/maplibre/maplibre-gl.css", app);
         Assert.DoesNotContain("<script src=\"https://unpkg.com/leaflet", app);
 
-        var maps = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "maps-loader.js"));
-        Assert.Contains("pending[kind] = null", maps);
-        Assert.Contains("discovery", maps);
-        Assert.Contains("fetchpriority", maps);
-        Assert.DoesNotContain("requestIdleCallback", maps);
-        Assert.DoesNotContain("ensureAfterPaint", maps);
         var bundle = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("pending[kind] = null", bundle);
+        Assert.Contains("discovery", bundle);
         Assert.Contains("maplibre-gl-csp.js", bundle);
         Assert.Contains("fetchpriority", bundle);
-        Assert.DoesNotContain("requestIdleCallback", bundle);
+        // MapLibre boot waits for Blazor circuit or idle (Safari: 1500 ms fallback).
+        Assert.Contains("whenCircuitOrIdle", bundle);
+        Assert.Contains("requestIdleCallback", bundle);
         Assert.DoesNotContain("ensureAfterPaint", bundle);
     }
 
@@ -290,13 +316,16 @@ public class JobMapPrerenderGuardTests
         var firstInit = afterRenderFn.IndexOf("await TryInitJobMapAsync();", StringComparison.Ordinal);
         var extraInit = afterRenderFn.IndexOf("await TryInitJobMapAsync();", firstInit + 1, StringComparison.Ordinal);
         Assert.True(measureCall >= 0 && firstInit > measureCall && extraInit < 0);
-        var geoHydrate = discovery.IndexOf("ensureLocationOnLaunch", afterRender, StringComparison.Ordinal);
+        var geoHydrate = discovery.IndexOf("ResolveLaunchOriginAsync", afterRender, StringComparison.Ordinal);
         Assert.True(geoHydrate > afterRender);
         var launchDone = discovery.IndexOf("_launchHydrationDone = true", geoHydrate, StringComparison.Ordinal);
         Assert.True(launchDone > geoHydrate);
         Assert.DoesNotContain("CenterMapOnFilledLocationAsync", discovery[geoHydrate..launchDone]);
-        var hydrateCatch = discovery.IndexOf("catch (JSException)", geoHydrate, StringComparison.Ordinal);
-        Assert.True(hydrateCatch > geoHydrate);
+        // Session/home/stored origin resolution (and ensureLocationOnLaunch) lives in ResolveLaunchOriginAsync.
+        Assert.Contains("jobsyGeo.ensureLocationOnLaunch", discovery, StringComparison.Ordinal);
+        Assert.Contains("jobsyGeo.getSessionOrigin", discovery, StringComparison.Ordinal);
+        var hydrateCatch = discovery.IndexOf("catch (JSException)", launchDone, StringComparison.Ordinal);
+        Assert.True(hydrateCatch > launchDone);
         var hydrateSlice = discovery[hydrateCatch..(hydrateCatch + 180)];
         Assert.DoesNotContain("return;", hydrateSlice);
 
@@ -331,21 +360,27 @@ public class JobMapPrerenderGuardTests
         Assert.DoesNotContain("text-transform: uppercase", css[css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal)..(css.IndexOf(".vacancy-location__transport {", StringComparison.Ordinal) + 400)]);
 
         var detail = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
-        Assert.Contains("vacancy-media--split", detail);
-        Assert.Contains("HasPhoto && HasLocation", detail);
+        Assert.Contains("kb-detail", detail, StringComparison.Ordinal);
+        Assert.Contains("kb-travel-card", detail, StringComparison.Ordinal);
+        Assert.Contains("vacancy-detail-map", detail, StringComparison.Ordinal);
         Assert.Contains("detail-card--pending", detail);
         Assert.Contains("PersistentComponentState", detail);
         Assert.Contains("panel-page--vacancy", detail);
         Assert.Contains("keepPrerendered", detail);
-        Assert.Contains("vacancy-location__eta", detail);
         Assert.Contains("GetVacancyTravelAsync", detail);
         Assert.Contains("apply-panel--guest", detail);
         Assert.DoesNotContain("Vacancy.ProximityWink", detail);
         Assert.DoesNotContain("± @_vacancy.TravelMinutes", detail);
-        var mediaIdx = detail.IndexOf("class=\"vacancy-media", StringComparison.Ordinal);
-        var titleIdx = detail.IndexOf("detail-card__top", StringComparison.Ordinal);
+        // File 06 layout: photo → title → travel slot → description.
+        var photoIdx = detail.IndexOf("kb-detail__photo", StringComparison.Ordinal);
+        var titleIdx = detail.IndexOf("<h1>@_vacancy.Title</h1>", StringComparison.Ordinal);
+        var travelSlotIdx = detail.IndexOf("@TravelCardFragment", StringComparison.Ordinal);
         var bodyIdx = detail.IndexOf("detail-card__body", StringComparison.Ordinal);
-        Assert.True(mediaIdx > 0 && titleIdx > mediaIdx && bodyIdx > titleIdx, "Photo and map must sit together above the title and description.");
+        Assert.True(photoIdx > 0 && titleIdx > photoIdx && travelSlotIdx > titleIdx && bodyIdx > travelSlotIdx,
+            "Photo, title, travel card and description must follow the kb-detail order.");
+
+        var kbCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "kandidaat-banen.css"));
+        Assert.Contains(".kb-travel-card__map", kbCss, StringComparison.Ordinal);
 
         var js = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "js", "vacancyDetailMap.js"));
         Assert.Contains("styleKey: \"liberty\"", js);

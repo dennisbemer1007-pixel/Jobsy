@@ -1,0 +1,97 @@
+@namespace Jobsy.Web.Components.Layout
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Security
+@using Jobsy.Web.Services
+@inherits LayoutComponentBase
+@inject CultureState Culture
+@inject NavigationManager Nav
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@implements IDisposable
+
+<div class="ll-shell" lang="nl">
+    <header class="ll-topbar">
+        <a class="ll-topbar__brand" href="/leerling">
+            <img class="ll-topbar__logo" src="/images/brand/mascot-256.webp" width="28" height="28" alt="" />
+            <span>Lobsy</span>
+        </a>
+        @if (!string.IsNullOrEmpty(_chip))
+        {
+            <span class="ll-topbar__chip">@_chip</span>
+        }
+        @if (_showPause)
+        {
+            <form method="post" action="/leerling/pauze" class="ll-topbar__pause-form">
+                <AntiforgeryToken />
+                <button type="submit" class="ll-topbar__pause">@Culture["Leerling.Pause"]</button>
+            </form>
+        }
+    </header>
+    <main class="ll-main">
+        @Body
+    </main>
+    <footer class="ll-legal">
+        <a href="@PublicRoutes.Privacy">@Culture["Footer.Privacy"]</a>
+        <a href="@PublicRoutes.Accessibility">@Culture["PublicFooter.Accessibility"]</a>
+    </footer>
+    <LeerlingCoach />
+</div>
+
+@code {
+    private string _chip = "";
+    private bool _showPause;
+    private IDisposable? _displayLanguage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Dutch UI only. Do not persist: viewing /leerling must not rewrite a signed-in user's language.
+        _displayLanguage ??= Culture.PushDisplayLanguage("nl");
+        _chip = "";
+        _showPause = false;
+        // Prerender: the middleware stored the principal. The circuit has no request
+        // items; AuthenticationState is the pupil from /_blazor. Do not AuthenticateAsync.
+        var pupil = PupilFromRequest();
+        if (pupil is null)
+        {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            if (JobsyApiAuthHandler.IsPupilPrincipal(state.User))
+            {
+                pupil = state.User;
+            }
+        }
+
+        if (pupil is null)
+        {
+            return;
+        }
+
+        var cls = pupil.FindFirst(PupilClaimTypes.ClassLabel)?.Value;
+        var code = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value;
+        if (!string.IsNullOrWhiteSpace(cls) && !string.IsNullOrWhiteSpace(code))
+        {
+            _chip = $"{cls} · {code}";
+        }
+
+        var path = Nav.ToBaseRelativePath(Nav.Uri);
+        _showPause = !path.Equals("leerling", StringComparison.OrdinalIgnoreCase)
+                     && !path.StartsWith("leerling?", StringComparison.OrdinalIgnoreCase)
+                     && !path.StartsWith("leerling/stop", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private ClaimsPrincipal? PupilFromRequest()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is ClaimsPrincipal pupil
+            && pupil.Identity?.IsAuthenticated == true
+            && JobsyApiAuthHandler.IsPupilPrincipal(pupil))
+        {
+            return pupil;
+        }
+
+        return null;
+    }
+
+    public void Dispose() => _displayLanguage?.Dispose();
+}

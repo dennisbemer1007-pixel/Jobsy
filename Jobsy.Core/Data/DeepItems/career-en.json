@@ -1,0 +1,1202 @@
+{
+ "1": {
+  "prompt": "I work gladly with my handen, gereedschap or machines.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "2": {
+  "prompt": "I vind the prettig om buiten or in a kas, magazijn or werkplaats te his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "3": {
+  "prompt": "I zie gladly a tastbaar result to the eind of the dienst.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "4": {
+  "prompt": "I vermijd work waarbij I vies, nat or stoffig kan worden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "5": {
+  "prompt": "I snap snel hoe a device or installatie in elkaar steekt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "6": {
+  "prompt": "I houd of tillen, sjouwen or fysiek doorwerken if the veilig kan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "7": {
+  "prompt": "The repareren or bijstellen of iets that hapert geeft me voldoening.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "8": {
+  "prompt": "Praktisch jobs voelt if tijdverlies; I wil vooral achter a scherm zitten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "9": {
+  "prompt": "I oriënteer me makkelijk in a grote ruimte, tuin or magazijn.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "10": {
+  "prompt": "I volg technische instructions and pas ze toe without a lot uitleg.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "11": {
+  "prompt": "I voel me onzeker at machines, hekwerken or zwaar materieel.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "12": {
+  "prompt": "I kweek, plant, oogst or verwerk producten rather dan I erover praat.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "13": {
+  "prompt": "I let on veiligheid: looppaden, scherpe randen, natte vloeren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "14": {
+  "prompt": "I kan a hele dienst on the been blijven without that I afhaak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "15": {
+  "prompt": "I kies work waarin I zo min mogelijk fysiek hoef te doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "16": {
+  "prompt": "I meet, weeg or tel rather in the echt dan in a spreadsheet.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "17": {
+  "prompt": "I vind the fijn om with seizoen, weer or teelt mee te work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "18": {
+  "prompt": "Technische storingen laat I preferably helemaal to a ander.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "19": {
+  "prompt": "I bouw, monteer or zet iets in elkaar volgens a tekening or voorbeeld.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "20": {
+  "prompt": "I houd of ritme: herhalen, tempo maken, afvinken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "21": {
+  "prompt": "Buitenwerk or productieomgevingen putten me mentaal out.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "22": {
+  "prompt": "I check kwaliteit with ogen and handen, not alleen on papier.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "23": {
+  "prompt": "I kan a voertuig, steekwagen or heftruck-achtige task aanleren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "24": {
+  "prompt": "I vermijd werkplaatsen, kassen and keukens if I the choice heb.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "25": {
+  "prompt": "I krijg energie of doen, not of eindeloos overleggen about doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "26": {
+  "prompt": "I onderzoek gladly waarom iets not werkt zoals the hoort.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "27": {
+  "prompt": "I zoek out hoe a proces, teelt or system in elkaar zit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "28": {
+  "prompt": "I vergelijk cijfers or metingen before I a conclusie trek.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "29": {
+  "prompt": "Diep nadenken about oorzaken vind I saai; zeg me gewoon the truc.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "30": {
+  "prompt": "I stel 'waarom'-vragen until I the mechanisme begrijp.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "31": {
+  "prompt": "I lees handleidingen or specificaties rather zelf na.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "32": {
+  "prompt": "I test a aanname klein before we hem overal doorvoeren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "33": {
+  "prompt": "I vertrouw on feeling and sla controles or data about.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "34": {
+  "prompt": "I vind the leuk om a foutpatroon te ontdekken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "35": {
+  "prompt": "I kan me lang concentreren on a inhoudelijk vraagstuk.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "36": {
+  "prompt": "Onderzoeken voelt if treuzelen; I wil meteen doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "37": {
+  "prompt": "I gebruik tabellen, logs or keuringslijsten om te sturen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "38": {
+  "prompt": "I wil the oorzaak of klachten kennen, not alleen the symptomen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "39": {
+  "prompt": "I leer gladly hoe wetgeving, kwaliteit or voedselveiligheid werkt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "40": {
+  "prompt": "Technische or inhoudelijke diepgang schrik I of af.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "41": {
+  "prompt": "I splits a vaag problem on in meetbare stukjes.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "42": {
+  "prompt": "I houd of work waarin I mag uitzoeken and verbeteren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "43": {
+  "prompt": "I accepteer 'that doen we always zo' without door te vragen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "44": {
+  "prompt": "I zoek bronnen or colleague-experts if I iets not weet.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "45": {
+  "prompt": "I zie gladly the verband tussen weer, seizoen, vraag and voorraad.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "46": {
+  "prompt": "Cijfers and analyses laat I rather volledig to a ander.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "47": {
+  "prompt": "I documenteer wat I heb gevonden zodat we ervan leren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "48": {
+  "prompt": "I blijf nuchter at a hype or a snelle 'solution'.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "49": {
+  "prompt": "I word ongeduldig of uitzoekwerk without directe actie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "50": {
+  "prompt": "I krijg energie of puzzelen until the klopt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "51": {
+  "prompt": "I bedenk gladly a own draai to hoe iets eruitziet or overkomt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "52": {
+  "prompt": "I let on kleur, geur, presentatie or atmosphere in the work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "53": {
+  "prompt": "I maak of a saaie task iets that er verzorgd uitziet.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "54": {
+  "prompt": "Vormgeving and uitstraling interesseert me nauwelijks.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "55": {
+  "prompt": "I verzin a originele solution if the standaardplaatje not past.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "56": {
+  "prompt": "I geniet of work waarin smaak, stijl or verhaal meeweegt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "57": {
+  "prompt": "I kan a etalage, bord, arrangement or gerecht aantrekkelijk maken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "58": {
+  "prompt": "Creatieve vrijheid maakt me onrustig; geef me a vast sjabloon.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "59": {
+  "prompt": "I zie mogelijkheden in restmateriaal, seizoensproduct or restant.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "60": {
+  "prompt": "I experimenteer with combinaties (smaken, kleuren, indeling).",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "61": {
+  "prompt": "I vermijd tasks waarin I iets 'mooi' or 'passend' moet maken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "62": {
+  "prompt": "I vertaal a vaag idea of a customer to iets concreets.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "63": {
+  "prompt": "I houd of afwisseling in hoe a product or dienst wordt gebracht.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "64": {
+  "prompt": "I gebruik taal or beeld om iets helder and aantrekkelijk te maken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "65": {
+  "prompt": "I vind creatieve input of anderen vooral gedoe.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "66": {
+  "prompt": "I merk disharmonie in indeling, muziek, licht or styling.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "67": {
+  "prompt": "I wil ruimte om zelf keuzes te maken in the uitvoering.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "68": {
+  "prompt": "Strakke, identieke herhaling without own inbreng is precies wat I zoek.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "69": {
+  "prompt": "I inspireer colleagues with a frisse aanpak or presentatie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "70": {
+  "prompt": "I kan a seizoensthema or actie visueel until leven brengen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "71": {
+  "prompt": "I sla about wat 'er leuk uitziet' if functioneel genoeg is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "72": {
+  "prompt": "I schrijf, teken or formuleer rather zelf dan a standaardtekst te kopiëren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "73": {
+  "prompt": "I haal voldoening out iets unieks afleveren, not alleen volume.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "74": {
+  "prompt": "Kunstzinnige or stylingtaken voelen if hobby, not if work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "75": {
+  "prompt": "I zie work ook if beleving for the gast or customer.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "76": {
+  "prompt": "I help people gladly verder, ook if the even duurt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "77": {
+  "prompt": "I voel me on my plek in zorg, horeca, retail or begeleiding.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "78": {
+  "prompt": "I merk the if iemand zich onprettig voelt and doe er iets mee.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "79": {
+  "prompt": "Andermans problemen on the work laat I rather links liggen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "80": {
+  "prompt": "I leg iets geduldig out until the ander the snapt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "81": {
+  "prompt": "I work gladly in a team waarin we elkaar steunen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "82": {
+  "prompt": "I kan omgaan with gasten or cliënten that extra aandacht nodig hebben.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "83": {
+  "prompt": "I vermijd work waarin I anderen moet begeleiden or opvangen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "84": {
+  "prompt": "I bouw vertrouwen on door betrouwbaar and vriendelijk te blijven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "85": {
+  "prompt": "I vind the belangrijk that iedereen zich welkom voelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "86": {
+  "prompt": "I wil zo min mogelijk te maken hebben with the feelings of anderen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "87": {
+  "prompt": "I kan a conflict tussen people sussen without partij te kiezen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "88": {
+  "prompt": "I haal energie out a tevreden customer, leerling or colleague.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "89": {
+  "prompt": "I pas my uitleg to on leeftijd, taal or ervaring of the ander.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "90": {
+  "prompt": "Service with a lach voelt gespeeld; rather puur transactie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "91": {
+  "prompt": "I zie work if samen iets for elkaar krijgen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "92": {
+  "prompt": "I houd rekening with toegankelijkheid and inclusie in the praktijk.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "93": {
+  "prompt": "I raak geïrriteerd if people extra uitleg or geduld vragen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "94": {
+  "prompt": "I kan nieuws, bad nieuws or a weigering respectvol brengen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "95": {
+  "prompt": "I work gladly with publiek: gasten, patiënten, leerlingen, shoppers.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "96": {
+  "prompt": "I kies tasks waarin I zo min mogelijk with people hoef te praten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "97": {
+  "prompt": "I coach a new colleague rather zelf dan the af te schuiven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "98": {
+  "prompt": "I merk groepsdruk and zorg that niemand buitengesloten wordt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "99": {
+  "prompt": "Zorg- or klantcontact put me out; I wil productiewerk without people.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "100": {
+  "prompt": "I krijg betekenis of work that anderen écht helpt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "101": {
+  "prompt": "I neem gladly the initiatief if niemand different the doet.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "102": {
+  "prompt": "I overtuig anderen of a aanpak, product or aanbieding.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "103": {
+  "prompt": "I zie kansen om omzet, bezetting or tempo te verbeteren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "104": {
+  "prompt": "Leiding nemen or verkopen voelt ongemakkelijk; laat a ander the maar doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "105": {
+  "prompt": "I stel doelen and trek the team daar naartoe.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "106": {
+  "prompt": "I durf a prijs, schedule or belofte te onderhandelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "107": {
+  "prompt": "I blijf actie vragen until er a besluit is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "108": {
+  "prompt": "I wacht until I opdracht krijg in plaats of zelf te starten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "109": {
+  "prompt": "I presenteer a idea kort and krachtig.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "110": {
+  "prompt": "I houd of verantwoordelijkheid for a result, not alleen a task.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "111": {
+  "prompt": "I vermijd gesprekken waarin I iets moet 'verkopen'.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "112": {
+  "prompt": "I zet a actie, seizoenspiek or campagne om in concrete stappen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "113": {
+  "prompt": "I spreek people to on agreements if the result achterblijft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "114": {
+  "prompt": "I zie concurrentie if prikkel, not if dreiging.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "115": {
+  "prompt": "I laat kansen lopen if er risico or afwijzing in zit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "116": {
+  "prompt": "I bouw a netwerk of vaste customers, telers or leveranciers.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "117": {
+  "prompt": "I kan a team opstarten if the leiding even weg is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "118": {
+  "prompt": "I schrik terug of targets, omzet or bezettingscijfers.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "119": {
+  "prompt": "I maak a proposal that for beide partijen werkt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "120": {
+  "prompt": "I houd of work waarin I mag sturen, werven or organiseren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "121": {
+  "prompt": "I wil no zichtbare rol to buiten; hou me on the background.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "122": {
+  "prompt": "I zet teleurstelling om in a volgende pitch or poging.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "123": {
+  "prompt": "I zie snel wie I nodig heb om iets for elkaar te krijgen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "124": {
+  "prompt": "Ondernemen in the klein (upsell, extra ronde, extra dienst) is niets for mij.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "125": {
+  "prompt": "I krijg energie of a deal, a volle zaal or a gehaald doel.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "126": {
+  "prompt": "I houd of duidelijke procedures, lijsten and vaste volgordes.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "127": {
+  "prompt": "I work nauwkeurig with cijfers, codes, data or labels.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "128": {
+  "prompt": "I richt a administratie or voorraad zo in that iedereen the terugvindt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "129": {
+  "prompt": "Regels and vaste formats irriteren me; I improviseer rather always.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "130": {
+  "prompt": "I check or a bestelling, factuur or schedule klopt until on the detail.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "131": {
+  "prompt": "I work gladly with roosters, slots and voorspelbare diensten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "132": {
+  "prompt": "I archiveer or sluit af zodat er later no chaos is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "133": {
+  "prompt": "Papierwerk, scans and systemen laat I zo lang mogelijk liggen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "134": {
+  "prompt": "I volg a checklist ook if I the job al honderd keer deed.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "135": {
+  "prompt": "I houd of work waarin structuur belangrijker is dan improvisatie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "136": {
+  "prompt": "Vaste routines maken me rusteloos; I wil elke dag iets totaal different.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "137": {
+  "prompt": "I voer gegevens foutloos in and controleer ze nog a keer.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "138": {
+  "prompt": "I bewaak voorraadgrenzen, houdbaarheidsdata or minimumaantallen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "139": {
+  "prompt": "I maak of a wirwar a overzichtelijke indeling.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "140": {
+  "prompt": "I vind the overbodig om hetzelfde on twee plekken vast te leggen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "141": {
+  "prompt": "I work prettig with kassa, planningsoftware or orderpicking-systemen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "142": {
+  "prompt": "I houd me to afgesproken formats, ook if I zelf a other layout zou kiezen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "143": {
+  "prompt": "I gooi informatiestromen door elkaar if that sneller voelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "144": {
+  "prompt": "I sluit the dag af with a kloppende telling or overdracht.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "145": {
+  "prompt": "I zie the if my task that wet- and regelgeving in the uitvoering klopt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "146": {
+  "prompt": "Orde in mappen, bakken or systemen is for mij bijzaak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "147": {
+  "prompt": "I plan terug of deadline to nu, in plaats of ad hoc te beginnen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "148": {
+  "prompt": "I work rather with vaste kwaliteitsnormen dan with 'kijk maar'.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "149": {
+  "prompt": "I vermijd tasks waarin I nauwkeurig moet registreren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "150": {
+  "prompt": "I krijg calm of a opgeruimd proces that elke dienst hetzelfde loopt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "151": {
+  "prompt": "I work gladly with teelt, logistiek or productie waar I iets tastbaars maak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Realistic"
+ },
+ "152": {
+  "prompt": "I vermijd tasks waarbij I zware or natte materialen moet hanteren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "153": {
+  "prompt": "I houd of a duidelijke task that I fysiek kan afronden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "154": {
+  "prompt": "I leer snel a new machine or gereedschap te bedienen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "155": {
+  "prompt": "I prefereer overlegkamers boven werkplaats, kas or keuken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "156": {
+  "prompt": "I check or paden, rekken and materialen veilig staan before I doorwerk.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "157": {
+  "prompt": "I work prettig in ploegen or seizoenspieken if the ritme helder is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "158": {
+  "prompt": "I raak gefrustreerd of herhalend productiewerk, hoe nuttig ook.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Realistic"
+ },
+ "159": {
+  "prompt": "I zoek systematisch to the oorzaak of a kwaliteitsafwijking.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "+9)\n        (CareerTestCatalog.Investigative"
+ },
+ "160": {
+  "prompt": "I vind meten and controleren overbodig if the 'er good uitziet'.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "161": {
+  "prompt": "I houd of work waarin I processen mag verbeteren with feiten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "162": {
+  "prompt": "I lees keuringsrapporten or teeltlogs om beslissingen te sturen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "163": {
+  "prompt": "I word ongeduldig of analyses that not meteen until actie leiden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "164": {
+  "prompt": "I test a kleine wijziging before we that breed uitrollen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "165": {
+  "prompt": "I wil snappen hoe wetgeving or voedselveiligheid in the praktijk werkt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "166": {
+  "prompt": "I laat onderzoek rather helemaal to specialisten without mee te denken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "167": {
+  "prompt": "I leg connections tussen cijfers, seizoen and wat er on the vloer gebeurt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Investigative"
+ },
+ "168": {
+  "prompt": "I geef a product or dienst gladly a herkenbare, own uitstraling.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Artistic"
+ },
+ "169": {
+  "prompt": "I vind styling and presentatie bijzaak zolang the functioneert.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "170": {
+  "prompt": "I bedenk frisse manieren om seizoensproducten onder the aandacht te brengen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "171": {
+  "prompt": "I let on atmosphere: licht, geur, indeling and hoe gasten that beleven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "172": {
+  "prompt": "I vermijd tasks waarin I iets visueel or creatief moet maken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "173": {
+  "prompt": "I combineer smaken, kleuren or materialen until iets that opvalt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "174": {
+  "prompt": "I vertaal a vaag idea of a customer to a concreet result.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "175": {
+  "prompt": "Creatieve vrijheid maakt me onzeker; I wil precies voorgeschreven stappen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Artistic"
+ },
+ "176": {
+  "prompt": "I help new colleagues on weg until ze zich zeker voelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Social"
+ },
+ "177": {
+  "prompt": "I vermijd work waarin I gasten or cliënten moet opvangen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "178": {
+  "prompt": "I merk spanning in a team and help that constructief on te lossen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "179": {
+  "prompt": "I vind the belangrijk that iedereen zich gezien and welkom voelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "180": {
+  "prompt": "I houd afstand: andermans welzijn is not my verantwoordelijkheid on the work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "181": {
+  "prompt": "I leg procedures geduldig out to people that ze for the eerst doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "182": {
+  "prompt": "I krijg energie of a tevreden gast, leerling or colleague.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "183": {
+  "prompt": "I kies work waarin I zo min mogelijk with people hoef te schakelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Social"
+ },
+ "184": {
+  "prompt": "I zie kansen om iets extra's te verkopen or te organiseren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "+9)\n        (CareerTestCatalog.Enterprising"
+ },
+ "185": {
+  "prompt": "I vermijd zichtbare rollen to customers, leveranciers or gasten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "186": {
+  "prompt": "I neem the voortouw if er snel a beslissing nodig is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "187": {
+  "prompt": "I bouw gladly relaties that later until samenwerking or omzet leiden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "188": {
+  "prompt": "Targets and bezettingscijfers demotiveren me.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "189": {
+  "prompt": "I kan a kort proposal pitchen zodat anderen meegaan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "190": {
+  "prompt": "I organiseer people and middelen om a doel binnen the dienst te halen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "191": {
+  "prompt": "I laat initiatief rather to anderen and volg afwachtend.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "192": {
+  "prompt": "I zet a setback om in a volgende poging or betere aanpak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Enterprising"
+ },
+ "193": {
+  "prompt": "I houd roosters, orders and voorraden strak at zodat niemand zoekt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "+8)\n        (CareerTestCatalog.Conventional"
+ },
+ "194": {
+  "prompt": "I vind vaste formats and checklists vooral belemmerend.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "195": {
+  "prompt": "I controleer labels, codes and aantallen until ze kloppen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "196": {
+  "prompt": "I richt mappen, bakken or systemen zo in that iedereen the snapt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "197": {
+  "prompt": "I sla registratie about if I denk that I the toch indeed onthoud.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "198": {
+  "prompt": "I work prettig with vaste kwaliteitsnormen and afvinklijsten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "199": {
+  "prompt": "I sluit the dienst af with a kloppende overdracht or telling.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CareerTestCatalog.Conventional"
+ },
+ "200": {
+  "prompt": "I raak onrustig of voorspelbare routines, ook if ze efficiënt his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CareerTestCatalog.Conventional"
+ }
+}

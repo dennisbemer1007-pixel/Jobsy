@@ -3,6 +3,7 @@ using Jobsy.Api;
 using Jobsy.Api.Authorization;
 using Jobsy.Api.Hosting;
 using Jobsy.Api.Jobs;
+using Jobsy.Api.Ops;
 using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
@@ -10,6 +11,19 @@ using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using Scalar.AspNetCore;
+
+if (args.Length > 0 && args[0] == "test-accounts")
+{
+    Environment.ExitCode = await TestAccountsCommand.RunAsync(args[1..]);
+    return;
+}
+
+if (args.Length > 0 && args[0] == "proactive-matching")
+{
+    Environment.ExitCode = await ProactiveMatchingCommand.RunAsync(args[1..]);
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,15 +57,48 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     // and break Secure cookies. Client IP is still overridden from CF-Connecting-IP only
     // after CloudflareOriginMiddleware validates the origin secret.
     options.ForwardLimit = 2;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
 builder.Services.AddJobsyApiPerformance();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<MfaChallengeService>();
+builder.Services.AddSingleton(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var key = JobsyLocalSessionToken.ResolveSigningKey(
+        cfg["JobsyAuth:LocalSessionSigningKey"],
+        cfg["JobsyAuth:DevelopmentAuthSecret"]);
+    return new UnknownAccountLockoutTracker(key);
+});
+builder.Services.AddSingleton(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>();
+    var key = JobsyLocalSessionToken.ResolveSigningKey(
+        cfg["JobsyAuth:LocalSessionSigningKey"],
+        cfg["JobsyAuth:DevelopmentAuthSecret"]);
+    return new PasswordResetRequestLimiter(key);
+});
+builder.Services.AddScoped<Jobsy.Core.Interfaces.ITotpVerifier, Jobsy.Infrastructure.Security.TotpVerifier>();
+builder.Services.AddSingleton(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    return new Jobsy.Core.Hosting.DeploymentEnvironmentLabel(
+        Jobsy.Core.Hosting.DeploymentEnvironment.Resolve(
+            config["PublicWebBaseUrl"],
+            config["Deployment:Label"]));
+});
 builder.Services.AddSingleton<LoginProtectionRateLimiter>();
-builder.Services.AddControllers()
+builder.Services.AddScoped<Jobsy.Api.Admin.IAdminAuditContext, Jobsy.Api.Admin.AdminAuditContext>();
+builder.Services.AddScoped<Jobsy.Api.Admin.AdminAuditFilter>();
+builder.Services.AddScoped<Jobsy.Api.Filters.FeatureGateFilter>();
+builder.Services.AddScoped<Jobsy.Api.Passport.PassportPdfDownload>();
+builder.Services.AddControllers(options =>
+    {
+        options.Filters.AddService<Jobsy.Api.Admin.AdminAuditFilter>();
+        options.Filters.AddService<Jobsy.Api.Filters.FeatureGateFilter>();
+    })
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(
@@ -59,8 +106,7 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.DefaultIgnoreCondition =
             System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
     });
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(ExternalApiSwagger.Configure);
+builder.Services.AddOpenApi(ExternalApiOpenApi.DocumentName, ExternalApiOpenApi.Configure);
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddJobsyApiAuthorization(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<DatabaseSeedHostedService>();
@@ -90,23 +136,74 @@ builder.Services.AddRateLimiter(options =>
     var publicTravelLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicTravelPermitLimit")
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
-        ?? 60;
+        ?? (isProduction ? 60 : 10_000);
+    var pupilLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
+        ?? (isProduction ? 60 : 10_000);
+    var kvkSearchLimit = builder.Configuration.GetValue<int?>("RateLimiting:KvkSearchPermitLimit")
+        ?? 30;
+    var registrationSubmitLimit = builder.Configuration.GetValue<int?>("RateLimiting:RegistrationSubmitPermitLimit")
+        ?? 5;
+    var verifyStartLimit = builder.Configuration.GetValue<int?>("RateLimiting:VerifyStartPermitLimit")
+        ?? 5;
+    var accessRequestLimit = builder.Configuration.GetValue<int?>("RateLimiting:AccessRequestPermitLimit")
+        ?? 5;
+    var reportHourlyLimit = builder.Configuration.GetValue<int?>("RateLimiting:ReportHourlyPermitLimit")
+        ?? 5;
+    var reportDailyLimit = builder.Configuration.GetValue<int?>("RateLimiting:ReportDailyPermitLimit")
+        ?? 20;
+    var otpVerifyLimit = builder.Configuration.GetValue<int?>("RateLimiting:OtpVerifyPermitLimit")
+        ?? 10;
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
+
+    options.AddPolicy("candidate-apply", httpContext =>
+    {
+        var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (env.IsDevelopment())
+        {
+            return RateLimitPartition.GetNoLimiter("candidate-apply");
+        }
+
+        var limits = httpContext.RequestServices
+            .GetRequiredService<Jobsy.Core.Interfaces.ICandidateApplyRateLimitProvider>()
+            .GetCurrent();
+
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                     ?? httpContext.User.FindFirst("sub")?.Value;
+        var partition = string.IsNullOrWhiteSpace(userId)
+            ? $"candidate-apply:ip:{RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret)}"
+            : $"candidate-apply:user:{userId}";
+
+        return RateLimitPartition.Get(
+            partition,
+            _ => new TripleWindowRateLimiter(
+                limits.PerMinute,
+                TimeSpan.FromMinutes(1),
+                limits.PerHour,
+                TimeSpan.FromHours(1),
+                limits.PerDay,
+                TimeSpan.FromDays(1)));
+    });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = RateLimitPartitioning.OnRejectedAsync;
 
     options.AddPolicy("auth", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
-            ?? httpContext.Connection.RemoteIpAddress?.ToString()
-            ?? "unknown",
+    {
+        var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (env.IsDevelopment())
+        {
+            return RateLimitPartition.GetNoLimiter("auth");
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
-            }));
+            });
+    });
     options.AddPolicy("public-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
@@ -116,6 +213,53 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    options.AddPolicy("kvk-search", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = kvkSearchLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("registration-submit", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = registrationSubmitLimit,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("verify-start", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+            ?? RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = verifyStartLimit,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
+    options.AddPolicy("access-request", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = accessRequestLimit,
+                Window = TimeSpan.FromDays(1),
+                QueueLimit = 0
+            }));
+    // DSA report form: 5 per hour and 20 per day per visitor. The IP is only a partition key,
+    // never stored with the report (06).
+    options.AddPolicy("report", httpContext =>
+        RateLimitPartition.Get(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new DualWindowRateLimiter(
+                reportHourlyLimit,
+                TimeSpan.FromHours(1),
+                reportDailyLimit,
+                TimeSpan.FromDays(1))));
     options.AddPolicy("public-read", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
@@ -138,12 +282,14 @@ builder.Services.AddRateLimiter(options =>
     // Prefer authenticated user id when present so forged X-Forwarded-For cannot bypass limits alone.
     options.AddPolicy("otp-verify", httpContext =>
     {
-        var userKey = httpContext.User?.Identity?.IsAuthenticated == true
-            ? httpContext.User.FindFirst("sub")?.Value
-              ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-              ?? httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+        // User is always present on HttpContext; capture once for null-flow analysis (CS8602).
+        var user = httpContext.User;
+        var userKey = user.Identity?.IsAuthenticated == true
+            ? user.FindFirst("sub")?.Value
+              ?? user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+              ?? user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
             : null;
-        var ip = httpContext.User.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
+        var ip = user.FindFirst(JobsyAccessToken.ClientIpClaim)?.Value
                  ?? httpContext.Connection.RemoteIpAddress?.ToString()
                  ?? "unknown";
         var partition = string.IsNullOrWhiteSpace(userKey) ? $"ip:{ip}" : $"user:{userKey}|ip:{ip}";
@@ -151,7 +297,7 @@ builder.Services.AddRateLimiter(options =>
             partition,
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = otpVerifyLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             });
@@ -165,6 +311,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // Coach chats are one request per message. 30 messages must not hit the shared AI cap of 10/min.
+    options.AddPolicy("assistant", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 40,
+                Window = TimeSpan.FromMinutes(10),
+                QueueLimit = 0
+            }));
     options.AddPolicy("feedback-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
@@ -174,6 +330,16 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
+    // GET api/privacy/export: per signed-in user, same budget as the web download.
+    options.AddPolicy("export", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            }));
     // Partner PDF flyer generation (QuestPDF) — tighter than generic public-write.
     options.AddPolicy("public-pdf", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
@@ -181,6 +347,16 @@ builder.Services.AddRateLimiter(options =>
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 12,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+    // Global pupil API partition: 60 req/min per IP (HMAC partition in production).
+    options.AddPolicy("pupil", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = pupilLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             }));
@@ -194,6 +370,19 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+Jobsy.Core.Careers.OccupationCatalog.Configure(
+    app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
+    app.Environment.IsProduction());
+Jobsy.Core.Reports.DeepReportCatalog.Logger =
+    app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Jobsy.DeepReportCatalog");
+
+if (string.IsNullOrWhiteSpace(builder.Configuration[RateLimitPartitioning.ConfigKey])
+    && !app.Environment.IsDevelopment())
+{
+    app.Logger.LogWarning(
+        "JobsyAuth:InternalClientIpSecret is empty; auth rate limits fall back to the Web→API hop");
+}
+
 
 app.UseForwardedHeaders();
 app.UseResponseCompression();
@@ -223,34 +412,16 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
-    // Swagger UI needs inline script/style; keep API responses locked down.
+    // Scalar/OpenAPI UI needs inline script/style; keep API responses locked down.
     var path = context.Request.Path.Value ?? string.Empty;
+    var openApiUi = path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
+                    || path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase);
     context.Response.Headers["Content-Security-Policy"] =
-        path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase)
+        openApiUi
             ? "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'"
             : "default-src 'none'; frame-ancestors 'none'; base-uri 'none'";
     await next();
 });
-
-// Partner docs for the external vacancy API (X-API-Key). Scoped to /api/external/vacancies.
-// Default: on in Development, off elsewhere. Override with Swagger:Enabled=true|false.
-var swaggerEnabled = builder.Configuration.GetValue<bool?>("Swagger:Enabled")
-    ?? builder.Environment.IsDevelopment();
-if (swaggerEnabled)
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint($"/swagger/{ExternalApiSwagger.DocumentName}/swagger.json", "Lobsy externe vacature-API");
-        options.DocumentTitle = "Lobsy API · Swagger";
-        options.RoutePrefix = "swagger";
-        if (!app.Environment.IsDevelopment())
-        {
-            // Reduce abuse of live "Try it out" against production.
-            options.SupportedSubmitMethods();
-        }
-    });
-}
 
 if (app.Environment.IsDevelopment())
 {
@@ -264,22 +435,57 @@ else
 }
 
 app.UseCors("JobsyWeb");
+// Outside Development, refuse OpenAPI/Scalar/legacy Swagger with a hard 404 (code-health 08b).
+if (!app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        var path = context.Request.Path.Value ?? string.Empty;
+        if (path.StartsWith("/openapi", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/scalar", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/swagger", StringComparison.OrdinalIgnoreCase))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        await next();
+    });
+}
+
 app.UseAuthentication();
 app.UseRateLimiter();
 app.UseLoginProtection();
 app.UseAuthorization();
+// After auth so the admin bypass can read the principal (errors 05).
+app.UseMiddleware<Jobsy.Api.Security.MaintenanceApiMiddleware>();
+app.UseMiddleware<Jobsy.Api.Security.SchoolsFeatureMiddleware>();
+app.UseMiddleware<Jobsy.Api.Middleware.TestAccountScopeMiddleware>();
 
 app.MapGet("/health", () => Results.Ok(new
-    {
-        status = "ok",
-        commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
+{
+    status = "ok",
+    commit = Environment.GetEnvironmentVariable("RENDER_GIT_COMMIT")
             ?? Environment.GetEnvironmentVariable("GIT_COMMIT")
             ?? "local"
-    }))
+}))
     .AllowAnonymous();
+
+// Partner OpenAPI for the external vacancy API (X-API-Key). Development only —
+// Acceptatie/Production must 404 (code-health 08b). Self-hosted Scalar UI, no CDN.
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi().AllowAnonymous();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Lobsy API · OpenAPI");
+        options.WithOpenApiRoutePattern($"/openapi/{ExternalApiOpenApi.DocumentName}.json");
+    }).AllowAnonymous();
+}
 
 app.MapControllers();
 
 app.Run();
 
-public partial class Program;
+// Entry-point type stays compiler-generated. Tests host via Jobsy.Api.ApiAssemblyMarker
+// (not bare Program) because Jobsy.Web also emits a public Program on .NET 10+.

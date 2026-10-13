@@ -3,12 +3,14 @@ using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/metrics")]
 [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class MetricsController : ControllerBase
 {
     private readonly IMetricsQueryService _metrics;
@@ -33,8 +35,15 @@ public class MetricsController : ControllerBase
         }
 
         var includePlatformOnly = _companyAuth.IsAdmin(User);
-        var metrics = await _metrics.GetSummaryAsync(includePlatformOnly, companyIds, period, cancellationToken);
-        return Ok(metrics);
+        try
+        {
+            var metrics = await _metrics.GetSummaryAsync(includePlatformOnly, companyIds, period, cancellationToken);
+            return Ok(metrics);
+        }
+        catch (InvalidOperationException)
+        {
+            return Ok(Array.Empty<MetricCountDto>());
+        }
     }
 
     [HttpGet("drilldown/{key}")]
@@ -73,8 +82,15 @@ public class MetricsController : ControllerBase
             return Forbid();
         }
 
-        var board = await _metrics.GetVacancyPerformanceAsync(companyIds, period, take, cancellationToken);
-        return Ok(board);
+        try
+        {
+            var board = await _metrics.GetVacancyPerformanceAsync(companyIds, period, take, cancellationToken);
+            return Ok(board);
+        }
+        catch (InvalidOperationException)
+        {
+            return Ok(new VacancyPerformanceBoardDto(period, [], []));
+        }
     }
 
     [HttpGet("client-performance")]
@@ -88,8 +104,15 @@ public class MetricsController : ControllerBase
             return Forbid();
         }
 
-        var board = await _metrics.GetClientPerformanceAsync(companyIds, period, cancellationToken);
-        return Ok(board);
+        try
+        {
+            var board = await _metrics.GetClientPerformanceAsync(companyIds, period, cancellationToken);
+            return Ok(board);
+        }
+        catch (InvalidOperationException)
+        {
+            return Ok(new ClientPerformanceBoardDto(period, []));
+        }
     }
 
     private async Task<IReadOnlyCollection<Guid>?> ResolveCompanyFilterAsync(

@@ -71,5 +71,8 @@ public enum SalesManagerVatTreatment
     ReverseCharge = 1,
 
     /// <summary>VAT-exempt exception.</summary>
-    Exempt = 2
+    Exempt = 2,
+
+    /// <summary>Kleineondernemersregeling (KOR) — no VAT charged.</summary>
+    SmallBusinessScheme = 3
 }

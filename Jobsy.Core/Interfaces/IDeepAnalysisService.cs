@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
-using Jobsy.Core.Rules;
+using Jobsy.Core.Reports.Culture;
+using Jobsy.Core.Reports.Values;
 
 namespace Jobsy.Core.Interfaces;
 
@@ -11,19 +14,9 @@ public interface IDeepAnalysisService
         AssessmentKind kind,
         CancellationToken cancellationToken = default);
 
-    Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
+    Task<IReadOnlyDictionary<AssessmentKind, DeepAnalysisStateDto>> GetStatesAsync(
         Guid userId,
-        AssessmentKind kind,
-        CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Marks a pending stub checkout as paid (Development / AllowStubPayments only) and unlocks.
-    /// When <paramref name="expectedUserId"/> is set, the checkout must belong to that user.
-    /// </summary>
-    Task<bool> TryFulfillPaidCheckoutAsync(
-        string paymentId,
-        Guid? expectedUserId = null,
-        bool allowDevStubMarkPaid = false,
+        IReadOnlyList<AssessmentKind> kinds,
         CancellationToken cancellationToken = default);
 
     Task UnlockForUserAsync(
@@ -55,17 +48,21 @@ public sealed record DeepAnalysisStateDto(
     IReadOnlyList<DeepAnalysisQuestionDto> Questions,
     string UpsellCopy,
     /// <summary>Populated only for a completed <see cref="AssessmentKind.Competence"/> report; null otherwise.</summary>
-    CompetenceDeepReport? CompetenceReport = null);
+    CompetenceDeepReport? CompetenceReport = null,
+    CareerDeepReport? CareerReport = null,
+    CultureDeepReport? CultureReport = null,
+    ValuesDeepReport? ValuesReport = null);
 
 public sealed record DeepAnalysisQuestionDto(
     int Id,
     string Family,
     string Domain,
-    bool Reverse,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Always)] bool Reverse,
     string PromptNl,
     string ExampleNl = "",
     string DomainLabel = "");
 
+/// <summary>Kept for API JSON shape compatibility with older Web clients.</summary>
 public sealed record DeepAnalysisCheckoutResult(
     Guid CheckoutId,
     string PaymentId,

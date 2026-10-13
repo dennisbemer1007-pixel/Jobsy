@@ -1,0 +1,16 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+
+<JobsyDateField Kind="JobsyDatePickerKind.Month"
+                Constraint="JobsyDateConstraint.WorkHistoryMonth"
+                MonthValue="@Value"
+                MonthValueChanged="ValueChanged"
+                CssClass="month-year__input"
+                TestId="@TestId" />
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string? TestId { get; set; }
+}

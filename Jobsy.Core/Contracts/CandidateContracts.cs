@@ -24,7 +24,49 @@ public record CandidatePreferencesDto(
     /// <summary>Wizard/profile: candidate indicated they have no work experience yet.</summary>
     bool? NoWorkExperience = null,
     /// <summary>Optional study direction (e.g. E&amp;M) paired with education level.</summary>
-    string? EducationDirection = null);
+    string? EducationDirection = null,
+    /// <summary>Selected availability preset codes from onboarding wizard v2.</summary>
+    IReadOnlyList<string>? AvailabilityPresets = null,
+    /// <summary>True when the candidate manually overrode preset-computed hours/day-parts.</summary>
+    bool? AvailabilityPresetsOverridden = null,
+    /// <summary>Spoken languages (ISO 639-1 + optional CEFR-style level). Max 8.</summary>
+    IReadOnlyList<CandidateLanguageDto>? SpokenLanguages = null,
+    /// <summary>Separate Dutch level for B1 support: beginner|basis|goed|vloeiend|moedertaal.</summary>
+    string? DutchLevel = null,
+    /// <summary>Self-knowledge employer preference codes (DiscoveryCatalogs).</summary>
+    IReadOnlyList<string>? EmployerPreferences = null,
+    /// <summary>Free-text learning goals. Max 5 × 60 chars.</summary>
+    IReadOnlyList<string>? LearningGoals = null,
+    /// <summary>Hobby catalog codes and/or free text. Max 10.</summary>
+    IReadOnlyList<string>? Hobbies = null,
+    /// <summary>Shareable work-environment choices. Null on older JSON.</summary>
+    SharedWorkPreferences? WorkPreferences = null,
+    /// <summary>When true, employer-preference codes may appear on the passport.</summary>
+    bool? ShareEmployerPreferences = null,
+    /// <summary>City or region the candidate wants to work in. No postcode.</summary>
+    string? WorkRegion = null,
+    bool? HasOwnCar = null,
+    /// <summary>Contract codes, max 3. <c>geen-voorkeur</c> is exclusive.</summary>
+    IReadOnlyList<string>? ContractPreferences = null);
+
+/// <summary>Positive, shareable work preferences. Not private dislikes.</summary>
+public record SharedWorkPreferences(
+    string? Indoor = null,
+    string? Outdoor = null,
+    string? PhysicalWork = null,
+    string? Pace = null);
+
+public record CandidateLanguageDto(string Code, string? Level = null);
+
+/// <summary>Candidate-only private preferences (dislikes). Never employer-facing.</summary>
+public record CandidatePrivatePreferencesDto(
+    IReadOnlyList<string> Dislikes,
+    IReadOnlyList<string> CustomDislikes,
+    DateTime? UpdatedAtUtc = null);
+
+public record UpdateCandidatePrivatePreferencesRequest(
+    IReadOnlyList<string>? Dislikes = null,
+    IReadOnlyList<string>? CustomDislikes = null);
 
 public record CandidateEmployerHistoryDto(
     string EmployerName,
@@ -33,7 +75,10 @@ public record CandidateEmployerHistoryDto(
     string? Description = null,
     /// <summary>Start month as yyyy-MM. End empty means currently employed.</summary>
     string? StartMonth = null,
-    string? EndMonth = null);
+    string? EndMonth = null,
+    bool? IsCurrent = null,
+    /// <summary>ESCO occupation id confirmed by the candidate. Never set from a CV upload.</summary>
+    string? EscoId = null);
 
 public record CandidateCertificateDto(
     string Name,
@@ -47,4 +92,22 @@ public record CandidateVacancyEngagementDto(
     DateTime CreatedAt,
     string? Channel = null,
     string? ImageUrl = null,
-    string? CompanyLogoUrl = null);
+    string? CompanyLogoUrl = null,
+    // Bewaard enrichment (likes only; null on shares)
+    string? VacancyStatus = null,
+    DateOnly? EndDate = null,
+    DateTime? ClosedAtUtc = null,
+    string? LocationLabel = null,
+    int? HoursPerWeekMin = null,
+    int? HoursPerWeekMax = null,
+    Guid? CategoryId = null,
+    string? WorkTypeLabel = null,
+    bool HasApplied = false,
+    Guid? ApplicationId = null,
+    int? FitPercent = null,
+    string? FitBand = null,
+    string? WhyLineKey = null,
+    bool FitGateClosed = false,
+    string? SavedStateKind = null,
+    int? DaysUntilEnd = null,
+    string? SavedStateLabelKey = null);

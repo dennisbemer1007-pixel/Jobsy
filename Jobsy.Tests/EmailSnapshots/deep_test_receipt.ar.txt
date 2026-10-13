@@ -1,0 +1,41 @@
+KEY: deep_test_receipt
+SUBJECT: Your extended test is ready
+PREHEADER: Paid: you can start with question 1
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+Paid. You can start
+
+Paid: Extended test ⁨Competenties⁩
+
+€ 2.99 :Amount (incl. VAT)
+1 أكتوبر 2026, 14:00 :Date
+LOB-KT-2026-0001 :Invoice number
+2026-10 :Terms version
+
+You chose to start right away. That means you cannot cancel within 14 days.
+
+Questions about your payment? Email support@lobsy.nl.
+
+Start with question 1: https://lobsy.nl/candidate/deep-analysis/competence
+
+فريق Lobsy
+
+تصلك هذه الرسالة لأنك تقدّمت عبر Lobsy.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Paid. You can start
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Start with question 1 -> https://lobsy.nl/candidate/deep-analysis/competence
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
+img: src=https://lobsy.nl/images/email/mascot-celebrating-128.png?v=20260930-mail2 alt= width=64 height=64

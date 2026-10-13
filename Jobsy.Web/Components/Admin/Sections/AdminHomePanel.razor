@@ -1,0 +1,242 @@
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Dashboard
+@inherits CultureAwareComponentBase
+@inject JobsyApiClient Api
+
+<div class="admin-dashboard">
+    @if (!HideToolbar)
+    {
+        <div class="admin-dashboard__toolbar">
+            <DashboardRefreshButton Period="@_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+            <div class="period-tabs period-tabs--compact" role="tablist" aria-label="Periode">
+            @foreach (var p in Periods)
+            {
+                <button type="button"
+                        class="period-tab @(_period == p.Key ? "period-tab--active" : null)"
+                        role="tab"
+                        aria-selected="@(_period == p.Key)"
+                        disabled="@_loading"
+                        @onclick="() => SetPeriodAsync(p.Key)">
+                    @p.Label
+                </button>
+            }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="admin-dashboard__toolbar admin-dashboard__toolbar--end">
+            <DashboardRefreshButton Period="@_period" Disabled="_loading" OnRefreshed="ApplyRefreshAsync" />
+        </div>
+    }
+
+    @if (_error is not null && _metrics.Count == 0 && !_loading)
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        <MetricsCategoryBoard Metrics="_metrics"
+                              Loading="@(_loading && _metrics.Count == 0)"
+                              SelectedKey="@_selectedKey"
+                              ValueFormatter="FormatValue"
+                              ShowVacancyPerformance="true"
+                              VacancyPerformance="_vacancyBoard"
+                              VacancyHrefPrefix="/vacancies"
+                              OnMetricClick="SelectMetricAsync" />
+
+        @if (_selectedKey is not null)
+        {
+            <DrilldownGrid Title="@SelectedLabel"
+                           OverviewHref="@ListHrefFor(_selectedKey)"
+                           Loading="@_drillLoading"
+                           Items="_drilldown" />
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string? Period { get; set; }
+    [Parameter] public bool HideToolbar { get; set; }
+
+    private static readonly (string Key, string Label)[] Periods =
+    [
+        ("day", "Dag"),
+        ("week", "Week"),
+        ("month", "Maand"),
+        ("quarter", "Kwartaal"),
+        ("year", "Jaar")
+    ];
+
+    private string _period = "week";
+    private string? _selectedKey;
+    private bool _loading = true;
+    private bool _drillLoading;
+    private string? _error;
+    private List<MetricCount> _metrics = [];
+    private List<MetricDrilldownItem> _drilldown = [];
+    private VacancyPerformanceBoard? _vacancyBoard;
+    private bool _loadStarted;
+
+    private string SelectedLabel =>
+        _metrics.FirstOrDefault(m => m.Key == _selectedKey)?.Label ?? _selectedKey ?? "";
+
+    protected override void OnParametersSet()
+    {
+        if (!string.IsNullOrWhiteSpace(Period) && Period != _period)
+        {
+            _period = Period;
+        }
+    }
+
+    protected override Task OnInitializedAsync()
+        => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
+    {
+        if (!HomeDashboardLoad.TryBegin(ref _loadStarted, RendererInfo.IsInteractive))
+        {
+            return;
+        }
+
+        await LoadSummaryAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static string FormatValue(MetricCount metric)
+    {
+        if (MetricDashboardCatalog.IsPercent(metric.Key))
+        {
+            return metric.Value.ToString("0.#") + "%";
+        }
+
+        if (MetricDashboardCatalog.IsMinutes(metric.Key))
+        {
+            return metric.Value.ToString("0.#") + " min";
+        }
+
+        if (string.Equals(metric.Key, "avg_vacancy_lead_time_days", StringComparison.OrdinalIgnoreCase))
+        {
+            return metric.Value.ToString("0.#") + " d";
+        }
+
+        return metric.Key.StartsWith("tokens_", StringComparison.OrdinalIgnoreCase)
+            ? metric.Value.ToString("0.##")
+            : metric.Value.ToString("0");
+    }
+
+    private async Task SetPeriodAsync(string period)
+    {
+        if (_period == period) return;
+        _period = period;
+        await LoadSummaryAsync();
+        if (_selectedKey is not null)
+        {
+            await LoadDrilldownAsync(_selectedKey);
+        }
+    }
+
+    private async Task SelectMetricAsync(MetricCount metric)
+    {
+        if (_selectedKey == metric.Key)
+        {
+            _selectedKey = null;
+            _drilldown = [];
+            return;
+        }
+
+        _selectedKey = metric.Key;
+        await LoadDrilldownAsync(metric.Key);
+    }
+
+    private async Task LoadSummaryAsync()
+    {
+        _loading = true;
+        _error = null;
+        var (metrics, error) = await HomeDashboardLoad.FetchAsync(async () =>
+            (await Api.GetEmployerMetricsSummaryAsync(_period)).ToList());
+        if (error is not null)
+        {
+            _error = error;
+            _metrics = [];
+            _vacancyBoard = null;
+            _loading = false;
+            return;
+        }
+
+        _metrics = metrics ?? [];
+
+        try
+        {
+            _vacancyBoard = await Api.GetVacancyPerformanceAsync(_period);
+        }
+        catch
+        {
+            _vacancyBoard = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task ApplyRefreshAsync(DashboardRefreshResult result)
+    {
+        if (result.Metrics is { Count: > 0 } or not null)
+        {
+            _metrics = result.Metrics ?? [];
+        }
+
+        if (result.VacancyPerformance is not null)
+        {
+            _vacancyBoard = result.VacancyPerformance;
+        }
+
+        _error = null;
+        return Task.CompletedTask;
+    }
+
+    private async Task LoadDrilldownAsync(string key)
+    {
+        _drillLoading = true;
+        try
+        {
+            _drilldown = (await Api.GetEmployerMetricsDrilldownAsync(key, _period)).ToList();
+        }
+        catch
+        {
+            _drilldown = [];
+        }
+        finally
+        {
+            _drillLoading = false;
+        }
+    }
+
+    private static string ListHrefFor(string key) => key.ToLowerInvariant() switch
+    {
+        "errors" => "/admin/beveiliging/systeemlogs?level=Error",
+        "companies_employers" => "/admin/organisaties?type=Employer",
+        "companies_intermediaries" => "/admin/organisaties?type=Intermediary",
+        "companies_with_api" => "/admin/instellingen/integraties?tab=api",
+        "companies_with_csv" or "reengagement_emails_sent" or "reengagement_reactivated" => "/admin/organisaties",
+        "users_open_for_work" or "users_active" or "users_active_candidates" => "/admin/gebruikers",
+        "tokens_purchased" or "tokens_spent" or "tokens_balance" or "pushboms" or "extensions"
+            => "/admin/financien?tab=tokenlog",
+        "active_vacancies" or "active_vacancies_employers" or "active_vacancies_intermediaries"
+            or "active_vacancies_ats" or "active_vacancies_regular"
+            or "active_boosts" or "applications" or "applications_pending" or "conversion_rate"
+            or "impressions" or "clicks" or "shares" or "likes" or "unpublished_vacancies"
+            or "avg_travel_minutes" or "top_transport_share" or "avg_vacancy_lead_time_days" => key.ToLowerInvariant() switch
+            {
+                "active_vacancies_ats" => "/admin/vacatures?channel=ats&status=Active",
+                "active_vacancies_regular" => "/admin/vacatures?channel=regular&status=Active",
+                _ => "/admin/vacatures"
+            },
+        "site_visits" or "site_visits_unique" => "/admin/vacatures",
+        _ => "/admin/vacatures"
+    };
+}

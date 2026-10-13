@@ -1,0 +1,902 @@
+{
+ "1": {
+  "prompt": "I work preferably zelfstandig, without that iemand steeds meekijkt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "2": {
+  "prompt": "I plan gladly zelf the volgorde of my tasks.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "3": {
+  "prompt": "I voel me sterker if I zelf mag kiezen hoe I a job aanpak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "4": {
+  "prompt": "I wacht rather on instructie before I ergens to begin.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "5": {
+  "prompt": "I bedenk zelf a solution if er no leidinggevende in the buurt is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "6": {
+  "prompt": "I vind the prettig if I my werkdag zelf mag indelen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "7": {
+  "prompt": "I neem gladly verantwoordelijkheid for a heel stuk work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "8": {
+  "prompt": "I raak onzeker if I without strakke stappenlijst moet work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "9": {
+  "prompt": "I stel zelf vragen if iets onduidelijk is, in plaats of stil te blijven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "10": {
+  "prompt": "I verbeter a way of working rather zelf dan that I alles laat zoals the is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "11": {
+  "prompt": "I geef tasks preferably terug if niemand precies heeft gezegd hoe.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "12": {
+  "prompt": "I kan good verder if the doelen helder his, ook without constant toezicht.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "13": {
+  "prompt": "I kies zelf welke hulpmiddelen I gebruik om sneller klaar te his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "14": {
+  "prompt": "I wil at elke kleine beslissing eerst toestemming vragen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "15": {
+  "prompt": "I voel me trots if I a problem alleen heb opgelost.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Autonomy"
+ },
+ "16": {
+  "prompt": "I voel me thuis in a team waar we elkaar at the voornaam noemen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "17": {
+  "prompt": "I vind a luchtige grap on the shop floor usually prettig.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "18": {
+  "prompt": "I praat makkelijk about gewone dingen with colleagues, not alleen about work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "19": {
+  "prompt": "I houd of a formele toon, ook at kleine vragen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "20": {
+  "prompt": "I stuur rather a kort berichtje dan a lange officiële mail.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "21": {
+  "prompt": "I vind the fijn if the leidinggevende gewoon meeloopt on the vloer.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "22": {
+  "prompt": "I work gladly in a atmosphere waar je mistakes hardop mag benoemen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "23": {
+  "prompt": "I raak gespannen of te a lot informeel geklets tijdens the dienst.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "24": {
+  "prompt": "I vind hierarchy less belangrijk dan that we elkaar snel helpen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "25": {
+  "prompt": "I spreek a colleague makkelijk to, ook if that hoger in rang staat.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "26": {
+  "prompt": "I wacht until iemand different a gesprek begint; zelf doe I that zelden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "27": {
+  "prompt": "I vind a open deur and korte lijnen prettiger dan vaste procedures for alles.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "28": {
+  "prompt": "I deel gladly a tip with a colleague without formeel meeting.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "29": {
+  "prompt": "I wil eerst a officiële agreement before I iets with a colleague regel.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "30": {
+  "prompt": "I voel me on my gemak if the team informeel and direct communiceert.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Informal"
+ },
+ "31": {
+  "prompt": "I krijg energie of samen a job afronden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "32": {
+  "prompt": "I vraag snel or iemand mee kan denken if I vastzit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "33": {
+  "prompt": "I deel informatie gladly zodat the team verder kan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "34": {
+  "prompt": "I work rather alleen and lever pas in if alles klaar is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "35": {
+  "prompt": "I stem gladly even af with colleagues before we a piek ingaan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "36": {
+  "prompt": "I help a new colleague gladly on weg.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "37": {
+  "prompt": "I vind meeting about the taakverdeling the moeite waard.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "38": {
+  "prompt": "I vermijd teamoverleg; the kost me te a lot tijd.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "39": {
+  "prompt": "I vier gladly a klein succes samen with the team.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "40": {
+  "prompt": "I luister to wat anderen nodig hebben before I doorpak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "41": {
+  "prompt": "I vind the lastig om work with anderen te delen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "42": {
+  "prompt": "I pas my tempo to zodat we samen on schema blijven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "43": {
+  "prompt": "I bied to a stuk about te nemen if a colleague the zwaar heeft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "44": {
+  "prompt": "I houd my aanpak rather for mezelf until the eindresultaat er is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "45": {
+  "prompt": "I zie samenwerken if a sterkte, not if oponthoud.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Collaboration"
+ },
+ "46": {
+  "prompt": "I schakel makkelijk if the schedule plotseling verandert.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "47": {
+  "prompt": "I vind wisselende tasks usually juist leuk.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "48": {
+  "prompt": "I kan snel of the ene job to the other overstappen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "49": {
+  "prompt": "I raak of slag if my vaste ronde wordt doorbroken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "50": {
+  "prompt": "I help gladly at a spoedklus that not on my lijst stond.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "51": {
+  "prompt": "I pas my work to if the customer or the seizoen iets different vraagt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "52": {
+  "prompt": "I blijf rustig if er om half elf a new prioriteit at komt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "53": {
+  "prompt": "I wil gladly elke dag dezelfde tasks in dezelfde volgorde.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "54": {
+  "prompt": "I improvisier rather a beetje dan that alles vastligt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "55": {
+  "prompt": "I vind the oké om vandaag iets different te doen dan gisteren.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "56": {
+  "prompt": "I verzet me tegen last-minute wijzigingen, ook if ze nodig his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "57": {
+  "prompt": "I kan me snel inwerken on a tijdelijke extra task.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "58": {
+  "prompt": "I zie change on the vloer if iets waar I mee om kan gaan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "59": {
+  "prompt": "I word onrustig if er no vaste schedule for the hele week is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "60": {
+  "prompt": "I blijf bruikbaar if the team moet meebuigen with busyness.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Flexibility"
+ },
+ "61": {
+  "prompt": "I bedenk gladly a slimmere manier om hetzelfde work te doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "62": {
+  "prompt": "I probeer a new hulpmiddel out if the tijd kan besparen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "63": {
+  "prompt": "I stel verbeterideeën for, ook if ze nog klein his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "64": {
+  "prompt": "I blijf at the old method, ook if that traag is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "65": {
+  "prompt": "I word nieuwsgierig if er a new way of working wordt geïntroduceerd.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "66": {
+  "prompt": "I kijk at other teams hoe zij a problem oplossen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "67": {
+  "prompt": "I durf a proposal te doen that nog not in the handbook staat.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "68": {
+  "prompt": "I wantrouw new ideas totdat iedereen ze al lang gebruikt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "69": {
+  "prompt": "I experimenteer rather klein dan that I wacht on a perfect plan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "70": {
+  "prompt": "I merk snel if a proces onnodig omslachtig is geworden.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "71": {
+  "prompt": "I houd not of brainstormen; zeg me gewoon wat I moet doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "72": {
+  "prompt": "I leer gladly of a mistake door te kijken wat we different kunnen doen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "73": {
+  "prompt": "I zie kansen in new producten or diensten of the vestiging.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "74": {
+  "prompt": "I voel me ongemakkelijk at tasks without duidelijk voorbeeld.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "75": {
+  "prompt": "I blijf nadenken about hoe kwaliteit and tempo beter kunnen samengaan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Innovation"
+ },
+ "76": {
+  "prompt": "I kies eerder for the person dan for alleen the cijfer if the schuurt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "77": {
+  "prompt": "I merk the if a colleague a zware dag heeft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "78": {
+  "prompt": "I neem the tijd om a customer or colleague écht te helpen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "79": {
+  "prompt": "I zet result always vóór hoe iemand zich voelt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "80": {
+  "prompt": "I vraag hoe the gaat, not alleen or the task af is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "81": {
+  "prompt": "I vind a goede atmosphere minstens zo belangrijk if snelle output.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "82": {
+  "prompt": "I bescherm a colleague tegen onnodige busy if that kan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "83": {
+  "prompt": "I vind persoonlijke problemen of colleagues no werkzaak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "84": {
+  "prompt": "I geef iemand the ruimte om even on adem te komen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "85": {
+  "prompt": "I leg iets geduldig out if iemand the nog not snapt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "86": {
+  "prompt": "I push door, ook if iemand duidelijk overvraagd is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "87": {
+  "prompt": "I denk na about hoe a beslissing colleagues raakt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "88": {
+  "prompt": "I vier rather that iemand groeit dan alleen that the target gehaald is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "89": {
+  "prompt": "I meet succes vooral in cijfers, not in hoe the team erbij zit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "90": {
+  "prompt": "I zorg that niemand er alleen for staat at a lastige job.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.PeopleFirst"
+ },
+ "91": {
+  "prompt": "I leer gladly iets nieuws about hoe ons field werkt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "92": {
+  "prompt": "I probeer a onbekende way of working eerst klein out.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "93": {
+  "prompt": "I zie snel connections tussen losse details on the vloer.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "94": {
+  "prompt": "I blijf preferably at wat I al ken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "95": {
+  "prompt": "I stel vragen if I the background of a task nog not snap.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "96": {
+  "prompt": "I haal inspiratie out hoe other teams hetzelfde aanpakken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "97": {
+  "prompt": "New ideas of colleagues wijs I usually meteen af.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "98": {
+  "prompt": "I vind afwisseling in tasks prettig zodat I alert blijf.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "99": {
+  "prompt": "I raak nieuwsgierig if iets different werkt dan verwacht.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "100": {
+  "prompt": "I vermijd tasks waarbij I iets moet leren that I nog never deed.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "101": {
+  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "102": {
+  "prompt": "I pas my aanpak to if the seizoensdruk different is dan vorig jaar.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Openness"
+ },
+ "103": {
+  "prompt": "I maak af wat I beloof, ook if the dag tegenzit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "104": {
+  "prompt": "I controleer details before I iets if klaar doorgeef.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "105": {
+  "prompt": "I plan my work zodat deadlines haalbaar blijven.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "106": {
+  "prompt": "I laat half afgemaakt work makkelijk liggen.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "107": {
+  "prompt": "I kom on tijd and geef the door if I te laat dreig te his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "108": {
+  "prompt": "I houd at wat er nog openstaat, without that iemand erom vraagt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "109": {
+  "prompt": "I stel lastige jobs out until the not different more kan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "110": {
+  "prompt": "I work netjes volgens afgesproken veiligheid or kwaliteit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "111": {
+  "prompt": "I ruim my werkplek on zodat the volgende ploeg verder kan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "112": {
+  "prompt": "If niemand kijkt, sla I controles or stappen about.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "113": {
+  "prompt": "I geef the eerlijk to if I a mistake heb gemaakt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "114": {
+  "prompt": "I verdeel grote tasks in stukken that I écht afkrijg.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Conscientiousness"
+ },
+ "115": {
+  "prompt": "I praat makkelijk with new colleagues or customers.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "116": {
+  "prompt": "I neem gladly the woord in a kort teamoverleg.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "117": {
+  "prompt": "I krijg energie of a drukke balie or vloer.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "118": {
+  "prompt": "I vermijd contact and work preferably stil door.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "119": {
+  "prompt": "I stel mezelf for if er iemand nieuws at the team komt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "120": {
+  "prompt": "I vind the leuk om a groep mee te nemen in a plan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "121": {
+  "prompt": "Na a lot mensencontact heb I vooral behoefte om alleen te his.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "122": {
+  "prompt": "I begin makkelijk a praatje tijdens the pauze.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "123": {
+  "prompt": "I voel me on my gemak if er a lot beweging and geluid is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "124": {
+  "prompt": "I laat anderen the woord doen, ook if I iets te zeggen heb.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "125": {
+  "prompt": "I geniet of work waarbij I a lot people zie.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "126": {
+  "prompt": "I straal calm and warmte out if iemand mij aanspreekt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Extraversion"
+ },
+ "127": {
+  "prompt": "I bied to a task about te nemen if a colleague the zwaar heeft.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "128": {
+  "prompt": "I zoek a solution waar iedereen mee verder kan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "129": {
+  "prompt": "I blijf beleefd, ook if a customer ontevreden is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "130": {
+  "prompt": "I zet my zin door, ook if that the atmosphere schaadt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "131": {
+  "prompt": "I geef eerlijk complimenten if iemand iets good doet.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "132": {
+  "prompt": "I luister eerst good before I antwoord.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "133": {
+  "prompt": "I vind meedenken with anderen usually tijdverspilling.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "134": {
+  "prompt": "I houd rekening with the feelings of colleagues at feedback.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "135": {
+  "prompt": "I help gladly, ook if the not letterlijk my task is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "136": {
+  "prompt": "I zeg bot wat I denk, without on the toon te letten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "137": {
+  "prompt": "I maak vrede if er spanning in the team zit.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "138": {
+  "prompt": "I doe my best om prettig samen te work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.Agreeableness"
+ },
+ "139": {
+  "prompt": "I blijf kalm if the schedule ineens omvalt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "140": {
+  "prompt": "I adem even and kijk wat wél kan if the hectisch wordt.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "141": {
+  "prompt": "I reageer later rustig if iemand kortaf is.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "142": {
+  "prompt": "I raak snel of streek at onverwachte busy.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "143": {
+  "prompt": "I houd my hoofd erbij tijdens piekdruk in the winkel or kas.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "144": {
+  "prompt": "I laat a mistake me not the hele dienst dwarszitten.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "145": {
+  "prompt": "I panikeer makkelijk if er meerdere dingen tegelijk misgaan.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "146": {
+  "prompt": "I blijf beleefd onder tijdsdruk.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "147": {
+  "prompt": "I herstel snel na a stevige criticism.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "148": {
+  "prompt": "I neem stress of the work mee until ver na my dienst.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about holding on to what you know — or not.",
+  "reverse": true,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "149": {
+  "prompt": "I blijf overzicht houden if colleagues gestrest raken.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ },
+ "150": {
+  "prompt": "I kan a setback laten for wat hij is and verder work.",
+  "example": "Example: at work something unexpected happens. What do you usually do? This is about how you usually react when it matters.",
+  "reverse": false,
+  "domain": "CulturePersonalityCatalog.EmotionalStability"
+ }
+}

@@ -1,0 +1,492 @@
+/*
+  Error / status pages (errors stack 01). Scoped under .err-layout, BEM prefix err-.
+  Warm tints are derived from the public theme tokens with color-mix so the pages stay
+  in family with .pub-theme without duplicating its palette.
+*/
+
+.err-layout {
+  --err-ink: var(--text, #122033);
+  --err-muted: var(--muted, #5a6a7d);
+  --err-surface: color-mix(in srgb, var(--surface, #fffcfa) 92%, var(--coral-soft, #ffe8e0) 8%);
+  --err-blob: color-mix(in srgb, var(--coral-soft, #ffe8e0) 70%, var(--surface, #fffcfa) 30%);
+  --err-line: color-mix(in srgb, var(--border, #ddd5cc) 70%, transparent);
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+  background: var(--err-surface);
+  color: var(--err-ink);
+}
+
+.err-layout .err-skip {
+  position: absolute;
+  inset-block-start: -3rem;
+}
+
+.err-layout .err-skip:focus-visible {
+  inset-block-start: 0.5rem;
+}
+
+/* —— header —— */
+
+.err-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  border-block-end: 1px solid var(--err-line);
+}
+
+.err-header__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 44px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.err-header__name {
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.err-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.err-header__action {
+  min-block-size: 44px;
+}
+
+.err-lang {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.err-lang__option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--err-muted);
+}
+
+.err-lang__option.is-current {
+  color: var(--err-ink);
+  background: color-mix(in srgb, var(--accent-soft, #e7eef7) 80%, transparent);
+}
+
+.err-lang__option:hover,
+.err-lang__option:focus-visible {
+  color: var(--err-ink);
+}
+
+/* —— main —— */
+
+.err-main {
+  flex: 1 1 auto;
+  inline-size: 100%;
+  max-inline-size: 72rem;
+  margin-inline: auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.err-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.err-hero__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  order: 2;
+}
+
+.err-hero__art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  order: 1;
+  min-block-size: 10rem;
+}
+
+.err-blob {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: 14rem;
+  block-size: 14rem;
+  translate: -50% -50%;
+  border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+  background: var(--err-blob);
+}
+
+.err-mascot {
+  position: relative;
+  animation: err-bob 4s ease-in-out infinite;
+}
+
+@keyframes err-bob {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -0.5rem; }
+}
+
+.err-code {
+  align-self: start;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.err-hero__title {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.5rem);
+  line-height: 1.15;
+}
+
+.err-hero__lead {
+  margin: 0;
+  max-inline-size: 42ch;
+  color: var(--err-muted);
+  font-size: 1.0625rem;
+}
+
+.err-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-block-start: 0.4rem;
+}
+
+.err-actions > a {
+  min-block-size: 44px;
+}
+
+.err-support {
+  margin: 0.4rem 0 0;
+  font-size: 0.9375rem;
+  color: var(--err-muted);
+}
+
+.err-support__link {
+  color: inherit;
+}
+
+/* —— small secondary line, e.g. the admin sign-in hint on 503 (errors 05) —— */
+
+.err-aside {
+  margin: 0.2rem 0 0;
+  font-size: 0.875rem;
+  color: var(--err-muted);
+}
+
+.err-aside__link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: inherit;
+}
+
+/* —— account card (403, errors 02) —— */
+
+.err-account {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-block-start: 0.2rem;
+}
+
+.err-account__line {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.err-account__email,
+.err-account__role {
+  color: var(--err-muted);
+}
+
+.err-switch-form {
+  margin: 0;
+}
+
+/* —— support code card (500) —— */
+
+.err-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  max-inline-size: 26rem;
+  padding: 0.85rem 1rem;
+}
+
+.err-card__label {
+  grid-column: 1;
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--err-muted);
+}
+
+.err-card__code {
+  grid-column: 1;
+  margin: 0;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  user-select: all;
+}
+
+.err-card__copy {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-block-size: 44px;
+}
+
+/* —— footer —— */
+
+.err-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 1rem;
+  border-block-start: 1px solid var(--err-line);
+  font-size: 0.875rem;
+  color: var(--err-muted);
+}
+
+.err-footer__copy {
+  margin: 0;
+}
+
+.err-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.err-footer__links a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 44px;
+  color: inherit;
+}
+
+/* —— breakpoints —— */
+
+@media (min-width: 640px) {
+  .err-main {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .err-hero {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 2.5rem;
+    padding-block: 2rem;
+  }
+
+  .err-hero__text {
+    order: 1;
+  }
+
+  .err-hero__art {
+    order: 2;
+    min-block-size: 18rem;
+  }
+
+  .err-blob {
+    inline-size: 20rem;
+    block-size: 20rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .err-mascot {
+    animation: none;
+  }
+}
+
+/* —— embedded content style (closed vacancy / errors 03) ——
+   VacancyDetail.razor keeps its own route, layout and interactive render mode;
+   this just gives the .err-hero markup the same CSS variables ErrorLayout sets
+   on .err-layout, without the full-page flex/min-height shell. */
+
+.err-embed {
+  --err-ink: var(--text, #122033);
+  --err-muted: var(--muted, #5a6a7d);
+  --err-surface: color-mix(in srgb, var(--surface, #fffcfa) 92%, var(--coral-soft, #ffe8e0) 8%);
+  --err-blob: color-mix(in srgb, var(--coral-soft, #ffe8e0) 70%, var(--surface, #fffcfa) 30%);
+  --err-line: color-mix(in srgb, var(--border, #ddd5cc) 70%, transparent);
+  display: block;
+  color: var(--err-ink);
+  background: var(--err-surface);
+  border-radius: 20px;
+  padding: 1.5rem 1rem;
+}
+
+.err-similar-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.err-similar-card {
+  border-radius: 14px;
+  overflow: clip;
+  background: var(--surface, #fff);
+  border: 1px solid var(--err-line);
+}
+
+.err-similar-card__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  min-block-size: 44px;
+}
+
+.err-similar-card__photo {
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  flex: none;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.err-similar-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-inline-size: 0;
+}
+
+.err-similar-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.err-similar-card__place,
+.err-similar-card__travel {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--err-muted);
+}
+
+.err-similar-empty {
+  margin: 0;
+  color: var(--err-muted);
+}
+
+@media (min-width: 640px) {
+  .err-similar-grid {
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  }
+}
+
+/*
+  —— inline block error (errors 04) ——
+  The only err- block that lives outside .err-layout: it sits inside normal app pages where one
+  card, list or chart failed. errors.css is linked for every page, so it needs no second file.
+*/
+
+.err-inline {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--warn, #a65b00) 35%, transparent);
+  background: var(--warn-soft, #fff8e7);
+  color: var(--text, #122033);
+}
+
+.err-inline__icon {
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.err-inline__body {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.err-inline__text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.err-inline__detail {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.err-inline__code {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-family: ui-monospace, "SFMono-Regular", "Consolas", monospace;
+  color: var(--muted, #5a6a7d);
+  user-select: all;
+}
+
+.err-inline__retry {
+  flex: none;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--warn, #a65b00) 45%, transparent);
+  background: var(--surface, #fffcfa);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.err-inline__retry:focus-visible {
+  outline: 2px solid var(--accent, #0f2d5c);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .err-inline {
+    flex-wrap: wrap;
+  }
+
+  .err-inline__retry {
+    inline-size: 100%;
+  }
+}

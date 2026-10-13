@@ -46,7 +46,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
         _features = features;
     }
 
-    public async Task<CandidateKompasDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<CandidateKompasDto> GetAsync(Guid userId, string? language = null, CancellationToken cancellationToken = default)
     {
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
@@ -75,14 +75,22 @@ public sealed class CandidateKompasService : ICandidateKompasService
             .FirstOrDefaultAsync(cancellationToken);
 
         var competencies = await _competencies.GetAsync(userId, cancellationToken);
-        var careerState = await _career.GetAsync(userId, cancellationToken, includeMatches: false);
+        var careerState = await _career.GetAsync(userId, includeMatches: false, cancellationToken);
         var culture = await _culture.GetAsync(userId, cancellationToken);
         var values = await _values.GetAsync(userId, cancellationToken);
         var (matches, matchStatus) = await _matches.GetAsync(userId, cancellationToken);
-        var competenceDeep = await _deep.GetStateAsync(userId, AssessmentKind.Competence, cancellationToken);
-        var careerDeep = await _deep.GetStateAsync(userId, AssessmentKind.Career, cancellationToken);
-        var cultureDeep = await _deep.GetStateAsync(userId, AssessmentKind.Culture, cancellationToken);
-        var valuesDeep = await _deep.GetStateAsync(userId, AssessmentKind.Values, cancellationToken);
+        if (!features.EmployersEnabled)
+        {
+            matches = [];
+        }
+        var deepStates = await _deep.GetStatesAsync(
+            userId,
+            [AssessmentKind.Competence, AssessmentKind.Career, AssessmentKind.Culture, AssessmentKind.Values],
+            cancellationToken);
+        var competenceDeep = deepStates[AssessmentKind.Competence];
+        var careerDeep = deepStates[AssessmentKind.Career];
+        var cultureDeep = deepStates[AssessmentKind.Culture];
+        var valuesDeep = deepStates[AssessmentKind.Values];
 
         var prefs = TryPrefs(user.PreferencesJson);
         var hasUploadedCv = uploadedCv is not null;
@@ -106,7 +114,7 @@ public sealed class CandidateKompasService : ICandidateKompasService
             uploadedCv,
             references);
 
-        var career = careerState with { TopVacancies = matches };
+        var career = careerState with { TopVacancies = [] };
         var insights = InsightsStatuses.IsUpdating(matchStatus)
                        || InsightsStatuses.IsUpdating(career.InsightsStatus)
             ? InsightsStatuses.Updating
@@ -148,6 +156,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             cultureProvisional,
             valuesProvisional);
 
+        var (storyTraits, storyFromDeep) = await WhoAmICompetenceLoader.LoadAsync(_db, userId, cancellationToken);
+        var competenceSource = WhoAmICompetenceSource.FingerprintSuffix(storyTraits, storyFromDeep);
         var whoAmI = BuildWhoAmIStory(
             whoAmIRow?.StoryText,
             whoAmIRow?.KeywordsJson,
@@ -161,7 +171,12 @@ public sealed class CandidateKompasService : ICandidateKompasService
             competencies.Scores,
             career.Scores,
             culture.Scores,
-            values.Scores);
+            values.Scores,
+            WhoAmIProfileHighlights.FromPreferences(prefs),
+            features.EmployersEnabled,
+            language,
+            storyFromDeep ? storyTraits : null,
+            competenceSource);
 
         return new CandidateKompasDto(
             profile,
@@ -177,6 +192,270 @@ public sealed class CandidateKompasService : ICandidateKompasService
             insights,
             whoAmI,
             completeness);
+    }
+
+    public async Task<CandidateDnaSummaryDto> GetDnaAsync(Guid userId, string? language = null, CancellationToken cancellationToken = default)
+    {
+        var features = await _features.GetAsync(cancellationToken);
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
+            ?? throw new InvalidOperationException("Gebruiker niet gevonden.");
+
+        var whoAmIRow = await _db.CandidateWhoAmIProfiles.AsNoTracking()
+            .Where(w => w.UserId == userId)
+            .Select(w => new
+            {
+                w.StoryText,
+                w.KeywordsJson,
+                w.StoryGeneratedAtUtc,
+                w.InputFingerprint,
+                w.FromOpenAi
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var competencyRow = await _db.CandidateCompetencies.AsNoTracking()
+            .Where(c => c.UserId == userId)
+            .Select(c => new
+            {
+                c.Status,
+                c.AnswersJson,
+                c.SamenwerkenPercent,
+                c.ResultaatgerichtheidPercent,
+                c.StressbestendigheidPercent,
+                c.InnovatiePercent,
+                c.ExtraversiePercent
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var careerRow = await _db.CandidateCareerInterests.AsNoTracking()
+            .Where(c => c.UserId == userId)
+            .Select(c => new
+            {
+                c.Status,
+                c.AnswersJson,
+                c.RealisticPercent,
+                c.InvestigativePercent,
+                c.ArtisticPercent,
+                c.SocialPercent,
+                c.EnterprisingPercent,
+                c.ConventionalPercent
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var cultureRow = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
+            .Where(c => c.UserId == userId)
+            .Select(c => new
+            {
+                c.Status,
+                c.AnswersJson,
+                c.AutonomyPercent,
+                c.InformalPercent,
+                c.CollaborationPercent,
+                c.FlexibilityPercent,
+                c.InnovationPercent,
+                c.PeopleFirstPercent,
+                c.OpennessPercent,
+                c.ConscientiousnessPercent,
+                c.ExtraversionPercent,
+                c.AgreeablenessPercent,
+                c.EmotionalStabilityPercent
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var valuesRow = await _db.CandidateValuesProfiles.AsNoTracking()
+            .Where(c => c.UserId == userId)
+            .Select(c => new
+            {
+                c.Status,
+                c.AnswersJson,
+                c.AutonomyPercent,
+                c.ConnectionPercent,
+                c.AchievementPercent,
+                c.StabilityPercent,
+                c.ImpactPercent
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var deepRows = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .Where(d => d.UserId == userId)
+            .Select(d => new { d.Kind, d.Status, d.AnswersJson })
+            .ToListAsync(cancellationToken);
+
+        var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
+            .AnyAsync(c => c.UserId == userId, cancellationToken);
+        var hasReferences = await _db.CandidateReferences.AsNoTracking()
+            .AnyAsync(r => r.UserId == userId, cancellationToken);
+
+        var competencyResolved = competencyRow is null
+            ? ProvisionalAssessmentScores.ResolveCompetency(null, null, null, null, null, null, null)
+            : ProvisionalAssessmentScores.ResolveCompetency(
+                competencyRow.Status,
+                competencyRow.AnswersJson,
+                competencyRow.SamenwerkenPercent,
+                competencyRow.ResultaatgerichtheidPercent,
+                competencyRow.StressbestendigheidPercent,
+                competencyRow.InnovatiePercent,
+                competencyRow.ExtraversiePercent);
+        var careerResolved = careerRow is null
+            ? ProvisionalAssessmentScores.ResolveCareer(null, null, null, null, null, null, null, null)
+            : ProvisionalAssessmentScores.ResolveCareer(
+                careerRow.Status,
+                careerRow.AnswersJson,
+                careerRow.RealisticPercent,
+                careerRow.InvestigativePercent,
+                careerRow.ArtisticPercent,
+                careerRow.SocialPercent,
+                careerRow.EnterprisingPercent,
+                careerRow.ConventionalPercent);
+
+        CulturePersonalityScores? storedCulture = null;
+        if (cultureRow is not null && CandidateCompetencyStatuses.IsCompleted(cultureRow.Status))
+        {
+            storedCulture = new CulturePersonalityScores(
+                cultureRow.AutonomyPercent,
+                cultureRow.InformalPercent,
+                cultureRow.CollaborationPercent,
+                cultureRow.FlexibilityPercent,
+                cultureRow.InnovationPercent,
+                cultureRow.PeopleFirstPercent,
+                cultureRow.OpennessPercent,
+                cultureRow.ConscientiousnessPercent,
+                cultureRow.ExtraversionPercent,
+                cultureRow.AgreeablenessPercent,
+                cultureRow.EmotionalStabilityPercent);
+        }
+
+        var cultureResolved = cultureRow is null
+            ? ProvisionalAssessmentScores.ResolveCulture(null, null, null)
+            : ProvisionalAssessmentScores.ResolveCulture(
+                cultureRow.Status,
+                cultureRow.AnswersJson,
+                storedCulture);
+
+        var valuesResolved = valuesRow is null
+            ? ProvisionalAssessmentScores.ResolveValues(null, null, null, null, null, null, null)
+            : ProvisionalAssessmentScores.ResolveValues(
+                valuesRow.Status,
+                valuesRow.AnswersJson,
+                valuesRow.AutonomyPercent,
+                valuesRow.ConnectionPercent,
+                valuesRow.AchievementPercent,
+                valuesRow.StabilityPercent,
+                valuesRow.ImpactPercent);
+
+        var competencyDone = competencyRow is not null
+                               && CandidateCompetencyStatuses.IsCompleted(competencyRow.Status);
+        var careerDone = careerRow is not null && CandidateCompetencyStatuses.IsCompleted(careerRow.Status);
+        var cultureDone = cultureRow is not null && CandidateCompetencyStatuses.IsCompleted(cultureRow.Status);
+        var valuesDone = valuesRow is not null && CandidateCompetencyStatuses.IsCompleted(valuesRow.Status);
+
+        var competencyAnswers = CompetencyTestCatalog.ParseAnswersJson(competencyRow?.AnswersJson);
+        var careerAnswers = CareerTestCatalog.ParseAnswersJson(careerRow?.AnswersJson);
+        var cultureAnswers = CulturePersonalityCatalog.ParseAnswers(cultureRow?.AnswersJson);
+        var valuesAnswers = SchwartzValuesCatalog.ParseAnswers(valuesRow?.AnswersJson);
+
+        var competencyProvisional = competencyResolved.IsProvisional;
+        var careerProvisional = careerResolved.IsProvisional;
+        var cultureProvisional = cultureResolved.IsProvisional;
+        var valuesProvisional = valuesResolved.IsProvisional;
+
+        var prefs = TryPrefs(user.PreferencesJson);
+        var profileFilled = WhoAmICompleteness.IsProfileFilled(
+            user.FullName,
+            user.FirstName,
+            user.LastName,
+            user.PreferencesJson,
+            hasUploadedCv,
+            hasReferences);
+        var hasBackground = profileFilled || MatchProfileCompleteness.HasEducationLevel(prefs);
+
+        var completeness = KompasProfileCompleteness.Percent(
+            profileFilled,
+            competencyDone,
+            careerDone,
+            cultureDone,
+            valuesDone,
+            hasBackground,
+            competencyProvisional,
+            careerProvisional,
+            cultureProvisional,
+            valuesProvisional);
+
+        var (dnaTraits, dnaDeep) = await WhoAmICompetenceLoader.LoadAsync(_db, userId, cancellationToken);
+        var dnaSource = WhoAmICompetenceSource.FingerprintSuffix(dnaTraits, dnaDeep);
+        var whoAmI = BuildWhoAmIStory(
+            whoAmIRow?.StoryText,
+            whoAmIRow?.KeywordsJson,
+            whoAmIRow?.StoryGeneratedAtUtc,
+            whoAmIRow?.InputFingerprint,
+            whoAmIRow?.FromOpenAi ?? false,
+            profileFilled,
+            competencyDone,
+            careerDone,
+            cultureDone,
+            competencyResolved.Scores,
+            careerResolved.Scores,
+            cultureResolved.Scores,
+            valuesResolved.Scores,
+            WhoAmIProfileHighlights.FromPreferences(prefs),
+            features.EmployersEnabled,
+            language,
+            dnaDeep ? dnaTraits : null,
+            dnaSource);
+
+        bool IsDeepCompleted(AssessmentKind kind)
+        {
+            var row = deepRows.FirstOrDefault(r => r.Kind == kind);
+            if (row is null)
+            {
+                return false;
+            }
+
+            var answers = DeepAnalysisCatalog.ParseAnswersJson(row.AnswersJson, kind);
+            var expected = DeepAnalysisCatalog.QuestionCountFor(kind);
+            return CandidateDeepAnalysisStatuses.IsCompleted(row.Status) && answers.Count >= expected;
+        }
+
+        CompetencyScores? competencyCompleted = competencyDone ? competencyResolved.Scores : null;
+        CompetencyScores? competencyPreview = competencyProvisional ? competencyResolved.Scores : null;
+        RiasecScores? careerCompleted = careerDone ? careerResolved.Scores : null;
+        RiasecScores? careerPreview = careerProvisional ? careerResolved.Scores : null;
+        CulturePersonalityScores? cultureCompleted = cultureDone ? cultureResolved.Scores : null;
+        CulturePersonalityScores? culturePreview = cultureProvisional ? cultureResolved.Scores : null;
+        SchwartzValuesScores? valuesCompleted = valuesDone ? valuesResolved.Scores : null;
+        SchwartzValuesScores? valuesPreview = valuesProvisional ? valuesResolved.Scores : null;
+
+        return new CandidateDnaSummaryDto(
+            whoAmI,
+            completeness,
+            new CandidateDnaCompetencySummaryDto(
+                competencyRow?.Status ?? CandidateCompetencyStatuses.Draft,
+                competencyAnswers.Count,
+                CompetencyTestCatalog.QuestionCount,
+                competencyCompleted,
+                competencyPreview,
+                IsDeepCompleted(AssessmentKind.Competence)),
+            new CandidateDnaCareerSummaryDto(
+                careerRow?.Status ?? CandidateCompetencyStatuses.Draft,
+                careerAnswers.Count,
+                CareerTestCatalog.QuestionCount,
+                careerCompleted,
+                careerPreview,
+                IsDeepCompleted(AssessmentKind.Career)),
+            new CandidateDnaCultureSummaryDto(
+                cultureRow?.Status ?? CandidateCompetencyStatuses.Draft,
+                cultureAnswers.Count,
+                CulturePersonalityCatalog.QuestionCount,
+                cultureCompleted,
+                culturePreview,
+                IsDeepCompleted(AssessmentKind.Culture)),
+            new CandidateDnaValuesSummaryDto(
+                valuesRow?.Status ?? CandidateCompetencyStatuses.Draft,
+                valuesAnswers.Count,
+                SchwartzValuesCatalog.QuestionCount,
+                valuesCompleted,
+                valuesPreview,
+                IsDeepCompleted(AssessmentKind.Values)));
     }
 
     /// <summary>
@@ -195,11 +474,38 @@ public sealed class CandidateKompasService : ICandidateKompasService
         CompetencyScores? competency,
         RiasecScores? career,
         CulturePersonalityScores? culture,
-        SchwartzValuesScores? values)
+        SchwartzValuesScores? values,
+        WhoAmIProfileHighlights? highlights = null,
+        bool employersEnabled = false,
+        string? language = null,
+        IReadOnlyList<(string Code, int Score)>? competence = null,
+        string? competenceSource = null)
     {
         var keywords = ParseKeywords(keywordsJson);
         var story = string.IsNullOrWhiteSpace(storyText) ? null : storyText.Trim();
+        if (fromOpenAi && story is not null)
+        {
+            story = WhoAmIStoryBuilder.NormalizeParagraphs(story);
+        }
         var unlocked = WhoAmICompleteness.IsUnlocked(profileFilled, competencyDone, careerDone, cultureDone);
+        var scoresReady = competency is { IsComplete: true }
+                          && career is { IsComplete: true }
+                          && culture is { IsComplete: true };
+        var lang = Jobsy.Core.Localization.JobsyLanguages.Normalize(language);
+
+        // The passport reads this summary, not the who-am-i endpoint. A missing stored
+        // story used to stay "wordt geschreven" forever. Compose the same local story.
+        // A stored Dutch template is shown in the UI language without overwriting the row.
+        if (scoresReady && (story is null || !fromOpenAi || lang is not "nl"))
+        {
+            highlights ??= WhoAmIProfileHighlights.Empty;
+            story = WhoAmIStoryBuilder.Build(competency!, career!, culture!, highlights, values, employersEnabled, language, competence);
+            keywords = WhoAmIKeywords.FromScores(competency!, career!, culture!, values, language);
+            if (string.IsNullOrWhiteSpace(storyText))
+            {
+                return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc ?? DateTime.UtcNow, WhoAmIStoryStatuses.Ready);
+            }
+        }
 
         if (story is null)
         {
@@ -214,8 +520,8 @@ public sealed class CandidateKompasService : ICandidateKompasService
             return new WhoAmIStorySummaryDto(story, keywords, generatedAtUtc, WhoAmIStoryStatuses.Ready);
         }
 
-        var highlights = WhoAmIProfileHighlights.Empty;
-        var expected = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values);
+        highlights ??= WhoAmIProfileHighlights.Empty;
+        var expected = WhoAmICompleteness.Fingerprint(competency, career, culture, highlights, values, competenceSource);
         var stale = !string.Equals(storedFingerprint, expected, StringComparison.Ordinal);
         var retryFallback = CandidateInsightsFingerprint.ShouldRetryFallback(
             fromOpenAi,

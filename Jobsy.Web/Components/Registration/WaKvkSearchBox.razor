@@ -1,0 +1,236 @@
+@namespace Jobsy.Web.Components.Registration
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject KvkSearchClient KvkSearch
+
+<div class="wa-search">
+    <div class="wa-search__row">
+        <label class="wa-field">
+            <span class="wa-field__label">@Culture["Wa.Search.QueryLabel"]</span>
+            <span class="wa-input">
+                <input value="@_query"
+                       @oninput="OnQueryInput"
+                       maxlength="80"
+                       placeholder="@Culture["Wa.Search.QueryPlaceholder"]"
+                       autocomplete="organization"
+                       aria-describedby="wa-search-hint"
+                       aria-controls="wa-search-results"
+                       aria-autocomplete="list" />
+            </span>
+        </label>
+        <label class="wa-field">
+            <span class="wa-field__label">@Culture["Wa.Search.PlaceLabel"]</span>
+            <span class="wa-input">
+                <input value="@_place"
+                       @oninput="OnPlaceInput"
+                       maxlength="64"
+                       placeholder="@Culture["Wa.Search.PlacePlaceholder"]"
+                       autocomplete="address-level2" />
+            </span>
+        </label>
+        <button type="button"
+                class="wa-btn wa-btn--primary"
+                disabled="@(_busy || !CanSearch)"
+                @onclick="SearchAsync">
+            @Culture["Wa.Search.Button"]
+        </button>
+    </div>
+    <p id="wa-search-hint" class="wa-hint">@Culture["Wa.Search.Hint"]</p>
+    @if (_query.Trim().Length is > 0 and < 3 && !LooksLikeKvk(_query))
+    {
+        <p class="wa-hint">@Culture["Wa.Search.MinChars"]</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="wa-error" role="alert">@_error</p>
+    }
+
+    <div id="wa-search-results" class="wa-results" role="listbox" aria-live="polite" aria-label="@Culture["Wa.Search.ResultsLabel"]">
+        @if (_hits.Count > 0)
+        {
+            <p class="wa-results__count">@string.Format(Culture["Wa.Search.ResultsCount"], _hits.Count)</p>
+            @for (var i = 0; i < _hits.Count; i++)
+            {
+                var hit = _hits[i];
+                var idx = i;
+                <button type="button"
+                        role="option"
+                        class="wa-result @(_activeIndex == idx ? "is-selected" : null)"
+                        aria-selected="@(_activeIndex == idx)"
+                        @onclick="() => SelectAsync(hit)"
+                        @onkeydown="e => OnKey(e, idx)">
+                    <span class="wa-result__main">
+                        <strong>@hit.Name</strong>
+                        <span class="wa-result__meta">
+                            KvK @hit.KvkNumber
+                            @if (!string.IsNullOrWhiteSpace(hit.Place))
+                            {
+                                <text> · @hit.Place</text>
+                            }
+                            @if (hit.VestigingCount is int count)
+                            {
+                                <text> · @string.Format(Culture[count == 1 ? "Wa.Search.OneBranch" : "Wa.Search.NBranches"], count)</text>
+                            }
+                        </span>
+                    </span>
+                    <span class="wa-result__tags">
+                        @if (!string.IsNullOrWhiteSpace(hit.Type))
+                        {
+                            <span class="wa-chip">@hit.Type</span>
+                        }
+                        @if (hit.IsOnLobsy)
+                        {
+                            <span class="wa-chip wa-chip--warn">@Culture["Wa.Search.AlreadyOnLobsy"]</span>
+                        }
+                    </span>
+                </button>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string InitialQuery { get; set; } = "";
+    [Parameter] public string InitialPlace { get; set; } = "";
+    [Parameter] public EventCallback<KvkSearchHitItem> OnSelected { get; set; }
+    [Parameter] public EventCallback OnManualRequested { get; set; }
+    [Parameter] public EventCallback<(string Query, string Place)> OnQueryChanged { get; set; }
+
+    private string _query = "";
+    private string _place = "";
+    private bool _busy;
+    private string? _error;
+    private List<KvkSearchHitItem> _hits = [];
+    private int _activeIndex = -1;
+    private CancellationTokenSource? _debounce;
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrEmpty(_query) && !string.IsNullOrEmpty(InitialQuery))
+        {
+            _query = InitialQuery;
+        }
+
+        if (string.IsNullOrEmpty(_place) && !string.IsNullOrEmpty(InitialPlace))
+        {
+            _place = InitialPlace;
+        }
+    }
+
+    private bool CanSearch
+    {
+        get
+        {
+            var text = _query.Trim();
+            return LooksLikeKvk(text) || text.Length >= 3;
+        }
+    }
+
+    private static bool LooksLikeKvk(string text)
+    {
+        var digits = new string(text.Where(char.IsDigit).ToArray());
+        return digits.Length == 8
+               && text.All(c => char.IsDigit(c) || char.IsWhiteSpace(c) || c is '.' or '-');
+    }
+
+    private async Task OnQueryInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? "";
+        await OnQueryChanged.InvokeAsync((_query, _place));
+        await DebounceSearchAsync();
+    }
+
+    private async Task OnPlaceInput(ChangeEventArgs e)
+    {
+        _place = e.Value?.ToString() ?? "";
+        await OnQueryChanged.InvokeAsync((_query, _place));
+        await DebounceSearchAsync();
+    }
+
+    private async Task DebounceSearchAsync()
+    {
+        _debounce?.Cancel();
+        _debounce?.Dispose();
+        if (!CanSearch)
+        {
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _debounce = cts;
+        try
+        {
+            await Task.Delay(300, cts.Token);
+            await SearchAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // newer keystroke
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        if (!CanSearch)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var result = await KvkSearch.SearchAsync(_query.Trim(), string.IsNullOrWhiteSpace(_place) ? null : _place.Trim());
+            if (result.Status.Equals("Unavailable", StringComparison.OrdinalIgnoreCase))
+            {
+                _hits = [];
+                _error = result.Message ?? Culture["Wa.Search.Unavailable"];
+                await OnManualRequested.InvokeAsync();
+                return;
+            }
+
+            _hits = result.Hits ?? [];
+            _activeIndex = _hits.Count > 0 ? 0 : -1;
+            if (_hits.Count == 0)
+            {
+                _error = Culture["Wa.Search.NoResults"];
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _hits = [];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SelectAsync(KvkSearchHitItem hit)
+    {
+        await OnSelected.InvokeAsync(hit);
+    }
+
+    private async Task OnKey(KeyboardEventArgs e, int idx)
+    {
+        if (e.Key == "ArrowDown")
+        {
+            _activeIndex = Math.Min(_hits.Count - 1, idx + 1);
+        }
+        else if (e.Key == "ArrowUp")
+        {
+            _activeIndex = Math.Max(0, idx - 1);
+        }
+        else if (e.Key is "Enter" or " ")
+        {
+            if (_activeIndex >= 0 && _activeIndex < _hits.Count)
+            {
+                await SelectAsync(_hits[_activeIndex]);
+            }
+        }
+    }
+}

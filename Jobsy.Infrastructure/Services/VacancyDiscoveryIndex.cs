@@ -14,11 +14,12 @@ namespace Jobsy.Infrastructure.Services;
 /// <summary>
 /// Process-wide banenkaart snapshot. Rebuilt on a short timer and immediately after writes.
 /// </summary>
-public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
+public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<VacancyDiscoveryIndex> _logger;
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
+    private bool _disposed;
 
     private volatile IReadOnlyList<VacancyDiscoveryRecord>? _snapshot;
     private volatile VacancyMapView _mapView = VacancyMapViewCalculator.Fallback;
@@ -45,7 +46,29 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
 
     public void Invalidate() => _dirty = true;
 
+    public Task InvalidateCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        _ = companyId;
+        Invalidate();
+        return Task.CompletedTask;
+    }
+
     public async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var snap = _snapshot;
+        if (snap is null || _dirty || _indexedForDate != today)
+        {
+            await RefreshCoreAsync(force: false, cancellationToken);
+            snap = _snapshot ?? [];
+        }
+
+        // Public/default callers never see test data; test viewers filter at the controller.
+        return VisibleToday(snap, today).Where(r => !r.IsTestData).ToList();
+    }
+
+    public async Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveIncludingTestAsync(
         CancellationToken cancellationToken = default)
     {
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -123,10 +146,36 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 v.Status == VacancyStatus.Active
                 && v.StartDate <= today
                 && v.EndDate >= today)
+            .Where(PublicVisibility.VacancyPublisherIsPublic)
             .OrderBy(v => v.Title)
             .ToListAsync(cancellationToken);
 
         var records = new List<VacancyDiscoveryRecord>(vacancies.Count);
+        var companyIds = vacancies.Select(v => v.CompanyId).Distinct().ToList();
+        var parents = await db.Companies.AsNoTracking()
+            .Where(c => companyIds.Contains(c.Id))
+            .Select(c => new { c.Id, c.ParentCompanyId })
+            .ToListAsync(cancellationToken);
+        var rootByCompany = parents.ToDictionary(
+            c => c.Id,
+            c => c.ParentCompanyId ?? c.Id);
+        var rootIds = rootByCompany.Values.Distinct().ToList();
+        var engagementRows = await db.CompanyEngagementClaims.AsNoTracking()
+            .Where(c => rootIds.Contains(c.CompanyId)
+                        && c.Status != CompanyEngagementStatuses.Removed)
+            .ToListAsync(cancellationToken);
+        var engagementByRoot = engagementRows
+            .GroupBy(c => c.CompanyId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<VacancyEngagementItem>)g
+                    .OrderByDescending(x => x.Status == CompanyEngagementStatuses.Checked)
+                    .ThenBy(x => x.ItemId, StringComparer.Ordinal)
+                    .Select(x => new VacancyEngagementItem(
+                        x.ItemId,
+                        x.Status == CompanyEngagementStatuses.Checked))
+                    .ToList());
+
         foreach (var vacancy in vacancies)
         {
             if (vacancy.Location is null)
@@ -134,7 +183,15 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
                 continue;
             }
 
-            records.Add(ToRecord(vacancy));
+            var record = ToRecord(vacancy);
+            if (rootByCompany.TryGetValue(vacancy.CompanyId, out var rootId)
+                && engagementByRoot.TryGetValue(rootId, out var items)
+                && items.Count > 0)
+            {
+                record = record with { EngagementItems = items };
+            }
+
+            records.Add(record);
         }
 
         return records;
@@ -146,7 +203,17 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy,
             vacancy.Company,
             vacancy.IntermediaryCompany);
-        var kvk = CompanyPublicPaths.NormalizeKvkNumber(vacancy.Company?.KvkNumber);
+        // KB-FALLBACK(A): never expose end-client KvK/vestiging on candidate discovery payloads.
+        var redactClient = Jobsy.Core.Rules.KandidaatBanen.KbHiddenIntermediaryMask
+            .RedactClientPublicPaths(vacancy.IntermediaryCompanyId, vacancy.ShowClientAddressOnMap);
+        var kvk = redactClient
+            ? null
+            : CompanyPublicPaths.NormalizeKvkNumber(vacancy.Company?.KvkNumber);
+        var vestiging = redactClient
+            ? null
+            : CompanyPublicPaths.TryParseVestigingsnummer(
+                vacancy.Company?.KvkEstablishmentId,
+                kvk);
         var rates = vacancy.SalaryTable is { IsActive: true }
             ? vacancy.SalaryTable.Rates
                 .OrderBy(r => r.AgeYears)
@@ -211,13 +278,18 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
             vacancy.Category?.ColorHex,
             vacancy.SuitableFor65Plus,
             kvk,
-            CompanyPublicPaths.TryParseVestigingsnummer(
-                vacancy.Company?.KvkEstablishmentId,
-                kvk),
+            vestiging,
             vacancy.ContentModerationPassed,
             vacancy.RequireEmailVerification,
             vacancy.MinimumReferences,
-            CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson));
+            CulturePillarCatalog.Deserialize(vacancy.CulturePillarsJson),
+            PublisherVerified: PublicVisibility.IsCompanyPublic(vacancy.Company)
+                && (vacancy.IntermediaryCompanyId is null
+                    || PublicVisibility.IsCompanyPublic(vacancy.IntermediaryCompany)),
+            IsTestData: vacancy.IsTestData,
+            PublicMapRadiusKm: vacancy.IntermediaryCompanyId is not null
+                ? AcceptCandidatePricingRules.NormalizeAgencyRadiusKm(vacancy.PublicMapRadiusKm)
+                : null);
     }
 
     private static IReadOnlyList<VacancyDiscoveryRecord> VisibleToday(
@@ -230,5 +302,16 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex
         }
 
         return records.Where(r => VacancyVisibilityRules.IsPubliclyVisible(r, today)).ToList();
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _refreshLock.Dispose();
     }
 }

@@ -1,0 +1,10 @@
+@namespace Jobsy.Web.Components.Ui.Enterprise
+
+<div class="ent-impact-note ent-impact-note--@Tone" role="note">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Tone { get; set; } = "warn";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

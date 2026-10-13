@@ -1,0 +1,34 @@
+KEY: AccountLockout
+SUBJECT: Your Lobsy account is paused for a bit
+PREHEADER: You cannot sign in with your password until 2 أكتوبر 2026, 13:05.
+KIND: Essential
+--- TEXT ---
+A short pause
+
+أُدخلَت كلمة المرور خطأً 5 مرات. لذلك لا يمكنك تسجيل الدخول بكلمة المرور
+لمدة 15 minutes، حتى 2 أكتوبر 2026, 13:05.
+
+2 أكتوبر 2026, 13:05 :Paused until
+
+Was this you? Then you can try again afterwards. Was this not you? Please
+contact support.
+
+نسيت كلمة المرور؟: https://lobsy.nl/wachtwoord-vergeten
+
+فريق Lobsy
+
+You get this email to protect your account.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: A short pause
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: نسيت كلمة المرور؟ -> https://lobsy.nl/wachtwoord-vergeten
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

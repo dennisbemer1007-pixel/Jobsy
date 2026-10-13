@@ -1,0 +1,227 @@
+@page "/leerling/dit-ben-jij"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using System.Net.Http.Json
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IServiceProvider Services
+
+<PageTitle>@Culture["LeerlingStory.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_resultPending)
+{
+    <section class="ll-card">
+        <p class="ll-error" role="alert">@Culture["Leerling.Reis.ResultPending"]</p>
+        <button type="button" class="btn-primary" disabled="@_retryBusy" @onclick="RetryOnce">
+            @Culture["Leerling.Reis.Retry"]
+        </button>
+    </section>
+}
+else if (_sessionLost)
+{
+    <section class="ll-card">
+        <h1>@Culture["Leerling.Result.Title"]</h1>
+        <p class="muted">@Culture["Leerling.Session.Lost"]</p>
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Reis.Title"]</a>
+    </section>
+}
+else if (_result is null)
+{
+    <LeerlingOfflineRetry Busy="@_retryBusy" OnRetry="RetryOffline" />
+}
+else
+{
+    <div class="ll-reis ll-result" data-testid="leerling-dit-ben-jij">
+        <LeerlingCoachCue Text="@Culture["Leerling.Coach.Story"]" />
+
+        <section class="ll-card">
+            <p class="ll-question__meta">
+                <span class="ll-pill">@string.Format(Culture["LeerlingStory.DonePill"], _result.TotalItems)</span>
+            </p>
+            <h1>@Culture["LeerlingStory.Title"]</h1>
+            <LeerlingSpeak Text="@_result.Story.Body" SpeechKey="ll-story" />
+            <p class="ll-result__story">@_result.Story.Body</p>
+
+            <div class="ll-tile-grid">
+                @foreach (var tile in _result.Story.Tiles)
+                {
+                    <div class="ll-tile">
+                        <LeerlingSpeak Text="@SpokenText.Join(tile.KidLabel, tile.Explanation)" SpeechKey="@($"ll-tile-{tile.ModelKey}")" />
+                        <p class="ll-tile__label">@tile.KidLabel</p>
+                        <p class="ll-tile__value">@tile.Explanation</p>
+                    </div>
+                }
+            </div>
+
+            @if (_result.Likes.Count > 0)
+            {
+                <h2 class="ll-result__sub">@Culture["LeerlingStory.LikesTitle"]</h2>
+                <div class="ll-chips__row">
+                    @foreach (var chip in _result.Likes)
+                    {
+                        <span class="ll-chip is-on is-like">@chip</span>
+                    }
+                </div>
+            }
+
+            <h2 class="ll-result__sub">@Culture["LeerlingStory.JobsTitle"]</h2>
+            <LeerlingSpeak Text="@SpokenText.Join(_result.Story.JobIdeas.ToArray())" SpeechKey="ll-jobs" />
+            <div class="ll-chips__row">
+                @foreach (var job in _result.Story.JobIdeas)
+                {
+                    <span class="ll-job-idea">@job</span>
+                }
+            </div>
+
+            <p class="ll-privacy" role="note">@Culture[PupilCopy.Key(_result.QuestionSet, "LeerlingStory.Privacy")]</p>
+        </section>
+
+        <div class="ll-result__actions">
+            <a class="btn-secondary" href="/leerling/pdf">@Culture["LeerlingStory.Pdf"]</a>
+            <a class="btn-primary" href="/leerling/droombaan">@Culture["LeerlingStory.CheckDream"]</a>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _resultPending;
+    private bool _retryBusy;
+    private bool _retried;
+    private bool _sessionLost;
+    private PupilResultPageDto? _result;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync(allowRetry: true);
+    }
+
+    private async Task RetryOnce()
+    {
+        if (_retryBusy)
+        {
+            return;
+        }
+
+        _retryBusy = true;
+        try
+        {
+            await LoadAsync(allowRetry: false);
+        }
+        finally
+        {
+            _retryBusy = false;
+        }
+    }
+
+    private Task RetryOffline() => LoadAsync(allowRetry: true);
+
+    private async Task LoadAsync(bool allowRetry)
+    {
+        _loading = true;
+        _sessionLost = false;
+        _resultPending = false;
+        Exception? lastError = null;
+        System.Net.HttpStatusCode? lastStatus = null;
+        try
+        {
+            for (var attempt = 0; attempt < PupilLoadRetry.AttemptDelaysMs.Length; attempt++)
+            {
+                if (PupilLoadRetry.AttemptDelaysMs[attempt] > 0)
+                {
+                    await Task.Delay(PupilLoadRetry.AttemptDelaysMs[attempt]);
+                }
+
+                try
+                {
+                    using var response = await Api.GetPupilResultResponseAsync();
+                    if (PupilLoadRetry.IsSessionLost(response.StatusCode))
+                    {
+                        _sessionLost = true;
+                        _result = null;
+                        _resultPending = false;
+                        return;
+                    }
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        _result = await response.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
+                        _resultPending = false;
+                        return;
+                    }
+
+                    if (response.StatusCode == System.Net.HttpStatusCode.Conflict)
+                    {
+                        await HandleConflictAsync(allowRetry);
+                        return;
+                    }
+
+                    lastStatus = response.StatusCode;
+                    lastError = null;
+                    LeerlingLoadLog.Failed(Services, "result", null, lastStatus, giveUp: false);
+                }
+                catch (Exception ex) when (PupilLoadRetry.IsSessionLost(ex))
+                {
+                    _sessionLost = true;
+                    _result = null;
+                    _resultPending = false;
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                    lastStatus = ex is HttpRequestException http ? http.StatusCode : null;
+                    LeerlingLoadLog.Failed(Services, "result", ex, lastStatus, giveUp: false);
+                }
+            }
+
+            LeerlingLoadLog.Failed(Services, "result", lastError, lastStatus, giveUp: true);
+            _result = null;
+            _resultPending = false;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task HandleConflictAsync(bool allowRetry)
+    {
+        var progress = await Api.GetPupilProgressAsync();
+        if (progress is not null
+            && progress.AnsweredCount >= progress.TotalItems
+            && progress.TotalItems > 0)
+        {
+            if (allowRetry && !_retried)
+            {
+                _retried = true;
+                using var retry = await Api.GetPupilResultResponseAsync();
+                if (retry.IsSuccessStatusCode)
+                {
+                    _result = await retry.Content.ReadFromJsonAsync<PupilResultPageDto>(JobsyApiClient.ApiJson);
+                    _resultPending = false;
+                    return;
+                }
+            }
+
+            _resultPending = true;
+            _result = null;
+            return;
+        }
+
+        _result = null;
+        _resultPending = false;
+    }
+}

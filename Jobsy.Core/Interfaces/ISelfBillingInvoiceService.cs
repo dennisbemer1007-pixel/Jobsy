@@ -13,6 +13,15 @@ public interface ISelfBillingInvoiceService
         decimal? maxAmountExVat = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Issues a self-billing invoice for an approved payout request (08).
+    /// Uses the request's snapshotted VAT treatment and linked ledger lines.
+    /// </summary>
+    Task<SelfBillingInvoice> IssueForRequestAsync(
+        SalesPayoutRequest request,
+        SalesSelfBillingConsent consent,
+        CancellationToken cancellationToken = default);
+
     Task<SelfBillingInvoice> MarkPaidAsync(
         Guid invoiceId,
         CancellationToken cancellationToken = default);

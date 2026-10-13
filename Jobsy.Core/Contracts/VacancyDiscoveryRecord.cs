@@ -64,4 +64,18 @@ public sealed record VacancyDiscoveryRecord(
     bool ContentModerationPassed,
     bool RequireEmailVerification,
     int? MinimumReferences = null,
-    IReadOnlyList<string>? CulturePillars = null);
+    IReadOnlyList<string>? CulturePillars = null,
+    /// <summary>
+    /// True when the vacancy company (and intermediary, if any) is Verified.
+    /// Set at index build; used by <see cref="Rules.PublicVisibility"/>.
+    /// </summary>
+    bool PublisherVerified = true,
+    /// <summary>Non-removed engagement claims (ids + checked) for badges and match bonus.</summary>
+    IReadOnlyList<VacancyEngagementItem>? EngagementItems = null,
+    /// <summary>Acceptatie CLI test vacancy; filtered out for real/anonymous viewers.</summary>
+    bool IsTestData = false,
+    /// <summary>Agency public map circle radius (km) when posted via uitzendbureau.</summary>
+    int? PublicMapRadiusKm = null);
+
+/// <summary>Discovery snapshot of one engagement claim (no proof text / URLs).</summary>
+public sealed record VacancyEngagementItem(string ItemId, bool Checked);

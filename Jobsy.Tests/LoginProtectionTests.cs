@@ -12,9 +12,13 @@ public class LoginProtectionTests
     [Fact]
     public void Fifth_failed_attempt_starts_fifteen_minute_lockout()
     {
-        Assert.Equal(TimeSpan.Zero, LoginLockoutRules.LockoutDuration(4));
-        Assert.Equal(TimeSpan.FromMinutes(15), LoginLockoutRules.LockoutDuration(5));
-        Assert.Equal(TimeSpan.FromMinutes(30), LoginLockoutRules.LockoutDuration(6));
+        // LockoutDuration is 1-based lockout count in the 24h window (not failed-attempt count).
+        // FailedAttemptsBeforeLockout (5) triggers the first lockout → 15 min.
+        Assert.Equal(5, LoginLockoutRules.FailedAttemptsBeforeLockout);
+        Assert.Equal(TimeSpan.Zero, LoginLockoutRules.LockoutDuration(0));
+        Assert.Equal(TimeSpan.FromMinutes(15), LoginLockoutRules.LockoutDuration(1));
+        Assert.Equal(TimeSpan.FromMinutes(30), LoginLockoutRules.LockoutDuration(2));
+        Assert.Equal(TimeSpan.FromMinutes(120), LoginLockoutRules.LockoutDuration(4));
     }
 
     [Fact]
@@ -48,7 +52,8 @@ public class LoginProtectionTests
         context.Request.Path = "/admin/users";
         context.User = new ClaimsPrincipal(new ClaimsIdentity(
         [
-            new Claim(ClaimTypes.Role, "Admin")
+            new Claim(ClaimTypes.Role, "Admin"),
+            new Claim("auth_method", "password")
         ], "test"));
         var reachedNext = false;
         var middleware = new MfaEnforcementMiddleware(_ =>
@@ -60,7 +65,28 @@ public class LoginProtectionTests
         await middleware.InvokeAsync(context);
 
         Assert.False(reachedNext);
-        Assert.StartsWith("/account/mfa?returnUrl=", context.Response.Headers.Location.ToString());
+        // ADR 0005 / auth hotfix: re-login with mfa-required (no dead-end /account/mfa without challenge).
+        Assert.StartsWith("/login?error=mfa-required&returnUrl=", context.Response.Headers.Location.ToString());
+    }
+
+    [Fact]
+    public async Task Branch_manager_local_without_mfa_is_redirected()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Path = "/branch";
+        context.User = new ClaimsPrincipal(new ClaimsIdentity(
+        [
+            new Claim(ClaimTypes.Role, "BranchManager"),
+            new Claim("auth_method", "local-registration")
+        ], "test"));
+        var reachedNext = false;
+        await new MfaEnforcementMiddleware(_ =>
+        {
+            reachedNext = true;
+            return Task.CompletedTask;
+        }).InvokeAsync(context);
+        Assert.False(reachedNext);
+        Assert.StartsWith("/login?error=mfa-required&returnUrl=", context.Response.Headers.Location.ToString());
     }
 
     private static string CreateHash(string password, int iterations)

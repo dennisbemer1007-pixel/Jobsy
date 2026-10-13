@@ -49,6 +49,25 @@ public static class KompasProfileCompleteness
         return (int)Math.Round(100.0 * done / StepCount);
     }
 
+    /// <summary>
+    /// Maps a 0–100 completeness percent onto the same step count the percent was built from.
+    /// Integer division into a shorter bar (percent / 20) under-counts a 6-step profile.
+    /// </summary>
+    public static int FilledSteps(int percent)
+    {
+        if (percent <= 0)
+        {
+            return 0;
+        }
+
+        if (percent >= 100)
+        {
+            return StepCount;
+        }
+
+        return Math.Clamp((int)Math.Round(percent / 100.0 * StepCount), 0, StepCount);
+    }
+
     private static double StepWeight(bool completed, bool provisional)
         => completed ? 1.0 : provisional ? 0.5 : 0.0;
 }

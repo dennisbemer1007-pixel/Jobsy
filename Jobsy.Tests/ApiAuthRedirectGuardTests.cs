@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using Jobsy.Core.Authorization;
+using Jobsy.Web.Auth;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Http;
 
@@ -48,6 +50,32 @@ public class ApiAuthRedirectGuardTests
         http.User = Authed();
 
         Assert.False(JobsyApiAuthHandler.ShouldRedirectHtmlNavigationToLogin(http));
+    }
+
+    [Fact]
+    public void Pupil_html_401_goes_to_the_code_form_not_the_staff_login()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers.Accept = "text/html";
+        http.Request.Path = "/leerling/start";
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(PupilClaimTypes.PupilCodeId, Guid.NewGuid().ToString("D"))],
+            authenticationType: PupilAuthDefaults.Scheme));
+
+        Assert.True(JobsyApiAuthHandler.ShouldRedirectPupilToCodeLogin(http));
+        Assert.False(JobsyApiAuthHandler.ShouldRedirectHtmlNavigationToLogin(http));
+    }
+
+    [Fact]
+    public void Staff_html_401_still_goes_to_the_staff_login()
+    {
+        var http = new DefaultHttpContext();
+        http.Request.Headers.Accept = "text/html";
+        http.Request.Path = "/leerling/start";
+        http.User = Authed();
+
+        Assert.False(JobsyApiAuthHandler.IsPupilPrincipal(http.User));
+        Assert.True(JobsyApiAuthHandler.ShouldRedirectHtmlNavigationToLogin(http));
     }
 
     private static ClaimsPrincipal Authed()

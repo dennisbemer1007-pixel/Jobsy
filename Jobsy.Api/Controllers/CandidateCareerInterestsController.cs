@@ -25,6 +25,7 @@ public sealed class CandidateCareerInterestsController : ControllerBase
     }
 
     [HttpGet("career-interests")]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<CandidateCareerInterestStateDto>> Get(CancellationToken cancellationToken)
     {
         var user = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -33,7 +34,7 @@ public sealed class CandidateCareerInterestsController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
-        return Ok(await _career.GetAsync(user.Id, cancellationToken));
+        return Ok(await _career.GetAsync(user.Id, cancellationToken: cancellationToken));
     }
 
     [HttpPut("career-interests")]
@@ -49,11 +50,11 @@ public sealed class CandidateCareerInterestsController : ControllerBase
         }
         if (!CandidateConsentRules.CanUseCandidateFeatures(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+            return TestSaveErrors.ParentalConsent();
         }
         if (!CandidateConsentRules.HasCurrentTestAiConsent(user))
         {
-            return BadRequest(new { message = CandidateConsentRules.TestConsentRequiredMessage });
+            return TestSaveErrors.TestConsent();
         }
 
         var answers = new Dictionary<int, int>();
@@ -63,11 +64,16 @@ public sealed class CandidateCareerInterestsController : ControllerBase
             {
                 if (int.TryParse(key, out var id))
                 {
+                    if (value is < 1 or > 5)
+                    {
+                        return TestSaveErrors.InvalidAnswer();
+                    }
+
                     answers[id] = value;
                 }
                 else
                 {
-                    return BadRequest(new { message = "Onbekend vraagnummer in de beroepentest." });
+                    return TestSaveErrors.UnknownQuestion();
                 }
             }
         }
@@ -78,7 +84,11 @@ public sealed class CandidateCareerInterestsController : ControllerBase
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return await TestSaveErrors.LogAsync(this, ex, TestSaveErrors.FromException(ex), "TestSave", cancellationToken);
+        }
+        catch (AssessmentAdjustmentLimitException ex)
+        {
+            return Conflict(new { code = ex.Code, remaining = ex.Remaining, max = ex.Max });
         }
     }
 }

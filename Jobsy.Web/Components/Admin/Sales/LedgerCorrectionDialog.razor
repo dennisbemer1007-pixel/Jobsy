@@ -1,0 +1,75 @@
+@namespace Jobsy.Web.Components.Admin.Sales
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+@if (Open)
+{
+    <div class="ent-drawer-backdrop" style="z-index:70" @onclick="Close"></div>
+    <div class="panel-section" style="position:fixed;inset:20% auto auto 50%;transform:translateX(-50%);z-index:71;background:var(--surface,#fff);padding:1.25rem;min-width:20rem;max-width:28rem;border:1px solid var(--border,#ddd)">
+        <h3>@Culture["SalesAdmin.Correction.Title"]</h3>
+        <p class="muted">@Culture["SalesAdmin.Correction.Lead"]</p>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <p class="state-message error">@_error</p>
+        }
+        <label>
+            @Culture["SalesAdmin.Correction.Amount"]
+            <input type="number" step="0.01" @bind="_amount" style="width:100%" />
+        </label>
+        <label>
+            @Culture["SalesAdmin.Correction.Reason"]
+            <textarea @bind="_reason" rows="3" style="width:100%"></textarea>
+        </label>
+        <div class="inline-actions" style="margin-top:.75rem">
+            <button type="button" class="provider-btn" @onclick="Close">@Culture["Common.Cancel"]</button>
+            <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveAsync">@Culture["SalesAdmin.Correction.Save"]</button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public Guid? BeneficiaryUserId { get; set; }
+    [Parameter] public Guid? CompanyId { get; set; }
+    [Parameter] public EventCallback OnSaved { get; set; }
+
+    private decimal _amount;
+    private string _reason = "";
+    private bool _busy;
+    private string? _error;
+
+    private async Task Close()
+    {
+        Open = false;
+        await OpenChanged.InvokeAsync(false);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (BeneficiaryUserId is not Guid userId)
+        {
+            _error = Culture["SalesAdmin.Correction.NoBeneficiary"];
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await Api.BookAdminSalesLedgerCorrectionAsync(userId, CompanyId, _amount, _reason);
+            _amount = 0;
+            _reason = "";
+            await OnSaved.InvokeAsync();
+            await Close();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

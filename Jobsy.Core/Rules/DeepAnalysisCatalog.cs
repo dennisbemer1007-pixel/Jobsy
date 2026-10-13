@@ -346,7 +346,7 @@ public static class DeepAnalysisCatalog
             Get(CareerTestCatalog.Conventional));
     }
 
-    public static IReadOnlyList<string> CareerAdviceParagraphs(IReadOnlyList<DeepAnalysisDomainScore> scores)
+    public static IReadOnlyList<string> CareerAdviceParagraphs(IReadOnlyList<DeepAnalysisDomainScore> scores, bool employersOn = true)
     {
         var top = scores
             .OrderByDescending(s => s.Percent)
@@ -357,7 +357,9 @@ public static class DeepAnalysisCatalog
         {
             return
             [
-            "Rond de 200 vragen af. Dan maken we een helder beeld van welk werk bij je past, plus advies voor Den Haag en het Westland."
+                employersOn
+                    ? "Rond de 200 vragen af. Dan maken we een helder beeld van welk werk bij je past, plus advies voor Den Haag en het Westland."
+                    : "Rond de 200 vragen af. Dan maken we een helder beeld van welk werk bij je past."
             ];
         }
 
@@ -370,8 +372,9 @@ public static class DeepAnalysisCatalog
             lines.Add(AdviceFor(score.Domain));
         }
 
-        lines.Add(
-            "Gebruik dit advies samen met je harde criteria (reistijd, vervoer, beschikbaarheid) op de banenkaart. Werkgevers zien alleen anonieme tags tot jij contact deelt.");
+        lines.Add(employersOn
+            ? "Gebruik dit advies samen met je harde criteria (reistijd, vervoer, beschikbaarheid) op de banenkaart. Werkgevers zien alleen anonieme tags tot jij contact deelt."
+            : "Gebruik dit advies samen met je harde criteria: reistijd, vervoer en beschikbaarheid.");
         return lines;
     }
 
@@ -400,7 +403,7 @@ public static class DeepAnalysisCatalog
         DeepAnalysisCompetenceItems.EmotioneleStabiliteit =>
             "Emotionele stabiliteit: piekdruk (seizoen, horeca, logistiek) is haalbaarder als de rest van het profiel klopt.",
         SchwartzValuesCatalog.Autonomy =>
-            "Eigen regie: rollen met ruimte om zelf te plannen en nieuwe aanpakken te proberen passen bij jouw drijfveren.",
+            "Zelf kiezen: rollen met ruimte om zelf te plannen en nieuwe aanpakken te proberen passen bij jouw drijfveren.",
         SchwartzValuesCatalog.Connection =>
             "Verbinding: teams met warme sfeer, klantcontact en collegiale hulp benutten wat jij belangrijk vindt.",
         SchwartzValuesCatalog.Achievement =>

@@ -1,0 +1,83 @@
+@namespace Jobsy.Web.Components.Shared
+@using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@inherits CultureAwareComponentBase
+@inject IJSRuntime Js
+@inject IServiceProvider Services
+
+<fieldset class="read-aloud-setting" data-read-aloud-setting>
+    <legend>@Culture["ReadAloud.SettingTitle"]</legend>
+    <p class="read-aloud-setting__hint">@Culture["ReadAloud.SettingHint"]</p>
+    @if (_ready && _supported)
+    {
+        <label class="read-aloud-setting__choice">
+            <input type="checkbox" checked="@_on" @onchange="OnToggleAsync" />
+            <span>@(_on ? Culture["ReadAloud.On"] : Culture["ReadAloud.Off"])</span>
+        </label>
+    }
+    else if (_ready)
+    {
+        <p class="read-aloud-setting__hint">@Culture["ReadAloud.Unsupported"]</p>
+    }
+</fieldset>
+
+@code {
+    private bool _ready;
+    private bool _supported;
+    private bool _on = true;
+    private ReadAloudCoordinator? _coordinator;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        _coordinator = Services.GetService<ReadAloudCoordinator>();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ProbeAsync();
+        }
+    }
+
+    protected override async Task OnCultureChanged()
+    {
+        await ProbeAsync();
+        await base.OnCultureChanged();
+    }
+
+    private async Task ProbeAsync()
+    {
+        try
+        {
+            var probe = await Js.InvokeAsync<ReadAloudProbe>("lobsyReadAloud.whenReady", Culture.Language);
+            _supported = probe?.Supported == true;
+            _on = probe?.Enabled != false;
+        }
+        catch (Exception)
+        {
+            _supported = false;
+            _on = false;
+        }
+
+        _ready = true;
+        StateHasChanged();
+    }
+
+    private async Task OnToggleAsync(ChangeEventArgs e)
+    {
+        _on = e.Value is bool value
+            ? value
+            : !string.Equals(e.Value?.ToString(), "false", StringComparison.OrdinalIgnoreCase);
+        _coordinator?.NotifyPreferenceChanged();
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyReadAloud.setEnabled", _on);
+        }
+        catch (JSException)
+        {
+            /* The switch still shows the choice. A later probe reads the device again. */
+        }
+    }
+}

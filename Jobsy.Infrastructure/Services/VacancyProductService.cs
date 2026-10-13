@@ -20,13 +20,15 @@ public sealed class VacancyProductService : IVacancyProductService
     private readonly ISalesCommercialService _salesCommercial;
     private readonly IVacancyCategoryService _categories;
     private readonly IPushNotificationService _push;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPlatformFeatureService _features;
     private readonly IRoutingService _routing;
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
+    private readonly ILenderRegistrationCheck _lenderRegistration;
     private readonly ILogger<VacancyProductService> _logger;
     private readonly IVacancyDiscoveryIndex? _discoveryIndex;
+    private readonly IProactiveVacancyInstantMatchQueue? _instantProactiveMatch;
 
     public VacancyProductService(
         JobsyDbContext db,
@@ -34,26 +36,30 @@ public sealed class VacancyProductService : IVacancyProductService
         ISalesCommercialService salesCommercial,
         IVacancyCategoryService categories,
         IPushNotificationService push,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPlatformFeatureService features,
         IRoutingService routing,
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
         ILogger<VacancyProductService> logger,
-        IVacancyDiscoveryIndex? discoveryIndex = null)
+        IVacancyDiscoveryIndex? discoveryIndex = null,
+        ILenderRegistrationCheck? lenderRegistration = null,
+        IProactiveVacancyInstantMatchQueue? instantProactiveMatch = null)
     {
         _db = db;
         _tokens = tokens;
         _salesCommercial = salesCommercial;
         _categories = categories;
         _push = push;
-        _email = email;
+        _mailer = mailer;
         _features = features;
         _routing = routing;
         _notifications = notifications;
         _actionTokens = actionTokens;
         _logger = logger;
         _discoveryIndex = discoveryIndex;
+        _lenderRegistration = lenderRegistration ?? new NullLenderRegistrationCheck();
+        _instantProactiveMatch = instantProactiveMatch;
     }
 
     private VacancyProductOutcome Indexed(VacancyProductOutcome result)
@@ -61,6 +67,10 @@ public sealed class VacancyProductService : IVacancyProductService
         if (result.Succeeded)
         {
             _discoveryIndex?.Invalidate();
+            if (result.Vacancy.Status == VacancyStatus.Active)
+            {
+                _instantProactiveMatch?.TryEnqueue(result.Vacancy.Id);
+            }
         }
 
         return result;
@@ -70,8 +80,8 @@ public sealed class VacancyProductService : IVacancyProductService
         Vacancy vacancy,
         VacancyPublishOptions options,
         Guid? actorUserId,
-        CancellationToken cancellationToken = default,
-        bool allowPendingApproval = true)
+        bool allowPendingApproval = true,
+        CancellationToken cancellationToken = default)
     {
         if (vacancy.Status == VacancyStatus.PendingApproval)
         {
@@ -91,6 +101,18 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus));
         }
 
+        var rootStatus = await ResolveRootVerificationStatusAsync(company, cancellationToken);
+        if (!CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            return Fail(vacancy, CompanyVerificationRules.BlockedMessageNl, CompanyVerificationRules.UnverifiedErrorCode);
+        }
+
+        var lenderBlock = await EnsureLenderAllowsPublishAsync(vacancy, cancellationToken);
+        if (lenderBlock is not null)
+        {
+            return lenderBlock;
+        }
+
         var useStartHighlight = company?.PendingStartHighlightBonus == true;
         if (useStartHighlight)
         {
@@ -108,21 +130,15 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "PushBom is niet beschikbaar voor deze vacaturecategorie.");
         }
 
-        var publishCost = FreePublishRules.EffectivePublishCost(
-            pricing.PublishCostTokens,
-            (await _features.GetAsync(cancellationToken)).FreePublishUntil,
-            DateTime.UtcNow);
-        if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
-        {
-            publishCost = 0m;
-        }
+        var publishCost = VacancyPostingTokenRules.PublishCostTokens;
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
 
         var reasons = BuildPublishReasons(options);
         var costOverrides = new Dictionary<TokenSpendReason, decimal>
         {
-            [TokenSpendReason.Publish] = publishCost
+            [TokenSpendReason.Publish] = publishCost,
+            [TokenSpendReason.Extend] = VacancyPostingTokenRules.ExtendCostTokens
         };
         List<PushBomRecipient>? pushBomCandidates = null;
 
@@ -177,22 +193,13 @@ public sealed class VacancyProductService : IVacancyProductService
         var totalCost = billableReasons.Sum(CostOf);
         var balance = await _tokens.GetBalanceAsync(vacancy.CompanyId, cancellationToken);
 
-        if (publishCost > 0 && balance < publishCost)
+        if (balance < totalCost)
         {
-            if (allowPendingApproval)
+            if (allowPendingApproval && totalCost > 0)
             {
                 return await MarkPendingApprovalAsync(vacancy, options, cancellationToken);
             }
 
-            return InsufficientTokens(
-                vacancy,
-                Math.Max(totalCost, publishCost),
-                balance,
-                "Je tokens zijn op. Koop tokens om te publiceren.");
-        }
-
-        if (balance < totalCost)
-        {
             return InsufficientTokens(
                 vacancy,
                 totalCost,
@@ -266,8 +273,7 @@ public sealed class VacancyProductService : IVacancyProductService
 
         if (!spend.Succeeded)
         {
-            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true
-                && spend.Balance < publishCost)
+            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
             {
                 if (allowPendingApproval)
                 {
@@ -278,16 +284,7 @@ public sealed class VacancyProductService : IVacancyProductService
                     vacancy,
                     totalCost,
                     spend.Balance,
-                    "Je tokens zijn op. Koop tokens om te publiceren.");
-            }
-
-            if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
-            {
-                return InsufficientTokens(
-                    vacancy,
-                    totalCost,
-                    spend.Balance,
-                    spend.ErrorMessage);
+                    spend.ErrorMessage ?? "Onvoldoende tokens voor geselecteerde opties.");
             }
 
             return Fail(vacancy, spend.ErrorMessage ?? "Tokenafschrijving mislukt.");
@@ -316,6 +313,12 @@ public sealed class VacancyProductService : IVacancyProductService
         if (kvkBlock is not null)
         {
             return kvkBlock;
+        }
+
+        var lenderBlock = await EnsureLenderAllowsPublishAsync(vacancy, cancellationToken);
+        if (lenderBlock is not null)
+        {
+            return lenderBlock;
         }
 
         var options = new VacancyPublishOptions(
@@ -378,18 +381,11 @@ public sealed class VacancyProductService : IVacancyProductService
             costOverrides?.Remove(TokenSpendReason.PushBom);
         }
 
-        var publishCost = FreePublishRules.EffectivePublishCost(
-            pricing.PublishCostTokens,
-            (await _features.GetAsync(cancellationToken)).FreePublishUntil,
-            DateTime.UtcNow);
-        if (publishCost > 0 && await HasActiveAgencySubscriptionAsync(vacancy.CompanyId, cancellationToken))
-        {
-            publishCost = 0m;
-        }
         var highlightCost = pricing.HighlightCostTokens;
         var highlightDays = await _salesCommercial.GetHighlightDaysAsync(cancellationToken);
         costOverrides ??= new Dictionary<TokenSpendReason, decimal>();
-        costOverrides[TokenSpendReason.Publish] = publishCost;
+        costOverrides[TokenSpendReason.Publish] = VacancyPostingTokenRules.PublishCostTokens;
+        costOverrides[TokenSpendReason.Extend] = VacancyPostingTokenRules.ExtendCostTokens;
         if (approveOptions.Highlight)
         {
             costOverrides[TokenSpendReason.Highlight] = useStartHighlight ? 0m : highlightCost;
@@ -486,6 +482,12 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "Vacature is al gehighlight.");
         }
 
+        var lenderBlock = await EnsureLenderAllowsPublishAsync(vacancy, cancellationToken);
+        if (lenderBlock is not null)
+        {
+            return lenderBlock;
+        }
+
         var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
         if (!pricing.HighlightAvailable)
         {
@@ -576,6 +578,12 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "PushBom is alleen beschikbaar voor actieve vacatures.");
         }
 
+        var lenderBlock = await EnsureLenderAllowsPublishAsync(vacancy, cancellationToken);
+        if (lenderBlock is not null)
+        {
+            return lenderBlock;
+        }
+
         var pricing = await ResolveCategoryPricingAsync(vacancy, cancellationToken);
         if (!pricing.PushBomAvailable)
         {
@@ -655,50 +663,28 @@ public sealed class VacancyProductService : IVacancyProductService
             return Fail(vacancy, "Alleen actieve of inactieve vacatures kunnen worden verlengd.");
         }
 
-        TokenSpendOutcome spend;
+        var lenderBlock = await EnsureLenderAllowsPublishAsync(vacancy, cancellationToken);
+        if (lenderBlock is not null)
+        {
+            return lenderBlock;
+        }
+
         try
         {
-            spend = await _tokens.TrySpendAsync(
-                vacancy.CompanyId,
-                TokenSpendReason.Extend,
-                vacancyId: vacancy.Id,
-                actorUserId: actorUserId,
-                branchCompanyId: vacancy.CompanyId,
-                note: $"Extend +{VacancyProductRules.ExtendDays}d",
-                onSuccessBeforeCommit: async ct =>
-                {
-                    await _db.Entry(vacancy).ReloadAsync(ct);
-                    if (vacancy.Status is not (VacancyStatus.Active or VacancyStatus.Archived))
-                    {
-                        throw new VacancyProductConflictException(
-                            "Vacature kan niet meer worden verlengd.");
-                    }
+            await _db.Entry(vacancy).ReloadAsync(cancellationToken);
+            if (vacancy.Status is not (VacancyStatus.Active or VacancyStatus.Archived))
+            {
+                return Fail(vacancy, "Vacature kan niet meer worden verlengd.");
+            }
 
-                    ApplyExtend(vacancy);
-                },
-                cancellationToken: cancellationToken);
+            ApplyExtend(vacancy);
+            await _db.SaveChangesAsync(cancellationToken);
+            return Indexed(new VacancyProductOutcome(true, null, vacancy));
         }
         catch (VacancyProductConflictException ex)
         {
             return Fail(vacancy, ex.Message);
         }
-
-        if (spend.Succeeded)
-        {
-            return Indexed(new VacancyProductOutcome(true, null, vacancy));
-        }
-
-        if (spend.ErrorMessage?.Contains("Onvoldoende", StringComparison.OrdinalIgnoreCase) == true)
-        {
-            var extendCost = await _tokens.GetCostAsync(TokenSpendReason.Extend, cancellationToken) ?? 1m;
-            return InsufficientTokens(
-                vacancy,
-                extendCost,
-                spend.Balance,
-                "Je tokens zijn op. Koop tokens om te verlengen.");
-        }
-
-        return Fail(vacancy, spend.ErrorMessage ?? "Verlengen mislukt.");
     }
 
     public async Task<VacancyProductOutcome> DeactivateAsync(
@@ -1079,9 +1065,7 @@ public sealed class VacancyProductService : IVacancyProductService
                 wageNote ?? "Uurloon",
                 setUnavailableLink);
 
-            await _email.SendAsync(
-                new EmailMessage(candidate.Email, mail.Subject, mail.Html, mail.Category),
-                cancellationToken);
+            await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
 
             await _push.SendAsync(
                 new PushMessage(
@@ -1265,13 +1249,7 @@ public sealed class VacancyProductService : IVacancyProductService
             features.PublicWebBaseUrl, vacancy.Title, companyName);
         foreach (var manager in managers)
         {
-            await _email.SendAsync(
-                new EmailMessage(
-                    manager.Email,
-                    pending.Subject,
-                    pending.Html,
-                    pending.Category),
-                cancellationToken);
+            await _mailer.SendAsync(pending, manager.Email, cancellationToken: cancellationToken);
 
             await _push.SendAsync(
                 new PushMessage(
@@ -1295,34 +1273,78 @@ public sealed class VacancyProductService : IVacancyProductService
         Vacancy vacancy,
         CancellationToken cancellationToken)
     {
-        var status = await _db.Companies.AsNoTracking()
+        var company = await _db.Companies.AsNoTracking()
             .Where(c => c.Id == companyId)
-            .Select(c => c.KvkVerificationStatus)
+            .Select(c => new Company
+            {
+                Id = c.Id,
+                ParentCompanyId = c.ParentCompanyId,
+                KvkVerificationStatus = c.KvkVerificationStatus,
+                VerificationStatus = c.VerificationStatus
+            })
             .FirstOrDefaultAsync(cancellationToken);
-        if (!KvkVerificationRules.CanPublishOrSpend(status))
+        if (company is null)
         {
-            return Fail(vacancy, KvkVerificationRules.BlockedMessage(status));
+            return null;
+        }
+
+        if (!KvkVerificationRules.CanPublishOrSpend(company.KvkVerificationStatus))
+        {
+            return Fail(vacancy, KvkVerificationRules.BlockedMessage(company.KvkVerificationStatus));
+        }
+
+        var rootStatus = await ResolveRootVerificationStatusAsync(company, cancellationToken);
+        if (!CompanyVerificationRules.CanPublish(rootStatus))
+        {
+            return Fail(vacancy, CompanyVerificationRules.BlockedMessageNl, CompanyVerificationRules.UnverifiedErrorCode);
         }
 
         return null;
     }
 
-    private async Task<bool> HasActiveAgencySubscriptionAsync(
-        Guid companyId,
+    private async Task<VacancyProductOutcome?> EnsureLenderAllowsPublishAsync(
+        Vacancy vacancy,
         CancellationToken cancellationToken)
     {
-        var now = DateTime.UtcNow;
-        return await _db.AgencyAnnualSubscriptions.AsNoTracking()
-            .AnyAsync(
-                s => s.CompanyId == companyId
-                     && s.IsActive
-                     && s.StartsAtUtc <= now
-                     && s.EndsAtUtc > now,
-                cancellationToken);
+        if (vacancy.IntermediaryCompanyId is not Guid bureauId)
+        {
+            return null;
+        }
+
+        var state = await _lenderRegistration.GetStateAsync(bureauId, cancellationToken);
+        if (_lenderRegistration.CanPublish(state))
+        {
+            return null;
+        }
+
+        return Fail(
+            vacancy,
+            LenderRegistrationRules.PendingMessageNl,
+            LenderRegistrationRules.PendingErrorCode);
     }
 
-    private static VacancyProductOutcome Fail(Vacancy vacancy, string message)
-        => new(false, message, vacancy);
+    private async Task<CompanyVerificationStatus> ResolveRootVerificationStatusAsync(
+        Company? company,
+        CancellationToken cancellationToken)
+    {
+        if (company is null)
+        {
+            return CompanyVerificationStatus.Unverified;
+        }
+
+        if (company.ParentCompanyId is Guid parentId)
+        {
+            return await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return company.VerificationStatus;
+    }
+
+    private static VacancyProductOutcome Fail(Vacancy vacancy, string message, string? errorCode = null)
+        => new(false, message, vacancy, ErrorCode: errorCode);
 
     private static VacancyProductOutcome InsufficientTokens(
         Vacancy vacancy,
@@ -1337,6 +1359,24 @@ public sealed class VacancyProductService : IVacancyProductService
             RequiredTokens: requiredTokens,
             Balance: balance,
             SpendCompanyId: vacancy.CompanyId);
+
+    /// <summary>Test fallback when lender check is not injected.</summary>
+    private sealed class NullLenderRegistrationCheck : ILenderRegistrationCheck
+    {
+        public Task<LenderRegistrationState> GetStateAsync(Guid bureauOrgId, CancellationToken cancellationToken = default)
+            => Task.FromResult(new LenderRegistrationState(
+                bureauOrgId, LenderRegistrationStatuses.NotChecked, null, null, null, null, null, null));
+
+        public Task<LenderRegistrationState> StartForNewBureauAsync(
+            Guid bureauOrgId, string kvkNumber, CancellationToken cancellationToken = default)
+            => GetStateAsync(bureauOrgId, cancellationToken);
+
+        public Task RecordDecisionAsync(
+            Guid bureauOrgId, LenderRegistrationDecision decision, Guid adminUserId, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public bool CanPublish(LenderRegistrationState state) => true;
+    }
 
     private sealed record PushBomRecipient(User Candidate, int TravelMinutes, double DistanceKm);
 

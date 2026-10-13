@@ -1,0 +1,23 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Media
+
+<div class="pub-landing__mini @($"pub-landing__mini--{Kind}")" aria-hidden="true">
+    <svg viewBox="0 0 380 118" preserveAspectRatio="xMidYMid slice">
+        @((MarkupString)SvgInner)
+    </svg>
+    <LobsyMascot Pose="MascotPose.Default" Size="MascotSize.Tiny" Alt="" Class="pub-landing__mini-mascot" />
+</div>
+
+@code {
+    [Parameter] public string Kind { get; set; } = "dive";
+
+    private string SvgInner => Kind switch
+    {
+        "dive" => """<path d="M0 34 C 40 20, 80 48, 120 34 S 200 20, 400 34" fill="none" stroke="var(--surface)" stroke-width="3" opacity=".8"/><circle cx="150" cy="46" r="5" fill="none" stroke="var(--surface)" stroke-width="2"/><circle cx="162" cy="30" r="3.5" fill="none" stroke="var(--surface)" stroke-width="2"/>""",
+        "antenna" => """<path d="M166 58 A 24 24 0 0 1 214 58" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" opacity=".9"/><path d="M152 58 A 38 38 0 0 1 228 58" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" opacity=".6"/>""",
+        "rock" => """<path d="M110 118 C 120 84, 150 70, 190 72 C 236 74, 262 92, 272 118 Z" fill="color-mix(in srgb, var(--muted) 22%, var(--surface))"/>""",
+        "claw" => """<text x="120" y="40" font-size="20">✨</text><text x="236" y="34" font-size="16">✨</text>""",
+        "grow" => """<path d="M60 108 L 320 108" stroke="color-mix(in srgb, var(--gold) 55%, var(--surface))" stroke-width="3" stroke-linecap="round"/>""",
+        _ => """<path d="M30 100 C 90 40, 150 110, 210 60 S 300 30, 330 44" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-dasharray="3 7" stroke-linecap="round" opacity=".5"/><text x="318" y="46" font-size="22">🚩</text>"""
+    };
+}

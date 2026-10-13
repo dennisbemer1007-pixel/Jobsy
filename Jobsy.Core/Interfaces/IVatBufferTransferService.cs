@@ -12,6 +12,10 @@ public interface IVatBufferTransferService
         TokenPurchaseInvoice invoice,
         CancellationToken cancellationToken = default);
 
+    Task<VatBufferTransfer> QueueForInvoiceAsync(
+        ConsumerPurchaseInvoice invoice,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Processes pending transfer orders (logboek-trigger for bank execution).</summary>
     Task<int> ProcessPendingAsync(CancellationToken cancellationToken = default);
 

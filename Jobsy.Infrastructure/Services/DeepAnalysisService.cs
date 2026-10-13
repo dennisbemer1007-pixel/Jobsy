@@ -2,12 +2,13 @@ using System.Globalization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Reports.Career;
 using Jobsy.Core.Reports.Competence;
+using Jobsy.Core.Reports.Culture;
+using Jobsy.Core.Reports.Values;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Services;
@@ -16,59 +17,50 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
 {
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
-    private readonly IHostEnvironment _environment;
-    private readonly IConfiguration _configuration;
     private readonly ICareerCompassGenerationService _careerCompass;
     private readonly ICompetenceDeepReportService _competenceReport;
+    private readonly IKindDeepReportService? _kindReports;
     private readonly ICandidateInsightsQueue _queue;
     private readonly ILogger<DeepAnalysisService> _logger;
+    private readonly AssessmentSaveGuard _saveGuard;
 
     public DeepAnalysisService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        IHostEnvironment environment,
-        IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
         ICompetenceDeepReportService competenceReport,
-        ILogger<DeepAnalysisService> logger)
-        : this(db, commercial, environment, configuration, careerCompass, competenceReport, new CandidateInsightsQueue(), logger)
+        ILogger<DeepAnalysisService> logger,
+        AssessmentSaveGuard saveGuard)
+        : this(db, commercial, careerCompass, competenceReport, new CandidateInsightsQueue(), logger, null, saveGuard)
     {
     }
 
     public DeepAnalysisService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        IHostEnvironment environment,
-        IConfiguration configuration,
         ICareerCompassGenerationService careerCompass,
         ICompetenceDeepReportService competenceReport,
         ICandidateInsightsQueue queue,
-        ILogger<DeepAnalysisService> logger)
+        ILogger<DeepAnalysisService> logger,
+        IKindDeepReportService? kindReports,
+        AssessmentSaveGuard saveGuard)
     {
         _db = db;
         _commercial = commercial;
-        _environment = environment;
-        _configuration = configuration;
         _careerCompass = careerCompass;
         _competenceReport = competenceReport;
+        _kindReports = kindReports;
         _queue = queue;
         _logger = logger;
+        _saveGuard = saveGuard;
     }
 
+    /// <summary>Localization key for deep upsell copy (Web formats with question count).</summary>
     public static string FormatUpsellCopy(decimal priceEuro, AssessmentKind kind = AssessmentKind.Competence)
     {
-        var price = priceEuro.ToString("0.00", CultureInfo.GetCultureInfo("nl-NL"));
-        return kind switch
-        {
-            AssessmentKind.Culture =>
-                $"Wil je een grondige diepteanalyse van cultuurfit en werksfeer (150 vragen) inclusief PDF-rapport? Ontgrendel voor € {price}.",
-            AssessmentKind.Career =>
-                $"Wil je een diepgaand carrière-advies en een uitgebreid overzicht van al je opties inclusief PDF-rapport? Ontgrendel de uitgebreide beroepentest van 200 vragen voor € {price}.",
-            AssessmentKind.Values =>
-                $"Wil je een grondige diepteanalyse van je waarden en drijfveren (150 vragen) inclusief PDF-rapport? Ontgrendel voor € {price}.",
-            _ =>
-                $"Ontgrendel je uitgebreide competentie-analyse (150 vragen) inclusief officiële PDF-rapportage voor € {price}."
-        };
+        _ = priceEuro;
+        _ = kind;
+        return "DeepPay.Upsell";
     }
 
     public async Task<DeepAnalysisStateDto> GetStateAsync(
@@ -76,11 +68,49 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         AssessmentKind kind,
         CancellationToken cancellationToken = default)
     {
-        var row = await _db.CandidateDeepAnalyses.AsNoTracking()
-            .FirstOrDefaultAsync(d => d.UserId == userId && d.Kind == kind, cancellationToken);
+        var map = await GetStatesAsync(userId, [kind], cancellationToken);
+        return map[kind];
+    }
+
+    public async Task<IReadOnlyDictionary<AssessmentKind, DeepAnalysisStateDto>> GetStatesAsync(
+        Guid userId,
+        IReadOnlyList<AssessmentKind> kinds,
+        CancellationToken cancellationToken = default)
+    {
+        if (kinds.Count == 0)
+        {
+            return new Dictionary<AssessmentKind, DeepAnalysisStateDto>();
+        }
+
+        var distinct = kinds.Distinct().ToList();
+        var rows = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .Where(d => d.UserId == userId && distinct.Contains(d.Kind))
+            .ToListAsync(cancellationToken);
         var commercial = await _commercial.GetAsync(cancellationToken);
-        var competenceReport = await LoadOrBuildCompetenceReportAsync(userId, kind, row, cancellationToken);
-        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro, competenceReport);
+        var result = new Dictionary<AssessmentKind, DeepAnalysisStateDto>(distinct.Count);
+        foreach (var kind in distinct)
+        {
+            var row = rows.FirstOrDefault(r => r.Kind == kind);
+            CompetenceDeepReport? competenceReport = null;
+            CareerDeepReport? careerReport = null;
+            if (kind == AssessmentKind.Competence)
+            {
+                competenceReport = await LoadOrBuildCompetenceReportAsync(userId, kind, row, cancellationToken);
+            }
+            else if (kind == AssessmentKind.Career && _kindReports is not null)
+            {
+                careerReport = await LoadOrBuildCareerReportAsync(userId, row, cancellationToken);
+            }
+
+            result[kind] = ToDto(
+                kind,
+                row,
+                DeepAnalysisPricing.For(commercial, kind),
+                competenceReport,
+                careerReport);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -117,119 +147,31 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
     }
 
-    public async Task<DeepAnalysisCheckoutResult> StartCheckoutAsync(
+    /// <summary>
+    /// Reads the stored career report, or rebuilds it without waiting on the model
+    /// when the deep analysis is completed but the report is missing or an old version.
+    /// </summary>
+    private async Task<CareerDeepReport?> LoadOrBuildCareerReportAsync(
         Guid userId,
-        AssessmentKind kind,
-        CancellationToken cancellationToken = default)
+        CandidateDeepAnalysis? row,
+        CancellationToken cancellationToken)
     {
-        if (!DeepAnalysisCatalog.SupportsDeepAnalysis(kind))
+        if (row is null
+            || !CandidateDeepAnalysisStatuses.IsCompleted(row.Status)
+            || _kindReports is null)
         {
-            throw new InvalidOperationException("Deze test ondersteunt geen diepte-analyse.");
+            return null;
         }
 
-        _ = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken)
-            ?? throw new KeyNotFoundException("Gebruiker niet gevonden.");
-
-        var existing = await _db.CandidateDeepAnalyses
-            .FirstOrDefaultAsync(d => d.UserId == userId && d.Kind == kind, cancellationToken);
-        if (existing is not null && CandidateDeepAnalysisStatuses.IsUnlocked(existing.Status))
+        try
         {
-            throw new InvalidOperationException("Diepte-analyse is al ontgrendeld.");
+            return await _kindReports.GetCareerAsync(userId, cancellationToken);
         }
-
-        if (!AllowStubPayments())
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            throw new InvalidOperationException(
-                "Diepte-analyse-betalingen zijn buiten Development alleen beschikbaar met Mollie of AllowStubPayments.");
+            _logger.LogWarning(ex, "Career deep-report build-on-read failed for {UserId}.", userId);
+            return CareerDeepReportJson.Deserialize(row.ReportJson);
         }
-
-        var commercial = await _commercial.GetAsync(cancellationToken);
-        var price = commercial.DeepAnalysisPriceEuro;
-
-        var open = await _db.DeepAnalysisCheckouts
-            .Where(c => c.UserId == userId && c.Kind == kind && c.Status == DeepAnalysisCheckoutStatus.Pending)
-            .ToListAsync(cancellationToken);
-        foreach (var prior in open)
-        {
-            prior.Status = DeepAnalysisCheckoutStatus.Cancelled;
-        }
-
-        var slug = AssessmentKindLabels.ToSlug(kind);
-        var paymentId = $"stub_deep_{slug}_{Guid.NewGuid():N}";
-        var checkout = new DeepAnalysisCheckout
-        {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            Kind = kind,
-            PaymentId = paymentId,
-            AmountEuro = price,
-            Status = DeepAnalysisCheckoutStatus.Pending,
-            CreatedAtUtc = DateTime.UtcNow
-        };
-        _db.DeepAnalysisCheckouts.Add(checkout);
-        await _db.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation(
-            "Deep analysis ({Kind}) checkout for user {UserId}: €{Amount} ({PaymentId})",
-            kind, userId, price, paymentId);
-
-        return new DeepAnalysisCheckoutResult(
-            checkout.Id,
-            paymentId,
-            $"/candidate/deep-analysis/checkout?kind={Uri.EscapeDataString(slug)}&paymentId={Uri.EscapeDataString(paymentId)}",
-            price,
-            IsStub: true,
-            kind);
-    }
-
-    public async Task<bool> TryFulfillPaidCheckoutAsync(
-        string paymentId,
-        Guid? expectedUserId = null,
-        bool allowDevStubMarkPaid = false,
-        CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(paymentId))
-        {
-            return false;
-        }
-
-        var checkout = await _db.DeepAnalysisCheckouts
-            .FirstOrDefaultAsync(c => c.PaymentId == paymentId, cancellationToken);
-        if (checkout is null)
-        {
-            return false;
-        }
-
-        if (expectedUserId is Guid uid && checkout.UserId != uid)
-        {
-            return false;
-        }
-
-        if (checkout.Status == DeepAnalysisCheckoutStatus.Paid)
-        {
-            await UnlockForUserAsync(checkout.UserId, checkout.Kind, cancellationToken);
-            return true;
-        }
-
-        if (checkout.Status != DeepAnalysisCheckoutStatus.Pending)
-        {
-            return false;
-        }
-
-        var canStubMarkPaid = allowDevStubMarkPaid
-            && AllowStubPayments()
-            && paymentId.StartsWith("stub_deep_", StringComparison.Ordinal);
-
-        if (!canStubMarkPaid)
-        {
-            return false;
-        }
-
-        checkout.Status = DeepAnalysisCheckoutStatus.Paid;
-        checkout.PaidAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
-        await UnlockForUserAsync(checkout.UserId, checkout.Kind, cancellationToken);
-        return true;
     }
 
     public async Task UnlockForUserAsync(
@@ -291,7 +233,7 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             }
 
             var commercialEmpty = await _commercial.GetAsync(cancellationToken);
-            return ToDto(kind, row, commercialEmpty.DeepAnalysisPriceEuro);
+            return ToDto(kind, row, DeepAnalysisPricing.For(commercialEmpty, kind));
         }
 
         var error = DeepAnalysisCatalog.ValidateAnswers(answers, complete, kind);
@@ -301,7 +243,24 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         }
 
         var now = DateTime.UtcNow;
-        row.AnswersJson = DeepAnalysisCatalog.SerializeAnswers(answers, kind);
+        var wasCompleted = CandidateDeepAnalysisStatuses.IsCompleted(row.Status);
+        var answersJson = DeepAnalysisCatalog.SerializeAnswers(answers, kind);
+        var baselineAnswersJson = row.AnswersJson;
+        if (wasCompleted && !complete)
+        {
+            await _saveGuard.SaveDraftAsync(userId, kind, AssessmentVariant.Deep, answersJson, baselineAnswersJson, cancellationToken);
+        }
+        else if (wasCompleted && complete)
+        {
+            var noOp = await _saveGuard.CommitCompleteAsync(
+                userId, kind, AssessmentVariant.Deep, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
+            if (noOp)
+            {
+                var commercialNoOp = await _commercial.GetAsync(cancellationToken);
+                return ToDto(kind, row, DeepAnalysisPricing.For(commercialNoOp, kind));
+            }
+        }
+        row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
         if (complete)
@@ -313,13 +272,15 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             row.ReportGeneratedAtUtc = now;
             await MergeTagsIntoQuickScanAsync(userId, kind, answers, tags, now, cancellationToken);
         }
-        else
+        else if (!CandidateDeepAnalysisStatuses.IsCompleted(row.Status))
         {
             row.Status = CandidateDeepAnalysisStatuses.Draft;
             row.CompletedAtUtc = null;
             row.ReportGeneratedAtUtc = null;
             row.TagsJson = "[]";
         }
+        // Completed + autosave: keep status/tags/report timestamps; AnswersJson above is the
+        // pending edit until the candidate finishes again with complete:true (rescore).
 
         await _db.SaveChangesAsync(cancellationToken);
         CompetenceDeepReport? competenceReport = null;
@@ -338,10 +299,21 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                     _logger.LogWarning(ex, "Competence deep-report build-on-complete failed for {UserId}.", userId);
                 }
             }
+            else if (_kindReports is not null)
+            {
+                try
+                {
+                    await _kindReports.BuildAndStoreAsync(userId, kind, cancellationToken);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _logger.LogWarning(ex, "{Kind} deep-report build-on-complete failed for {UserId}.", kind, userId);
+                }
+            }
         }
 
         var commercial = await _commercial.GetAsync(cancellationToken);
-        return ToDto(kind, row, commercial.DeepAnalysisPriceEuro, competenceReport);
+        return ToDto(kind, row, DeepAnalysisPricing.For(commercial, kind), competenceReport);
     }
 
     private async Task MergeTagsIntoQuickScanAsync(
@@ -392,7 +364,28 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
             }
 
             career.MatchTagsJson = CareerTestCatalog.SerializeTags(existing);
-            var compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+            var scoresKey = CareerCompassBuilder.ScoresKey(riasec);
+            CareerCompassSnapshot compass;
+            if (CareerCompassAttempt.TryBegin(userId, career.CompassJson, scoresKey, now))
+            {
+                try
+                {
+                    compass = await _careerCompass.GenerateFromCareerDeepAsync(answers, cancellationToken);
+                }
+                finally
+                {
+                    CareerCompassAttempt.End(userId, scoresKey);
+                }
+
+                compass = compass with { ScoresFingerprint = scoresKey, ModelAttemptUtc = now };
+            }
+            else
+            {
+                compass = CareerCompassJson.TryDeserialize(career.CompassJson)
+                          ?? CareerCompassBuilder.Build(riasec, fromDeepAnalysis: true);
+                compass = compass with { ScoresFingerprint = scoresKey };
+            }
+
             career.CompassJson = CareerCompassJson.Serialize(compass);
             career.CompletedAtUtc ??= now;
             career.UpdatedAtUtc = now;
@@ -509,12 +502,14 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         quick.UpdatedAtUtc = now;
     }
 
-    private bool AllowStubPayments() =>
-        _environment.IsDevelopment()
-        || _configuration.GetValue("JobsyAuth:AllowStubPayments", false);
-
     private static DeepAnalysisStateDto ToDto(
-        AssessmentKind kind, CandidateDeepAnalysis? row, decimal priceEuro, CompetenceDeepReport? competenceReport = null)
+        AssessmentKind kind,
+        CandidateDeepAnalysis? row,
+        decimal priceEuro,
+        CompetenceDeepReport? competenceReport = null,
+        CareerDeepReport? careerReport = null,
+        CultureDeepReport? cultureReport = null,
+        ValuesDeepReport? valuesReport = null)
     {
         var status = row?.Status ?? CandidateDeepAnalysisStatuses.Locked;
         var answers = DeepAnalysisCatalog.ParseAnswersJson(row?.AnswersJson, kind);
@@ -523,6 +518,23 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
         // Status alone is not enough: older/stub rows could be marked Completed without a full answer set.
         var completed = CandidateDeepAnalysisStatuses.IsCompleted(status)
                         && answers.Count >= expected;
+
+        if (completed && row is not null)
+        {
+            competenceReport ??= kind == AssessmentKind.Competence
+                ? CompetenceDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+            careerReport ??= kind == AssessmentKind.Career
+                ? CareerDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+            cultureReport ??= kind == AssessmentKind.Culture
+                ? CultureDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+            valuesReport ??= kind == AssessmentKind.Values
+                ? ValuesDeepReportJson.Deserialize(row.ReportJson)
+                : null;
+        }
+
         return new DeepAnalysisStateDto(
             kind,
             status,
@@ -548,7 +560,10 @@ public sealed class DeepAnalysisService : IDeepAnalysisService
                         DeepAnalysisQuestionHelp.DomainLabel(q.Domain)))
                     .ToList()
                 : [],
-            FormatUpsellCopy(priceEuro, kind),
-            completed && kind == AssessmentKind.Competence ? competenceReport : null);
+            DeepAnalysisUpsellRules.CopyNl(kind, expected),
+            completed && kind == AssessmentKind.Competence ? competenceReport : null,
+            completed && kind == AssessmentKind.Career ? careerReport : null,
+            completed && kind == AssessmentKind.Culture ? cultureReport : null,
+            completed && kind == AssessmentKind.Values ? valuesReport : null);
     }
 }

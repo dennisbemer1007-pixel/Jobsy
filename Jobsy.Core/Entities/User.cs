@@ -18,6 +18,15 @@ public class User
     /// <summary>Candidate phone (E.164 or NL local). Shared with employers only post-Accept via CV/PII.</summary>
     public string? PhoneNumber { get; set; }
 
+    /// <summary>Set when the candidate proved this e-mail (code or external IdP). Null until then.</summary>
+    public DateTime? EmailVerifiedAtUtc { get; set; }
+
+    /// <summary>Set when the candidate confirmed <see cref="PhoneVerifiedE164"/> with an SMS code.</summary>
+    public DateTime? PhoneVerifiedAtUtc { get; set; }
+
+    /// <summary>Normalized phone that was verified. Cleared when the number changes.</summary>
+    public string? PhoneVerifiedE164 { get; set; }
+
     /// <summary>Candidate consents that employers may contact via WhatsApp on the phone number.</summary>
     public bool WhatsAppContactAllowed { get; set; }
 
@@ -29,6 +38,11 @@ public class User
     /// </summary>
     public Guid? CompanyId { get; set; }
     public Company? Company { get; set; }
+
+    /// <summary>
+    /// School for SchoolAdmin and Teacher. One school per staff account. Null for all other roles.
+    /// </summary>
+    public Guid? SchoolId { get; set; }
 
     public DateOnly? DateOfBirth { get; set; }
     public bool OpenForWork { get; set; }
@@ -66,6 +80,17 @@ public class User
     public bool IsEarlyAdapter { get; set; }
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// True only for acceptatie CLI-seeded test logins. Never set via API/UI.
+    /// </summary>
+    public bool IsTestAccount { get; set; }
+
+    /// <summary>
+    /// Break-glass admin provisioned from <c>SystemAdmin:*</c> env vars on startup only.
+    /// Never set via API/UI; hidden from admin user lists.
+    /// </summary>
+    public bool IsSystemAdminAccount { get; set; }
+
     /// <summary>When the user accepted terms/privacy (registration or profile).</summary>
     public DateTime? TermsAcceptedAt { get; set; }
     public string? ConsentVersion { get; set; }
@@ -84,6 +109,17 @@ public class User
     /// <summary>Last successful login (local or external). Null = never logged in before.</summary>
     public DateTime? LastLoginAtUtc { get; set; }
 
+    /// <summary>
+    /// Reminder e-mails (come-back, vacancy tips, employer nudges). On until the user turns them off.
+    /// Push and WhatsApp stay separate.
+    /// </summary>
+    public bool ReminderEmailsEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Bumped when the user turns reminder e-mail back on, so older unsubscribe links stop working.
+    /// </summary>
+    public int MailUnsubscribeEpoch { get; set; }
+
     /// <summary>Data-protection encrypted TOTP seed. Never expose this value through an API.</summary>
     public string? AuthenticatorSecret { get; set; }
 
@@ -94,6 +130,18 @@ public class User
     public string? RecoveryCodesHash { get; set; }
 
     public DateTime? AuthenticatorEnrolledAtUtc { get; set; }
+
+    /// <summary>Consecutive wrong TOTP / recovery-code attempts since last success.</summary>
+    public int MfaFailedCount { get; set; }
+
+    /// <summary>Until when 2FA verification is temporarily blocked.</summary>
+    public DateTime? MfaLockoutUntilUtc { get; set; }
+
+    /// <summary>Last accepted TOTP time-step (replay block).</summary>
+    public long? LastTotpTimeStep { get; set; }
+
+    /// <summary>When the most recent MFA lockout mail was sent (UTC). At most one per 24 h.</summary>
+    public DateTime? LastMfaLockoutMailAtUtc { get; set; }
 
     /// <summary>
     /// Incremented to invalidate all cookie principals (password change, logout-all, admin block).

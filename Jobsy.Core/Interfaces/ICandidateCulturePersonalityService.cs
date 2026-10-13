@@ -1,3 +1,4 @@
+using Jobsy.Core.Entities;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
@@ -23,7 +24,8 @@ public sealed record CandidateCulturePersonalityStateDto(
     CulturePersonalityScores? Scores,
     IReadOnlyList<string> MatchTags,
     DateTime? CompletedAtUtc,
-    decimal DeepAnalysisPriceEuro);
+    decimal DeepAnalysisPriceEuro,
+    CulturePersonalityScores? PreviewScores = null);
 
 public interface ICompanyCultureService
 {
@@ -44,4 +46,5 @@ public sealed record CompanyCultureStateDto(
     string Status,
     IReadOnlyDictionary<int, int> Answers,
     CulturePersonalityScores? Scores,
-    DateTime? CompletedAtUtc);
+    DateTime? CompletedAtUtc,
+    string Source = CompanyCultureSources.Full);

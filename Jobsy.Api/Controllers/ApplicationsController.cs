@@ -1,89 +1,214 @@
 using System.Net;
+using System.Text.Json;
+using Jobsy.Api.Authorization;
+using Jobsy.Api.Passport;
 using Jobsy.Api.Models;
-using Jobsy.Core.ValueObjects;
+using Jobsy.Api.Privacy;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
+using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/applications")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class ApplicationsController : ControllerBase
 {
     private readonly JobsyDbContext _db;
     private readonly ICompanyAuthorizationService _companyAuth;
     private readonly IUserLookupService _users;
-    private readonly IEmailService _email;
+    private readonly ITransactionalMailer _mailer;
     private readonly IPushNotificationService _push;
     private readonly IPlatformFeatureService _features;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
+    private readonly PassportPdfDownload _passportPdf;
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
-    private readonly IWhoAmIService _whoAmI;
+    private readonly IPersonalDataAccessLogger _accessLog;
+    private readonly ISupportAccessService _supportAccess;
+    private readonly IApplicationStatusRecorder _statusRecorder;
 
     public ApplicationsController(
         JobsyDbContext db,
         ICompanyAuthorizationService companyAuth,
         IUserLookupService users,
-        IEmailService email,
+        ITransactionalMailer mailer,
         IPushNotificationService push,
         IPlatformFeatureService features,
         ILobsyCvPdfService lobsyCvPdf,
+        PassportPdfDownload passportPdf,
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
         IVacancyDiscoveryIndex discoveryIndex,
-        IWhoAmIService whoAmI)
+        IPersonalDataAccessLogger accessLog,
+        ISupportAccessService supportAccess,
+        IApplicationStatusRecorder statusRecorder)
     {
         _db = db;
         _companyAuth = companyAuth;
         _users = users;
-        _email = email;
+        _mailer = mailer;
         _push = push;
         _features = features;
         _lobsyCvPdf = lobsyCvPdf;
+        _passportPdf = passportPdf;
         _notifications = notifications;
         _actionTokens = actionTokens;
         _discoveryIndex = discoveryIndex;
-        _whoAmI = whoAmI;
+        _accessLog = accessLog;
+        _supportAccess = supportAccess;
+        _statusRecorder = statusRecorder;
     }
 
     [HttpGet]
     [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
-    public async Task<ActionResult<IEnumerable<EmployerApplicationDto>>> GetForManagedCompanies(CancellationToken cancellationToken)
+    [RequiresVerifiedCompany]
+    public async Task<ActionResult> GetForManagedCompanies(
+        [FromQuery] Guid? companyId = null,
+        [FromQuery] Guid? vacancyId = null,
+        [FromQuery] string[]? status = null,
+        [FromQuery] int? overdueHours = null,
+        [FromQuery] Guid[]? branchIds = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50,
+        CancellationToken cancellationToken = default)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        var isAdmin = accessible is null;
         var query = _db.Applications
             .AsNoTracking()
             .Where(a => a.EmailVerifiedAt != null)
             .AsQueryable();
 
-        if (accessible is not null)
+        List<Guid>? scope = accessible is null ? null : accessible as List<Guid> ?? accessible.ToList();
+        if (scope is not null)
         {
             query = query.Where(a =>
-                accessible.Contains(a.Vacancy.CompanyId)
-                || (a.Vacancy.IntermediaryCompanyId != null
-                    && accessible.Contains(a.Vacancy.IntermediaryCompanyId.Value)));
+                scope.Contains(a.Vacancy.CompanyId)
+                || scope.Contains(a.Vacancy.IntermediaryCompanyId ?? Guid.Empty));
+        }
+        else
+        {
+            // Admin: require companyId or vacancyId; otherwise return aggregates only.
+            if (companyId is null && vacancyId is null)
+            {
+                var aggRows = await query
+                    .Select(a => new { a.Status, a.Vacancy.CompanyId, CompanyName = a.Vacancy.Company.Name })
+                    .ToListAsync(cancellationToken);
+                var byStatus = aggRows
+                    .GroupBy(a => a.Status.ToString())
+                    .ToDictionary(g => g.Key, g => g.Count());
+                var topCompanies = aggRows
+                    .GroupBy(a => new { a.CompanyId, a.CompanyName })
+                    .Select(g => new AdminApplicationsCompanyCountDto(g.Key.CompanyId, g.Key.CompanyName, g.Count()))
+                    .OrderByDescending(x => x.Count)
+                    .Take(20)
+                    .ToList();
+
+                var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+                if (actor is not null)
+                {
+                    await this.LogPersonalDataAccessAsync(
+                        _accessLog,
+                        actor.Id,
+                        PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                        "admin.applications.aggregate",
+                        "list",
+                        reason: "no-filter",
+                        cancellationToken: cancellationToken);
+                }
+
+                return Ok(new AdminApplicationsAggregateDto(aggRows.Count, byStatus, topCompanies));
+            }
+        }
+
+        if (companyId is Guid cid)
+        {
+            query = query.Where(a =>
+                a.Vacancy.CompanyId == cid
+                || a.Vacancy.IntermediaryCompanyId == cid);
+        }
+
+        if (vacancyId is Guid vid)
+        {
+            query = query.Where(a => a.VacancyId == vid);
+        }
+
+        if (branchIds is { Length: > 0 })
+        {
+            IEnumerable<Guid> allowedBranches = branchIds.Distinct();
+            if (accessible is not null)
+            {
+                allowedBranches = allowedBranches.Where(accessible.Contains);
+            }
+
+            var branchSet = allowedBranches.ToList();
+            if (branchSet.Count == 0)
+            {
+                return Ok(Array.Empty<EmployerApplicationDto>());
+            }
+
+            query = query.Where(a =>
+                branchSet.Contains(a.Vacancy.CompanyId)
+                || branchSet.Contains(a.Vacancy.IntermediaryCompanyId ?? Guid.Empty));
+        }
+
+        if (status is { Length: > 0 })
+        {
+            var parsed = status
+                .Select(s => Enum.TryParse<ApplicationStatus>(s, ignoreCase: true, out var st) ? st : (ApplicationStatus?)null)
+                .Where(s => s.HasValue)
+                .Select(s => s!.Value)
+                .Distinct()
+                .ToList();
+            if (parsed.Count > 0)
+            {
+                query = query.Where(a => parsed.Contains(a.Status));
+            }
+        }
+
+        if (overdueHours is int hours && hours > 0)
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-hours);
+            query = query.Where(a =>
+                a.Status == ApplicationStatus.Pending && a.CreatedAt < cutoff);
+        }
+
+        query = query
+            .OrderByDescending(a => a.CreatedAt)
+            .ThenBy(a => a.EstimatedTravelMinutes);
+
+        if (isAdmin)
+        {
+            query = query.Skip((page - 1) * pageSize).Take(pageSize);
+        }
+        else
+        {
+            // Employer lists stay uncapped by page for now (existing behaviour) but hard-cap Take.
+            query = query.Take(500);
         }
 
         var rows = await query
-            .OrderByDescending(a => a.MatchPercent ?? -1)
-            .ThenBy(a => a.EstimatedTravelMinutes)
-            .ThenByDescending(a => a.CreatedAt)
             .Select(a => new
             {
                 a.Id,
@@ -107,8 +232,6 @@ public class ApplicationsController : ControllerBase
                 a.SnapshotEducations,
                 a.SnapshotAboutMe,
                 a.CandidateEmployerCount,
-                a.MatchPercent,
-                a.MatchBreakdownJson,
                 a.ViaSafetyNet,
                 a.Motivation,
                 a.StudentNumber,
@@ -120,16 +243,119 @@ public class ApplicationsController : ControllerBase
                 a.SnapshotWhatsAppAllowed,
                 a.CandidateAgeYears,
                 a.HasUploadedCv,
-                a.CandidateReferenceCount
+                a.CandidateReferenceCount,
+                a.CandidateUserId,
+                a.Vacancy.CompanyId
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(rows.Select(a =>
+        if (isAdmin)
         {
-            var revealed = ApplicationRules.IsPiiRevealed(a.Status);
-            var contact = ApplicationRules.IsDirectContactRevealed(a.Status);
-            var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
-            return new EmployerApplicationDto(
+            var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+            if (actor is not null)
+            {
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog,
+                    actor.Id,
+                    PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "admin.applications.list",
+                    "list",
+                    subjectCompanyId: companyId,
+                    reason: $"companyId={companyId};vacancyId={vacancyId};page={page};pageSize={pageSize}",
+                    cancellationToken: cancellationToken);
+            }
+        }
+
+        if (!isAdmin)
+        {
+            return Ok(rows.Select(a =>
+            {
+                var revealed = ApplicationRules.IsPiiRevealed(a.Status);
+                var contact = ApplicationRules.IsDirectContactRevealed(a.Status);
+                var availability = LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson);
+                return new EmployerApplicationDto(
+                    a.Id,
+                    a.VacancyId,
+                    a.VacancyTitle,
+                    a.CompanyName,
+                    a.PreferredTransport,
+                    a.EstimatedTravelMinutes,
+                    a.CreatedAt,
+                    a.Status.ToString(),
+                    a.RespondedAt,
+                    revealed ? a.CandidateCity : null,
+                    a.DistanceKm,
+                    ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
+                    revealed ? a.CandidateName : null,
+                    contact ? a.CandidateEmail : null,
+                    revealed ? a.CandidateAddress : null,
+                    revealed,
+                    revealed && a.WorkPermitConfirmed,
+                    a.SnapshotAvailabilityJson,
+                    revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
+                    revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
+                    revealed ? a.SnapshotAboutMe : null,
+                    revealed ? a.CandidateEmployerCount : 0,
+                    a.ViaSafetyNet,
+                    a.Motivation,
+                    LegalEligible: true,
+                    revealed ? a.StudentNumber : null,
+                    contact ? a.SchoolEmail : null,
+                    revealed ? a.StudyProgram : null,
+                    revealed ? a.StudyYear : null,
+                    revealed ? a.ExclusivityValidationStatus : null,
+                    CvPdfAvailable: revealed,
+                    CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
+                    WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
+                    YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
+                    AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
+                        availability.Slots,
+                        availability.FlexibleTimes),
+                    UploadedCvAvailable: revealed && a.HasUploadedCv,
+                    CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+            }));
+        }
+
+        var adminActor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var mapped = new List<EmployerApplicationDto>(rows.Count);
+        foreach (var a in rows)
+        {
+            Guid? grantId = null;
+            if (adminActor is not null)
+            {
+                grantId = await _supportAccess.FindActiveGrantIdAsync(
+                    adminActor.Id,
+                    a.CandidateUserId,
+                    null,
+                    SupportAccessScope.Applications,
+                    cancellationToken);
+            }
+
+            var unmask = grantId is not null;
+            if (unmask && adminActor is not null)
+            {
+                await this.LogPersonalDataAccessAsync(
+                    _accessLog,
+                    adminActor.Id,
+                    PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                    "admin.applications.reveal",
+                    "reveal",
+                    subjectUserId: a.CandidateUserId,
+                    subjectCompanyId: a.CompanyId,
+                    reason: "support-access",
+                    supportAccessGrantId: grantId,
+                    cancellationToken: cancellationToken);
+            }
+
+            var name = unmask ? a.CandidateName : PersonalDataMasker.MaskName(a.CandidateName);
+            var email = unmask ? a.CandidateEmail : PersonalDataMasker.MaskEmail(a.CandidateEmail);
+            var phone = unmask ? a.SnapshotPhoneNumber : PersonalDataMasker.MaskPhone(a.SnapshotPhoneNumber);
+            var city = a.CandidateCity;
+            var address = unmask
+                ? a.CandidateAddress
+                : PersonalDataMasker.MaskAddressToCity(a.CandidateAddress, city);
+
+            mapped.Add(new EmployerApplicationDto(
                 a.Id,
                 a.VacancyId,
                 a.VacancyTitle,
@@ -139,42 +365,41 @@ public class ApplicationsController : ControllerBase
                 a.CreatedAt,
                 a.Status.ToString(),
                 a.RespondedAt,
-                revealed ? a.CandidateCity : null,
-                // Distance without address/city is allowed pre-accept for screening.
+                city,
                 a.DistanceKm,
-                ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, revealed),
-                revealed ? a.CandidateName : null,
-                contact ? a.CandidateEmail : null,
-                revealed ? a.CandidateAddress : null,
-                revealed,
-                revealed && a.WorkPermitConfirmed,
-                // Availability is screening data (not identity PII) — same matrix before and after Accept.
-                a.SnapshotAvailabilityJson,
-                revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
-                revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
-                revealed ? a.SnapshotAboutMe : null,
-                revealed ? a.CandidateEmployerCount : 0,
-                a.MatchPercent,
-                MatchBreakdownJson: null,
+                ApplicationPreferenceRedaction.RedactForEmployer(a.PreferencesSummary, unmask),
+                name,
+                email,
+                address,
+                unmask,
+                unmask && a.WorkPermitConfirmed,
+                unmask ? a.SnapshotAvailabilityJson : null,
+                unmask ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotDrivingLicenses) : null,
+                unmask ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
+                unmask ? a.SnapshotAboutMe : null,
+                unmask ? a.CandidateEmployerCount : 0,
                 a.ViaSafetyNet,
-                // Motivation is candidate-authored for the employer — show after verified apply (pre-accept OK).
-                a.Motivation,
+                unmask ? a.Motivation : null,
                 LegalEligible: true,
-                revealed ? a.StudentNumber : null,
-                contact ? a.SchoolEmail : null,
-                revealed ? a.StudyProgram : null,
-                revealed ? a.StudyYear : null,
-                revealed ? a.ExclusivityValidationStatus : null,
-                CvPdfAvailable: revealed,
-                CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
-                WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
-                CandidateAgeYears: a.CandidateAgeYears,
-                AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
-                    availability.Slots,
-                    availability.FlexibleTimes),
-                UploadedCvAvailable: revealed && a.HasUploadedCv,
-                CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
-        }));
+                unmask ? a.StudentNumber : null,
+                unmask ? a.SchoolEmail : null,
+                unmask ? a.StudyProgram : null,
+                unmask ? a.StudyYear : null,
+                unmask ? a.ExclusivityValidationStatus : null,
+                CvPdfAvailable: unmask,
+                CandidatePhone: phone,
+                WhatsAppContactAllowed: unmask && a.SnapshotWhatsAppAllowed,
+                YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
+                AvailabilitySummary: unmask
+                    ? LobsyCvModelFactory.FormatAvailability(
+                        LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).Slots,
+                        LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).FlexibleTimes)
+                    : null,
+                UploadedCvAvailable: unmask && a.HasUploadedCv,
+                CandidateReferenceCount: unmask ? a.CandidateReferenceCount : 0));
+        }
+
+        return Ok(mapped);
     }
 
     /// <summary>
@@ -222,12 +447,18 @@ public class ApplicationsController : ControllerBase
                 });
             }
 
-            var model = LobsyCvModelFactory.FromApplicationForDownload(
-                application,
-                includePii: true,
-                includeDirectContact: true);
-            var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
-            return File(pdf, "application/pdf", _lobsyCvPdf.BuildFileName(model));
+            var (pdf, fileName) = await RenderApplicationCvAsync(application, includeDirectContact: true, cancellationToken);
+            await this.LogPersonalDataAccessAsync(
+                _accessLog,
+                caller.Id,
+                PersonalDataAccessLogExtensions.ResolveActorRole(User),
+                "application.cv.download",
+                "download",
+                subjectUserId: application.CandidateUserId,
+                subjectCompanyId: application.Vacancy.CompanyId,
+                reason: "lobsy-cv;owner",
+                cancellationToken: cancellationToken);
+            return File(pdf, "application/pdf", fileName);
         }
 
         if (!_companyAuth.IsEmployer(User) && !_companyAuth.IsAdmin(User))
@@ -235,9 +466,32 @@ public class ApplicationsController : ControllerBase
             return Forbid();
         }
 
+        if (caller.Role == UserRole.RegionalManager)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "cv_read_only",
+                message = "Als regiomanager kun je geen CV met naam downloaden."
+            });
+        }
+
         if (!await CanAccessApplicationEmployerAsync(application, cancellationToken))
         {
             return Forbid();
+        }
+
+        if (!_companyAuth.IsAdmin(User))
+        {
+            var publisherId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+            var rootStatus = await ResolveRootVerificationStatusAsync(publisherId, cancellationToken);
+            if (!CompanyVerificationRules.CanSeeCandidates(rootStatus))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = CompanyVerificationRules.UnverifiedErrorCode,
+                    message = CompanyVerificationRules.BlockedMessageNl
+                });
+            }
         }
 
         if (!LobsyCvAccessRules.CanEmployerDownloadCv(application.Status, application.EmailVerifiedAt))
@@ -249,12 +503,70 @@ public class ApplicationsController : ControllerBase
             });
         }
 
-        var employerModel = LobsyCvModelFactory.FromApplicationForDownload(
+        await MaybeRecordEmployerViewedAsync(application, caller.Id, DateTime.UtcNow, cancellationToken);
+        var (employerPdf, employerFileName) = await RenderApplicationCvAsync(
+            application,
+            ApplicationRules.IsDirectContactRevealed(application.Status),
+            cancellationToken);
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            caller.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "application.cv.download",
+            "download",
+            subjectUserId: application.CandidateUserId,
+            subjectCompanyId: application.Vacancy.CompanyId,
+            reason: "lobsy-cv",
+            cancellationToken: cancellationToken);
+        return File(employerPdf, "application/pdf", employerFileName);
+    }
+
+    private async Task<(byte[] Pdf, string FileName)> RenderApplicationCvAsync(
+        Application application,
+        bool includeDirectContact,
+        CancellationToken cancellationToken)
+    {
+        var features = await _features.GetAsync(cancellationToken);
+        if (features.PassportPdfV2Enabled)
+        {
+            var passport = await _passportPdf.ForApplicationAsync(
+                application,
+                includeDirectContact,
+                features.PhoneVerificationEnabled,
+                cancellationToken);
+            return (passport.Pdf, passport.FileName);
+        }
+
+        var model = LobsyCvModelFactory.FromApplicationForDownload(
             application,
             includePii: true,
-            includeDirectContact: ApplicationRules.IsDirectContactRevealed(application.Status));
-        var employerPdf = await _lobsyCvPdf.RenderAsync(employerModel, cancellationToken);
-        return File(employerPdf, "application/pdf", _lobsyCvPdf.BuildFileName(employerModel));
+            includeDirectContact: includeDirectContact);
+        var pdf = await _lobsyCvPdf.RenderAsync(model, cancellationToken);
+        return (pdf, _lobsyCvPdf.BuildFileName(model));
+    }
+
+    private async Task<CompanyVerificationStatus> ResolveRootVerificationStatusAsync(
+        Guid companyId,
+        CancellationToken cancellationToken)
+    {
+        var row = await _db.Companies.AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new { c.ParentCompanyId, c.VerificationStatus })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (row is null)
+        {
+            return CompanyVerificationStatus.Unverified;
+        }
+
+        if (row.ParentCompanyId is Guid parentId)
+        {
+            return await _db.Companies.AsNoTracking()
+                .Where(c => c.Id == parentId)
+                .Select(c => c.VerificationStatus)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        return row.VerificationStatus;
     }
 
     [HttpGet("{id:guid}/uploaded-cv")]
@@ -291,9 +603,32 @@ public class ApplicationsController : ControllerBase
                 return Forbid();
             }
 
+            if (caller.Role == UserRole.RegionalManager)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "cv_read_only",
+                    message = "Als regiomanager kun je geen CV met naam downloaden."
+                });
+            }
+
             if (!await CanAccessApplicationEmployerAsync(application, cancellationToken))
             {
                 return Forbid();
+            }
+
+            if (!_companyAuth.IsAdmin(User))
+            {
+                var publisherId = application.Vacancy.IntermediaryCompanyId ?? application.Vacancy.CompanyId;
+                var rootStatus = await ResolveRootVerificationStatusAsync(publisherId, cancellationToken);
+                if (!CompanyVerificationRules.CanSeeCandidates(rootStatus))
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new
+                    {
+                        code = CompanyVerificationRules.UnverifiedErrorCode,
+                        message = CompanyVerificationRules.BlockedMessageNl
+                    });
+                }
             }
 
             if (!LobsyCvAccessRules.CanEmployerDownloadCv(application.Status, application.EmailVerifiedAt))
@@ -314,17 +649,33 @@ public class ApplicationsController : ControllerBase
             });
         }
 
+        if (!isOwner)
+        {
+            await MaybeRecordEmployerViewedAsync(application, caller.Id, DateTime.UtcNow, cancellationToken);
+        }
+
         if (application.UploadedCv is null || application.UploadedCv.Content.Length == 0)
         {
             return NotFound(new { message = "Er is geen geüpload CV bij deze sollicitatie." });
         }
+
+        await this.LogPersonalDataAccessAsync(
+            _accessLog,
+            caller.Id,
+            PersonalDataAccessLogExtensions.ResolveActorRole(User),
+            "application.cv.download",
+            "download",
+            subjectUserId: application.CandidateUserId,
+            subjectCompanyId: application.Vacancy.CompanyId,
+            reason: isOwner ? "uploaded-cv;owner" : "uploaded-cv",
+            cancellationToken: cancellationToken);
 
         return File(application.UploadedCv.Content, application.UploadedCv.ContentType, application.UploadedCv.FileName);
     }
 
     [HttpPost]
     [Authorize(Policy = JobsyPolicies.RequireCandidate)]
-    [EnableRateLimiting("otp-verify")]
+    [EnableRateLimiting("candidate-apply")]
     public async Task<ActionResult<ApplyResultDto>> Apply(
         [FromBody] ApplyRequest request,
         CancellationToken cancellationToken)
@@ -358,6 +709,7 @@ public class ApplicationsController : ControllerBase
         var vacancy = await _db.Vacancies
             .Include(v => v.Company)
                 .ThenInclude(c => c.ParentCompany)
+            .Include(v => v.IntermediaryCompany)
             .Include(v => v.ExclusivitySetting!)
                 .ThenInclude(s => s.Educations)
             .FirstOrDefaultAsync(v => v.Id == request.VacancyId, cancellationToken);
@@ -365,6 +717,17 @@ public class ApplicationsController : ControllerBase
         if (vacancy is null)
         {
             return NotFound();
+        }
+
+        var actorIsTest = TestDataRules.IsTestViewer(User);
+        if (TestDataRules.IsBoundaryViolation(actorIsTest, vacancy.IsTestData))
+        {
+            if (!actorIsTest && vacancy.IsTestData)
+            {
+                return NotFound();
+            }
+
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = TestDataRules.BoundaryErrorCode });
         }
 
         if (vacancy.Kind == VacancyKind.Internship
@@ -401,6 +764,16 @@ public class ApplicationsController : ControllerBase
         if (!CandidateConsentRules.CanUseCandidateFeatures(candidate))
         {
             return BadRequest(new { message = CandidateConsentRules.ParentalConsentRequiredMessage });
+        }
+
+        if (!candidate.OpenForWork)
+        {
+            return BadRequest(new
+            {
+                code = "open_for_work_required",
+                message = "Zet eerst 'Beschikbaar voor werk' aan op je profiel. Daarna kun je solliciteren.",
+                userMessage = true
+            });
         }
 
         var existing = await _db.Applications.FirstOrDefaultAsync(
@@ -489,7 +862,7 @@ public class ApplicationsController : ControllerBase
                 MatchPercent: match.TotalPercent,
                 MatchBreakdownJson: matchJson,
                 SafetyNetMessage:
-                $"Je matchscore is {match.TotalPercent}%. Pas je profiel aan voor een betere match, of ga toch door (vangnet)."));
+                "Deze baan past minder goed bij je profiel. Pas je profiel aan, of ga toch door."));
         }
 
         var authenticatorStubUsed = false;
@@ -521,16 +894,22 @@ public class ApplicationsController : ControllerBase
             CandidateUserId = candidate.Id,
             CandidateName = candidate.FullName,
             CandidateEmail = candidate.Email,
-            CreatedAt = DateTime.UtcNow,
-            Status = ApplicationStatus.Pending
+            CreatedAt = DateTime.UtcNow
         };
 
         if (existing is not null && ApplicationRules.CanReuseWithdrawnApplication(existing.Status))
         {
             // Reopen withdrawn application instead of blocking re-apply.
-            application.Status = ApplicationStatus.Pending;
-            application.RespondedAt = null;
-            application.CreatedAt = DateTime.UtcNow;
+            var reopenNow = DateTime.UtcNow;
+            _statusRecorder.SetStatus(
+                application,
+                ApplicationStatus.Pending,
+                ApplicationStatusActorKind.Candidate,
+                candidate.Id,
+                reopenNow,
+                setRespondedAt: false,
+                clearRespondedAt: true);
+            application.CreatedAt = reopenNow;
             application.CandidateUserId = candidate.Id;
             application.CandidateEmail = candidate.Email;
         }
@@ -569,6 +948,8 @@ public class ApplicationsController : ControllerBase
         application.SnapshotHomeLongitude = candidate.HomeLocation?.Longitude;
         application.SnapshotCertificatesJson =
             LobsyCvModelFactory.SerializeCertificatesSnapshot(preferences.Certificates, maxLength: 4000);
+        application.SnapshotDiplomaEvaluationsJson =
+            await SnapshotDiplomaEvaluationsAsync(candidate.Id, cancellationToken);
         // Home address is never shown on Lobsy-CV; keep snapshot flag false for privacy consistency.
         application.SnapshotShowAddressOnCv = false;
         application.CandidateName = CandidateNameRules.ComposeFullName(
@@ -583,8 +964,8 @@ public class ApplicationsController : ControllerBase
         application.MatchBreakdownJson = Truncate(matchJson, 4000);
         application.ViaSafetyNet = GuldenMiddenwegRules.RequiresSafetyNetConfirmation(match)
                                    && request.ConfirmLowMatchSafetyNet;
-        var whoAmI = await _whoAmI.GetCvAttachmentAsync(candidate.Id, cancellationToken);
-        application.SnapshotWhoAmIJson = WhoAmISnapshot.Serialize(whoAmI);
+        // New applications do not snapshot the AI "Wie ben ik" story (decision 22). Existing rows stay.
+        application.SnapshotWhoAmIJson = null;
 
         if (vacancy.Kind == VacancyKind.Internship
             && vacancy.ExclusivitySetting is { } excl
@@ -618,7 +999,11 @@ public class ApplicationsController : ControllerBase
                 application.EmailVerificationCode = null;
                 application.EmailVerificationExpiresAt = null;
                 application.EmailVerificationFailedAttempts = 0;
-                application.Status = ApplicationStatus.Pending;
+                _statusRecorder.RecordCreated(
+                    application,
+                    ApplicationStatusActorKind.Candidate,
+                    candidate.Id,
+                    DateTime.UtcNow);
                 if (existing is null)
                 {
                     _db.Applications.Add(application);
@@ -672,7 +1057,7 @@ public class ApplicationsController : ControllerBase
 
             var code = VerificationCodes.CreateNumericCode();
             application.EmailVerificationCode = VerificationCodes.Hash(code);
-            application.EmailVerificationExpiresAt = DateTime.UtcNow.AddMinutes(10);
+            application.EmailVerificationExpiresAt = DateTime.UtcNow.Add(ApplicationRules.EmailVerificationCodeLifetime);
             // Do not reset failed attempts on resend — prevents lockout bypass via spam resend.
             if (existing is null || existing.EmailVerificationFailedAttempts >= VerificationCodes.MaxFailedAttempts)
             {
@@ -680,7 +1065,11 @@ public class ApplicationsController : ControllerBase
             }
 
             application.EmailVerifiedAt = null;
-            application.Status = ApplicationStatus.Pending;
+            _statusRecorder.RecordCreated(
+                application,
+                ApplicationStatusActorKind.Candidate,
+                candidate.Id,
+                DateTime.UtcNow);
             if (existing is null)
             {
                 _db.Applications.Add(application);
@@ -820,7 +1209,8 @@ public class ApplicationsController : ControllerBase
             DirectContact: ToDirectContactDto(vacancy),
             RequiresSafetyNetConfirmation: false,
             MatchPercent: existing.MatchPercent ?? match.TotalPercent,
-            MatchBreakdownJson: existing.MatchBreakdownJson ?? matchJson));
+            MatchBreakdownJson: existing.MatchBreakdownJson ?? matchJson,
+            ConfirmationLoggedToStub: _mailer.LogsToStub));
     }
 
     /// <summary>
@@ -916,11 +1306,20 @@ public class ApplicationsController : ControllerBase
         // Only verified "Open" (Pending) applications can be withdrawn — drafts awaiting a code cannot.
         if (!ApplicationRules.CanCandidateWithdraw(application.Status, application.EmailVerifiedAt))
         {
-            return BadRequest(new { message = "Alleen open sollicitaties kunnen worden ingetrokken." });
+            return BadRequest(new
+            {
+                code = "withdraw_not_allowed",
+                message = "Deze sollicitatie kun je niet meer intrekken.",
+                userMessage = true
+            });
         }
 
-        application.Status = ApplicationStatus.Withdrawn;
-        application.RespondedAt = DateTime.UtcNow;
+        _statusRecorder.SetStatus(
+            application,
+            ApplicationStatus.Withdrawn,
+            ApplicationStatusActorKind.Candidate,
+            user.Id,
+            DateTime.UtcNow);
         await ApplicationPrivacyCleanup.RemoveUploadedCvSnapshotsAsync(_db, [application.Id], cancellationToken);
         ApplicationRules.ScrubPersonalDataOnWithdraw(application);
         await _db.SaveChangesAsync(cancellationToken);
@@ -938,6 +1337,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost("{id:guid}/react")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<EmployerApplicationDto>> React(
         Guid id,
         [FromBody] ReactToApplicationRequest request,
@@ -967,39 +1367,31 @@ public class ApplicationsController : ControllerBase
             return Forbid();
         }
 
-        if (!ApplicationRules.CanEmployerReact(application.Status))
+        var canReact = request.Status == ApplicationStatus.Rejected
+            ? ApplicationRules.CanEmployerReject(application.Status)
+            : ApplicationRules.CanEmployerReact(application.Status);
+        if (!canReact)
         {
-            return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
+            return BadRequest(new
+            {
+                code = "react_not_allowed",
+                message = "Op deze sollicitatie kun je niet meer reageren.",
+                userMessage = true
+            });
         }
 
         var respondedAt = DateTime.UtcNow;
-        if (_db.Database.IsRelational())
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        await MaybeRecordEmployerViewedAsync(application, actor?.Id, respondedAt, cancellationToken);
+        var reacted = await _statusRecorder.TryReactAsync(
+            application,
+            request.Status,
+            actor?.Id,
+            respondedAt,
+            cancellationToken);
+        if (!reacted)
         {
-            // Atomic Pending→react on Postgres (race-safe).
-            var updated = await _db.Applications
-                .Where(a => a.Id == id && a.Status == ApplicationStatus.Pending)
-                .ExecuteUpdateAsync(
-                    s => s
-                        .SetProperty(a => a.Status, request.Status)
-                        .SetProperty(a => a.RespondedAt, respondedAt),
-                    cancellationToken);
-            if (updated == 0)
-            {
-                return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
-            }
-
-            // Keep the tracked graph in sync for e-mail / push below.
-            application.Status = request.Status;
-            application.RespondedAt = respondedAt;
-            _db.Entry(application).Property(a => a.Status).IsModified = false;
-            _db.Entry(application).Property(a => a.RespondedAt).IsModified = false;
-        }
-        else
-        {
-            // InMemory test provider has no ExecuteUpdate — tracked update is enough there.
-            application.Status = request.Status;
-            application.RespondedAt = respondedAt;
-            await _db.SaveChangesAsync(cancellationToken);
+            return BadRequest(new { message = "Op deze sollicitatie is al gereageerd." });
         }
 
         var appsLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
@@ -1012,11 +1404,7 @@ public class ApplicationsController : ControllerBase
                 $"{application.Vacancy.Company.Name}: helaas niet geselecteerd voor {application.Vacancy.Title}";
             var rejectMail = TransactionalEmails.EmployerReactionRejected(
                 baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
-            await _email.SendAsync(new EmailMessage(
-                application.CandidateEmail,
-                rejectMail.Subject,
-                rejectMail.Html,
-                rejectMail.Category), cancellationToken);
+            await _mailer.SendAsync(rejectMail, application.CandidateEmail, cancellationToken: cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
@@ -1037,14 +1425,10 @@ public class ApplicationsController : ControllerBase
         {
             var acceptSubject = $"Je sollicitatie is geaccepteerd: {application.Vacancy.Title}";
             var acceptBody =
-                $"{application.Vacancy.Company.Name}: sollicitatie geaccepteerd — {application.Vacancy.Title}";
+                $"{application.Vacancy.Company.Name}: je sollicitatie is geaccepteerd.";
             var acceptMail = TransactionalEmails.EmployerReactionAccepted(
                 baseUrl, application.CandidateName, application.Vacancy.Title, application.Vacancy.Company.Name);
-            await _email.SendAsync(new EmailMessage(
-                application.CandidateEmail,
-                acceptMail.Subject,
-                acceptMail.Html,
-                acceptMail.Category), cancellationToken);
+            await _mailer.SendAsync(acceptMail, application.CandidateEmail, cancellationToken: cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 application.CandidateEmail,
@@ -1065,8 +1449,36 @@ public class ApplicationsController : ControllerBase
         return Ok(MapEmployerDto(application));
     }
 
+    /// <summary>
+    /// Records the first employer view of an applicant (idempotent). List endpoint does not count.
+    /// // KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands
+    /// </summary>
+    [HttpPost("{id:guid}/viewed")]
+    [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    public async Task<IActionResult> MarkViewed(Guid id, CancellationToken cancellationToken)
+    {
+        var application = await _db.Applications
+            .Include(a => a.Vacancy)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+        if (application is null)
+        {
+            return NotFound();
+        }
+
+        var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
+        if (!CanAccessApplicationCompany(application, accessible))
+        {
+            return Forbid();
+        }
+
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        await MaybeRecordEmployerViewedAsync(application, actor?.Id, DateTime.UtcNow, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("{id:guid}/contact")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult<EmployerApplicationDto>> MarkEmployerContact(Guid id, CancellationToken cancellationToken)
     {
         var application = await _db.Applications
@@ -1088,8 +1500,15 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Contact kan alleen na acceptatie." });
         }
 
-        application.Status = ApplicationStatus.EmployerContacting;
-        application.RespondedAt = DateTime.UtcNow;
+        var contactNow = DateTime.UtcNow;
+        var contactActor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        await MaybeRecordEmployerViewedAsync(application, contactActor?.Id, contactNow, cancellationToken);
+        _statusRecorder.SetStatus(
+            application,
+            ApplicationStatus.EmployerContacting,
+            ApplicationStatusActorKind.Employer,
+            contactActor?.Id,
+            contactNow);
         await _db.SaveChangesAsync(cancellationToken);
 
         var appsLink = await BuildDeepLinkAsync("/candidate/applications", cancellationToken);
@@ -1097,12 +1516,10 @@ public class ApplicationsController : ControllerBase
         var contactBody = $"{application.Vacancy.Company.Name} neemt contact op over {application.Vacancy.Title}";
         var contactMail = TransactionalEmails.EmployerContacting(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            application.Vacancy.Title);
-        await _email.SendAsync(new EmailMessage(
+            application.Vacancy.Title,
             application.CandidateEmail,
-            contactMail.Subject,
-            contactMail.Html,
-            contactMail.Category), cancellationToken);
+            application.Vacancy.Company.Name);
+        await _mailer.SendAsync(contactMail, application.CandidateEmail, cancellationToken: cancellationToken);
         await _push.SendAsync(new PushMessage(
             application.CandidateEmail,
             "Werkgever neemt contact op",
@@ -1122,6 +1539,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost("vacancies/{vacancyId:guid}/fulfill/{applicationId:guid}")]
     [Authorize(Roles = JobsyRoles.ApplicationReactRoles)]
+    [RequiresVerifiedCompany]
     public async Task<ActionResult> FulfillVacancy(
         Guid vacancyId,
         Guid applicationId,
@@ -1167,13 +1585,19 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Matchen kan pas na acceptatie van de kandidaat." });
         }
 
-        chosen.Status = ApplicationStatus.Hired;
-        chosen.RespondedAt = DateTime.UtcNow;
+        var fulfillNow = DateTime.UtcNow;
+        var fulfillActor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        _statusRecorder.SetStatus(
+            chosen,
+            ApplicationStatus.Hired,
+            ApplicationStatusActorKind.Employer,
+            fulfillActor?.Id,
+            fulfillNow);
 
         if (closeVacancy)
         {
             vacancy.Status = VacancyStatus.Fulfilled;
-            vacancy.ClosedAtUtc ??= DateTime.UtcNow;
+            vacancy.ClosedAtUtc ??= fulfillNow;
             vacancy.FulfilledByApplicationId = chosen.Id;
         }
 
@@ -1191,8 +1615,12 @@ public class ApplicationsController : ControllerBase
                 .ToListAsync(cancellationToken);
             foreach (var other in others)
             {
-                other.Status = ApplicationStatus.FilledElsewhere;
-                other.RespondedAt = DateTime.UtcNow;
+                _statusRecorder.SetStatus(
+                    other,
+                    ApplicationStatus.FilledElsewhere,
+                    ApplicationStatusActorKind.Employer,
+                    fulfillActor?.Id,
+                    fulfillNow);
             }
         }
 
@@ -1227,11 +1655,7 @@ public class ApplicationsController : ControllerBase
             vacancy.Company.Name,
             chosen.Id,
             withdrawAbsolute);
-        await _email.SendAsync(new EmailMessage(
-            chosen.CandidateEmail,
-            hiredMail.Subject,
-            hiredMail.Html,
-            hiredMail.Category), cancellationToken);
+        await _mailer.SendAsync(hiredMail, chosen.CandidateEmail, cancellationToken: cancellationToken);
 
         await NotifyCandidateAsync(
             chosen,
@@ -1252,11 +1676,7 @@ public class ApplicationsController : ControllerBase
                 other.CandidateName,
                 vacancy.Title,
                 vacancy.Company.Name);
-            await _email.SendAsync(new EmailMessage(
-                other.CandidateEmail,
-                otherMail.Subject,
-                otherMail.Html,
-                otherMail.Category), cancellationToken);
+            await _mailer.SendAsync(otherMail, other.CandidateEmail, cancellationToken: cancellationToken);
 
             await NotifyCandidateAsync(
                 other,
@@ -1303,8 +1723,6 @@ public class ApplicationsController : ControllerBase
             revealed ? ApplicationPreferenceRedaction.ToHumanReadable(a.SnapshotEducations) : null,
             revealed ? a.SnapshotAboutMe : null,
             revealed ? a.CandidateEmployerCount : 0,
-            a.MatchPercent,
-            MatchBreakdownJson: null,
             a.ViaSafetyNet,
             a.Motivation,
             LegalEligible: true,
@@ -1316,7 +1734,7 @@ public class ApplicationsController : ControllerBase
             CvPdfAvailable: revealed,
             CandidatePhone: contact ? a.SnapshotPhoneNumber : null,
             WhatsAppContactAllowed: contact && a.SnapshotWhatsAppAllowed,
-            CandidateAgeYears: a.CandidateAgeYears,
+            YouthWageApplies: YouthWageIndicator.Applies(a.CandidateAgeYears),
             AvailabilitySummary: LobsyCvModelFactory.FormatAvailability(
                 availability.Slots,
                 availability.FlexibleTimes),
@@ -1359,6 +1777,24 @@ public class ApplicationsController : ControllerBase
         application.UploadedCv = snapshot;
     }
 
+    /// <summary>Facts only. The evaluation document is not copied onto the application.</summary>
+    private async Task<string?> SnapshotDiplomaEvaluationsAsync(Guid candidateUserId, CancellationToken cancellationToken)
+    {
+        var rows = await _db.CandidateDiplomaEvaluations.AsNoTracking()
+            .Where(e => e.UserId == candidateUserId)
+            .OrderBy(e => e.CreatedAtUtc)
+            .Select(e => new DiplomaEvaluationSharedFact(
+                e.DiplomaTitle,
+                e.IssuingBody,
+                e.IssuingBodyOther,
+                e.EquivalentLevelText,
+                e.EquivalentLevelCode,
+                e.EvaluationDate,
+                e.ReferenceNumber))
+            .ToListAsync(cancellationToken);
+        return DiplomaEvaluationRules.SerializeSnapshot(rows);
+    }
+
     private async Task SendApplicationConfirmationAsync(
         Core.Entities.User candidate,
         Core.Entities.Vacancy vacancy,
@@ -1366,19 +1802,15 @@ public class ApplicationsController : ControllerBase
         bool authenticatorStubUsed,
         CancellationToken cancellationToken)
     {
+        _ = authenticatorStubUsed; // logged by callers if needed; never shown in mail (05.3)
         var subject = $"Sollicitatie bevestigd: {vacancy.Title}";
-        var body = $"Je sollicitatie op {vacancy.Title} bij {vacancy.Company.Name} is ontvangen.";
+        var body = ApplicationRules.ConfirmationNoticeBody(vacancy.Company.Name);
         var mail = TransactionalEmails.ApplicationConfirmation(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
             candidate.FullName,
             vacancy.Title,
-            vacancy.Company.Name,
-            authenticatorStubUsed);
-        await _email.SendAsync(new EmailMessage(
-            candidate.Email,
-            mail.Subject,
-            mail.Html,
-            mail.Category), cancellationToken);
+            vacancy.Company.Name);
+        await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
 
         await NotifyCandidateAsync(
             application,
@@ -1403,11 +1835,7 @@ public class ApplicationsController : ControllerBase
             vacancy.Title,
             vacancy.Id,
             code);
-        await _email.SendAsync(new EmailMessage(
-            candidate.Email,
-            mail.Subject,
-            mail.Html,
-            mail.Category), cancellationToken);
+        await _mailer.SendAsync(mail, candidate.Email, cancellationToken: cancellationToken);
 
         await _notifications.CreateAsync(
             new NotificationCreateRequest(
@@ -1479,14 +1907,15 @@ public class ApplicationsController : ControllerBase
         var body = $"{vacancy.Company.Name}: nieuwe kandidaat voor {vacancy.Title}";
         var mail = TransactionalEmails.EmployerNewApplication(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title);
+            vacancy.Title,
+            branchName: vacancy.Company.Name,
+            applicationId: application.Id,
+            receivedAtUtc: application.CreatedAt,
+            matchPercent: null,
+            companyName: vacancy.Company.Name);
         foreach (var contact in contacts)
         {
-            await _email.SendAsync(new EmailMessage(
-                contact.Email,
-                mail.Subject,
-                mail.Html,
-                mail.Category), cancellationToken);
+            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
             await _push.SendAsync(new PushMessage(
                 contact.Email,
@@ -1527,14 +1956,11 @@ public class ApplicationsController : ControllerBase
         var body = "Een kandidaat heeft de sollicitatie ingetrokken.";
         var mail = TransactionalEmails.CandidateWithdrawn(
             (await _features.GetAsync(cancellationToken)).PublicWebBaseUrl,
-            vacancy.Title);
+            vacancy.Title,
+            companyName: vacancy.Company.Name);
         foreach (var contact in contacts)
         {
-            await _email.SendAsync(new EmailMessage(
-                contact.Email,
-                mail.Subject,
-                mail.Html,
-                mail.Category), cancellationToken);
+            await _mailer.SendAsync(mail, contact.Email, cancellationToken: cancellationToken);
 
             await _notifications.CreateAsync(
                 new NotificationCreateRequest(
@@ -1625,5 +2051,40 @@ public class ApplicationsController : ControllerBase
         return CanAccessApplicationCompany(application, accessible);
     }
 
-    private static string Html(string? value) => EmailLayout.Escape(value);
+    /// <summary>
+    /// First employer (non-support) view of an application. Candidates and support access never record.
+    /// </summary>
+    private async Task MaybeRecordEmployerViewedAsync(
+        Application application,
+        Guid? actorUserId,
+        DateTime nowUtc,
+        CancellationToken cancellationToken)
+    {
+        if (actorUserId is null)
+        {
+            return;
+        }
+
+        if (application.CandidateUserId is Guid candidateId && candidateId == actorUserId.Value)
+        {
+            return;
+        }
+
+        // Admin support access must never record a candidate-facing "Gezien" event.
+        if (await _supportAccess.FindActiveGrantIdAsync(
+                actorUserId.Value,
+                application.CandidateUserId,
+                null,
+                SupportAccessScope.Applications,
+                cancellationToken) is not null)
+        {
+            return;
+        }
+
+        await _statusRecorder.TryRecordEmployerViewedAsync(
+            application.Id,
+            actorUserId,
+            nowUtc,
+            cancellationToken);
+    }
 }

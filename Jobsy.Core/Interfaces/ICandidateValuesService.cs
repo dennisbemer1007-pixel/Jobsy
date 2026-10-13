@@ -23,4 +23,5 @@ public sealed record CandidateValuesStateDto(
     SchwartzValuesScores? Scores,
     IReadOnlyList<string> MatchTags,
     DateTime? CompletedAtUtc,
-    decimal DeepAnalysisPriceEuro);
+    decimal DeepAnalysisPriceEuro,
+    SchwartzValuesScores? PreviewScores = null);

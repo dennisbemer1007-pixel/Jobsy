@@ -13,11 +13,27 @@ public static class ApplicationRules
         => existingUserId == candidateUserId
            || string.Equals(existingEmail, candidateEmail, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Accept is only from the open (Pending) state.</summary>
     public static bool CanEmployerReact(ApplicationStatus status)
         => status == ApplicationStatus.Pending;
 
+    /// <summary>
+    /// Reject stays possible after Accept, until the candidate is hired or the application is closed.
+    /// </summary>
+    public static bool CanEmployerReject(ApplicationStatus status)
+        => status is ApplicationStatus.Pending
+            or ApplicationStatus.Accepted
+            or ApplicationStatus.EmployerContacting;
+
+    /// <summary>
+    /// A verified candidate may withdraw while the application is still open, accepted, or in contact.
+    /// Hired and closed applications stay as they are.
+    /// </summary>
     public static bool CanCandidateWithdraw(ApplicationStatus status, DateTime? emailVerifiedAt)
-        => emailVerifiedAt is not null && status == ApplicationStatus.Pending;
+        => emailVerifiedAt is not null
+           && status is ApplicationStatus.Pending
+               or ApplicationStatus.Accepted
+               or ApplicationStatus.EmployerContacting;
 
     public static bool IsOpenForEmployerPipeline(ApplicationStatus status)
         => status is ApplicationStatus.Pending
@@ -36,6 +52,12 @@ public static class ApplicationRules
     /// </summary>
     public static bool IsListedForCandidate(DateTime? emailVerifiedAt)
         => emailVerifiedAt is not null;
+
+    /// <summary>OTP lifetime for application e-mail verification (controller + mail copy).</summary>
+    public static TimeSpan EmailVerificationCodeLifetime { get; set; } = TimeSpan.FromMinutes(10);
+
+    public static int EmailVerificationCodeMinutes
+        => Math.Max(1, (int)Math.Round(EmailVerificationCodeLifetime.TotalMinutes));
 
     /// <summary>Employer sees candidate name / CV after Accept. Direct contact is separate.</summary>
     public static bool IsPiiRevealed(ApplicationStatus status)
@@ -92,6 +114,7 @@ public static class ApplicationRules
         application.SnapshotHomeLatitude = null;
         application.SnapshotHomeLongitude = null;
         application.SnapshotCertificatesJson = null;
+        application.SnapshotDiplomaEvaluationsJson = null;
         application.SnapshotShowAddressOnCv = false;
         application.SnapshotDateOfBirth = null;
         application.Motivation = null;
@@ -112,4 +135,8 @@ public static class ApplicationRules
         application.EmailVerificationExpiresAt = null;
         application.EmailVerificationFailedAttempts = 0;
     }
+
+    /// <summary>In-app confirmation body. The subject keeps the vacancy title; the body does not.</summary>
+    public static string ConfirmationNoticeBody(string companyName)
+        => $"{companyName}: je sollicitatie is ontvangen.";
 }

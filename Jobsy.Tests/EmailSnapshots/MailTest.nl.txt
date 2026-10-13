@@ -1,0 +1,29 @@
+KEY: MailTest
+SUBJECT: Testmail van Lobsy
+PREHEADER: Als je dit leest, werkt het versturen van mail.
+KIND: Essential
+--- TEXT ---
+Dit is een testmail
+===================
+
+Als je dit leest, werkt het versturen van mail vanaf acceptatie (Resend:
+Resend of SMTP). Verstuurd op 2 oktober 2026, 16:18.
+
+Naar e-mails: https://lobsy.nl/admin/content/emails
+
+Team Lobsy
+
+Je krijgt deze mail omdat je beheerder bent van Lobsy.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Dit is een testmail
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar e-mails -> https://lobsy.nl/admin/content/emails
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

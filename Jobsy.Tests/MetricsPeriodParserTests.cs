@@ -13,6 +13,7 @@ public class MetricsPeriodParserTests
     [InlineData("month", MetricsPeriod.Month)]
     [InlineData("quarter", MetricsPeriod.Quarter)]
     [InlineData("year", MetricsPeriod.Year)]
+    [InlineData("all", MetricsPeriod.All)]
     [InlineData(" unknown ", MetricsPeriod.Day)]
     public void Parse_maps_expected_period(string? input, MetricsPeriod expected)
         => Assert.Equal(expected, MetricsPeriodParser.Parse(input));
@@ -32,5 +33,14 @@ public class MetricsPeriodParserTests
         var now = new DateTime(2026, 7, 24, 12, 0, 0, DateTimeKind.Utc);
         var (from, _) = MetricsPeriodParser.ResolveRange(MetricsPeriod.Week, now);
         Assert.Equal(now.Date.AddDays(-7), from);
+    }
+
+    [Fact]
+    public void ResolveRange_all_starts_at_min_value()
+    {
+        var now = new DateTime(2026, 7, 24, 12, 0, 0, DateTimeKind.Utc);
+        var (from, to) = MetricsPeriodParser.ResolveRange(MetricsPeriod.All, now);
+        Assert.Equal(DateTime.MinValue, from);
+        Assert.Equal(now, to);
     }
 }

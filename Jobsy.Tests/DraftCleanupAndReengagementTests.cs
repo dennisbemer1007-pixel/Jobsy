@@ -23,7 +23,11 @@ public class DraftCleanupAndReengagementTests
             Address = "A",
             Location = new GeoPoint(52, 4),
             CsvBatchImportEnabled = true,
-            ReengagementEmailSentAtUtc = DateTime.UtcNow.AddDays(-10)
+            ReengagementEmailSentAtUtc = DateTime.UtcNow.AddDays(-10),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.ApiKeys.Add(new ApiKey
         {
@@ -107,7 +111,11 @@ public class DraftCleanupAndReengagementTests
             Name = "Co",
             KvkNumber = "1",
             Address = "A",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var oldDraft = new Vacancy

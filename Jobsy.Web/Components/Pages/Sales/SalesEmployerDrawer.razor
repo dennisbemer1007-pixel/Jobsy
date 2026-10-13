@@ -1,0 +1,203 @@
+@namespace Jobsy.Web.Components.Pages.Sales
+@using Jobsy.Core.Contracts.Sales
+@using Jobsy.Core.Sales
+@using Jobsy.Web.Components.Ui.Enterprise
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<EntDrawer Open="Open"
+           OpenChanged="OpenChanged"
+           Title="@(_detail?.Row.DisplayName ?? "")"
+           FullSheet="false">
+    <ChildContent>
+        @if (_loading)
+        {
+            <p>@Culture["EntUi.Loading"]</p>
+        }
+        else if (_detail is not null)
+        {
+            <p class="muted">@SubLine(_detail.Row)</p>
+
+            <div class="sp-drawer-kpis">
+                <div>
+                    <span>@Culture["Sales.Employers.Drawer.Total"]</span>
+                    <strong>@SalesMoney.FormatPlain(_detail.CommissionTotal)</strong>
+                </div>
+                <div>
+                    <span>@Culture["Sales.Employers.Drawer.Purchases"]</span>
+                    <strong>@_detail.PurchaseCount</strong>
+                </div>
+                <div>
+                    <span>@Culture["Sales.Employers.Drawer.Now"]</span>
+                    <strong>
+                        @if (_detail.Row.CommissionYear is int y)
+                        {
+                            @Culture.Format("Sales.Employers.Drawer.NowYear", y, Pct(_detail.Row.CurrentRate))
+                        }
+                        else
+                        {
+                            @Culture["Sales.Employers.Drawer.NowEnded"]
+                        }
+                    </strong>
+                </div>
+            </div>
+
+            @if (_detail.Years.Count > 0)
+            {
+                <h3>@Culture["Sales.Employers.Drawer.Years"]</h3>
+                <div class="sp-year-segs" aria-hidden="true">
+                    @foreach (var seg in _detail.Years)
+                    {
+                        <div class="sp-year-segs__item @(seg.IsCurrent ? "is-current" : null)">
+                            <span class="sp-year-segs__bar" data-p="@((int)(seg.Progress * 100))"></span>
+                            <span>@Culture.Format("Sales.Employers.Drawer.YearSeg", seg.Year, Pct(seg.Rate), seg.End.ToString("dd-MM-yyyy"))</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <h3>@Culture["Sales.Employers.Drawer.Timeline"]</h3>
+            <ol class="sp-timeline">
+                @foreach (var item in _detail.Timeline)
+                {
+                    <li class="@(item.IsFuture ? "is-future" : null)">
+                        <span class="sp-timeline__icon" aria-hidden="true">@(item.IsFuture ? "◷" : "✓")</span>
+                        <div>
+                            <strong>@TimelineLabel(item)</strong>
+                            @if (item.On is DateOnly on)
+                            {
+                                <span>@on.ToString("dd-MM-yyyy")</span>
+                            }
+                        </div>
+                    </li>
+                }
+            </ol>
+
+            <h3>@Culture["Sales.Employers.Drawer.Lines"]</h3>
+            <table class="ent-data-table data-table sp-lines">
+                <thead>
+                    <tr>
+                        <th scope="col">@Culture["Sales.Employers.Drawer.Purchase"]</th>
+                        <th scope="col" class="is-num">@Culture["Sales.Employers.Drawer.YouGet"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var line in VisibleLines)
+                    {
+                        <tr>
+                            <td>
+                                <strong>@PackageLabel(line.PackageLabel)</strong>
+                                <div class="muted">@Culture.Format("Sales.Employers.LineSub", line.On.ToString("dd-MM-yyyy"), SalesMoney.FormatPlain(line.PurchaseAmountExVat))</div>
+                            </td>
+                            <td class="is-num">
+                                <strong>@SalesMoney.FormatPlain(line.OwnCommissionExVat)</strong>
+                                <div><span class="sp-status">@Culture[line.StateLabel]</span></div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (!_showAll && _detail.Lines.Count > 10)
+            {
+                <button type="button" class="btn-compact" @onclick="() => _showAll = true">@Culture["Sales.Employers.Drawer.ShowAll"]</button>
+            }
+
+            <p class="sp-privacy-note">@Culture["Sales.Employers.Drawer.Privacy"]</p>
+        }
+    </ChildContent>
+    <Footer>
+        @if (_detail is not null)
+        {
+            <a class="btn-compact" href="@HelpMailto(_detail.Row.DisplayName)">@Culture["Sales.Employers.Drawer.Help"]</a>
+        }
+    </Footer>
+</EntDrawer>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public Guid? CompanyId { get; set; }
+
+    private SalesEmployerDetailDto? _detail;
+    private bool _loading;
+    private bool _showAll;
+    private Guid? _loadedId;
+
+    private IEnumerable<SalesEmployerCommissionLineDto> VisibleLines
+        => _detail is null ? [] : (_showAll ? _detail.Lines : _detail.Lines.Take(10));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Open || CompanyId is null)
+        {
+            return;
+        }
+
+        if (_loadedId == CompanyId && _detail is not null)
+        {
+            return;
+        }
+
+        _loading = true;
+        _showAll = false;
+        try
+        {
+            _detail = await Api.GetSalesPartnerEmployerAsync(CompanyId.Value);
+            _loadedId = CompanyId;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string SubLine(SalesEmployerDto row)
+    {
+        var source = string.IsNullOrEmpty(row.Source) ? Culture["Sales.Label.Attribution.Legacy"] : Culture[row.Source];
+        if (string.IsNullOrEmpty(row.Place))
+        {
+            return Culture.Format("Sales.Employers.Drawer.SubNoPlace", source, row.AttributedOn.ToString("dd-MM-yyyy"));
+        }
+
+        return Culture.Format("Sales.Employers.Drawer.Sub", row.Place, source, row.AttributedOn.ToString("dd-MM-yyyy"));
+    }
+
+    private string TimelineLabel(SalesEmployerTimelineItemDto item)
+    {
+        if (item.Key == "attributed")
+        {
+            var source = string.IsNullOrEmpty(item.Label) ? Culture["Sales.Label.Attribution.Legacy"] : Culture[item.Label];
+            return Culture.Format("Sales.Timeline.Attributed", source);
+        }
+
+        if (item.Label.StartsWith("Sales.", StringComparison.Ordinal))
+        {
+            return Culture[item.Label];
+        }
+
+        return item.Label;
+    }
+
+    private string PackageLabel(string label)
+    {
+        if (label.StartsWith("Sales.", StringComparison.Ordinal))
+        {
+            return Culture[label];
+        }
+
+        if (label.EndsWith(" tokens", StringComparison.Ordinal) && int.TryParse(label.Split(' ')[0], out var n))
+        {
+            return Culture.Format("Sales.TokensPack", n);
+        }
+
+        return label;
+    }
+
+    private static int Pct(decimal? rate) => (int)Math.Round((rate ?? 0m) * 100m);
+
+    private string HelpMailto(string name)
+    {
+        var subject = Uri.EscapeDataString(Culture.Format("Sales.Employers.Drawer.HelpSubject", name));
+        return $"mailto:support@lobsy.nl?subject={subject}";
+    }
+}

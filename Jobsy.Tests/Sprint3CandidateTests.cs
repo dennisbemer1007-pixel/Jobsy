@@ -62,7 +62,11 @@ public class Sprint3CandidateTests
             Name = "Demo BV",
             Address = "Straat 1",
             KvkNumber = "123",
-            Location = new GeoPoint(52.0, 4.3)
+            Location = new GeoPoint(52.0, 4.3),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.AddRange(
             new User { Id = candidateId, Email = "a@test.nl", FullName = "A", Role = UserRole.Candidate, IsActive = true },
@@ -210,17 +214,20 @@ public class Sprint3CandidateTests
     }
 
     [Fact]
-    public void Resend_resolve_requires_api_key_and_from()
+    public void Resend_resolve_requires_api_key_and_defaults_from()
     {
         Assert.False(SmtpEmailService.TryResolveResend(null, out _));
-        Assert.False(SmtpEmailService.TryResolveResend(
+        // 03: API key alone is enough; From falls through to MailOptions default.
+        Assert.True(SmtpEmailService.TryResolveResend(
             new IntegrationCredentialSecrets("re_test", null, null, null, null, null, null),
-            out _));
+            out var defaulted));
+        Assert.Contains("hallo@mail.lobsy.nl", defaulted.FromAddress, StringComparison.OrdinalIgnoreCase);
         Assert.True(SmtpEmailService.TryResolveResend(
             new IntegrationCredentialSecrets("re_test", null, null, null, null, null, "onboarding@resend.dev"),
             out var settings));
         Assert.Equal("re_test", settings.ApiKey);
-        Assert.Equal("onboarding@resend.dev", settings.FromAddress);
+        Assert.Contains("onboarding@resend.dev", settings.FromAddress, StringComparison.OrdinalIgnoreCase);
+        Assert.StartsWith("Lobsy", settings.FromAddress, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -290,7 +297,10 @@ public class Sprint3CandidateTests
 
         Assert.True(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Pending, DateTime.UtcNow));
         Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Pending, null));
-        Assert.False(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Accepted, DateTime.UtcNow));
+        Assert.True(ApplicationRules.CanCandidateWithdraw(ApplicationStatus.Accepted, DateTime.UtcNow));
+        Assert.True(ApplicationRules.CanEmployerReject(ApplicationStatus.Accepted));
+        Assert.True(ApplicationRules.CanEmployerReject(ApplicationStatus.EmployerContacting));
+        Assert.False(ApplicationRules.CanEmployerReject(ApplicationStatus.Hired));
     }
 
     [Fact]

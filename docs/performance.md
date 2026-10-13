@@ -15,6 +15,8 @@ Na die eerste ronde was het gewicht weg (36 requests / ~334&nbsp;KB) en LCP ~2.4
 
 ## Homepage-kaart (aug 2026)
 
+> **Landing 05:** `/` is de landing (static SSR, geen MapLibre/`blazor.web.js`). De banenkaart staat op `/banenkaart`. Alles hieronder over “Homepage-kaart” geldt voor `/banenkaart`.
+
 De banenkaart blijft de first-paint kernervaring (geen Funda-klik-om-te-tonen). PageSpeed-PRs #159–#165 (vaste 300px-box, MapLibre pas na `window.load` of klik, minified CSS/JS, cards-first) zijn teruggedraaid omdat de desktopkaart leeg bleef.
 
 - Home prerendert alleen de kaart-chrome (landkleur, geen nep-pins en geen NL-overzicht). `#job-map` heeft een vaste `min-height` (55dvh / 70vh) zodat CLS niet optreedt. De initiële camera komt uit de vacature-index (centroid + zoom van actieve pins) in `#jobsy-map-boot`; markers mogen later verschijnen zonder `fitBounds`.
@@ -65,3 +67,15 @@ Herhaal PSI/Lighthouse op `https://lobsy.nl` na merge naar `main` en vul de tabe
 - Eigen image-CDN of upload-pipeline (Cloudflare Resizing is de schakelaar als die add-on aanstaat).
 - Critical-CSS extractie van `app.css` (271&nbsp;KB) — te bros voor Blazor; compressie + preload is de praktische winst.
 - Blazor WASM / lazy `.razor` assemblies — dit is Interactive Server.
+
+## Map JS minify (code-health 01)
+
+Rebuild MapLibre wrappers after editing the sources:
+
+```bash
+npx --yes terser@5 Jobsy.Web/wwwroot/js/jobsyMapLibre.js --compress --mangle -o Jobsy.Web/wwwroot/js/jobsyMapLibre.min.js
+npx --yes terser@5 Jobsy.Web/wwwroot/js/jobMap.js --compress --mangle -o Jobsy.Web/wwwroot/js/jobMap.min.js
+npx --yes terser@5 Jobsy.Web/wwwroot/js/vacancyDetailMap.js --compress --mangle -o Jobsy.Web/wwwroot/js/vacancyDetailMap.min.js
+```
+
+Bump the matching `?v=` strings in `Jobsy.Web/wwwroot/js/app-core.js` (and App.razor for CSS).

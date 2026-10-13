@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
@@ -9,6 +10,8 @@ namespace Jobsy.Infrastructure.Services;
 
 public sealed class MolliePaymentStub : IPaymentService
 {
+    private static readonly ConcurrentDictionary<string, (decimal Refunded, decimal ChargedBack)> ReversalHooks = new();
+
     private readonly JobsyDbContext _db;
     private readonly IPlatformFeatureService _features;
     private readonly ILogger<MolliePaymentStub> _logger;
@@ -23,16 +26,22 @@ public sealed class MolliePaymentStub : IPaymentService
         _logger = logger;
     }
 
+    /// <summary>Test hook: set cumulative refunded / charged-back amounts for a stub payment id.</summary>
+    public static void SetReversalAmounts(string paymentId, decimal amountRefundedEuro, decimal amountChargedBackEuro)
+        => ReversalHooks[paymentId] = (amountRefundedEuro, amountChargedBackEuro);
+
+    public static void ClearReversalAmounts(string paymentId)
+        => ReversalHooks.TryRemove(paymentId, out _);
+
+    public static void ClearAllReversalAmounts() => ReversalHooks.Clear();
+
     public async Task<PaymentCheckoutResult> CreateTokenPurchaseCheckoutAsync(
         Guid companyId,
         int packSize,
         string? paymentMethod = null,
         CancellationToken cancellationToken = default)
     {
-        if (packSize <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(packSize));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(packSize);
 
         var company = await _db.Companies.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == companyId, cancellationToken)
@@ -115,9 +124,14 @@ public sealed class MolliePaymentStub : IPaymentService
         // CompleteCheckout (Development) may mark Pending → Paid before calling this.
         var paid = session.Status is TokenPurchaseCheckoutStatus.Paid
             or TokenPurchaseCheckoutStatus.Credited;
+        ReversalHooks.TryGetValue(paymentId, out var reversal);
         return new PaymentStatusResult(
             paymentId,
             session.Status.ToString().ToLowerInvariant(),
-            IsPaid: paid);
+            IsPaid: paid,
+            Method: session.PaymentMethod,
+            AmountEuro: session.AmountEuro,
+            AmountRefundedEuro: reversal.Refunded,
+            AmountChargedBackEuro: reversal.ChargedBack);
     }
 }

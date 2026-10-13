@@ -19,6 +19,12 @@ public interface ITokenFinanceQueryService
         int? quarter = null,
         CancellationToken cancellationToken = default);
 
+    Task<string> ExportPurchasesCsvAsync(
+        int? year,
+        int? quarter,
+        int? month,
+        CancellationToken cancellationToken = default);
+
     Task<string> ExportGoodwillCsvAsync(
         int? year = null,
         int? quarter = null,
@@ -38,7 +44,9 @@ public sealed record TokenPurchaseFinanceRow(
     int TotalAmountCents,
     DateTime IssuedAt,
     string InvoicePdfPath,
-    string? VatDeclarationStatusLabel = null);
+    string? VatDeclarationStatusLabel = null,
+    string MollieStatus = "Paid",
+    string? PaymentMethod = null);
 
 public sealed record TokenGoodwillFinanceRow(
     Guid TransactionId,

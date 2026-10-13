@@ -9,7 +9,7 @@ public class CookieConsentAnalyticsTests
     public void Cookie_consent_helper_exposes_analytics_gate()
     {
         var root = FindRepoRoot();
-        var consentJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "cookieConsent.js"));
+        var consentJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("Jobsy.CookieConsent", consentJs);
         Assert.Contains("allowsAnalytics", consentJs);
         Assert.Contains("analytics", consentJs);
@@ -19,7 +19,7 @@ public class CookieConsentAnalyticsTests
     public void Geo_anonymous_key_requires_analytics_consent()
     {
         var root = FindRepoRoot();
-        var geoJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "geo.js"));
+        var geoJs = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "wwwroot", "js", "app-core.js"));
         Assert.Contains("analyticsAllowed", geoJs);
         Assert.Contains("getOrCreateAnonymousKey", geoJs);
         Assert.Contains("jobsyCookieConsent", geoJs);
@@ -29,7 +29,8 @@ public class CookieConsentAnalyticsTests
     public void Api_client_gates_engagement_recording_on_consent()
     {
         var root = FindRepoRoot();
-        var client = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Services", "JobsyApiClient.cs"));
+        var clientDir = Path.Combine(root, "Jobsy.Web", "Services", "ApiClient");
+        var client = string.Concat(Directory.EnumerateFiles(clientDir, "JobsyApiClient*.cs").Select(File.ReadAllText));
         Assert.Contains("AllowsAnalyticsAsync", client);
 
         var impressionsIdx = client.IndexOf("public async Task RecordImpressionsAsync", StringComparison.Ordinal);

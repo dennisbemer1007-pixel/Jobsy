@@ -4,8 +4,11 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
@@ -17,15 +20,21 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private readonly JobsyDbContext _db;
     private readonly JobsyFeatureOptions _options;
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache? _cache;
+    private readonly IHostEnvironment? _environment;
 
     public PlatformFeatureService(
         JobsyDbContext db,
         IOptions<JobsyFeatureOptions> options,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IMemoryCache? cache = null,
+        IHostEnvironment? environment = null)
     {
         _db = db;
         _options = options.Value;
         _configuration = configuration;
+        _cache = cache;
+        _environment = environment;
     }
 
     public async Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
@@ -45,18 +54,185 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row = new PlatformFeatureSettings { Id = SingletonId };
             _db.PlatformFeatureSettings.Add(row);
+            ApplyDefaultsForInsert(row);
         }
 
-        row.VacancyContentModerationEnabled = update.VacancyContentModerationEnabled;
-        row.AuthenticatorEnabled = update.AuthenticatorEnabled;
-        row.ExposeRegistrationActivationLinks = update.ExposeRegistrationActivationLinks;
-        row.InactiveCompanyDays = Math.Clamp(update.InactiveCompanyDays, 30, 730);
-        row.SessionInactivityTimeoutMinutes =
-            SessionSecurityRules.ClampTimeoutMinutes(update.SessionInactivityTimeoutMinutes);
+        if (update.VacancyContentModerationEnabled is bool moderation)
+        {
+            row.VacancyContentModerationEnabled = moderation;
+        }
+
+        if (update.AuthenticatorEnabled is bool authenticator)
+        {
+            row.AuthenticatorEnabled = authenticator;
+        }
+
+        if (update.InactiveCompanyDays is int inactiveDays)
+        {
+            row.InactiveCompanyDays = Math.Clamp(inactiveDays, 30, 730);
+        }
+
+        if (update.SessionInactivityTimeoutMinutes is int timeout)
+        {
+            row.SessionInactivityTimeoutMinutes = SessionSecurityRules.ClampTimeoutMinutes(timeout);
+        }
+
         if (update.MinimumSessionVersion is int minSession)
         {
             row.MinimumSessionVersion = Math.Max(0, minSession);
         }
+
+        if (update.SupportAccessNotifyAdmins is bool notifyAdmins)
+        {
+            row.SupportAccessNotifyAdmins = notifyAdmins;
+        }
+
+        if (update.SupportAccessNotifySubject is bool notifySubject)
+        {
+            row.SupportAccessNotifySubject = notifySubject;
+        }
+
+        if (update.CandidateInsightsEnabled is bool insightsEnabled)
+        {
+            row.CandidateInsightsEnabled = insightsEnabled;
+        }
+
+        if (update.CandidateInsightsUnlockDays is int unlockDays)
+        {
+            row.CandidateInsightsUnlockDays = CandidateInsightsAccess.ClampUnlockDays(unlockDays);
+        }
+        else if (isNew)
+        {
+            row.CandidateInsightsUnlockDays = CandidateInsightsAccess.DefaultUnlockDays;
+        }
+
+        if (update.CandidateInsightsUnlockPerBranch is bool perBranch)
+        {
+            row.CandidateInsightsUnlockPerBranch = perBranch;
+        }
+
+        if (update.SchoolsEnabled is bool schoolsEnabled)
+        {
+            row.SchoolsEnabled = schoolsEnabled;
+        }
+
+        if (update.SchoolPerCodeResultsEnabled is bool perCode)
+        {
+            row.SchoolPerCodeResultsEnabled = perCode;
+        }
+
+        if (update.SchoolRetentionCutoffMonth is int || update.SchoolRetentionCutoffDay is int)
+        {
+            var month = update.SchoolRetentionCutoffMonth ?? row.SchoolRetentionCutoffMonth;
+            var day = update.SchoolRetentionCutoffDay ?? row.SchoolRetentionCutoffDay;
+            Jobsy.Core.Scholen.SchoolYear.ValidateCutoff(month, day);
+            row.SchoolRetentionCutoffMonth = month;
+            row.SchoolRetentionCutoffDay = day;
+        }
+
+        if (update.AmbassadorsEnabled is bool ambassadorsEnabled)
+        {
+            row.AmbassadorsEnabled = ambassadorsEnabled;
+        }
+        if (update.EmployersEnabled is bool employersEnabled)
+        {
+            row.EmployersEnabled = employersEnabled;
+        }
+
+        if (update.CandidatePassportEnabled is bool passportEnabled)
+        {
+            row.CandidatePassportEnabled = passportEnabled;
+        }
+
+        if (update.PassportPartnersEnabled is bool partnersEnabled)
+        {
+            row.PassportPartnersEnabled = partnersEnabled;
+        }
+
+        if (update.PassportPdfV2Enabled is bool pdfV2Enabled)
+        {
+            row.PassportPdfV2Enabled = pdfV2Enabled;
+        }
+
+        if (update.PhoneVerificationEnabled is bool phoneVerificationEnabled)
+        {
+            row.PhoneVerificationEnabled = phoneVerificationEnabled;
+        }
+
+        if (update.WhatsAppRemindersEnabled is bool whatsAppRemindersEnabled)
+        {
+            row.WhatsAppRemindersEnabled = whatsAppRemindersEnabled;
+        }
+
+        if (update.CompactTestPdfEnabled is bool compactTestPdfEnabled)
+        {
+            row.CompactTestPdfEnabled = compactTestPdfEnabled;
+        }
+
+        if (update.HonestAdviceEnabled is bool honestAdviceEnabled)
+        {
+            row.HonestAdviceEnabled = honestAdviceEnabled;
+        }
+
+        if (update.FutureJobsForYouEnabled is bool futureJobsForYouEnabled)
+        {
+            row.FutureJobsForYouEnabled = futureJobsForYouEnabled;
+        }
+
+        if (update.EmployerPhase2Enabled is bool employerPhase2Enabled)
+        {
+            row.EmployerPhase2Enabled = employerPhase2Enabled;
+        }
+
+        if (update.CandidateExternalVacanciesEnabled is bool externalVacanciesEnabled)
+        {
+            row.CandidateExternalVacanciesEnabled = externalVacanciesEnabled;
+        }
+
+        if (update.ProactiveMatchingEnabled is bool proactiveMatchingEnabled)
+        {
+            row.ProactiveMatchingEnabled = proactiveMatchingEnabled;
+        }
+
+        if (update.CandidateApplyPerMinuteLimit is int perMinute)
+        {
+            row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
+        }
+
+        if (update.CandidateApplyPerHourLimit is int perHour)
+        {
+            row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.ClampPerHour(perHour);
+        }
+
+        if (update.CandidateApplyPerDayLimit is int perDay)
+        {
+            row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.ClampPerDay(perDay);
+        }
+
+        if (update.FreeCandidateTestsEnabled is bool freeCandidateTestsEnabled)
+        {
+            row.FreeCandidateTestsEnabled = freeCandidateTestsEnabled;
+        }
+
+        if (update.MaintenanceEnabled is bool maintenanceEnabled)
+        {
+            row.MaintenanceEnabled = maintenanceEnabled;
+        }
+
+        if (update.ClearMaintenanceExpectedEndUtc)
+        {
+            row.MaintenanceExpectedEndUtc = null;
+        }
+        else if (update.MaintenanceExpectedEndUtc is DateTime expectedEnd)
+        {
+            row.MaintenanceExpectedEndUtc = DateTime.SpecifyKind(expectedEnd, DateTimeKind.Utc);
+        }
+
+        if (update.MaintenanceNote is not null)
+        {
+            row.MaintenanceNote = MaintenanceRules.NormalizeNote(update.MaintenanceNote);
+        }
+
         // Explicit clear → null. Explicit date → set. Otherwise preserve (or launch default on insert)
         // so session-timeout-only PUTs do not silently disable the free-publish promo.
         if (update.ClearFreePublishUntil)
@@ -71,6 +247,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         {
             row.FreePublishUntil = FreePublishRules.DefaultUntil;
         }
+
+        // Null PublicWebBaseUrl = keep. Non-empty = set after validation.
         if (!string.IsNullOrWhiteSpace(update.PublicWebBaseUrl))
         {
             var normalized = JobsyPublicUrl.NormalizeOrigin(update.PublicWebBaseUrl);
@@ -82,13 +260,51 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
 
             row.PublicWebBaseUrl = normalized.TrimEnd('/');
         }
-        else
-        {
-            row.PublicWebBaseUrl = null;
-        }
+
         row.UpdatedAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        _cache?.Remove(FeatureFlags.CacheKey);
+        _cache?.Remove(MaintenanceRules.CacheKey);
+        _cache?.Remove(CandidateApplyRateLimitProvider.CacheKey);
         return ToSnapshot(row);
+    }
+
+    /// <summary>
+    /// No settings row means employers OFF (decision 20). Development test hosts may set
+    /// <c>Jobsy:TestEmployersEnabled</c> so existing suites keep the previous no-row behaviour.
+    /// A stored row always wins, including an explicit false.
+    /// </summary>
+    private bool ResolveEmployersEnabled(bool? stored)
+    {
+        if (stored is bool value)
+        {
+            return value;
+        }
+
+        var env = _environment?.EnvironmentName
+            ?? _configuration["ASPNETCORE_ENVIRONMENT"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        if (string.Equals(env, "Development", StringComparison.OrdinalIgnoreCase)
+            && bool.TryParse(_configuration["Jobsy:TestEmployersEnabled"], out var testOverride))
+        {
+            return testOverride;
+        }
+
+        return false;
+    }
+
+    private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
+    {
+        row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
+        row.AuthenticatorEnabled = _options.AuthenticatorEnabled;
+        row.InactiveCompanyDays = 120;
+        row.SessionInactivityTimeoutMinutes = SessionSecurityRules.DefaultInactivityTimeoutMinutes;
+        row.SupportAccessNotifyAdmins = false;
+        row.SupportAccessNotifySubject = false;
+        row.FreeCandidateTestsEnabled = true;
+        row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute;
+        row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour;
+        row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay;
     }
 
     private bool IsAllowedPublicOrigin(string origin)
@@ -148,7 +364,6 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         return new PlatformFeatureSnapshot(
             row?.VacancyContentModerationEnabled ?? _options.VacancyContentModerationEnabled,
             row?.AuthenticatorEnabled ?? _options.AuthenticatorEnabled,
-            row?.ExposeRegistrationActivationLinks ?? _options.ExposeRegistrationActivationLinks,
             string.IsNullOrWhiteSpace(row?.PublicWebBaseUrl)
                 ? configBase
                 : JobsyPublicUrl.NormalizeOrigin(row.PublicWebBaseUrl),
@@ -158,6 +373,43 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
                 row?.SessionInactivityTimeoutMinutes
                 ?? SessionSecurityRules.DefaultInactivityTimeoutMinutes),
             freeUntil,
-            row?.MinimumSessionVersion ?? 0);
+            row?.MinimumSessionVersion ?? 0,
+            row?.SupportAccessNotifyAdmins ?? false,
+            row?.SupportAccessNotifySubject ?? false,
+            row?.CandidateInsightsEnabled ?? true,
+            row is null
+                ? CandidateInsightsAccess.DefaultUnlockDays
+                : CandidateInsightsAccess.ClampUnlockDays(row.CandidateInsightsUnlockDays),
+            row?.CandidateInsightsUnlockPerBranch ?? false,
+            row?.SchoolsEnabled ?? false,
+            row?.SchoolPerCodeResultsEnabled ?? true,
+            row?.SchoolRetentionCutoffMonth is >= 1 and <= 12
+                ? row.SchoolRetentionCutoffMonth
+                : 7,
+            row?.SchoolRetentionCutoffDay is >= 1 and <= 31
+                ? row.SchoolRetentionCutoffDay
+                : 31,
+            row?.AmbassadorsEnabled ?? false,
+            ResolveEmployersEnabled(row?.EmployersEnabled),
+            row?.CandidatePassportEnabled ?? true,
+            row?.MaintenanceEnabled ?? false,
+            row?.MaintenanceExpectedEndUtc is DateTime end
+                ? DateTime.SpecifyKind(end, DateTimeKind.Utc)
+                : null,
+            row?.MaintenanceNote,
+            row?.PassportPartnersEnabled ?? false,
+            row?.PassportPdfV2Enabled ?? false,
+            row?.PhoneVerificationEnabled ?? false,
+            row?.WhatsAppRemindersEnabled ?? false,
+            row?.CompactTestPdfEnabled ?? false,
+            row?.FreeCandidateTestsEnabled ?? true,
+            row?.HonestAdviceEnabled ?? false,
+            row?.FutureJobsForYouEnabled ?? false,
+            row?.EmployerPhase2Enabled ?? false,
+            row?.CandidateExternalVacanciesEnabled ?? false,
+            row?.ProactiveMatchingEnabled ?? false,
+            CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
+            CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
+            CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));
     }
 }

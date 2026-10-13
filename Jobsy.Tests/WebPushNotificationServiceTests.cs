@@ -31,7 +31,11 @@ public class WebPushNotificationServiceTests
             new TestOptionsMonitor(new Jobsy.Core.Options.WebPushOptions()),
             new FakeHostEnvironment { EnvironmentName = Environments.Development },
             NullLogger<WebPushVapidKeyProvider>.Instance);
-        var sut = new WebPushNotificationService(db, vapid, NullLogger<WebPushNotificationService>.Instance);
+        var sut = new WebPushNotificationService(
+            db,
+            vapid,
+            new AlwaysOnFeatureFlags(),
+            NullLogger<WebPushNotificationService>.Instance);
 
         await sut.SendAsync(new PushMessage(user.Email, "Nieuwe match", "Er staat een rol voor je klaar.", "/candidate/match", "Match"));
 

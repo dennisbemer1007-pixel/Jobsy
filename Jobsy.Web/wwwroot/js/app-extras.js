@@ -364,6 +364,14 @@
 
 /* === download.js === */
 window.jobsyDownload = {
+  url: function (href) {
+    const a = document.createElement("a");
+    a.href = href;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  },
   text: function (filename, content, mimeType) {
     const blob = new Blob([content], { type: mimeType || "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);

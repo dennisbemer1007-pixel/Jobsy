@@ -1,9 +1,8 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Jobsy.Core.Authorization
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
-@implements IDisposable
 
 @if (_open)
 {
@@ -59,7 +58,7 @@
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         AuthState.AuthenticationStateChanged += OnAuthChanged;
     }
 
@@ -87,9 +86,6 @@
             StateHasChanged();
         });
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
 
     private async Task RefreshAsync()
     {
@@ -147,9 +143,9 @@
         }
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         AuthState.AuthenticationStateChanged -= OnAuthChanged;
+        base.Dispose();
     }
 }

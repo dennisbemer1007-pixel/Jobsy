@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -17,22 +18,27 @@ public sealed class WhoAmIService : IWhoAmIService
 
     private readonly JobsyDbContext _db;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly IFeatureFlags? _flags;
 
-    public WhoAmIService(JobsyDbContext db, ICandidateInsightsQueue queue)
+    public WhoAmIService(JobsyDbContext db, ICandidateInsightsQueue queue, IFeatureFlags? flags = null)
     {
         _db = db;
         _queue = queue;
+        _flags = flags;
     }
 
     public Task<WhoAmIStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
-        => LoadAsync(userId, cancellationToken);
+        => LoadAsync(userId, null, cancellationToken);
+
+    public Task<WhoAmIStateDto> GetAsync(Guid userId, string? language, CancellationToken cancellationToken = default)
+        => LoadAsync(userId, language, cancellationToken);
 
     public async Task<WhoAmIStateDto> SetIncludeOnCvAsync(
         Guid userId,
         bool includeOnCv,
         CancellationToken cancellationToken = default)
     {
-        var state = await LoadAsync(userId, cancellationToken);
+        var state = await LoadAsync(userId, null, cancellationToken);
         if (!state.IsUnlocked)
         {
             throw new InvalidOperationException("Rond eerst alle vier stappen af voordat je het persoonsprofiel aan je Lobsy-CV kunt toevoegen.");
@@ -55,7 +61,7 @@ public sealed class WhoAmIService : IWhoAmIService
     public async Task<LobsyCvWhoAmI?> GetCvAttachmentAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         // Stored story only — never generate inside CV/PDF requests.
-        var state = await LoadAsync(userId, cancellationToken);
+        var state = await LoadAsync(userId, null, cancellationToken);
         if (!state.IsUnlocked || !state.IncludeOnCv || string.IsNullOrWhiteSpace(state.Story)
             || state.CompetencyScores is not { IsComplete: true } competency
             || state.CultureScores is not { IsComplete: true } culture)
@@ -66,7 +72,10 @@ public sealed class WhoAmIService : IWhoAmIService
         return ToAttachment(state.Story, state.Keywords, competency, culture);
     }
 
-    private async Task<WhoAmIStateDto> LoadAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<WhoAmIStateDto> LoadAsync(
+        Guid userId,
+        string? language,
+        CancellationToken cancellationToken)
     {
         var user = await _db.Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -190,23 +199,62 @@ public sealed class WhoAmIService : IWhoAmIService
             }
         }
 
-        if (unlocked && competency is { IsComplete: true } cScores
+        var employersEnabled = _flags is not null
+            && await _flags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        if (competency is { IsComplete: true } cScores
             && career is { IsComplete: true } rScores
             && culture is { IsComplete: true } cultureScores)
         {
-            var fingerprint = WhoAmICompleteness.Fingerprint(cScores, rScores, cultureScores, profileHighlights, values);
-            var fingerprintMatch = stored is not null
-                                   && string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal)
-                                   && story is not null;
-            var retryFallback = stored is not null
-                                && CandidateInsightsFingerprint.ShouldRetryFallback(
-                                    stored.FromOpenAi,
-                                    stored.StoryGeneratedAtUtc,
-                                    DateTime.UtcNow);
-            if (!fingerprintMatch || retryFallback || story is null)
+            var (competenceTraits, competenceDeep) = await WhoAmICompetenceLoader.LoadAsync(_db, userId, cancellationToken);
+            var competenceSource = WhoAmICompetenceSource.FingerprintSuffix(competenceTraits, competenceDeep);
+            var competence = competenceDeep ? competenceTraits : null;
+            var fingerprint = WhoAmICompleteness.Fingerprint(
+                cScores, rScores, cultureScores, profileHighlights, values, competenceSource);
+            var sheet = CandidateFactSheet.ForWhoAmI(cScores, rScores, cultureScores, profileHighlights, values);
+            var storyOk = story is not null
+                          && CandidateFactGuard.RejectionReason(story, sheet) is null
+                          && WhoAmIStoryBuilder.Accepts(story, profileHighlights, cScores, cultureScores, rScores, values);
+            var dutchTemplate = WhoAmIStoryBuilder.Build(
+                cScores, rScores, cultureScores, profileHighlights, values, employersEnabled, competence: competence);
+            if (!storyOk)
+            {
+                story = dutchTemplate;
+                keywords = WhoAmIKeywords.FromScores(cScores, rScores, cultureScores, values);
+                fromOpenAi = false;
+            }
+
+            story = fromOpenAi
+                ? WhoAmIStoryBuilder.ForDisplay(story, employersEnabled)
+                : WhoAmIStoryBuilder.ForDisplay(
+                    WhoAmIStoryBuilder.Build(cScores, rScores, cultureScores, profileHighlights, values, employersEnabled, language, competence),
+                    employersEnabled);
+
+            var now = DateTime.UtcNow;
+            var fingerprintChanged = stored is not null
+                                     && !string.Equals(stored.InputFingerprint, fingerprint, StringComparison.Ordinal);
+            var shouldGenerate = stored is not null
+                                 && CandidateInsightsFingerprint.ShouldGenerateWhoAmI(
+                                     !fingerprintChanged,
+                                     stored.FromOpenAi,
+                                     storyOk,
+                                     stored.LastAttemptUtc,
+                                     now);
+            if (stored is null)
+            {
+                generatedAt = await PersistLocalStoryAsync(
+                    userId, dutchTemplate, keywords.Count > 0 ? keywords : WhoAmIKeywords.FromScores(cScores, rScores, cultureScores, values), fingerprint, cancellationToken);
+                fromOpenAi = false;
+            }
+            else if (shouldGenerate)
             {
                 insightsStatus = InsightsStatuses.Updating;
                 _queue.TryEnqueue(userId);
+            }
+            else if (fingerprintChanged)
+            {
+                generatedAt = await PersistLocalStoryAsync(
+                    userId, dutchTemplate, keywords.Count > 0 ? keywords : WhoAmIKeywords.FromScores(cScores, rScores, cultureScores, values), fingerprint, cancellationToken);
+                fromOpenAi = false;
             }
         }
 
@@ -245,6 +293,32 @@ public sealed class WhoAmIService : IWhoAmIService
             CulturePersonalityCatalog.CategoryCodes
                 .Select(code => new LobsyCvScoreBar(CulturePersonalityCatalog.EverydayLabel(code), culture.Get(code)))
                 .ToList());
+
+    private async Task<DateTime> PersistLocalStoryAsync(
+        Guid userId,
+        string story,
+        IReadOnlyList<string> keywords,
+        string fingerprint,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var row = await _db.CandidateWhoAmIProfiles
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (row is null)
+        {
+            row = NewRow(userId);
+            _db.CandidateWhoAmIProfiles.Add(row);
+        }
+
+        row.StoryText = story;
+        row.KeywordsJson = JsonSerializer.Serialize(keywords, Json);
+        row.InputFingerprint = fingerprint;
+        row.FromOpenAi = false;
+        row.StoryGeneratedAtUtc = now;
+        row.UpdatedAtUtc = now;
+        await _db.SaveChangesAsync(cancellationToken);
+        return now;
+    }
 
     private static CandidateWhoAmIProfile NewRow(Guid userId)
         => new()

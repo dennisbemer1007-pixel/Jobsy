@@ -1,0 +1,68 @@
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Werkgever
+@using Microsoft.AspNetCore.Components.Authorization
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject NavigationManager Navigation
+
+<header class="wg-topbar">
+    <div class="wg-topbar__start">
+        <a class="wg-topbar__brand" href="/werkgever" aria-label="Lobsy Werkgever">
+            <LobsyLogo Class="wg-topbar__logo" Alt="Lobsy" />
+            <span class="wg-topbar__brand-text">
+                <span class="wg-topbar__name">Lobsy</span>
+                <span class="wg-topbar__role-tag">@Culture["WgShell.Werkgever"]</span>
+            </span>
+        </a>
+        <EntScopeChip Label="@Scope.Label"
+                      SubLabel="@Scope.SubLabel"
+                      SelectedKey="@Scope.Current?.Key"
+                      Options="@ChipOptions"
+                      ShowReadOnlyPill="@Scope.IsReadOnly"
+                      OnSelected="OnScopeSelected"
+                      IconSvg="@NavIcons.Companies" />
+    </div>
+    <div class="wg-topbar__end">
+        @if (Scope.Role != EmployerRole.Regiomanager)
+        {
+            <TokenWalletChip />
+        }
+        <PageHelp />
+        <NotificationBell />
+        <LanguageSelector />
+        <AuthorizeView>
+            <Authorized>
+                <AuthHeader />
+                <span class="wg-topbar__account-meta">@RoleLabel</span>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+</header>
+
+@code {
+    private IReadOnlyList<EntScopeChip.ScopeOption> ChipOptions =>
+        Scope.AvailableScopes
+            .Select(s => new EntScopeChip.ScopeOption(s.Key, s.Label, s.SubLabel))
+            .ToList();
+
+    private string RoleLabel => Scope.Role switch
+    {
+        EmployerRole.Bedrijfsmanager => Culture["WgShell.Role.BM"],
+        EmployerRole.Regiomanager => Culture["WgShell.Role.RM"],
+        EmployerRole.Vestigingsmanager => Culture["WgShell.Role.VM"],
+        EmployerRole.Intermediair => Culture["WgShell.Role.IM"],
+        _ => ""
+    };
+
+    private void OnScopeSelected(EntScopeChip.ScopeOption opt)
+    {
+        var match = Scope.AvailableScopes.FirstOrDefault(s => s.Key == opt.Key);
+        if (match is not null)
+        {
+            Scope.Select(match);
+            var uri = Navigation.GetUriWithQueryParameter("scope", match.Key);
+            Navigation.NavigateTo(uri, replace: true);
+        }
+    }
+}

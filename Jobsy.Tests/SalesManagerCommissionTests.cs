@@ -32,7 +32,7 @@ public class SalesManagerCommissionTests
         Assert.True(first.CommissionCredited);
         Assert.Equal(1, first.FirstYearSupplierSlot);
 
-        var balance = await new CommissionLedgerService(db).GetBalanceExVatAsync(smId);
+        var balance = await new CommissionLedgerService(db, new AlwaysOnFeatures()).GetBalanceExVatAsync(smId);
         Assert.Equal(SalesCommissionRules.FounderBonusExVat, balance);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -45,7 +45,7 @@ public class SalesManagerCommissionTests
             await db.CommissionLedgerEntries.CountAsync(e =>
                 e.Kind == CommissionEntryKind.FounderBonus && e.CompanyId == companyId));
         Assert.Equal(SalesCommissionRules.FounderBonusExVat,
-            await new CommissionLedgerService(db).GetBalanceExVatAsync(smId));
+            await new CommissionLedgerService(db, new AlwaysOnFeatures()).GetBalanceExVatAsync(smId));
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class SalesManagerCommissionTests
         company.FirstYearStartedAt = DateTime.UtcNow.AddMonths(-1);
         await db.SaveChangesAsync();
 
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var checkoutId = Guid.NewGuid();
         var first = await ledger.TryCreditTokenCommissionAsync(
             smId, companyId, checkoutId, 40.00m, company.FirstYearStartedAt);
@@ -93,7 +93,7 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 5, kvk: "55550005");
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_payout_1", 5);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
@@ -146,7 +146,7 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 6, kvk: "55550006");
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_partial_1", 6);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
@@ -180,7 +180,7 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 3);
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_test_1", 3);
 
         var invoices = new SelfBillingInvoiceService(db, ledger);
@@ -239,7 +239,7 @@ public class SalesManagerCommissionTests
             "99990001_0001",
             RegistrationScope.BranchOnly,
             "Nova",
-            "nova.sm@jobsy.local",
+            "nova.sm@employer.test",
             null,
             AcceptedTerms: true,
             SalesManagerTrackingCode: "SM-TEST01",
@@ -254,11 +254,14 @@ public class SalesManagerCommissionTests
         var branch = await db.Companies.SingleAsync(c => c.Id == activated.BranchCompanyId);
         Assert.Equal(smId, branch.ReferredBySalesManagerUserId);
         Assert.Equal(1, branch.FirstYearSupplierSlot);
-        Assert.NotNull(branch.FirstYearStartedAt);
+        // Attribution + rate snapshot at registration; commission window starts at first purchase.
+        Assert.NotNull(branch.SalesAttributedAtUtc);
+        Assert.Null(branch.CommissionStartsAtUtc);
+        Assert.NotNull(branch.CommissionTermsSnapshottedAtUtc);
     }
 
     [Fact]
-    public async Task Registration_rejects_unknown_tracking_code_but_allows_empty()
+    public async Task Registration_ignores_unknown_tracking_code_but_allows_empty()
     {
         await using var db = CreateDb();
         var registration = CreateRegistrationService(db);
@@ -275,7 +278,11 @@ public class SalesManagerCommissionTests
             Password: "TestPassphrase!"));
         Assert.Equal(CompanyRegistrationStatus.PendingActivation, emptyOk.Status);
 
-        var ex = await Assert.ThrowsAsync<ArgumentException>(() => registration.SubmitAsync(
+        // Soft referral (05): unknown codes never block submit; tracking is left unset.
+        db.CompanyRegistrations.RemoveRange(db.CompanyRegistrations);
+        await db.SaveChangesAsync();
+
+        var soft = await registration.SubmitAsync(
             new RegistrationSubmitRequest(
                 "99990001",
                 "99990001_0001",
@@ -285,9 +292,11 @@ public class SalesManagerCommissionTests
                 null,
                 AcceptedTerms: true,
                 SalesManagerTrackingCode: "SM-NOPE01",
-                Password: "TestPassphrase!")));
-        Assert.Contains("trackingcode", ex.Message, StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(0, await db.CompanyRegistrations.CountAsync(r => r.ContactEmail == "nova.badcode@jobsy.local"));
+                Password: "TestPassphrase!"));
+        Assert.Equal(CompanyRegistrationStatus.PendingActivation, soft.Status);
+        var reg = await db.CompanyRegistrations.SingleAsync(r => r.ContactEmail == "nova.badcode@jobsy.local");
+        Assert.Null(reg.SalesManagerTrackingCode);
+        Assert.Null(reg.SalesManagerUserId);
     }
 
     [Fact]
@@ -304,7 +313,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "11112222_0001",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -347,8 +360,39 @@ public class SalesManagerCommissionTests
         Assert.Equal(partnerId, branch.ReferredByPartnerUserId);
         Assert.Null(branch.ReferredBySalesManagerUserId);
         Assert.Equal(PartnerReferralStatus.Pending, branch.PartnerReferralStatus);
+        Assert.False(branch.WelcomeTokenLedgerCredited);
+
+        // Welcome token is granted on verification (03), not activation.
+        var features = new PlatformFeatureService(
+            db,
+            Options.Create(new JobsyFeatureOptions()),
+            new ConfigurationBuilder().Build());
+        var ledger = new TokenLedgerService(db);
+        var verification = new CompanyVerificationService(
+            db,
+            registration,
+            new VacancyProductService(
+                db,
+                ledger,
+                new SalesCommercialService(db, ledger),
+                new VacancyCategoryService(db),
+                new PushNotificationServiceStub(db, NullLogger<PushNotificationServiceStub>.Instance),
+                new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+                features,
+                new MockRoutingService(),
+                new UserNotificationService(db),
+                new CandidateActionTokenService(db),
+                NullLogger<VacancyProductService>.Instance),
+            discovery: null,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new UserNotificationService(db),
+            features,
+            NullLogger<CompanyVerificationService>.Instance);
+        await verification.MarkVerifiedAsync(
+            branch.Id, CompanyVerificationMethod.BusinessEmail, activated.UserId, null);
+        await db.Entry(branch).ReloadAsync();
         Assert.True(branch.WelcomeTokenLedgerCredited);
-        Assert.Equal(1m, await new TokenLedgerService(db).GetBalanceAsync(branch.Id));
+        Assert.Equal(1m, await ledger.GetBalanceAsync(branch.Id));
 
         var partners = CreatePartnerAffiliateService(db);
         var mine = await partners.GetMineAsync(partnerId);
@@ -436,7 +480,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "55556666_0001",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -466,7 +514,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "55556666_0002",
             Address = "B",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
         Assert.False(await partners.ApplyReferralAsync(target, "BM-SELF23"));
         Assert.Null(target.ReferredByPartnerUserId);
@@ -492,14 +544,15 @@ public class SalesManagerCommissionTests
     {
         await using var db = CreateDb();
         var (smId, companyId) = await SeedReferredCompanyAsync(db, slot: 4);
-        var ledger = new CommissionLedgerService(db);
+        var ledger = new CommissionLedgerService(db, new AlwaysOnFeatures());
         await ledger.TryCreditFounderBonusAsync(smId, companyId, "pay_privacy", 4);
         await new SelfBillingInvoiceService(db, ledger).CreateFromUninvoicedBalanceAsync(smId);
 
         var privacy = new PrivacyDataService(
             db,
             new StubUserLookup(db),
-            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance));
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures());
         var principal = CreatePrincipal("sm@jobsy.local", smId);
         var export = await privacy.ExportAsync(principal);
         var json = System.Text.Json.JsonSerializer.Serialize(export);
@@ -572,7 +625,7 @@ public class SalesManagerCommissionTests
     }
 
     private static SupplierOnboardingPaymentService CreateOnboardingService(JobsyDbContext db) =>
-        new(db, new CommissionLedgerService(db), new TestHostEnvironment(),
+        new(db, new CommissionLedgerService(db, new AlwaysOnFeatures()), new TestHostEnvironment(),
             NullLogger<SupplierOnboardingPaymentService>.Instance);
 
     private static PartnerAffiliateService CreatePartnerAffiliateService(JobsyDbContext db) =>
@@ -581,28 +634,12 @@ public class SalesManagerCommissionTests
             new TokenLedgerService(db),
             new FakePublicWebFeatures("https://lobsy.nl"));
 
-    private static SalesManagerPayoutService CreatePayoutService(
-        JobsyDbContext db,
-        CommissionLedgerService ledger)
-    {
-        var invoices = new SelfBillingInvoiceService(db, ledger);
-        return new SalesManagerPayoutService(
-            db,
-            invoices,
-            ledger,
-            new PlatformCompanySettingsService(db),
-            new FakePublicWebFeatures("https://lobsy.nl"),
-            new TestHostEnvironment(),
-            new ConfigurationBuilder().Build(),
-            NullLogger<SalesManagerPayoutService>.Instance);
-    }
-
     private static CompanyRegistrationService CreateRegistrationService(JobsyDbContext db)
     {
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Options.Create(new JobsyFeatureOptions { ExposeRegistrationActivationLinks = true }),
+            Options.Create(new JobsyFeatureOptions()),
             config);
 
         if (!db.PlatformFeatureSettings.Any())
@@ -610,7 +647,6 @@ public class SalesManagerCommissionTests
             db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
             {
                 Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-                ExposeRegistrationActivationLinks = true,
                 FreePublishUntil = null,
                 UpdatedAtUtc = DateTime.UtcNow
             });
@@ -675,7 +711,11 @@ public class SalesManagerCommissionTests
             Type = CompanyType.Employer,
             ReferredBySalesManagerUserId = smId,
             FirstYearSupplierSlot = slot,
-            FirstYearStartedAt = now
+            FirstYearStartedAt = now,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
         return (smId, companyId);
@@ -696,7 +736,11 @@ public class SalesManagerCommissionTests
             KvkEstablishmentId = "12345678_0001",
             Address = "Partnerstraat 1",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -731,7 +775,11 @@ public class SalesManagerCommissionTests
             PartnerReferredAtUtc = now,
             WelcomeTokenLedgerCredited = true,
             HasReceivedWelcomeToken = true,
-            FirstYearStartedAt = now
+            FirstYearStartedAt = now,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenTransactions.Add(new TokenTransaction
         {
@@ -786,8 +834,7 @@ public class SalesManagerCommissionTests
     private sealed class FakePublicWebFeatures(string publicWebBaseUrl) : IPlatformFeatureService
     {
         public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => Task.FromResult(new PlatformFeatureSnapshot(
-                false, false, false, publicWebBaseUrl, DateTime.UtcNow, 120));
+            => Task.FromResult(new PlatformFeatureSnapshot(false, false, publicWebBaseUrl, DateTime.UtcNow, 120));
 
         public Task<PlatformFeatureSnapshot> UpdateAsync(
             PlatformFeatureUpdate update,

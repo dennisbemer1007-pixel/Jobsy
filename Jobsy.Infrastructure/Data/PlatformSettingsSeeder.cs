@@ -38,6 +38,13 @@ internal static class PlatformSettingsSeeder
                     Id = Guid.NewGuid(),
                     Reason = TokenSpendReason.ContactUnlock,
                     CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
+                },
+                new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.InsightsUnlock,
+                    CostTokens = CandidateInsightsAccess.DefaultUnlockCostTokens,
+                    IsActive = true
                 });
         }
         else
@@ -57,6 +64,17 @@ internal static class PlatformSettingsSeeder
                     Id = Guid.NewGuid(),
                     Reason = TokenSpendReason.ContactUnlock,
                     CostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens
+                });
+            }
+
+            if (!await db.TokenSpendCosts.AnyAsync(c => c.Reason == TokenSpendReason.InsightsUnlock))
+            {
+                db.TokenSpendCosts.Add(new TokenSpendCost
+                {
+                    Id = Guid.NewGuid(),
+                    Reason = TokenSpendReason.InsightsUnlock,
+                    CostTokens = CandidateInsightsAccess.DefaultUnlockCostTokens,
+                    IsActive = true
                 });
             }
         }
@@ -127,24 +145,32 @@ internal static class PlatformSettingsSeeder
             {
                 Id = PlatformCompanySettingsService.SingletonId,
                 CompanyName = PlatformCompanySettingsService.DefaultCompanyName,
+                LegalName = PlatformCompanySettingsService.DefaultLegalName,
+                TradeName = PlatformCompanySettingsService.DefaultTradeName,
                 Slogan = PlatformCompanySettingsService.DefaultSlogan,
                 Country = "NL",
                 UpdatedAtUtc = DateTime.UtcNow
             });
             logger.LogInformation("Seeded default PlatformCompanySettings (Lobsy).");
         }
-
-        if (!await db.AboutPageSettings.AnyAsync())
+        else
         {
-            db.AboutPageSettings.Add(new AboutPageSettings
+            var company = await db.PlatformCompanySettings.FirstAsync();
+            var stillDefaultName = string.Equals(
+                company.CompanyName?.Trim(),
+                PlatformCompanySettingsService.DefaultCompanyName,
+                StringComparison.OrdinalIgnoreCase);
+            if (stillDefaultName && string.IsNullOrWhiteSpace(company.LegalName))
             {
-                Id = AboutPageSettingsService.SingletonId,
-                Title = AboutPageSettingsService.DefaultTitle,
-                Lead = AboutPageSettingsService.DefaultLead,
-                BodyHtml = AboutPageSettingsService.DefaultBodyHtml,
-                UpdatedAtUtc = DateTime.UtcNow
-            });
-            logger.LogInformation("Seeded default AboutPageSettings (Wie zijn wij).");
+                company.LegalName = PlatformCompanySettingsService.DefaultLegalName;
+                company.UpdatedAtUtc = DateTime.UtcNow;
+                logger.LogInformation("Seeded statutory name on the default PlatformCompanySettings row.");
+            }
+
+            if (stillDefaultName && string.IsNullOrWhiteSpace(company.TradeName))
+            {
+                company.TradeName = PlatformCompanySettingsService.DefaultTradeName;
+            }
         }
 
         if (!await db.MarketingFlyerSettings.AnyAsync())
@@ -269,7 +295,10 @@ internal static class PlatformSettingsSeeder
                 Id = FlexCommercialService.SettingsSingletonId,
                 MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
                 BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
-                DeepAnalysisPriceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCompetenceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCareerEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceValuesEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCultureEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
                 AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
                 ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
                 UpdatedAtUtc = DateTime.UtcNow

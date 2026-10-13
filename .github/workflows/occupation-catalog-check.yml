@@ -1,0 +1,27 @@
+name: Occupation catalogue check
+
+# Manual only. fetch.py downloads about 130 MB (ESCO pages are large) and waits
+# one second between requests. Do not run this on every push.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install openpyxl
+        run: pip install openpyxl
+
+      - name: Fetch pinned sources
+        run: python3 tools/occupations/fetch.py
+
+      - name: Rebuild and compare
+        run: python3 tools/occupations/build_catalog.py --check

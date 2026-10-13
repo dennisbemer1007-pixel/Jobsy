@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Jobs;
 using Jobsy.Api.Models;
@@ -25,7 +26,11 @@ public class Sprint6AdminSuiteTests
             KvkNumber = "11111111",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Companies.Add(new Company
         {
@@ -34,7 +39,11 @@ public class Sprint6AdminSuiteTests
             KvkNumber = "22222222",
             Address = "B",
             Location = new GeoPoint(52.1, 4.1),
-            Type = CompanyType.Intermediary
+            Type = CompanyType.Intermediary,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.PlatformLogs.Add(new PlatformLog
         {
@@ -80,7 +89,11 @@ public class Sprint6AdminSuiteTests
             KvkNumber = "11111111",
             Address = "A",
             Location = new GeoPoint(52, 4),
-            Type = CompanyType.Employer
+            Type = CompanyType.Employer,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.TokenTransactions.AddRange(
             new TokenTransaction
@@ -124,7 +137,11 @@ public class Sprint6AdminSuiteTests
             KvkEstablishmentId = "55667788_0001",
             Address = "Binckhorstlaan 36, Den Haag",
             Type = CompanyType.Intermediary,
-            Location = new GeoPoint(52.0680, 4.3350)
+            Location = new GeoPoint(52.0680, 4.3350),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -185,7 +202,9 @@ public class Sprint6AdminSuiteTests
     public void Semi_annual_effective_from_aligns_with_due_dates(int day, int month, int year, string expected)
     {
         var today = new DateOnly(year, month, day);
-        Assert.Equal(DateOnly.Parse(expected), WagesController.ResolveSemiAnnualEffectiveFrom(today));
+        Assert.Equal(
+            DateOnly.ParseExact(expected, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            WagesController.ResolveSemiAnnualEffectiveFrom(today));
     }
 
     [Fact]
@@ -271,7 +290,6 @@ public class Sprint6AdminSuiteTests
                 Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
                 new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build()),
             new PlatformCompanySettingsService(db),
-            new AboutPageSettingsService(db),
             new MarketingFlyerSettingsService(db),
             new MarketingFlyerPdfService(
                 new MarketingFlyerSettingsService(db),
@@ -280,7 +298,10 @@ public class Sprint6AdminSuiteTests
                     db,
                     Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
                     new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build())),
-            new FlexCommercialService(db));
+            new FlexCommercialService(db),
+            new NoOpAdminAuditLog(),
+            new NoOpAdminAuditContext(),
+            new FakeUserLookup());
 
         var create = await controller.UpsertEarlyAdapterRule(
             new UpsertEarlyAdapterRuleRequest(null, "Pilot", 5, 10m, true),

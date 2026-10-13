@@ -194,7 +194,7 @@ public class VacancyCsvImportIntegrationTests : IClassFixture<VacancyCsvImportWe
             CompanyId: companyId?.ToString());
 }
 
-public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Program>
+public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid OrgId { get; } = Guid.Parse("a1111111-1111-1111-1111-111111111111");
     public Guid BranchId { get; } = Guid.Parse("a2222222-2222-2222-2222-222222222222");
@@ -279,7 +279,11 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
                 KvkNumber = "11111111",
                 Address = "HQ",
                 Location = new GeoPoint(52, 4),
-                CsvBatchImportEnabled = true
+                CsvBatchImportEnabled = true,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             },
             new Company
             {
@@ -288,7 +292,11 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
                 KvkNumber = "11111111",
                 Address = "Branch",
                 Location = new GeoPoint(52.01, 4.01),
-                ParentCompanyId = OrgId
+                ParentCompanyId = OrgId,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             },
             new Company
             {
@@ -297,7 +305,11 @@ public sealed class VacancyCsvImportWebAppFactory : WebApplicationFactory<Progra
                 KvkNumber = "22222222",
                 Address = "Other",
                 Location = new GeoPoint(52.1, 4.1),
-                CsvBatchImportEnabled = false
+                CsvBatchImportEnabled = false,
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
             });
 
         db.Users.Add(new User

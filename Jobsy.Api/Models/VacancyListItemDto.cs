@@ -2,6 +2,13 @@ namespace Jobsy.Api.Models;
 
 public record WageByAgeDto(int AgeYears, decimal HourlyRate, string Label);
 
+public sealed record VacancyListPageDto(
+    IReadOnlyList<VacancyListItemDto> Items,
+    int Skip,
+    int Take,
+    int TotalCount,
+    bool HasMore);
+
 public record VacancyListItemDto(
     Guid Id,
     string Title,
@@ -97,7 +104,51 @@ public record VacancyListItemDto(
     IReadOnlyList<string>? BarrierCertifications = null,
     int? BarrierMinExperienceYears = null,
     int? BarrierMinExperienceHours = null,
-    IReadOnlyList<string>? BarrierHardChecks = null);
+    IReadOnlyList<string>? BarrierHardChecks = null,
+    /// <summary>PendingApproval options (manage list).</summary>
+    bool RequestedHighlight = false,
+    bool RequestedPushBom = false,
+    bool RequestedExtend = false,
+    /// <summary>Pending applications (new badge on manage list).</summary>
+    int NewApplicationCount = 0,
+    /// <summary>True when a PushBom spend exists for this vacancy.</summary>
+    bool HasPushBom = false,
+    /// <summary>Missing draft fields count when incompleteness is known.</summary>
+    int IncompleteFieldCount = 0,
+    /// <summary>Short requester name for publicatieaanvraag rows.</summary>
+    string? RequesterDisplayName = null,
+    /// <summary>
+    /// True when the response is an employer-only preview of a non-public vacancy
+    /// (draft, unverified publisher, etc.). Suppresses indexation and JSON-LD.
+    /// </summary>
+    bool IsPreview = false,
+    bool PublishOnVerification = false,
+    IReadOnlyList<VacancyEngagementBadgeDto>? EngagementItems = null,
+    /// <summary>Candidate fit gate: "open" | "closed". Null for anonymous/employer.</summary>
+    string? FitGate = null,
+    int? FitPercent = null,
+    string? FitBand = null,
+    string? FitWhyLine = null,
+    IReadOnlyList<string>? FitWhyKinds = null,
+    CandidateFitDimensionsDto? FitDimensions = null,
+    /// <summary>Candidate-own-only dislike reason key (e.g. Kb.Dislike.night-shifts). Never on shared/public.</summary>
+    string? RankLowerReason = null,
+    /// <summary>
+    /// Candidate has not ticked "Beschikbaar voor werk". No match percent is calculated.
+    /// </summary>
+    bool OpenForWorkRequired = false,
+    /// <summary>When the vacancy was taken offline. Null on older rows; do not substitute EndDate.</summary>
+    DateTime? ClosedAtUtc = null,
+    int? PublicMapRadiusKm = null);
+
+public sealed record VacancyEngagementBadgeDto(string ItemId, bool Checked);
+
+/// <summary>Four DNA bars for the vacancy detail fit panel (null = Nog niet gedaan).</summary>
+public sealed record CandidateFitDimensionsDto(
+    int? Culture = null,
+    int? Values = null,
+    int? Competencies = null,
+    int? Interests = null);
 
 /// <summary>Public MapLibre opening camera. Coordinates only — no vacancy or employer PII.</summary>
 public sealed record VacancyMapViewDto(double Lat, double Lng, double Zoom, int PinCount);
@@ -117,7 +168,8 @@ public sealed record VacancyPinDto(
     bool Highlighted = false,
     uint HighlightRank = 0,
     string? WorkType = null,
-    string? MatchColorBand = null);
+    string? MatchColorBand = null,
+    int? PublicMapRadiusKm = null);
 
 /// <summary>
 /// Lightweight popup/list card from the in-memory discovery index (no DB round-trip).
@@ -140,7 +192,31 @@ public sealed record VacancyCardDto(
     string? CategoryColorHex = null,
     string? CompanyAddress = null,
     string? KvkNumber = null,
-    string? Vestigingsnummer = null);
+    string? Vestigingsnummer = null,
+    string? FitGate = null,
+    string? FitWhyLine = null,
+    string? RankLowerReason = null,
+    decimal? MinHoursPerWeek = null,
+    decimal? MaxHoursPerWeek = null,
+    /// <summary>Crow-flies km from the requested origin (closed-vacancy "similar" list fallback
+    /// when the visitor has no geolocation origin yet). Null when an origin wasn't supplied.</summary>
+    double? DistanceKm = null,
+    /// <summary>Candidate must tick "Beschikbaar voor werk" before a fit percent is shown.</summary>
+    bool OpenForWorkRequired = false);
 
 /// <summary>Exact origin→vacancy travel for the selected transport. No PII.</summary>
 public sealed record VacancyTravelDto(int? TravelMinutes, double? DistanceKm);
+
+/// <summary>
+/// Minimal public payload for a closed vacancy (410). No company name, dates, contact or
+/// description — only enough to show the title/city and look up similar vacancies.
+/// City (and the owning category) already reflect the intermediary-hidden display rules.
+/// </summary>
+public sealed record ClosedVacancyDto(
+    Guid Id,
+    string Title,
+    string? City,
+    Guid? CategoryId,
+    string? CategoryLabel,
+    /// <summary>Machine-readable reason, so a caller can tell 410 "closed" from any other 410.</summary>
+    string Code = "vacancy_closed");

@@ -1,0 +1,38 @@
+KEY: ExternalVacancyApplication
+SUBJECT: Sollicitatie via Lobsy
+PREHEADER: Een kandidaat deelt een vacature met jou.
+KIND: Essential
+--- TEXT ---
+Nieuwe sollicitatie
+===================
+
+Alex de Tester solliciteert via Lobsy op Weekendhulp verkoop bij Bakkerij De
+Gouden Korrel.
+
+"Ik werk graag met mijn handen en ben altijd op tijd."
+
+Rijbewijs B: Ja
+Direct beschikbaar: Ja
+
+Je kunt de sollicitatie bekijken en een Lobsy-account maken om verder te
+gaan.
+
+Bekijk sollicitatie: https://lobsy.nl/register/externe-sollicitatie?token=voorbeeld
+
+Team Lobsy
+
+Geen mails meer? Uitschrijven: https://lobsy.nl/api/public/external-vacancy/unsubscribe?token=voorbeeld
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Nieuwe sollicitatie
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk sollicitatie -> https://lobsy.nl/register/externe-sollicitatie?token=voorbeeld
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

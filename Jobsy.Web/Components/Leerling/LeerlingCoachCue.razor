@@ -1,0 +1,44 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@implements IDisposable
+@inject IServiceProvider Services
+@inject CultureState Culture
+
+@if (_hints?.ShouldShow(Text) == true)
+{
+    <div class="ll-coach-inline" role="status">
+        <p>@Text</p>
+        <ReadAloudButton Text="@Text" SpeechKey="ll-coach-inline" PlayAria="@Culture["ReadAloud.Play"]" />
+    </div>
+}
+
+@code {
+    private LeerlingCoachHint? _hints;
+
+    [Parameter] public string? Text { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _hints = Services.GetService<LeerlingCoachHint>();
+        if (_hints is not null)
+        {
+            _hints.Changed += OnChanged;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        _hints?.Set(Text);
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        if (_hints is not null)
+        {
+            _hints.Changed -= OnChanged;
+        }
+    }
+}

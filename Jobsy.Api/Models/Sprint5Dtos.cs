@@ -120,8 +120,8 @@ public record CompanyUserDto(
     string? CompanyName,
     IReadOnlyList<Guid> MembershipCompanyIds,
     bool IsActive = true,
-    string? TemporaryPassword = null,
-    string? LoginUrl = null);
+    string? LoginUrl = null,
+    DateTime? LastLoginAtUtc = null);
 
 public record InviteUserRequest(
     string Email,
@@ -166,8 +166,6 @@ public record EmployerApplicationDto(
     string? SnapshotEducations,
     string? SnapshotAboutMe,
     int CandidateEmployerCount,
-    int? MatchPercent = null,
-    string? MatchBreakdownJson = null,
     bool ViaSafetyNet = false,
     string? Motivation = null,
     bool LegalEligible = true,
@@ -187,8 +185,11 @@ public record EmployerApplicationDto(
     string? CandidatePhone = null,
     /// <summary>WhatsApp contact allowed (only meaningful when CandidatePhone is revealed).</summary>
     bool WhatsAppContactAllowed = false,
-    /// <summary>Age at apply — visible before Accept.</summary>
-    int? CandidateAgeYears = null,
+    /// <summary>
+    /// True when the age at apply is below the youth-wage cut-off (21).
+    /// Null when the age is unknown. The exact age is not exposed.
+    /// </summary>
+    bool? YouthWageApplies = null,
     /// <summary>Formatted availability — visible before Accept.</summary>
     string? AvailabilitySummary = null,
     /// <summary>True when employer may download the candidate-uploaded CV (post-Accept snapshot).</summary>

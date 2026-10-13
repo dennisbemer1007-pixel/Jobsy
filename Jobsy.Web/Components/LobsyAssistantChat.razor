@@ -1,16 +1,18 @@
 @namespace Jobsy.Web.Components
 @using Microsoft.AspNetCore.Components.Authorization
 @using Jobsy.Web.Navigation
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
 @inject AssistantChatHost ChatHost
-@implements IDisposable
+@inject FeedbackHost FeedbackHost
+@inject IFeatureFlags FeatureFlags
+@inject IJSRuntime Js
 
 <AuthorizeView>
     <Authorized>
-        @if (_visible)
+        @if (_visible && !HideEdgeTab)
         {
             <div class="lobsy-assistant-tab lobsy-assistant-tab--edge @(_hasBottomNav ? "has-bottom-nav" : null) @(_open ? "is-open" : null)">
                 <button type="button"
@@ -28,22 +30,24 @@
         }
         @if (_visible && _open)
         {
-            <div class="lobsy-assistant is-open @(_hasBottomNav ? "has-bottom-nav" : null)">
+            <div class="lobsy-assistant is-open @(HideEdgeTab ? "lobsy-assistant--coach" : null) @(_hasBottomNav ? "has-bottom-nav" : null)">
                 <div id="lobsy-assistant-panel" class="lobsy-assistant__panel" role="dialog" aria-modal="false" aria-labelledby="lobsy-assistant-title" tabindex="-1" @onkeydown="OnKeyDown">
                     <header class="lobsy-assistant__header">
                         <div class="lobsy-assistant__brand">
                             <LobsyLogo Class="lobsy-assistant__logo" Alt="" UseMascot="true" />
                             <div>
                                 <h2 id="lobsy-assistant-title">@Culture["Assistant.Title"]</h2>
-                                <p class="lobsy-assistant__lead">@Culture["Assistant.Lead"]</p>
+                                <p class="lobsy-assistant__lead">@Culture[_employersOn ? "Assistant.Lead" : "Assistant.LeadEmployersOff"]</p>
                             </div>
                         </div>
+                        <button type="button" class="btn btn-ghost" @onclick="StartNewChat" disabled="@_busy">@Culture["Assistant.NewChat"]</button>
                         <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Assistant.Close"]">×</button>
                     </header>
 
                     <div class="lobsy-assistant__chat">
-                        @foreach (var msg in _messages)
+                        @for (var i = 0; i < _messages.Count; i++)
                         {
+                            var msg = _messages[i];
                             <div class="lobsy-assistant__bubble lobsy-assistant__bubble--@msg.Role">
                                 @if (msg.Role == "assistant")
                                 {
@@ -57,6 +61,10 @@
                                     <span class="lobsy-assistant__bubble-role">@Culture["Assistant.You"]</span>
                                 }
                                 <p>@msg.Content</p>
+                                @if (msg.Role == "assistant")
+                                {
+                                    <ReadAloudButton Text="@msg.Content" SpeechKey="@($"assistant-{i}")" />
+                                }
                             </div>
                         }
                         @if (_busy)
@@ -96,7 +104,8 @@
                                   placeholder="@Culture["Assistant.Placeholder"]"
                                   disabled="@_busy"
                                   @bind="_draft"
-                                  @bind:event="oninput"></textarea>
+                                  @bind:event="oninput"
+                                  @onkeydown="OnDraftKeyDown"></textarea>
                         <button type="submit" class="login-submit" disabled="@(_busy || string.IsNullOrWhiteSpace(_draft))">
                             @Culture["Assistant.Send"]
                         </button>
@@ -106,6 +115,12 @@
                         @Culture["Assistant.Disclaimer"]
                         <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["Assistant.DisclaimerLink"]</a>
                     </p>
+                    @if (HideEdgeTab)
+                    {
+                        <p class="lobsy-assistant__feedback">
+                            <button type="button" class="btn btn-ghost" @onclick="OpenFeedback">@Culture["Coach.Feedback"]</button>
+                        </p>
+                    }
                 </div>
             </div>
         }
@@ -114,43 +129,66 @@
 
 @code {
     [Parameter] public bool HasBottomNav { get; set; }
+    [Parameter] public bool HideEdgeTab { get; set; }
+
+    private bool _focusInput;
 
     private bool _visible;
     private bool _open;
     private bool _busy;
     private bool _started;
     private bool _hasBottomNav;
+    private bool _employersOn = true;
     private string _draft = "";
     private string? _error;
+    private int _sendGeneration;
     private readonly List<AssistantChatMessage> _messages = [];
     private List<AssistantChatActionItem> _actionLinks = [];
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         ChatHost.ToggleRequested += OnToggleRequested;
     }
 
     protected override async Task OnParametersSetAsync()
     {
         _hasBottomNav = HasBottomNav;
+        try
+        {
+            _employersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.Employers);
+        }
+        catch (Exception)
+        {
+            _employersOn = true;
+        }
+
         await ResolveVisibilityAsync();
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         ChatHost.ToggleRequested -= OnToggleRequested;
         if (_open)
         {
             ChatHost.NotifyOpen(false);
         }
+
+        base.Dispose();
     }
 
-    private void OnCultureChanged() => _ = InvokeAsync(StateHasChanged);
-
     private void OnToggleRequested()
-        => _ = InvokeAsync(Toggle);
+        => _ = InvokeAsync(OpenFromCoachAsync);
+
+    /// <summary>
+    /// The coach button lives in another component. A UI event there does not
+    /// render this chat, so the panel has to be painted here.
+    /// </summary>
+    private async Task OpenFromCoachAsync()
+    {
+        await Toggle();
+        StateHasChanged();
+    }
 
     private async Task ResolveVisibilityAsync()
     {
@@ -180,23 +218,80 @@
 
         _open = !_open;
         ChatHost.NotifyOpen(_open);
-        if (_open && !_started)
+        if (_open)
         {
-            await StartAsync();
+            _focusInput = true;
+            // Show the panel before the assistant HTTP call. A slow reply must
+            // not leave the click looking like a no-op.
+            StateHasChanged();
+            if (!_started)
+            {
+                await StartAsync();
+            }
         }
     }
 
-    private void Close()
+    private async Task Close()
     {
         _open = false;
         ChatHost.NotifyOpen(false);
+        if (HideEdgeTab)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.focus", "lobsy-coach-btn");
+            }
+            catch
+            {
+                // Circuit gone or no coach button.
+            }
+        }
     }
 
-    private void OnKeyDown(KeyboardEventArgs e)
+    private void OpenFeedback()
+    {
+        _open = false;
+        ChatHost.NotifyOpen(false);
+        FeedbackHost.RequestOpen();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
     {
         if (e.Key is "Escape" or "Esc")
         {
-            Close();
+            await Close();
+        }
+    }
+
+    private async Task OnDraftKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key != "Enter" || e.ShiftKey || _busy || string.IsNullOrWhiteSpace(_draft))
+        {
+            return;
+        }
+
+        await SendAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_open)
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyComposeEnter", "lobsy-assistant-input");
+            if (_focusInput)
+            {
+                _focusInput = false;
+                await Js.InvokeVoidAsync("jobsyCoachDock.focus", "lobsy-assistant-input");
+            }
+        }
+        catch
+        {
+            // bUnit / no JS: OnDraftKeyDown still sends.
         }
     }
 
@@ -226,6 +321,17 @@
         }
     }
 
+    private async Task StartNewChat()
+    {
+        _sendGeneration++;
+        _messages.Clear();
+        _actionLinks = [];
+        _error = null;
+        _draft = "";
+        _started = false;
+        await StartAsync();
+    }
+
     private async Task SendAsync()
     {
         if (_busy || string.IsNullOrWhiteSpace(_draft))
@@ -239,21 +345,56 @@
         _messages.Add(new AssistantChatMessage("user", text));
         _busy = true;
         _actionLinks = [];
+        var generation = ++_sendGeneration;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
         try
         {
-            var history = _messages.Select(m => new AssistantChatMessage(m.Role, m.Content)).ToList();
-            var reply = await Api.SendAssistantChatAsync(history);
+            var history = AssistantChatHistory.ForRequest(_messages).ToList();
+            var reply = await Api.SendAssistantChatAsync(history, timeout.Token);
+            if (generation != _sendGeneration)
+            {
+                return;
+            }
+
             _messages.Add(new AssistantChatMessage("assistant", reply.Reply));
             ApplyActions(reply.Actions);
         }
-        catch (Exception ex)
+        catch (ApiErrorException ex) when (ex.Code == ApiErrorException.RateLimited || ex.StatusCode == 429)
         {
-            _error = ex.Message;
+            if (generation == _sendGeneration)
+            {
+                RestoreUnanswered(text);
+                _error = Culture["Assistant.RateLimited"];
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _sendGeneration++;
+            if (generation == _sendGeneration - 1)
+            {
+                RestoreUnanswered(text);
+                _error = Culture["Common.Error.TryAgain"];
+            }
+        }
+        catch (Exception)
+        {
+            if (generation == _sendGeneration)
+            {
+                _error = Culture["Common.Error.TryAgain"];
+            }
         }
         finally
         {
             _busy = false;
         }
+    }
+
+    private void RestoreUnanswered(string text)
+    {
+        var restored = AssistantChatHistory.RestoreAfterUnanswered(_messages, text);
+        _messages.Clear();
+        _messages.AddRange(restored.Messages);
+        _draft = restored.Draft;
     }
 
     private void ApplyActions(IReadOnlyList<AssistantChatActionItem>? actions)

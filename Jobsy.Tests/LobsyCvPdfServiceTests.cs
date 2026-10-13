@@ -1,3 +1,4 @@
+using System.Globalization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Privacy;
@@ -56,7 +57,7 @@ public class LobsyCvPdfServiceTests
         Assert.Equal(2, model.Certificates.Count);
         Assert.Null(model.Latitude);
         Assert.Null(model.Address);
-        Assert.Null(model.City);
+        Assert.Equal("Naaldwijk", model.City);
         Assert.False(model.IncludeFullAddress);
         Assert.Null(model.WorkplaceLatitude);
         Assert.Null(model.ReachTravelMinutes);
@@ -108,7 +109,28 @@ public class LobsyCvPdfServiceTests
     }
 
     [Fact]
-    public async Task Render_includes_whoami_bijlage_when_opted_in()
+    public void File_name_and_header_use_the_amsterdam_date()
+    {
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+        var prefs = new CandidatePreferencesDto(Roles: [], MaxTravelMinutes: 20, PreferredTransport: "Fiets");
+        var utc = new DateTime(2026, 10, 3, 23, 30, 0, DateTimeKind.Utc);
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Ada Candidate", null, null, false, prefs, null, null, utc);
+        var name = service.BuildFileName(model);
+        Assert.Contains("20261004", name, StringComparison.Ordinal);
+        Assert.DoesNotContain("20261003", name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Education_line_does_not_repeat_the_direction()
+    {
+        Assert.Equal("MBO 2 – Logistiek", LobsyCvPdfService.FormatEducation(["MBO 2 – Logistiek"], "Logistiek"));
+        Assert.Equal("MBO 2 · Logistiek", LobsyCvPdfService.FormatEducation(["MBO 2"], "Logistiek"));
+        Assert.Equal("Logistiek", LobsyCvPdfService.FormatEducation([], "Logistiek"));
+    }
+
+    [Fact]
+    public async Task Render_does_not_add_whoami_page_when_model_carries_story()
     {
         var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
         var prefs = new CandidatePreferencesDto(
@@ -117,11 +139,11 @@ public class LobsyCvPdfServiceTests
             PreferredTransport: "Fiets",
             AboutMe: "Ik werk graag met mensen.");
         var who = new LobsyCvWhoAmI(
-            "Ik werk graag samen en houd ritme in de ploeg.",
+            "ZZ-AI-MARKER-WHOAMI Ik werk graag samen en houd ritme in de ploeg.",
             ["samenwerken", "rust en ritme"],
             [new LobsyCvScoreBar("samenwerken", 88)],
             [new LobsyCvScoreBar("mensen meenemen", 80)]);
-        var model = LobsyCvModelFactory.FromLiveProfile(
+        var plain = LobsyCvModelFactory.FromLiveProfile(
             "Ada Candidate",
             "ada@test.local",
             null,
@@ -129,12 +151,20 @@ public class LobsyCvPdfServiceTests
             prefs,
             null,
             null,
-            DateTime.UtcNow,
-            whoAmI: who);
+            DateTime.UtcNow);
+        var model = plain with { WhoAmI = who };
         Assert.NotNull(model.WhoAmI);
         var pdf = await service.RenderAsync(model);
-        Assert.True(pdf.Length > 800);
+        var without = await service.RenderAsync(plain);
+        Assert.True(pdf.Length > 500);
         Assert.Equal((byte)'%', pdf[0]);
+        using var withDoc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        using var withoutDoc = UglyToad.PdfPig.PdfDocument.Open(without);
+        Assert.Equal(withoutDoc.NumberOfPages, withDoc.NumberOfPages);
+        var text = string.Join('\n', withDoc.GetPages().Select(p => p.Text));
+        Assert.DoesNotContain("ZZ-AI-MARKER-WHOAMI", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Wie ben ik", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Persoonsprofiel bijgevoegd", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -160,7 +190,7 @@ public class LobsyCvPdfServiceTests
 
         Assert.False(model.IncludeFullAddress);
         Assert.Null(model.Address);
-        Assert.Null(model.City);
+        Assert.Equal("Naaldwijk", model.City);
         Assert.Null(model.Latitude);
         Assert.Null(model.Longitude);
         Assert.Null(model.ReachTravelMinutes);
@@ -172,6 +202,79 @@ public class LobsyCvPdfServiceTests
         Assert.True(pdf.Length > 500);
         Assert.Equal(0, maps.CallCount);
         Assert.Equal(0, maps.ReachCallCount);
+        using var doc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        var text = string.Join('\n', doc.GetPages().Select(p => p.Text));
+        Assert.Contains("Naaldwijk", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Voorstraat", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("2671", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Live_cv_shows_languages_highlights_and_consent_date()
+    {
+        var prefs = new CandidatePreferencesDto(
+            Roles: [],
+            MaxTravelMinutes: 25,
+            PreferredTransport: "Fiets",
+            HomeAddress: "2671 AA Naaldwijk",
+            DutchLevel: "vloeiend",
+            SpokenLanguages: [new CandidateLanguageDto("en", "goed")],
+            EducationDirection: "Logistiek",
+            Educations: ["MBO 2"]);
+        var highlights = LobsyCvHighlightLines.Build(
+            new CompetencyScores(90, 40, 30, 20, 10),
+            new RiasecScores(90, 38, 31, 88, 81, 100),
+            culture: null,
+            values: null);
+        var accepted = new DateTime(2026, 10, 3, 12, 0, 0, DateTimeKind.Utc);
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Sanne",
+            "sanne@test.local",
+            null,
+            false,
+            prefs,
+            null,
+            null,
+            accepted,
+            PrivacyConstants.CurrentConsentVersion,
+            testHighlights: highlights,
+            consentAcceptedAt: accepted);
+
+        Assert.Equal("Naaldwijk", model.City);
+        Assert.Contains("Nederlands (vloeiend)", model.Languages!);
+        Assert.Contains("Engels (goed)", model.Languages!);
+        Assert.Equal("Logistiek", model.EducationDirection);
+        Assert.DoesNotContain(PrivacyConstants.CurrentConsentVersion, model.TestHighlights!);
+
+        // A parallel test can leave a non-Gregorian culture on the thread (ar-SA uses Hijri).
+        // The PDF must still print the consent date on the Gregorian calendar.
+        var previousCulture = CultureInfo.CurrentCulture;
+        var previousUiCulture = CultureInfo.CurrentUICulture;
+        var arabic = CultureInfo.GetCultureInfo("ar-SA");
+        CultureInfo.CurrentCulture = arabic;
+        CultureInfo.CurrentUICulture = arabic;
+        byte[] pdf;
+        try
+        {
+            var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+            pdf = await service.RenderAsync(model);
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previousCulture;
+            CultureInfo.CurrentUICulture = previousUiCulture;
+        }
+
+        using var doc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        var text = string.Join('\n', doc.GetPages().Select(p => p.Text));
+        Assert.Contains("Talen", text, StringComparison.Ordinal);
+        Assert.Contains("Engels", text, StringComparison.Ordinal);
+        Assert.Contains("Uit je tests", text, StringComparison.Ordinal);
+        Assert.Contains("Samenwerken", text, StringComparison.Ordinal);
+        Assert.Contains("03-10-2026", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("22-04-1448", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(PrivacyConstants.CurrentConsentVersion, text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Voorstraat", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -313,6 +416,34 @@ public class LobsyCvPdfServiceTests
         var pdf = await service.RenderAsync(model);
         Assert.True(pdf.Length > 500);
         Assert.Equal('%', (char)pdf[0]);
+    }
+
+    [Fact]
+    public async Task Employer_cv_pdf_does_not_print_a_match_percent()
+    {
+        var service = new LobsyCvPdfService(new FakeCompanySettings(), new FakeMapImages());
+        var prefs = new CandidatePreferencesDto(
+            Roles: ["horeca"],
+            MaxTravelMinutes: 30,
+            PreferredTransport: "Fiets");
+        var model = LobsyCvModelFactory.FromLiveProfile(
+            "Ada Candidate",
+            "ada@test.local",
+            null,
+            false,
+            prefs,
+            null,
+            null,
+            DateTime.UtcNow,
+            vacancyTitle: "Kas medewerker",
+            companyName: "Tuinbouw Test",
+            matchPercent: 77);
+        var pdf = await service.RenderAsync(model);
+        using var doc = UglyToad.PdfPig.PdfDocument.Open(pdf);
+        var text = string.Join('\n', doc.GetPages().Select(p => p.Text));
+        Assert.Contains("Kas medewerker", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("% match", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("77%", text, StringComparison.Ordinal);
     }
 
     [Fact]

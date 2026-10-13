@@ -1,0 +1,48 @@
+@namespace Jobsy.Web.Components.KandidaatBanen
+@inject CultureState Culture
+
+@if (Badges is { Count: > 0 })
+{
+    var visible = Badges.Take(MaxVisible).ToList();
+    var hidden = Badges.Skip(MaxVisible).ToList();
+    <ul class="kb-badges" role="list">
+        @foreach (var badge in visible)
+        {
+            <li class="kb-badges__item">
+                @if (badge.IsFitPill && Fit is not null)
+                {
+                    <KbFitPill Fit="Fit" />
+                }
+                else
+                {
+                    var chipClass = string.IsNullOrWhiteSpace(badge.CssModifier)
+                        ? "kb-badges__chip"
+                        : $"kb-badges__chip kb-badges__chip--{badge.CssModifier}";
+                    <span class="@chipClass">@badge.Label</span>
+                }
+            </li>
+        }
+        @if (hidden.Count > 0)
+        {
+            var hiddenLabels = string.Join(", ", hidden.Select(b => b.Label));
+            <li class="kb-badges__item">
+                <span class="kb-badges__chip kb-badges__more"
+                      title="@hiddenLabels"
+                      aria-label="@string.Format(Culture["Kb.Badge.MoreAria"], hidden.Count, hiddenLabels)">
+                    @string.Format(Culture["Kb.Badge.More"], hidden.Count)
+                </span>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    /// <summary>Ordered badges. Fit pill (when present) should be first and counts toward MaxVisible (D7).</summary>
+    [Parameter] public IReadOnlyList<KbBadgeItem>? Badges { get; set; }
+
+    /// <summary>Max visible badges including the fit pill. Default 2 (D7).</summary>
+    [Parameter] public int MaxVisible { get; set; } = 2;
+
+    /// <summary>Optional fit view when a badge item is marked <see cref="KbBadgeItem.IsFitPill"/>.</summary>
+    [Parameter] public KbFitView? Fit { get; set; }
+}

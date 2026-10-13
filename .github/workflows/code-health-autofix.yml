@@ -1,0 +1,61 @@
+name: Code health auto-fix
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+concurrency:
+  group: autofix-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  autofix:
+    # Same-repo PRs only (no forks), never for main/acceptatie heads.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.head_ref != 'main' && github.head_ref != 'acceptatie'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - name: Bot token present?
+        id: token
+        env:
+          BOT_TOKEN: ${{ secrets.CODE_HEALTH_BOT_TOKEN }}
+        run: |
+          if [[ -z "$BOT_TOKEN" ]]; then
+            echo "::notice::CODE_HEALTH_BOT_TOKEN not configured; auto-fix skipped (Dennis creates this secret)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.skip != 'true'
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 2
+          token: ${{ secrets.CODE_HEALTH_BOT_TOKEN }}
+      - name: Loop guard
+        id: guard
+        if: steps.token.outputs.skip != 'true'
+        run: |
+          msg="$(git log -1 --pretty=%B)"; author="$(git log -1 --pretty=%ae)"
+          if [[ "$msg" == *"[code-health-autofix]"* || "$author" == "code-health-bot@users.noreply.github.com" ]]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "Last commit is the bot's: skipping."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-dotnet@v4
+        if: steps.token.outputs.skip != 'true' && steps.guard.outputs.skip == 'false'
+        with: { dotnet-version: "10.0.x" }
+      - name: dotnet format (safe fixers only)
+        if: steps.token.outputs.skip != 'true' && steps.guard.outputs.skip == 'false'
+        run: |
+          dotnet restore Jobsy.sln
+          dotnet format whitespace Jobsy.sln
+          dotnet format style Jobsy.sln --severity warn --diagnostics IDE0005 IDE0055 IDE0161 IDE0040 IDE0044
+          dotnet format analyzers Jobsy.sln --severity warn --diagnostics \
+            CA1827 CA1828 CA1834 CA1847 CA1854 CA1860 CA1865 CA2249 CA2263
+      - name: Commit and push fixes
+        if: steps.token.outputs.skip != 'true' && steps.guard.outputs.skip == 'false'
+        run: |
+          git diff --quiet && { echo "No fixes."; exit 0; }
+          git -c user.name="code-health-bot" -c user.email="code-health-bot@users.noreply.github.com" \
+            commit -am "chore: dotnet format auto-fix [code-health-autofix]"
+          git push origin HEAD:${{ github.head_ref }}

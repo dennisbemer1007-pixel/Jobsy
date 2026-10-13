@@ -2,13 +2,21 @@ using System.Security.Cryptography;
 using System.Text;
 using Jobsy.Api.Models;
 using Jobsy.Api.Security;
+using Jobsy.Core.Dev;
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
+using Jobsy.Core.Ops;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Ops;
 using Jobsy.Infrastructure.Security;
+using Jobsy.Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -26,8 +34,15 @@ public class AuthController : ControllerBase
     private readonly IAmbassadeurAttributionService _ambassadeurAttribution;
     private readonly IHostEnvironment _environment;
     private readonly IDeviceSessionService _deviceSessions;
-    private readonly IEmailService _email;
+    private readonly IMfaTrustedDeviceService _trustedDevices;
+    private readonly ITransactionalMailer _mailer;
     private readonly MfaChallengeService _mfaChallenges;
+    private readonly IPlatformFeatureService _features;
+    private readonly UnknownAccountLockoutTracker _unknownLockouts;
+    private readonly ITestAccountsRuntime _testAccounts;
+    private readonly ISystemAdminSettings _systemAdmin;
+    private readonly SystemAdminLoginNotifier _systemAdminLoginNotifier;
+    private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         JobsyDbContext db,
@@ -36,8 +51,15 @@ public class AuthController : ControllerBase
         IAmbassadeurAttributionService ambassadeurAttribution,
         IHostEnvironment environment,
         IDeviceSessionService deviceSessions,
-        IEmailService email,
-        MfaChallengeService mfaChallenges)
+        IMfaTrustedDeviceService trustedDevices,
+        ITransactionalMailer mailer,
+        MfaChallengeService mfaChallenges,
+        IPlatformFeatureService features,
+        UnknownAccountLockoutTracker unknownLockouts,
+        ITestAccountsRuntime testAccounts,
+        ISystemAdminSettings systemAdmin,
+        SystemAdminLoginNotifier systemAdminLoginNotifier,
+        ILogger<AuthController> logger)
     {
         _db = db;
         _configuration = configuration;
@@ -45,8 +67,41 @@ public class AuthController : ControllerBase
         _ambassadeurAttribution = ambassadeurAttribution;
         _environment = environment;
         _deviceSessions = deviceSessions;
-        _email = email;
+        _trustedDevices = trustedDevices;
+        _mailer = mailer;
         _mfaChallenges = mfaChallenges;
+        _features = features;
+        _unknownLockouts = unknownLockouts;
+        _testAccounts = testAccounts;
+        _systemAdmin = systemAdmin;
+        _systemAdminLoginNotifier = systemAdminLoginNotifier;
+        _logger = logger;
+    }
+
+    private bool IsTestAccountExempt(User user)
+        => user.IsTestAccount && _testAccounts.IsActive;
+
+    private bool RequiresLocalPasswordMfa(User user)
+        => MfaPolicy.IsLocalPasswordMfaStepRequired(
+            user.IsSystemAdminAccount,
+            user.Role,
+            user.IsTestAccount,
+            _testAccounts.IsActive,
+            user.AuthenticatorEnabled,
+            _systemAdmin.RequireTwoFactor);
+
+    private string? ClientIpAddress()
+        => HttpContext.Connection.RemoteIpAddress?.ToString();
+
+    private async Task NotifySystemAdminLoginAsync(User user, string authMethod, CancellationToken cancellationToken)
+    {
+        if (!user.IsSystemAdminAccount)
+        {
+            return;
+        }
+
+        await _systemAdminLoginNotifier.NotifySuccessfulLoginAsync(
+            user, authMethod, ClientIpAddress(), cancellationToken);
     }
 
     /// <summary>
@@ -65,56 +120,86 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "E-mail en wachtwoord zijn verplicht." });
         }
 
-        var email = request.Email.Trim().ToLowerInvariant();
+        var email = LoginIdentity.Normalize(request.Email);
         var credential = await _db.LocalAuthCredentials
             .FirstOrDefaultAsync(c => c.Email == email, cancellationToken);
-
-        var genericError = new { message = "Ongeldige e-mail of wachtwoord." };
         var now = DateTime.UtcNow;
+        var unknownKey = _unknownLockouts.KeyForEmail(email);
+
         if (credential is null)
         {
-            return Unauthorized(genericError);
+            JobsyPasswordHasher.VerifyAgainstDummy(request.Password);
+            if (_unknownLockouts.IsLocked(unknownKey, now, out var unknownRetry))
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "locked_out",
+                    retryAtUtc = unknownRetry
+                });
+            }
+
+            var unknownUntil = _unknownLockouts.RecordFailure(unknownKey, now);
+            if (unknownUntil is not null)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "locked_out",
+                    retryAtUtc = unknownUntil
+                });
+            }
+
+            return Unauthorized(new { code = "invalid_credentials" });
         }
 
         if (credential.LockoutUntil is DateTime lockedUntil && lockedUntil > now)
         {
-            return Unauthorized(genericError);
+            JobsyPasswordHasher.VerifyAgainstDummy(request.Password);
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                code = "locked_out",
+                retryAtUtc = lockedUntil
+            });
+        }
+
+        // Pause over → reset counters.
+        if (credential.LockoutUntil is DateTime ended && ended <= now)
+        {
+            credential.FailedLoginCount = 0;
+            credential.LockoutUntil = null;
+            if (credential.LastLockoutAtUtc is DateTime lastLockout
+                && lastLockout < now - LoginLockoutRules.LockoutWindow)
+            {
+                credential.LockoutCount = 0;
+            }
         }
 
         if (!JobsyPasswordHasher.Verify(request.Password, credential.PasswordHash))
         {
             credential.FailedLoginCount++;
-            var lockoutStarted = false;
-            var duration = LoginLockoutRules.LockoutDuration(credential.FailedLoginCount);
-            if (duration > TimeSpan.Zero)
+            if (credential.FailedLoginCount >= LoginLockoutRules.FailedAttemptsBeforeLockout)
             {
+                credential.LockoutCount++;
+                credential.LastLockoutAtUtc = now;
+                var duration = LoginLockoutRules.LockoutDuration(credential.LockoutCount);
                 credential.LockoutUntil = now.Add(duration);
-                lockoutStarted = true;
+                credential.FailedLoginCount = 0;
+                await _db.SaveChangesAsync(cancellationToken);
+                await SendLockoutMailAsync(credential, duration, cancellationToken);
+                return StatusCode(StatusCodes.Status403Forbidden, new
+                {
+                    code = "locked_out",
+                    retryAtUtc = credential.LockoutUntil
+                });
             }
 
             await _db.SaveChangesAsync(cancellationToken);
-            if (lockoutStarted)
-            {
-                try
-                {
-                    await _email.SendAsync(new EmailMessage(
-                        credential.Email,
-                        "Je Lobsy-account is tijdelijk geblokkeerd",
-                        "<p>Er zijn meerdere mislukte inlogpogingen gedaan. Je account is tijdelijk geblokkeerd. Was je dit niet zelf? Kies dan na de blokkade een nieuw wachtwoord.</p>",
-                        "AccountLockout"),
-                        cancellationToken);
-                }
-                catch
-                {
-                    // The lockout must never depend on e-mail delivery.
-                }
-            }
-
-            return Unauthorized(genericError);
+            return Unauthorized(new { code = "invalid_credentials" });
         }
 
         credential.FailedLoginCount = 0;
         credential.LockoutUntil = null;
+        credential.LockoutCount = 0;
+        _unknownLockouts.Clear(unknownKey);
         if (JobsyPasswordHasher.NeedsRehash(credential.PasswordHash))
         {
             credential.PasswordHash = JobsyPasswordHasher.Hash(request.Password);
@@ -127,11 +212,90 @@ public class AuthController : ControllerBase
 
         if (user is null || !user.IsActive)
         {
-            return Unauthorized(genericError);
+            return Unauthorized(new { code = "invalid_credentials" });
         }
 
-        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        if (user.Role == UserRole.Ambassadeur)
         {
+            var features = await _features.GetAsync(cancellationToken);
+            if (!features.AmbassadorsEnabled)
+            {
+                return Unauthorized(new
+                {
+                    code = "ambassadors_paused",
+                    message =
+                        "Het ambassadeursprogramma is gepauzeerd. Je gegevens en je tegoed blijven bewaard. Vragen? Mail support@lobsy.nl."
+                });
+            }
+        }
+
+        if (user.Role is UserRole.SchoolAdmin or UserRole.Teacher)
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            if (!features.SchoolsEnabled)
+            {
+                return Unauthorized(new
+                {
+                    code = "schools_paused",
+                    message =
+                        "Het scholenportaal is nog niet open. Je account blijft bewaard. Vragen? Mail support@lobsy.nl."
+                });
+            }
+        }
+
+        var testExempt = IsTestAccountExempt(user);
+        if (!testExempt && RequiresLocalPasswordMfa(user))
+        {
+            if (user.AuthenticatorEnabled
+                && await _trustedDevices.TryValidateAsync(
+                    user.Id,
+                    request.MfaTrustToken,
+                    user.SessionVersion,
+                    authenticatorEnabled: true,
+                    cancellationToken))
+            {
+                var trustedFlags = await BuildFlagsAsync(user, cancellationToken);
+                var trustedSession = CreateLocalSessionToken(user.Email, user.Id);
+                Guid? trustedDeviceId = null;
+                string? trustedRefresh = null;
+                DateTime? trustedExpires = null;
+                if (request.RememberDevice)
+                {
+                    var device = await _deviceSessions.CreateAsync(
+                        user.Id,
+                        Request.Headers.UserAgent.ToString(),
+                        mfaVerified: true,
+                        cancellationToken: cancellationToken);
+                    trustedDeviceId = device.DeviceSessionId;
+                    trustedRefresh = device.RefreshToken;
+                    trustedExpires = device.ExpiresAtUtc;
+                }
+
+                user.LastLoginAtUtc = DateTime.UtcNow;
+                await _db.SaveChangesAsync(cancellationToken);
+                await NotifySystemAdminLoginAsync(user, "password+trusted-device", cancellationToken);
+                return Ok(new LocalLoginResponse(
+                    user.Email,
+                    user.FullName,
+                    user.Role.ToString(),
+                    user.CompanyId,
+                    trustedFlags.CompanyIds,
+                    trustedFlags.ShowCandidateHowTo,
+                    trustedFlags.HasCandidateApplications,
+                    trustedFlags.HasSalesReferral,
+                    trustedSession,
+                    user.SessionVersion,
+                    trustedDeviceId,
+                    trustedRefresh,
+                    trustedExpires,
+                    user.Id,
+                    MfaVerified: true,
+                    SchoolId: user.SchoolId,
+                    AuthMethod: "password+trusted-device",
+                    IsTestAccount: user.IsTestAccount,
+                    IsSystemAdminAccount: user.IsSystemAdminAccount));
+            }
+
             return Ok(new LocalLoginResponse(
                 user.Email,
                 user.FullName,
@@ -140,8 +304,16 @@ public class AuthController : ControllerBase
                 [],
                 RequiresMfa: true,
                 MfaEnrolled: user.AuthenticatorEnabled,
-                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice),
-                UserId: user.Id));
+                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
+                UserId: user.Id,
+                SchoolId: user.SchoolId,
+                IsTestAccount: user.IsTestAccount,
+                IsSystemAdminAccount: user.IsSystemAdminAccount));
+        }
+
+        if (testExempt)
+        {
+            _logger.LogInformation("auth.login.test_exempt userId={UserId}", user.Id);
         }
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
@@ -154,7 +326,7 @@ public class AuthController : ControllerBase
             var device = await _deviceSessions.CreateAsync(
                 user.Id,
                 Request.Headers.UserAgent.ToString(),
-                cancellationToken);
+                cancellationToken: cancellationToken);
             deviceSessionId = device.DeviceSessionId;
             deviceRefresh = device.RefreshToken;
             deviceExpires = device.ExpiresAtUtc;
@@ -162,6 +334,8 @@ public class AuthController : ControllerBase
 
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
+        var authMethod = testExempt ? "password+test-exempt" : "password";
+        await NotifySystemAdminLoginAsync(user, authMethod, cancellationToken);
 
         return Ok(new LocalLoginResponse(
             user.Email,
@@ -177,7 +351,11 @@ public class AuthController : ControllerBase
             deviceSessionId,
             deviceRefresh,
             deviceExpires,
-            user.Id));
+            user.Id,
+            SchoolId: user.SchoolId,
+            AuthMethod: testExempt ? "password+test-exempt" : null,
+            IsTestAccount: user.IsTestAccount,
+            IsSystemAdminAccount: user.IsSystemAdminAccount));
     }
 
     /// <summary>
@@ -186,6 +364,75 @@ public class AuthController : ControllerBase
     /// New users become Candidate; invited managers keep their DB role.
     /// Requires the shared JobsyAuth development/provision secret (server-to-server).
     /// </summary>
+    /// <summary>
+    /// Exchanges a HMAC local session token (issued after registration confirm) for a login profile.
+    /// </summary>
+    [HttpPost("session-login")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<LocalLoginResponse>> SessionLogin(
+        [FromBody] SessionLoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.SessionToken))
+        {
+            return BadRequest(new { message = "Sessietoken ontbreekt." });
+        }
+
+        var secret = JobsyLocalSessionToken.ResolveSigningKey(
+            _configuration["JobsyAuth:LocalSessionSigningKey"],
+            _configuration["JobsyAuth:DevelopmentAuthSecret"]);
+        if (string.IsNullOrWhiteSpace(secret)
+            || !JobsyLocalSessionToken.TryValidate(request.SessionToken, secret, out var email, out var userId))
+        {
+            return Unauthorized(new { message = "Sessie ongeldig of verlopen." });
+        }
+
+        var user = await _db.Users
+            .Include(u => u.CompanyMemberships)
+            .FirstOrDefaultAsync(u => u.Id == userId && u.Email.ToLower() == email, cancellationToken);
+        if (user is null || !user.IsActive)
+        {
+            return Unauthorized(new { message = "Sessie ongeldig of verlopen." });
+        }
+
+        if (!IsTestAccountExempt(user) && RequiresLocalPasswordMfa(user))
+        {
+            return Ok(new LocalLoginResponse(
+                user.Email,
+                user.FullName,
+                user.Role.ToString(),
+                user.CompanyId,
+                [],
+                RequiresMfa: true,
+                MfaEnrolled: user.AuthenticatorEnabled,
+                MfaChallengeToken: _mfaChallenges.Create(user, rememberDevice: false, localPassword: true),
+                UserId: user.Id,
+                SessionToken: request.SessionToken,
+                IsTestAccount: user.IsTestAccount));
+        }
+
+        var flags = await BuildFlagsAsync(user, cancellationToken);
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new LocalLoginResponse(
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.CompanyId,
+            flags.CompanyIds,
+            flags.ShowCandidateHowTo,
+            flags.HasCandidateApplications,
+            flags.HasSalesReferral,
+            request.SessionToken,
+            user.SessionVersion,
+            null,
+            null,
+            null,
+            UserId: user.Id));
+    }
+
     [HttpPost("ensure-external")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]
@@ -247,7 +494,9 @@ public class AuthController : ControllerBase
                 Email = email,
                 FullName = fullName,
                 Role = UserRole.Candidate,
-                IsActive = true
+                IsActive = true,
+                // Same acceptance stamp as passwordless e-mail sign-up (external IdP consent covers terms).
+                TermsAcceptedAt = DateTime.UtcNow
             };
             _db.Users.Add(user);
             await _db.SaveChangesAsync(cancellationToken);
@@ -263,6 +512,11 @@ public class AuthController : ControllerBase
             if (!user.IsActive)
             {
                 return Unauthorized(new { message = "Account is niet actief." });
+            }
+
+            if (user.IsSystemAdminAccount)
+            {
+                return StatusCode(StatusCodes.Status403Forbidden, new { code = "system_admin_local_only" });
             }
 
             if (!string.IsNullOrWhiteSpace(fullName)
@@ -282,6 +536,17 @@ public class AuthController : ControllerBase
             }
         }
 
+        var allowedTenants = AdminLoginProviderPolicy.ParseAllowedTenants(
+            _configuration["JobsyAuth:AdminAllowedEntraTenants"]);
+        if (!AdminLoginProviderPolicy.IsAllowed(user.Role, provider, request.ProviderTenantId, allowedTenants))
+        {
+            _logger.LogInformation(
+                "auth.external.blocked userId={UserId} provider={Provider}",
+                user.Id,
+                provider);
+            return StatusCode(StatusCodes.Status403Forbidden, new { code = "provider_not_allowed" });
+        }
+
         if (provider is not null && subject is not null)
         {
             // First-time OID bind to an existing privileged account is only allowed when the
@@ -292,10 +557,12 @@ public class AuthController : ControllerBase
             await EnsureExternalLoginBoundAsync(user.Id, provider, subject, email, cancellationToken);
         }
 
+        ContactVerification.MarkEmailVerified(user, DateTime.UtcNow);
         await _db.SaveChangesAsync(cancellationToken);
 
         var flags = await BuildFlagsAsync(user, cancellationToken);
-        if (user.AuthenticatorEnabled || MfaPolicy.IsRequired(user.Role))
+        // IdP (Entra/Google/…) already enforced MFA — never challenge again in Lobsy.
+        if (provider is null && !IsTestAccountExempt(user) && RequiresLocalPasswordMfa(user))
         {
             return Ok(new EnsureExternalUserResponse(
                 user.Email,
@@ -327,6 +594,7 @@ public class AuthController : ControllerBase
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);
 
+        var authMethod = provider is null ? null : $"external:{provider}";
         return Ok(new EnsureExternalUserResponse(
             user.Email,
             user.FullName,
@@ -340,7 +608,342 @@ public class AuthController : ControllerBase
             sessionToken,
             user.SessionVersion,
             handoffCode,
+            user.Id,
+            AuthMethod: authMethod));
+    }
+
+    /// <summary>
+    /// Starts a passwordless e-mail code challenge for candidate sign-up / sign-in.
+    /// Response shape is identical for new, candidate, non-candidate and invalid addresses.
+    /// </summary>
+    [HttpPost("email-code/start")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<EmailCodeStartResponse>> StartEmailCode(
+        [FromBody] EmailCodeStartRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsTrustedProvisionCaller())
+        {
+            return Unauthorized(new { message = "Ongeldige provision-secret." });
+        }
+
+        var email = LoginIdentity.Normalize(request.Email);
+        var dummy = new EmailCodeStartResponse(Guid.NewGuid());
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@', StringComparison.Ordinal))
+        {
+            return Accepted(dummy);
+        }
+
+        var now = DateTime.UtcNow;
+        var stale = await _db.EmailSignInChallenges
+            .Where(c => c.CreatedAtUtc < now.AddHours(-24))
+            .ToListAsync(cancellationToken);
+        if (stale.Count > 0)
+        {
+            _db.EmailSignInChallenges.RemoveRange(stale);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        var window15 = now.AddMinutes(-15);
+        var dayStart = now.AddHours(-24);
+        var starts15 = await _db.EmailSignInChallenges.AsNoTracking()
+            .CountAsync(c => c.EmailNormalized == email && c.CreatedAtUtc >= window15, cancellationToken);
+        var startsDay = await _db.EmailSignInChallenges.AsNoTracking()
+            .CountAsync(c => c.EmailNormalized == email && c.CreatedAtUtc >= dayStart, cancellationToken);
+        // Count non-candidate reminder attempts via PlatformLogs would be heavy; instead track
+        // throttle rows even when we only send a password reminder (dummy challenges without hash).
+        if (!DevEmailCodeCapture.Enabled && (starts15 >= 3 || startsDay >= 10))
+        {
+            return Conflict(new { message = "too_many_codes" });
+        }
+
+        var culture = JobsyLanguages.Normalize(request.Culture);
+        var baseUrl = string.IsNullOrWhiteSpace(_configuration["PublicWebBaseUrl"])
+            ? "https://lobsy.nl"
+            : _configuration["PublicWebBaseUrl"]!.Trim();
+        var firstName = string.IsNullOrWhiteSpace(request.FirstName)
+            ? null
+            : request.FirstName.Trim();
+        if (firstName is { Length: > 60 })
+        {
+            firstName = firstName[..60];
+        }
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Email.ToLower() == email, cancellationToken);
+
+        if (user is not null && user.Role != UserRole.Candidate)
+        {
+            // Throttle row without a usable code (cannot verify).
+            _db.EmailSignInChallenges.Add(new EmailSignInChallenge
+            {
+                Id = Guid.NewGuid(),
+                EmailNormalized = email,
+                CodeHash = VerificationCodes.Hash(Guid.NewGuid().ToString("N")[..6]),
+                Purpose = EmailSignInPurpose.SignIn,
+                CreatedAtUtc = now,
+                ExpiresAtUtc = now.AddMinutes(10),
+                ConsumedAtUtc = now // burned immediately — not verifiable
+            });
+            await _db.SaveChangesAsync(cancellationToken);
+
+            try
+            {
+                var mail = TransactionalEmails.EmailCodeUsePassword(baseUrl, culture);
+                await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
+            }
+            catch
+            {
+                // Delivery must not change the identical 202 response.
+            }
+
+            return Accepted(dummy);
+        }
+
+        var purpose = user is null ? EmailSignInPurpose.SignUp : EmailSignInPurpose.SignIn;
+        var code = VerificationCodes.CreateNumericCode();
+        var challenge = new EmailSignInChallenge
+        {
+            Id = Guid.NewGuid(),
+            EmailNormalized = email,
+            CodeHash = VerificationCodes.Hash(code),
+            Purpose = purpose,
+            FirstName = firstName,
+            ReferralCode = string.IsNullOrWhiteSpace(request.ReferralCode)
+                ? null
+                : request.ReferralCode.Trim(),
+            ReturnUrl = string.IsNullOrWhiteSpace(request.ReturnUrl) ? null : request.ReturnUrl.Trim(),
+            CreatedAtUtc = now,
+            ExpiresAtUtc = now.AddMinutes(10)
+        };
+        _db.EmailSignInChallenges.Add(challenge);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        if (DevEmailCodeCapture.Enabled)
+        {
+            DevEmailCodeCapture.Record(email, code, challenge.Id);
+        }
+
+        try
+        {
+            var mail = purpose == EmailSignInPurpose.SignUp
+                ? TransactionalEmails.EmailSignUpCode(baseUrl, code, culture)
+                : TransactionalEmails.EmailSignInCode(baseUrl, code, culture);
+            await _mailer.SendAsync(mail, email, cancellationToken: cancellationToken);
+        }
+        catch
+        {
+            // Challenge stays; user can request a new code.
+        }
+
+        return Accepted(new EmailCodeStartResponse(challenge.Id));
+    }
+
+    /// <summary>Verifies a passwordless e-mail code and returns the local-login profile shape.</summary>
+    [HttpPost("email-code/verify")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<ActionResult<LocalLoginResponse>> VerifyEmailCode(
+        [FromBody] EmailCodeVerifyRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!IsTrustedProvisionCaller())
+        {
+            return Unauthorized(new { message = "Ongeldige provision-secret." });
+        }
+
+        var code = (request.Code ?? string.Empty).Trim();
+        if (request.ChallengeId == Guid.Empty || code.Length != 6)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        var challenge = await _db.EmailSignInChallenges
+            .FirstOrDefaultAsync(c => c.Id == request.ChallengeId, cancellationToken);
+        var now = DateTime.UtcNow;
+        if (challenge is null
+            || challenge.ConsumedAtUtc is not null
+            || challenge.ExpiresAtUtc <= now
+            || challenge.FailedAttempts >= VerificationCodes.MaxFailedAttempts)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        if (!VerificationCodes.MatchesHash(challenge.CodeHash, code))
+        {
+            var attempts = challenge.FailedAttempts;
+            var burned = VerificationCodes.RegisterFailedAttempt(ref attempts);
+            challenge.FailedAttempts = attempts;
+            if (burned)
+            {
+                challenge.ConsumedAtUtc = now;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+            return burned
+                ? StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" })
+                : Unauthorized(new
+                {
+                    message = "invalid_code",
+                    attemptsLeft = VerificationCodes.MaxFailedAttempts - challenge.FailedAttempts
+                });
+        }
+
+        // Race: reload and consume only if still open (second parallel verify loses).
+        await _db.Entry(challenge).ReloadAsync(cancellationToken);
+        if (challenge.ConsumedAtUtc is not null || challenge.ExpiresAtUtc <= now)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        challenge.ConsumedAtUtc = now;
+        challenge.Version++;
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+        }
+
+        User user;
+        if (challenge.Purpose == EmailSignInPurpose.SignUp)
+        {
+            var existing = await _db.Users
+                .Include(u => u.CompanyMemberships)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == challenge.EmailNormalized, cancellationToken);
+            if (existing is not null)
+            {
+                if (existing.Role != UserRole.Candidate || !existing.IsActive)
+                {
+                    return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+                }
+
+                user = existing;
+            }
+            else
+            {
+                var fullName = !string.IsNullOrWhiteSpace(challenge.FirstName)
+                    ? challenge.FirstName.Trim()
+                    : challenge.EmailNormalized.Split('@')[0];
+                user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    Email = challenge.EmailNormalized,
+                    FullName = fullName,
+                    FirstName = string.IsNullOrWhiteSpace(challenge.FirstName)
+                        ? null
+                        : challenge.FirstName.Trim(),
+                    Role = UserRole.Candidate,
+                    IsActive = true,
+                    TermsAcceptedAt = now
+                };
+                _db.Users.Add(user);
+                await _db.SaveChangesAsync(cancellationToken);
+
+                if (!string.IsNullOrWhiteSpace(challenge.ReferralCode))
+                {
+                    await _ambassadeurAttribution.TryAttributeCandidateAsync(
+                        user.Id, challenge.ReferralCode, cancellationToken);
+                }
+            }
+        }
+        else
+        {
+            var existing = await _db.Users
+                .Include(u => u.CompanyMemberships)
+                .FirstOrDefaultAsync(u => u.Email.ToLower() == challenge.EmailNormalized, cancellationToken);
+            if (existing is null || !existing.IsActive || existing.Role != UserRole.Candidate)
+            {
+                return StatusCode(StatusCodes.Status410Gone, new { message = "code_expired" });
+            }
+
+            user = existing;
+        }
+
+        ContactVerification.MarkEmailVerified(user, now);
+
+        if (!IsTestAccountExempt(user) && RequiresLocalPasswordMfa(user))
+        {
+            return Ok(new LocalLoginResponse(
+                user.Email,
+                user.FullName,
+                user.Role.ToString(),
+                user.CompanyId,
+                [],
+                RequiresMfa: true,
+                MfaEnrolled: user.AuthenticatorEnabled,
+                MfaChallengeToken: _mfaChallenges.Create(user, request.RememberDevice, localPassword: true),
+                UserId: user.Id,
+                IsTestAccount: user.IsTestAccount));
+        }
+
+        var flags = await BuildFlagsAsync(user, cancellationToken);
+        var sessionToken = CreateLocalSessionToken(user.Email, user.Id);
+        Guid? deviceSessionId = null;
+        string? deviceRefresh = null;
+        DateTime? deviceExpires = null;
+        if (request.RememberDevice)
+        {
+            var device = await _deviceSessions.CreateAsync(
+                user.Id,
+                request.UserAgent ?? Request.Headers.UserAgent.ToString(),
+                cancellationToken: cancellationToken);
+            deviceSessionId = device.DeviceSessionId;
+            deviceRefresh = device.RefreshToken;
+            deviceExpires = device.ExpiresAtUtc;
+        }
+
+        user.LastLoginAtUtc = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return Ok(new LocalLoginResponse(
+            user.Email,
+            user.FullName,
+            user.Role.ToString(),
+            user.CompanyId,
+            flags.CompanyIds,
+            flags.ShowCandidateHowTo,
+            flags.HasCandidateApplications,
+            flags.HasSalesReferral,
+            sessionToken,
+            user.SessionVersion,
+            deviceSessionId,
+            deviceRefresh,
+            deviceExpires,
             user.Id));
+    }
+
+    private async Task SendLockoutMailAsync(
+        LocalAuthCredential credential,
+        TimeSpan duration,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        if (credential.LastLockoutMailAtUtc is DateTime lastMail
+            && lastMail > now - LoginLockoutRules.MailCooldown)
+        {
+            return;
+        }
+
+        try
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            var lockoutMail = TransactionalEmails.AccountLockout(
+                features.PublicWebBaseUrl,
+                LoginLockoutRules.FailedAttemptsBeforeLockout,
+                credential.LockoutUntil,
+                duration);
+            await _mailer.SendAsync(lockoutMail, credential.Email, cancellationToken: cancellationToken);
+            credential.LastLockoutMailAtUtc = now;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Account lockout mail failed for user {UserId}", credential.UserId);
+        }
     }
 
     private string? CreateLocalSessionToken(string email, Guid userId)
@@ -419,6 +1022,7 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpGet("external-providers")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<ExternalProvidersStatusResponse>> GetExternalProviders(
         CancellationToken cancellationToken)
     {
@@ -519,9 +1123,29 @@ public class AuthController : ControllerBase
             && await _db.Companies.AsNoTracking()
                 .AnyAsync(c => c.Id == companyId && c.ReferredBySalesManagerUserId != null, cancellationToken);
 
-        // Eerste login ooit → Hoe werkt Lobsy; daarna → banenkaart (nav blijft beschikbaar).
-        var isFirstLogin = user.LastLoginAtUtc is null;
-        var showHowTo = user.Role == UserRole.Candidate && isFirstLogin;
+        bool showHowTo;
+        if (user.Role == UserRole.Candidate)
+        {
+            var features = await _features.GetAsync(cancellationToken);
+            if (features.CandidatePassportEnabled)
+            {
+                // Paspoort ON: showHowTo = not passport-ready (CompletedAtUtc).
+                var completedAt = await _db.CandidateOnboardings.AsNoTracking()
+                    .Where(o => o.UserId == user.Id)
+                    .Select(o => o.CompletedAtUtc)
+                    .FirstOrDefaultAsync(cancellationToken);
+                showHowTo = !CandidateLanding.IsPassportReady(completedAt);
+            }
+            else
+            {
+                // Eerste login ooit → Hoe werkt Lobsy; daarna → banenkaart (nav blijft beschikbaar).
+                showHowTo = user.LastLoginAtUtc is null;
+            }
+        }
+        else
+        {
+            showHowTo = false;
+        }
 
         user.LastLoginAtUtc = DateTime.UtcNow;
         await _db.SaveChangesAsync(cancellationToken);

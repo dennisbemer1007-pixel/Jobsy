@@ -1,0 +1,57 @@
+@namespace Jobsy.Web.Components.Engagement
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Items.Count > 0)
+{
+    <ul class="engage-badges @CssClass" aria-label="@Culture["WaEngage.OrgSection"]">
+        @foreach (var item in Visible)
+        {
+            <li class="engage-badges__item @(item.Checked ? "is-checked" : "is-claimed")">
+                @if (EngagementCatalog.TryGet(item.ItemId, out var def))
+                {
+                    <span class="pub-emoji" aria-hidden="true">@def.Emoji</span>
+                    <span class="engage-badges__title">@Culture[def.TitleKey]</span>
+                    <span class="engage-badges__label">@LabelFor(item)</span>
+                }
+            </li>
+        }
+        @if (Overflow > 0)
+        {
+            <li class="engage-badges__more">@string.Format(Culture["WaEngage.More"], Overflow)</li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<EngageBadgeItem> Items { get; set; } = [];
+    [Parameter] public int MaxVisible { get; set; } = 0;
+    [Parameter] public string? CssClass { get; set; }
+
+    private IReadOnlyList<EngageBadgeItem> Ordered => Items
+        .Where(i => EngagementCatalog.IsKnown(i.ItemId))
+        .OrderByDescending(i => i.Checked)
+        .ThenBy(i => i.ItemId, StringComparer.Ordinal)
+        .ToList();
+
+    private IReadOnlyList<EngageBadgeItem> Visible
+        => MaxVisible > 0 ? Ordered.Take(MaxVisible).ToList() : Ordered;
+
+    private int Overflow
+        => MaxVisible > 0 ? Math.Max(0, Ordered.Count - MaxVisible) : 0;
+
+    private string LabelFor(EngageBadgeItem item)
+    {
+        if (!item.Checked)
+        {
+            return Culture["WaEngage.Label.SelfDeclared"];
+        }
+
+        return string.Equals(item.CheckedSource, CompanyEngagementCheckedSources.Sbb, StringComparison.OrdinalIgnoreCase)
+            ? Culture["WaEngage.Label.CheckedSbb"]
+            : Culture["WaEngage.Label.CheckedAdmin"];
+    }
+
+    public sealed record EngageBadgeItem(string ItemId, bool Checked, string? CheckedSource = null);
+}

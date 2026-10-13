@@ -1,3 +1,4 @@
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Auth;
 
@@ -33,8 +34,15 @@ public class PlatformUxSpecTests
     [Fact]
     public void Auth_preserves_vacancy_return_url()
     {
-        Assert.Equal("/vacancies/123", AuthRedirects.ResolveCandidateReturnUrl("/vacancies/123", true));
-        Assert.Equal(AuthRedirects.BanenkaartPath, AuthRedirects.ResolveCandidateReturnUrl("/home", false));
+        var on = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        Assert.Equal("/vacancies/123", AuthRedirects.ResolveCandidateReturnUrl("/vacancies/123", true, on));
+        Assert.Equal(
+            FeatureRoutes.CandidatePassportPath,
+            AuthRedirects.ResolveCandidateReturnUrl("/home", false));
+        var off = new FeatureFlagSnapshot(true, false);
+        Assert.Equal(
+            AuthRedirects.BanenkaartPath,
+            AuthRedirects.ResolveCandidateReturnUrl("/home", false, off));
     }
 
     [Fact]
@@ -57,8 +65,7 @@ public class PlatformUxSpecTests
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains(".job-map .maplibregl-popup", css);
         Assert.Contains("z-index: 40 !important", css);
-        Assert.Contains(".travel-ring-label", css);
-        Assert.Contains("z-index: 1 !important", css);
+        // .travel-ring-label rules were unused (dead CSS) and removed; popup stacking remains.
         Assert.DoesNotContain("z-index: 1200 !important", css);
     }
 

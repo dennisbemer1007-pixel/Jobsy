@@ -1,0 +1,28 @@
+@namespace Jobsy.Web.Components.KandidaatBanen
+@inject CultureState Culture
+
+@if (Fit is null)
+{
+}
+else if (!Fit.GateOpen)
+{
+    <a class="kb-fit kb-fit--gate"
+       href="@KbRoutes.PaspoortTests"
+       title="@Culture["Kb.Fit.GateHint"]">
+        <span class="kb-fit__icon" aria-hidden="true">@KbIcons.Sparkle</span>
+        <span class="kb-fit__label">@Culture["Kb.Fit.Gate"]</span>
+    </a>
+}
+else if (Fit.Percent is int percent && Fit.Band is KbFitBand band)
+{
+    var mod = KbLabels.FitBandCss(band);
+    <span class="kb-fit kb-fit--@mod" title="@(band == KbFitBand.Strong ? Culture["Kb.Fit.Strong"] : null)">
+        <span class="kb-fit__icon" aria-hidden="true">@KbIcons.Sparkle</span>
+        <span class="kb-fit__label">@string.Format(Culture["Kb.Fit.Percent"], percent)</span>
+        <span class="visually-hidden">@KbLabels.FitBand(Culture, band)</span>
+    </span>
+}
+
+@code {
+    [Parameter] public KbFitView? Fit { get; set; }
+}

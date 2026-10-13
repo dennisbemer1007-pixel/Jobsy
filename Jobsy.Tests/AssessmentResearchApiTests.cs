@@ -89,7 +89,7 @@ public class AssessmentResearchApiTests : IClassFixture<AssessmentResearchApiFac
     }
 }
 
-public sealed class AssessmentResearchApiFactory : WebApplicationFactory<Program>
+public sealed class AssessmentResearchApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid AdminId { get; } = Guid.Parse("a1000000-0000-0000-0000-000000000099");
     public Guid CandidateId { get; } = Guid.Parse("c1000000-0000-0000-0000-000000000099");

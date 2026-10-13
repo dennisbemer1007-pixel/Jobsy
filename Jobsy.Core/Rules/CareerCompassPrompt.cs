@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Jobsy.Core.Rules;
 
 /// <summary>Structured OpenAI prompt for an inspiring Jip-en-Janneke career PDF and compass.</summary>
@@ -7,22 +5,30 @@ public static class CareerCompassPrompt
 {
     public const string System = """
         Je bent de loopbaanadviseur van Lobsy. Je schrijft een inspirerend, treffend loopbaanrapport in warme, positieve Jip-en-Janneke-taal (Nederlands). Alsof je het aan een vriend uitlegt.
-        Verboden vaktermen (niet in titels, toelichting of notities): RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid.
-        Doel: analyseer de 200 unieke antwoorden en de scores per richting. Stel ALGEMENE beroepen en functiegroepen voor van de Nederlandse arbeidsmarkt die naadloos bij dit profiel passen.
+        Verboden vaktermen (niet in titels, toelichting of notities): RIASEC, OCEAN, Holland-code, Holland code, Realistic, Investigative, Artistic, Social, Enterprising, Conventional, Big Five, extraversie, extraversion, neuroticisme, neuroticism, consciëntieusheid, ISCO, ESCO, O*NET, gradient.
+        Een zin over vraag tot 2030 of over AI die taken verandert mag je alleen letterlijk citeren uit de Vooruitblik in de feitenlijst. Verzin geen andere vooruitblik.
+        Een eerlijk advies mag je alleen letterlijk citeren uit Eerlijk advies in de feitenlijst. Zet dat advies niet in why of strengths. Verzin geen eigen advies over hoe AI het werk verandert.
+        Doel: gebruik alleen de feitenlijst (scores van de uitgebreide beroepentest, 200 unieke vragen). Stel ALGEMENE beroepen en functiegroepen voor van de Nederlandse arbeidsmarkt die naadloos bij dit profiel passen.
+        Kies elke title alleen uit de lijst Toegestane beroepen in het gebruikersbericht. Gebruik die titels letterlijk. Verzin geen andere functienaam.
+        Verzin geen werkgever, sector, jaartal, diploma of werkervaring. De feitenlijst heeft geen werkverleden. Zeg niets over eerder werk.
         Niet beperken tot vacatures die nu op Lobsy staan. Geen bedrijfsnamen, geen woonplaats vragen, geen naam of e-mail.
-        Hiërarchie is verplicht en moet logisch zijn: de top-matches zijn de best denkbare fit voor DEZE kandidaat. Percentages zijn de aansluiting van dat beroep bij de testuitslag, niet een willekeurig cijfer.
-        - superMatches (kernfit): percent 95-100. De ideale banen die direct resoneren met de hoogste richtingen. Nooit geforceerd te laag (geen 80% voor de beste fit). 3 tot 6 beroepen, aflopend in percent.
-        - strongChoices (uitstekende alternatieven): percent 85-94. Dichtbij de kernfit, logisch om te overwegen. 3 tot 6 beroepen, allemaal lager dan de laagste super-match.
-        - broadening (doorgroei of omscholing): percent 75-84. Aanverwante talenten of een mogelijke switch. 3 tot 6 beroepen, allemaal lager dan de laagste sterke keus.
-        Elk beroep: title (algemene functienaam), percent, why (één warme zin waarom dit bij de antwoorden past), keys (2-6 korte Nederlandse zoekwoorden voor de banenkaart, bijv. zorg, verpleeg, kas).
+        Het percentage bij elk beroep staat al in de feitenlijst. Kopieer dat cijfer. Verzin geen 95-100 en geen ander cijfer.
+        Kies superMatches 3 tot 4, strongChoices 3 tot 4, broadening 2 tot 4. Samen 8 tot 12 beroepen. Niet meer.
+        Elk beroep: title (exact uit de toegestane lijst), percent (het berekende cijfer), why (één warme zin), keys (2-6 korte Nederlandse zoekwoorden, bijv. zorg, verpleeg, kas).
+        De why-zin noemt alleen de richting achter de pijl bij dat beroep in de feitenlijst. Noem geen andere richting.
+        Elke why-zin bevat die richtingnaam letterlijk, bijvoorbeeld "Dit beroep vraagt Aanpakken met je handen". Zonder die woorden is het antwoord fout.
+        Zeg nooit dat een beroep een eigen richting niet heeft.
+        Noem een score van 50 of lager niet als kracht en niet als iets positiefs.
+        Gebruik nooit de woorden graag, leuk, fijn, you like, you enjoy, lubisz, îți place of تحب.
+        Zeg niet dat de persoon van dieren, planten, koken, schoonmaak of andere dingen houdt, tenzij dat letterlijk in de feiten staat. Leg het beroep uit met de scores.
         practicalNotes: 3 tot 5 korte alinea's onder "Wat betekent dit voor jou?": soort werkomgeving, soort taken, sfeer/cultuur, en hoe de kandidaat dit op de Lobsy-banenkaart gebruikt (filter op hoge match, bewaar wat voelt als 'dit is het').
         strengths: 3 tot 5 sterke kanten in gewone woorden, afgeleid van de hoogste richtingen.
         Antwoord ALLEEN als JSON-object met exact deze velden:
         {
           "strengths": ["korte sterke kanten in gewone taal"],
-          "superMatches": [{"title":"algemeen beroep","percent":97,"why":"één zin","keys":["zoekwoord","synoniem"]}],
-          "strongChoices": [{"title":"...","percent":88,"why":"...","keys":["..."]}],
-          "broadening": [{"title":"...","percent":78,"why":"...","keys":["..."]}],
+          "superMatches": [{"title":"algemeen beroep","percent":66,"why":"één zin die een richting uit de feiten noemt","keys":["zoekwoord","synoniem"]}],
+          "strongChoices": [{"title":"...","percent":64,"why":"...","keys":["..."]}],
+          "broadening": [{"title":"...","percent":62,"why":"...","keys":["..."]}],
           "practicalNotes": ["Wat betekent dit voor jou? korte alinea's"]
         }
         """;
@@ -31,49 +37,6 @@ public static class CareerCompassPrompt
         IReadOnlyList<DeepAnalysisDomainScore> scores,
         IReadOnlyDictionary<int, int> answers)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("Resultaten van de uitgebreide beroepentest (200 unieke vragen). Geen naam of e-mail.");
-        var ordered = scores
-            .OrderByDescending(s => s.Percent)
-            .ThenBy(s => s.Domain, StringComparer.Ordinal)
-            .ToList();
-        sb.AppendLine("Kernfit (hoogste richtingen). Super-match beroepen moeten hier direct bij horen:");
-        foreach (var score in ordered.Take(3))
-        {
-            sb.Append("- ")
-                .Append(CareerCompassBuilder.TypeLabel(score.Domain))
-                .Append(": ")
-                .Append(score.Percent)
-                .AppendLine("%");
-        }
-
-        sb.AppendLine("Alle richtingen 0-100 (gebruik dit zodat percentages bij de testuitslag kloppen):");
-        foreach (var score in ordered)
-        {
-            sb.Append("- ")
-                .Append(CareerCompassBuilder.TypeLabel(score.Domain))
-                .Append(": ")
-                .Append(score.Percent)
-                .AppendLine("%");
-        }
-
-        sb.AppendLine();
-        sb.AppendLine("Antwoorden (1=helemaal oneens, 5=helemaal eens). Kies beroepen die bij het patroon van 5-en en 1-en passen:");
-        foreach (var question in DeepAnalysisCatalog.CareerQuestions)
-        {
-            if (!answers.TryGetValue(question.Id, out var value))
-            {
-                continue;
-            }
-
-            sb.Append(question.Id)
-                .Append(". ")
-                .Append(question.PromptNl)
-                .Append(" → ")
-                .Append(value)
-                .AppendLine();
-        }
-
-        return sb.ToString();
+        return CandidateFactSheet.ForCareer(scores, answers).ToPrompt();
     }
 }

@@ -44,7 +44,7 @@ public class SalesManagerReferralHierarchyTests
         CompleteOnboarding(db, child.UserId, "SM-CHILD1");
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            apps.SubmitAsync(child.UserId, "newbie@jobsy.local", "Newbie", "Motivatie lang genoeg."));
+            apps.SubmitAsync(child.UserId, "newbie@jobsy.local", "Newbie", "Motivatie lang genoeg.", true));
     }
 
     [Fact]
@@ -68,14 +68,18 @@ public class SalesManagerReferralHierarchyTests
         CompleteOnboarding(db, parent.UserId, "SM-RECR01");
 
         var pending = await apps.SubmitAsync(
-            parent.UserId, "candidate@jobsy.local", "Candidate SM", "Sterke netwerk in Westland.");
+            parent.UserId, "candidate@jobsy.local", "Candidate SM", "Sterke netwerk in Westland.", true);
         Assert.Equal(nameof(SalesManagerApplicationStatus.Pending), pending.Status);
         Assert.Null(await db.Users.FirstOrDefaultAsync(u => u.Email == "candidate@jobsy.local"));
 
         var approved = await apps.ApproveAsync(pending.Id, adminId);
         Assert.Equal(nameof(SalesManagerApplicationStatus.Approved), approved.Status);
         Assert.NotNull(approved.ProvisionedUserId);
-        Assert.False(string.IsNullOrWhiteSpace(approved.TemporaryPassword));
+        Assert.True(await db.OneTimeLinks.AnyAsync(l =>
+            l.UserId == approved.ProvisionedUserId
+            && l.Purpose == Jobsy.Core.Enums.OneTimeLinkPurpose.SetPassword
+            && l.UsedAtUtc == null));
+        Assert.False(await db.LocalAuthCredentials.AnyAsync(c => c.UserId == approved.ProvisionedUserId));
 
         var profile = await db.SalesManagerProfiles.SingleAsync(p => p.UserId == approved.ProvisionedUserId);
         Assert.False(profile.CanRecruitSalesManagers);
@@ -129,12 +133,16 @@ public class SalesManagerReferralHierarchyTests
             Address = "A",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
             ReferredBySalesManagerUserId = childId,
-            FirstYearStartedAt = now.AddMonths(-2)
+            FirstYearStartedAt = now.AddMonths(-2),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var commercial = new SalesCommercialService(db, tokens);
         var share = new RevenueShareService(db, tokens, commissions, commercial);
 
@@ -163,7 +171,11 @@ public class SalesManagerReferralHierarchyTests
         var started = DateTime.UtcNow.AddYears(-3).AddDays(-1);
         db.Users.Add(new User
         {
-            Id = smId, Email = "sm@t.local", FullName = "SM", Role = UserRole.SalesManager, IsActive = true
+            Id = smId,
+            Email = "sm@t.local",
+            FullName = "SM",
+            Role = UserRole.SalesManager,
+            IsActive = true
         });
         db.SalesManagerProfiles.Add(new SalesManagerProfile
         {
@@ -185,19 +197,30 @@ public class SalesManagerReferralHierarchyTests
             Address = "A",
             Location = new Jobsy.Core.ValueObjects.GeoPoint(52, 4),
             ReferredBySalesManagerUserId = smId,
-            FirstYearStartedAt = started
+            FirstYearStartedAt = started,
+            CommissionStartsAtUtc = started,
+            CommissionDirectRateSnapshot = 0.25m,
+            CommissionIndirectRateSnapshot = 0m,
+            CommissionYear2RateSnapshot = 0.10m,
+            CommissionYear3RateSnapshot = 0.05m,
+            CommissionDurationDaysSnapshot = 1095,
+            CommissionTermsSnapshottedAtUtc = started,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
         var tokens = new TokenLedgerService(db);
-        var commissions = new CommissionLedgerService(db);
+        var commissions = new CommissionLedgerService(db, new AlwaysOnFeatures());
         var share = new RevenueShareService(db, tokens, commissions, new SalesCommercialService(db, tokens));
 
         await share.ApplyTokenPurchaseShareAsync(
             Guid.NewGuid(), companyId, null, 10, 100m, smId, started);
 
         Assert.Equal(0m, await commissions.GetBalanceExVatAsync(smId));
-        Assert.Equal(1.5m, await tokens.GetBalanceAsync(companyId)); // ambassador still applies
+        Assert.Equal(0m, await tokens.GetBalanceAsync(companyId)); // no 15% bonus after window (D1)
     }
 
     private static void CompleteOnboarding(JobsyDbContext db, Guid userId, string code)
@@ -241,11 +264,18 @@ public class SalesManagerReferralHierarchyTests
         new SalesManagerInviteService(
             db,
             new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new OneTimeLinkService(db, NullLogger<OneTimeLinkService>.Instance),
+            new AlwaysOnFeatures(),
             NullLogger<SalesManagerInviteService>.Instance);
 
     private static ISalesManagerApplicationService CreateApplications(
         JobsyDbContext db, ISalesManagerInviteService invite) =>
-        new SalesManagerApplicationService(db, invite, NullLogger<SalesManagerApplicationService>.Instance);
+        new SalesManagerApplicationService(
+            db,
+            invite,
+            new EmailServiceStub(db, NullLogger<EmailServiceStub>.Instance),
+            new AlwaysOnFeatures(),
+            NullLogger<SalesManagerApplicationService>.Instance);
 
     private static JobsyDbContext CreateDb()
     {

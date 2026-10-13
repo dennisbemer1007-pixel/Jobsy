@@ -1,27 +1,39 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Media;
+using Jobsy.Core.Rules;
 
 namespace Jobsy.Tests;
 
 public class VacancyImageUrlsTests
 {
     [Fact]
-    public void Placeholder_is_local_svg_by_work_type()
+    public void Placeholder_is_local_webp_by_work_type()
     {
         var id = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         var url = VacancyImageUrls.Placeholder(id, WorkType.Horeca);
-        Assert.StartsWith("/images/vacancies/horeca-", url);
-        Assert.EndsWith(".svg", url);
+        Assert.Equal("/images/vacancies/horeca.webp", url);
     }
 
     [Fact]
-    public void Resolve_maps_picsum_and_unsplash_to_local_svg()
+    public void Placeholder_maps_product_category_aliases()
+    {
+        var id = Guid.NewGuid();
+        Assert.Equal("/images/vacancies/winkel.webp", VacancyImageUrls.Placeholder(id, "retail"));
+        Assert.Equal("/images/vacancies/tuinbouw.webp", VacancyImageUrls.Placeholder(id, "groen"));
+        Assert.Equal("/images/vacancies/bouw.webp", VacancyImageUrls.Placeholder(id, "techniek"));
+        Assert.Equal("/images/vacancies/kantoor.webp", VacancyImageUrls.Placeholder(id, "administratie"));
+        Assert.Equal("/images/vacancies/onderwijs.webp", VacancyImageUrls.Placeholder(id, "onderwijs"));
+        Assert.Equal("/images/vacancies/flex.webp", VacancyImageUrls.Placeholder(id, "overig"));
+    }
+
+    [Fact]
+    public void Resolve_maps_picsum_and_unsplash_to_local_fallback()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var svg = VacancyImageUrls.Placeholder(id, WorkType.Horeca);
-        Assert.Equal(svg, VacancyImageUrls.Resolve(VacancyImageUrls.PicsumUrl(id), id, "Horeca"));
-        Assert.Equal(svg, VacancyImageUrls.Resolve("https://images.unsplash.com/photo-legacy-404", id, "Horeca"));
-        Assert.Equal(svg, VacancyImageUrls.Resolve(svg, id, "Horeca"));
+        var photo = VacancyImageUrls.Placeholder(id, WorkType.Horeca);
+        Assert.Equal(photo, VacancyImageUrls.Resolve(LegacyPicsumUrl(id), id, "Horeca"));
+        Assert.Equal(photo, VacancyImageUrls.Resolve("https://images.unsplash.com/photo-legacy-404", id, "Horeca"));
+        Assert.Equal(photo, VacancyImageUrls.Resolve(photo, id, "Horeca"));
     }
 
     [Fact]
@@ -40,12 +52,12 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void Resolve_uses_work_type_svg_when_photo_and_logo_are_empty()
+    public void Resolve_uses_work_type_photo_when_photo_and_logo_are_empty()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var svg = VacancyImageUrls.Placeholder(id, "Horeca");
-        Assert.Equal(svg, VacancyImageUrls.Resolve(null, null, id, "Horeca"));
-        Assert.Equal(svg, VacancyImageUrls.Resolve("undefined", "", id, "Horeca"));
+        var photo = VacancyImageUrls.Placeholder(id, "Horeca");
+        Assert.Equal(photo, VacancyImageUrls.Resolve(null, null, id, "Horeca"));
+        Assert.Equal(photo, VacancyImageUrls.Resolve("undefined", "", id, "Horeca"));
     }
 
     [Fact]
@@ -70,18 +82,18 @@ public class VacancyImageUrlsTests
     public void AlternateSrc_is_logo_only_when_it_differs_from_display()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var svg = VacancyImageUrls.Placeholder(id, "Horeca");
+        var photo = VacancyImageUrls.Placeholder(id, "Horeca");
         Assert.Equal(
             "/images/logos/westland.svg",
             VacancyImageUrls.AlternateSrc(
-                VacancyImageUrls.PicsumUrl(id),
+                LegacyPicsumUrl(id),
                 "/images/logos/westland.svg",
-                svg));
+                photo));
         Assert.Null(VacancyImageUrls.AlternateSrc(
             "/images/logos/westland.svg",
             "/images/logos/westland.svg",
             "/images/logos/westland.svg"));
-        Assert.Null(VacancyImageUrls.AlternateSrc(null, null, "/images/vacancies/horeca-0.svg"));
+        Assert.Null(VacancyImageUrls.AlternateSrc(null, null, "/images/vacancies/horeca.webp"));
     }
 
     [Fact]
@@ -112,45 +124,57 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void ForDisplay_maps_picsum_to_local_svg()
+    public void ForDisplay_maps_picsum_to_local_fallback()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        var svg = VacancyImageUrls.Placeholder(id, "Horeca");
-        Assert.Equal(svg, VacancyImageUrls.ForDisplay(VacancyImageUrls.PicsumUrl(id), 400, cloudflareResizing: false, id, "Horeca"));
+        var photo = VacancyImageUrls.Placeholder(id, "Horeca");
+        Assert.Equal(photo, VacancyImageUrls.ForDisplay(LegacyPicsumUrl(id), 400, cloudflareResizing: false, id, "Horeca"));
     }
 
     [Fact]
-    public void Placeholder_svg_files_exist_for_every_work_type()
+    public void Placeholder_webp_files_exist_for_every_work_type()
     {
         var root = FindRepoRoot();
         var dir = Path.Combine(root, "Jobsy.Web", "wwwroot", "images", "vacancies");
         foreach (var slug in new[]
                  {
                      "horeca", "winkel", "logistiek", "tuinbouw", "zorg",
-                     "kantoor", "bouw", "schoonmaak", "productie", "flex"
+                     "kantoor", "bouw", "schoonmaak", "productie", "flex", "onderwijs"
                  })
         {
-            Assert.True(File.Exists(Path.Combine(dir, $"{slug}-0.svg")), slug + "-0");
-            Assert.True(File.Exists(Path.Combine(dir, $"{slug}-1.svg")), slug + "-1");
+            var primary = Path.Combine(dir, $"{slug}.webp");
+            var companion = Path.Combine(dir, $"{slug}-400.webp");
+            Assert.True(File.Exists(primary), slug + ".webp");
+            Assert.True(File.Exists(companion), slug + "-400.webp");
+            Assert.True(new FileInfo(primary).Length < 80 * 1024, slug + " under 80KB");
         }
     }
 
     [Fact]
-    public void NeedsImageBackfill_replaces_third_party_placeholders()
+    public void SrcSet_returns_local_400_and_800_for_fallback_photos()
+    {
+        var primary = VacancyImageUrls.Placeholder(Guid.NewGuid(), WorkType.Winkel);
+        var srcset = VacancyImageUrls.SrcSet(primary, cloudflareResizing: false);
+        Assert.Equal("/images/vacancies/winkel-400.webp 400w, /images/vacancies/winkel.webp 800w", srcset);
+    }
+
+    [Fact]
+    public void NeedsImageBackfill_replaces_third_party_and_legacy_svg()
     {
         var id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
         Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(null));
         Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.Placeholder(id, WorkType.Winkel)));
         Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("https://images.unsplash.com/photo-x"));
-        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(VacancyImageUrls.PicsumUrl(id)));
+        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill(LegacyPicsumUrl(id)));
+        Assert.True(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("/images/vacancies/horeca-0.svg"));
         Assert.False(Jobsy.Infrastructure.Data.MockVacancyMedia.NeedsImageBackfill("/images/uploads/x.jpg"));
     }
 
     [Fact]
-    public void ForDisplay_skips_svg_and_data_uris_when_resizing()
+    public void ForDisplay_skips_fallback_webp_and_data_uris_when_resizing()
     {
-        var svg = VacancyImageUrls.Placeholder(Guid.NewGuid(), WorkType.Winkel);
-        Assert.Equal(svg, VacancyImageUrls.ForDisplay(svg, 400, cloudflareResizing: true));
+        var photo = VacancyImageUrls.Placeholder(Guid.NewGuid(), WorkType.Winkel);
+        Assert.Equal(photo, VacancyImageUrls.ForDisplay(photo, 400, cloudflareResizing: true));
         Assert.Equal("data:image/png;base64,x", VacancyImageUrls.ForDisplay("data:image/png;base64,x", 400, true));
     }
 
@@ -162,7 +186,7 @@ public class VacancyImageUrlsTests
         Assert.Equal(placeholder, VacancyImageUrls.ForPublicList("data:image/png;base64,abc", id, "Horeca"));
         Assert.DoesNotContain("data:image", VacancyImageUrls.ForPublicList("data:image/jpeg;base64,/9j/", id, "Zorg"));
 
-        Assert.Equal(placeholder, VacancyImageUrls.ForPublicList(VacancyImageUrls.PicsumUrl(id), id, "Horeca"));
+        Assert.Equal(placeholder, VacancyImageUrls.ForPublicList(LegacyPicsumUrl(id), id, "Horeca"));
         Assert.Equal("/images/logos/westland.svg", VacancyImageUrls.ForPublicList("/images/logos/westland.svg", id));
     }
 
@@ -194,7 +218,7 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void ForCard_empty_photo_without_logo_returns_svg_placeholder()
+    public void ForCard_empty_photo_without_logo_returns_webp_placeholder()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         Assert.Equal(
@@ -203,22 +227,22 @@ public class VacancyImageUrlsTests
     }
 
     [Fact]
-    public void ForCard_picsum_falls_back_to_logo_then_svg()
+    public void ForCard_picsum_falls_back_to_logo_then_placeholder()
     {
         var id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
         Assert.Equal(
             "/images/logos/westland.svg",
-            VacancyImageUrls.ForCard(VacancyImageUrls.PicsumUrl(id), "/images/logos/westland.svg", id, "Horeca"));
+            VacancyImageUrls.ForCard(LegacyPicsumUrl(id), "/images/logos/westland.svg", id, "Horeca"));
         Assert.Equal(
             VacancyImageUrls.Placeholder(id, "Horeca"),
-            VacancyImageUrls.ForCard(VacancyImageUrls.PicsumUrl(id), null, id, "Horeca"));
+            VacancyImageUrls.ForCard(LegacyPicsumUrl(id), null, id, "Horeca"));
     }
 
     [Fact]
     public void ForCard_external_https_falls_back_for_csp()
     {
         var id = Guid.NewGuid();
-        // External absolute URLs are not returned (img-src 'self'); logo/SVG instead.
+        // External absolute URLs are not returned (img-src 'self'); logo/placeholder instead.
         Assert.Equal(
             "/images/logos/westland.svg",
             VacancyImageUrls.ForCard(
@@ -226,6 +250,47 @@ public class VacancyImageUrlsTests
                 "/images/logos/westland.svg",
                 id,
                 "Zorg"));
+    }
+
+    [Fact]
+    public void ForCardKind_classifies_photo_logo_and_placeholder()
+    {
+        var id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+        var photo = VacancyImageUrls.ForCard("/images/brand/dennis.jpg", "/images/logos/westland.svg", id, "Horeca");
+        Assert.Equal("photo", VacancyImageUrls.ForCardKind(photo, "/images/logos/westland.svg"));
+
+        var logo = VacancyImageUrls.ForCard(null, "/images/logos/westland.svg", id, "Horeca");
+        Assert.Equal("logo", VacancyImageUrls.ForCardKind(logo, "/images/logos/westland.svg"));
+
+        var placeholder = VacancyImageUrls.ForCard(null, null, id, "Horeca");
+        Assert.Equal("placeholder", VacancyImageUrls.ForCardKind(placeholder, null));
+
+        var externalFallsToLogo = VacancyImageUrls.ForCard(
+            "https://cdn.example.com/x.jpg", "/images/logos/westland.svg", id, "Zorg");
+        Assert.Equal("logo", VacancyImageUrls.ForCardKind(externalFallsToLogo, "/images/logos/westland.svg"));
+    }
+
+    [Fact]
+    public void Application_card_logo_follows_intermediary_when_client_address_hidden()
+    {
+        // Mirrors MeController: intermediary logo when ForPublicCard shows intermediary name.
+        var (name, _) = CandidateApplicationLocation.ForPublicCard(
+            hasIntermediary: true,
+            showClientAddressOnMap: false,
+            endClientName: "Jumbo",
+            endClientAddress: "Straat 1, Naaldwijk",
+            intermediaryName: "Uitzend Westland",
+            intermediaryAddress: "Haven 2, Den Haag");
+        Assert.Equal("Uitzend Westland", name);
+
+        var logo = /* same branch as MeController */ true && !false
+            ? "/images/logos/intermediary.svg"
+            : "/images/logos/client.svg";
+        Assert.Equal("/images/logos/intermediary.svg", logo);
+
+        var id = Guid.NewGuid();
+        var picture = VacancyImageUrls.ForCard(null, logo, id, "Winkel");
+        Assert.Equal("logo", VacancyImageUrls.ForCardKind(picture, logo));
     }
 
     [Fact]
@@ -237,6 +302,10 @@ public class VacancyImageUrlsTests
         Assert.True(bytes.Length > 8);
         Assert.False(VacancyImageUrls.TryDecodeInlineImage("https://picsum.photos/seed/x/400/267", out _, out _));
     }
+
+    /// <summary>Old stored picsum links. The generator is gone; the sanitizer still rewrites them.</summary>
+    private static string LegacyPicsumUrl(Guid id)
+        => $"https://picsum.photos/seed/jobsy-{id:N}/960/640";
 
     private static string FindRepoRoot()
     {

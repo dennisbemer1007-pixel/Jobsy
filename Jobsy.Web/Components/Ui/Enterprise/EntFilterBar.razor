@@ -1,0 +1,31 @@
+@namespace Jobsy.Web.Components.Ui.Enterprise
+@inject CultureState Culture
+
+<div class="ent-filter-bar filter-bar">
+    <label class="ent-filter-bar__search filter-bar__search">
+        <span class="visually-hidden">@Culture["EntUi.FilterSearch"]</span>
+        <input type="search"
+               value="@Query"
+               placeholder="@(Placeholder ?? Culture["EntUi.FilterSearch"])"
+               @oninput="OnQuery" />
+    </label>
+    @if (Chips is not null)
+    {
+        <div class="ent-filter-bar__chips">@Chips</div>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Query { get; set; } = "";
+    [Parameter] public EventCallback<string> QueryChanged { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public RenderFragment? Chips { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private async Task OnQuery(ChangeEventArgs e)
+    {
+        Query = e.Value?.ToString() ?? "";
+        await QueryChanged.InvokeAsync(Query);
+    }
+}

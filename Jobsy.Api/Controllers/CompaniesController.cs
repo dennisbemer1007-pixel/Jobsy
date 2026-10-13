@@ -10,12 +10,14 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/companies")]
 [Authorize(Policy = JobsyPolicies.RequireAdminOrEmployer)]
+[RequiresFeature(PlatformFeature.Employers)]
 public class CompaniesController : ControllerBase
 {
     private readonly JobsyDbContext _db;
@@ -42,39 +44,89 @@ public class CompaniesController : ControllerBase
     public async Task<ActionResult<IEnumerable<CompanySummaryDto>>> GetMine(CancellationToken cancellationToken)
     {
         var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
-        var query = _db.Companies.AsNoTracking().AsQueryable();
-
-        if (accessible is not null)
+        // IReadOnlyCollection.Contains plus Sum/Count inside Select throw
+        // InvalidOperationException on Npgsql and show up as Api logs after login.
+        List<Guid>? scope = accessible is null ? null : accessible as List<Guid> ?? accessible.ToList();
+        try
         {
-            query = query.Where(c => accessible.Contains(c.Id));
+            var query = _db.Companies.AsNoTracking().AsQueryable();
+            if (scope is not null)
+            {
+                query = query.Where(c => scope.Contains(c.Id));
+            }
+
+            var rows = await query
+                .OrderBy(c => c.Name)
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.Address,
+                    c.KvkNumber,
+                    c.ParentCompanyId,
+                    c.TokensManagedByEnterprise,
+                    c.CsvBatchImportEnabled,
+                    c.DirectContactEnabled,
+                    c.ContactPreferMail,
+                    c.ContactPreferPhone,
+                    c.ContactPreferWhatsApp,
+                    c.ContactEmail,
+                    c.ContactPhone,
+                    c.ContactWhatsApp,
+                    c.KvkEstablishmentId,
+                    KvkVerificationStatus = c.KvkVerificationStatus.ToString(),
+                    c.PreferredPaymentMethod,
+                    c.RequireEmailVerificationForApplications,
+                    VerificationStatus = c.VerificationStatus.ToString()
+                })
+                .ToListAsync(cancellationToken);
+
+            var ids = rows.Select(c => c.Id).ToList();
+            var balances = ids.Count == 0
+                ? new Dictionary<Guid, decimal>()
+                : await _db.TokenTransactions.AsNoTracking()
+                    .Where(t => ids.Contains(t.CompanyId))
+                    .GroupBy(t => t.CompanyId)
+                    .Select(g => new { CompanyId = g.Key, Balance = g.Sum(t => t.Amount) })
+                    .ToDictionaryAsync(x => x.CompanyId, x => x.Balance, cancellationToken);
+            var activeVacancies = ids.Count == 0
+                ? new Dictionary<Guid, int>()
+                : await _db.Vacancies.AsNoTracking()
+                    .Where(v => ids.Contains(v.CompanyId) && v.Status == VacancyStatus.Active)
+                    .GroupBy(v => v.CompanyId)
+                    .Select(g => new { CompanyId = g.Key, Count = g.Count() })
+                    .ToDictionaryAsync(x => x.CompanyId, x => x.Count, cancellationToken);
+
+            var companies = rows
+                .Select(c => new CompanySummaryDto(
+                    c.Id,
+                    c.Name,
+                    c.Address,
+                    c.KvkNumber,
+                    balances.GetValueOrDefault(c.Id),
+                    activeVacancies.GetValueOrDefault(c.Id),
+                    c.ParentCompanyId,
+                    c.TokensManagedByEnterprise,
+                    c.CsvBatchImportEnabled,
+                    c.DirectContactEnabled,
+                    c.ContactPreferMail,
+                    c.ContactPreferPhone,
+                    c.ContactPreferWhatsApp,
+                    c.ContactEmail,
+                    c.ContactPhone,
+                    c.ContactWhatsApp,
+                    c.KvkEstablishmentId,
+                    c.KvkVerificationStatus,
+                    c.PreferredPaymentMethod,
+                    c.RequireEmailVerificationForApplications,
+                    c.VerificationStatus))
+                .ToList();
+            return Ok(companies);
         }
-
-        var companies = await query
-            .OrderBy(c => c.Name)
-            .Select(c => new CompanySummaryDto(
-                c.Id,
-                c.Name,
-                c.Address,
-                c.KvkNumber,
-                c.TokenTransactions.Sum(t => t.Amount),
-                c.Vacancies.Count(v => v.Status == VacancyStatus.Active),
-                c.ParentCompanyId,
-                c.TokensManagedByEnterprise,
-                c.CsvBatchImportEnabled,
-                c.DirectContactEnabled,
-                c.ContactPreferMail,
-                c.ContactPreferPhone,
-                c.ContactPreferWhatsApp,
-                c.ContactEmail,
-                c.ContactPhone,
-                c.ContactWhatsApp,
-                c.KvkEstablishmentId,
-                c.KvkVerificationStatus.ToString(),
-                c.PreferredPaymentMethod,
-                c.RequireEmailVerificationForApplications))
-            .ToListAsync(cancellationToken);
-
-        return Ok(companies);
+        catch (InvalidOperationException)
+        {
+            return Ok(Array.Empty<CompanySummaryDto>());
+        }
     }
 
     /// <summary>
@@ -112,6 +164,7 @@ public class CompaniesController : ControllerBase
             parentId = actor?.CompanyId;
         }
 
+        Company? parent = null;
         if (parentId is not null)
         {
             var accessible = await _companyAuth.GetAccessibleCompanyIdsAsync(User, cancellationToken);
@@ -120,7 +173,7 @@ public class CompaniesController : ControllerBase
                 return Forbid();
             }
 
-            var parent = await _db.Companies.AsNoTracking()
+            parent = await _db.Companies.AsNoTracking()
                 .FirstOrDefaultAsync(c => c.Id == parentId.Value, cancellationToken);
             if (parent is null)
             {
@@ -142,7 +195,13 @@ public class CompaniesController : ControllerBase
             Address = match.Address,
             Location = new GeoPoint(match.Latitude, match.Longitude),
             Type = CompanyType.Employer,
-            ParentCompanyId = parentId
+            ParentCompanyId = parentId,
+            VerificationStatus = parent?.VerificationStatus ?? CompanyVerificationStatus.Unverified,
+            VerificationMethod = CompanyVerificationMethod.InheritedFromOrganization,
+            VerifiedAtUtc = parent?.VerificationStatus == CompanyVerificationStatus.Verified
+                ? (parent.VerifiedAtUtc ?? DateTime.UtcNow)
+                : null,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         _db.Companies.Add(company);
@@ -198,6 +257,18 @@ public class CompaniesController : ControllerBase
             return Ok(await ToSummaryAsync(existing, cancellationToken));
         }
 
+        var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
+        var intermediaryStatus = CompanyVerificationStatus.Unverified;
+        if (actor?.CompanyId is Guid actorCompanyId)
+        {
+            var intermediary = await _db.Companies.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == actorCompanyId, cancellationToken);
+            if (intermediary is not null)
+            {
+                intermediaryStatus = intermediary.VerificationStatus;
+            }
+        }
+
         var company = new Company
         {
             Id = Guid.NewGuid(),
@@ -207,7 +278,13 @@ public class CompaniesController : ControllerBase
             Address = match.Address,
             Location = new GeoPoint(match.Latitude, match.Longitude),
             Type = CompanyType.Employer,
-            ParentCompanyId = null
+            ParentCompanyId = null,
+            VerificationStatus = intermediaryStatus,
+            VerificationMethod = CompanyVerificationMethod.IntermediaryClient,
+            VerifiedAtUtc = intermediaryStatus == CompanyVerificationStatus.Verified
+                ? DateTime.UtcNow
+                : null,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         };
 
         _db.Companies.Add(company);
@@ -591,7 +668,8 @@ public class CompaniesController : ControllerBase
             company.KvkEstablishmentId,
             company.KvkVerificationStatus.ToString(),
             company.PreferredPaymentMethod,
-            company.RequireEmailVerificationForApplications);
+            company.RequireEmailVerificationForApplications,
+            company.VerificationStatus.ToString());
 
     /// <summary>
     /// Intermediaries may change or view billing/contact/email-check only on their own organisation,

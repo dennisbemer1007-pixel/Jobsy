@@ -1,0 +1,37 @@
+KEY: EmployerNewApplication
+SUBJECT: Nieuwe sollicitatie op Weekendhulp verkoop
+PREHEADER: Bekijk de sollicitatie en reageer snel.
+KIND: Essential
+--- TEXT ---
+Hallo Alex,
+
+Iemand heeft gesolliciteerd
+===========================
+
+Er is een nieuwe sollicitatie op Weekendhulp verkoop.
+
+Vacature: Weekendhulp verkoop
+Vestiging: Bakkerij De Gouden Korrel
+Ontvangen op: 2 oktober 2026, 16:18
+
+Reageer snel. Kandidaten haken af als ze lang niets horen.
+
+Bekijk de sollicitatie: https://lobsy.nl/werkgever/sollicitaties?id=22222222-2222-2222-2222-222222222222
+
+Team Lobsy
+
+Je krijgt deze mail omdat je vacatures beheert voor Bakkerij De Gouden Korrel op Lobsy.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Iemand heeft gesolliciteerd
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk de sollicitatie -> https://lobsy.nl/werkgever/sollicitaties?id=22222222-2222-2222-2222-222222222222
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

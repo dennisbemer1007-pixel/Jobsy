@@ -8,6 +8,8 @@ public class CompanySummary
     public string KvkNumber { get; set; } = string.Empty;
     public string? KvkEstablishmentId { get; set; }
     public string KvkVerificationStatus { get; set; } = "Verified";
+    /// <summary>Lobsy company verification (Unverified/Pending/Verified/Rejected).</summary>
+    public string VerificationStatus { get; set; } = "Verified";
     public decimal TokenBalance { get; set; }
     public int ActiveVacancies { get; set; }
     public Guid? ParentCompanyId { get; set; }
@@ -75,9 +77,8 @@ public class GeneratedApiKeyItem
 
 public class EmailApiKeyResultItem
 {
-    public Guid Id { get; set; }
+    public Guid LinkId { get; set; }
     public string RecipientEmail { get; set; } = string.Empty;
-    public string KeyPrefix { get; set; } = string.Empty;
     public bool Sent { get; set; }
 }
 
@@ -104,6 +105,20 @@ public class ApplicationItem
     public string Status { get; set; } = "Pending";
     public DateTime? RespondedAt { get; set; }
     public string? LocationLabel { get; set; }
+    public string? PictureUrl { get; set; }
+    public string? PictureKind { get; set; }
+    public List<ApplicationTimelineStepItem>? Timeline { get; set; }
+    public string? NextStepKey { get; set; }
+    public bool LegacyNoHistory { get; set; }
+    public bool VacancyClosed { get; set; }
+}
+
+public class ApplicationTimelineStepItem
+{
+    public string Key { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public DateTime? OccurredAtUtc { get; set; }
+    public string LabelKey { get; set; } = string.Empty;
 }
 
 public class ApplyResultItem
@@ -118,6 +133,7 @@ public class ApplyResultItem
     public int? MatchPercent { get; set; }
     public string? MatchBreakdownJson { get; set; }
     public string? SafetyNetMessage { get; set; }
+    public bool ConfirmationLoggedToStub { get; set; }
 }
 
 public class EmployerDirectContactItem
@@ -195,8 +211,6 @@ public class EmployerApplicationItem
     public string? SnapshotEducations { get; set; }
     public string? SnapshotAboutMe { get; set; }
     public int CandidateEmployerCount { get; set; }
-    public int? MatchPercent { get; set; }
-    public string? MatchBreakdownJson { get; set; }
     public bool ViaSafetyNet { get; set; }
     public string? Motivation { get; set; }
     public bool LegalEligible { get; set; } = true;
@@ -208,7 +222,7 @@ public class EmployerApplicationItem
     public bool CvPdfAvailable { get; set; }
     public string? CandidatePhone { get; set; }
     public bool WhatsAppContactAllowed { get; set; }
-    public int? CandidateAgeYears { get; set; }
+    public bool? YouthWageApplies { get; set; }
     public string? AvailabilitySummary { get; set; }
     public bool UploadedCvAvailable { get; set; }
     public int CandidateReferenceCount { get; set; }
@@ -240,6 +254,7 @@ public class TokenLogItem
     public Guid? VacancyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? ActorName { get; set; }
 }
 
 public class CheckoutResult
@@ -317,6 +332,62 @@ public class KvkEstablishmentsLookupResult
         Status.Equals("Unavailable", StringComparison.OrdinalIgnoreCase);
 }
 
+public class KvkSearchHitItem
+{
+    public string KvkNumber { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Place { get; set; } = string.Empty;
+    public string Type { get; set; } = string.Empty;
+    public int? VestigingCount { get; set; }
+    public bool IsOnLobsy { get; set; }
+}
+
+public class KvkSearchResultItem
+{
+    public string Status { get; set; } = "NotFound";
+    public int Total { get; set; }
+    public List<KvkSearchHitItem> Hits { get; set; } = [];
+    public string? Message { get; set; }
+}
+
+public class KvkAddressLineItem
+{
+    public string Street { get; set; } = string.Empty;
+    public string HouseNumber { get; set; } = string.Empty;
+    public string? HouseLetter { get; set; }
+    public string Postcode { get; set; } = string.Empty;
+    public string Place { get; set; } = string.Empty;
+    public string FormattedLine { get; set; } = string.Empty;
+}
+
+public class KvkEstablishmentProfileItem
+{
+    public string KvkNumber { get; set; } = string.Empty;
+    public string EstablishmentNumber { get; set; } = string.Empty;
+    public string KvkEstablishmentId { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public bool IsInUse { get; set; }
+    public List<string> SbiCodes { get; set; } = [];
+    public KvkAddressLineItem? VisitingAddress { get; set; }
+    public KvkAddressLineItem? PostalAddress { get; set; }
+}
+
+public class KvkCompanyProfileItem
+{
+    public string Status { get; set; } = "NotFound";
+    public string KvkNumber { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? LegalForm { get; set; }
+    public List<string> SbiCodes { get; set; } = [];
+    public List<string> Websites { get; set; } = [];
+    public List<KvkEstablishmentProfileItem> Establishments { get; set; } = [];
+    public string? Message { get; set; }
+}
+
 public class KvkEstablishmentItem
 {
     public string KvkNumber { get; set; } = string.Empty;
@@ -356,13 +427,25 @@ public class RegistrationActivationResult
     public string Role { get; set; } = string.Empty;
     public Guid? CompanyId { get; set; }
     public List<Guid> CompanyIds { get; set; } = [];
-    public string? TemporaryPassword { get; set; }
     public Guid? OrganizationCompanyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
     public bool UsedChosenPassword { get; set; }
     public bool EmailVerifiedAwaitingTakeover { get; set; }
     public bool WelcomeTokenGranted { get; set; }
     public DateOnly? FreePublishUntil { get; set; }
+    public string? SessionToken { get; set; }
+    public bool InstantlyVerified { get; set; }
+    public string? PreferredLoginProvider { get; set; }
+    public string? PostActivationWebPath { get; set; }
+}
+
+public class RegistrationReferralItem
+{
+    public string? Code { get; set; }
+    public string? Source { get; set; }
+    public Guid? SalesManagerUserId { get; set; }
+    public bool IsPartnerCode { get; set; }
+    public bool IsKnown { get; set; }
 }
 
 public class TakeoverInboxItem
@@ -385,6 +468,86 @@ public class TakeoverDecisionResult
     public string Message { get; set; } = string.Empty;
     public Guid? OrganizationCompanyId { get; set; }
     public Guid? BranchCompanyId { get; set; }
+}
+
+public sealed record AccessRequestSubmitModel(
+    string KvkNumber,
+    string? KvkEstablishmentId,
+    string RequestedRole,
+    string RequesterName,
+    string? RequesterFunction,
+    string RequesterEmail,
+    string? RequesterPhone,
+    string? Message);
+
+public class AccessRequestSubmitResultModel
+{
+    public Guid RequestId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public DateTime? CodeExpiresAtUtc { get; set; }
+}
+
+public class AccessRequestConfirmResultModel
+{
+    public Guid RequestId { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+}
+
+public class AccessRequestInboxItemModel
+{
+    public Guid RequestId { get; set; }
+    public Guid TargetCompanyId { get; set; }
+    public string TargetCompanyName { get; set; } = string.Empty;
+    public string RequesterName { get; set; } = string.Empty;
+    public string? RequesterFunction { get; set; }
+    public string RequesterEmail { get; set; } = string.Empty;
+    public string RequestedRole { get; set; } = string.Empty;
+    public List<Guid> RequestedCompanyIds { get; set; } = [];
+    public string? Message { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public DateTime CreatedAtUtc { get; set; }
+    public int AgeWorkingDays { get; set; }
+}
+
+public class AccessRequestAdminItemModel
+{
+    public Guid RequestId { get; set; }
+    public Guid TargetCompanyId { get; set; }
+    public string TargetCompanyName { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string RequesterName { get; set; } = string.Empty;
+    public string RequesterEmail { get; set; } = string.Empty;
+    public string? RequesterPhone { get; set; }
+    public string RequestedRole { get; set; } = string.Empty;
+    public string? Message { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime? EscalatedAtUtc { get; set; }
+    public List<AccessRequestManagerContactModel> ManagerContacts { get; set; } = [];
+}
+
+public class AccessRequestManagerContactModel
+{
+    public Guid UserId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string Role { get; set; } = string.Empty;
+}
+
+public class OwnershipTransferAdminItemModel
+{
+    public Guid TakeoverId { get; set; }
+    public Guid TargetCompanyId { get; set; }
+    public string TargetCompanyName { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string RequesterName { get; set; } = string.Empty;
+    public string RequesterEmail { get; set; } = string.Empty;
+    public bool LetterVerified { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LetterVerifiedAtUtc { get; set; }
 }
 
 public class RegionItem
@@ -462,8 +625,8 @@ public class CompanyUserItem
     public string? CompanyName { get; set; }
     public List<Guid> MembershipCompanyIds { get; set; } = [];
     public bool IsActive { get; set; } = true;
-    public string? TemporaryPassword { get; set; }
     public string? LoginUrl { get; set; }
+    public DateTime? LastLoginAtUtc { get; set; }
 }
 
 public record InviteUserForm(
@@ -506,6 +669,41 @@ public class AdminCompanyItem
     public decimal TokenBalance { get; set; }
     public Guid? SalesManagerUserId { get; set; }
     public string? SalesManagerName { get; set; }
+    public int BranchCount { get; set; }
+    public string? RegionName { get; set; }
+    public string? DomainHostname { get; set; }
+    public string? EnterpriseManagerName { get; set; }
+    public string KvkVerificationStatus { get; set; } = "Verified";
+    public string Status { get; set; } = "active";
+    public int? InactiveDays { get; set; }
+    public DateTime? CustomerSinceUtc { get; set; }
+    public decimal GoodwillBalance { get; set; }
+    public string? PackageLabel { get; set; }
+    public Guid? PendingTakeoverId { get; set; }
+    public string? PendingTakeoverApplicant { get; set; }
+    public DateTime? PendingTakeoverAtUtc { get; set; }
+    public Guid? PendingTakeoverTargetCompanyId { get; set; }
+    public int KvkVerificationAttempts { get; set; }
+    public DateTime? KvkLastVerificationAttemptAtUtc { get; set; }
+}
+
+public class AdminCompaniesPage
+{
+    public List<AdminCompanyItem> Items { get; set; } = [];
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
+    public int TotalCount { get; set; }
+}
+
+public class AdminKvkIssueItem
+{
+    public Guid Id { get; set; }
+    public string Source { get; set; } = "company";
+    public string Name { get; set; } = string.Empty;
+    public string KvkNumber { get; set; } = string.Empty;
+    public string Status { get; set; } = "Failed";
+    public int Attempts { get; set; }
+    public DateTime? LastAttemptAtUtc { get; set; }
 }
 
 public class AdminUserItem
@@ -520,6 +718,119 @@ public class AdminUserItem
     public bool IsEarlyAdapter { get; set; }
     public bool IsActive { get; set; } = true;
     public List<Guid> MembershipCompanyIds { get; set; } = [];
+    /// <summary><c>enrolled</c> | <c>not-enrolled</c> | <c>external-only</c></summary>
+    public string MfaStatus { get; set; } = "not-enrolled";
+    public string? PhoneNumber { get; set; }
+    public DateTime? TermsAcceptedAt { get; set; }
+    public DateTime? LastActiveAtUtc { get; set; }
+    public DateTime? AuthenticatorEnrolledAtUtc { get; set; }
+    public int ActiveSessionCount { get; set; }
+    public int TrustedDeviceCount { get; set; }
+    public List<string> MembershipCompanyNames { get; set; } = [];
+    public bool IsTestAccount { get; set; }
+}
+
+public class AdminUserSessionItem
+{
+    public Guid Id { get; set; }
+    public string DeviceName { get; set; } = string.Empty;
+    public DateTime LastUsedAtUtc { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime ExpiresAtUtc { get; set; }
+    public bool IsCurrent { get; set; }
+}
+
+public class AdminBulkUsersResponse
+{
+    public int Succeeded { get; set; }
+    public int Skipped { get; set; }
+    public List<AdminBulkUserResult> Results { get; set; } = [];
+}
+
+public class AdminBulkUserResult
+{
+    public Guid UserId { get; set; }
+    public bool Ok { get; set; }
+    public string? SkipReason { get; set; }
+}
+
+public class AdminUsersPage
+{
+    public AdminUsersAggregates Aggregates { get; set; } = new();
+    public List<AdminUserItem> Items { get; set; } = [];
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+    public bool Masked { get; set; } = true;
+}
+
+public class AdminUsersAggregates
+{
+    public Dictionary<string, int> ByRole { get; set; } = new();
+    public List<AdminUsersCompanyCount> TopCompanies { get; set; } = [];
+    public int ActiveCount { get; set; }
+    public int InactiveCount { get; set; }
+    public List<AdminUsersWeekBucket> ByRegistrationWeek { get; set; } = [];
+}
+
+public class AdminUsersCompanyCount
+{
+    public Guid? CompanyId { get; set; }
+    public string CompanyName { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
+
+public class AdminUsersWeekBucket
+{
+    public string WeekStartUtc { get; set; } = string.Empty;
+    public int Count { get; set; }
+}
+
+public class PersonalDataAccessLogItem
+{
+    public Guid Id { get; set; }
+    public DateTime OccurredAt { get; set; }
+    public Guid ActorUserId { get; set; }
+    public string ActorRole { get; set; } = string.Empty;
+    public Guid? SubjectUserId { get; set; }
+    public Guid? SubjectCompanyId { get; set; }
+    public string Resource { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public string? Reason { get; set; }
+    public Guid? SupportAccessGrantId { get; set; }
+    public string CorrelationId { get; set; } = string.Empty;
+    public string? ActorName { get; set; }
+    public string? ActorEmailMasked { get; set; }
+    public string? ActorCompanyName { get; set; }
+    public string? SubjectName { get; set; }
+    public string? SubjectEmailMasked { get; set; }
+    public string? SubjectRole { get; set; }
+    public string? SubjectCompanyName { get; set; }
+}
+
+public class PersonalDataAccessLogPage
+{
+    public List<PersonalDataAccessLogItem> Items { get; set; } = [];
+    public int Page { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+}
+
+public class SupportAccessGrantItem
+{
+    public Guid Id { get; set; }
+    public Guid AdminUserId { get; set; }
+    public Guid? SubjectUserId { get; set; }
+    public Guid? SubjectCompanyId { get; set; }
+    /// <summary>Flags enum serialized as string by the API (JsonStringEnumConverter).</summary>
+    public string Scope { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public string? TicketReference { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime ExpiresAt { get; set; }
+    public DateTime? RevokedAt { get; set; }
+    public Guid? RevokedByUserId { get; set; }
+    public bool IsActive { get; set; }
 }
 
 public class AdminVacancyItem
@@ -541,7 +852,17 @@ public class AdminVacancyItem
     public int LikeCount { get; set; }
     public bool IsExtended { get; set; }
     public string CreatedVia { get; set; } = "Manual";
+    public bool ContentModerationPassed { get; set; } = true;
+    public DateTime? ClosedAtUtc { get; set; }
+    public string? DescriptionExcerpt { get; set; }
+    public string Kind { get; set; } = "Regular";
 }
+
+public sealed record AdminVacancyPage(
+    IReadOnlyList<AdminVacancyItem> Items,
+    int TotalCount,
+    int ActiveAts,
+    int ActiveRegular);
 
 public class AtsListingItem
 {
@@ -633,6 +954,7 @@ public class PlatformLogItem
     public string Category { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
+    public string? Detail { get; set; }
 }
 
 public sealed class FeedbackClientMeta
@@ -713,8 +1035,16 @@ public class LobsyCommercialSettingsItem
     public decimal MarginPerHourEuro { get; set; } = 2.00m;
     public string BackofficePartnerName { get; set; } = "Yellowstone";
     public decimal DeepAnalysisPriceEuro { get; set; } = 2.99m;
+    public decimal DeepTestPriceCompetenceEuro { get; set; } = 2.99m;
+    public decimal DeepTestPriceCareerEuro { get; set; } = 2.99m;
+    public decimal DeepTestPriceValuesEuro { get; set; } = 2.99m;
+    public decimal DeepTestPriceCultureEuro { get; set; } = 2.99m;
     public decimal AgencyAnnualPriceEuro { get; set; } = 4000m;
     public decimal ContactUnlockCostTokens { get; set; } = 1m;
+    public decimal AcceptCandidatePilotCostTokens { get; set; } = 0.5m;
+    public DateOnly? AcceptCandidatePilotEndsOn { get; set; }
+    public decimal AcceptCandidateStandardCostTokens { get; set; } = 1m;
+    public bool FirstEmployerAcceptanceFreeEnabled { get; set; } = true;
     public DateTime UpdatedAtUtc { get; set; }
 }
 

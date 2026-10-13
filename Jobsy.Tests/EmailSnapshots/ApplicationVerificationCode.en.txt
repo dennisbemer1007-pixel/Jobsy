@@ -1,0 +1,35 @@
+KEY: ApplicationVerificationCode
+SUBJECT: Your code for your application: 123456
+PREHEADER: Enter this code to send your application.
+KIND: Security
+--- TEXT ---
+Hi Alex,
+
+Your code
+=========
+
+Enter this code on Lobsy to send your application for Weekendhulp verkoop.
+
+
+123456
+
+The code works for 10 minutes.
+
+Did you not do this yourself? Then you can ignore this email.
+
+Team Lobsy
+
+You get this email because someone with this email address wants to apply via Lobsy.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Your code
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=code
+marker: div data-lobsy-otp=123456
+marker: table data-lobsy-block=note
+a: Lobsy -> https://lobsy.nl
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

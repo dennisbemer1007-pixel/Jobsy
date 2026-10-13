@@ -1,0 +1,456 @@
+@using Jobsy.Core.Ai
+@using Jobsy.Core.Legal
+@using Jobsy.Core.Options
+@using Jobsy.Core.Privacy
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.Extensions.DependencyInjection
+@using Microsoft.Extensions.Options
+@inject CultureState Culture
+@inject LegalIdentityProvider LegalIdentity
+@inject IConfiguration Configuration
+@inject IServiceProvider Services
+
+@* Official Dutch privacy statement (D3). B1 Dutch, "je"; every number comes from a constant. *@
+<LegalDocument DocumentId="@LegalDocumentIds.Privacy"
+               Title="@Culture["Legal.Privacy"]"
+               Lead="@Culture["Privacy.Doc.Lead"]"
+               Eyebrow="@Culture["Legal.Eyebrow.Privacy"]"
+               EyebrowEmoji="🔒"
+               Sections="Sections" />
+
+@code {
+    private string? _privacyContact;
+    private IReadOnlyList<LegalSection>? _sections;
+
+    private AiProviderDecision AiDecision
+        => AiProviderChoice.Decide(AiProvider, MistralApiKey);
+
+    private bool UsesMistral => AiDecision.Kind == AiProviderKind.Mistral;
+
+    private bool MistralDataStaysInTheEu
+        => UsesMistral && MistralEndpoint.InferenceStaysInEu(MistralBaseUrl);
+
+    private string? AiProvider
+        => FirstSet(
+            Services.GetService<IOptions<AiOptions>>()?.Value.Provider,
+            Configuration["Ai:Provider"]);
+
+    private string? MistralApiKey
+        => FirstSet(
+            Services.GetService<IOptions<MistralOptions>>()?.Value.ApiKey,
+            Configuration["Mistral:ApiKey"],
+            Configuration["MISTRAL_API_KEY"]);
+
+    private string? MistralBaseUrl
+        => FirstSet(
+            Services.GetService<IOptions<MistralOptions>>()?.Value.BaseUrl,
+            Configuration["Mistral:BaseUrl"]);
+
+    private static int TalentPoolAge => CandidateConsentRules.TalentPoolMinimumAge;
+
+    private static int ParentalConsentAge => CandidateConsentRules.ParentalConsentAge;
+
+    private IReadOnlyList<LegalProcessor> ActiveProcessors =>
+        LegalProcessorSelection.Resolve(
+            Configuration["Mail:Provider"],
+            !string.IsNullOrWhiteSpace(Configuration["Lettermint:ApiKey"])
+                || !string.IsNullOrWhiteSpace(Configuration["LETTERMINT_API_KEY"]),
+            AiDecision.Kind,
+            MistralBaseUrl);
+
+    private static string? FirstSet(params string?[] values)
+    {
+        foreach (var value in values)
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var legal = await LegalIdentity.GetAsync();
+        _privacyContact = legal.PrivacyContact;
+    }
+
+    private IReadOnlyList<LegalSection> Sections => _sections ??= BuildSections();
+
+    private IReadOnlyList<LegalSection> BuildSections() =>
+    [
+        new LegalSection
+        {
+            Id = "wie",
+            Number = "1",
+            TitleKey = "Privacy.Sec.wie.Title",
+            SummaryKey = "Privacy.Sec.wie.Summary",
+            AliasIds = ["verantwoordelijk"],
+            Body = @<text>
+                <p>
+                    Lobsy is een platform dat werk dicht bij huis zoekt. We kijken naar reistijd, uren en dagdelen.
+                    Lobsy bepaalt wat er met jouw gegevens gebeurt. In de wet heet dat
+                    “verwerkingsverantwoordelijke”. Hieronder staan onze gegevens.
+                </p>
+                <LegalIdentityCard ShowPrivacyContact="true" />
+                @if (!string.IsNullOrWhiteSpace(_privacyContact))
+                {
+                    <p>Vragen over je privacy? Mail <a href="mailto:@_privacyContact">@_privacyContact</a>. Je krijgt altijd antwoord van een mens.</p>
+                }
+                <p>
+                    We hebben geen functionaris gegevensbescherming; dat is voor ons niet verplicht.
+                    Je kunt met al je vragen bij ons terecht.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "gegevens",
+            Number = "2",
+            TitleKey = "Privacy.Sec.gegevens.Title",
+            SummaryKey = "Privacy.Sec.gegevens.Summary",
+            Body = @<text>
+                <p>Wat we van je gebruiken, hangt af van wat je met Lobsy doet.</p>
+                <p><strong>Je account</strong></p>
+                <ul>
+                    <li>Je naam en e-mailadres, en je inloggegevens. Soms ook je telefoonnummer.</li>
+                    <li>Log je in met een code per e-mail? Die code is 10 minuten geldig. We bewaren alleen een versleutelde versie en gooien die binnen 24 uur weg.</li>
+                    <li>Log je in met Google of Microsoft? Dan krijgen we je e-mailadres en een inlogcode van die partij.</li>
+                </ul>
+                <p><strong>Als je werk zoekt</strong></p>
+                <ul>
+                    <li>Je geboortedatum. Die hebben we nodig voor je loon per leeftijd en voor de regels over werk voor jongeren.</li>
+                    <li>Hoe je reist, waar je ongeveer vandaan reist, hoeveel uur je wil werken en op welke dagdelen.</li>
+                    <li>Wat je leuk vindt (likes) en waar je op solliciteert. Bij een sollicitatie bewaren we een kopie van je voorkeuren, opleiding, rijbewijs en je motivatie.</li>
+                    <li>Je eigen cv als je dat uploadt (pdf of docx). Dat is vrijwillig.</li>
+                    <li>Je antwoorden en uitslagen van de tests die je doet, en van een betaalde uitgebreide analyse.</li>
+                    <li>Recensies die je plaatst. Daarin staan ook gegevens van een werkgever of contactpersoon.</li>
+                </ul>
+                <p><strong>Als je werkgever bent</strong></p>
+                <ul>
+                    <li>Gegevens van je bedrijf uit de KvK, je vestigingen en je contactpersonen.</li>
+                    <li>Hoe je gebeld of gemaild wil worden na een sollicitatie.</li>
+                    <li>Je vacatures: uren, dagdelen en de vinkjes over taken bij werk voor jongeren.</li>
+                    <li>Rollen van je medewerkers, je tokens en je betalingen.</li>
+                    <li>Een koppeling met je eigen systeem (API). Van een API-sleutel bewaren we alleen een versleutelde versie.</li>
+                    <li>@Culture["Legal.Privacy.EmployerSignup.Body"]</li>
+                </ul>
+                <p><strong>Als je salesmanager bent</strong></p>
+                <ul>
+                    <li>Je KvK-nummer, btw-nummer, naam en adres, je trackingcode en je commissies.</li>
+                    <li>Je IBAN voor de uitbetaling. In het platform zie je alleen de laatste cijfers; we tonen nooit je hele IBAN.</li>
+                </ul>
+                <p><strong>Berichten</strong></p>
+                <ul>
+                    <li>De e-mails en berichten die via Lobsy worden verstuurd, zoals codes, bevestigingen en meldingen. In onze logboeken maken we e-mailadressen onleesbaar.</li>
+                    <li>Herinneringen per e-mail staan standaard aan. Je zet ze uit in je <a href="/account/mail-instellingen">mail-instellingen</a>. Elke herinnering heeft een link om je af te melden. Die link werkt zonder in te loggen. Een seintje op je telefoon blijft apart.</li>
+                    <li>Een API-sleutel mailen we nooit. Je krijgt een link waarmee je de sleutel één keer ziet.</li>
+                </ul>
+                <p>
+                    Over cookies en wat er op je eigen apparaat staat, lees je bij
+                    <a href="#cookies">@Culture["Privacy.Sec.cookies.Title"]</a>.
+                </p>
+                <p>
+                    We vragen zo weinig mogelijk. Het telefoonnummer en WhatsApp-nummer van een werkgever
+                    staan nooit op een openbare vacaturepagina.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "waarom",
+            Number = "3",
+            TitleKey = "Privacy.Sec.waarom.Title",
+            SummaryKey = "Privacy.Sec.waarom.Summary",
+            AliasIds = ["grondslag"],
+            Body = @<text>
+                <p>Voor elk gebruik van je gegevens hebben we een reden die de wet toestaat.</p>
+                <ul>
+                    <li><strong>We moeten het doen om Lobsy te kunnen leveren.</strong> Bijvoorbeeld: je account aanmaken, vacatures bij je zoeken en je sollicitatie bij de werkgever afleveren.</li>
+                    <li><strong>Je geeft ons toestemming.</strong> Bijvoorbeeld: de tests, de AI-analyse, de talentpool of statistieken na “Accepteer cookies”. Je mag die toestemming altijd weer intrekken.</li>
+                    <li><strong>We hebben er zelf een gerechtvaardigd belang bij.</strong> Bijvoorbeeld: misbruik tegengaan, Lobsy beter maken en vacatureteksten controleren. We kijken altijd eerst of dat niet te veel van jou vraagt.</li>
+                    <li><strong>De wet verplicht ons.</strong> Bijvoorbeeld: facturen bewaren voor de Belastingdienst, of een vraag van de politie of een toezichthouder.</li>
+                </ul>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "delen",
+            Number = "4",
+            TitleKey = "Privacy.Sec.delen.Title",
+            SummaryKey = "Privacy.Sec.delen.Summary",
+            AliasIds = ["verwerkers"],
+            Body = @<text>
+                <p><strong>Werkgevers</strong></p>
+                <p>
+                    Solliciteer je? Dan ziet de werkgever eerst je reistijd, je uren en dagdelen,
+                    en je motivatie. Geen matchpercentage en geen score. Je naam en Lobsy-CV krijgt de werkgever
+                    pas nadat die je accepteert. Je e-mailadres en telefoonnummer pas als je wordt aangenomen. De ruwe antwoorden van je tests ziet
+                    niemand anders dan jij.
+                </p>
+                <p>
+                    Sta je in de talentpool? Dan zien werkgevers daar alleen tags, percentages, je rijbewijs en
+                    een schatting van je reistijd. Geen naam, geen e-mailadres, geen telefoonnummer en geen
+                    geboortedatum. Contact komt er alleen als jij daar zelf ja op zegt.
+                </p>
+                <p><strong>Partijen die voor ons werken</strong></p>
+                <p>
+                    Sommige bedrijven doen een stukje van het werk voor ons. Ze mogen jouw gegevens alleen
+                    gebruiken voor dat stukje. Dat staat in een contract (een verwerkersovereenkomst).
+                </p>
+                <ProcessorTable Rows="@ActiveProcessors" />
+                <DataLocationSentence Rows="@ActiveProcessors" />
+                <p>We verkopen je gegevens niet. Nooit.</p>
+                <p>
+                    Bel je of WhatsApp je met een werkgever nadat je sollicitatie is geaccepteerd?
+                    Dat gesprek loopt buiten Lobsy. Wij lezen niet mee.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "bewaren",
+            Number = "5",
+            TitleKey = "Privacy.Sec.bewaren.Title",
+            SummaryKey = "Privacy.Sec.bewaren.Summary",
+            Body = @<text>
+                <p>We bewaren gegevens zo kort als kan. Deze termijnen komen rechtstreeks uit onze code.</p>
+                <RetentionTable />
+                <p>Daarnaast geldt:</p>
+                <ul>
+                    <li><strong>Trek je een sollicitatie in?</strong> Dan wissen we je kopie van je voorkeuren en je geüploade cv. De sollicitatie zelf blijft bestaan, zonder die gegevens.</li>
+                    <li><strong>Facturen, commissies en uitbetalingen</strong> moeten we 7 jaar bewaren van de Belastingdienst. Verwijder je je account, dan maken we je gegevens op die facturen anoniem waar dat kan.</li>
+                    <li><strong>Meld je je af voor een optionele mail?</strong> Dan bewaren we alleen een versleutelde versie van je e-mailadres en de soort mail, ook na het verwijderen van je account. Zo sturen we je die mail niet opnieuw.</li>
+                </ul>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "cookies",
+            Number = "6",
+            TitleKey = "Privacy.Sec.cookies.Title",
+            SummaryKey = "Privacy.Sec.cookies.Summary",
+            AliasIds = ["salesmanager"],
+            Body = @<text>
+                <p>
+                    Een cookie is een klein bestandje op je apparaat. We gebruiken ook de opslag van je browser.
+                    Hieronder staat wat we zetten en waarom.
+                </p>
+                <CookieTable />
+                <p>Statistieken alleen na “Accepteer cookies”.</p>
+                <p>
+                    Dat geldt ook als je ingelogd bent: zonder jouw ja weigert Lobsy die statistieken.
+                    Je keuze pas je altijd aan via de cookiemelding onderaan de site.
+                </p>
+                <p>
+                    Kom je binnen via een link of code van een partner of salesmanager? Dan zetten we
+                    <code>lobsy_sales_ref</code> met alleen die code. Zo weten we wie de commissie krijgt als jij
+                    als werkgever tokens koopt. De salesmanager ziet van jou alleen de handelsnaam, soms de
+                    plaats, en zijn eigen commissie. Nooit contactpersonen, kandidaten of vacaturedetails.
+                    Staat er nog een oude cookie <code>lobsy_ambassadeur_ref</code> in je browser? Die gebruiken we niet.
+                </p>
+                <p>Klikken op links in sales-mails tellen we per dag. Zonder IP-adres en zonder gegevens over je apparaat.</p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "ai",
+            Number = "7",
+            TitleKey = "Privacy.Sec.ai.Title",
+            SummaryKey = "Privacy.Sec.ai.Summary",
+            AliasIds = ["locatie", "jeugdige-arbeid"],
+            Body = @<text>
+                <p><strong>Reistijd</strong></p>
+                <p>
+                    We rekenen je reistijd uit met OSRM, Transitous en Valhalla. Daarvoor sturen we het punt
+                    waar je vandaan reist, het punt van de vacature en je vervoermiddel. Geen naam, geen
+                    e-mailadres. Voor kaartjes in pdf’s halen we kaarttegels bij OpenStreetMap op.
+                </p>
+                <p>
+                    Je locatie gebruiken we alleen als jij die zelf deelt of opslaat. Je kunt dat later weer
+                    weghalen of aanpassen in je profiel.
+                </p>
+                <p><strong>Matching</strong></p>
+                <p>
+                    Op jouw profiel zie je hoe goed een baan bij je past. Dat komt uit reistijd, uren en dagdelen,
+                    en of je de taken mag doen. Deed je een test, dan gebruiken we die scores alleen voor jou,
+                    om banen te sorteren. Werkgevers zien geen percentage, geen score en geen testantwoorden.
+                </p>
+                <p><strong>Wat de AI doet</strong></p>
+                <ul>
+                    @if (MistralDataStaysInTheEu)
+                    {
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs, voor verwerking in de EU. Account en facturen van Mistral kunnen buiten de EU staan. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
+                    }
+                    else if (UsesMistral)
+                    {
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar Mistral AI in Parijs. Mistral belooft geen plek voor die verwerking. Account en facturen van Mistral kunnen buiten de EU staan. In die tekst kunnen je naam, adres en telefoonnummer staan.</li>
+                    }
+                    else
+                    {
+                        <li>Je cv uitlezen als je dat uploadt. Dan gaat de hele tekst van je cv naar OpenAI, dus misschien ook je naam, adres en telefoonnummer.</li>
+                    }
+                    <li>Het oefengesprek en de assistent. Daar gaan je naam en je berichten mee. We bewaren het gesprek niet als archief op onze servers.</li>
+                    <li>Vacatureteksten controleren en vertalen.</li>
+                    <li>Je Beroepen-kompas, de Cultuur Fit en de Functie-Fit Checker. Daar gaan alleen scores, voorkeuren en een functietitel mee. Geen naam, geen e-mailadres.</li>
+                </ul>
+                <p>
+                    Werkt de AI niet of hebben we geen sleutel? Dan gebruikt Lobsy een eigen lijst met beroepen
+                    uit de Nederlandse arbeidsmarkt. Een cv uploaden is altijd vrijwillig: upload je niets, dan
+                    @(UsesMistral ? "gaat er geen cv-tekst naar Mistral AI." : "gaat er geen cv-tekst naar OpenAI.")
+                </p>
+                <p>
+                    <strong>AI en jouw gegevens.</strong> Lobsy geeft werkgevers geen scores en geen ranglijst.
+                    AI helpt alleen jou om jezelf te begrijpen. Op gegevens van leerlingen gebruiken we geen AI.
+                    Antwoorden van AI zijn als AI gelabeld. Wil je uitleg? Dan vraag je die aan een mens.
+                    <strong>Een computer beslist niet over jou.</strong> Percentages en suggesties zijn een hulpje.
+                    Een werkgever kiest zelf wie hij uitnodigt. Er is geen besluit met gevolgen voor de wet dat
+                    alleen door een machine wordt genomen.
+                    @if (!string.IsNullOrWhiteSpace(_privacyContact))
+                    {
+                        <text>
+                            Vind je een score niet kloppen? Mail
+                            <a href="mailto:@_privacyContact">@_privacyContact</a> en een mens kijkt ernaar.
+                        </text>
+                    }
+                </p>
+                <p><strong>Werk voor jongeren</strong></p>
+                <p>
+                    Werkgevers zetten vinkjes bij hun vacature: werken na 19:00, nachtdienst, alleen in de winkel
+                    staan, afsluiten, met geld werken, zwaar of gevaarlijk werk. Met je geboortedatum kijkt Lobsy
+                    of de wet dat werk voor jou toestaat. Mag het niet, dan kun je niet solliciteren. We vragen
+                    werkgevers geen minimumleeftijd bij de vacature; we kijken per taak. De werkgever blijft zelf
+                    verantwoordelijk voor de regels over arbeid.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "tests",
+            Number = "8",
+            TitleKey = "Privacy.Sec.tests.Title",
+            SummaryKey = "Privacy.Sec.tests.Summary",
+            Body = @<text>
+                <h3>5b. Competentietest, beroepentest, diepte-analyse en talentpool</h3>
+                <p>
+                    De competentietest (25 vragen) en de beroepentest (25 vragen) zijn gratis en vrijwillig.
+                    Je vindt ze in je profiel. Je kunt tussentijds stoppen, later aanpassen of een test overslaan.
+                    Voordat je begint, vragen we apart je toestemming voor de test, de analyse van je profiel en
+                    de AI. Ben je jonger dan @ParentalConsentAge jaar? Dan vragen we eerst je ouder of voogd.
+                </p>
+                <p>
+                    We bewaren je antwoorden en, als je klaar bent, je percentages, je Holland-code en je tags.
+                    Zo kun jij ze zelf bekijken en zoeken we betere vacatures bij je. Je ruwe antwoorden worden
+                    <strong>niet</strong> aan werkgevers getoond.
+                </p>
+                <p>
+                    <strong>Talentpool.</strong> De talentpool is vanaf @TalentPoolAge jaar. Je komt er alleen in als je
+                    daar apart ja op zegt, “Open voor werk” aanstaat en je minstens één test hebt afgerond.
+                    Deze optie staat standaard uit. Werkgevers zien je dan anoniem. Je naam, e-mailadres en
+                    telefoonnummer krijgen ze pas als zij contact betalen én jij dat contact accepteert.
+                </p>
+                <p>
+                    <strong>Uitgebreide analyse.</strong> Koop je de uitgebreide test (150 vragen)? Dan krijg je meer
+                    tags en een rapport in pdf. Daarna vullen we je Beroepen-kompas met beroepen uit de
+                    Nederlandse arbeidsmarkt, dus niet alleen met wat er nu op Lobsy staat.
+                </p>
+                <p>
+                    Werkgevers kunnen cijfers over een hele regio zien, bijvoorbeeld hoeveel mensen binnen
+                    10 tot 30 km wonen. Jij telt daarin alleen anoniem mee, en alleen in groepen van minstens
+                    10 kandidaten. Namen, adressen en losse antwoorden zien ze nooit.
+                </p>
+                <p>
+                    Alles uit de tests gaat mee in je download bij
+                    <a href="/privacy/data">@Culture["Legal.MyData"]</a>, en gaat weg als je je account verwijdert.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "jonger",
+            Number = "9",
+            TitleKey = "Privacy.Sec.jonger.Title",
+            SummaryKey = "Privacy.Sec.jonger.Summary",
+            Body = @<text>
+                <AgeRulesText />
+                <p>
+                    We vragen die toestemming per e-mail aan je ouder of voogd. Tot die er is, kun je de tests,
+                    de AI-functies en het solliciteren niet gebruiken.
+                </p>
+                <p>
+                    Ben je ouder of voogd en wil je de toestemming intrekken? Mail ons, dan regelen we het
+                    en wissen we de uitslagen.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "rechten",
+            Number = "10",
+            TitleKey = "Privacy.Sec.rechten.Title",
+            SummaryKey = "Privacy.Sec.rechten.Summary",
+            Body = @<text>
+                <p>Over je eigen gegevens heb je deze rechten:</p>
+                <ul>
+                    <li><strong>Bekijken.</strong> Je mag zien wat we van je hebben.</li>
+                    <li><strong>Verbeteren.</strong> Staat er iets fout of niet volledig? Dan passen we het aan.</li>
+                    <li><strong>Verwijderen.</strong> Je mag vragen om je gegevens te wissen (“recht om vergeten te worden”).</li>
+                    <li><strong>Bezwaar maken of beperken.</strong> Je mag zeggen dat we even moeten stoppen met iets.</li>
+                    <li><strong>Meenemen.</strong> Je mag je gegevens downloaden in een bestand en meenemen naar een andere dienst.</li>
+                    <li><strong>Toestemming intrekken.</strong> Dat mag altijd. Wat we daarvoor al deden, blijft rechtmatig.</li>
+                </ul>
+                <p>
+                    Ben je ingelogd? Dan regel je het meeste zelf: je gegevens downloaden, je toestemming voor de
+                    tests en de talentpool intrekken, of je account laten verwijderen. Trek je de talentpool in,
+                    dan ben je direct uit de pool.
+                </p>
+                <p>
+                    <a class="pub-btn pub-btn--secondary" href="/privacy/data">@Culture["Legal.MyData"]</a>
+                </p>
+                <p>
+                    Ben je niet tevreden over hoe we met je gegevens omgaan? Laat het ons eerst weten, dan
+                    zoeken we het samen uit. Je mag ook een klacht indienen bij de
+                    <a href="https://autoriteitpersoonsgegevens.nl/" rel="noopener noreferrer" target="_blank">Autoriteit Persoonsgegevens</a>.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "beveiliging",
+            Number = "11",
+            TitleKey = "Privacy.Sec.beveiliging.Title",
+            SummaryKey = "Privacy.Sec.beveiliging.Summary",
+            Body = @<text>
+                <p>We doen dit om je gegevens te beschermen:</p>
+                <ul>
+                    <li>Iedereen ziet alleen wat bij zijn rol hoort.</li>
+                    <li>Je sessie en je cookies zijn versleuteld.</li>
+                    <li>API-sleutels en inlogcodes slaan we versleuteld op, nooit als gewone tekst.</li>
+                    <li>Op gevoelige pagina’s zit een limiet op het aantal pogingen.</li>
+                    <li>In onze logboeken maken we e-mailadressen onleesbaar.</li>
+                </ul>
+                <p>
+                    Geen enkele dienst op internet is helemaal zonder risico. Zie je iets vreemds?
+                    Laat het ons snel weten, dan kijken we er meteen naar.
+                </p>
+            </text>
+        },
+        new LegalSection
+        {
+            Id = "wijzigingen",
+            Number = "12",
+            TitleKey = "Privacy.Sec.wijzigingen.Title",
+            SummaryKey = "Privacy.Sec.wijzigingen.Summary",
+            Body = @<text>
+                <p>
+                    Lobsy verandert, dus deze tekst verandert soms ook. De nieuwste versie staat altijd op deze
+                    pagina, met de datum vanaf wanneer die geldt. Verandert er iets belangrijks? Dan laten we
+                    het weten in het platform of per e-mail. Hieronder zie je wat er de vorige keren is veranderd.
+                </p>
+            </text>
+        }
+    ];
+}

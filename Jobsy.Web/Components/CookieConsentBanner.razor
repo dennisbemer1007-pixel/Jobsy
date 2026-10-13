@@ -1,44 +1,82 @@
+@namespace Jobsy.Web.Components
+
 @using Jobsy.Core.Privacy
-@using Jobsy.Core.Security
+@using Jobsy.Web.Services
 @inject IJSRuntime Js
-@inject IConfiguration Configuration
+@inject ICookieConsentTokenService ConsentTokens
 
 @if (_visible)
 {
-    <div class="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" aria-live="polite">
+    <div class="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" aria-live="polite" @ref="_bar">
         <div class="cookie-consent__inner">
             <div class="cookie-consent__copy">
                 <h2 id="cookie-consent-title" class="cookie-consent__title">Cookies &amp; privacy</h2>
                 <p class="cookie-consent__text">
-                    Noodzakelijke cookies voor inloggen.
-                    Optioneel anonieme statistieken.
+                    <span class="cookie-consent__text-full">Noodzakelijke cookies voor inloggen. Optioneel anonieme statistieken. </span>
+                    <span class="cookie-consent__text-short">Cookies voor inloggen. Optioneel statistieken. </span>
                     <a href="/privacy" class="cookie-consent__privacy">Privacy</a>
                 </p>
             </div>
             <div class="cookie-consent__actions">
-                <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => SaveAsync(false)">
-                    Alleen noodzakelijk
-                </button>
-                <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => SaveAsync(true)">
-                    Accepteer cookies
-                </button>
+                @if (Mode == CookieConsentMode.Static)
+                {
+                    <button type="button" class="btn-compact" data-consent="necessary">
+                        Alleen noodzakelijk
+                    </button>
+                    <button type="button" class="btn-compact" data-consent="analytics">
+                        Accepteer cookies
+                    </button>
+                }
+                else
+                {
+                    <button type="button" class="btn-compact" data-consent="necessary" disabled="@_busy" @onclick="() => SaveAsync(false)">
+                        Alleen noodzakelijk
+                    </button>
+                    <button type="button" class="btn-compact" data-consent="analytics" disabled="@_busy" @onclick="() => SaveAsync(true)">
+                        Accepteer cookies
+                    </button>
+                }
             </div>
         </div>
     </div>
 }
 
 @code {
+    public enum CookieConsentMode
+    {
+        Interactive,
+        Static
+    }
+
     [Parameter] public EventCallback OnConsentChanged { get; set; }
+    [Parameter] public CookieConsentMode Mode { get; set; } = CookieConsentMode.Interactive;
 
     // Visible in prerender so first paint has a compact banner (not a late LCP text block).
     // Returning visitors are hidden before paint via html.cookie-consent-known.
     private bool _visible = true;
     private bool _busy;
     private bool _checked;
+    private ElementReference _bar;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _checked)
+        try
+        {
+            if (_visible)
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.bind", _bar, "--cookie-bar-h");
+            }
+            else
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--cookie-bar-h");
+            }
+        }
+        catch
+        {
+            // prerender
+        }
+
+        if (Mode == CookieConsentMode.Static || !firstRender || _checked)
         {
             return;
         }
@@ -51,7 +89,7 @@
             {
                 if (existing.Equals(CookieConsentNames.AnalyticsValue, StringComparison.OrdinalIgnoreCase))
                 {
-                    await Js.InvokeVoidAsync("jobsyCookieConsent.set", MintAnalyticsToken());
+                    await Js.InvokeVoidAsync("jobsyCookieConsent.set", ConsentTokens.MintAnalyticsToken());
                 }
 
                 _visible = false;
@@ -70,14 +108,24 @@
         _busy = true;
         try
         {
-            await Js.InvokeVoidAsync(
+            var saved = await Js.InvokeAsync<bool>(
                 "jobsyCookieConsent.set",
-                analyticsAllowed ? MintAnalyticsToken() : CookieConsentNames.NecessaryValue);
+                analyticsAllowed ? ConsentTokens.MintAnalyticsToken() : CookieConsentNames.NecessaryValue);
+            if (!saved)
+            {
+                // Storage blocked — keep the banner visible so the user can retry.
+                return;
+            }
+
             _visible = false;
             if (OnConsentChanged.HasDelegate)
             {
                 await OnConsentChanged.InvokeAsync();
             }
+        }
+        catch
+        {
+            // Keep banner visible when the interop call fails.
         }
         finally
         {
@@ -97,11 +145,12 @@
         }
     }
 
-    private string MintAnalyticsToken()
+    /// <summary>Same format as interactive mode — prefer <see cref="ICookieConsentTokenService"/>.</summary>
+    public static string MintAnalyticsToken(IConfiguration configuration)
     {
-        var key = JobsyLocalSessionToken.ResolveSigningKey(
-            Configuration["JobsyAuth:LocalSessionSigningKey"],
-            Configuration["JobsyAuth:DevelopmentAuthSecret"]);
+        var key = Jobsy.Core.Security.JobsyLocalSessionToken.ResolveSigningKey(
+            configuration["JobsyAuth:LocalSessionSigningKey"],
+            configuration["JobsyAuth:DevelopmentAuthSecret"]);
         return string.IsNullOrWhiteSpace(key)
             ? CookieConsentNames.AnalyticsValue
             : CookieConsentToken.Create(key);

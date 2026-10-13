@@ -34,7 +34,7 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
     }
 
     [Fact]
-    public async Task Employer_publish_with_empty_balance_returns_402_insufficient_tokens()
+    public async Task Employer_publish_with_empty_balance_succeeds_without_token_debit()
     {
         var client = EmployerClient();
         var response = await client.PostAsJsonAsync("api/vacancies/publish", new
@@ -45,17 +45,13 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
             extend = false
         });
 
-        Assert.Equal(HttpStatusCode.PaymentRequired, response.StatusCode);
-        var body = await response.Content.ReadFromJsonAsync<InsufficientTokensDto>(JsonOpts);
-        Assert.NotNull(body);
-        Assert.Equal("InsufficientTokens", body!.Code);
-        Assert.Equal(_factory.CompanyId, body.CompanyId);
-        Assert.Equal(_factory.DraftVacancyId, body.VacancyId);
-        Assert.Equal("Publish", body.Action);
-        Assert.Equal(0m, body.Balance);
-        Assert.True(body.RequiredTokens >= 1m);
-        Assert.True(body.Deficit >= 1m);
-        Assert.Contains("token", body.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var vacancy = await db.Vacancies.AsNoTracking().SingleAsync(v => v.Id == _factory.DraftVacancyId);
+        Assert.Equal(VacancyStatus.Active, vacancy.Status);
+        Assert.False(await db.TokenTransactions.AnyAsync(t =>
+            t.CompanyId == _factory.CompanyId && t.Kind == TokenTransactionKind.Spend));
     }
 
     [Fact]
@@ -161,7 +157,6 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
         var update = await admin.PutAsJsonAsync("api/settings/platform-features", new UpdatePlatformFeatureRequest(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 5));
@@ -176,7 +171,6 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
         var restore = await admin.PutAsJsonAsync("api/settings/platform-features", new UpdatePlatformFeatureRequest(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
             SessionInactivityTimeoutMinutes: 30));
@@ -212,7 +206,7 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
     }
 }
 
-public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program>
+public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid CompanyId { get; } = Guid.Parse("d2000000-0000-0000-0000-000000000001");
     public Guid DraftVacancyId { get; } = Guid.Parse("d2000000-0000-0000-0000-000000000010");
@@ -296,6 +290,7 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
         {
             Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
             FreePublishUntil = null,
+            EmployersEnabled = true,
             UpdatedAtUtc = DateTime.UtcNow
         });
         db.Companies.Add(new Company
@@ -309,7 +304,11 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
             Type = CompanyType.Employer,
             TokensManagedByEnterprise = false,
             PreferredPaymentMethod = MolliePaymentMethods.Ideal,
-            KvkVerificationStatus = KvkVerificationStatus.Verified
+            KvkVerificationStatus = KvkVerificationStatus.Verified,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var salaryTableId = Guid.Parse("d2000000-0000-0000-0000-000000000030");
@@ -339,7 +338,7 @@ public sealed class CoreFunctionalFlowApiFactory : WebApplicationFactory<Program
                 Id = EmployerId,
                 Email = EmployerEmail,
                 FullName = "Flow Manager",
-                Role = UserRole.BranchManager,
+                Role = UserRole.EnterpriseManager,
                 IsActive = true,
                 CompanyId = CompanyId
             },

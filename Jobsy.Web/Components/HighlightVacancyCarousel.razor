@@ -1,10 +1,14 @@
 @namespace Jobsy.Web.Components
 @inject CultureState Culture
 
-@if (Vacancies.Count > 0)
+@if (Vacancies.Count > 0 || LeadingItem is not null)
 {
     <aside class="highlight-carousel @ModifierClass" aria-label="@Culture["Discovery.Featured"]">
         <div class="highlight-carousel__track" role="list">
+            @if (LeadingItem is not null)
+            {
+                @LeadingItem
+            }
             @foreach (var vacancy in Vacancies)
             {
                 var travelText = FormatTravel?.Invoke(vacancy) ?? string.Empty;
@@ -43,4 +47,5 @@
     [Parameter] public Func<VacancyListItem, string>? FormatTravel { get; set; }
     [Parameter] public EventCallback<Guid?> OnHover { get; set; }
     [Parameter] public EventCallback<Guid> OnSelect { get; set; }
+    [Parameter] public RenderFragment? LeadingItem { get; set; }
 }

@@ -2,13 +2,12 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -29,26 +28,27 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<OpenAiCompetenceDeepReportAiService> _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public OpenAiCompetenceDeepReportAiService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
-        ILogger<OpenAiCompetenceDeepReportAiService> logger)
+        IOpenAiEndpointResolver openAi,
+        ILogger<OpenAiCompetenceDeepReportAiService> logger,
+        IPlatformErrorLog? platformLog = null)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<(string Summary, IReadOnlyList<(string Title, string Body)> Steps)?> TryGenerateAsync(
         CompetenceDeepReport draftWithoutAi, string? jobTitle, CancellationToken ct)
     {
-        var apiKey = await ResolveApiKeyAsync(ct);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.CompetenceDeepReport, ct);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return null;
@@ -60,8 +60,8 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
                 draftWithoutAi,
                 jobTitle,
                 apiKey,
-                await ResolveModelAsync(ct),
-                await ResolveBaseUrlAsync(ct),
+                endpoint.Model,
+                endpoint.BaseUrl,
                 ct);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -83,7 +83,8 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
         sb.AppendLine("Persoonlijkheidsprofiel (Big Five, 0-100, hoog naar laag):");
         foreach (var trait in draft.Traits.OrderByDescending(t => t.Score))
         {
-            sb.AppendLine($"- {trait.LabelNl}: {trait.Score}/100 ({trait.Level}). {trait.Meaning}");
+            var band = CandidateFactSheet.ScoreBand(trait.Score);
+            sb.AppendLine($"- {trait.LabelNl}: {trait.Score}/100 ({trait.Level}, band {band}). {trait.Meaning}");
         }
 
         if (!string.IsNullOrWhiteSpace(jobTitle))
@@ -93,7 +94,12 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
 
         if (draft.Occupations.Count > 0)
         {
-            sb.AppendLine("Passende beroepen: " + string.Join(", ", draft.Occupations.Select(o => o.Title)));
+            sb.AppendLine("Passende beroepen, met de enige richting die je mag noemen:");
+            foreach (var occupation in draft.Occupations)
+            {
+                var code = CareerCompassBuilder.PrimaryCode(occupation.Title);
+                sb.AppendLine($"- {occupation.Title} → {CareerCompassBuilder.TypeLabel(code)}");
+            }
         }
 
         sb.AppendLine(
@@ -122,7 +128,13 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
                         Je bent een loopbaancoach van Lobsy. Schrijf in helder, positief maar eerlijk Nederlands
                         op B1-niveau en spreek de lezer aan met 'je'. Geen jargon zoals OCEAN, Big Five, RIASEC,
                         DISC. Blijf dicht bij het gegeven profiel; verzin geen feiten die er niet in staan.
-                        """
+                        Noem geen woonplaats of regio. Zeg niet wat de persoon leuk vindt.
+                        Zeg niet dat een trek sterk of positief is als de score 50 of lager is.
+                        Gebruik 'je scoort' of 'uit je test blijkt', niet 'je werkt graag' of 'you like'.
+                        Gebruik nooit de woorden graag, leuk, fijn, you like, you enjoy, lubisz, îți place of تحب.
+                        Noem bij een beroep alleen de richting die bij dat beroep hoort, en noem die naam letterlijk.
+                        Zeg nooit dat een beroep een eigen richting niet heeft.
+                        """ + "\n" + CandidateFactGuard.StrictAddendum
                 },
                 new { role = "user", content = sb.ToString() }
             }
@@ -167,46 +179,30 @@ public sealed class OpenAiCompetenceDeepReportAiService : ICompetenceDeepReportA
             return null;
         }
 
-        return (dto.Summary.Trim(), steps);
-    }
-
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken ct)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, ct);
-        if (!string.IsNullOrWhiteSpace(fromDb))
+        var summary = dto.Summary.Trim();
+        var visible = summary + "\n" + string.Join('\n', steps.Select(step => step.Item1 + " " + step.Item2));
+        var scores = draft.Traits.Select(trait => $"{trait.LabelNl} {trait.Score}%").ToList();
+        if (!string.IsNullOrWhiteSpace(jobTitle))
         {
-            return fromDb;
+            scores.Add(jobTitle.Trim());
         }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
-
-    private async Task<string> ResolveModelAsync(CancellationToken ct)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, ct);
-        if (!string.IsNullOrWhiteSpace(fromDb))
+        var sheet = CandidateFactSheet.Personal([], [], [], scores: scores, checkJobTitles: false);
+        var traits = draft.Traits.Select(trait => (trait.LabelNl, trait.Score)).ToList();
+        var reason = CandidateFactGuard.RejectionReason(visible, sheet)
+            ?? CandidateFactGuard.BelowAveragePraise(visible, traits);
+        if (reason is not null)
         {
-            return fromDb;
+            await AiFactRejectionLog.WriteAsync(
+                _platformLog, _logger, "competence-report", reason, 1, ct, model, visible);
+            return null;
         }
 
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
+        return (summary, steps);
     }
 
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken ct)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, ct);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
 
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl.Trim();
-        return fallback.EndsWith('/') ? fallback : fallback + "/";
-    }
+
 
     private sealed class ReportDto
     {

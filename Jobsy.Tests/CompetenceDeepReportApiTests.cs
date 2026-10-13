@@ -53,6 +53,9 @@ public class CompetenceDeepReportApiTests : IClassFixture<CompetenceDeepReportAp
     {
         _factory.Ai.Reset();
         var client = Authed(_factory.UnlockedCandidateEmail);
+        // Shared IClassFixture DB: a sibling test may already have completed the analysis.
+        // Reset to Draft so completion walks the tryAi path again (xunit.v3 order is not stable).
+        await ResetUnlockedCompetenceToDraftAsync();
         await CompleteDeepAnalysisAsync(client);
 
         // Completion attempts AI once (tryAi:true); our fake throws, so the build falls back to
@@ -136,6 +139,22 @@ public class CompetenceDeepReportApiTests : IClassFixture<CompetenceDeepReportAp
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
+    private async Task ResetUnlockedCompetenceToDraftAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var row = await db.CandidateDeepAnalyses.SingleAsync(
+            d => d.UserId == _factory.UnlockedCandidateId && d.Kind == AssessmentKind.Competence);
+        row.Status = CandidateDeepAnalysisStatuses.Draft;
+        row.ReportJson = "";
+        row.ReportVersion = 0;
+        row.CompletedAtUtc = null;
+        row.AnswersJson = "{}";
+        row.TagsJson = "[]";
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+    }
+
     private HttpClient Authed(string email)
     {
         var userId = email == _factory.UnlockedCandidateEmail
@@ -145,7 +164,7 @@ public class CompetenceDeepReportApiTests : IClassFixture<CompetenceDeepReportAp
     }
 }
 
-public sealed class CompetenceDeepReportApiFactory : WebApplicationFactory<Program>
+public sealed class CompetenceDeepReportApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid UnlockedCandidateId { get; } = Guid.Parse("e4000000-0000-0000-0000-000000000010");
     public Guid FreeCandidateId { get; } = Guid.Parse("e4000000-0000-0000-0000-000000000011");

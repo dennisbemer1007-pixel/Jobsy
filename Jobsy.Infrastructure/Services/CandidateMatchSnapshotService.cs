@@ -1,6 +1,8 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Media;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -18,19 +20,22 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
     private readonly IProfileVacancyMatchService _matches;
     private readonly ICandidateInsightsQueue _queue;
     private readonly IMemoryCache _cache;
+    private readonly IFeatureFlags _flags;
 
     public CandidateMatchSnapshotService(
         JobsyDbContext db,
         IVacancyDiscoveryIndex discovery,
         IProfileVacancyMatchService matches,
         ICandidateInsightsQueue queue,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        IFeatureFlags flags)
     {
         _db = db;
         _discovery = discovery;
         _matches = matches;
         _queue = queue;
         _cache = cache;
+        _flags = flags;
     }
 
     public async Task<(IReadOnlyList<CandidateMatchedVacancyDto> Matches, string InsightsStatus)> GetAsync(
@@ -39,24 +44,28 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
     {
         var row = await _db.CandidateMatchSnapshots.AsNoTracking()
             .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
-        var matches = CandidateMatchSnapshotJson.Deserialize(row?.MatchesJson);
-        var status = InsightsStatuses.Ready;
-
-        // Cheap fingerprint from test/prefs rows — never score vacancies on GET.
-        var fingerprint = await ComputeInputFingerprintCheapAsync(userId, cancellationToken);
-        var indexStamp = _discovery.LastRefreshedAtUtc;
-        var staleFingerprint = row is null
-                               || !string.Equals(row.InputFingerprint, fingerprint, StringComparison.Ordinal);
-        var staleIndex = row is not null
-                         && indexStamp is DateTime idx
-                         && row.ComputedAtUtc < idx;
-        if (staleFingerprint || staleIndex || row is null)
+        if (row is null)
         {
-            status = InsightsStatuses.Updating;
             _queue.TryEnqueue(userId);
+            return ([], InsightsStatuses.Updating);
         }
 
-        return (matches, status);
+        var matches = SanitizeMatches(CandidateMatchSnapshotJson.Deserialize(row.MatchesJson));
+        if (InsightsStatuses.IsUpdating(row.Status))
+        {
+            _queue.TryEnqueue(userId);
+            return (matches, InsightsStatuses.Updating);
+        }
+
+        var indexStamp = _discovery.LastRefreshedAtUtc;
+        var staleIndex = indexStamp is DateTime idx && row.ComputedAtUtc < idx;
+        if (staleIndex)
+        {
+            _queue.TryEnqueue(userId);
+            return (matches, InsightsStatuses.Updating);
+        }
+
+        return (matches, InsightsStatuses.Ready);
     }
 
     public async Task SaveComputedAsync(
@@ -78,7 +87,7 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
             _db.CandidateMatchSnapshots.Add(row);
         }
 
-        row.MatchesJson = CandidateMatchSnapshotJson.Serialize(matches);
+        row.MatchesJson = CandidateMatchSnapshotJson.Serialize(SanitizeMatches(matches));
         row.InputFingerprint = inputFingerprint;
         row.ComputedAtUtc = now;
         row.Status = InsightsStatuses.Ready;
@@ -237,8 +246,13 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
         }
 
         var vacancies = await _discovery.GetActiveAsync(cancellationToken);
-        var transport = TransportLabels.Parse(context.Prefs.PreferredTransport);
-        var scored = _matches.Score(
+        if (await _flags.IsEnabledAsync(PlatformFeature.EmployerPhase2, cancellationToken))
+        {
+            vacancies = vacancies.Where(v => v.IntermediaryCompanyId is null).ToList();
+        }
+
+        var transport = TravelReach.Fastest(TransportLabels.ParseMany(context.Prefs.PreferredTransport));
+        var scored = await _matches.ScoreAsync(
             context,
             vacancies.Select(vacancy =>
             {
@@ -255,7 +269,8 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 }
 
                 return (vacancy, travelMinutes);
-            }));
+            }),
+            cancellationToken);
 
         var ranked = ProfileVacancyMatchCalculator.RankScored(scored.Values);
         var byId = vacancies.ToDictionary(v => v.Id);
@@ -275,12 +290,18 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 why.Insert(0, match.MatchRationale);
             }
 
+            var imageUrl = VacancyImageUrls.ForCard(
+                vacancy.ImageUrl,
+                vacancy.CompanyLogoUrl,
+                vacancy.Id,
+                vacancy.WorkTypeLabelList?.FirstOrDefault());
+            var logoUrl = VacancyImageUrls.Normalize(vacancy.CompanyLogoUrl);
             result.Add(new CandidateMatchedVacancyDto(
                 vacancy.Id,
                 vacancy.Title,
                 vacancy.CompanyName,
-                vacancy.ImageUrl,
-                vacancy.CompanyLogoUrl,
+                imageUrl,
+                logoUrl,
                 match.TotalPercent,
                 match.ColorBand,
                 why,
@@ -289,11 +310,81 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 match.MatchRationale));
         }
 
-        return result;
+        var dislikeCodes = await LoadDislikeCodesAsync(userId, cancellationToken);
+        var nightShiftIds = vacancies
+            .Where(v => v.LegalNightShift23To06 == true)
+            .Select(v => v.Id)
+            .ToHashSet();
+        return DislikeMatchRules.DownRankNightShifts(
+            result,
+            dislikeCodes,
+            m => nightShiftIds.Contains(m.Id));
+    }
+
+    private async Task<IReadOnlyList<string>> LoadDislikeCodesAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var json = await _db.CandidatePrivatePreferences.AsNoTracking()
+            .Where(p => p.UserId == userId)
+            .Select(p => p.DislikesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return [];
+        }
     }
 
     public void InvalidateContextCache(Guid userId)
         => _cache.Remove(ContextCachePrefix + userId);
+
+    public async Task MarkInputsStaleAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var row = await _db.CandidateMatchSnapshots
+            .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+        if (row is null)
+        {
+            return;
+        }
+
+        if (InsightsStatuses.IsUpdating(row.Status))
+        {
+            return;
+        }
+
+        row.Status = InsightsStatuses.Updating;
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private static IReadOnlyList<CandidateMatchedVacancyDto> SanitizeMatches(
+        IReadOnlyList<CandidateMatchedVacancyDto> matches)
+    {
+        if (matches.Count == 0)
+        {
+            return matches;
+        }
+
+        var list = new List<CandidateMatchedVacancyDto>(matches.Count);
+        foreach (var match in matches)
+        {
+            list.Add(match with
+            {
+                ImageUrl = VacancyImageUrls.ForCard(match.ImageUrl, match.CompanyLogoUrl, match.Id, null),
+                CompanyLogoUrl = VacancyImageUrls.Normalize(match.CompanyLogoUrl)
+            });
+        }
+
+        return list;
+    }
 
     private async Task<ProfileVacancyMatchContext?> GetOrLoadContextAsync(
         Guid userId,

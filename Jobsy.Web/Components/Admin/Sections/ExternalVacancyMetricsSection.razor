@@ -1,0 +1,57 @@
+@using Jobsy.Core.Contracts
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<section class="detail-card admin-settings-group" aria-labelledby="ext-vac-metrics">
+    <h2 id="ext-vac-metrics">@Culture["AdminSettings.ExternalVacancies.MetricsTitle"]</h2>
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_metrics is null)
+    {
+        <p class="muted">—</p>
+    }
+    else
+    {
+        <div class="admin-kpi-grid">
+            <div class="stat-card">
+                <span class="stat-card__value">@_metrics.SentCount</span>
+                <span class="stat-card__label">@Culture["AdminSettings.ExternalVacancies.Sent"]</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__value">@_metrics.ClickedCount</span>
+                <span class="stat-card__label">@Culture["AdminSettings.ExternalVacancies.Clicked"]</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__value">@_metrics.EmployerAccountCreatedCount</span>
+                <span class="stat-card__label">@Culture["AdminSettings.ExternalVacancies.EmployerAccountCreated"]</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-card__value">@_metrics.AcceptedCount</span>
+                <span class="stat-card__label">@Culture["AdminSettings.ExternalVacancies.Accepted"]</span>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private ExternalVacancyAdminMetricsDto? _metrics;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _metrics = await Api.GetExternalVacancyAdminMetricsAsync();
+        }
+        catch
+        {
+            _metrics = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

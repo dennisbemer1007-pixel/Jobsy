@@ -4,7 +4,7 @@
 Jobsy is een hyper-lokale job-matching applicatie gericht op de regionale arbeidsmarkt (startend in Westland en Den Haag), waarbij de nadruk ligt op reistijd en vervoersmiddel in plaats van traditionele zoekfilters. Het platform gebruikt een "Funda-model" (directe visuele controle via een kaart en lijst).
 
 ## 2. Tech Stack
-- **Backend:** .NET 9 (C#), ASP.NET Core Web API (`Jobsy.Api`)
+- **Backend:** .NET 10 (C#), ASP.NET Core Web API (`Jobsy.Api`)
 - **Frontend:** Blazor Web (Interactive Server) (`Jobsy.Web`)
 - **Domain / Infra:** `Jobsy.Core` (entities, rules, interfaces) + `Jobsy.Infrastructure` (EF Core, seeders, stub services)
 - **Tests:** `Jobsy.Tests`

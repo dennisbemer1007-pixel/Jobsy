@@ -51,3 +51,10 @@ appsettings.*.local.json
 # Node (demo screenshot/pptx tooling)
 node_modules/
 package-lock.json
+!tools/css/package-lock.json
+Jobsy.Api/scholen-code-hmac.key
+TestResults/
+
+# Occupation catalogue downloads (rebuild with tools/occupations/fetch.py)
+tools/occupations/.cache/
+__pycache__/

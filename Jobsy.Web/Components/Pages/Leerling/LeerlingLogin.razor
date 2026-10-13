@@ -1,0 +1,212 @@
+@page "/leerling"
+@layout LeerlingLayout
+@attribute [AllowAnonymous]
+@using System.Security.Claims
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+
+<PageTitle>@(_pupilSession ? Culture["Leerling.Login.AlreadyTitle"] : Culture["Leerling.LoginTitle"]) · Lobsy</PageTitle>
+
+<div class="ll-login">
+    <LeerlingCoachCue Text="@CoachHint" />
+    @if (!string.IsNullOrEmpty(_staffBlock))
+    {
+        <div class="ll-card ll-card--warn" role="alert">
+            <LeerlingSpeak Text="@(_staffBlock ?? "")" SpeechKey="ll-login-staff" />
+            <p>@_staffBlock</p>
+        </div>
+    }
+    else if (_pupilSession)
+    {
+        <section class="ll-card">
+            <h1>@Culture["Leerling.Login.AlreadyIn"]</h1>
+            <LeerlingSpeak Text="@AlreadySpoken" SpeechKey="ll-login-already" />
+            <p>@Culture["Leerling.Login.AlreadyLead"]</p>
+            <div class="ll-question__nav">
+                <a class="btn-primary" href="/leerling/start">@Culture["Leerling.Login.Continue"]</a>
+                <a class="btn-secondary" href="/leerling/stop">@Culture["Leerling.Login.Stop"]</a>
+            </div>
+        </section>
+    }
+    else
+    {
+        <section class="ll-card">
+            <h1>@Culture["Leerling.Login.Heading"]</h1>
+            <LeerlingSpeak Text="@GuestSpoken" SpeechKey="ll-login-guest" />
+            <p class="muted">@Culture["Leerling.Login.Lead"]</p>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="ll-error" role="alert">@_error</p>
+            }
+
+            <form method="get" action="/leerling" class="ll-form ll-form--cascade">
+                <label class="ll-field">
+                    <span>@Culture["Leerling.Login.School"]</span>
+                    <select name="schoolId" required data-leerling-school>
+                        <option value="">@Culture["Leerling.Login.SchoolPlaceholder"]</option>
+                        @foreach (var s in _schools)
+                        {
+                            <option value="@s.Id" selected="@(s.Id == SchoolId)">@s.SchoolName · @s.City</option>
+                        }
+                    </select>
+                </label>
+                <button type="submit" class="btn-secondary ll-login__choose">@Culture["Leerling.Login.ChooseSchool"]</button>
+                @if (_schools.Count == 0)
+                {
+                    <p class="muted">@Culture["Leerling.Login.NoOpenSchool"]</p>
+                }
+            </form>
+
+            <form method="post" action="/leerling/login" class="ll-form">
+                <AntiforgeryToken />
+                <input type="hidden" name="schoolId" value="@SchoolId" />
+                <label class="ll-field">
+                    <span>@Culture["Leerling.Login.Class"]</span>
+                    <select name="classId" required disabled="@(_classes.Count == 0 || SchoolId is null)">
+                        <option value="">@Culture["Leerling.Login.ClassPlaceholder"]</option>
+                        @foreach (var c in _classes)
+                        {
+                            <option value="@c.Id" selected="@(c.Id == ClassId)">@c.Label</option>
+                        }
+                    </select>
+                </label>
+                <label class="ll-field">
+                    <span>@Culture["Leerling.Login.Code"]</span>
+                    <input name="code"
+                           type="text"
+                           maxlength="7"
+                           autocomplete="off"
+                           autocapitalize="characters"
+                           spellcheck="false"
+                           inputmode="text"
+                           placeholder="K7Q-M2P"
+                           required />
+                </label>
+                <p class="ll-privacy">@Culture["Leerling.Login.NoName"]</p>
+                <button type="submit" class="btn-primary ll-login__submit" disabled="@(SchoolId is null)">@Culture["Leerling.Login.Start"]</button>
+            </form>
+        </section>
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")] public string? ErrorQuery { get; set; }
+    [SupplyParameterFromQuery(Name = "schoolId")] public Guid? SchoolId { get; set; }
+    [SupplyParameterFromQuery(Name = "classId")] public Guid? ClassId { get; set; }
+    [SupplyParameterFromQuery(Name = "questionSet")] public string? QuestionSetQuery { get; set; }
+
+    private List<PupilSchoolOptionDto> _schools = [];
+    private List<PupilClassOptionDto> _classes = [];
+    private string? _error;
+    private string? _staffBlock;
+    private bool _pupilSession;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        // The document request keeps the pupil on Items (cookie auth must not run
+        // inside the circuit). The circuit itself puts that principal on User.
+        if (IsStoredPupil(http) || JobsyApiAuthHandler.IsPupilPrincipal(http?.User))
+        {
+            _pupilSession = true;
+            return;
+        }
+
+        var state = await AuthState.GetAuthenticationStateAsync();
+        if (JobsyApiAuthHandler.IsPupilPrincipal(state.User))
+        {
+            _pupilSession = true;
+            return;
+        }
+
+        var signedIn = http?.User.Identity?.IsAuthenticated == true
+            ? http.User
+            : state.User.Identity?.IsAuthenticated == true ? state.User : null;
+        if (signedIn is not null)
+        {
+            _staffBlock = string.Format(
+                System.Globalization.CultureInfo.CurrentCulture,
+                Culture["Leerling.Login.StaffBusy"],
+                StaffRoleLabel(signedIn.FindFirst(ClaimTypes.Role)?.Value));
+            return;
+        }
+
+        try { _schools = (await Api.GetPupilSchoolsAsync()).ToList(); }
+        catch { _schools = []; }
+
+        if (SchoolId is Guid sid)
+        {
+            try { _classes = (await Api.GetPupilClassesAsync(sid) ?? []).ToList(); }
+            catch { _classes = []; }
+        }
+
+        var errorSet = ResolveErrorSet();
+        _error = ErrorQuery switch
+        {
+            "invalid" => Culture[PupilCopy.Key(errorSet, "Leerling.Login.Error.Invalid")],
+            "cooldown" => Culture[PupilCopy.Key(errorSet, "Leerling.Login.Error.Cooldown")],
+            "window" => Culture[PupilCopy.Key(errorSet, "Leerling.Login.Error.Window")],
+            "staff" => Culture["Leerling.Login.Error.Staff"],
+            "retry" => Culture["Leerling.Login.Error.Retry"],
+            "expired" => Culture["Leerling.Login.Error.Expired"],
+            _ => null
+        };
+    }
+
+    private static bool IsStoredPupil(HttpContext? http)
+        => http?.Items[LeerlingNoStoreMiddleware.PupilPrincipalItemKey] is ClaimsPrincipal pupil
+           && JobsyApiAuthHandler.IsPupilPrincipal(pupil);
+
+    private string StaffRoleLabel(string? role) => role switch
+    {
+        JobsyRoles.Teacher => Culture["Leraar.RoleChip"],
+        JobsyRoles.SchoolAdmin => Culture["School.RoleChip"],
+        _ => Culture["Leerling.Login.StaffOther"]
+    };
+
+    private string CoachHint => _pupilSession
+        ? Culture["Leerling.Coach.Back"]
+        : Culture["Leerling.Login.Bubble"];
+
+    private string GuestSpoken => SpokenText.Join(
+        Culture["Leerling.Login.Bubble"],
+        Culture["Leerling.Login.Lead"],
+        Culture["Leerling.Login.NoName"]);
+
+    private string AlreadySpoken => SpokenText.Join(
+        Culture["Leerling.Login.AlreadyIn"],
+        SpokenText.WithoutRepeatedLead(
+            Culture["Leerling.Login.AlreadyIn"],
+            Culture["Leerling.Login.AlreadyLead"]));
+
+    private PupilQuestionSet ResolveErrorSet()
+    {
+        if (string.Equals(QuestionSetQuery, "Vo", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(QuestionSetQuery, "2", StringComparison.Ordinal))
+        {
+            return PupilQuestionSet.Vo;
+        }
+
+        if (ClassId is Guid cid)
+        {
+            var match = _classes.FirstOrDefault(c => c.Id == cid);
+            if (match is not null)
+            {
+                return match.QuestionSet;
+            }
+        }
+
+        return PupilQuestionSet.Groep78;
+    }
+}

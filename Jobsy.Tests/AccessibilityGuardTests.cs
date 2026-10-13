@@ -24,9 +24,11 @@ public class AccessibilityGuardTests
         var panelAt = discovery.IndexOf("id=\"discovery-filters-desktop\"", StringComparison.Ordinal);
         Assert.True(panelAt > 0);
         var panelHead = discovery[Math.Max(0, panelAt - 180)..Math.Min(discovery.Length, panelAt + 220)];
+        // Desktop filter bar stays in the DOM and is always visible (Zoeken CTA + inline filters).
+        // Mobile uses the filter sheet; do not wrap the desktop panel in @if (_filtersOpen).
         Assert.DoesNotContain("@if (_filtersOpen)", panelHead);
-        Assert.Contains("hidden=\"@(!_filtersOpen)\"", panelHead);
-        Assert.Contains("aria-hidden=\"@(!_filtersOpen ? \"true\" : \"false\")\"", panelHead);
+        Assert.DoesNotContain("hidden=\"@(!_filtersOpen)\"", panelHead);
+        Assert.Contains("aria-hidden=\"false\"", panelHead);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains(".filter-bar--desktop[hidden]", css);
@@ -43,13 +45,12 @@ public class AccessibilityGuardTests
         var end = css.IndexOf('}', start);
         Assert.True(end > start);
         var block = css[start..end];
-        Assert.Contains("--coral-deep", block);
-        Assert.Contains("#fff", block);
-        Assert.DoesNotContain("#f54a1b", block);
+        Assert.Contains("#f7f4f0", block);
+        Assert.Contains("transparent", block, StringComparison.Ordinal);
 
         Assert.True(
-            ContrastRatio(0xFFFFFF, 0xD93A12) >= 4.5,
-            "White on --coral-deep (#d93a12) must meet WCAG AA for the compact cookie CTA.");
+            ContrastRatio(0xF7F4F0, 0x0F2D5C) >= 4.5,
+            "Cookie CTA text on dark bar must meet WCAG AA.");
     }
 
     [Fact]

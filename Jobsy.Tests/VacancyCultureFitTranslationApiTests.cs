@@ -212,7 +212,7 @@ public class VacancyCultureFitTranslationApiTests : IClassFixture<VacancyCulture
     }
 }
 
-public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<Program>
+public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     public Guid CandidateId { get; } = Guid.Parse("e2000000-0000-0000-0000-000000000020");
     public Guid CompanyId { get; } = Guid.Parse("e2000000-0000-0000-0000-000000000001");
@@ -300,7 +300,11 @@ public sealed class VacancyCultureFitTranslationFactory : WebApplicationFactory<
             Name = "Cultuur Fit BV",
             KvkNumber = "11223344",
             Address = "Teststraat 1, Den Haag",
-            Location = new GeoPoint(52.09, 4.31)
+            Location = new GeoPoint(52.09, 4.31),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {

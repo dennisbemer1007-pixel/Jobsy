@@ -6,17 +6,13 @@ public class CandidateVacanciesTabTests
     public void Recently_viewed_is_local_guid_storage_not_email()
     {
         var root = FindRepoRoot();
-        var geo = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/geo.js"));
-        var core = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js"));
-        foreach (var js in new[] { geo, core })
-        {
-            Assert.Contains("jobsy.recentlyViewedVacancies", js);
-            Assert.Contains("rememberViewedVacancy", js);
-            Assert.Contains("listRecentlyViewed", js);
-            Assert.Contains("UUID_RE", js);
-            Assert.Contains("RECENT_MAX = 20", js);
-            Assert.DoesNotContain("FindFirst(ClaimTypes.Email)", js);
-        }
+        var js = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js"));
+        Assert.Contains("jobsy.recentlyViewedVacancies", js);
+        Assert.Contains("rememberViewedVacancy", js);
+        Assert.Contains("listRecentlyViewed", js);
+        Assert.Contains("UUID_RE", js);
+        Assert.Contains("RECENT_MAX = 20", js);
+        Assert.DoesNotContain("FindFirst(ClaimTypes.Email)", js);
 
         var helper = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Navigation/RecentlyViewedVacancies.cs"));
         Assert.Contains("Stores GUIDs, never emails", helper);
@@ -41,8 +37,9 @@ public class CandidateVacanciesTabTests
     {
         var root = FindRepoRoot();
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".lobsy-assistant-tab {\n    position: fixed;\n    top: 26%;\n    right: 0;", css);
-        Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: 46%;\n    right: 0;", css);
+        Assert.Contains(".lobsy-assistant-tab {\n    position: fixed;\n    top: 50%;\n    right: 0;", css);
+        Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
+        Assert.Contains("width: max-content;\n    height: max-content;\n    pointer-events: none;", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);
         Assert.Contains(".bottom-nav {\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    width: 100%;\n    max-width: 100%;\n    box-sizing: border-box;\n    z-index: 50;", css);
         Assert.Contains(".candidate-vacancies-page .candidate-vacancies__section", css);

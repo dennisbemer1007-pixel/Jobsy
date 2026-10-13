@@ -20,7 +20,11 @@ public enum TokenSpendReason
     PushBom = 3,
     Extend = 4,
     /// <summary>Unlock anonymous talent-pool contact (1 token; refundable within 48h rules).</summary>
-    ContactUnlock = 5
+    ContactUnlock = 5,
+    /// <summary>Paid unlock of Kandidaatinzichten for a set duration (default 12 tokens).</summary>
+    InsightsUnlock = 6,
+    /// <summary>Accepting a candidate application (pilot: ½ token).</summary>
+    AcceptCandidate = 7
 }
 
 public enum ApplicationStatus
@@ -53,7 +57,8 @@ public enum MetricsPeriod
     Week = 1,
     Month = 2,
     Quarter = 3,
-    Year = 4
+    Year = 4,
+    All = 5
 }
 
 public enum ShareChannel

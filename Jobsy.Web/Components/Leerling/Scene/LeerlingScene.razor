@@ -1,0 +1,28 @@
+@namespace Jobsy.Web.Components.Leerling.Scene
+
+<div class="ll-scene ll-scene--depth-@Depth ll-scene--desktop" aria-hidden="true">
+    @((MarkupString)_desktop)
+</div>
+<div class="ll-scene ll-scene--depth-@Depth ll-scene--mobile" aria-hidden="true">
+    @((MarkupString)_mobile)
+</div>
+
+@code {
+    private string _desktop = "";
+    private string _mobile = "";
+    private int _renderedDepth = -1;
+
+    [Parameter] public int Depth { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (_renderedDepth == Depth && _desktop.Length > 0)
+        {
+            return;
+        }
+
+        _renderedDepth = Depth;
+        _desktop = LeerlingSceneBuilder.BuildSvg(Depth, 1440, 772, 1180);
+        _mobile = LeerlingSceneBuilder.BuildSvg(Depth, 390, 170, 60);
+    }
+}

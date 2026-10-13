@@ -23,5 +23,8 @@
   "bugs": {
     "url": "https://github.com/dennisbemer1007-pixel/Jobsy/issues"
   },
-  "homepage": "https://github.com/dennisbemer1007-pixel/Jobsy#readme"
+  "homepage": "https://github.com/dennisbemer1007-pixel/Jobsy#readme",
+  "overrides": {
+    "image-size": "^2.0.4"
+  }
 }

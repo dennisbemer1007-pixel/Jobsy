@@ -49,7 +49,11 @@ public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserPro
                     KvkEstablishmentId = "88881111_0001",
                     Address = "Teststraat 1",
                     Location = new GeoPoint(52.1, 5.1),
-                    Type = CompanyType.Employer
+                    Type = CompanyType.Employer,
+                    VerificationStatus = CompanyVerificationStatus.Verified,
+                    VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                    VerifiedAtUtc = DateTime.UtcNow,
+                    VerificationUpdatedAtUtc = DateTime.UtcNow
                 });
             }
 
@@ -85,7 +89,7 @@ public class RegisteredUserProductionAuthTests : IClassFixture<RegisteredUserPro
     }
 }
 
-public sealed class RegisteredUserProductionAuthFactory : WebApplicationFactory<Program>
+public sealed class RegisteredUserProductionAuthFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
 {
     private readonly string _dbName = "RegisteredUserProdAuth-" + Guid.NewGuid();
 

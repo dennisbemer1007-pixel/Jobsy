@@ -1,0 +1,256 @@
+@page "/candidate/external/{Id:guid}"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.CandidateExternalVacancies)]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.KandidaatBanen
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@(_detail?.Title ?? Culture["ExtVac.Add.Title"]) · Lobsy</PageTitle>
+
+<div class="kb-ext" data-testid="kb-ext-detail">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_detail is null)
+    {
+        <Jobsy.Web.Components.Errors.NotFoundView Embedded="true" />
+    }
+    else if (_detail.IsDismissed)
+    {
+        <div class="kb-ext__card" role="status">
+            <h1 class="kb-ext__title">@_detail.Title</h1>
+            <p class="muted">@Culture["ExtVac.Detail.DismissedLead"]</p>
+            <button type="button" class="kb-ext__btn kb-ext__btn--secondary" @onclick="UndoDismissAsync">
+                @Culture["ExtVac.Detail.DismissUndo"]
+            </button>
+            <a class="kb-ext__btn kb-ext__btn--secondary" href="@KbRoutes.Saved">@Culture["Kb.Match.ViewSaved"]</a>
+        </div>
+    }
+    else
+    {
+        <div class="kb-ext__header-row">
+            <div>
+                @if (_detail.IsOnSavedList)
+                {
+                    <span class="kb-ext__badge">@Culture["ExtVac.Detail.Saved"]</span>
+                }
+                <h1 class="kb-ext__title">@_detail.Title</h1>
+                <p class="muted">@_detail.CompanyName · @_detail.Place</p>
+            </div>
+            <ReadAloudButton Text="@ReadAloudText" SpeechKey="@($"ext-{_detail.Id}")" />
+        </div>
+
+        @if (_detail.RequirementsBullets.Count > 0)
+        {
+            <section class="kb-ext__card">
+                <h2 class="kb-ext__method-title">@Culture["ExtVac.Detail.Requirements"]</h2>
+                <ul class="kb-ext__bullets">
+                    @foreach (var bullet in _detail.RequirementsBullets)
+                    {
+                        <li>@bullet</li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (_detail.TravelMinutesEstimate is int travel)
+        {
+            <p class="muted">@string.Format(Culture["Discovery.TravelMinutes"], travel)</p>
+        }
+
+        <section class="kb-ext__card">
+            <h2 class="kb-ext__method-title">@Culture["ExtVac.Detail.Facts"]</h2>
+            <table class="kb-ext__facts">
+                <tbody>
+                    @foreach (var row in FactRows(_detail))
+                    {
+                        <tr>
+                            <th scope="row">@row.Label</th>
+                            <td class="@(row.Unknown ? "is-unknown" : null)">@row.Value</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </section>
+
+        <section class="kb-ext__card">
+            <div class="kb-ext__match">
+                <div class="kb-ext__match-panel kb-ext__match-panel--good">
+                    <h3>@Culture["ExtVac.Detail.Strengths"]</h3>
+                    <ul class="kb-ext__bullets">
+                        @foreach (var s in _detail.MatchInsights.Strengths)
+                        {
+                            <li>@s</li>
+                        }
+                    </ul>
+                </div>
+                <div class="kb-ext__match-panel">
+                    <h3>@Culture["ExtVac.Detail.Challenges"]</h3>
+                    <ul class="kb-ext__bullets">
+                        @foreach (var c in _detail.MatchInsights.Challenges)
+                        {
+                            <li>@c</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <p class="kb-ext__privacy">@Culture["ExtVac.Detail.Privacy"]</p>
+        </section>
+
+        <p class="muted">
+            <a href="@_detail.SourceUrl" rel="noopener noreferrer" target="_blank">@Culture["ExtVac.Detail.Source"]</a>
+        </p>
+
+        <div class="kb-ext__actions" data-testid="kb-ext-detail-actions">
+            @if (_detail.CanApply)
+            {
+                <a class="kb-ext__btn" href="@KbRoutes.ExternalVacancyApply(_detail.Id)" data-testid="kb-ext-apply-cta">
+                    @Culture["ExtVac.Detail.Apply"]
+                </a>
+            }
+
+            <div class="kb-ext__actions-row">
+                @if (_detail.Status != CandidateExternalVacancyStatus.Applied)
+                {
+                    <button type="button"
+                            class="kb-ext__btn kb-ext__btn--secondary @(_detail.IsOnSavedList ? "is-active" : null)"
+                            disabled="@_engagementBusy"
+                            data-testid="kb-ext-save-toggle"
+                            @onclick="ToggleSavedAsync">
+                        @(_detail.IsOnSavedList ? Culture["ExtVac.Detail.Unsave"] : Culture["ExtVac.Detail.Save"])
+                    </button>
+                    <button type="button"
+                            class="kb-ext__btn kb-ext__btn--secondary"
+                            disabled="@_engagementBusy"
+                            data-testid="kb-ext-not-interested"
+                            @onclick="DismissAsync">
+                        @Culture["ExtVac.Detail.NotInterested"]
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@if (_dismissToastVisible)
+{
+    <div class="kb-ext__toast" role="status">
+        <span>@Culture["ExtVac.Detail.DismissUndoToast"]</span>
+        <button type="button" @onclick="UndoDismissAsync">@Culture["ExtVac.Detail.DismissUndo"]</button>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private ExternalVacancyDetailDto? _detail;
+    private bool _loading = true;
+    private bool _engagementBusy;
+    private bool _dismissToastVisible;
+    private Guid? _dismissedId;
+
+    private string ReadAloudText => _detail is null
+        ? ""
+        : $"{_detail.Title}. {_detail.CompanyName}. {_detail.Place}.";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _detail = await Api.GetExternalVacancyAsync(Id);
+        _loading = false;
+    }
+
+    private IEnumerable<(string Label, string Value, bool Unknown)> FactRows(ExternalVacancyDetailDto detail)
+    {
+        var keys = new[] { "bedrijf", "plaats", "uren", "salaris", "start", "opleiding" };
+        foreach (var key in keys)
+        {
+            detail.StructuredFacts.TryGetValue(key, out var value);
+            var unknown = string.IsNullOrWhiteSpace(value);
+            var labelKey = $"ExtVac.Fact.{key}";
+            var label = Culture[labelKey];
+            yield return (label, unknown ? Culture["ExtVac.Detail.Unknown"] : value!, unknown);
+        }
+    }
+
+    private async Task ToggleSavedAsync()
+    {
+        if (_detail is null || _engagementBusy)
+        {
+            return;
+        }
+
+        _engagementBusy = true;
+        try
+        {
+            var next = !_detail.IsOnSavedList;
+            var updated = await Api.SetExternalVacancySavedAsync(_detail.Id, next);
+            if (updated is not null)
+            {
+                _detail = updated;
+            }
+        }
+        finally
+        {
+            _engagementBusy = false;
+        }
+    }
+
+    private async Task DismissAsync()
+    {
+        if (_detail is null || _engagementBusy)
+        {
+            return;
+        }
+
+        _engagementBusy = true;
+        try
+        {
+            var updated = await Api.DismissExternalVacancyAsync(_detail.Id);
+            if (updated is null)
+            {
+                return;
+            }
+
+            _dismissedId = _detail.Id;
+            _detail = updated;
+            _dismissToastVisible = true;
+        }
+        finally
+        {
+            _engagementBusy = false;
+        }
+    }
+
+    private async Task UndoDismissAsync()
+    {
+        var id = _dismissedId ?? _detail?.Id;
+        if (id is null || _engagementBusy)
+        {
+            return;
+        }
+
+        _engagementBusy = true;
+        try
+        {
+            var updated = await Api.RestoreExternalVacancyAsync(id.Value);
+            if (updated is not null)
+            {
+                _detail = updated;
+                _dismissToastVisible = false;
+                _dismissedId = null;
+            }
+        }
+        finally
+        {
+            _engagementBusy = false;
+        }
+    }
+}

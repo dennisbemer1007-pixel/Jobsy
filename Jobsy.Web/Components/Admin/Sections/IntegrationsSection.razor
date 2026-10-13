@@ -1,0 +1,181 @@
+@using Jobsy.Web.Components.Admin
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+@if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error">@_error</p>
+    }
+    else
+    {
+        @if (_aiProvider is not null)
+        {
+            <p class="muted" data-testid="ai-provider">
+                @if (!_aiProvider.Available)
+                {
+                    <strong>@Culture["Admin.AiProvider.Unavailable"]</strong>
+                }
+                else
+                {
+                    <strong>@Culture["Admin.AiProvider.Title"]:</strong>
+                    @string.Format(
+                        Culture["Admin.AiProvider.ActiveLine"],
+                        AiName,
+                        string.IsNullOrWhiteSpace(_aiProvider.Model) ? "—" : _aiProvider.Model,
+                        Culture[RegionKey(_aiProvider.RegionCode)],
+                        string.IsNullOrWhiteSpace(_aiProvider.EndpointHost) ? "—" : _aiProvider.EndpointHost)
+                }
+                <span>@Culture["Admin.AiProvider.ReadOnly"]</span>
+            </p>
+            @if (ShowMistralModels)
+            {
+                <ul class="muted" data-testid="ai-feature-models">
+                    @foreach (var row in _aiProvider!.FeatureModels)
+                    {
+                        <li data-feature="@row.Feature">
+                            <strong>@FeatureLabel(row.Feature):</strong>
+                            @(string.IsNullOrWhiteSpace(row.Model) ? "—" : row.Model)
+                        </li>
+                    }
+                </ul>
+                <p class="muted">@Culture["Admin.AiProvider.ModelsHint"]</p>
+            }
+        }
+        @if (_mailProvider is not null)
+        {
+            <p class="muted" data-testid="mail-provider">
+                @if (!_mailProvider.Available)
+                {
+                    <strong>@Culture["Admin.MailProvider.Missing"]</strong>
+                }
+                else
+                {
+                    <strong>@string.Format(
+                        Culture["Admin.MailProvider.ActiveLine"],
+                        _mailProvider.Provider,
+                        Culture[MailRegionKey(_mailProvider.RegionCode)],
+                        string.IsNullOrWhiteSpace(_mailProvider.EndpointHost) ? "—" : _mailProvider.EndpointHost)</strong>
+                }
+            </p>
+        }
+        <div class="company-grid">
+            @foreach (var cred in VisibleCredentials)
+            {
+                var health = _health.FirstOrDefault(h => string.Equals(h.Key, cred.Key, StringComparison.OrdinalIgnoreCase));
+                <IntegrationSettingsTile @key="cred.Key" Credential="cred" Health="health" OnChanged="ReloadAsync" />
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+    }
+@code {
+    private List<IntegrationHealthItem> _health = [];
+    private List<IntegrationCredentialItem> _credentials = [];
+    private AiProviderStatusItem? _aiProvider;
+    private MailProviderStatusItem? _mailProvider;
+    private bool _loading = true;
+    private string? _error;
+    private string? _message;
+
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged()
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _health = (await Api.GetIntegrationHealthAsync()).ToList();
+        _credentials = (await Api.GetIntegrationCredentialsAsync()).ToList();
+        _message = null;
+        try
+        {
+            _aiProvider = await Api.GetAiProviderAsync();
+            _mailProvider = await Api.GetMailProviderAsync();
+        }
+        catch (Exception)
+        {
+            _aiProvider = null;
+            _mailProvider = null;
+            _message = Culture["Common.Error"];
+        }
+    }
+
+    private IEnumerable<IntegrationCredentialItem> VisibleCredentials
+        => _aiProvider?.HideOpenAiProbe == true
+            ? _credentials.Where(c => !string.Equals(c.Key, "OpenAI", StringComparison.OrdinalIgnoreCase))
+            : _credentials;
+
+    private bool ShowMistralModels
+        => _aiProvider is { Available: true, FeatureModels.Count: > 0 }
+           && string.Equals(_aiProvider.Provider, "Mistral", StringComparison.OrdinalIgnoreCase);
+
+    private string AiName
+        => string.Equals(_aiProvider?.Provider, "Mistral", StringComparison.OrdinalIgnoreCase)
+            ? "Mistral"
+            : "AI";
+
+    private string FeatureLabel(string feature)
+    {
+        var key = feature switch
+        {
+            "Story" => "Admin.AiProvider.Feature.Story",
+            "CareerReport" => "Admin.AiProvider.Feature.CareerReport",
+            "Compass" => "Admin.AiProvider.Feature.Compass",
+            "Chat" => "Admin.AiProvider.Feature.Chat",
+            "CareerPath" => "Admin.AiProvider.Feature.CareerPath",
+            "CompetenceReport" => "Admin.AiProvider.Feature.CompetenceReport",
+            "CultureFit" => "Admin.AiProvider.Feature.CultureFit",
+            "RoleFit" => "Admin.AiProvider.Feature.RoleFit",
+            "MockInterview" => "Admin.AiProvider.Feature.MockInterview",
+            "VacancyModeration" => "Admin.AiProvider.Feature.VacancyModeration",
+            "CvExtraction" => "Admin.AiProvider.Feature.CvExtraction",
+            "Translation" => "Admin.AiProvider.Feature.Translation",
+            _ => null
+        };
+        return key is null ? feature : Culture[key];
+    }
+
+    private static string RegionKey(string? code) => code switch
+    {
+        "eu" => "Admin.AiProvider.Region.Eu",
+        "us" => "Admin.AiProvider.Region.Us",
+        "global" => "Admin.AiProvider.Region.Global",
+        _ => "Admin.AiProvider.Region.Off"
+    };
+
+    private static string MailRegionKey(string? code) => code switch
+    {
+        "nl" => "Admin.MailProvider.Region.Nl",
+        "us" => "Admin.MailProvider.Region.Us",
+        _ => "Admin.AiProvider.Region.Off"
+    };
+}

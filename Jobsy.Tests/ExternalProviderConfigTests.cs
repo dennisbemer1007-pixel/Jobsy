@@ -1,3 +1,4 @@
+using Jobsy.Core.Interfaces;
 using Jobsy.Api.Controllers;
 using Jobsy.Api.Models;
 using Jobsy.Core.Entities;
@@ -10,6 +11,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Jobsy.Core.Security;
+using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
@@ -73,16 +77,23 @@ public class ExternalProviderConfigTests
             .Build();
         return new AuthController(
             db, config, credentials,
-            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures()),
             new StubHostEnvironment { EnvironmentName = Environments.Development },
             new DeviceSessionService(
                 db,
                 config,
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance),
+            new MfaTrustedDeviceService(db),
             new Jobsy.Infrastructure.Services.EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Infrastructure.Services.EmailServiceStub>.Instance),
             new Jobsy.Api.Security.MfaChallengeService(
-                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())));
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
+            new AlwaysOnFeatures(),
+            new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
+            new StubSystemAdminSettings(),
+            SystemAdminTestDoubles.LoginNotifier(),
+            NullLogger<AuthController>.Instance);
     }
 
     private static JobsyDbContext CreateDb()

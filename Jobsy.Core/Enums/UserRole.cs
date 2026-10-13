@@ -13,5 +13,9 @@ public enum UserRole
     Admin = 5,
     SalesManager = 6,
     /// <summary>Candidate-acquisition partner with tiered commission and flyers.</summary>
-    Ambassadeur = 7
+    Ambassadeur = 7,
+    /// <summary>School administrator (Lobsy voor scholen). Mandatory 2FA.</summary>
+    SchoolAdmin = 8,
+    /// <summary>Teacher (Lobsy voor scholen). Mandatory 2FA; sees only assigned classes.</summary>
+    Teacher = 9
 }

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Rules;
 
@@ -7,8 +8,8 @@ public interface ICandidateCareerInterestService
 {
     Task<CandidateCareerInterestStateDto> GetAsync(
         Guid userId,
-        CancellationToken cancellationToken = default,
-        bool includeMatches = true);
+        bool includeMatches = true,
+        CancellationToken cancellationToken = default);
 
     Task<CandidateCareerInterestStateDto> SaveAsync(
         Guid userId,
@@ -42,5 +43,5 @@ public sealed record CandidateCareerInterestStateDto(
 public sealed record CareerQuestionDto(
     int Id,
     string Category,
-    bool Reverse,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Always)] bool Reverse,
     string TextKey);

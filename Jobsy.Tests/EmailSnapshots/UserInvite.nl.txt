@@ -1,0 +1,38 @@
+KEY: UserInvite
+SUBJECT: Uitnodiging voor Bakkerij De Gouden Korrel op Lobsy
+PREHEADER: Kies een wachtwoord en begin.
+KIND: Essential
+--- TEXT ---
+Hallo Alex,
+
+Je bent uitgenodigd
+===================
+
+Joris nodigt je uit als Filiaalmanager bij Bakkerij De Gouden Korrel.
+
+Rol: Filiaalmanager
+Bedrijf: Bakkerij De Gouden Korrel
+Je e-mailadres: alex@voorbeeld.invalid
+Link geldig tot: 7 oktober 2026
+
+Je kunt ook inloggen met Google of Microsoft met dit e-mailadres.
+
+Uitnodiging accepteren: https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+
+Team Lobsy
+
+Je krijgt deze mail omdat Joris je heeft uitgenodigd.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Je bent uitgenodigd
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Uitnodiging accepteren -> https://lobsy.nl/account/wachtwoord-instellen?t=voorbeeld
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

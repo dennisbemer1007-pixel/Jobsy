@@ -19,13 +19,28 @@ public static class AtsListingValidation
         "service unavailable", "foutmelding"
     ];
 
+    /// <summary>Navigation and info pages that career sites link next to real jobs.</summary>
+    private static readonly string[] NavigationTitleHints =
+    [
+        "veelgestelde vragen", "faq", "locaties waar", "aanmelden", "contact",
+        "privacy", "cookie", "inloggen", "over ons", "nieuwsbrief", "sitemap",
+        "dit zijn onze zorgverleners", "waar bent u naar op zoek",
+        "specialismen en poliklinieken", "onze poliklinieken", "afdelingen en specialismen"
+    ];
+
+    private static readonly string[] JobSignals =
+    [
+        "vacature", "sollicit", "functie", "dienstverband", "fulltime", "parttime",
+        "full-time", "part-time", "uren per", "wat ga je doen", "wij vragen", "wij bieden",
+        "jouw taken", "job description", "apply"
+    ];
+
     /// <summary>Minimum description length for scrape intake (admin can enrich later).</summary>
     public const int MinDescriptionLengthForIntake = 12;
 
     public static bool TryValidateForReview(
         string? title,
         string? companyName,
-        string? locationLabel,
         string? description,
         out string? rejectReason)
     {
@@ -38,6 +53,12 @@ public static class AtsListingValidation
         if (ContainsAny(title, TitleErrorHints))
         {
             rejectReason = "Titel lijkt op een foutpagina.";
+            return false;
+        }
+
+        if (ContainsAny(title, NavigationTitleHints))
+        {
+            rejectReason = "Pagina lijkt geen vacature.";
             return false;
         }
 
@@ -56,18 +77,24 @@ public static class AtsListingValidation
         }
 
         var head = description.Length <= 240 ? description : description[..240];
-        if (ContainsAny(head, StrongErrorPageHints))
+        if (ContainsAny(head, StrongErrorPageHints)
+            || description.Contains("Error: Javascript", StringComparison.OrdinalIgnoreCase)
+            || description.Contains("javascript is disabled", StringComparison.OrdinalIgnoreCase)
+            || description.Contains("enable javascript", StringComparison.OrdinalIgnoreCase))
         {
             rejectReason = "Omschrijving lijkt op een foutpagina.";
+            return false;
+        }
+
+        if (!ContainsAny(title + " " + description, JobSignals))
+        {
+            rejectReason = "Geen vacaturesignaal op de pagina.";
             return false;
         }
 
         rejectReason = null;
         return true;
     }
-
-    public static bool LooksLikeErrorPage(string? text)
-        => ContainsAny(text, StrongErrorPageHints) || ContainsAny(text, TitleErrorHints);
 
     private static bool ContainsAny(string? text, string[] hints)
     {

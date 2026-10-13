@@ -16,4 +16,10 @@ public sealed class KvkOptions
     /// Test environment: <c>https://api.kvk.nl/test/api/</c>.
     /// </summary>
     public string? BaseUrl { get; set; }
+
+    /// <summary>
+    /// Soft monthly budget for paid profile calls (basisprofiel + vestigingen).
+    /// Default 50.000 ≈ €1.000 at €0,02/call. Admin warns at 80 %.
+    /// </summary>
+    public int MonthlyProfileBudget { get; set; } = 50_000;
 }

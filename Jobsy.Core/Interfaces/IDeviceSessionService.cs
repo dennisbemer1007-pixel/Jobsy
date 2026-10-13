@@ -5,8 +5,10 @@ public interface IDeviceSessionService
     Task<DeviceSessionCreateResult> CreateAsync(
         Guid userId,
         string? userAgent,
-        CancellationToken cancellationToken = default,
-        bool mfaVerified = false);
+        bool mfaVerified = false,
+        string? authMethod = null,
+        string? authTenantId = null,
+        CancellationToken cancellationToken = default);
 
     Task<DeviceSessionRotateResult?> RotateAsync(
         string refreshToken,
@@ -73,7 +75,8 @@ public sealed record DeviceSessionRotateResult(
     bool HasSalesReferral,
     int SessionVersion,
     string? SessionToken,
-    bool MfaVerified = false);
+    bool MfaVerified = false,
+    bool IsTestAccount = false);
 
 public sealed record DeviceSessionListItem(
     Guid Id,

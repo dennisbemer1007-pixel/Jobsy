@@ -42,4 +42,21 @@ public static class ApplicationStatusWizard
         var index = Math.Clamp(CurrentStepIndex(status), 0, steps.Length - 1);
         return steps[index];
     }
+
+    /// <summary>
+    /// Candidate applications filter group: open / running / rejected (null = unknown).
+    /// </summary>
+    public static string? FilterGroup(string? status) => status switch
+    {
+        "Pending" => "open",
+        "Accepted" or "EmployerContacting" or "Hired" => "running",
+        "Rejected" or "FilledElsewhere" or "Withdrawn" => "rejected",
+        _ => null
+    };
+
+    public static bool IsOpen(string? status) => FilterGroup(status) == "open";
+
+    public static bool IsRunning(string? status) => FilterGroup(status) == "running";
+
+    public static bool IsRejectedFilter(string? status) => FilterGroup(status) == "rejected";
 }

@@ -3,6 +3,7 @@
 /* === geo.js === */
 window.jobsyGeo = (function () {
     const STORAGE_KEY = "jobsy.origin";
+    const SESSION_ORIGIN_KEY = "jobsy.kb.origin";
     const ANON_KEY = "jobsy.anonymousKey";
     const CLICKED_KEY = "jobsy.clickedVacancies";
     const SITE_VISIT_KEY = "jobsy.siteVisitClaimed";
@@ -43,6 +44,89 @@ window.jobsyGeo = (function () {
 
     function clearStoredOrigin() {
         localStorage.removeItem(STORAGE_KEY);
+    }
+
+    function getSessionOrigin() {
+        try {
+            const raw = sessionStorage.getItem(SESSION_ORIGIN_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            const lat = Number(parsed.lat);
+            const lng = Number(parsed.lng);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+            const label = typeof parsed.label === "string" && parsed.label.trim()
+                ? parsed.label.trim()
+                : null;
+            const transport = typeof parsed.transport === "string" && parsed.transport.trim()
+                ? parsed.transport.trim()
+                : null;
+            const maxMinutes = Number(parsed.maxMinutes);
+            return {
+                lat: lat,
+                lng: lng,
+                label: label,
+                transport: transport,
+                maxMinutes: Number.isFinite(maxMinutes) ? maxMinutes : null
+            };
+        } catch {
+            return null;
+        }
+    }
+
+    function setSessionOrigin(lat, lng, label, transport, maxMinutes) {
+        try {
+            const payload = {
+                lat: Number(lat),
+                lng: Number(lng),
+                at: new Date().toISOString()
+            };
+            if (typeof label === "string" && label.trim()) {
+                payload.label = label.trim();
+            }
+            if (typeof transport === "string" && transport.trim()) {
+                payload.transport = transport.trim();
+            }
+            if (maxMinutes != null && Number.isFinite(Number(maxMinutes))) {
+                payload.maxMinutes = Math.round(Number(maxMinutes));
+            }
+            sessionStorage.setItem(SESSION_ORIGIN_KEY, JSON.stringify(payload));
+        } catch {
+            // ignore
+        }
+    }
+
+    function clearSessionOrigin() {
+        try {
+            sessionStorage.removeItem(SESSION_ORIGIN_KEY);
+        } catch {
+            // ignore
+        }
+    }
+
+    const WEERGAVE_KEY = "jobsy.kb.weergave";
+
+    function getWeergave() {
+        try {
+            var raw = sessionStorage.getItem(WEERGAVE_KEY);
+            if (raw === "lijst" || raw === "kaart") {
+                return raw;
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    function setWeergave(value) {
+        try {
+            if (value === "lijst" || value === "kaart") {
+                sessionStorage.setItem(WEERGAVE_KEY, value);
+            } else {
+                sessionStorage.removeItem(WEERGAVE_KEY);
+            }
+        } catch {
+            // ignore
+        }
     }
 
     function wasLocationPrompted() {
@@ -313,6 +397,11 @@ window.jobsyGeo = (function () {
         getStoredOrigin,
         setStoredOrigin,
         clearStoredOrigin,
+        getSessionOrigin,
+        setSessionOrigin,
+        clearSessionOrigin,
+        getWeergave,
+        setWeergave,
         getStoredAge,
         setStoredAge,
         clearStoredAge,
@@ -336,7 +425,8 @@ window.jobsyGeo = (function () {
 window.jobsyCulture = {
   cookieName: "Jobsy.Culture",
   get: function () {
-    var match = document.cookie.match(new RegExp("(?:^|; )" + this.cookieName + "=([^;]*)"));
+    var name = String(this.cookieName).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    var match = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
     return match ? decodeURIComponent(match[1]) : null;
   },
   set: function (code) {
@@ -362,13 +452,27 @@ window.jobsyCulture = {
 
     var KEY = "Jobsy.CookieConsent";
 
+    function consentStored() {
+        try {
+            if (localStorage.getItem(KEY)) {
+                return true;
+            }
+        } catch (e) { }
+        var escaped = KEY.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        var match = document.cookie.match(new RegExp("(?:^|; )" + escaped + "=([^;]*)"));
+        return !!(match && match[1]);
+    }
+
     function applyKnownClass() {
         try {
-            var known = !!(localStorage.getItem(KEY) || "");
-            document.documentElement.classList.toggle("cookie-consent-known", known);
+            document.documentElement.classList.toggle("cookie-consent-known", consentStored());
         } catch (e) {
             // private mode / blocked storage — show the banner
         }
+    }
+
+    function onEnhancedNav() {
+        applyKnownClass();
     }
 
     window.jobsyCookieConsent = {
@@ -400,7 +504,8 @@ window.jobsyCulture = {
 
     window.jobsyViewport = {
         isWide: function () {
-            return window.matchMedia("(min-width: 769px)").matches;
+            // Design-system breakpoint (file 03): split view from 900px.
+            return window.matchMedia("(min-width: 900px)").matches;
         },
         isKompasWide: function () {
             return window.matchMedia("(min-width: 1024px)").matches;
@@ -472,15 +577,59 @@ window.jobsyCulture = {
         };
     })();
 
+    // Static cookie banner (PublicLayout SSR): buttons use data-consent, no Blazor circuit.
+    document.addEventListener("click", function (ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest("[data-consent]") : null;
+        if (!btn || !btn.getAttribute) return;
+        var choice = (btn.getAttribute("data-consent") || "").toLowerCase();
+        if (choice !== "necessary" && choice !== "analytics") return;
+        ev.preventDefault();
+
+        function finish(value) {
+            window.jobsyCookieConsent.set(value);
+            var banner = btn.closest(".cookie-consent");
+            if (banner && banner.parentNode) {
+                banner.parentNode.removeChild(banner);
+            }
+        }
+
+        if (choice === "necessary") {
+            finish("necessary");
+            return;
+        }
+
+        fetch("/account/cookie-consent/analytics-token", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Accept": "application/json" }
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error("token");
+                return res.json();
+            })
+            .then(function (body) {
+                finish((body && body.token) || "analytics");
+            })
+            .catch(function () {
+                finish("analytics");
+            });
+    });
+
     applyKnownClass();
+    document.addEventListener("enhancedload", onEnhancedNav);
+    try {
+        if (window.Blazor && typeof Blazor.addEventListener === "function") {
+            Blazor.addEventListener("enhancedload", onEnhancedNav);
+        }
+    } catch (e) { }
 })();
 
 /* === maps-loader.js === */
 window.jobsyMaps = (function () {
     "use strict";
 
-    // MapLibre is not linked from the homepage document. Load it only when
-    // Blazor calls ensure() so crawlers/Lighthouse never download the GL bundle.
+    // MapLibre is not linked from every document. On the banenkaart we preload +
+    // load the three map scripts in parallel so first pins do not wait on the Blazor circuit.
     var pending = {};
     var mapLibreWorker = "/lib/maplibre/maplibre-gl-csp-worker.js?v=20260820-r166";
     var css = [
@@ -488,13 +637,13 @@ window.jobsyMaps = (function () {
     ];
     var mapLibreScripts = [
         "/lib/maplibre/maplibre-gl-csp.js?v=20260820-r180",
-        "/js/jobsyMapLibre.min.js?v=20260926-mapfix9"
+        "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20260927-acc2709"
+        "/js/jobMap.min.js?v=20261012-bbox07"
     ];
     var detailScripts = [
-        "/js/vacancyDetailMap.min.js?v=20260822-r195"
+        "/js/vacancyDetailMap.min.js?v=20261004-13"
     ];
 
     function pathOnly(url) {
@@ -557,6 +706,20 @@ window.jobsyMaps = (function () {
         }
     }
 
+    function preloadScripts(urls) {
+        urls.forEach(function (href) {
+            if (document.querySelector('link[data-jobsy-map-preload="' + href + '"]')) {
+                return;
+            }
+            var link = document.createElement("link");
+            link.rel = "preload";
+            link.as = "script";
+            link.href = href;
+            link.setAttribute("data-jobsy-map-preload", href);
+            document.head.appendChild(link);
+        });
+    }
+
     function loadScript(src) {
         if (document.querySelector('script[data-jobsy-map="' + src + '"]')) {
             if (isMapLibreMain(src)) {
@@ -580,9 +743,11 @@ window.jobsyMaps = (function () {
         return new Promise(function (resolve, reject) {
             var script = document.createElement("script");
             script.src = src;
-            script.async = false;
+            script.defer = true;
             script.setAttribute("data-jobsy-map", src);
-            script.setAttribute("fetchpriority", "low");
+            if (!isMapLibreMain(src)) {
+                script.setAttribute("fetchpriority", "high");
+            }
             script.onload = function () {
                 if (isMapLibreMain(src)) {
                     configureMapLibreWorker();
@@ -594,13 +759,9 @@ window.jobsyMaps = (function () {
         });
     }
 
-    function loadScriptsInOrder(urls, index) {
-        if (index >= urls.length) {
-            return Promise.resolve();
-        }
-        return loadScript(urls[index]).then(function () {
-            return loadScriptsInOrder(urls, index + 1);
-        });
+    /** Load all map scripts in parallel (maplibre / jobsyMapLibre / jobMap). */
+    function loadScriptsParallel(urls) {
+        return Promise.all(urls.map(loadScript));
     }
 
     function normalizeKind(kind) {
@@ -648,9 +809,11 @@ window.jobsyMaps = (function () {
         if (pending[kind]) {
             return pending[kind];
         }
+        var urls = scriptsFor(kind);
+        preloadScripts(urls);
         pending[kind] = Promise.all([
             Promise.all(css.map(loadCss)),
-            loadScriptsInOrder(scriptsFor(kind), 0)
+            loadScriptsParallel(urls)
         ]).catch(function (err) {
             pending[kind] = null;
             throw err;
@@ -658,12 +821,41 @@ window.jobsyMaps = (function () {
         return pending[kind];
     }
 
+    function pinsFilterKey(url) {
+        if (!url) {
+            return "";
+        }
+        try {
+            var u = new URL(url, window.location.origin);
+            u.searchParams.delete("transport");
+            u.searchParams.delete("minLat");
+            u.searchParams.delete("minLng");
+            u.searchParams.delete("maxLat");
+            u.searchParams.delete("maxLng");
+            u.searchParams.delete("zoom");
+            var keys = Array.prototype.slice.call(u.searchParams.keys()).sort();
+            var parts = [];
+            for (var i = 0; i < keys.length; i++) {
+                var k = keys[i];
+                var vals = u.searchParams.getAll(k).slice().sort();
+                for (var j = 0; j < vals.length; j++) {
+                    parts.push(k + "=" + vals[j]);
+                }
+            }
+            return u.pathname + "?" + parts.join("&");
+        } catch (e) {
+            return String(url).replace(/([?&])transport=[^&]*/gi, "$1").replace(/[?&]$/, "");
+        }
+    }
+
     /** Start pins HTTP before MapLibre finishes loading (first pins &lt; 1.5s target). */
     function prefetchPins(url) {
         if (!url || typeof fetch !== "function") {
             return Promise.resolve(null);
         }
-        if (window.__jobsyPinsPrefetch && window.__jobsyPinsPrefetchUrl === url) {
+        var key = pinsFilterKey(url);
+        if (window.__jobsyPinsPrefetch
+            && pinsFilterKey(window.__jobsyPinsPrefetchUrl) === key) {
             return window.__jobsyPinsPrefetch;
         }
         window.__jobsyPinsPrefetchUrl = url;
@@ -675,6 +867,10 @@ window.jobsyMaps = (function () {
                 if (!res.ok) {
                     throw new Error("pins " + res.status);
                 }
+                var etag = res.headers.get("ETag");
+                if (etag) {
+                    window.__jobsyPinsEtag = etag;
+                }
                 return res.json();
             })
             .catch(function () {
@@ -684,7 +880,55 @@ window.jobsyMaps = (function () {
         return window.__jobsyPinsPrefetch;
     }
 
-    // Kick off pins fetch as soon as boot JSON is in the DOM (no MapLibre needed).
+    function isDiscoveryPath() {
+        try {
+            var path = (window.location && window.location.pathname) || "";
+            return path === "/" || path === "" || path === "/banenkaart";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function whenCircuitOrIdle(cb) {
+        var done = false;
+        function run() {
+            if (done) {
+                return;
+            }
+            done = true;
+            try { cb(); } catch (e) { }
+        }
+        function circuitReady() {
+            try {
+                return !!(window.Blazor && window.Blazor._internal);
+            } catch (e) {
+                return false;
+            }
+        }
+        if (circuitReady()) {
+            run();
+            return;
+        }
+        var iv = setInterval(function () {
+            if (circuitReady()) {
+                clearInterval(iv);
+                run();
+            }
+        }, 50);
+        if (typeof requestIdleCallback === "function") {
+            requestIdleCallback(function () {
+                clearInterval(iv);
+                run();
+            }, { timeout: 1500 });
+        } else {
+            setTimeout(function () {
+                clearInterval(iv);
+                run();
+            }, 1500);
+        }
+    }
+
+    // Kick off pins fetch immediately; defer MapLibre + boot to idle/circuit.
     function warmBootPins() {
         try {
             var node = document.getElementById("jobsy-map-boot");
@@ -694,6 +938,15 @@ window.jobsyMaps = (function () {
             var parsed = JSON.parse(node.textContent);
             if (parsed && parsed.pinsUrl) {
                 prefetchPins(String(parsed.pinsUrl));
+            }
+            if (isDiscoveryPath()) {
+                whenCircuitOrIdle(function () {
+                    ensure("discovery").then(function () {
+                        if (window.jobMap && typeof window.jobMap.boot === "function") {
+                            window.jobMap.boot("job-map");
+                        }
+                    }).catch(function () { });
+                });
             }
         } catch (e) { }
     }
@@ -715,7 +968,7 @@ window.jobsyExtras = (function () {
     "use strict";
 
     var extrasSrc = "/js/app-extras.js?v=20260902-bw1";
-    var feedbackSrc = "/js/feedback.js?v=20260831-ux2";
+    var feedbackSrc = "/js/feedback.js?v=20261002-ch10";
     var pending = {};
 
     function loadScript(src, ready) {
@@ -751,11 +1004,181 @@ window.jobsyExtras = (function () {
         });
     };
 
-    return { ensure: ensure };
+    function openDatePicker(el) {
+        if (!el) {
+            return;
+        }
+        if (typeof el.showPicker === "function") {
+            try {
+                el.showPicker();
+                return;
+            } catch (e) {
+                // fall through
+            }
+        }
+        el.focus();
+        el.click();
+    }
+
+    return { ensure: ensure, openDatePicker: openDatePicker };
 })();
 
 window.jobsyPageVisible = function () {
     return typeof document === "undefined" || document.visibilityState !== "hidden";
+};
+
+window.jobsyDom = {
+    matchesMedia: function (query) {
+        try {
+            return !!(window.matchMedia && window.matchMedia(query).matches);
+        } catch (e) {
+            return false;
+        }
+    },
+    sessionGet: function (key) {
+        try { return sessionStorage.getItem(key); } catch (e) { return null; }
+    },
+    sessionSet: function (key, value) {
+        try { sessionStorage.setItem(key, value); } catch (e) { }
+    },
+    sessionRemove: function (key) {
+        try { sessionStorage.removeItem(key); } catch (e) { }
+    },
+    shareOrCopy: function (url) {
+        if (navigator.share) {
+            return navigator.share({ url: url });
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(url);
+        }
+        return Promise.reject(new Error("share-unavailable"));
+    },
+    bindKeyFocus: function (selector) {
+        if (window.__jobsyKeyFocusBound) {
+            return;
+        }
+        window.__jobsyKeyFocusBound = true;
+        document.addEventListener("keydown", function (e) {
+            if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+                var el = document.querySelector(selector);
+                if (!el) {
+                    return;
+                }
+                e.preventDefault();
+                el.focus();
+            }
+        });
+    },
+    ensureScript: function (src, globalName) {
+        window.__jobsyScriptPromises = window.__jobsyScriptPromises || {};
+        if (globalName && window[globalName]) {
+            return Promise.resolve();
+        }
+        if (window.__jobsyScriptPromises[src]) {
+            return window.__jobsyScriptPromises[src];
+        }
+        window.__jobsyScriptPromises[src] = new Promise(function (resolve, reject) {
+            var s = document.createElement("script");
+            s.src = src;
+            s.onload = function () { resolve(); };
+            s.onerror = function () {
+                window.__jobsyScriptPromises[src] = null;
+                reject(new Error("Failed to load " + src));
+            };
+            document.head.appendChild(s);
+        });
+        return window.__jobsyScriptPromises[src];
+    }
+};
+
+document.addEventListener("change", function (ev) {
+    var target = ev.target;
+    if (!target || !target.matches || !target.matches("[data-jobsy-submit-form]")) {
+        return;
+    }
+    if (target.form) {
+        target.form.submit();
+    }
+});
+
+window.jobsyMedia = {
+    matches: function (query) {
+        try {
+            return !!(query && window.matchMedia && window.matchMedia(query).matches);
+        } catch (e) {
+            return false;
+        }
+    }
+};
+
+window.jobsySessionFlag = {
+    get: function (key) {
+        try { return sessionStorage.getItem(key) === "1"; } catch (e) { return false; }
+    },
+    set: function (key) {
+        try { sessionStorage.setItem(key, "1"); } catch (e) { }
+    },
+    remove: function (key) {
+        try { sessionStorage.removeItem(key); } catch (e) { }
+    }
+};
+
+window.jobsySaveFile = function (filename, base64, mimeType) {
+    try {
+        var binary = atob(base64);
+        var bytes = new Uint8Array(binary.length);
+        for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        var blob = new Blob([bytes], { type: mimeType || "application/octet-stream" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = filename || "download.bin";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    } catch (e) { }
+};
+
+window.jobsyBindSearchShortcut = function () {
+    if (window.__jobsySalesSearchBound) return;
+    window.__jobsySalesSearchBound = true;
+    document.addEventListener("keydown", function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+            e.preventDefault();
+            var el = document.querySelector(".sp-search__field input");
+            if (el) el.focus();
+        }
+    });
+};
+
+window.jobsyShareUrl = function (url) {
+    if (navigator.share) return navigator.share({ url: url });
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(url);
+};
+
+window.jobsyComposeEnter = function (id) {
+    var el = typeof id === "string" ? document.getElementById(id) : id;
+    if (!el || el.dataset.enterBound) return;
+    el.dataset.enterBound = "1";
+    el.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" || e.shiftKey) return;
+        e.preventDefault();
+        var form = el.closest("form");
+        if (form && typeof form.requestSubmit === "function") form.requestSubmit();
+    });
+};
+
+window.jobsyEnsureInsightsMap = function () {
+    window.__jobsyInsightsMapReady = window.__jobsyInsightsMapReady || new Promise(function (resolve, reject) {
+        if (window.JobsyCandidateInsightsMap) { resolve(); return; }
+        var s = document.createElement("script");
+        s.src = "js/features/kandidaatinzichten-map.js?v=20261004-14";
+        s.onload = function () { resolve(); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+    return window.__jobsyInsightsMapReady;
 };
 
 window.jobsyQuestionnaire = {
@@ -780,16 +1203,213 @@ window.jobsyQuestionnaire = {
     }
 };
 
+/** Focus the checked (or first) radio inside a radiogroup by element id. */
+window.jobsyFocusRadioInGroup = function (groupId) {
+    if (!groupId) {
+        return;
+    }
+    var group = document.getElementById(groupId);
+    if (!group) {
+        return;
+    }
+    var radios = group.querySelectorAll('input[type="radio"]');
+    if (!radios.length) {
+        return;
+    }
+    var target = null;
+    for (var i = 0; i < radios.length; i++) {
+        if (radios[i].checked) {
+            target = radios[i];
+            break;
+        }
+    }
+    if (!target) {
+        target = radios[0];
+    }
+    try {
+        target.focus({ preventScroll: false });
+    } catch (e) {
+        try { target.focus(); } catch (e2) { }
+    }
+};
+
+(function registerKeyboardFocus() {
+    function setKeyboard(on) {
+        var root = document.documentElement;
+        if (!root) {
+            return;
+        }
+        if (on) {
+            root.setAttribute("data-lobsy-keyboard", "1");
+        } else {
+            root.removeAttribute("data-lobsy-keyboard");
+        }
+    }
+
+    document.addEventListener("keydown", function (ev) {
+        if (ev.key === "Tab" || ev.key === "ArrowUp" || ev.key === "ArrowDown" || ev.key === "ArrowLeft" || ev.key === "ArrowRight") {
+            setKeyboard(true);
+        }
+    }, true);
+    document.addEventListener("pointerdown", function () {
+        setKeyboard(false);
+    }, true);
+    document.addEventListener("mousedown", function () {
+        setKeyboard(false);
+    }, true);
+})();
+
+window.jobsyDialog = (function () {
+    var active = null;
+    var previouslyFocused = null;
+
+    function focusables(root) {
+        if (!root || !root.querySelectorAll) {
+            return [];
+        }
+        var nodes = root.querySelectorAll(
+            'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        return Array.prototype.filter.call(nodes, function (el) {
+            return el.offsetParent !== null || el === document.activeElement;
+        });
+    }
+
+    function onKeyDown(ev) {
+        if (!active) {
+            return;
+        }
+        if (ev.key === "Escape") {
+            var closer = active.querySelector("[data-jobsy-dialog-close]");
+            if (closer) {
+                ev.preventDefault();
+                closer.click();
+            }
+            return;
+        }
+        if (ev.key !== "Tab") {
+            return;
+        }
+        var list = focusables(active);
+        if (list.length === 0) {
+            ev.preventDefault();
+            return;
+        }
+        var first = list[0];
+        var last = list[list.length - 1];
+        if (ev.shiftKey && document.activeElement === first) {
+            ev.preventDefault();
+            last.focus();
+        } else if (!ev.shiftKey && document.activeElement === last) {
+            ev.preventDefault();
+            first.focus();
+        }
+    }
+
+    function firstFocusable(el) {
+        var list = focusables(el);
+        for (var i = 0; i < list.length; i++) {
+            var node = list[i];
+            // A clipped close control is the first button in row menus. Focusing it
+            // does not stick in headless Chrome, so focus falls to the body and the
+            // menu treats that as "focus left" and closes itself.
+            if (node.classList && node.classList.contains("visually-hidden")) {
+                continue;
+            }
+            return node;
+        }
+        return list.length ? list[0] : el;
+    }
+
+    function trap(el) {
+        release();
+        if (!el) {
+            return;
+        }
+        previouslyFocused = document.activeElement;
+        active = el;
+        document.addEventListener("keydown", onKeyDown, true);
+        var target = firstFocusable(el);
+        try {
+            target.focus();
+        } catch (e) { }
+        try {
+            if (document.body) {
+                document.body.setAttribute("data-jobsy-dialog-open", "1");
+            }
+        } catch (e2) { }
+    }
+
+    function release() {
+        if (!active) {
+            return;
+        }
+        document.removeEventListener("keydown", onKeyDown, true);
+        active = null;
+        try {
+            if (document.body) {
+                document.body.removeAttribute("data-jobsy-dialog-open");
+            }
+        } catch (e) { }
+        if (previouslyFocused && typeof previouslyFocused.focus === "function") {
+            try {
+                previouslyFocused.focus();
+            } catch (e2) { }
+        }
+        previouslyFocused = null;
+    }
+
+    function focusLeft(el) {
+        if (!el || typeof el.contains !== "function") {
+            return false;
+        }
+        var active = document.activeElement;
+        if (!active) {
+            return true;
+        }
+        return !el.contains(active);
+    }
+
+    return { trap: trap, release: release, focusLeft: focusLeft };
+})();
+
 (function registerLobsyServiceWorker() {
     if (!("serviceWorker" in navigator)) {
         return;
     }
+    var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
+    var swUrl = isPublished
+        ? "/service-worker.published.js?v=20261012-01"
+        : "/service-worker.js?v=20261010-02";
+    var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
+        && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
+
+    function circuitReady() {
+        try {
+            return document.documentElement.getAttribute("data-lobsy-circuit") === "ready";
+        } catch (e) {
+            return false;
+        }
+    }
+
+    function register() {
+        navigator.serviceWorker.register(swUrl, { scope: "/", updateViaCache: "none" }).catch(function () { });
+    }
+
+    function scheduleRegister() {
+        var started = Date.now();
+        function tick() {
+            if (circuitReady() || Date.now() - started > 12000) {
+                register();
+                return;
+            }
+            window.setTimeout(tick, isWebKit ? 400 : 200);
+        }
+        tick();
+    }
+
     window.addEventListener("load", function () {
-        var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
-        var swUrl = isPublished
-            ? "/service-worker.published.js?v=20260925-coral"
-            : "/service-worker.js?v=20260925-coral";
-        navigator.serviceWorker.register(swUrl, { scope: "/" }).catch(function () { });
+        window.setTimeout(scheduleRegister, isWebKit ? 1200 : 0);
     });
 })();
 
@@ -862,3 +1482,237 @@ window.lobsyPwaInstall = (function () {
     }
   };
 })();
+
+/* Header menus: one open at a time, even when the Blazor circuit is down.
+   html[data-header-menu] is the only visibility source. */
+(function () {
+  if (window.__jobsyHeaderMenus) return;
+  window.__jobsyHeaderMenus = true;
+
+  function syncAria() {
+    var open = document.documentElement.getAttribute("data-header-menu");
+    document.querySelectorAll("[data-menu-id]").forEach(function (root) {
+      var id = root.getAttribute("data-menu-id");
+      var on = open === id;
+      var trigger = root.querySelector("[data-menu-trigger]");
+      if (trigger) trigger.setAttribute("aria-expanded", on ? "true" : "false");
+      root.classList.toggle("is-open", on);
+      root.classList.toggle("is-closed", !on);
+    });
+  }
+
+  function setOpen(id) {
+    if (id) document.documentElement.setAttribute("data-header-menu", id);
+    else document.documentElement.removeAttribute("data-header-menu");
+    syncAria();
+  }
+
+  document.addEventListener("click", function (event) {
+    if (event.target.closest("[data-menu-close]")) {
+      setOpen(null);
+      return;
+    }
+    var trigger = event.target.closest("[data-menu-trigger]");
+    if (trigger) {
+      var root = trigger.closest("[data-menu-id]");
+      if (!root) return;
+      var id = root.getAttribute("data-menu-id");
+      var current = document.documentElement.getAttribute("data-header-menu");
+      setOpen(current === id ? null : id);
+      return;
+    }
+    if (event.target.closest(".header-dropdown-backdrop")) {
+      setOpen(null);
+      return;
+    }
+    if (!event.target.closest("[data-menu-id]")) {
+      if (document.documentElement.hasAttribute("data-header-menu")) setOpen(null);
+    }
+  }, true);
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    if (!document.documentElement.hasAttribute("data-header-menu")) return;
+    setOpen(null);
+  });
+
+  document.addEventListener("click", function (event) {
+    document.querySelectorAll("details.pub-lang[open], details.pub-menu[open]").forEach(function (el) {
+      if (!el.contains(event.target)) el.removeAttribute("open");
+    });
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") return;
+    document.querySelectorAll("details.pub-lang[open], details.pub-menu[open]").forEach(function (el) {
+      el.removeAttribute("open");
+    });
+  });
+
+  document.addEventListener("focusout", function (event) {
+    var open = document.documentElement.getAttribute("data-header-menu");
+    if (!open) return;
+    var next = event.relatedTarget;
+    // A click with no next focus is handled by the click listener (toggle or switch).
+    if (!next) return;
+    var root = document.querySelector('[data-menu-id="' + open + '"]');
+    if (root && root.contains(next)) return;
+    if (next.closest && next.closest("[data-menu-trigger]")) return;
+    setOpen(null);
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Tab") document.documentElement.classList.add("using-keyboard");
+  }, true);
+  document.addEventListener("pointerdown", function () {
+    document.documentElement.classList.remove("using-keyboard");
+  }, true);
+})();
+
+(function () {
+  if (window.__jobsyInputMode) return;
+  window.__jobsyInputMode = true;
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Tab") document.documentElement.setAttribute("data-input", "keyboard");
+  }, true);
+  document.addEventListener("pointerdown", function () {
+    document.documentElement.setAttribute("data-input", "pointer");
+  }, true);
+})();
+
+window.jobsyCoachDock = window.jobsyCoachDock || {
+  bind: function (el, cssVar) {
+    if (!el || !cssVar) return;
+    var root = document.documentElement;
+    var apply = function () {
+      var h = 0;
+      if (el && el.isConnected) {
+        var style = window.getComputedStyle(el);
+        var hidden = style.display === "none" || style.visibility === "hidden";
+        h = hidden ? 0 : Math.ceil(el.getBoundingClientRect().height);
+      }
+      root.style.setProperty(cssVar, h + "px");
+    };
+    apply();
+    if (typeof ResizeObserver === "function") {
+      var ro = new ResizeObserver(apply);
+      ro.observe(el);
+    }
+  },
+  clear: function (cssVar) {
+    document.documentElement.style.setProperty(cssVar, "0px");
+  },
+  focus: function (id) {
+    var el = document.getElementById(id);
+    if (el && el.focus) el.focus();
+  },
+  tipDismissed: function (key) {
+    try { return localStorage.getItem("lobsy-coach-tip:" + key) === "1"; } catch (e) { return false; }
+  },
+  dismissTip: function (key) {
+    try { localStorage.setItem("lobsy-coach-tip:" + key, "1"); } catch (e) { }
+  },
+  placeTip: function (dock) {
+    if (!dock) return;
+    var tip = dock.querySelector(".lobsy-coach-dock__tip");
+    dock.classList.add("lobsy-coach-dock--tip-above");
+    dock.classList.remove("lobsy-coach-dock--tip-aside");
+    if (!tip) return;
+    tip.hidden = false;
+
+    function overlapsControls() {
+      var tipBox = tip.getBoundingClientRect();
+      if (tipBox.width < 2 || tipBox.height < 2) return false;
+      var nodes = document.querySelectorAll("main a, main button, main input, main textarea, main select, main summary, main [role='tab'], main [role='button']");
+      for (var i = 0; i < nodes.length; i++) {
+        var el = nodes[i];
+        if (!el || dock.contains(el)) continue;
+        var style = window.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        var box = el.getBoundingClientRect();
+        if (box.width < 8 || box.height < 8) continue;
+        var visible = box.bottom > 0 && box.right > 0 && box.top < window.innerHeight && box.left < window.innerWidth;
+        if (!visible) continue;
+        if (tipBox.left < box.right - 1 && tipBox.right > box.left + 1 && tipBox.top < box.bottom - 1 && tipBox.bottom > box.top + 1) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    if (overlapsControls()) {
+      tip.hidden = true;
+      return;
+    }
+
+    if (window.innerWidth <= 480) {
+      dock.classList.remove("lobsy-coach-dock--tip-aside");
+      return;
+    }
+
+    dock.classList.remove("lobsy-coach-dock--tip-aside");
+  },
+  bindScrollDismiss: function (dock) {
+    if (!dock || dock.dataset.scrollDismiss === "1") return;
+    dock.dataset.scrollDismiss = "1";
+    var last = window.scrollY || 0;
+    window.addEventListener("scroll", function () {
+      var y = window.scrollY || 0;
+      if (Math.abs(y - last) < 12) return;
+      last = y;
+      window.jobsyCoachDock.placeTip(dock);
+    }, { passive: true });
+  },
+  syncClearance: function (dock) {
+    if (!dock || !dock.getBoundingClientRect) return;
+    var btn = dock.querySelector("#lobsy-coach-btn") || dock;
+    var box = btn.getBoundingClientRect();
+    if (!box || box.width < 8) return;
+    var gap = 12;
+    var clear = Math.ceil(window.innerWidth - box.left + gap);
+    if (clear < 72) clear = 72;
+    document.documentElement.style.setProperty("--lobsy-coach-clear-inline", clear + "px");
+  },
+  syncStickyFooters: function (cssVar) {
+    cssVar = cssVar || "--sticky-footer-h";
+    var root = document.documentElement;
+    var roMap = window.jobsyCoachDock._stickyRoMap = window.jobsyCoachDock._stickyRoMap || new WeakMap();
+
+    function measure() {
+      var max = 0;
+      document.querySelectorAll("[data-sticky-footer]").forEach(function (el) {
+        if (!el || !el.isConnected) return;
+        var style = window.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") return;
+        var h = Math.ceil(el.getBoundingClientRect().height);
+        if (h > max) max = h;
+      });
+      root.style.setProperty(cssVar, max + "px");
+    }
+
+    function observeEl(el) {
+      if (!el || roMap.has(el)) return;
+      if (typeof ResizeObserver === "function") {
+        var ro = new ResizeObserver(measure);
+        ro.observe(el);
+        roMap.set(el, ro);
+      }
+    }
+
+    document.querySelectorAll("[data-sticky-footer]").forEach(observeEl);
+    measure();
+
+    if (!window.jobsyCoachDock._stickyMo) {
+      window.jobsyCoachDock._stickyMo = new MutationObserver(function () {
+        document.querySelectorAll("[data-sticky-footer]").forEach(observeEl);
+        measure();
+      });
+      window.jobsyCoachDock._stickyMo.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "style", "hidden"]
+      });
+    }
+  }
+};

@@ -1,10 +1,6 @@
-@using Microsoft.AspNetCore.Antiforgery
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject IAntiforgery Antiforgery
-@inject IHttpContextAccessor HttpContextAccessor
-@inject IJSRuntime Js
-@inject CultureState Culture
-@implements IDisposable
+@inject NavigationManager Navigation
 
 @if (IsOpen)
 {
@@ -19,9 +15,6 @@
         @if (_completed)
         {
             <p class="share-modal__lead lobsy-dialog__lead">@Culture["Unsubscribe.Completed"]</p>
-            <form id="unsubscribe-logout" method="post" action="/account/logout">
-                <input type="hidden" name="__RequestVerificationToken" value="@_antiforgeryToken" />
-            </form>
         }
         else if (_awaitingVerification)
         {
@@ -108,6 +101,13 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnCompleted { get; set; }
 
+    /// <summary>
+    /// When set, the caller's <see cref="OnCompleted"/> handler is responsible for signing
+    /// the visitor out (a POST form submit, public-pages 07); this dialog then skips its own
+    /// GET navigation to <c>/account/logout</c>. Default keeps today's behaviour unchanged.
+    /// </summary>
+    [Parameter] public bool SkipLogoutNavigation { get; set; }
+
     private List<UnsubscribeReasonOption> _reasons = [];
     private string _reasonCode = "";
     private string _reasonOther = "";
@@ -115,9 +115,7 @@
     private bool _awaitingVerification;
     private bool _busy;
     private bool _completed;
-    private bool _submitLogoutPending;
     private bool _reasonsLoaded;
-    private string _antiforgeryToken = "";
     private string? _error;
     private string? _info;
 
@@ -127,17 +125,6 @@
     private bool CanRequest =>
         !string.IsNullOrWhiteSpace(_reasonCode)
         && (!SelectedRequiresOther || !string.IsNullOrWhiteSpace(_reasonOther));
-
-    protected override void OnInitialized()
-    {
-        Culture.Changed += OnCultureChanged;
-        var http = HttpContextAccessor.HttpContext;
-        if (http is not null)
-        {
-            var tokens = Antiforgery.GetAndStoreTokens(http);
-            _antiforgeryToken = tokens.RequestToken ?? "";
-        }
-    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -152,15 +139,6 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_submitLogoutPending)
-        {
-            _submitLogoutPending = false;
-            await Js.InvokeVoidAsync("eval", "document.getElementById('unsubscribe-logout')?.submit()");
-        }
-    }
-
     private string ReasonLabel(UnsubscribeReasonOption reason)
     {
         var key = $"Unsubscribe.Reason.{reason.Code}";
@@ -170,12 +148,6 @@
             : translated;
     }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
-
     private async Task LoadReasonsAsync()
     {
         try
@@ -183,9 +155,9 @@
             _reasons = (await Api.GetUnsubscribeReasonsAsync()).ToList();
             _reasonsLoaded = true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Common.Error.TryAgain"];
         }
     }
 
@@ -208,9 +180,9 @@
             _verificationCode = "";
             _info = "Controleer je e-mail voor de verificatiecode.";
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Common.Error.TryAgain"];
         }
         finally
         {
@@ -247,12 +219,16 @@
         {
             await Api.ConfirmUnsubscribeAsync(_verificationCode.Trim());
             _completed = true;
-            _submitLogoutPending = true;
             await OnCompleted.InvokeAsync();
+            if (!SkipLogoutNavigation)
+            {
+                // GET /account/logout always signs out (same path as AuthHeader) — no eval/form submit.
+                Navigation.NavigateTo("/account/logout", forceLoad: true);
+            }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _error = Culture["Common.Error.TryAgain"];
         }
         finally
         {

@@ -1,0 +1,485 @@
+@namespace Jobsy.Web.Components.Shared.Questionnaire
+@using System.Text.RegularExpressions
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+@{
+    var targetCount = TargetCount;
+    var index = Math.Clamp(_index, 0, Math.Max(0, Ordered.Count - 1));
+    var question = Ordered.Count > 0 ? Ordered[index] : null;
+    var answered = question is not null && FlowAnswers.ContainsKey(question.Id);
+    var isLast = Ordered.Count > 0 && index >= targetCount - 1;
+    var answeredCount = FlowAnswers.Count;
+    var reached = TestDepthRules.Reached(Kind, answeredCount);
+    var nextLevel = TestDepthRules.Next(Kind, answeredCount);
+    var blocks = targetCount > 50 ? 25 : targetCount;
+}
+
+<div class="test-flow @(Compact ? "test-flow--compact" : null) @(Target == TestDepthLevel.Bottom ? "test-flow--deep" : null)" data-test-flow="@Kind">
+    @if (question is not null)
+    {
+        @if (Target != TestDepthLevel.Bottom)
+        {
+            <p class="test-flow__counter" id="@($"tf-counter-{Kind}")">
+                @Culture.Format("TestFlow.QuestionOf", index + 1, targetCount)
+            </p>
+        }
+        <div class="test-flow__bar" aria-hidden="true">
+            @for (var i = 0; i < blocks; i++)
+            {
+                var answeredUpTo = (int)Math.Ceiling((i + 1) * (double)targetCount / blocks);
+                var cls = answeredUpTo <= answeredCount
+                    ? "is-done"
+                    : answeredUpTo <= CountForLevel(reached) || i == (int)((index) * (double)blocks / targetCount)
+                        ? "is-current"
+                        : "is-todo";
+                <i class="@cls"></i>
+            }
+            @foreach (var band in TestDepthRules.Levels(Kind))
+            {
+                if (band.Count <= targetCount)
+                {
+                    var pct = band.Count * 100.0 / targetCount;
+                    <span class="test-flow__tick" style="--tick:@pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                }
+            }
+        </div>
+        @if (!Compact && Target != TestDepthLevel.Bottom)
+        {
+            <p class="test-flow__level">
+                @if (reached is TestDepthLevel r)
+                {
+                    <span class="test-flow__level-check" aria-hidden="true">✓</span>
+                    <span>@Culture.Format("TestFlow.LevelDone", Culture[TestDepthRules.NameKey(r)])</span>
+                    @if (nextLevel is TestDepthLevel n && CountForLevel(n) <= targetCount)
+                    {
+                        <span> · @Culture.Format("TestFlow.LevelNext", CountForLevel(n) - answeredCount, Culture[TestDepthRules.NameKey(n)])</span>
+                    }
+                }
+                else if (nextLevel is TestDepthLevel n0)
+                {
+                    <span>@Culture.Format("TestFlow.LevelNext", CountForLevel(n0) - answeredCount, Culture[TestDepthRules.NameKey(n0)])</span>
+                }
+            </p>
+        }
+
+        var spokenQuestion = StripIdPrefix(question.Text);
+        <div class="test-flow__speak">
+            <blockquote class="test-flow__statement" id="@($"tf-stmt-{question.Id}")">
+                “@spokenQuestion”
+            </blockquote>
+            <ReadAloudButton Text="@spokenQuestion" SpeechKey="@($"q-{Kind}-{question.Id}")" />
+        </div>
+        @if (!string.IsNullOrWhiteSpace(question.Example))
+        {
+            <details class="test-example" open="@_exampleOpen">
+                <summary>@Culture["TestFlow.Example"]</summary>
+                <div class="test-example__body">
+                    <p>@question.Example</p>
+                    <ReadAloudButton Text="@question.Example" SpeechKey="@($"ex-{Kind}-{question.Id}")" />
+                </div>
+            </details>
+        }
+
+        <LikertRadioGroup QuestionId="question.Id"
+                          Value="@(answered ? FlowAnswers[question.Id] : null)"
+                          Interactive="true"
+                          InputPrefix="@InputPrefix"
+                          StatementId="@($"tf-stmt-{question.Id}")"
+                          RequestFocus="_focusRequest"
+                          ValueChanged="OnAnswerAsync" />
+
+        @if (!Compact)
+        {
+            var answeredEarlier = RecentAnswered().ToList();
+            var recent = answeredEarlier.Take(_recentLimit).ToList();
+            @if (recent.Count > 0)
+            {
+                <div class="test-flow__recent">
+                    <p class="test-flow__recent-title">@Culture.Format("TestFlow.Answered", answeredEarlier.Count)</p>
+                    <ul>
+                        @foreach (var (q, val, qi) in recent)
+                        {
+                            <li>
+                                <span>“@StripIdPrefix(q.Text)”</span>
+                                <strong>@val</strong>
+                                <button type="button" class="test-flow__adjust" @onclick="() => JumpTo(qi)">
+                                    @Culture["TestFlow.Adjust"]
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        }
+
+        <footer class="test-flow__footer" @ref="_footer" data-sticky-footer>
+            <button type="button"
+                    class="test-flow__back"
+                    disabled="@(index <= 0 && !OnLeave.HasDelegate)"
+                    @onclick="GoBackAsync">
+                @Culture["TestFlow.Back"]
+            </button>
+            @if (!Compact && OnLater.HasDelegate)
+            {
+                <button type="button" class="test-flow__later" @onclick="LaterAsync">
+                    @Culture["TestFlow.Later"]
+                </button>
+            }
+            <button type="button"
+                    class="test-flow__next engagement-btn"
+                    disabled="@(!answered || LoadFailed)"
+                    @onclick="GoNextAsync">
+                @(isLast ? (FinishLabel ?? Culture["TestFlow.Finish"]) : Culture["TestFlow.Next"])
+            </button>
+        </footer>
+    }
+</div>
+
+@code {
+    public sealed record FlowQuestion(int Id, string Text, string? Example = null);
+
+    [Parameter] public AssessmentKind Kind { get; set; }
+    [Parameter] public IReadOnlyList<FlowQuestion> Questions { get; set; } = [];
+    [Parameter] public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
+    [Parameter] public int StartAt { get; set; }
+    [Parameter] public TestDepthLevel Target { get; set; } = TestDepthLevel.Full;
+    [Parameter] public QuestionnaireAutosave? Autosave { get; set; }
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public string InputPrefix { get; set; } = "tf";
+    [Parameter] public EventCallback<TestDepthLevel> OnLevelReached { get; set; }
+    [Parameter] public EventCallback OnFinished { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public EventCallback OnLeave { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+    [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
+    [Parameter] public bool LoadFailed { get; set; }
+    /// <summary>Overrides <see cref="UiStrings"/> TestFlow.Finish on the last question (e.g. onboarding “Volgende test”).</summary>
+    [Parameter] public string? FinishLabel { get; set; }
+    /// <summary>When set, advancing past this 0-based index fires <see cref="OnPauseAfter"/> instead of moving on.</summary>
+    [Parameter] public Func<int, bool>? ShouldPauseAfterIndex { get; set; }
+    [Parameter] public EventCallback<int> OnPauseAfter { get; set; }
+    [Parameter] public int? ExternalIndex { get; set; }
+
+    private int _index;
+    private int? _appliedExternalIndex;
+    private bool _focusRequest;
+    private bool _exampleOpen = true;
+    private int _recentLimit = 8;
+    private readonly HashSet<TestDepthLevel> _firedLevels = [];
+    private CancellationTokenSource? _advanceCts;
+    private int _advanceGeneration;
+    /// <summary>Merged parameter answers plus in-flight selections (same dict ref may not trigger param refresh).</summary>
+    private readonly Dictionary<int, int> _flowAnswers = new();
+    private IReadOnlyDictionary<int, int> FlowAnswers => _flowAnswers;
+    private IReadOnlyList<FlowQuestion> Ordered => Questions;
+
+    private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
+
+    protected override void OnInitialized()
+    {
+        MergeParameterAnswers();
+        _index = Math.Clamp(StartAt, 0, Math.Max(0, TargetCount - 1));
+        // Prefer first unanswered within target.
+        for (var i = 0; i < TargetCount; i++)
+        {
+            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
+            {
+                _index = i;
+                break;
+            }
+        }
+
+        _focusRequest = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var reduce = await MatchesMediaAsync("(prefers-reduced-motion: reduce)");
+                if (reduce)
+                {
+                    // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
+                }
+
+                var narrow = await MatchesMediaAsync("(max-width: 639px)");
+                _recentLimit = narrow ? 5 : 8;
+                _exampleOpen = !narrow;
+            }
+            catch
+            {
+                // bUnit / no JS
+            }
+        }
+
+        _focusRequest = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyCoachDock.syncStickyFooters");
+        }
+        catch
+        {
+            // bUnit
+        }
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+    private ElementReference _footer;
+
+    private static int CountForLevel(TestDepthLevel? level)
+        => level is null ? 0 : level switch
+        {
+            TestDepthLevel.First => TestDepthRules.FirstCount,
+            TestDepthLevel.Deeper => TestDepthRules.DeeperCount,
+            _ => 0
+        };
+
+    private int CountForLevel(TestDepthLevel level) => TestDepthRules.CountFor(Kind, level);
+
+    public static string StripIdPrefix(string text)
+        => Regex.Replace(text ?? "", @"^\d+\.\s*", "");
+
+    private IEnumerable<(FlowQuestion Q, int Value, int Index)> RecentAnswered()
+    {
+        for (var i = _index - 1; i >= 0; i--)
+        {
+            var q = Ordered[i];
+            if (_flowAnswers.TryGetValue(q.Id, out var v))
+            {
+                yield return (q, v, i);
+            }
+        }
+    }
+
+    private async Task<bool> MatchesMediaAsync(string query)
+    {
+        try
+        {
+            return await Js.InvokeAsync<bool>("jobsyMedia.matches", query);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private async Task OnAnswerAsync(int value)
+    {
+        // Capture the question before any await. Volgende can run while those awaits
+        // are in flight; a later _index++ would skip the question the click already left.
+        var answeredIndex = _index;
+        if (answeredIndex < 0 || answeredIndex >= Ordered.Count) return;
+        CancelPendingAdvance();
+        var generation = _advanceGeneration;
+
+        var question = Ordered[answeredIndex];
+        _flowAnswers[question.Id] = value;
+
+        if (Autosave is not null)
+        {
+            await Autosave.SetAnswerAsync(question.Id, value);
+        }
+        else if (OnAnswer.HasDelegate)
+        {
+            await OnAnswer.InvokeAsync((question.Id, value));
+        }
+
+        await InvokeAsync(StateHasChanged);
+        await OnChanged.InvokeAsync();
+        await FireLevelsAsync();
+        if (generation != _advanceGeneration || _index != answeredIndex) return;
+
+        if (answeredIndex >= TargetCount - 1)
+        {
+            if (FirstGapIndex() is int lastGap)
+            {
+                _index = lastGap;
+                _focusRequest = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (Autosave is not null)
+            {
+                await Autosave.FlushAsync();
+            }
+
+            if (OnFinished.HasDelegate)
+            {
+                await OnFinished.InvokeAsync();
+            }
+
+            return;
+        }
+
+        if (ShouldPauseAfterIndex?.Invoke(answeredIndex) == true)
+        {
+            await OnPauseAfter.InvokeAsync(answeredIndex);
+            _focusRequest = true;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var delayMs = await MatchesMediaAsync("(prefers-reduced-motion: reduce)") ? 0 : 250;
+        if (generation != _advanceGeneration || _index != answeredIndex) return;
+
+        _advanceCts = new CancellationTokenSource();
+        var token = _advanceCts.Token;
+        try
+        {
+            if (delayMs > 0) await Task.Delay(delayMs, token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (token.IsCancellationRequested || generation != _advanceGeneration || _index != answeredIndex) return;
+        if (_index >= TargetCount - 1) return;
+        _index = answeredIndex + 1;
+        _focusRequest = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CancelPendingAdvance()
+    {
+        _advanceGeneration++;
+        _advanceCts?.Cancel();
+        _advanceCts?.Dispose();
+        _advanceCts = null;
+    }
+
+    private int? FirstGapIndex()
+    {
+        var count = TargetCount;
+        for (var i = 0; i < count; i++)
+        {
+            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
+            {
+                return i;
+            }
+        }
+
+        return null;
+    }
+
+    private void MergeParameterAnswers()
+    {
+        foreach (var (id, val) in Answers)
+        {
+            _flowAnswers[id] = val;
+        }
+
+        if (Autosave is not null)
+        {
+            foreach (var (id, val) in Autosave.Answers)
+            {
+                _flowAnswers[id] = val;
+            }
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        MergeParameterAnswers();
+
+        // Apply an external jump only when it changes. Re-applying the same index
+        // on every render put the candidate back on the last question after Next
+        // had moved them to the first unanswered one.
+        if (ExternalIndex is int ei && _appliedExternalIndex != ei)
+        {
+            _appliedExternalIndex = ei;
+            _index = Math.Clamp(ei, 0, Math.Max(0, TargetCount - 1));
+        }
+    }
+
+    /// <summary>Jump to a 0-based index (used after pause "Verder").</summary>
+    public void JumpToIndex(int index)
+    {
+        JumpTo(index);
+    }
+
+    private async Task FireLevelsAsync()
+    {
+        var count = _flowAnswers.Count;
+        foreach (var band in TestDepthRules.Levels(Kind))
+        {
+            if (count >= band.Count && _firedLevels.Add(band.Level) && OnLevelReached.HasDelegate)
+            {
+                await OnLevelReached.InvokeAsync(band.Level);
+            }
+        }
+    }
+
+    private void JumpTo(int index)
+    {
+        CancelPendingAdvance();
+        _index = Math.Clamp(index, 0, Math.Max(0, TargetCount - 1));
+        _focusRequest = true;
+    }
+
+    private async Task GoBackAsync()
+    {
+        CancelPendingAdvance();
+        if (_index <= 0)
+        {
+            if (OnLeave.HasDelegate)
+            {
+                await OnLeave.InvokeAsync();
+            }
+
+            return;
+        }
+        _index--;
+        _focusRequest = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task GoNextAsync()
+    {
+        CancelPendingAdvance();
+        if (Ordered.Count == 0 || TargetCount <= 0) return;
+        _index = Math.Clamp(_index, 0, TargetCount - 1);
+        var question = Ordered[_index];
+        if (!_flowAnswers.ContainsKey(question.Id)) return;
+
+        if (_index >= TargetCount - 1)
+        {
+            if (FirstGapIndex() is int gap)
+            {
+                _index = gap;
+                _focusRequest = true;
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (Autosave is not null) await Autosave.FlushAsync();
+            await OnFinished.InvokeAsync();
+            return;
+        }
+
+        if (ShouldPauseAfterIndex?.Invoke(_index) == true)
+        {
+            await OnPauseAfter.InvokeAsync(_index);
+            return;
+        }
+
+        _index++;
+        _focusRequest = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LaterAsync()
+    {
+        if (Autosave is not null) await Autosave.FlushAsync();
+        await OnLater.InvokeAsync();
+    }
+}

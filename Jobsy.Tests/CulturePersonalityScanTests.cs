@@ -71,11 +71,11 @@ public class CulturePersonalityScanTests
     public void Kompas_Routes_Culture_Through_Tests_Tab()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+        var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
         Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
         Assert.Contains("Kompas.TabTests", kompas, StringComparison.Ordinal);
         Assert.DoesNotContain("DiscScorePanel", kompas, StringComparison.Ordinal);
-        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CultureScorePanel.razor"));
+        var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CultureScorePanel.razor"));
         Assert.Contains("CulturePersonalityCatalog", panel, StringComparison.Ordinal);
         var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TestDetail.razor"));
         Assert.Contains("/profiel/tests/{TestKey}", detail, StringComparison.Ordinal);

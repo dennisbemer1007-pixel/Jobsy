@@ -1,23 +1,24 @@
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Navigation
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
-@implements IDisposable
+@inject IFeatureFlags FeatureFlags
 
 @if (_visible)
 {
     <aside class="ob-resume-card" aria-labelledby="ob-resume-title">
         <p id="ob-resume-title" class="ob-resume-card__title">@Culture["Onboarding.Resume.Title"]</p>
-        <p class="ob-resume-card__lead">@Culture["Onboarding.Resume.Lead"]</p>
-        <a class="ob-resume-card__link" href="/candidate/start">@Culture["Onboarding.Resume.Cta"]</a>
+        <p class="ob-resume-card__lead">@Culture.Format("Onboarding.Resume.Lead", _remainingSteps)</p>
+        <a class="ob-resume-card__link" href="@ResumeHref">@Culture["Onboarding.Resume.Cta"]</a>
     </aside>
 }
 
 @code {
     private bool _visible;
     private bool _loadStarted;
-
-    protected override void OnInitialized()
-        => Culture.Changed += OnCultureChanged;
+    private int _remainingSteps = 1;
+    private string ResumeHref = OnboardingRoutes.ClassicStartPath;
 
     protected override Task OnInitializedAsync()
         => LoadOnceAsync();
@@ -32,18 +33,26 @@
         _loadStarted = true;
         try
         {
+            try
+            {
+                var flags = await FeatureFlags.GetAsync();
+                ResumeHref = OnboardingRoutes.StartPath(flags);
+            }
+            catch
+            {
+                ResumeHref = OnboardingRoutes.ClassicStartPath;
+            }
+
             var state = await Api.GetMyOnboardingAsync();
             _visible = state is not null && !state.IsComplete;
+            if (_visible)
+            {
+                _remainingSteps = Math.Max(1, 11 - state!.CurrentStep);
+            }
         }
         catch
         {
             _visible = false;
         }
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-        => Culture.Changed -= OnCultureChanged;
 }

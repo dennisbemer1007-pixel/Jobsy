@@ -1,3 +1,4 @@
+using Jobsy.Api.Extensions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -32,11 +33,31 @@ public sealed class CandidateKompasController : ControllerBase
 
         try
         {
-            return Ok(await _kompas.GetAsync(user.Id, cancellationToken));
+            return Ok(await _kompas.GetAsync(user.Id, HttpContext.GetJobsyLanguage(), cancellationToken));
         }
         catch (InvalidOperationException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return await TestSaveErrors.LogAsync(this, ex, NotFound(new { message = ex.Message }), "CandidateJourney", cancellationToken);
+        }
+    }
+
+    [HttpGet("dna")]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<CandidateDnaSummaryDto>> GetDna(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        try
+        {
+            return Ok(await _kompas.GetDnaAsync(user.Id, HttpContext.GetJobsyLanguage(), cancellationToken));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return await TestSaveErrors.LogAsync(this, ex, NotFound(new { message = ex.Message }), "CandidateJourney", cancellationToken);
         }
     }
 }

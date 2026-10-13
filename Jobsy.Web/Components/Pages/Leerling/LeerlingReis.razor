@@ -1,0 +1,430 @@
+@page "/leerling/reis"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Scholen
+@using Jobsy.Core.Scholen.QuestionSets
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+@inject IJSRuntime Js
+@inject IPupilQuestionSetRegistry Registry
+@inject IServiceProvider Services
+
+<PageTitle>@Culture["Leerling.Reis.Title"] · Lobsy</PageTitle>
+
+<LeerlingCoachCue Text="@Culture["Leerling.Coach.Reis"]" />
+
+@if (_windowClosed)
+{
+    <section class="ll-card">
+        <h1>@Culture["Leerling.WindowClosed.Title"]</h1>
+        <p>@Culture[PupilCopy.Key(_state?.QuestionSet ?? _def?.Set ?? Jobsy.Core.Enums.PupilQuestionSet.Vo, "Leerling.WindowClosed.Body")]</p>
+    </section>
+}
+else if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_sessionLost)
+{
+    <p class="state-message error">@Culture["Leerling.Session.Lost"]</p>
+}
+else if (_state is null || _def is null)
+{
+    <LeerlingOfflineRetry OnRetry="Reload" />
+}
+else if (_resultPending)
+{
+    <section class="ll-card">
+        <p class="ll-error" role="alert">@Culture["Leerling.Reis.ResultPending"]</p>
+        <button type="button" class="btn-primary" disabled="@_busy" @onclick="RetryPending">
+            @Culture["Leerling.Reis.Retry"]
+        </button>
+    </section>
+}
+else if (_state.Completed)
+{
+    <section class="ll-card">
+        <h1>@Culture["Leerling.Reis.Done"]</h1>
+        <p>@Culture["Leerling.Reis.DoneLead"]</p>
+        <a class="btn-primary" href="/leerling/dit-ben-jij">@Culture["Leerling.Reis.ToResult"]</a>
+    </section>
+}
+else
+{
+    var item = _current;
+    var worldKey = item?.WorldKey ?? _state.CurrentWorldKey ?? "koraalrif";
+    var world = PupilWorldCatalog.Find(worldKey);
+    var worldNum = PupilWorldCatalog.TestWorldNumber(worldKey);
+    var qLabel = item is null ? "" : Culture[item.TextKey];
+    var imagineRaw = item is null ? "" : Culture[item.ImagineKey];
+    var imagineHeading = Culture["Leerling.Reis.Imagine"];
+    var imagine = SpokenText.WithoutRepeatedLead(imagineHeading, imagineRaw);
+    var imagineSpoken = SpokenText.Join(imagineHeading, imagine);
+    var plates = _state.PlatesShed;
+    var infoId = "ll-imagine-" + (item?.Id ?? "x");
+    var cheerKey = _def.CheerKey(_state.AnsweredCount);
+
+    <div class="ll-reis">
+        <aside class="ll-rail" aria-label="@Culture["Leerling.Reis.Journey"]">
+            <p class="ll-rail__title">@Culture["Leerling.Reis.Journey"]</p>
+            <p class="ll-rail__meta">@string.Format(Culture["Leerling.Reis.WorldOf"], worldNum, 4)</p>
+            <ol class="ll-rail__list">
+                @foreach (var railKey in _def.RailWorldKeys())
+                {
+                    var w = PupilWorldCatalog.Find(railKey);
+                    if (w is null)
+                    {
+                        continue;
+                    }
+
+                    var done = IsWorldDone(w.Key);
+                    var current = string.Equals(w.Key, worldKey, StringComparison.OrdinalIgnoreCase);
+                    <li class="@(done ? "is-done" : null) @(current ? "is-now" : null)">
+                        <strong>@Culture[w.TitleKey]</strong>
+                        <small>@Culture[w.SubtitleKey]</small>
+                    </li>
+                }
+            </ol>
+            <div class="ll-plates" aria-hidden="true">
+                @for (var i = 0; i < _def.PlateCount; i++)
+                {
+                    <span class="ll-plates__seg @(i < plates ? "is-gone" : null)"></span>
+                }
+            </div>
+            <p class="ll-plates__label">@Culture["Leerling.Reis.PlatesGone"]</p>
+        </aside>
+
+        <section class="ll-card ll-question" role="group" aria-labelledby="ll-q-title">
+            <LeerlingCheerToast Text="@Culture[cheerKey]"
+                                Show="_cheerToast"
+                                OnHidden="HideCheerToast" />
+            <p class="ll-question__meta">
+                @string.Format(Culture["Leerling.Reis.QuestionOf"], _state.CurrentIndex + 1, _state.TotalItems)
+                · @Culture["Leerling.World.Label"] @worldNum
+            </p>
+            <p class="ll-question__world">@(world is null ? "" : Culture[world.TitleKey])</p>
+            <h1 id="ll-q-title"
+                class="ll-question__text"
+                aria-describedby="@(_infoOpen ? infoId : null)">@qLabel</h1>
+            <LeerlingSpeak Text="@qLabel" SpeechKey="@($"ll-q-{item?.Id}")" />
+            <button type="button"
+                    class="ll-info-btn"
+                    aria-label="@Culture["Leerling.Reis.More"]"
+                    aria-expanded="@(_infoOpen ? "true" : "false")"
+                    aria-controls="@infoId"
+                    title="@Culture["Leerling.Reis.Imagine"]"
+                    @onclick="ToggleInfo">i</button>
+            <div id="@infoId" class="ll-info @(_infoOpen ? "is-open" : null)" hidden="@(!_infoOpen)">
+                <p><strong>@Culture["Leerling.Reis.Imagine"]</strong></p>
+                <LeerlingSpeak Text="@imagineSpoken" SpeechKey="@($"ll-imagine-{item?.Id}")" />
+                <p>@imagine</p>
+                <button type="button" class="ll-info__close" @onclick="() => _infoOpen = false" aria-label="Sluiten">×</button>
+            </div>
+
+            <LeerlingAnswerScale Labels="_def.AnswerLabels"
+                                 Set="_def.Set"
+                                 Selected="_selected"
+                                 OnSelect="SelectAnswer"
+                                 GroupLabel="@Culture["Leerling.Reis.Answers"]"
+                                 Disabled="_busy" />
+
+            @if (_offline)
+            {
+                <p class="ll-error" role="alert">@Culture["Leerling.Reis.Offline"]</p>
+                <button type="button" class="btn-secondary" disabled="@_busy" @onclick="Reload">
+                    @Culture["Leerling.Reis.Retry"]
+                </button>
+            }
+            else if (!string.IsNullOrEmpty(_saveError))
+            {
+                <p class="ll-error" role="alert">@_saveError</p>
+            }
+            else if (_saved)
+            {
+                <p class="ll-saved">@Culture["Leerling.Reis.Saved"]</p>
+            }
+
+            <div class="ll-question__nav">
+                <button type="button" class="btn-secondary" disabled="@(_state.CurrentIndex <= 0)" @onclick="GoPrev">@Culture["Leerling.Reis.Prev"]</button>
+            </div>
+        </section>
+
+    </div>
+}
+
+@code {
+    private PupilProgressStateDto? _state;
+    private PupilQuestionSetDef? _def;
+    private PupilQuestionItem? _current;
+    private bool _loading = true;
+    private bool _windowClosed;
+    private bool _infoOpen;
+    private bool _saved;
+    private bool _resultPending;
+    private bool _offline;
+    private bool _sessionLost;
+    private bool _leaving;
+    private int? _queuedAnswer;
+    private string? _saveError;
+    private int? _selected;
+    private bool _busy;
+    private bool _cheerToast;
+    private int _platesSeen = int.MinValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Reload();
+    }
+
+    private async Task Reload()
+    {
+        var previous = _state;
+        _loading = previous is null;
+        _offline = false;
+        _sessionLost = false;
+        var outcome = await PupilLoadRetry.RunAsync(() => Api.GetPupilProgressAsync(), Services, "reis");
+        if (outcome.SessionLost)
+        {
+            _sessionLost = true;
+            _state = null;
+            _def = null;
+        }
+        else if (outcome.Value is null)
+        {
+            if (previous is null)
+            {
+                _state = null;
+                _def = null;
+                _offline = true;
+            }
+            else
+            {
+                _state = previous;
+                _offline = true;
+            }
+        }
+        else
+        {
+            ApplyLoaded(outcome.Value);
+        }
+
+        _loading = false;
+    }
+
+    private void ApplyLoaded(PupilProgressStateDto state)
+    {
+        _state = state;
+        _offline = false;
+        _def = Registry.Get(state.QuestionSet);
+
+        if (!state.WindowOpen && !state.Completed)
+        {
+            _windowClosed = true;
+            return;
+        }
+
+        if (state.Completed || string.Equals(state.NextStep, "done", StringComparison.OrdinalIgnoreCase))
+        {
+            _resultPending = false;
+            return;
+        }
+
+        if (state.NeedsIsland || string.Equals(state.NextStep, "island", StringComparison.OrdinalIgnoreCase))
+        {
+            _leaving = true;
+            Nav.NavigateTo("/leerling/eiland");
+            return;
+        }
+
+        if (string.Equals(state.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+            && PupilPuzzleRoutes.IsBuilt(state.NextPuzzleKey))
+        {
+            _leaving = true;
+            Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(state.NextPuzzleKey!)}");
+            return;
+        }
+
+        if (state.AnsweredCount >= state.TotalItems && state.TotalItems > 0)
+        {
+            _resultPending = true;
+            return;
+        }
+
+        _resultPending = false;
+        _current = state.CurrentItemId is null || _def is null ? null : _def.Bank.GetById(state.CurrentItemId);
+        if (_current is not null && state.Answers.TryGetValue(_current.Id, out var v))
+        {
+            _selected = v;
+        }
+        else
+        {
+            _selected = null;
+        }
+
+        _infoOpen = false;
+        MaybeShowCheerToast();
+    }
+
+    private void MaybeShowCheerToast()
+    {
+        if (_state is null)
+        {
+            return;
+        }
+
+        var plates = _state.PlatesShed;
+        if (_platesSeen != int.MinValue && plates > _platesSeen)
+        {
+            _cheerToast = true;
+        }
+
+        _platesSeen = plates;
+    }
+
+    private void HideCheerToast() => _cheerToast = false;
+
+    private async Task RetryPending()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Reload();
+            if (_state?.Completed == true)
+            {
+                Nav.NavigateTo("/leerling/dit-ben-jij");
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SelectAnswer(int value)
+    {
+        if (_current is null || _state is null)
+        {
+            return;
+        }
+
+        if (_busy)
+        {
+            _queuedAnswer = value;
+            _selected = value;
+            return;
+        }
+
+        var itemId = _current.Id;
+        _selected = value;
+        _saveError = null;
+        _saved = false;
+        _infoOpen = false;
+        _busy = true;
+        try
+        {
+            var result = await Api.SavePupilAnswerAsync(itemId, value);
+            if (result is null)
+            {
+                _saveError = Culture["Leerling.Reis.SaveFailed"];
+                return;
+            }
+
+            _saved = true;
+            if (result.Completed || string.Equals(result.NextStep, "done", StringComparison.OrdinalIgnoreCase))
+            {
+                _leaving = true;
+                Nav.NavigateTo("/leerling/dit-ben-jij");
+                return;
+            }
+
+            if (result.ResultPending)
+            {
+                _resultPending = true;
+                _saveError = Culture["Leerling.Reis.ResultPending"];
+                return;
+            }
+
+            if (result.NeedsIsland || string.Equals(result.NextStep, "island", StringComparison.OrdinalIgnoreCase))
+            {
+                _leaving = true;
+                Nav.NavigateTo("/leerling/eiland");
+                return;
+            }
+
+            if (string.Equals(result.NextStep, "puzzle", StringComparison.OrdinalIgnoreCase)
+                && PupilPuzzleRoutes.IsBuilt(result.NextPuzzleKey))
+            {
+                _leaving = true;
+                Nav.NavigateTo($"/leerling/puzzel/{Uri.EscapeDataString(result.NextPuzzleKey!)}");
+                return;
+            }
+
+            await Reload();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            _windowClosed = true;
+        }
+        catch
+        {
+            _saveError = Culture["Leerling.Reis.SaveFailed"];
+        }
+        finally
+        {
+            _busy = false;
+            if (!_leaving && _queuedAnswer is int queued && _current?.Id == itemId)
+            {
+                _queuedAnswer = null;
+                await SelectAnswer(queued);
+            }
+        }
+    }
+
+    private async Task GoPrev()
+    {
+        if (_state is null || _def is null || _state.CurrentIndex <= 0)
+        {
+            return;
+        }
+
+        var prev = _def.Bank.GetByGlobalIndex(_state.CurrentIndex - 1);
+        if (prev is null)
+        {
+            return;
+        }
+
+        _current = prev;
+        _selected = _state.Answers.TryGetValue(prev.Id, out var v) ? v : null;
+        _infoOpen = false;
+        await Task.CompletedTask;
+    }
+
+    private void ToggleInfo() => _infoOpen = !_infoOpen;
+
+    private bool IsWorldDone(string worldKey)
+    {
+        if (_state is null || _def is null)
+        {
+            return false;
+        }
+
+        if (string.Equals(worldKey, "pauze-eiland", StringComparison.OrdinalIgnoreCase))
+        {
+            return _state.IslandDone;
+        }
+
+        var items = _def.Bank.AllItems.Where(i => i.WorldKey == worldKey).ToList();
+        return items.Count > 0 && items.All(i => _state.Answers.ContainsKey(i.Id));
+    }
+}

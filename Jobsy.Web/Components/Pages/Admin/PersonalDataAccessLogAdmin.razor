@@ -1,0 +1,439 @@
+@page "/admin/beveiliging/gegevensinzage"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Time
+@using Jobsy.Web.Admin
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Sections
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Components.Shared
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<PageTitle>@Culture["AdminNav.DataAccess"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.DataAccess"]" Lead="@Culture["Admin.PersonalDataAccessLogLead"]">
+    <BeveiligingTabs ActiveKey="pii" />
+
+    <div class="admin-access-log">
+    <AdminFilterBar>
+        <div class="admin-user-picker">
+            <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Actor"]"
+                   @bind="_actorQuery" @bind:event="oninput" @bind:after="OnActorTyped" autocomplete="off" />
+            @if (_actorHits.Count > 0)
+            {
+                <ul class="admin-user-picker__list">
+                    @foreach (var hit in _actorHits)
+                    {
+                        <li>
+                            <button type="button" @onclick="() => PickActor(hit)">
+                                <strong>@hit.FullName</strong>
+                                <span class="admin-muted">@PickerMeta(hit)</span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+            else if (_actorMiss)
+            {
+                <p class="admin-user-picker__empty" role="status">@Culture["AdminDataAccess.NoMatch"]</p>
+            }
+        </div>
+        <div class="admin-user-picker">
+            <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Subject"]"
+                   @bind="_subjectQuery" @bind:event="oninput" @bind:after="OnSubjectTyped" autocomplete="off" />
+            @if (_subjectHits.Count > 0)
+            {
+                <ul class="admin-user-picker__list">
+                    @foreach (var hit in _subjectHits)
+                    {
+                        <li>
+                            <button type="button" @onclick="() => PickSubject(hit)">
+                                <strong>@hit.FullName</strong>
+                                <span class="admin-muted">@PickerMeta(hit)</span>
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+            else if (_subjectMiss)
+            {
+                <p class="admin-user-picker__empty" role="status">@Culture["AdminDataAccess.NoMatch"]</p>
+            }
+        </div>
+        <input type="text" class="admin-filter-input" placeholder="@Culture["AdminDataAccess.Resource"]" @bind="_resource" />
+        <input type="text" class="admin-filter-input" placeholder="@Culture["AdminAudit.Col.Action"]" @bind="_action" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_fromFilterDate"
+                        ValueChanged="v => _fromFilterDate = v"
+                        TestId="admin-pii-from-date" />
+        <JobsyDateField CssClass="admin-filter-input"
+                        Value="_toFilterDate"
+                        ValueChanged="v => _toFilterDate = v"
+                        TestId="admin-pii-to-date" />
+        <button class="btn-compact" type="button" disabled="@_loading" @onclick="ReloadAsync">@Culture["Common.Filter"]</button>
+    </AdminFilterBar>
+    @if (!string.IsNullOrEmpty(_idHint))
+    {
+        <p class="state-message @(_idError ? "error" : null)" role="status">@_idHint</p>
+    }
+
+    <AdminDataTable Loading="_loading" Empty="@(_rows.Count == 0)" EmptyText="@Culture["AdminDataAccess.Empty"]" KeepHeader="true">
+        <Header>
+            <th scope="col">@Culture["AdminAudit.Col.Time"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Col.Actor"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Col.Subject"]</th>
+            <th scope="col">@Culture["AdminDataAccess.Resource"]</th>
+            <th scope="col">@Culture["AdminAudit.Col.Action"]</th>
+            <th scope="col" class="admin-access-log__reason">@Culture["AdminAudit.Reason"]</th>
+            <th scope="col" class="admin-access-log__corr">@Culture["AdminAudit.Col.Correlation"]</th>
+        </Header>
+        <Rows>
+            @foreach (var row in _rows)
+            {
+                <tr>
+                    <td class="admin-mono" data-label="@Culture["AdminAudit.Col.Time"]">@AmsterdamTime.ToLocal(row.OccurredAt).ToString("dd-MM HH:mm")</td>
+                    <td data-label="@Culture["AdminDataAccess.Col.Actor"]" title="@row.ActorUserId">
+                        <strong>@PersonName(row.ActorName)</strong>
+                        <span class="admin-muted">@PersonDetail(row.ActorRole, row.ActorCompanyName, row.ActorEmailMasked)</span>
+                    </td>
+                    <td data-label="@Culture["AdminDataAccess.Col.Subject"]" title="@(row.SubjectUserId?.ToString())">
+                        @if (row.SubjectUserId is null)
+                        {
+                            <span>—</span>
+                        }
+                        else
+                        {
+                            <strong>@PersonName(row.SubjectName)</strong>
+                            <span class="admin-muted">@PersonDetail(row.SubjectRole, row.SubjectCompanyName, row.SubjectEmailMasked)</span>
+                        }
+                    </td>
+                    <td data-label="@Culture["AdminDataAccess.Resource"]">@AdminActionLabels.Resource(row.Resource, key => Culture[key])</td>
+                    <td data-label="@Culture["AdminAudit.Col.Action"]">@AdminActionLabels.AccessAction(row.Resource, row.Action, key => Culture[key])</td>
+                    <td class="admin-muted admin-access-log__reason" data-label="@Culture["AdminAudit.Reason"]">@AdminActionLabels.AccessReason(row.Reason, key => Culture[key])</td>
+                    <td class="admin-mono admin-access-log__corr" data-label="@Culture["AdminAudit.Col.Correlation"]" title="@row.CorrelationId">@ShortCorrelation(row.CorrelationId)</td>
+                </tr>
+            }
+        </Rows>
+    </AdminDataTable>
+    </div>
+</AdminPageShell>
+
+@code {
+    private PersonalDataAccessLogPage? _page;
+    private string _actorQuery = "";
+    private string _subjectQuery = "";
+    private Guid? _actorId;
+    private Guid? _subjectId;
+    private List<AdminUserItem> _actorHits = [];
+    private List<AdminUserItem> _subjectHits = [];
+    private readonly DebouncedAction _actorSuggest = new();
+    private readonly DebouncedAction _subjectSuggest = new();
+    private string _resource = "";
+    private string _action = "";
+    private DateOnly? _fromFilterDate;
+    private DateOnly? _toFilterDate;
+    private bool _loading = true;
+
+    private string? _idHint;
+    private bool _idError;
+    private bool _actorMiss;
+    private bool _subjectMiss;
+
+    private List<PersonalDataAccessLogItem> _rows =>
+        (_page?.Items ?? [])
+            .Where(r => string.IsNullOrWhiteSpace(_resource)
+                        || r.Resource.Contains(_resource, StringComparison.OrdinalIgnoreCase))
+            .Where(r => string.IsNullOrWhiteSpace(_action)
+                        || r.Action.Contains(_action, StringComparison.OrdinalIgnoreCase))
+            .Where(r => MatchesPrefix(r.ActorUserId, _actorPrefix))
+            .Where(r => MatchesPrefix(r.SubjectUserId, _subjectPrefix))
+            .ToList();
+
+    private string? _actorPrefix;
+    private string? _subjectPrefix;
+
+    private static bool MatchesPrefix(Guid? id, string? prefix)
+    {
+        if (string.IsNullOrEmpty(prefix))
+        {
+            return true;
+        }
+
+        return id is Guid value
+               && value.ToString("N").StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+    }
+
+    protected override void OnInitialized() => Culture.Changed += OnCultureChanged;
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose()
+    {
+        Culture.Changed -= OnCultureChanged;
+        _actorSuggest.Dispose();
+        _subjectSuggest.Dispose();
+    }
+
+    protected override Task OnInitializedAsync() => ReloadAsync();
+
+    private void OnActorTyped()
+    {
+        _actorId = null;
+        var q = _actorQuery;
+        _ = _actorSuggest.RunAsync(250, async ct =>
+        {
+            var hits = await SearchUsersAsync(q, ct);
+            await InvokeAsync(() =>
+            {
+                if (ct.IsCancellationRequested || !string.Equals(q, _actorQuery, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                _actorHits = hits;
+                _actorMiss = IsEmptyUserSearch(q, hits);
+                StateHasChanged();
+            });
+        });
+    }
+
+    private void OnSubjectTyped()
+    {
+        _subjectId = null;
+        var q = _subjectQuery;
+        _ = _subjectSuggest.RunAsync(250, async ct =>
+        {
+            var hits = await SearchUsersAsync(q, ct);
+            await InvokeAsync(() =>
+            {
+                if (ct.IsCancellationRequested || !string.Equals(q, _subjectQuery, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                _subjectHits = hits;
+                _subjectMiss = IsEmptyUserSearch(q, hits);
+                StateHasChanged();
+            });
+        });
+    }
+
+    private Task PickActor(AdminUserItem user)
+    {
+        _actorId = user.Id;
+        _actorQuery = string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName;
+        _actorHits = [];
+        _actorMiss = false;
+        return ReloadAsync();
+    }
+
+    private Task PickSubject(AdminUserItem user)
+    {
+        _subjectId = user.Id;
+        _subjectQuery = string.IsNullOrWhiteSpace(user.FullName) ? user.Email : user.FullName;
+        _subjectHits = [];
+        _subjectMiss = false;
+        return ReloadAsync();
+    }
+
+    private async Task<List<AdminUserItem>> SearchUsersAsync(string text, CancellationToken ct)
+    {
+        text = text.Trim();
+        if (text.Length < 2 || Guid.TryParse(text, out _) || LooksLikeHexPrefix(text))
+        {
+            return [];
+        }
+
+        try
+        {
+            var page = await Api.GetAdminUsersPageAsync(q: text, page: 1, pageSize: 8, ct: ct);
+            return page.Items;
+        }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _idHint = null;
+            _idError = false;
+            _actorPrefix = null;
+            _subjectPrefix = null;
+            if (!await TryResolveUserAsync(_actorQuery, _actorId, actor: true)
+                || !await TryResolveUserAsync(_subjectQuery, _subjectId, actor: false))
+            {
+                _page = new PersonalDataAccessLogPage();
+                return;
+            }
+
+            var actor = _actorId;
+            var subject = _subjectId;
+
+            if (_actorPrefix is not null || _subjectPrefix is not null)
+            {
+                _idHint = Culture["AdminDataAccess.PrefixNote"];
+            }
+            _page = await Api.GetPersonalDataAccessLogAsync(
+                page: 1, pageSize: 50,
+                actorUserId: actor, subjectUserId: subject,
+                fromUtc: _fromFilterDate?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc),
+                toUtc: _toFilterDate?.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc));
+        }
+        catch { _page = new PersonalDataAccessLogPage(); }
+        finally { _loading = false; }
+    }
+
+    private async Task<bool> TryResolveUserAsync(string text, Guid? already, bool actor)
+    {
+        if (already is not null && !Guid.TryParse(text.Trim(), out _))
+        {
+            return true;
+        }
+
+        if (!TryUserId(text, out var id, out var prefix))
+        {
+            var hits = await SearchUsersAsync(text, CancellationToken.None);
+            if (hits.Count == 1)
+            {
+                if (actor)
+                {
+                    _actorId = hits[0].Id;
+                    _actorHits = [];
+                }
+                else
+                {
+                    _subjectId = hits[0].Id;
+                    _subjectHits = [];
+                }
+
+                return true;
+            }
+
+            if (actor)
+            {
+                _actorHits = hits;
+            }
+            else
+            {
+                _subjectHits = hits;
+            }
+
+            _idHint = hits.Count == 0
+                ? Culture["AdminDataAccess.NoUser"]
+                : Culture["AdminDataAccess.PickUser"];
+            _idError = hits.Count == 0;
+            return false;
+        }
+
+        if (actor)
+        {
+            _actorId = id;
+            _actorPrefix = prefix;
+        }
+        else
+        {
+            _subjectId = id;
+            _subjectPrefix = prefix;
+        }
+
+        return true;
+    }
+
+    private static bool LooksLikeHexPrefix(string text)
+    {
+        var hex = text.Replace("-", "", StringComparison.Ordinal);
+        return hex.Length >= 4 && hex.All(Uri.IsHexDigit);
+    }
+
+    private static bool IsEmptyUserSearch(string text, List<AdminUserItem> hits)
+        => hits.Count == 0
+           && text.Trim().Length >= 2
+           && !Guid.TryParse(text.Trim(), out _)
+           && !LooksLikeHexPrefix(text);
+
+    private static string ShortCorrelation(string? id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return "—";
+        }
+
+        var compact = id.Trim();
+        return compact.Length <= 8 ? compact : compact[..8];
+    }
+
+    private string PersonName(string? name)
+        => string.IsNullOrWhiteSpace(name) ? Culture["AdminDataAccess.Unknown"] : name;
+
+    private string PersonDetail(string? role, string? company, string? email)
+    {
+        var mail = email ?? "";
+        if (string.Equals(role, "Candidate", StringComparison.OrdinalIgnoreCase))
+        {
+            var candidate = AdminActionLabels.Role(role, key => Culture[key]);
+            return mail.Length == 0 ? candidate : $"{candidate} · {mail}";
+        }
+
+        var who = !string.IsNullOrWhiteSpace(company)
+            ? company
+            : AdminActionLabels.Role(role, key => Culture[key]);
+        if (who.Length == 0)
+        {
+            return mail;
+        }
+
+        return mail.Length == 0 ? who : $"{who} · {mail}";
+    }
+
+    private string PickerMeta(AdminUserItem hit)
+    {
+        var role = AdminActionLabels.Role(hit.Role, key => Culture[key]);
+        if (string.Equals(hit.Role, "Candidate", StringComparison.OrdinalIgnoreCase))
+        {
+            return role;
+        }
+
+        var company = hit.CompanyName?.Trim() ?? "";
+        if (role.Length == 0)
+        {
+            return company;
+        }
+
+        return company.Length == 0 ? role : $"{role} · {company}";
+    }
+
+    private static bool TryUserId(string text, out Guid? id, out string? prefix)
+    {
+        text = text.Trim();
+        id = null;
+        prefix = null;
+        if (text.Length == 0)
+        {
+            return true;
+        }
+
+        if (Guid.TryParse(text, out var parsed))
+        {
+            id = parsed;
+            return true;
+        }
+
+        var hex = text.Replace("-", "", StringComparison.Ordinal);
+        if (hex.Length >= 4 && hex.All(Uri.IsHexDigit))
+        {
+            prefix = hex.ToLowerInvariant();
+            return true;
+        }
+
+        return false;
+    }
+}

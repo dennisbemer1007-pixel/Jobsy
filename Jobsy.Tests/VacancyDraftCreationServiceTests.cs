@@ -204,7 +204,11 @@ public class VacancyDraftCreationServiceTests
             KvkNumber = "12345678",
             Address = "Straat 1",
             Location = new GeoPoint(52, 4),
-            CsvBatchImportEnabled = true
+            CsvBatchImportEnabled = true,
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
 
         var table = new CompanySalaryTable

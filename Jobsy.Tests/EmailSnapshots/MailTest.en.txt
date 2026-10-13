@@ -1,0 +1,29 @@
+KEY: MailTest
+SUBJECT: Test email from Lobsy
+PREHEADER: If you can read this, sending mail works.
+KIND: Essential
+--- TEXT ---
+This is a test email
+====================
+
+If you can read this, sending mail from acceptatie works (Resend: Resend or
+SMTP). Sent at 2 October 2026, 16:18.
+
+Go to emails: https://lobsy.nl/admin/content/emails
+
+Team Lobsy
+
+You get this email because you are a Lobsy administrator.
+You get this email because you have a Lobsy account.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: This is a test email
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Go to emails -> https://lobsy.nl/admin/content/emails
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

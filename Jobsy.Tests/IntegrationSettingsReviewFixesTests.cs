@@ -2,6 +2,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -82,14 +83,14 @@ public class IntegrationSettingsReviewFixesTests
         await features.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: false,
             AuthenticatorEnabled: false,
-            ExposeRegistrationActivationLinks: false,
             PublicWebBaseUrl: "http://localhost:5201"));
 
         var sut = new VacancyContentModerationService(
             new FakeHttpClientFactory(),
-            new IntegrationCredentialService(db, new PassthroughSecretProtector()),
             features,
-            Options.Create(new OpenAiOptions()),
+            new OpenAiEndpointResolver(
+                new IntegrationCredentialService(db, new PassthroughSecretProtector()),
+                Options.Create(new OpenAiOptions())),
             NullLogger<VacancyContentModerationService>.Instance);
 
         var result = await sut.CheckAsync(

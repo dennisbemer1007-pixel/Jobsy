@@ -1,13 +1,13 @@
 @using Jobsy.Web.Help
 @using Jobsy.Web.Localization
-@implements IDisposable
+@inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
-@inject CultureState Culture
 
 @if (_doc is not null)
 {
-    <div class="page-help">
+    <div class="page-help @(_open ? "is-open" : null) @(_forceClosed ? "is-closed" : null)" data-menu-id="help" @onkeydown="OnKeyDown">
         <button type="button"
+                data-menu-trigger
                 class="page-help__btn @(_open ? "is-open" : null)"
                 title="@Culture["Help.AboutPage"]"
                 aria-label="@($"{Culture["Help.AboutPage"]}: {_doc.Title}")"
@@ -17,13 +17,11 @@
             i
         </button>
 
-        @if (_open)
-        {
             <div class="header-dropdown-backdrop" @onclick="Close" aria-hidden="true"></div>
             <aside id="page-help-panel" class="page-help__panel info-dropdown right-0 max-w-[90vw] mx-auto z-50" role="dialog" aria-label="@_doc.Title">
                 <div class="page-help__panel-head">
                     <strong>@_doc.Title</strong>
-                    <button type="button" class="page-help__close" aria-label="@Culture["Common.Close"]" @onclick="Close">×</button>
+                    <button type="button" class="page-help__close" data-menu-close aria-label="@Culture["Common.Close"]" @onclick="Close">×</button>
                 </div>
                 <dl class="page-help__list">
                     <div>
@@ -40,31 +38,29 @@
                     </div>
                 </dl>
             </aside>
-        }
     </div>
 }
 
 @code {
     private bool _open;
+    private bool _forceClosed;
     private string? _path;
     private PageHelpDocs.Doc? _doc;
 
     protected override void OnInitialized()
     {
+        base.OnInitialized();
         Navigation.LocationChanged += OnLocationChanged;
-        Culture.Changed += OnCultureChanged;
         RefreshFromUri();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         _open = false;
+        _forceClosed = false;
         RefreshFromUri();
         _ = InvokeAsync(StateHasChanged);
     }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
 
     private void RefreshFromUri()
     {
@@ -72,13 +68,29 @@
         _doc = PageHelpDocs.TryGet(_path);
     }
 
-    private void Toggle() => _open = !_open;
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            Close();
+        }
+    }
 
-    private void Close() => _open = false;
+    private void Toggle()
+    {
+        _open = !_open;
+        _forceClosed = !_open;
+    }
 
-    public void Dispose()
+    private void Close()
+    {
+        _open = false;
+        _forceClosed = true;
+    }
+
+    public override void Dispose()
     {
         Navigation.LocationChanged -= OnLocationChanged;
-        Culture.Changed -= OnCultureChanged;
+        base.Dispose();
     }
 }

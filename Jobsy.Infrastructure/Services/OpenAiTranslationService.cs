@@ -6,13 +6,11 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -32,23 +30,20 @@ public sealed class OpenAiTranslationService : ITranslationService
 
     private readonly JobsyDbContext _db;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly IMemoryCache _cache;
     private readonly ILogger<OpenAiTranslationService> _logger;
 
     public OpenAiTranslationService(
         JobsyDbContext db,
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
+        IOpenAiEndpointResolver openAi,
         IMemoryCache cache,
         ILogger<OpenAiTranslationService> logger)
     {
         _db = db;
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _cache = cache;
         _logger = logger;
     }
@@ -59,7 +54,12 @@ public sealed class OpenAiTranslationService : ITranslationService
         string targetLanguage,
         CancellationToken cancellationToken = default)
     {
-        var batch = await TranslateVacancyAsync(text, string.Empty, sourceLanguage, targetLanguage, cancellationToken);
+        var batch = await TranslateVacancyAsync(
+            text,
+            string.Empty,
+            sourceLanguage,
+            targetLanguage,
+            cancellationToken: cancellationToken);
         return batch.Title;
     }
 
@@ -68,8 +68,8 @@ public sealed class OpenAiTranslationService : ITranslationService
         string description,
         string sourceLanguage,
         string targetLanguage,
-        CancellationToken cancellationToken = default,
-        Guid? vacancyId = null)
+        Guid? vacancyId = null,
+        CancellationToken cancellationToken = default)
     {
         var source = JobsyLanguages.Normalize(sourceLanguage);
         var target = JobsyLanguages.Normalize(targetLanguage);
@@ -87,7 +87,8 @@ public sealed class OpenAiTranslationService : ITranslationService
             }
         }
 
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.Translation, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return new TranslatedVacancyContent(title, description, source, target, WasTranslated: false, vacancyId);
@@ -95,7 +96,8 @@ public sealed class OpenAiTranslationService : ITranslationService
 
         try
         {
-            var batch = await CompleteVacancyBatchAsync(title, Clip(description), source, target, apiKey, cancellationToken);
+            var batch = await CompleteVacancyBatchAsync(
+                title, Clip(description), source, target, apiKey, endpoint.Model, endpoint.BaseUrl, cancellationToken);
             var translatedTitle = string.IsNullOrWhiteSpace(batch.Title) ? title : batch.Title.Trim();
             var translatedDescription = string.IsNullOrWhiteSpace(batch.Description) ? description : batch.Description.Trim();
             var changed = !string.Equals(translatedTitle, title, StringComparison.Ordinal)
@@ -177,8 +179,8 @@ public sealed class OpenAiTranslationService : ITranslationService
                     item.Description,
                     source,
                     target,
-                    cancellationToken,
-                    item.VacancyId);
+                    item.VacancyId,
+                    cancellationToken);
             }
             finally
             {
@@ -316,12 +318,12 @@ public sealed class OpenAiTranslationService : ITranslationService
         string source,
         string target,
         string apiKey,
+        string model,
+        string baseUrl,
         CancellationToken cancellationToken)
     {
         var sourceName = JobsyLanguages.Get(source).NativeName;
         var targetName = JobsyLanguages.Get(target).NativeName;
-        var model = await ResolveModelAsync(cancellationToken);
-        var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
         var payload = JsonSerializer.Serialize(new { title, description });
 
         var client = _httpClientFactory.CreateClient("IntegrationProbe");
@@ -402,49 +404,8 @@ public sealed class OpenAiTranslationService : ITranslationService
         return match.Success ? match.Value : null;
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

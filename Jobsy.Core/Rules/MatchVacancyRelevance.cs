@@ -32,16 +32,30 @@ public static class MatchVacancyRelevance
             .Select(t => t.Trim())
             .ToArray();
 
-        if (required.Length == 0 || string.IsNullOrWhiteSpace(candidatePreferredTransport))
+        var preferredModes = TransportLabels.SplitMany(candidatePreferredTransport);
+        if (required.Length == 0 || preferredModes.Count == 0)
         {
             return true;
         }
 
-        var preferred = candidatePreferredTransport.Trim();
+        return required.Any(r => preferredModes.Any(preferred => TransportMatches(preferred, r)));
+    }
+
+    private static bool TransportMatches(string preferred, string required)
+    {
+        if (string.Equals(required, preferred, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var canonical = TransportLabels.TryCanonical(required);
+        if (canonical is not null && string.Equals(canonical, preferred, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
         // "Auto" preference also covers unspecified car-like labels on vacancies.
-        return required.Any(r =>
-            string.Equals(r, preferred, StringComparison.OrdinalIgnoreCase)
-            || (string.Equals(preferred, "Auto", StringComparison.OrdinalIgnoreCase)
-                && r.Contains("auto", StringComparison.OrdinalIgnoreCase)));
+        return string.Equals(preferred, TransportLabels.Car, StringComparison.OrdinalIgnoreCase)
+               && required.Contains("auto", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -1,0 +1,66 @@
+@namespace Jobsy.Web.Components.Pages.Candidate
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Scores is { IsComplete: true } complete)
+{
+    <div class="competency-score-panel">
+        <ScoreRadarChart AriaLabel="@Culture["Competency.RadarLabel"]"
+                         Labels="@_labels"
+                         Values="@ValuesOf(complete)" />
+        <ul class="competency-skill-list" aria-label="@Culture["Kompas.TabCompetencies"]">
+            @foreach (var category in CompetencyTestCatalog.QuickScanCategories)
+            {
+                var value = Value(complete, category) ?? 0;
+                <li class="competency-skill">
+                    <details class="competency-skill__details">
+                        <summary>
+                            <span class="competency-skill__name">@Culture[$"Competency.Cat.{category}"]</span>
+                            <span class="competency-skill__value">@value%</span>
+                        </summary>
+                        <div class="competency-skill__body">
+                            <p class="competency-skill__meaning">@Culture[CompetencyTrainingCatalog.MeaningKey(category, value)]</p>
+                            <TrainingOffersBlock JobTitle="@CompetencyTrainingCatalog.SearchBlob(category)"
+                                                 Campaign="@TrainingTracking.CampaignCompetence"
+                                                 Compact="true"
+                                                 TitleKey="Competency.TrainingTitle" />
+                        </div>
+                    </details>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter] public CompetencyScoreSet? Scores { get; set; }
+
+    private string[] _labels = [];
+
+    protected override void OnParametersSet()
+    {
+        _labels = CompetencyTestCatalog.QuickScanCategories
+            .Select(c => Culture[$"Competency.Cat.{c}"])
+            .ToArray();
+    }
+
+    private static int[] ValuesOf(CompetencyScoreSet scores) =>
+    [
+        scores.Samenwerken ?? 0,
+        scores.Resultaatgerichtheid ?? 0,
+        scores.Stressbestendigheid ?? 0,
+        scores.Innovatie ?? 0,
+        scores.Extraversie ?? 0
+    ];
+
+    private static int? Value(CompetencyScoreSet scores, string category) => category switch
+    {
+        CompetencyTestCatalog.Samenwerken => scores.Samenwerken,
+        CompetencyTestCatalog.Resultaatgerichtheid => scores.Resultaatgerichtheid,
+        CompetencyTestCatalog.Stressbestendigheid => scores.Stressbestendigheid,
+        CompetencyTestCatalog.Innovatie => scores.Innovatie,
+        CompetencyTestCatalog.Extraversie => scores.Extraversie,
+        _ => null
+    };
+}

@@ -12,9 +12,32 @@ public static class StructuredData
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
     };
 
-    public static string WebsiteAndOrganization(string origin)
+    public static string WebsiteAndOrganization(string origin, bool includeSearchAction = true)
     {
         var root = origin.TrimEnd('/');
+        var website = new Dictionary<string, object?>
+        {
+            ["@type"] = "WebSite",
+            ["@id"] = root + "/#website",
+            ["name"] = "Lobsy",
+            ["url"] = root + "/",
+            ["inLanguage"] = "nl-NL",
+            ["publisher"] = new Dictionary<string, object?> { ["@id"] = root + "/#organization" }
+        };
+        if (includeSearchAction)
+        {
+            website["potentialAction"] = new Dictionary<string, object?>
+            {
+                ["@type"] = "SearchAction",
+                ["target"] = root + "/banenkaart?q={search_term_string}",
+                ["query-input"] = "required name=search_term_string"
+            };
+        }
+
+        var orgDescription = includeSearchAction
+            ? "Hyperlokale banenkaart: vacatures en bijbanen op reistijd en vervoer."
+            : "Ontdek wie jij bent en welke richting bij je past. Gratis test en paspoort.";
+
         var payload = new Dictionary<string, object?>
         {
             ["@context"] = "https://schema.org",
@@ -27,24 +50,9 @@ public static class StructuredData
                     ["name"] = "Lobsy",
                     ["url"] = root + "/",
                     ["logo"] = root + "/images/brand/lobsy-256.webp",
-                    ["description"] =
-                        "Hyperlokale banenkaart: vacatures en bijbanen op reistijd en vervoer."
+                    ["description"] = orgDescription
                 },
-                new Dictionary<string, object?>
-                {
-                    ["@type"] = "WebSite",
-                    ["@id"] = root + "/#website",
-                    ["name"] = "Lobsy",
-                    ["url"] = root + "/",
-                    ["inLanguage"] = "nl-NL",
-                    ["publisher"] = new Dictionary<string, object?> { ["@id"] = root + "/#organization" },
-                    ["potentialAction"] = new Dictionary<string, object?>
-                    {
-                        ["@type"] = "SearchAction",
-                        ["target"] = root + "/?q={search_term_string}",
-                        ["query-input"] = "required name=search_term_string"
-                    }
-                }
+                website
             }
         };
 
@@ -101,7 +109,37 @@ public static class StructuredData
         return Serialize(payload);
     }
 
-    public static string? Organization(string origin, string name, string? address, string? logoUrl, string pagePath)
+    /// <summary>FAQPage JSON-LD from the exact (question, answer) pairs rendered on the page.</summary>
+    public static string FaqPage(IEnumerable<(string Question, string Answer)> items)
+    {
+        var entities = items
+            .Where(i => !string.IsNullOrWhiteSpace(i.Question) && !string.IsNullOrWhiteSpace(i.Answer))
+            .Select(i => new Dictionary<string, object?>
+            {
+                ["@type"] = "Question",
+                ["name"] = i.Question.Trim(),
+                ["acceptedAnswer"] = new Dictionary<string, object?>
+                {
+                    ["@type"] = "Answer",
+                    ["text"] = i.Answer.Trim()
+                }
+            })
+            .ToList();
+
+        var payload = new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "FAQPage",
+            ["mainEntity"] = entities
+        };
+        return Serialize(payload);
+    }
+
+    /// <summary>
+    /// Company page markup (public-pages 09, D4): the address carries the city only, never a street
+    /// or coordinates.
+    /// </summary>
+    public static string? Organization(string origin, string name, string? city, string? logoUrl, string pagePath)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -116,12 +154,12 @@ public static class StructuredData
             ["name"] = name.Trim(),
             ["url"] = root + pagePath
         };
-        if (!string.IsNullOrWhiteSpace(address))
+        if (!string.IsNullOrWhiteSpace(city))
         {
             payload["address"] = new Dictionary<string, object?>
             {
                 ["@type"] = "PostalAddress",
-                ["streetAddress"] = address.Trim(),
+                ["addressLocality"] = city.Trim(),
                 ["addressCountry"] = "NL"
             };
         }
@@ -159,8 +197,15 @@ public static class StructuredData
         decimal? minHoursPerWeek,
         decimal? maxHoursPerWeek,
         string pageUrl,
-        string origin)
+        string origin,
+        bool isPreview = false)
     {
+        // Employer-only previews of non-public vacancies must never emit JobPosting JSON-LD.
+        if (isPreview)
+        {
+            return null;
+        }
+
         if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(companyName))
         {
             return null;

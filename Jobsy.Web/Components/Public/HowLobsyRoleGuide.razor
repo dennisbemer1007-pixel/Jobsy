@@ -1,0 +1,32 @@
+@namespace Jobsy.Web.Components.Public
+@using Jobsy.Web.Help
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@* Staff role guide on the public /hoe-werkt-lobsy, rendered server-side (public-pages 08). *@
+<div class="pp-how__guide">
+    <h2 class="pp-how__guide-title">@Culture[Guide.TitleKey]</h2>
+    <p class="pp-how__guide-lead">@Culture[Guide.LeadKey]</p>
+
+    <ol class="pp-how__guide-steps">
+        @foreach (var step in Guide.Steps)
+        {
+            <li class="pp-how__guide-step">
+                <h3>@Culture[step.TitleKey]</h3>
+                <p>@HowLobsyGuideBody.Render(step, Culture)</p>
+            </li>
+        }
+    </ol>
+
+    <div class="pp-how__actions">
+        <a class="pub-btn pub-btn--primary" href="@Guide.Primary.Href">@Culture[Guide.Primary.LabelKey]</a>
+        @if (Guide.Secondary is not null)
+        {
+            <a class="pub-btn pub-btn--secondary" href="@Guide.Secondary.Href">@Culture[Guide.Secondary.LabelKey]</a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public HowLobsyRoleGuides.Guide Guide { get; set; } = null!;
+}

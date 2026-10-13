@@ -1,0 +1,50 @@
+@* Shared category sections + Likert questions for CultureScan / ValuesScan / CareerTest. *@
+
+@foreach (var group in Categories)
+{
+    if (group.Questions.Count == 0)
+    {
+        continue;
+    }
+
+    <section class="questionnaire-section" aria-labelledby="@($"cat-{group.Key}")">
+        <h2 class="questionnaire-section__label" id="@($"cat-{group.Key}")">@group.Label</h2>
+        @{
+            var catIndex = 0;
+        }
+        @foreach (var question in group.Questions)
+        {
+            catIndex++;
+            var answered = Answers.ContainsKey(question.Id);
+            var isCurrent = CurrentId == question.Id;
+            var isDimmed = DimmedId == question.Id;
+            <LikertScaleQuestion QuestionId="question.Id"
+                                 Text="@question.Text"
+                                 Value="@(answered ? Answers[question.Id] : null)"
+                                 IsAnswered="answered"
+                                 IsCurrent="isCurrent"
+                                 Collapsed="@(answered && !isCurrent && ExpandedId != question.Id)"
+                                 Dimmed="isDimmed"
+                                 Index="catIndex"
+                                 Total="group.Questions.Count"
+                                 InputPrefix="@InputPrefix"
+                                 ValueChanged="value => OnAnswer.InvokeAsync((question.Id, value))"
+                                 Expanded="() => OnExpand.InvokeAsync(question.Id)" />
+        }
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<QuestionnaireCategoryGroup> Categories { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
+
+    [Parameter] public int? CurrentId { get; set; }
+    [Parameter] public int? DimmedId { get; set; }
+    [Parameter] public int? ExpandedId { get; set; }
+    [Parameter] public string InputPrefix { get; set; } = "q";
+    [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
+    [Parameter] public EventCallback<int> OnExpand { get; set; }
+}

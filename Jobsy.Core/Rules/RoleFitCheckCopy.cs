@@ -4,7 +4,7 @@ namespace Jobsy.Core.Rules;
 public static class RoleFitCheckCopy
 {
     public const string Locked =
-        "Ontgrendel de Functie-Fit Checker door eerst je korte competentie- en beroepentest in te vullen (ca. 3 minuten).";
+        "Ontgrendel de Functie-Fit Checker door eerst je korte test over hoe je werkt en de beroepentest in te vullen (ongeveer 3 minuten).";
 
     public const string DeepUpsell =
         "Wil je een nóg preciezere analyse op maat met een haarscherp groeistappenplan? Ontgrendel dan de uitgebreide diepte-analyse (€ 2,99) voor een waterdichte vergelijking.";

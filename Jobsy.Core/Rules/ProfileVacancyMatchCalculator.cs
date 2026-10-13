@@ -32,6 +32,9 @@ public static class ProfileVacancyMatchCalculator
                 input.VacancyTitle,
                 input.VacancyDescription))
             : (double?)null;
+        // Pure competency (pre culture/values blend) for candidate DNA bars (04) — TotalPercent unchanged.
+        var competencyDim01 = competency01;
+        double? cultureDim01 = null;
         if (competency01 is not null
             && input.CandidateCultureScores is { IsComplete: true } cultureScores)
         {
@@ -45,16 +48,33 @@ public static class ProfileVacancyMatchCalculator
                 blend = 0.55 * personality01 + 0.45 * culture01;
             }
 
+            cultureDim01 = blend;
             competency01 = 0.75 * competency01.Value + 0.25 * blend;
         }
+        else if (input.CandidateCultureScores is { IsComplete: true } cultureOnly)
+        {
+            cultureDim01 = CulturePersonalityFitRules.PersonalityFit01(
+                cultureOnly, input.VacancyTitle, input.VacancyDescription);
+            if (input.CompanyCultureScores is { } companyCulture
+                && companyCulture.Autonomy is not null)
+            {
+                var culture01 = CulturePersonalityFitRules.CultureFit01(cultureOnly, companyCulture);
+                cultureDim01 = 0.55 * cultureDim01.Value + 0.45 * culture01;
+            }
+        }
 
+        double? valuesFit01 = null;
         if (input.CandidateValuesScores is { IsComplete: true } valuesScores)
         {
-            var values01 = SchwartzValuesFitRules.Fit01(
-                valuesScores, input.VacancyTitle, input.VacancyDescription);
+            // WA: prefer company values when present; else infer from vacancy text.
+            // KB: keep ValuesFit01 for candidate DNA bars / calibrated display.
+            valuesFit01 = SchwartzValuesFitRules.Fit01(
+                valuesScores,
+                input.CompanyValuesScores
+                ?? SchwartzValuesFitRules.InferVacancyDrivers(input.VacancyTitle, input.VacancyDescription));
             competency01 = competency01 is not null
-                ? 0.78 * competency01.Value + 0.22 * values01
-                : values01;
+                ? 0.78 * competency01.Value + 0.22 * valuesFit01.Value
+                : valuesFit01;
         }
         var interest01 = input.CandidateRiasecScores is { IsComplete: true } scored
             ? VacancyRiasecProfile.Fit01(
@@ -143,8 +163,16 @@ public static class ProfileVacancyMatchCalculator
         var rationale = BroadMatchRationaleBuilder.TryBuild(
             input, experience01, competency01, interest01, occupationFit, isBroadMatch);
 
+        var engagementBonus = EngagementCatalog.ComputeBonus(
+            input.CandidateValuesScores,
+            input.CompanyEngagement);
+        if (engagementBonus > 0)
+        {
+            total = Math.Min(100, total + engagementBonus);
+        }
+
         var (why, gaps) = BuildExplanation(
-            input, core, experience01, competency01, interest01, occupationFit, culture, total);
+            input, core, experience01, competency01, interest01, occupationFit, culture, total, engagementBonus);
         return new ProfileVacancyMatch
         {
             VacancyId = input.VacancyId,
@@ -153,8 +181,12 @@ public static class ProfileVacancyMatchCalculator
             Core = core,
             ExperienceScore01 = experience01,
             CompetencyScore01 = competency01,
+            CompetencyDim01 = competencyDim01,
             InterestScore01 = interest01,
+            CultureDim01 = cultureDim01,
+            ValuesFit01 = valuesFit01,
             CultureFit = culture,
+            EngagementBonus = engagementBonus,
             IsBroadMatch = isBroadMatch,
             MatchRationale = rationale,
             Why = why,
@@ -202,6 +234,7 @@ public static class ProfileVacancyMatchCalculator
         "experience" => "Branche sluit aan",
         "competency" => "Sterke competentie-match",
         "culture" => "Cultuur & teamfit",
+        "engagement" => "Maatschappelijke betrokkenheid",
         "occupation" => "Beroepen-kompas past",
         "interest" => "Beroepsinteresse past",
         "broad" => "Brede match",
@@ -318,7 +351,8 @@ public static class ProfileVacancyMatchCalculator
             double? interest01,
             VacancyOccupationMatch.Fit? occupationFit,
             CultureFitResult? culture,
-            int total)
+            int total,
+            int engagementBonus = 0)
     {
         var why = new List<ProfileMatchExplainPoint>();
         var gaps = new List<ProfileMatchExplainPoint>();
@@ -334,6 +368,25 @@ public static class ProfileVacancyMatchCalculator
             {
                 why.Add(point);
             }
+        }
+
+        if (engagementBonus > 0)
+        {
+            var labels = EngagementCatalog.MatchingItemLabelsNl(
+                input.CandidateValuesScores,
+                input.CompanyEngagement);
+            var joined = labels.Count switch
+            {
+                0 => "maatschappelijke betrokkenheid",
+                1 => labels[0],
+                2 => $"{labels[0]} en {labels[1]}",
+                _ => string.Join(", ", labels.Take(labels.Count - 1)) + " en " + labels[^1]
+            };
+            var company = string.IsNullOrWhiteSpace(input.CompanyName) ? "dit bedrijf" : input.CompanyName;
+            why.Insert(0, new(
+                "engagement",
+                engagementBonus.ToString(),
+                $"Bonus +{engagementBonus}: {company} zet zich in voor {joined}, en dat vind jij belangrijk."));
         }
 
         if (core.TravelWithinPreference == true)
@@ -574,14 +627,15 @@ public static class ProfileVacancyMatchCalculator
             .OrderBy(p => p.Kind switch
             {
                 "culture" => 0,
-                "travel" => 1,
-                "competency" => 2,
-                "occupation" => 3,
-                "interest" => 4,
-                "hours" => 5,
-                "experience" => 6,
-                "dayparts" => 7,
-                _ => 8
+                "engagement" => 1,
+                "travel" => 2,
+                "competency" => 3,
+                "occupation" => 4,
+                "interest" => 5,
+                "hours" => 6,
+                "experience" => 7,
+                "dayparts" => 8,
+                _ => 9
             })
             .Take(3)
             .ToList();
@@ -609,8 +663,12 @@ public static class ProfileVacancyMatchCalculator
             : WorkTypeLabels.Expand(parsed).FirstOrDefault() ?? value.Trim();
     }
 
+    public static string FormatHoursRange(decimal? min, decimal? max) => FmtHours(min, max);
+
     private static string FmtHours(decimal? min, decimal? max)
     {
+        static string Whole(decimal value) => value.ToString("0", System.Globalization.CultureInfo.InvariantCulture);
+
         if (min is null && max is null)
         {
             return "—";
@@ -618,15 +676,15 @@ public static class ProfileVacancyMatchCalculator
 
         if (min is null)
         {
-            return $"max. {max}";
+            return $"max. {Whole(max!.Value)}";
         }
 
         if (max is null)
         {
-            return $"min. {min}";
+            return $"min. {Whole(min.Value)}";
         }
 
-        return $"{min}–{max}";
+        return $"{Whole(min.Value)}-{Whole(max.Value)}";
     }
 
     private static string PrettySlot(string code)
@@ -697,6 +755,12 @@ public sealed class ProfileVacancyMatchInput
     public CulturePersonalityScores? CandidateCultureScores { get; init; }
     public CulturePersonalityScores? CompanyCultureScores { get; init; }
     public SchwartzValuesScores? CandidateValuesScores { get; init; }
+    /// <summary>Employer kernwaarden scores; keyword inference is the fallback when null.</summary>
+    public SchwartzValuesScores? CompanyValuesScores { get; init; }
+    /// <summary>Non-removed engagement claims for the match bonus (D13).</summary>
+    public IReadOnlyList<CompanyEngagementMatchItem>? CompanyEngagement { get; init; }
+    /// <summary>Company display name for the engagement bonus explanation line.</summary>
+    public string? CompanyName { get; init; }
 }
 
 public sealed class ProfileVacancyMatch
@@ -707,8 +771,16 @@ public sealed class ProfileVacancyMatch
     public required MatchScoreBreakdown Core { get; init; }
     public double ExperienceScore01 { get; init; }
     public double? CompetencyScore01 { get; init; }
+    /// <summary>Pure competency 0–1 before culture/values blend (candidate DNA bars).</summary>
+    public double? CompetencyDim01 { get; init; }
     public double? InterestScore01 { get; init; }
+    /// <summary>Culture/personality dimension 0–1 for candidate DNA (does not change TotalPercent).</summary>
+    public double? CultureDim01 { get; init; }
+    /// <summary>Schwartz values fit 0–1 for candidate DNA (does not change TotalPercent).</summary>
+    public double? ValuesFit01 { get; init; }
     public CultureFitResult? CultureFit { get; init; }
+    /// <summary>Points added for matching maatschappelijke betrokkenheid (0–5).</summary>
+    public int EngagementBonus { get; init; }
     /// <summary>True when the vacancy fits holistically without an exact functietitel hit.</summary>
     public bool IsBroadMatch { get; init; }
     /// <summary>Short AI-style onderbouwing for broader matches (opleiding, drijfveren, transferable).</summary>

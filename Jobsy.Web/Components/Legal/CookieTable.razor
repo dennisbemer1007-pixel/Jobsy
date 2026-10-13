@@ -1,0 +1,42 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@* Cookies and device storage of the privacy statement (03.2 §6). Dutch rows, localized headers. *@
+<div class="pp-table">
+    <table class="pp-table__grid">
+        <thead>
+            <tr>
+                <th scope="col">@Culture["Legal.Cookies.Name"]</th>
+                <th scope="col">@Culture["Legal.Cookies.Why"]</th>
+                <th scope="col">@Culture["Legal.Cookies.HowLong"]</th>
+                <th scope="col">@Culture["Legal.Cookies.Needed"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in Rows)
+            {
+                <tr>
+                    <th scope="row" data-label="@Culture["Legal.Cookies.Name"]"><code>@row.Name</code></th>
+                    <td data-label="@Culture["Legal.Cookies.Why"]">@row.Why</td>
+                    <td data-label="@Culture["Legal.Cookies.HowLong"]">@row.HowLong</td>
+                    <td data-label="@Culture["Legal.Cookies.Needed"]">@row.Needed</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    private static readonly IReadOnlyList<Row> Rows =
+    [
+        new("Jobsy.Auth", "Je inloggen en je sessie veilig houden.", "Tot je uitlogt of je sessie verloopt.", "Ja, nodig"),
+        new("Jobsy.LastActivity", "Je uitloggen als je een tijd niets doet.", "Zolang je sessie duurt.", "Ja, nodig"),
+        new("Jobsy.Culture", "Je taalkeuze onthouden.", "1 jaar.", "Ja, functioneel"),
+        new("Jobsy.CookieConsent", "Onthouden wat je bij de cookiemelding koos.", "1 jaar.", "Ja, nodig"),
+        new("lobsy_sales_ref", "Onthouden via welke partner- of salescode je binnenkwam, zodat die partner commissie krijgt.", "Maximaal 30 dagen.", "Ja, functioneel"),
+        new("jobsy.gratisDna.v1", "Je antwoorden van de gratis werk-DNA-test op je eigen apparaat bewaren (localStorage). Je kunt ze zelf wissen.", "7 dagen.", "Ja, functioneel"),
+        new("jobsy.anonymousKey", "Statistieken over het gebruik van Lobsy, zonder je naam (localStorage of sessionStorage).", "Tot je de opslag van je browser wist.", "Nee, alleen na ‘Accepteer cookies’")
+    ];
+
+    private sealed record Row(string Name, string Why, string HowLong, string Needed);
+}

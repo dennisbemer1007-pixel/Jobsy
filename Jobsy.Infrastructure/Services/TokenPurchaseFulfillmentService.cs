@@ -350,7 +350,7 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
                 session.PackSize,
                 purchaseExVatEuro,
                 company.ReferredBySalesManagerUserId,
-                company.FirstYearStartedAt,
+                company.CommissionStartsAtUtc ?? company.FirstYearStartedAt,
                 cancellationToken);
 
             if (company.ReferredByAmbassadeurUserId is Guid ambassadeurId
@@ -362,10 +362,11 @@ public sealed class TokenPurchaseFulfillmentService : ITokenPurchaseFulfillmentS
                     session.CompanyId,
                     session.Id,
                     purchaseExVatEuro,
-                    company.FirstYearStartedAt,
+                    company.CommissionStartsAtUtc ?? company.FirstYearStartedAt,
                     amRate,
                     company.CommissionDurationDaysSnapshot,
-                    cancellationToken);
+                    availableFromUtc: null,
+                    cancellationToken: cancellationToken);
             }
 
             if (company.ReferredBySalesManagerUserId is Guid smId)

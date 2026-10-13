@@ -38,7 +38,12 @@ public class DimensionLabelsAndRiasecRankingTests
         Assert.Equal(2, top.Count);
         Assert.Equal(CareerTestCatalog.Artistic, top[0]);
         Assert.Equal(CareerTestCatalog.Social, top[1]);
-        Assert.Equal("A en S even sterk", RiasecRanking.FormatTopEqualOrLabel(top));
+        Assert.Equal(
+            CareerCompassBuilder.TypeLabel(CareerTestCatalog.Artistic)
+            + " en "
+            + CareerCompassBuilder.TypeLabel(CareerTestCatalog.Social)
+            + " even sterk",
+            RiasecRanking.FormatTopEqualOrLabel(top));
     }
 
     [Fact]

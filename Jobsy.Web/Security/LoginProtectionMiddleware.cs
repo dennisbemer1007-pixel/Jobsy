@@ -12,17 +12,23 @@ public sealed class LoginProtectionMiddleware
     public async Task InvokeAsync(HttpContext context, LoginProtectionRateLimiter limiter)
     {
         if (HttpMethods.IsPost(context.Request.Method)
-            && context.Request.Path.Equals("/account/login", StringComparison.OrdinalIgnoreCase))
+            && (context.Request.Path.Equals("/account/login", StringComparison.OrdinalIgnoreCase)
+                || context.Request.Path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)))
         {
             var form = await context.Request.ReadFormAsync(context.RequestAborted);
             var email = form["email"].ToString();
-            var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            if (!limiter.TryAcquire("login", ip, email))
+            var ip = TrustedClientIp.Resolve(context) ?? "unknown";
+            var operation = context.Request.Path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
+                ? "login"
+                : "login";
+            if (!limiter.TryAcquire(operation, ip, string.IsNullOrWhiteSpace(email) ? null : email))
             {
-                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-                await context.Response.WriteAsync(
-                    "Te veel pogingen. Wacht even en probeer opnieuw.",
-                    context.RequestAborted);
+                var until = DateTimeOffset.UtcNow.AddMinutes(1).ToUnixTimeSeconds();
+                var target = context.Request.Path.Equals("/account/mfa/verify", StringComparison.OrdinalIgnoreCase)
+                    ? $"/account/mfa?error=too-many&until={until}"
+                    : $"/login?error=too-many&until={until}";
+                context.Response.StatusCode = StatusCodes.Status303SeeOther;
+                context.Response.Headers.Location = target;
                 return;
             }
         }

@@ -29,6 +29,12 @@ public class Vacancy
     public bool ShowClientAddressOnMap { get; set; }
 
     /// <summary>
+    /// For intermediary vacancies: discovery map circle radius in km (2, 5 or 10). Default 2.
+    /// Distance search uses the area centre (postcode/place geocode).
+    /// </summary>
+    public int PublicMapRadiusKm { get; set; } = 2;
+
+    /// <summary>
     /// Origin channel: Manual / Api / Csv = Regulier; Ats = scrape pipeline.
     /// </summary>
     public VacancySource CreatedVia { get; set; } = VacancySource.Manual;
@@ -88,6 +94,11 @@ public class Vacancy
     public string? ImageUrl { get; set; }
     public string? VideoUrl { get; set; }
     public bool IsHighlighted { get; set; }
+
+    /// <summary>
+    /// True only for acceptatie CLI-seeded sample vacancies. Never set via API/UI.
+    /// </summary>
+    public bool IsTestData { get; set; }
 
     /// <summary>
     /// UTC expiry of the paid highlight. When in the past, the vacancy is no longer treated as featured
@@ -156,6 +167,17 @@ public class Vacancy
     /// Defaults to false (no verification UI / flow).
     /// </summary>
     public bool RequireEmailVerification { get; set; }
+
+    /// <summary>
+    /// When true on an unverified company, this draft is "klaar" and auto-publishes on verification.
+    /// </summary>
+    public bool PublishOnVerification { get; set; }
+
+    /// <summary>When <see cref="PublishOnVerification"/> was set.</summary>
+    public DateTime? ReadyMarkedAtUtc { get; set; }
+
+    /// <summary>User who marked the vacancy klaar (actor for auto-publish).</summary>
+    public Guid? ReadyMarkedByUserId { get; set; }
 
     /// <summary>When the 14-day engagement reminder e-mail/notification was sent.</summary>
     public DateTime? EngagementReminderSentAtUtc { get; set; }

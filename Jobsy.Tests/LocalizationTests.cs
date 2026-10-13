@@ -165,7 +165,19 @@ public class LocalizationTests
         foreach (var lang in languages)
         {
             Assert.True(catalog.ContainsKey(lang), $"Missing language catalog: {lang}");
-            Assert.Equal(nlCount, catalog[lang].Count);
+            // D12: Scholen/Sales nl-only prefixes are not mirrored into other catalogs.
+            if (lang == "nl")
+            {
+                Assert.Equal(nlCount, catalog[lang].Count);
+                continue;
+            }
+
+            static bool IsNlOnly(string k)
+                => UiStringsScholen.IsNlOnlyPrefix(k) || UiStringsSales.IsNlOnlyPrefix(k);
+
+            var nlComparable = catalog["nl"].Keys.Count(k => !IsNlOnly(k));
+            var langComparable = catalog[lang].Keys.Count(k => !IsNlOnly(k));
+            Assert.Equal(nlComparable, langComparable);
         }
 
         // New extras keys resolve distinctly (not as the key itself) after Build/MergeAll.

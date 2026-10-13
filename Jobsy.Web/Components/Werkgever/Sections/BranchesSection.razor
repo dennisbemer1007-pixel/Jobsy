@@ -1,0 +1,28 @@
+@* Legacy section kept for raamflyer placement until 05b (Wervingsmateriaal). No invite UI (D6). *@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Web.Components.Employer
+@inject JobsyApiClient Api
+@inject CultureState Culture
+
+<section class="panel-section">
+    <h2>Wervingsmateriaal</h2>
+    <RaamflyerTools Companies="_companies"
+                    AllowOverview="true"
+                    OverviewTitle="onze regio" />
+</section>
+
+@code {
+    private List<CompanySummary> _companies = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _companies = (await Api.GetMyCompaniesAsync()).ToList();
+        }
+        catch
+        {
+            _companies = [];
+        }
+    }
+}

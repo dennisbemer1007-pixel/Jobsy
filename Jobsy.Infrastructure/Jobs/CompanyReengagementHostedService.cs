@@ -17,6 +17,7 @@ namespace Jobsy.Infrastructure.Jobs;
 /// </summary>
 public sealed class CompanyReengagementHostedService : BackgroundService
 {
+    private readonly EmployersJobGate _employersGate;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<CompanyReengagementHostedService> _logger;
 
@@ -26,6 +27,7 @@ public sealed class CompanyReengagementHostedService : BackgroundService
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(CompanyReengagementHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -49,9 +51,14 @@ public sealed class CompanyReengagementHostedService : BackgroundService
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
+        if (!await _employersGate.ShouldRunAsync(_scopeFactory, cancellationToken))
+        {
+            return;
+        }
+
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
-        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var mailer = scope.ServiceProvider.GetRequiredService<ITransactionalMailer>();
         var features = scope.ServiceProvider.GetRequiredService<IPlatformFeatureService>();
 
         var snap = await features.GetAsync(cancellationToken);
@@ -127,11 +134,7 @@ public sealed class CompanyReengagementHostedService : BackgroundService
             }
 
             var mail = TransactionalEmails.CompanyReEngagement(baseUrl, org.Name);
-            await email.SendAsync(new EmailMessage(
-                recipient,
-                mail.Subject,
-                mail.Html,
-                mail.Category), cancellationToken);
+            await mailer.SendAsync(mail, recipient, cancellationToken: cancellationToken);
 
             var tracked = await db.Companies.FirstAsync(c => c.Id == org.Id, cancellationToken);
             tracked.ReengagementEmailSentAtUtc = DateTime.UtcNow;
@@ -179,6 +182,7 @@ public sealed class CompanyReengagementHostedService : BackgroundService
         IReadOnlyList<Guid> orgIds,
         CancellationToken cancellationToken)
     {
+        _ = orgId;
         var email = await db.Users.AsNoTracking()
             .Where(u => u.IsActive
                         && (u.CompanyId != null && orgIds.Contains(u.CompanyId.Value)

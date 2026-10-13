@@ -17,12 +17,14 @@ public static class CompetenceDeepReportBuilder
         IReadOnlyDictionary<int, int> answers,
         INormProvider norms,
         string? jobTitle,
-        IReadOnlyList<(string Title, int MatchPercent, string Reason)>? occupations,
+        IReadOnlyList<(string Title, decimal MatchPercent, string Reason)>? occupations,
         string? aiSummary,
         IReadOnlyList<(string Title, string Body)>? aiPlan,
         bool fromOpenAi,
         DateTime generatedAtUtc)
     {
+        // TODO(code-health): use jobTitle in report header / PDF title when product wants occupation context.
+        _ = jobTitle;
         var domainScores = DeepAnalysisCatalog.ScoreDomains(answers, AssessmentKind.Competence)
             .ToDictionary(s => s.Domain, s => s.Percent, StringComparer.OrdinalIgnoreCase);
         var facetScores = DeepAnalysisCatalog.ScoreFacets(answers);
@@ -110,7 +112,7 @@ public static class CompetenceDeepReportBuilder
         };
     }
 
-    private static List<CompetenceDeepOccupation> FallbackOccupations(
+    internal static List<CompetenceDeepOccupation> FallbackOccupations(
         IReadOnlyList<CompetenceDeepTraitReport> traits)
     {
         var topTraits = traits
@@ -122,17 +124,20 @@ public static class CompetenceDeepReportBuilder
         foreach (var trait in topTraits)
         {
             var candidates = CompetenceDeepReportTexts.OccupationsFor(trait.Domain);
-            var pick = candidates.FirstOrDefault();
+            var pick = candidates.Count > 0 ? candidates[0] : default;
             if (pick.Title is null)
             {
                 continue;
             }
 
+            var reason = string.Equals(trait.Level, CompetenceDeepReportLevels.Hoog, StringComparison.Ordinal)
+                ? pick.Reason
+                : $"Dit sluit aan bij je score op {trait.LabelNl} ({trait.Score}%).";
             result.Add(new CompetenceDeepOccupation
             {
                 Title = pick.Title,
                 MatchPercent = trait.Score,
-                Reason = pick.Reason
+                Reason = reason
             });
         }
 

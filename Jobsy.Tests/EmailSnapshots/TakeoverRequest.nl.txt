@@ -1,0 +1,38 @@
+KEY: TakeoverRequest
+SUBJECT: Alex de Tester wil toegang tot Bakkerij De Gouden Korrel
+PREHEADER: Keur het verzoek goed of wijs het af.
+KIND: Essential
+--- TEXT ---
+Iemand wil toegang tot Bakkerij De Gouden Korrel
+================================================
+
+Alex de Tester (alex@voorbeeld.invalid) wil Bakkerij De Gouden Korrel ook
+beheren op Lobsy.
+
+Naam: Alex de Tester
+E-mail: alex@voorbeeld.invalid
+Vestiging: Bakkerij De Gouden Korrel
+KvK-vestigingsnummer: 000012345678
+Aangevraagd op: 2 oktober 2026, 16:18
+
+Ken je deze persoon niet? Wijs het verzoek dan af.
+
+Bekijk het verzoek: https://lobsy.nl/werkgever/overnames
+
+Team Lobsy
+
+Je krijgt deze mail omdat je Bakkerij De Gouden Korrel beheert op Lobsy.
+Je krijgt deze e-mail omdat je een account hebt bij Lobsy.
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Iemand wil toegang tot Bakkerij De Gouden Korrel
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk het verzoek -> https://lobsy.nl/werkgever/overnames
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

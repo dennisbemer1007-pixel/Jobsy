@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Http;
 
@@ -15,17 +16,19 @@ public class ContentSecurityPolicyTests
         Assert.NotNull(scriptSrc);
         Assert.Contains($"'nonce-{nonce}'", scriptSrc);
         Assert.DoesNotContain("unsafe-inline", scriptSrc);
-        Assert.Contains("'unsafe-eval'", scriptSrc);
+        Assert.DoesNotContain("unsafe-eval", scriptSrc);
+
+        var cspCi = JobsyContentSecurityPolicy.ForWeb(nonce, allowUnsafeEval: true);
+        Assert.Contains("'unsafe-eval'", JobsyContentSecurityPolicy.ScriptSrc(cspCi)!);
 
         var imgSrc = JobsyContentSecurityPolicy.Directive(csp, "img-src");
         Assert.NotNull(imgSrc);
         var imgWithoutHosts = imgSrc
-            .Replace(JobsyContentSecurityPolicy.OpenFreeMap, "", StringComparison.Ordinal)
-            .Replace(JobsyContentSecurityPolicy.YouTubeThumbnail, "", StringComparison.Ordinal);
+            .Replace(JobsyContentSecurityPolicy.OpenFreeMap, "", StringComparison.Ordinal);
         Assert.DoesNotContain("https:", imgWithoutHosts);
         Assert.DoesNotContain("picsum.photos", imgSrc);
+        Assert.DoesNotContain("i.ytimg.com", imgSrc);
         Assert.Contains(JobsyContentSecurityPolicy.OpenFreeMap, imgSrc);
-        Assert.Contains(JobsyContentSecurityPolicy.YouTubeThumbnail, imgSrc);
 
         var connectSrc = JobsyContentSecurityPolicy.Directive(csp, "connect-src");
         Assert.Equal($"connect-src 'self' {JobsyContentSecurityPolicy.OpenFreeMap}", connectSrc);
@@ -78,7 +81,8 @@ public class ContentSecurityPolicyTests
     public void App_shell_nonces_scripts_and_avoids_inline_handlers()
     {
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
-        Assert.Contains("<style nonce=\"@Nonce\">", app);
+        Assert.Contains("css/critical.css?v=", app);
+        Assert.DoesNotContain("<style", app, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("<script nonce=\"@Nonce\">", app);
         Assert.Contains("nonce=\"@Nonce\" defer", app);
         Assert.Contains("data-app-css", app);
@@ -90,6 +94,29 @@ public class ContentSecurityPolicyTests
         Assert.Contains("UseMiddleware<SecurityHeadersMiddleware>", program);
         Assert.Contains("ContentSecurityFrameAncestorsPolicy = null", program);
         Assert.DoesNotContain("script-src 'self' 'unsafe-inline'", program);
+    }
+
+    [Fact]
+    public void Js_interop_does_not_invoke_eval()
+    {
+        var rx = new Regex(@"Invoke(?:Void)?Async(?:<[^>]+>)?\s*\(\s*""eval""", RegexOptions.Compiled);
+        var root = Path.Combine(FindRepoRoot(), "Jobsy.Web");
+        var hits = new List<string>();
+        foreach (var file in Directory.EnumerateFiles(root, "*.*", SearchOption.AllDirectories))
+        {
+            if (!file.EndsWith(".cs", StringComparison.Ordinal) && !file.EndsWith(".razor", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            var text = File.ReadAllText(file);
+            if (rx.IsMatch(text))
+            {
+                hits.Add(Path.GetRelativePath(root, file));
+            }
+        }
+
+        Assert.Empty(hits);
     }
 
     private static string FindRepoRoot()

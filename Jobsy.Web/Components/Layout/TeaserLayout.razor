@@ -1,18 +1,20 @@
 @inherits LayoutComponentBase
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <PageSeoHead />
 <div class="teaser-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <header class="teaser-shell__bar">
-        <a class="teaser-shell__brand" href="/westland" aria-label="Lobsy">
+        <a class="teaser-shell__brand" href="@PublicRoutes.Landing" aria-label="Lobsy">
             <LobsyLogo Class="teaser-shell__logo" Alt="" Animate="false" />
             <span class="teaser-shell__name">Lobsy</span>
         </a>
-        <nav class="teaser-shell__nav" aria-label="Snelle links">
-            <a class="teaser-shell__link" href="/register">Registreren</a>
-            <a class="teaser-shell__link teaser-shell__link--quiet" href="/login">Inloggen</a>
+        <nav class="teaser-shell__nav" aria-label="@Culture["PublicNav.QuickLinks"]">
+            <a class="teaser-shell__link" href="@PublicRoutes.CreateAccount">@Culture["PublicNav.CreateAccount"]</a>
+            <a class="teaser-shell__link teaser-shell__link--quiet" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
         </nav>
     </header>
     <main class="teaser-shell__main">
@@ -26,6 +28,7 @@
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
+        Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
     }

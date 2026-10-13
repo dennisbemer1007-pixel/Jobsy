@@ -2,12 +2,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Jobsy.Core.Diagnostics;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
-using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -21,20 +20,20 @@ public sealed class CultureFitAiService : ICultureFitAiService
     };
 
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IIntegrationCredentialService _credentials;
-    private readonly OpenAiOptions _options;
+    private readonly IOpenAiEndpointResolver _openAi;
     private readonly ILogger<CultureFitAiService> _logger;
+    private readonly IPlatformErrorLog? _platformLog;
 
     public CultureFitAiService(
         IHttpClientFactory httpClientFactory,
-        IIntegrationCredentialService credentials,
-        IOptions<OpenAiOptions> options,
-        ILogger<CultureFitAiService> logger)
+        IOpenAiEndpointResolver openAi,
+        ILogger<CultureFitAiService> logger,
+        IPlatformErrorLog? platformLog = null)
     {
         _httpClientFactory = httpClientFactory;
-        _credentials = credentials;
-        _options = options.Value;
+        _openAi = openAi;
         _logger = logger;
+        _platformLog = platformLog;
     }
 
     public async Task<CultureFitResult?> TryRefineAsync(
@@ -49,7 +48,8 @@ public sealed class CultureFitAiService : ICultureFitAiService
             return null;
         }
 
-        var apiKey = await ResolveApiKeyAsync(cancellationToken);
+        var endpoint = await _openAi.ResolveAsync(OpenAiFeature.CultureFit, cancellationToken);
+        var apiKey = endpoint.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
             return null;
@@ -57,8 +57,18 @@ public sealed class CultureFitAiService : ICultureFitAiService
 
         try
         {
-            var model = await ResolveModelAsync(cancellationToken);
-            var baseUrl = await ResolveBaseUrlAsync(cancellationToken);
+            var model = endpoint.Model;
+            var baseUrl = endpoint.BaseUrl;
+            var sheet = CandidateFactSheet.Personal(
+                [],
+                [],
+                [],
+                scores:
+                [
+                    $"Samenwerken {scores.Samenwerken ?? 0}%",
+                    $"Afmaken {scores.Resultaatgerichtheid ?? 0}%"
+                ],
+                checkJobTitles: false);
             var client = _httpClientFactory.CreateClient(HttpClientName);
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
@@ -71,7 +81,7 @@ public sealed class CultureFitAiService : ICultureFitAiService
                 response_format = new { type = "json_object" },
                 messages = new object[]
                 {
-                    new { role = "system", content = CultureFitPrompt.System },
+                    new { role = "system", content = CultureFitPrompt.System + "\n" + sheet.ToPrompt() + "\n" + CandidateFactGuard.StrictAddendum },
                     new { role = "user", content = CultureFitPrompt.User(pillarLabels, scores, culture) }
                 }
             });
@@ -87,7 +97,21 @@ public sealed class CultureFitAiService : ICultureFitAiService
 
             var completion = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(JsonOptions, cancellationToken);
             var content = completion?.Choices?.FirstOrDefault()?.Message?.Content;
-            return CultureFitJson.TryParse(content, local);
+            var parsed = CultureFitJson.TryParse(content, local);
+            if (parsed is null)
+            {
+                return null;
+            }
+
+            var reason = CandidateFactGuard.RejectionReason(parsed.Why, sheet);
+            if (reason is not null)
+            {
+                await AiFactRejectionLog.WriteAsync(
+                    _platformLog, _logger, "culture-fit", reason, 1, cancellationToken, model, parsed.Why);
+                return null;
+            }
+
+            return parsed;
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -96,49 +120,8 @@ public sealed class CultureFitAiService : ICultureFitAiService
         }
     }
 
-    private async Task<string?> ResolveApiKeyAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetRawApiKeyAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
 
-        return string.IsNullOrWhiteSpace(_options.ApiKey) ? null : _options.ApiKey.Trim();
-    }
 
-    private async Task<string> ResolveModelAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetModelAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb))
-        {
-            return fromDb;
-        }
-
-        return string.IsNullOrWhiteSpace(_options.Model) ? "gpt-4o-mini" : _options.Model.Trim();
-    }
-
-    private async Task<string> ResolveBaseUrlAsync(CancellationToken cancellationToken)
-    {
-        var fromDb = await _credentials.GetBaseUrlAsync(IntegrationKey.OpenAI, cancellationToken);
-        if (!string.IsNullOrWhiteSpace(fromDb)
-            && IntegrationEndpointUrl.TryNormalizeBaseUrl(fromDb, out var normalized, out _)
-            && !string.IsNullOrWhiteSpace(normalized))
-        {
-            return normalized;
-        }
-
-        var fallback = string.IsNullOrWhiteSpace(_options.BaseUrl)
-            ? "https://api.openai.com/v1/"
-            : _options.BaseUrl;
-        if (IntegrationEndpointUrl.TryNormalizeBaseUrl(fallback, out var normalizedFallback, out _)
-            && !string.IsNullOrWhiteSpace(normalizedFallback))
-        {
-            return normalizedFallback;
-        }
-
-        return "https://api.openai.com/v1/";
-    }
 
     private sealed class ChatCompletionResponse
     {

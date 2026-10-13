@@ -1,0 +1,24 @@
+@namespace Jobsy.Web.Components.Ui.Enterprise
+
+<div class="ent-kpi-card">
+    @if (!string.IsNullOrEmpty(IconSvg))
+    {
+        <span class="ent-kpi-card__icon" aria-hidden="true">@((MarkupString)IconSvg)</span>
+    }
+    <p class="ent-kpi-card__label">@Label</p>
+    <p class="ent-kpi-card__value">@Value</p>
+    @if (!string.IsNullOrWhiteSpace(Delta))
+    {
+        <p class="ent-kpi-card__delta ent-kpi-card__delta--@DeltaTone">@Delta</p>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string? Delta { get; set; }
+    [Parameter] public string DeltaTone { get; set; } = "neutral";
+    [Parameter] public string? IconSvg { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

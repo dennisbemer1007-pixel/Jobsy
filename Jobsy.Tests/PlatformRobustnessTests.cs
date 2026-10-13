@@ -14,6 +14,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
+using Jobsy.Tests.TestSupport;
+using Jobsy.Core.Security;
 
 namespace Jobsy.Tests;
 
@@ -26,10 +28,7 @@ public class PlatformRobustnessTests
         var config = new ConfigurationBuilder().Build();
         var features = new PlatformFeatureService(
             db,
-            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions
-            {
-                ExposeRegistrationActivationLinks = true
-            }),
+            Microsoft.Extensions.Options.Options.Create(new Jobsy.Core.Options.JobsyFeatureOptions()),
             config);
 
         var sut = new CompanyRegistrationService(
@@ -215,7 +214,11 @@ public class PlatformRobustnessTests
             CommissionDirectRateSnapshot = 0.15m,
             CommissionIndirectRateSnapshot = 0.03m,
             CommissionDurationDaysSnapshot = 365,
-            CommissionTermsSnapshottedAtUtc = DateTime.UtcNow.AddMonths(-1)
+            CommissionTermsSnapshottedAtUtc = DateTime.UtcNow.AddMonths(-1),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         await db.SaveChangesAsync();
 
@@ -226,7 +229,7 @@ public class PlatformRobustnessTests
 
         var tokens = new TokenLedgerService(db);
         var share = new RevenueShareService(
-            db, tokens, new CommissionLedgerService(db), new SalesCommercialService(db, tokens));
+            db, tokens, new CommissionLedgerService(db, new AlwaysOnFeatures()), new SalesCommercialService(db, tokens));
 
         var checkoutId = Guid.NewGuid();
         await share.ApplyTokenPurchaseShareAsync(
@@ -250,7 +253,11 @@ public class PlatformRobustnessTests
             Name = "Org",
             KvkNumber = "12345678",
             Address = "Straat",
-            Location = new GeoPoint(52, 4)
+            Location = new GeoPoint(52, 4),
+            VerificationStatus = CompanyVerificationStatus.Verified,
+            VerificationMethod = CompanyVerificationMethod.AdminCreated,
+            VerifiedAtUtc = DateTime.UtcNow,
+            VerificationUpdatedAtUtc = DateTime.UtcNow
         });
         db.Users.Add(new User
         {
@@ -293,8 +300,30 @@ public class PlatformRobustnessTests
         var b = Guid.NewGuid();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         db.Companies.AddRange(
-            new Company { Id = a, Name = "A", KvkNumber = "1", Address = "x", Location = new GeoPoint(52, 4) },
-            new Company { Id = b, Name = "B", KvkNumber = "2", Address = "y", Location = new GeoPoint(52, 4) });
+            new Company
+            {
+                Id = a,
+                Name = "A",
+                KvkNumber = "1",
+                Address = "x",
+                Location = new GeoPoint(52, 4),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            },
+            new Company
+            {
+                Id = b,
+                Name = "B",
+                KvkNumber = "2",
+                Address = "y",
+                Location = new GeoPoint(52, 4),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
         db.Vacancies.AddRange(
             new Vacancy
             {
@@ -369,16 +398,23 @@ public class PlatformRobustnessTests
             db,
             config,
             new IntegrationCredentialService(db, new PassthroughSecretProtector()),
-            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance),
+            new AmbassadeurAttributionService(db, new AmbassadeurSettingsService(db), Microsoft.Extensions.Logging.Abstractions.NullLogger<AmbassadeurAttributionService>.Instance, new AlwaysOnFeatures()),
             new TestHostEnvironment(),
             new DeviceSessionService(
                 db,
                 config,
                 new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions()),
                 Microsoft.Extensions.Logging.Abstractions.NullLogger<DeviceSessionService>.Instance),
+            new MfaTrustedDeviceService(db),
             new Jobsy.Infrastructure.Services.EmailServiceStub(db, Microsoft.Extensions.Logging.Abstractions.NullLogger<Jobsy.Infrastructure.Services.EmailServiceStub>.Instance),
             new Jobsy.Api.Security.MfaChallengeService(
-                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())));
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())),
+            new AlwaysOnFeatures(),
+            new UnknownAccountLockoutTracker("test-lockout-key"),
+            new StubTestAccountsRuntime(),
+            new StubSystemAdminSettings(),
+            SystemAdminTestDoubles.LoginNotifier(),
+            NullLogger<AuthController>.Instance);
     }
 
     private static ControllerContext WithProvisionSecret(string secret)

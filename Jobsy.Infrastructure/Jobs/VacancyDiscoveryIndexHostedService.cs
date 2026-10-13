@@ -1,4 +1,5 @@
 using Jobsy.Core.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -13,20 +14,24 @@ public sealed class VacancyDiscoveryIndexHostedService : BackgroundService
 {
     public static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(60);
 
+    private readonly EmployersJobGate _employersGate;
     private readonly IVacancyDiscoveryIndex _index;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<VacancyDiscoveryIndexHostedService> _logger;
 
     public VacancyDiscoveryIndexHostedService(
         IVacancyDiscoveryIndex index,
+        IServiceScopeFactory scopeFactory,
         ILogger<VacancyDiscoveryIndexHostedService> logger)
     {
         _index = index;
+        _scopeFactory = scopeFactory;
         _logger = logger;
+        _employersGate = new EmployersJobGate(_logger, nameof(VacancyDiscoveryIndexHostedService));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Index immediately so the first banenkaart open does not wait on a DB include-query.
         await RefreshSafeAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested)
@@ -48,6 +53,11 @@ public sealed class VacancyDiscoveryIndexHostedService : BackgroundService
     {
         try
         {
+            if (!await _employersGate.ShouldRunAsync(_scopeFactory, cancellationToken))
+            {
+                return;
+            }
+
             await _index.RefreshAsync(cancellationToken);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

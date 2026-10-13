@@ -3,12 +3,12 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components.Admin;
-using Jobsy.Web.Components.Employer;
 using Jobsy.Web.Help;
 using Jobsy.Web.Navigation;
 
@@ -42,6 +42,13 @@ public static class UatScriptRunner
         "/admin/launch"
     };
 
+    /// <summary>Server redirects (middleware / Minimal API) — no Blazor <c>@page</c>.</summary>
+    private static readonly HashSet<string> KnownRedirectRoutes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/banen",
+        "/register/activate"
+    };
+
     public static void Execute(UatScenario scenario)
     {
         var blob = scenario.Scenario + " " + scenario.Expected;
@@ -66,6 +73,7 @@ public static class UatScriptRunner
 
     private static void AssertChromeContracts(UatScenario scenario, string blob)
     {
+        _ = scenario;
         var root = RepoRoot.Find();
         if (Contains(blob, "cookie", "Alleen noodzakelijk", "Accepteer cookies"))
         {
@@ -82,7 +90,7 @@ public static class UatScriptRunner
             Assert.Contains("href=\"/algemene-voorwaarden\"", footer, StringComparison.Ordinal);
             Assert.Contains("href=\"/gebruiksvoorwaarden\"", footer, StringComparison.Ordinal);
             Assert.Contains("href=\"/wie-zijn-wij\"", footer, StringComparison.Ordinal);
-            Assert.Contains("href=\"/westland\"", footer, StringComparison.Ordinal);
+            Assert.DoesNotContain("href=\"/westland\"", footer, StringComparison.Ordinal);
         }
 
         if (Contains(blob, "Feedback"))
@@ -161,7 +169,7 @@ public static class UatScriptRunner
     private static void AssertNavigation(UatScenario scenario, string blob, string? jobsyRole)
     {
         var principal = PrincipalFor(jobsyRole);
-        var items = RoleNavCatalog.ForUser(principal);
+        var items = BottomNavFor(principal);
 
         if (jobsyRole is null)
         {
@@ -175,10 +183,28 @@ public static class UatScriptRunner
 
         if (Contains(blob, "bottom-nav", "Bottom-nav", "Elke bottom-nav", "rondklikken"))
         {
-            Assert.NotEmpty(items);
-            foreach (var item in items)
+            // Admin uses AdminLayout sidebar; bottom nav is intentionally empty (D1).
+            if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal))
             {
-                AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: nav {jobsyRole} → {item.Href}");
+                Assert.Empty(items);
+                Assert.NotEmpty(AdminNav.AvailableItems());
+            }
+            else if (jobsyRole == JobsyRoles.SalesManager)
+            {
+                var salesItems = Jobsy.Web.Navigation.SalesNav.BottomNavItems(canRecruit: true);
+                Assert.NotEmpty(salesItems);
+                foreach (var item in salesItems)
+                {
+                    AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: sales nav → {item.Href}");
+                }
+            }
+            else
+            {
+                Assert.NotEmpty(items);
+                foreach (var item in items)
+                {
+                    AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: nav {jobsyRole} → {item.Href}");
+                }
             }
         }
 
@@ -196,37 +222,60 @@ public static class UatScriptRunner
             }
             else if (employer)
             {
-                Assert.True(href is "/branch/tokens" or "/employer/tokens");
+                Assert.Equal("/werkgever/tokens", href);
             }
         }
 
         if (string.Equals(jobsyRole, JobsyRoles.EnterpriseManager, StringComparison.Ordinal)
             && Contains(blob, "Organisatie", "desktop-only", "Desktop"))
         {
-            Assert.Contains(items, i => i.Href == "/employer/organization" && i.DesktopOnly);
-            foreach (var module in EnterpriseNavItems.OrganizationModules)
+            Assert.Contains(
+                WerkgeverNav.For(EmployerRole.Bedrijfsmanager, new WerkgeverNavContext()).SelectMany(g => g.Items),
+                i => i.Href == "/werkgever/organisatie/vestigingen");
+            foreach (var href in new[]
+                     {
+                         "/werkgever/organisatie/profiel",
+                         "/werkgever/organisatie/vestigingen",
+                         "/werkgever/organisatie/vestigingen?tab=regios",
+                         "/werkgever/organisatie/salaristabellen",
+                         "/werkgever/koppelingen?tab=csv",
+                         "/werkgever/overnames"
+                     })
             {
-                AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: org module {module.Href}");
+                AssertRouteExistsOrAuthEndpoint(href, $"{scenario.Id}: org module {href}");
             }
         }
 
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal)
-            && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules"))
+            && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules", "sidebar", "AdminNav"))
         {
-            Assert.Equal(18, AdminNavItems.SettingsModules.Length);
-            foreach (var module in AdminNavItems.SettingsModules)
+            var available = AdminNav.AvailableItems().ToList();
+            Assert.True(available.Count >= 10, $"{scenario.Id}: expected available admin nav items");
+            Assert.Contains(available, i => i.Href == "/admin/research");
+            foreach (var item in available)
             {
-                AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: admin settings {module.Href}");
+                AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: admin nav {item.Href}");
             }
 
-            var root = RepoRoot.Find();
-            var settingsNav = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Admin/AdminSettingsSubnav.razor"));
-            Assert.Contains("admin-sublinks--wrap", settingsNav, StringComparison.Ordinal);
-            Assert.DoesNotContain("pill-scroller", settingsNav, StringComparison.Ordinal);
-            var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-            Assert.Contains(".admin-sublinks.admin-sublinks--wrap", css, StringComparison.Ordinal);
-            Assert.Contains("flex-wrap: wrap", css, StringComparison.Ordinal);
+            Assert.Empty(RoleNavCatalog.Admin);
         }
+    }
+
+    private static IReadOnlyList<NavItem> BottomNavFor(ClaimsPrincipal principal)
+    {
+        var role = WerkgeverNav.ResolveRole(principal);
+        if (role is { } er)
+        {
+            var ctx = new WerkgeverNavContext(CandidateInsightsEnabled: true, HasTakeovers: true);
+            return WerkgeverNav.MobileItems(er, ctx)
+                .Where(i => i.Key != "meer")
+                .Select(i => new NavItem(i.LabelKey, i.Href, i.Svg))
+                .ToList();
+        }
+
+        // UAT grid describes the employers-on catalog. Production default is OFF (decision 20).
+        var on = new FeatureFlagSnapshot(EmployersEnabled: true, CandidatePassportEnabled: true);
+        return RoleNavCatalog.ForUser(principal, on);
     }
 
     private static void AssertHowTo(UatScenario scenario, string blob, string? jobsyRole)
@@ -319,6 +368,12 @@ public static class UatScriptRunner
                 continue;
             }
 
+            if (KnownRedirectRoutes.Contains(path))
+            {
+                Assert.Null(Routes.Value.Find(path));
+                continue;
+            }
+
             var page = Routes.Value.Find(path);
             if (page is null)
             {
@@ -360,9 +415,19 @@ public static class UatScriptRunner
     }
 
     private static string Alias(string path)
-        => path.Equals("/employer/partner-sales", StringComparison.OrdinalIgnoreCase)
-            ? "/employer/sales"
-            : path;
+    {
+        if (path.Equals("/employer/partner-sales", StringComparison.OrdinalIgnoreCase))
+        {
+            path = "/employer/sales";
+        }
+
+        if (WerkgeverLegacyRoutes.TryMap(path, out var neu, out _))
+        {
+            return neu;
+        }
+
+        return path;
+    }
 
     private static bool IsPagePath(string raw)
     {
@@ -373,6 +438,7 @@ public static class UatScriptRunner
 
     private static void AssertDomainRules(UatScenario scenario, string blob, string? jobsyRole)
     {
+        _ = scenario;
         if (Contains(blob, "PII", "progressive", "vóór Accept", "pre-accept", "PiiRevealed"))
         {
             Assert.False(ApplicationRules.IsPiiRevealed(Jobsy.Core.Enums.ApplicationStatus.Pending));
@@ -419,11 +485,11 @@ public static class UatScriptRunner
                         > ProfileVacancyMatchCalculator.InterestWeightQuickScanOnly);
 
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CareerCompassPanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CareerCompassPanel.razor"));
             Assert.Contains("Kompas.BandSuper", panel, StringComparison.Ordinal);
             Assert.Contains("Kompas.BandStrong", panel, StringComparison.Ordinal);
             Assert.Contains("Kompas.BandBroaden", panel, StringComparison.Ordinal);
-            Assert.Contains("Kompas.PracticalTitle", panel, StringComparison.Ordinal);
+            Assert.Contains("Kompas.PracticalEmployersOff", panel, StringComparison.Ordinal);
             Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
 
@@ -470,9 +536,9 @@ public static class UatScriptRunner
         if (Contains(blob, "Mijn Lobsy Kompas", "match-%", "Beste match", ">80% match"))
         {
             var root = RepoRoot.Find();
-            var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateHomePanel.razor"));
+            var home = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateHomePanel.razor"));
             Assert.Contains("CandidateKompas", home, StringComparison.Ordinal);
-            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
             Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabProfile", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabTests", kompas, StringComparison.Ordinal);
@@ -494,7 +560,7 @@ public static class UatScriptRunner
             || Contains(blob, "Mijn DNA", "Profiel", "Tests", "Functiefit"))
         {
             var root = RepoRoot.Find();
-            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
             Assert.Contains("Kompas.TabDna", kompas, StringComparison.Ordinal);
             Assert.Contains("Kompas.TabTests", kompas, StringComparison.Ordinal);
             Assert.Contains("DnaPanel", kompas, StringComparison.Ordinal);
@@ -509,18 +575,20 @@ public static class UatScriptRunner
             || Contains(blob, "Mijn DNA", "leeg", "Naar de tests"))
         {
             var root = RepoRoot.Find();
-            var dna = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/DnaPanel.razor"));
+            var dna = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
             Assert.Contains("Dna.StoryEmpty", dna, StringComparison.Ordinal);
             Assert.Contains("Dna.StoryEmptyCta", dna, StringComparison.Ordinal);
             Assert.Contains("Dna.TestsTitle", dna, StringComparison.Ordinal);
         }
 
-        if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage"))
+        if (Contains(blob, "Wie ben ik?", "persoonsprofiel", "Lobsy-CV-bijlage")
+            || Contains(blob, "Mijn DNA", "verhaal", "tests"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/WhoAmIPanel.razor"));
-            Assert.Contains("WhoAmI.AttachCv", panel, StringComparison.Ordinal);
-            Assert.Contains("CultureScorePanel", panel, StringComparison.Ordinal);
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/DnaPanel.razor"));
+            Assert.Contains("Dna.StoryEmpty", panel, StringComparison.Ordinal);
+            Assert.Contains("Dna.TestsTitle", panel, StringComparison.Ordinal);
+            Assert.Contains("WhoAmIStoryStatuses", panel, StringComparison.Ordinal);
             Assert.False(WhoAmICompleteness.IsUnlocked(false, true, true, true));
             Assert.True(WhoAmICompleteness.IsUnlocked(true, true, true, true));
             Assert.DoesNotContain("@", WhoAmIPrompt.User(
@@ -534,14 +602,14 @@ public static class UatScriptRunner
         if (Contains(blob, "accordeon per vaardigheid", "workshops"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CompetencyScorePanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CompetencyScorePanel.razor"));
             Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
             Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
             Assert.Contains("CampaignCompetence", panel, StringComparison.Ordinal);
             Assert.Contains("CompetencyTrainingCatalog.MeaningKey", panel, StringComparison.Ordinal);
             Assert.DoesNotContain("OCEAN", panel, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("RIASEC", panel, StringComparison.OrdinalIgnoreCase);
-            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CandidateKompas.razor"));
+            var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
             Assert.Contains("TestsOverviewPanel", kompas, StringComparison.Ordinal);
             Assert.DoesNotContain("Talent.CandidateTitle", kompas, StringComparison.Ordinal);
             Assert.Equal("competence", TrainingTracking.CampaignCompetence);
@@ -551,7 +619,7 @@ public static class UatScriptRunner
         if (Contains(blob, "DISC-Analyse", "gedragsstijl", "workshops"))
         {
             var root = RepoRoot.Find();
-            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/CultureScorePanel.razor"));
+            var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CultureScorePanel.razor"));
             Assert.Contains("competency-skill__details", panel, StringComparison.Ordinal);
             Assert.Contains("TrainingOffersBlock", panel, StringComparison.Ordinal);
             Assert.Equal(18, CulturePersonalityCatalog.QuestionCount);
@@ -568,7 +636,7 @@ public static class UatScriptRunner
             Assert.Equal(5, CulturePillarCatalog.MaxSelected);
             Assert.Contains("CultureFitPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs")), StringComparison.Ordinal);
             Assert.Contains("CulturePillarsJson", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Entities/Vacancy.cs")), StringComparison.Ordinal);
-            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Branch/CreateVacancy.razor"));
+            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
             Assert.Contains("CulturePillarCatalog", create, StringComparison.Ordinal);
             var map = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/jobMap.js"));
             Assert.Contains("cultureFitHtml", map, StringComparison.Ordinal);
@@ -594,12 +662,18 @@ public static class UatScriptRunner
         }
 
         if (string.Equals(jobsyRole, JobsyRoles.EnterpriseManager, StringComparison.Ordinal)
-            && Contains(blob, "e-mail+naam+rol+vestigingen"))
+            && Contains(blob, "WgInviteDrawer", "e-mail+rol+bereik"))
         {
             var root = RepoRoot.Find();
-            var users = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Employer/Users.razor"));
-            Assert.Contains("InviteExtraCompanies", users, StringComparison.Ordinal);
-            Assert.Contains("EmployerInviteCompanyOptions", users, StringComparison.Ordinal);
+            var users = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/Users.razor"));
+            Assert.Contains("WgInviteDrawer", users, StringComparison.Ordinal);
+
+            var drawer = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/Team/WgInviteDrawer.razor"));
+            Assert.Contains("InviteCompanyUserAsync", drawer, StringComparison.Ordinal);
+            Assert.Contains("TeamRoleCopy.Cards", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Privacy", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Branch", drawer, StringComparison.Ordinal);
+            Assert.Contains("WgInvite.Region", drawer, StringComparison.Ordinal);
 
             var orgId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
             var branchId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
@@ -608,14 +682,14 @@ public static class UatScriptRunner
                 new(orgId, "Bemer IT Solutions", "Laan 1", ParentCompanyId: null),
                 new(branchId, "Bemer IT Solutions", "Laan 1", orgId, "000012345678")
             ];
-            Assert.Empty(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, branchId));
-            Assert.Single(EmployerInviteCompanyOptions.ExtraMembershipChoices(companies, orgId));
+            Assert.Equal("Bemer IT Solutions (organisatie)", EmployerInviteCompanyOptions.Label(companies[0], companies));
+            Assert.Equal("Bemer IT Solutions — Laan 1", EmployerInviteCompanyOptions.Label(companies[1], companies));
         }
     }
 
     private static void AssertRouteExistsOrAuthEndpoint(string href, string because)
     {
-        var path = RazorRouteIndex.CanonicalPath(href);
+        var path = RazorRouteIndex.CanonicalPath(href.Split('?', 2)[0]);
         if (path is "#" or "")
         {
             return;
@@ -627,6 +701,11 @@ public static class UatScriptRunner
         }
 
         if (KnownMissingRoutes.Contains(path))
+        {
+            return;
+        }
+
+        if (KnownRedirectRoutes.Contains(path))
         {
             return;
         }

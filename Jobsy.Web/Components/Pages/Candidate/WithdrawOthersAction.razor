@@ -1,9 +1,12 @@
 @page "/candidate/actions/withdraw-others"
 @rendermode InteractiveServer
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @using Microsoft.AspNetCore.Components.Authorization
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject UserFacingError UserFacing
 
 <PageTitle>Andere sollicitaties intrekken · Lobsy</PageTitle>
 
@@ -38,7 +41,7 @@
                 <button type="button" class="login-submit" disabled="@_busy" @onclick="ConfirmAsync">
                     Ja, trek andere sollicitaties in
                 </button>
-                <a class="btn-compact" href="/candidate/applications">Liever niet</a>
+                <a class="btn btn-secondary" href="/candidate/applications">Liever niet</a>
             </div>
         </div>
     }
@@ -51,7 +54,7 @@
             <p class="muted">Je vindt het overzicht terug bij Sollicitaties.</p>
             <div class="inline-actions candidate-action-page__actions">
                 <a class="login-submit" href="/candidate/applications">Naar sollicitaties</a>
-                <a class="btn-compact" href="/">Naar home</a>
+                <a class="btn btn-secondary" href="/">Naar home</a>
             </div>
         </div>
     }
@@ -60,11 +63,11 @@
         <div class="candidate-action-page__card">
             <p class="candidate-action-page__eyebrow">Link niet geldig</p>
             <h1>Deze actie lukt niet meer</h1>
-            <p class="@(_error ? "state-message error" : "muted")">@_message</p>
+            <p class="@(_error ?"state-message error" : "muted")">@_message</p>
             <p class="muted">Je kunt openstaande sollicitaties ook handmatig intrekken via Sollicitaties.</p>
             <div class="inline-actions candidate-action-page__actions">
                 <a class="login-submit" href="/candidate/applications">Naar sollicitaties</a>
-                <a class="btn-compact" href="/">Naar home</a>
+                <a class="btn btn-secondary" href="/">Naar home</a>
             </div>
         </div>
     }
@@ -151,27 +154,11 @@
         {
             _phase = Phase.Failed;
             _error = true;
-            _message = FriendlyError(ex.Message);
+            _message = UserFacing.Describe(ex);
         }
         finally
         {
             _busy = false;
         }
-    }
-
-    private static string FriendlyError(string raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return "Er ging iets mis. Trek sollicitaties desnoods handmatig in via Sollicitaties.";
-        }
-
-        if (raw.Contains("ongeldig", StringComparison.OrdinalIgnoreCase)
-            || raw.Contains("gebruikt", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Deze link is al gebruikt of niet meer geldig. Open Sollicitaties om het handmatig te doen.";
-        }
-
-        return raw;
     }
 }

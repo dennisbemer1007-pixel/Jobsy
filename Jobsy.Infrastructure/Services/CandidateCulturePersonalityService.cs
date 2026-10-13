@@ -1,9 +1,10 @@
-using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -13,17 +14,23 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateInsightsQueue _queue;
     private readonly IAssessmentResearchService _research;
+    private readonly AssessmentSaveGuard _saveGuard;
+    private readonly ICandidateMatchSnapshotService _matchSnapshots;
 
     public CandidateCulturePersonalityService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateInsightsQueue queue,
-        IAssessmentResearchService research)
+        IAssessmentResearchService research,
+        ICandidateMatchSnapshotService matchSnapshots,
+        AssessmentSaveGuard saveGuard)
     {
         _db = db;
         _commercial = commercial;
         _queue = queue;
         _research = research;
+        _matchSnapshots = matchSnapshots;
+        _saveGuard = saveGuard;
     }
 
     public async Task<CandidateCulturePersonalityStateDto> GetAsync(
@@ -32,7 +39,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
     {
         var row = await _db.CandidateCulturePersonalityProfiles.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
         return ToDto(row, price);
     }
 
@@ -42,14 +49,20 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
         bool complete,
         CancellationToken cancellationToken = default)
     {
+        var row = await _db.CandidateCulturePersonalityProfiles
+            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+        if (answers.Count == 0 && row is not null && CandidateCompetencyStatuses.IsCompleted(row.Status))
+        {
+            var kept = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
+            return ToDto(row, kept);
+        }
+
         var error = CulturePersonalityCatalog.ValidateAnswers(answers, complete);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
         }
 
-        var row = await _db.CandidateCulturePersonalityProfiles
-            .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
         if (answers.Count == 0)
         {
             if (row is not null)
@@ -75,7 +88,26 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
             _db.CandidateCulturePersonalityProfiles.Add(row);
         }
 
-        row.AnswersJson = CulturePersonalityCatalog.SerializeAnswers(answers);
+        var storedAnswers = CulturePersonalityCatalog.ParseAnswers(row.AnswersJson);
+        var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
+            && CulturePersonalityCatalog.IsComplete(storedAnswers);
+        var answersJson = CulturePersonalityCatalog.SerializeAnswers(answers);
+        var baselineAnswersJson = row.AnswersJson;
+        if (wasCompleted && !complete)
+        {
+            await _saveGuard.SaveDraftAsync(userId, AssessmentKind.Culture, AssessmentVariant.Quick, answersJson, baselineAnswersJson, cancellationToken);
+        }
+        else if (wasCompleted && complete)
+        {
+            var noOp = await _saveGuard.CommitCompleteAsync(
+                userId, AssessmentKind.Culture, AssessmentVariant.Quick, answersJson, null, baselineAnswersJson, baselineAnswersJson, cancellationToken);
+            if (noOp && ScoresMatch(row, CulturePersonalityCatalog.Score(answers)))
+            {
+                var priceNoOp = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
+                return ToDto(row, priceNoOp);
+            }
+        }
+        row.AnswersJson = answersJson;
         row.UpdatedAtUtc = now;
 
         var preview = CulturePersonalityCatalog.Score(answers);
@@ -92,15 +124,18 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 CulturePersonalityCatalog.DeriveMatchTags(preview));
             row.CompletedAtUtc = now;
         }
-        else
+        else if (!CandidateCompetencyStatuses.IsCompleted(row.Status))
         {
             ClearScores(row);
             row.Status = CandidateCompetencyStatuses.Draft;
             row.MatchTagsJson = "[]";
             row.CompletedAtUtc = null;
         }
+        // Completed + autosave: keep status/scores; AnswersJson above is the pending edit
+        // until the candidate finishes again with complete:true (rescore).
 
         await _db.SaveChangesAsync(cancellationToken);
+        await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
             await ResearchQuickScanSync.AfterCompleteAsync(
@@ -114,7 +149,7 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
             _queue.TryEnqueue(userId);
         }
 
-        var price = (await _commercial.GetAsync(cancellationToken)).DeepAnalysisPriceEuro;
+        var price = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Culture);
         return ToDto(row, price);
     }
 
@@ -128,6 +163,20 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 cancellationToken);
         return row is null ? null : FromRow(row);
     }
+
+    private static bool ScoresMatch(CandidateCulturePersonalityProfile row, CulturePersonalityScores? preview)
+        => preview is { IsComplete: true }
+           && row.AutonomyPercent == preview.Autonomy
+           && row.InformalPercent == preview.Informal
+           && row.CollaborationPercent == preview.Collaboration
+           && row.FlexibilityPercent == preview.Flexibility
+           && row.InnovationPercent == preview.Innovation
+           && row.PeopleFirstPercent == preview.PeopleFirst
+           && row.OpennessPercent == preview.Openness
+           && row.ConscientiousnessPercent == preview.Conscientiousness
+           && row.ExtraversionPercent == preview.Extraversion
+           && row.AgreeablenessPercent == preview.Agreeableness
+           && row.EmotionalStabilityPercent == preview.EmotionalStability;
 
     private static void ApplyScores(CandidateCulturePersonalityProfile row, CulturePersonalityScores s)
     {
@@ -191,21 +240,29 @@ public sealed class CandidateCulturePersonalityService : ICandidateCulturePerson
                 price);
         }
 
+        var answers = CulturePersonalityCatalog.ParseAnswers(row.AnswersJson);
+        var preview = CulturePersonalityCatalog.Score(answers);
         return new CandidateCulturePersonalityStateDto(
             row.Status,
-            CulturePersonalityCatalog.ParseAnswers(row.AnswersJson),
+            answers,
             FromRow(row),
             CulturePersonalityCatalog.ParseTags(row.MatchTagsJson),
             row.CompletedAtUtc,
-            price);
+            price,
+            preview);
     }
 }
 
 public sealed class CompanyCultureService : ICompanyCultureService
 {
     private readonly JobsyDbContext _db;
+    private readonly IMemoryCache _cache;
 
-    public CompanyCultureService(JobsyDbContext db) => _db = db;
+    public CompanyCultureService(JobsyDbContext db, IMemoryCache cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
 
     public async Task<CompanyCultureStateDto> GetAsync(
         Guid companyId,
@@ -266,6 +323,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
         if (complete && preview is not null)
         {
             row.Status = CandidateCompetencyStatuses.Completed;
+            row.Source = CompanyCultureSources.Full;
             row.AutonomyPercent = preview.Autonomy;
             row.InformalPercent = preview.Informal;
             row.CollaborationPercent = preview.Collaboration;
@@ -286,6 +344,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await EvictCultureCacheAsync(companyId, cancellationToken);
         return ToDto(row);
     }
 
@@ -317,6 +376,19 @@ public sealed class CompanyCultureService : ICompanyCultureService
         return scores.Autonomy is not null ? scores : null;
     }
 
+    private async Task EvictCultureCacheAsync(Guid companyId, CancellationToken cancellationToken)
+    {
+        _cache.Remove(CompanyCultureCacheKeys.ForCompany(companyId));
+        var childIds = await _db.Companies.AsNoTracking()
+            .Where(c => c.ParentCompanyId == companyId)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+        foreach (var childId in childIds)
+        {
+            _cache.Remove(CompanyCultureCacheKeys.ForCompany(childId));
+        }
+    }
+
     private static IReadOnlyDictionary<int, int> PadPersonalityDefaults(IReadOnlyDictionary<int, int> answers)
     {
         var map = answers.ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -336,7 +408,8 @@ public sealed class CompanyCultureService : ICompanyCultureService
                 CandidateCompetencyStatuses.Draft,
                 new Dictionary<int, int>(),
                 null,
-                null);
+                null,
+                CompanyCultureSources.Full);
         }
 
         var scores = new CulturePersonalityScores(
@@ -356,6 +429,7 @@ public sealed class CompanyCultureService : ICompanyCultureService
             row.Status,
             CulturePersonalityCatalog.ParseAnswers(row.AnswersJson),
             row.Status == CandidateCompetencyStatuses.Completed ? scores : null,
-            row.CompletedAtUtc);
+            row.CompletedAtUtc,
+            row.Source);
     }
 }

@@ -121,53 +121,54 @@ public static class CulturePersonalityCatalog
         => LikertAnswerJson.Serialize(answers, QuestionCount);
 
     public static CulturePersonalityScores? Score(IReadOnlyDictionary<int, int> answers)
+        => Score(answers, Questions);
+
+    /// <summary>
+    /// Same math as <see cref="Score(IReadOnlyDictionary{int,int})"/> over an explicit item list (pupil bank).
+    /// Categories with no answered items stay null (pupil culture items omit Big Five facets).
+    /// </summary>
+    public static CulturePersonalityScores? Score(
+        IReadOnlyDictionary<int, int> answers,
+        IEnumerable<CompetencyQuestion> items)
     {
-        var scored = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var q in Questions)
-        {
-            if (!answers.TryGetValue(q.Id, out var raw) || !IsValidAnswer(raw))
-            {
-                continue;
-            }
+        var list = items.Select(q => (q.Id, q.Category, q.Reverse)).ToList();
+        var autonomy = LikertCategoryScorer.ScoreCategory(list, answers, Autonomy);
+        var informal = LikertCategoryScorer.ScoreCategory(list, answers, Informal);
+        var collaboration = LikertCategoryScorer.ScoreCategory(list, answers, Collaboration);
+        var flexibility = LikertCategoryScorer.ScoreCategory(list, answers, Flexibility);
+        var innovation = LikertCategoryScorer.ScoreCategory(list, answers, Innovation);
+        var peopleFirst = LikertCategoryScorer.ScoreCategory(list, answers, PeopleFirst);
+        var openness = LikertCategoryScorer.ScoreCategory(list, answers, Openness);
+        var conscientiousness = LikertCategoryScorer.ScoreCategory(list, answers, Conscientiousness);
+        var extraversion = LikertCategoryScorer.ScoreCategory(list, answers, Extraversion);
+        var agreeableness = LikertCategoryScorer.ScoreCategory(list, answers, Agreeableness);
+        var emotionalStability = LikertCategoryScorer.ScoreCategory(list, answers, EmotionalStability);
 
-            var value = q.Reverse ? LikertMax + LikertMin - raw : raw;
-            if (!scored.TryGetValue(q.Category, out var list))
-            {
-                list = [];
-                scored[q.Category] = list;
-            }
-
-            list.Add(value);
-        }
-
-        if (scored.Count == 0)
+        if (autonomy is null && informal is null && collaboration is null && flexibility is null
+            && innovation is null && peopleFirst is null && openness is null && conscientiousness is null
+            && extraversion is null && agreeableness is null && emotionalStability is null)
         {
             return null;
         }
 
-        int? Pct(string code)
-            => scored.TryGetValue(code, out var list) && list.Count > 0
-                ? LikertAnswerJson.ToPercent(list)
-                : null;
-
         return new CulturePersonalityScores(
-            Autonomy: Pct(Autonomy),
-            Informal: Pct(Informal),
-            Collaboration: Pct(Collaboration),
-            Flexibility: Pct(Flexibility),
-            Innovation: Pct(Innovation),
-            PeopleFirst: Pct(PeopleFirst),
-            Openness: Pct(Openness),
-            Conscientiousness: Pct(Conscientiousness),
-            Extraversion: Pct(Extraversion),
-            Agreeableness: Pct(Agreeableness),
-            EmotionalStability: Pct(EmotionalStability));
+            Autonomy: autonomy,
+            Informal: informal,
+            Collaboration: collaboration,
+            Flexibility: flexibility,
+            Innovation: innovation,
+            PeopleFirst: peopleFirst,
+            Openness: openness,
+            Conscientiousness: conscientiousness,
+            Extraversion: extraversion,
+            Agreeableness: agreeableness,
+            EmotionalStability: emotionalStability);
     }
 
     public static IReadOnlyList<string> DeriveMatchTags(CulturePersonalityScores scores)
     {
         var tags = new List<string>();
-        void Add(string code, int? value, string high, string low)
+        void Add(int? value, string high, string low)
         {
             if (value is null)
             {
@@ -177,12 +178,12 @@ public static class CulturePersonalityCatalog
             tags.Add(value >= 60 ? high : low);
         }
 
-        Add(Autonomy, scores.Autonomy, "zelfstandig", "duidelijke-kaders");
-        Add(Informal, scores.Informal, "informeel", "formeel");
-        Add(Collaboration, scores.Collaboration, "samenwerken", "zelfstandig-werken");
-        Add(Flexibility, scores.Flexibility, "flexibel", "gestructureerd");
-        Add(Innovation, scores.Innovation, "vernieuwend", "stabiel");
-        Add(PeopleFirst, scores.PeopleFirst, "mensgericht", "resultaatgericht");
+        Add(scores.Autonomy, "zelfstandig", "duidelijke-kaders");
+        Add(scores.Informal, "informeel", "formeel");
+        Add(scores.Collaboration, "samenwerken", "zelfstandig-werken");
+        Add(scores.Flexibility, "flexibel", "gestructureerd");
+        Add(scores.Innovation, "vernieuwend", "stabiel");
+        Add(scores.PeopleFirst, "mensgericht", "resultaatgericht");
         return tags;
     }
 

@@ -1,0 +1,218 @@
+@namespace Jobsy.Web.Components.Employer
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+
+@if (_status is not null && !_status.ChecklistComplete)
+{
+    <section class="cv-onboarding" aria-label="@Culture["WaBanner.Checklist.Title"]">
+        <div class="cv-onboarding__grid">
+            <article class="cv-card">
+                <header class="cv-card__header">
+                    <h2>@Culture["WaBanner.Checklist.Title"]</h2>
+                    <p class="cv-card__progress">@string.Format(Culture["WaBanner.Checklist.Progress"], _doneCount, _totalCount)</p>
+                </header>
+                <div class="cv-card__bar" style="@($"--pct:{_pct}%")" aria-hidden="true"><span></span></div>
+                <ul class="cv-checklist">
+                    @foreach (var item in _status.Checklist.Where(c => c.Key != "suggested_vestiging"))
+                    {
+                        <li class="cv-checklist__item @(item.Done ? "is-done" : null)">
+                            <span class="cv-checklist__mark" aria-hidden="true">@(item.Done ? "✓" : "")</span>
+                            <div class="cv-checklist__body">
+                                <p class="cv-checklist__title">@ChecklistTitle(item)</p>
+                                @if (!string.IsNullOrWhiteSpace(ChecklistDetail(item)))
+                                {
+                                    <p class="cv-checklist__detail">@ChecklistDetail(item)</p>
+                                }
+                            </div>
+                            @if (!item.Done && !string.IsNullOrWhiteSpace(item.Href))
+                            {
+                                <a class="cv-checklist__go" href="@item.Href" aria-label="@ChecklistTitle(item)">→</a>
+                            }
+                        </li>
+                    }
+                    @foreach (var suggestion in _status.SuggestedVestigingen)
+                    {
+                        <li class="cv-checklist__item cv-checklist__item--suggest">
+                            <span class="cv-checklist__mark" aria-hidden="true"></span>
+                            <div class="cv-checklist__body">
+                                <p class="cv-checklist__title">@string.Format(Culture["WaBanner.Checklist.Suggestion"], suggestion.Address)</p>
+                            </div>
+                            <div class="cv-checklist__suggest-actions">
+                                <button type="button" class="login-submit" disabled="@_busy" @onclick="() => AcceptAsync(suggestion.KvkEstablishmentId)">
+                                    @Culture["WaBanner.Checklist.Add"]
+                                </button>
+                                <button type="button" class="provider-btn" disabled="@_busy" @onclick="() => DismissAsync(suggestion.KvkEstablishmentId)">
+                                    @Culture["WaBanner.Checklist.NotNow"]
+                                </button>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </article>
+
+            <article class="cv-card">
+                <header class="cv-card__header">
+                    <h2>@Culture["WaBanner.Visibility.Title"]</h2>
+                </header>
+                <ul class="cv-visibility">
+                    @foreach (var row in _status.Visibility)
+                    {
+                        <li class="cv-visibility__row">
+                            <span class="cv-visibility__label">@VisibilityLabel(row.Key)</span>
+                            <span class="cv-visibility__state @(row.Visible ? "is-visible" : "is-hidden")">
+                                @(row.Visible ? Culture["WaBanner.Visibility.Visible"] : Culture["WaBanner.Visibility.Hidden"])
+                            </span>
+                            @if (!row.Visible)
+                            {
+                                <span class="cv-visibility__hint">@VisibilityHint(row.Key)</span>
+                            }
+                        </li>
+                    }
+                    <li class="cv-visibility__row cv-visibility__row--locked">
+                        <span class="cv-visibility__label">@Culture["WaBanner.Visibility.Applications"]</span>
+                        <span class="cv-visibility__state">@Culture["WaBanner.Visibility.Locked"]</span>
+                    </li>
+                    <li class="cv-visibility__row cv-visibility__row--locked">
+                        <span class="cv-visibility__label">@Culture["WaBanner.Visibility.Tokens"]</span>
+                        <span class="cv-visibility__state">@Culture["WaBanner.Visibility.Locked"]</span>
+                    </li>
+                    <li class="cv-visibility__row cv-visibility__row--locked">
+                        <span class="cv-visibility__label">@Culture["WaBanner.Visibility.Insights"]</span>
+                        <span class="cv-visibility__state">@Culture["WaBanner.Visibility.Locked"]</span>
+                    </li>
+                </ul>
+                <p class="cv-visibility__footer">@Culture["WaBanner.Visibility.Footer"]</p>
+            </article>
+        </div>
+    </section>
+}
+
+@code {
+    private EmployerOnboardingStatusItem? _status;
+    private bool _busy;
+    private bool _loadStarted;
+    private int _doneCount;
+    private int _totalCount;
+    private int _pct;
+
+    protected override Task OnInitializedAsync() => TryLoadAsync();
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+        => firstRender ? TryLoadAsync() : Task.CompletedTask;
+
+    private async Task TryLoadAsync()
+    {
+        if (_loadStarted)
+        {
+            return;
+        }
+
+        _loadStarted = true;
+        try
+        {
+            _status = await Api.GetEmployerOnboardingStatusAsync();
+            Recalc();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            _loadStarted = false;
+        }
+    }
+
+    private void Recalc()
+    {
+        if (_status is null)
+        {
+            return;
+        }
+
+        var items = _status.Checklist.Where(c => c.Key != "suggested_vestiging").ToList();
+        _totalCount = items.Count + _status.SuggestedVestigingen.Count;
+        _doneCount = items.Count(c => c.Done);
+        _pct = _totalCount == 0 ? 100 : (int)Math.Round(100.0 * _doneCount / _totalCount);
+    }
+
+    private string ChecklistTitle(EmployerChecklistItemModel item) => item.Key switch
+    {
+        "account" => Culture["WaBanner.Checklist.Account"],
+        "verify" => Culture["WaBanner.Checklist.Verify"],
+        "about" => Culture["WaBanner.Checklist.About"],
+        "vacancy" => Culture["WaBanner.Checklist.Vacancy"],
+        "invite" => Culture["WaBanner.Checklist.Invite"],
+        _ => item.Key
+    };
+
+    private string? ChecklistDetail(EmployerChecklistItemModel item)
+    {
+        if (item.Done)
+        {
+            return item.Key switch
+            {
+                "about" => Culture["WaBanner.Checklist.About.Detail"],
+                _ => null
+            };
+        }
+
+        return item.Key switch
+        {
+            "verify" when item.Detail == "letter" => Culture["WaBanner.Checklist.Verify.Letter"],
+            "verify" when item.Detail == "manual" => Culture["WaBanner.Checklist.Verify.Manual"],
+            "about" => Culture["WaBanner.Checklist.About.Detail"],
+            "vacancy" when item.Detail == "ready" => Culture["WaBanner.Checklist.Vacancy.Ready"],
+            _ => null
+        };
+    }
+
+    private string VisibilityLabel(string key) => key switch
+    {
+        EmployerVisibilityPanel.CompanyPage => Culture["WaBanner.Visibility.CompanyPage"],
+        EmployerVisibilityPanel.MapSearchMatch => Culture["WaBanner.Visibility.Map"],
+        EmployerVisibilityPanel.Matches => Culture["WaBanner.Visibility.Matches"],
+        EmployerVisibilityPanel.SearchEngines => Culture["WaBanner.Visibility.Search"],
+        _ => key
+    };
+
+    private string VisibilityHint(string key) => key switch
+    {
+        EmployerVisibilityPanel.CompanyPage => Culture["WaBanner.Visibility.CompanyPage.Hint"],
+        EmployerVisibilityPanel.MapSearchMatch => Culture["WaBanner.Visibility.Map.Hint"],
+        EmployerVisibilityPanel.SearchEngines => Culture["WaBanner.Visibility.Search.Hint"],
+        _ => ""
+    };
+
+    private async Task AcceptAsync(string id)
+    {
+        _busy = true;
+        try
+        {
+            await Api.AcceptVestigingSuggestionAsync(id);
+            _loadStarted = false;
+            await TryLoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DismissAsync(string id)
+    {
+        _busy = true;
+        try
+        {
+            await Api.DismissVestigingSuggestionAsync(id);
+            _loadStarted = false;
+            await TryLoadAsync();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

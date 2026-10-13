@@ -1,0 +1,33 @@
+@page "/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.ProactiveMatching)]
+@using Jobsy.Web.Components.Ui.Enterprise
+@using Jobsy.Web.Components.Werkgever.Sections
+@inject NavigationManager Navigation
+@inject CultureState Culture
+
+<PageTitle>@Culture["ProactiveMatching.Employer.Shortlist.PageTitle"] · Lobsy</PageTitle>
+
+<WgPageShell>
+    <div class="proactive-shortlist-page panel-page">
+        <header class="proactive-hero proactive-shortlist-page__header">
+            <a class="proactive-shortlist-page__back" href="@EditVacancyHref">
+                @Culture["ProactiveMatching.Employer.Shortlist.BackToVacancy"]
+            </a>
+            <p class="proactive-hero__eyebrow">@Culture["ProactiveMatching.Hero.Eyebrow"]</p>
+            <h1>@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h1>
+            <p class="proactive-shortlist-page__lead proactive-hero__lead">@Culture["ProactiveMatching.Employer.Shortlist.Lead"]</p>
+        </header>
+
+        <ProactiveVacancyShortlistSection VacancyId="VacancyId" Layout="full" />
+    </div>
+</WgPageShell>
+
+@code {
+    [Parameter] public Guid VacancyId { get; set; }
+
+    private string EditVacancyHref => $"/werkgever/vacatures/nieuw?edit={VacancyId:D}";
+}

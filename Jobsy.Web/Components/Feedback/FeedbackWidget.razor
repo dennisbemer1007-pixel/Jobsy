@@ -2,14 +2,15 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using Jobsy.Web.Navigation
+@inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
-@inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject AuthenticationStateProvider AuthState
 @inject FeedbackHost FeedbackHost
-@implements IDisposable
 
+@if (!HideEdgeTab)
+{
 <div class="feedback-widget feedback-widget--tab @(_hasBottomNav ? "has-bottom-nav" : null) @(_capturing ? "is-capturing" : null) @(_open ? "is-open" : null)">
     <button type="button"
             class="feedback-widget__btn feedback-widget__tab feedback-widget__tab--edge"
@@ -21,6 +22,7 @@
         <span>@(_capturing ? Culture["Feedback.Capturing"] : Culture["Feedback.Button"])</span>
     </button>
 </div>
+}
 
 <LobsyFriendlyDialog IsOpen="_open"
                      Title="@Culture["Feedback.Title"]"
@@ -92,23 +94,21 @@
     private string _roleLabel = "Gast";
 
     [Parameter] public bool HasBottomNav { get; set; }
+    [Parameter] public bool HideEdgeTab { get; set; }
 
     protected override void OnParametersSet()
         => _hasBottomNav = HasBottomNav;
 
     protected override void OnInitialized()
     {
-        Culture.Changed += OnCultureChanged;
+        base.OnInitialized();
         FeedbackHost.OpenRequested += OpenAsync;
     }
 
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
+    public override void Dispose()
     {
-        Culture.Changed -= OnCultureChanged;
         FeedbackHost.OpenRequested -= OpenAsync;
+        base.Dispose();
     }
 
     private string PageUrlForSubmit
@@ -150,6 +150,7 @@
         }
 
         _capturing = true;
+        _open = true;
         _sent = false;
         _error = null;
         _description = "";
@@ -158,7 +159,6 @@
         _meta = null;
         _roleLabel = await ResolveRoleAsync();
         await InvokeAsync(StateHasChanged);
-        await Task.Delay(40);
 
         try
         {

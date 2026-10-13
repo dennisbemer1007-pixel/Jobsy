@@ -1,0 +1,189 @@
+@using Jobsy.Core.Privacy
+@using Jobsy.Web.Admin
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject Jobsy.Web.Branding.PlatformBrandingState Branding
+@implements IDisposable
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error">@_error</p>
+}
+else
+{
+    <section class="detail-card admin-settings-group">
+        <div class="panel-header">
+            <h2>@Culture["AdminSettings.LobsyCompany.Title"]</h2>
+            <button class="btn-compact btn-compact--primary" type="button" data-testid="company-save" disabled="@_busy" @onclick="SaveAsync">
+                @Culture["Common.Save"]
+            </button>
+        </div>
+        <p class="muted">@Culture["AdminSettings.LobsyCompany.Hint"]</p>
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        <div class="login-form admin-company-form">
+            <label>
+                @Culture["AdminSettings.LobsyCompany.LegalName"]
+                <input data-testid="company-legal-name" @bind="_form.LegalName" maxlength="200" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.TradeName"]
+                <input data-testid="company-trade-name" @bind="_form.TradeName" maxlength="200" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Slogan"]
+                <input @bind="_form.Slogan" maxlength="240" />
+            </label>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.SloganHint"]</p>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.Visiting"]</p>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Address"]
+                <input data-testid="company-street" @bind="_form.Address" />
+            </label>
+            <div class="admin-company-form__row">
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.PostalCode"]
+                    <input data-testid="company-postal" @bind="_form.PostalCode" />
+                </label>
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.City"]
+                    <input data-testid="company-city" @bind="_form.City" />
+                </label>
+            </div>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Country"]
+                <input data-testid="company-country" @bind="_form.Country" />
+            </label>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.Postal"]</p>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.PostalHint"]</p>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Address"]
+                <input data-testid="company-postal-street" @bind="_form.PostalStreet" />
+            </label>
+            <div class="admin-company-form__row">
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.PostalCode"]
+                    <input data-testid="company-postal-code" @bind="_form.PostalPostalCode" />
+                </label>
+                <label>
+                    @Culture["AdminSettings.LobsyCompany.City"]
+                    <input data-testid="company-postal-city" @bind="_form.PostalCity" />
+                </label>
+            </div>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Kvk"]
+                <input data-testid="company-kvk" @bind="_form.KvkNumber" inputmode="numeric" maxlength="8" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Vat"]
+                <input data-testid="company-vat" @bind="_form.VatNumber" maxlength="32" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Iban"]
+                <input data-testid="company-iban"
+                       @bind="_form.VatBufferIban"
+                       placeholder="@_ibanPlaceholder"
+                       autocomplete="off"
+                       spellcheck="false" />
+            </label>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.IbanHint"]</p>
+            <p class="muted">@Culture["AdminSettings.LobsyCompany.IbanVatHint"]</p>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.Phone"]
+                <input data-testid="company-phone" @bind="_form.Phone" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.SupportEmail"]
+                <input data-testid="company-support-email" type="email" @bind="_form.SupportEmail" />
+            </label>
+            <label>
+                @Culture["AdminSettings.LobsyCompany.PrivacyEmail"]
+                <input data-testid="company-privacy-email" type="email" @bind="_form.PrivacyEmail" />
+            </label>
+        </div>
+    </section>
+}
+
+@code {
+    private PlatformCompanyItem _form = new();
+    private string _ibanPlaceholder = CompanyFormFields.IbanExample;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string? _message;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _form = await Api.GetPlatformCompanyAsync() ?? new PlatformCompanyItem();
+            if (string.IsNullOrWhiteSpace(_form.SupportEmail))
+            {
+                _form.SupportEmail = _form.Email;
+            }
+
+            PrepareDisplay();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _error = null;
+        _message = null;
+        try
+        {
+            _form.Email = _form.SupportEmail;
+            _form.CompanyName = string.IsNullOrWhiteSpace(_form.TradeName) ? _form.CompanyName : _form.TradeName;
+            _form.Country = CompanyFormFields.CountryToStore(_form.Country);
+            _form.VatBufferIban = CompanyFormFields.IbanToSave(_form.VatBufferIban);
+            _form = await Api.SavePlatformCompanyAsync(_form) ?? _form;
+            PrepareDisplay();
+            await Branding.RefreshAsync();
+            _message = Culture["AdminSettings.LobsyCompany.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void PrepareDisplay()
+    {
+        _ibanPlaceholder = CompanyFormFields.IbanPlaceholder(_form.VatBufferIban);
+        if (!IbanMasking.IsFullIbanInput(_form.VatBufferIban))
+        {
+            _form.VatBufferIban = "";
+        }
+
+        _form.Country = CompanyFormFields.DisplayCountry(_form.Country);
+    }
+}

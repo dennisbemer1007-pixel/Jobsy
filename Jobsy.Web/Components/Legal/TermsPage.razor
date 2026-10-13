@@ -1,0 +1,16 @@
+@using Jobsy.Core.Legal
+@using Jobsy.Web.Components.Legal.Docs
+
+@* One page component for /algemene-voorwaarden and /gebruiksvoorwaarden (04.2). *@
+@if (Audience == TermsAudience.Employer)
+{
+    <AlgemeneVoorwaardenNl />
+}
+else
+{
+    <GebruiksvoorwaardenNl />
+}
+
+@code {
+    [Parameter, EditorRequired] public TermsAudience Audience { get; set; }
+}

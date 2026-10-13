@@ -11,6 +11,7 @@ public static class MetricsPeriodParser
             "month" => MetricsPeriod.Month,
             "quarter" => MetricsPeriod.Quarter,
             "year" => MetricsPeriod.Year,
+            "all" => MetricsPeriod.All,
             _ => MetricsPeriod.Day
         };
 
@@ -24,6 +25,7 @@ public static class MetricsPeriodParser
             MetricsPeriod.Month => now.Date.AddDays(-30),
             MetricsPeriod.Quarter => now.Date.AddDays(-90),
             MetricsPeriod.Year => now.Date.AddDays(-365),
+            MetricsPeriod.All => DateTime.MinValue,
             _ => now.Date
         };
         return (from, to);
@@ -35,7 +37,8 @@ public record MetricCountDto(
     string Label,
     string Period,
     decimal Value,
-    IReadOnlyList<decimal>? Sparkline = null);
+    IReadOnlyList<decimal>? Sparkline = null,
+    decimal? PreviousValue = null);
 
 public record MetricDrilldownItemDto(
     Guid Id,
@@ -85,7 +88,7 @@ public static class MetricsKeys
 {
     public static readonly HashSet<string> PlatformOnly = new(StringComparer.OrdinalIgnoreCase)
     {
-        "errors", "users_open_for_work", "users_active",
+        "errors", "users_open_for_work", "users_active", "users_active_candidates",
         "companies_employers", "companies_intermediaries",
         "site_visits", "site_visits_unique",
         "companies_with_api", "companies_with_csv",
@@ -107,11 +110,13 @@ public record TokenLogItemDto(
     string? Note,
     Guid? VacancyId,
     Guid? BranchCompanyId,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? ActorName = null);
 
 public record PlatformLogItemDto(
     Guid Id,
     string Level,
     string Category,
     string Message,
-    DateTime CreatedAt);
+    DateTime CreatedAt,
+    string? Detail = null);

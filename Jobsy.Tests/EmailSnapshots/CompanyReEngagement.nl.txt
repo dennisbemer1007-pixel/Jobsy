@@ -1,0 +1,36 @@
+KEY: CompanyReEngagement
+SUBJECT: Plaats je volgende vacature op Lobsy
+PREHEADER: Je account en je gegevens staan nog klaar.
+KIND: Optional
+--- TEXT ---
+Klaar voor je volgende vacature?
+================================
+
+Hallo team Bakkerij De Gouden Korrel,
+
+Het is een tijd stil bij jullie op Lobsy. Je account staat nog klaar. Een
+nieuwe vacature plaats je in een paar minuten.
+
+1 Log in. 2 Maak een vacature. 3 Publiceer hem.
+
+Naar je dashboard: https://lobsy.nl/werkgever
+
+Team Lobsy
+
+Je krijgt deze mail omdat je Bakkerij De Gouden Korrel beheert op Lobsy.
+Geen herinneringen meer ontvangen? Afmelden: https://lobsy.nl/mail/afmelden
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail-instellingen: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Klaar voor je volgende vacature?
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Naar je dashboard -> https://lobsy.nl/werkgever
+a: Geen herinneringen meer ontvangen? Afmelden -> https://lobsy.nl/mail/afmelden
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

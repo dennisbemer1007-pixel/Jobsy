@@ -1,15 +1,16 @@
-@page "/admin/training"
+@page "/admin/content/opleidingen"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Enums
 @using Jobsy.Web.Components.Admin
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IJSRuntime Js
 @implements IDisposable
 
-<PageTitle>@Culture["Admin.Training"] · Lobsy</PageTitle>
+<PageTitle>@Culture["AdminNav.Training"] · Lobsy</PageTitle>
 
-<AdminPageShell Title="@Culture["Admin.Training"]" Lead="@Culture["Admin.TrainingLead"]" ShowSettingsNav="true">
+<AdminPageShell Title="@Culture["AdminNav.Training"]" Lead="@Culture["Admin.TrainingLead"]">
     @if (!string.IsNullOrWhiteSpace(_message))
     {
         <p class="state-message">@_message</p>
@@ -24,7 +25,7 @@
         <section class="training-admin-export">
             <h3>Maandexport lokale deals</h3>
             <p class="login-lead">Landelijke affiliates (Awin/Daisycon) lopen via hun eigen dashboard. Dit CSV matcht anonieme hashes voor Den Haag / Westland.</p>
-            <div class="masterdata-row__fields" style="grid-template-columns: 8rem 8rem auto;">
+            <div class="masterdata-row__fields masterdata-row__fields--export">
                 <label>
                     Jaar
                     <input type="number" @bind="_year" />
@@ -42,7 +43,7 @@
                     <input @bind="_clickId" />
                 </label>
                 <label>
-                    Candidate hash
+                    @Culture["AdminTraining.CandidateHash"]
                     <input @bind="_candidateHash" />
                 </label>
                 <label>
@@ -60,10 +61,85 @@
             </form>
         </section>
 
+        @if (_edit is not null)
+        {
+            <section class="detail-card" aria-labelledby="training-offer-edit-title" @onkeydown="OnEditKey">
+                <h3 id="training-offer-edit-title">@Culture["Admin.Training.EditOffer"]</h3>
+                <p><strong>@_edit.Title</strong></p>
+                <div class="masterdata-row__fields">
+                    <label>
+                        @Culture["Admin.Training.Type"]
+                        <select @ref="_editFirst" @bind="_editType">
+                            <option value="Opleiding">Opleiding</option>
+                            <option value="Cursus">Cursus</option>
+                            <option value="Workshop">Workshop</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Duration"]
+                        <input type="number" min="1" @bind="_editDurationValue" />
+                    </label>
+                    <label>
+                        @Culture["AdminTraining.Unit"]
+                        <select @bind="_editDurationUnit">
+                            <option value="">—</option>
+                            <option value="Hours">@Culture["AdminTraining.Hours"]</option>
+                            <option value="Days">@Culture["AdminTraining.Days"]</option>
+                            <option value="Weeks">@Culture["AdminTraining.Weeks"]</option>
+                            <option value="Months">@Culture["AdminTraining.Months"]</option>
+                            <option value="Years">@Culture["AdminTraining.Years"]</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Delivery"]
+                        <select @bind="_editDelivery">
+                            <option value="Online">Online</option>
+                            <option value="OnSite">@Culture["AdminTraining.OnSite"]</option>
+                            <option value="Blended">Blended</option>
+                        </select>
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.Location"]
+                        <input @bind="_editLocation" />
+                    </label>
+                    <label>
+                        @Culture["AdminTraining.Deeplink"]
+                        <input @bind="_editPath" />
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsFree" />
+                        @Culture["Admin.Training.IsFree"]
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsPartner" />
+                        @Culture["Admin.Training.IsPartner"]
+                    </label>
+                    <label>
+                        @Culture["Admin.Training.AffiliateCode"]
+                        <input @bind="_editAffiliate" />
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editShowInPassport" />
+                        @Culture["Admin.Training.ShowInPassport"]
+                    </label>
+                    <label>
+                        <input type="checkbox" @bind="_editIsActive" />
+                        @Culture["AdminTraining.Active"]
+                    </label>
+                </div>
+                <div class="inline-actions">
+                    <button type="button" class="btn-compact" @onclick="CancelEdit">@Culture["Common.Cancel"]</button>
+                    <button type="button" class="login-submit" disabled="@_busy" @onclick="SaveOfferAsync">
+                        @Culture["Admin.Training.SaveOffer"]
+                    </button>
+                </div>
+            </section>
+        }
+
         @foreach (var provider in _providers)
         {
             <article class="table-row masterdata-row">
-                <h3>@provider.Name <small>@provider.Kind · @provider.Network · @provider.Region</small></h3>
+                <h3>@provider.Name <small>@ProviderKind(provider.Kind) · @provider.Network · @provider.Region</small></h3>
                 <p>@provider.BaseUrl</p>
                 <p>Velden: @provider.FieldsCsv</p>
                 <p>
@@ -75,11 +151,29 @@
                 <ul>
                     @foreach (var offer in provider.Offers)
                     {
-                        <li>@offer.Title (@offer.FieldsCsv)</li>
+                        <li>
+                            <button type="button" class="training-offers__link" @onclick="() => BeginEdit(offer)">
+                                @offer.Title
+                            </button>
+                            (@offer.FieldsCsv)
+                            @if (offer.ShowInPassport)
+                            {
+                                <span class="status-pill">paspoort</span>
+                            }
+                            @if (offer.IsFree)
+                            {
+                                <span class="status-pill">@Culture["Admin.Training.IsFree"]</span>
+                            }
+                            @if (offer.IsPartner)
+                            {
+                                <span class="status-pill">@Culture["Admin.Training.IsPartner"]</span>
+                            }
+                        </li>
                     }
                 </ul>
             </article>
         }
+
     }
 </AdminPageShell>
 
@@ -94,6 +188,19 @@
     private string _candidateHash = "";
     private string _email = "";
     private string _kind = "0";
+
+    private TrainingOfferAdmin? _edit;
+    private string _editType = "Cursus";
+    private int? _editDurationValue;
+    private string _editDurationUnit = "";
+    private string _editDelivery = "Online";
+    private string _editLocation = "";
+    private string _editPath = "";
+    private bool _editIsFree;
+    private bool _editIsPartner;
+    private string _editAffiliate = "";
+    private bool _editShowInPassport;
+    private bool _editIsActive = true;
 
     protected override void OnInitialized()
         => Culture.Changed += OnCultureChanged;
@@ -121,6 +228,112 @@
         finally
         {
             _loading = false;
+        }
+    }
+
+    private ElementReference _editFirst;
+    private Guid? _focusedEditId;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_edit is not null && _focusedEditId != _edit.Id)
+        {
+            _focusedEditId = _edit.Id;
+            try
+            {
+                await _editFirst.FocusAsync();
+            }
+            catch (Exception)
+            {
+            }
+        }
+    }
+
+    private void CancelEdit()
+    {
+        _edit = null;
+        _focusedEditId = null;
+    }
+
+    private void OnEditKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            CancelEdit();
+        }
+    }
+
+    private string ProviderKind(string? kind) => kind switch
+    {
+        "RegionalPartner" => Culture["AdminTraining.RegionalPartner"],
+        "NationalAffiliate" => Culture["AdminTraining.NationalAffiliate"],
+        _ => kind ?? ""
+    };
+
+    private void BeginEdit(TrainingOfferAdmin offer)
+    {
+        _focusedEditId = null;
+        _edit = offer;
+        _editType = string.IsNullOrWhiteSpace(offer.Type) ? "Cursus" : offer.Type;
+        _editDurationValue = offer.DurationValue;
+        _editDurationUnit = offer.DurationUnit ?? "";
+        _editDelivery = string.IsNullOrWhiteSpace(offer.Delivery) ? "Online" : offer.Delivery;
+        _editLocation = offer.Location ?? "";
+        _editPath = offer.ExternalPath ?? "";
+        _editIsFree = offer.IsFree;
+        _editIsPartner = offer.IsPartner;
+        _editAffiliate = offer.AffiliateCode ?? "";
+        _editShowInPassport = offer.ShowInPassport;
+        _editIsActive = offer.IsActive;
+        _message = null;
+    }
+
+    private async Task SaveOfferAsync()
+    {
+        if (_edit is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            Enum.TryParse<TrainingOfferType>(_editType, true, out var type);
+            TrainingDurationUnit? unit = Enum.TryParse<TrainingDurationUnit>(_editDurationUnit, true, out var u) ? u : null;
+            Enum.TryParse<TrainingDeliveryMode>(_editDelivery, true, out var delivery);
+
+            await Api.UpsertTrainingOfferAdminAsync(new
+            {
+                id = _edit.Id,
+                providerId = _edit.ProviderId,
+                title = _edit.Title,
+                fieldsCsv = _edit.FieldsCsv,
+                keysCsv = _edit.KeysCsv,
+                externalPath = _editPath,
+                isActive = _editIsActive,
+                sortOrder = _edit.SortOrder,
+                type = type.ToString(),
+                durationValue = _editDurationValue,
+                durationUnit = unit?.ToString(),
+                delivery = delivery.ToString(),
+                location = string.IsNullOrWhiteSpace(_editLocation) ? null : _editLocation,
+                isFree = _editIsFree,
+                isPartner = _editIsPartner,
+                affiliateCode = string.IsNullOrWhiteSpace(_editAffiliate) ? null : _editAffiliate,
+                showInPassport = _editShowInPassport
+            });
+            _message = "Opgeslagen.";
+            _edit = null;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 

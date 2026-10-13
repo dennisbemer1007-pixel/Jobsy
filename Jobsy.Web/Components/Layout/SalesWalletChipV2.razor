@@ -1,0 +1,63 @@
+@namespace Jobsy.Web.Components.Layout
+@using Jobsy.Core.Sales
+@using Microsoft.AspNetCore.Components.Authorization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@implements IDisposable
+
+<AuthorizeView Roles="SalesManager">
+    <Authorized>
+        @if (_loaded)
+        {
+            <a class="sp-wallet-chip" href="/sales/wallet" title="@Culture.Format("Sales.WalletAvailable", SalesMoney.FormatPlain(_balance))">
+                <span class="sp-wallet-chip__icon" aria-hidden="true">@((MarkupString)NavIcons.Wallet)</span>
+                <span class="sp-wallet-chip__label">@Culture["Sales.Label.State.Available"]</span>
+                <strong class="sp-wallet-chip__amount">@SalesMoney.FormatPlain(_balance)</strong>
+            </a>
+        }
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private decimal _balance;
+    private bool _loaded;
+
+    protected override void OnInitialized()
+        => Culture.Changed += OnCultureChanged;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (AuthStateTask is null)
+            {
+                return;
+            }
+
+            var auth = await AuthStateTask;
+            var user = auth.User;
+            if (user.Identity?.IsAuthenticated != true || !user.IsInRole("SalesManager"))
+            {
+                return;
+            }
+
+            var dash = await Api.GetMySalesManagerDashboardAsync();
+            _balance = dash?.UninvoicedExVat ?? dash?.BalanceExVat ?? 0m;
+        }
+        catch
+        {
+            _balance = 0m;
+        }
+        finally
+        {
+            _loaded = true;
+        }
+    }
+
+    private void OnCultureChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Culture.Changed -= OnCultureChanged;
+}

@@ -1,0 +1,29 @@
+@inject CultureState Culture
+
+@if (Items is null || Items.Count == 0)
+{
+    <span class="status-pill status-pill--neutral" data-testid="insights-insufficient">@Culture["Insights.Insufficient"]</span>
+}
+else
+{
+    <ol class="insights-list">
+        @foreach (var item in Items)
+        {
+            <li class="insights-list__row">
+                <span>@item.Label</span>
+                @if (item.Count.Status == "ok" && item.Count.Value is int v)
+                {
+                    <span>@v</span>
+                }
+                else
+                {
+                    <span class="status-pill status-pill--neutral">@Culture["Insights.Insufficient"]</span>
+                }
+            </li>
+        }
+    </ol>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<RankedItemModel>? Items { get; set; }
+}

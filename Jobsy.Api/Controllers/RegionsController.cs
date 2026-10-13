@@ -6,12 +6,14 @@ using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
 
 [ApiController]
 [Route("api/regions")]
-[Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
+[Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.RegionalManager},{JobsyRoles.Admin}")]
+[RequiresFeature(PlatformFeature.Employers)]
 public class RegionsController : ControllerBase
 {
     private readonly JobsyDbContext _db;
@@ -33,7 +35,10 @@ public class RegionsController : ControllerBase
         var query = _db.Regions.AsNoTracking().AsQueryable();
         if (accessible is not null)
         {
-            query = query.Where(r => accessible.Contains(r.OrganizationCompanyId));
+            // RM memberships are vestigingen; also match regions that contain those companies.
+            query = query.Where(r =>
+                accessible.Contains(r.OrganizationCompanyId)
+                || r.Companies.Any(c => accessible.Contains(c.CompanyId)));
         }
 
         var rows = await query
@@ -67,6 +72,7 @@ public class RegionsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
     public async Task<ActionResult<RegionDto>> Create(
         [FromBody] CreateRegionRequest request,
         CancellationToken cancellationToken)
@@ -116,6 +122,7 @@ public class RegionsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
     public async Task<ActionResult<RegionDto>> Update(
         Guid id,
         [FromBody] UpdateRegionRequest request,
@@ -155,6 +162,7 @@ public class RegionsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = $"{JobsyRoles.EnterpriseManager},{JobsyRoles.Admin}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         var region = await _db.Regions

@@ -1,0 +1,40 @@
+@namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Scholen
+@inject CultureState Culture
+
+<LeerlingCoachCue Text="@Culture["Leerling.Coach.Part"]" />
+<section class="ll-card" role="status">
+    <h1 @ref="_heading" tabindex="-1">@Culture["Leerling.Vo.PartBreak.Title"]</h1>
+    <LeerlingSpeak Text="@Spoken" SpeechKey="ll-part-break" />
+    <p>@Culture["Leerling.Vo.PartBreak.Body"]</p>
+    <div class="ll-question__nav">
+        <a class="btn-primary" href="/leerling/reis">@Culture["Leerling.Vo.PartBreak.Continue"]</a>
+        <form method="post" action="/leerling/pauze" class="ll-topbar__pause-form">
+            <AntiforgeryToken />
+            <input type="hidden" name="part" value="1" />
+            <button type="submit" class="btn-secondary">@Culture["Leerling.Vo.PartBreak.Stop"]</button>
+        </form>
+    </div>
+</section>
+
+@code {
+    private ElementReference _heading;
+
+    private string Spoken =>
+        SpokenText.Join(Culture["Leerling.Vo.PartBreak.Title"], Culture["Leerling.Vo.PartBreak.Body"]);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await _heading.FocusAsync();
+            }
+            catch (InvalidOperationException)
+            {
+                // bUnit / prerender: no interactive runtime.
+            }
+        }
+    }
+}

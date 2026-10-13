@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -13,17 +14,20 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
     private readonly ICandidateMatchSnapshotService _matches;
     private readonly ICandidateInsightsQueue _insightsQueue;
     private readonly ICandidateCareerPlanService _careerPlans;
+    private readonly IFeatureFlags _featureFlags;
 
     public CandidateOnboardingService(
         JobsyDbContext db,
         ICandidateMatchSnapshotService matches,
         ICandidateInsightsQueue insightsQueue,
-        ICandidateCareerPlanService careerPlans)
+        ICandidateCareerPlanService careerPlans,
+        IFeatureFlags featureFlags)
     {
         _db = db;
         _matches = matches;
         _insightsQueue = insightsQueue;
         _careerPlans = careerPlans;
+        _featureFlags = featureFlags;
     }
 
     public async Task<CandidateOnboardingStateDto> GetAsync(
@@ -31,9 +35,12 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
+        await AlignWizardVersionOnReadAsync(row, persist: true, cancellationToken);
         var shouldShow = await ShouldShowWizardAsync(userId, cancellationToken);
         CandidateOnboardingImpressionDto? impression = null;
-        if (row.CurrentStep >= OnboardingWizardCatalog.StepCount || row.CompletedAtUtc is not null)
+        if (row.FinishReached
+            || row.CurrentStep >= ActiveStepCount(row.WizardVersion)
+            || row.CompletedAtUtc is not null)
         {
             impression = await BuildImpressionAsync(userId, cancellationToken);
         }
@@ -47,21 +54,29 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
+        await AlignWizardVersionOnReadAsync(row, persist: true, cancellationToken);
         var now = DateTime.UtcNow;
-        var step = Math.Clamp(request.CurrentStep, 1, OnboardingWizardCatalog.StepCount);
+        var version = row.WizardVersion;
+        var maxStep = ActiveStepCount(version);
+        var step = Math.Clamp(request.CurrentStep, 1, maxStep);
 
-        row.StepsJson = OnboardingStepAnalytics.MarkStarted(row.StepsJson, step, now);
+        row.StepsJson = OnboardingStepAnalytics.MarkStarted(row.StepsJson, step, now, version);
         if (request.StepCompleted == true)
         {
-            row.StepsJson = OnboardingStepAnalytics.MarkCompleted(row.StepsJson, step, now);
+            row.StepsJson = OnboardingStepAnalytics.MarkCompleted(row.StepsJson, step, now, version);
         }
 
         if (request.StepSkipped == true)
         {
-            row.StepsJson = OnboardingStepAnalytics.MarkSkipped(row.StepsJson, step, now);
+            row.StepsJson = OnboardingStepAnalytics.MarkSkipped(row.StepsJson, step, now, version);
         }
 
         row.CurrentStep = step;
+        if (request.FinishReached == true)
+        {
+            row.FinishReached = true;
+        }
+
         if (!string.IsNullOrWhiteSpace(request.Source))
         {
             row.Source = request.Source.Trim();
@@ -73,7 +88,13 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
 
         row.UpdatedAtUtc = now;
         await _db.SaveChangesAsync(cancellationToken);
-        return ToDto(row, await ShouldShowWizardAsync(userId, cancellationToken), null);
+        CandidateOnboardingImpressionDto? impression = null;
+        if (row.FinishReached)
+        {
+            impression = await BuildImpressionAsync(userId, cancellationToken);
+        }
+
+        return ToDto(row, await ShouldShowWizardAsync(userId, cancellationToken), impression);
     }
 
     public async Task<CandidateOnboardingStateDto> CompleteAsync(
@@ -81,10 +102,14 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         CancellationToken cancellationToken = default)
     {
         var row = await EnsureRowAsync(userId, cancellationToken);
+        await AlignWizardVersionOnReadAsync(row, persist: true, cancellationToken);
         var now = DateTime.UtcNow;
+        var version = row.WizardVersion;
+        var lastStep = ActiveStepCount(version);
         row.StepsJson = OnboardingStepAnalytics.MarkCompleted(
-            row.StepsJson, OnboardingWizardCatalog.StepCount, now);
-        row.CurrentStep = OnboardingWizardCatalog.StepCount;
+            row.StepsJson, lastStep, now, version);
+        row.CurrentStep = lastStep;
+        row.FinishReached = true;
         row.CompletedAtUtc ??= now;
         row.UpdatedAtUtc = now;
 
@@ -149,19 +174,144 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         }
 
         var now = DateTime.UtcNow;
+        var passportOn = await IsPassportEnabledAsync(cancellationToken);
+        var version = passportOn
+            ? OnboardingWizardCatalog.WizardVersionV3
+            : OnboardingWizardCatalog.WizardVersionV2;
         row = new CandidateOnboarding
         {
             Id = Guid.NewGuid(),
             UserId = userId,
             CurrentStep = 1,
+            WizardVersion = version,
+            FinishReached = false,
             StartedAtUtc = now,
             UpdatedAtUtc = now,
-            StepsJson = OnboardingStepAnalytics.MarkStarted("[]", 1, now)
+            StepsJson = OnboardingStepAnalytics.MarkStarted("[]", 1, now, version)
         };
         _db.CandidateOnboardings.Add(row);
         await _db.SaveChangesAsync(cancellationToken);
         return row;
     }
+
+    /// <summary>
+    /// Flag ON: incomplete v1/v2 → v3 on read (answers untouched; only step pointer moves).
+    /// Flag OFF: incomplete v3 → v2 on read via <see cref="OnboardingWizardCatalog.MapV3ToV2"/>.
+    /// Completed rows are never reopened or remapped.
+    /// </summary>
+    private async Task AlignWizardVersionOnReadAsync(
+        CandidateOnboarding row,
+        bool persist,
+        CancellationToken cancellationToken)
+    {
+        if (row.CompletedAtUtc is not null)
+        {
+            return;
+        }
+
+        var passportOn = await IsPassportEnabledAsync(cancellationToken);
+        var targetVersion = passportOn
+            ? OnboardingWizardCatalog.WizardVersionV3
+            : OnboardingWizardCatalog.WizardVersionV2;
+
+        if (row.WizardVersion == targetVersion)
+        {
+            // Still migrate raw v1 leftovers when flag is OFF (legacy path).
+            if (!passportOn && row.WizardVersion < OnboardingWizardCatalog.WizardVersionV2)
+            {
+                await MigrateV1ToV2Async(row, persist, cancellationToken);
+            }
+
+            return;
+        }
+
+        if (passportOn)
+        {
+            // v1 → v2 map first, then v2 → v3.
+            var fromVersion = row.WizardVersion;
+            if (fromVersion < OnboardingWizardCatalog.WizardVersionV2)
+            {
+                var v1Step = row.CurrentStep;
+                row.CurrentStep = OnboardingWizardCatalog.MapV1Step(v1Step);
+                if (OnboardingWizardCatalog.MapV1ShowsFinish(v1Step))
+                {
+                    row.FinishReached = true;
+                }
+
+                fromVersion = OnboardingWizardCatalog.WizardVersionV2;
+            }
+
+            if (fromVersion < OnboardingWizardCatalog.WizardVersionV3)
+            {
+                row.CurrentStep = OnboardingWizardCatalog.MapV2ToV3(row.CurrentStep);
+            }
+
+            row.WizardVersion = OnboardingWizardCatalog.WizardVersionV3;
+        }
+        else
+        {
+            // Flag OFF: map v3 back to v2 so the classic wizard never sees v3 pointers.
+            if (row.WizardVersion >= OnboardingWizardCatalog.WizardVersionV3)
+            {
+                row.CurrentStep = OnboardingWizardCatalog.MapV3ToV2(row.CurrentStep);
+                row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
+            }
+            else if (row.WizardVersion < OnboardingWizardCatalog.WizardVersionV2)
+            {
+                await MigrateV1ToV2Async(row, persist, cancellationToken);
+                return;
+            }
+        }
+
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        if (persist)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task MigrateV1ToV2Async(
+        CandidateOnboarding row,
+        bool persist,
+        CancellationToken cancellationToken)
+    {
+        if (row.WizardVersion >= OnboardingWizardCatalog.WizardVersionV2
+            || row.CompletedAtUtc is not null)
+        {
+            return;
+        }
+
+        var v1Step = row.CurrentStep;
+        row.CurrentStep = OnboardingWizardCatalog.MapV1Step(v1Step);
+        if (OnboardingWizardCatalog.MapV1ShowsFinish(v1Step))
+        {
+            row.FinishReached = true;
+        }
+
+        row.WizardVersion = OnboardingWizardCatalog.WizardVersionV2;
+        row.UpdatedAtUtc = DateTime.UtcNow;
+        if (persist)
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private async Task<bool> IsPassportEnabledAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _featureFlags.IsEnabledAsync(PlatformFeature.CandidatePassport, cancellationToken);
+        }
+        catch
+        {
+            return FeatureFlagSnapshot.Defaults.CandidatePassportEnabled;
+        }
+    }
+
+    private static int ActiveStepCount(int wizardVersion)
+        => wizardVersion >= OnboardingWizardCatalog.WizardVersionV3
+            ? OnboardingWizardCatalog.V3StepCount
+            : OnboardingWizardCatalog.StepCount;
 
     private async Task<CandidateOnboardingImpressionDto> BuildImpressionAsync(
         Guid userId,
@@ -225,70 +375,39 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             valuesRow?.StabilityPercent,
             valuesRow?.ImpactPercent);
 
-        var strengths = TopCompetencyItems(competency.Scores, 2);
-        var riasecTop = career.Scores is { } rs
-            ? RiasecRanking.Rank(
-                    rs.Realistic, rs.Investigative, rs.Artistic,
-                    rs.Social, rs.Enterprising, rs.Conventional)
-                .Take(2)
-                .Select(x => x.Code)
-                .ToList()
-            : [];
-        var riasecItems = riasecTop
-            .Select(code => new OnboardingImpressionItemDto(
-                code,
-                DimensionLabels.For(code),
-                OnboardingImpressionLibrary.RiasecSentence(code),
-                career.Scores?.Get(code)))
-            .ToList();
+        var core = OnboardingImpressionComposer.Compose(
+            competency.Scores,
+            career.Scores,
+            culture.Scores,
+            values.Scores);
+        var strengths = core.Strengths.Select(ToImpressionItem).ToList();
+        var riasecItems = core.RiasecTop.Select(ToImpressionItem).ToList();
+        var cultureHighlight = core.CultureHighlight is { } ch ? ToImpressionItem(ch) : null;
+        var topValue = core.TopValue is { } tv ? ToImpressionItem(tv) : null;
 
-        OnboardingImpressionItemDto? cultureHighlight = null;
-        if (culture.Scores is { } cs)
+        // 01.2d / 08.4: when Werkgevers is OFF, never expose vacancy counts or match cards.
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        IReadOnlyList<OnboardingMatchCardDto> cards = Array.Empty<OnboardingMatchCardDto>();
+        var matchCount = 0;
+        if (employersOn)
         {
-            var best = OnboardingWizardCatalog.CultureDimensionCodes
-                .Select(code => (Code: code, Pct: cs.Get(code)))
-                .OrderByDescending(x => x.Pct)
-                .ThenBy(x => x.Code, StringComparer.Ordinal)
-                .First();
-            cultureHighlight = new OnboardingImpressionItemDto(
-                best.Code,
-                DimensionLabels.For(best.Code),
-                OnboardingImpressionLibrary.CultureSentence(best.Code),
-                best.Pct);
+            var liveMatches = await _matches.ComputeLiveAsync(userId, cancellationToken);
+            var topStrengthLabel = strengths.FirstOrDefault()?.Label;
+            cards = liveMatches.Take(3).Select(m =>
+            {
+                var travelHint = TryParseTravelMinutes(m.Why);
+                return new OnboardingMatchCardDto(
+                    m.Id,
+                    m.Title,
+                    m.CompanyName,
+                    m.MatchPercent,
+                    OnboardingImpressionLibrary.MatchWhyLine(topStrengthLabel, dream, travelHint),
+                    IsProvisional: competency.IsProvisional
+                                   || career.IsProvisional
+                                   || culture.IsProvisional);
+            }).ToList();
+            matchCount = liveMatches.Count;
         }
-
-        OnboardingImpressionItemDto? topValue = null;
-        if (values.Scores is { } vs)
-        {
-            var best = SchwartzValuesCatalog.CategoryCodes
-                .Select(code => (Code: code, Pct: vs.Get(code)))
-                .OrderByDescending(x => x.Pct)
-                .ThenBy(x => x.Code, StringComparer.Ordinal)
-                .First();
-            topValue = new OnboardingImpressionItemDto(
-                best.Code,
-                DimensionLabels.For(best.Code),
-                OnboardingImpressionLibrary.ValueSentence(best.Code),
-                best.Pct);
-        }
-
-        var liveMatches = await _matches.ComputeLiveAsync(userId, cancellationToken);
-        var topStrengthLabel = strengths.FirstOrDefault()?.Label;
-        var cards = liveMatches.Take(3).Select(m =>
-        {
-            var travelHint = TryParseTravelMinutes(m.Why);
-            return new OnboardingMatchCardDto(
-                m.Id,
-                m.Title,
-                m.CompanyName,
-                m.MatchPercent,
-                OnboardingImpressionLibrary.MatchWhyLine(topStrengthLabel, dream, travelHint),
-                IsProvisional: competency.IsProvisional
-                               || career.IsProvisional
-                               || culture.IsProvisional);
-        }).ToList();
-
-        var dreamSuggestions = OnboardingWizardCatalog.DreamChipsForRiasec(riasecTop);
 
         return new CandidateOnboardingImpressionDto(
             OnboardingImpressionLibrary.ResultLabel,
@@ -296,36 +415,16 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             riasecItems,
             cultureHighlight,
             topValue,
-            liveMatches.Count,
+            matchCount,
             cards,
-            dreamSuggestions,
             competency.IsProvisional,
             career.IsProvisional,
             culture.IsProvisional,
             values.IsProvisional);
     }
 
-    private static List<OnboardingImpressionItemDto> TopCompetencyItems(CompetencyScores? scores, int take)
-    {
-        if (scores is null)
-        {
-            return [];
-        }
-
-        return CompetencyTestCatalog.CategoryCodes
-            .Concat([CompetencyTestCatalog.Extraversie])
-            .Select(code => (Code: code, Pct: scores.TryGet(code)))
-            .Where(x => x.Pct is not null)
-            .OrderByDescending(x => x.Pct)
-            .ThenBy(x => x.Code, StringComparer.Ordinal)
-            .Take(take)
-            .Select(x => new OnboardingImpressionItemDto(
-                x.Code,
-                DimensionLabels.For(x.Code),
-                OnboardingImpressionLibrary.StrengthSentence(x.Code),
-                x.Pct))
-            .ToList();
-    }
+    private static OnboardingImpressionItemDto ToImpressionItem(OnboardingImpressionCoreItem item)
+        => new(item.Code, item.Label, item.Sentence, item.Percent);
 
     private static CandidateOnboardingStateDto ToDto(
         CandidateOnboarding row,
@@ -339,7 +438,9 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
             shouldShow,
             row.Source,
             OnboardingStepAnalytics.Parse(row.StepsJson),
-            impression);
+            impression,
+            row.WizardVersion,
+            row.FinishReached);
 
     private static int? TryParseTravelMinutes(IReadOnlyList<string>? why)
     {

@@ -1,0 +1,36 @@
+KEY: EmployerNewApplication
+SUBJECT: New application for ⁨Weekendhulp verkoop⁩
+PREHEADER: Review the application and reply soon.
+KIND: Essential
+--- TEXT ---
+مرحبًا ⁨Alex⁩،
+
+Someone applied
+
+There is a new application for ⁨Weekendhulp verkoop⁩.
+
+Weekendhulp verkoop :الوظيفة
+Bakkerij De Gouden Korrel :Branch
+2 أكتوبر 2026, 16:18 :Received on
+
+Reply soon. Candidates drop off when they hear nothing for a long time.
+
+View the application: https://lobsy.nl/werkgever/sollicitaties?id=22222222-2222-2222-2222-222222222222
+
+فريق Lobsy
+
+You get this email because you manage vacancies for ⁨Bakkerij De Gouden Korrel⁩ on Lobsy.
+تصلك هذه الرسالة لأن لديك حسابًا في Lobsy.
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Someone applied
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=facts
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View the application -> https://lobsy.nl/werkgever/sollicitaties?id=22222222-2222-2222-2222-222222222222
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

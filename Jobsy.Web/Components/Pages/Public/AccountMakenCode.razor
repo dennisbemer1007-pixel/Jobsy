@@ -1,0 +1,162 @@
+@page "/account-maken/code"
+@attribute [AllowAnonymous]
+@attribute [ExcludeFromInteractiveRouting]
+@layout PublicLayout
+@using Jobsy.Web.Auth
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Microsoft.AspNetCore.Antiforgery
+@using Microsoft.AspNetCore.DataProtection
+@using Microsoft.AspNetCore.WebUtilities
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IDataProtectionProvider DataProtection
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Signup.Code.Title"] · Lobsy</PageTitle>
+
+<section class="pub-section pub-signup" aria-labelledby="signup-code-title">
+    <div class="pub-card pub-signup__card">
+        <h1 id="signup-code-title" class="pub-signup__title">@Culture["Signup.Code.Title"]</h1>
+        <p class="pub-signup__lead">@string.Format(Culture["Signup.Code.Lead"], _maskedEmail)</p>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <p class="login-error" role="alert">@_errorMessage</p>
+        }
+
+        <form method="post" action="/account/email-code/verify" class="login-form pub-signup__form" data-enhance="false">
+            <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+            <input type="hidden" name="returnUrl" value="@_returnUrl" />
+            @if (!string.IsNullOrEmpty(_van))
+            {
+                <input type="hidden" name="van" value="@_van" />
+            }
+            <label>
+                @Culture["Signup.Code.Label"]
+                <input type="text"
+                       name="code"
+                       class="w-full px-4 py-3"
+                       required
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       maxlength="6"
+                       pattern="[0-9]{6}"
+                       autocapitalize="none"
+                       autocorrect="off"
+                       spellcheck="false" />
+            </label>
+            <label class="login-remember">
+                <input type="checkbox" name="rememberDevice" value="true" checked />
+                <span>@Culture["Login.RememberDevice"]</span>
+            </label>
+            <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
+                @Culture["Signup.Code.Submit"]
+            </button>
+        </form>
+
+        <div class="pub-signup__footer">
+            <form method="post" action="/account/email-code/start" data-enhance="false" class="pub-signup__resend">
+                <input type="hidden" name="@_antiforgeryFieldName" value="@_antiforgeryToken" />
+                <input type="hidden" name="returnUrl" value="@_returnUrl" />
+                <input type="hidden" name="email" value="@_emailNormalized" />
+                @if (!string.IsNullOrEmpty(_van))
+                {
+                    <input type="hidden" name="van" value="@_van" />
+                }
+                <button type="submit" class="auth-link pub-signup__linkbtn">@Culture["Signup.Code.Resend"]</button>
+            </form>
+            <p>
+                <a class="auth-link" href="@BackHref">@Culture["Signup.Code.OtherEmail"]</a>
+            </p>
+        </div>
+    </div>
+</section>
+
+@code {
+    private string _returnUrl = AuthRedirects.BanenkaartPath;
+    private string? _van;
+    private string _maskedEmail = "•••";
+    private string _emailNormalized = string.Empty;
+    private string? _errorMessage;
+    private string _antiforgeryFieldName = string.Empty;
+    private string _antiforgeryToken = string.Empty;
+
+    private string BackHref => string.IsNullOrEmpty(_van)
+        ? $"{PublicRoutes.CreateAccount}?returnUrl={Uri.EscapeDataString(_returnUrl)}"
+        : $"{PublicRoutes.CreateAccount}?van={Uri.EscapeDataString(_van)}&returnUrl={Uri.EscapeDataString(_returnUrl)}";
+
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContext ?? HttpContextAccessor.HttpContext;
+        if (http?.User.Identity?.IsAuthenticated == true)
+        {
+            http.Response.Redirect(AuthRedirects.BanenkaartPath);
+            return;
+        }
+
+        if (http is not null)
+        {
+            var tokens = Antiforgery.GetAndStoreTokens(http);
+            _antiforgeryFieldName = tokens.FormFieldName;
+            _antiforgeryToken = tokens.RequestToken ?? string.Empty;
+
+            var payload = EmailCodeCookie.TryRead(http, DataProtection);
+            if (payload is null)
+            {
+                http.Response.Redirect(PublicRoutes.CreateAccount + "?error=expired");
+                return;
+            }
+
+            _emailNormalized = payload.EmailNormalized;
+            _maskedEmail = EmailCodeCookie.MaskEmail(payload.EmailNormalized);
+            if (!string.IsNullOrWhiteSpace(payload.ReturnUrl))
+            {
+                _returnUrl = AuthRedirects.SafeLocalUrl(payload.ReturnUrl);
+            }
+
+            if (!string.IsNullOrWhiteSpace(payload.Van))
+            {
+                _van = payload.Van;
+            }
+        }
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        var qReturn = QueryValue(query, "returnUrl");
+        if (!string.IsNullOrWhiteSpace(qReturn))
+        {
+            _returnUrl = AuthRedirects.SafeLocalUrl(qReturn);
+        }
+
+        var qVan = QueryValue(query, "van");
+        if (!string.IsNullOrWhiteSpace(qVan))
+        {
+            _van = qVan;
+        }
+
+        var error = QueryValue(query, "error");
+        var leftRaw = QueryValue(query, "left");
+        _errorMessage = error switch
+        {
+            "retry" => Culture["Signup.ErrorRetry"],
+            "expired" => Culture["Signup.ErrorExpired"],
+            "too_many" => Culture["Signup.ErrorTooMany"],
+            "invalid" when int.TryParse(leftRaw, out var left) && left >= 0
+                => string.Format(Culture["Signup.Code.Invalid"], left),
+            "invalid" => Culture["Signup.Code.InvalidGeneric"],
+            _ => null
+        };
+    }
+
+    private static string? QueryValue(
+        Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query,
+        string key)
+        => query.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value)
+            ? value.ToString()
+            : null;
+}

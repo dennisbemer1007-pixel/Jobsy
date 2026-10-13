@@ -1,0 +1,31 @@
+@namespace Jobsy.Web.Components.Werkgever.Tokens
+@using Jobsy.Web.Tokens
+@inject CultureState Culture
+
+<section class="wg-card wg-tok-costs" aria-labelledby="wg-tok-costs-title">
+    <button type="button" class="wg-tok-costs__toggle" @onclick="() => _open = !_open" aria-expanded="@_open">
+        <span id="wg-tok-costs-title">@Culture["WgTok.WhatCosts"]</span>
+        <span aria-hidden="true">@(_open ? "▾" : "▸")</span>
+    </button>
+    @if (_open)
+    {
+        <ul class="wg-tok-costs__list">
+            @foreach (var c in Costs)
+            {
+                <li>
+                    <span>@TokenLogPresentation.CostLabel(c.Reason)</span>
+                    <strong>@c.CostTokens.ToString("0.##")</strong>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<TokenSpendCostItem> Costs { get; set; } = [];
+    [Parameter] public bool StartOpen { get; set; }
+
+    private bool _open;
+
+    protected override void OnInitialized() => _open = StartOpen;
+}

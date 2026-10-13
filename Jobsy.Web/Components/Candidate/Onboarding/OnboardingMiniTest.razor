@@ -1,0 +1,99 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="ob-wizard__test-tabs">
+    @foreach (var tab in TestTabs)
+    {
+        var isCurrent = tab.Step == Step;
+        var isDone = tab.Step < Step;
+        <span class="@(isCurrent ?"is-current" : isDone ? "is-done" : null)">
+            @if (isDone)
+            {
+                <span aria-hidden="true">✓ </span>
+            }
+            @Culture[tab.Title]
+        </span>
+    }
+</div>
+<h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+<p class="ob-wizard__lead">@(string.IsNullOrWhiteSpace(LeadKey) ? Culture["Onboarding.Test.Lead"] : Culture[LeadKey])</p>
+@if (Questions.Count == 0)
+{
+    <p>@Culture["Onboarding.MiniAllDone"]</p>
+}
+else
+{
+    <TestQuestionFlow @key="FlowEpoch"
+                      Kind="_kind"
+                      Questions="_flowQuestions"
+                      Answers="Answers"
+                      StartAt="CurrentQuestion"
+                      Target="Depth"
+                      Compact="true"
+                      FinishLabel="@Culture["Onboarding.NextTest"]"
+                      InputPrefix="@InputPrefix"
+                      OnAnswer="OnFlowAnswer"
+                      OnFinished="OnFlowFinished"
+                      OnLeave="OnLeave" />
+}
+@if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint)
+{
+    <div class="read-aloud-block">
+        <p class="journey-deeper-hint">@Culture[HintKey]</p>
+        <ReadAloudButton Text="@Culture[HintKey]" SpeechKey="@($"hint-{Step}")" />
+    </div>
+}
+
+@code {
+    public sealed record TestTab(int Step, string Title, string Lead);
+    public sealed record MiniQuestion(int Id, string TextKey);
+
+    [Parameter] public int Step { get; set; }
+    [Parameter] public int FlowEpoch { get; set; }
+    [Parameter] public int CurrentQuestion { get; set; }
+    [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
+    [Parameter] public IReadOnlyList<MiniQuestion> Questions { get; set; } = [];
+    [Parameter] public IReadOnlyDictionary<int, int> Answers { get; set; } = new Dictionary<int, int>();
+    [Parameter] public string InputPrefix { get; set; } = "obv2-";
+    [Parameter] public string? TitleKey { get; set; }
+    [Parameter] public string? LeadKey { get; set; }
+    [Parameter] public string? HintKey { get; set; }
+    [Parameter] public bool ShowHint { get; set; }
+    [Parameter] public bool ShowQuestionCounter { get; set; }
+    [Parameter] public TestDepthLevel Depth { get; set; } = TestDepthLevel.First;
+    [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
+    [Parameter] public EventCallback OnFinished { get; set; }
+    [Parameter] public EventCallback OnLeave { get; set; }
+    [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
+    [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
+
+    private AssessmentKind _kind = AssessmentKind.Competence;
+    private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
+
+    protected override void OnParametersSet()
+    {
+        _kind = Step switch
+        {
+            8 => AssessmentKind.Career,
+            9 => AssessmentKind.Culture,
+            10 => AssessmentKind.Values,
+            _ => AssessmentKind.Competence
+        };
+        _flowQuestions = Questions
+            .Select(q => new TestQuestionFlow.FlowQuestion(q.Id, QuestionText(q)))
+            .ToList();
+    }
+
+    private string QuestionText(MiniQuestion question)
+        => ResolveQuestionText?.Invoke(question) ?? Culture[question.TextKey];
+
+    private Task OnFlowAnswer((int Id, int Value) pair)
+        => Answer.InvokeAsync(pair);
+
+    private Task OnFlowFinished()
+        => OnFinished.InvokeAsync();
+}
