@@ -34,7 +34,7 @@
                                  InputPrefix="pilot"
                                  ValueChanged="OnAnswerAsync" />
             <label class="filter-check">
-                <input type="checkbox" @bind="_unclear[_currentQuestion.Id]" />
+                <input type="checkbox" @bind="UnclearForCurrentQuestion" />
                 @Culture["Research.Pilot.Unclear"]
             </label>
         }
@@ -71,6 +71,18 @@
             : null;
 
     private bool CanNext => _currentQuestion is not null && _answers.ContainsKey(_currentQuestion.Id);
+
+    private bool UnclearForCurrentQuestion
+    {
+        get => _currentQuestion is not null && _unclear.GetValueOrDefault(_currentQuestion.Id);
+        set
+        {
+            if (_currentQuestion is not null)
+            {
+                _unclear[_currentQuestion.Id] = value;
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

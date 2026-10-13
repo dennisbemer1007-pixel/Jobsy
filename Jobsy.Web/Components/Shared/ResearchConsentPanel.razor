@@ -2,25 +2,56 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<section class="research-consent" data-testid="research-consent-panel" aria-labelledby="research-consent-title">
-    <h2 id="research-consent-title" class="profile-page__title">@Culture["Research.Demo.Title"]</h2>
-    <p class="login-lead">@Culture["Research.Consent.Lead"]</p>
-    <label class="filter-check research-consent__check">
-        <input type="checkbox" @bind="_consentChecked" data-testid="research-consent-checkbox" />
-        <span>@Culture["Research.Consent.Label"]</span>
-    </label>
-    <p class="profile-address__hint">
-        <a class="auth-link" href="/info/onderzoek" target="_blank" rel="noopener">@Culture["Research.Consent.InfoLink"]</a>
-    </p>
+<article class="research-consent-card company-card competency-profile-card profile-form"
+         data-testid="research-consent-panel"
+         aria-labelledby="research-consent-title">
+    <header class="research-consent-card__header">
+        <h2 id="research-consent-title" class="research-consent-card__title">
+            @Culture[Embedded ? "Research.Info.Title" : "Research.Demo.Title"]
+        </h2>
+        <p class="research-consent-card__lead login-lead">@Culture["Research.Consent.Lead"]</p>
+    </header>
+
+    <div class="research-consent-card__opt-in">
+        <label class="research-consent-card__check filter-check">
+            <input type="checkbox"
+                   @bind="_consentChecked"
+                   data-testid="research-consent-checkbox" />
+            <span class="research-consent-card__check-text">@Culture["Research.Consent.Label"]</span>
+        </label>
+        <p class="research-consent-card__info">
+            <a class="auth-link" href="/info/onderzoek" target="_blank" rel="noopener">@Culture["Research.Consent.InfoLink"]</a>
+        </p>
+    </div>
 
     @if (_consentChecked)
     {
-        <div class="research-consent__demographics" data-testid="research-demographics">
-            @DemoSelect(Culture["Research.Demo.Age"], ResearchDemographicsCatalog.AgeBands, "_age", _age, v => _age = v)
-            @DemoSelect(Culture["Research.Demo.Gender"], ResearchDemographicsCatalog.Genders, "_gender", _gender, v => _gender = v)
-            @DemoSelect(Culture["Research.Demo.Education"], ResearchDemographicsCatalog.EducationLevels, "_education", _education, v => _education = v)
-            @DemoSelect(Culture["Research.Demo.NativeLang"], ResearchDemographicsCatalog.Languages, "_native", _native, v => _native = v)
-            @DemoSelect(Culture["Research.Demo.TestLang"], ResearchDemographicsCatalog.Languages, "_testLang", _testLang, v => _testLang = v)
+        <div class="research-consent-card__fields" data-testid="research-demographics">
+            <ResearchDemographicsSelect LabelKey="Research.Demo.Age"
+                                        OptionCategory="Age"
+                                        Options="ResearchDemographicsCatalog.AgeBands"
+                                        Id="_age"
+                                        @bind-Value="_age" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.Gender"
+                                        OptionCategory="Gender"
+                                        Options="ResearchDemographicsCatalog.Genders"
+                                        Id="_gender"
+                                        @bind-Value="_gender" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.Education"
+                                        OptionCategory="Education"
+                                        Options="ResearchDemographicsCatalog.EducationLevels"
+                                        Id="_education"
+                                        @bind-Value="_education" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.NativeLang"
+                                        OptionCategory="Lang"
+                                        Options="ResearchDemographicsCatalog.Languages"
+                                        Id="_native"
+                                        @bind-Value="_native" />
+            <ResearchDemographicsSelect LabelKey="Research.Demo.TestLang"
+                                        OptionCategory="Lang"
+                                        Options="ResearchDemographicsCatalog.Languages"
+                                        Id="_testLang"
+                                        @bind-Value="_testLang" />
         </div>
     }
 
@@ -29,18 +60,23 @@
         <p class="state-message" role="alert">@_message</p>
     }
 
-    <div class="research-consent__actions">
-        <button type="button" class="engagement-btn" disabled="@Busy" data-testid="research-consent-save" @onclick="AcceptAsync">
+    <footer class="research-consent-card__actions">
+        <button type="button" class="btn btn-primary" disabled="@Busy" data-testid="research-consent-save" @onclick="AcceptAsync">
             @Culture["Research.Consent.Accept"]
         </button>
-        <button type="button" class="provider-btn" disabled="@Busy" data-testid="research-consent-skip" @onclick="SkipAsync">
-            @Culture["Research.Consent.Skip"]
-        </button>
-    </div>
-</section>
+        @if (ShowSkip)
+        {
+            <button type="button" class="btn btn-secondary" disabled="@Busy" data-testid="research-consent-skip" @onclick="SkipAsync">
+                @Culture["Research.Consent.Skip"]
+            </button>
+        }
+    </footer>
+</article>
 
 @code {
     [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool Embedded { get; set; }
+    [Parameter] public bool ShowSkip { get; set; } = true;
     [Parameter] public EventCallback<ResearchDemographicsSubmit> OnAccept { get; set; }
     [Parameter] public EventCallback OnSkip { get; set; }
 
@@ -56,7 +92,7 @@
     {
         if (!_consentChecked)
         {
-            _message = Culture["Research.Consent.Label"];
+            _message = Culture["Research.Consent.NeedCheckbox"];
             return;
         }
 
@@ -64,43 +100,6 @@
     }
 
     private Task SkipAsync() => OnSkip.InvokeAsync();
-
-    private RenderFragment DemoSelect(
-        string label,
-        IReadOnlyList<string> options,
-        string id,
-        string? value,
-        Action<string?> assign) => __builder =>
-    {
-        __builder.OpenElement(0, "label");
-        __builder.AddAttribute(1, "for", id);
-        __builder.AddContent(2, label);
-        __builder.OpenElement(3, "select");
-        __builder.AddAttribute(4, "id", id);
-        __builder.AddAttribute(5, "class", "research-consent__select");
-        __builder.AddAttribute(6, "value", value ?? "");
-        __builder.AddAttribute(7, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
-        {
-            var raw = e.Value?.ToString();
-            assign(string.IsNullOrWhiteSpace(raw) ? null : raw);
-        }));
-        __builder.OpenElement(8, "option");
-        __builder.AddAttribute(9, "value", "");
-        __builder.AddContent(10, "—");
-        __builder.CloseElement();
-        foreach (var opt in options)
-        {
-            __builder.OpenElement(11, "option");
-            __builder.AddAttribute(12, "value", opt);
-            __builder.AddContent(13, opt == ResearchDemographicsCatalog.PreferNotToSay
-                ? Culture["Research.Demo.PreferNot"]
-                : opt);
-            __builder.CloseElement();
-        }
-
-        __builder.CloseElement();
-        __builder.CloseElement();
-    };
 
     public sealed record ResearchDemographicsSubmit(
         string? AgeBand,

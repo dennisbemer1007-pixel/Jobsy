@@ -40,10 +40,12 @@ public class ResearchViewportScreenshotTests
             ViewportSize = new() { Width = width, Height = height },
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(adminCtx);
         var adminPage = await adminCtx.NewPageAsync();
         if (await LoginAsync(adminPage, baseUrl, AdminEmail, AdminPassword))
         {
             await adminPage.GotoAsync(baseUrl + "/admin/research", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await adminPage.Locator("[data-testid='research-pilot-create']").WaitForAsync(new() { Timeout = 60_000 });
             await adminPage.Locator("[data-testid='research-admin-dashboard']").WaitForAsync(new() { Timeout = 60_000 });
             var enableToggle = adminPage.Locator(".platform-features-card input[type='checkbox']").First;
             if (await enableToggle.CountAsync() > 0 && !await enableToggle.IsCheckedAsync())
@@ -77,9 +79,11 @@ public class ResearchViewportScreenshotTests
                         ViewportSize = new() { Width = width, Height = height },
                         IgnoreHTTPSErrors = true
                     });
+                    await PlaywrightCookieConsent.AcceptAsync(pilotCtx);
                     var pilotPage = await pilotCtx.NewPageAsync();
                     await pilotPage.GotoAsync($"{baseUrl}/pilot/{pilotCode}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-                    await pilotPage.WaitForTimeoutAsync(1200);
+                    await pilotPage.Locator("[data-testid='pilot-test-page']").WaitForAsync(new() { Timeout = 60_000 });
+                    await pilotPage.WaitForTimeoutAsync(600);
                     await pilotPage.ScreenshotAsync(new()
                     {
                         Path = $"/opt/cursor/artifacts/research-pilot-{label}.png",
@@ -87,7 +91,7 @@ public class ResearchViewportScreenshotTests
                     });
                 }
             }
-            catch (PlaywrightException)
+            catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
             {
                 // Pilot UI is optional when admin create fails in headless CI.
             }
@@ -98,6 +102,7 @@ public class ResearchViewportScreenshotTests
             ViewportSize = new() { Width = width, Height = height },
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(candidateCtx);
         var page = await candidateCtx.NewPageAsync();
 
         await page.GotoAsync(baseUrl + "/info/onderzoek", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -113,44 +118,34 @@ public class ResearchViewportScreenshotTests
             return;
         }
 
+        await page.GotoAsync(baseUrl + "/candidate/profile#consent", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        var profileResearch = page.Locator("[data-testid='profile-research-privacy']");
+        await profileResearch.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await page.EvaluateAsync("() => document.getElementById('consent')?.scrollIntoView({ block: 'start' })");
+        await page.WaitForTimeoutAsync(800);
+        var consentCheckbox = profileResearch.Locator("[data-testid='research-consent-checkbox']");
+        await consentCheckbox.CheckAsync(new() { Force = true });
+        await page.Locator("[data-testid='research-demographics']").WaitForAsync(new() { Timeout = 15_000 });
+        await FillDemographicsAsync(page);
+        await page.WaitForTimeoutAsync(400);
+        await page.ScreenshotAsync(new()
+        {
+            Path = $"/opt/cursor/artifacts/research-privacy-demographics-{label}.png",
+            FullPage = true
+        });
+
         await page.GotoAsync(baseUrl + "/candidate/research-consent?return=/candidate/profile&test=competence");
-        var panel = page.Locator("[data-testid='research-consent-panel']");
-        if (await panel.CountAsync() > 0)
+        if (await page.Locator("[data-testid='research-consent-panel']").CountAsync() > 0)
         {
             await page.Locator("[data-testid='research-consent-checkbox']").CheckAsync();
+            await page.Locator("[data-testid='research-demographics']").WaitForAsync(new() { Timeout = 15_000 });
             await FillDemographicsAsync(page);
+            await page.WaitForTimeoutAsync(400);
             await page.ScreenshotAsync(new()
             {
                 Path = $"/opt/cursor/artifacts/research-consent-after-scan-{label}.png",
                 FullPage = true
             });
-        }
-
-        try
-        {
-            await page.GotoAsync(baseUrl + "/candidate/profile", new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await page.EvaluateAsync("() => document.getElementById('consent')?.scrollIntoView({block:'start'})");
-            await page.WaitForTimeoutAsync(600);
-            var privacy = page.Locator("[data-testid='profile-research-privacy']");
-            if (await privacy.CountAsync() > 0)
-            {
-                var checkbox = page.Locator("[data-testid='research-consent-checkbox']");
-                if (await checkbox.CountAsync() > 0)
-                {
-                    await checkbox.CheckAsync();
-                    await FillDemographicsAsync(page);
-                }
-
-                await page.ScreenshotAsync(new()
-                {
-                    Path = $"/opt/cursor/artifacts/research-privacy-demographics-{label}.png",
-                    FullPage = true
-                });
-            }
-        }
-        catch (TimeoutException)
-        {
-            // Profile layout can differ when passport redirect is active; info + consent pages are the primary captures.
         }
     }
 
@@ -179,16 +174,18 @@ public class ResearchViewportScreenshotTests
     private static async Task<string?> EnsurePilotCampaignAsync(IPage adminPage, string baseUrl)
     {
         await adminPage.GotoAsync(baseUrl + "/admin/research", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        var titleInput = adminPage.Locator("input[type='text']").First;
+        var titleInput = adminPage.Locator("[data-testid='research-pilot-title']");
         if (await titleInput.CountAsync() == 0)
         {
             return null;
         }
 
         await titleInput.FillAsync($"UAT pilot {DateTime.UtcNow:yyyyMMddHHmm}");
-        await adminPage.GetByRole(AriaRole.Button, new() { Name = "Nieuwe pilotlink" }).ClickAsync();
-        await adminPage.Locator("ul li").First.WaitForAsync(new() { Timeout = 30_000 });
-        var itemText = await adminPage.Locator("ul li").First.InnerTextAsync();
+        await adminPage.Locator("[data-testid='research-pilot-create']").ClickAsync();
+        await adminPage.WaitForTimeoutAsync(1200);
+        var listItem = adminPage.Locator("[data-testid='research-pilot-list'] li").First;
+        await listItem.WaitForAsync(new() { Timeout = 45_000 });
+        var itemText = await listItem.InnerTextAsync();
         var marker = "code ";
         var idx = itemText.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
         if (idx >= 0)

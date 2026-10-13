@@ -62,10 +62,15 @@
 
             <h2>Pilotcampagnes</h2>
             <div class="research-admin__pilot-create">
-                <input @bind="_pilotTitle" placeholder="Titel pilot" />
-                <button type="button" class="engagement-btn" @onclick="CreatePilotAsync">Nieuwe pilotlink</button>
+                <input @bind="_pilotTitle" placeholder="Titel pilot" data-testid="research-pilot-title" />
+                <button type="button"
+                        class="engagement-btn"
+                        data-testid="research-pilot-create"
+                        @onclick="CreatePilotAsync">
+                    Nieuwe pilotlink
+                </button>
             </div>
-            <ul>
+            <ul data-testid="research-pilot-list">
                 @foreach (var pilot in _pilots)
                 {
                     <li>
@@ -119,11 +124,17 @@
 
     private async Task CreatePilotAsync()
     {
-        var created = await Api.CreateResearchPilotCampaignAsync(_pilotTitle);
+        var title = string.IsNullOrWhiteSpace(_pilotTitle) ? "Pilot" : _pilotTitle.Trim();
+        var created = await Api.CreateResearchPilotCampaignAsync(title);
         if (created is not null)
         {
             _pilots.Insert(0, created);
             _message = $"Pilot aangemaakt: {created.PilotUrl}";
+            await InvokeAsync(StateHasChanged);
+        }
+        else
+        {
+            _message = Culture["Common.Error"];
         }
     }
 }

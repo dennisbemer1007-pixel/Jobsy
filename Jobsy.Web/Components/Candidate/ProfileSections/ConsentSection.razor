@@ -41,12 +41,15 @@
 
                 @if (Editor.ResearchFeatureEnabled)
                 {
-                    <h3 data-testid="profile-research-privacy">@Culture["Research.Info.Title"]</h3>
                     @if (Editor.ResearchConsent?.HasConsent != true)
                     {
-                        <ResearchConsentPanel Busy="Editor.ConsentBusy"
-                                              OnAccept="Editor.AcceptResearchConsentAsync"
-                                              OnSkip="() => Task.CompletedTask" />
+                        <div data-testid="profile-research-privacy">
+                            <ResearchConsentPanel Busy="Editor.ConsentBusy"
+                                                  Embedded="true"
+                                                  ShowSkip="false"
+                                                  OnAccept="Editor.AcceptResearchConsentAsync"
+                                                  OnSkip="() => Task.CompletedTask" />
+                        </div>
                     }
                     else
                     {
@@ -81,4 +84,12 @@
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await Editor.LoadResearchConsentAsync();
+        }
+    }
 }

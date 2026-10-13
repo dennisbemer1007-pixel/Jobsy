@@ -1152,11 +1152,28 @@ public sealed class CandidateProfileEditor : IDisposable
         {
             var researchStatus = await _api.GetResearchFeatureStatusAsync();
             ResearchFeatureEnabled = researchStatus?.Enabled == true;
-            ResearchConsent = ResearchFeatureEnabled ? await _api.GetResearchConsentAsync() : null;
         }
         catch
         {
             ResearchFeatureEnabled = false;
+            ResearchConsent = null;
+            Notify();
+            return;
+        }
+
+        if (!ResearchFeatureEnabled)
+        {
+            ResearchConsent = null;
+            Notify();
+            return;
+        }
+
+        try
+        {
+            ResearchConsent = await _api.GetResearchConsentAsync();
+        }
+        catch
+        {
             ResearchConsent = null;
         }
 
