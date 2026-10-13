@@ -27,6 +27,10 @@ public static class RateLimitPartitioning
     /// <summary>Machine-readable ProblemDetails code the Web client maps to a friendly message.</summary>
     public const string RateLimitCode = "rate_limited";
 
+    public const string CandidateApplyRateLimitedCode = "candidate_apply_rate_limited";
+    public const string CandidateApplyRateLimitedBurstCode = "candidate_apply_rate_limited_burst";
+    public const string CandidateApplyRateLimitedDailyCode = "candidate_apply_rate_limited_daily";
+
     private static readonly JsonSerializerOptions ProblemJson = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -160,6 +164,14 @@ public static class RateLimitPartitioning
         http.Response.Headers.RetryAfter = retryAfterSeconds.ToString(CultureInfo.InvariantCulture);
         http.Response.ContentType = "application/problem+json; charset=utf-8";
 
+        var isCandidateApply = route.Equals("/api/applications", StringComparison.OrdinalIgnoreCase)
+                               && HttpMethods.IsPost(http.Request.Method);
+        var applyWindow = isCandidateApply
+                           && context.Lease.TryGetMetadata(TripleWindowRateLimiter.LimitWindowMetadata, out var windowObj)
+                           && windowObj is string window
+            ? window
+            : null;
+
         // errors 04 §04.2: ProblemDetails with a machine-readable code the Web client maps to
         // ApiErrorException.RateLimited, plus the same LB-XXXX support code the error pages show.
         var problem = new ProblemDetails
@@ -167,9 +179,13 @@ public static class RateLimitPartitioning
             Type = "https://tools.ietf.org/html/rfc6585#section-4",
             Title = "Too many requests",
             Status = StatusCodes.Status429TooManyRequests,
-            Detail = RetryDetail(http)
+            Detail = isCandidateApply
+                ? CandidateApplyRateLimitDetail(http, applyWindow)
+                : RetryDetail(http)
         };
-        problem.Extensions["code"] = RateLimitCode;
+        problem.Extensions["code"] = isCandidateApply
+            ? CandidateApplyRateLimitCode(applyWindow)
+            : RateLimitCode;
         problem.Extensions["retryAfterSeconds"] = retryAfterSeconds;
         problem.Extensions["supportCode"] = supportCode;
 
@@ -188,6 +204,46 @@ public static class RateLimitPartitioning
             "ro" => "Mai încearcă peste puțin timp.",
             "ar" => "جرّب مرة أخرى بعد قليل.",
             _ => "Probeer het zo opnieuw."
+        };
+    }
+
+    private static string CandidateApplyRateLimitCode(string? window)
+        => window switch
+        {
+            "minute" => CandidateApplyRateLimitedBurstCode,
+            "day" => CandidateApplyRateLimitedDailyCode,
+            _ => CandidateApplyRateLimitedCode
+        };
+
+    private static string CandidateApplyRateLimitDetail(HttpContext http, string? window)
+    {
+        var lang = JobsyLanguages.Normalize(http.GetJobsyLanguage());
+        return window switch
+        {
+            "minute" => lang switch
+            {
+                "en" => "You are applying very quickly. Wait a moment and try again.",
+                "pl" => "Aplikujesz bardzo szybko. Odczekaj chwilę i spróbuj ponownie.",
+                "ro" => "Aplici foarte repede. Așteaptă un moment și încearcă din nou.",
+                "ar" => "تتقدم بسرعة كبيرة. انتظر لحظة ثم حاول مرة أخرى.",
+                _ => "Je solliciteert erg snel achter elkaar. Wacht even en probeer het opnieuw."
+            },
+            "day" => lang switch
+            {
+                "en" => "You have applied to many vacancies today. Try again tomorrow.",
+                "pl" => "Aplikowałeś/aś dziś na wiele ofert. Spróbuj jutro ponownie.",
+                "ro" => "Ai aplicat la multe joburi astăzi. Încearcă din nou mâine.",
+                "ar" => "تقدمت إلى عدد كبير من الوظائف اليوم. حاول مرة أخرى غدًا.",
+                _ => "Je hebt vandaag al op veel vacatures gesolliciteerd. Probeer het morgen opnieuw."
+            },
+            _ => lang switch
+            {
+                "en" => "You have applied to many vacancies in a short time. Try again in about an hour.",
+                "pl" => "Aplikowałeś/aś na wiele ofert w krótkim czasie. Spróbuj ponownie za około godzinę.",
+                "ro" => "Ai aplicat la multe joburi într-un timp scurt. Încearcă din nou peste aproximativ o oră.",
+                "ar" => "تقدمت إلى عدد كبير من الوظائف في وقت قصير. حاول مرة أخرى بعد حوالي ساعة.",
+                _ => "Je hebt veel gesolliciteerd in korte tijd. Probeer het over een uurtje opnieuw."
+            }
         };
     }
 

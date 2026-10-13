@@ -16,6 +16,9 @@ namespace Jobsy.Web.Services;
 public sealed class ApiErrorException : Exception
 {
     public const string RateLimited = "rate_limited";
+    public const string CandidateApplyRateLimited = "candidate_apply_rate_limited";
+    public const string CandidateApplyRateLimitedBurst = "candidate_apply_rate_limited_burst";
+    public const string CandidateApplyRateLimitedDaily = "candidate_apply_rate_limited_daily";
     public const string NotFound = "not_found";
     public const string Forbidden = "forbidden";
     public const string Validation = "validation";

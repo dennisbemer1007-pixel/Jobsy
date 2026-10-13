@@ -571,7 +571,13 @@ else if (_snapshot is not null)
             CompactTestPdfEnabled = u.CompactTestPdfEnabled,
             FreeCandidateTestsEnabled = u.FreeCandidateTestsEnabled,
             HonestAdviceEnabled = u.HonestAdviceEnabled,
-            FutureJobsForYouEnabled = u.FutureJobsForYouEnabled
+            FutureJobsForYouEnabled = u.FutureJobsForYouEnabled,
+            EmployerPhase2Enabled = u.EmployerPhase2Enabled,
+            CandidateExternalVacanciesEnabled = u.CandidateExternalVacanciesEnabled,
+            ProactiveMatchingEnabled = u.ProactiveMatchingEnabled,
+            CandidateApplyPerMinuteLimit = u.CandidateApplyPerMinuteLimit,
+            CandidateApplyPerHourLimit = u.CandidateApplyPerHourLimit,
+            CandidateApplyPerDayLimit = u.CandidateApplyPerDayLimit
         };
         LastPatch = patch;
         return patch;
@@ -639,5 +645,10 @@ else if (_snapshot is not null)
             FreeCandidateTestsEnabled: f.FreeCandidateTestsEnabled,
             HonestAdviceEnabled: f.HonestAdviceEnabled,
             FutureJobsForYouEnabled: f.FutureJobsForYouEnabled,
-            EmployerPhase2Enabled: f.EmployerPhase2Enabled);
+            EmployerPhase2Enabled: f.EmployerPhase2Enabled,
+            CandidateExternalVacanciesEnabled: f.CandidateExternalVacanciesEnabled,
+            ProactiveMatchingEnabled: f.ProactiveMatchingEnabled,
+            CandidateApplyPerMinuteLimit: f.CandidateApplyPerMinuteLimit,
+            CandidateApplyPerHourLimit: f.CandidateApplyPerHourLimit,
+            CandidateApplyPerDayLimit: f.CandidateApplyPerDayLimit);
 }

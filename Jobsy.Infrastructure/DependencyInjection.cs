@@ -443,6 +443,7 @@ public static class DependencyInjection
         services.AddScoped<PassportPartnerConsentJob>();
         services.AddHostedService<PassportPartnerConsentHostedService>();
         services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Infrastructure.Features.FeatureFlags>();
+        services.AddSingleton<Jobsy.Core.Interfaces.ICandidateApplyRateLimitProvider, CandidateApplyRateLimitProvider>();
         services.AddScoped<IPlatformCompanySettingsService, PlatformCompanySettingsService>();
         services.AddScoped<ILegalIdentity, LegalIdentityService>();
         services.AddScoped<IPublicCompanyQuery, PublicCompanyQuery>();

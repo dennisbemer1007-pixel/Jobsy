@@ -494,7 +494,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     FutureJobsForYouEnabled: request.FutureJobsForYouEnabled,
                     EmployerPhase2Enabled: request.EmployerPhase2Enabled,
                     CandidateExternalVacanciesEnabled: request.CandidateExternalVacanciesEnabled,
-                    ProactiveMatchingEnabled: request.ProactiveMatchingEnabled),
+                    ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
+                    CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
+                    CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
+                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -575,6 +578,9 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
+        Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
+        Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
+        Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
         return list;
     }
 
@@ -916,7 +922,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.FutureJobsForYouEnabled,
             snap.EmployerPhase2Enabled,
             snap.CandidateExternalVacanciesEnabled,
-            snap.ProactiveMatchingEnabled);
+            snap.ProactiveMatchingEnabled,
+            snap.CandidateApplyPerMinuteLimit,
+            snap.CandidateApplyPerHourLimit,
+            snap.CandidateApplyPerDayLimit);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

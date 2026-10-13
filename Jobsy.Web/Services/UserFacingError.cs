@@ -68,6 +68,9 @@ public sealed class UserFacingError
     private static string KeyForCode(string code) => code switch
     {
         ApiErrorException.RateLimited => "Common.Error.RateLimited",
+        ApiErrorException.CandidateApplyRateLimited => "Apply.RateLimited",
+        ApiErrorException.CandidateApplyRateLimitedBurst => "Apply.RateLimitedBurst",
+        ApiErrorException.CandidateApplyRateLimitedDaily => "Apply.RateLimitedDaily",
         ApiErrorException.NotFound => "Common.Error.NotFound",
         ApiErrorException.Forbidden => "Common.Error.Forbidden",
         ApiErrorException.Validation => "Common.Error.Validation",
