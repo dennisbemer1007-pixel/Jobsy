@@ -1,0 +1,140 @@
+@page "/admin/research"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["Research.Admin.Title"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["Research.Admin.Title"]">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <article class="company-card platform-features-card" data-testid="research-admin-dashboard">
+            <h2>@Culture["Research.Admin.Enable"]</h2>
+            <label class="filter-check">
+                <input type="checkbox" @bind="_settingsEnabled" @bind:after="SaveSettingsAsync" />
+                <span>@Culture["Research.Admin.Enable"]</span>
+            </label>
+
+            <h2>@Culture["Research.Admin.Target"]</h2>
+            @if (_dashboard?.Rows.Count > 0)
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Test</th>
+                            <th>Versie</th>
+                            <th>Taal</th>
+                            <th>Deelnemers</th>
+                            <th>Doel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in _dashboard.Rows)
+                        {
+                            <tr>
+                                <td>@row.TestKey</td>
+                                <td>@row.TestVersion</td>
+                                <td>@row.Language</td>
+                                <td>@(row.Suppressed ? "&lt;5" : row.ConsentedCount.ToString())</td>
+                                <td>@row.TargetCount</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <p class="muted">Nog geen geanonimiseerde data.</p>
+            }
+
+            <h2>@Culture["Research.Admin.Export"]</h2>
+            <button type="button" class="engagement-btn" data-testid="research-export-btn" @onclick="DownloadExportAsync">
+                Download CSV
+            </button>
+
+            <h2>Pilotcampagnes</h2>
+            <div class="research-admin__pilot-create">
+                <input @bind="_pilotTitle" placeholder="Titel pilot" data-testid="research-pilot-title" />
+                <button type="button"
+                        class="engagement-btn"
+                        data-testid="research-pilot-create"
+                        @onclick="CreatePilotAsync">
+                    Nieuwe pilotlink
+                </button>
+            </div>
+            <ul data-testid="research-pilot-list">
+                @foreach (var pilot in _pilots)
+                {
+                    <li>
+                        <strong>@pilot.Title</strong> — code @pilot.Code —
+                        <a href="@pilot.PilotUrl">@pilot.PilotUrl</a>
+                    </li>
+                }
+            </ul>
+
+            @if (!string.IsNullOrWhiteSpace(_message))
+            {
+                <p class="state-message" role="status">@_message</p>
+            }
+        </article>
+    }
+</AdminPageShell>
+
+@code {
+    private bool _loading = true;
+    private bool _settingsEnabled;
+    private string? _message;
+    private string _pilotTitle = "Pilot";
+    private ResearchDashboardClient? _dashboard;
+    private List<ResearchPilotCampaignClient> _pilots = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+        _loading = false;
+    }
+
+    private async Task ReloadAsync()
+    {
+        var settings = await Api.GetResearchAdminSettingsAsync();
+        _settingsEnabled = settings?.ResearchConsentEnabled == true;
+        _dashboard = await Api.GetResearchDashboardAsync();
+        _pilots = (await Api.GetResearchPilotCampaignsAsync() ?? []).ToList();
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        await Api.SaveResearchAdminSettingsAsync(_settingsEnabled);
+        _message = "Instelling opgeslagen.";
+    }
+
+    private async Task DownloadExportAsync()
+    {
+        await Api.DownloadResearchExportCsvAsync(Js);
+        _message = "Export gedownload (audit-log).";
+    }
+
+    private async Task CreatePilotAsync()
+    {
+        var title = string.IsNullOrWhiteSpace(_pilotTitle) ? "Pilot" : _pilotTitle.Trim();
+        var created = await Api.CreateResearchPilotCampaignAsync(title);
+        if (created is not null)
+        {
+            _pilots.Insert(0, created);
+            _message = $"Pilot aangemaakt: {created.PilotUrl}";
+            await InvokeAsync(StateHasChanged);
+        }
+        else
+        {
+            _message = Culture["Common.Error"];
+        }
+    }
+}

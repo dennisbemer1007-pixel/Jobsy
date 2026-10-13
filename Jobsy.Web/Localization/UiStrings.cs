@@ -3521,6 +3521,7 @@ public static class UiStrings
         UiStringsAssessmentV2.MergeAll(nl, en, pl, ro, ar);
         UiStringsWhoAmI.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyRoles.MergeAll(nl, en, pl, ro, ar);
+        UiStringsResearch.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyCandidate.MergeAll(nl, en, pl, ro, ar);
         UiStringsOnboardingV2.MergeAll(nl, en, pl, ro, ar);
         UiStringsGratisDna.MergeAll(nl, en, pl, ro, ar);

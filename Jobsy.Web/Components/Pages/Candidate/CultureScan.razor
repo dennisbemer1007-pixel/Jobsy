@@ -7,6 +7,7 @@
 @using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -284,8 +285,16 @@ else
                 await _autosave.FlushAsync();
                 if (complete) await Api.SaveMyCultureAsync(_autosave.Answers, complete: true);
             }
+
             _answered = _autosave?.AnsweredCount ?? _answered;
             _gainLines = [Culture["TestDone.Gain.Culture1"], Culture["TestDone.Gain.Culture2"], Culture["TestDone.Gain.Culture3"]];
+            if (complete)
+            {
+                await ResearchPostTestNavigation.GoAfterQuickScanCompleteAsync(
+                    Api, Navigation, "/candidate/culture?stap=klaar", "culture");
+                return;
+            }
+
             _mode = TestPageShell.ShellMode.Done;
             Navigation.NavigateTo("/candidate/culture?stap=klaar", replace: true);
         }

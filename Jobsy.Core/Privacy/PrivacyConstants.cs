@@ -10,6 +10,11 @@ public static class PrivacyConstants
     /// <summary>Version of the separate optional test/AI and talent-pool consents.</summary>
     public const string CandidateProfilingConsentVersion = "2026-09-26";
 
+    /// <summary>Version of the optional anonymized research consent copy (bump when info text changes).</summary>
+    public const string ResearchConsentTextVersion = "2026-10-13";
+
+    public const int ResearchExportTargetRespondents = 300;
+
     /// <summary>Version of the candidate's consent to share a passport with one partner.</summary>
     public const string PartnerShareConsentVersion = "2026-10-03";
 

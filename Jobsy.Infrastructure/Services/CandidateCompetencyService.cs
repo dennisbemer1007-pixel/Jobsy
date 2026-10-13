@@ -14,6 +14,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly IAssessmentResearchService _research;
     private readonly AssessmentSaveGuard _saveGuard;
     private readonly IFeatureFlags _flags;
 
@@ -22,6 +23,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         IFlexCommercialService commercial,
         ICandidateMatchSnapshotService matchSnapshots,
         ICandidateInsightsQueue queue,
+        IAssessmentResearchService research,
         AssessmentSaveGuard saveGuard,
         IFeatureFlags flags)
     {
@@ -29,6 +31,7 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         _commercial = commercial;
         _matchSnapshots = matchSnapshots;
         _queue = queue;
+        _research = research;
         _saveGuard = saveGuard;
         _flags = flags;
     }
@@ -204,6 +207,14 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
             row.CompletedAtUtc = now;
             await _db.SaveChangesAsync(cancellationToken);
             await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
+            await ResearchQuickScanSync.AfterCompleteAsync(
+                _research,
+                userId,
+                AssessmentKind.Competence,
+                answers,
+                itemDurationMs: null,
+                totalDurationMs: null,
+                cancellationToken);
             _queue.TryEnqueue(userId);
             var priceDone = DeepAnalysisPricing.For(await _commercial.GetAsync(cancellationToken), AssessmentKind.Competence);
             return ToDto(row, priceDone);
@@ -249,6 +260,14 @@ public sealed class CandidateCompetencyService : ICandidateCompetencyService
         await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
+            await ResearchQuickScanSync.AfterCompleteAsync(
+                _research,
+                userId,
+                AssessmentKind.Competence,
+                answers,
+                itemDurationMs: null,
+                totalDurationMs: null,
+                cancellationToken);
             _queue.TryEnqueue(userId);
         }
 

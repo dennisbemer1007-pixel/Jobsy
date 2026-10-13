@@ -508,6 +508,7 @@ public class AccountUnsubscribeTests
         {
             typeof(AmbassadeurProfile),
             typeof(Application),
+            typeof(AssessmentResearchAttempt),
             typeof(CandidateActionToken),
             typeof(CandidateAssessmentAdjustment),
             typeof(CandidateAssessmentAttempt),

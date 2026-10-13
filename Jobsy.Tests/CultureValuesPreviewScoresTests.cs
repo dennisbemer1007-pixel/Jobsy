@@ -3,6 +3,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Tests.Stubs;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Tests;
@@ -58,6 +59,7 @@ public class CultureValuesPreviewScoresTests
             db,
             new StubCommercial(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
@@ -87,6 +89,7 @@ public class CultureValuesPreviewScoresTests
             db,
             new StubCommercial(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);
@@ -123,6 +126,7 @@ public class CultureValuesPreviewScoresTests
             db,
             new StubCommercial(),
             new StubQueue(),
+            new NoOpAssessmentResearchService(),
             new StubMatchSnapshots(),
             new AssessmentSaveGuard(db, new AssessmentAdjustmentService(db)),
             QuickScanTestSupport.FeatureFlagsOff);

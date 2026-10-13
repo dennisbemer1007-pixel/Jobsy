@@ -20032,6 +20032,135 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     font-size: 0.9rem;
 }
 
+.research-consent-page {
+    max-width: 42rem;
+    margin-inline: auto;
+}
+
+.research-consent-card {
+    margin: 1.25rem 0;
+    padding: 1.35rem 1.5rem;
+    max-width: none;
+    gap: 1.15rem;
+    box-shadow: var(--shadow);
+}
+
+.research-consent-card__title {
+    margin: 0;
+    font-size: 1.2rem;
+    line-height: 1.35;
+    color: var(--text);
+}
+
+.research-consent-card__lead {
+    margin: 0.5rem 0 0;
+}
+
+.research-consent-card__opt-in {
+    margin-top: 0.25rem;
+}
+
+.research-consent-card__check {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    margin: 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--pearl-shine);
+    cursor: pointer;
+}
+
+.research-consent-card__check input[type="checkbox"] {
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--brand);
+}
+
+.research-consent-card__check-text {
+    font-size: 0.95rem;
+    line-height: 1.45;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.research-consent-card__info {
+    margin: 0.75rem 0 0;
+    padding-left: 0.15rem;
+    font-size: 0.92rem;
+}
+
+.research-consent-card__fields {
+    display: grid;
+    gap: 1.15rem 1.35rem;
+    margin-top: 0.35rem;
+    grid-template-columns: 1fr;
+    max-width: none;
+}
+
+@media (min-width: 640px) {
+    .research-consent-card__fields {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.research-consent-card__field {
+    min-width: 0;
+}
+
+.research-consent-card__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--text);
+}
+
+.research-consent-card__label-text {
+    line-height: 1.35;
+}
+
+.research-consent-card__select {
+    width: 100%;
+    font: inherit;
+    font-weight: 500;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text);
+}
+
+.research-consent-card__select:focus {
+    outline: 2px solid color-mix(in srgb, var(--brand) 35%, transparent);
+    outline-offset: 1px;
+}
+
+.research-consent-card__select option {
+    color: var(--text);
+}
+
+.research-consent-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
+}
+
+.research-admin__pilot-create {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 /* One header menu at a time. html[data-header-menu] is set by app-core.js
    (works with or without the Blazor circuit). Triggers stay above the backdrop. */
 .page-help > .page-help__btn,

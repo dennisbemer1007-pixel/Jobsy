@@ -180,6 +180,10 @@ public class JobsyDbContext : DbContext
     public DbSet<VacancyCategory> VacancyCategories => Set<VacancyCategory>();
     public DbSet<SalesPackage> SalesPackages => Set<SalesPackage>();
     public DbSet<PlatformFeedback> PlatformFeedbacks => Set<PlatformFeedback>();
+    public DbSet<AssessmentResearchAttempt> AssessmentResearchAttempts => Set<AssessmentResearchAttempt>();
+    public DbSet<AssessmentResearchItemResponse> AssessmentResearchItemResponses => Set<AssessmentResearchItemResponse>();
+    public DbSet<ResearchPilotCampaign> ResearchPilotCampaigns => Set<ResearchPilotCampaign>();
+    public DbSet<ResearchPilotSession> ResearchPilotSessions => Set<ResearchPilotSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -200,6 +204,12 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ConsentVersion).HasMaxLength(32);
             entity.Property(e => e.TalentPoolConsentVersion).HasMaxLength(32);
             entity.Property(e => e.TestAiConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.ResearchConsentVersion).HasMaxLength(32);
+            entity.Property(e => e.ResearchAgeBand).HasMaxLength(32);
+            entity.Property(e => e.ResearchGender).HasMaxLength(32);
+            entity.Property(e => e.ResearchEducationLevel).HasMaxLength(32);
+            entity.Property(e => e.ResearchNativeLanguage).HasMaxLength(16);
+            entity.Property(e => e.ResearchTestLanguage).HasMaxLength(16);
             entity.Property(e => e.ParentalConsentEmail).HasMaxLength(256);
             entity.Property(e => e.ParentalConsentTokenHash).HasMaxLength(128);
             entity.Property(e => e.AuthenticatorSecret).HasMaxLength(1024);
@@ -1869,6 +1879,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.HonestAdviceEnabled).HasDefaultValue(false);
             entity.Property(e => e.FutureJobsForYouEnabled).HasDefaultValue(false);
             entity.Property(e => e.FreeCandidateTestsEnabled).HasDefaultValue(true);
+            entity.Property(e => e.ResearchConsentEnabled).HasDefaultValue(false);
         });
 
         modelBuilder.Entity<PassportPartner>(entity =>
@@ -2952,6 +2963,58 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.School)
                 .WithMany()
                 .HasForeignKey(e => e.SchoolId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AssessmentResearchAttempt>(entity =>
+        {
+            entity.ToTable("AssessmentResearchAttempts");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RespondentHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TestKey).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TestLanguage).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.AgeBand).HasMaxLength(32);
+            entity.Property(e => e.Gender).HasMaxLength(32);
+            entity.Property(e => e.EducationLevel).HasMaxLength(32);
+            entity.Property(e => e.NativeLanguage).HasMaxLength(16);
+            entity.Property(e => e.PilotEndComment).HasMaxLength(2000);
+            entity.HasIndex(e => new { e.UserId, e.TestKey, e.CompletedAtUtc });
+            entity.HasIndex(e => e.RespondentHash);
+            entity.HasMany(e => e.Items)
+                .WithOne(i => i.Attempt)
+                .HasForeignKey(i => i.AttemptId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AssessmentResearchItemResponse>(entity =>
+        {
+            entity.ToTable("AssessmentResearchItemResponses");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.AttemptId, e.ItemId }).IsUnique();
+        });
+
+        modelBuilder.Entity<ResearchPilotCampaign>(entity =>
+        {
+            entity.ToTable("ResearchPilotCampaigns");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Code).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.HasIndex(e => e.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<ResearchPilotSession>(entity =>
+        {
+            entity.ToTable("ResearchPilotSessions");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.RespondentHash).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.TestLanguage).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.AgeBand).HasMaxLength(32);
+            entity.Property(e => e.Gender).HasMaxLength(32);
+            entity.Property(e => e.EducationLevel).HasMaxLength(32);
+            entity.Property(e => e.NativeLanguage).HasMaxLength(16);
+            entity.HasOne(e => e.Campaign)
+                .WithMany()
+                .HasForeignKey(e => e.CampaignId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

@@ -14,6 +14,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly IAssessmentResearchService _research;
     private readonly AssessmentSaveGuard _saveGuard;
     private readonly IFeatureFlags _flags;
 
@@ -22,6 +23,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         IFlexCommercialService commercial,
         ICandidateMatchSnapshotService matchSnapshots,
         ICandidateInsightsQueue queue,
+        IAssessmentResearchService research,
         AssessmentSaveGuard saveGuard,
         IFeatureFlags flags)
     {
@@ -29,6 +31,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         _commercial = commercial;
         _matchSnapshots = matchSnapshots;
         _queue = queue;
+        _research = research;
         _saveGuard = saveGuard;
         _flags = flags;
     }
@@ -163,6 +166,14 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         await _matchSnapshots.MarkInputsStaleAsync(userId, cancellationToken);
         if (complete)
         {
+            await ResearchQuickScanSync.AfterCompleteAsync(
+                _research,
+                userId,
+                AssessmentKind.Career,
+                answers,
+                itemDurationMs: null,
+                totalDurationMs: null,
+                cancellationToken);
             _queue.TryEnqueue(userId);
         }
 

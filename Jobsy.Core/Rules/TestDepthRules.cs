@@ -44,13 +44,13 @@ public static class TestDepthRules
         AssessmentKind kind,
         TestDepthLevel level,
         int quickScanVersion = AssessmentTestVersions.V1) => level switch
-    {
-        TestDepthLevel.First => FirstCount,
-        TestDepthLevel.Deeper => DeeperCount,
-        TestDepthLevel.Full => FullCount(kind, quickScanVersion),
-        TestDepthLevel.Bottom => Bottom(kind),
-        _ => FirstCount
-    };
+        {
+            TestDepthLevel.First => FirstCount,
+            TestDepthLevel.Deeper => DeeperCount,
+            TestDepthLevel.Full => FullCount(kind, quickScanVersion),
+            TestDepthLevel.Bottom => Bottom(kind),
+            _ => FirstCount
+        };
 
     /// <summary>Highest free level reached by answered count; null below 5.</summary>
     public static TestDepthLevel? Reached(

@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "b74040d09dda16e25a8d3c88c6f74d2d1ebb5297c4c8fc3ca032739452566f2a",
+    "sha256": "93775d6f05bf74c57352d02497884b5f3089f5f646462ae42157d9cb80eb3c9a",
     "v": "20261011-03"
   },
   "css/critical.css": {
@@ -164,8 +164,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "da93c94860a08e9d19b4c632db4b78a71fe1f1b72aa8ebc93379a99b98779fdc",
-    "v": "20261012-02"
+    "sha256": "73d4ef3e96554cbab8c17e67b4c10fb35d8313e38e6764e1be8ed607d303bada",
+    "v": "20261013-mascot-sticky"
   },
   "js/app-extras.js": {
     "sha256": "766c6b30c5eb689319309e1b3f6bd29871a9d93e9f57468be1937a2aee6f9823",
