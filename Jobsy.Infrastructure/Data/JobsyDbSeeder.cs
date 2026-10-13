@@ -44,6 +44,15 @@ public static class JobsyDbSeeder
 
         try
         {
+            await BeheerTodoSeeder.SeedAsync(db);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Beheer todo seed after migrate failed; continuing.");
+        }
+
+        try
+        {
             await scope.ServiceProvider.GetRequiredService<Jobsy.Core.Interfaces.ITrainingUpskillService>()
                 .EnsureDefaultsAsync();
         }

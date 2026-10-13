@@ -248,6 +248,7 @@ public static partial class PageSeoCatalog
             ["/admin/organisaties"] = Private("AdminNav.Companies", "Seo.PrivateDescription"),
             ["/admin/instellingen/algemeen"] = Private("AdminNav.General", "Seo.PrivateDescription"),
             ["/admin/feedback"] = Private("AdminNav.Feedback", "Seo.PrivateDescription"),
+            ["/admin/takenlijst"] = Private("AdminNav.BeheerTaken", "Seo.PrivateDescription"),
             ["/admin/financien"] = Private("AdminNav.Revenue", "Seo.PrivateDescription"),
             ["/admin/instellingen/integraties"] = Private("AdminNav.Integrations", "Seo.PrivateDescription"),
             ["/admin/beveiliging/systeemlogs"] = Private("AdminNav.SystemLogs", "Seo.PrivateDescription"),

@@ -2352,3 +2352,153 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
     letter-spacing: inherit;
     text-transform: inherit;
 }
+
+/* Admin to-do lijst (beheer) */
+.beheer-todos__toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.beheer-todos__toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.beheer-todos__filter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 12rem;
+}
+
+.beheer-todos__field-label {
+    display: block;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-1);
+}
+
+.beheer-todos__select {
+    min-width: 12rem;
+}
+
+.beheer-todos__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.beheer-todo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--space-5);
+    box-shadow: var(--shadow);
+}
+
+.beheer-todo-card--done {
+    opacity: 0.82;
+}
+
+.beheer-todo-card__head {
+    margin-bottom: var(--space-4);
+}
+
+.beheer-todo-card__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+
+.beheer-todo-card__title {
+    font-size: var(--text-lg);
+    margin: 0;
+    flex: 1 1 12rem;
+}
+
+.beheer-todo-card__category {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--brand);
+    background: var(--accent-soft);
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-pill);
+}
+
+.beheer-todo-card__meta {
+    font-size: var(--text-sm);
+    line-height: 1.5;
+}
+
+.beheer-todo-card__body-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.beheer-todo-card__body {
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--text);
+    background: var(--pearl-shine);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: var(--space-4);
+}
+
+.beheer-todo-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.beheer-todos__form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.beheer-todos__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.beheer-todos__textarea {
+    min-height: 12rem;
+    resize: vertical;
+    line-height: 1.5;
+}
+
+.beheer-todos__form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+}
+
+@media (max-width: 480px) {
+    .beheer-todo-card {
+        padding: var(--space-4);
+    }
+
+    .beheer-todo-card__title {
+        font-size: var(--text-md);
+    }
+}

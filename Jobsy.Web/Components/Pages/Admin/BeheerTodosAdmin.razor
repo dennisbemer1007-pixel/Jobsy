@@ -1,0 +1,385 @@
+@page "/admin/takenlijst"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Authorize(Roles = "Admin")]
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Components.Shared
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+<PageTitle>@Culture["AdminNav.BeheerTaken"] · Lobsy</PageTitle>
+
+<AdminPageShell Title="@Culture["AdminNav.BeheerTaken"]"
+                Lead="@Culture["AdminBeheerTaken.Lead"]"
+                Wide="true">
+    <div class="beheer-todos__toolbar">
+        <div class="beheer-todos__filter">
+            <label class="beheer-todos__field-label" for="beheer-todo-status-filter">@Culture["AdminBeheerTaken.FilterStatus"]</label>
+            <select id="beheer-todo-status-filter" class="jobsy-form-value beheer-todos__select" @bind="_statusFilter" @bind:after="ReloadAsync">
+                <option value="">@Culture["AdminBeheerTaken.StatusFilter.All"]</option>
+                <option value="@((int)BeheerTodoStatus.Open)">@Culture["AdminBeheerTaken.Status.Open"]</option>
+                <option value="@((int)BeheerTodoStatus.Bezig)">@Culture["AdminBeheerTaken.Status.Bezig"]</option>
+                <option value="@((int)BeheerTodoStatus.Klaar)">@Culture["AdminBeheerTaken.Status.Klaar"]</option>
+            </select>
+        </div>
+        <div class="beheer-todos__toolbar-actions">
+            <button type="button" class="btn-compact" disabled="@_loading" @onclick="ReloadAsync">@Culture["AdminOrgs.Refresh"]</button>
+            <button type="button" class="btn-compact btn-compact--primary" @onclick="OpenCreate">@Culture["AdminBeheerTaken.New"]</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <p class="state-message error" role="alert">@_error</p>
+    }
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message">@_message</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">@Culture["AdminBeheerTaken.Empty"]</p>
+    }
+    else
+    {
+        <div class="beheer-todos__list">
+            @foreach (var item in _items)
+            {
+                <article class="beheer-todo-card @StatusCardClass(item.Status)" data-testid="beheer-todo-card">
+                    <header class="beheer-todo-card__head">
+                        <div class="beheer-todo-card__title-row">
+                            <h2 class="beheer-todo-card__title">@item.Title</h2>
+                            <span class="status-pill @PriorityPillClass(item.Priority)">@PriorityLabel(item.Priority)</span>
+                            <span class="status-pill">@StatusLabel(item.Status)</span>
+                            @if (!string.IsNullOrWhiteSpace(item.Category))
+                            {
+                                <span class="beheer-todo-card__category">@item.Category</span>
+                            }
+                        </div>
+                        <div class="beheer-todo-card__meta muted">
+                            @if (item.DueDate is not null)
+                            {
+                                <span>@Culture["AdminBeheerTaken.Col.Due"]: @item.DueDate.Value.ToString("dd-MM-yyyy")</span>
+                                <span aria-hidden="true"> · </span>
+                            }
+                            <span>
+                                @Culture["AdminBeheerTaken.CreatedBy"]
+                                @FormatWhen(item.CreatedAtUtc)
+                                @(string.IsNullOrWhiteSpace(item.CreatedByDisplayName) ? "" : $" · {item.CreatedByDisplayName}")
+                            </span>
+                            <span aria-hidden="true"> · </span>
+                            <span>
+                                @Culture["AdminBeheerTaken.UpdatedBy"]
+                                @FormatWhen(item.UpdatedAtUtc)
+                                @(string.IsNullOrWhiteSpace(item.UpdatedByDisplayName) ? "" : $" · {item.UpdatedByDisplayName}")
+                            </span>
+                        </div>
+                    </header>
+
+                    @if (!string.IsNullOrWhiteSpace(item.Body))
+                    {
+                        <div class="beheer-todo-card__body-wrap">
+                            <pre class="beheer-todo-card__body">@item.Body</pre>
+                            <button type="button" class="btn-compact" @onclick="() => CopyBodyAsync(item.Id, item.Body)">
+                                @(_copiedId == item.Id ? Culture["AdminBeheerTaken.Copied"] : Culture["AdminBeheerTaken.CopyBody"])
+                            </button>
+                        </div>
+                    }
+
+                    <footer class="beheer-todo-card__actions">
+                        <button type="button" class="btn-compact" @onclick="() => Edit(item)">@Culture["Common.Edit"]</button>
+                        @if (item.Status != BeheerTodoStatus.Klaar)
+                        {
+                            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="() => MarkDoneAsync(item)">
+                                @Culture["AdminBeheerTaken.MarkDone"]
+                            </button>
+                        }
+                        <button type="button" class="btn-compact" disabled="@_busy" @onclick="() => ConfirmDelete(item)">@Culture["Common.Delete"]</button>
+                    </footer>
+                </article>
+            }
+        </div>
+    }
+</AdminPageShell>
+
+<AdminDrawer Open="_drawerOpen"
+             OpenChanged="v => { _drawerOpen = v; if (!v) ResetForm(); }"
+             Title="@(_editId is null ? Culture["AdminBeheerTaken.New"] : Culture["Common.Edit"])">
+    <div class="beheer-todos__form">
+        <label class="beheer-todos__field">
+            <span class="beheer-todos__field-label">@Culture["AdminBeheerTaken.Label.Title"]</span>
+            <input class="jobsy-form-value" @bind="_formTitle" maxlength="500" autocomplete="off" />
+        </label>
+        <label class="beheer-todos__field">
+            <span class="beheer-todos__field-label">@Culture["AdminBeheerTaken.Label.Category"]</span>
+            <input class="jobsy-form-value" @bind="_formCategory" maxlength="64" autocomplete="off" />
+        </label>
+        <label class="beheer-todos__field">
+            <span class="beheer-todos__field-label">@Culture["AdminBeheerTaken.Label.Priority"]</span>
+            <select class="jobsy-form-value beheer-todos__select" @bind="_formPriority">
+                <option value="@BeheerTodoPriority.Laag">@Culture["AdminBeheerTaken.Priority.Laag"]</option>
+                <option value="@BeheerTodoPriority.Normaal">@Culture["AdminBeheerTaken.Priority.Normaal"]</option>
+                <option value="@BeheerTodoPriority.Hoog">@Culture["AdminBeheerTaken.Priority.Hoog"]</option>
+            </select>
+        </label>
+        <label class="beheer-todos__field">
+            <span class="beheer-todos__field-label">@Culture["AdminBeheerTaken.Label.Status"]</span>
+            <select class="jobsy-form-value beheer-todos__select" @bind="_formStatus">
+                <option value="@BeheerTodoStatus.Open">@Culture["AdminBeheerTaken.Status.Open"]</option>
+                <option value="@BeheerTodoStatus.Bezig">@Culture["AdminBeheerTaken.Status.Bezig"]</option>
+                <option value="@BeheerTodoStatus.Klaar">@Culture["AdminBeheerTaken.Status.Klaar"]</option>
+            </select>
+        </label>
+        <div class="beheer-todos__field">
+            <span class="beheer-todos__field-label">@Culture["AdminBeheerTaken.Label.Due"]</span>
+            <JobsyDateField @bind-Value="_formDueDate" InputId="beheer-todo-due" />
+        </div>
+        <label class="beheer-todos__field">
+            <span class="beheer-todos__field-label">@Culture["AdminBeheerTaken.Label.Body"]</span>
+            <textarea class="jobsy-form-value beheer-todos__textarea" rows="12" @bind="_formBody"></textarea>
+        </label>
+        @if (!string.IsNullOrEmpty(_formError))
+        {
+            <p class="error" role="alert">@_formError</p>
+        }
+        <div class="beheer-todos__form-actions">
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="SaveAsync">@Culture["Common.Save"]</button>
+            <button type="button" class="btn-compact" @onclick="() => _drawerOpen = false">@Culture["Common.Cancel"]</button>
+        </div>
+    </div>
+</AdminDrawer>
+
+<LobsyFriendlyDialog IsOpen="_deleteOpen"
+                     Title="@Culture["AdminBeheerTaken.DeleteTitle"]"
+                     TitleId="beheer-todo-delete-title"
+                     Lead="@Culture["AdminBeheerTaken.DeleteLead"]"
+                     OnClose="() => _deleteOpen = false">
+    @if (_deleteTarget is not null)
+    {
+        <p><strong>@_deleteTarget.Title</strong></p>
+        <div class="inline-actions">
+            <button type="button" class="btn-compact btn-compact--primary" disabled="@_busy" @onclick="DeleteConfirmedAsync">@Culture["Common.Delete"]</button>
+            <button type="button" class="btn-compact" @onclick="() => _deleteOpen = false">@Culture["Common.Cancel"]</button>
+        </div>
+    }
+</LobsyFriendlyDialog>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private bool _drawerOpen;
+    private bool _deleteOpen;
+    private string _statusFilter = "";
+    private string _error = "";
+    private string _message = "";
+    private string _formError = "";
+    private Guid? _editId;
+    private Guid? _copiedId;
+    private BeheerTodoItem? _deleteTarget;
+    private List<BeheerTodoItem> _items = [];
+
+    private string _formTitle = "";
+    private string _formBody = "";
+    private string _formCategory = "";
+    private BeheerTodoPriority _formPriority = BeheerTodoPriority.Normaal;
+    private BeheerTodoStatus _formStatus = BeheerTodoStatus.Open;
+    private DateOnly? _formDueDate;
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = "";
+        try
+        {
+            BeheerTodoStatus? filter = string.IsNullOrEmpty(_statusFilter)
+                ? null
+                : (BeheerTodoStatus)int.Parse(_statusFilter, System.Globalization.CultureInfo.InvariantCulture);
+            _items = (await Api.GetBeheerTodosAsync(filter)).ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenCreate()
+    {
+        ResetForm();
+        _drawerOpen = true;
+    }
+
+    private void Edit(BeheerTodoItem item)
+    {
+        _editId = item.Id;
+        _formTitle = item.Title;
+        _formBody = item.Body;
+        _formCategory = item.Category;
+        _formPriority = item.Priority;
+        _formStatus = item.Status;
+        _formDueDate = item.DueDate;
+        _formError = "";
+        _drawerOpen = true;
+    }
+
+    private void ResetForm()
+    {
+        _editId = null;
+        _formTitle = "";
+        _formBody = "";
+        _formCategory = "";
+        _formPriority = BeheerTodoPriority.Normaal;
+        _formStatus = BeheerTodoStatus.Open;
+        _formDueDate = null;
+        _formError = "";
+    }
+
+    private async Task SaveAsync()
+    {
+        _formError = "";
+        _busy = true;
+        _message = "";
+        try
+        {
+            var payload = new BeheerTodoUpsertPayload(
+                _formTitle.Trim(),
+                _formBody,
+                _formDueDate,
+                _formPriority,
+                _formStatus,
+                _formCategory.Trim());
+
+            if (_editId is null)
+            {
+                await Api.CreateBeheerTodoAsync(payload);
+            }
+            else
+            {
+                await Api.UpdateBeheerTodoAsync(_editId.Value, payload);
+            }
+
+            _drawerOpen = false;
+            ResetForm();
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _formError = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task MarkDoneAsync(BeheerTodoItem item)
+    {
+        _busy = true;
+        _error = "";
+        try
+        {
+            await Api.MarkBeheerTodoDoneAsync(item.Id);
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ConfirmDelete(BeheerTodoItem item)
+    {
+        _deleteTarget = item;
+        _deleteOpen = true;
+    }
+
+    private async Task DeleteConfirmedAsync()
+    {
+        if (_deleteTarget is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = "";
+        try
+        {
+            await Api.DeleteBeheerTodoAsync(_deleteTarget.Id);
+            _deleteOpen = false;
+            _deleteTarget = null;
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task CopyBodyAsync(Guid id, string body)
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", body);
+            _copiedId = id;
+            StateHasChanged();
+            await Task.Delay(2000);
+            if (_copiedId == id)
+            {
+                _copiedId = null;
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // ignore clipboard failures
+        }
+    }
+
+    private static string FormatWhen(DateTime utc)
+        => utc.ToLocalTime().ToString("dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string PriorityLabel(BeheerTodoPriority p) => p switch
+    {
+        BeheerTodoPriority.Laag => Culture["AdminBeheerTaken.Priority.Laag"],
+        BeheerTodoPriority.Hoog => Culture["AdminBeheerTaken.Priority.Hoog"],
+        _ => Culture["AdminBeheerTaken.Priority.Normaal"],
+    };
+
+    private string StatusLabel(BeheerTodoStatus s) => s switch
+    {
+        BeheerTodoStatus.Bezig => Culture["AdminBeheerTaken.Status.Bezig"],
+        BeheerTodoStatus.Klaar => Culture["AdminBeheerTaken.Status.Klaar"],
+        _ => Culture["AdminBeheerTaken.Status.Open"],
+    };
+
+    private static string PriorityPillClass(BeheerTodoPriority p) => p switch
+    {
+        BeheerTodoPriority.Hoog => "status-pill--danger",
+        BeheerTodoPriority.Laag => "",
+        _ => "status-pill--warn",
+    };
+
+    private static string StatusCardClass(BeheerTodoStatus s)
+        => s == BeheerTodoStatus.Klaar ? "beheer-todo-card--done" : "";
+}

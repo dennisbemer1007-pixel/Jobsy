@@ -853,6 +853,64 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("AtsScrapedListings", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.BeheerTodo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SeedKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("SeedKey")
+                        .IsUnique()
+                        .HasFilter("\"SeedKey\" IS NOT NULL");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.ToTable("BeheerTodos");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateActionToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1068,18 +1126,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int?>("RealisticPercent")
+                    b.Property<int>("QuickScanHighestAnswered")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
                     b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RealisticPercent")
+                        .HasColumnType("integer");
 
                     b.Property<string>("RiasecTagsJson")
                         .IsRequired()
@@ -1261,6 +1315,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<int>("QuickScanHighestAnswered")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("QuickScanVersion")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("ResultaatgerichtheidPercent")
                         .HasColumnType("integer");
 
@@ -1279,16 +1339,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int?>("StressbestendigheidPercent")
                         .HasColumnType("integer");
-
-                    b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
@@ -1360,14 +1410,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
+                        .HasColumnType("integer");
 
                     b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -2118,18 +2164,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
-                    b.Property<int?>("StabilityPercent")
+                    b.Property<int>("QuickScanHighestAnswered")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuickScanHighestAnswered")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
                     b.Property<int>("QuickScanVersion")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("StabilityPercent")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -5262,6 +5304,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("MatchCalibrationV1Enabled")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("MinimumSessionVersion")
                         .HasColumnType("integer");
 
@@ -5281,9 +5326,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasDefaultValue(false);
 
                     b.Property<bool>("ProactiveMatchingEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("MatchCalibrationV1Enabled")
                         .HasColumnType("boolean");
 
                     b.Property<string>("PublicWebBaseUrl")
@@ -9130,6 +9172,23 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("LinkedVacancy");
 
                     b.Navigation("Source");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.BeheerTodo", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateActionToken", b =>

@@ -38,6 +38,10 @@ public static partial class AdminActionLabels
             "masterdata.create" => "AdminAudit.Action.MasterdataCreated",
             "masterdata.update" => "AdminAudit.Action.MasterdataUpdated",
             "masterdata.delete" => "AdminAudit.Action.MasterdataDeleted",
+            "beheer-todo.create" => "AdminAudit.Action.BeheerTodoCreated",
+            "beheer-todo.update" => "AdminAudit.Action.BeheerTodoUpdated",
+            "beheer-todo.mark-done" => "AdminAudit.Action.BeheerTodoMarkDone",
+            "beheer-todo.delete" => "AdminAudit.Action.BeheerTodoDeleted",
             "user.sessions" or "user.sessions.list" or "user.sessions.revoke" or "user.sessions.revoke-all"
                 => "AdminAudit.Action.Sessions",
             "reference.misuse.handled" => "AdminAudit.Action.MisuseHandled",
