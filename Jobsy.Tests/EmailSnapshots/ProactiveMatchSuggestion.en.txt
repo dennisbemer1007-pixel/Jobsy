@@ -1,0 +1,36 @@
+KEY: ProactiveMatchSuggestion
+SUBJECT: Lobsy tip: Weekendhulp verkoop
+PREHEADER: Match 87% - see why this fits you
+KIND: Optional
+--- TEXT ---
+Lobsy searches for you
+======================
+
+We spotted a vacancy that fits you: Weekendhulp verkoop at Bakkerij De
+Gouden Korrel.
+
+Why this fits you: Past bij je profiel en voorkeuren.
+
+Match score: 87%
+
+View tip: https://lobsy.nl/candidate/proactive-matching
+
+Team Lobsy
+
+You receive this email because of an action on Lobsy.
+No more reminder emails? Unsubscribe: https://lobsy.nl/mail/afmelden
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail settings: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Lobsy searches for you
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: View tip -> https://lobsy.nl/candidate/proactive-matching
+a: No more reminder emails? Unsubscribe -> https://lobsy.nl/mail/afmelden
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail settings -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

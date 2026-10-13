@@ -27,4 +27,7 @@ public sealed class JobsyFeatureOptions
     /// When true, "Bekijk voorbeeld-PDF" is shown. Enabled in PR B when sample PDFs exist.
     /// </summary>
     public bool SamplePdf { get; set; }
+
+    /// <summary>When true, new Quick-Scan rows use v2 catalogs. Overridden by platform settings when present.</summary>
+    public bool TestsV2Enabled { get; set; }
 }

@@ -345,7 +345,9 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
             Competencies = Competencies,
             CultureScores = CandidateCulture,
             RiasecTags = [],
-            CareerOccupations = []
+            CareerOccupations = [],
+            CompetencyMatchEvidence = AssessmentMatchEvidence.FullQuickScan,
+            CareerMatchEvidence = AssessmentMatchEvidence.FullQuickScan
         };
 
     private static VacancyDiscoveryRecord MakeRecord(

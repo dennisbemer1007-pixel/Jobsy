@@ -194,6 +194,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.ProactiveMatchingEnabled = proactiveMatchingEnabled;
         }
 
+        if (update.TestsV2Enabled is bool testsV2Enabled)
+        {
+            row.TestsV2Enabled = testsV2Enabled;
+        }
+
         if (update.MatchCalibrationV1Enabled is bool matchCalibrationV1)
         {
             row.MatchCalibrationV1Enabled = matchCalibrationV1;
@@ -413,6 +418,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.EmployerPhase2Enabled ?? false,
             row?.CandidateExternalVacanciesEnabled ?? false,
             row?.ProactiveMatchingEnabled ?? false,
+            row?.TestsV2Enabled ?? _options.TestsV2Enabled,
             row?.MatchCalibrationV1Enabled ?? false,
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),

@@ -48,5 +48,8 @@ public enum PlatformFeature
     /// <summary>
     /// Proactive matching: Lobsy zoekt voor je, werkgever-shortlist en kennismakingsverzoeken. Default false.
     /// </summary>
-    ProactiveMatching
+    ProactiveMatching,
+
+    /// <summary>Quick-Scan v2 question sets for new candidate test rows. Default false.</summary>
+    TestsV2
 }

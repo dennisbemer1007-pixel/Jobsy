@@ -1071,6 +1071,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int?>("RealisticPercent")
                         .HasColumnType("integer");
 
+                    b.Property<int>("QuickScanHighestAnswered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("QuickScanVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
                     b.Property<string>("RiasecTagsJson")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1270,6 +1280,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int?>("StressbestendigheidPercent")
                         .HasColumnType("integer");
 
+                    b.Property<int>("QuickScanHighestAnswered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("QuickScanVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -1338,6 +1358,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int?>("PeopleFirstPercent")
                         .HasColumnType("integer");
+
+                    b.Property<int>("QuickScanHighestAnswered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("QuickScanVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -2090,6 +2120,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int?>("StabilityPercent")
                         .HasColumnType("integer");
+
+                    b.Property<int>("QuickScanHighestAnswered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("QuickScanVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -5270,6 +5310,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("SupportAccessNotifySubject")
                         .HasColumnType("boolean");
+
+                    b.Property<bool>("TestsV2Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");

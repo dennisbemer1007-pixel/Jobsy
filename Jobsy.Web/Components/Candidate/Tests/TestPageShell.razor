@@ -21,10 +21,16 @@
                 <p class="test-shell__eyebrow">@Culture.Format("TestFlow.Eyebrow.Intro", TestName)</p>
                 <h1 tabindex="-1">@H1</h1>
                 <p class="test-shell__lead">@Lead</p>
-                @if (ChildContent is not null)
-                {
-                    @ChildContent
-                }
+                        @if (ShowIndicativeBanner)
+                        {
+                            <p class="test-indicative-banner muted" data-testid="assessment-indicative-depth">
+                                @Culture["AssessmentV2.Transparency.ShortDepth"]
+                            </p>
+                        }
+                        @if (ChildContent is not null)
+                        {
+                            @ChildContent
+                        }
             </div>
             <div class="test-shell__scene">
                 <TestDiveScene Kind="Kind"
@@ -57,6 +63,12 @@
                 else
                 {
                     <p class="test-shell__lead">@Culture["TestFlow.QuestionLead"]</p>
+                }
+                @if (ShowIndicativeBanner)
+                {
+                    <p class="test-indicative-banner muted" data-testid="assessment-indicative-depth">
+                        @Culture["AssessmentV2.Transparency.ShortDepth"]
+                    </p>
                 }
                 @ChildContent
             </div>
@@ -163,4 +175,5 @@
     [Parameter] public bool NewShell { get; set; } = true;
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RailContent { get; set; }
+    [Parameter] public bool ShowIndicativeBanner { get; set; }
 }

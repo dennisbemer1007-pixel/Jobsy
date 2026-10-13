@@ -66,7 +66,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.FutureJobsForYouEnabled ?? false,
                 dto?.EmployerPhase2Enabled ?? false,
                 dto?.CandidateExternalVacanciesEnabled ?? false,
-                dto?.ProactiveMatchingEnabled ?? false);
+                dto?.ProactiveMatchingEnabled ?? false,
+                dto?.TestsV2Enabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -133,5 +134,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("proactiveMatchingEnabled")]
         public bool ProactiveMatchingEnabled { get; set; }
+
+        [JsonPropertyName("testsV2Enabled")]
+        public bool TestsV2Enabled { get; set; }
     }
 }

@@ -100,7 +100,9 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 CandidateValuesScores = context.ValuesScores,
                 CompanyValuesScores = companyProfile?.Values,
                 CompanyEngagement = companyProfile?.Engagement,
-                CompanyName = record.CompanyName
+                CompanyName = record.CompanyName,
+                CompetencyMatchEvidence = context.CompetencyMatchEvidence,
+                CareerMatchEvidence = context.CareerMatchEvidence
             }, useCalibrationV1);
             result[record.Id] = match;
             if (useCalibrationV1 && match.LegacyTotalPercent is int legacy)
@@ -135,6 +137,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         var career = await _db.CandidateCareerInterests.AsNoTracking()
             .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
 
+        var competencyVersion = AssessmentTestVersions.Normalize(competency?.QuickScanVersion);
         var competencyResolved = competency is null
             ? new ProvisionalAssessmentScores.ResolvedCompetency(null, false)
             : ProvisionalAssessmentScores.ResolveCompetency(
@@ -144,9 +147,11 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 competency.ResultaatgerichtheidPercent,
                 competency.StressbestendigheidPercent,
                 competency.InnovatiePercent,
-                competency.ExtraversiePercent);
+                competency.ExtraversiePercent,
+                competencyVersion);
         var scores = competencyResolved.Scores is { IsComplete: true } ? competencyResolved.Scores : null;
 
+        var careerVersion = AssessmentTestVersions.Normalize(career?.QuickScanVersion);
         var careerResolved = career is null
             ? new ProvisionalAssessmentScores.ResolvedRiasec(null, false)
             : ProvisionalAssessmentScores.ResolveCareer(
@@ -157,7 +162,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 career.ArtisticPercent,
                 career.SocialPercent,
                 career.EnterprisingPercent,
-                career.ConventionalPercent);
+                career.ConventionalPercent,
+                careerVersion);
         var riasecScores = careerResolved.Scores is { IsComplete: true } ? careerResolved.Scores : null;
         var riasecTags = riasecScores is not null
             ? CareerTestCatalog.DeriveRiasecTags(riasecScores)
@@ -192,8 +198,9 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 cultureRow.EmotionalStabilityPercent);
         }
 
+        var cultureVersion = AssessmentTestVersions.Normalize(cultureRow?.QuickScanVersion);
         var cultureResolved = ProvisionalAssessmentScores.ResolveCulture(
-            cultureRow?.Status, cultureRow?.AnswersJson, storedCulture);
+            cultureRow?.Status, cultureRow?.AnswersJson, storedCulture, cultureVersion);
         var culture = cultureResolved.Scores is { IsComplete: true } ? cultureResolved.Scores : null;
 
         var valuesRow = await _db.CandidateValuesProfiles.AsNoTracking()
@@ -207,8 +214,31 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 valuesRow.ConnectionPercent,
                 valuesRow.AchievementPercent,
                 valuesRow.StabilityPercent,
-                valuesRow.ImpactPercent);
+                valuesRow.ImpactPercent,
+                AssessmentTestVersions.Normalize(valuesRow.QuickScanVersion));
         var values = valuesResolved.Scores is { IsComplete: true } ? valuesResolved.Scores : null;
+
+        var competenceDeep = await _db.CandidateDeepAnalyses.AsNoTracking()
+            .AnyAsync(
+                d => d.UserId == userId
+                     && d.Kind == AssessmentKind.Competence
+                     && d.Status == CandidateDeepAnalysisStatuses.Completed,
+                cancellationToken);
+
+        var competencyEvidence = ResolveQuickScanEvidence(
+            AssessmentKind.Competence,
+            competencyVersion,
+            competency?.QuickScanHighestAnswered ?? 0,
+            scores is { IsComplete: true },
+            competencyResolved.IsProvisional,
+            competenceDeep);
+        var careerEvidence = ResolveQuickScanEvidence(
+            AssessmentKind.Career,
+            careerVersion,
+            career?.QuickScanHighestAnswered ?? 0,
+            riasecScores is { IsComplete: true },
+            careerResolved.IsProvisional,
+            careerDeep);
 
         return new ProfileVacancyMatchContext
         {
@@ -228,8 +258,30 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                             || careerResolved.IsProvisional
                             || cultureResolved.IsProvisional
                             || valuesResolved.IsProvisional,
+            CompetencyMatchEvidence = competencyEvidence,
+            CareerMatchEvidence = careerEvidence,
             OpenForWork = user.OpenForWork
         };
+    }
+
+    private static AssessmentMatchEvidence ResolveQuickScanEvidence(
+        AssessmentKind kind,
+        int version,
+        int highestAnswered,
+        bool scoresComplete,
+        bool isProvisional,
+        bool deepCompleted)
+    {
+        if (deepCompleted)
+        {
+            return AssessmentMatchEvidence.DeepAnalysis;
+        }
+
+        return AssessmentMatchEvidenceRules.FromQuickScan(
+            scoresComplete,
+            highestAnswered,
+            AssessmentQuickScanCatalog.QuestionCount(kind, version),
+            isProvisional);
     }
 
     private static IReadOnlyList<CareerOccupationMatch> ResolveOccupations(

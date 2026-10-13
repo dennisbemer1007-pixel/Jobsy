@@ -1,5 +1,6 @@
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -14,19 +15,22 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ICandidateInsightsQueue _queue;
     private readonly AssessmentSaveGuard _saveGuard;
+    private readonly IFeatureFlags _flags;
 
     public CandidateCareerInterestService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateMatchSnapshotService matchSnapshots,
         ICandidateInsightsQueue queue,
-        AssessmentSaveGuard saveGuard)
+        AssessmentSaveGuard saveGuard,
+        IFeatureFlags flags)
     {
         _db = db;
         _commercial = commercial;
         _matchSnapshots = matchSnapshots;
         _queue = queue;
         _saveGuard = saveGuard;
+        _flags = flags;
     }
 
     public async Task<CandidateCareerInterestStateDto> GetAsync(
@@ -52,7 +56,11 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             return await ComposeDtoAsync(userId, row, includeMatches: true, cancellationToken);
         }
 
-        var error = CareerTestCatalog.ValidateAnswers(answers, complete);
+        var testsV2 = await _flags.IsEnabledAsync(PlatformFeature.TestsV2, cancellationToken);
+        var version = QuickScanVersionPolicy.ResolveVersionForNew(row?.QuickScanVersion, testsV2);
+
+        var error = QuickScanAssessmentBridge.ValidateAnswers(
+            AssessmentKind.Career, answers, complete, version);
         if (error is not null)
         {
             throw new InvalidOperationException(error);
@@ -80,13 +88,19 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
                 AnswersJson = "{}",
                 CreatedAtUtc = now
             };
+            row.QuickScanVersion = version;
             _db.CandidateCareerInterests.Add(row);
         }
 
-        var storedAnswers = CareerTestCatalog.ParseAnswersJson(row.AnswersJson);
+        version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
+        row.QuickScanHighestAnswered = Math.Max(row.QuickScanHighestAnswered, answers.Count);
+
+        var storedAnswers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Career, row.AnswersJson, version);
         var wasCompleted = CandidateCompetencyStatuses.IsCompleted(row.Status)
-            && CareerTestCatalog.IsComplete(storedAnswers);
-        var answersJson = CareerTestCatalog.SerializeAnswers(answers);
+            && QuickScanAssessmentBridge.IsComplete(AssessmentKind.Career, storedAnswers, version);
+        var answersJson = QuickScanAssessmentBridge.SerializeAnswers(
+            AssessmentKind.Career, answers, version);
         var baselineAnswersJson = row.AnswersJson;
         if (wasCompleted && !complete)
         {
@@ -97,7 +111,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             var noOp = await _saveGuard.CommitCompleteAsync(
                 userId, AssessmentKind.Career, AssessmentVariant.Quick, answersJson, null,
                 previousSnapshotJson: baselineAnswersJson, completedAnswersJson: baselineAnswersJson, cancellationToken);
-            if (noOp && ScoresMatch(row, CareerTestCatalog.Score(answers)))
+            if (noOp && ScoresMatch(row, QuickScanAssessmentBridge.ScoreCareer(answers, version)))
             {
                 return await ComposeDtoAsync(userId, row, includeMatches: true, cancellationToken);
             }
@@ -106,15 +120,16 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         row.UpdatedAtUtc = now;
 
 
-        var preview = CareerTestCatalog.Score(answers);
+        var preview = QuickScanAssessmentBridge.ScoreCareer(answers, version);
         if (complete)
         {
             if (preview is not { IsComplete: true })
             {
-                throw new InvalidOperationException("Beantwoord alle 25 vragen om de beroepentest af te ronden.");
+                throw new InvalidOperationException(
+                    $"Beantwoord alle {QuickScanAssessmentBridge.FullCount(AssessmentKind.Career, version)} vragen om de beroepentest af te ronden.");
             }
 
-            var tags = CareerTestCatalog.DeriveRiasecTags(preview);
+            var tags = QuickScanAssessmentBridge.DeriveCareerTags(preview, version);
             row.Status = CandidateCompetencyStatuses.Completed;
             row.RealisticPercent = preview.Realistic;
             row.InvestigativePercent = preview.Investigative;
@@ -122,7 +137,7 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             row.SocialPercent = preview.Social;
             row.EnterprisingPercent = preview.Enterprising;
             row.ConventionalPercent = preview.Conventional;
-            row.HollandCode = CareerTestCatalog.HollandCode(preview);
+            row.HollandCode = QuickScanAssessmentBridge.HollandCode(preview, version);
             row.RiasecTagsJson = CareerTestCatalog.SerializeTags(tags);
             row.MatchTagsJson = CareerTestCatalog.SerializeTags(tags);
             row.CompletedAtUtc = now;
@@ -272,8 +287,11 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         string insightsStatus,
         RiasecScores? scoreOverride = null)
     {
-        var answers = CareerTestCatalog.ParseAnswersJson(row?.AnswersJson);
-        var preview = CareerTestCatalog.Score(answers);
+        var version = AssessmentTestVersions.Normalize(row?.QuickScanVersion);
+        var fullCount = QuickScanAssessmentBridge.FullCount(AssessmentKind.Career, version);
+        var answers = QuickScanAssessmentBridge.ParseAnswers(
+            AssessmentKind.Career, row?.AnswersJson, version);
+        var preview = QuickScanAssessmentBridge.ScoreCareer(answers, version);
         var completed = scoreOverride is { IsComplete: true }
             ? scoreOverride
             : CareerTestCatalog.CompletedScoresOrNull(
@@ -284,17 +302,18 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
                 row?.SocialPercent,
                 row?.EnterprisingPercent,
                 row?.ConventionalPercent);
+        var depthCount = Math.Max(answers.Count, row?.QuickScanHighestAnswered ?? 0);
         return new CandidateCareerInterestStateDto(
             row?.Status ?? CandidateCompetencyStatuses.Draft,
             answers,
             answers.Count,
-            CareerTestCatalog.QuestionCount,
+            fullCount,
             completed,
             preview,
             row?.HollandCode ?? "",
             row?.CompletedAtUtc,
             row?.UpdatedAtUtc,
-            CareerTestCatalog.Questions
+            QuickScanAssessmentBridge.CareerQuestions(version)
                 .Select(q => new CareerQuestionDto(q.Id, q.Category, q.Reverse, q.TextKey))
                 .ToList(),
             CareerTestCatalog.ParseTagsJson(row?.RiasecTagsJson),
@@ -302,7 +321,10 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
             DeepAnalysisService.FormatUpsellCopy(deepAnalysisPriceEuro, AssessmentKind.Career),
             matches,
             compass,
-            insightsStatus);
+            insightsStatus,
+            version,
+            fullCount,
+            depthCount < fullCount);
     }
 
     /// <summary>

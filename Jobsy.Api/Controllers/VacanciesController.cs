@@ -3309,7 +3309,10 @@ public class VacanciesController : ControllerBase
             MatchRationale = match.MatchRationale,
             Why = why,
             Gaps = gaps,
-            ColorBand = match.ColorBand
+            ColorBand = match.ColorBand,
+            MatchEvidenceLevel = match.MatchEvidenceLevel,
+            MatchUncertaintyPoints = match.MatchUncertaintyPoints,
+            MatchTransparencyNote = match.MatchTransparencyNote
         };
     }
 
@@ -3349,7 +3352,9 @@ public class VacanciesController : ControllerBase
             FitWhyLine = applied.FitWhyLineNl,
             FitWhyKinds = applied.FitWhyKinds.Count > 0 ? applied.FitWhyKinds : null,
             FitDimensions = dims,
-            RankLowerReason = rankLowerReason
+            RankLowerReason = rankLowerReason,
+            MatchTransparencyNote = match.MatchTransparencyNote,
+            MatchUncertaintyPoints = match.MatchUncertaintyPoints > 0 ? match.MatchUncertaintyPoints : null
         };
     }
 

@@ -486,6 +486,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CandidatePassportEnabled: request.CandidatePassportEnabled,
                     PassportPartnersEnabled: request.PassportPartnersEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
+                    TestsV2Enabled: request.TestsV2Enabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
@@ -569,6 +570,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidatePassportEnabled", before.CandidatePassportEnabled.ToString(), after.CandidatePassportEnabled.ToString());
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
+        Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
@@ -578,6 +580,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
+        Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
         Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
         Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
@@ -608,7 +611,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             futureJobsForYouEnabled = snap.FutureJobsForYouEnabled,
             employerPhase2Enabled = snap.EmployerPhase2Enabled,
             candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
-            proactiveMatchingEnabled = snap.ProactiveMatchingEnabled
+            proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
+            testsV2Enabled = snap.TestsV2Enabled
         });
     }
 
@@ -913,6 +917,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.CandidatePassportEnabled,
             snap.PassportPartnersEnabled,
             snap.PassportPdfV2Enabled,
+            snap.TestsV2Enabled,
             snap.PhoneVerificationEnabled,
             snap.WhatsAppRemindersEnabled,
             snap.CompactTestPdfEnabled,
