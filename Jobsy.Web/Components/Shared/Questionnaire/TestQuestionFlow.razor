@@ -117,7 +117,7 @@
             }
         }
 
-        <footer class="test-flow__footer" @ref="_footer">
+        <footer class="test-flow__footer" @ref="_footer" data-sticky-footer>
             <button type="button"
                     class="test-flow__back"
                     disabled="@(index <= 0 && !OnLeave.HasDelegate)"
@@ -222,18 +222,7 @@
         _focusRequest = false;
         try
         {
-            if (Ordered.Count > 0)
-            {
-                var bindFooter = Target == TestDepthLevel.Bottom || await MatchesMediaAsync("(max-width: 639px)");
-                if (bindFooter)
-                {
-                    await Js.InvokeVoidAsync("jobsyCoachDock.bind", _footer, "--sticky-footer-h");
-                }
-                else
-                {
-                    await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--sticky-footer-h");
-                }
-            }
+            await Js.InvokeVoidAsync("jobsyCoachDock.syncStickyFooters");
         }
         catch
         {
@@ -241,17 +230,7 @@
         }
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        try
-        {
-            await Js.InvokeVoidAsync("jobsyCoachDock.clear", "--sticky-footer-h");
-        }
-        catch
-        {
-            // bUnit / disconnect
-        }
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     private ElementReference _footer;
 

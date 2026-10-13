@@ -7483,7 +7483,10 @@ button.bottom-nav__item {
         padding-bottom: 0;
     }
 
-    .lobsy-assistant.has-bottom-nav,
+    .lobsy-assistant.has-bottom-nav {
+        bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+
     .feedback-widget.has-bottom-nav {
         bottom: 1rem;
     }
@@ -12911,12 +12914,12 @@ a.apply-flow__secondary {
 }
 
 .lobsy-assistant.has-bottom-nav {
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-h, 4.5rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 720px) {
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(var(--bottom-nav-h, 3.5rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -13121,7 +13124,7 @@ a.apply-flow__secondary {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(var(--bottom-nav-h, 3.5rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant__panel {
@@ -13131,7 +13134,7 @@ a.apply-flow__secondary {
     }
 
     .lobsy-assistant.has-bottom-nav .lobsy-assistant__panel {
-        max-height: calc(100dvh - 8.5rem - env(safe-area-inset-bottom, 0px));
+        max-height: calc(100dvh - 8.5rem - var(--sticky-footer-h, 0px) - env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant__logo {
@@ -14544,7 +14547,7 @@ html.cookie-consent-known .cookie-consent {
 @media (max-width: 639px) {
     .lobsy-assistant-tab.has-bottom-nav {
         top: auto;
-        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(var(--bottom-nav-h, 4.75rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
         transform: none;
     }
 
@@ -15463,7 +15466,7 @@ html.cookie-consent-known .cookie-consent {
     }
 
     .lobsy-assistant.has-bottom-nav {
-        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(var(--bottom-nav-h, 4.75rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -20191,7 +20194,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 .app-shell.has-bottom-nav .lobsy-coach-dock,
 .app-shell:has(.bottom-nav) .lobsy-coach-dock {
-    bottom: calc(var(--bottom-nav-h, 64px) + 12px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
 }
 
 .lobsy-coach-dock--tip-above {
