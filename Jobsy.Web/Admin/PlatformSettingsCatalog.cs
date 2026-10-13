@@ -383,6 +383,64 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("MatchCalibrationV1Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "MatchCalibrationV1Enabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.MatchCalibrationV1.Enabled.Title",
+                DescriptionKey: "AdminSettings.MatchCalibrationV1.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.MatchCalibrationV1Enabled,
+                Write: v => new PlatformFeatureUpdate(MatchCalibrationV1Enabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("CandidateApplyPerHourLimit"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateApplyPerHourLimit",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ApplyRate.PerHour.Title",
+                DescriptionKey: "AdminSettings.ApplyRate.PerHour.Desc",
+                Kind: PlatformSettingKind.Int,
+                Read: s => s.CandidateApplyPerHourLimit,
+                Write: v => new PlatformFeatureUpdate(CandidateApplyPerHourLimit: ToInt(v)),
+                Min: CandidateApplyRateLimitRules.MinLimit,
+                Max: CandidateApplyRateLimitRules.MaxPerHour,
+                UnitKey: "AdminSettings.Unit.PerHour"));
+        }
+
+        if (FieldExists("CandidateApplyPerDayLimit"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateApplyPerDayLimit",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ApplyRate.PerDay.Title",
+                DescriptionKey: "AdminSettings.ApplyRate.PerDay.Desc",
+                Kind: PlatformSettingKind.Int,
+                Read: s => s.CandidateApplyPerDayLimit,
+                Write: v => new PlatformFeatureUpdate(CandidateApplyPerDayLimit: ToInt(v)),
+                Min: CandidateApplyRateLimitRules.MinLimit,
+                Max: CandidateApplyRateLimitRules.MaxPerDay,
+                UnitKey: "AdminSettings.Unit.PerDay"));
+        }
+
+        if (FieldExists("CandidateApplyPerMinuteLimit"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateApplyPerMinuteLimit",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ApplyRate.PerMinute.Title",
+                DescriptionKey: "AdminSettings.ApplyRate.PerMinute.Desc",
+                Kind: PlatformSettingKind.Int,
+                Read: s => s.CandidateApplyPerMinuteLimit,
+                Write: v => new PlatformFeatureUpdate(CandidateApplyPerMinuteLimit: ToInt(v)),
+                Min: CandidateApplyRateLimitRules.MinLimit,
+                Max: CandidateApplyRateLimitRules.MaxPerMinute,
+                UnitKey: "AdminSettings.Unit.PerMinute"));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "CandidateInsightsUnlockPerBranch",
             Group: GroupVacancies,
@@ -581,7 +639,11 @@ public static class PlatformSettingsCatalog
         bool? employerPhase2Enabled = null;
         bool? candidateExternalVacanciesEnabled = null;
         bool? proactiveMatchingEnabled = null;
+        bool? matchCalibrationV1Enabled = null;
         bool? freeCandidateTestsEnabled = null;
+        int? candidateApplyPerMinute = null;
+        int? candidateApplyPerHour = null;
+        int? candidateApplyPerDay = null;
 
         foreach (var p in parts)
         {
@@ -632,6 +694,26 @@ public static class PlatformSettingsCatalog
             {
                 proactiveMatchingEnabled = p.ProactiveMatchingEnabled;
             }
+
+            if (p.MatchCalibrationV1Enabled is not null)
+            {
+                matchCalibrationV1Enabled = p.MatchCalibrationV1Enabled;
+            }
+
+            if (p.CandidateApplyPerMinuteLimit is not null)
+            {
+                candidateApplyPerMinute = p.CandidateApplyPerMinuteLimit;
+            }
+
+            if (p.CandidateApplyPerHourLimit is not null)
+            {
+                candidateApplyPerHour = p.CandidateApplyPerHourLimit;
+            }
+
+            if (p.CandidateApplyPerDayLimit is not null)
+            {
+                candidateApplyPerDay = p.CandidateApplyPerDayLimit;
+            }
         }
 
         return new PlatformFeatureUpdate(
@@ -665,6 +747,10 @@ public static class PlatformSettingsCatalog
             FutureJobsForYouEnabled: futureJobsForYouEnabled,
             EmployerPhase2Enabled: employerPhase2Enabled,
             CandidateExternalVacanciesEnabled: candidateExternalVacanciesEnabled,
-            ProactiveMatchingEnabled: proactiveMatchingEnabled);
+            ProactiveMatchingEnabled: proactiveMatchingEnabled,
+            MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
+            CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
+            CandidateApplyPerHourLimit: candidateApplyPerHour,
+            CandidateApplyPerDayLimit: candidateApplyPerDay);
     }
 }

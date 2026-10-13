@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -139,6 +141,20 @@ public class PlatformFeatureSettings
 
     /// <summary>Quick-Scan v2 catalogs for newly started candidate tests. Default false.</summary>
     public bool TestsV2Enabled { get; set; }
+
+    /// <summary>
+    /// Realistic match calibration (fit + confidence, no neutral inflation). Default false.
+    /// </summary>
+    public bool MatchCalibrationV1Enabled { get; set; }
+
+    /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
+    public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
+
+    /// <summary>Max authenticated apply POSTs per candidate per hour. Default 30.</summary>
+    public int CandidateApplyPerHourLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerHour;
+
+    /// <summary>Max authenticated apply POSTs per candidate per day. Default 100.</summary>
+    public int CandidateApplyPerDayLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerDay;
 
     /// <summary>
     /// When true, every candidate unlocks the uitgebreide analyse without Mollie.

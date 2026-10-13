@@ -163,28 +163,47 @@ builder.Services.AddRateLimiter(options =>
             return RateLimitPartition.GetNoLimiter("candidate-apply");
         }
 
-        return RateLimitPartition.GetFixedWindowLimiter(
-            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = publicWriteLimit,
-                Window = TimeSpan.FromMinutes(1),
-                QueueLimit = 0
-            });
+        var limits = httpContext.RequestServices
+            .GetRequiredService<Jobsy.Core.Interfaces.ICandidateApplyRateLimitProvider>()
+            .GetCurrent();
+
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                     ?? httpContext.User.FindFirst("sub")?.Value;
+        var partition = string.IsNullOrWhiteSpace(userId)
+            ? $"candidate-apply:ip:{RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret)}"
+            : $"candidate-apply:user:{userId}";
+
+        return RateLimitPartition.Get(
+            partition,
+            _ => new TripleWindowRateLimiter(
+                limits.PerMinute,
+                TimeSpan.FromMinutes(1),
+                limits.PerHour,
+                TimeSpan.FromHours(1),
+                limits.PerDay,
+                TimeSpan.FromDays(1)));
     });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = RateLimitPartitioning.OnRejectedAsync;
 
     options.AddPolicy("auth", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
+    {
+        var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (env.IsDevelopment())
+        {
+            return RateLimitPartition.GetNoLimiter("auth");
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
-            }));
+            });
+    });
     options.AddPolicy("public-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),

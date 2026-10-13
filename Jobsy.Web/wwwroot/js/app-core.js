@@ -1672,5 +1672,47 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
     var clear = Math.ceil(window.innerWidth - box.left + gap);
     if (clear < 72) clear = 72;
     document.documentElement.style.setProperty("--lobsy-coach-clear-inline", clear + "px");
+  },
+  syncStickyFooters: function (cssVar) {
+    cssVar = cssVar || "--sticky-footer-h";
+    var root = document.documentElement;
+    var roMap = window.jobsyCoachDock._stickyRoMap = window.jobsyCoachDock._stickyRoMap || new WeakMap();
+
+    function measure() {
+      var max = 0;
+      document.querySelectorAll("[data-sticky-footer]").forEach(function (el) {
+        if (!el || !el.isConnected) return;
+        var style = window.getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") return;
+        var h = Math.ceil(el.getBoundingClientRect().height);
+        if (h > max) max = h;
+      });
+      root.style.setProperty(cssVar, max + "px");
+    }
+
+    function observeEl(el) {
+      if (!el || roMap.has(el)) return;
+      if (typeof ResizeObserver === "function") {
+        var ro = new ResizeObserver(measure);
+        ro.observe(el);
+        roMap.set(el, ro);
+      }
+    }
+
+    document.querySelectorAll("[data-sticky-footer]").forEach(observeEl);
+    measure();
+
+    if (!window.jobsyCoachDock._stickyMo) {
+      window.jobsyCoachDock._stickyMo = new MutationObserver(function () {
+        document.querySelectorAll("[data-sticky-footer]").forEach(observeEl);
+        measure();
+      });
+      window.jobsyCoachDock._stickyMo.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["class", "style", "hidden"]
+      });
+    }
   }
 };

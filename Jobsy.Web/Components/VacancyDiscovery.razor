@@ -1151,6 +1151,8 @@
                 }
             </p>
         }
+        <MatchConfidenceHint ConfidencePercent="_matchExplain.MatchConfidencePercent"
+                             FitRawPercent="_matchExplain.MatchFitRawPercent" />
         @if (!string.IsNullOrWhiteSpace(_matchExplain.CultureFitLabel))
         {
             <p class="culture-fit culture-fit--@(_matchExplain.CultureFitBand ?? "mid")">@_matchExplain.CultureFitLabel</p>

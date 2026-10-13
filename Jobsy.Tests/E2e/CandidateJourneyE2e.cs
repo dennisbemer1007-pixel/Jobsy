@@ -11,6 +11,7 @@ using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -283,6 +284,65 @@ public static class CandidateJourneyE2e
 
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         return doc.RootElement.TryGetProperty("id", out var id) && id.TryGetGuid(out var guid) ? guid : null;
+    }
+
+    /// <summary>Creates a one-off candidate with local login for repeated apply E2E (no shared demo account).</summary>
+    public static async Task<(string Email, string Password)?> SeedFreshApplyCandidateAsync(string tag, int run)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return null;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+
+        var id = Guid.NewGuid();
+        var email = $"usability5-{tag}-{run}-{id.ToString("N")[..8]}@jobsy.local";
+        const string password = KbE2e.DefaultPassword;
+        var prefs = new CandidatePreferencesDto(
+            Roles: ["horeca", "retail"],
+            MaxTravelMinutes: 30,
+            PreferredTransport: "Fiets",
+            AboutMe: "Usability5 apply proof kandidaat.",
+            DefaultMotivation: "Ik solliciteer graag via Lobsy.",
+            Availability: new Dictionary<string, string[]> { ["ma"] = ["ochtend"] },
+            Employers:
+            [
+                new CandidateEmployerHistoryDto("Demo Winkel Westland", "Medewerker", 2)
+            ]);
+
+        var user = new User
+        {
+            Id = id,
+            Email = email,
+            FullName = "Usability5 Kandidaat",
+            Role = UserRole.Candidate,
+            DateOfBirth = new DateOnly(1998, 4, 12),
+            OpenForWork = true,
+            HomeLocation = new GeoPoint(51.9850, 4.2300),
+            PreferencesJson = JsonSerializer.Serialize(
+                prefs,
+                new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                }),
+            IsActive = true
+        };
+        db.Users.Add(user);
+        db.LocalAuthCredentials.Add(new LocalAuthCredential
+        {
+            Id = Guid.NewGuid(),
+            UserId = id,
+            Email = email,
+            PasswordHash = JobsyPasswordHasher.Hash(password)
+        });
+        await db.SaveChangesAsync();
+        return (email, password);
     }
 
     public static async Task EnsureDemoApplyProfileReadyAsync(string candidateEmail)

@@ -45,6 +45,12 @@ public class FeatureFlagFoundationTests
     }
 
     [Fact]
+    public void PlatformFeatureSettings_match_calibration_v1_default_off()
+    {
+        Assert.False(new PlatformFeatureSettings().MatchCalibrationV1Enabled);
+    }
+
+    [Fact]
     public void PlatformFeatureSettings_external_vacancies_default_off()
     {
         Assert.False(new PlatformFeatureSettings().CandidateExternalVacanciesEnabled);

@@ -1,0 +1,19 @@
+@if (ConfidencePercent is int conf)
+{
+    <p class="match-confidence-hint muted" role="note">
+        @if (conf < 50)
+        {
+            <span>@Culture["Match.Confidence.Indicative"]</span>
+        }
+        else
+        {
+            <span>@Culture.Format("Match.Confidence.Level", conf)</span>
+        }
+    </p>
+}
+
+@code {
+    [Parameter] public int? ConfidencePercent { get; set; }
+    [Parameter] public int? FitRawPercent { get; set; }
+    [Inject] private CultureState Culture { get; set; } = default!;
+}

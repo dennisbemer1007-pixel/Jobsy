@@ -306,7 +306,10 @@ public record UpdatePlatformFeatureRequest(
     bool? FutureJobsForYouEnabled = null,
     bool? EmployerPhase2Enabled = null,
     bool? CandidateExternalVacanciesEnabled = null,
-    bool? ProactiveMatchingEnabled = null);
+    bool? ProactiveMatchingEnabled = null,
+    int? CandidateApplyPerMinuteLimit = null,
+    int? CandidateApplyPerHourLimit = null,
+    int? CandidateApplyPerDayLimit = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -340,7 +343,10 @@ public record PlatformFeatureDto(
     bool FutureJobsForYouEnabled = false,
     bool EmployerPhase2Enabled = false,
     bool CandidateExternalVacanciesEnabled = false,
-    bool ProactiveMatchingEnabled = false);
+    bool ProactiveMatchingEnabled = false,
+    int CandidateApplyPerMinuteLimit = 5,
+    int CandidateApplyPerHourLimit = 30,
+    int CandidateApplyPerDayLimit = 100);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 
