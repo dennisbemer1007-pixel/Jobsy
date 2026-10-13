@@ -14,6 +14,9 @@ public class UserFacingErrorTests
 
     [Theory]
     [InlineData(ApiErrorException.RateLimited, "Common.Error.RateLimited")]
+    [InlineData(ApiErrorException.CandidateApplyRateLimited, "Apply.RateLimited")]
+    [InlineData(ApiErrorException.CandidateApplyRateLimitedBurst, "Apply.RateLimitedBurst")]
+    [InlineData(ApiErrorException.CandidateApplyRateLimitedDaily, "Apply.RateLimitedDaily")]
     [InlineData(ApiErrorException.NotFound, "Common.Error.NotFound")]
     [InlineData(ApiErrorException.Forbidden, "Common.Error.Forbidden")]
     [InlineData(ApiErrorException.Validation, "Common.Error.Validation")]

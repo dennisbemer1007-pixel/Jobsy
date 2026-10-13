@@ -153,8 +153,12 @@ builder.Services.AddRateLimiter(options =>
         ?? 20;
     var otpVerifyLimit = builder.Configuration.GetValue<int?>("RateLimiting:OtpVerifyPermitLimit")
         ?? 10;
+    var candidateApplyBurstLimit = builder.Configuration.GetValue<int?>("RateLimiting:CandidateApplyPermitLimitPerMinute")
+        ?? (isProduction ? 5 : 10_000);
     var candidateApplyHourlyLimit = builder.Configuration.GetValue<int?>("RateLimiting:CandidateApplyPermitLimitPerHour")
         ?? (isProduction ? 30 : 10_000);
+    var candidateApplyDailyLimit = builder.Configuration.GetValue<int?>("RateLimiting:CandidateApplyPermitLimitPerDay")
+        ?? (isProduction ? 100 : 10_000);
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
 
     options.AddPolicy("candidate-apply", httpContext =>
@@ -171,14 +175,15 @@ builder.Services.AddRateLimiter(options =>
             ? $"candidate-apply:ip:{RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret)}"
             : $"candidate-apply:user:{userId}";
 
-        return RateLimitPartition.GetFixedWindowLimiter(
+        return RateLimitPartition.Get(
             partition,
-            _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = candidateApplyHourlyLimit,
-                Window = TimeSpan.FromHours(1),
-                QueueLimit = 0
-            });
+            _ => new TripleWindowRateLimiter(
+                candidateApplyBurstLimit,
+                TimeSpan.FromMinutes(1),
+                candidateApplyHourlyLimit,
+                TimeSpan.FromHours(1),
+                candidateApplyDailyLimit,
+                TimeSpan.FromDays(1)));
     });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
