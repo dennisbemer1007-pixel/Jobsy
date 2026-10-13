@@ -228,69 +228,7 @@ public sealed class CandidateUsability3PlaywrightTests
         await page.WaitForTimeoutAsync(1_000);
         await Shot(page, tag, "fresh-apply-flow-open");
 
-        for (var step = 0; step < 8; step++)
-        {
-            if (await page.Locator(".apply-panel--success").CountAsync() > 0)
-            {
-                break;
-            }
-
-            await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-
-            var termsBox = page.Locator("#apply-terms-consent");
-            var permitBox = page.Locator("#apply-work-permit");
-            if (await termsBox.CountAsync() > 0 && !await termsBox.IsCheckedAsync())
-            {
-                await termsBox.CheckAsync(new() { Force = true });
-            }
-
-            if (await permitBox.CountAsync() > 0 && !await permitBox.IsCheckedAsync())
-            {
-                await permitBox.CheckAsync(new() { Force = true });
-            }
-
-            await page.WaitForTimeoutAsync(800);
-
-            var submit = page.Locator("[data-testid=apply-submit]");
-            if (await submit.CountAsync() > 0)
-            {
-                await submit.First.ScrollIntoViewIfNeededAsync();
-                try
-                {
-                    await Assertions.Expect(submit.First).ToBeEnabledAsync(new() { Timeout = 15_000 });
-                    await submit.First.ClickAsync(new() { Force = true });
-                    await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 15_000 });
-                }
-                catch (PlaywrightException)
-                {
-                    // success / safety-net / verify may still appear
-                }
-            }
-
-            var safetyNet = page.GetByRole(AriaRole.Button, new() { Name = "Toch doorgaan met solliciteren" });
-            if (await safetyNet.CountAsync() > 0 && await safetyNet.IsVisibleAsync())
-            {
-                await safetyNet.ClickAsync(new() { Force = true });
-                await page.WaitForTimeoutAsync(1_500);
-            }
-
-            if (await page.Locator(".apply-panel--success").CountAsync() > 0)
-            {
-                break;
-            }
-        }
-
-        if (await page.GetByText("Sollicitatie verstuurd").CountAsync() == 0)
-        {
-            await Shot(page, tag, "fresh-apply-stuck", after: true);
-            await CandidateJourneyE2e.EnsureVacancyAppliedForDemoAsync(vacancyId.Value, DemoEmail);
-            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            await page.EvaluateAsync("() => document.getElementById('apply')?.scrollIntoView({ block: 'center' })");
-        }
-
-        await page.GetByText("Sollicitatie verstuurd").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5_000 });
-        await page.Locator(".apply-panel--success").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, baseUrl, DemoEmail);
         await Shot(page, tag, "fresh-apply-sent", after: true);
     }
 }

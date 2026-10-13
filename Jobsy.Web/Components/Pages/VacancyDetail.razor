@@ -473,7 +473,9 @@
                 </AuthorizeView>
             }
 
-            <div id="apply" class="apply-flow">
+            <div id="apply"
+                 class="apply-flow"
+                 data-apply-interactive="@(_applyCircuitReady ? "true" : "false")">
                 <AuthorizeView Roles="Candidate">
                     <Authorized>
                         @if (_vacancy is not null && !_vacancy.OpenForWorkRequired)
@@ -657,7 +659,8 @@
                                     <div class="apply-check apply-check--terms">
                                         <input id="apply-terms-consent"
                                                type="checkbox"
-                                               @bind="_acceptedTerms" />
+                                               @bind="_acceptedTerms"
+                                               @bind:after="OnApplyConsentChangedAsync" />
                                         <label for="apply-terms-consent" class="apply-check__text">
                                             @Culture["Apply.AcceptTerms"]
                                             <a class="auth-link"
@@ -674,7 +677,8 @@
                                     <div class="apply-check">
                                         <input id="apply-work-permit"
                                                type="checkbox"
-                                               @bind="_workPermitConfirmed" />
+                                               @bind="_workPermitConfirmed"
+                                               @bind:after="OnApplyConsentChangedAsync" />
                                         <label for="apply-work-permit">@Culture["Apply.WorkPermit"]</label>
                                     </div>
                                     <label class="apply-field apply-field--motivation">
@@ -716,7 +720,7 @@
                                     <button class="login-submit apply-flow__primary"
                                             type="button"
                                             data-testid="apply-submit"
-                                            disabled="@(_applying || !_acceptedTerms || !_workPermitConfirmed || _showSafetyNet || (RequiresExclusivityExtras && !ExclusivityFieldsReady))"
+                                            disabled="@(!CanSubmitApply)"
                                             @onclick="ApplyAsync">
                                         @(_applying ? Culture["Apply.Busy"] : Culture["Apply.Submit"])
                                     </button>
@@ -1009,6 +1013,8 @@
     }
 
     private bool _loading = true;
+    /// <summary>Interactive circuit finished initial apply hydration (profile + applications).</summary>
+    private bool _applyCircuitReady;
     private bool _applying;
     private bool _applied;
     private bool _liked;
@@ -1136,6 +1142,16 @@
     }
 
     private bool RequiresEmailCode => _vacancy?.RequireEmailVerification == true;
+
+    private bool CanSubmitApply =>
+        _applyCircuitReady
+        && !_applying
+        && _acceptedTerms
+        && _workPermitConfirmed
+        && !_showSafetyNet
+        && (!RequiresExclusivityExtras || !ExclusivityBlocksApply);
+
+    private Task OnApplyConsentChangedAsync() => InvokeAsync(StateHasChanged);
 
     private string ApplyFlowLead => _applied
         ? Culture["Apply.LeadDone"]
@@ -1343,6 +1359,11 @@
     {
         if (_loadedVacancyId == Id)
         {
+            if (RendererInfo.IsInteractive && !_applyCircuitReady)
+            {
+                _pendingInitialHydration = true;
+            }
+
             return;
         }
 
@@ -1416,6 +1437,9 @@
         _dobInput = null;
         _directContact = null;
         _directContactOpen = false;
+        _applyCircuitReady = false;
+        _showSafetyNet = false;
+        _confirmSafetyNet = false;
     }
 
     private async void OnCultureChanged()
@@ -1459,7 +1483,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_pendingInitialHydration)
+        // Prerender pass must not consume hydration — JS/API/profile load requires an interactive circuit.
+        if (_pendingInitialHydration && RendererInfo.IsInteractive)
         {
             _pendingInitialHydration = false;
             try
@@ -1541,6 +1566,7 @@
                     _ = RefreshCultureFitLaterAsync();
                 }
 
+                _applyCircuitReady = true;
                 await InvokeAsync(StateHasChanged);
 
                 if (!_clickRecorded)
@@ -1562,6 +1588,7 @@
             catch
             {
                 _loading = false;
+                _pendingInitialHydration = true;
                 await InvokeAsync(StateHasChanged);
             }
         }
@@ -2191,7 +2218,7 @@
 
     private async Task ApplyAsync()
     {
-        if (_vacancy is null || _applied)
+        if (_vacancy is null || _applied || _applying || !_applyCircuitReady)
         {
             return;
         }
@@ -2277,6 +2304,11 @@
 
     private async Task ContinueWithSafetyNetAsync()
     {
+        if (_applying || !_applyCircuitReady)
+        {
+            return;
+        }
+
         _confirmSafetyNet = true;
         _showSafetyNet = false;
         await ApplyAsync();

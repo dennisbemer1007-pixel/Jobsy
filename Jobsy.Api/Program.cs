@@ -136,7 +136,7 @@ builder.Services.AddRateLimiter(options =>
     var publicTravelLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicTravelPermitLimit")
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
-        ?? 60;
+        ?? (isProduction ? 60 : 10_000);
     var pupilLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
         ?? (isProduction ? 60 : 10_000);
     var kvkSearchLimit = builder.Configuration.GetValue<int?>("RateLimiting:KvkSearchPermitLimit")
@@ -151,7 +151,27 @@ builder.Services.AddRateLimiter(options =>
         ?? 5;
     var reportDailyLimit = builder.Configuration.GetValue<int?>("RateLimiting:ReportDailyPermitLimit")
         ?? 20;
+    var otpVerifyLimit = builder.Configuration.GetValue<int?>("RateLimiting:OtpVerifyPermitLimit")
+        ?? 10;
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
+
+    options.AddPolicy("candidate-apply", httpContext =>
+    {
+        var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (env.IsDevelopment())
+        {
+            return RateLimitPartition.GetNoLimiter("candidate-apply");
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = publicWriteLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            });
+    });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = RateLimitPartitioning.OnRejectedAsync;
@@ -258,7 +278,7 @@ builder.Services.AddRateLimiter(options =>
             partition,
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = otpVerifyLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             });
