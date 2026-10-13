@@ -13,17 +13,20 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateMatchSnapshotService _matchSnapshots;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly IAssessmentResearchService _research;
 
     public CandidateCareerInterestService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
         ICandidateMatchSnapshotService matchSnapshots,
-        ICandidateInsightsQueue queue)
+        ICandidateInsightsQueue queue,
+        IAssessmentResearchService research)
     {
         _db = db;
         _commercial = commercial;
         _matchSnapshots = matchSnapshots;
         _queue = queue;
+        _research = research;
     }
 
     public async Task<CandidateCareerInterestStateDto> GetAsync(
@@ -117,6 +120,14 @@ public sealed class CandidateCareerInterestService : ICandidateCareerInterestSer
         await _db.SaveChangesAsync(cancellationToken);
         if (complete)
         {
+            await ResearchQuickScanSync.AfterCompleteAsync(
+                _research,
+                userId,
+                AssessmentKind.Career,
+                answers,
+                itemDurationMs: null,
+                totalDurationMs: null,
+                cancellationToken);
             _queue.TryEnqueue(userId);
         }
 

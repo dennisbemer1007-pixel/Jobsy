@@ -1,0 +1,65 @@
+@page "/candidate/research-consent"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>@Culture["Research.Demo.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page profile-page pb-28" data-testid="research-consent-finish-page">
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else if (!_enabled)
+    {
+        <p class="state-message">@Culture["Common.Error"]</p>
+        <a class="engagement-btn" href="@_returnHref">@Culture["Common.Back"]</a>
+    }
+    else
+    {
+        <ResearchConsentPanel Busy="_busy"
+                              OnAccept="AcceptAsync"
+                              OnSkip="SkipAsync" />
+    }
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "return")]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "test")]
+    public string? TestKey { get; set; }
+
+    private bool _loading = true;
+    private bool _enabled;
+    private bool _busy;
+    private string _returnHref = "/candidate/profile";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _returnHref = string.IsNullOrWhiteSpace(ReturnUrl) ? "/candidate/profile" : ReturnUrl;
+        var status = await Api.GetResearchFeatureStatusAsync();
+        _enabled = status?.Enabled == true;
+        _loading = false;
+    }
+
+    private async Task AcceptAsync(ResearchConsentPanel.ResearchDemographicsSubmit demo)
+    {
+        _busy = true;
+        try
+        {
+            await Api.AcceptResearchConsentAsync(demo);
+            Navigation.NavigateTo(_returnHref);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void SkipAsync() => Navigation.NavigateTo(_returnHref);
+}

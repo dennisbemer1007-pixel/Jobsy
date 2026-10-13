@@ -1,4 +1,5 @@
 using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
@@ -11,15 +12,18 @@ public sealed class CandidateValuesService : ICandidateValuesService
     private readonly JobsyDbContext _db;
     private readonly IFlexCommercialService _commercial;
     private readonly ICandidateInsightsQueue _queue;
+    private readonly IAssessmentResearchService _research;
 
     public CandidateValuesService(
         JobsyDbContext db,
         IFlexCommercialService commercial,
-        ICandidateInsightsQueue queue)
+        ICandidateInsightsQueue queue,
+        IAssessmentResearchService research)
     {
         _db = db;
         _commercial = commercial;
         _queue = queue;
+        _research = research;
     }
 
     public async Task<CandidateValuesStateDto> GetAsync(
@@ -100,6 +104,14 @@ public sealed class CandidateValuesService : ICandidateValuesService
         await _db.SaveChangesAsync(cancellationToken);
         if (complete)
         {
+            await ResearchQuickScanSync.AfterCompleteAsync(
+                _research,
+                userId,
+                AssessmentKind.Values,
+                answers,
+                itemDurationMs: null,
+                totalDurationMs: null,
+                cancellationToken);
             _queue.TryEnqueue(userId);
         }
 

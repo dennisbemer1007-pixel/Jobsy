@@ -1,0 +1,31 @@
+@page "/info/onderzoek"
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<PageTitle>@Culture["Research.Info.Title"] · Lobsy</PageTitle>
+
+<article class="legal-page" data-testid="research-info-page">
+    <h1>@Culture["Research.Info.Title"]</h1>
+    <p>
+        Lobsy wil de kwaliteit van de tests verbeteren. Daarvoor doen we wetenschappelijk onderzoek.
+        Jij kunt vrijwillig meedoen.
+    </p>
+    <h2>Wat gebeurt er met je antwoorden?</h2>
+    <ul>
+        <li>We slaan geen naam, e-mail of adres op in het onderzoeksbestand.</li>
+        <li>Elke deelnemer krijgt een willekeurige code. Niemand kan zien wie jij bent.</li>
+        <li>We gebruiken je antwoorden alleen om te meten of de tests betrouwbaar en eerlijk zijn.</li>
+        <li>Optioneel mag je leeftijdsgroep, gender, opleiding of taal invullen. Dat helpt ons om verschillen tussen groepen te begrijpen.</li>
+    </ul>
+    <h2>Jouw keuze</h2>
+    <p>
+        Meedoen is niet verplicht. Je kunt nee zeggen zonder nadeel voor sollicitaties of je profiel.
+        Geef je toestemming, dan kun je die later intrekken in je privacy-instellingen.
+        Na intrekking nemen we je antwoorden niet meer mee in nieuwe exports.
+    </p>
+    <h2>Vragen</h2>
+    <p>
+        Mail naar <a href="mailto:privacy@lobsy.nl">privacy@lobsy.nl</a> als je vragen hebt over dit onderzoek.
+    </p>
+    <p><a class="auth-link" href="/privacy">Terug naar privacy</a></p>
+</article>

@@ -213,7 +213,7 @@ public static class UatScriptRunner
         if (string.Equals(jobsyRole, JobsyRoles.Admin, StringComparison.Ordinal)
             && Contains(blob, "Settings-subnav", "settings-subnav", "16 modules"))
         {
-            Assert.Equal(17, AdminNavItems.SettingsModules.Length);
+            Assert.Equal(18, AdminNavItems.SettingsModules.Length);
             foreach (var module in AdminNavItems.SettingsModules)
             {
                 AssertRouteExistsOrAuthEndpoint(module.Href, $"{scenario.Id}: admin settings {module.Href}");

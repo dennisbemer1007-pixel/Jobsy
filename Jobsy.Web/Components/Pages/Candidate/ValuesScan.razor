@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -216,7 +217,8 @@
             }
 
             await Api.SaveMyValuesAsync(_answers, complete: true);
-            Navigation.NavigateTo("/profiel");
+            await ResearchPostTestNavigation.GoAfterQuickScanCompleteAsync(
+                Api, Navigation, "/profiel", "values");
         }
         catch (Exception ex)
         {

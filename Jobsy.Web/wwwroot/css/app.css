@@ -22946,3 +22946,46 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     color: var(--muted);
     font-size: 0.9rem;
 }
+
+.research-consent {
+    margin: 1.5rem 0;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.research-consent__check {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
+    margin: 1rem 0;
+}
+
+.research-consent__demographics {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.research-consent__select {
+    display: block;
+    width: 100%;
+    max-width: 20rem;
+    margin-top: 0.25rem;
+}
+
+.research-consent__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.research-admin__pilot-create {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}

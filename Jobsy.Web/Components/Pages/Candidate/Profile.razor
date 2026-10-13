@@ -614,6 +614,30 @@
                     <button class="provider-btn provider-btn--danger" type="button" disabled="@_consentBusy" @onclick="WithdrawTalentPoolConsentAsync">Talentpooltoestemming intrekken</button>
                 }
 
+                @if (_researchFeatureEnabled)
+                {
+                    <h3 data-testid="profile-research-privacy">@Culture["Research.Info.Title"]</h3>
+                    @if (_researchConsent?.HasConsent != true)
+                    {
+                        <ResearchConsentPanel Busy="_consentBusy"
+                                              OnAccept="AcceptResearchConsentAsync"
+                                              OnSkip="() => Task.CompletedTask" />
+                    }
+                    else
+                    {
+                        <p class="profile-address__hint">
+                            Onderzoekstoestemming gegeven op @_researchConsent!.ResearchConsentAt!.Value.ToLocalTime():dd-MM-yyyy.
+                        </p>
+                        <button class="provider-btn provider-btn--danger"
+                                type="button"
+                                disabled="@_consentBusy"
+                                data-testid="research-consent-revoke"
+                                @onclick="WithdrawResearchConsentAsync">
+                            @Culture["Research.Consent.Revoke"]
+                        </button>
+                    }
+                }
+
                 @if (IsUnder16 && _parentalConsentAt is null)
                 {
                     <h3>Toestemming ouder of voogd</h3>
@@ -685,6 +709,8 @@
     private bool _consentBusy;
     private DateTime? _talentPoolConsentAt;
     private DateTime? _testAiConsentAt;
+    private bool _researchFeatureEnabled;
+    private ResearchConsentStateClient? _researchConsent;
     private DateTime? _parentalConsentAt;
     private string _parentalConsentEmail = "";
     private string? _consentMessage;
@@ -828,6 +854,9 @@
         _authenticatorEnabled = profile.AuthenticatorEnabled;
         _talentPoolConsentAt = profile.TalentPoolConsentAt;
         _testAiConsentAt = profile.TestAiConsentAt;
+        var researchStatus = await Api.GetResearchFeatureStatusAsync();
+        _researchFeatureEnabled = researchStatus?.Enabled == true;
+        _researchConsent = _researchFeatureEnabled ? await Api.GetResearchConsentAsync() : null;
         _parentalConsentAt = profile.ParentalConsentAt;
         _parentalConsentEmail = profile.ParentalConsentEmail ?? "";
         _homeLat = profile.HomeLatitude;
@@ -1544,6 +1573,44 @@
     private async Task WithdrawTalentPoolConsentAsync()
     {
         await UpdateConsentAsync(() => Api.WithdrawTalentPoolConsentAsync(), "Je profiel is direct uit de talentpool verwijderd.");
+    }
+
+    private async Task AcceptResearchConsentAsync(ResearchConsentPanel.ResearchDemographicsSubmit demo)
+    {
+        _consentBusy = true;
+        _consentMessage = null;
+        try
+        {
+            _researchConsent = await Api.AcceptResearchConsentAsync(demo);
+            _consentMessage = "Onderzoekstoestemming opgeslagen.";
+        }
+        catch (Exception ex)
+        {
+            _consentMessage = ex.Message;
+        }
+        finally
+        {
+            _consentBusy = false;
+        }
+    }
+
+    private async Task WithdrawResearchConsentAsync()
+    {
+        _consentBusy = true;
+        _consentMessage = null;
+        try
+        {
+            _researchConsent = await Api.WithdrawResearchConsentAsync();
+            _consentMessage = "Onderzoekstoestemming ingetrokken.";
+        }
+        catch (Exception ex)
+        {
+            _consentMessage = ex.Message;
+        }
+        finally
+        {
+            _consentBusy = false;
+        }
     }
 
     private async Task RequestParentalConsentAsync()

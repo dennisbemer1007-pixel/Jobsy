@@ -21,4 +21,10 @@ public sealed class JobsyFeatureOptions
     /// When false, vacancy create skips content moderation (AI and heuristics).
     /// </summary>
     public bool VacancyContentModerationEnabled { get; set; } = true;
+
+    /// <summary>
+    /// When true, candidates may opt in to anonymized research exports (COTAN validation). Default off.
+    /// Overridden by <see cref="Entities.PlatformFeatureSettings.ResearchConsentEnabled"/> when set in admin.
+    /// </summary>
+    public bool ResearchConsentEnabled { get; set; }
 }

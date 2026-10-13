@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -264,7 +265,8 @@
             }
 
             await Api.SaveMyCompetenciesAsync(_answers, complete: true);
-            Navigation.NavigateTo("/candidate/profile");
+            await ResearchPostTestNavigation.GoAfterQuickScanCompleteAsync(
+                Api, Navigation, "/candidate/profile", "competence");
         }
         catch (Exception ex)
         {

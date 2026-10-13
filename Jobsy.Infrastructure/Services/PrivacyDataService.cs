@@ -1110,6 +1110,13 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.TalentPoolConsentVersion = null;
         user.TestAiConsentAt = null;
         user.TestAiConsentVersion = null;
+        user.ResearchConsentAt = null;
+        user.ResearchConsentVersion = null;
+        user.ResearchAgeBand = null;
+        user.ResearchGender = null;
+        user.ResearchEducationLevel = null;
+        user.ResearchNativeLanguage = null;
+        user.ResearchTestLanguage = null;
         user.ParentalConsentAt = null;
         user.ParentalConsentEmail = null;
         user.ParentalConsentTokenHash = null;
@@ -1146,6 +1153,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (competencies.Count > 0)
         {
             _db.CandidateCompetencies.RemoveRange(competencies);
+        }
+
+        var researchAttempts = await _db.AssessmentResearchAttempts
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (researchAttempts.Count > 0)
+        {
+            _db.AssessmentResearchAttempts.RemoveRange(researchAttempts);
         }
 
         var discs = await _db.CandidateCulturePersonalityProfiles
