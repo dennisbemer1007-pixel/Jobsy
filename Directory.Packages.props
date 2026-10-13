@@ -49,6 +49,9 @@
     <PackageVersion Include="Sentry.AspNetCore" Version="6.12.0" />
     <PackageVersion Include="SixLabors.ImageSharp" Version="3.1.12" />
     <PackageVersion Include="SixLabors.ImageSharp.Drawing" Version="2.1.7" />
+    <!-- Transitive pins: CI vulnerable-package gate fails on High (GHSA-846f / GHSA-r955) below 10.0.13. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.13" />
     <PackageVersion Include="WebPush" Version="1.0.13" />
     <!-- Test (code-health 09: xunit.v3 + bunit 2 + MTP) -->
     <PackageVersion Include="bunit" Version="2.11.3" />
