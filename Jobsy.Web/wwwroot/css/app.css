@@ -20653,6 +20653,106 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     color: #fff;
 }
 
+/* Werkgever shell (no .app-shell): same button contract as candidate app. */
+.wg-shell .btn,
+.wg-shell .btn-primary,
+.wg-shell .login-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.55rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--brand);
+    background: var(--brand);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    width: auto;
+    max-width: 100%;
+}
+
+.wg-shell .btn-secondary {
+    background: var(--surface);
+    color: var(--brand);
+    border-color: var(--border);
+}
+
+.wg-shell .btn-primary:hover,
+.wg-shell .btn:hover:not(.btn-secondary):not(.btn-ghost),
+.wg-shell .login-submit:hover:not(:disabled) {
+    background: var(--accent-hover);
+    border-color: var(--brand);
+    color: #fff;
+}
+
+.wg-shell .btn-secondary:hover:not(:disabled) {
+    background: var(--hover);
+    border-color: var(--accent);
+    color: var(--brand);
+}
+
+.employer-fit-culture__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    align-items: center;
+    margin-top: 0.35rem;
+}
+
+.employer-fit-culture__actions .login-submit {
+    margin-top: 0;
+    min-width: min(100%, 14rem);
+}
+
+.employer-fit-culture__actions .btn-secondary {
+    flex: 1 1 auto;
+    max-width: 100%;
+}
+
+.vacancy-editor details.vacancy-match-optional {
+    margin-top: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.vacancy-editor details.vacancy-match-optional summary {
+    cursor: pointer;
+    font-weight: 650;
+    color: var(--brand);
+    list-style: none;
+}
+
+.vacancy-editor details.vacancy-match-optional summary::-webkit-details-marker {
+    display: none;
+}
+
+.vacancy-editor details.vacancy-match-optional[open] summary {
+    margin-bottom: 0.65rem;
+}
+
+.vacancy-editor details.vacancy-match-optional label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.65rem;
+    font-weight: 500;
+}
+
+.vacancy-editor details.vacancy-match-optional select {
+    min-height: 44px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font: inherit;
+}
+
 /* Coach sits at the inline end. Keep tappable rows out of that 56px + 12px gutter. */
 @media (max-width: 480px) {
     .app-shell:has([data-lobsy-coach]) main :is(

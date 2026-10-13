@@ -5,76 +5,20 @@
 @inject CultureState Culture
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 
-<section class="shared-prefs" data-testid="shared-with-employers">
-    <p class="shared-prefs__help">@Culture["Passport.Shared.Help"]</p>
+<section class="shared-with-employers" data-testid="shared-with-employers">
+    <p class="shared-with-employers__help">@Culture["Passport.Shared.Help"]</p>
 
-    <fieldset class="shared-prefs__group">
-        <legend>@Culture["Passport.Shared.Indoor"]</legend>
-        @foreach (var code in WorkPreferenceCatalogs.IndoorCodes)
-        {
-            <button type="button" class="chip @(Editor.WorkIndoor == code ?"is-on" : null)"
-                    @onclick="() => SetIndoor(code)">@Culture[WorkPreferenceCatalogs.IndoorLabelKey(code)]</button>
-        }
-    </fieldset>
-    <fieldset class="shared-prefs__group">
-        <legend>@Culture["Passport.Shared.Outdoor"]</legend>
-        @foreach (var code in WorkPreferenceCatalogs.OutdoorCodes)
-        {
-            <button type="button" class="chip @(Editor.WorkOutdoor == code ?"is-on" : null)"
-                    @onclick="() => SetOutdoor(code)">@Culture[WorkPreferenceCatalogs.OutdoorLabelKey(code)]</button>
-        }
-    </fieldset>
-    <fieldset class="shared-prefs__group">
-        <legend>@Culture["Passport.Shared.Physical"]</legend>
-        @foreach (var code in WorkPreferenceCatalogs.PhysicalWorkCodes)
-        {
-            <button type="button" class="chip @(Editor.WorkPhysical == code ?"is-on" : null)"
-                    @onclick="() => SetPhysical(code)">@Culture[WorkPreferenceCatalogs.PhysicalLabelKey(code)]</button>
-        }
-    </fieldset>
-    <fieldset class="shared-prefs__group">
-        <legend>@Culture["Passport.Shared.Pace"]</legend>
-        @foreach (var code in WorkPreferenceCatalogs.PaceCodes)
-        {
-            <button type="button" class="chip @(Editor.WorkPace == code ?"is-on" : null)"
-                    @onclick="() => SetPace(code)">@Culture[WorkPreferenceCatalogs.PaceLabelKey(code)]</button>
-        }
-    </fieldset>
+    @RenderChipGroup(Culture["Passport.Shared.Indoor"], WorkPreferenceCatalogs.IndoorCodes, WorkPreferenceCatalogs.IndoorLabelKey, Editor.WorkIndoor, SetIndoor)
+    @RenderChipGroup(Culture["Passport.Shared.Outdoor"], WorkPreferenceCatalogs.OutdoorCodes, WorkPreferenceCatalogs.OutdoorLabelKey, Editor.WorkOutdoor, SetOutdoor)
+    @RenderChipGroup(Culture["Passport.Shared.Physical"], WorkPreferenceCatalogs.PhysicalWorkCodes, WorkPreferenceCatalogs.PhysicalLabelKey, Editor.WorkPhysical, SetPhysical)
+    @RenderChipGroup(Culture["Passport.Shared.Pace"], WorkPreferenceCatalogs.PaceCodes, WorkPreferenceCatalogs.PaceLabelKey, Editor.WorkPace, SetPace)
 
     @if (_employerFitEnabled)
     {
-        <fieldset class="shared-prefs__group">
-            <legend>@Culture["WorkPref.TeamMode.team"] / @Culture["WorkPref.TeamMode.solo"]</legend>
-            @foreach (var code in WorkPreferenceCatalogs.TeamModeCodes)
-            {
-                <button type="button" class="chip @(Editor.WorkTeamMode == code ? "is-on" : null)"
-                        @onclick="() => SetTeamMode(code)">@Culture[WorkPreferenceCatalogs.TeamModeLabelKey(code)]</button>
-            }
-        </fieldset>
-        <fieldset class="shared-prefs__group">
-            <legend>@Culture["WorkPref.Structure.fixed"]</legend>
-            @foreach (var code in WorkPreferenceCatalogs.StructureCodes)
-            {
-                <button type="button" class="chip @(Editor.WorkStructure == code ? "is-on" : null)"
-                        @onclick="() => SetStructure(code)">@Culture[WorkPreferenceCatalogs.StructureLabelKey(code)]</button>
-            }
-        </fieldset>
-        <fieldset class="shared-prefs__group">
-            <legend>@Culture["WorkPref.Customer.much"]</legend>
-            @foreach (var code in WorkPreferenceCatalogs.CustomerContactCodes)
-            {
-                <button type="button" class="chip @(Editor.WorkCustomerContact == code ? "is-on" : null)"
-                        @onclick="() => SetCustomer(code)">@Culture[WorkPreferenceCatalogs.CustomerContactLabelKey(code)]</button>
-            }
-        </fieldset>
-        <fieldset class="shared-prefs__group">
-            <legend>@Culture["WorkPref.Shifts.flex"]</legend>
-            @foreach (var code in WorkPreferenceCatalogs.ShiftsPreferenceCodes)
-            {
-                <button type="button" class="chip @(Editor.WorkShiftsPreference == code ? "is-on" : null)"
-                        @onclick="() => SetShifts(code)">@Culture[WorkPreferenceCatalogs.ShiftsLabelKey(code)]</button>
-            }
-        </fieldset>
+        @RenderChipGroup(Culture["WorkPref.TeamMode.team"] + " / " + Culture["WorkPref.TeamMode.solo"], WorkPreferenceCatalogs.TeamModeCodes, WorkPreferenceCatalogs.TeamModeLabelKey, Editor.WorkTeamMode, SetTeamMode)
+        @RenderChipGroup(Culture["WorkPref.Structure.fixed"], WorkPreferenceCatalogs.StructureCodes, WorkPreferenceCatalogs.StructureLabelKey, Editor.WorkStructure, SetStructure)
+        @RenderChipGroup(Culture["WorkPref.Customer.much"], WorkPreferenceCatalogs.CustomerContactCodes, WorkPreferenceCatalogs.CustomerContactLabelKey, Editor.WorkCustomerContact, SetCustomer)
+        @RenderChipGroup(Culture["WorkPref.Shifts.flex"], WorkPreferenceCatalogs.ShiftsPreferenceCodes, WorkPreferenceCatalogs.ShiftsLabelKey, Editor.WorkShiftsPreference, SetShifts)
     }
 
     <label class="detail-card passport-data__switch">
@@ -91,18 +35,29 @@
         <button type="button" class="btn btn-secondary" @onclick="UseSuggestion">@Editor.WorkRegionSuggestion</button>
     }
 
-    <fieldset class="shared-prefs__group">
+    <fieldset class="profile-roles profile-chip-grid">
         <legend>@Culture["Passport.Shared.OwnCar"]</legend>
-        <button type="button" class="chip @(Editor.HasOwnCar == true ?"is-on" : null)" @onclick="() => SetCar(true)">@Culture["Passport.Shared.Yes"]</button>
-        <button type="button" class="chip @(Editor.HasOwnCar == false ?"is-on" : null)" @onclick="() => SetCar(false)">@Culture["Passport.Shared.No"]</button>
+        <button type="button"
+                class="kompas-chip @(Editor.HasOwnCar == true ? "is-selected" : null)"
+                aria-pressed="@(Editor.HasOwnCar == true ? "true" : "false")"
+                @onclick="() => SetCar(true)">@Culture["Passport.Shared.Yes"]</button>
+        <button type="button"
+                class="kompas-chip @(Editor.HasOwnCar == false ? "is-selected" : null)"
+                aria-pressed="@(Editor.HasOwnCar == false ? "true" : "false")"
+                @onclick="() => SetCar(false)">@Culture["Passport.Shared.No"]</button>
     </fieldset>
 
-    <fieldset class="shared-prefs__group">
+    <fieldset class="profile-roles profile-chip-grid">
         <legend>@Culture["Passport.Shared.Contract"]</legend>
         @foreach (var code in WorkPreferenceCatalogs.ContractCodes)
         {
-            <button type="button" class="chip @(Editor.ContractPreferences.Contains(code) ?"is-on" : null)"
-                    @onclick="() => ToggleContract(code)">@Culture[WorkPreferenceCatalogs.ContractLabelKey(code)]</button>
+            var selected = Editor.ContractPreferences.Contains(code);
+            <button type="button"
+                    class="kompas-chip @(selected ? "is-selected" : null)"
+                    aria-pressed="@(selected ? "true" : "false")"
+                    @onclick="() => ToggleContract(code)">
+                @Culture[WorkPreferenceCatalogs.ContractLabelKey(code)]
+            </button>
         }
     </fieldset>
 
@@ -129,6 +84,43 @@
         var flags = await FeatureFlags.GetAsync();
         _employerFitEnabled = flags.IsEnabled(Jobsy.Core.Features.PlatformFeature.EmployerFitQuestionnaires);
     }
+
+    private RenderFragment RenderChipGroup(
+        string title,
+        IReadOnlyList<string> codes,
+        Func<string, string> labelKey,
+        string? selectedCode,
+        Action<string> onSelect)
+        => builder =>
+        {
+            builder.OpenElement(0, "fieldset");
+            builder.AddAttribute(1, "class", "profile-roles profile-chip-grid");
+            builder.OpenElement(2, "legend");
+            builder.AddContent(3, title);
+            builder.CloseElement();
+            var seq = 4;
+            foreach (var code in codes)
+            {
+                var selected = string.Equals(selectedCode, code, StringComparison.OrdinalIgnoreCase);
+                builder.OpenElement(seq++, "button");
+                builder.AddAttribute(seq++, "type", "button");
+                builder.AddAttribute(seq++, "class", $"kompas-chip {(selected ? "is-selected" : null)}");
+                builder.AddAttribute(seq++, "aria-pressed", selected ? "true" : "false");
+                builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => onSelect(code)));
+                builder.AddContent(seq++, Culture[labelKey(code)]);
+                builder.CloseElement();
+            }
+
+            builder.CloseElement();
+        };
+
+    private RenderFragment RenderChipGroup(
+        string title,
+        string[] codes,
+        Func<string, string> labelResolver,
+        string? selectedCode,
+        Action<string> onSelect)
+        => RenderChipGroup(title, (IReadOnlyList<string>)codes, labelResolver, selectedCode, onSelect);
 
     private void SetIndoor(string code) { Editor.WorkIndoor = code; Editor.Notify(); }
     private void SetOutdoor(string code) { Editor.WorkOutdoor = code; Editor.Notify(); }

@@ -41,9 +41,11 @@
 
         @if (!_showExtension)
         {
-            <button type="button" class="btn btn-secondary" disabled="@(!_canMutate)" @onclick="() => _showExtension = true">
-                @Culture["EmployerFit.Team.Extend"]
-            </button>
+            <div class="employer-fit-culture__actions">
+                <button type="button" class="btn btn-secondary" disabled="@(!_canMutate)" @onclick="() => _showExtension = true">
+                    @Culture["EmployerFit.Team.Extend"]
+                </button>
+            </div>
         }
         else
         {
@@ -74,9 +76,11 @@
 
         @if (_canMutate)
         {
-            <button type="button" class="btn btn-primary" disabled="@_saving" @onclick="SaveAsync">
-                @Culture["Common.Save"]
-            </button>
+            <div class="employer-fit-culture__actions">
+                <button type="button" class="login-submit" disabled="@_saving" @onclick="SaveAsync">
+                    @Culture["Common.Save"]
+                </button>
+            </div>
         }
     }
 </article>
