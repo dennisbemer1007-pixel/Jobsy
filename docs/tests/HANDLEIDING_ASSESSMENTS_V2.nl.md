@@ -52,7 +52,7 @@ Minderjarigen: extra ouder/voogd-consent volgens platformregels.
 
 - **Likert 1–5** (oneens → eens). Reverse items: gescoorde waarde = 6 − ruwe waarde.
 - **Schaling:** percent = round((gemiddelde − 1) / 4 × 100), 0–100 (zie `AssessmentScoringDocumentation`).
-- Itemteksten: waarden + RIASEC in `UiStringsAssessmentV2ValuesCareerBank.cs`; overige v2 in supplement; parity gecontroleerd door `AssessmentV2TranslationGuardTests`. Construct→item matrix waarden: `docs/psychometrie/VALUES_V2_CONSTRUCT_MATRIX.md`.
+- Itemteksten: waarden + RIASEC + cultuur Q20-fix in `UiStringsAssessmentV2ValuesCareerBank.cs`; overige v2 in supplement; parity gecontroleerd door `AssessmentV2TranslationGuardTests`. Construct→item matrices: `docs/psychometrie/VALUES_V2_CONSTRUCT_MATRIX.md`, `COMPETENCE_V2_CONSTRUCT_MATRIX.md`, `CULTURE_V2_CONSTRUCT_MATRIX.md`, `RIASEC_V2_CONSTRUCT_MATRIX.md`.
 
 Korte vormen (5/10 items): **indicatief** — `IsIndicativeDepth` en UI-banner `AssessmentV2.Transparency.ShortDepth`.
 

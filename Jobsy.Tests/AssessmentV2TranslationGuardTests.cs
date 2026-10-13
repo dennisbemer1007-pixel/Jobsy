@@ -115,7 +115,7 @@ public sealed class AssessmentV2TranslationGuardTests
     }
 
     [Fact]
-    public void Values_v2_reverse_items_use_contrary_nl_wording()
+    public void V2_all_instruments_reverse_items_use_contrary_nl_wording()
     {
         string[] contraryMarkers =
         [
@@ -123,20 +123,39 @@ public sealed class AssessmentV2TranslationGuardTests
             "hoef niet", "interesseert me weinig", "boeit", "prima als", "afleiding",
             "precies zegt", "verdragen", "plaatsen", "zwaarder", "hoeft", "zoek geen",
             "maakt mij weinig", "maakt me weinig", "alleen als",
-            "dan bij veel vrijheid", "vaste routines"
+            "dan bij veel vrijheid", "vaste routines", "afzijdig", "lastig", "uitstellen",
+            "tijdverspilling", "paniek", "gefrustreerd", "uit balans", "onzeker", "saai",
+            "stel klusjes vaak uit", "uit tot het laatste", "makkelijk liggen", "laat rommel",
+            "slordig", "corrigeren", "pieker", "van slag", "liefst vast", "vermoeiend", "uitgeput",
+            "bewez", "voorspelbare", "formelere", "vaste kaders", "alleen kan afmaken",
+            "bekende werkwijzen", "resultaat komt eerst", "raken me lang", "onrustig als",
+            "minimaal blijven", "goed genoeg", "maken me leeg", "hard kiezen", "'s avonds",
+            "hoef niet te weten", "eigen gemak", "zonder extra", "coachen", "pitch", "ordenen vind ik",
+            "spreekt me weinig", "tend to believe", "prefer not", "prefer to avoid", "appeals little",
+            "mostly feels boring", "ongeduldig", "onderbuikgevoel", "gut feeling", "saai lijken",
+            "zonder duidelijke regels", "zonder veel contact", "laat liever anderen",
+            "elke stap goedkeurt", "niemand zich", "targets halen is belangrijker",
+            "verwacht een formele", "word onrustig", "verandering moet minimaal", "put me", "snel uit"
         ];
 
-        var forbiddenProTrait = new Dictionary<int, string[]>
+        var forbiddenProTraitByKey = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
-            [21] = ["drijven mij aan", "motiveert me extra", "drijven"],
-            [31] = ["storen me", "storen mij"],
-            [39] = ["belangrijkst", "doe ik graag mee"],
+            ["AssessmentV2.Values.Q21"] = ["drijven mij aan", "motiveert me extra", "drijven"],
+            ["AssessmentV2.Values.Q31"] = ["storen me", "storen mij"],
+            ["AssessmentV2.Values.Q39"] = ["belangrijkst", "doe ik graag mee"],
+            ["AssessmentV2.Culture.Q20"] = ["belangen van anderen", "others' interests", "interesele altora"],
+            ["AssessmentV2.Career.Q07"] = ["schrik me niet", "does not put me off", "nie odstrasza", "nu mă sperie", "لا يخيفني"],
+            ["AssessmentV2.Career.Q14"] = ["vergelijk graag", "comparing different sources", "Porównuję różne", "Compar surse"],
+            ["AssessmentV2.Career.Q22"] = ["graag doe", "enjoy adjusting", "poprawiam muzykę", "adjustez muzică"],
+            ["AssessmentV2.Career.Q30"] = ["geef graag praktische", "giving practical tips", "praktyczne wskazówki"],
+            ["AssessmentV2.Career.Q38"] = ["pitch graag", "pitching an idea", "przedstawiam pomysł"],
+            ["AssessmentV2.Career.Q46"] = ["sorteer en orden graag", "sorting and ordering", "sortować i porządkować"],
         };
 
-        foreach (var q in SchwartzValuesCatalogV2.Questions.Where(x => x.Reverse))
+        foreach (var item in AllV2ReverseItems())
         {
-            var nl = UiStrings.Get(q.TextKey, "nl");
-            if (forbiddenProTrait.TryGetValue(q.Id, out var forbidden))
+            var nl = UiStrings.Get(item.TextKey, "nl");
+            if (forbiddenProTraitByKey.TryGetValue(item.TextKey, out var forbidden))
             {
                 foreach (var phrase in forbidden)
                 {
@@ -146,7 +165,30 @@ public sealed class AssessmentV2TranslationGuardTests
 
             Assert.True(
                 contraryMarkers.Any(m => nl.Contains(m, StringComparison.OrdinalIgnoreCase)),
-                $"Values Q{q.Id} (reverse) NL stem lacks contrary marker: {nl}");
+                $"{item.TextKey} (reverse, {item.Kind}) NL stem lacks contrary marker: {nl}");
+        }
+    }
+
+    private static IEnumerable<(string TextKey, AssessmentKind Kind)> AllV2ReverseItems()
+    {
+        foreach (var q in CompetencyTestCatalogV2.Questions.Where(x => x.Reverse))
+        {
+            yield return (q.TextKey, AssessmentKind.Competence);
+        }
+
+        foreach (var q in CareerTestCatalogV2.Questions.Where(x => x.Reverse))
+        {
+            yield return (q.TextKey, AssessmentKind.Career);
+        }
+
+        foreach (var q in CulturePersonalityCatalogV2.Questions.Where(x => x.Reverse))
+        {
+            yield return (q.TextKey, AssessmentKind.Culture);
+        }
+
+        foreach (var q in SchwartzValuesCatalogV2.Questions.Where(x => x.Reverse))
+        {
+            yield return (q.TextKey, AssessmentKind.Values);
         }
     }
 
