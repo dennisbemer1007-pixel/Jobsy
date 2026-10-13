@@ -11,6 +11,7 @@ description = "Development placeholders and admin setting keys (not secrets)"
 paths = [
   '''(^|/)appsettings\.Development\.json$''',
   '''PlatformSettingsCatalog\.cs$''',
+  '''docs/psychometrie/data/.*\.json$''',
 ]
 regexes = [
   '''local-dev-[A-Za-z0-9_-]+''',
