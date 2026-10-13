@@ -46,57 +46,57 @@ public class ResearchViewportScreenshotTests
         {
             try
             {
-            await adminPage.GotoAsync(baseUrl + "/admin/research", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await adminPage.Locator("[data-testid='research-admin-dashboard']").WaitForAsync(new() { Timeout = 90_000 });
-            await adminPage.Locator("[data-testid='research-pilot-create']").WaitForAsync(new() { Timeout = 90_000 });
-            var enableToggle = adminPage.Locator(".platform-features-card input[type='checkbox']").First;
-            if (await enableToggle.CountAsync() > 0 && !await enableToggle.IsCheckedAsync())
-            {
-                await enableToggle.CheckAsync();
-                await adminPage.WaitForTimeoutAsync(800);
-            }
-            await adminPage.ScreenshotAsync(new()
-            {
-                Path = $"/opt/cursor/artifacts/research-admin-dashboard-{label}.png",
-                FullPage = true
-            });
-            var exportBtn = adminPage.Locator("[data-testid='research-export-btn']");
-            if (await exportBtn.CountAsync() > 0)
-            {
-                await exportBtn.ScrollIntoViewIfNeededAsync();
+                await adminPage.GotoAsync(baseUrl + "/admin/research", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                await adminPage.Locator("[data-testid='research-admin-dashboard']").WaitForAsync(new() { Timeout = 90_000 });
+                await adminPage.Locator("[data-testid='research-pilot-create']").WaitForAsync(new() { Timeout = 90_000 });
+                var enableToggle = adminPage.Locator(".platform-features-card input[type='checkbox']").First;
+                if (await enableToggle.CountAsync() > 0 && !await enableToggle.IsCheckedAsync())
+                {
+                    await enableToggle.CheckAsync();
+                    await adminPage.WaitForTimeoutAsync(800);
+                }
                 await adminPage.ScreenshotAsync(new()
                 {
-                    Path = $"/opt/cursor/artifacts/research-admin-export-{label}.png",
+                    Path = $"/opt/cursor/artifacts/research-admin-dashboard-{label}.png",
                     FullPage = true
                 });
-            }
-
-            try
-            {
-                var pilotCode = await EnsurePilotCampaignAsync(adminPage, baseUrl);
-                if (!string.IsNullOrWhiteSpace(pilotCode))
+                var exportBtn = adminPage.Locator("[data-testid='research-export-btn']");
+                if (await exportBtn.CountAsync() > 0)
                 {
-                    await using var pilotCtx = await browser.NewContextAsync(new()
+                    await exportBtn.ScrollIntoViewIfNeededAsync();
+                    await adminPage.ScreenshotAsync(new()
                     {
-                        ViewportSize = new() { Width = width, Height = height },
-                        IgnoreHTTPSErrors = true
-                    });
-                    await PlaywrightCookieConsent.AcceptAsync(pilotCtx);
-                    var pilotPage = await pilotCtx.NewPageAsync();
-                    await pilotPage.GotoAsync($"{baseUrl}/pilot/{pilotCode}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-                    await pilotPage.Locator("[data-testid='pilot-test-page']").WaitForAsync(new() { Timeout = 60_000 });
-                    await pilotPage.WaitForTimeoutAsync(600);
-                    await pilotPage.ScreenshotAsync(new()
-                    {
-                        Path = $"/opt/cursor/artifacts/research-pilot-{label}.png",
+                        Path = $"/opt/cursor/artifacts/research-admin-export-{label}.png",
                         FullPage = true
                     });
                 }
-            }
-            catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
-            {
-                // Pilot UI is optional when admin create fails in headless CI.
-            }
+
+                try
+                {
+                    var pilotCode = await EnsurePilotCampaignAsync(adminPage, baseUrl);
+                    if (!string.IsNullOrWhiteSpace(pilotCode))
+                    {
+                        await using var pilotCtx = await browser.NewContextAsync(new()
+                        {
+                            ViewportSize = new() { Width = width, Height = height },
+                            IgnoreHTTPSErrors = true
+                        });
+                        await PlaywrightCookieConsent.AcceptAsync(pilotCtx);
+                        var pilotPage = await pilotCtx.NewPageAsync();
+                        await pilotPage.GotoAsync($"{baseUrl}/pilot/{pilotCode}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                        await pilotPage.Locator("[data-testid='pilot-test-page']").WaitForAsync(new() { Timeout = 60_000 });
+                        await pilotPage.WaitForTimeoutAsync(600);
+                        await pilotPage.ScreenshotAsync(new()
+                        {
+                            Path = $"/opt/cursor/artifacts/research-pilot-{label}.png",
+                            FullPage = true
+                        });
+                    }
+                }
+                catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
+                {
+                    // Pilot UI is optional when admin create fails in headless CI.
+                }
             }
             catch (Exception ex) when (ex is PlaywrightException or TimeoutException)
             {
