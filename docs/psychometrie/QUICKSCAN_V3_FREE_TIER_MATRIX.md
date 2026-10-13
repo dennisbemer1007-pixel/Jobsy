@@ -10,7 +10,7 @@
 |------|------|-------|------|
 | Onboarding | `TestDepthLevel.First` (5) + wizard-mini | 5 per module in wizard | Indicatief |
 | Gratis verdieping | `TestDepthLevel.Full` @ v3 | **25** | Volledige free Quick-Scan |
-| Betaalde diepte | `TestDepthLevel.Bottom` | 150–200 (`DeepAnalysisCatalog`) | Paywall + rapport; zie TODO-doc |
+| Betaalde diepte | `TestDepthLevel.Bottom` | 150–200 (`DeepAnalysisCatalog`) | Paywall + rapport; `*_DEEP_CONSTRUCT_MATRIX.md` |
 
 ## Geselecteerde vraag-id’s (v2 bank)
 

@@ -49,9 +49,22 @@ Minderjarigen: extra ouder/voogd-consent volgens platformregels.
 |------|--------------|------------|--------------------|
 | Onboarding / mini | First (5) | 5 | Indicatief |
 | Gratis verdieping | Deeper (10) → Full | **25** | Volledige **free** Quick-Scan @ v3 |
-| Betaalde diepteanalyse | Bottom | 150–200 (`DeepAnalysisCatalog`) | Deep / paywall; zie `DEEP_ANALYSIS_ITEM_BANK_TODO.md` |
+| Betaalde diepteanalyse | Bottom | 150–200 (`DeepAnalysisCatalog`) | Deep / paywall; matrices `docs/psychometrie/*_DEEP_CONSTRUCT_MATRIX.md` |
 
-### 3.2 Itembudget per versie
+### 3.2 Betaalde diepteanalyse (Bottom)
+
+| Instrument | Items | Theoretische basis | Norm / α |
+|------------|-------|-------------------|----------|
+| Competentie | 150 | Big Five / IPIP-NEO facetten (werk-B1) | **Pilot n≈300** |
+| RIASEC | 200 | Holland | **Pilot n≈300** |
+| Waarden | 150 | Schwartz workplace drivers | **Pilot n≈300** |
+| Cultuur & persoonlijkheid | 150 | OCP-achtig + Big Five werkfacetten | **Pilot n≈300** |
+
+- NL-stems: `DeepAnalysis*Items.cs`; en/pl/ro/ar: embedded JSON (`DeepItemLocalizations`).
+- UI: `DeepAnalysis.razor` — `TestQuestionFlow`, voortgang via `TestPageShell` / `TestDiveScene`, **pauze** tussen parts (`Deep.Pause.*`).
+- Geen wijziging betaalflow; alleen itemkoppeling via bestaande `DeepAnalysisCatalog`.
+
+### 3.3 Itembudget per versie (Quick-Scan)
 
 | Instrument | v1 Full | v2 legacy Full | **v3 free Full** |
 |------------|---------|----------------|------------------|

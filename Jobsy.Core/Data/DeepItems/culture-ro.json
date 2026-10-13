@@ -1,902 +1,902 @@
 {
  "1": {
-  "prompt": "Lucrez preferably zelfstșiig, fără that iemși steeds meekijkt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Prefer să ridic sarcini eu, fără ca cineva să verifice constant.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "2": {
-  "prompt": "Plandacăic gladly zelf the volgsaude of my sarcini.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aş vrea să-mi planific personal ordinea îndatoririlor.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "3": {
-  "prompt": "I voel me sterker dacă I zelf mag kiezen hoe I a job aanpak.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă simt mai puternic când pot alege cum să fac o treabă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "4": {
-  "prompt": "I wacht mai degrabă on instructie înainte I ergens to begin.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să aştept instrucţiuni înainte să încep ceva.ignic.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "5": {
-  "prompt": "I bedenk zelf a soluție dacă er no leidinggevende in the buurt is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "O să găsesc eu o soluţie dacă nu e niciun supraveghetor pe aici.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "6": {
-  "prompt": "I vind the prettig dacă I my werkdag zelf mag indelen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place când ajung să-mi ofer ziua de muncă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "7": {
-  "prompt": "I neem gladly verantwosaudelijkheid fsau a heel stuk wsauk.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să-mi asum responsabilitatea pentru multă muncă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "8": {
-  "prompt": "I raak onzeker dacă I fără strakke stappenlijst moet wsauk.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Voi fi nesigur dacă va trebui să lucrez fără o listă strânsă pas cu pas.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "9": {
-  "prompt": "I stel zelf vragen dacă iets onduidelijk is, in plaats of stil te blijven.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi pun întrebări când ceva nu e clar, în loc să stau liniştit.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "10": {
-  "prompt": "I verbeter a way of wsauking mai degrabă zelf dan that I alles laat zoals the is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aş prefera să îmbunătăţesc şi eu o metodă decât să las totul aşa cum este.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "11": {
-  "prompt": "I geef sarcini preferably terug dacă niemși precies heeft gezegd hoe.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să returnez sarcini când nimeni nu a spus exact cum.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "12": {
-  "prompt": "I kan good verder dacă the doelen helder his, ook fără constant toezicht.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Pot merge mai departe dacă obiectivele sunt clare, chiar și fără monitorizare constantă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "13": {
-  "prompt": "I kies zelf welke hulpmiddelen I gebruik om sneller klaar te his.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aleg ce unelte să fiu gata mai repede.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "14": {
-  "prompt": "I wil at elke kleine beslissing eerst toestemming vragen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Aş vrea să cer permisiunea pentru fiecare decizie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "15": {
-  "prompt": "I voel me trots dacă I a problemă alleen heb opgelost.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă simt mândru că am rezolvat o problemă singură.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "16": {
-  "prompt": "I voel me thuis in a echipă waar we elkaar at the vosaunaam noemen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă simt ca acasă într-o echipă unde ne spunem pe nume.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "17": {
-  "prompt": "I vind a luchtige grap on the shop flosau de obicei prettig.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "De obicei îmi place o glumă uşoară la locul de muncă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "18": {
-  "prompt": "I praat makkelijk about gewone dingen cu colegi, nu alleen about wsauk.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Vorbesc despre lucruri obişnuite cu colegii, nu doar despre muncă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "19": {
-  "prompt": "I houd of a fsaumele toon, ook at kleine vragen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "-C s-o s-o s-o s-o s-o s-o s-o s-o s-o s-o s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s s cu s cu s cu s cu s cu s cu s cu s cu s cu s cu s s cu s cu s cu s s s s cu s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s cu s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s c s s s s s s s s s s s s s",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "20": {
-  "prompt": "I stuur mai degrabă a ksaut berichtje dan a lange officiële mail.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mai degrabă aş trimite un mesaj scurt decât un e-mail oficial.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "21": {
-  "prompt": "I vind the fijn dacă the leidinggevende gewoon meeloopt on the vloer.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place când supraveghetorul doar merge pe podea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "22": {
-  "prompt": "Lucrez gladly in a atmosphere waar je mistakes hardop mag benoemen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să lucrez într-o atmosferă în care poţi numi greşelile cu voce tare.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "23": {
-  "prompt": "I raak gespannen of te a lot infsaumeel geklets tijdens the dienst.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Devin tensionat de la prea multă vorbărie informală în timpul serviciului.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "24": {
-  "prompt": "I vind hierarchy less belangrijk dan that we elkaar snel helpen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Cred că ierarhia e mai puţin importantă decât să ne ajutăm reciproc rapid.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "25": {
-  "prompt": "I spreek a coleg makkelijk to, ook dacă that hoger in rang staat.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Vorbesc cu uşurinţă cu un coleg consumă un grad mai înalt.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "26": {
-  "prompt": "I wacht until iemși ddacăferent a gesprek begint; zelf doe I that zelden.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Aştept pe altcineva să înceapă o conversaţie, rareori o fac şi eu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "27": {
-  "prompt": "I vind a open deur și ksaute lijnen prettiger dan vaste procedures fsau alles.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi plac uşile deschise şi liniile scurte mai mult decât procedurile fixe pentru orice.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "28": {
-  "prompt": "I deel gladly a tip cu a coleg fără fsaumeel meeting.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aș dori să împărtășesc un sfat cu un coleg fără consultare formală.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "29": {
-  "prompt": "I wil eerst a officiële agreement înainte I iets cu a coleg regel.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Aş vrea o întâlnire oficială înainte să aranjez ceva cu un coleg.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "30": {
-  "prompt": "I voel me on my gemak dacă the echipă infsaumeel și direct communiceert.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă simt confortabil când echipa comunică informal şi direct.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "31": {
-  "prompt": "I krijg energie of samen a job afronden.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Primesc energie de la finalizarea unui loc de muncă împreună.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "32": {
-  "prompt": "I vraag snel sau iemși mee kan denken dacă I vastzit.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi vedea dacă cineva poate gândi de-a lungul atunci când sunt blocat.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "33": {
-  "prompt": "I deel infsaumatie gladly zodat the echipă verder kan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "S-ar putea s-o s-o ia si s-o s-o s-o s-o s-o s-o s-o s-o s-o s-o s s-o s-o s-o s-o s-o s-o s s s-o s-o s-o s s-o s-o s s s-o s s-o s s s Party s s-o s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s  s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s s",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "34": {
-  "prompt": "Lucrez mai degrabă alleen și lever pas in dacă alles klaar is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să lucrez singur şi să mă întorc când totul e gata.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "35": {
-  "prompt": "I stem gladly even af cu colegi înainte we a piek ingaan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aș dori să fiu de acord cu colegii înainte de a intra într-un vârf.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "36": {
-  "prompt": "Ajut a nou coleg gladly on weg.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Sunt fericit să ajut un nou coleg pe drum.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "37": {
-  "prompt": "I vind meeting about the taakverdeling the moeite waard.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Cred că merită să discutăm despre diviziunea muncii.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "38": {
-  "prompt": "I vermijd echipăoverleg; the kost me te a lot tijd.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Evit întâlnirile de echipă; Durează prea mult.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "39": {
-  "prompt": "I vier gladly a klein succes samen cu the echipă.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să sărbătoresc un mic succes cu echipa.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "40": {
-  "prompt": "I luister to wat șieren nodig hebben înainte I dosaupak.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Sunt pe un b, pentru că eu sunt, pentru că redactează, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, pentru că sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt, sunt,",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "41": {
-  "prompt": "I vind the lastig om wsauk cu șieren te delen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Mi-e greu să împart munca cu alţii.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "42": {
-  "prompt": "I pas my tempo to zodat we samen on schema blijven.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi reglez ritmul ca să rămânem pe program.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "43": {
-  "prompt": "I bied to a stuk about te nemen dacă a coleg the zwaar heeft.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă ofer să preiau o piesă atunci când un coleg se luptă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "44": {
-  "prompt": "I houd my aanpak mai degrabă fsau mezelf until the eindrezultataat er is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Aş prefera să-mi păstrez abordarea până la sfârşit.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "45": {
-  "prompt": "I zie samenwerken dacă a sterkte, nu dacă oponthoud.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Văd lucrând împreună ca o putere, nu o întârziere.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "46": {
-  "prompt": "I schakel makkelijk dacă the schedule plotseling verșiert.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Schimb uşor atunci când planificarea se schimbă brusc.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "47": {
-  "prompt": "I vind wisselende sarcini de obicei juist leuk.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "De obicei îmi plac schimbările.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "48": {
-  "prompt": "I kan snel of the ene job to the other overstappen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Pot trece repede de la o slujbă la alta.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "49": {
-  "prompt": "I raak of slag dacă my vaste ronde wsaudt dosaubroken.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Mă supăr când mi se rupe runda obişnuită.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "50": {
-  "prompt": "Ajut gladly at a spoedklus that nu on my lijst stond.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aș fi fericit să ajute cu un loc de muncă de urgență care nu a fost pe lista mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "51": {
-  "prompt": "I pas my wsauk to dacă the client sau the seizoen iets ddacăferent vraagt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi reglez munca dacă clientul sau sezonul întreabă altceva.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "52": {
-  "prompt": "I blijf rustig dacă er om half elf a nou prisauiteit at komt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi rămâne calm când o nouă prioritate vine la 10:30.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "53": {
-  "prompt": "I wil gladly elke dag dezelfde sarcini in dezelfde volgsaude.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Vreau aceleaşi sarcini în fiecare zi în aceeaşi ordine.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "54": {
-  "prompt": "I improvisier mai degrabă a beetje dan that alles vastligt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Omit un pic mai mult decât totul.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "55": {
-  "prompt": "I vind the oké om vșiaag iets ddacăferent te doen dan gisteren.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Cred că e în regulă să faci ceva diferit astăzi decât ieri.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "56": {
-  "prompt": "I verzet me tegen last-minute wijzigingen, ook dacă ze nodig his.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Mă opun schimbărilor de ultim moment, chiar dacă sunt necesare.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "57": {
-  "prompt": "I kan me snel inwerken on a tijdelijke extra sarcină.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Pot lucra rapid la o sarcină suplimentară temporară.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "58": {
-  "prompt": "I zie schimbare on the vloer dacă iets waar I mee om kan gaan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Văd schimbarea pe podea ca pe ceva ce mă pot descurca.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "59": {
-  "prompt": "I wsaud onrustig dacă er no vaste schedule fsau the hele week is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Devin agitată când nu e program fix pentru toată săptămâna.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "60": {
-  "prompt": "I blijf bruikbaar dacă the echipă moet meebuigen cu busyness.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi fi util dacă echipa trebuie să se aplece cu mulțimile.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "61": {
-  "prompt": "I bedenk gladly a slimmere manier om hetzelfde wsauk te doen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să mă gândesc la un mod mai inteligent de a face aceeaşi treabă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "62": {
-  "prompt": "I probeer a nou hulpmiddel out dacă the tijd kan besparen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Încerc o unealtă nouă dacă poate economisi timp.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "63": {
-  "prompt": "I stel verbeterideeën fsau, ook dacă ze nog klein his.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Sugerez idei de îmbunătăţire, chiar şi atunci când îşi susţin micimea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "64": {
-  "prompt": "I blijf at the old method, ook dacă that traag is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Mă ţin de vechea metodă, chiar dacă e lentă.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "65": {
-  "prompt": "I wsaud nieuwsgierig dacă er a nou way of wsauking wsaudt geïntroduceerd.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Devin curios când se introduce o nouă metodă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "66": {
-  "prompt": "I kijk at other echipăs hoe zij a problemă oplossen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi verifica cu alte echipe pentru a vedea cum rezolvă o problemă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "67": {
-  "prompt": "I durf a proposal te doen that nog nu in the hșibook staat.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îndrăznesc să fac o propunere care nu este încă în manual.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "68": {
-  "prompt": "Vreaurouw nou ideas totdat iedereen ze al lang gebruikt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Sunt suspicios de idei noi până când toată lumea le foloseşte de mult timp.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "69": {
-  "prompt": "I experimenteer mai degrabă klein dan that I wacht on a perfect plan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Prefer să experimentez puţin decât să aştept un plan perfect.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "70": {
-  "prompt": "I merk snel dacă a proces onnodig omslachtig is gewsauden.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Am observat repede când un proces a devenit inutil de greoi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "71": {
-  "prompt": "I houd nu of brainstsaumen; zeg me gewoon wat I moet doen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Spune-mi ce să fac.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "72": {
-  "prompt": "I leer gladly of a mistake dosau te kijken wat we ddacăferent kunnen doen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să învăţ dintr-o greşeală uitându-mă la ce altceva putem face.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "73": {
-  "prompt": "I zie kansen in nou producten sau diensten of the vestiging.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Văd oportunităţi în produse sau servicii noi de la instituţie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "74": {
-  "prompt": "I voel me ongemakkelijk at sarcini fără duidelijk vosaubeeld.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Mă simt inconfortabil cu sarcini fără un exemplu clar.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "75": {
-  "prompt": "I blijf nadenken about hoe kwaliteit și tempo beter kunnen samengaan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă tot gândesc cum calitatea şi ritmul pot fi combinate mai bine.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "76": {
-  "prompt": "I kies eerder fsau the person dan fsau alleen the cijfer dacă the schuurt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Prefer să aleg omul decât figura când e şlefuit.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "77": {
-  "prompt": "I merk the dacă a coleg a zware dag heeft.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Observ când un coleg are o zi grea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "78": {
-  "prompt": "I neem the tijd om a client sau coleg écht te helpen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi fac timp să ajut un client sau un coleg.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "79": {
-  "prompt": "I zet rezultat întotdeauna vóór hoe iemși zich voelt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Întotdeauna pun rezultate înainte de a simţi cineva.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "80": {
-  "prompt": "I vraag hoe the gaat, nu alleen sau the sarcină af is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Întreb cum merge treaba, nu doar dacă treaba se face.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "81": {
-  "prompt": "I vind a goede atmosphere minstens zo belangrijk dacă snelle output.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Găsesc o atmosferă primită cel puţin la fel de importantă ca şi ieşirea rapidă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "82": {
-  "prompt": "I bescherm a coleg tegen onnodige busy dacă that kan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Protejez un coleg de presiunile inutile dacă pot.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "83": {
-  "prompt": "I vind persoonlijke problemăen of colegi no werkzaak.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Nu cred că problemele personale ale colegilor mei deputaţi sunt o chestiune de muncă.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "84": {
-  "prompt": "I geef iemși the ruimte om even on adem te komen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "O să las pe cineva să respire.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "85": {
-  "prompt": "I leg iets geduldig out dacă iemși the nog nu snapt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi explica ceva cu răbdare dacă cineva nu-l obține încă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "86": {
-  "prompt": "I push dosau, ook dacă iemși duidelijk overvraagd is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Am împinge pe, chiar dacă cineva este în mod clar suprasolicitat.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "87": {
-  "prompt": "I denk na about hoe a beslissing colegi raakt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă gândesc la modul în care o decizie afectează colegii.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "88": {
-  "prompt": "I vier mai degrabă that iemși groeit dan alleen that the target gehaald is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aş prefera să sărbătoresc pe cineva în creştere decât să obţin ţinta.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "89": {
-  "prompt": "I meet succes vosaual in cijfers, nu in hoe the echipă erbij zit.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Măsor succesul în mare parte în numere, nu în modul în care echipa este.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "90": {
-  "prompt": "I zsaug that niemși er alleen fsau staat at a lastige job.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă voi asigura că nimeni nu rămâne singur într-o slujbă grea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "91": {
-  "prompt": "I leer gladly iets nieuws about hoe ons field werkt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să învăţ ceva nou despre cum funcţionează profesia noastră.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "92": {
-  "prompt": "I probeer a onbekende way of wsauking eerst klein out.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi încerca un mod de operare necunoscut mai întâi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "93": {
-  "prompt": "I zie snel connections tussen losse details on the vloer.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Văd repede conexiuni între detalii pe podea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "94": {
-  "prompt": "I blijf preferably at wat I al ken.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să rămân cu ceea ce ştiu deja.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "95": {
-  "prompt": "I stel vragen dacă I the background of a sarcină nog nu snap.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Pun întrebări dacă încă nu înţeleg trecutul unei sarcini.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "96": {
-  "prompt": "I haal inspiratie out hoe other echipăs hetzelfde aanpakken.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă inspiră modul în care alte echipe fac același lucru.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "97": {
-  "prompt": "New ideas of colegi wijs I de obicei meteen af.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "De obicei resping idei noi din partea colegilor.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "98": {
-  "prompt": "I vind afwisseling in sarcini prettig zodat I alert blijf.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place varietatea sarcinilor, aşa că rămân în alertă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "99": {
-  "prompt": "I raak nieuwsgierig dacă iets ddacăferent werkt dan verwacht.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Devin curios când altceva funcţionează mai mult decât mă aşteptam.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "100": {
-  "prompt": "I vermijd sarcini waarbij I iets moet leren that I nog niciodată deed.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Evit sarcinile în care trebuie să învăţ ceva ce n-am mai făcut până acum.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "101": {
-  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmbin cunoştinţele de la diferite locuri de muncă la o abordare mai bună.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "102": {
-  "prompt": "I pas my aanpak to dacă the seizoensdruk ddacăferent is dan vsauig jaar.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi adaptez abordarea dacă presiunea sezonieră e diferită faţă de cea de anul trecut.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "103": {
-  "prompt": "I maak af wat I beloof, ook dacă the dag tegenzit.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi termin treaba aşa cum ne-am înţeles, şi în zilele aglomerate.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "104": {
-  "prompt": "I controleer details înainte I iets dacă klaar dosaugeef.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "O să verific detaliile înainteelelalte.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "105": {
-  "prompt": "Plandacăic my wsauk zodat deadlines haalbaar blijven.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi planific munca astfel încât termenele să rămână accesibile.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "106": {
-  "prompt": "I laat half afgemaakt wsauk makkelijk liggen.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Las pe jumătate terminat de lucru ușor.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "107": {
-  "prompt": "I kom on tijd și geef the dosau dacă I te laat dreig te his.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi fi la timp și transmite-l pe dacă am ajuns prea târziu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "108": {
-  "prompt": "I houd at wat er nog openstaat, fără that iemși erom vraagt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Ţin evidenţa a ceea ce e încă deschis, fără să întrebe nimeni.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "109": {
-  "prompt": "I stel lastige jobs out until the nu ddacăferent msaue kan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Voi amâna locurile de muncă dificile până când nu există nici o altă cale.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "110": {
-  "prompt": "Lucrez netjes volgens afgesproken veiligheid sau kwaliteit.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Lucrez cum trebuie conform siguranţei sau calităţii convenite.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "111": {
-  "prompt": "I ruim my werkplek on zodat the volgende ploeg verder kan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi curăţa locul meu de muncă ca următorul echipaj să poată merge mai departe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "112": {
-  "prompt": "If niemși kijkt, sla I controles sau stappen about.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Dacă nu se uită nimenitrek, sar peste cecuri sau paşi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "113": {
-  "prompt": "I geef the eerlijk to dacă I a mistake heb gemaakt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "O să ţi-o dau ţie dictată spontan, făcând o greşeală.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "114": {
-  "prompt": "I verdeel grote sarcini in stukken that I écht afkrijg.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Împărtesc sarcini mari în bucăţi pe care le pot face.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "115": {
-  "prompt": "I praat makkelijk cu nou colegi sau clienți.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "E uşor să vorbeşti cu noi colegi sau clienţi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "116": {
-  "prompt": "I neem gladly the wosaud in a ksaut echipăoverleg.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aş vrea să iau cuvântul într-o şedinţă scurtă a echipei.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "117": {
-  "prompt": "I krijg energie of a drukke balie sau vloer.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Primesc energie de la un birou ocupat sau podea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "118": {
-  "prompt": "I vermijd contact și wsauk preferably stil dosau.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Prefer să evit contactul şi să lucrez în linişte.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "119": {
-  "prompt": "I stel mezelf fsau dacă er iemși nieuws at the echipă komt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă prezint dacă se alătură cineva echipei.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "120": {
-  "prompt": "I vind the leuk om a groep mee te nemen in a plan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să aduc un grup într-un plan.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "121": {
-  "prompt": "Na a lot mensencontact heb I vosaual behoefte om alleen te his.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "După o mulţime de oameni de contact, trebuie să fiu singur.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "122": {
-  "prompt": "I begin makkelijk a praatje tijdens the pauze.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "E uşor pentru mine să încep o discuţie în timpul unei pauze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "123": {
-  "prompt": "I voel me on my gemak dacă er a lot beweging și geluid is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă simt confortabil atunci când există o mulțime de mișcare și sunet.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "124": {
-  "prompt": "I laat șieren the wosaud doen, ook dacă I iets te zeggen heb.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "- S-au în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în de în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în în",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "125": {
-  "prompt": "I geniet of wsauk waarbij I a lot people zie.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să lucrez în care văd mulţi oameni.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "126": {
-  "prompt": "I straal calm și warmte out dacă iemși mij aanspreekt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Am emis un semnal de alarmă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "127": {
-  "prompt": "I bied to a sarcină about te nemen dacă a coleg the zwaar heeft.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Mă ofer să preiau o sarcină atunci când un coleg se luptă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "128": {
-  "prompt": "I zoek a soluție waar iedereen mee verder kan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Caut o soluţie cu care oricine poate continua.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "129": {
-  "prompt": "I blijf beleefd, ook dacă a client ontevreden is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi place să fiu politicos, chiar dacă un client e nemulţumit.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "130": {
-  "prompt": "I zet my zin dosau, ook dacă that the atmosphere schaadt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Trec prin asta, chiar dacă doare atmosfera.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "131": {
-  "prompt": "I geef eerlijk complimenten dacă iemși iets good doet.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Fac complimente sincere când cineva face ceva corect.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "132": {
-  "prompt": "I luister eerst good înainte I antwosaud.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi asculta cu atenţie înainte să răspund.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "133": {
-  "prompt": "I vind meedenken cu șieren de obicei tijdverspilling.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Cred că e o pierdere de timp.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "134": {
-  "prompt": "I houd rekening cu the feelings of colegi at feedback.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Iau în considerare sentimentele colegilor deputați în feedback.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "135": {
-  "prompt": "Ajut gladly, ook dacă the nu letterlijk my sarcină is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Aș fi fericit să ajute, chiar dacă nu e literalmente treaba mea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "136": {
-  "prompt": "I zeg bot wat I denk, fără on the toon te letten.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Spun sincer ce gândesc fără să fiu atent la ton.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "137": {
-  "prompt": "I maak vrede dacă er spanning in the echipă zit.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Eu fac pace atunci când există tensiune în echipă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "138": {
-  "prompt": "I doe my best om prettig samen te wsauk.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Fac tot ce pot ca să lucrez bine kit.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "139": {
-  "prompt": "I blijf kalm dacă the schedule ineens omvalt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi rămâne calm când planul festiv cade peste.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "140": {
-  "prompt": "I adem even și kijk wat wél kan dacă the hectisch wsaudt.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "ites will'll' will will will will will will will will will will will will will will will will will will will will will will will will will will will will will va recupera.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "141": {
-  "prompt": "I reageer later rustig dacă iemși ksautaf is.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi răspunde în linişte când cineva va fi scund.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "142": {
-  "prompt": "I raak snel of streek at onverwachte busy.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Sunt foarte supărată de presiunea neaşteptat încadrate.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "143": {
-  "prompt": "I houd my hoofd erbij tijdens piekdruk in the winkel sau kas.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Îmi ţin capul sus la presiune maximă în magazin sau bani gheaţă.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "144": {
-  "prompt": "I laat a mistake me nu the hele dienst dwarszitten.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Nu voi lăsa o greşeală să mă deranjeze cu toată tura.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "145": {
-  "prompt": "I panikeer makkelijk dacă er meerdere dingen tegelijk misgaan.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Mă panichez uşor când mai multe lucruri merg prost în acelaşi timp.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "146": {
-  "prompt": "I blijf beleefd onder tijdsdruk.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Voi fi politicos sub presiunea timpului.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "147": {
-  "prompt": "I herstel snel na a stevige criticism.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "O să-mi revin imediat după o critică grea.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "148": {
-  "prompt": "I neem stress of the wsauk mee until ver na my dienst.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about holding on to what you know — sau nu.",
+  "prompt": "Iau stres de la locul de muncă departe după tura mea.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "149": {
-  "prompt": "I blijf overzicht houden dacă colegi gestrest raken.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "Țin o prezentare generală atunci când colegii deputați sunt stresați.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "150": {
-  "prompt": "I kan a setback laten fsau wat hij is și verder wsauk.",
-  "example": "Example: la muncă something unexpected happens. What do you de obicei do? This is about how you de obicei react când it matters.",
+  "prompt": "care se încadrează în dragoste cu el. Pot face un pas înapoi pentru ceea ce este și să continue să lucreze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  }
 }
