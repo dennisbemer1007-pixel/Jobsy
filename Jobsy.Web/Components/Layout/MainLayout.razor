@@ -183,6 +183,18 @@
             StateHasChanged();
         }
 
+        if (RendererInfo.IsInteractive)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobsyCoachDock.syncStickyFooters");
+            }
+            catch
+            {
+                // CSS fallbacks keep the coach tab usable when JS is blocked.
+            }
+        }
+
         if (_siteVisitRecorded)
         {
             return;
