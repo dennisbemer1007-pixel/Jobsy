@@ -82,9 +82,12 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("desktop", 1440, 900)]
-    [InlineData("mobile", 390, 844)]
-    public async Task V2_competency_intro_shows_transparency_and_depth_pick(string name, int width, int height)
+    [InlineData("desktop", 1440, 900, "nl-NL")]
+    [InlineData("mobile", 390, 844, "nl-NL")]
+    [InlineData("desktop", 1440, 900, "pl-PL")]
+    [InlineData("mobile", 390, 844, "ar")]
+    public async Task V2_competency_intro_shows_transparency_and_depth_pick(
+        string name, int width, int height, string locale)
     {
         using var web = new TestsV2WebFactory(testsV2On: true);
         var baseUrl = web.EnsureServerAddress()
@@ -94,7 +97,7 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
         await using var context = await _browser!.NewContextAsync(new()
         {
             ViewportSize = new ViewportSize { Width = width, Height = height },
-            Locale = "nl-NL"
+            Locale = locale
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
@@ -114,9 +117,29 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");
         Assert.False(overflow);
 
+        var indicative = page.Locator("[data-testid=assessment-indicative-depth]");
+        await indicative.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
         await page.ScreenshotAsync(new()
         {
-            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, $"competency-v2-intro-{name}.png"),
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, $"competency-v2-intro-{locale}-{name}.png"),
+            FullPage = true
+        });
+
+        await page.Locator(".test-shell__footer button.btn-primary").ClickAsync();
+        await page.Locator(".test-shell[data-mode=Question]").WaitForAsync(new() { Timeout = 45_000 });
+        await indicative.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+
+        var body = await page.ContentAsync();
+        Assert.DoesNotContain("AssessmentV2.Competency.Q", body, StringComparison.Ordinal);
+        if (locale.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.Contains("samen", body, StringComparison.OrdinalIgnoreCase);
+        }
+
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, $"competency-v2-question-{locale}-{name}.png"),
             FullPage = true
         });
     }
@@ -310,7 +333,8 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
                 QuickScanVersion = AssessmentTestVersions.V2,
                 QuickScanFullCount = 40,
                 QuestionCount = 40,
-                Answers = new Dictionary<string, int>()
+                IsIndicativeDepth = true,
+                Answers = new Dictionary<string, int> { ["1"] = 4, ["2"] = 3 }
             };
 
         private static CandidateCareerInterestState BuildCareer()
@@ -328,7 +352,7 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             {
                 Status = "Draft",
                 QuickScanVersion = AssessmentTestVersions.V2,
-                QuickScanFullCount = 24,
+                QuickScanFullCount = 48,
                 Answers = new Dictionary<string, int>()
             };
 

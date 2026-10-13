@@ -1,61 +1,154 @@
-# Handleiding Quick-Scan assessments (v2)
+# Testhandleiding Quick-Scan assessments v2 (Lobsy)
 
-**Status:** concept handleiding voor productie-ondersteuning. Geen COTAN-registratie; geen normtabellen tot de validatiestudie is afgerond.
+**Versie:** concept v2 (Quick-Scan `QuickScanVersion = 2`)  
+**Status:** interne handleiding — **geen COTAN-registratie**, geen normtabellen tot validatiestudie is afgerond.  
+**Feature flag:** `TestsV2Enabled` (standaard uit). Bestaande v1-resultaten blijven op versie 1.
 
-**Feature flag:** `TestsV2Enabled` (platform). Standaard uit. Nieuwe kandidaten krijgen v2 alleen als de flag aan staat; bestaande v1-resultaten blijven op `QuickScanVersion = 1`.
+---
 
-## Doel en doelgroep
+## Hoofdstuk 1 — Doel en meetpretentie
 
-| Instrument | Construct (indicatief) | Doelgroep |
-|------------|------------------------|-----------|
-| Competentie Quick-Scan v2 | Samenwerken, resultaatgerichtheid, stressbestendigheid, innovatie (+ extraversie in rapport) | Werkzoekenden 16+, NL/EN/PL/RO/AR |
-| Carrière (RIASEC) v2 | Realistic, Investigative, Artistic, Social, Enterprising, Conventional | Idem |
-| Cultuur & persoonlijkheid v2 | Werkcultuur (6) + Big Five korte schalen (Openness i.p.v. losse “Curiosity”) | Idem |
-| Waarden (Schwartz-achtig) v2 | Autonomie, verbinding, prestatie, stabiliteit, impact | Idem |
+### 1.1 Doel
+De Quick-Scan v2 ondersteunt **oriëntatie op werk**: competenties, RIASEC-interesses, werkcultuurvoorkeur en waarden. Output is bedoeld voor **gesprek, matching-hulp en paspoort**, niet voor automatische selectie.
 
-Gebruik: **oriëntatie en matching-hulp**, geen selectiebesluit zonder menselijke beoordeling (AI Act: menselijke oversight).
+### 1.2 Wat wordt níet gemeten
+- Geen medische of psychologische diagnose.
+- Geen IQ, pathologie of klinische schalen.
+- Geen arbeidsongeschiktheids- of veiligheidskeuring.
 
-## Itemsets en diepte
+### 1.3 Toegestaan gebruik
+- Kandidaat zelfinzicht en vacature-exploratie.
+- Recruiter-ondersteuning **met menselijke beoordeling** (AI Act: geen louter geautomatiseerde afwijzing).
+- Interne matching-scores **indicatief** bij onvolledige scan (zie hoofdstuk 6).
 
-- **v1:** 18–25 items per instrument (historisch); scores blijven op v1-formules.
-- **v2:** uitgebreidere sets (competentie 40, carrière 48, cultuur 24, waarden 40) met B1-itemteksten en volledige vertalingen nl/en/pl/ro/ar (`AssessmentV2.*` keys).
-- **Diepteniveaus:** Eerste blik / Dieper / Volledig — korte vormen zijn **indicatief** (`IsIndicativeDepth`); match-% krijgt lagere zekerheid (zie `AssessmentMatchEvidence`).
+### 1.4 Verboden / voorzichtig gebruik
+- Enige selectiebeslissing zonder menselijke review.
+- Sterke claims (“boven gemiddeld”, “objectief beste kandidaat”) zonder normen.
+- Hergebruik van v1-scores alsof het v2-scores zijn.
 
-## Administratie
+---
 
-1. Toestemming test + AI (`TestAiConsent`, versie `PrivacyConstants.CandidateProfilingConsentVersion`).
-2. Kandidaat kiest diepte; antwoorden 1–5 Likert, autosave.
-3. `QuickScanVersion` wordt gezet bij eerste save (beleid: `QuickScanVersionPolicy`).
+## Hoofdstuk 2 — Populatie en taal
 
-## Scoring (transparant)
+| Instrument | Construct (indicatief) | Doelgroep | Talen v2 |
+|------------|------------------------|-----------|----------|
+| Competentie | Samenwerken, resultaat, stress, innovatie, extraversie | Werkzoekenden 16+ | nl, en, pl, ro, ar |
+| Carrière (RIASEC) | R-I-A-S-E-C | Idem | nl, en, pl, ro, ar |
+| Cultuur & persoonlijkheid | 6 cultuur + 6 persoonlijkheidsfacetten | Idem | nl, en, pl, ro, ar |
+| Waarden | Autonomie, verbinding, prestatie, stabiliteit, impact | Idem | nl, en, pl, ro, ar |
 
-- Likert: `AssessmentScoringDocumentation.LikertRange`
-- Reverse items: `AssessmentScoringDocumentation.ReverseFormula` (6 − ruwe score)
-- Schaalpercent: `AssessmentScoringDocumentation.PercentFormula`
-- Implementatie per catalogus: `CompetencyTestCatalogV2`, `CareerTestCatalogV2`, `CulturePersonalityCatalogV2`, `SchwartzValuesCatalogV2` via `AssessmentQuickScanCatalog`.
+Minderjarigen: extra ouder/voogd-consent volgens platformregels.
 
-Match-percentage: gewogen overlap met vacature-eisen; bij indicatieve diepte: **uncertainty band** en transparency string `AssessmentV2.Transparency.MatchIndicative`.
+---
 
-## Interpretatie
+## Hoofdstuk 3 — Testmateriaal (v2)
 
-- Percentages 0–100: relatieve sterkte binnen het instrument, **geen normvergelijking** tot normstudie.
-- RIASEC: Holland-code uit top-3; culture/values: top-dimensies voor gesprek met recruiter.
-- Geen medische/psychologische diagnose.
+| Instrument | Items (volledig) | Items per schaal/dimensie | Diepte |
+|------------|------------------|---------------------------|--------|
+| Competentie | 40 | 8 | Eerste blik 5, Dieper 10, Volledig 40 |
+| Carrière | 48 | 8 per RIASEC-type | Idem |
+| Cultuur | 48 | 4 per dimensie (12 dimensies) | Idem |
+| Waarden | 40 | 8 per waarde-driver | Idem |
 
-## Beperkingen
+- **Likert 1–5** (oneens → eens). Reverse items: gescoorde waarde = 6 − ruwe waarde.
+- **Schaling:** percent = round((gemiddelde − 1) / 4 × 100), 0–100 (zie `AssessmentScoringDocumentation`).
+- Itemteksten: `AssessmentV2.*` in `UiStringsAssessmentV2` + supplement; parity gecontroleerd door `AssessmentV2TranslationGuardTests`.
 
-- Geen gepubliceerde normen of COTAN-beoordeling.
-- v2-itemvalidatie (factorstructuur, α) vereist echte responsdata — zie `docs/psychometrie/VALIDATIE_STUDIEPLAN.md` (aparte docs-PR).
-- Mini-wizard en onboarding-mini blijven korte proxies; volledige Quick-Scan aanbevolen voor stabieler beeld.
+Korte vormen (5/10 items): **indicatief** — `IsIndicativeDepth` en UI-banner `AssessmentV2.Transparency.ShortDepth`.
 
-## Normen (plan, geen data)
+---
 
-Fase 1: N ≥ 300 voltooide v2-profielen per instrument, stratificatie leeftijd/geslacht/taal.  
-Fase 2: percentielen en betrouwbaarheidsbanden; alleen publiceren na interne review.  
-Tot die tijd: UI toont ruwe percentages + indicatieve match, geen “u scoort boven gemiddeld”-claims.
+## Hoofdstuk 4 — Administratie (unproctored)
 
-## Technische referenties
+### 4.1 Setting
+Thuis of eigen device; geen toezicht (unproctored). Kandidaat beantwoordt zelfstandig.
 
-- Versie-enum: `AssessmentTestVersions`
-- Migratie: `20261013120000_AddQuickScanVersionAndTestsV2Enabled`
-- Documentatie in code: `AssessmentScoringDocumentation`, `AssessmentMatchEvidenceRules`
+### 4.2 Integriteit en fraude
+- Geen proctoring; geen biometrische identiteitscontrole tijdens de scan.
+- Platform: account + consent; rate limits op opslaan; geen “perfect score” beloning.
+- **Beleid:** bij vermoeden van oneerlijk invullen (extreme snelheid, inconsistent patroon) mag recruiter **geen** scan als enige bewijs gebruiken; her-test of diepere procedure mogelijk.
+
+### 4.3 Technische administratie
+1. Toestemming test + AI (`TestAiConsent`).
+2. Keuze diepteniveau; autosave per antwoord.
+3. `QuickScanVersion` vastgelegd bij eerste save (`QuickScanVersionPolicy`).
+
+### 4.4 Unproctored-addendum (COTAN 2018)
+- Instructie: eerlijk antwoorden, geen “goede” antwoorden kiezen.
+- Omgeving: rust, eigen tempo; pauzeren toegestaan.
+- Geen tijdslimiet per item (soft UX only).
+
+---
+
+## Hoofdstuk 5 — Scoring en match
+
+### 5.1 Per instrument
+Scoring via `AssessmentQuickScanCatalog` → v2 catalogi (`*CatalogV2`). v1 blijft ongewijzigd voor opgeslagen v1-data.
+
+### 5.2 Match-percentage
+- Gewogen overlap kandidaat–vacature; cultuur/waarden/engagement-blends zoals in `ProfileVacancyMatchCalculator`.
+- **Indicatieve diepte:** `AssessmentMatchEvidence.Indicative` → gewichtsfactor 0,72, **+10 pp onzekerheid**, UI-key `AssessmentV2.Transparency.MatchIndicative` (+ `MatchUncertainty` tekst).
+
+---
+
+## Hoofdstuk 6 — Interpretatie
+
+### 6.1 Ruwe percentages
+0–100 = relatieve sterkte **binnen het instrument**, geen normvergelijking tot normstudie.
+
+### 6.2 Volledige vs korte scan
+- **Volledig:** stabieler beeld per schaal; match mag als **volledige Quick-Scan** worden gewogen.
+- **Eerste blik / Dieper:** alleen **indicatie**; geen sterke claims in UI of rapportage.
+
+### 6.3 Voorbeeld (zonder normen)
+“Resultaatgerichtheid 72%” = relatief hoog binnen eigen antwoordpatroon op v2-items; **niet** “boven populatiegemiddelde”.
+
+---
+
+## Hoofdstuk 7 — Normen en precisie
+
+### 7.1 Huidige status
+**Geen** gepubliceerde normen, SE of percentielen. UI toont ruwe scores.
+
+### 7.2 Plan (geen fake data)
+Zie `docs/psychometrie/VALIDATIE_STUDIEPLAN.md`: fases A (materiaal) → B (α, N≥300/instrument) → D (normen N≥500) → E (criterium) → F (DIF).
+
+---
+
+## Hoofdstuk 8 — Beperkingen
+
+- Geen COTAN-beoordeling; geen externe validatiestudie op Lobsy-data in v2.
+- Cultuur/waarden/competentie zijn ** verkorte vormen**, geen volledige Big Five / Schwartz-batterijen.
+- RIASEC v2 bevat hergebruikte stems (monitoring in itembank).
+- Vertaling: v2 keys gecontroleerd; v1 legacy-keys kunnen nog NL-fallback hebben wanneer v2 uit staat.
+
+---
+
+## Hoofdstuk 9 — Foutmarge en herkansing
+
+- Onzekerheid match: zie `MatchUncertaintyPoints` (typisch 10 bij indicatieve diepte).
+- Kandidaat mag scan verder zetten tot volledig; versie blijft op eerste toegewezen `QuickScanVersion`.
+- Geen automatische “reset” van v1 naar v2 zonder expliciete productbeslissing.
+
+---
+
+## Hoofdstuk 10 — Privacy, consent, AI Act
+
+- Test-AI consent verplicht (`TestConsentGate`).
+- Transparantieblok v2: geen diagnose, menselijke oversight, match indicatief.
+- Gegevens: antwoorden gekoppeld aan account; zie privacyverklaring.
+
+---
+
+## Hoofdstuk 11 — Technische referenties
+
+- Versie: `AssessmentTestVersions`, migratie `QuickScanVersion`
+- Scoring: `AssessmentScoringDocumentation`, `LikertAnswerJson`
+- Match evidence: `AssessmentMatchEvidenceRules`
+- Keuzes product: `docs/tests/GEMAAKTE_KEUZES_TESTS_V2.md`
+
+---
+
+## Contact / onderhoud
+
+Producteigenaar Lobsy; psychometrische review: zie PR-documentatie `docs/psychometrie/` (aparte docs-PR). Wijzigingen v2 via `TestsV2Enabled` en itembank-updates met regressietests (`AssessmentV2TranslationGuardTests`, `AssessmentQuickScanV2Tests`).

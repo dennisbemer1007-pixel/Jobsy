@@ -97,6 +97,8 @@ public class VacancyListItem
     public string? CultureFitLabel { get; set; }
     public string? CultureFitWhy { get; set; }
     public string CultureFitStatus { get; set; } = "Ready";
+    public string? MatchTransparencyNote { get; set; }
+    public int? MatchUncertaintyPoints { get; set; }
     public string? BarrierKind { get; set; }
     public List<string> BarrierDiplomas { get; set; } = [];
     public List<string> BarrierCertifications { get; set; } = [];

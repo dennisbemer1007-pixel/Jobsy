@@ -37,7 +37,7 @@ public sealed class AssessmentQuickScanV2Tests
     [Theory]
     [InlineData(AssessmentKind.Competence, 40)]
     [InlineData(AssessmentKind.Career, 48)]
-    [InlineData(AssessmentKind.Culture, 24)]
+    [InlineData(AssessmentKind.Culture, 48)]
     [InlineData(AssessmentKind.Values, 40)]
     public void V2_full_counts_match_contract(AssessmentKind kind, int expected)
         => Assert.Equal(expected, TestDepthRules.FullCount(kind, AssessmentTestVersions.V2));

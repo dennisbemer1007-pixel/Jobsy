@@ -3,12 +3,13 @@ using Jobsy.Core.Entities;
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Quick-Scan v2 culture &amp; personality: 24 Likert items
-/// (6 culture dimensions × 2 + 6 personality facets × 2, reverses on opposing poles).
+/// Quick-Scan v2 culture &amp; personality: 48 Likert items
+/// (12 dimensions × 4 items; reverses balanced per dimension).
 /// </summary>
 public static class CulturePersonalityCatalogV2
 {
-    public const int QuestionCount = 24;
+    public const int QuestionCount = 48;
+    public const int ItemsPerDimension = 4;
     public const int LikertMin = LikertAnswerJson.LikertMin;
     public const int LikertMax = LikertAnswerJson.LikertMax;
 
@@ -25,7 +26,7 @@ public static class CulturePersonalityCatalogV2
     public const string Agreeableness = CulturePersonalityCatalog.Agreeableness;
     public const string EmotionalStability = CulturePersonalityCatalog.EmotionalStability;
 
-    /// <summary>Sixth personality facet (items 23–24); scored together with <see cref="Openness"/>.</summary>
+    /// <summary>Sixth personality facet (items 45–48); scored together with <see cref="Openness"/>.</summary>
     public const string Curiosity = "Curiosity";
 
     public static readonly string[] CultureDimensionCodes = CulturePersonalityCatalog.CultureDimensionCodes;
@@ -41,33 +42,83 @@ public static class CulturePersonalityCatalogV2
         .. PersonalityFacetCodes
     ];
 
-    public static readonly IReadOnlyList<CompetencyQuestion> Questions =
-    [
-        new(1, Autonomy, Reverse: false, "AssessmentV2.Culture.Q01"),
-        new(2, Autonomy, Reverse: true, "AssessmentV2.Culture.Q02"),
-        new(3, Informal, Reverse: false, "AssessmentV2.Culture.Q03"),
-        new(4, Informal, Reverse: true, "AssessmentV2.Culture.Q04"),
-        new(5, Collaboration, Reverse: false, "AssessmentV2.Culture.Q05"),
-        new(6, Collaboration, Reverse: true, "AssessmentV2.Culture.Q06"),
-        new(7, Flexibility, Reverse: false, "AssessmentV2.Culture.Q07"),
-        new(8, Flexibility, Reverse: true, "AssessmentV2.Culture.Q08"),
-        new(9, Innovation, Reverse: false, "AssessmentV2.Culture.Q09"),
-        new(10, Innovation, Reverse: true, "AssessmentV2.Culture.Q10"),
-        new(11, PeopleFirst, Reverse: false, "AssessmentV2.Culture.Q11"),
-        new(12, PeopleFirst, Reverse: true, "AssessmentV2.Culture.Q12"),
-        new(13, Openness, Reverse: false, "AssessmentV2.Culture.Q13"),
-        new(14, Openness, Reverse: true, "AssessmentV2.Culture.Q14"),
-        new(15, Conscientiousness, Reverse: false, "AssessmentV2.Culture.Q15"),
-        new(16, Conscientiousness, Reverse: true, "AssessmentV2.Culture.Q16"),
-        new(17, Extraversion, Reverse: false, "AssessmentV2.Culture.Q17"),
-        new(18, Extraversion, Reverse: true, "AssessmentV2.Culture.Q18"),
-        new(19, Agreeableness, Reverse: false, "AssessmentV2.Culture.Q19"),
-        new(20, Agreeableness, Reverse: true, "AssessmentV2.Culture.Q20"),
-        new(21, EmotionalStability, Reverse: false, "AssessmentV2.Culture.Q21"),
-        new(22, EmotionalStability, Reverse: true, "AssessmentV2.Culture.Q22"),
-        new(23, Curiosity, Reverse: false, "AssessmentV2.Culture.Q23"),
-        new(24, Curiosity, Reverse: true, "AssessmentV2.Culture.Q24")
-    ];
+    public static readonly IReadOnlyList<CompetencyQuestion> Questions = BuildQuestions();
+
+    private static IReadOnlyList<CompetencyQuestion> BuildQuestions()
+    {
+        var rows = new (string Category, bool Reverse, string Key)[]
+        {
+            // Autonomy 1–4
+            (Autonomy, false, "AssessmentV2.Culture.Q01"),
+            (Autonomy, true, "AssessmentV2.Culture.Q02"),
+            (Autonomy, false, "AssessmentV2.Culture.Q25"),
+            (Autonomy, true, "AssessmentV2.Culture.Q26"),
+            // Informal 5–8
+            (Informal, false, "AssessmentV2.Culture.Q03"),
+            (Informal, true, "AssessmentV2.Culture.Q04"),
+            (Informal, false, "AssessmentV2.Culture.Q27"),
+            (Informal, true, "AssessmentV2.Culture.Q28"),
+            // Collaboration 9–12
+            (Collaboration, false, "AssessmentV2.Culture.Q05"),
+            (Collaboration, true, "AssessmentV2.Culture.Q06"),
+            (Collaboration, false, "AssessmentV2.Culture.Q29"),
+            (Collaboration, true, "AssessmentV2.Culture.Q30"),
+            // Flexibility 13–16
+            (Flexibility, false, "AssessmentV2.Culture.Q07"),
+            (Flexibility, true, "AssessmentV2.Culture.Q08"),
+            (Flexibility, false, "AssessmentV2.Culture.Q31"),
+            (Flexibility, true, "AssessmentV2.Culture.Q32"),
+            // Innovation 17–20
+            (Innovation, false, "AssessmentV2.Culture.Q09"),
+            (Innovation, true, "AssessmentV2.Culture.Q10"),
+            (Innovation, false, "AssessmentV2.Culture.Q33"),
+            (Innovation, true, "AssessmentV2.Culture.Q34"),
+            // PeopleFirst 21–24
+            (PeopleFirst, false, "AssessmentV2.Culture.Q11"),
+            (PeopleFirst, true, "AssessmentV2.Culture.Q12"),
+            (PeopleFirst, false, "AssessmentV2.Culture.Q35"),
+            (PeopleFirst, true, "AssessmentV2.Culture.Q36"),
+            // Openness 25–28 (catalog ids 25–28 map to Q13,Q14,Q37,Q38)
+            (Openness, false, "AssessmentV2.Culture.Q13"),
+            (Openness, true, "AssessmentV2.Culture.Q14"),
+            (Openness, false, "AssessmentV2.Culture.Q37"),
+            (Openness, true, "AssessmentV2.Culture.Q38"),
+            // Conscientiousness 29–32
+            (Conscientiousness, false, "AssessmentV2.Culture.Q15"),
+            (Conscientiousness, true, "AssessmentV2.Culture.Q16"),
+            (Conscientiousness, false, "AssessmentV2.Culture.Q39"),
+            (Conscientiousness, true, "AssessmentV2.Culture.Q40"),
+            // Extraversion 33–36
+            (Extraversion, false, "AssessmentV2.Culture.Q17"),
+            (Extraversion, true, "AssessmentV2.Culture.Q18"),
+            (Extraversion, false, "AssessmentV2.Culture.Q41"),
+            (Extraversion, true, "AssessmentV2.Culture.Q42"),
+            // Agreeableness 37–40
+            (Agreeableness, false, "AssessmentV2.Culture.Q19"),
+            (Agreeableness, true, "AssessmentV2.Culture.Q20"),
+            (Agreeableness, false, "AssessmentV2.Culture.Q43"),
+            (Agreeableness, true, "AssessmentV2.Culture.Q44"),
+            // EmotionalStability 41–44
+            (EmotionalStability, false, "AssessmentV2.Culture.Q21"),
+            (EmotionalStability, true, "AssessmentV2.Culture.Q22"),
+            (EmotionalStability, false, "AssessmentV2.Culture.Q45"),
+            (EmotionalStability, true, "AssessmentV2.Culture.Q46"),
+            // Curiosity 45–48
+            (Curiosity, false, "AssessmentV2.Culture.Q23"),
+            (Curiosity, true, "AssessmentV2.Culture.Q24"),
+            (Curiosity, false, "AssessmentV2.Culture.Q47"),
+            (Curiosity, true, "AssessmentV2.Culture.Q48"),
+        };
+
+        var list = new List<CompetencyQuestion>(QuestionCount);
+        for (var i = 0; i < rows.Length; i++)
+        {
+            var (cat, rev, key) = rows[i];
+            list.Add(new CompetencyQuestion(i + 1, cat, rev, key));
+        }
+
+        return list;
+    }
 
     public static bool IsValidAnswer(int value) => LikertAnswerJson.IsValidAnswer(value);
 
@@ -88,7 +139,7 @@ public static class CulturePersonalityCatalogV2
 
         if (requireComplete && !IsComplete(answers))
         {
-            return "Beantwoord alle 24 stellingen om de cultuurscan af te ronden.";
+            return "Beantwoord alle 48 stellingen om de cultuurscan af te ronden.";
         }
 
         return null;

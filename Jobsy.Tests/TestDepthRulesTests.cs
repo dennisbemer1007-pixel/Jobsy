@@ -17,7 +17,7 @@ public sealed class TestDepthRulesTests
     [InlineData(AssessmentKind.Competence, 40)]
     [InlineData(AssessmentKind.Career, 48)]
     [InlineData(AssessmentKind.Values, 40)]
-    [InlineData(AssessmentKind.Culture, 24)]
+    [InlineData(AssessmentKind.Culture, 48)]
     public void FullCount_V2_MatchesCatalog(AssessmentKind kind, int expected)
         => Assert.Equal(expected, TestDepthRules.FullCount(kind, AssessmentTestVersions.V2));
 

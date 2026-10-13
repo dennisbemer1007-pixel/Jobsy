@@ -36,6 +36,7 @@ else
                                TestName="@Culture["CultureScan.Title"]"
                                Answered="_answered"
                                TargetCount="_targetCount"
+                               ShowIndicativeBanner="ShowIndicativeBanner"
                                BubbleText="@IntroBubble">
                     <ChildContent>
                         <fieldset class="test-depth-pick" role="radiogroup" aria-label="@Culture["TestFlow.DepthPick"]">
@@ -77,6 +78,7 @@ else
                                LevelName="@Culture[TestDepthRules.NameKey(_target)]"
                                Answered="_autosave.AnsweredCount"
                                TargetCount="_targetCount"
+                               ShowIndicativeBanner="ShowIndicativeBanner"
                                BubbleText="@Culture["TestFlow.Bubble.Question"]">
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
@@ -103,6 +105,7 @@ else
                                DoneLead="@DoneLead"
                                Answered="_answered"
                                TargetCount="_targetCount"
+                               ShowIndicativeBanner="ShowIndicativeBanner"
                                BubbleText="@Culture["TestDone.Bubble.Culture"]">
                     <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
@@ -141,6 +144,9 @@ else
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
     private int _quickScanVersion = AssessmentTestVersions.V1;
+    private bool _isIndicativeDepth;
+    private bool ShowIndicativeBanner => _quickScanVersion == AssessmentTestVersions.V2
+        && (_isIndicativeDepth || _targetCount < _fullCount || (_answered > 0 && _answered < _fullCount));
     private int _targetCount => TestDepthRules.CountFor(AssessmentKind.Culture, _target, _quickScanVersion);
     private int _fullCount => TestDepthRules.CountFor(AssessmentKind.Culture, TestDepthLevel.Full, _quickScanVersion);
     private static readonly IReadOnlyDictionary<int, int> EmptyAnswers = new Dictionary<int, int>();
@@ -194,6 +200,7 @@ else
                 }
             }
             _quickScanVersion = state?.QuickScanVersion ?? AssessmentTestVersions.V1;
+            _isIndicativeDepth = state?.IsIndicativeDepth ?? false;
             _answered = answers.Count;
             _flowQuestions = TestDepthRules.QuestionIdsFor(
                     AssessmentKind.Culture, TestDepthLevel.Full, _quickScanVersion)

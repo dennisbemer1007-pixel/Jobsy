@@ -17,9 +17,10 @@ public static class OnboardingWizardCatalogV2
 
     public static readonly int[] CareerDeeperQuestionIds = [2, 10, 18, 26, 34];
 
-    public static readonly int[] CultureQuestionIds = [1, 3, 5, 7, 11];
+    /// <summary>First item per culture dimension (48-item bank).</summary>
+    public static readonly int[] CultureQuestionIds = [1, 5, 9, 13, 17];
 
-    public static readonly int[] CultureDeeperQuestionIds = [2, 4, 6, 8, 12];
+    public static readonly int[] CultureDeeperQuestionIds = [2, 6, 10, 14, 18];
 
     public static readonly int[] ValuesQuestionIds = [1, 9, 17, 25, 33];
 
