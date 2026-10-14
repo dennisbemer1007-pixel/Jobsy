@@ -53,6 +53,10 @@ public sealed class EmployerFitScreenshotsPlaywrightTests
 
         await EnableEmployerFitFlagsAsync(baseUrl);
         Directory.CreateDirectory(OutputDir);
+        foreach (var stale in Directory.GetFiles(OutputDir, "employer-fit-*.png"))
+        {
+            File.Delete(stale);
+        }
 
         var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         Assert.Equal(0, exit);
