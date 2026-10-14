@@ -291,7 +291,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/uren` | `Pages/Werkgever/MaqqieHoursApprove.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures` | `Pages/Werkgever/Vacancies.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/vacatures/nieuw` | `Pages/Werkgever/CreateVacancy.razor` | BranchManager, EnterpriseManager, Intermediary |
-| `/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist` | `Pages/Werkgever/ProactiveVacancyShortlistPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist` | `Pages/Werkgever/ProactiveVacancyShortlistPage.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/wervingsmateriaal` | `Pages/Werkgever/Wervingsmateriaal.razor` | BranchManager, RegionalManager, EnterpriseManager, Admin |
 | `/werkgevers/binnenkort` | `Pages/WerkgeversBinnenkort.razor` | anonymous |
 | `/werven/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
