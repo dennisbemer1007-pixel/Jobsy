@@ -56,8 +56,6 @@ jobs:
             --results-directory test-results \
             --report-trx \
             --timeout 85m \
-            --hangdump \
-            --hangdump-timeout 25m \
             --filter-not-class '*Playwright*' \
             --filter-not-class '*Screenshot*' \
             --filter-not-class 'AcceptatieOct2026BugfixTests' \
