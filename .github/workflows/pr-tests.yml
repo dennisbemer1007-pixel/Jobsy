@@ -5,11 +5,15 @@ on:
   push:
     branches: [main, acceptatie, "cursor/**"]
 
+concurrency:
+  group: pr-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Unit+integration + Playwright smoke; cap job so a hung test cannot burn 2.5h.
-    timeout-minutes: 90
+    # Unit (~30m) + Playwright smoke (~45m); 90m was too tight and cancelled mid-unit.
+    timeout-minutes: 150
     services:
       postgres:
         # PostGIS required — API migrate runs CREATE EXTENSION postgis.
