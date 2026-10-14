@@ -7,6 +7,8 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@inject UserFacingError UserFacing
+@using Jobsy.Web.Services
 
 <section class="proactive-shortlist @(Layout == "full" ? "proactive-shortlist--page" : "proactive-shortlist--inline")"
          aria-labelledby="proactive-shortlist-title"
@@ -145,7 +147,8 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
             _entries = [];
         }
         finally
@@ -180,7 +183,8 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

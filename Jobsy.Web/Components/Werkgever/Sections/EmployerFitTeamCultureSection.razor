@@ -151,9 +151,9 @@
             await Api.SaveCompanyProfileExtrasAsync(companyId, cultureSliders: sliders);
             _message = Culture["Common.Saved"];
         }
-        catch (Exception ex)
+        catch
         {
-            _message = ex.Message;
+            _message = Culture["Common.ErrorGeneric"];
         }
         finally
         {

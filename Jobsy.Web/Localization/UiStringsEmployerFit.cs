@@ -114,8 +114,8 @@ public static class UiStringsEmployerFit
         Add("WorkPref.Shifts.night", "Nacht", "Night", "Noc", "Noapte", "ليلاً");
         Add("WorkPref.Shifts.flex", "Wisselend", "Variable", "Zmienne", "Variabil", "متغير");
         Add("WorkPref.Pace.piek", "Vaak druk", "Often busy", "Często intensywnie", "Des busy", "غالباً مزدحم");
-        Add("WorkPref.VacancyPace.calm", "Rustig", "Calm", "Spokojnie", "Calm", "هادئ");
-        Add("WorkPref.VacancyPace.norm-ok", "Normaal", "Normal", "Normalnie", "Normal", "عادي");
+        Add("WorkPref.VacancyPace.calm", "Rustig", "Calm", "Spokojnie", "Liniștit", "هادئ");
+        Add("WorkPref.VacancyPace.norm-ok", "Normaal", "Normal", "Normalnie", "Obișnuit", "عادي");
         Add("WorkPref.VacancyPace.piek", "Vaak piek/druk", "Often peak/busy", "Często szczyt", "Des vârf", "ذروة");
         Add("WorkPref.Place.prefer-indoor", "Binnen", "Indoors", "Wewnątrz", "Interior", "داخل");
         Add("WorkPref.Place.mix", "Mix", "Mix", "Mix", "Mix", "مزيج");

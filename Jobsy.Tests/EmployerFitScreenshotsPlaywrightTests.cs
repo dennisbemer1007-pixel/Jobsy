@@ -168,7 +168,7 @@ public sealed class EmployerFitScreenshotsPlaywrightTests
         await KbE2e.WaitForStyledAppAsync(page);
         await page.Locator("[data-testid=employer-fit-team-culture]").WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await page.Locator("[data-testid=employer-fit-team-culture]").ScrollIntoViewIfNeededAsync();
-        await ShotAsync(page, $"employer-fit-team-culture-{tag}.png");
+        await ShotAsync(page, tag == "1280" ? "employer-fit-team-culture-1280-v2.png" : $"employer-fit-team-culture-{tag}.png");
 
         // 3) Vacancy editor — werkcontext accordion open
         await page.GotoAsync(baseUrl + "/werkgever/vacatures/nieuw", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
@@ -178,7 +178,7 @@ public sealed class EmployerFitScreenshotsPlaywrightTests
         await accordion.EvaluateAsync("el => { el.open = true; }");
         await accordion.ScrollIntoViewIfNeededAsync();
         await page.WaitForTimeoutAsync(500);
-        await ShotAsync(page, $"employer-fit-vacancy-workcontext-{tag}.png");
+        await ShotAsync(page, tag == "1280" ? "employer-fit-vacancy-workcontext-1280-v2.png" : $"employer-fit-vacancy-workcontext-{tag}.png");
 
         // 4) Candidate passport — module E chips (shared section)
         await page.Context.ClearCookiesAsync();
@@ -194,7 +194,7 @@ public sealed class EmployerFitScreenshotsPlaywrightTests
         await sharedBtn.First.ClickAsync();
         await page.Locator("[data-testid=shared-with-employers]").WaitForAsync(new() { State = WaitForSelectorState.Visible });
         await page.Locator("[data-testid=shared-with-employers]").ScrollIntoViewIfNeededAsync();
-        await ShotAsync(page, $"employer-fit-passport-module-e-{tag}.png");
+        await ShotAsync(page, tag == "390" ? "employer-fit-passport-module-e-390-v2.png" : $"employer-fit-passport-module-e-{tag}.png");
 
         // 5) Match explain — confidence / work context (desktop split list on banenkaart)
         await page.GotoAsync(baseUrl + E2eRoutes.Banenkaart + "?employerFitScreenshot=1", new()
@@ -213,7 +213,7 @@ public sealed class EmployerFitScreenshotsPlaywrightTests
             await confidence.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         }
 
-        await ShotAsync(page, $"employer-fit-match-explain-{tag}.png");
+        await ShotAsync(page, tag == "390" ? "employer-fit-match-explain-390-v2.png" : $"employer-fit-match-explain-{tag}.png");
     }
 
     private static async Task ShotAsync(IPage page, string fileName)
