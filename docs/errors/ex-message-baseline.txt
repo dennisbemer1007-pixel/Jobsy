@@ -113,3 +113,5 @@
 1	Jobsy.Web/Components/Werkgever/Team/WgInviteDrawer.razor
 2	Jobsy.Web/Security/DataProtectionSetup.cs
 1	Jobsy.Web/Services/HomeDashboardLoad.cs
+1	Jobsy.Web/Auth/EntraAuthFailureFormatter.cs
+1	Jobsy.Web/Auth/EntraOidcAudienceDiagnostics.cs
