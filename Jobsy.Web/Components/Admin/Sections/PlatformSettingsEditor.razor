@@ -154,6 +154,10 @@ else if (_snapshot is not null)
                        @bind:event="oninput"
                        placeholder="@Culture["AdminSettings.ReasonPlaceholder"]" />
             </label>
+            @if (!CanSave)
+            {
+                <p class="state-message error admin-save-bar__hint">@Culture["AdminSettings.ReasonRequired"]</p>
+            }
             <div class="admin-save-bar__actions">
                 <button type="button" class="btn-compact" disabled="@_busy" @onclick="Cancel">@Culture["Common.Cancel"]</button>
                 <button type="button" class="btn-compact btn-compact--primary" disabled="@(_busy || !CanSave)" @onclick="SaveAsync">
@@ -186,7 +190,7 @@ else if (_snapshot is not null)
 
     @if (!string.IsNullOrEmpty(_message))
     {
-        <p class="state-message @(_messageIsError ? "error" : null)" role="@(_messageIsError ? "alert" : "status")">@_message</p>
+        <p class="state-message @(_messageIsError ? "error" : "success")" role="@(_messageIsError ? "alert" : "status")">@_message</p>
     }
 }
 
@@ -472,7 +476,9 @@ else if (_snapshot is not null)
         catch (Exception ex)
         {
             _messageIsError = true;
-            _message = string.Format(Culture["AdminSettings.SaveFailed"], ex.Message);
+            _message = string.Format(
+                Culture["AdminSettings.SaveFailed"],
+                string.IsNullOrWhiteSpace(ex.Message) ? "onbekende fout" : ex.Message);
         }
         finally
         {
@@ -615,6 +621,7 @@ else if (_snapshot is not null)
             EmployerPhase2Enabled = u.EmployerPhase2Enabled,
             CandidateExternalVacanciesEnabled = u.CandidateExternalVacanciesEnabled,
             ProactiveMatchingEnabled = u.ProactiveMatchingEnabled,
+            MatchCalibrationV1Enabled = u.MatchCalibrationV1Enabled,
             CandidateApplyPerMinuteLimit = u.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit = u.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit = u.CandidateApplyPerDayLimit
@@ -689,6 +696,7 @@ else if (_snapshot is not null)
             EmployerPhase2Enabled: f.EmployerPhase2Enabled,
             CandidateExternalVacanciesEnabled: f.CandidateExternalVacanciesEnabled,
             ProactiveMatchingEnabled: f.ProactiveMatchingEnabled,
+            MatchCalibrationV1Enabled: f.MatchCalibrationV1Enabled,
             CandidateApplyPerMinuteLimit: f.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit: f.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit: f.CandidateApplyPerDayLimit);

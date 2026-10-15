@@ -498,7 +498,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
                     CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
                     CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
-                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit),
+                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit,
+                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -543,7 +544,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                 {
                     message =
                         "Platforminstellingen konden niet worden opgeslagen (database-schema loopt achter). "
-                        + "Voer de nieuwste EF-migraties uit op de productie-database en herstart de API. "
+                        + "Voer de nieuwste EF-migraties uit op de database en herstart de API. "
                         + "Technisch: "
                         + (ex.InnerException?.Message ?? ex.Message)
                 });
@@ -941,6 +942,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.EmployerPhase2Enabled,
             snap.CandidateExternalVacanciesEnabled,
             snap.ProactiveMatchingEnabled,
+            snap.MatchCalibrationV1Enabled,
             snap.CandidateApplyPerMinuteLimit,
             snap.CandidateApplyPerHourLimit,
             snap.CandidateApplyPerDayLimit);

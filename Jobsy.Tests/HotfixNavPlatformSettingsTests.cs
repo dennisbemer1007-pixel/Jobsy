@@ -17,6 +17,16 @@ public class HotfixNavPlatformSettingsTests
     }
 
     [Fact]
+    public void Main_layout_refreshes_candidate_shell_when_auth_state_changes()
+    {
+        var layout = File.ReadAllText(Path.Combine(
+            FindRepoRoot(),
+            "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        Assert.Contains("AuthenticationStateChanged += OnAuthenticationStateChanged", layout, StringComparison.Ordinal);
+        Assert.Contains("app-shell--candidate", layout, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Platform_settings_editor_shows_save_errors_and_verifies_api_response()
     {
         var editor = File.ReadAllText(Path.Combine(
@@ -25,7 +35,7 @@ public class HotfixNavPlatformSettingsTests
         Assert.Contains("state-message @(_messageIsError ? \"error\" : null)", editor, StringComparison.Ordinal);
         Assert.Contains("VerifySavedValues", editor, StringComparison.Ordinal);
         Assert.Contains("FeatureFlags.Invalidate()", editor, StringComparison.Ordinal);
-        Assert.DoesNotContain("PatchPlatformFeaturesAsync(patch) ?? new PlatformFeatureItem()", editor, StringComparison.Ordinal);
+        Assert.Contains("if (saved is null)", editor, StringComparison.Ordinal);
 
         var client = File.ReadAllText(Path.Combine(
             FindRepoRoot(),
