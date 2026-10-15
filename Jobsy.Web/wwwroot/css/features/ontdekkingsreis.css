@@ -422,8 +422,10 @@
 
 .journey-step__eyebrow {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  row-gap: 6px;
   font-size: var(--text-xs);
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -805,6 +807,8 @@
   background: var(--success-soft);
   border-radius: var(--radius-pill);
   padding: 2px 10px;
+  flex-shrink: 0;
+  margin-inline-start: auto;
 }
 
 .journey-body {
@@ -830,11 +834,15 @@
 .journey-chips {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: 8px;
   margin-top: 10px;
+  max-width: 100%;
 }
 
 .journey-chip {
+  width: auto;
+  max-width: 100%;
   min-height: 44px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border);
@@ -843,6 +851,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  flex: 0 0 auto;
+  white-space: nowrap;
   font-size: var(--text-sm);
   color: var(--text);
   font-family: inherit;
@@ -1938,10 +1948,6 @@
 
   .app-shell--questionnaire:has(.journey:not(.journey--fit)) .journey-stage {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .app-shell--questionnaire:has(.journey:not(.journey--fit)) .journey-chips {
-    padding-inline-end: max(8px, min(72px, 20vw));
   }
 
   .app-shell--questionnaire:has(.journey:not(.journey--fit)) .journey-step__foot {
