@@ -230,6 +230,12 @@
 .ob-wizard__presets.lobsy-choice-grid > button.lobsy-choice-tile--tall {
   height: auto;
   min-height: 64px;
+  align-items: flex-start;
+}
+
+.ob-wizard__presets.lobsy-choice-grid .lobsy-choice-tile__stack {
+  overflow: visible;
+  white-space: normal;
 }
 
 .ob-wizard__presets.lobsy-choice-grid > button.lobsy-choice-tile--tall > span:first-child {
@@ -347,6 +353,41 @@
 
   .journey-step--fit-mobile .journey-private-note {
     display: none;
+  }
+}
+
+@media (max-width: 899px) and (max-height: 760px) {
+  .journey-step--fit-mobile {
+    padding-top: 6px;
+  }
+
+  .journey-step--fit-mobile h1 {
+    font-size: 1.125rem;
+    margin-top: 2px;
+  }
+
+  .journey-step--fit-mobile .journey-step__lead {
+    font-size: 0.6875rem;
+    margin-top: 2px;
+  }
+
+  .journey-step--fit-mobile .journey-body--compact {
+    margin-top: 6px;
+    gap: 6px;
+  }
+
+  .journey-chips.lobsy-choice-grid .lobsy-choice-tile {
+    padding: 5px 6px 5px 5px;
+    font-size: 0.8125rem;
+    min-height: 44px;
+  }
+
+  .journey-step--fit-mobile .journey-step__foot {
+    margin-top: 8px;
+  }
+
+  .journey:has(.journey-step--fit-mobile) .journey-mtrack {
+    margin-top: 6px;
   }
 }
 

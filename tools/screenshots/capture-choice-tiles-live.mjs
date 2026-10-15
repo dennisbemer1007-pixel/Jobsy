@@ -210,6 +210,13 @@ const shots = [
       await page.goto(`${base}/candidate/start`, { waitUntil: 'domcontentloaded' });
       await page.waitForSelector('.ob-wizard__presets .lobsy-choice-tile', { timeout: 60_000 });
       await page.waitForSelector('text=Kies wat bij je past', { timeout: 60_000 });
+      await resetScroll(page);
+      await page.waitForFunction(() => {
+        const foot = document.querySelector('.ob-wizard__footer .ob-wizard__cta');
+        if (!foot) return false;
+        const r = foot.getBoundingClientRect();
+        return r.bottom <= window.innerHeight + 2 || r.top > window.innerHeight * 0.55;
+      });
       await shot(page, this.name);
     },
   },
@@ -250,37 +257,55 @@ const shots = [
       prepareDiscoveryStep(6);
     },
     async run(page) {
-      await page.goto(`${base}/candidate/profile`, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('.passport-data, .profile-page', { timeout: 60_000 }).catch(() => {});
-      const dislikes = page.locator('text=Waar houd ik niet van').first();
-      if (await dislikes.count()) {
-        await dislikes.click().catch(() => {});
+      await page.goto(`${base}/candidate/paspoort?tab=data`, { waitUntil: 'domcontentloaded' });
+      const dataTab = page.getByRole('tab', { name: /Mijn gegevens|My details/i });
+      if (await dataTab.count()) {
+        await dataTab.click();
       }
-      await page.waitForSelector('.profile-chip-grid .lobsy-choice-tile', { timeout: 60_000 });
+      await page.waitForFunction(
+        () => {
+          const panel = document.querySelector('#passport-panel-data');
+          return panel && !panel.hasAttribute('hidden');
+        },
+        null,
+        { timeout: 60_000 },
+      );
+      await page.waitForSelector('.passport-data', { timeout: 60_000 });
+      const dislikesToggle = page.locator('#passport-data-btn-dislikes, button.passport-data__toggle', {
+        hasText: /niet van/i,
+      }).first();
+      await dislikesToggle.scrollIntoViewIfNeeded();
+      await dislikesToggle.click();
+      await page.waitForSelector('#passport-data-panel-dislikes .profile-chip-grid .lobsy-choice-tile', {
+        timeout: 60_000,
+      });
+      await page.locator('#passport-data-panel-dislikes .profile-chip-grid .lobsy-choice-tile').first().scrollIntoViewIfNeeded();
       await shot(page, this.name);
     },
   },
 ];
 
 const browser = await chromium.launch();
+const context = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  isMobile: true,
+  hasTouch: true,
+});
+await context.addInitScript(() => {
+  try {
+    localStorage.setItem('Jobsy.CookieConsent', 'necessary');
+  } catch (e) {}
+});
+const page = await context.newPage();
+page.setDefaultTimeout(90_000);
+await login(page);
+
 for (const s of shots) {
   if (s.prepare) {
     s.prepare();
   }
-  const context = await browser.newContext({
-    viewport: { width: s.width, height: s.height },
-    isMobile: s.mobile,
-    hasTouch: s.mobile,
-  });
-  await context.addInitScript(() => {
-    try {
-      localStorage.setItem('Jobsy.CookieConsent', 'necessary');
-    } catch (e) {}
-  });
-  const page = await context.newPage();
-  page.setDefaultTimeout(90_000);
-  await login(page);
+  await page.setViewportSize({ width: s.width, height: s.height });
   await s.run(page);
-  await context.close();
 }
+await context.close();
 await browser.close();
