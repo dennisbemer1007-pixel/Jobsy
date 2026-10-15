@@ -40,7 +40,12 @@
 
 .journey-scene--mobile { display: none; }
 .journey-only-mobile { display: none; }
-.journey-only-desktop { display: contents; }
+.journey-only-desktop { display: block; }
+
+.journey-step__eyebrow-step {
+  display: inline;
+  white-space: nowrap;
+}
 
 @media (max-width: 899px) {
   .journey {
@@ -62,6 +67,32 @@
   .journey-coach--mobile { display: flex; }
   .journey-mprog.journey-only-mobile { display: block; }
   .journey-only-desktop { display: none !important; }
+
+  .journey-step__eyebrow-step { display: none !important; }
+
+  .journey--zone-header .journey-mprog__step-no,
+  .journey--zone-header .journey-mprog__sep,
+  .journey--zone-header .journey-mprog__step-name {
+    display: none !important;
+  }
+
+  .journey-mprog__zone-only {
+    display: none;
+  }
+
+  .journey--zone-header .journey-mprog__zone-only {
+    display: inline;
+    flex: 1;
+    min-width: 0;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+  }
 }
 
 .journey-scene__svg { display: block; }

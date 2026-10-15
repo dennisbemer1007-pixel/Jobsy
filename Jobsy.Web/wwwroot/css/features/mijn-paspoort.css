@@ -510,8 +510,12 @@
     mask-image: linear-gradient(to left, transparent, #000 12px, #000 calc(100% - 12px), transparent);
 }
 
-/* Phone: keep the overview above the bottom-right coach. */
+/* Phone: keep scrollable content clear of fixed tabs + bottom-right coach (56px + 12px). */
 @media (max-width: 639px) {
+    .passport-page {
+        --passport-coach-clearance: calc(56px + 12px + 16px);
+    }
+
     /* Coach sits above the fixed passport tab row (not over Carrière). */
     .app-shell:has(.passport-page) .lobsy-coach-dock {
         bottom: calc(
@@ -519,10 +523,22 @@
         );
     }
 
+    .app-shell:has(.passport-page) .app-main {
+        padding-bottom: calc(
+            var(--bottom-nav-h, 4.75rem) + 3.5rem + var(--passport-coach-clearance)
+                + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
     .passport-page .passport-layout__main {
         padding-bottom: calc(
-            3.25rem + var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px)
+            3.5rem + var(--passport-coach-clearance) + var(--bottom-nav-h, 4.75rem)
+                + env(safe-area-inset-bottom, 0px)
         );
+    }
+
+    .passport-page .passport-data__accordions {
+        padding-bottom: var(--passport-coach-clearance);
     }
 
     .passport-page .passport-tabs {

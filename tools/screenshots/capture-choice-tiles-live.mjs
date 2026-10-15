@@ -424,12 +424,19 @@ const round5Names = new Set([
   'choice-tiles-paspoort-tabs-coach-390x844.png',
 ]);
 
+const polishNames = new Set([
+  'choice-tiles-discovery-stap6-390x844.png',
+  'choice-tiles-discovery-stap6-360x740.png',
+]);
+
 const activeShots =
-  process.env.SHOT_SET === 'round5'
-    ? shots.filter((s) => round5Names.has(s.name))
-    : process.env.SHOT_SET === 'round4'
-      ? shots.filter((s) => round4Names.has(s.name))
-      : shots.filter((s) => !s.optional || process.env.FULL_SHOTS === '1');
+  process.env.SHOT_SET === 'polish'
+    ? shots.filter((s) => polishNames.has(s.name))
+    : process.env.SHOT_SET === 'round5'
+      ? shots.filter((s) => round5Names.has(s.name))
+      : process.env.SHOT_SET === 'round4'
+        ? shots.filter((s) => round4Names.has(s.name))
+        : shots.filter((s) => !s.optional || process.env.FULL_SHOTS === '1');
 
 for (const s of activeShots) {
   if (s.prepare && !s.round5) {

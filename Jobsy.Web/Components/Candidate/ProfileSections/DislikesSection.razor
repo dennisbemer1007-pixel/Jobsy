@@ -22,29 +22,27 @@
                         Selected="selected"
                         OnClick="@(() => Editor.ToggleDislike(code, !selected))" />
         }
+        @for (var i = 0; i < Editor.CustomDislikes.Count; i++)
+        {
+            var index = i;
+            <div class="profile-language-row">
+                <input type="text"
+                       maxlength="@DiscoveryCatalogs.MaxCustomDislikeLength"
+                       value="@Editor.CustomDislikes[index]"
+                       placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
+                       @oninput="e => OnCustomInput(index, e.Value?.ToString())" />
+                <button type="button" class="btn btn-secondary" @onclick="() => RemoveCustom(index)">×</button>
+            </div>
+        }
+        @if (Editor.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
+        {
+            <ChoiceTile Class="kompas-chip"
+                        IsAdd="true"
+                        Label="@Culture["Discovery.Dislike.SomethingElse"]"
+                        OnClick="@AddCustom" />
+        }
     </ChoiceTileGrid>
 </fieldset>
-
-<div class="profile-custom-dislikes">
-    @for (var i = 0; i < Editor.CustomDislikes.Count; i++)
-    {
-        var index = i;
-        <div class="profile-language-row">
-            <input type="text"
-                   maxlength="@DiscoveryCatalogs.MaxCustomDislikeLength"
-                   value="@Editor.CustomDislikes[index]"
-                   placeholder="@Culture["Discovery.Dislike.CustomPlaceholder"]"
-                   @oninput="e => OnCustomInput(index, e.Value?.ToString())" />
-            <button type="button" class="btn btn-secondary" @onclick="() => RemoveCustom(index)">×</button>
-        </div>
-    }
-    @if (Editor.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
-    {
-        <button type="button" class="btn btn-ghost" @onclick="AddCustom">
-            + @Culture["Discovery.Dislike.SomethingElse"]
-        </button>
-    }
-</div>
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
