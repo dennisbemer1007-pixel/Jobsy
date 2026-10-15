@@ -250,10 +250,14 @@
   width: 100%;
   height: 44px;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 12px 0 36px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
-  background: var(--surface);
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6a7d' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px 18px;
   font-size: 16px;
   color: var(--text);
 }
@@ -546,8 +550,17 @@
   background: var(--surface);
   color: var(--brand);
   cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
+}
+
+.kb-address__clear-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+}
+
+.kb-address__clear-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .kb-address__geo:disabled {
@@ -620,7 +633,8 @@
 .kb-travel-legend {
   position: absolute;
   z-index: 4;
-  inset-inline-end: 0.75rem;
+  inset-inline-start: 0.75rem;
+  inset-inline-end: auto;
   bottom: 0.75rem;
   max-width: 14rem;
   padding: 0.65rem 0.75rem;
@@ -2496,10 +2510,38 @@ ol.apply-steps.apply-steps--three {
 }
 
 .kb-panel-head__search-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  display: flex;
+  flex-wrap: nowrap;
   align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.kb-filter-search.kb-panel-head__search,
+.kb-filter-search--bar,
+.kb-chrome-search.kb-filter-search--bar {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kb-filter-search__icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kb-filter-search__icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .kb-panel-head__search input {
@@ -2509,7 +2551,11 @@ ol.apply-steps.apply-steps--three {
   padding: 0 12px 0 36px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
-  background: var(--surface);
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6a7d' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px 18px;
   font-size: 16px;
   color: var(--text);
   box-sizing: border-box;
@@ -2526,17 +2572,14 @@ ol.apply-steps.apply-steps--three {
   min-height: 40px;
 }
 
-.kb-panel-head__address .kb-address__geo,
-.kb-panel-head__address .kb-address__clear {
-  width: 40px;
+.kb-panel-head__match,
+.kb-filter-bar__match--inline {
+  flex: 0 0 auto;
+  align-self: stretch;
   height: 40px;
-  min-width: 40px;
   min-height: 40px;
-}
-
-.kb-panel-head__match {
-  align-self: flex-start;
-  margin-top: 4px;
+  margin: 0;
+  white-space: nowrap;
 }
 
 .kb-active-filters {
@@ -2638,11 +2681,45 @@ ol.apply-steps.apply-steps--three {
   border-radius: 0;
 }
 
-.kb-filter-bar__match {
-  display: none;
-}
 
 @media (min-width: 900px) {
+  .kb-panel-head__address .kb-address__field {
+    position: relative;
+    display: block;
+    gap: 0;
+  }
+
+  .kb-panel-head__address .kb-address__field input {
+    width: 100%;
+    padding-right: 48px;
+  }
+
+  .kb-panel-head__address.kb-address--with-clear .kb-address__field input {
+    padding-right: calc(48px + 8px + 40px);
+  }
+
+  .kb-panel-head__address .kb-address__geo,
+  .kb-panel-head__address .kb-address__clear {
+    position: absolute;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .kb-panel-head__address .kb-address__clear {
+    inset-inline-end: 0;
+  }
+
+  .kb-panel-head__address .kb-address__geo {
+    inset-inline-end: 0;
+  }
+
+  .kb-panel-head__address.kb-address--with-clear .kb-address__geo {
+    inset-inline-end: 48px;
+  }
+
   .kb-panel-head.discovery-toolbar--desktop {
     display: flex;
   }

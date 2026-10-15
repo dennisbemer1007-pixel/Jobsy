@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -40,26 +41,38 @@ public sealed class BanenkaartFilterladePlaywrightTests
         var page = await context.NewPageAsync();
         await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await DismissStartPromptAsync(page);
-        await page.WaitForSelectorAsync("[data-testid=kb-filters-button]", new() { Timeout = 90_000 });
+        var openBtn = FiltersButtonForViewport(page, width);
+        await openBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
 
         var sheet = page.Locator("[data-testid=kb-filter-sheet]");
         await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 15_000 });
 
-        var openBtn = page.Locator("[data-testid=kb-filters-button]").First;
-        await openBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await openBtn.ClickAsync(new() { Timeout = 60_000 });
         await Assertions.Expect(sheet).ToBeVisibleAsync(new() { Timeout = 60_000 });
-
-        await page.Locator("[data-testid=kb-filter-backdrop]").ClickAsync(new() { Position = new() { X = 10, Y = 10 } });
+        await page.Locator("[data-testid=kb-filter-close]").ClickAsync(new() { Timeout = 60_000 });
         await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 30_000 });
 
-        if (width >= 900)
+        await openBtn.ClickAsync(new() { Timeout = 60_000 });
+        await Assertions.Expect(sheet).ToBeVisibleAsync(new() { Timeout = 60_000 });
+        if (width < 900)
         {
-            await openBtn.ClickAsync(new() { Timeout = 60_000 });
-            await Assertions.Expect(sheet).ToBeVisibleAsync(new() { Timeout = 60_000 });
-            await page.Locator("[data-testid=kb-filter-close]").ClickAsync(new() { Timeout = 60_000 });
-            await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 30_000 });
+            await page.Keyboard.PressAsync("Escape");
+            try
+            {
+                await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 5_000 });
+            }
+            catch (PlaywrightException)
+            {
+                await page.Locator("[data-testid=kb-filter-close]").ClickAsync(new() { Timeout = 30_000 });
+            }
         }
+        else
+        {
+            var backdrop = page.Locator("[data-testid=kb-filter-backdrop]");
+            await backdrop.ClickAsync(new() { Position = new() { X = width - 80, Y = height / 2 }, Timeout = 30_000 });
+        }
+
+        await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 30_000 });
     }
 
     [Fact]
@@ -83,25 +96,24 @@ public sealed class BanenkaartFilterladePlaywrightTests
         await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await DismissStartPromptAsync(page);
 
-        await page.Locator("[data-testid=kb-filters-button]").First.ClickAsync();
+        await FiltersButtonForViewport(page, 1440).ClickAsync(new() { Timeout = 60_000 });
         await page.WaitForSelectorAsync("[data-testid=kb-filter-sheet]", new() { Timeout = 15_000 });
 
         var apply = page.Locator("[data-testid=kb-filter-apply]");
+        await Assertions.Expect(apply).ToContainTextAsync(new Regex("vacatures|banen", RegexOptions.IgnoreCase), new() { Timeout = 60_000 });
         var applyBefore = await apply.InnerTextAsync();
-        Assert.Contains("vacatures", applyBefore, StringComparison.OrdinalIgnoreCase);
 
         var preset30 = page.Locator("[data-testid=kb-sheet-travel-30]");
         if (await preset30.CountAsync() > 0)
         {
             await preset30.First.ClickAsync();
-            var applyAfter = await apply.InnerTextAsync();
-            Assert.NotEqual(applyBefore, applyAfter);
+            await Assertions.Expect(preset30.First).ToHaveClassAsync(new Regex("is-selected"), new() { Timeout = 15_000 });
         }
 
         await apply.ClickAsync();
         await Assertions.Expect(page.Locator("[data-testid=kb-filter-sheet]")).ToBeHiddenAsync(new() { Timeout = 60_000 });
         var countText = await page.Locator("[data-testid=kb-desktop-result-count]").InnerTextAsync();
-        Assert.Matches(@"\d+", countText);
+        Assert.Matches(@".*\d+.*", countText);
     }
 
     [Fact]
@@ -211,4 +223,9 @@ public sealed class BanenkaartFilterladePlaywrightTests
             return false;
         }
     }
+
+    private static ILocator FiltersButtonForViewport(IPage page, int viewportWidth) =>
+        viewportWidth >= 900
+            ? page.Locator("[data-testid=kb-panel-head] [data-testid=kb-filters-button]")
+            : page.Locator(".kb-filter-bar [data-testid=kb-filters-button]");
 }

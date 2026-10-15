@@ -30,7 +30,7 @@ public sealed class BanenkaartFilterladeScreenshotTests
         catch (Exception ex) { errors.Add("desktop-logged-in: " + ex.Message); }
 
         var count = Directory.Exists(OutDir) ? Directory.GetFiles(OutDir, "*.png").Length : 0;
-        Assert.True(count >= 4, $"Expected ≥4 screenshots, got {count}. {string.Join("; ", errors)}");
+        Assert.True(count >= 6, $"Expected ≥6 screenshots, got {count}. {string.Join("; ", errors)}");
     }
 
     private static async Task CaptureDesktopLoggedOutAsync(IBrowser browser, string baseUrl)
@@ -41,8 +41,8 @@ public sealed class BanenkaartFilterladeScreenshotTests
         await DismissStartAsync(page);
         await page.WaitForTimeoutAsync(1500);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "desktop-1440-closed-logged-out.png") });
-        await page.Locator("[data-testid=kb-filters-button]").First.ClickAsync(new() { Timeout = 30_000 });
-        await page.WaitForSelectorAsync("[data-testid=kb-filter-sheet]", new() { Timeout = 90_000 });
+        await page.Locator("[data-testid=kb-panel-head] [data-testid=kb-filters-button]").ClickAsync(new() { Timeout = 30_000 });
+        await page.WaitForSelectorAsync(".jobsy-discovery.filters-open [data-testid=kb-filter-sheet]", new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         await page.WaitForTimeoutAsync(800);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "desktop-1440-drawer-open-logged-out.png") });
     }
@@ -60,7 +60,7 @@ public sealed class BanenkaartFilterladeScreenshotTests
         await DismissStartAsync(page);
         await page.WaitForTimeoutAsync(1500);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "mobile-390-closed-logged-out.png") });
-        await page.Locator("[data-testid=kb-filters-button]").First.ClickAsync();
+        await page.Locator(".kb-filter-bar [data-testid=kb-filters-button]").ClickAsync();
         await page.WaitForSelectorAsync("[data-testid=kb-filter-sheet]", new() { Timeout = 15_000 });
         await page.WaitForTimeoutAsync(400);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "mobile-390-sheet-open-logged-out.png") });
@@ -78,6 +78,10 @@ public sealed class BanenkaartFilterladeScreenshotTests
         await DismissStartAsync(page);
         await page.WaitForTimeoutAsync(1500);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "desktop-1440-closed-logged-in.png") });
+        await page.Locator("[data-testid=kb-panel-head] [data-testid=kb-filters-button]").ClickAsync(new() { Timeout = 30_000 });
+        await page.WaitForSelectorAsync(".jobsy-discovery.filters-open [data-testid=kb-filter-sheet]", new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(800);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "desktop-1440-drawer-open-logged-in.png") });
     }
 
     private static async Task DismissStartAsync(IPage page)

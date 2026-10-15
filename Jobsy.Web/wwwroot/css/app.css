@@ -2635,6 +2635,10 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 @media (min-width: 900px) {
+    .app-shell:has(.jobsy-discovery.filters-open) .app-main {
+        z-index: 45;
+    }
+
     .jobsy-discovery.filters-open .filter-sheet-backdrop.kb-filter-drawer-backdrop {
         position: fixed;
         inset: 0;
@@ -2646,12 +2650,12 @@ html[dir="rtl"] .account-menu__panel {
         position: fixed;
         z-index: 90;
         left: 0;
-        top: 0;
+        top: var(--app-header-height, 4.25rem);
         bottom: 0;
         width: min(42vw, 520px);
         max-width: 100%;
-        height: 100%;
-        max-height: 100dvh;
+        height: calc(100dvh - var(--app-header-height, 4.25rem));
+        max-height: calc(100dvh - var(--app-header-height, 4.25rem));
         border-radius: 0;
         box-shadow: 8px 0 32px rgba(15, 45, 92, 0.12);
     }
@@ -3696,8 +3700,12 @@ html[dir="rtl"] .account-menu__panel {
     .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
     .jobsy-discovery:not(.jobsy-discovery--branch) #job-map,
     .jobsy-discovery:not(.jobsy-discovery--branch) .job-map {
-        min-height: 70vh;
+        min-height: 0;
         width: 100%;
+    }
+
+    .app-shell:has(.jobsy-discovery) .app-footer {
+        display: none;
     }
 }
 
@@ -3763,7 +3771,50 @@ html[dir="rtl"] .account-menu__panel {
 /* Keep zoom + 3D above the locate button and out from under the featured carousel. */
 .job-map .maplibregl-ctrl-bottom-right {
     bottom: 58px;
-    right: 0;
+    right: 10px;
+}
+
+.jobsy-discovery .map-legend {
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 6;
+}
+
+.app-shell:has(.jobsy-discovery) .feedback-widget__tab--edge {
+    display: none !important;
+}
+
+@media (min-width: 900px) {
+    html:not(.cookie-consent-known) .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+        height: calc(100dvh - var(--app-header-height, 4.25rem) - var(--cookie-bar-h, 3.75rem));
+        max-height: calc(100dvh - var(--app-header-height, 4.25rem) - var(--cookie-bar-h, 3.75rem));
+    }
+
+    .jobsy-discovery .kb-travel-legend {
+        bottom: 1rem;
+        left: 1rem;
+    }
+}
+
+@media (max-width: 899px) {
+    .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right {
+        bottom: calc(110px + var(--jobsy-map-mobile-clearance, 0px));
+        right: 8px;
+    }
+
+    .jobsy-discovery.show-map .job-map-locate {
+        bottom: calc(58px + var(--jobsy-map-mobile-clearance, 0px));
+        right: 8px;
+    }
+
+    .jobsy-discovery.show-map .map-legend {
+        top: 0.55rem;
+        right: 0.55rem;
+    }
+
+    .jobsy-discovery.show-map .map-legend {
+        top: calc(0.55rem + var(--jobsy-map-mobile-clearance-top, 0px));
+    }
 }
 
 .job-map-style-switch {
@@ -20130,13 +20181,41 @@ html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
     );
 }
 
-/* Banenkaart: map stays flush with bottom-nav; cookie clearance is on scrollable inner panes. */
+/* Banenkaart: no page scroll — reserve cookie space on map controls, not app-main padding. */
+html:not(.cookie-consent-known) body:has(.jobsy-discovery),
+html:not(.cookie-consent-known) .app-shell:has(.jobsy-discovery) .app-main {
+    padding-bottom: 0;
+}
+
+html:not(.cookie-consent-known) .app-shell:has(.jobsy-discovery) {
+    height: calc(100dvh - var(--cookie-bar-h, 3.75rem));
+    max-height: calc(100dvh - var(--cookie-bar-h, 3.75rem));
+}
+
 @media (max-width: 1024px) {
-    html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
-        padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery),
+    html:not(.cookie-consent-known) .app-shell:has(.bottom-nav):has(.jobsy-discovery) {
+        height: calc(
+            100dvh - var(--cookie-bar-h, 4.5rem) - var(--bottom-nav-h, 4.75rem)
+        );
+        max-height: calc(
+            100dvh - var(--cookie-bar-h, 4.5rem) - var(--bottom-nav-h, 4.75rem)
+        );
     }
-    html:not(.cookie-consent-known) .app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main {
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    html:not(.cookie-consent-known) .jobsy-discovery {
+        --jobsy-map-mobile-clearance: var(--cookie-bar-h, 4.5rem);
+    }
+
+    html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main,
+    html:not(.cookie-consent-known) .app-shell:has(.bottom-nav):has(.jobsy-discovery) .app-main {
+        padding-bottom: 0;
+    }
+}
+
+@media (min-width: 1025px) {
+    html:not(.cookie-consent-known) .jobsy-discovery {
+        --jobsy-map-mobile-clearance: 0px;
     }
 }
 

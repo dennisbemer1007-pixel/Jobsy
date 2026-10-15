@@ -1,4 +1,5 @@
 @inject CultureState Culture
+@using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
 
 <div class="kb-address @CssClass @(_originSet ? "kb-address--with-clear" : null)">
@@ -51,7 +52,7 @@
                     title="@Culture["Common.Clear"]"
                     @onclick="ClearAsync"
                     aria-label="@Culture["Common.Clear"]">
-                @Culture["Common.Clear"]
+                <span class="kb-address__clear-icon" aria-hidden="true">@((MarkupString)NavIcons.Close)</span>
             </button>
         }
     </div>
