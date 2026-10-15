@@ -535,6 +535,19 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (DbUpdateException ex)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new
+                {
+                    message =
+                        "Platforminstellingen konden niet worden opgeslagen (database-schema loopt achter). "
+                        + "Voer de nieuwste EF-migraties uit op de productie-database en herstart de API. "
+                        + "Technisch: "
+                        + (ex.InnerException?.Message ?? ex.Message)
+                });
+        }
     }
 
     private static List<(string Field, string? From, string? To)> CollectPlatformFeatureChanges(

@@ -568,6 +568,18 @@ public static class UiStringsAdmin
         Add("AdminSettings.SaveSummary", "{0} wijziging(en): {1}", "{0} change(s): {1}", "{0} zmian(y): {1}", "{0} modificare(ări): {1}", "{0} تغيير(ات): {1}");
         Add("AdminSettings.LastSaved", "Laatst opgeslagen {0}", "Last saved {0}", "Ostatnio zapisano {0}", "Salvat ultima dată {0}", "آخر حفظ {0}");
         Add("AdminSettings.Saved", "Instellingen opgeslagen.", "Settings saved.", "Ustawienia zapisane.", "Setări salvate.", "تم حفظ الإعدادات.");
+        Add("AdminSettings.SaveFailed",
+            "Opslaan mislukt: {0}",
+            "Save failed: {0}",
+            "Zapis nieudany: {0}",
+            "Salvare eșuată: {0}",
+            "فشل الحفظ: {0}");
+        Add("AdminSettings.SaveFailedEmpty",
+            "De API gaf geen gegevens terug na opslaan. Controleer of de API-database up-to-date is (migraties) en of web en API dezelfde versie draaien.",
+            "The API returned no data after save. Check that the API database is up to date (migrations) and that web and API run the same version.",
+            "API nie zwróciło danych po zapisie. Sprawdź migracje i wersję web/API.",
+            "API-ul nu a returnat date după salvare. Verifică migrările și versiunea web/API.",
+            "لم تُرجع واجهة API بيانات بعد الحفظ. تحقق من الهجرات ونسخة الويب/API.");
         Add("AdminSettings.LobsyCompany.Title", "Bedrijfsgegevens", "Company details", "Dane firmy", "Datele firmei", "بيانات الشركة");
         Add("AdminSettings.LobsyCompany.Hint", "Deze gegevens staan op de privacypagina, de voorwaarden, de footer en de PDF’s. Een leeg veld verdwijnt helemaal. Het Knab BTW-IBAN is alleen voor de BTW-buffer.", "These details appear on the privacy page, the terms, the footer and the PDFs. An empty field disappears completely. The Knab VAT IBAN is only for the VAT buffer.", "Te dane są na stronie prywatności, w regulaminie, w stopce i na PDF-ach. Puste pole znika. IBAN Knab jest tylko do bufora VAT.", "Aceste date apar pe pagina de confidențialitate, în termeni, în subsol și pe PDF-uri. Un câmp gol dispare. IBAN-ul Knab este doar pentru tamponul de TVA.", "تظهر هذه البيانات في صفحة الخصوصية والشروط والتذييل وملفات PDF. الحقل الفارغ يختفي. حساب Knab للضريبة فقط.");
         Add("AdminSettings.LobsyCompany.LegalName", "Wettelijke naam", "Legal name", "Nazwa prawna", "Nume legal", "الاسم القانوني");
