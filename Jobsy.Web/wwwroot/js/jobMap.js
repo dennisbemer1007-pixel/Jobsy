@@ -34,6 +34,15 @@ window.jobMap = (function () {
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
     let viewportListDotNet = null;
+    /** Suppress moveend-driven pin/discover churn during programmatic camera moves / resize. */
+    let viewportNotifySuppressed = 0;
+    let viewportBootstrapDone = false;
+    let lastUserGestureAt = 0;
+    let userGesturePending = false;
+    let setVacanciesCallCount = 0;
+    let viewportNotifyCount = 0;
+    let travelRingDrawCount = 0;
+    const ORIGIN_MOVE_MIN_METERS = 500;
     /** Localized map UI strings from VacancyDiscovery (nl fallbacks). */
     let uiLabels = {
         vacanciesAtPlace: "{count} banen",
@@ -2827,9 +2836,6 @@ window.jobMap = (function () {
             if (typeof onIsoModeChange === "function") {
                 onIsoModeChange(normalized);
             }
-            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
-                openCallback.invokeMethodAsync("OnIsoModeChanged", normalized);
-            }
         } catch (e) { }
     }
 
@@ -2962,6 +2968,7 @@ window.jobMap = (function () {
             return;
         }
         lastRingDrawKey = ringKey;
+        travelRingDrawCount += 1;
 
         // Circles first, swap isochrones when they arrive (no flash).
         const circleFeatures = buildTravelRingFeatures(lat, lng);
@@ -3031,9 +3038,29 @@ window.jobMap = (function () {
     }
 
     function sameOrigin(lat, lng) {
-        return !!(lastOrigin
-            && Math.abs(lastOrigin.lat - lat) < 1e-7
-            && Math.abs(lastOrigin.lng - lng) < 1e-7);
+        if (!lastOrigin) {
+            return false;
+        }
+        if (Math.abs(lastOrigin.lat - lat) < 1e-7 && Math.abs(lastOrigin.lng - lng) < 1e-7) {
+            return true;
+        }
+        return haversineMeters(lastOrigin.lat, lastOrigin.lng, lat, lng) < ORIGIN_MOVE_MIN_METERS;
+    }
+
+    function markUserMapGesture() {
+        lastUserGestureAt = Date.now();
+        userGesturePending = true;
+    }
+
+    function runWithViewportNotifySuppressed(fn) {
+        viewportNotifySuppressed += 1;
+        try {
+            fn();
+        } finally {
+            setTimeout(function () {
+                viewportNotifySuppressed = Math.max(0, viewportNotifySuppressed - 1);
+            }, 650);
+        }
     }
 
     function fitToOriginRings(animate) {
@@ -3061,26 +3088,28 @@ window.jobMap = (function () {
             finishOpeningFrame();
             return;
         }
-        try {
-            map.fitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
-            originNeedsFrame = false;
-            originHasBeenFramed = true;
-            cameraLocked = true;
-            firstSizedFit = true;
-            finishOpeningFrame();
-            map.once("idle", function () {
-                if (lastOrigin) {
-                    drawTravelRings(lastOrigin.lat, lastOrigin.lng);
-                }
-            });
-        } catch (e) {
-            originNeedsFrame = true;
-            safeJumpTo({
-                center: [lastOrigin.lng, lastOrigin.lat],
-                zoom: FILLED_LOCATION_ZOOM
-            });
-            finishOpeningFrame();
-        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.fitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
+                originNeedsFrame = false;
+                originHasBeenFramed = true;
+                cameraLocked = true;
+                firstSizedFit = true;
+                finishOpeningFrame();
+                map.once("idle", function () {
+                    if (lastOrigin) {
+                        drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+                    }
+                });
+            } catch (e) {
+                originNeedsFrame = true;
+                safeJumpTo({
+                    center: [lastOrigin.lng, lastOrigin.lat],
+                    zoom: FILLED_LOCATION_ZOOM
+                });
+                finishOpeningFrame();
+            }
+        });
     }
 
     function normalizeTravelOptions(options) {
@@ -3189,18 +3218,22 @@ window.jobMap = (function () {
         if (!map || !opts) {
             return;
         }
-        try {
-            map.jumpTo(opts);
-        } catch (e) { }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.jumpTo(opts);
+            } catch (e) { }
+        });
     }
 
     function safeEaseTo(opts) {
         if (!map || !opts) {
             return;
         }
-        try {
-            map.easeTo(opts);
-        } catch (e) { }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.easeTo(opts);
+            } catch (e) { }
+        });
     }
 
     function lockCamera(openingPoints, openingView, preferFilledLocation) {
@@ -4259,6 +4292,7 @@ window.jobMap = (function () {
 
     function setVacancies(vacancies) {
         if (!clusterGroup) return;
+        setVacanciesCallCount += 1;
 
         const nextSig = pinsSignature(vacancies);
         if (nextSig === lastPinsSignature && Object.keys(markersById).length > 0) {
@@ -4335,6 +4369,7 @@ window.jobMap = (function () {
             if (!box) {
                 return;
             }
+            viewportNotifyCount += 1;
             viewportListDotNet.invokeMethodAsync(
                 "OnMapViewportChanged",
                 box.minLat,
@@ -4343,6 +4378,14 @@ window.jobMap = (function () {
                 box.maxLng,
                 box.zoom);
         } catch (e) { /* circuit */ }
+    }
+
+    function viewportUserIntent() {
+        if (userGesturePending) {
+            userGesturePending = false;
+            return true;
+        }
+        return Date.now() - lastUserGestureAt < 900;
     }
 
     function bindViewportPinsReload() {
@@ -4355,14 +4398,43 @@ window.jobMap = (function () {
                 map.off("zoomend", map._jobsyViewportPinsSchedule);
             } catch (eOff) { /* ignore */ }
         }
+        if (!map._jobsyUserGestureBound) {
+            map._jobsyUserGestureBound = true;
+            map.on("dragstart", function (ev) {
+                if (ev && ev.originalEvent) {
+                    markUserMapGesture();
+                }
+            });
+            map.on("zoomstart", function (ev) {
+                if (ev && ev.originalEvent) {
+                    markUserMapGesture();
+                }
+            });
+        }
         viewportPinsBound = true;
         var debounce = null;
         function schedule() {
+            if (viewportNotifySuppressed > 0) {
+                return;
+            }
             if (debounce) {
                 clearTimeout(debounce);
             }
             debounce = setTimeout(function () {
                 debounce = null;
+                if (viewportNotifySuppressed > 0) {
+                    return;
+                }
+                const user = viewportUserIntent();
+                if (!viewportBootstrapDone) {
+                    viewportBootstrapDone = true;
+                    reloadPins();
+                    notifyViewportList();
+                    return;
+                }
+                if (!user) {
+                    return;
+                }
                 reloadPins();
                 notifyViewportList();
             }, 300);
@@ -4484,10 +4556,12 @@ window.jobMap = (function () {
         if (!map) {
             return;
         }
-        map.resize();
-        if (originNeedsFrame && lastOrigin) {
-            fitToOriginRings(false);
-        }
+        runWithViewportNotifySuppressed(function () {
+            map.resize();
+            if (originNeedsFrame && lastOrigin) {
+                fitToOriginRings(false);
+            }
+        });
     }
 
     function isAlive() {
@@ -4700,6 +4774,11 @@ window.jobMap = (function () {
             pinsCachedPayload = null;
             pinsEtag = null;
         },
+        __testGetSetVacanciesCallCount: function () { return setVacanciesCallCount; },
+        __testResetSetVacanciesCallCount: function () { setVacanciesCallCount = 0; },
+        __testGetViewportNotifyCount: function () { return viewportNotifyCount; },
+        __testResetViewportNotifyCount: function () { viewportNotifyCount = 0; },
+        __testGetTravelRingDrawCount: function () { return travelRingDrawCount; },
         /** @internal Open the densest visible cluster for v3 popup tests. */
         debugOpenLargestCluster: async function () {
             if (!map || typeof map.queryRenderedFeatures !== "function") {

@@ -200,8 +200,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "c3ee0f91ecf416244a38375f673b3c7e0aaec5508e5c65a6080754b4e5033891",
-    "v": "20261015-perf01"
+    "sha256": "87a171969a9b7f2254a031e2a1aef73470f278e962ca53ec74cfc563acb13252",
+    "v": "20261015-idle01"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "7398c432fd1e38c3840753ca918919adeed81ed19074c0fdcf75b33e1972b825",

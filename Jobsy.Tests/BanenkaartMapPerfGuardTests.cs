@@ -19,6 +19,10 @@ public class BanenkaartMapPerfGuardTests
         Assert.Contains("pinsByFilterKey", js, StringComparison.Ordinal);
         Assert.Contains("pinsNetworkFetchCount", js, StringComparison.Ordinal);
         Assert.Contains("__testGetPinsNetworkFetchCount", js, StringComparison.Ordinal);
+        Assert.Contains("viewportNotifySuppressed", js, StringComparison.Ordinal);
+        Assert.Contains("__testGetSetVacanciesCallCount", js, StringComparison.Ordinal);
+        Assert.Contains("jobsyGeo.replaceQuery", maps, StringComparison.Ordinal);
+        Assert.Contains("reloadMapPins: false", discovery, StringComparison.Ordinal);
 
         // Same filter, different travel mode → same cache key.
         Assert.Equal(

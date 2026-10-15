@@ -174,6 +174,34 @@ window.jobsyGeo = (function () {
         sessionStorage.removeItem(AGE_KEY);
     }
 
+    /**
+     * Sync URL query params without Blazor navigation (no LocationChanged / rerender flash).
+     * @param {Record<string, string|null|undefined>} updates
+     */
+    function replaceQuery(updates) {
+        if (!updates || typeof updates !== "object") {
+            return;
+        }
+        try {
+            const url = new URL(window.location.href);
+            Object.keys(updates).forEach(function (key) {
+                const v = updates[key];
+                if (v === null || v === undefined || v === "") {
+                    url.searchParams.delete(key);
+                } else {
+                    url.searchParams.set(key, String(v));
+                }
+            });
+            const next = url.pathname + url.search + url.hash;
+            const cur = window.location.pathname + window.location.search + window.location.hash;
+            if (next !== cur) {
+                history.replaceState(history.state, "", next);
+            }
+        } catch {
+            // ignore
+        }
+    }
+
     function analyticsAllowed() {
         try {
             if (window.jobsyCookieConsent && typeof window.jobsyCookieConsent.allowsAnalytics === "function") {
@@ -408,6 +436,7 @@ window.jobsyGeo = (function () {
         wasLocationPrompted,
         markLocationPrompted,
         ensureLocationOnLaunch,
+        replaceQuery,
         getOrCreateAnonymousKey,
         tryClaimClick,
         tryClaimSiteVisit,
@@ -640,7 +669,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261015-perf01"
+        "/js/jobMap.min.js?v=20261015-idle01"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
