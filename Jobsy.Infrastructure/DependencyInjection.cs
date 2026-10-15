@@ -572,6 +572,7 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
         services.AddSingleton<IUploadMalwareScanner, UploadMalwareScanner>();
+        services.AddSingleton<CandidateMatchScoreCache>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
         services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
         // KB-FALLBACK(D): paspoort 06 absent — no down-rank / "Staat lager".

@@ -3753,8 +3753,47 @@
         await ReloadFiltersIfAppliedAsync();
     }
 
-    private void OpenMatchExplain(VacancyListItem vacancy)
-        => _matchExplain = vacancy;
+    private async Task OpenMatchExplain(VacancyListItem vacancy)
+    {
+        _matchExplain = vacancy;
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            var detail = await Api.GetVacancyMatchExplainAsync(
+                vacancy.Id,
+                _origin?.Latitude,
+                _origin?.Longitude,
+                _selectedTransport);
+            if (detail is not null)
+            {
+                _matchExplain = MergeMatchExplain(vacancy, detail);
+            }
+        }
+        catch
+        {
+            // Dialog keeps summary fields from the list row.
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private static VacancyListItem MergeMatchExplain(VacancyListItem row, VacancyListItem detail)
+    {
+        row.MatchWhy = detail.MatchWhy;
+        row.MatchGaps = detail.MatchGaps;
+        row.MatchWhySummary = detail.MatchWhySummary ?? row.MatchWhySummary;
+        row.MatchTransparencyNote = detail.MatchTransparencyNote;
+        row.MatchUncertaintyPoints = detail.MatchUncertaintyPoints;
+        row.MatchConfidencePercent = detail.MatchConfidencePercent;
+        row.MatchFitRawPercent = detail.MatchFitRawPercent;
+        row.CultureFitLabel = detail.CultureFitLabel;
+        row.CultureFitWhy = detail.CultureFitWhy;
+        row.CultureFitBand = detail.CultureFitBand;
+        row.CultureFitPercent = detail.CultureFitPercent;
+        row.IsBroadMatch = detail.IsBroadMatch;
+        row.MatchRationale = detail.MatchRationale;
+        return row;
+    }
 
     private void CloseMatchExplain()
         => _matchExplain = null;
@@ -4225,21 +4264,20 @@
     }
 
     [JSInvokable]
-    public Task OnMapMatchExplainRequested(string id)
+    public async Task OnMapMatchExplainRequested(string id)
     {
         if (!Guid.TryParse(id, out var vacancyId))
         {
-            return Task.CompletedTask;
+            return;
         }
 
         var vacancy = _vacancies.FirstOrDefault(v => v.Id == vacancyId);
         if (vacancy is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        OpenMatchExplain(vacancy);
-        return InvokeAsync(StateHasChanged);
+        await OpenMatchExplain(vacancy);
     }
 
     [JSInvokable]
