@@ -305,7 +305,7 @@
         return changed;
     }
 
-    /// <summary>Discovery mini-test (stap 7–10): journey lobster only — no sticky coach dock.</summary>
+    /// <summary>Discovery in-progress: journey lobster in the stage — hide the sticky LobsyCoach dock.</summary>
     public static bool IsDiscoveryQuestionCoachHidden(string path, string relativeUri)
     {
         path = path.TrimStart('/');
@@ -314,13 +314,12 @@
             return false;
         }
 
-        if (!TryGetJourneyStap(relativeUri, out var stap))
+        if (!TryGetJourneyStap(relativeUri, out var stap) || string.IsNullOrWhiteSpace(stap))
         {
             return false;
         }
 
-        return int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n)
-               && n is >= 7 and <= 10;
+        return !stap.Equals("start", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryGetJourneyStap(string relativeUri, out string stap)

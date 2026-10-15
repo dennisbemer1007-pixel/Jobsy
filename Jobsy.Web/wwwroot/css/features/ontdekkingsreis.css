@@ -145,7 +145,7 @@
   grid-template-columns: minmax(0, 15.5rem) minmax(0, 34rem) minmax(0, 1fr);
   gap: var(--space-4);
   padding: var(--space-4) var(--space-5) var(--space-5);
-  align-items: center;
+  align-items: start;
   min-height: calc(100vh - 64px);
   min-width: 0;
   max-width: 100%;
@@ -213,6 +213,21 @@
   overflow-y: auto;
   scrollbar-width: thin;
   overscroll-behavior: contain;
+}
+
+@media (min-width: 900px) {
+  .journey-stage .journey-rail {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    max-height: calc(100dvh - 48px);
+  }
+
+  .journey-rail-drawer .journey-rail {
+    position: static;
+    top: auto;
+    max-height: none;
+  }
 }
 
 .journey-rail h2 {
@@ -1796,12 +1811,12 @@
     min-height: 0;
     overflow: hidden;
     grid-template-columns: minmax(0, 15.5rem) minmax(0, 1fr);
-    align-items: center;
+    align-items: start;
     padding-bottom: var(--space-4);
   }
 
   .journey--fit .journey-only-desktop:has(.journey-rail) {
-    align-self: center;
+    align-self: start;
     max-height: calc(100dvh - var(--app-header-height, 4.25rem) - 2rem);
   }
 

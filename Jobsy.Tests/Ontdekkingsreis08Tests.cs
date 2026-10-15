@@ -183,8 +183,10 @@ public class Ontdekkingsreis08RoutesNavTests
         Assert.False(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
         Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=7"));
         Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=8"));
-        Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=3"));
+        Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=3"));
+        Assert.True(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=2"));
         Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis"));
+        Assert.False(MainLayout.IsDiscoveryQuestionCoachHidden("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=start"));
         Assert.True(MainLayout.IsQuestionnairePath("candidate/ontdekkingsreis", "candidate/ontdekkingsreis?stap=klaar"));
         Assert.True(MainLayout.IsQuestionnairePath("candidate/start", "candidate/start"));
     }
