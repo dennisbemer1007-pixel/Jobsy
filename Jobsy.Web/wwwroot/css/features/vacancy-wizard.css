@@ -1,0 +1,308 @@
+/* Employer vacancy create wizard — variant A (sidebar rail + mobile segments). Scoped to .vac-wizard */
+.vac-wizard {
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+.vac-wizard__layout {
+  min-height: calc(100dvh - 56px);
+}
+
+.vac-wizard__rail {
+  display: none;
+}
+
+.vac-wizard__rail-title {
+  margin: 0 0 4px;
+  font-size: var(--text-lg);
+  color: var(--brand);
+}
+
+.vac-wizard__rail-meta {
+  margin: 0 0 16px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.vac-wizard__rail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.vac-wizard__rail-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.vac-wizard__rail-item.is-current {
+  background: var(--accent-soft);
+}
+
+.vac-wizard__rail-item.is-done .vac-wizard__rail-dot {
+  background: var(--success);
+  color: #fff;
+}
+
+.vac-wizard__rail-dot {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--brand);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.vac-wizard__rail-item strong,
+.vac-wizard__rail-item small {
+  display: block;
+}
+
+.vac-wizard__rail-item small {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.vac-wizard__rail-saved {
+  margin-top: 20px;
+  font-size: var(--text-xs);
+}
+
+.vac-wizard__stage {
+  padding: 12px 16px 24px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.vac-wizard__mobile-rail {
+  margin-bottom: 16px;
+}
+
+.vac-wizard__mobile-rail-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.vac-wizard__mobile-track {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.vac-wizard__mobile-track i {
+  display: block;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.vac-wizard__mobile-track i.on {
+  background: var(--brand);
+}
+
+.vac-wizard__head {
+  margin-bottom: 20px;
+}
+
+.vac-wizard__eyebrow {
+  margin: 0 0 6px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.vac-wizard__head h1 {
+  margin: 0 0 8px;
+  font-size: var(--text-2xl);
+  color: var(--brand);
+}
+
+.vac-wizard__lead {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.vac-wizard__form fieldset {
+  margin: 16px 0;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.vac-wizard__foot {
+  position: sticky;
+  bottom: 0;
+  margin-top: 24px;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(transparent, var(--bg) 28%);
+}
+
+.vac-wizard__foot-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.vac-wizard__foot-actions .vac-wizard__save,
+.vac-wizard__foot-actions .vac-wizard__next {
+  margin-inline-start: auto;
+}
+
+.vac-wizard-field__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.vac-wizard-richtext__toolbar {
+  margin-bottom: 6px;
+}
+
+.vac-wizard-richtext__area {
+  width: 100%;
+  min-height: 12rem;
+  font-family: inherit;
+}
+
+.vac-wizard-richtext__colors {
+  flex-wrap: wrap;
+}
+
+.vac-wizard-richtext__color {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--swatch, var(--text));
+  padding: 0;
+  cursor: pointer;
+}
+
+.vac-wizard-richtext__color--default {
+  background: linear-gradient(135deg, var(--surface) 45%, var(--text) 46%);
+}
+
+.vac-candidate-preview-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 1000);
+  background: rgb(15 45 92 / 45%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.vac-candidate-preview-backdrop.is-desktop {
+  align-items: center;
+  padding: 24px;
+}
+
+.vac-candidate-preview-panel {
+  background: var(--bg);
+  width: 100%;
+  max-height: 92dvh;
+  overflow: auto;
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: var(--shadow-lg);
+}
+
+.vac-candidate-preview-backdrop.is-desktop .vac-candidate-preview-panel {
+  max-width: 920px;
+  border-radius: var(--radius);
+  max-height: 88dvh;
+}
+
+.vac-candidate-preview-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+
+.vac-candidate-preview-panel__head h2 {
+  margin: 0;
+  font-size: var(--text-md);
+}
+
+.vac-candidate-preview-panel__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--brand);
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.vac-candidate-preview-panel__body {
+  padding: 12px 16px 24px;
+}
+
+.vacancy-description-html h2,
+.vacancy-description-html h3 {
+  color: var(--brand);
+  margin: 1rem 0 0.5rem;
+}
+
+.vacancy-description-html p {
+  margin: 0 0 0.75rem;
+}
+
+.vacancy-description-html ul,
+.vacancy-description-html ol {
+  margin: 0 0 0.75rem;
+  padding-inline-start: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  .vac-wizard__layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .vac-wizard__rail {
+    display: block;
+    padding: 28px 20px;
+    border-inline-end: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .vac-wizard__mobile-rail {
+    display: none;
+  }
+
+  .vac-wizard__stage {
+    max-width: none;
+    padding: 28px 40px 40px;
+  }
+}

@@ -1,0 +1,173 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Hosting
+@inject IJSRuntime Js
+
+<label class="vac-wizard-field">
+    <span class="vac-wizard-field__label-row">
+        <span>Omschrijving</span>
+        <span class="vac-wizard-field__meta muted">@CharacterCount / 4000 tekens</span>
+    </span>
+    <div class="richtext-toolbar vac-wizard-richtext__toolbar" role="toolbar" aria-label="Opmaak">
+        <div class="richtext-toolbar__group">
+            <button type="button" class="richtext-btn" title="Vet" aria-label="Vet"
+                    @onclick='() => FormatAsync("b")'><span aria-hidden="true">B</span></button>
+            <button type="button" class="richtext-btn richtext-btn--italic" title="Cursief" aria-label="Cursief"
+                    @onclick='() => FormatAsync("i")'><span aria-hidden="true">I</span></button>
+            <button type="button" class="richtext-btn richtext-btn--underline" title="Onderstrepen" aria-label="Onderstrepen"
+                    @onclick='() => FormatAsync("u")'><span aria-hidden="true">U</span></button>
+        </div>
+        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+        <div class="richtext-toolbar__group">
+            <button type="button" class="richtext-btn" title="Kop 2" aria-label="Kop 2"
+                    @onclick='() => HeadingAsync("h2")'>H2</button>
+            <button type="button" class="richtext-btn" title="Kop 3" aria-label="Kop 3"
+                    @onclick='() => HeadingAsync("h3")'>H3</button>
+        </div>
+        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+        <div class="richtext-toolbar__group">
+            <button type="button" class="richtext-btn @(Align == "left" ? "is-active" : null)" title="Links uitlijnen" aria-label="Links uitlijnen"
+                    @onclick='() => AlignAsync("left")'>≡</button>
+            <button type="button" class="richtext-btn @(Align == "center" ? "is-active" : null)" title="Centreren" aria-label="Centreren"
+                    @onclick='() => AlignAsync("center")'>≡</button>
+            <button type="button" class="richtext-btn @(Align == "right" ? "is-active" : null)" title="Rechts uitlijnen" aria-label="Rechts uitlijnen"
+                    @onclick='() => AlignAsync("right")'>≡</button>
+        </div>
+        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+        <div class="richtext-toolbar__group vac-wizard-richtext__colors" role="group" aria-label="Tekstkleur">
+            @foreach (var color in VacancyRichtextPalette.All)
+            {
+                var hex = color.Hex;
+                <button type="button"
+                        class="vac-wizard-richtext__color @(string.IsNullOrEmpty(hex) ? "vac-wizard-richtext__color--default" : null)"
+                        style="@(string.IsNullOrEmpty(hex) ? null : $"--swatch:{hex}")"
+                        title="@color.LabelNl"
+                        aria-label="@color.LabelNl"
+                        @onclick="() => ColorAsync(hex)">
+                </button>
+            }
+        </div>
+        <span class="richtext-toolbar__sep" aria-hidden="true"></span>
+        <div class="richtext-toolbar__group">
+            <button type="button" class="richtext-btn" title="Lijst" aria-label="Lijst"
+                    @onclick="InsertListAsync">•</button>
+            <button type="button" class="richtext-btn" title="Link invoegen" aria-label="Link invoegen"
+                    @onclick="InsertLinkAsync">🔗</button>
+        </div>
+    </div>
+    <textarea @ref="_descriptionRef"
+              class="vac-wizard-richtext__area"
+              rows="8"
+              value="@Value"
+              @oninput="OnInput"
+              required="@Required"
+              data-testid="vacancy-description-input"></textarea>
+</label>
+
+@code {
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public bool Required { get; set; } = true;
+
+    private ElementReference _descriptionRef;
+    private string? _align;
+
+    private int CharacterCount => string.IsNullOrEmpty(Value) ? 0 : Value.Length;
+
+    private string? Align => _align;
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        var next = e.Value?.ToString() ?? "";
+        if (next.Length > 4000)
+        {
+            next = next[..4000];
+        }
+
+        await ValueChanged.InvokeAsync(next);
+    }
+
+    private async Task FormatAsync(string tag)
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, $"<{tag}>", $"</{tag}>", "tekst");
+        if (next is not null)
+        {
+            await ValueChanged.InvokeAsync(next);
+        }
+    }
+
+    private async Task HeadingAsync(string tag)
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, $"<{tag}>", $"</{tag}>", "Kop");
+        if (next is not null)
+        {
+            await ValueChanged.InvokeAsync(next);
+        }
+    }
+
+    private async Task AlignAsync(string align)
+    {
+        _align = align;
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _descriptionRef,
+            $"<p style=\"text-align:{align}\">",
+            "</p>",
+            "tekst");
+        if (next is not null)
+        {
+            await ValueChanged.InvokeAsync(next);
+        }
+    }
+
+    private async Task ColorAsync(string hex)
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var normalized = VacancyRichtextPalette.NormalizeHex(hex);
+        string before;
+        string after;
+        if (string.IsNullOrEmpty(normalized))
+        {
+            before = "<span>";
+            after = "</span>";
+        }
+        else
+        {
+            before = $"<span style=\"color:{normalized}\">";
+            after = "</span>";
+        }
+
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.wrap", _descriptionRef, before, after, "tekst");
+        if (next is not null)
+        {
+            await ValueChanged.InvokeAsync(next);
+        }
+    }
+
+    private async Task InsertListAsync()
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>(
+            "jobsyRichtext.wrap",
+            _descriptionRef,
+            "<ul>\n<li>",
+            "</li>\n</ul>",
+            "Punt");
+        if (next is not null)
+        {
+            await ValueChanged.InvokeAsync(next);
+        }
+    }
+
+    private async Task InsertLinkAsync()
+    {
+        await JobsyJs.EnsureExtrasAsync(Js);
+        var next = await Js.InvokeAsync<string?>("jobsyRichtext.insertLink", _descriptionRef);
+        if (next is not null)
+        {
+            await ValueChanged.InvokeAsync(next);
+        }
+    }
+}

@@ -1,0 +1,786 @@
+@namespace Jobsy.Web.Components.Werkgever
+@using Jobsy.Web.Components.Werkgever.Sections
+@using Jobsy.Web.Components.Werkgever.VacancyWizard
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.KandidaatBanen
+@implements IDisposable
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Media
+@using Jobsy.Core.Rules
+
+<PageTitle>@PageHeading · Lobsy</PageTitle>
+
+<div class="vac-wizard" data-testid="vacancy-create-wizard">
+    @if (_accessDenied)
+    {
+        <p class="state-message error" data-testid="vacancy-access-denied">Niet gevonden of geen toegang.</p>
+    }
+    else
+    {
+        <div class="vac-wizard__layout">
+            <aside class="vac-wizard__rail" aria-labelledby="vac-wizard-rail-title">
+                <h2 id="vac-wizard-rail-title" class="vac-wizard__rail-title">@PageHeading</h2>
+                <p class="vac-wizard__rail-meta">Stap @_step van @TotalSteps</p>
+                <ol class="vac-wizard__rail-list">
+                    @foreach (var step in WizardSteps)
+                    {
+                        var done = step.Id < _step;
+                        var current = step.Id == _step;
+                        <li class="vac-wizard__rail-item @(done ? "is-done" : null) @(current ? "is-current" : null)">
+                            <span class="vac-wizard__rail-dot" aria-hidden="true">@(done ? "✓" : step.Id.ToString())</span>
+                            <div>
+                                <strong>@step.Title</strong>
+                                <small>@step.Hint</small>
+                            </div>
+                        </li>
+                    }
+                </ol>
+                <p class="vac-wizard__rail-saved muted">Concept wordt lokaal bewaard tijdens je sessie.</p>
+            </aside>
+
+            <div class="vac-wizard__stage">
+                <div class="vac-wizard__mobile-rail" aria-label="Voortgang">
+                    <div class="vac-wizard__mobile-rail-top">
+                        <span><b>Stap @_step</b> · @CurrentStepTitle</span>
+                        <span>@_step van @TotalSteps</span>
+                    </div>
+                    <div class="vac-wizard__mobile-track" aria-hidden="true">
+                        @for (var i = 1; i <= TotalSteps; i++)
+                        {
+                            <i class="@(i <= _step ? "on" : null)"></i>
+                        }
+                    </div>
+                </div>
+
+                <header class="vac-wizard__head">
+                    <p class="vac-wizard__eyebrow">Stap @_step van @TotalSteps</p>
+                    <h1>@CurrentStepTitle</h1>
+                    <p class="vac-wizard__lead">@CurrentStepLead</p>
+                    @if (!string.IsNullOrEmpty(_vmPublishNote))
+                    {
+                        <p class="muted wg-vac-create-note">@_vmPublishNote</p>
+                    }
+                </header>
+
+                <form class="vac-wizard__form login-form" data-session-draft="true" @onsubmit="OnFormSubmitAsync" @onsubmit:preventDefault>
+                    @if (_step == 1)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-1">
+            @if (_isIntermediary)
+            {
+                <fieldset class="vacancy-intermediary">
+                    <legend>Inhuurend bedrijf (verplicht)</legend>
+                    <p class="muted vacancy-field-hint">
+                        Zoek op bedrijfsnaam of KVK-nummer en selecteer de vestiging van de opdrachtgever.
+                    </p>
+                    <KvkSearchField Label="Bedrijfsnaam of KVK-nummer"
+                                    SearchButtonLabel="Zoek bedrijven"
+                                    OnSelected="OnClientSearchSelectedAsync"
+                                    Disabled="_kvkBusy" />
+                    @if (_clientEstablishments.Count > 0)
+                    {
+                        <label>
+                            Vestiging
+                            <select @bind="_selectedEstablishmentId"
+                                    @bind:after="OnClientEstablishmentChangedAsync"
+                                    disabled="@_kvkBusy"
+                                    aria-busy="@_kvkBusy">
+                                <option value="">— Kies vestiging —</option>
+                                @foreach (var e in _clientEstablishments)
+                                {
+                                    <option value="@e.KvkEstablishmentId">@e.Name · @e.Address</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    @if (_companies.Count > 0)
+                    {
+                        <label>
+                            Bekende opdrachtgever
+                            <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync" required>
+                                @foreach (var c in _companies)
+                                {
+                                    <option value="@c.Id">@c.Name@(!string.IsNullOrWhiteSpace(c.KvkNumber) ? $" · KVK {c.KvkNumber}" : "")</option>
+                                }
+                            </select>
+                        </label>
+                    }
+                    @if (SelectedCompany is not null)
+                    {
+                        <p class="muted" style="margin:0;font-size:0.85rem">
+                            Geselecteerd: <strong>@SelectedCompany.Name</strong>
+                            · KVK @SelectedCompany.KvkNumber
+                            @if (!string.IsNullOrWhiteSpace(SelectedCompany.KvkEstablishmentId))
+                            {
+                                <text> · vestiging @SelectedCompany.KvkEstablishmentId</text>
+                            }
+                        </p>
+                    }
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" @bind="_hideClientAddressOnMap" />
+                        <span>
+                            <strong>Vervang bedrijfsnaam en adres door die van het intermediair</strong>
+                            <span class="muted">Op de banenkaart en vacaturekaartjes; opdrachtgever blijft bekend voor admin/SROI</span>
+                        </span>
+                    </label>
+                </fieldset>
+            }
+            else if (_companies.Count > 1)
+            {
+                <label>
+                    Vestiging
+                    <select @bind="_companyId" @bind:after="LoadSalaryTablesAsync" required>
+                        @foreach (var c in _companies)
+                        {
+                            <option value="@c.Id">@c.Name@(!string.IsNullOrWhiteSpace(c.KvkNumber) ? $" · KVK {c.KvkNumber}" : "")</option>
+                        }
+                    </select>
+                </label>
+            }
+            <label>
+                Titel
+                <input @bind="_title" @bind:event="oninput" required />
+            </label>
+            @if (_isIntermediary)
+            {
+                <div class="vacancy-category-summary" aria-live="polite">
+                    <span class="vacancy-category-swatch" style="--category-color:@(SelectedCategory?.ColorHex ?? VacancyCategoryDefaults.UitzendbureauColorHex)" aria-hidden="true"></span>
+                    <div>
+                        <strong>@(SelectedCategory?.Name ?? VacancyCategoryDefaults.UitzendbureauLabel)</strong>
+                        <p class="muted">Vacaturetype voor intermediairs staat vast op Uitzendbureau.</p>
+                    </div>
+                </div>
+                <fieldset>
+                    <legend>Zichtbaarheid op de banenkaart</legend>
+                    <p class="muted">Kandidaten zien een cirkel rond het uitzendbureau · @MapRadiusPreview</p>
+                    <div class="inline-actions">
+                        @foreach (var km in new[] { 2, 5, 10 })
+                        {
+                            var value = km;
+                            <label class="checkbox-row">
+                                <input type="radio" name="map-radius" checked="@(_publicMapRadiusKm == value)"
+                                       @onchange="() => _publicMapRadiusKm = value" />
+                                <span>@value km</span>
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+            }
+            else
+            {
+                <label>
+                    Categorie
+                    <select @bind="_categoryId" @bind:after="OnCategoryChanged" required>
+                        @if (_categories.Count == 0)
+                        {
+                            <option value="">Laden…</option>
+                        }
+                        else
+                        {
+                            @foreach (var cat in _categories)
+                            {
+                                <option value="@cat.Id.ToString()">@cat.Name</option>
+                            }
+                        }
+                    </select>
+                </label>
+            }
+            @if (!_isIntermediary && SelectedCategory?.PlacementKind == "Internship")
+            {
+                <label>
+                    Exclusiviteit
+                    <select @bind="_exclusivitySettingId">
+                        @foreach (var opt in _exclusivityOptions)
+                        {
+                            <option value="@opt.Id.ToString()">@opt.Name</option>
+                        }
+                    </select>
+                </label>
+                @if (SelectedExclusivity is { IsOpenOption: false } exclusive)
+                {
+                    <p class="muted">Deze stageplek wordt zichtbaar voor iedereen, maar alleen studenten van @exclusive.Name kunnen solliciteren.</p>
+                }
+            }
+            @if (!_isIntermediary && SelectedCategory?.ExtraFieldDefinitions is { Count: > 0 } fields)
+            {
+                <fieldset class="vacancy-category-extra">
+                    <legend>Extra gegevens voor @SelectedCategory.Name</legend>
+                    @foreach (var field in fields.Where(f => !IsLegalStyleCategoryField(f.Key)))
+                    {
+                        @if (field.InputType == "boolean")
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@(string.Equals(GetCategoryField(field.Key), "ja", StringComparison.OrdinalIgnoreCase))"
+                                       @onchange="e => SetCategoryBool(field.Key, e)" />
+                                @field.Label
+                            </label>
+                        }
+                        else if (field.InputType == "select" && field.Options is { Count: > 0 })
+                        {
+                            <label>
+                                @field.Label
+                                <select value="@GetCategoryField(field.Key)" @onchange="e => SetCategoryField(field.Key, e.Value?.ToString())">
+                                    <option value="">—</option>
+                                    @foreach (var opt in field.Options)
+                                    {
+                                        <option value="@opt">@opt</option>
+                                    }
+                                </select>
+                            </label>
+                        }
+                        else if (field.InputType == "textarea")
+                        {
+                            <label>
+                                @field.Label
+                                <textarea rows="3" value="@GetCategoryField(field.Key)" @oninput="e => SetCategoryField(field.Key, e.Value?.ToString())"></textarea>
+                            </label>
+                        }
+                        else
+                        {
+                            <label>
+                                @field.Label
+                                <input value="@GetCategoryField(field.Key)" @oninput="e => SetCategoryField(field.Key, e.Value?.ToString())" />
+                            </label>
+                        }
+                    }
+                </fieldset>
+            }
+                        </div>
+                    }
+                    @if (_step == 2)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-2">
+<VacancyRichTextEditor @bind-Value="_description" Required="true" />
+                <label>
+                    Afbeelding-URL
+                    <input @bind="_imageUrl" @bind:event="oninput" placeholder="https://…" />
+                </label>
+                <label>
+                    Video-URL
+                    <input @bind="_videoUrl" @bind:event="oninput" placeholder="https://… (YouTube/Vimeo)" />
+                </label>
+                        </div>
+                    }
+                    @if (_step == 3)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-3">
+            <label>
+                Salaristabel
+                <select @bind="_salaryTableId" required>
+                    <option value="">— Kies een salaristabel —</option>
+                    @foreach (var t in _salaryTables)
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                </select>
+            </label>
+            @if (SelectedSalaryTable is not null)
+            {
+                <div class="salary-table-preview" aria-live="polite">
+                    <p class="salary-table-preview__title">Voorbeeld · @SelectedSalaryTable.Name</p>
+                    <table class="wage-table">
+                        <thead>
+                            <tr>
+                                <th>Leeftijd</th>
+                                <th>Uurloon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rate in SelectedSalaryTable.Rates.OrderBy(r => r.AgeYears))
+                            {
+                                <tr>
+                                    <th>@rate.Label</th>
+                                    <td>€ @rate.HourlyRate.ToString("0.00")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <fieldset class="vacancy-hours">
+                <legend class="visually-hidden">Uren per week</legend>
+                <div class="vacancy-hours__row">
+                    <span class="vacancy-hours__title">Uren per week</span>
+                    <label>
+                        Min
+                        <input type="number" min="1" max="60" step="0.5" @bind="_minHours" @bind:event="oninput" />
+                    </label>
+                    <span class="vacancy-hours__sep" aria-hidden="true">–</span>
+                    <label>
+                        Max
+                        <input type="number" min="1" max="60" step="0.5" @bind="_maxHours" @bind:event="oninput" />
+                    </label>
+                    @if (_minHours is decimal minH && _maxHours is decimal maxH && maxH >= minH)
+                    {
+                        <span class="vacancy-hours__meta muted">@HoursRangeRules.CategoryLabel(new HoursRange(minH, maxH).Category)</span>
+                    }
+                </div>
+            </fieldset>
+
+            <fieldset class="vacancy-schedule">
+                <legend>Dagdelen</legend>
+                <p class="muted vacancy-field-hint">Selecteer voor welke dagdelen de vacature bedoeld is, of kies tijden in overleg.</p>
+                <label class="vacancy-toggle-row">
+                    <input type="checkbox" checked="@_flexibleTimes" @onchange="OnFlexibleTimesChanged" />
+                    <span>
+                        <strong>Tijden in overleg / Variabele tijden</strong>
+                        <span class="muted">Geen vaste dagdelen; matching weegt dagdelen neutraal</span>
+                    </span>
+                </label>
+                <div class="vacancy-schedule__table-wrap @(_flexibleTimes ? "is-disabled" : null)">
+                    <table class="wage-table vacancy-schedule__table">
+                        <thead>
+                            <tr>
+                                <th>Dag</th>
+                                @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                {
+                                    <th>
+                                        @slot
+                                        <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
+                                    </th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in DayPartMatrix.DayCodes)
+                            {
+                                <tr>
+                                    <th>@day</th>
+                                    @foreach (var slot in DayPartMatrix.DayPartCodes)
+                                    {
+                                        var key = $"{day}:{slot}";
+                                        <td>
+                                            <input type="checkbox"
+                                                   checked="@_scheduleSlots.Contains(key)"
+                                                   disabled="@_flexibleTimes"
+                                                   aria-label="@($"{day} {slot}")"
+                                                   @onchange="e => ToggleScheduleSlot(key, e)" />
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </fieldset>
+
+                        </div>
+                    }
+                    @if (_step == 4)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-4">
+            <fieldset class="profile-roles">
+                <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
+                @foreach (var label in _branchOptions)
+                {
+                    var selected = _selectedWorkTypes.Contains(label);
+                    var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
+                    <label class="@(disabled ? "is-disabled" : null)">
+                        <input type="checkbox"
+                               checked="@selected"
+                               disabled="@disabled"
+                               @onchange="e => ToggleWorkType(label, e)" />
+                        @label
+                    </label>
+                }
+            </fieldset>
+            <fieldset class="profile-roles">
+                <legend>Vereist rijbewijs (optioneel)</legend>
+                @foreach (var license in _licenseOptions)
+                {
+                    <label>
+                        <input type="checkbox"
+                               checked="@_selectedLicenses.Contains(license)"
+                               @onchange="e => ToggleLicense(license, e)" />
+                        @license
+                    </label>
+                }
+            </fieldset>
+            <fieldset class="profile-roles">
+                <legend>Vereist opleidingsniveau (optioneel)</legend>
+                @foreach (var level in _educationOptions)
+                {
+                    <label>
+                        <input type="checkbox"
+                               checked="@_selectedEducationLevels.Contains(level)"
+                               @onchange="e => ToggleEducation(level, e)" />
+                        @level
+                    </label>
+                }
+            </fieldset>
+            <fieldset class="vacancy-barrier">
+                <legend>@Culture["Employer.Barrier.Legend"]</legend>
+                <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.Hint"]</p>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="@Culture["Employer.Barrier.Legend"]">
+                    <label>
+                        <input type="radio" name="barrier" checked="@(!_barrierHigh)" @onchange="() => SetBarrierHigh(false)" />
+                        @Culture["Employer.Barrier.Low"]
+                    </label>
+                    <label>
+                        <input type="radio" name="barrier" checked="@_barrierHigh" @onchange="() => SetBarrierHigh(true)" />
+                        @Culture["Employer.Barrier.High"]
+                    </label>
+                </div>
+                @if (_barrierHigh)
+                {
+                    <label>
+                        @Culture["Employer.Barrier.Diplomas"]
+                        <textarea rows="3" @bind="_barrierDiplomas" @bind:event="oninput" placeholder="MBO Verpleegkunde"></textarea>
+                    </label>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.HardHint"]</p>
+                    <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Barrier.HardChecks"]">
+                        @foreach (var check in VacancyHardCheckCatalog.Suggested)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_barrierHardChecks.Contains(check.Kind)"
+                                       @onchange="e => ToggleHardCheck(check.Kind, e)" />
+                                @check.Label
+                            </label>
+                        }
+                    </div>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Barrier.Certs"]</p>
+                    <div class="profile-min-employers__options" role="group">
+                        @foreach (var cert in VacancyBarrierCatalog.SuggestedCertifications)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_barrierCerts.Contains(cert)"
+                                       @onchange="e => ToggleBarrierCert(cert, e)" />
+                                @cert
+                            </label>
+                        }
+                    </div>
+                    <label>
+                        Extra certificaten (komma)
+                        <input @bind="_barrierCertExtra" @bind:event="oninput" placeholder="VCA, BIG" />
+                    </label>
+                    <div class="vacancy-hours__row">
+                        <label>
+                            @Culture["Employer.Barrier.Years"]
+                            <input type="number" min="0" max="40" @bind="_barrierYears" @bind:event="oninput" />
+                        </label>
+                        <label>
+                            @Culture["Employer.Barrier.Hours"]
+                            <input type="number" min="0" max="80000" step="100" @bind="_barrierHours" @bind:event="oninput" />
+                        </label>
+                    </div>
+                }
+            </fieldset>
+            <fieldset class="profile-min-employers">
+                <legend>Minimaal aantal werkgevers</legend>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="Minimaal aantal werkgevers">
+                    <label>
+                        <input type="radio" name="min-employers" checked="@(_minimumEmployers is null)" @onchange="() => SetMinimumEmployers(null)" />
+                        Geen
+                    </label>
+                    @foreach (var n in _minEmployerOptions)
+                    {
+                        <label>
+                            <input type="radio" name="min-employers" checked="@(_minimumEmployers == n)" @onchange="() => SetMinimumEmployers(n)" />
+                            @n
+                        </label>
+                    }
+                </div>
+            </fieldset>
+            <fieldset class="profile-min-employers">
+                <legend>Minimaal aantal recensies</legend>
+                <p class="muted vacancy-field-hint">Standaard geen. Bij 1 of meer is dit een harde eis: solliciteren kan pas als het kandidaatprofiel zoveel complete recensies heeft.</p>
+                <div class="profile-min-employers__options" role="radiogroup" aria-label="Minimaal aantal recensies">
+                    <label>
+                        <input type="radio" name="min-references" checked="@(_minimumReferences is null)" @onchange="() => SetMinimumReferences(null)" />
+                        Geen
+                    </label>
+                    @foreach (var n in _minReferenceOptions)
+                    {
+                        <label>
+                            <input type="radio" name="min-references" checked="@(_minimumReferences == n)" @onchange="() => SetMinimumReferences(n)" />
+                            @n
+                        </label>
+                    }
+                </div>
+            </fieldset>
+                        </div>
+                    }
+                    @if (_step == 5)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-5">
+            <fieldset class="profile-roles vacancy-culture">
+                <legend>@Culture["WaProfile.Vacancy.Section"]</legend>
+                @if (_companyCultureSummary is null && !_teamOverride)
+                {
+                    <p class="muted vacancy-field-hint">
+                        @Culture["WaProfile.Vacancy.NoProfile"]
+                        <a href="/register/bedrijf?stap=cultuur">@Culture["WaProfile.Vacancy.EditLink"]</a>
+                    </p>
+                }
+                else if (!_teamOverride)
+                {
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" checked="@(!_teamOverride)" @onchange="e => SetTeamOverride(!(e.Value as bool? ?? false))" />
+                        <span>
+                            <strong>@string.Format(Culture["WaProfile.Vacancy.InheritTitle"], _companyCultureName)</strong>
+                            <span class="muted">@Culture["WaProfile.Vacancy.InheritHint"]</span>
+                        </span>
+                    </label>
+                    @if (_companyCultureSummary is not null)
+                    {
+                        <div class="wa-prof vacancy-culture__summary" aria-label="@Culture["WaProfile.Cultuur.ProfileTitle"]">
+                            @foreach (var (label, pct) in _companyCultureSummary)
+                            {
+                                <div><b>@pct%</b>@label</div>
+                            }
+                        </div>
+                        @if (_companyValueLabels.Count > 0)
+                        {
+                            <div class="wa-toprow wa-toprow--gap">
+                                @foreach (var v in _companyValueLabels)
+                                {
+                                    <span class="wa-pill">@v</span>
+                                }
+                                <a class="wa-link" href="/werkgever/organisatie/profiel?tab=cultuur">@Culture["WaProfile.Vacancy.EditLink"]</a>
+                            </div>
+                        }
+                    }
+                    <button type="button" class="btn ghost" @onclick="() => SetTeamOverride(true)">
+                        @Culture["WaProfile.Vacancy.Override"]
+                        <span class="pill">@Culture["WaProfile.Vacancy.Optional"]</span>
+                    </button>
+                }
+                else
+                {
+                    <label class="vacancy-toggle-row">
+                        <input type="checkbox" checked="@_teamOverride" @onchange="e => SetTeamOverride(e.Value as bool? ?? false)" />
+                        <span>
+                            <strong>@Culture["WaProfile.Vacancy.Override"]</strong>
+                            <span class="muted">@Culture["WaProfile.Vacancy.OverrideHint"]</span>
+                        </span>
+                    </label>
+                    <p class="muted vacancy-field-hint">@Culture["Employer.Culture.Hint"]</p>
+                    <div class="profile-min-employers__options" role="group" aria-label="@Culture["Employer.Culture.Legend"]">
+                        @foreach (var pillar in CulturePillarCatalog.All)
+                        {
+                            <label>
+                                <input type="checkbox"
+                                       checked="@_selectedCulturePillars.Contains(pillar.Id)"
+                                       @onchange="e => ToggleCulturePillar(pillar.Id, e)" />
+                                @Culture[pillar.LabelKey]
+                            </label>
+                        }
+                    </div>
+                    @if (_cultureError)
+                    {
+                        <p class="state-message error">@Culture["Employer.Culture.Error"]</p>
+                    }
+                }
+            </fieldset>
+            <fieldset class="vacancy-legal">
+                <legend>Werkzaamheden &amp; wetgeving</legend>
+                <p class="muted vacancy-field-hint">Bepaalt automatisch of jongeren (15–17) mogen solliciteren.</p>
+                <ul class="vacancy-legal__list">
+                    @foreach (var flag in LegalTaskFlags.Catalog)
+                    {
+                        var isOn = GetLegalFlag(flag.Code);
+                        var tipOpen = _openLegalTip == flag.Code;
+                        <li class="vacancy-legal__item @(tipOpen ? "is-open" : null)">
+                            <input id="@($"legal-{flag.Code}")"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   checked="@isOn"
+                                   @onchange="e => SetLegalFlag(flag.Code, e)" />
+                            <label class="vacancy-legal__text" for="@($"legal-{flag.Code}")">@flag.Label</label>
+                            <button type="button"
+                                    class="vacancy-legal__info"
+                                    title="@flag.Tooltip"
+                                    aria-label="@($"Toelichting: {flag.Label}")"
+                                    aria-expanded="@tipOpen"
+                                    @onclick="() => ToggleLegalTip(flag.Code)">
+                                i
+                            </button>
+                            @if (tipOpen)
+                            {
+                                <span class="vacancy-legal__tip">@flag.Tooltip</span>
+                            }
+                        </li>
+                    }
+                    @if (ShowSuitableFor65PlusLegal)
+                    {
+                        <li class="vacancy-legal__item vacancy-legal__item--plain">
+                            <input id="legal-suitable-65"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   @bind="_suitableFor65Plus" />
+                            <label class="vacancy-legal__text" for="legal-suitable-65">
+                                Geschikt voor 65+
+                                <span class="muted">Vacature blijft regulier en krijgt de 65+ filter/badge.</span>
+                            </label>
+                        </li>
+                    }
+                    @if (ShowJobCoachLegal)
+                    {
+                        <li class="vacancy-legal__item vacancy-legal__item--plain">
+                            <input id="legal-jobcoach"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   checked="@(string.Equals(GetCategoryField(VacancyCategoryExtraFields.JobCoachAvailable), "ja", StringComparison.OrdinalIgnoreCase))"
+                                   @onchange="e => SetCategoryBool(VacancyCategoryExtraFields.JobCoachAvailable, e)" />
+                            <label class="vacancy-legal__text" for="legal-jobcoach">Jobcoach beschikbaar</label>
+                        </li>
+                    }
+                </ul>
+            </fieldset>
+
+                        </div>
+                    }
+                    @if (_step == 6)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-6">
+            <fieldset class="vacancy-contact">
+                <legend>Voorkeur voor contact</legend>
+                <p class="muted vacancy-field-hint">
+                    Directe contactopties (WhatsApp/telefoon) verschijnen voor kandidaten pas na een succesvolle sollicitatie.
+                </p>
+                @if (SelectedCompany is not null)
+                {
+                    <p class="vacancy-contact__company">
+                        Bedrijf:
+                        @(SelectedCompany.DirectContactEnabled
+                            ? $"direct contact aan ({string.Join(", ", CompanyChannelLabels(SelectedCompany))})"
+                            : "direct contact uit")
+                    </p>
+                }
+                <ul class="vacancy-legal__list">
+                    <li class="vacancy-legal__item vacancy-legal__item--plain">
+                        <input id="vacancy-direct-contact"
+                               class="vacancy-legal__check"
+                               type="checkbox"
+                               @bind="_vacancyDirectContact"
+                               @bind:after="OnVacancyDirectContactChanged" />
+                        <label class="vacancy-legal__text" for="vacancy-direct-contact">
+                            Direct contact gewenst
+                            <span class="muted">Mail, telefoon of WhatsApp tonen na sollicitatie</span>
+                        </label>
+                    </li>
+                </ul>
+                @if (_vacancyDirectContact)
+                {
+                    <div class="vacancy-contact__channels" role="group" aria-label="Contactkanalen">
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferMail" />
+                            Mail
+                        </label>
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferPhone" />
+                            Telefoon
+                        </label>
+                        <label class="vacancy-contact__channel">
+                            <input type="checkbox" @bind="_vacancyPreferWhatsApp" />
+                            WhatsApp
+                        </label>
+                    </div>
+                }
+            </fieldset>
+
+            <fieldset class="vacancy-contact">
+                <legend>E-mailcheck bij solliciteren</legend>
+                <p class="muted vacancy-field-hint">
+                    Standaard uit, zodat kandidaten meteen kunnen solliciteren.
+                    Alleen aanzetten als je een extra bevestiging via e-mail wilt.
+                </p>
+                <ul class="vacancy-legal__list">
+                    <li class="vacancy-legal__item vacancy-legal__item--plain">
+                        <input id="vacancy-email-verification"
+                               class="vacancy-legal__check"
+                               type="checkbox"
+                               @bind="_requireEmailVerification" />
+                        <label class="vacancy-legal__text" for="vacancy-email-verification">
+                            Vraag e-mailbevestiging
+                            <span class="muted">Kandidaat krijgt een korte code per mail vóór de sollicitatie definitief is</span>
+                        </label>
+                    </li>
+                </ul>
+            </fieldset>
+
+                        </div>
+                    }@if (!string.IsNullOrEmpty(_stepMessage))
+                    {
+                        <p class="state-message error" role="alert">@_stepMessage</p>
+                    }
+                    <footer class="vac-wizard__foot">
+                        <div class="vac-wizard__foot-actions">
+                            @if (_step > 1)
+                            {
+                                <button type="button" class="btn ghost vac-wizard__back" @onclick="GoBackAsync">Terug</button>
+                            }
+                            <button type="button" class="btn ghost vac-wizard__preview" data-testid="vacancy-preview-open" @onclick="OpenPreviewAsync">
+                                Bekijk als kandidaat
+                            </button>
+                            @if (_step < TotalSteps)
+                            {
+                                <button type="button" class="btn btn-primary vac-wizard__next" @onclick="GoNextAsync">Volgende</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary vac-wizard__save" type="submit" disabled="@_saving" data-testid="vacancy-save-draft">
+                                    @(_saving ? "Opslaan…" : Culture["Employer.SaveDraft"])
+                                </button>
+                                @if (SelectedCompanyIsUnverified && _editVacancyId is Guid readyId && !_saving)
+                                {
+                                    <button class="btn ghost" type="button" disabled="@_readyBusy" @onclick="() => MarkReadyAsync(readyId)">
+                                        @(_readyBusy ? Culture["Common.Busy"] : Culture["WaBanner.ReadyCta"])
+                                    </button>
+                                }
+                            }
+                        </div>
+                    </footer>
+                </form>
+
+                @if (_proactiveMatchingOn && _editVacancyId is Guid shortlistVacancyId)
+                {
+                    <section class="proactive-shortlist-promo" aria-labelledby="proactive-shortlist-promo-title">
+                        <h2 id="proactive-shortlist-promo-title">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
+                        <p>@Culture["ProactiveMatching.Employer.Shortlist.PromoLead"]</p>
+                        <a class="login-submit proactive-shortlist-promo__cta"
+                           href="@($"/werkgever/vacatures/{shortlistVacancyId:D}/proactieve-shortlist")">
+                            @Culture["ProactiveMatching.Employer.Shortlist.OpenPage"]
+                        </a>
+                    </section>
+                }
+            </div>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(_message))
+    {
+        <p class="state-message error">@_message</p>
+    }
+</div>
+
+<VacancyCandidatePreviewOverlay IsOpen="_previewOpen"
+                                Vacancy="PreviewVacancy"
+                                MobileSheet="_previewMobileSheet"
+                                OnClose="ClosePreviewAsync" />
+
+@if (_moderationOpen)
+{
+    <LobsyFriendlyDialog IsOpen="true"
+                         Title="Even aanpassen"
+                         TitleId="moderation-title"
+                         Lead="We hebben de tekst bekeken voordat we opslaan."
+                         Class="moderation-modal"
+                         OnClose="CloseModeration">
+        <p class="moderation-modal__warning">@_moderationWarning</p>
+        @if (!string.IsNullOrWhiteSpace(_moderationSuggestion))
+        {
+            <div class="moderation-modal__suggestion">
+                <strong>Tip</strong>
+                <p>@_moderationSuggestion</p>
+            </div>
+        }
+        <div class="inline-actions">
+            <button type="button" class="login-submit" @onclick="CloseModeration">Tekst aanpassen</button>
+        </div>
+    </LobsyFriendlyDialog>
+}
