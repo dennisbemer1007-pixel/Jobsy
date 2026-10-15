@@ -311,7 +311,7 @@ public sealed class JobsyApiAuthHandler : DelegatingHandler
             await httpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic());
+                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic(httpContext));
             SessionActivityCookie.Stamp(httpContext, DateTimeOffset.UtcNow);
             if (!string.IsNullOrWhiteSpace(profile.RefreshToken) && profile.ExpiresAtUtc is DateTime exp)
             {

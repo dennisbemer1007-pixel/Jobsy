@@ -1,3 +1,4 @@
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Entities;
@@ -26,7 +27,7 @@ public class PlatformFeatureSettings
     /// Interactive session inactivity timeout in minutes (cookie + UI idle timer).
     /// Default 30 minutes; admin-configurable.
     /// </summary>
-    public int SessionInactivityTimeoutMinutes { get; set; } = 30;
+    public int SessionInactivityTimeoutMinutes { get; set; } = SessionAuthDefaults.InactivityTimeoutMinutes;
 
     /// <summary>
     /// Global floor for cookie <c>session_version</c>. Raise on a release to force every

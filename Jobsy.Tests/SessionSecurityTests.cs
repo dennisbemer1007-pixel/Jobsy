@@ -24,8 +24,8 @@ namespace Jobsy.Tests;
 public class SessionSecurityTests
 {
     [Theory]
-    [InlineData(0, 30)]
-    [InlineData(-5, 30)]
+    [InlineData(0, 480)]
+    [InlineData(-5, 480)]
     [InlineData(4, 5)]
     [InlineData(30, 30)]
     [InlineData(120, 120)]
@@ -143,7 +143,7 @@ public class SessionSecurityTests
     }
 
     [Fact]
-    public async Task Middleware_expires_forged_plaintext_or_future_activity_cookie()
+    public async Task Middleware_recovers_unreadable_activity_cookie_while_auth_valid()
     {
         var http = CreateAuthedContext("/admin/settings", "admin@jobsy.local");
         var future = DateTimeOffset.UtcNow.AddHours(6).ToUnixTimeSeconds();
@@ -152,11 +152,49 @@ public class SessionSecurityTests
         var authService = new FakeAuthService();
         ReplaceAuthService(http, authService);
 
-        var middleware = new SessionInactivityMiddleware(_ => Task.CompletedTask);
+        var nextCalled = false;
+        var middleware = new SessionInactivityMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
         await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
 
-        Assert.True(authService.SignedOut);
-        Assert.Contains("session-expired", http.Response.Headers.Location.ToString());
+        Assert.False(authService.SignedOut);
+        Assert.True(nextCalled);
+        Assert.Contains(
+            http.Response.Headers.SetCookie,
+            v => v is not null
+                 && v.Contains(SessionInactivityMiddleware.LastActivityCookieName, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Middleware_skips_idle_logout_for_employer_with_device_session()
+    {
+        var userId = Guid.NewGuid().ToString("D");
+        var http = CreateAuthedContext("/employer/vacancies", "manager@jobsy.local");
+        http.User = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Email, "manager@jobsy.local"),
+                new Claim(ClaimTypes.Role, "BranchManager"),
+                new Claim(Jobsy.Core.Authorization.JobsyClaimTypes.HasDeviceSession, "1")
+            ],
+            CookieAuthenticationDefaults.AuthenticationScheme));
+        SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow.AddMinutes(-120));
+        CopySetCookieToRequest(http);
+        ReplaceAuthService(http, new FakeAuthService());
+
+        var nextCalled = false;
+        var middleware = new SessionInactivityMiddleware(_ =>
+        {
+            nextCalled = true;
+            return Task.CompletedTask;
+        });
+        await middleware.InvokeAsync(http, new FixedTimeoutProvider(30));
+
+        Assert.True(nextCalled);
+        Assert.False(((FakeAuthService)http.RequestServices.GetRequiredService<IAuthenticationService>()).SignedOut);
     }
 
     [Fact]

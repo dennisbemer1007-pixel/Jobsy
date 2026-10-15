@@ -6,6 +6,7 @@ using System.Text.Json;
 using Jobsy.Core;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Security;
@@ -51,6 +52,9 @@ public static class AuthServiceCollectionExtensions
         services.AddSingleton<IExternalAuthCredentialSource, ExternalAuthCredentialSource>();
 
         var authOptions = configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+        var sessionAuth = configuration.GetSection(SessionAuthOptions.SectionName).Get<SessionAuthOptions>()
+                          ?? new SessionAuthOptions();
+        var authCookieMinutes = SessionTimeoutResolver.ResolveAuthCookieLifetimeMinutes(sessionAuth);
         var secureAlways = environment is not null && !environment.IsDevelopment();
 
         var authBuilder = services
@@ -63,7 +67,7 @@ public static class AuthServiceCollectionExtensions
                 // Sliding cookie ceiling; fine-grained inactivity is enforced by SessionInactivityMiddleware
                 // using the admin-configured SessionInactivityTimeoutMinutes value.
                 options.SlidingExpiration = true;
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes);
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(authCookieMinutes);
                 options.Cookie.Name = "Jobsy.Auth";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SameSite = SameSiteMode.Lax;
@@ -76,8 +80,10 @@ public static class AuthServiceCollectionExtensions
                     context.Properties.AllowRefresh = true;
                     if (context.Properties.ExpiresUtc is null)
                     {
-                        context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(
-                            SessionSecurityRules.MaxInactivityTimeoutMinutes);
+                        var opts = context.HttpContext.RequestServices
+                            .GetService<IOptions<SessionAuthOptions>>()?.Value;
+                        var minutes = SessionTimeoutResolver.ResolveAuthCookieLifetimeMinutes(opts);
+                        context.Properties.ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(minutes);
                     }
 
                     StampLastActivity(context.HttpContext);
@@ -783,7 +789,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             ClearMfaChallengeCookies(http);
             StampLastActivity(http);
 
@@ -966,7 +972,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));
@@ -1158,7 +1164,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             StampLastActivity(http);
 
             return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl ?? "/home"));
@@ -1228,7 +1234,7 @@ public static class AuthServiceCollectionExtensions
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                CreateSessionAuthProperties());
+                CreateSessionAuthProperties(http));
             StampLastActivity(http);
             if (!string.IsNullOrWhiteSpace(profile.RefreshToken) && profile.DeviceExpiresAtUtc is DateTime exp)
             {
@@ -1282,16 +1288,25 @@ public static class AuthServiceCollectionExtensions
         }).AllowAnonymous().DisableAntiforgery();
     }
 
-    public static AuthenticationProperties CreateSessionAuthPropertiesPublic()
-        => CreateSessionAuthProperties();
+    public static AuthenticationProperties CreateSessionAuthPropertiesPublic(HttpContext? http = null)
+        => CreateSessionAuthProperties(http);
 
-    private static AuthenticationProperties CreateSessionAuthProperties() =>
-        new()
+    private static AuthenticationProperties CreateSessionAuthProperties(HttpContext? http = null)
+    {
+        var minutes = SessionSecurityRules.MaxInactivityTimeoutMinutes;
+        if (http is not null)
+        {
+            var opts = http.RequestServices.GetService<IOptions<SessionAuthOptions>>()?.Value;
+            minutes = SessionTimeoutResolver.ResolveAuthCookieLifetimeMinutes(opts);
+        }
+
+        return new AuthenticationProperties
         {
             IsPersistent = true,
             AllowRefresh = true,
-            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(SessionSecurityRules.MaxInactivityTimeoutMinutes)
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(minutes)
         };
+    }
 
     private static void StampLastActivity(HttpContext http)
         => SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow);
@@ -1342,7 +1357,12 @@ public static class AuthServiceCollectionExtensions
             return;
         }
 
-        var fresh = JobsyLocalSessionToken.Create(email, userId, key);
+        var sessionOpts = http.RequestServices.GetRequiredService<IOptions<SessionAuthOptions>>().Value;
+        var fresh = JobsyLocalSessionToken.Create(
+            email,
+            userId,
+            key,
+            SessionTimeoutResolver.ResolveLocalSessionLifetime(sessionOpts));
         foreach (var claim in identity.FindAll(JobsyClaimTypes.LocalSession).ToList())
         {
             identity.RemoveClaim(claim);
@@ -1352,7 +1372,7 @@ public static class AuthServiceCollectionExtensions
         await http.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             http.User,
-            CreateSessionAuthProperties());
+            CreateSessionAuthProperties(http));
     }
 
     private static bool IsDemoLoginEnabled(HttpContext http, IConfiguration configuration)
@@ -1458,7 +1478,7 @@ public static class AuthServiceCollectionExtensions
         await http.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             principal,
-            CreateSessionAuthProperties());
+            CreateSessionAuthProperties(http));
         StampLastActivity(http);
 
         return Results.Redirect(AuthRedirects.SafeLocalUrl(returnUrl));

@@ -38,6 +38,7 @@ public class SettingsController : ControllerBase
     private readonly AiOptions _ai;
     private readonly MistralOptions _mistral;
     private readonly OpenAiOptions _openAi;
+    private readonly SessionAuthOptions _sessionAuth;
     private readonly MailOptions _mail;
     private readonly LettermintOptions _lettermint;
     private readonly WhatsAppReminderOptions _whatsApp;
@@ -58,9 +59,11 @@ public class SettingsController : ControllerBase
         IOptions<WhatsAppReminderOptions>? whatsAppOptions = null,
         IOptions<OpenAiOptions>? openAiOptions = null,
         IOptions<MailOptions>? mailOptions = null,
-        IOptions<LettermintOptions>? lettermintOptions = null)
+        IOptions<LettermintOptions>? lettermintOptions = null,
+        IOptions<SessionAuthOptions>? sessionAuthOptions = null)
     {
         _db = db;
+        _sessionAuth = sessionAuthOptions?.Value ?? new SessionAuthOptions();
         _credentials = credentials;
         _features = features;
         _companySettings = companySettings;
@@ -653,7 +656,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     public async Task<ActionResult<SessionSecurityDto>> GetSessionSecurity(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
-        return Ok(new SessionSecurityDto(snap.SessionInactivityTimeoutMinutes));
+        var minutes = SessionTimeoutResolver.ResolveInactivityMinutes(
+            _sessionAuth,
+            snap.SessionInactivityTimeoutMinutes);
+        return Ok(new SessionSecurityDto(minutes));
     }
 
     [HttpGet("company")]
