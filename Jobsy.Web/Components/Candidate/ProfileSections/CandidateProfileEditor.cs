@@ -129,6 +129,7 @@ public sealed class CandidateProfileEditor : IDisposable
     public string? WorkRegionSuggestion { get; set; }
     public bool? HasOwnCar { get; set; }
     public HashSet<string> ContractPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> WorkStatuses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public bool EmailVerified { get; private set; }
     public bool PhoneVerified { get; private set; }
     public List<string> LearningGoals { get; } = [];
@@ -253,6 +254,15 @@ public sealed class CandidateProfileEditor : IDisposable
             if (!string.IsNullOrWhiteSpace(code))
             {
                 ContractPreferences.Add(code);
+            }
+        }
+
+        WorkStatuses.Clear();
+        foreach (var code in prefs.WorkStatuses ?? [])
+        {
+            if (WorkStatusCatalog.IsKnown(code))
+            {
+                WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
             }
         }
 
@@ -1001,7 +1011,8 @@ public sealed class CandidateProfileEditor : IDisposable
                     ShareEmployerPreferences = ShareEmployerPreferences,
                     WorkRegion = WorkRegion,
                     HasOwnCar = HasOwnCar,
-                    ContractPreferences = ContractPreferences.OrderBy(x => x).ToList()
+                    ContractPreferences = ContractPreferences.OrderBy(x => x).ToList(),
+                    WorkStatuses = WorkStatuses.OrderBy(x => x).ToList()
                 },
                 homeLatitude: clearHome || !HomeLocationDirty ? null : HomeLat,
                 homeLongitude: clearHome || !HomeLocationDirty ? null : HomeLng,

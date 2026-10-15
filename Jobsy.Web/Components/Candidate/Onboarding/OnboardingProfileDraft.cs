@@ -48,6 +48,7 @@ public sealed class OnboardingProfileDraft
     public HashSet<string> Presets { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> DrivingLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> EmployerPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> WorkStatuses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Roles { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Hobbies { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Dislikes { get; } = new(StringComparer.OrdinalIgnoreCase);

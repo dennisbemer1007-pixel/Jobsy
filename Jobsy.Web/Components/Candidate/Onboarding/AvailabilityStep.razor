@@ -40,7 +40,7 @@
             <button type="button"
                     class="ob-wizard__summary-action"
                     aria-expanded="@(Draft.FineTune ? "true" : "false")"
-                    @onclick="ToggleFineTune">
+                    @onclick="OnFineTuneClickAsync">
                 @(Draft.FineTune ? Culture["Onboarding.AvailabilityFineTuneClose"] : Culture["Onboarding.AvailabilityFineTuneCta"])
             </button>
         </div>
@@ -60,12 +60,6 @@
         </dl>
     </section>
 }
-
-<AvailabilityStartSection Immediate="Draft.Immediate"
-                            ImmediateChanged="OnImmediateChanged"
-                            AvailableFrom="Draft.AvailableFrom"
-                            AvailableFromChanged="OnAvailableFromChanged"
-                            ShowValidation="true" />
 
 @if (ShowMatrix)
 {
@@ -101,13 +95,19 @@
         {
             <p class="ob-wizard__hint">
                 @Culture["Onboarding.ManualOverride"]
-                <button type="button" class="ob-wizard__inline-link" @onclick="ResetPresets">
+                <button type="button" class="ob-wizard__inline-link" @onclick="OnResetPresetsClickAsync">
                     @Culture["Onboarding.Refill"]
                 </button>
             </p>
         }
     </section>
 }
+
+<AvailabilityStartSection Immediate="Draft.Immediate"
+                            ImmediateChanged="OnImmediateChanged"
+                            AvailableFrom="Draft.AvailableFrom"
+                            AvailableFromChanged="OnAvailableFromChanged"
+                            ShowValidation="true" />
 
 @if (!StartDateValid && !Draft.Immediate)
 {
@@ -167,4 +167,16 @@
         Draft.AvailableFrom = value;
         await NotifyAsync();
     }
+
+    private async Task OnFineTuneClickAsync()
+    {
+        Draft.FineTune = !Draft.FineTune;
+        await NotifyAsync();
+        if (ToggleFineTune.HasDelegate)
+        {
+            await ToggleFineTune.InvokeAsync();
+        }
+    }
+
+    private Task OnResetPresetsClickAsync() => ResetPresets.InvokeAsync();
 }

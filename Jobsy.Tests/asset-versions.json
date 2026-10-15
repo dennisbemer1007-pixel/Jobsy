@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "8e5b77727c2d57a04d8c20db5459d2b1a002934673ac9ba12dc4029af8c0feef",
-    "v": "20261015-02"
+    "sha256": "66be8ddb169a1dfcf207877c1dc2f4470f74157b777693a74dc6e325b57b576d",
+    "v": "20261015-03"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -96,12 +96,12 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "9961d9a0fac174c8588be0bf52e57987c295f85e3cd3a2cbc08498fd7f51197f",
-    "v": "20261012-04"
+    "sha256": "fff0a875b99f9a76b7797a7f3c1b1a01ece63fbe1cd38a4600ea5aa81ecd9c54",
+    "v": "20261015-02"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "7688ac608274cf00918f6b0cbe5ce05f7740a70c389402c5f85d0d1cdf63de0a",
-    "v": "20261015-01"
+    "sha256": "65ec7e997f0725bc31d91682f8d9d07c195d4c87fc0727d32e37232f9cb7d45a",
+    "v": "20261015-04"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
@@ -164,12 +164,12 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "4f9280becb6a6ca3e8b9bb76eb5e0323640bfd3b1613f5d561aa9e5888d3037e",
-    "v": "20261015-02"
+    "sha256": "d46c809f24170885c9de8395911b5570c23d8c2521eb0d0262e792e2fa6816ab",
+    "v": "20261015-03"
   },
   "js/app-extras.js": {
-    "sha256": "766c6b30c5eb689319309e1b3f6bd29871a9d93e9f57468be1937a2aee6f9823",
-    "v": "20260902-bw1"
+    "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
+    "v": "20261015-pdfdl"
   },
   "js/blazor-boot.js": {
     "sha256": "d142e2be0ef852136fcb6cf404f1687e8e7dd35ccd65d7f29cdb701c81bc83fd",

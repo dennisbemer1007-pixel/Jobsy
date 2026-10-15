@@ -108,6 +108,18 @@ public class AcceptatieLayoutSweepTests
     }
 
     [Fact]
+    public void Candidate_scroll_hotfix_673_layout_traps_stay_removed()
+    {
+        var app = Read("Jobsy.Web", "wwwroot", "css", "app.css");
+        var wizard = Read("Jobsy.Web", "wwwroot", "css", "features", "onboarding-wizard.css");
+        Assert.DoesNotContain(".app-main:has(.journey)", app, StringComparison.Ordinal);
+        Assert.DoesNotContain("ob-wizard__layout{max-height:100dvh;overflow:hidden", wizard, StringComparison.Ordinal);
+        Assert.DoesNotContain("Progress header: solid bar, content scrolls underneath", wizard, StringComparison.Ordinal);
+        Assert.Contains("journey-coach--mobile", Read("Jobsy.Web", "wwwroot", "css", "features", "ontdekkingsreis.css"), StringComparison.Ordinal);
+        Assert.Contains("CandidateScrollRegressionPlaywrightTests", File.ReadAllText(Path.Combine(RepoRoot(), "Jobsy.Tests/CandidateScrollRegressionPlaywrightTests.cs")), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Service_worker_precache_matches_app_razor()
     {
         var app = Read("Jobsy.Web", "Components", "App.razor");

@@ -64,6 +64,31 @@ public static class AvailabilityOnboardingPresets
         }
     }
 
+    /// <summary>
+    /// After the candidate edits the matrix or hours, drop computed presets and keep custom + manual mode.
+    /// </summary>
+    public static void MarkManualEdit(HashSet<string> presets, ref bool presetsOverridden, ref bool fineTune)
+    {
+        presetsOverridden = true;
+        if (presets.Contains(AvailabilityPresetRules.Custom))
+        {
+            fineTune = true;
+            return;
+        }
+
+        if (presets.Count == 0)
+        {
+            presets.Clear();
+            presets.Add(AvailabilityPresetRules.Custom);
+            fineTune = true;
+            return;
+        }
+
+        presets.Clear();
+        presets.Add(AvailabilityPresetRules.Custom);
+        fineTune = true;
+    }
+
     public static void ResetToPresets(
         HashSet<string> presets,
         HashSet<string> availability,

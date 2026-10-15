@@ -51,6 +51,21 @@ public class AvailabilityOnboardingPresetsTests
     }
 
     [Fact]
+    public void Manual_edit_promotes_to_custom_and_keeps_fine_tune_open()
+    {
+        var presets = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "office" };
+        var overridden = false;
+        var fineTune = false;
+
+        AvailabilityOnboardingPresets.MarkManualEdit(presets, ref overridden, ref fineTune);
+
+        Assert.Single(presets);
+        Assert.Contains(AvailabilityPresetRules.Custom, presets);
+        Assert.True(overridden);
+        Assert.True(fineTune);
+    }
+
+    [Fact]
     public void Custom_is_a_known_preset_with_no_default_day_parts()
     {
         Assert.True(AvailabilityPresetRules.IsKnown(AvailabilityPresetRules.Custom));

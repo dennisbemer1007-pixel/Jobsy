@@ -517,6 +517,15 @@
             Draft.Education = parts[0];
             Draft.EducationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
         }
+
+        Draft.WorkStatuses.Clear();
+        foreach (var code in preferences.WorkStatuses ?? [])
+        {
+            if (WorkStatusCatalog.IsKnown(code))
+            {
+                Draft.WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
+            }
+        }
     }
 
     private async Task BeginAsync()
@@ -704,7 +713,7 @@
         ScheduleProfileSave();
     }
 
-    private void ToggleFineTune() => Draft.FineTune = !Draft.FineTune;
+    private void ToggleFineTune() => ScheduleProfileSave();
 
     private void TogglePreset(string code)
     {
@@ -767,7 +776,11 @@
 
     private void ManualAvailability()
     {
-        Draft.PresetsOverridden = true;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.MarkManualEdit(Draft.Presets, ref overridden, ref fineTune);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
         ScheduleProfileSave();
     }
 
@@ -1195,7 +1208,8 @@
                 ? []
                 : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],
             EducationDirection = Draft.EducationDirection,
-            HomeAddress = HomeAddress()
+            HomeAddress = HomeAddress(),
+            WorkStatuses = Draft.WorkStatuses.OrderBy(x => x).ToList()
         },
         homeLatitude: Draft.HomeLat,
         homeLongitude: Draft.HomeLng,

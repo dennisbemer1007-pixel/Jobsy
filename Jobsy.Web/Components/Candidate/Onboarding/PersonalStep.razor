@@ -94,6 +94,9 @@
         <p class="error" role="status">@AgeMessage</p>
     }
 </fieldset>
+
+<WorkStatusChipSelect Selected="Draft.WorkStatuses" OnToggle="ToggleWorkStatusAsync" />
+
 <label>
     @Culture["Profile.Phone"] <small>@Culture["Onboarding.Optional"]</small>
     <input type="tel" autocomplete="tel"
@@ -165,6 +168,16 @@
         : Culture.Format("Onboarding.PostcodeResolved", Draft.City);
 
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
+
+    private async Task ToggleWorkStatusAsync(string code)
+    {
+        if (!Draft.WorkStatuses.Add(code))
+        {
+            Draft.WorkStatuses.Remove(code);
+        }
+
+        await NotifyAsync();
+    }
     private Task OnAddressChangedAsync() => AddressChanged.InvokeAsync();
     private async Task OnBirthDatePickedAsync(DateOnly? value)
     {

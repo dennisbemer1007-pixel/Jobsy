@@ -27,6 +27,11 @@
 .ob-fields .ob-wizard__check{flex-direction:row;align-items:center}
 @media (max-width:420px){.ob-fields .ob-wizard__field-row{grid-template-columns:1fr}.ob-fields .ob-wizard__birth{grid-template-columns:1fr 1fr 1.4fr}}
 @media (max-width:359px){.ob-fields .ob-wizard__field-row,.ob-fields .ob-wizard__birth{grid-template-columns:1fr}}
+.work-status-field{margin-block:16px 8px;border:0;padding:0;min-inline-size:0}
+.work-status-chips{display:flex;flex-wrap:wrap;gap:8px;margin-block:8px 0}
+.work-status-chip{min-block-size:44px;padding:8px 14px;border:1px solid color-mix(in srgb,var(--border) 88%,transparent);border-radius:var(--radius-pill);background:var(--surface);color:var(--text);font-size:var(--text-sm);font-weight:500;font-family:inherit;cursor:pointer;touch-action:manipulation;text-align:start;line-height:1.25}
+.work-status-chip.is-selected{background:var(--brand);border-color:var(--brand-deep,var(--brand));color:#fff;font-weight:600}
+.profile-page--candidate .work-status-chips .work-status-chip.is-selected{background:var(--brand);color:#fff}
 .month-year{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr);gap:8px}
 .month-year select,.journey-body .ob-wizard__job input,.journey-body .ob-wizard__fine-tune input,.journey-body .ob-wizard__fine-tune select,.ob-wizard__job input{min-block-size:44px;inline-size:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font:inherit}
 .journey-body .ob-wizard__check{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin:8px 0 12px;clear:both}

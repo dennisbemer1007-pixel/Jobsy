@@ -1439,10 +1439,13 @@ window.lobsyPwaInstall = (function () {
   }
 
   function stabilizeStandaloneTitle() {
-    if (!readStandalone()) return;
     try {
       var bad = /installatie|uninstall|ongedaan/i.test(document.title || "");
-      if (bad || !(document.title || "").trim()) {
+      if (bad) {
+        document.title = "Lobsy";
+        return;
+      }
+      if (readStandalone() && !(document.title || "").trim()) {
         document.title = "Lobsy";
       }
     } catch (e) { }
@@ -1481,8 +1484,12 @@ window.lobsyPwaInstall = (function () {
     }).catch(function () { });
   }
 
+  stabilizeStandaloneTitle();
   if (readStandalone()) {
-    stabilizeStandaloneTitle();
+    try {
+      var titleObs = new MutationObserver(function () { stabilizeStandaloneTitle(); });
+      titleObs.observe(document.querySelector("title") || document.head, { subtree: true, childList: true, characterData: true });
+    } catch (e) { }
   }
 
   function visits() {

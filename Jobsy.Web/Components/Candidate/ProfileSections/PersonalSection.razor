@@ -96,6 +96,9 @@
                                 <p class="profile-address__hint">@Culture["Profile.CvMapPrivacyHint"]</p>
                             </div>
 
+                            <WorkStatusChipSelect Selected="Editor.WorkStatuses"
+                                                  OnToggle="ToggleWorkStatusAsync" />
+
                             @if (ShowDiscoveryFields)
                             {
                             <fieldset class="profile-roles">
@@ -163,6 +166,17 @@
     {
         Editor.DutchLevel = level;
         Editor.Notify();
+    }
+
+    private Task ToggleWorkStatusAsync(string code)
+    {
+        if (!Editor.WorkStatuses.Add(code))
+        {
+            Editor.WorkStatuses.Remove(code);
+        }
+
+        Editor.Notify();
+        return Task.CompletedTask;
     }
 
     private void OnAddLanguage(ChangeEventArgs e)
