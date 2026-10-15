@@ -68,10 +68,8 @@
     private RenderFragment MatchRow(string titleKey, string metaKey, int pct) => __builder =>
     {
         <div class="pub-landing__match-row">
-            <div class="pub-landing__match-title">
-                <b>@LandingText.For(titleKey, Variant)</b>
-                <small>@LandingText.For(metaKey, Variant)</small>
-            </div>
+            <b class="pub-landing__match-job">@LandingText.For(titleKey, Variant)</b>
+            <small class="pub-landing__match-meta">@LandingText.For(metaKey, Variant)</small>
             <div class="pub-landing__match-bar">
                 <span class="pub-landing__match-pct">@pct%</span>
                 <span class="pub-landing__match-track"><i style="@($"width:{pct}%")"></i></span>

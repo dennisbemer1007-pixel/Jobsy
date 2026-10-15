@@ -19,18 +19,9 @@
                 <a class="pub-btn pub-btn--primary pub-btn--lg"
                    href="@PublicRoutes.Test"
                    data-kpi="LandingCtaTest">@LandingText.For("Landing.Hero.CtaTest", Variant)</a>
-                @if (Variant == LandingVariant.On)
-                {
-                    <a class="pub-landing__textlink"
-                       href="@PublicRoutes.Login"
-                       data-kpi="LandingCtaLogin">@LandingText.For("Landing.Hero.CtaLogin", Variant)</a>
-                }
-                else
-                {
-                    <a class="pub-btn pub-btn--ghost pub-btn--lg"
-                       href="@PublicRoutes.Login"
-                       data-kpi="LandingCtaLogin">@LandingText.For("Landing.Hero.CtaLogin", Variant)</a>
-                }
+                <a class="pub-btn pub-btn--ghost pub-btn--lg @LoginCtaClass"
+                   href="@PublicRoutes.Login"
+                   data-kpi="LandingCtaLogin">@LandingText.For("Landing.Hero.CtaLogin", Variant)</a>
             </div>
             <div class="pub-landing__micro">
                 <span>@LandingText.For(MetaTimeKey, Variant)</span>
@@ -97,6 +88,8 @@
     private string HeroSubKey => Variant == LandingVariant.Zw ? "Landing.Hero.Sub.Zw" : "Landing.Hero.Sub";
     private string MetaTimeKey => Variant == LandingVariant.On ? "Landing.Hero.MetaTimePlain" : "Landing.Hero.MetaTime";
     private string MetaPrivacyKey => Variant == LandingVariant.On ? "Landing.Hero.MetaPrivacyPlain" : "Landing.Hero.MetaPrivacy";
+
+    private string LoginCtaClass => Variant == LandingVariant.On ? "pub-landing__cta-login" : "";
 
     private System.Globalization.CultureInfo CultureInfo =>
         System.Globalization.CultureInfo.GetCultureInfo(Culture.Language switch

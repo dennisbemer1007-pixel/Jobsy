@@ -1,10 +1,12 @@
+using Jobsy.Core.Hosting;
 using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Web.Features;
 
 /// <summary>
 /// Resolves ON/OFF once per request (cached in <see cref="HttpContext.Items"/>).
-/// Development-only overrides: query <c>?_variant=on|zw</c> and config <c>Landing:ForceVariant</c>.
+/// Overrides: query <c>?_variant=on|zw</c> (Development only) and config <c>Landing:ForceVariant</c>
+/// (Development and Acceptatie — set on lobsy-acc-web, not production).
 /// </summary>
 public sealed class LandingVariantResolver
 {
@@ -48,22 +50,33 @@ public sealed class LandingVariantResolver
 
     private async ValueTask<LandingVariant> ResolveCoreAsync(HttpContext? http, CancellationToken ct)
     {
-        if (_environment.IsDevelopment())
+        if (_environment.IsDevelopment()
+            && http is not null
+            && http.Request.Query.TryGetValue(QueryName, out var query)
+            && TryParse(query.ToString(), out var fromQuery))
         {
-            if (http is not null
-                && http.Request.Query.TryGetValue(QueryName, out var query)
-                && TryParse(query.ToString(), out var fromQuery))
-            {
-                return fromQuery;
-            }
+            return fromQuery;
+        }
 
-            if (TryParse(_configuration[ConfigKey], out var fromConfig))
-            {
-                return fromConfig;
-            }
+        if (AllowsConfigOverride(_environment, _configuration)
+            && TryParse(_configuration[ConfigKey], out var fromConfig))
+        {
+            return fromConfig;
         }
 
         return await _employers.VariantAsync(ct);
+    }
+
+    /// <summary>Acceptatie preview and local dev may force the landing variant via config; production may not.</summary>
+    public static bool AllowsConfigOverride(IHostEnvironment environment, IConfiguration configuration)
+    {
+        if (environment.IsDevelopment())
+        {
+            return true;
+        }
+
+        var label = configuration["Lobsy:DeploymentEnvironment"];
+        return string.Equals(label, DeploymentEnvironment.Acceptatie, StringComparison.OrdinalIgnoreCase);
     }
 
     public static bool TryParse(string? raw, out LandingVariant variant)

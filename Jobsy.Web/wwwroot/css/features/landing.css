@@ -837,6 +837,24 @@
     width: 100%;
   }
 
+  .pub-theme .pub-landing--combo .pub-landing__ctas .pub-btn--primary {
+    width: 100%;
+  }
+
+  .pub-theme .pub-landing--combo .pub-landing__ctas .pub-landing__cta-login {
+    width: auto;
+    min-height: auto;
+    padding: 0.35rem 0.75rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    align-self: center;
+    font-weight: 600;
+    color: var(--brand);
+    text-decoration: underline;
+    text-underline-offset: 0.14em;
+  }
+
   .pub-theme .pub-landing__scene {
     min-height: 22rem;
     margin-inline: 0;
@@ -1346,14 +1364,6 @@
   font-style: normal;
 }
 
-.pub-theme .pub-landing__textlink {
-  font-weight: 600;
-  color: var(--brand);
-  border-bottom: 1px solid color-mix(in srgb, var(--brand) 35%, transparent);
-  padding-bottom: 0.12rem;
-  text-decoration: none;
-}
-
 .pub-theme .pub-landing__lift {
   background: var(--surface);
   border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
@@ -1371,8 +1381,12 @@
 }
 
 .pub-theme .pub-landing__hero-grid--combo {
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.15fr);
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.22fr);
   gap: 2.5rem;
+}
+
+.pub-theme .pub-landing--combo .pub-landing__ctas {
+  align-items: center;
 }
 
 .pub-theme .pub-landing--combo .pub-landing__h1 {
@@ -1423,7 +1437,7 @@
 
 .pub-theme .pub-landing__passport-body {
   display: grid;
-  grid-template-columns: 1.15fr 1fr;
+  grid-template-columns: 1fr 1.12fr;
   gap: 0;
 }
 
@@ -1454,37 +1468,42 @@
 }
 
 .pub-theme .pub-landing__passport-matches {
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 1rem 5.25rem;
+  min-width: 0;
 }
 
 .pub-theme .pub-landing__match-row {
   display: grid;
-  grid-template-columns: 2rem 1fr;
-  gap: 0.15rem 0.65rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.18rem;
   padding: 0.55rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 45%, transparent);
 }
 
 .pub-theme .pub-landing__match-row:last-child {
   border-bottom: 0;
+  padding-bottom: 0.15rem;
 }
 
-.pub-theme .pub-landing__match-title b {
+.pub-theme .pub-landing__match-job {
   display: block;
   font-size: 0.84rem;
   line-height: 1.25;
+  font-weight: 650;
 }
 
-.pub-theme .pub-landing__match-title small {
+.pub-theme .pub-landing__match-meta {
+  display: block;
   font-size: 0.72rem;
   color: var(--muted);
+  line-height: 1.35;
 }
 
 .pub-theme .pub-landing__match-bar {
-  grid-column: 2;
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  margin-top: 0.15rem;
 }
 
 .pub-theme .pub-landing__match-pct {
@@ -1520,6 +1539,8 @@
   padding: 0.55rem 0.85rem 0.55rem 0.55rem;
   border-radius: 1rem;
   font-size: 0.85rem;
+  max-width: calc(100% - 1rem);
+  pointer-events: none;
 }
 
 .pub-theme .pub-landing__top-match b {
@@ -2002,6 +2023,18 @@
     grid-template-columns: 1fr;
   }
 
+  .pub-theme .pub-landing--combo .pub-landing__hero-grid--combo {
+    gap: 1rem;
+  }
+
+  .pub-theme .pub-landing--combo .pub-landing__hero-copy {
+    margin-bottom: 0.35rem;
+  }
+
+  .pub-theme .pub-landing--combo .pub-landing__passport-stage {
+    padding-top: 0.15rem;
+  }
+
   .pub-theme .pub-landing__stat-grid,
   .pub-theme .pub-landing__get-five,
   .pub-theme .pub-landing__journey-five {
@@ -2054,6 +2087,11 @@
     inset: auto;
     margin: -0.5rem 0.85rem 0.5rem auto;
     width: fit-content;
+    pointer-events: auto;
+  }
+
+  .pub-theme .pub-landing__passport-matches {
+    padding-bottom: 0.5rem;
   }
 
   .pub-theme .pub-landing__passport-stage {
@@ -2076,10 +2114,23 @@
 
 @media (max-width: 390px) {
   .pub-theme .pub-landing__radar-svg {
-    font-size: 11px;
+    font-size: 10px;
+  }
+
+  .pub-theme .pub-landing__radar-lbl {
+    font-size: 0.62rem;
+  }
+
+  .pub-theme .pub-landing__radar-lbl--tr,
+  .pub-theme .pub-landing__radar-lbl--br {
+    font-size: 0.58rem;
   }
 
   .pub-theme .pub-landing__radar-lbl--br {
     text-anchor: end;
+  }
+
+  .pub-theme .pub-landing__passport-rad {
+    padding-inline: 0.35rem 0.25rem;
   }
 }
