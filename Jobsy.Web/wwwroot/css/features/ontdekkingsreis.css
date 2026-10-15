@@ -729,21 +729,41 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.35rem;
   flex-wrap: nowrap;
 }
 
 .journey-mprog__line {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  overflow: hidden;
   white-space: nowrap;
+}
+
+.journey-mprog__step-no {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.journey-mprog__sep {
+  flex-shrink: 0;
+}
+
+.journey-mprog__step-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .journey-mprog__t--question .journey-mprog__ok {
   flex-shrink: 0;
   white-space: nowrap;
+  font-size: var(--text-xs);
 }
 
 .journey-mtrack {

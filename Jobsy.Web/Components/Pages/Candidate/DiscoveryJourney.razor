@@ -38,12 +38,13 @@
         <JourneyScene Depth="_depth" IsMobile="true" />
 
         <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
-            @if (UseQuestionCardLayout)
+            @if (MobileHeaderSingleLine)
             {
                 <p class="journey-mprog__t journey-mprog__t--question">
                     <span class="journey-mprog__line">
-                        <b>@Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)</b>
-                        <span class="muted"> · @CurrentStepTitle</span>
+                        <b class="journey-mprog__step-no">@Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)</b>
+                        <span class="journey-mprog__sep muted" aria-hidden="true"> · </span>
+                        <span class="journey-mprog__step-name muted">@CurrentStepTitle</span>
                     </span>
                     @if (_saveStatus == "saved")
                     {
@@ -55,10 +56,6 @@
             {
                 <p class="journey-mprog__t">
                     <b>@MobileProgressLabel</b>
-                    @if (_screen is not "start" && !IsLightScreen)
-                    {
-                        <span class="muted">· @CurrentStepTitle</span>
-                    }
                     <span class="journey-mprog__sp"></span>
                     @if (_saveStatus == "saved" && _screen is not "start")
                     {
@@ -820,6 +817,9 @@
     }
 
     private int MobileProgressStep => Math.Max(Math.Min(RailStep, 10), 1);
+
+    private bool MobileHeaderSingleLine => UseQuestionCardLayout
+        || (_screen is not "start" and not "overview" and not "klaar" && !IsLightScreen);
 
     private string MobileProgressLabel => _screen switch
     {
