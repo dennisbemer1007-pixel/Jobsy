@@ -97,7 +97,7 @@
                     <p class="vac-wizard__eyebrow">Stap @_step van @TotalSteps</p>
                     <h1>@CurrentStepTitle</h1>
                     <p class="vac-wizard__lead">@CurrentStepLead</p>
-                    @if (!string.IsNullOrEmpty(_vmPublishNote))
+                    @if (!string.IsNullOrEmpty(_vmPublishNote) && _step == 1)
                     {
                         <p class="muted wg-vac-create-note">@_vmPublishNote</p>
                     }

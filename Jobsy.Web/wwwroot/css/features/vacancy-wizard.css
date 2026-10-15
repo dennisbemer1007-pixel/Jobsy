@@ -1,24 +1,56 @@
 /* Employer vacancy create wizard — variant A (sidebar rail + mobile segments). Scoped to .vac-wizard */
+html.has-vacancy-wizard,
+html.has-vacancy-wizard body {
+  height: 100%;
+  overflow: hidden;
+}
+
+html.has-vacancy-wizard .wg-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+}
+
+html.has-vacancy-wizard .wg-shell__body {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+html.has-vacancy-wizard .wg-shell__sidebar--desktop,
+html.has-vacancy-wizard .wg-main {
+  align-self: stretch;
+  min-height: 0;
+}
 .vac-wizard {
-  --vac-wizard-actionbar-height: 64px;
-  flex: 1 1 auto;
+  --vac-wizard-actionbar-height: 56px;
+  --vac-wizard-mobile-nav-height: 56px;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: calc(100dvh - 56px - var(--bottom-nav-clearance, 0px));
+  min-height: 0;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font);
 }
 
 .wg-shell:has(.vac-wizard) {
-  height: 100dvh;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  min-height: 100svh;
+  padding-bottom: var(--vac-wizard-cookie-offset, 0px);
+}
+
+@media (max-width: 1023px) {
+  .wg-shell.wg-has-bottom-nav:has(.vac-wizard) {
+    padding-bottom: calc(var(--vac-wizard-mobile-nav-height) + var(--vac-wizard-cookie-offset, 0px));
+  }
 }
 
 .wg-shell:has(.vac-wizard) .wg-shell__body {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
+  display: flex;
   align-items: stretch;
   overflow: hidden;
 }
@@ -30,9 +62,10 @@
 .wg-main:has(> .vac-wizard) {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   padding: 0;
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -87,34 +120,24 @@
 }
 
 .vac-wizard__layout {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 56px - var(--bottom-nav-clearance, 0px));
+  min-height: 0;
   width: 100%;
 }
 
 @media (max-width: 1023px) {
-  .vac-wizard {
-    max-height: 100%;
-  }
-
-  .vac-wizard__layout {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: 100%;
-  }
-
   .vac-wizard__stage {
     max-width: none;
     width: 100%;
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: 100%;
   }
 
-  .vac-wizard__stage-body {
-    padding-bottom: 12px;
+  .vac-wizard-actionbar {
+    bottom: var(--vac-wizard-mobile-nav-height);
+    margin-bottom: 0;
+    border-bottom: none;
+    box-shadow: 0 -2px 8px rgb(15 45 92 / 5%);
   }
 }
 
@@ -334,13 +357,34 @@
   width: 100%;
 }
 
-.vac-wizard-schedule__chips .lobsy-choice-tile--inline {
+.vac-wizard-schedule__slot.lobsy-choice-tile--inline {
   width: 100%;
   max-width: none;
-  padding: 6px 1px;
-  font-size: 0.625rem;
-  min-height: 32px;
+  min-height: 36px;
+  padding: 6px;
   justify-content: center;
+}
+
+.vac-wizard-schedule__slot .lobsy-choice-tile__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.vac-wizard-schedule__slot .lobsy-choice-tile__icon {
+  width: 18px;
+  height: 18px;
+  color: var(--brand);
+}
+
+.vac-wizard-schedule__slot.is-selected .lobsy-choice-tile__icon {
+  color: var(--lobsy-choice-navy, var(--brand));
 }
 
 .vac-wizard__head h1 {
@@ -393,13 +437,21 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
   overflow-x: auto;
+  overflow-y: hidden;
   margin-bottom: 8px;
-  padding: 6px 8px;
+  padding: 6px 10px 6px 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
+  max-width: 100%;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+}
+
+.vac-wizard-richtext__toolbar .richtext-toolbar__group {
+  flex-shrink: 0;
 }
 
 .vac-wizard .richtext-btn {
@@ -536,9 +588,10 @@
 }
 
 .vac-wizard-actionbar {
-  position: relative;
+  position: sticky;
+  bottom: 0;
   flex: 0 0 auto;
-  z-index: 2;
+  z-index: 45;
   min-height: var(--vac-wizard-actionbar-height);
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   background: var(--surface);
@@ -708,18 +761,12 @@
   color: var(--success);
 }
 
-.vac-wizard:has(> .vac-wizard-saved) {
-  height: 100%;
-  min-height: 0;
-}
-
 .vac-wizard-saved {
   display: flex;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 100%;
   min-height: 0;
   padding: 24px 16px;
   box-sizing: border-box;
@@ -824,12 +871,6 @@
 }
 
 @media (min-width: 1024px) {
-  .vac-wizard:has(.vac-wizard__layout),
-  .vac-wizard:has(.vac-wizard-saved) {
-    min-height: calc(100dvh - 56px);
-    height: calc(100dvh - 56px);
-  }
-
   .vac-wizard__layout {
     display: grid;
     grid-template-columns: 280px minmax(0, 1fr) 320px;
@@ -839,7 +880,7 @@
     width: 100%;
     height: 100%;
     margin: 0;
-    min-height: calc(100dvh - 56px);
+    min-height: 0;
     align-items: stretch;
   }
 
@@ -848,7 +889,9 @@
     padding: 28px 20px;
     border-inline-end: 1px solid var(--border);
     background: var(--surface);
-    min-height: 100%;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
   }
 
   .vac-wizard__mobile-rail {
@@ -858,7 +901,9 @@
   .vac-wizard__stage {
     max-width: none;
     margin: 0;
-    min-height: calc(100dvh - 56px);
+    min-height: 0;
+    height: auto;
+    overflow: hidden;
   }
 
   .vac-wizard__stage-body {
@@ -867,6 +912,7 @@
 
   .vac-wizard-actionbar {
     padding-inline: 32px;
+    flex-shrink: 0;
   }
 
   .vac-wizard__preview-aside {
@@ -875,7 +921,9 @@
     padding: 28px 20px;
     border-inline-start: 1px solid var(--border);
     background: var(--bg);
-    min-height: calc(100dvh - 56px);
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
   }
 
   .vac-wizard:has([data-testid='vac-wizard-step-1']) .vac-wizard__head {

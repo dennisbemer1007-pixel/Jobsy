@@ -52,6 +52,7 @@ public class VacancyWizardPlaywrightTests
         await FillStep1Async(page, title);
         await page.GetByRole(AriaRole.Button, new() { Name = "Volgende: Omschrijving" }).ClickAsync();
         await page.Locator("[data-testid='vac-wizard-step-2']").WaitForAsync();
+        await Expect(page.Locator("[data-testid='vacancy-description-char-count']")).ToContainTextAsync("tekens");
         await VacancyWizardE2e.ShotAsync(page, viewportTag, "02-step-omschrijving-toolbar");
 
         await FillStep2RichTextAsync(page);

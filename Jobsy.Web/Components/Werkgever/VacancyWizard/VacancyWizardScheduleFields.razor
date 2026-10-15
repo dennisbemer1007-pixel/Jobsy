@@ -22,21 +22,15 @@
                     {
                         var key = $"{day}:{slot}";
                         var selected = ScheduleSlots.Contains(key);
-                        var shortLabel = slot switch
-                        {
-                            "Ochtend" => "Ocht",
-                            "Middag" => "Mid",
-                            "Avond" => "Av",
-                            "Nacht" => "Ngt",
-                            _ => slot
-                        };
                         <ChoiceTile Inline="true"
                                     AlignIcons="false"
-                                    Label="@shortLabel"
+                                    Class="vac-wizard-schedule__slot"
+                                    Icon="@ChoiceTileIcons.ForVacancyDayPart(slot)"
+                                    Label="@slot"
                                     Selected="selected"
                                     Disabled="FlexibleTimes"
                                     Role="checkbox"
-                                    AdditionalAttributes="@(new Dictionary<string, object> { ["title"] = $"{day} {slot}" })"
+                                    AdditionalAttributes="@(new Dictionary<string, object> { ["title"] = $"{day} {slot}", ["aria-label"] = $"{day} {slot}" })"
                                     OnClick="() => ToggleSlot.InvokeAsync(key)" />
                     }
                 </ChoiceTileGrid>

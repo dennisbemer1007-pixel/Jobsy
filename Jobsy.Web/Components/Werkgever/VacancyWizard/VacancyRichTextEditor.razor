@@ -1,11 +1,13 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Localization
 @inject IJSRuntime Js
+@inject CultureState Culture
 
 <label class="vac-wizard-field">
     <span class="vac-wizard-field__label-row">
         <span>Omschrijving</span>
-        <span class="vac-wizard-char-count muted" data-testid="vacancy-description-char-count">@CharacterCount van 4000 tekens</span>
+        <span class="vac-wizard-char-count muted" data-testid="vacancy-description-char-count">@string.Format(Culture["WgVac.Wizard.DescriptionCharCount"], CharacterCount, 4000)</span>
     </span>
     <div class="richtext-toolbar vac-wizard-richtext__toolbar" role="toolbar" aria-label="Opmaak">
         <div class="richtext-toolbar__group">
