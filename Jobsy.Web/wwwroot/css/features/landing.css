@@ -2173,96 +2173,98 @@
   display: none;
 }
 
+.pub-theme .pub-landing--calm .pub-landing__passport-body {
+  grid-template-columns: 1.08fr 0.92fr;
+}
+
 .pub-theme .pub-landing--calm .pub-landing__passport-rad {
-  padding: 0.85rem 1rem 0.75rem;
+  padding: 0.85rem 0.65rem 0.75rem 1rem;
+  overflow: clip;
+  min-width: 0;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__passport-lbl {
   padding-inline: 0.15rem;
 }
 
-.pub-theme .pub-landing--calm .pub-landing__passport-rad {
-  overflow: clip;
-  min-width: 0;
-}
-
 .pub-theme .pub-landing--calm .pub-landing__passport-matches {
   position: relative;
   z-index: 1;
   background: var(--surface);
+  padding-inline: 0.85rem 1rem;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__radar-wrap {
-  display: grid;
-  grid-template-columns: minmax(0, auto) minmax(172px, 1fr) minmax(0, auto);
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    ". top ."
-    "tl svg tr"
-    "bl bot br";
-  gap: 0.45rem 0.35rem;
   width: 100%;
-  min-height: 280px;
-  max-height: 300px;
-  align-items: center;
+  min-height: 248px;
+  padding: 1.65rem 0.35rem;
+  box-sizing: border-box;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__radar-plot {
+  position: relative;
+  width: min(100%, 156px);
+  min-width: 150px;
+  margin-inline: auto;
+  aspect-ratio: 132 / 152;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__radar-svg {
-  grid-area: svg;
   display: block;
   width: 100%;
-  min-width: 172px;
-  height: auto;
-  aspect-ratio: 132 / 152;
-  justify-self: center;
+  height: 100%;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__radar-html-lbl {
+  position: absolute;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.25;
   color: var(--brand);
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  hyphens: auto;
+  white-space: nowrap;
+  hyphens: none;
+  pointer-events: none;
 }
 
-.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl--t {
-  grid-area: top;
+/* Outer hex vertices in viewBox 132×152 — label anchored 8px outside each vertex */
+.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl[data-axis="t"] {
+  left: 49.848%;
+  top: 0;
+  transform: translate(-50%, calc(-100% - 8px));
   text-align: center;
 }
 
-.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl--tl {
-  grid-area: tl;
-  text-align: end;
-  align-self: center;
-  padding-inline-end: 0.15rem;
+.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl[data-axis="tr"] {
+  left: 99.697%;
+  top: 25%;
+  transform: translate(5px, -50%);
 }
 
-.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl--tr {
-  grid-area: tr;
-  text-align: start;
-  align-self: center;
-  padding-inline-start: 0.15rem;
+.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl[data-axis="br"] {
+  left: 99.697%;
+  top: 75%;
+  transform: translate(5px, -50%);
 }
 
-.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl--bl {
-  grid-area: bl;
-  text-align: end;
-  align-self: center;
-  padding-inline-end: 0.15rem;
-}
-
-.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl--br {
-  grid-area: br;
-  text-align: start;
-  align-self: center;
-  padding-inline-start: 0.15rem;
-}
-
-.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl--b {
-  grid-area: bot;
+.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl[data-axis="b"] {
+  left: 49.848%;
+  top: 100%;
+  transform: translate(-50%, 8px);
   text-align: center;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl[data-axis="bl"] {
+  left: 0;
+  top: 75%;
+  transform: translate(calc(-100% - 5px), -50%);
+  text-align: right;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__radar-html-lbl[data-axis="tl"] {
+  left: 0;
+  top: 25%;
+  transform: translate(calc(-100% - 5px), -50%);
+  text-align: right;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__map-block--balanced {
@@ -2347,12 +2349,12 @@
   }
 
   .pub-theme .pub-landing--calm .pub-landing__radar-wrap {
-    min-height: 280px;
-    grid-template-columns: minmax(0, auto) minmax(192px, 1fr) minmax(0, auto);
-    gap: 0.4rem 0.3rem;
+    min-height: 268px;
+    padding-inline: 0.5rem;
   }
 
-  .pub-theme .pub-landing--calm .pub-landing__radar-svg {
-    min-width: 192px;
+  .pub-theme .pub-landing--calm .pub-landing__radar-plot {
+    width: min(100%, 188px);
+    min-width: 176px;
   }
 }

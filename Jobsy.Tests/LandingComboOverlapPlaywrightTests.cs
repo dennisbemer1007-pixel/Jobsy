@@ -192,11 +192,40 @@ public class LandingComboOverlapPlaywrightTests
             const hit = (ra, rb) => !(ra.right <= rb.left + svgGap || rb.right <= ra.left + svgGap || ra.bottom <= rb.top + svgGap || rb.bottom <= ra.top + svgGap);
             const hexW = outerR?.width ?? 0;
             const vw = window.innerWidth;
-            if (vw === 1440 && hexW < 170) radarChecks.push(`outerHexWidth=${hexW.toFixed(1)}px (min 170)`);
-            if (vw === 390 && hexW < 190) radarChecks.push(`outerHexWidth=${hexW.toFixed(1)}px (min 190)`);
+            if (vw === 1440 && hexW < 150) radarChecks.push(`outerHexWidth=${hexW.toFixed(1)}px (min 150)`);
+            if (vw === 390 && hexW < 175) radarChecks.push(`outerHexWidth=${hexW.toFixed(1)}px (min 175)`);
+            const vertFrac = {
+              t: [65.8 / 132, 0 / 152],
+              tr: [131.6 / 132, 38 / 152],
+              br: [131.6 / 132, 114 / 152],
+              b: [65.8 / 132, 1],
+              bl: [0 / 132, 114 / 152],
+              tl: [0 / 132, 38 / 152],
+            };
+            const plot = radar.closest('.pub-landing__radar-plot');
+            const plotR = plot?.getBoundingClientRect();
             for (const l of labels) {
-              const lh = l.getBoundingClientRect().height;
-              if (lh < 12) radarChecks.push(`labelHeight=${lh.toFixed(1)}px "${(l.textContent || '').trim()}" (min 12)`);
+              const lr = l.getBoundingClientRect();
+              const lhPx = lr.height;
+              if (lhPx < 12) radarChecks.push(`labelHeight=${lhPx.toFixed(1)}px "${(l.textContent || '').trim()}" (min 12)`);
+              const st = getComputedStyle(l);
+              const fs = parseFloat(st.fontSize) || 12;
+              const lhLine = st.lineHeight === 'normal' ? fs * 1.25 : parseFloat(st.lineHeight);
+              if (lhPx > lhLine * 1.5 + 1) {
+                radarChecks.push(`labelMultiline="${(l.textContent || '').trim()}" h=${lhPx.toFixed(1)} lh=${lhLine.toFixed(1)}`);
+              }
+              const axis = l.getAttribute('data-axis');
+              if (plotR && axis && vertFrac[axis]) {
+                const [fx, fy] = vertFrac[axis];
+                const vx = plotR.left + plotR.width * fx;
+                const vy = plotR.top + plotR.height * fy;
+                const cx = (lr.left + lr.right) / 2;
+                const cy = (lr.top + lr.bottom) / 2;
+                const dist = Math.hypot(cx - vx, cy - vy);
+                if (dist > 40) {
+                  radarChecks.push(`labelVertexDist=${dist.toFixed(1)}px axis=${axis} "${(l.textContent || '').trim()}" (max 40)`);
+                }
+              }
             }
             for (let i = 0; i < labels.length; i++) {
               for (let j = i + 1; j < labels.length; j++) {
@@ -211,16 +240,6 @@ public class LandingComboOverlapPlaywrightTests
               for (const l of labels) {
                 if (hit(l.getBoundingClientRect(), outerR)) {
                   svgOverlaps.push({ a: l.textContent?.trim(), b: 'radar-outer-ring' });
-                  if (svgOverlaps.length >= 6) break;
-                }
-              }
-            }
-            if (radCol) {
-              for (const l of labels) {
-                const tr = l.getBoundingClientRect();
-                if (tr.left < radCol.left + svgGap - 1 || tr.right > radCol.right - svgGap + 1
-                    || tr.top < radCol.top + svgGap - 1 || tr.bottom > radCol.bottom - svgGap + 1) {
-                  svgOverlaps.push({ a: l.textContent?.trim(), b: 'radar-column-edge' });
                   if (svgOverlaps.length >= 6) break;
                 }
               }

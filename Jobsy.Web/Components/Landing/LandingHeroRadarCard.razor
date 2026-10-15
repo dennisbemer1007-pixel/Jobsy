@@ -13,25 +13,27 @@
             <div class="pub-landing__passport-rad">
                 <div class="pub-landing__passport-lbl">@LandingText.For("Landing.Hero.RadarYou", Variant)</div>
                 <div class="pub-landing__radar-wrap" data-testid="landing-radar-wrap">
-                    <span class="pub-landing__radar-html-lbl pub-landing__radar-html-lbl--t">@LandingText.For("Landing.Hero.BarTeam", Variant)</span>
-                    <span class="pub-landing__radar-html-lbl pub-landing__radar-html-lbl--tl">@LandingText.For("Landing.Hero.BarPrecision", Variant)</span>
-                    <span class="pub-landing__radar-html-lbl pub-landing__radar-html-lbl--tr">@LandingText.For("Landing.Hero.BarPersist", Variant)</span>
-                    <svg class="pub-landing__radar-svg" viewBox="0 0 132 152" aria-hidden="true" data-testid="landing-radar-svg">
-                        <polygon class="pub-landing__radar-outer" points="65.8,0 131.6,38 131.6,114 65.8,152 0,114 0,38" fill="#FBF7F0" stroke="#E6DDCF" stroke-width="1"/>
-                        <polygon points="65.8,19 115.2,47.5 115.2,104.5 65.8,133 16.4,104.5 16.4,47.5" fill="none" stroke="#E6DDCF" stroke-width="1"/>
-                        <polygon points="65.8,38 98.7,57 98.7,95 65.8,114 32.9,95 32.9,57" fill="none" stroke="#E6DDCF" stroke-width="1"/>
-                        <polygon points="65.8,57 82.3,66.5 82.3,85.5 65.8,95 49.3,85.5 49.3,66.5" fill="none" stroke="#E6DDCF" stroke-width="1"/>
-                        <line x1="65.8" y1="76" x2="65.8" y2="0" stroke="#E6DDCF"/>
-                        <line x1="65.8" y1="76" x2="131.6" y2="38" stroke="#E6DDCF"/>
-                        <line x1="65.8" y1="76" x2="131.6" y2="114" stroke="#E6DDCF"/>
-                        <line x1="65.8" y1="76" x2="65.8" y2="152" stroke="#E6DDCF"/>
-                        <line x1="65.8" y1="76" x2="0" y2="114" stroke="#E6DDCF"/>
-                        <line x1="65.8" y1="76" x2="0" y2="38" stroke="#E6DDCF"/>
-                        <polygon class="pub-landing__radar-fill" points="65.8,10.6 114.5,47.9 106.6,99.6 65.8,115.5 5.2,111 20.8,50.2" fill="#1F2F55" fill-opacity="0.15" stroke="#1F2F55" stroke-width="2" stroke-linejoin="round"/>
-                    </svg>
-                    <span class="pub-landing__radar-html-lbl pub-landing__radar-html-lbl--bl">@LandingText.For("Landing.Hero.BarCare", Variant)</span>
-                    <span class="pub-landing__radar-html-lbl pub-landing__radar-html-lbl--br">@LandingText.For("Landing.Hero.BarCalm", Variant)</span>
-                    <span class="pub-landing__radar-html-lbl pub-landing__radar-html-lbl--b">@LandingText.For("Landing.Hero.BarCreative", Variant)</span>
+                    <div class="pub-landing__radar-plot">
+                        <svg class="pub-landing__radar-svg" viewBox="0 0 132 152" aria-hidden="true" data-testid="landing-radar-svg">
+                            <polygon class="pub-landing__radar-outer" points="65.8,0 131.6,38 131.6,114 65.8,152 0,114 0,38" fill="#FBF7F0" stroke="#E6DDCF" stroke-width="1"/>
+                            <polygon points="65.8,19 115.2,47.5 115.2,104.5 65.8,133 16.4,104.5 16.4,47.5" fill="none" stroke="#E6DDCF" stroke-width="1"/>
+                            <polygon points="65.8,38 98.7,57 98.7,95 65.8,114 32.9,95 32.9,57" fill="none" stroke="#E6DDCF" stroke-width="1"/>
+                            <polygon points="65.8,57 82.3,66.5 82.3,85.5 65.8,95 49.3,85.5 49.3,66.5" fill="none" stroke="#E6DDCF" stroke-width="1"/>
+                            <line x1="65.8" y1="76" x2="65.8" y2="0" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="131.6" y2="38" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="131.6" y2="114" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="65.8" y2="152" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="0" y2="114" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="0" y2="38" stroke="#E6DDCF"/>
+                            <polygon class="pub-landing__radar-fill" points="65.8,10.6 114.5,47.9 106.6,99.6 65.8,115.5 5.2,111 20.8,50.2" fill="#2F7D5B" fill-opacity="0.12" stroke="#1F2F55" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="pub-landing__radar-html-lbl" data-axis="t">@LandingText.For("Landing.Hero.BarTeam", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="tr">@LandingText.For("Landing.Hero.BarPersist", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="br">@LandingText.For("Landing.Hero.BarCalm", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="b">@LandingText.For("Landing.Hero.BarCreative", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="bl">@LandingText.For("Landing.Hero.BarCare", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="tl">@LandingText.For("Landing.Hero.BarPrecision", Variant)</span>
+                    </div>
                 </div>
             </div>
             <div class="pub-landing__passport-matches">
