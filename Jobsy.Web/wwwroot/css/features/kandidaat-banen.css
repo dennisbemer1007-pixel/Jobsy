@@ -550,6 +550,9 @@
   background: var(--surface);
   color: var(--brand);
   cursor: pointer;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
 }
 
 .kb-address__clear-icon {
@@ -637,6 +640,8 @@
   inset-inline-end: auto;
   bottom: 0.75rem;
   max-width: 14rem;
+  max-height: calc(100% - 5.5rem);
+  overflow: visible;
   padding: 0.65rem 0.75rem;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--border);
@@ -2544,6 +2549,7 @@ ol.apply-steps.apply-steps--three {
   height: 100%;
 }
 
+#discovery-keyword-desktop,
 .kb-panel-head__search input {
   width: 100%;
   height: 40px;
@@ -2559,6 +2565,12 @@ ol.apply-steps.apply-steps--three {
   font-size: 16px;
   color: var(--text);
   box-sizing: border-box;
+}
+
+.kb-panel-head__search .kb-filter-search__icon {
+  display: inline-flex;
+  opacity: 1;
+  color: var(--muted);
 }
 
 .kb-panel-head__filters {
@@ -2683,6 +2695,24 @@ ol.apply-steps.apply-steps--three {
 
 
 @media (min-width: 900px) {
+  .jobsy-discovery:not(.jobsy-discovery--branch) .vacancy-pane {
+    overflow: visible;
+  }
+
+  .kb-panel-head {
+    position: relative;
+    z-index: 12;
+    overflow: visible;
+  }
+
+  .kb-panel-head__address.kb-address {
+    overflow: visible;
+  }
+
+  .kb-panel-head__address .address-suggestions {
+    z-index: 40;
+  }
+
   .kb-panel-head__address .kb-address__field {
     position: relative;
     display: block;

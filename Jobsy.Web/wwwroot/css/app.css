@@ -3790,9 +3790,51 @@ html[dir="rtl"] .account-menu__panel {
         max-height: calc(100dvh - var(--app-header-height, 4.25rem) - var(--cookie-bar-h, 3.75rem));
     }
 
-    .jobsy-discovery .kb-travel-legend {
-        bottom: 1rem;
-        left: 1rem;
+    .app-shell--candidate:has(.jobsy-discovery) .bottom-nav {
+        display: none !important;
+    }
+
+    .app-shell--candidate:has(.jobsy-discovery) .app-main,
+    .app-shell--candidate.has-bottom-nav:has(.jobsy-discovery) .app-main {
+        padding-bottom: 0 !important;
+    }
+
+    .app-shell:has(.jobsy-discovery) .lobsy-coach-dock {
+        display: none !important;
+    }
+
+    .jobsy-discovery .map-stage {
+        overflow: visible;
+    }
+
+    .jobsy-discovery .map-stage .kb-travel-legend {
+        inset-inline-start: 0.75rem;
+        max-width: min(14rem, calc(100% - 5rem));
+        max-height: calc(100% - 3.5rem);
+        overflow: hidden;
+        bottom: 2.75rem;
+    }
+
+    html:not(.cookie-consent-known) .jobsy-discovery .map-stage .kb-travel-legend {
+        bottom: calc(var(--cookie-bar-h, 3.75rem) + 0.5rem);
+        max-height: calc(100% - var(--cookie-bar-h, 3.75rem) - 1.25rem);
+    }
+
+    .job-map .maplibregl-ctrl-bottom-right {
+        bottom: 58px;
+        right: 10px;
+    }
+
+    html:not(.cookie-consent-known) .job-map .maplibregl-ctrl-bottom-right {
+        bottom: calc(var(--cookie-bar-h, 3.75rem) + 58px);
+    }
+}
+
+@media (min-width: 1024px) {
+    .app-shell--candidate:has(.jobsy-discovery) .bottom-nav {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
 }
 
