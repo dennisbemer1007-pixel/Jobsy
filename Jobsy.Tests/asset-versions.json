@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "855d58c40f780fd4209d51b3205ad8a36ec680ac91b80f85208a2cbc3d509b8d",
-    "v": "20261015-06"
+    "sha256": "4e35543c3b1bb3293ddb824176c2f3cfeeb3b563a9c4985593eb582da7dcd041",
+    "v": "20261015-07"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -27,10 +27,6 @@
     "sha256": "a6a392c09fe4b4d6ba05d4718d82d44bb18d4786ad10bd49f23f967f4eb250d0",
     "v": "20261004-14"
   },
-  "css/features/choice-tiles.css": {
-    "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
-    "v": "20261015-06"
-  },
   "css/features/candidate-hub.css": {
     "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
     "v": "20261012-01"
@@ -38,6 +34,10 @@
   "css/features/carriere.css": {
     "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
     "v": "20261011-01"
+  },
+  "css/features/choice-tiles.css": {
+    "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
+    "v": "20261015-06"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
@@ -76,8 +76,8 @@
     "v": "20261011-03"
   },
   "css/features/landing.css": {
-    "sha256": "d52b358a0784d8751783a541a7e9c22d4e7f2158b2e71b30dd11f5ff03898bd4",
-    "v": "20261015-01"
+    "sha256": "67e0a9d9865981bf575baa2282bfa8eeb4185ec94a039fcf93bc2066542d3286",
+    "v": "20261015-03"
   },
   "css/features/match-desktop.css": {
     "sha256": "8a93b7c3157f521af81598edb8ffe256de3b19076ef8ee2bdd26c4d963fa45bb",
@@ -88,8 +88,8 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "bbc88a311da2dca31d584c956a637a978548bb6d0a9169a4d3a2a6087240dab2",
-    "v": "20261015-08"
+    "sha256": "5aa8b568c67bcfb60471e4c806b0289257f2e6362244216d67477d1451d6c4ea",
+    "v": "20261015-09"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
@@ -104,8 +104,8 @@
     "v": "20261015-06"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "bb996ba4d4b2e34d8e5831494c7afb949db301a8c0426ebd88e6cb8f4912cafc",
-    "v": "20261015-19"
+    "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
+    "v": "20261015-21"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
@@ -116,7 +116,7 @@
     "v": "20261004-10"
   },
   "css/features/public-theme.css": {
-    "sha256": "92e73fda8b6ce147006d097245b10eee95dabb43ad75d9af8999a5009a0daa99",
+    "sha256": "256cbf9b5136a3d6feb68523ee81d1a14ae5c0ea1821aa207b920d01545cda5f",
     "v": "20261004-11"
   },
   "css/features/questionnaire.css": {
@@ -168,8 +168,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "1feb4e51ca59e59c74733e0b2cb98a51580ec149b16a7c94456c3aee584418bd",
-    "v": "20261015-09"
+    "sha256": "f53f233ff38f38dd42639f0a7c31d93c207339c7a820dbd40777053d796bc45f",
+    "v": "20261015-10"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -220,7 +220,7 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "7f6816cbc363ce369d166f137c5928c1662102c7976e9453df4e5efa95502f03",
+    "sha256": "fbf69f42ee6e7424e8e214a80944ee15401011fdf66ce20fd96b1c074de4b42c",
     "v": "20261015-04"
   },
   "js/navFeedback.js": {
@@ -244,11 +244,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "31bb1a3c34aaa6018a0cee623ecba250f91df7469b274a88c5517101311da15e",
-    "v": "20261015-06"
+    "sha256": "9c37261b443d8b0879f2b27ed655cd60b76d47c6382c2272e3716369a777013d",
+    "v": "20261015-08"
   },
   "service-worker.published.js": {
-    "sha256": "e49f95df7bce6ff128a829e50b5eedeeb15ac1db65d4732d3332556c1ea7eb34",
-    "v": "20261015-06"
+    "sha256": "742ce24154eda79a492ed03f0bf39a36d72260b2ecba5a244d9ec77d73ef1607",
+    "v": "20261015-08"
   }
 }

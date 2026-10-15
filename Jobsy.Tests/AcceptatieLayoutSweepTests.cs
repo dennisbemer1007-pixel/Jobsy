@@ -145,6 +145,23 @@ public class AcceptatieLayoutSweepTests
     }
 
     [Fact]
+    public void Desktop_candidate_header_is_sticky_with_dropdowns_below_modals()
+    {
+        var css = Read("Jobsy.Web", "wwwroot", "css", "app.css");
+        Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
+        Assert.Contains("position: sticky;\n        top: 0;\n        z-index: 40;", css, StringComparison.Ordinal);
+
+        var journey = Read("Jobsy.Web", "wwwroot", "css", "features", "ontdekkingsreis.css");
+        Assert.Contains(".app-shell:has(.app-header) .journey-stage .journey-rail", journey, StringComparison.Ordinal);
+        Assert.Contains("top: calc(var(--app-header-height, 4.25rem) + 24px);", journey, StringComparison.Ordinal);
+        Assert.Contains("max-height: calc(100dvh - var(--app-header-height, 4.25rem) - 48px);", journey, StringComparison.Ordinal);
+
+        var passport = Read("Jobsy.Web", "wwwroot", "css", "features", "mijn-paspoort.css");
+        Assert.Contains("inset-block-start: 0;", passport, StringComparison.Ordinal);
+        Assert.Contains("inset-block-start: var(--app-header-height, 4.25rem);", passport, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Header_menus_use_one_attribute_and_keep_triggers_above_the_backdrop()
     {
         var css = Read("Jobsy.Web", "wwwroot", "css", "app.css");

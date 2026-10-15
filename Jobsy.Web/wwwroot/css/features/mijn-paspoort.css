@@ -459,7 +459,7 @@
 /* —— Tabs —— */
 .passport-tabs {
     position: sticky;
-    inset-block-start: var(--app-header-height, 4.25rem);
+    inset-block-start: 0;
     z-index: var(--z-sticky);
     display: flex;
     flex-wrap: nowrap;
@@ -575,6 +575,7 @@
 @media (min-width: 1024px) {
     .passport-tabs,
     [dir="rtl"] .passport-tabs {
+        inset-block-start: var(--app-header-height, 4.25rem);
         flex-wrap: wrap;
         overflow: visible;
         mask-image: none;

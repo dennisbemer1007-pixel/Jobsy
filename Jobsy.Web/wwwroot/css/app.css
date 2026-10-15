@@ -161,6 +161,19 @@ a {
     min-width: 0;
 }
 
+@media (min-width: 1024px) {
+    .app-header {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background-color: var(--pearl-shine);
+        background-image: var(--pearl-gradient);
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.7) inset,
+            0 2px 10px rgba(15, 45, 92, 0.06);
+    }
+}
+
 .app-header .brand-tagline {
     color: color-mix(in srgb, var(--brand) 55%, var(--muted));
 }
