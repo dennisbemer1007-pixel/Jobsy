@@ -109,8 +109,61 @@ async function assertNoEllipsis(page) {
 
 async function selectStep6Dislikes(page) {
   for (const label of ['Nachtdiensten', 'Lawaai']) {
-    await page.locator('.lobsy-choice-tile', { hasText: label }).first().click();
+    const tile = page.locator('.journey-chips .lobsy-choice-tile', { hasText: label }).first();
+    const pressed = await tile.getAttribute('aria-pressed');
+    if (pressed !== 'true') {
+      await tile.click();
+    }
   }
+  const selected = await page.$$eval('.journey-chips .lobsy-choice-tile[aria-pressed="true"]', (els) =>
+    els.map((el) => el.textContent?.trim().split('\n')[0]),
+  );
+  console.log('step6-selected', JSON.stringify(selected));
+}
+
+async function gotoOnboardingStep(page, step) {
+  prepareOnboardingStep(step);
+  await page.goto(`${base}/candidate/start`, { waitUntil: 'networkidle' });
+  if (!(await page.locator('.ob-wizard__presets .lobsy-choice-tile, .ob-wizard__start-grid .lobsy-choice-tile, .work-status-chip').count())) {
+    await page.reload({ waitUntil: 'networkidle' });
+  }
+  await page.waitForTimeout(600);
+}
+
+async function measureOnboardingTileWidths(page) {
+  const result = await page.evaluate(() => {
+    const check = (selector) => {
+      const grid = document.querySelector(selector);
+      if (!grid) return { error: `missing ${selector}` };
+      const gr = grid.getBoundingClientRect();
+      const gs = getComputedStyle(grid);
+      const gap = parseFloat(gs.gap) || 8;
+      const minExpected = (gr.width - gap) / 2 - 2;
+      const tiles = [...grid.querySelectorAll(':scope > .lobsy-choice-tile')].map((t) => ({
+        label: t.textContent?.trim().split('\n')[0],
+        width: Math.round(t.getBoundingClientRect().width),
+      }));
+      return {
+        gridWidth: Math.round(gr.width),
+        gap,
+        gridTemplateColumns: gs.gridTemplateColumns,
+        minExpectedTileWidth: Math.round(minExpected * 10) / 10,
+        tiles,
+        pass: tiles.every((t) => t.width >= minExpected - 1),
+      };
+    };
+    return {
+      presets: check('.ob-wizard__presets'),
+      start: check('.ob-wizard__start-grid'),
+    };
+  });
+  console.log('onboarding-tile-widths', JSON.stringify(result));
+  for (const key of ['presets', 'start']) {
+    if (!result[key]?.pass) {
+      throw new Error(`Onboarding ${key} tile width assertion failed: ${JSON.stringify(result[key])}`);
+    }
+  }
+  return result;
 }
 
 async function shot(page, name, fitLabel, options = {}) {
@@ -256,6 +309,50 @@ const shots = [
     },
   },
   {
+    name: 'choice-tiles-onboarding-presets-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    round5: true,
+    async run(page) {
+      await gotoOnboardingStep(page, 2);
+      await page.waitForSelector('.ob-wizard__presets .lobsy-choice-tile', { timeout: 60_000 });
+      await measureOnboardingTileWidths(page);
+      await resetScroll(page);
+      await page.locator('.ob-wizard__presets').scrollIntoViewIfNeeded();
+      await shot(page, this.name, null, { skipReset: true });
+    },
+  },
+  {
+    name: 'choice-tiles-onboarding-start-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    round5: true,
+    async run(page) {
+      await gotoOnboardingStep(page, 2);
+      await page.waitForSelector('.ob-wizard__start-grid .lobsy-choice-tile', { timeout: 60_000 });
+      await measureOnboardingTileWidths(page);
+      await page.locator('.ob-wizard__start-options').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
+      await shot(page, this.name, null, { skipReset: true });
+    },
+  },
+  {
+    name: 'choice-tiles-paspoort-tabs-coach-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    round5: true,
+    async run(page) {
+      await page.goto(`${base}/candidate/paspoort?tab=dna`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.passport-tabs', { timeout: 60_000 });
+      await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+      await page.waitForTimeout(400);
+      await shot(page, this.name, null, { skipReset: true });
+    },
+  },
+  {
     name: 'choice-tiles-profile-dislikes-390x844.png',
     width: 390,
     height: 844,
@@ -282,8 +379,14 @@ const shots = [
       await page.waitForSelector('#passport-data-panel-dislikes .profile-chip-grid .lobsy-choice-tile', {
         timeout: 60_000,
       });
-      await page.locator('#passport-data-panel-dislikes .profile-chip-grid .lobsy-choice-tile').first().scrollIntoViewIfNeeded();
-      await shot(page, this.name);
+      await page.evaluate(() => {
+        const panel = document.querySelector('#passport-data-panel-dislikes');
+        if (!panel) return;
+        const y = panel.getBoundingClientRect().top + window.scrollY - 72;
+        window.scrollTo(0, Math.max(0, y));
+      });
+      await page.waitForTimeout(400);
+      await shot(page, this.name, null, { skipReset: true });
     },
   },
 ];
@@ -312,13 +415,24 @@ const round4Names = new Set([
   'choice-tiles-onboarding-workstatus-390x844.png',
 ]);
 
+const round5Names = new Set([
+  'choice-tiles-discovery-stap6-390x844.png',
+  'choice-tiles-discovery-stap6-360x740.png',
+  'choice-tiles-onboarding-presets-390x844.png',
+  'choice-tiles-onboarding-start-390x844.png',
+  'choice-tiles-profile-dislikes-390x844.png',
+  'choice-tiles-paspoort-tabs-coach-390x844.png',
+]);
+
 const activeShots =
-  process.env.SHOT_SET === 'round4'
-    ? shots.filter((s) => round4Names.has(s.name))
-    : shots.filter((s) => !s.optional || process.env.FULL_SHOTS === '1');
+  process.env.SHOT_SET === 'round5'
+    ? shots.filter((s) => round5Names.has(s.name))
+    : process.env.SHOT_SET === 'round4'
+      ? shots.filter((s) => round4Names.has(s.name))
+      : shots.filter((s) => !s.optional || process.env.FULL_SHOTS === '1');
 
 for (const s of activeShots) {
-  if (s.prepare) {
+  if (s.prepare && !s.round5) {
     s.prepare();
   }
   await page.setViewportSize({ width: s.width, height: s.height });

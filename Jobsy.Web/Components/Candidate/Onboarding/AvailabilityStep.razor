@@ -12,7 +12,7 @@
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
     <fieldset class="ob-wizard__presets-field">
         <legend class="visually-hidden">@Culture["Onboarding.AvailabilityPresetsLegend"]</legend>
-        <ChoiceTileGrid Class="ob-wizard__presets" AriaLabel="@Culture["Onboarding.AvailabilityPresetsLegend"]">
+        <ChoiceTileGrid Class="ob-wizard__presets" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.AvailabilityPresetsLegend"]">
             @foreach (var preset in Presets)
             {
                 var isSelected = Draft.Presets.Contains(preset.Code);

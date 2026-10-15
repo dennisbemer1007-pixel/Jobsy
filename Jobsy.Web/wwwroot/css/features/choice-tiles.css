@@ -63,8 +63,18 @@ fieldset > .lobsy-choice-grid {
 .lobsy-choice-grid > .work-status-chip.lobsy-choice-tile {
   width: 100%;
   max-width: none;
+  max-inline-size: none;
   justify-self: stretch;
   align-self: stretch;
+}
+
+@media (max-width: 480px) {
+  .app-shell:has([data-lobsy-coach]) main .lobsy-choice-grid .lobsy-choice-tile,
+  .app-shell:has([data-lobsy-coach]) .ob-wizard .lobsy-choice-grid .lobsy-choice-tile {
+    max-width: none;
+    max-inline-size: none;
+    width: 100%;
+  }
 }
 
 @media (min-width: 900px) {
