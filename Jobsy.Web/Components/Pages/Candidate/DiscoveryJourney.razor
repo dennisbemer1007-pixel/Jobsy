@@ -89,7 +89,31 @@
             </div>
         }
 
-        <div class="journey-stage">
+        @if (ShowDesktopCoachInGrid)
+        {
+            <div class="journey-coach journey-coach--mobile journey-only-mobile @(_mobileCoachBubbleOpen ? "is-bubble-open" : null)"
+                 aria-live="polite">
+                @if (_mobileCoachBubbleOpen)
+                {
+                    <div class="journey-bubble journey-coach__bubble" id="journey-mobile-coach-bubble">
+                        <p>@LobsterSay</p>
+                    </div>
+                }
+                <button type="button"
+                        class="journey-coach__tap"
+                        aria-expanded="@_mobileCoachBubbleOpen"
+                        aria-label="@Culture["Discovery.Lobster.Aria"]"
+                        @onclick="ToggleMobileCoachBubbleAsync">
+                    <JourneyLobster PlatesShed="@_platesShed"
+                                    Size="46"
+                                    NewShell="@IsLightScreen"
+                                    Mobile="true"
+                                    Label="" />
+                </button>
+            </div>
+        }
+
+        <div class="journey-stage" @onscroll="CloseMobileCoachBubble">
             <div class="journey-only-desktop">
                 <JourneyProgressRail ActiveStep="@RailStep"
                                        LightStepComplete="@LightStepComplete"
@@ -157,6 +181,7 @@
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
                     <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
+                    @MobileCoachInlineOnCard
                     <div class="journey-step__foot">
                         <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                         <span class="journey-step__sp"></span>
@@ -709,6 +734,10 @@
 
     private bool ShowMobileCoachInline => UseQuestionCardLayout;
 
+    private bool ShowMobileCoachInlineOnCard => ShowDesktopCoachInGrid;
+
+    private bool _mobileCoachBubbleOpen;
+
     private HashSet<int> CompletedStepNumbers
     {
         get
@@ -832,6 +861,28 @@
         ? $"{Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)} · {CurrentStepTitle}, {Culture.Format("Discovery.Rail.ProgressCount", CompletedLayerCount)}"
         : Culture.Format("Discovery.Rail.StepLayersCount", MobileProgressStep, CompletedLayerCount);
 
+    private RenderFragment MobileCoachInlineOnCard => __builder =>
+    {
+        if (!ShowMobileCoachInlineOnCard)
+        {
+            return;
+        }
+
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "journey-coach-inline journey-coach-inline--card journey-only-mobile");
+        __builder.AddAttribute(2, "aria-live", "polite");
+        __builder.OpenComponent<JourneyLobster>(3);
+        __builder.AddAttribute(4, "PlatesShed", _platesShed);
+        __builder.AddAttribute(5, "Size", 40);
+        __builder.AddAttribute(6, "Mobile", true);
+        __builder.AddAttribute(7, "Label", "");
+        __builder.CloseComponent();
+        __builder.OpenElement(8, "p");
+        __builder.AddContent(9, LobsterSay);
+        __builder.CloseElement();
+        __builder.CloseElement();
+    };
+
     private RenderFragment JourneyQuestionAfterLikert => __builder =>
     {
         if (!ShowMobileCoachInline)
@@ -953,8 +1004,26 @@
         }
     }
 
+    private void CloseMobileCoachBubble()
+    {
+        if (!_mobileCoachBubbleOpen)
+        {
+            return;
+        }
+
+        _mobileCoachBubbleOpen = false;
+        StateHasChanged();
+    }
+
+    private Task ToggleMobileCoachBubbleAsync()
+    {
+        _mobileCoachBubbleOpen = !_mobileCoachBubbleOpen;
+        return Task.CompletedTask;
+    }
+
     private RenderFragment RenderFooter(bool showBack = true, bool showSkip = false, bool showPrimary = true) => __builder =>
     {
+        @MobileCoachInlineOnCard
         <div class="journey-step__foot">
             @if (showBack)
             {
