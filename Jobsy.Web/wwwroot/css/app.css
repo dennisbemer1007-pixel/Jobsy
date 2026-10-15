@@ -1578,6 +1578,10 @@ html[dir="rtl"] .account-menu__panel {
     -webkit-overflow-scrolling: touch;
 }
 
+.app-shell.app-shell--questionnaire .app-main:has(.journey) {
+    overflow: hidden;
+}
+
 /* Side-gutter logos removed for a quieter desktop chrome. */
 .lobsy-watermarks,
 .lobsy-watermark {
@@ -15703,6 +15707,7 @@ html.cookie-consent-known .cookie-consent {
     font-size: 0.75rem;
 }
 
+.availability-matrix__cell,
 .profile-page--candidate .availability-matrix__cell {
     display: flex;
     flex-direction: row;
@@ -15717,6 +15722,25 @@ html.cookie-consent-known .cookie-consent {
     background: var(--surface);
     cursor: pointer;
     font-weight: 500;
+}
+
+.availability-matrix__cell--btn {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    touch-action: manipulation;
+    color: var(--text);
+}
+
+.availability-matrix--touch .availability-matrix__cell--btn {
+    min-height: 3rem;
+}
+
+.availability-matrix__cell--btn.is-on {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
 }
 
 .availability-matrix__cell input {
@@ -20241,6 +20265,32 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 .read-aloud.is-speaking {
     background: var(--accent-soft);
     color: var(--brand-deep);
+}
+
+.read-aloud__error {
+    margin: 0.35rem 0 0;
+    max-width: 22rem;
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--warn, var(--danger));
+    line-height: 1.35;
+}
+
+.ob-wizard__postcode-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.ob-wizard__postcode-row input {
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+.ob-wizard__geo {
+    flex: none;
+    white-space: nowrap;
 }
 
 .read-aloud__icon {

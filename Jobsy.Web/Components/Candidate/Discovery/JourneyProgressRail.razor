@@ -6,16 +6,26 @@
     <h2 id="journey-rail-title">@Culture["Discovery.Rail.Title"]</h2>
     <p class="journey-rail__count">@CountText</p>
     <ol class="journey-rail__route" aria-label="@Culture["Discovery.Rail.Aria"]">
-        <li class="journey-rail__step @BeachClass">
-            @if (CurrentStep == 0)
+        @{
+            var beachDone = ActiveStep > 0 || IsEnd;
+            var beachCurrent = ActiveStep == 0 && !IsEnd;
+        }
+        <li class="journey-rail__step @(beachCurrent ? "is-current" : beachDone ? "is-done" : "is-todo")"
+            aria-current="@(beachCurrent ? "step" : null)"
+            aria-label="@BeachAria(beachCurrent, beachDone)">
+            @if (beachCurrent)
             {
                 <span class="journey-rail__marker">
                     <JourneyLobster PlatesShed="0" Size="30" Label="" />
                 </span>
             }
+            else if (beachDone)
+            {
+                <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
+            }
             else
             {
-                <span class="journey-rail__dot" aria-hidden="true">✓</span>
+                <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true"></span>
             }
             <div>
                 <b>@Culture["Discovery.Zone.Beach"]</b>
@@ -32,38 +42,52 @@
                 zone = step.ZoneKey;
                 <li class="journey-rail__zone" aria-hidden="true">@Culture[JourneyCatalog.ZoneKeys[zone]]</li>
             }
-            var state = StepClass(step.Number);
-            <li class="journey-rail__step @state" aria-current="@(CurrentStep == step.Number ? "step" : null)">
-                @if (CurrentStep == step.Number)
+
+            var done = IsEnd || CompletedSteps.Contains(step.Number);
+            var current = !IsEnd && ActiveStep == step.Number;
+            var clickable = done && !current && OnGoToStep.HasDelegate;
+            var rowClass = current ? "is-current" : done ? "is-done" : "is-todo";
+            if (clickable)
+            {
+                rowClass += " is-clickable";
+            }
+
+            <li class="journey-rail__step @rowClass"
+                aria-current="@(current ? "step" : null)"
+                aria-label="@StepAria(step.Number, step.TitleKey, current, done)">
+                @if (clickable)
                 {
-                    <span class="journey-rail__marker">
-                        <JourneyLobster PlatesShed="@(step.Number - 1)" Size="30" Label="" />
-                    </span>
-                }
-                else if (CurrentStep > step.Number || IsEnd)
-                {
-                    <span class="journey-rail__dot" aria-hidden="true">✓</span>
+                    <button type="button"
+                            class="journey-rail__jump"
+                            @onclick="() => OnGoToStep.InvokeAsync(step.Number)">
+                        @StepMarker(step.Number, current, done)
+                        <div>
+                            <b>@Culture[step.TitleKey]</b>
+                            <small>@Culture.Format("Discovery.Rail.LayerOff", step.Number)</small>
+                        </div>
+                    </button>
                 }
                 else
                 {
-                    <span class="journey-rail__dot">@step.Number</span>
+                    @StepMarker(step.Number, current, done)
+                    <div>
+                        <b>@Culture[step.TitleKey]</b>
+                        <small>@(done
+                            ? Culture.Format("Discovery.Rail.LayerOff", step.Number)
+                            : Culture[step.SubKey])</small>
+                    </div>
                 }
-                <div>
-                    <b>@Culture[step.TitleKey]</b>
-                    <small>@(CurrentStep > step.Number || IsEnd
-                        ? Culture.Format("Discovery.Rail.LayerOff", step.Number)
-                        : Culture[step.SubKey])</small>
-                </div>
             </li>
         }
-        <li class="journey-rail__step @(IsEnd ?"is-done" : "is-todo is-end")">
+        <li class="journey-rail__step @(IsEnd ? "is-done" : "is-todo is-end")"
+            aria-label="@EndAria()">
             @if (IsEnd)
             {
-                <span class="journey-rail__dot" aria-hidden="true">✓</span>
+                <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
             }
             else
             {
-                <span class="journey-rail__dot" aria-hidden="true">☼</span>
+                <span class="journey-rail__dot journey-rail__dot--open journey-rail__dot--sun" aria-hidden="true">☼</span>
             }
             <div>
                 <b>@Culture["Discovery.Zone.Light"]</b>
@@ -75,37 +99,94 @@
         <span class="journey-rail__segs">
             @for (var k = 0; k < 10; k++)
             {
-                <i class="@(k < LayersOff ?"is-off" : null)"></i>
+                <i class="@(k < LayersOff ? "is-off" : null)"></i>
             }
         </span>
         <span>@Culture.Format("Discovery.Rail.LayersCount", LayersOff)</span>
     </div>
-    @if (CurrentStep > 0 || IsEnd)
+    @if (ActiveStep > 0 || IsEnd)
     {
         <p class="journey-rail__saved @SaveClass" aria-live="polite">@SaveText</p>
     }
 </aside>
 
 @code {
-    [Parameter] public int CurrentStep { get; set; }
+    [Parameter] public int ActiveStep { get; set; }
     [Parameter] public bool IsEnd { get; set; }
-    [Parameter] public string SaveStatus { get; set; } = "idle"; // idle|saving|saved|error
+    [Parameter] public string SaveStatus { get; set; } = "idle";
+    [Parameter] public IReadOnlySet<int> CompletedSteps { get; set; } = EmptySteps;
+    [Parameter] public EventCallback<int> OnGoToStep { get; set; }
 
-    private int LayersOff => IsEnd ? 10 : Math.Max(CurrentStep - 1, 0);
+    private static readonly HashSet<int> EmptySteps = [];
+
+    private int LayersOff
+    {
+        get
+        {
+            if (IsEnd)
+            {
+                return 10;
+            }
+
+            var n = CompletedSteps.Count(s => s is >= 1 and <= 10);
+            return Math.Clamp(n, 0, 10);
+        }
+    }
 
     private string CountText => IsEnd
         ? Culture["Discovery.Rail.DoneCount"]
-        : CurrentStep == 0
+        : ActiveStep == 0
             ? Culture["Discovery.Rail.StartCount"]
-            : Culture.Format("Discovery.Rail.StepCount", CurrentStep);
+            : Culture.Format("Discovery.Rail.StepCount", ActiveStep);
 
-    private string BeachClass => CurrentStep == 0 && !IsEnd ? "is-current" : "is-done";
-
-    private string StepClass(int number)
+    private RenderFragment StepMarker(int number, bool current, bool done) => __builder =>
     {
-        if (IsEnd || CurrentStep > number) return "is-done";
-        if (CurrentStep == number) return "is-current";
-        return "is-todo";
+        if (current)
+        {
+            <span class="journey-rail__marker">
+                <JourneyLobster PlatesShed="@(number - 1)" Size="30" Label="" />
+            </span>
+        }
+        else if (done)
+        {
+            <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
+        }
+        else
+        {
+            <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true">@number</span>
+        }
+    };
+
+    private string BeachAria(bool current, bool done)
+    {
+        var name = Culture["Discovery.Zone.Beach"];
+        return StatusLabel(name, current, done);
+    }
+
+    private string StepAria(int number, string titleKey, bool current, bool done)
+    {
+        var name = Culture.Format("Discovery.Rail.StepName", number, Culture[titleKey]);
+        return StatusLabel(name, current, done);
+    }
+
+    private string EndAria()
+    {
+        var name = Culture["Discovery.Zone.Light"];
+        return IsEnd
+            ? $"{name}, {Culture["Discovery.Rail.StatusDone"]}"
+            : $"{name}, {Culture["Discovery.Rail.StatusTodo"]}";
+    }
+
+    private string StatusLabel(string name, bool current, bool done)
+    {
+        if (current)
+        {
+            return $"{name}, {Culture["Discovery.Rail.StatusCurrent"]}";
+        }
+
+        return done
+            ? $"{name}, {Culture["Discovery.Rail.StatusDone"]}"
+            : $"{name}, {Culture["Discovery.Rail.StatusTodo"]}";
     }
 
     private string SaveClass => SaveStatus switch

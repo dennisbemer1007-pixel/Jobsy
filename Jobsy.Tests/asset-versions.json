@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "7c918a0549d6728b562295594adafe276ae8683b0e1fce2419a993cd07e05abf",
-    "v": "20261015-01"
+    "sha256": "8e5b77727c2d57a04d8c20db5459d2b1a002934673ac9ba12dc4029af8c0feef",
+    "v": "20261015-02"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -96,12 +96,12 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "a88974b883714b1756e364e81e540dea487ff4737992fda08c247fcd5ecb0fd2",
+    "sha256": "9961d9a0fac174c8588be0bf52e57987c295f85e3cd3a2cbc08498fd7f51197f",
     "v": "20261012-04"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "00c329cc69c6cf5c3da11d3810f2091896b8f60b46a7b0276534a586fef1d442",
-    "v": "20261012-04"
+    "sha256": "7688ac608274cf00918f6b0cbe5ce05f7740a70c389402c5f85d0d1cdf63de0a",
+    "v": "20261015-01"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
@@ -164,8 +164,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "c06c1c12a90ed9052d9d95111c4137ad9a71f71e04fbc89db6502205b98d300f",
-    "v": "20261013-03"
+    "sha256": "4f9280becb6a6ca3e8b9bb76eb5e0323640bfd3b1613f5d561aa9e5888d3037e",
+    "v": "20261015-02"
   },
   "js/app-extras.js": {
     "sha256": "766c6b30c5eb689319309e1b3f6bd29871a9d93e9f57468be1937a2aee6f9823",
@@ -228,8 +228,8 @@
     "v": "20261004-13"
   },
   "js/read-aloud.js": {
-    "sha256": "2304ed48414b99aeb7e9a61bfab786adef61fcc39f3010d714d27c730bb149db",
-    "v": "20261004-14"
+    "sha256": "48461623f48be4c5c47b4896ff7ccd38c1cc86f4a7e11922344f3941ce663044",
+    "v": "20261015-01"
   },
   "js/vacancyDetailMap.min.js": {
     "sha256": "a4cf52ee4b1ecf0658692206cb15d175c77075253cef7bc6afab2a174edf24ef",

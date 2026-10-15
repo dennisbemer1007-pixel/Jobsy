@@ -1418,18 +1418,72 @@ window.lobsyPwaInstall = (function () {
   var KEY_VISITS = "Jobsy.PwaVisits";
   var KEY_DISMISS = "Jobsy.PwaInstallDismissed";
   var deferred = null;
+  var relatedInstalled = false;
+  var bannerRef = null;
   var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent || "")
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  var isStandalone = window.matchMedia("(display-mode: standalone)").matches
-    || window.navigator.standalone === true;
+
+  function readStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches
+      || window.matchMedia("(display-mode: fullscreen)").matches
+      || window.matchMedia("(display-mode: minimal-ui)").matches
+      || window.navigator.standalone === true;
+  }
+
+  function markInstalled() {
+    relatedInstalled = true;
+    try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+    deferred = null;
+    notifyBanner();
+    stabilizeStandaloneTitle();
+  }
+
+  function stabilizeStandaloneTitle() {
+    if (!readStandalone()) return;
+    try {
+      var bad = /installatie|uninstall|ongedaan/i.test(document.title || "");
+      if (bad || !(document.title || "").trim()) {
+        document.title = "Lobsy";
+      }
+    } catch (e) { }
+  }
+
+  function notifyBanner() {
+    if (!bannerRef || typeof bannerRef.invokeMethodAsync !== "function") return;
+    var show = shouldShowBanner();
+    bannerRef.invokeMethodAsync("SetPwaBannerVisible", show).catch(function () { });
+  }
+
+  function shouldShowBanner() {
+    if (readStandalone() || relatedInstalled || wasDismissed()) return false;
+    if (isIos) return visits() >= 2;
+    return visits() >= 2 && !!deferred;
+  }
 
   try {
     window.addEventListener("beforeinstallprompt", function (e) {
       e.preventDefault();
       deferred = e;
       window.dispatchEvent(new CustomEvent("lobsy-pwa-prompt-ready"));
+      notifyBanner();
+    });
+    window.addEventListener("appinstalled", function () {
+      markInstalled();
+      window.dispatchEvent(new CustomEvent("lobsy-pwa-installed"));
     });
   } catch (err) { }
+
+  if (navigator.getInstalledRelatedApps) {
+    navigator.getInstalledRelatedApps().then(function (apps) {
+      if (apps && apps.length) {
+        markInstalled();
+      }
+    }).catch(function () { });
+  }
+
+  if (readStandalone()) {
+    stabilizeStandaloneTitle();
+  }
 
   function visits() {
     try {
@@ -1441,7 +1495,7 @@ window.lobsyPwaInstall = (function () {
   }
 
   function bumpVisit() {
-    if (isStandalone) return visits();
+    if (readStandalone()) return visits();
     try {
       var n = visits() + 1;
       localStorage.setItem(KEY_VISITS, String(n));
@@ -1451,22 +1505,31 @@ window.lobsyPwaInstall = (function () {
     }
   }
 
+  function wasDismissed() {
+    try { return localStorage.getItem(KEY_DISMISS) === "1"; } catch (e) { return false; }
+  }
+
   return {
     bumpVisit: bumpVisit,
     isIos: function () { return isIos; },
-    isStandalone: function () { return isStandalone; },
-    canPrompt: function () { return !!deferred && !isStandalone; },
-    wasDismissed: function () {
-      try { return localStorage.getItem(KEY_DISMISS) === "1"; } catch (e) { return false; }
-    },
+    isStandalone: function () { return readStandalone() || relatedInstalled; },
+    canPrompt: function () { return !!deferred && !readStandalone() && !relatedInstalled; },
+    wasDismissed: wasDismissed,
     dismiss: function () {
       try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
       deferred = null;
+      notifyBanner();
     },
-    shouldShowBanner: function () {
-      if (isStandalone || this.wasDismissed()) return false;
-      if (isIos) return visits() >= 2;
-      return visits() >= 2 && !!deferred;
+    shouldShowBanner: shouldShowBanner,
+    watchBanner: function (dotNetRef) {
+      bannerRef = dotNetRef;
+      function tick() { notifyBanner(); }
+      window.addEventListener("lobsy-pwa-prompt-ready", tick);
+      window.addEventListener("lobsy-pwa-installed", tick);
+      tick();
+    },
+    unwatchBanner: function () {
+      bannerRef = null;
     },
     prompt: async function () {
       if (!deferred) return { ok: false, reason: "unavailable" };
@@ -1475,6 +1538,7 @@ window.lobsyPwaInstall = (function () {
         var choice = await deferred.userChoice;
         deferred = null;
         try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+        notifyBanner();
         return { ok: true, outcome: choice && choice.outcome };
       } catch (e) {
         return { ok: false, reason: "error" };

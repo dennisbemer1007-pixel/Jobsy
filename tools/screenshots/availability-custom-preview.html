@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Availability custom grid preview</title>
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/app.min.css" />
+  <style>
+    body { margin: 0; background: var(--bg, #f5f7fa); font-family: system-ui, sans-serif; }
+    .preview { max-width: 420px; margin: 0 auto; padding: 16px; }
+    .preview h1 { font-size: 1.35rem; color: #0b5; margin: 0 0 8px; }
+    .preview .lead { color: #556; margin: 0 0 16px; font-size: 0.95rem; }
+  </style>
+</head>
+<body class="ob-wizard">
+  <div class="preview">
+    <h1>Wanneer kun je werken?</h1>
+    <p class="lead">1. Kies wat bij je past — optie <strong>Zelf aangeven</strong> actief.</p>
+    <section class="ob-wizard__fine-tune ob-wizard__fine-tune--custom">
+      <h2 class="ob-wizard__section-title">Wanneer ben je beschikbaar?</h2>
+      <p class="ob-wizard__hint ob-wizard__section-hint">Tik per dag aan: ochtend, middag, avond of nacht.</p>
+      <fieldset>
+        <legend>Beschikbaarheid</legend>
+        <div class="availability-matrix availability-matrix--touch" role="grid">
+          <div class="availability-matrix__corner" role="columnheader"></div>
+          <div class="availability-matrix__slot" role="columnheader">Ochtend</div>
+          <div class="availability-matrix__slot" role="columnheader">Middag</div>
+          <div class="availability-matrix__slot" role="columnheader">Avond</div>
+          <div class="availability-matrix__slot" role="columnheader">Nacht</div>
+          <div class="availability-matrix__day" role="rowheader">Ma</div>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <div class="availability-matrix__day" role="rowheader">Di</div>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <div class="availability-matrix__day" role="rowheader">Za</div>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+        </div>
+      </fieldset>
+    </section>
+  </div>
+</body>
+</html>

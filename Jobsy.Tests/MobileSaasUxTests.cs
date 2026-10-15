@@ -224,7 +224,8 @@ public class MobileSaasUxTests
         var razor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         var sectionsDir = Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections");
         var sections = string.Concat(Directory.EnumerateFiles(sectionsDir, "*.razor").Select(File.ReadAllText));
-        var blob = razor + sections;
+        var availabilityMatrix = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/AvailabilityDayPartMatrix.razor"));
+        var blob = razor + sections + availabilityMatrix;
         Assert.Contains("profile-page--candidate", razor);
         Assert.Contains("profile-accordion", razor);
         Assert.Contains("ToggleSection(\"personal\")", razor);
