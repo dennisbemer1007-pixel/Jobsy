@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "bb6079d70cb24de244568a3d725601abc5090ff47b66f0e351fd1f78efb5cb0f",
+    "sha256": "9cc31edf0cc1cba2bd28ccf20ee3a67eac4c3634493d37b4fada6f74d6fa6a1d",
     "v": "20261015-05"
   },
   "css/critical.css": {
@@ -148,7 +148,7 @@
     "v": "20261012-01"
   },
   "favicon.ico": {
-    "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
+    "sha256": "3c0151450ba116c4e2856cd0302d59df12905fa3e16d95057eb4d2d9f00f7136",
     "v": "20261015-coral-mascot"
   },
   "favicon.png": {
@@ -240,11 +240,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "0af06fb0a4af293896e10cadf6ef3bc9434d4ad4cf30781db083b8283ffb6ccc",
+    "sha256": "6da0274f9743fb12e2a2422d9832eda1dd40ccdca70446d88eafb6397c1a4095",
     "v": "20261015-02"
   },
   "service-worker.published.js": {
-    "sha256": "9957b13c94f86b48f11704b16430e70b6e6f7e6252ad03eabd07bfc5e4ab4fe9",
+    "sha256": "5d6f8fde24514c5f9fb51d1481989e25f93a51912ad2f6735b242326864cdf31",
     "v": "20261015-02"
   }
 }

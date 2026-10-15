@@ -30,9 +30,6 @@
             <stop offset="1" style="stop-color:color-mix(in srgb,var(--shell-old) 80%,var(--brand-deep))" />
         </linearGradient>
     </defs>
-    <g class="ll-lob__mascot" transform="translate(64 36) scale(1.05)">
-        @((MarkupString)characterMarkup)
-    </g>
     @if (NewShell)
     {
         <g class="ll-lob__nshell">
@@ -51,6 +48,9 @@
             <path d="@LeerlingLobsterPlates.CracksPath" />
         </g>
     }
+    <g class="ll-lob__mascot" transform="translate(128 138) scale(1.38) translate(-64 -64)">
+        @((MarkupString)characterMarkup)
+    </g>
     @if (FallingPlate is int fallIdx && fallIdx >= 0 && fallIdx < LeerlingLobsterPlates.Plates.Length)
     {
         <g class="ll-lob__fall" aria-hidden="true">

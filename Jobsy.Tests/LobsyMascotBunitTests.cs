@@ -20,7 +20,7 @@ public class LobsyMascotBunitTests : BunitContext
         Assert.Equal("true", root.GetAttribute("aria-hidden"));
 
         var svg = cut.Find("svg.pub-mascot__svg");
-        Assert.Contains("lobsy-claw-", svg.InnerHtml, StringComparison.Ordinal);
+        Assert.Contains("lobsy-arm-", svg.InnerHtml, StringComparison.Ordinal);
         Assert.Contains("#F54A1B", svg.InnerHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("<img", cut.Markup, StringComparison.Ordinal);
     }

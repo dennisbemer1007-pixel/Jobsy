@@ -20468,6 +20468,31 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     align-items: flex-end;
 }
 
+/* Inline LobsyMascot (MainLayout — not scoped under .pub-theme) */
+.pub-mascot {
+    display: inline-block;
+    line-height: 0;
+    flex-shrink: 0;
+}
+
+.pub-mascot__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.pub-mascot--tiny { width: 40px; height: 40px; }
+.pub-mascot--small { width: 64px; height: 64px; }
+.pub-mascot--medium { width: 128px; height: 128px; }
+.pub-mascot--large { width: 200px; height: 200px; }
+.pub-mascot--hero { width: 256px; height: 256px; }
+
+.pub-mascot--avatar {
+    width: 56px;
+    height: 56px;
+}
+
 .lobsy-coach-dock__btn,
 .lobsy-coach-dock__tip,
 .lobsy-coach-dock__close {
