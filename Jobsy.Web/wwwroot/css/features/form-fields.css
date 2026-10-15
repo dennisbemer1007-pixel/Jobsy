@@ -23,7 +23,7 @@
 .login-form input:not([type="checkbox"]):not([type="radio"]),
 .admin-filter-input,
 .admin-settings-input,
-.filter-bar__search,
+input.filter-bar__search,
 textarea:not(.code-input) {
     color: var(--form-value-color);
     font-weight: var(--form-value-weight);
@@ -37,7 +37,7 @@ textarea:not(.code-input) {
 .login-form input::placeholder,
 .login-form textarea::placeholder,
 .admin-filter-input::placeholder,
-.filter-bar__search::placeholder {
+input.filter-bar__search::placeholder {
     color: var(--form-placeholder-color);
     font-weight: 400;
     opacity: 1;
@@ -374,7 +374,7 @@ input.jobsy-date-field__input[type="month"] {
 }
 
 .admin-filter-input,
-.filter-bar__search {
+input.filter-bar__search {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     line-height: 1.4;

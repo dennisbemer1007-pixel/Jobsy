@@ -1,6 +1,6 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-published-v20261015-08";
+var CACHE_VERSION = "lobsy-shell-published-v20261015-09";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 var OFFLINE_URL = "/offline.html";
@@ -10,7 +10,7 @@ var PRECACHE = [
     "/manifest.webmanifest?v=20261004-14",
     "/css/critical.css?v=20261004-13",
     "/css/app.min.css?v=20261015-07",
-    "/js/app-core.js?v=20261015-10",
+    "/js/app-core.js?v=20261015-11",
     "/icons/icon-192.png?v=20261004-13",
     "/icons/icon-512.png?v=20261004-13",
     "/favicon.png?v=20261004-13",
@@ -103,9 +103,23 @@ self.addEventListener("fetch", function (event) {
     }
 
     if (isStaticAsset(url.pathname)) {
-        event.respondWith(staleWhileRevalidate(SHELL_CACHE, request));
+        /* Network-first: stale cached JS/CSS must never break a fresh HTML document. */
+        event.respondWith(networkFirst(SHELL_CACHE, request));
     }
 });
+
+function networkFirst(cacheName, request) {
+    return caches.open(cacheName).then(function (cache) {
+        return fetch(request).then(function (response) {
+            if (response && response.ok) {
+                cache.put(request, response.clone());
+            }
+            return response;
+        }).catch(function () {
+            return cache.match(request);
+        });
+    });
+}
 
 function cacheFirst(cacheName, request) {
     return caches.open(cacheName).then(function (cache) {
