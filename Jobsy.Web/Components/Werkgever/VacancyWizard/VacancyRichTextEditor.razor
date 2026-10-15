@@ -7,7 +7,7 @@
 <label class="vac-wizard-field">
     <span class="vac-wizard-field__label-row">
         <span>Omschrijving</span>
-        <span class="vac-wizard-char-count muted" data-testid="vacancy-description-char-count">@string.Format(Culture["WgVac.Wizard.DescriptionCharCount"], CharacterCount, 4000)</span>
+        <span class="vac-wizard-char-count muted" data-testid="vacancy-description-char-count">@DescriptionCharCountLabel</span>
     </span>
     <div class="richtext-toolbar vac-wizard-richtext__toolbar" role="toolbar" aria-label="Opmaak">
         <div class="richtext-toolbar__group">
@@ -53,7 +53,12 @@
             <button type="button" class="richtext-btn" title="Lijst" aria-label="Lijst"
                     @onclick="InsertListAsync">•</button>
             <button type="button" class="richtext-btn" title="Link invoegen" aria-label="Link invoegen"
-                    @onclick="InsertLinkAsync">🔗</button>
+                    @onclick="InsertLinkAsync">
+                <svg class="richtext-btn__svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
+            </button>
         </div>
     </div>
     <textarea @ref="_descriptionRef"
@@ -74,6 +79,20 @@
     private string? _align;
 
     private int CharacterCount => string.IsNullOrEmpty(Value) ? 0 : Value.Length;
+
+    private string DescriptionCharCountLabel
+    {
+        get
+        {
+            var fmt = Culture["WgVac.Wizard.DescriptionCharCount"];
+            if (string.IsNullOrEmpty(fmt) || fmt.Contains("WgVac.Wizard", StringComparison.Ordinal))
+            {
+                fmt = "{0} van {1} tekens";
+            }
+
+            return string.Format(fmt, CharacterCount, 4000);
+        }
+    }
 
     private string? Align => _align;
 

@@ -38,11 +38,22 @@ html.has-vacancy-wizard .wg-main {
   flex-direction: column;
   min-height: 100dvh;
   min-height: 100svh;
-  padding-bottom: var(--vac-wizard-cookie-offset, 0px);
+  box-sizing: border-box;
+}
+
+/* Override wg-has-bottom-nav 7rem clearance (nav is hidden ≥1024px). */
+@media (min-width: 1024px) {
+  .wg-shell.wg-has-bottom-nav:has(.vac-wizard) {
+    height: 100dvh;
+    max-height: 100dvh;
+    padding-bottom: var(--vac-wizard-cookie-offset, 0px);
+  }
 }
 
 @media (max-width: 1023px) {
   .wg-shell.wg-has-bottom-nav:has(.vac-wizard) {
+    min-height: 100dvh;
+    min-height: 100svh;
     padding-bottom: calc(var(--vac-wizard-mobile-nav-height) + var(--vac-wizard-cookie-offset, 0px));
   }
 }
@@ -134,7 +145,7 @@ html.has-vacancy-wizard .wg-main {
   }
 
   .vac-wizard-actionbar {
-    bottom: var(--vac-wizard-mobile-nav-height);
+    bottom: 0;
     margin-bottom: 0;
     border-bottom: none;
     box-shadow: 0 -2px 8px rgb(15 45 92 / 5%);
@@ -222,7 +233,7 @@ html.has-vacancy-wizard .wg-main {
 }
 
 .vac-wizard__stage-body {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   overflow: auto;
   padding: 12px 16px 8px;
@@ -361,8 +372,9 @@ html.has-vacancy-wizard .wg-main {
   width: 100%;
   max-width: none;
   min-height: 36px;
-  padding: 6px;
+  padding: 4px;
   justify-content: center;
+  font-size: 0;
 }
 
 .vac-wizard-schedule__slot .lobsy-choice-tile__label {
@@ -437,11 +449,11 @@ html.has-vacancy-wizard .wg-main {
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.15rem;
   overflow-x: auto;
   overflow-y: hidden;
   margin-bottom: 8px;
-  padding: 6px 10px 6px 8px;
+  padding: 6px 12px 6px 8px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -455,13 +467,22 @@ html.has-vacancy-wizard .wg-main {
 }
 
 .vac-wizard .richtext-btn {
-  width: 2rem;
-  height: 2rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface);
   color: var(--brand);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
+  padding: 0;
+}
+
+.vac-wizard .richtext-btn .richtext-btn__svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: auto;
 }
 
 .vac-wizard .richtext-btn:hover {
@@ -490,8 +511,9 @@ html.has-vacancy-wizard .wg-main {
 }
 
 .vac-wizard-richtext__color {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 2px solid var(--border);
   background: var(--swatch, var(--text));
@@ -591,6 +613,7 @@ html.has-vacancy-wizard .wg-main {
   position: sticky;
   bottom: 0;
   flex: 0 0 auto;
+  margin-top: auto;
   z-index: 45;
   min-height: var(--vac-wizard-actionbar-height);
   padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
@@ -890,7 +913,7 @@ html.has-vacancy-wizard .wg-main {
     border-inline-end: 1px solid var(--border);
     background: var(--surface);
     min-height: 0;
-    height: auto;
+    height: 100%;
     overflow-y: auto;
   }
 
@@ -902,11 +925,14 @@ html.has-vacancy-wizard .wg-main {
     max-width: none;
     margin: 0;
     min-height: 0;
-    height: auto;
+    height: 100%;
     overflow: hidden;
   }
 
   .vac-wizard__stage-body {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: auto;
     padding: 20px 32px 12px;
   }
 
@@ -922,7 +948,7 @@ html.has-vacancy-wizard .wg-main {
     border-inline-start: 1px solid var(--border);
     background: var(--bg);
     min-height: 0;
-    height: auto;
+    height: 100%;
     overflow-y: auto;
   }
 
@@ -950,10 +976,6 @@ html.has-vacancy-wizard .wg-main {
   .vac-wizard:has([data-testid='vac-wizard-step-1']) .vac-wizard-branch-grid.lobsy-choice-grid--wrap {
     flex-wrap: nowrap;
     overflow: hidden;
-  }
-
-  .vac-wizard:has([data-testid='vac-wizard-step-1']) .vac-wizard__stage-body {
-    overflow: auto;
   }
 
   .vac-wizard:has([data-testid='vac-wizard-step-1']) .lobsy-choice-tile--inline {

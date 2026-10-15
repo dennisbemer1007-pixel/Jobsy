@@ -15,6 +15,15 @@ window.vacancyWizard = {
         measureCookie();
         window.addEventListener("resize", measureCookie, { passive: true });
 
+        if (typeof MutationObserver !== "undefined") {
+            var cookieClassObserver = new MutationObserver(measureCookie);
+            cookieClassObserver.observe(root, { attributes: true, attributeFilter: ["class"] });
+            var banner = document.querySelector(".cookie-consent");
+            if (banner) {
+                cookieClassObserver.observe(banner, { attributes: true, childList: true, subtree: true });
+            }
+        }
+
         if (window.visualViewport) {
             window.visualViewport.addEventListener("resize", function () {
                 var keyboardOpen = window.visualViewport.height < window.innerHeight * 0.75;
