@@ -12,6 +12,7 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Core.ValueObjects
 @using Jobsy.Web.Components.Discovery
 @using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.KandidaatBanen
@@ -1225,6 +1226,9 @@
     private List<Dictionary<string, object?>> _bootPins = [];
     private CancellationTokenSource? _viewportDiscoverCts;
     private string? _lastMapTravelSyncKey;
+    private string? _lastDiscoverViewportKey;
+    private double? _lastSyncedOriginLat;
+    private double? _lastSyncedOriginLng;
 
     private ElementReference _mapElement;
     private ElementReference _moreCardsSentinel;
@@ -1530,6 +1534,13 @@
             return Task.CompletedTask;
         }
 
+        var viewportKey = ViewportDiscoverKey(minLat, minLng, maxLat, maxLng, zoom);
+        if (string.Equals(viewportKey, _lastDiscoverViewportKey, StringComparison.Ordinal))
+        {
+            return Task.CompletedTask;
+        }
+
+        _lastDiscoverViewportKey = viewportKey;
         _bboxMinLat = minLat;
         _bboxMinLng = minLng;
         _bboxMaxLat = maxLat;
@@ -1547,6 +1558,40 @@
         }
 
         return Task.CompletedTask;
+    }
+
+    private static string ViewportDiscoverKey(double minLat, double minLng, double maxLat, double maxLng, double zoom)
+    {
+        static string R(double v) => v.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+        var z = double.IsFinite(zoom) ? ((int)Math.Round(zoom)).ToString(System.Globalization.CultureInfo.InvariantCulture) : "0";
+        return string.Join('|', R(minLat), R(minLng), R(maxLat), R(maxLng), z);
+    }
+
+    private bool ShouldSyncOriginToMap(double lat, double lng)
+    {
+        if (_lastSyncedOriginLat is not double slat || _lastSyncedOriginLng is not double slng)
+        {
+            return true;
+        }
+
+        return GeoDistance.HaversineKm(new GeoPoint(slat, slng), new GeoPoint(lat, lng)) * 1000.0 >= 500;
+    }
+
+    private async Task ReplaceQueryAsync(IReadOnlyDictionary<string, string?> updates)
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyGeo.replaceQuery", updates);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
     }
 
     private async Task DebouncedViewportDiscoverAsync(CancellationToken ct)
@@ -1947,8 +1992,7 @@
 
         _desktopListMode = list;
         await PersistWeergaveAsync();
-        var uri = Navigation.GetUriWithQueryParameter("weergave", list ? "lijst" : null);
-        Navigation.NavigateTo(uri, replace: true);
+        await ReplaceQueryAsync(new Dictionary<string, string?> { ["weergave"] = list ? "lijst" : null });
         if (!list && !_mapReady)
         {
             _mapInitScheduled = false;
@@ -2003,8 +2047,7 @@
             if (string.Equals(stored, "lijst", StringComparison.OrdinalIgnoreCase))
             {
                 _desktopListMode = true;
-                var next = Navigation.GetUriWithQueryParameter("weergave", "lijst");
-                Navigation.NavigateTo(next, replace: true);
+                await ReplaceQueryAsync(new Dictionary<string, string?> { ["weergave"] = "lijst" });
             }
         }
         catch (JSDisconnectedException) { }
@@ -2819,7 +2862,16 @@
                     _lastMapTravelSyncKey = travelKey;
                     if (_origin is not null && _companyFocusIds is null)
                     {
-                        await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
+                        if (ShouldSyncOriginToMap(_origin.Latitude, _origin.Longitude))
+                        {
+                            await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
+                            _lastSyncedOriginLat = _origin.Latitude;
+                            _lastSyncedOriginLng = _origin.Longitude;
+                        }
+                        else
+                        {
+                            await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions());
+                        }
                     }
                     else
                     {
@@ -2830,7 +2882,6 @@
                 _mapPainted = true;
                 await InvokeAsync(StateHasChanged);
                 RunDetachedAsync(EnsureDesktopMatchDeckAsync, "EnsureDesktopMatchDeckAsync(map)");
-                _ = RefreshMapSizeAsync();
                 _ = TryFocusCompanyOnMapAsync();
             }
             else
@@ -3452,6 +3503,14 @@
 
     private async Task ApplyOriginAsync(double lat, double lng, string? label)
     {
+        if (_origin is { } prev
+            && GeoDistance.HaversineKm(
+                new GeoPoint(prev.Latitude, prev.Longitude),
+                new GeoPoint(lat, lng)) * 1000.0 < 500)
+        {
+            return;
+        }
+
         _origin = new OriginPoint { Latitude = lat, Longitude = lng };
         _showStartPrompt = false;
         _startPromptDismissed = true;
@@ -4453,29 +4512,7 @@
         _searchDebounceCts?.Cancel();
         _searchQuery = null;
         _searchDraft = null;
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var parsed = QueryHelpers.ParseQuery(uri.Query);
-        if (parsed.ContainsKey("q"))
-        {
-            var parts = new List<string>();
-            foreach (var kv in parsed)
-            {
-                if (string.Equals(kv.Key, "q", StringComparison.OrdinalIgnoreCase))
-                {
-                    continue;
-                }
-
-                foreach (var value in kv.Value)
-                {
-                    parts.Add($"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(value ?? string.Empty)}");
-                }
-            }
-
-            var next = parts.Count == 0 ? uri.AbsolutePath : $"{uri.AbsolutePath}?{string.Join("&", parts)}";
-            Navigation.NavigateTo(next, forceLoad: false);
-            return;
-        }
-
+        await ReplaceQueryAsync(new Dictionary<string, string?> { ["q"] = null });
         await ReloadFiltersIfAppliedAsync();
     }
 
