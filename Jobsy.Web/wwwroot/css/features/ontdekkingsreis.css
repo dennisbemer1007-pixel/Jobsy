@@ -1831,7 +1831,7 @@
 }
 
 @media (max-width: 899px) {
-  .journey-coach--mobile {
+  .journey--fit .journey-coach--mobile {
     display: none !important;
   }
 

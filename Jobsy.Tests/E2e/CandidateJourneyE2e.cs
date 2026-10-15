@@ -560,6 +560,13 @@ public static class CandidateJourneyE2e
         await SetDiscoveryJourneyStepsForE2eAsync(candidateEmail, completedThrough: 1, currentStep: 2);
     }
 
+    /// <summary>Arbitrary onboarding step with honest prior-step completion for E2E screenshots.</summary>
+    public static Task PrepareDiscoveryStepForE2eAsync(string candidateEmail, int step)
+        => SetDiscoveryJourneyStepsForE2eAsync(
+            candidateEmail,
+            completedThrough: Math.Max(0, step - 1),
+            currentStep: Math.Clamp(step, 1, OnboardingWizardCatalog.V3StepCount));
+
     /// <summary>Consent + cleared answers for discovery journey step 7–10 question screenshots.</summary>
     public static async Task PrepareDiscoveryQuestionScreenForE2eAsync(string candidateEmail, int step = 8)
     {

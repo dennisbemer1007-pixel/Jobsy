@@ -305,7 +305,7 @@
         return changed;
     }
 
-    /// <summary>Discovery in-progress: journey lobster in the stage — hide the sticky LobsyCoach dock.</summary>
+    /// <summary>Hide sticky LobsyCoach when the journey page already shows its own mascot (desktop grid or mobile dock / inline).</summary>
     public static bool IsDiscoveryQuestionCoachHidden(string path, string relativeUri)
     {
         path = path.TrimStart('/');
@@ -319,7 +319,26 @@
             return false;
         }
 
-        return !stap.Equals("start", StringComparison.OrdinalIgnoreCase);
+        if (stap.Equals("start", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n)
+            && n is >= 7 and <= 10)
+        {
+            return true;
+        }
+
+        if (int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var step)
+            && step is >= 1 and <= 6)
+        {
+            return true;
+        }
+
+        return stap.Equals("shed", StringComparison.OrdinalIgnoreCase)
+               || stap.Equals("klaar", StringComparison.OrdinalIgnoreCase)
+               || stap.Equals("toestemming", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryGetJourneyStap(string relativeUri, out string stap)

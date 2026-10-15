@@ -89,6 +89,19 @@
             </div>
         }
 
+        @if (ShowDesktopCoachInGrid)
+        {
+            <div class="journey-coach journey-coach--mobile journey-only-mobile" aria-live="polite">
+                <div class="journey-bubble journey-coach__bubble">
+                    <p>@LobsterSay</p>
+                </div>
+                <JourneyLobster PlatesShed="@_platesShed"
+                                NewShell="@IsLightScreen"
+                                Mobile="true"
+                                Label="@Culture["Discovery.Lobster.Aria"]" />
+            </div>
+        }
+
         <div class="journey-stage">
             <div class="journey-only-desktop">
                 <JourneyProgressRail ActiveStep="@RailStep"
