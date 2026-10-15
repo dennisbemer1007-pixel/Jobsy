@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "7c918a0549d6728b562295594adafe276ae8683b0e1fce2419a993cd07e05abf",
-    "v": "20261013-01"
+    "sha256": "94024a1557e60ad688adebeaa56081493a71a0b92b67b899824cf6f5d0d17081",
+    "v": "20261015-navonly"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -240,7 +240,7 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "26e8193d0a2c96e83891c9f766043a72cc63851809646abd3b753909958d1189",
+    "sha256": "26cfa742f88a0563aeac97d424a56a8756800f71b8ea66f774eb100244e7f71e",
     "v": "20261010-02"
   },
   "service-worker.published.js": {

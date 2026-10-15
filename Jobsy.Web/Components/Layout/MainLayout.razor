@@ -119,6 +119,11 @@
         RegionHost.Changed += OnBrandingChanged;
         Branding.Changed += OnBrandingChanged;
         Navigation.LocationChanged += OnLocationChanged;
+        if (AuthState is AuthenticationStateProvider authProvider)
+        {
+            authProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        }
+
         RefreshFocusedFlags();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
@@ -242,6 +247,21 @@
 
         _hasBottomNav = hasItems;
         return InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> _)
+    {
+        try
+        {
+            await RefreshHomeHrefAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -406,6 +426,11 @@
 
     public void Dispose()
     {
+        if (AuthState is AuthenticationStateProvider authProvider)
+        {
+            authProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        }
+
         Culture.Changed -= OnCultureChanged;
         RegionHost.Changed -= OnBrandingChanged;
         Branding.Changed -= OnBrandingChanged;
