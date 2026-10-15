@@ -230,6 +230,12 @@
     max-height: calc(100dvh - 48px);
   }
 
+  /* Candidate shell with sticky app header: offset the rail below the header. */
+  .app-shell:has(.app-header) .journey-stage .journey-rail {
+    top: calc(var(--app-header-height, 4.25rem) + 24px);
+    max-height: calc(100dvh - var(--app-header-height, 4.25rem) - 48px);
+  }
+
   .journey-rail-drawer .journey-rail {
     position: static;
     top: auto;
