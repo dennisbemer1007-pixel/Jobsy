@@ -34,11 +34,3 @@
 .ob-wizard__dream-grid button{min-inline-size:0;overflow-wrap:anywhere}
 .ob-wizard__fine-tune fieldset{margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)}
 @media (max-width:639px){.ob-wizard__footer{padding-inline-end:calc(56px + 12px);flex-wrap:wrap}}
-
-/* Progress header: solid bar, content scrolls underneath never shows through */
-.ob-wizard__layout{max-height:100dvh;overflow:hidden}
-.ob-wizard__main{display:flex;flex-direction:column;min-block-size:0;overflow:hidden}
-.ob-wizard__header{position:relative;inset-block-start:auto;flex-shrink:0;background:var(--surface);border-block-end:1px solid var(--border);box-shadow:var(--shadow)}
-.ob-wizard__content{flex:1;min-block-size:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.ob-wizard__footer{position:relative;inset-block-end:auto;flex-shrink:0;background:var(--surface);border-block-start:1px solid var(--border);box-shadow:0 -4px 12px color-mix(in srgb,var(--text) 6%,transparent)}
-@media (min-width:1024px){.ob-wizard__layout{max-height:100dvh}.ob-wizard__main{block-size:100%}.ob-wizard__header{background:var(--surface)}.ob-wizard__footer{background:var(--surface)}}

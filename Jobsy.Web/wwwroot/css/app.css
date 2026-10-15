@@ -1578,10 +1578,6 @@ html[dir="rtl"] .account-menu__panel {
     -webkit-overflow-scrolling: touch;
 }
 
-.app-shell.app-shell--questionnaire .app-main:has(.journey) {
-    overflow: hidden;
-}
-
 /* Side-gutter logos removed for a quieter desktop chrome. */
 .lobsy-watermarks,
 .lobsy-watermark {
