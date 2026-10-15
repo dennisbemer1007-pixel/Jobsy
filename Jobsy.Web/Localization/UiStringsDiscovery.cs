@@ -175,6 +175,10 @@ public static class UiStringsDiscovery
             "10 stappen · ± 12 min", "10 steps · ± 12 min", "10 kroków · ± 12 min", "10 pași · ± 12 min", "10 خطوات · ± 12 د");
         Add("Discovery.Rail.StepCount",
             "Stap {0} van 10", "Step {0} of 10", "Krok {0} z 10", "Pasul {0} din 10", "الخطوة {0} من 10");
+        Add("Discovery.Rail.StepLayersCount",
+            "Stap {0} van 10 · laag {1} eraf", "Step {0} of 10 · layer {1} off", "Krok {0} z 10 · warstwa {1} zdjęta", "Pasul {0} din 10 · stratul {1} jos", "الخطوة {0} من 10 · الطبقة {1} انتهت");
+        Add("Discovery.Rail.ProgressCount",
+            "{0} van 10 afgerond", "{0} of 10 done", "{0} z 10 gotowych", "{0} din 10 gata", "{0} من 10 منجزة");
         Add("Discovery.Rail.DoneCount",
             "Klaar · 10 van 10 · nieuwe schaal", "Done · 10 of 10 · new shell", "Gotowe · 10 z 10 · nowa skorupa", "Gata · 10 din 10 · carapace nouă", "تم · 10 من 10 · صدفة جديدة");
         Add("Discovery.StepOf",
@@ -506,6 +510,8 @@ public static class UiStringsDiscovery
             "Vraag {0} van {1}", "Question {0} of {1}", "Pytanie {0} z {1}", "Întrebarea {0} din {1}", "سؤال {0} من {1}");
         Add("Discovery.TestOf",
             "test {0} van 4", "test {0} of 4", "test {0} z 4", "testul {0} din 4", "اختبار {0} من 4");
+        Add("Discovery.Test.PartOf",
+            "Deel {0} van {1}", "Part {0} of {1}", "Część {0} z {1}", "Partea {0} din {1}", "الجزء {0} من {1}");
 
         Add("Discovery.Shed.EyebrowDone",
             "stap {0} van 10 klaar", "step {0} of 10 done", "krok {0} z 10 gotowy", "pasul {0} din 10 gata", "الخطوة {0} من 10 جاهزة");

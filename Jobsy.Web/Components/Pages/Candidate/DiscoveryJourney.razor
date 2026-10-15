@@ -27,7 +27,7 @@
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
 
-<div class="journey">
+<div class="@JourneyRootClass">
     @if (_loading && _screen != "overview")
     {
         <p class="journey__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -40,7 +40,7 @@
         <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
             <p class="journey-mprog__t">
                 <b>@MobileProgressLabel</b>
-                @if (_screen is not "start" && !ShowFinishedChrome)
+                @if (_screen is not "start" && !IsLightScreen)
                 {
                     <span class="muted">· @CurrentStepTitle</span>
                 }
@@ -55,27 +55,31 @@
                 {
                     <i class="@(SegmentClass(k))"></i>
                 }
-                <span class="journey-mtrack__mk" style="left:@MarkerLeft%">
-                    <JourneyLobster PlatesShed="@_platesShed" Size="28" Mobile="true" Label="@Culture["Discovery.Lobster.Aria"]" />
-                </span>
             </div>
+            @if (_screen is not "start")
+            {
+                <button type="button" class="journey-mprog__drawer" @onclick="ToggleMobileRailAsync" aria-expanded="@_mobileRailOpen">
+                    @Culture["Discovery.Rail.Title"] · @Culture.Format("Discovery.Rail.ProgressCount", CompletedLayerCount)
+                </button>
+            }
         </div>
 
-        <div class="journey-coach journey-coach--mobile journey-only-mobile" aria-live="polite">
-            <div class="journey-bubble journey-coach__bubble">
-                <p>@LobsterSay</p>
-                <ReadAloudButton Text="@LobsterSay" SpeechKey="journey-lobster-mobile" />
+        @if (_mobileRailOpen)
+        {
+            <div class="journey-rail-drawer journey-only-mobile" role="dialog" aria-modal="true" aria-label="@Culture["Discovery.Rail.Title"]">
+                <button type="button" class="journey-rail-drawer__close" @onclick="CloseMobileRail">×</button>
+                <JourneyProgressRail ActiveStep="@RailStep"
+                                       LightStepComplete="@LightStepComplete"
+                                       SaveStatus="@_saveStatus"
+                                       CompletedSteps="@CompletedStepNumbers"
+                                       OnGoToStep="GoToRailStepFromMobileAsync" />
             </div>
-            <JourneyLobster PlatesShed="@_platesShed"
-                            NewShell="@IsLightScreen"
-                            Mobile="true"
-                            Label="@Culture["Discovery.Lobster.Aria"]" />
-        </div>
+        }
 
         <div class="journey-stage">
             <div class="journey-only-desktop">
                 <JourneyProgressRail ActiveStep="@RailStep"
-                                       IsEnd="@ShowFinishedChrome"
+                                       LightStepComplete="@LightStepComplete"
                                        SaveStatus="@_saveStatus"
                                        CompletedSteps="@CompletedStepNumbers"
                                        OnGoToStep="GoToRailStepAsync" />
@@ -539,28 +543,35 @@
                                         HintKey="@JourneyTestFlow.TestHintKey(_countedStep)"
                                         ShowHint="@(_targetLevel <= OnboardingWizardCatalog.MiniLevelCount)"
                                         ShowQuestionCounter="true"
+                                        JourneyShell="true"
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
                                         ResolveQuestionText="QuestionText"
                                         OnFinished="FinishMiniAsync"
                                         OnLeave="BackAsync" />
                 }
+                @if (ShowMobileCoachInline)
+                {
+                    <div class="journey-coach-inline journey-only-mobile" aria-live="polite">
+                        <JourneyLobster PlatesShed="@_platesShed" Size="40" Mobile="true" Label="" />
+                        <p>@LobsterSay</p>
+                    </div>
+                }
             </section>
 
-            <div class="journey-lz journey-only-desktop @(IsLightScreen ?"is-rising" : null)">
-                <div class="journey-bubble">
-                    <p>@LobsterSay</p>
-                    <ReadAloudButton Text="@LobsterSay" SpeechKey="journey-lobster-desktop" />
+            @if (ShowDesktopCoach)
+            {
+                <div class="journey-lz journey-only-desktop @(IsLightScreen ? "is-rising" : null)">
+                    <div class="journey-bubble">
+                        <p>@LobsterSay</p>
+                    </div>
+                    <JourneyLobster PlatesShed="@_platesShed"
+                                    Size="72"
+                                    NewShell="@IsLightScreen"
+                                    FallingPlate="@(_screen == "shed" && !_preferReducedMotion ? _shedStep - 1 : null)"
+                                    Label="@Culture["Discovery.Lobster.Aria"]" />
                 </div>
-                <JourneyLobster PlatesShed="@_platesShed"
-                                NewShell="@IsLightScreen"
-                                FallingPlate="@(_screen == "shed" && !_preferReducedMotion ? _shedStep - 1 : null)"
-                                Label="@Culture["Discovery.Lobster.Aria"]" />
-                @if (!IsLightScreen)
-                {
-                    <span class="journey-lz__shadow" aria-hidden="true"></span>
-                }
-            </div>
+            }
         </div>
     }
 </div>
@@ -652,6 +663,21 @@
 
     private bool JourneyFinished => _state?.IsComplete == true || _state?.FinishReached == true;
 
+    private bool LightStepComplete => _screen is "klaar" or "overview";
+
+    private bool _mobileRailOpen;
+
+    private int CompletedLayerCount => CompletedStepNumbers.Count(s => s is >= 1 and <= 10);
+
+    private bool FitViewport => _screen is "shed" or "klaar"
+        || (_countedStep is >= 7 and <= 10 && _screen is not "overview" and not "start");
+
+    private string JourneyRootClass => FitViewport ? "journey journey--fit" : "journey";
+
+    private bool ShowDesktopCoach => _screen is not "start" and not "overview";
+
+    private bool ShowMobileCoachInline => _screen is not "start" and not "overview" and not "klaar";
+
     private HashSet<int> CompletedStepNumbers
     {
         get
@@ -674,20 +700,15 @@
         }
     }
 
-    /// <summary>A finished journey keeps 10/10 on every revisited step, not only the end screens.</summary>
-    private bool ShowFinishedChrome => JourneyChrome.ShowFinished(JourneyFinished, IsLightScreen);
-
-    private int _platesShed => ShowFinishedChrome
+    private int _platesShed => IsLightScreen
         ? 10
         : _screen == "shed"
             ? _shedStep
-            : Math.Max(RailStep - 1, 0);
+            : CompletedLayerCount;
     private int RailStep => _screen switch
     {
-        "toestemming" when JourneyFinished => 11,
         "toestemming" => 6,
-        "shed" when JourneyFinished => 11,
-        "shed" => _shedStep + 1,
+        "shed" => Math.Clamp(_shedStep + 1, 1, 10),
         "klaar" or "overview" => 11,
         _ => _countedStep
     };
@@ -764,22 +785,14 @@
         }
     }
 
-    private string MobileProgressLabel => ShowFinishedChrome
-        ? Culture["Discovery.Rail.DoneCountShort"]
-        : _screen switch
-        {
-            "start" => Culture["Discovery.Rail.StartCountShort"],
-            _ => Culture.Format("Discovery.Rail.StepCount", Math.Max(Math.Min(RailStep, 10), 1))
-        };
+    private string MobileProgressLabel => _screen switch
+    {
+        "start" => Culture["Discovery.Rail.StartCountShort"],
+        "klaar" or "overview" when CompletedLayerCount >= 10 => Culture["Discovery.Rail.DoneCountShort"],
+        _ => Culture.Format("Discovery.Rail.StepCount", Math.Max(Math.Min(RailStep, 10), 1))
+    };
 
-    private string MobileProgressAria => $"{MobileProgressLabel}, {_platesShed} lagen eraf";
-    private string MarkerLeft => ShowFinishedChrome
-        ? "95%"
-        : _screen switch
-        {
-            "start" => "2%",
-            _ => $"{(Math.Max(Math.Min(RailStep, 10), 1) - 0.5) / 10 * 100:0.0}%"
-        };
+    private string MobileProgressAria => $"{MobileProgressLabel}, {CompletedLayerCount} lagen eraf";
 
     private string RolesSummary => Draft.Roles.Count == 0
         ? ""
@@ -1958,12 +1971,24 @@
 
     private string SegmentClass(int index)
     {
-        if (ShowFinishedChrome) return "is-done";
+        if (index < CompletedLayerCount) return "is-done";
         var step = Math.Max(RailStep, 0);
-        if (step <= 0) return "";
-        if (index < step - 1) return "is-done";
-        if (index == step - 1) return "is-now";
+        if (step is >= 1 and <= 10 && index == step - 1) return "is-now";
         return "";
+    }
+
+    private Task ToggleMobileRailAsync()
+    {
+        _mobileRailOpen = !_mobileRailOpen;
+        return Task.CompletedTask;
+    }
+
+    private void CloseMobileRail() => _mobileRailOpen = false;
+
+    private async Task GoToRailStepFromMobileAsync(int step)
+    {
+        CloseMobileRail();
+        await GoToRailStepAsync(step);
     }
 
     private async Task PrepareMiniAsync()

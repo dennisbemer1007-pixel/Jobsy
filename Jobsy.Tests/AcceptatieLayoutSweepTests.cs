@@ -100,7 +100,7 @@ public class AcceptatieLayoutSweepTests
     public void Journey_mobile_grid_override_follows_the_base_rule()
     {
         var css = Read("Jobsy.Web", "wwwroot", "css", "features", "ontdekkingsreis.css");
-        var baseIdx = css.IndexOf("grid-template-columns: 300px minmax(0, 640px) 1fr", StringComparison.Ordinal);
+        var baseIdx = css.IndexOf("grid-template-columns: minmax(0, 15.5rem) minmax(0, 34rem)", StringComparison.Ordinal);
         Assert.True(baseIdx > 0);
         var after = css[(baseIdx + 1)..];
         Assert.Contains("grid-template-columns: minmax(0, 1fr)", after, StringComparison.Ordinal);

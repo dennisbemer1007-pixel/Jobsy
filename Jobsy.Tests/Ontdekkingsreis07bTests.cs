@@ -168,6 +168,38 @@ public class JourneyProgressRailBunitTests : BunitContext
         Assert.Contains("afgerond", cut.Markup, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Rail_with_seven_completed_shows_seven_step_checkmarks()
+    {
+        var done = new HashSet<int> { 1, 2, 3, 4, 5, 6, 7 };
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<JourneyProgressRail>(0);
+            builder.AddAttribute(1, "ActiveStep", 8);
+            builder.AddAttribute(2, "CompletedSteps", done);
+            builder.CloseComponent();
+        });
+
+        Assert.Contains("7 van 10 lagen eraf", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Stap 8 van 10 · laag 7 eraf", cut.Markup, StringComparison.Ordinal);
+        Assert.True(CountOccurrences(cut.Markup, "journey-rail__dot--check") >= 7);
+        Assert.Contains("journey-rail__dot--current", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Klaar · 10 van 10", cut.Markup, StringComparison.Ordinal);
+    }
+
+    private static int CountOccurrences(string haystack, string needle)
+    {
+        var count = 0;
+        var idx = 0;
+        while ((idx = haystack.IndexOf(needle, idx, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            idx += needle.Length;
+        }
+
+        return count;
+    }
+
     private sealed class FakeAuth : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()

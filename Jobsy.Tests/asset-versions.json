@@ -100,8 +100,8 @@
     "v": "20261015-02"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "a20ce89f5c11e4fd2d53febcc6d68d16ca3de7939d1f9ed478a35f07029681f6",
-    "v": "20261015-06"
+    "sha256": "fd1b39f533fbed941e8f09143741fa925f7c738419c9fcbc7b5fd1ad92439b41",
+    "v": "20261015-07"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
@@ -120,8 +120,8 @@
     "v": "20261004-10"
   },
   "css/features/reconnect.css": {
-    "sha256": "510f1f6aeccfb7b0d307175091a185176e26475bfcbc2821f6c09a0c7c41c73b",
-    "v": "20261015-01"
+    "sha256": "bc14c189d7fca29a383530cfa0feee5e63b3c123f12974e71f8a5c12dfd0527e",
+    "v": "20261015-02"
   },
   "css/features/sales.css": {
     "sha256": "8ddbe15c3222a39e1f6a22d866ea228c49311cb1f39b329576a47d9ba2c31e11",

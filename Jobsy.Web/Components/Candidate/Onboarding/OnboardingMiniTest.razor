@@ -5,7 +5,7 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<div class="ob-wizard__test-tabs">
+<div class="ob-wizard__test-tabs @(JourneyShell ? "journey-segments" : null)">
     @foreach (var tab in TestTabs)
     {
         var isCurrent = tab.Step == Step;
@@ -19,8 +19,11 @@
         </span>
     }
 </div>
-<h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
-<p class="ob-wizard__lead">@(string.IsNullOrWhiteSpace(LeadKey) ? Culture["Onboarding.Test.Lead"] : Culture[LeadKey])</p>
+@if (!JourneyShell)
+{
+    <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+    <p class="ob-wizard__lead">@(string.IsNullOrWhiteSpace(LeadKey) ? Culture["Onboarding.Test.Lead"] : Culture[LeadKey])</p>
+}
 @if (Questions.Count == 0)
 {
     <p>@Culture["Onboarding.MiniAllDone"]</p>
@@ -34,6 +37,10 @@ else
                       StartAt="CurrentQuestion"
                       Target="Depth"
                       Compact="true"
+                      QuestionTitle="@(JourneyShell ? (string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey]) : null)"
+                      QuestionLead="@(JourneyShell ? Culture["TestFlow.QuestionLead"] : null)"
+                      PartIndex="@(JourneyShell ? Step - 6 : 0)"
+                      PartTotal="@(JourneyShell ? 4 : 0)"
                       FinishLabel="@Culture["Onboarding.NextTest"]"
                       InputPrefix="@InputPrefix"
                       OnAnswer="OnFlowAnswer"
@@ -42,10 +49,7 @@ else
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint)
 {
-    <div class="read-aloud-block">
-        <p class="journey-deeper-hint">@Culture[HintKey]</p>
-        <ReadAloudButton Text="@Culture[HintKey]" SpeechKey="@($"hint-{Step}")" />
-    </div>
+    <p class="journey-deeper-hint">@Culture[HintKey]</p>
 }
 
 @code {
@@ -64,6 +68,7 @@ else
     [Parameter] public string? HintKey { get; set; }
     [Parameter] public bool ShowHint { get; set; }
     [Parameter] public bool ShowQuestionCounter { get; set; }
+    [Parameter] public bool JourneyShell { get; set; }
     [Parameter] public TestDepthLevel Depth { get; set; } = TestDepthLevel.First;
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }

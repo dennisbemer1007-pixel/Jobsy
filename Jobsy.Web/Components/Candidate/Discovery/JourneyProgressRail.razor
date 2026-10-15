@@ -7,17 +7,15 @@
     <p class="journey-rail__count">@CountText</p>
     <ol class="journey-rail__route" aria-label="@Culture["Discovery.Rail.Aria"]">
         @{
-            var beachDone = ActiveStep > 0 || IsEnd;
-            var beachCurrent = ActiveStep == 0 && !IsEnd;
+            var beachDone = ActiveStep > 0 || CompletedSteps.Any(s => s is >= 1 and <= 10);
+            var beachCurrent = ActiveStep == 0 && !LightStepComplete;
         }
         <li class="journey-rail__step @(beachCurrent ? "is-current" : beachDone ? "is-done" : "is-todo")"
             aria-current="@(beachCurrent ? "step" : null)"
             aria-label="@BeachAria(beachCurrent, beachDone)">
             @if (beachCurrent)
             {
-                <span class="journey-rail__marker">
-                    <JourneyLobster PlatesShed="0" Size="30" Label="" />
-                </span>
+                <span class="journey-rail__dot journey-rail__dot--current" aria-hidden="true"></span>
             }
             else if (beachDone)
             {
@@ -43,8 +41,8 @@
                 <li class="journey-rail__zone" aria-hidden="true">@Culture[JourneyCatalog.ZoneKeys[zone]]</li>
             }
 
-            var done = IsEnd || CompletedSteps.Contains(step.Number);
-            var current = !IsEnd && ActiveStep == step.Number;
+            var done = CompletedSteps.Contains(step.Number);
+            var current = ActiveStep == step.Number;
             var clickable = done && !current && OnGoToStep.HasDelegate;
             var rowClass = current ? "is-current" : done ? "is-done" : "is-todo";
             if (clickable)
@@ -79,9 +77,9 @@
                 }
             </li>
         }
-        <li class="journey-rail__step @(IsEnd ? "is-done" : "is-todo is-end")"
+        <li class="journey-rail__step @(LightStepComplete ? "is-done" : "is-todo is-end")"
             aria-label="@EndAria()">
-            @if (IsEnd)
+            @if (LightStepComplete)
             {
                 <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
             }
@@ -104,7 +102,7 @@
         </span>
         <span>@Culture.Format("Discovery.Rail.LayersCount", LayersOff)</span>
     </div>
-    @if (ActiveStep > 0 || IsEnd)
+    @if (ActiveStep > 0 || LayersOff > 0)
     {
         <p class="journey-rail__saved @SaveClass" aria-live="polite">@SaveText</p>
     }
@@ -112,7 +110,7 @@
 
 @code {
     [Parameter] public int ActiveStep { get; set; }
-    [Parameter] public bool IsEnd { get; set; }
+    [Parameter] public bool LightStepComplete { get; set; }
     [Parameter] public string SaveStatus { get; set; } = "idle";
     [Parameter] public IReadOnlySet<int> CompletedSteps { get; set; } = EmptySteps;
     [Parameter] public EventCallback<int> OnGoToStep { get; set; }
@@ -123,29 +121,39 @@
     {
         get
         {
-            if (IsEnd)
-            {
-                return 10;
-            }
-
             var n = CompletedSteps.Count(s => s is >= 1 and <= 10);
             return Math.Clamp(n, 0, 10);
         }
     }
 
-    private string CountText => IsEnd
-        ? Culture["Discovery.Rail.DoneCount"]
-        : ActiveStep == 0
-            ? Culture["Discovery.Rail.StartCount"]
-            : Culture.Format("Discovery.Rail.StepCount", ActiveStep);
+    private string CountText
+    {
+        get
+        {
+            if (ActiveStep == 0 && LayersOff == 0)
+            {
+                return Culture["Discovery.Rail.StartCount"];
+            }
+
+            if (LightStepComplete && LayersOff >= 10)
+            {
+                return Culture["Discovery.Rail.DoneCount"];
+            }
+
+            if (ActiveStep is >= 1 and <= 10)
+            {
+                return Culture.Format("Discovery.Rail.StepLayersCount", ActiveStep, LayersOff);
+            }
+
+            return Culture.Format("Discovery.Rail.ProgressCount", LayersOff);
+        }
+    }
 
     private RenderFragment StepMarker(int number, bool current, bool done) => __builder =>
     {
         if (current)
         {
-            <span class="journey-rail__marker">
-                <JourneyLobster PlatesShed="@(number - 1)" Size="30" Label="" />
-            </span>
+            <span class="journey-rail__dot journey-rail__dot--current" aria-hidden="true"></span>
         }
         else if (done)
         {
@@ -172,7 +180,7 @@
     private string EndAria()
     {
         var name = Culture["Discovery.Zone.Light"];
-        return IsEnd
+        return LightStepComplete
             ? $"{name}, {Culture["Discovery.Rail.StatusDone"]}"
             : $"{name}, {Culture["Discovery.Rail.StatusTodo"]}";
     }
