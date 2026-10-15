@@ -139,9 +139,9 @@ input.jobsy-date-field__input[type="month"] {
     outline-offset: 2px;
 }
 
-.ob-wizard__presets button.is-selected,
-.ob-wizard__transport button.is-selected,
-.ob-wizard__education-grid button.is-selected,
+.ob-wizard__presets button:not(.lobsy-choice-tile).is-selected,
+.ob-wizard__transport button:not(.lobsy-choice-tile).is-selected,
+.ob-wizard__education-grid button:not(.lobsy-choice-tile).is-selected,
 .ob-wizard__dream-grid button.is-selected {
     border: 2px solid var(--brand);
     background: var(--accent-soft);

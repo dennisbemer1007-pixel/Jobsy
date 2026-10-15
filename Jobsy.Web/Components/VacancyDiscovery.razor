@@ -112,7 +112,7 @@
                                 @foreach (var mode in TravelChipModes)
                                 {
                                     <button type="button"
-                                            class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
+                                            class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
                                             @onclick="() => SetTravelPresetAsync(mode, _maxTravelMinutes)">
                                         @UiLabels.Transport(Culture, mode)
                                     </button>
@@ -122,7 +122,7 @@
                                 @foreach (var m in TravelChipMinutes)
                                 {
                                     <button type="button"
-                                            class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
+                                            class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline @(_maxTravelMinutes == m ? "is-selected" : null)"
                                             @onclick="() => SetTravelPresetAsync(_selectedTransport, m)">
                                         @Culture.Format("Kb.Filter.MinutesPreset", m)
                                     </button>
@@ -196,7 +196,7 @@
                                 @foreach (var mode in TravelChipModes)
                                 {
                                     <button type="button"
-                                            class="kb-chip-preset @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
+                                            class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline @(string.Equals(_selectedTransport, mode, StringComparison.Ordinal) ? "is-selected" : null)"
                                             @onclick="() => SetTravelPresetAsync(mode, _maxTravelMinutes)">
                                         @UiLabels.Transport(Culture, mode)
                                     </button>
@@ -206,7 +206,7 @@
                                 @foreach (var m in TravelChipMinutes)
                                 {
                                     <button type="button"
-                                            class="kb-chip-preset @(_maxTravelMinutes == m ? "is-selected" : null)"
+                                            class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline @(_maxTravelMinutes == m ? "is-selected" : null)"
                                             @onclick="() => SetTravelPresetAsync(_selectedTransport, m)">
                                         @Culture.Format("Kb.Filter.MinutesPreset", m)
                                     </button>
@@ -297,17 +297,17 @@
             @if (_hoursChipOpen)
             {
                 <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
-                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(0, 16)">0–16</button>
-                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(16, 24)">16–24</button>
-                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(24, 32)">24–32</button>
-                    <button type="button" class="kb-chip-preset" @onclick="() => SetHoursPresetAsync(32, 40)">32–40</button>
-                    <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
+                    <button type="button" class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline" @onclick="() => SetHoursPresetAsync(0, 16)">0–16</button>
+                    <button type="button" class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline" @onclick="() => SetHoursPresetAsync(16, 24)">16–24</button>
+                    <button type="button" class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline" @onclick="() => SetHoursPresetAsync(24, 32)">24–32</button>
+                    <button type="button" class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline" @onclick="() => SetHoursPresetAsync(32, 40)">32–40</button>
+                    <button type="button" class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
                 </div>
             }
             @if (_wageChipOpen)
             {
                 <div class="kb-chip-popover kb-chip-popover--inline" role="dialog">
-                    <button type="button" class="kb-chip-preset" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
+                    <button type="button" class="kb-chip-preset lobsy-choice-tile lobsy-choice-tile--inline" @onclick="ToggleFilters">@Culture["Kb.Filter.Exact"]</button>
                 </div>
             }
         </div>
@@ -853,7 +853,7 @@
                         @foreach (var m in TravelChipMinutes)
                         {
                             <button type="button"
-                                    class="filter-sheet__chip @(_maxTravelMinutes == m ? "is-selected" : null)"
+                                    class="filter-sheet__chip lobsy-choice-tile lobsy-choice-tile--inline @(_maxTravelMinutes == m ? "is-selected" : null)"
                                     data-testid="kb-sheet-travel-@m"
                                     @onclick="() => SetSheetTravelMinutesAsync(m)">
                                 @Culture.Format("Kb.Filter.MinutesPreset", m)
@@ -948,7 +948,7 @@
                         {
                             var selected = _selectedCategoryIds.Contains(cat.Id);
                             <button type="button"
-                                    class="filter-sheet__chip filter-sheet__chip--category @(selected ? "is-selected" : null)"
+                                    class="filter-sheet__chip filter-sheet__chip--category lobsy-choice-tile lobsy-choice-tile--inline @(selected ? "is-selected" : null)"
                                     data-testid="kb-sheet-category-@cat.Slug"
                                     aria-pressed="@(selected ? "true" : "false")"
                                     @onclick="() => ToggleCategoryChipAsync(cat.Id)">

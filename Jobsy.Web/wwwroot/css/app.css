@@ -20794,7 +20794,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 @media (max-width: 480px) {
     .app-shell:has([data-lobsy-coach]) main :is(
         a,
-        button,
+        button:not(.lobsy-choice-tile),
         input,
         textarea,
         select,

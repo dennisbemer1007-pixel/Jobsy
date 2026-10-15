@@ -7,6 +7,7 @@
 @using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Core.Contracts
@@ -123,7 +124,7 @@
             </div>
 
             <div class="@StageMainClass">
-            <section class="journey-step card" aria-live="polite">
+            <section class="@JourneyStepClass" aria-live="polite">
                 @if (!string.IsNullOrWhiteSpace(_error))
                 {
                     <p class="state-message error">@_error</p>
@@ -193,7 +194,10 @@
                 }
                 else if (_countedStep == 1)
                 {
-                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 1)</p>
+                    <p class="journey-step__eyebrow">
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Coast"]</span>
+                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 1)</span>
+                    </p>
                     <PersonalStep Draft="Draft"
                                   ShowValidation="_showValidation"
                                   AddressChanged="AddressChanged"
@@ -207,7 +211,10 @@
                 }
                 else if (_countedStep == 2)
                 {
-                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
+                    <p class="journey-step__eyebrow">
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Coast"]</span>
+                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 2)</span>
+                    </p>
                     <div class="journey-stack">
                         <AvailabilityStep Draft="Draft"
                                           ShowValidation="_showValidation"
@@ -233,7 +240,10 @@
                 }
                 else if (_countedStep == 3)
                 {
-                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 3)</p>
+                    <p class="journey-step__eyebrow">
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"]</span>
+                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 3)</span>
+                    </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step3.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step3.Lead"]</p>
                     <div class="journey-body">
@@ -250,17 +260,17 @@
                         <section>
                             <h2 class="journey-q">@Culture["Discovery.Step3.EmployerWant"]</h2>
                             <p class="journey-qs">@Culture["Discovery.Step3.EmployerWantHint"]</p>
-                            <div class="journey-chips" role="group" aria-label="@Culture["Discovery.Step3.EmployerWant"]">
+                            <ChoiceTileGrid Class="journey-chips" AriaLabel="@Culture["Discovery.Step3.EmployerWant"]">
                                 @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
                                 {
                                     var selected = Draft.EmployerPreferences.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
-                                            aria-pressed="@(selected ? "true" : "false")"
-                                            @onclick="() => ToggleEmployerPref(code)">
-                                        @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip"
+                                                Label="@Culture[DiscoveryCatalogs.EmployerLabelKey(code)]"
+                                                Icon="@ChoiceTileIcons.ForEmployer(code)"
+                                                Selected="selected"
+                                                OnClick="@(() => ToggleEmployerPref(code))" />
                                 }
-                            </div>
+                            </ChoiceTileGrid>
                         </section>
                         <details class="journey-more">
                             <summary>
@@ -285,7 +295,10 @@
                 }
                 else if (_countedStep == 4)
                 {
-                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 4)</p>
+                    <p class="journey-step__eyebrow">
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"]</span>
+                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 4)</span>
+                    </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step4.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step4.Lead"]</p>
                     <div class="journey-body">
@@ -408,22 +421,25 @@
                 }
                 else if (_countedStep == 5)
                 {
-                    <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 5)</p>
+                    <p class="journey-step__eyebrow">
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"]</span>
+                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 5)</span>
+                    </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step5.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step5.Lead"]</p>
                     <div class="journey-body">
                         <section>
                             <h2 class="journey-q">@Culture["Discovery.Step5.Hobbies"]</h2>
                             <p class="journey-qs">@Culture["Discovery.Step5.HobbiesHint"]</p>
-                            <div class="journey-chips">
+                            <ChoiceTileGrid Class="journey-chips">
                                 @foreach (var code in DiscoveryCatalogs.HobbyCodes)
                                 {
                                     var selected = Draft.Hobbies.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
-                                            aria-pressed="@(selected ? "true" : "false")"
-                                            @onclick="() => ToggleHobby(code)">
-                                        @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip"
+                                                Label="@Culture[DiscoveryCatalogs.HobbyLabelKey(code)]"
+                                                Icon="@ChoiceTileIcons.ForHobby(code)"
+                                                Selected="selected"
+                                                OnClick="@(() => ToggleHobby(code))" />
                                 }
                                 @for (var i = 0; i < Draft.HobbyFreeText.Count; i++)
                                 {
@@ -439,11 +455,12 @@
                                 }
                                 @if (Draft.HobbyFreeText.Count < 3)
                                 {
-                                    <button type="button" class="journey-chip journey-chip--add" @onclick="AddHobbyFree">
-                                        + @Culture["Discovery.Dislike.SomethingElse"]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip journey-chip--add"
+                                                IsAdd="true"
+                                                Label="@Culture["Discovery.Dislike.SomethingElse"]"
+                                                OnClick="@AddHobbyFree" />
                                 }
-                            </div>
+                            </ChoiceTileGrid>
                         </section>
                         <section>
                             <label>
@@ -460,7 +477,7 @@
                 else if (_countedStep == 6)
                 {
                     <p class="journey-step__eyebrow">
-                        @Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 6)
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"]</span>
                         <span class="journey-skip-badge">@Culture["Discovery.Step6.SkipBadge"]</span>
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step6.Heading"]</h1>
@@ -472,19 +489,19 @@
                             @Culture["Discovery.Step6.LeadEmployersOff"]
                         </FeatureVisible>
                     </p>
-                    <div class="journey-body">
+                    <div class="journey-body journey-body--compact">
                         <section>
                             <h2 class="journey-q">@Culture["Discovery.Step6.Question"]</h2>
                             <p class="journey-qs">@Culture["Discovery.Step6.QuestionHint"]</p>
-                            <div class="journey-chips" role="group" aria-label="@Culture["Discovery.Step6.Question"]">
+                            <ChoiceTileGrid Class="journey-chips" AriaLabel="@Culture["Discovery.Step6.Question"]">
                                 @foreach (var code in DiscoveryCatalogs.DislikeCodes)
                                 {
                                     var selected = Draft.Dislikes.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
-                                            aria-pressed="@(selected ? "true" : "false")"
-                                            @onclick="() => ToggleDislike(code)">
-                                        @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip"
+                                                Label="@Culture[DiscoveryCatalogs.DislikeLabelKey(code)]"
+                                                Icon="@ChoiceTileIcons.ForDislike(code)"
+                                                Selected="selected"
+                                                OnClick="@(() => ToggleDislike(code))" />
                                 }
                                 @for (var i = 0; i < Draft.CustomDislikes.Count; i++)
                                 {
@@ -500,11 +517,12 @@
                                 }
                                 @if (Draft.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
                                 {
-                                    <button type="button" class="journey-chip journey-chip--add" @onclick="AddCustomDislike">
-                                        + @Culture["Discovery.Dislike.SomethingElse"]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip journey-chip--add"
+                                                IsAdd="true"
+                                                Label="@Culture["Discovery.Dislike.SomethingElse"]"
+                                                OnClick="@AddCustomDislike" />
                                 }
-                            </div>
+                            </ChoiceTileGrid>
                         </section>
                         <p class="journey-private-note">
                             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -725,6 +743,10 @@
 
     private string StageMainClass => UseQuestionCardLayout ? "journey-card-wrap" : "journey-stage__main";
 
+    private string JourneyStepClass => _countedStep == 6 && _screen is not ("start" or "overview" or "klaar")
+        ? "journey-step card journey-step--fit-mobile"
+        : "journey-step card";
+
     private bool UseQuestionCardLayout => _countedStep is >= 7 and <= 10
         && _screen is not "overview" and not "start" and not "shed";
 
@@ -734,7 +756,8 @@
 
     private bool ShowMobileCoachInline => UseQuestionCardLayout;
 
-    private bool ShowMobileCoachInlineOnCard => ShowDesktopCoachInGrid;
+    private bool ShowMobileCoachInlineOnCard =>
+        ShowDesktopCoachInGrid && _countedStep is not (3 or 5 or 6);
 
     private bool _mobileCoachBubbleOpen;
 
@@ -1043,7 +1066,10 @@
             }
             else
             {
-                <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                @if (!showSkip)
+                {
+                    <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                }
                 @if (showPrimary)
                 {
                     <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">

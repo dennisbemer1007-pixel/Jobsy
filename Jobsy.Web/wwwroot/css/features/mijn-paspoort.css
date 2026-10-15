@@ -512,6 +512,13 @@
 
 /* Phone: keep the overview above the bottom-right coach. */
 @media (max-width: 639px) {
+    /* Coach sits above the fixed passport tab row (not over Carrière). */
+    .app-shell:has(.passport-page) .lobsy-coach-dock {
+        bottom: calc(
+            var(--bottom-nav-h, 4.75rem) + 3.5rem + 12px + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
     .passport-page .passport-layout__main {
         padding-bottom: calc(
             3.25rem + var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px)
@@ -2105,7 +2112,7 @@
     margin-block-end: var(--space-2, 0.5rem);
 }
 
-.profile-chip-grid {
+.profile-chip-grid:not(.lobsy-choice-grid) {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2, 0.5rem);
