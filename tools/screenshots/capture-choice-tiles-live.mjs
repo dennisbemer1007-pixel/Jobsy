@@ -339,6 +339,43 @@ const shots = [
     },
   },
   {
+    name: 'choice-tiles-paspoort-coach-motivation-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    async run(page) {
+      await page.goto(`${base}/candidate/paspoort?tab=data`, { waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(
+        () => {
+          const panel = document.querySelector('#passport-panel-data');
+          return panel && !panel.hasAttribute('hidden');
+        },
+        null,
+        { timeout: 60_000 },
+      );
+      await page.waitForSelector('.passport-data', { timeout: 60_000 });
+      const motivationToggle = page
+        .locator('button.passport-data__toggle', { hasText: /motivatie/i })
+        .first();
+      await page.waitForSelector('.passport-data__accordions', { timeout: 60_000 });
+      await motivationToggle.click({ timeout: 60_000 });
+      await page.waitForSelector('#passport-data-panel-motivation', { timeout: 60_000 });
+      await motivationToggle.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(350);
+      const coachBox = await page.locator('.lobsy-coach-dock__btn').first().boundingBox();
+      const rowBox = await motivationToggle.boundingBox();
+      if (rowBox && coachBox) {
+        const overlap = rowBox.y + rowBox.height - (coachBox.y - 12);
+        if (overlap > 0) {
+          await page.mouse.wheel(0, overlap);
+          await page.waitForTimeout(200);
+        }
+      }
+      await page.waitForTimeout(450);
+      await shot(page, this.name, null, { skipReset: true });
+    },
+  },
+  {
     name: 'choice-tiles-paspoort-tabs-coach-390x844.png',
     width: 390,
     height: 844,
@@ -424,12 +461,27 @@ const round5Names = new Set([
   'choice-tiles-paspoort-tabs-coach-390x844.png',
 ]);
 
+const polishNames = new Set([
+  'choice-tiles-discovery-stap6-390x844.png',
+  'choice-tiles-discovery-stap6-360x740.png',
+]);
+
+const polish2Names = new Set([
+  'choice-tiles-discovery-stap6-390x844.png',
+  'choice-tiles-discovery-stap6-360x740.png',
+  'choice-tiles-paspoort-coach-motivation-390x844.png',
+]);
+
 const activeShots =
-  process.env.SHOT_SET === 'round5'
-    ? shots.filter((s) => round5Names.has(s.name))
-    : process.env.SHOT_SET === 'round4'
-      ? shots.filter((s) => round4Names.has(s.name))
-      : shots.filter((s) => !s.optional || process.env.FULL_SHOTS === '1');
+  process.env.SHOT_SET === 'polish2'
+    ? shots.filter((s) => polish2Names.has(s.name))
+    : process.env.SHOT_SET === 'polish'
+      ? shots.filter((s) => polishNames.has(s.name))
+      : process.env.SHOT_SET === 'round5'
+      ? shots.filter((s) => round5Names.has(s.name))
+      : process.env.SHOT_SET === 'round4'
+        ? shots.filter((s) => round4Names.has(s.name))
+        : shots.filter((s) => !s.optional || process.env.FULL_SHOTS === '1');
 
 for (const s of activeShots) {
   if (s.prepare && !s.round5) {

@@ -40,7 +40,12 @@
 
 .journey-scene--mobile { display: none; }
 .journey-only-mobile { display: none; }
-.journey-only-desktop { display: contents; }
+.journey-only-desktop { display: block; }
+
+.journey-step__eyebrow-step {
+  display: inline;
+  white-space: nowrap;
+}
 
 @media (max-width: 899px) {
   .journey {
@@ -62,6 +67,8 @@
   .journey-coach--mobile { display: flex; }
   .journey-mprog.journey-only-mobile { display: block; }
   .journey-only-desktop { display: none !important; }
+
+  .journey-step__eyebrow-step { display: none !important; }
 }
 
 .journey-scene__svg { display: block; }

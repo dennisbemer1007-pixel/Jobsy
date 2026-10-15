@@ -196,7 +196,7 @@
                 {
                     <p class="journey-step__eyebrow">
                         <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Coast"]</span>
-                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 1)</span>
+                        <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", 1)</span>
                     </p>
                     <PersonalStep Draft="Draft"
                                   ShowValidation="_showValidation"
@@ -213,7 +213,7 @@
                 {
                     <p class="journey-step__eyebrow">
                         <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Coast"]</span>
-                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 2)</span>
+                        <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", 2)</span>
                     </p>
                     <div class="journey-stack">
                         <AvailabilityStep Draft="Draft"
@@ -242,7 +242,7 @@
                 {
                     <p class="journey-step__eyebrow">
                         <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"]</span>
-                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 3)</span>
+                        <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", 3)</span>
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step3.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step3.Lead"]</p>
@@ -297,7 +297,7 @@
                 {
                     <p class="journey-step__eyebrow">
                         <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"]</span>
-                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 4)</span>
+                        <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", 4)</span>
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step4.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step4.Lead"]</p>
@@ -423,7 +423,7 @@
                 {
                     <p class="journey-step__eyebrow">
                         <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"]</span>
-                        <span class="journey-only-desktop"> · @Culture.Format("Discovery.StepOf", 5)</span>
+                        <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", 5)</span>
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step5.Heading"]</h1>
                     <p class="journey-step__lead">@Culture["Discovery.Step5.Lead"]</p>
@@ -583,9 +583,9 @@
                 else if (_countedStep is >= 7 and <= 10)
                 {
                     <p class="journey-step__eyebrow">
-                        @Culture["Discovery.Zone.Deep"] ·
-                        <span class="journey-only-desktop">@Culture.Format("Discovery.StepOf", _countedStep)</span>
-                        <span class="journey-only-mobile">@Culture.Format("Discovery.TestOf", _countedStep - 6)</span>
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Deep"]</span>
+                        <span class="journey-step__eyebrow-step"> · @Culture.Format("Discovery.StepOf", _countedStep)</span>
+                        <span class="journey-only-mobile"> · @Culture.Format("Discovery.TestOf", _countedStep - 6)</span>
                     </p>
                     <OnboardingMiniTest Step="_countedStep"
                                         FlowEpoch="_miniFlowEpoch"
@@ -737,9 +737,19 @@
     private bool FitViewport => _screen is "shed" or "klaar"
         || (_countedStep is >= 7 and <= 10 && _screen is not "overview" and not "start");
 
-    private string JourneyRootClass => FitViewport
-        ? $"journey journey--fit journey--depth-{_depth}"
-        : "journey";
+    private string JourneyRootClass
+    {
+        get
+        {
+            var parts = new List<string> { FitViewport ? "journey journey--fit" : "journey" };
+            if (FitViewport)
+            {
+                parts.Add($"journey--depth-{_depth}");
+            }
+
+            return string.Join(' ', parts);
+        }
+    }
 
     private string StageMainClass => UseQuestionCardLayout ? "journey-card-wrap" : "journey-stage__main";
 
