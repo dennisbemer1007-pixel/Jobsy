@@ -2345,16 +2345,17 @@
 
 @media (max-width: 600px) {
   .pub-theme .pub-landing--calm .pub-landing__passport-rad {
-    padding: 0.85rem 1rem;
+    padding: 0.85rem 0.75rem;
+    overflow: visible;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__radar-wrap {
     min-height: 268px;
-    padding-inline: 0.5rem;
+    padding-inline: 2.6rem 2.35rem;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__radar-plot {
-    width: min(100%, 188px);
+    width: min(100%, 180px);
     min-width: 176px;
   }
 }
