@@ -81,3 +81,47 @@
     text-decoration: underline;
     cursor: pointer;
 }
+
+/* PWA / service-worker update — user-initiated refresh only */
+.lobsy-app-update {
+    display: none;
+    position: fixed;
+    left: 50%;
+    top: calc(0.75rem + env(safe-area-inset-top, 0px));
+    transform: translateX(-50%);
+    z-index: 10002;
+    width: min(22rem, calc(100vw - 1.5rem));
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+}
+
+.lobsy-app-update.is-visible {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.lobsy-app-update__panel {
+    padding: 0.65rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #ddd5cc);
+    background: var(--surface, #fffcfa);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+    color: var(--text, #122033);
+    font-size: 0.88rem;
+    font-weight: 650;
+    text-align: center;
+}
+
+.lobsy-app-update__action {
+    margin-left: 0.35rem;
+    border: none;
+    background: transparent;
+    color: var(--brand, #0f2d5c);
+    font: inherit;
+    font-weight: 800;
+    text-decoration: underline;
+    cursor: pointer;
+}
