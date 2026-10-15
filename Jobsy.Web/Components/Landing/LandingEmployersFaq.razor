@@ -9,7 +9,6 @@
         <article class="pub-landing__emp-card pub-landing__lift pub-landing__card-calm">
             <div class="pub-landing__emp-head">
                 <span class="pub-landing__eyebrow">@LandingText.For("Landing.Emp.Eyebrow", Variant)</span>
-                <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
             </div>
             <h2 class="pub-landing__h2 pub-landing__h2--sm">@LandingText.For("Landing.Emp.Title", Variant)</h2>
             <p class="pub-landing__lead pub-landing__lead--tight">@LandingText.For("Landing.Emp.Lead", Variant)</p>
@@ -19,10 +18,6 @@
                 <li>@LandingText.For("Landing.Emp.L3", Variant)</li>
             </ul>
             <div class="pub-landing__emp-row">
-                @if (!EmployersAvailable)
-                {
-                    <span class="pub-landing__emp-soon">@Culture["Public.Soon"]</span>
-                }
                 @if (EmployersAvailable)
                 {
                     <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Employers" data-kpi="LandingCtaAudience" data-kpi-target="werkgever">
@@ -35,6 +30,10 @@
                           data-kpi="LandingCtaAudience" data-kpi-target="werkgever">
                         @LandingText.For("Landing.Emp.Cta", Variant)
                     </span>
+                }
+                @if (!EmployersAvailable)
+                {
+                    <span class="pub-landing__emp-soon">@Culture["Public.Soon"]</span>
                 }
             </div>
             <p class="pub-landing__emp-register">

@@ -166,7 +166,7 @@ public static class UiStringsLanding
         Add("Landing.Stats.QuestionsShort", "vragen", "questions", "pytań", "întrebări", "أسئلة");
         Add("Landing.Stats.Questions", "en 3 minuten voor de gratis test", "and 3 minutes for the free test", "i 3 minuty na darmowy test", "și 3 minute pentru testul gratuit", "و3 دقائق للاختبار المجاني");
         Add("Landing.Stats.LangsShort", "talen", "languages", "języki", "limbi", "لغات");
-        Add("Landing.Stats.Langs", "Nederlands, Engels, Pools, Roemeens en Arabisch", "Dutch, English, Polish, Romanian and Arabic", "Niderlandzki, angielski, polski, rumuński i arabski", "Neerlandeză, engleză, poloneză, română și arabă", "هولندي وإنجليزي وبولندي وروماني وعربي");
+        Add("Landing.Stats.Langs", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR");
         Add("Landing.Stats.FreeLabel", "Gratis", "Free", "Za darmo", "Gratuit", "مجاني");
         Add("Landing.Stats.FreeBody", "test, account, paspoort en banenkaart", "test, account, passport and job map", "test, konto, paszport i mapa", "test, cont, pașaport și hartă", "اختبار وحساب وجواز وخريطة");
 
