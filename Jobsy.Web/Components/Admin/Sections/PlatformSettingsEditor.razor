@@ -9,6 +9,8 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject DeploymentEnvironmentLabel Env
+@using Jobsy.Core.Features
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 @if (_loading)
@@ -150,6 +152,10 @@ else if (_snapshot is not null)
                        @bind:event="oninput"
                        placeholder="@Culture["AdminSettings.ReasonPlaceholder"]" />
             </label>
+            @if (!CanSave)
+            {
+                <p class="state-message error admin-save-bar__hint">@Culture["AdminSettings.ReasonRequired"]</p>
+            }
             <div class="admin-save-bar__actions">
                 <button type="button" class="btn-compact" disabled="@_busy" @onclick="Cancel">@Culture["Common.Cancel"]</button>
                 <button type="button" class="btn-compact btn-compact--primary" disabled="@(_busy || !CanSave)" @onclick="SaveAsync">
@@ -182,7 +188,7 @@ else if (_snapshot is not null)
 
     @if (!string.IsNullOrEmpty(_message))
     {
-        <p class="state-message">@_message</p>
+        <p class="state-message @(_messageIsError ? "error" : "success")" role="@(_messageIsError ? "alert" : "status")">@_message</p>
     }
 }
 
@@ -207,6 +213,7 @@ else if (_snapshot is not null)
     private bool _busy;
     private string? _error;
     private string? _message;
+    private bool _messageIsError;
     private bool _confirmOpen;
     private bool _whatsAppConfigured;
     private PlatformSettingDescriptor? _confirmEntry;
@@ -436,6 +443,7 @@ else if (_snapshot is not null)
 
         _busy = true;
         _message = null;
+        _messageIsError = false;
         try
         {
             var parts = _draft.Select(kv =>
@@ -451,11 +459,15 @@ else if (_snapshot is not null)
             ApplySnapshot(ToSnapshot(saved));
             _reason = "";
             await LoadRecentChangesAsync();
+            FeatureFlags.Invalidate();
             _message = Culture["AdminSettings.Saved"];
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            _messageIsError = true;
+            _message = string.IsNullOrWhiteSpace(ex.Message)
+                ? Culture["AdminSettings.SaveFailed"]
+                : ex.Message;
         }
         finally
         {
@@ -576,6 +588,7 @@ else if (_snapshot is not null)
             EmployerPhase2Enabled = u.EmployerPhase2Enabled,
             CandidateExternalVacanciesEnabled = u.CandidateExternalVacanciesEnabled,
             ProactiveMatchingEnabled = u.ProactiveMatchingEnabled,
+            MatchCalibrationV1Enabled = u.MatchCalibrationV1Enabled,
             CandidateApplyPerMinuteLimit = u.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit = u.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit = u.CandidateApplyPerDayLimit
@@ -650,6 +663,7 @@ else if (_snapshot is not null)
             EmployerPhase2Enabled: f.EmployerPhase2Enabled,
             CandidateExternalVacanciesEnabled: f.CandidateExternalVacanciesEnabled,
             ProactiveMatchingEnabled: f.ProactiveMatchingEnabled,
+            MatchCalibrationV1Enabled: f.MatchCalibrationV1Enabled,
             CandidateApplyPerMinuteLimit: f.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit: f.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit: f.CandidateApplyPerDayLimit);

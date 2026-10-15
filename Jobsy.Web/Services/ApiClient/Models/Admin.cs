@@ -258,6 +258,7 @@ public sealed class PlatformFeatureItem
     /// <summary>Future jobs that fit the candidate. Default off.</summary>
     public bool FutureJobsForYouEnabled { get; set; }
     public bool ProactiveMatchingEnabled { get; set; }
+    public bool MatchCalibrationV1Enabled { get; set; }
     public int CandidateApplyPerMinuteLimit { get; set; } = 5;
     public int CandidateApplyPerHourLimit { get; set; } = 30;
     public int CandidateApplyPerDayLimit { get; set; } = 100;
@@ -302,6 +303,7 @@ public sealed class PlatformFeaturePatch
     public bool? HonestAdviceEnabled { get; set; }
     public bool? FutureJobsForYouEnabled { get; set; }
     public bool? ProactiveMatchingEnabled { get; set; }
+    public bool? MatchCalibrationV1Enabled { get; set; }
     public bool? CandidateExternalVacanciesEnabled { get; set; }
     public bool? EmployerPhase2Enabled { get; set; }
     public int? CandidateApplyPerMinuteLimit { get; set; }
