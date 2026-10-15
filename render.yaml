@@ -264,6 +264,10 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              - key: JobsyAuth__Session__InactivityTimeoutOverrideMinutes
+                value: "480"
+              - key: JobsyAuth__Session__RememberDeviceLifetimeDays
+                value: "30"
               # Same value on API and Web of this environment. Dashboard only — never commit a value.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
@@ -416,6 +420,11 @@ projects:
                 sync: false
               - key: Circuit__DetailedErrors
                 value: "true"
+              # Host override: Acceptatie DB may still store 30m admin idle; use 8h sliding for demos.
+              - key: JobsyAuth__Session__InactivityTimeoutOverrideMinutes
+                value: "480"
+              - key: JobsyAuth__Session__RememberDeviceLifetimeDays
+                value: "30"
               - key: ApiBaseUrl
                 fromService:
                   name: lobsy-acc-api

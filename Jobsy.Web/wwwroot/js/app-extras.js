@@ -5,7 +5,7 @@
     "use strict";
 
     var STORAGE_PREFIX = "lobsy.sessionDraft:";
-    var DEFAULT_MINUTES = 30;
+    var DEFAULT_MINUTES = 480;
     var REFRESH_MS = 60 * 1000;
     var ACTIVITY_THROTTLE_MS = 5 * 1000;
     var SENSITIVE_RE = /(iban|password|passwd|secret|token|cvv|ssn|bsn|vat|btw|credit.?card|card.?number)/i;

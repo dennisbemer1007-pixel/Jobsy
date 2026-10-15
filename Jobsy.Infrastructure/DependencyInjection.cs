@@ -76,6 +76,7 @@ public static class DependencyInjection
                 "Default local postgres connection is not allowed outside Development.");
         }
 
+        services.Configure<SessionAuthOptions>(configuration.GetSection(SessionAuthOptions.SectionName));
         services.AddJobsyDataProtection(connectionString, isDev, configuration);
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();

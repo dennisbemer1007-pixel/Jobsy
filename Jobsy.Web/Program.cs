@@ -46,6 +46,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+builder.Services.Configure<Jobsy.Core.Options.SessionAuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.SessionAuthOptions.SectionName));
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
 
 builder.Services.AddSingleton<ITestAccountsRuntime>(_ =>
