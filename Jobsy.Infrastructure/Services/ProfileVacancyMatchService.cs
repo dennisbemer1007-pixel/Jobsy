@@ -88,11 +88,11 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 RequiredEducation = record.RequiredEducation,
                 MinimumEmployers = record.MinimumEmployers,
                 CandidateCompetencies = context.Competencies,
-                VacancyCompetencies = VacancyCompetencyProfile.Infer(record),
+                VacancyCompetencies = record.InferredCompetencies ?? VacancyCompetencyProfile.Infer(record),
                 CandidateRiasecTags = context.RiasecTags,
                 CandidateRiasecScores = context.RiasecScores,
                 CareerDeepCompleted = context.CareerDeepCompleted,
-                VacancyRiasecTags = VacancyRiasecProfile.InferTags(record),
+                VacancyRiasecTags = record.InferredRiasecTags ?? VacancyRiasecProfile.InferTags(record),
                 CareerOccupations = context.CareerOccupations,
                 CulturePillars = record.CulturePillars,
                 CandidateCultureScores = context.CultureScores,
@@ -107,7 +107,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             result[record.Id] = match;
             if (useCalibrationV1 && match.LegacyTotalPercent is int legacy)
             {
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "MatchCalibrationV1 compare vacancy={VacancyId} legacy={Legacy} fit={Fit} confidence={Confidence} display={Display}",
                     record.Id,
                     legacy,

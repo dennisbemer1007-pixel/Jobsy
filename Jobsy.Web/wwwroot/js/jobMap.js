@@ -2160,6 +2160,9 @@ window.jobMap = (function () {
     /** In-memory pins by filter state (transport stripped — rings are client-side). */
     const pinsByFilterKey = Object.create(null);
     let pinsNetworkFetchCount = 0;
+    let lastPinsSignature = "";
+    let lastIsoModeNotified = "";
+    let lastRingDrawKey = "";
 
     function stripViewportParams(url) {
         return String(url || "")
@@ -2532,6 +2535,7 @@ window.jobMap = (function () {
             } catch (e) { }
         }
         travelRingGeo = null;
+        lastRingDrawKey = "";
         clearTravelRingLabels();
     }
 
@@ -2806,20 +2810,25 @@ window.jobMap = (function () {
 
     function setIsoMode(mode) {
         try {
+            const normalized = mode === "real" ? "real" : "approx";
             const host = map && map.getContainer ? map.getContainer() : null;
             if (!host) {
                 return;
             }
-            host.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+            host.setAttribute("data-iso-mode", normalized);
             const pane = host.closest ? host.closest(".map-pane") : null;
             if (pane) {
-                pane.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+                pane.setAttribute("data-iso-mode", normalized);
             }
+            if (normalized === lastIsoModeNotified) {
+                return;
+            }
+            lastIsoModeNotified = normalized;
             if (typeof onIsoModeChange === "function") {
-                onIsoModeChange(mode === "real" ? "real" : "approx");
+                onIsoModeChange(normalized);
             }
             if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
-                openCallback.invokeMethodAsync("OnIsoModeChanged", mode === "real" ? "real" : "approx");
+                openCallback.invokeMethodAsync("OnIsoModeChanged", normalized);
             }
         } catch (e) { }
     }
@@ -2946,6 +2955,13 @@ window.jobMap = (function () {
             scheduleTravelRingRedraw();
             return;
         }
+
+        const ringKey = String(lat) + "," + String(lng) + "|"
+            + String(travelOptions.maxMinutes) + "|" + String(travelOptions.transport || "");
+        if (ringKey === lastRingDrawKey && travelRingGeo) {
+            return;
+        }
+        lastRingDrawKey = ringKey;
 
         // Circles first, swap isochrones when they arrive (no flash).
         const circleFeatures = buildTravelRingFeatures(lat, lng);
@@ -4082,7 +4098,9 @@ window.jobMap = (function () {
         }
 
         bindMapRuntime();
-        bindViewportPinsReload();
+        if (!live || !viewportPinsBound) {
+            bindViewportPinsReload();
+        }
 
         // Early boot() may already have painted pins — do not re-fetch (one pins request/load).
         const alreadyPinned = live && Object.keys(markersById).length > 0;
@@ -4224,8 +4242,29 @@ window.jobMap = (function () {
         }
     }
 
+    function pinsSignature(vacancies) {
+        const list = vacancies || [];
+        if (!list.length) {
+            return "0";
+        }
+        let sig = String(list.length) + ":";
+        for (let i = 0; i < list.length; i++) {
+            const v = normalizePin(list[i]);
+            if (v && v.id != null) {
+                sig += String(v.id) + ",";
+            }
+        }
+        return sig;
+    }
+
     function setVacancies(vacancies) {
         if (!clusterGroup) return;
+
+        const nextSig = pinsSignature(vacancies);
+        if (nextSig === lastPinsSignature && Object.keys(markersById).length > 0) {
+            return;
+        }
+        lastPinsSignature = nextSig;
 
         clusterGroup.clearLayers();
         markersById = {};
@@ -4331,7 +4370,10 @@ window.jobMap = (function () {
         map._jobsyViewportPinsSchedule = schedule;
         map.on("moveend", schedule);
         map.on("zoomend", schedule);
-        setTimeout(schedule, 80);
+        if (!map._jobsyViewportPinsBootstrapped) {
+            map._jobsyViewportPinsBootstrapped = true;
+            setTimeout(schedule, 80);
+        }
     }
 
     function ensureOriginMarker(la, ln) {
