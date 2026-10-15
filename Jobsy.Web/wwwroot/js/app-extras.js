@@ -372,6 +372,49 @@ window.jobsyDownload = {
     a.click();
     a.remove();
   },
+  /** Same-origin authenticated PDF/file download without leaving the Blazor page (PWA/mobile safe). */
+  file: async function (href) {
+    const res = await fetch(href, { credentials: "include", cache: "no-store" });
+    if (!res.ok) {
+      let detail = "";
+      try {
+        detail = (await res.text()).slice(0, 160);
+      } catch (_) {
+        /* ignore */
+      }
+      throw new Error("download_failed:" + res.status + (detail ? ":" + detail : ""));
+    }
+    const blob = await res.blob();
+    if (!blob || blob.size < 32) {
+      throw new Error("download_empty");
+    }
+    let filename = "download.pdf";
+    const cd = res.headers.get("Content-Disposition") || "";
+    const star = /filename\*=UTF-8''([^;\n]+)/i.exec(cd);
+    if (star) {
+      try {
+        filename = decodeURIComponent(star[1].replace(/"/g, "").trim());
+      } catch (_) {
+        filename = star[1].trim();
+      }
+    } else {
+      const plain = /filename="?([^";\n]+)"?/i.exec(cd);
+      if (plain) {
+        filename = plain[1].trim();
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(function () {
+      URL.revokeObjectURL(url);
+    }, 60000);
+  },
   text: function (filename, content, mimeType) {
     const blob = new Blob([content], { type: mimeType || "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
