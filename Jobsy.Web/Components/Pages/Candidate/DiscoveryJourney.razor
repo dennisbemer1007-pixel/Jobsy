@@ -38,18 +38,34 @@
         <JourneyScene Depth="_depth" IsMobile="true" />
 
         <div class="journey-mprog journey-only-mobile" role="group" aria-label="@MobileProgressAria">
-            <p class="journey-mprog__t">
-                <b>@MobileProgressLabel</b>
-                @if (_screen is not "start" && !IsLightScreen)
-                {
-                    <span class="muted">· @CurrentStepTitle</span>
-                }
-                <span class="journey-mprog__sp"></span>
-                @if (_saveStatus == "saved" && _screen is not "start")
-                {
-                    <span class="journey-mprog__ok">✓ @Culture["Discovery.Saved.Short"]</span>
-                }
-            </p>
+            @if (UseQuestionCardLayout)
+            {
+                <p class="journey-mprog__t journey-mprog__t--question">
+                    <span class="journey-mprog__line">
+                        <b>@Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)</b>
+                        <span class="muted"> · @CurrentStepTitle</span>
+                    </span>
+                    @if (_saveStatus == "saved")
+                    {
+                        <span class="journey-mprog__ok">✓ @Culture["Discovery.Saved.Short"]</span>
+                    }
+                </p>
+            }
+            else
+            {
+                <p class="journey-mprog__t">
+                    <b>@MobileProgressLabel</b>
+                    @if (_screen is not "start" && !IsLightScreen)
+                    {
+                        <span class="muted">· @CurrentStepTitle</span>
+                    }
+                    <span class="journey-mprog__sp"></span>
+                    @if (_saveStatus == "saved" && _screen is not "start")
+                    {
+                        <span class="journey-mprog__ok">✓ @Culture["Discovery.Saved.Short"]</span>
+                    }
+                </p>
+            }
             <div class="journey-mtrack">
                 @for (var k = 0; k < 10; k++)
                 {
@@ -545,18 +561,12 @@
                                         ShowHint="@(_targetLevel <= OnboardingWizardCatalog.MiniLevelCount)"
                                         ShowQuestionCounter="true"
                                         JourneyShell="true"
+                                        JourneyAfterLikert="@JourneyQuestionAfterLikert"
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
                                         ResolveQuestionText="QuestionText"
                                         OnFinished="FinishMiniAsync"
                                         OnLeave="BackAsync" />
-                }
-                @if (ShowMobileCoachInline)
-                {
-                    <div class="journey-coach-inline journey-only-mobile" aria-live="polite">
-                        <JourneyLobster PlatesShed="@_platesShed" Size="40" Mobile="true" Label="" />
-                        <p>@LobsterSay</p>
-                    </div>
                 }
             </section>
 
@@ -809,14 +819,49 @@
         }
     }
 
+    private int MobileProgressStep => Math.Max(Math.Min(RailStep, 10), 1);
+
     private string MobileProgressLabel => _screen switch
     {
         "start" => Culture["Discovery.Rail.StartCountShort"],
         "klaar" or "overview" when CompletedLayerCount >= 10 => Culture["Discovery.Rail.DoneCountShort"],
-        _ => Culture.Format("Discovery.Rail.StepLayersCount", Math.Max(Math.Min(RailStep, 10), 1), CompletedLayerCount)
+        _ => Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)
     };
 
-    private string MobileProgressAria => Culture.Format("Discovery.Rail.StepLayersCount", Math.Max(Math.Min(RailStep, 10), 1), CompletedLayerCount);
+    private string MobileProgressAria => UseQuestionCardLayout
+        ? $"{Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)} · {CurrentStepTitle}, {Culture.Format("Discovery.Rail.ProgressCount", CompletedLayerCount)}"
+        : Culture.Format("Discovery.Rail.StepLayersCount", MobileProgressStep, CompletedLayerCount);
+
+    private RenderFragment JourneyQuestionAfterLikert => __builder =>
+    {
+        if (!ShowMobileCoachInline)
+        {
+            return;
+        }
+
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "class", "journey-coach-inline journey-only-mobile");
+        __builder.AddAttribute(2, "aria-live", "polite");
+        __builder.OpenComponent<JourneyLobster>(3);
+        __builder.AddAttribute(4, "PlatesShed", _platesShed);
+        __builder.AddAttribute(5, "Size", 40);
+        __builder.AddAttribute(6, "Mobile", true);
+        __builder.AddAttribute(7, "Label", "");
+        __builder.CloseComponent();
+        __builder.OpenElement(8, "p");
+        __builder.AddContent(9, LobsterSay);
+        __builder.CloseElement();
+        __builder.CloseElement();
+
+        if (_targetLevel <= OnboardingWizardCatalog.MiniLevelCount)
+        {
+            var hintKey = JourneyTestFlow.TestHintKey(_countedStep);
+            __builder.OpenElement(10, "p");
+            __builder.AddAttribute(11, "class", "journey-deeper-hint");
+            __builder.AddContent(12, Culture[hintKey]);
+            __builder.CloseElement();
+        }
+    };
 
     private string RolesSummary => Draft.Roles.Count == 0
         ? ""

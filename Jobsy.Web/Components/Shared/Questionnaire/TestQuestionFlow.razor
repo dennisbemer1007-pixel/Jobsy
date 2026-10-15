@@ -114,6 +114,11 @@
                           RequestFocus="_focusRequest"
                           ValueChanged="OnAnswerAsync" />
 
+        @if (AfterLikert is not null)
+        {
+            @AfterLikert
+        }
+
         @if (!Compact)
         {
             var answeredEarlier = RecentAnswered().ToList();
@@ -189,6 +194,7 @@
     [Parameter] public Func<int, bool>? ShouldPauseAfterIndex { get; set; }
     [Parameter] public EventCallback<int> OnPauseAfter { get; set; }
     [Parameter] public int? ExternalIndex { get; set; }
+    [Parameter] public RenderFragment? AfterLikert { get; set; }
 
     private int _index;
     private int? _appliedExternalIndex;

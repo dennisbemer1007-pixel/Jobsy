@@ -43,11 +43,12 @@ else
                       PartTotal="@(JourneyShell ? 4 : 0)"
                       FinishLabel="@Culture["Onboarding.NextTest"]"
                       InputPrefix="@InputPrefix"
+                      AfterLikert="@JourneyAfterLikert"
                       OnAnswer="OnFlowAnswer"
                       OnFinished="OnFlowFinished"
                       OnLeave="OnLeave" />
 }
-@if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint)
+@if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint && !JourneyShell)
 {
     <p class="journey-deeper-hint">@Culture[HintKey]</p>
 }
@@ -75,6 +76,7 @@ else
     [Parameter] public EventCallback OnLeave { get; set; }
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
+    [Parameter] public RenderFragment? JourneyAfterLikert { get; set; }
 
     private AssessmentKind _kind = AssessmentKind.Competence;
     private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
