@@ -119,8 +119,8 @@ public static class UiStringsLanding
         Add("Landing.Hero.JobBus", "Monteur", "Technician", "Monter", "Tehnician", "فني");
         Add("Landing.Hero.JobBusMeta", "24 min met de bus · Delft", "24 min by bus · Delft", "24 min autobusem · Delft", "24 min cu autobuzul · Delft", "٢٤ د بالحافلة · Delft");
         Add("Landing.Hero.BarTeam", "Samenwerken", "Teamwork", "Współpraca", "Colaborare", "العمل الجماعي");
-        Add("Landing.Hero.BarPersist", "Doorzetten", "Persistence", "Wytrwałość", "Persistență", "المثابرة");
-        Add("Landing.Hero.BarCalm", "Rust onder druk", "Calm under pressure", "Spokój pod presją", "Calm sub presiune", "الهدوء تحت الضغط");
+        Add("Landing.Hero.BarPersist", "Volhouden", "Persistence", "Wytrwałość", "Persistență", "المثابرة");
+        Add("Landing.Hero.BarCalm", "Rust", "Calm", "Spokój", "Calm", "هدوء");
         Add("Landing.Hero.BarCreative", "Creativiteit", "Creativity", "Kreatywność", "Creativitate", "الإبداع");
         Add("Landing.Hero.BarCare", "Zorgzaam", "Caring", "Troskliwy", "Grijuliu", "حنون");
         Add("Landing.Hero.BarPrecision", "Precisie", "Precision", "Precyzja", "Precizie", "الدقة");

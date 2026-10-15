@@ -7,48 +7,55 @@
 <section class="pub-landing__section pub-landing__section--tight" id="banenkaart">
     <div class="pub-landing__wrap">
         <div class="pub-landing__map-block">
-            <div class="pub-landing__map-frame pub-landing__lift" aria-hidden="true">
-                <span class="pub-pill-sample pub-landing__map-sample">@Culture["Public.Sample"]</span>
-                <div class="pub-landing__map-seg">
-                    <span class="is-on">@LandingText.For("Landing.Map.Bike", Variant)</span>
-                    <span>@LandingText.For("Landing.Map.Ov", Variant)</span>
-                    <span>@LandingText.For("Landing.Map.Car", Variant)</span>
+            <div class="pub-landing__map-col">
+                <div class="pub-landing__map-frame pub-landing__lift pub-landing__card-calm" aria-hidden="true">
+                    <div class="pub-landing__map-toolbar">
+                        <div class="pub-landing__map-seg">
+                            <span class="is-on">@LandingText.For("Landing.Map.Bike", Variant)</span>
+                            <span>@LandingText.For("Landing.Map.Ov", Variant)</span>
+                            <span>@LandingText.For("Landing.Map.Car", Variant)</span>
+                        </div>
+                        <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
+                    </div>
+                    <div class="pub-landing__map-canvas">
+                        <svg class="pub-landing__map-svg" viewBox="0 0 600 500" preserveAspectRatio="xMidYMid slice">
+                            <defs>
+                                <radialGradient id="lh-map-rad" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0" stop-color="#2F7D5B" stop-opacity=".16"/>
+                                    <stop offset=".85" stop-color="#2F7D5B" stop-opacity=".08"/>
+                                    <stop offset="1" stop-color="#2F7D5B" stop-opacity=".02"/>
+                                </radialGradient>
+                                <linearGradient id="lh-land" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" stop-color="#F3EEE4"/>
+                                    <stop offset="1" stop-color="#ECE5D7"/>
+                                </linearGradient>
+                            </defs>
+                            <rect width="600" height="500" fill="url(#lh-land)"/>
+                            <circle cx="300" cy="262" r="158" fill="url(#lh-map-rad)" stroke="#2F7D5B" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="5 6"/>
+                            <circle cx="300" cy="262" r="96" fill="none" stroke="#2F7D5B" stroke-opacity=".22" stroke-width="1" stroke-dasharray="3 6"/>
+                        </svg>
+                        <span class="pub-landing__map-home">🏠</span>
+                        <span class="pub-landing__map-radius">@LandingText.For("Landing.Map.Radius", Variant)</span>
+                        <span class="pub-landing__map-pin pub-landing__map-pin--a" style="left:62%;top:44%"></span>
+                        <span class="pub-landing__map-pin pub-landing__map-pin--b" style="left:28%;top:58%"></span>
+                    </div>
+                    <ul class="pub-landing__map-legend">
+                        <li>
+                            <b>@LandingText.For("Landing.Hero.SampleJob1", Variant)</b>
+                            <span>18 min · 91%</span>
+                        </li>
+                        <li>
+                            <b>@LandingText.For("Landing.Hero.SampleJob3", Variant)</b>
+                            <span>9 min · 72%</span>
+                        </li>
+                    </ul>
                 </div>
-                <svg class="pub-landing__map-svg" viewBox="0 0 600 500" preserveAspectRatio="xMidYMid slice">
-                    <defs>
-                        <radialGradient id="lh-map-rad" cx="50%" cy="50%" r="50%">
-                            <stop offset="0" stop-color="#2F7D5B" stop-opacity=".16"/>
-                            <stop offset=".85" stop-color="#2F7D5B" stop-opacity=".08"/>
-                            <stop offset="1" stop-color="#2F7D5B" stop-opacity=".02"/>
-                        </radialGradient>
-                        <linearGradient id="lh-land" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0" stop-color="#F3EEE4"/>
-                            <stop offset="1" stop-color="#ECE5D7"/>
-                        </linearGradient>
-                    </defs>
-                    <rect width="600" height="500" fill="url(#lh-land)"/>
-                    <circle cx="300" cy="262" r="158" fill="url(#lh-map-rad)" stroke="#2F7D5B" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="5 6"/>
-                    <circle cx="300" cy="262" r="96" fill="none" stroke="#2F7D5B" stroke-opacity=".22" stroke-width="1" stroke-dasharray="3 6"/>
-                </svg>
-                <span class="pub-landing__map-home">🏠</span>
-                <span class="pub-landing__map-radius">@LandingText.For("Landing.Map.Radius", Variant)</span>
-                <span class="pub-landing__map-pin pub-landing__map-pin--a" style="left:69%;top:39%"></span>
-                <span class="pub-landing__map-pin pub-landing__map-pin--a" style="left:21%;top:64%"></span>
-                <span class="pub-landing__map-pin pub-landing__map-pin--b" style="left:33%;top:34%"></span>
-                <div class="pub-landing__map-callout" style="left:69%;top:28%">
-                    <b>@LandingText.For("Landing.Hero.SampleJob1", Variant)</b>
-                    <span>18 min · 91%</span>
-                </div>
-                <div class="pub-landing__map-callout" style="left:21%;top:53%">
-                    <b>@LandingText.For("Landing.Hero.SampleJob3", Variant)</b>
-                    <span>9 min · 72%</span>
-                </div>
-                <div class="pub-landing__map-count pub-landing__lift">
+                <div class="pub-landing__map-count pub-landing__lift pub-landing__card-calm">
                     <small>@LandingText.For("Landing.Map.Within", Variant)</small>
                     <b>@LandingText.For("Landing.Map.JobsExample", Variant)</b>
                 </div>
             </div>
-            <div class="pub-landing__map-chart pub-landing__lift" aria-hidden="true">
+            <div class="pub-landing__map-chart pub-landing__lift pub-landing__card-calm" aria-hidden="true">
                 <div class="pub-landing__map-chart-h">
                     <b>@LandingText.For("Landing.Map.ChartTitle", Variant)</b>
                     <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
@@ -61,19 +68,19 @@
         </div>
 
         <div class="pub-landing__stat-grid">
-            <div class="pub-landing__stat pub-landing__lift">
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
                 <b>@VacancyStat</b>
                 <span>@LandingText.For("Landing.Stats.Vacancies", Variant)</span>
             </div>
-            <div class="pub-landing__stat pub-landing__lift">
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
                 <b>20 <small>@LandingText.For("Landing.Stats.QuestionsShort", Variant)</small></b>
                 <span>@LandingText.For("Landing.Stats.Questions", Variant)</span>
             </div>
-            <div class="pub-landing__stat pub-landing__lift">
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
                 <b>5 <small>@LandingText.For("Landing.Stats.LangsShort", Variant)</small></b>
                 <span>@LandingText.For("Landing.Stats.Langs", Variant)</span>
             </div>
-            <div class="pub-landing__stat pub-landing__lift">
+            <div class="pub-landing__stat pub-landing__lift pub-landing__card-calm">
                 <b>@LandingText.For("Landing.Stats.FreeLabel", Variant)</b>
                 <span>@LandingText.For("Landing.Stats.FreeBody", Variant)</span>
             </div>

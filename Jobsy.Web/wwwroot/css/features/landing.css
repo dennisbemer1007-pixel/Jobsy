@@ -1402,26 +1402,12 @@
 }
 
 .pub-theme .pub-landing__passport-stage {
-  position: relative;
-  padding: 0.5rem 0 1.5rem;
-}
-
-.pub-theme .pub-landing__passport-stage::before {
-  content: "";
-  position: absolute;
-  inset: 0 -0.5rem;
-  border-radius: 2rem;
-  background: radial-gradient(120% 90% at 85% 10%, color-mix(in srgb, var(--success) 12%, transparent), transparent 60%),
-    linear-gradient(160deg, color-mix(in srgb, var(--gold) 35%, var(--surface)), color-mix(in srgb, var(--gold) 22%, var(--surface)));
-  z-index: 0;
+  padding: 0.25rem 0 0.5rem;
 }
 
 .pub-theme .pub-landing__passport-card {
-  position: relative;
-  z-index: 1;
-  border-radius: 1.15rem;
+  border-radius: var(--pub-radius-card);
   overflow: hidden;
-  margin-inline: 0.5rem 0;
 }
 
 .pub-theme .pub-landing__passport-top {
@@ -1451,13 +1437,13 @@
 }
 
 .pub-theme .pub-landing__passport-rad {
-  padding: 0.75rem 0.35rem 0.65rem 0.85rem;
+  padding: 0.85rem 0.75rem 0.75rem;
   border-inline-end: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 
 .pub-theme .pub-landing__radar-svg {
   display: block;
-  overflow: visible;
+  overflow: hidden;
   max-width: 100%;
 }
 
@@ -1468,8 +1454,37 @@
 }
 
 .pub-theme .pub-landing__passport-matches {
-  padding: 0.85rem 1rem 5.25rem;
+  padding: 0.85rem 1rem;
   min-width: 0;
+}
+
+.pub-theme .pub-landing__passport-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--success) 6%, var(--surface));
+  font-size: 0.85rem;
+}
+
+.pub-theme .pub-landing__passport-footer-pct {
+  flex: none;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--success);
+  min-width: 2.25rem;
+}
+
+.pub-theme .pub-landing__passport-footer-copy strong {
+  display: block;
+  font-weight: 650;
+}
+
+.pub-theme .pub-landing__passport-footer-copy small {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--muted);
 }
 
 .pub-theme .pub-landing__match-row {
@@ -1528,30 +1543,6 @@
   background: linear-gradient(90deg, color-mix(in srgb, var(--success) 75%, #fff), var(--success));
 }
 
-.pub-theme .pub-landing__top-match {
-  position: absolute;
-  z-index: 2;
-  inset-inline-start: -0.15rem;
-  bottom: 0.35rem;
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.85rem 0.55rem 0.55rem;
-  border-radius: 1rem;
-  font-size: 0.85rem;
-  max-width: calc(100% - 1rem);
-  pointer-events: none;
-}
-
-.pub-theme .pub-landing__top-match b {
-  display: block;
-  font-weight: 650;
-}
-
-.pub-theme .pub-landing__top-match small {
-  font-size: 0.72rem;
-  color: var(--muted);
-}
 
 .pub-theme .pub-landing__flow-wrap {
   padding-block: 0 1.25rem;
@@ -1624,26 +1615,34 @@
   margin-bottom: 1.25rem;
 }
 
+.pub-theme .pub-landing__map-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
 .pub-theme .pub-landing__map-frame {
-  position: relative;
-  min-height: 16.5rem;
-  border-radius: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: var(--pub-radius-card);
   overflow: hidden;
 }
 
-.pub-theme .pub-landing__map-sample {
-  position: absolute;
-  inset-inline-end: 0.65rem;
-  top: 0.65rem;
-  z-index: 2;
+.pub-theme .pub-landing__map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
 }
 
 .pub-theme .pub-landing__map-seg {
-  position: absolute;
-  z-index: 2;
-  inset-inline-start: 0.65rem;
-  top: 0.65rem;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.2rem;
   padding: 0.2rem;
   border-radius: var(--pub-radius-pill);
@@ -1663,6 +1662,13 @@
   color: var(--surface);
 }
 
+.pub-theme .pub-landing__map-canvas {
+  position: relative;
+  aspect-ratio: 6 / 5;
+  min-height: 11rem;
+  overflow: hidden;
+}
+
 .pub-theme .pub-landing__map-svg {
   position: absolute;
   inset: 0;
@@ -1675,7 +1681,6 @@
   left: 50%;
   top: 52%;
   transform: translate(-50%, -50%);
-  z-index: 1;
   width: 2.1rem;
   height: 2.1rem;
   border-radius: 50%;
@@ -1689,20 +1694,20 @@
 .pub-theme .pub-landing__map-radius {
   position: absolute;
   left: 50%;
-  top: 38%;
+  top: 28%;
   transform: translateX(-50%);
-  z-index: 1;
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--success);
   background: color-mix(in srgb, var(--success) 14%, var(--surface));
   padding: 0.15rem 0.45rem;
   border-radius: var(--pub-radius-pill);
+  max-width: calc(100% - 1.5rem);
+  text-align: center;
 }
 
 .pub-theme .pub-landing__map-pin {
   position: absolute;
-  z-index: 1;
   width: 0.65rem;
   height: 0.65rem;
   border-radius: 50% 50% 50% 0;
@@ -1714,32 +1719,34 @@
   background: color-mix(in srgb, var(--muted) 55%, transparent);
 }
 
-.pub-theme .pub-landing__map-callout {
-  position: absolute;
-  z-index: 2;
-  transform: translate(-50%, -100%);
-  background: var(--surface);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  border-radius: 0.55rem;
-  padding: 0.35rem 0.55rem;
-  font-size: 0.68rem;
-  max-width: 9.5rem;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 10%, transparent);
+.pub-theme .pub-landing__map-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0.65rem 0.75rem 0.75rem;
+  display: grid;
+  gap: 0.45rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  font-size: 0.78rem;
 }
 
-.pub-theme .pub-landing__map-callout b {
-  display: block;
+.pub-theme .pub-landing__map-legend li {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.pub-theme .pub-landing__map-legend b {
+  font-size: 0.82rem;
+  line-height: 1.25;
+}
+
+.pub-theme .pub-landing__map-legend span {
+  color: var(--muted);
   font-size: 0.72rem;
-  line-height: 1.2;
 }
 
 .pub-theme .pub-landing__map-count {
-  position: absolute;
-  z-index: 2;
-  inset-inline-start: 0.65rem;
-  bottom: 0.65rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--pub-radius-card);
   font-size: 0.78rem;
 }
 
@@ -1901,13 +1908,17 @@
 
 .pub-theme .pub-landing__get-tag {
   margin-top: 0.75rem;
-  align-self: flex-start;
+  align-self: stretch;
+  max-width: 100%;
   font-size: 0.72rem;
   font-weight: 600;
-  padding: 0.2rem 0.55rem;
+  padding: 0.25rem 0.55rem;
   border-radius: var(--pub-radius-pill);
   background: color-mix(in srgb, var(--success) 14%, var(--surface));
   color: var(--success);
+  overflow-wrap: anywhere;
+  text-align: center;
+  box-sizing: border-box;
 }
 
 .pub-theme .pub-landing__get-tag--paid {
@@ -1956,48 +1967,20 @@
   font-size: 0.9rem;
 }
 
-.pub-theme .pub-landing__cand {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.75rem;
-  border-radius: 0.85rem;
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  margin-bottom: 1rem;
-  font-size: 0.85rem;
-}
-
-.pub-theme .pub-landing__cand-av {
-  width: 2.35rem;
-  height: 2.35rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--brand) 12%, var(--surface)), color-mix(in srgb, var(--success) 12%, var(--surface)));
-  font-weight: 700;
-}
-
-.pub-theme .pub-landing__cand-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-inline-start: auto;
-}
-
-.pub-theme .pub-landing__cand-tags span {
-  font-size: 0.72rem;
+.pub-theme .pub-landing__emp-soon {
+  font-size: 0.82rem;
   font-weight: 600;
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--pub-radius-pill);
-  background: color-mix(in srgb, var(--success) 14%, var(--surface));
-  color: var(--success);
+  color: var(--muted);
 }
 
-.pub-theme .pub-landing__cand-tags--n {
-  background: color-mix(in srgb, var(--brand) 10%, var(--surface)) !important;
-  color: var(--brand) !important;
+.pub-theme .pub-landing__emp-register {
+  margin: 0.85rem 0 0;
+  font-size: 0.88rem;
+}
+
+.pub-theme .pub-landing__emp-register a {
+  color: var(--brand);
+  font-weight: 600;
 }
 
 .pub-theme .pub-landing__emp-row {
@@ -2082,18 +2065,6 @@
     font-size: 0.68rem;
   }
 
-  .pub-theme .pub-landing__top-match {
-    position: relative;
-    inset: auto;
-    margin: -0.5rem 0.85rem 0.5rem auto;
-    width: fit-content;
-    pointer-events: auto;
-  }
-
-  .pub-theme .pub-landing__passport-matches {
-    padding-bottom: 0.5rem;
-  }
-
   .pub-theme .pub-landing__passport-stage {
     overflow: hidden;
   }
@@ -2107,9 +2078,6 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .pub-theme .pub-landing__cand-tags {
-    margin-inline-start: 3rem;
-  }
 }
 
 @media (max-width: 390px) {
@@ -2133,4 +2101,66 @@
   .pub-theme .pub-landing__passport-rad {
     padding-inline: 0.35rem 0.25rem;
   }
+}
+
+/* —— Calm combo: flat cards, spacing, no floating mascot —— */
+.pub-theme .pub-landing--calm .pub-landing__lift {
+  box-shadow: none;
+  border: 1px solid var(--pub-line);
+}
+
+.pub-theme .pub-landing--calm .pub-landing__section {
+  padding-block: 2.75rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__section--tight {
+  padding-block: 2rem 2.25rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero {
+  padding-block: 1.75rem 2.25rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__flow-wrap {
+  padding-block: 0 0.5rem;
+}
+
+.pub-theme:has(.pub-landing--calm) .lobsy-coach-dock,
+.pub-theme .pub-landing--calm .pub-mascot,
+.pub-theme .pub-landing--calm .pub-landing__mascot,
+.pub-theme .pub-landing--calm .pub-landing__float {
+  display: none !important;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__get-card {
+  overflow: hidden;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__emp-row {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__faq-card .pub-landing__fq--flat {
+  display: flow-root;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0.85rem 0;
+  margin: 0;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__faq-card .pub-landing__fq--flat summary {
+  min-height: auto;
+  padding-block: 0.1rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__faq-card .pub-landing__fq--flat p {
+  margin: 0.65rem 0 0;
+  padding-bottom: 0.15rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__faq-card .pub-landing__fq--flat:not([open]) > p {
+  display: none;
 }

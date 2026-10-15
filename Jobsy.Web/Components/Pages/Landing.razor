@@ -16,7 +16,7 @@
 @inject PageSeoContext Seo
 @inject IHttpContextAccessor HttpContextAccessor
 
-<div class="pub-landing @(_variant == LandingVariant.On ? "pub-landing--combo" : "")" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
+<div class="pub-landing @(_variant == LandingVariant.On ? "pub-landing--combo pub-landing--calm" : "")" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
     <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" />
     @if (_variant == LandingVariant.On)
     {
