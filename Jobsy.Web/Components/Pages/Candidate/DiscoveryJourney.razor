@@ -59,6 +59,17 @@
             </div>
         </div>
 
+        <div class="journey-coach journey-coach--mobile journey-only-mobile" aria-live="polite">
+            <div class="journey-bubble journey-coach__bubble">
+                <p>@LobsterSay</p>
+                <ReadAloudButton Text="@LobsterSay" SpeechKey="journey-lobster-mobile" />
+            </div>
+            <JourneyLobster PlatesShed="@_platesShed"
+                            NewShell="@IsLightScreen"
+                            Mobile="true"
+                            Label="@Culture["Discovery.Lobster.Aria"]" />
+        </div>
+
         <div class="journey-stage">
             <div class="journey-only-desktop">
                 <JourneyProgressRail ActiveStep="@RailStep"
@@ -543,16 +554,6 @@
                 {
                     <span class="journey-lz__shadow" aria-hidden="true"></span>
                 }
-            </div>
-            <div class="journey-mlob journey-only-mobile">
-                <JourneyLobster PlatesShed="@_platesShed"
-                                NewShell="@IsLightScreen"
-                                Mobile="true"
-                                Label="@Culture["Discovery.Lobster.Aria"]" />
-                <div class="journey-bubble">
-                    <p>@LobsterSay</p>
-                    <ReadAloudButton Text="@LobsterSay" SpeechKey="journey-lobster-mobile" />
-                </div>
             </div>
         </div>
     }
@@ -2123,7 +2124,7 @@
         ScheduleProfileSave();
     }
 
-    private void ToggleFineTune() => Draft.FineTune = !Draft.FineTune;
+    private void ToggleFineTune() => ScheduleProfileSave();
 
     private void TogglePreset(string code)
     {
@@ -2180,7 +2181,11 @@
 
     private Task ManualAvailabilityAsync()
     {
-        Draft.PresetsOverridden = true;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.MarkManualEdit(Draft.Presets, ref overridden, ref fineTune);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
         ScheduleProfileSave();
         return Task.CompletedTask;
     }
@@ -2188,7 +2193,11 @@
     private void ToggleAvailability(string key)
     {
         if (!Draft.Availability.Add(key)) Draft.Availability.Remove(key);
-        Draft.PresetsOverridden = true;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.MarkManualEdit(Draft.Presets, ref overridden, ref fineTune);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
         ScheduleProfileSave();
     }
 

@@ -713,7 +713,7 @@
         ScheduleProfileSave();
     }
 
-    private void ToggleFineTune() => Draft.FineTune = !Draft.FineTune;
+    private void ToggleFineTune() => ScheduleProfileSave();
 
     private void TogglePreset(string code)
     {
@@ -776,7 +776,11 @@
 
     private void ManualAvailability()
     {
-        Draft.PresetsOverridden = true;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.MarkManualEdit(Draft.Presets, ref overridden, ref fineTune);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
         ScheduleProfileSave();
     }
 

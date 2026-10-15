@@ -10,7 +10,7 @@ public class AvailabilityDayPartMatrixTests
         Assert.Equal(["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"], DayPartMatrix.DayCodes);
         Assert.Equal(4, DayPartMatrix.DayPartCodes.Length);
 
-        var root = Directory.GetParent(Directory.GetCurrentDirectory())!.Parent!.Parent!.FullName;
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var source = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/AvailabilityDayPartMatrix.razor"));
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
 
