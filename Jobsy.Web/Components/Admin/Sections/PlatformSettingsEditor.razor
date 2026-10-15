@@ -504,7 +504,7 @@ else if (_snapshot is not null)
             throw new InvalidOperationException(
                 "De server bewaarde niet alle wijzigingen ("
                 + string.Join(", ", mismatches)
-                + "). Waarschijnlijk draait productie-API of -database achter op acceptatie: deploy de laatste release en voer EF-migraties uit.");
+                + "). Controleer of acceptatie-web en acceptatie-API dezelfde versie draaien en of de database-migraties up-to-date zijn.");
         }
     }
 

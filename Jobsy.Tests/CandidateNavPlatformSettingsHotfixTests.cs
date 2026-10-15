@@ -16,8 +16,9 @@ public class CandidateDesktopNavCssTests
     public void Desktop_candidate_shell_keeps_bottom_nav_visible()
     {
         var css = File.ReadAllText(FindRepoRoot("Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".app-shell--candidate .bottom-nav", css, StringComparison.Ordinal);
-        Assert.Contains("display: flex", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell:has(.bottom-nav) .bottom-nav", css, StringComparison.Ordinal);
+        Assert.Contains("padding-inline-start: 13.5rem", css, StringComparison.Ordinal);
+        Assert.Contains("flex-direction: column", css, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot(string relative)
