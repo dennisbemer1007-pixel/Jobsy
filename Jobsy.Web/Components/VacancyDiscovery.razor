@@ -2469,28 +2469,39 @@
 
     private async Task MeasureViewportAsync()
     {
-        try
+        for (var attempt = 0; attempt < 24; attempt++)
         {
-            var wide = await Js.InvokeAsync<bool>("jobsyViewport.isWide");
-            if (wide != _wideViewport)
+            try
             {
-                _wideViewport = wide;
-                await InvokeAsync(StateHasChanged);
-                if (_wideViewport)
+                var wide = await Js.InvokeAsync<bool>("jobsyViewport.isWide");
+                if (wide != _wideViewport)
                 {
-                    RunDetachedAsync(EnsureDesktopMatchDeckAsync, "EnsureDesktopMatchDeckAsync(viewport)");
+                    _wideViewport = wide;
+                    await InvokeAsync(StateHasChanged);
+                    if (_wideViewport)
+                    {
+                        RunDetachedAsync(EnsureDesktopMatchDeckAsync, "EnsureDesktopMatchDeckAsync(viewport)");
+                    }
                 }
+
+                return;
             }
-        }
-        catch (JSException)
-        {
-            // Keep mobile-first: do not mount the full card list.
-        }
-        catch (InvalidOperationException)
-        {
-        }
-        catch
-        {
+            catch (JSException) when (attempt < 23)
+            {
+                await Task.Delay(50);
+            }
+            catch (JSException)
+            {
+                // Keep mobile-first: do not mount the full card list.
+            }
+            catch (InvalidOperationException)
+            {
+                return;
+            }
+            catch
+            {
+                return;
+            }
         }
     }
 
