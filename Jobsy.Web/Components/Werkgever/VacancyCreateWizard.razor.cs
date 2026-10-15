@@ -140,6 +140,8 @@ public partial class VacancyCreateWizard : IDisposable
     private List<(string Label, int Percent)>? _companyCultureSummary;
     private List<string> _companyValueLabels = [];
     private List<string> _branchOptions = WorkTypeLabels.All.ToList();
+    private bool _branchPickerExpanded;
+    private const int BranchCollapsedChipCount = 4;
     private List<string> _licenseOptions = DrivingLicenseLabels.All.ToList();
     private List<string> _educationOptions = EducationLevelLabels.VacancyAll.ToList();
     private bool _saving;
@@ -831,6 +833,42 @@ public partial class VacancyCreateWizard : IDisposable
         return title.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
             ? title
             : title + suffix;
+    }
+
+    private IReadOnlyList<string> BranchPickerVisibleLabels
+    {
+        get
+        {
+            if (_branchPickerExpanded || _branchOptions.Count <= BranchCollapsedChipCount)
+            {
+                return _branchOptions;
+            }
+
+            var visible = new List<string>();
+            foreach (var label in _branchOptions.Take(BranchCollapsedChipCount - 1))
+            {
+                visible.Add(label);
+            }
+
+            foreach (var selected in _selectedWorkTypes)
+            {
+                if (!visible.Contains(selected, StringComparer.OrdinalIgnoreCase))
+                {
+                    visible.Add(selected);
+                }
+            }
+
+            return visible;
+        }
+    }
+
+    private bool ShowBranchMoreChip
+        => !_branchPickerExpanded && _branchOptions.Count > BranchCollapsedChipCount;
+
+    private Task ExpandBranchPicker()
+    {
+        _branchPickerExpanded = true;
+        return Task.CompletedTask;
     }
 
     private Task ToggleWorkTypeChip(string label)
@@ -1655,7 +1693,8 @@ public partial class VacancyCreateWizard : IDisposable
                 return "—";
             }
 
-            return $"{_scheduleSlots.Count} dagdelen";
+            var count = _scheduleSlots.Count;
+            return count == 1 ? "1 dagdeel" : $"{count} dagdelen";
         }
     }
 

@@ -79,6 +79,7 @@
             </aside>
 
             <div class="vac-wizard__stage">
+                <div class="vac-wizard__stage-body">
                 <div class="vac-wizard__mobile-rail" aria-label="Voortgang">
                     <div class="vac-wizard__mobile-rail-top">
                         <span><b>Stap @_step</b> · @CurrentStepTitle</span>
@@ -102,7 +103,7 @@
                     }
                 </header>
 
-                <form class="vac-wizard__form login-form" data-session-draft="true" @onsubmit="OnFormSubmitAsync" @onsubmit:preventDefault>
+                <form id="vac-wizard-form" class="vac-wizard__form login-form" data-session-draft="true" @onsubmit="OnFormSubmitAsync" @onsubmit:preventDefault>
                     @if (_step == 1)
                     {
                         <div class="vac-wizard__step" data-testid="vac-wizard-step-1">
@@ -304,6 +305,7 @@
                             <ChoiceTile Label="@opt"
                                         Selected="@(GetCategoryField(contractField.Key) == opt)"
                                         Inline="true"
+                                        AlignIcons="false"
                                         OnClick="() => SelectCategoryOption(contractField.Key, opt)" />
                         }
                     </ChoiceTileGrid>
@@ -319,15 +321,16 @@
                             <ChoiceTile Label="@opt"
                                         Selected="@(GetCategoryField(expField.Key) == opt)"
                                         Inline="true"
+                                        AlignIcons="false"
                                         OnClick="() => SelectCategoryOption(expField.Key, opt)" />
                         }
                     </ChoiceTileGrid>
                 </fieldset>
             }
-            <fieldset class="vac-wizard-field">
+            <fieldset class="vac-wizard-field vac-wizard-field--branch">
                 <legend>Branche <span class="muted">max. @WorkTypeLabels.MaxPerVacancy</span></legend>
-                <ChoiceTileGrid Wrap="true">
-                    @foreach (var label in _branchOptions)
+                <ChoiceTileGrid Wrap="true" Class="vac-wizard-branch-grid">
+                    @foreach (var label in BranchPickerVisibleLabels)
                     {
                         var selected = _selectedWorkTypes.Contains(label);
                         var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
@@ -335,7 +338,16 @@
                                     Selected="selected"
                                     Disabled="disabled"
                                     Inline="true"
+                                    AlignIcons="false"
                                     OnClick="() => ToggleWorkTypeChip(label)" />
+                    }
+                    @if (ShowBranchMoreChip)
+                    {
+                        <ChoiceTile Label="Meer…"
+                                    Inline="true"
+                                    AlignIcons="false"
+                                    IsAdd="true"
+                                    OnClick="ExpandBranchPicker" />
                     }
                 </ChoiceTileGrid>
             </fieldset>
@@ -731,6 +743,20 @@
                     {
                         <p class="state-message error" role="alert">@_stepMessage</p>
                     }
+                </form>
+
+                @if (_proactiveMatchingOn && _editVacancyId is Guid shortlistVacancyId)
+                {
+                    <section class="proactive-shortlist-promo" aria-labelledby="proactive-shortlist-promo-title">
+                        <h2 id="proactive-shortlist-promo-title">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
+                        <p>@Culture["ProactiveMatching.Employer.Shortlist.PromoLead"]</p>
+                        <a class="login-submit proactive-shortlist-promo__cta"
+                           href="@($"/werkgever/vacatures/{shortlistVacancyId:D}/proactieve-shortlist")">
+                            @Culture["ProactiveMatching.Employer.Shortlist.OpenPage"]
+                        </a>
+                    </section>
+                }
+                </div>
                     <footer class="vac-wizard-actionbar" data-testid="vacancy-wizard-actionbar">
                         <div class="vac-wizard-actionbar__mobile">
                             @if (_step > 1)
@@ -770,7 +796,7 @@
                             }
                             else
                             {
-                                <button class="btn btn-primary vac-wizard__save vac-wizard-actionbar__next-btn" type="submit" disabled="@_saving" data-testid="vacancy-save-draft-submit">
+                                <button class="btn btn-primary vac-wizard__save vac-wizard-actionbar__next-btn" type="submit" form="vac-wizard-form" disabled="@_saving" data-testid="vacancy-save-draft-submit">
                                     @(_saving ? "Opslaan…" : "Opslaan")
                                 </button>
                             }
@@ -800,26 +826,13 @@
                                 }
                                 else
                                 {
-                                    <button class="btn btn-primary vac-wizard__save" type="submit" disabled="@_saving" data-testid="vacancy-save-draft-submit">
+                                    <button class="btn btn-primary vac-wizard__save" type="submit" form="vac-wizard-form" disabled="@_saving" data-testid="vacancy-save-draft-submit">
                                         @(_saving ? "Opslaan…" : "Opslaan als concept")
                                     </button>
                                 }
                             </div>
                         </div>
                     </footer>
-                </form>
-
-                @if (_proactiveMatchingOn && _editVacancyId is Guid shortlistVacancyId)
-                {
-                    <section class="proactive-shortlist-promo" aria-labelledby="proactive-shortlist-promo-title">
-                        <h2 id="proactive-shortlist-promo-title">@Culture["ProactiveMatching.Employer.Shortlist.Title"]</h2>
-                        <p>@Culture["ProactiveMatching.Employer.Shortlist.PromoLead"]</p>
-                        <a class="login-submit proactive-shortlist-promo__cta"
-                           href="@($"/werkgever/vacatures/{shortlistVacancyId:D}/proactieve-shortlist")">
-                            @Culture["ProactiveMatching.Employer.Shortlist.OpenPage"]
-                        </a>
-                    </section>
-                }
             </div>
 
             <aside class="vac-wizard__preview-aside" aria-label="Live voorbeeld">
@@ -844,11 +857,8 @@
                     <li class="@(ChecklistSalaryOk ? "is-ok" : null)">Loon en uren</li>
                     <li class="@(ChecklistScheduleOk ? "is-ok" : null)">Rooster of 'tijden in overleg'</li>
                 </ul>
-                <button type="button" class="btn ghost vac-wizard__preview" data-testid="vacancy-preview-open" @onclick="OpenPreviewDesktopAsync">
+                <button type="button" class="btn btn-secondary vac-wizard__preview" data-testid="vacancy-preview-open" @onclick="OpenPreviewDesktopAsync">
                     Bekijk als kandidaat
-                </button>
-                <button type="button" class="btn ghost vac-wizard__preview-mobile" data-testid="vacancy-preview-mobile" @onclick="() => OpenPreviewAsync(mobileSheet: true)">
-                    Voorbeeld
                 </button>
             </aside>
         </div>

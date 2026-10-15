@@ -24,17 +24,19 @@
                         var selected = ScheduleSlots.Contains(key);
                         var shortLabel = slot switch
                         {
-                            "Ochtend" => "Ochtend",
-                            "Middag" => "Middag",
-                            "Avond" => "Avond",
-                            "Nacht" => "Nacht",
+                            "Ochtend" => "Ocht",
+                            "Middag" => "Mid",
+                            "Avond" => "Av",
+                            "Nacht" => "Ngt",
                             _ => slot
                         };
                         <ChoiceTile Inline="true"
+                                    AlignIcons="false"
                                     Label="@shortLabel"
                                     Selected="selected"
                                     Disabled="FlexibleTimes"
                                     Role="checkbox"
+                                    AdditionalAttributes="@(new Dictionary<string, object> { ["title"] = $"{day} {slot}" })"
                                     OnClick="() => ToggleSlot.InvokeAsync(key)" />
                     }
                 </ChoiceTileGrid>
