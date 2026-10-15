@@ -6,10 +6,9 @@
 
 <section class="pub-landing__section pub-landing__section--ef" id="voor-werkgevers">
     <div class="pub-landing__wrap pub-landing__ef-grid">
-        <article class="pub-landing__emp-card pub-landing__lift">
+        <article class="pub-landing__emp-card pub-landing__lift pub-landing__card-calm">
             <div class="pub-landing__emp-head">
                 <span class="pub-landing__eyebrow">@LandingText.For("Landing.Emp.Eyebrow", Variant)</span>
-                <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
             </div>
             <h2 class="pub-landing__h2 pub-landing__h2--sm">@LandingText.For("Landing.Emp.Title", Variant)</h2>
             <p class="pub-landing__lead pub-landing__lead--tight">@LandingText.For("Landing.Emp.Lead", Variant)</p>
@@ -18,17 +17,6 @@
                 <li>@LandingText.For("Landing.Emp.L2", Variant)</li>
                 <li>@LandingText.For("Landing.Emp.L3", Variant)</li>
             </ul>
-            <div class="pub-landing__cand" aria-hidden="true">
-                <span class="pub-landing__cand-av">K</span>
-                <div>
-                    <b>@LandingText.For("Landing.Emp.CandTitle", Variant)</b>
-                    <small>@LandingText.For("Landing.Emp.CandSub", Variant)</small>
-                </div>
-                <div class="pub-landing__cand-tags">
-                    <span>@LandingText.For("Landing.Emp.CandDna", Variant)</span>
-                    <span class="pub-landing__cand-tags--n">@LandingText.For("Landing.Emp.CandTravel", Variant)</span>
-                </div>
-            </div>
             <div class="pub-landing__emp-row">
                 @if (EmployersAvailable)
                 {
@@ -41,14 +29,19 @@
                     <span class="pub-btn pub-btn--disabled" role="link" aria-disabled="true"
                           data-kpi="LandingCtaAudience" data-kpi-target="werkgever">
                         @LandingText.For("Landing.Emp.Cta", Variant)
-                        <span class="pub-btn__soon">@Culture["Public.Soon"]</span>
                     </span>
                 }
-                <a class="pub-landing__textlink" href="@PublicRoutes.CompanyRegister">@LandingText.For("Landing.Emp.Register", Variant)</a>
+                @if (!EmployersAvailable)
+                {
+                    <span class="pub-landing__emp-soon">@Culture["Public.Soon"]</span>
+                }
             </div>
+            <p class="pub-landing__emp-register">
+                <a href="@PublicRoutes.CompanyRegister">@LandingText.For("Landing.Emp.Register", Variant)</a>
+            </p>
         </article>
 
-        <article class="pub-landing__faq-card pub-landing__lift" id="faq">
+        <article class="pub-landing__faq-card pub-landing__lift pub-landing__card-calm" id="faq">
             <div class="pub-landing__eyebrow">@LandingText.For("Landing.Faq.Eyebrow", Variant)</div>
             <h2 class="pub-landing__h2 pub-landing__h2--sm">@LandingText.For("Landing.Faq.TitleShort", Variant)</h2>
             @{
@@ -57,7 +50,7 @@
             }
             @foreach (var (q, a) in pairs)
             {
-                <details class="pub-landing__fq pub-landing__fq--flat" open="@first">
+                <details class="pub-landing__fq pub-landing__fq--flat" open="@(first ? true : null)">
                     <summary>@q</summary>
                     <p>@a</p>
                 </details>

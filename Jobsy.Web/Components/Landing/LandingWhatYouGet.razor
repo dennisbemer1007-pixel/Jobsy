@@ -172,7 +172,7 @@
 
     private RenderFragment ComboCard(string titleKey, string bodyKey, string tagKey, bool paid) => __builder =>
     {
-        <article class="pub-landing__get-card pub-landing__lift">
+        <article class="pub-landing__get-card pub-landing__lift pub-landing__card-calm">
             <h3>@LandingText.For(titleKey, Variant)</h3>
             <p>@LandingText.For(bodyKey, Variant)</p>
             @if (paid && PriceEuro is decimal price)

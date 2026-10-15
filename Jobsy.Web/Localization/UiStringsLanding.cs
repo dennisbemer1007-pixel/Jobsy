@@ -119,8 +119,8 @@ public static class UiStringsLanding
         Add("Landing.Hero.JobBus", "Monteur", "Technician", "Monter", "Tehnician", "فني");
         Add("Landing.Hero.JobBusMeta", "24 min met de bus · Delft", "24 min by bus · Delft", "24 min autobusem · Delft", "24 min cu autobuzul · Delft", "٢٤ د بالحافلة · Delft");
         Add("Landing.Hero.BarTeam", "Samenwerken", "Teamwork", "Współpraca", "Colaborare", "العمل الجماعي");
-        Add("Landing.Hero.BarPersist", "Doorzetten", "Persistence", "Wytrwałość", "Persistență", "المثابرة");
-        Add("Landing.Hero.BarCalm", "Rust onder druk", "Calm under pressure", "Spokój pod presją", "Calm sub presiune", "الهدوء تحت الضغط");
+        Add("Landing.Hero.BarPersist", "Volhouden", "Persistence", "Wytrwałość", "Persistență", "المثابرة");
+        Add("Landing.Hero.BarCalm", "Rust", "Calm", "Spokój", "Calm", "هدوء");
         Add("Landing.Hero.BarCreative", "Creativiteit", "Creativity", "Kreatywność", "Creativitate", "الإبداع");
         Add("Landing.Hero.BarCare", "Zorgzaam", "Caring", "Troskliwy", "Grijuliu", "حنون");
         Add("Landing.Hero.BarPrecision", "Precisie", "Precision", "Precyzja", "Precizie", "الدقة");
@@ -166,7 +166,7 @@ public static class UiStringsLanding
         Add("Landing.Stats.QuestionsShort", "vragen", "questions", "pytań", "întrebări", "أسئلة");
         Add("Landing.Stats.Questions", "en 3 minuten voor de gratis test", "and 3 minutes for the free test", "i 3 minuty na darmowy test", "și 3 minute pentru testul gratuit", "و3 دقائق للاختبار المجاني");
         Add("Landing.Stats.LangsShort", "talen", "languages", "języki", "limbi", "لغات");
-        Add("Landing.Stats.Langs", "Nederlands, Engels, Pools, Roemeens en Arabisch", "Dutch, English, Polish, Romanian and Arabic", "Niderlandzki, angielski, polski, rumuński i arabski", "Neerlandeză, engleză, poloneză, română și arabă", "هولندي وإنجليزي وبولندي وروماني وعربي");
+        Add("Landing.Stats.Langs", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR");
         Add("Landing.Stats.FreeLabel", "Gratis", "Free", "Za darmo", "Gratuit", "مجاني");
         Add("Landing.Stats.FreeBody", "test, account, paspoort en banenkaart", "test, account, passport and job map", "test, konto, paszport i mapa", "test, cont, pașaport și hartă", "اختبار وحساب وجواز وخريطة");
 
