@@ -1223,6 +1223,8 @@
     private bool _mapHostReady;
     private VacancyMapView? _mapView;
     private List<Dictionary<string, object?>> _bootPins = [];
+    private CancellationTokenSource? _viewportDiscoverCts;
+    private string? _lastMapTravelSyncKey;
 
     private ElementReference _mapElement;
     private ElementReference _moreCardsSentinel;
@@ -1537,10 +1539,27 @@
         // so toggling list is not racing an empty bbox page during pan/zoom.
         if (_wideViewport || !showMapOnMobile)
         {
-            _ = LoadVacanciesAsync(reloadMapPins: false);
+            _viewportDiscoverCts?.Cancel();
+            _viewportDiscoverCts?.Dispose();
+            _viewportDiscoverCts = new CancellationTokenSource();
+            var token = _viewportDiscoverCts.Token;
+            _ = DebouncedViewportDiscoverAsync(token);
         }
 
         return Task.CompletedTask;
+    }
+
+    private async Task DebouncedViewportDiscoverAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(450, ct);
+            await LoadVacanciesAsync(reloadMapPins: false, ct: ct);
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer viewport event.
+        }
     }
 
     private string FormatCarouselTravel(VacancyListItem vacancy)
@@ -2794,13 +2813,18 @@
                     await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
                 }
 
-                if (_origin is not null && _companyFocusIds is null)
+                var travelKey = BuildMapTravelSyncKey();
+                if (!string.Equals(travelKey, _lastMapTravelSyncKey, StringComparison.Ordinal))
                 {
-                    await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
-                }
-                else
-                {
-                    await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions());
+                    _lastMapTravelSyncKey = travelKey;
+                    if (_origin is not null && _companyFocusIds is null)
+                    {
+                        await Js.InvokeVoidAsync("jobMap.setOrigin", _origin.Latitude, _origin.Longitude, TravelMapOptions());
+                    }
+                    else
+                    {
+                        await Js.InvokeVoidAsync("jobMap.setTravelOptions", TravelMapOptions());
+                    }
                 }
 
                 _mapPainted = true;
@@ -3511,6 +3535,14 @@
         ["transport"] = _selectedTransport,
         ["radiusKm"] = _radiusKm
     };
+
+    private string BuildMapTravelSyncKey()
+    {
+        var origin = _origin is null
+            ? "none"
+            : FormattableString.Invariant($"{_origin.Latitude:F5},{_origin.Longitude:F5}");
+        return FormattableString.Invariant($"{origin}|{_selectedTransport}|{_maxTravelMinutes}|{_radiusKm}");
+    }
 
     private Dictionary<string, object?> MapUiLabels() => new()
     {
@@ -4483,6 +4515,8 @@
         _searchDebounceCts?.Dispose();
         _pendingCountCts?.Cancel();
         _pendingCountCts?.Dispose();
+        _viewportDiscoverCts?.Cancel();
+        _viewportDiscoverCts?.Dispose();
         try
         {
             await Js.InvokeVoidAsync("jobsyDiscovery.disconnect");

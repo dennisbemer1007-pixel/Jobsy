@@ -203,6 +203,8 @@ public class VacanciesController : ControllerBase
                 .ToList();
         }
 
+        candidates = VacancyMatchScoreCap.LimitCandidates(candidates, bbox, zoom, c => c.Record);
+
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
         CandidateFitGate fitGate = CandidateFitGate.Closed;
         ProfileVacancyMatchContext? matchContext = null;
@@ -246,20 +248,6 @@ public class VacanciesController : ControllerBase
                     })
                     .ToList();
             }
-        }
-
-        var pinCap = bbox is { IsValid: true }
-            ? PublicApiLimits.MaxPinsPerBbox
-            : PublicApiLimits.MaxPinsWithoutBbox;
-        if (candidates.Count > pinCap)
-        {
-            var capped = VacancyDiscoveryBbox.CapPins(
-                candidates.Select(c => c.Record).ToList(),
-                bbox,
-                pinCap,
-                zoom);
-            var allowed = capped.Select(r => r.Id).ToHashSet();
-            candidates = candidates.Where(c => allowed.Contains(c.Record.Id)).ToList();
         }
 
         // Content hash (not a 60s clock) so Cloudflare can cache stable pin sets.
@@ -574,6 +562,8 @@ public class VacanciesController : ControllerBase
         var matchFloor = minMatchPercent is int requestedFloor
             ? Math.Clamp(requestedFloor, 0, 100)
             : (int?)null;
+        candidates = VacancyMatchScoreCap.LimitCandidates(candidates, bbox, zoom: null, c => c.Record);
+
         if (_companyAuth.IsCandidate(User))
         {
             matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
@@ -3367,6 +3357,11 @@ public class VacanciesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = new Dictionary<Guid, string>();
+        if (_dislikeSource is KbNoDislikeSource)
+        {
+            return result;
+        }
+
         foreach (var vacancyId in vacancyIds)
         {
             var codes = await _dislikeSource.GetMatchingDislikeCodesAsync(
