@@ -2344,14 +2344,23 @@
 }
 
 @media (max-width: 600px) {
+  .pub-theme .pub-landing--calm .pub-landing__passport-stage {
+    overflow: visible;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__passport-card {
+    overflow: visible;
+  }
+
   .pub-theme .pub-landing--calm .pub-landing__passport-rad {
-    padding: 0.85rem 0.75rem;
+    padding: 0.85rem 0.5rem;
     overflow: visible;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__radar-wrap {
     min-height: 268px;
-    padding-inline: 2.6rem 2.35rem;
+    padding-inline: 4.25rem;
+    box-sizing: border-box;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__radar-plot {
