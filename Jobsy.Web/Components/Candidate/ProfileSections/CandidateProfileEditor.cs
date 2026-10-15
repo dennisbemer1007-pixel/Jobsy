@@ -81,6 +81,7 @@ public sealed class CandidateProfileEditor : IDisposable
     public bool ResearchFeatureEnabled { get; private set; }
     public ResearchConsentStateClient? ResearchConsent { get; private set; }
     public bool UnsubscribeOpen { get; set; }
+    public bool ProfileResetOpen { get; set; }
     public DateOnly? DobInput { get; set; }
     public string HomeAddress { get; set; } = string.Empty;
     public double? HomeLat { get; set; }
@@ -358,6 +359,18 @@ public sealed class CandidateProfileEditor : IDisposable
         {
             // keep built-in fallbacks
         }
+    }
+
+    public void OpenProfileReset()
+    {
+        ProfileResetOpen = true;
+        Notify();
+    }
+
+    public void CloseProfileReset()
+    {
+        ProfileResetOpen = false;
+        Notify();
     }
 
     public void OpenUnsubscribe()

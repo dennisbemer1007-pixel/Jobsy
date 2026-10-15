@@ -47,6 +47,7 @@ public static class AdminAuditKeys
 
     public const string PrivacyRetentionRun = "privacy.retention.run";
     public const string PrivacyAccountDeleted = "privacy.account.deleted";
+    public const string PrivacyCandidateProfileReset = "privacy.candidate-profile.reset";
     public const string AuthAdminLoginFailed = "auth.admin.login-failed";
     public const string AuthSystemAdminLogin = "auth.system-admin.login";
     public const string EmailTestSend = "email.test-send";
