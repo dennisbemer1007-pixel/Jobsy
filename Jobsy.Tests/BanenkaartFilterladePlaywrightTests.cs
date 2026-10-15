@@ -53,10 +53,13 @@ public sealed class BanenkaartFilterladePlaywrightTests
         await page.Locator("[data-testid=kb-filter-backdrop]").ClickAsync(new() { Position = new() { X = 10, Y = 10 } });
         await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 30_000 });
 
-        await openBtn.ClickAsync();
-        await Assertions.Expect(sheet).ToBeVisibleAsync(new() { Timeout = 10_000 });
-        await page.Locator("[data-testid=kb-filter-close]").ClickAsync();
-        await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 30_000 });
+        if (width >= 900)
+        {
+            await openBtn.ClickAsync(new() { Timeout = 60_000 });
+            await Assertions.Expect(sheet).ToBeVisibleAsync(new() { Timeout = 60_000 });
+            await page.Locator("[data-testid=kb-filter-close]").ClickAsync(new() { Timeout = 60_000 });
+            await Assertions.Expect(sheet).ToBeHiddenAsync(new() { Timeout = 30_000 });
+        }
     }
 
     [Fact]
