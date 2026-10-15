@@ -2344,6 +2344,10 @@
 }
 
 @media (max-width: 600px) {
+  .pub-theme .pub-landing--calm .pub-landing__passport-body {
+    grid-template-columns: 1fr;
+  }
+
   .pub-theme .pub-landing--calm .pub-landing__passport-stage {
     overflow: visible;
   }
