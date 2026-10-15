@@ -2483,3 +2483,189 @@ ol.apply-steps.apply-steps--three {
 .apply-check--terms .auth-link {
   word-break: break-word;
 }
+
+/* Banenkaart variant B — filterlade panel (8px grid, 40px controls, 24px padding) */
+.kb-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 24px 8px;
+  background: var(--pearl, #f7f4f0);
+  border-bottom: 1px solid var(--pearl-mid, var(--border));
+  flex-shrink: 0;
+}
+
+.kb-panel-head__search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.kb-panel-head__search input {
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px 0 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--surface);
+  font-size: 16px;
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.kb-panel-head__filters {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.kb-panel-head__address .kb-address__field input {
+  height: 40px;
+  min-height: 40px;
+}
+
+.kb-panel-head__address .kb-address__geo,
+.kb-panel-head__address .kb-address__clear {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.kb-panel-head__match {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.kb-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.kb-active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: #2f7d5b;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.kb-active-tag:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.kb-active-tag__remove {
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.kb-active-filters__clear {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 4px;
+  min-height: 40px;
+}
+
+.kb-filter-bar {
+  padding: 8px 12px 8px;
+  gap: 8px;
+  background: var(--pearl, #f7f4f0);
+}
+
+.kb-filter-bar__summary {
+  align-items: center;
+  gap: 8px;
+}
+
+.kb-filter-bar__count-block {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kb-filter-bar__count {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.kb-filter-bar__count-sub {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+}
+
+.kb-filter-search--bar input {
+  height: 40px;
+  min-height: 40px;
+}
+
+.kb-filters-button {
+  height: 40px;
+  min-height: 40px;
+}
+
+.kb-view-toggle--mobile {
+  display: inline-flex;
+  margin-inline-start: auto;
+  border-radius: var(--radius-sm, 8px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.kb-view-toggle--mobile .kb-view-toggle__btn {
+  min-height: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 0;
+}
+
+.kb-filter-bar__match {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  .kb-panel-head.discovery-toolbar--desktop {
+    display: flex;
+  }
+
+  .vacancy-pane {
+    position: relative;
+    background: var(--pearl, #f7f4f0);
+  }
+
+  .results-meta {
+    padding-inline: 24px;
+  }
+
+  .kb-view-toggle {
+    display: inline-flex;
+    border-radius: var(--radius-sm, 8px);
+    overflow: hidden;
+  }
+
+  .kb-view-toggle__btn {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 0;
+  }
+}

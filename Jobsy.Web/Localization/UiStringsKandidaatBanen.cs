@@ -626,6 +626,30 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.ShowCount",
             "Toon {0} banen", "Show {0} jobs",
             "Pokaż {0} ofert", "Arată {0} joburi", "عرض {0} وظائف");
+        Add("Kb.Filter.ShowVacancyCount",
+            "Toon {0} vacatures", "Show {0} jobs",
+            "Pokaż {0} ofert", "Arată {0} joburi", "عرض {0} وظائف");
+        Add("Kb.Filter.ActiveCount",
+            "{0} actief", "{0} active",
+            "{0} aktywne", "{0} active", "{0} نشط");
+        Add("Kb.Filter.Wissen",
+            "Wissen", "Clear",
+            "Wyczyść", "Șterge", "مسح");
+        Add("Kb.Filter.ResultCount",
+            "{0} vacatures", "{0} jobs",
+            "{0} ofert", "{0} joburi", "{0} وظائف");
+        Add("Kb.Filter.ResultWithin",
+            "binnen {0} min {1}", "within {0} min {1}",
+            "w {0} min {1}", "în {0} min {1}", "خلال {0} د {1}");
+        Add("Kb.Filter.RemoveTag",
+            "Verwijder filter {0}", "Remove filter {0}",
+            "Usuń filtr {0}", "Elimină filtrul {0}", "إزالة عامل التصفية {0}");
+        Add("Kb.Filter.AgeTag",
+            "{0} jaar", "Age {0}",
+            "{0} lat", "Vârsta {0}", "عمر {0}");
+        Add("Kb.Filter.MatchTag",
+            "Match vanaf {0}%", "Match from {0}%",
+            "Dopasowanie od {0}%", "Potrivire de la {0}%", "تطابق من {0}٪");
         Add("Kb.Filter.Keyword",
             "Zoekwoord", "Keyword",
             "Słowo kluczowe", "Cuvânt cheie", "كلمة البحث");

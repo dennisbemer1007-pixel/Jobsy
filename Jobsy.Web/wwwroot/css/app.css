@@ -1994,13 +1994,7 @@ html[dir="rtl"] .account-menu__panel {
     background: var(--accent-hover);
 }
 
-/* Desktop: inline filter bar only — hide mobile bottom sheet */
-@media (min-width: 769px) {
-    .filter-sheet-backdrop,
-    .filter-sheet {
-        display: none !important;
-    }
-}
+/* Filter drawer: mobile bottom sheet + desktop overlay (variant B filterlade). */
 
 .visually-hidden {
     position: absolute;
@@ -2019,7 +2013,14 @@ html[dir="rtl"] .account-menu__panel {
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.75rem 1rem 0.25rem;
+    padding: 0.75rem 1.5rem 0.25rem;
+}
+
+.results-meta__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .results-meta__count {
@@ -2627,6 +2628,63 @@ html[dir="rtl"] .account-menu__panel {
     .app-shell:has(.jobsy-discovery.filters-open) .cookie-consent {
         display: none !important;
     }
+}
+
+.app-shell:has(.jobsy-discovery.filters-open) .lobsy-watermarks {
+    display: none !important;
+}
+
+@media (min-width: 900px) {
+    .jobsy-discovery.filters-open .filter-sheet-backdrop.kb-filter-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 85;
+        background: rgba(15, 23, 42, 0.35);
+    }
+
+    .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+        position: fixed;
+        z-index: 90;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: min(42vw, 520px);
+        max-width: 100%;
+        height: 100%;
+        max-height: 100dvh;
+        border-radius: 0;
+        box-shadow: 8px 0 32px rgba(15, 45, 92, 0.12);
+    }
+}
+
+@media (max-width: 899px) {
+    .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: min(88dvh, 720px);
+        max-height: min(88dvh, 720px);
+        border-radius: 16px 16px 0 0;
+    }
+
+    .filter-sheet.kb-filter-drawer::before {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 4px;
+        margin: 8px auto 4px;
+        border-radius: 999px;
+        background: var(--border);
+        flex-shrink: 0;
+    }
+}
+
+.filter-sheet__active-count {
+    margin-inline-start: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--muted);
 }
 
 .filter-sheet .filter-branches__options {
