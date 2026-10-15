@@ -12,7 +12,7 @@ const page = await browser.newPage();
 
 const overview = path.join(artifacts, "mascot-overview.html");
 await page.goto(`file://${overview}`);
-await page.setViewportSize({ width: 900, height: 700 });
+await page.setViewportSize({ width: 1100, height: 900 });
 await page.screenshot({ path: path.join(artifacts, "mascot-overview-6-poses.png"), fullPage: true });
 
 const livePreview = path.join(artifacts, "mascot-app-live-preview.html");

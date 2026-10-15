@@ -1,6 +1,6 @@
 # Lobsy mascot asset brief
 
-The public coral mascot is **inline SVG** in `LobsyMascotArt` / `<LobsyMascot />` (viewBox `0 0 128 128`). Each arm ends in a **reused claw symbol** (`<use href="#lobsy-claw-…">`) — never hands or fingers.
+The public coral mascot is **inline SVG** in `LobsyMascotArt` / `<LobsyMascot />` (viewBox `0 0 128 128`). Art is **traced from the approved reference grid** (`docs/brand/kreeft-set-scharen-reference.png`, regen via `tools/brand/trace_mascot_reference.py`) — never hands or fingers.
 
 ## Expressions (production)
 
