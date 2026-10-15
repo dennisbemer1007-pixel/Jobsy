@@ -802,11 +802,19 @@ public partial class MeController : ControllerBase
         var features = await _features.GetAsync(cancellationToken);
         if (features.PassportPdfV2Enabled)
         {
-            var passport = await _passportPdf.ForCandidateAsync(
-                user,
-                features.PhoneVerificationEnabled,
-                cancellationToken);
-            return File(passport.Pdf, "application/pdf", passport.FileName);
+            try
+            {
+                var passport = await _passportPdf.ForCandidateAsync(
+                    user,
+                    features.PhoneVerificationEnabled,
+                    cancellationToken);
+                return File(passport.Pdf, "application/pdf", passport.FileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DNA-paspoort PDF genereren mislukt voor kandidaat {UserId}", user.Id);
+                return StatusCode(500, new { message = "DNA-paspoort kon niet worden gemaakt. Probeer het later opnieuw." });
+            }
         }
 
         var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()

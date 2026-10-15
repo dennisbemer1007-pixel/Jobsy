@@ -31,7 +31,7 @@ public sealed partial class JobsyApiClient
     private static async Task DownloadMyLobsyCvPdfViaBrowserAsync(IJSRuntime js)
     {
         await js.InvokeVoidAsync("jobsyExtras.ensure");
-        await js.InvokeVoidAsync("jobsyDownload.url", Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.LobsyCvPath);
+        await js.InvokeVoidAsync("jobsyDownload.file", Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.LobsyCvPath);
     }
 
     public async Task<MeProfile?> UploadMyCvAsync(IBrowserFile file, CancellationToken ct = default)
