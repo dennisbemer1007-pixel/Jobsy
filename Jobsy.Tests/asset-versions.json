@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
     "sha256": "855d58c40f780fd4209d51b3205ad8a36ec680ac91b80f85208a2cbc3d509b8d",
-    "v": "20261015-05"
+    "v": "20261015-06"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -27,6 +27,10 @@
     "sha256": "a6a392c09fe4b4d6ba05d4718d82d44bb18d4786ad10bd49f23f967f4eb250d0",
     "v": "20261004-14"
   },
+  "css/features/choice-tiles.css": {
+    "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
+    "v": "20261015-06"
+  },
   "css/features/candidate-hub.css": {
     "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
     "v": "20261012-01"
@@ -44,8 +48,8 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "d1210f974f134556ff6e4ff44a93686b3ed7c05baa158287acb34613c9e8ca5b",
-    "v": "20261012-03"
+    "sha256": "66915959ccef9bebdf176b1164fc9c3585616402f93a2defa0e818bc02a551f6",
+    "v": "20261015-03"
   },
   "css/features/future-jobs.css": {
     "sha256": "78bf18d1a684c393bd4c61a439436f74488ba496619ab71063a935bee494e3b2",
@@ -72,8 +76,8 @@
     "v": "20261011-03"
   },
   "css/features/landing.css": {
-    "sha256": "fa784797cf21626a06bd7b7d8e8c18498071f2d7496200cfe5c3f1300e95e1f3",
-    "v": "20261004-10"
+    "sha256": "d52b358a0784d8751783a541a7e9c22d4e7f2158b2e71b30dd11f5ff03898bd4",
+    "v": "20261015-01"
   },
   "css/features/match-desktop.css": {
     "sha256": "8a93b7c3157f521af81598edb8ffe256de3b19076ef8ee2bdd26c4d963fa45bb",
@@ -84,8 +88,8 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "ae180d86fc41264aad46296c689f8cb9df9967d8dd6f889f3a7cc8c70d4fe5ca",
-    "v": "20261012-05"
+    "sha256": "bbc88a311da2dca31d584c956a637a978548bb6d0a9169a4d3a2a6087240dab2",
+    "v": "20261015-08"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
@@ -96,12 +100,12 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "fff0a875b99f9a76b7797a7f3c1b1a01ece63fbe1cd38a4600ea5aa81ecd9c54",
-    "v": "20261015-02"
+    "sha256": "b323f9555e8eb4489cab783c45c17800de6e7c56e4b9bdaa601f2cf8a94c1090",
+    "v": "20261015-06"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "39e2c7cb1c6f7ebcc5bdc43e9f9fe41816f5e34eae2c155224452c0b758dcf55",
-    "v": "20261015-12"
+    "sha256": "bb996ba4d4b2e34d8e5831494c7afb949db301a8c0426ebd88e6cb8f4912cafc",
+    "v": "20261015-19"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
@@ -164,8 +168,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "b81c42e1db3a23b13579802be1381bfe27583811836a4d7760ea429cef1372b2",
-    "v": "20261015-05"
+    "sha256": "1feb4e51ca59e59c74733e0b2cb98a51580ec149b16a7c94456c3aee584418bd",
+    "v": "20261015-09"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -216,8 +220,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "68ce448f1b788a0124d2da185c8a1e29dbc09b47c7f62ed7678f6b30412fc65d",
-    "v": "20261015-01"
+    "sha256": "7f6816cbc363ce369d166f137c5928c1662102c7976e9453df4e5efa95502f03",
+    "v": "20261015-04"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -240,11 +244,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "136cc26c1da7d62f9bb003d33fc3de55b7ce95ae4becfacbe124c01ea85ff552",
-    "v": "20261015-02"
+    "sha256": "31bb1a3c34aaa6018a0cee623ecba250f91df7469b274a88c5517101311da15e",
+    "v": "20261015-06"
   },
   "service-worker.published.js": {
-    "sha256": "38cf9a0597f4802d5e368ea57ec4ff6d31fd9589060c40be72f0ad0eb5dea5ed",
-    "v": "20261015-02"
+    "sha256": "e49f95df7bce6ff128a829e50b5eedeeb15ac1db65d4732d3332556c1ea7eb34",
+    "v": "20261015-06"
   }
 }

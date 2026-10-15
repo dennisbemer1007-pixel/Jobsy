@@ -151,7 +151,7 @@ public class LandingPlaywrightTests
 
                     var ok = await page.EvaluateAsync<bool>("""
                 () => {
-                  const scene = document.querySelector('.pub-landing__hero-scene');
+                  const scene = document.querySelector('.pub-landing__hero-scene, .pub-landing__passport-stage');
                   if (!scene) return false;
                   const vw = window.innerWidth;
                   const nodes = [scene, ...scene.querySelectorAll('*')];
