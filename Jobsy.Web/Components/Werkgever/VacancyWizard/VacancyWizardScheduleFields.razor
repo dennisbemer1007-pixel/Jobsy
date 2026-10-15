@@ -1,0 +1,98 @@
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
+
+<fieldset class="vacancy-schedule vac-wizard-schedule">
+    <legend>Dagdelen</legend>
+    <p class="muted vacancy-field-hint">Selecteer dagdelen of kies tijden in overleg.</p>
+    <label class="vacancy-toggle-row">
+        <input type="checkbox" checked="@FlexibleTimes" @onchange="OnFlexibleChanged" />
+        <span>
+            <strong>Tijden in overleg</strong>
+            <span class="muted">Geen vaste dagdelen; matching weegt dagdelen neutraal</span>
+        </span>
+    </label>
+
+    <div class="vac-wizard-schedule__mobile">
+        @foreach (var day in DayPartMatrix.DayCodes)
+        {
+            <div class="vac-wizard-schedule__day-row">
+                <span class="vac-wizard-schedule__day-label">@day</span>
+                <ChoiceTileGrid Wrap="true" Class="vac-wizard-schedule__chips">
+                    @foreach (var slot in DayPartMatrix.DayPartCodes)
+                    {
+                        var key = $"{day}:{slot}";
+                        var selected = ScheduleSlots.Contains(key);
+                        var shortLabel = slot switch
+                        {
+                            "Ochtend" => "Ochtend",
+                            "Middag" => "Middag",
+                            "Avond" => "Avond",
+                            "Nacht" => "Nacht",
+                            _ => slot
+                        };
+                        <ChoiceTile Inline="true"
+                                    Label="@shortLabel"
+                                    Selected="selected"
+                                    Disabled="FlexibleTimes"
+                                    Role="checkbox"
+                                    OnClick="() => ToggleSlot.InvokeAsync(key)" />
+                    }
+                </ChoiceTileGrid>
+            </div>
+        }
+    </div>
+
+    <div class="vacancy-schedule__table-wrap vac-wizard-schedule__desktop @(_flexibleClass)">
+        <table class="wage-table vacancy-schedule__table">
+            <thead>
+                <tr>
+                    <th>Dag</th>
+                    @foreach (var slot in DayPartMatrix.DayPartCodes)
+                    {
+                        <th>
+                            @slot
+                            <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var day in DayPartMatrix.DayCodes)
+                {
+                    <tr>
+                        <th>@day</th>
+                        @foreach (var slot in DayPartMatrix.DayPartCodes)
+                        {
+                            var key = $"{day}:{slot}";
+                            <td>
+                                <input type="checkbox"
+                                       checked="@ScheduleSlots.Contains(key)"
+                                       disabled="@FlexibleTimes"
+                                       aria-label="@($"{day} {slot}")"
+                                       @onchange="e => OnToggle(key, e)" />
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</fieldset>
+
+@code {
+    [Parameter] public bool FlexibleTimes { get; set; }
+    [Parameter] public EventCallback<bool> FlexibleTimesChanged { get; set; }
+    [Parameter] public HashSet<string> ScheduleSlots { get; set; } = [];
+    [Parameter] public EventCallback<string> ToggleSlot { get; set; }
+
+    private string? _flexibleClass => FlexibleTimes ? "is-disabled" : null;
+
+    private Task OnFlexibleChanged(ChangeEventArgs e)
+    {
+        var on = e.Value is bool b && b || e.Value?.ToString() == "on";
+        return FlexibleTimesChanged.InvokeAsync(on);
+    }
+
+    private Task OnToggle(string key, ChangeEventArgs e)
+        => ToggleSlot.InvokeAsync(key);
+}

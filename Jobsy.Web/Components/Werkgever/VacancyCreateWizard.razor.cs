@@ -17,6 +17,8 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Web.Components.Werkgever;
 
+#pragma warning disable IDE0051, IDE0052 // Wizard partial: legacy hooks and rail navigation pending UI wiring
+
 public partial class VacancyCreateWizard : IDisposable
 {
     private static readonly System.Text.Json.JsonSerializerOptions ScheduleJsonOptions = new()
@@ -29,39 +31,53 @@ public partial class VacancyCreateWizard : IDisposable
     [Inject] private AuthenticationStateProvider AuthState { get; set; } = default!;
     [Inject] private CultureState Culture { get; set; } = default!;
     [Inject] private IFeatureFlags FeatureFlags { get; set; } = default!;
+    [Inject] private IJSRuntime Js { get; set; } = default!;
 
     private const int TotalSteps = 6;
 
     private static readonly IReadOnlyList<(int Id, string Title, string Hint)> WizardSteps =
     [
-        (1, "Functie & type", "Titel, vestiging en categorie"),
-        (2, "Omschrijving & media", "Tekst, foto en video"),
-        (3, "Salaris & planning", "Loon, uren en dagdelen"),
-        (4, "Eisen & profiel", "Branche, diploma's en barrières"),
-        (5, "Cultuur & wetgeving", "Teamcultuur en wettelijke taken"),
-        (6, "Contact & opslaan", "Sollicitatie-contact en concept")
+        (1, "Basis", "Functietitel, categorie en vestiging"),
+        (2, "Omschrijving", "Tekst en optionele media"),
+        (3, "Loon & uren", "Salaristabel en uren per week"),
+        (4, "Rooster", "Dagdelen en werkzaamheden"),
+        (5, "Eisen & contact", "Profiel, cultuur en contact"),
+        (6, "Controleren", "Samenvatting voor publicatie")
     ];
 
     private int _step = 1;
+    private int _maxStepReached = 1;
     private string? _stepMessage;
     private bool _previewOpen;
-    private bool _previewMobileSheet = true;
+    private bool _previewMobileSheet;
+    private bool _savedConfirmation;
+    private Guid? _savedVacancyId;
+    private DateTimeOffset? _savedAt;
+    private bool _publishOpen;
+    private VacancyListItem? _publishVacancy;
+    private bool _wizardJsInit;
 
     private string CurrentStepTitle => WizardSteps.First(s => s.Id == _step).Title;
 
     private string CurrentStepLead => _step switch
     {
-        1 => _editVacancyId is not null
-            ? "Werk het concept bij. Klaarzetten of publiceren kan zodra alle verplichte onderdelen compleet zijn."
-            : _isDuplicate
-                ? "Gegevens zijn overgenomen uit de bronvacature. Pas aan waar nodig."
-                : "Begin met de basis: functietitel, vestiging en vacaturetype.",
-        2 => "Schrijf een duidelijke omschrijving. Rich text en media helpen kandidaten kiezen.",
-        3 => "Kies een salaristabel en geef uren en dagdelen aan voor matching.",
-        4 => "Branche en eisen bepalen wie kan solliciteren.",
-        5 => "Optioneel: teamcultuur afwijken en wettelijke werkzaamheden aangeven.",
-        6 => "Contactvoorkeuren en opslaan als concept — publiceren via de vacaturelijst.",
+        1 => "Wat voor functie is het en waar?",
+        2 => "Beschrijf de vacature voor kandidaten.",
+        3 => "Kies een salaristabel en het aantal uren per week.",
+        4 => "Wanneer wordt er gewerkt? Kies dagdelen of 'tijden in overleg'.",
+        5 => "Optionele eisen, teamcultuur en contactvoorkeur.",
+        6 => "Controleer alles voordat je het concept opslaat.",
         _ => string.Empty
+    };
+
+    private string NextStepButtonLabel => _step switch
+    {
+        1 => "Volgende: Omschrijving",
+        2 => "Volgende: Loon & uren",
+        3 => "Volgende: Rooster",
+        4 => "Volgende: Eisen & contact",
+        5 => "Volgende: Controleren",
+        _ => "Opslaan als concept"
     };
 
     private VacancyListItem? PreviewVacancy =>
@@ -139,7 +155,6 @@ public partial class VacancyCreateWizard : IDisposable
     private DateOnly? _draftEndDate;
     private Guid _companyId;
     private List<CompanySummary> _companies = [];
-    private bool _readyBusy;
     private List<KvkEstablishmentItem> _clientEstablishments = [];
     private List<SalaryTableItem> _salaryTables = [];
     private bool _vacancyDirectContact;
@@ -160,6 +175,8 @@ public partial class VacancyCreateWizard : IDisposable
 
     private CompanySummary? SelectedCompany =>
         _companies.FirstOrDefault(c => c.Id == _companyId);
+
+    private string SelectedCompanyName => SelectedCompany?.Name ?? "Vestiging";
 
     private bool SelectedCompanyIsUnverified =>
         SelectedCompany is not null
@@ -751,6 +768,8 @@ public partial class VacancyCreateWizard : IDisposable
                     _vacancyPreferWhatsApp = contact.ContactPreferWhatsApp;
                 }
             }
+
+            SyncHoursFromCategoryFields();
         }
         catch (Exception)
         {
@@ -765,6 +784,16 @@ public partial class VacancyCreateWizard : IDisposable
         return title.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
             ? title
             : title + suffix;
+    }
+
+    private Task ToggleWorkTypeChip(string label)
+    {
+        if (!_selectedWorkTypes.Remove(label) && _selectedWorkTypes.Count < WorkTypeLabels.MaxPerVacancy)
+        {
+            _selectedWorkTypes.Add(label);
+        }
+
+        return Task.CompletedTask;
     }
 
     private void ToggleWorkType(string label, ChangeEventArgs e)
@@ -877,6 +906,46 @@ public partial class VacancyCreateWizard : IDisposable
         {
             _scheduleSlots.Clear();
         }
+    }
+
+    private Task OnFlexibleTimesChangedBool(bool value)
+    {
+        _flexibleTimes = value;
+        if (_flexibleTimes)
+        {
+            _scheduleSlots.Clear();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task ToggleScheduleSlotFromChipAsync(string key)
+    {
+        if (!_scheduleSlots.Remove(key))
+        {
+            _flexibleTimes = false;
+            _scheduleSlots.Add(key);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task OpenPreviewDesktopAsync()
+        => OpenPreviewAsync(mobileSheet: false);
+
+    private async Task OpenPreviewFromActionBarAsync()
+    {
+        var mobile = false;
+        try
+        {
+            mobile = await Js.InvokeAsync<bool>("vacancyWizard.isMobilePreview");
+        }
+        catch (JSException)
+        {
+            // optional helper
+        }
+
+        await OpenPreviewAsync(mobile);
     }
 
     private void ToggleScheduleSlot(string key, ChangeEventArgs e)
@@ -1026,6 +1095,7 @@ public partial class VacancyCreateWizard : IDisposable
     private Task GoBackAsync()
     {
         _stepMessage = null;
+        _savedConfirmation = false;
         if (_step > 1)
         {
             _step--;
@@ -1046,16 +1116,44 @@ public partial class VacancyCreateWizard : IDisposable
         if (_step < TotalSteps)
         {
             _step++;
+            _maxStepReached = Math.Max(_maxStepReached, _step);
         }
 
+        return Task.CompletedTask;
+    }
+
+    private Task GoToStepAsync(int step)
+    {
+        if (step < 1 || step > TotalSteps || step > _maxStepReached + 1)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (step > _step)
+        {
+            for (var s = _step; s < step; s++)
+            {
+                if (!TryValidateStep(s, out var error))
+                {
+                    _stepMessage = error;
+                    _step = s;
+                    return Task.CompletedTask;
+                }
+            }
+        }
+
+        _stepMessage = null;
+        _step = step;
+        _maxStepReached = Math.Max(_maxStepReached, _step);
         return Task.CompletedTask;
     }
 
     private Task OnFormSubmitAsync()
         => _step == TotalSteps ? SaveAsync() : GoNextAsync();
 
-    private Task OpenPreviewAsync()
+    private Task OpenPreviewAsync(bool mobileSheet = false)
     {
+        _previewMobileSheet = mobileSheet;
         _previewOpen = true;
         return Task.CompletedTask;
     }
@@ -1064,6 +1162,22 @@ public partial class VacancyCreateWizard : IDisposable
     {
         _previewOpen = false;
         return Task.CompletedTask;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_wizardJsInit)
+        {
+            _wizardJsInit = true;
+            try
+            {
+                await Js.InvokeVoidAsync("vacancyWizard.init");
+            }
+            catch (JSException)
+            {
+                // optional layout helper
+            }
+        }
     }
 
     private bool TryValidateStep(int step, out string? error)
@@ -1101,6 +1215,13 @@ public partial class VacancyCreateWizard : IDisposable
                     return false;
                 }
 
+                var branchCount = _selectedWorkTypes.Count(x => !string.IsNullOrWhiteSpace(x));
+                if (branchCount is < 1 or > WorkTypeLabels.MaxPerVacancy)
+                {
+                    error = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches.";
+                    return false;
+                }
+
                 return true;
             case 2:
                 if (string.IsNullOrWhiteSpace(_description))
@@ -1130,18 +1251,11 @@ public partial class VacancyCreateWizard : IDisposable
                     return false;
                 }
 
+                return true;
+            case 4:
                 if (!_flexibleTimes && _scheduleSlots.Count == 0)
                 {
                     error = "Selecteer dagdelen of kies ‘Tijden in overleg’.";
-                    return false;
-                }
-
-                return true;
-            case 4:
-                var branchCount = _selectedWorkTypes.Count(x => !string.IsNullOrWhiteSpace(x));
-                if (branchCount is < 1 or > WorkTypeLabels.MaxPerVacancy)
-                {
-                    error = $"Kies 1 of {WorkTypeLabels.MaxPerVacancy} branches.";
                     return false;
                 }
 
@@ -1161,8 +1275,6 @@ public partial class VacancyCreateWizard : IDisposable
                     return false;
                 }
 
-                return true;
-            case 6:
                 if (_vacancyDirectContact
                     && !_vacancyPreferMail
                     && !_vacancyPreferPhone
@@ -1173,6 +1285,8 @@ public partial class VacancyCreateWizard : IDisposable
                 }
 
                 return true;
+            case 6:
+                return true;
             default:
                 return true;
         }
@@ -1181,25 +1295,6 @@ public partial class VacancyCreateWizard : IDisposable
     private void CloseModeration()
     {
         _moderationOpen = false;
-    }
-
-    private async Task MarkReadyAsync(Guid vacancyId)
-    {
-        _readyBusy = true;
-        _message = null;
-        try
-        {
-            await Api.MarkVacancyReadyAsync(vacancyId);
-            _message = Culture["WaBanner.ReadyStatus"];
-        }
-        catch (Exception ex)
-        {
-            _message = ex.Message;
-        }
-        finally
-        {
-            _readyBusy = false;
-        }
     }
 
     private async Task SaveAsync()
@@ -1307,6 +1402,9 @@ public partial class VacancyCreateWizard : IDisposable
                 ApplyIntermediaryCategory();
             }
 
+            SyncCategoryHoursFromRange();
+            _description = HtmlSanitize.ToVacancyDescriptionHtml(_description);
+
             var today = DateOnly.FromDateTime(DateTime.Today);
             var startDate = _editVacancyId is not null ? _draftStartDate ?? today : today;
             var endDate = _editVacancyId is not null ? _draftEndDate ?? startDate.AddMonths(3) : today.AddMonths(3);
@@ -1363,9 +1461,21 @@ public partial class VacancyCreateWizard : IDisposable
                 ? await Api.UpdateVacancyAsync(editId, form)
                 : await Api.CreateVacancyAsync(form);
 
-            Navigation.NavigateTo(string.IsNullOrWhiteSpace(saved?.ModerationWarning)
-                ? "/werkgever/vacatures"
-                : "/werkgever/vacatures?moderationWarning=1");
+            if (saved?.Id is Guid savedId)
+            {
+                _editVacancyId = savedId;
+                _savedVacancyId = savedId;
+            }
+
+            _savedAt = DateTimeOffset.Now;
+            _savedConfirmation = true;
+            _maxStepReached = TotalSteps;
+
+            if (!string.IsNullOrWhiteSpace(saved?.ModerationWarning))
+            {
+                _moderationWarning = saved.ModerationWarning;
+                _moderationOpen = true;
+            }
         }
         catch (VacancyModerationException ex)
         {
@@ -1380,6 +1490,125 @@ public partial class VacancyCreateWizard : IDisposable
         finally
         {
             _saving = false;
+        }
+    }
+
+    private void SyncCategoryHoursFromRange()
+    {
+        if (_minHours is not decimal min || _maxHours is not decimal max)
+        {
+            return;
+        }
+
+        if (!CategoryUsesField(VacancyCategoryExtraFields.HoursPerWeek))
+        {
+            _categoryFields.Remove(VacancyCategoryExtraFields.HoursPerWeek);
+            return;
+        }
+
+        _categoryFields[VacancyCategoryExtraFields.HoursPerWeek] = $"{min:0.#}–{max:0.#}";
+    }
+
+    private void SyncHoursFromCategoryFields()
+    {
+        var raw = GetCategoryField(VacancyCategoryExtraFields.HoursPerWeek);
+        if (string.IsNullOrEmpty(raw))
+        {
+            return;
+        }
+
+        var parts = raw.Split('–', '-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2
+            && decimal.TryParse(parts[0].Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var min)
+            && decimal.TryParse(parts[1].Replace(',', '.'), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var max))
+        {
+            _minHours = min;
+            _maxHours = max;
+        }
+    }
+
+    private bool CategoryUsesField(string key)
+        => SelectedCategory?.ExtraFieldDefinitions?.Any(f => string.Equals(f.Key, key, StringComparison.OrdinalIgnoreCase)) == true;
+
+    private static bool IsChipCategoryField(string key)
+        => string.Equals(key, VacancyCategoryExtraFields.ContractType, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(key, VacancyCategoryExtraFields.ExperienceLevel, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsMergedHoursCategoryField(string key)
+        => string.Equals(key, VacancyCategoryExtraFields.HoursPerWeek, StringComparison.OrdinalIgnoreCase);
+
+    private void SelectCategoryOption(string key, string value)
+    {
+        SetCategoryField(key, value);
+        StateHasChanged();
+    }
+
+    private Task OpenPublishAsync()
+    {
+        if (_savedVacancyId is not Guid id)
+        {
+            return Task.CompletedTask;
+        }
+
+        _publishVacancy = PreviewVacancy;
+        if (_publishVacancy is not null)
+        {
+            _publishVacancy.Id = id;
+        }
+        _publishOpen = true;
+        return Task.CompletedTask;
+    }
+
+    private Task ContinueEditingAsync()
+    {
+        _savedConfirmation = false;
+        _step = Math.Min(_step, TotalSteps);
+        return Task.CompletedTask;
+    }
+
+    private Task ContinueEditingFromSavedAsync()
+    {
+        _savedConfirmation = false;
+        _step = 1;
+        return Task.CompletedTask;
+    }
+
+    private Task ClosePublishAsync()
+    {
+        _publishOpen = false;
+        _publishVacancy = null;
+        return Task.CompletedTask;
+    }
+
+    private Task OnPublishedAsync(VacancyProductActionResult? result)
+    {
+        _message = result?.PendingApproval == true
+            ? (result.Message ?? "Wacht op goedkeuring.")
+            : "Vacature gepubliceerd.";
+        _publishOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private bool ChecklistTitleOk => !string.IsNullOrWhiteSpace(_title) && (!_isIntermediary || !string.IsNullOrWhiteSpace(_categoryId));
+    private bool ChecklistDescriptionOk => !string.IsNullOrWhiteSpace(_description);
+    private bool ChecklistSalaryOk => Guid.TryParse(_salaryTableId, out _);
+    private bool ChecklistScheduleOk => _flexibleTimes || _scheduleSlots.Count > 0;
+
+    private string ScheduleSummaryLabel
+    {
+        get
+        {
+            if (_flexibleTimes)
+            {
+                return "Tijden in overleg";
+            }
+
+            if (_scheduleSlots.Count == 0)
+            {
+                return "—";
+            }
+
+            return $"{_scheduleSlots.Count} dagdelen";
         }
     }
 

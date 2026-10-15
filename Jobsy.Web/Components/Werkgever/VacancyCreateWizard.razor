@@ -11,10 +11,40 @@
 
 <PageTitle>@PageHeading · Lobsy</PageTitle>
 
-<div class="vac-wizard" data-testid="vacancy-create-wizard">
+<div class="vac-wizard vacancy-wizard" data-testid="vacancy-wizard">
     @if (_accessDenied)
     {
         <p class="state-message error" data-testid="vacancy-access-denied">Niet gevonden of geen toegang.</p>
+    }
+    else if (_savedConfirmation)
+    {
+        <section class="vac-wizard-saved" data-testid="vacancy-draft-saved" data-vacancy-id="@(_savedVacancyId?.ToString("D"))">
+            <div class="vac-wizard-saved__card">
+                <p class="vac-wizard-saved__icon" aria-hidden="true">✓</p>
+                <h1>Concept opgeslagen</h1>
+                <p class="vac-wizard-saved__lead">
+                    Je vacature staat als concept in je vacaturelijst. Kandidaten zien hem pas als je publiceert. Publiceren kost geen tokens.
+                </p>
+                <dl class="vac-wizard-saved__facts">
+                    <div><dt>Functie</dt><dd>@_title</dd></div>
+                    @if (VacancyPublicDisplay.DisplayHourlyWage(PreviewVacancy) is decimal wage)
+                    {
+                        <div><dt>Loon</dt><dd>€ @wage.ToString("0.00") / uur (21+)</dd></div>
+                    }
+                    @if (_minHours is decimal minH && _maxHours is decimal maxH)
+                    {
+                        <div><dt>Uren</dt><dd>@minH–@maxH per week</dd></div>
+                    }
+                    <div><dt>Rooster</dt><dd>@ScheduleSummaryLabel</dd></div>
+                    <div><dt>Status</dt><dd>Concept, nog niet zichtbaar</dd></div>
+                </dl>
+                <div class="vac-wizard-saved__actions">
+                    <button type="button" class="btn btn-primary" data-testid="vacancy-publish-now" @onclick="OpenPublishAsync">Nu publiceren</button>
+                    <button type="button" class="btn ghost" @onclick="ContinueEditingFromSavedAsync">Verder bewerken</button>
+                </div>
+                <a class="vac-wizard-saved__link" href="/werkgever/vacatures">Naar vacaturelijst</a>
+            </div>
+        </section>
     }
     else
     {
@@ -206,7 +236,7 @@
             {
                 <fieldset class="vacancy-category-extra">
                     <legend>Extra gegevens voor @SelectedCategory.Name</legend>
-                    @foreach (var field in fields.Where(f => !IsLegalStyleCategoryField(f.Key)))
+                    @foreach (var field in fields.Where(f => !IsLegalStyleCategoryField(f.Key) && !IsChipCategoryField(f.Key) && !IsMergedHoursCategoryField(f.Key)))
                     {
                         @if (field.InputType == "boolean")
                         {
@@ -247,6 +277,51 @@
                     }
                 </fieldset>
             }
+            @if (SelectedCategory?.ExtraFieldDefinitions?.FirstOrDefault(f => f.Key == VacancyCategoryExtraFields.ContractType) is { } contractField)
+            {
+                <fieldset class="vac-wizard-field">
+                    <legend>@contractField.Label</legend>
+                    <ChoiceTileGrid Wrap="true">
+                        @foreach (var opt in contractField.Options ?? [])
+                        {
+                            <ChoiceTile Label="@opt"
+                                        Selected="@(GetCategoryField(contractField.Key) == opt)"
+                                        Inline="true"
+                                        OnClick="() => SelectCategoryOption(contractField.Key, opt)" />
+                        }
+                    </ChoiceTileGrid>
+                </fieldset>
+            }
+            @if (SelectedCategory?.ExtraFieldDefinitions?.FirstOrDefault(f => f.Key == VacancyCategoryExtraFields.ExperienceLevel) is { } expField)
+            {
+                <fieldset class="vac-wizard-field">
+                    <legend>@expField.Label</legend>
+                    <ChoiceTileGrid Wrap="true">
+                        @foreach (var opt in expField.Options ?? [])
+                        {
+                            <ChoiceTile Label="@opt"
+                                        Selected="@(GetCategoryField(expField.Key) == opt)"
+                                        Inline="true"
+                                        OnClick="() => SelectCategoryOption(expField.Key, opt)" />
+                        }
+                    </ChoiceTileGrid>
+                </fieldset>
+            }
+            <fieldset class="vac-wizard-field">
+                <legend>Branche <span class="muted">max. @WorkTypeLabels.MaxPerVacancy</span></legend>
+                <ChoiceTileGrid Wrap="true">
+                    @foreach (var label in _branchOptions)
+                    {
+                        var selected = _selectedWorkTypes.Contains(label);
+                        var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
+                        <ChoiceTile Label="@label"
+                                    Selected="selected"
+                                    Disabled="disabled"
+                                    Inline="true"
+                                    OnClick="() => ToggleWorkTypeChip(label)" />
+                    }
+                </ChoiceTileGrid>
+            </fieldset>
                         </div>
                     }
                     @if (_step == 2)
@@ -319,73 +394,51 @@
                 </div>
             </fieldset>
 
-            <fieldset class="vacancy-schedule">
-                <legend>Dagdelen</legend>
-                <p class="muted vacancy-field-hint">Selecteer voor welke dagdelen de vacature bedoeld is, of kies tijden in overleg.</p>
-                <label class="vacancy-toggle-row">
-                    <input type="checkbox" checked="@_flexibleTimes" @onchange="OnFlexibleTimesChanged" />
-                    <span>
-                        <strong>Tijden in overleg / Variabele tijden</strong>
-                        <span class="muted">Geen vaste dagdelen; matching weegt dagdelen neutraal</span>
-                    </span>
-                </label>
-                <div class="vacancy-schedule__table-wrap @(_flexibleTimes ? "is-disabled" : null)">
-                    <table class="wage-table vacancy-schedule__table">
-                        <thead>
-                            <tr>
-                                <th>Dag</th>
-                                @foreach (var slot in DayPartMatrix.DayPartCodes)
-                                {
-                                    <th>
-                                        @slot
-                                        <div class="muted" style="font-weight:normal;font-size:0.75rem">@DayPartMatrix.DayPartWindows[slot]</div>
-                                    </th>
-                                }
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var day in DayPartMatrix.DayCodes)
-                            {
-                                <tr>
-                                    <th>@day</th>
-                                    @foreach (var slot in DayPartMatrix.DayPartCodes)
-                                    {
-                                        var key = $"{day}:{slot}";
-                                        <td>
-                                            <input type="checkbox"
-                                                   checked="@_scheduleSlots.Contains(key)"
-                                                   disabled="@_flexibleTimes"
-                                                   aria-label="@($"{day} {slot}")"
-                                                   @onchange="e => ToggleScheduleSlot(key, e)" />
-                                        </td>
-                                    }
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </fieldset>
-
                         </div>
                     }
                     @if (_step == 4)
                     {
                         <div class="vac-wizard__step" data-testid="vac-wizard-step-4">
-            <fieldset class="profile-roles">
-                <legend>Branche (max @WorkTypeLabels.MaxPerVacancy)</legend>
-                @foreach (var label in _branchOptions)
-                {
-                    var selected = _selectedWorkTypes.Contains(label);
-                    var disabled = !selected && _selectedWorkTypes.Count >= WorkTypeLabels.MaxPerVacancy;
-                    <label class="@(disabled ? "is-disabled" : null)">
-                        <input type="checkbox"
-                               checked="@selected"
-                               disabled="@disabled"
-                               @onchange="e => ToggleWorkType(label, e)" />
-                        @label
-                    </label>
-                }
+            <VacancyWizardScheduleFields FlexibleTimes="_flexibleTimes"
+                                         FlexibleTimesChanged="OnFlexibleTimesChangedBool"
+                                         ScheduleSlots="_scheduleSlots"
+                                         ToggleSlot="ToggleScheduleSlotFromChipAsync" />
+            <fieldset class="vacancy-legal">
+                <legend>Werkzaamheden &amp; wetgeving</legend>
+                <p class="muted vacancy-field-hint">Bepaalt automatisch of jongeren (15–17) mogen solliciteren.</p>
+                <ul class="vacancy-legal__list">
+                    @foreach (var flag in LegalTaskFlags.Catalog)
+                    {
+                        var isOn = GetLegalFlag(flag.Code);
+                        var tipOpen = _openLegalTip == flag.Code;
+                        <li class="vacancy-legal__item @(tipOpen ? "is-open" : null)">
+                            <input id="@($"legal-{flag.Code}")"
+                                   class="vacancy-legal__check"
+                                   type="checkbox"
+                                   checked="@isOn"
+                                   @onchange="e => SetLegalFlag(flag.Code, e)" />
+                            <label class="vacancy-legal__text" for="@($"legal-{flag.Code}")">@flag.Label</label>
+                            <button type="button"
+                                    class="vacancy-legal__info"
+                                    title="@flag.Tooltip"
+                                    aria-label="@($"Toelichting: {flag.Label}")"
+                                    aria-expanded="@tipOpen"
+                                    @onclick="() => ToggleLegalTip(flag.Code)">
+                                i
+                            </button>
+                            @if (tipOpen)
+                            {
+                                <span class="vacancy-legal__tip">@flag.Tooltip</span>
+                            }
+                        </li>
+                    }
+                </ul>
             </fieldset>
+                        </div>
+                    }
+                    @if (_step == 5)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-5">
             <fieldset class="profile-roles">
                 <legend>Vereist rijbewijs (optioneel)</legend>
                 @foreach (var license in _licenseOptions)
@@ -502,11 +555,6 @@
                     }
                 </div>
             </fieldset>
-                        </div>
-                    }
-                    @if (_step == 5)
-                    {
-                        <div class="vac-wizard__step" data-testid="vac-wizard-step-5">
             <fieldset class="profile-roles vacancy-culture">
                 <legend>@Culture["WaProfile.Vacancy.Section"]</legend>
                 @if (_companyCultureSummary is null && !_teamOverride)
@@ -576,67 +624,6 @@
                     }
                 }
             </fieldset>
-            <fieldset class="vacancy-legal">
-                <legend>Werkzaamheden &amp; wetgeving</legend>
-                <p class="muted vacancy-field-hint">Bepaalt automatisch of jongeren (15–17) mogen solliciteren.</p>
-                <ul class="vacancy-legal__list">
-                    @foreach (var flag in LegalTaskFlags.Catalog)
-                    {
-                        var isOn = GetLegalFlag(flag.Code);
-                        var tipOpen = _openLegalTip == flag.Code;
-                        <li class="vacancy-legal__item @(tipOpen ? "is-open" : null)">
-                            <input id="@($"legal-{flag.Code}")"
-                                   class="vacancy-legal__check"
-                                   type="checkbox"
-                                   checked="@isOn"
-                                   @onchange="e => SetLegalFlag(flag.Code, e)" />
-                            <label class="vacancy-legal__text" for="@($"legal-{flag.Code}")">@flag.Label</label>
-                            <button type="button"
-                                    class="vacancy-legal__info"
-                                    title="@flag.Tooltip"
-                                    aria-label="@($"Toelichting: {flag.Label}")"
-                                    aria-expanded="@tipOpen"
-                                    @onclick="() => ToggleLegalTip(flag.Code)">
-                                i
-                            </button>
-                            @if (tipOpen)
-                            {
-                                <span class="vacancy-legal__tip">@flag.Tooltip</span>
-                            }
-                        </li>
-                    }
-                    @if (ShowSuitableFor65PlusLegal)
-                    {
-                        <li class="vacancy-legal__item vacancy-legal__item--plain">
-                            <input id="legal-suitable-65"
-                                   class="vacancy-legal__check"
-                                   type="checkbox"
-                                   @bind="_suitableFor65Plus" />
-                            <label class="vacancy-legal__text" for="legal-suitable-65">
-                                Geschikt voor 65+
-                                <span class="muted">Vacature blijft regulier en krijgt de 65+ filter/badge.</span>
-                            </label>
-                        </li>
-                    }
-                    @if (ShowJobCoachLegal)
-                    {
-                        <li class="vacancy-legal__item vacancy-legal__item--plain">
-                            <input id="legal-jobcoach"
-                                   class="vacancy-legal__check"
-                                   type="checkbox"
-                                   checked="@(string.Equals(GetCategoryField(VacancyCategoryExtraFields.JobCoachAvailable), "ja", StringComparison.OrdinalIgnoreCase))"
-                                   @onchange="e => SetCategoryBool(VacancyCategoryExtraFields.JobCoachAvailable, e)" />
-                            <label class="vacancy-legal__text" for="legal-jobcoach">Jobcoach beschikbaar</label>
-                        </li>
-                    }
-                </ul>
-            </fieldset>
-
-                        </div>
-                    }
-                    @if (_step == 6)
-                    {
-                        <div class="vac-wizard__step" data-testid="vac-wizard-step-6">
             <fieldset class="vacancy-contact">
                 <legend>Voorkeur voor contact</legend>
                 <p class="muted vacancy-field-hint">
@@ -704,34 +691,57 @@
             </fieldset>
 
                         </div>
-                    }@if (!string.IsNullOrEmpty(_stepMessage))
+                    }
+                    @if (_step == 6)
+                    {
+                        <div class="vac-wizard__step" data-testid="vac-wizard-step-6">
+                            <p class="muted">Controleer je gegevens. Sla op als concept — publiceren kan daarna vanaf deze pagina of via de vacaturelijst.</p>
+                            <dl class="vac-wizard-review">
+                                <div><dt>Functietitel</dt><dd>@_title</dd></div>
+                                <div><dt>Vestiging</dt><dd>@SelectedCompanyName</dd></div>
+                                <div><dt>Branche</dt><dd>@string.Join(", ", _selectedWorkTypes)</dd></div>
+                                <div><dt>Omschrijving</dt><dd>@(_description.Length) tekens</dd></div>
+                                <div><dt>Salaristabel</dt><dd>@(SelectedSalaryTable?.Name ?? "—")</dd></div>
+                                <div><dt>Uren</dt><dd>@(_minHours?.ToString("0.#") ?? "—")–@(_maxHours?.ToString("0.#") ?? "—") per week</dd></div>
+                                <div><dt>Rooster</dt><dd>@ScheduleSummaryLabel</dd></div>
+                            </dl>
+                            <button type="button" class="btn ghost" data-testid="vacancy-preview-open-review" @onclick="OpenPreviewDesktopAsync">
+                                Bekijk als kandidaat
+                            </button>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(_stepMessage))
                     {
                         <p class="state-message error" role="alert">@_stepMessage</p>
                     }
-                    <footer class="vac-wizard__foot">
-                        <div class="vac-wizard__foot-actions">
+                    <footer class="vac-wizard-actionbar" data-testid="vacancy-wizard-actionbar">
+                        <div class="vac-wizard-actionbar__left">
                             @if (_step > 1)
                             {
                                 <button type="button" class="btn ghost vac-wizard__back" @onclick="GoBackAsync">Terug</button>
                             }
-                            <button type="button" class="btn ghost vac-wizard__preview" data-testid="vacancy-preview-open" @onclick="OpenPreviewAsync">
-                                Bekijk als kandidaat
+                            <span class="vac-wizard-actionbar__step muted">Stap @_step van @TotalSteps</span>
+                        </div>
+                        <div class="vac-wizard-actionbar__right">
+                            <button type="button"
+                                    class="btn ghost vac-wizard__preview-actionbar"
+                                    data-testid="vacancy-preview-actionbar"
+                                    @onclick="OpenPreviewFromActionBarAsync">
+                                <span class="vac-wizard__preview-actionbar-icon" aria-hidden="true">👁</span>
+                                <span class="vac-wizard__preview-actionbar-label">Bekijk als kandidaat</span>
+                            </button>
+                            <button type="button" class="btn ghost vac-wizard__save-inline" disabled="@_saving" @onclick="SaveAsync" data-testid="vacancy-save-draft">
+                                @(_saving ? "Opslaan…" : "Opslaan als concept")
                             </button>
                             @if (_step < TotalSteps)
                             {
-                                <button type="button" class="btn btn-primary vac-wizard__next" @onclick="GoNextAsync">Volgende</button>
+                                <button type="button" class="btn btn-primary vac-wizard__next" @onclick="GoNextAsync">@NextStepButtonLabel</button>
                             }
                             else
                             {
-                                <button class="btn btn-primary vac-wizard__save" type="submit" disabled="@_saving" data-testid="vacancy-save-draft">
-                                    @(_saving ? "Opslaan…" : Culture["Employer.SaveDraft"])
+                                <button class="btn btn-primary vac-wizard__save" type="submit" disabled="@_saving" data-testid="vacancy-save-draft-submit">
+                                    @(_saving ? "Opslaan…" : "Opslaan als concept")
                                 </button>
-                                @if (SelectedCompanyIsUnverified && _editVacancyId is Guid readyId && !_saving)
-                                {
-                                    <button class="btn ghost" type="button" disabled="@_readyBusy" @onclick="() => MarkReadyAsync(readyId)">
-                                        @(_readyBusy ? Culture["Common.Busy"] : Culture["WaBanner.ReadyCta"])
-                                    </button>
-                                }
                             }
                         </div>
                     </footer>
@@ -749,6 +759,36 @@
                     </section>
                 }
             </div>
+
+            <aside class="vac-wizard__preview-aside" aria-label="Live voorbeeld">
+                <p class="vac-wizard__preview-label">Zo ziet een kandidaat je vacature</p>
+                <article class="vac-wizard-preview-card" data-testid="vacancy-live-preview-card">
+                    <h3>@(string.IsNullOrWhiteSpace(_title) ? "Functietitel…" : _title)</h3>
+                    <p class="muted">@SelectedCompanyName · @string.Join(" · ", _selectedWorkTypes.Take(2))</p>
+                    @if (VacancyPublicDisplay.DisplayHourlyWage(PreviewVacancy) is decimal pw)
+                    {
+                        <p><strong>€ @pw.ToString("0.00") / uur</strong></p>
+                    }
+                    @if (_minHours is decimal pmin && _maxHours is decimal pmax)
+                    {
+                        <p class="muted">@pmin–@pmax uur</p>
+                    }
+                    <p class="muted">@ScheduleSummaryLabel</p>
+                </article>
+                <h4 class="vac-wizard__checklist-title">Nodig om te publiceren</h4>
+                <ul class="vac-wizard__checklist">
+                    <li class="@(ChecklistTitleOk ? "is-ok" : null)">Functietitel en categorie</li>
+                    <li class="@(ChecklistDescriptionOk ? "is-ok" : null)">Omschrijving</li>
+                    <li class="@(ChecklistSalaryOk ? "is-ok" : null)">Loon en uren</li>
+                    <li class="@(ChecklistScheduleOk ? "is-ok" : null)">Rooster of 'tijden in overleg'</li>
+                </ul>
+                <button type="button" class="btn ghost vac-wizard__preview" data-testid="vacancy-preview-open" @onclick="OpenPreviewDesktopAsync">
+                    Bekijk als kandidaat
+                </button>
+                <button type="button" class="btn ghost vac-wizard__preview-mobile" data-testid="vacancy-preview-mobile" @onclick="() => OpenPreviewAsync(mobileSheet: true)">
+                    Voorbeeld
+                </button>
+            </aside>
         </div>
     }
 
@@ -762,6 +802,11 @@
                                 Vacancy="PreviewVacancy"
                                 MobileSheet="_previewMobileSheet"
                                 OnClose="ClosePreviewAsync" />
+
+<PublishOptionsDialog IsOpen="_publishOpen"
+                      Vacancy="_publishVacancy"
+                      OnClose="ClosePublishAsync"
+                      OnPublished="OnPublishedAsync" />
 
 @if (_moderationOpen)
 {
