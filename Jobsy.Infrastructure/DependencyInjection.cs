@@ -628,6 +628,7 @@ public static class DependencyInjection
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();
         services.AddScoped<CareerGenerationGuard>();
         services.AddScoped<ICandidateOnboardingService, CandidateOnboardingService>();
+        services.AddScoped<ICandidateDiscoveryOverviewService, CandidateDiscoveryOverviewService>();
         services.AddHttpClient(CareerPathPlanGenerationService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(60);

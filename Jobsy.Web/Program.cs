@@ -185,6 +185,7 @@ builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.MeGetCache>();
+builder.Services.AddScoped<Jobsy.Web.Services.DiscoveryOverviewCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
 builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();

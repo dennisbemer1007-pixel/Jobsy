@@ -9,6 +9,7 @@
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Contracts
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @using Microsoft.Extensions.Logging
@@ -21,12 +22,13 @@
 @inject IJSRuntime Js
 @inject UserFacingError UserFacing
 @inject ILogger<DiscoveryJourney> JourneyLog
+@inject DiscoveryOverviewCache OverviewCache
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Discovery.PageTitle"] · Lobsy</PageTitle>
 
 <div class="journey">
-    @if (_loading)
+    @if (_loading && _screen != "overview")
     {
         <p class="journey__loading" aria-busy="true">@Culture["Common.Loading"]</p>
     }
@@ -474,7 +476,8 @@
                 }
                 else if (_screen == "overview")
                 {
-                    <JourneyOverview Rows="_overviewRows"
+                    <JourneyOverview IsLoading="_overviewLoading"
+                                     Rows="_overviewRows"
                                      Tests="_overviewTests"
                                      OnRowAction="OnOverviewRowAsync"
                                      OnDeepen="OnOverviewDeepenAsync" />
@@ -589,6 +592,8 @@
         .Select(t => new OnboardingMiniTest.TestTab(t.Step, t.Title, t.Lead)).ToArray();
 
     private bool _loading = true;
+    private bool _overviewLoading;
+    private CandidateDiscoveryOverviewPanelDto? _overviewPanel;
     private bool _busy;
     private bool _employersEnabled = true;
     private bool _miniArrivedViaBack;
@@ -913,7 +918,11 @@
                     Navigation.ToAbsoluteUri(Navigation.Uri).Query);
                 if (!q.ContainsKey("stap"))
                 {
-                    await ShowOverviewAsync();
+                    _screen = "overview";
+                    _depth = 11;
+                    _countedStep = 10;
+                    _loading = false;
+                    await BuildOverviewAsync();
                     return;
                 }
             }
@@ -1477,9 +1486,10 @@
     private async Task LoadEndPresentationAsync()
     {
         ApplyEndFacts();
-        var competency = await CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind.Competency);
-        var career = await CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind.Career);
-        var values = await CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind.Values);
+        await EnsureOverviewPanelAsync();
+        var competency = AnsweredCount(OnboardingWizardCatalog.OnboardingTestKind.Competency);
+        var career = AnsweredCount(OnboardingWizardCatalog.OnboardingTestKind.Career);
+        var values = AnsweredCount(OnboardingWizardCatalog.OnboardingTestKind.Values);
         _strengthDepthKey = JourneyTestFlow.DepthLabelKey(competency, OnboardingWizardCatalog.OnboardingTestKind.Competency);
         _workDepthKey = JourneyTestFlow.DepthLabelKey(career, OnboardingWizardCatalog.OnboardingTestKind.Career);
         _valueDepthKey = JourneyTestFlow.DepthLabelKey(values, OnboardingWizardCatalog.OnboardingTestKind.Values);
@@ -1517,11 +1527,15 @@
         _screen = "overview";
         _depth = 11;
         _countedStep = 10;
+        _loading = false;
         await BuildOverviewAsync();
-        // Overview has no stap — clear query for focus-mode off
-        var uri = Navigation.Uri.Split('?', '#')[0];
-        Navigation.NavigateTo(uri, replace: true);
-        StateHasChanged();
+        // Overview has no stap — clear query only when something was in the URL (avoid enhanced-nav flash).
+        var current = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!string.IsNullOrEmpty(current.Query))
+        {
+            var uri = Navigation.Uri.Split('?', '#')[0];
+            Navigation.NavigateTo(uri, replace: true);
+        }
     }
 
     private Task GoToOverviewAsync() => ShowOverviewAsync();
@@ -1541,8 +1555,28 @@
         catch { /* keep */ }
     }
 
+    private async Task EnsureOverviewPanelAsync()
+    {
+        _overviewPanel ??= await OverviewCache.GetPanelAsync();
+    }
+
+    private int AnsweredCount(OnboardingWizardCatalog.OnboardingTestKind kind)
+        => kind switch
+        {
+            OnboardingWizardCatalog.OnboardingTestKind.Competency => _overviewPanel?.CompetencyAnswered ?? 0,
+            OnboardingWizardCatalog.OnboardingTestKind.Career => _overviewPanel?.CareerAnswered ?? 0,
+            OnboardingWizardCatalog.OnboardingTestKind.Culture => _overviewPanel?.CultureAnswered ?? 0,
+            _ => _overviewPanel?.ValuesAnswered ?? 0
+        };
+
     private async Task<int> CountAnsweredAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
     {
+        await EnsureOverviewPanelAsync();
+        if (_overviewPanel is not null)
+        {
+            return AnsweredCount(kind);
+        }
+
         Dictionary<string, int>? answers = kind switch
         {
             OnboardingWizardCatalog.OnboardingTestKind.Competency => (await Api.GetMyCompetenciesAsync())?.Answers,
@@ -1613,10 +1647,15 @@
             case 9: await Api.SaveMyCultureAsync(merged, completed); break;
             case 10: await Api.SaveMyValuesAsync(merged, completed); break;
         }
+
+        OverviewCache.Invalidate();
+        _overviewPanel = null;
     }
 
     private async Task BuildOverviewAsync()
     {
+        _overviewLoading = true;
+        _overviewPanel = await OverviewCache.GetPanelAsync();
         _overviewRows = [];
         foreach (var step in JourneyCatalog.Steps.Take(6))
         {
@@ -1667,7 +1706,7 @@
         foreach (var step in new[] { 7, 8, 9, 10 })
         {
             var kind = OnboardingWizardCatalog.TestKindForStep(step)!.Value;
-            var answered = await CountAnsweredAsync(kind);
+            var answered = AnsweredCount(kind);
             var full = OnboardingWizardCatalog.FullLevelCount(kind);
             var complete = answered >= full;
             var next = new List<JourneyOverview.DepthButton>();
@@ -1698,6 +1737,8 @@
                 report,
                 next));
         }
+
+        _overviewLoading = false;
     }
 
     private async Task OnOverviewRowAsync(JourneyOverview.OverviewRow row)

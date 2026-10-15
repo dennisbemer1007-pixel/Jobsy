@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "66be8ddb169a1dfcf207877c1dc2f4470f74157b777693a74dc6e325b57b576d",
+    "sha256": "855d58c40f780fd4209d51b3205ad8a36ec680ac91b80f85208a2cbc3d509b8d",
     "v": "20261015-03"
   },
   "css/critical.css": {
@@ -100,8 +100,8 @@
     "v": "20261015-02"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "65ec7e997f0725bc31d91682f8d9d07c195d4c87fc0727d32e37232f9cb7d45a",
-    "v": "20261015-04"
+    "sha256": "716a02b3930f42283c3d45976af36a9c983dadfef81d1dc88fcc70a89f12148c",
+    "v": "20261015-05"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",

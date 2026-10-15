@@ -13,6 +13,57 @@ public class CandidateNoUnwantedReloadPlaywrightTests
     private const string DefaultPassword = "Jobsy123!";
 
     [Fact]
+    public async Task Ontdekkingsreis_overview_idle_watch_has_no_unprompted_document_reload()
+    {
+        var baseUrl = ResolveBaseUrl();
+        if (baseUrl is null)
+        {
+            return;
+        }
+
+        var email = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? DefaultEmail;
+        var password = Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1280, Height = 800 },
+            IgnoreHTTPSErrors = true,
+            ServiceWorkers = ServiceWorkerPolicy.Allow
+        });
+
+        var page = await context.NewPageAsync();
+        await page.AddInitScriptAsync(
+            """
+            () => {
+              window.__lobsyNavCount = 0;
+              window.addEventListener("load", () => { window.__lobsyNavCount = (window.__lobsyNavCount || 0) + 1; });
+            }
+            """);
+
+        if (!await TryLoginAsync(page, baseUrl, email, password))
+        {
+            Assert.Fail("Candidate login failed.");
+        }
+
+        await page.GotoAsync(baseUrl + "/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.Load, Timeout = 90_000 });
+        await page.WaitForSelectorAsync(".journey-overview h1", new() { Timeout = 45_000 });
+        await page.EvaluateAsync("() => { window.__lobsyNavCount = 0; }");
+
+        var end = DateTime.UtcNow.AddMinutes(Math.Min(ResolveWatchMinutes(), 4));
+        while (DateTime.UtcNow < end)
+        {
+            await page.Mouse.WheelAsync(0, 320);
+            await page.WaitForTimeoutAsync(8_000);
+        }
+
+        var navCount = await page.EvaluateAsync<int>("() => window.__lobsyNavCount || 0");
+        Assert.True(navCount == 0, $"Unexpected reload on ontdekkingsreis overview: {navCount} load events.");
+    }
+
+    [Fact]
     public async Task Candidate_start_idle_watch_has_no_unprompted_document_reload()
     {
         var baseUrl = ResolveBaseUrl();
