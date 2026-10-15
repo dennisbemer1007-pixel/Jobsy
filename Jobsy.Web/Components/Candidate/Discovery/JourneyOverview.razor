@@ -8,30 +8,63 @@
     <h1 tabindex="-1">@Culture["Discovery.Overview.Title"]</h1>
     <p class="journey-step__lead">@Culture["Discovery.Overview.Lead"]</p>
 
-    <ul class="journey-overview__list">
-        @foreach (var row in Rows)
+    <ul class="journey-overview__list" aria-busy="@IsLoading">
+        @if (IsLoading)
         {
-            <li class="journey-overview__row">
-                <div>
-                    <b>@Culture[row.TitleKey]</b>
-                    <small class="@(row.StatusClass)">@row.StatusText</small>
-                </div>
-                @if (!string.IsNullOrWhiteSpace(row.ActionLabel))
-                {
-                    <button type="button" class="btn btn-secondary" @onclick="() => OnRowAction.InvokeAsync(row)">
-                        @row.ActionLabel
-                    </button>
-                }
-            </li>
+            @for (var i = 0; i < 6; i++)
+            {
+                <li class="journey-overview__row journey-overview__row--skeleton" aria-hidden="true">
+                    <div class="journey-overview__main">
+                        <span class="journey-skeleton journey-skeleton--title"></span>
+                        <span class="journey-skeleton journey-skeleton--meta"></span>
+                    </div>
+                    <span class="journey-skeleton journey-skeleton--btn"></span>
+                </li>
+            }
+        }
+        else
+        {
+            @foreach (var row in Rows)
+            {
+                <li class="journey-overview__row">
+                    <div class="journey-overview__main">
+                        <b>@Culture[row.TitleKey]</b>
+                        <small class="@(row.StatusClass)">@row.StatusText</small>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(row.ActionLabel))
+                    {
+                        <div class="journey-overview__actions">
+                            <button type="button" class="btn btn-secondary" @onclick="() => OnRowAction.InvokeAsync(row)">
+                                @row.ActionLabel
+                            </button>
+                        </div>
+                    }
+                </li>
+            }
         }
     </ul>
 
     <h2 class="journey-q">@Culture["Discovery.Overview.TestsHeading"]</h2>
-    <ul class="journey-overview__list">
+    <ul class="journey-overview__list" aria-busy="@IsLoading">
+        @if (IsLoading)
+        {
+            @for (var i = 0; i < 4; i++)
+            {
+                <li class="journey-overview__row journey-overview__row--test journey-overview__row--skeleton" aria-hidden="true">
+                    <div class="journey-overview__main">
+                        <span class="journey-skeleton journey-skeleton--title"></span>
+                        <span class="journey-skeleton journey-skeleton--meta"></span>
+                    </div>
+                    <span class="journey-skeleton journey-skeleton--btn"></span>
+                </li>
+            }
+        }
+        else
+        {
         @foreach (var test in Tests)
         {
             <li class="journey-overview__row journey-overview__row--test">
-                <div>
+                <div class="journey-overview__main">
                     <b>@Culture[test.TitleKey]</b>
                     <small>@test.DepthText</small>
                 </div>
@@ -52,6 +85,7 @@
                     }
                 </div>
             </li>
+        }
         }
     </ul>
 </div>
@@ -76,6 +110,7 @@
         string ReportHref,
         IReadOnlyList<DepthButton> NextLevels);
 
+    [Parameter] public bool IsLoading { get; set; }
     [Parameter] public IReadOnlyList<OverviewRow> Rows { get; set; } = [];
     [Parameter] public IReadOnlyList<TestRow> Tests { get; set; } = [];
     [Parameter] public EventCallback<OverviewRow> OnRowAction { get; set; }

@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net;
 using System.Text.Json;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -274,6 +275,22 @@ public sealed partial class JobsyApiClient
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<CandidatePrivatePreferences>(cancellationToken: ct);
+    }
+
+    public async Task<CandidateDiscoveryOverviewPanelDto?> GetDiscoveryOverviewPanelAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<CandidateDiscoveryOverviewPanelDto>(
+                "api/me/onboarding/discovery-overview",
+                ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized
+                                               or HttpStatusCode.NotFound
+                                               or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
     }
 
     public async Task<OnboardingState?> GetMyOnboardingAsync(CancellationToken ct = default)
