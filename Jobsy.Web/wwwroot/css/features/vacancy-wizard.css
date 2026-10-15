@@ -25,10 +25,12 @@ html.has-vacancy-wizard .wg-shell__body {
   overflow: hidden;
 }
 
-html.has-vacancy-wizard .wg-shell__sidebar--desktop,
-html.has-vacancy-wizard .wg-main {
-  align-self: stretch;
-  min-height: 0;
+@media (min-width: 1024px) {
+  html.has-vacancy-wizard .wg-shell__sidebar--desktop,
+  html.has-vacancy-wizard .wg-main {
+    align-self: stretch;
+    min-height: 0;
+  }
 }
 .vac-wizard {
   --vac-wizard-actionbar-height: 56px;
@@ -71,6 +73,29 @@ html.has-vacancy-wizard .wg-main {
       100dvh - 56px - var(--vac-wizard-mobile-nav-height) - var(--vac-wizard-cookie-offset, 0px)
     );
   }
+
+  .wg-shell:has(.vac-wizard) .wg-shell__sidebar--desktop {
+    display: none;
+  }
+
+  .wg-main:has(.vac-wizard) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .wg-main:has(.vac-wizard) .vac-wizard {
+    flex: 1 1 0;
+    min-height: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
 }
 
 .wg-shell:has(.vac-wizard) .wg-shell__body {
@@ -81,31 +106,33 @@ html.has-vacancy-wizard .wg-main {
   overflow: hidden;
 }
 
-.wg-shell:has(.vac-wizard) .wg-shell__sidebar--desktop {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  min-height: 0;
-}
+@media (min-width: 1024px) {
+  .wg-shell:has(.vac-wizard) .wg-shell__sidebar--desktop {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    min-height: 0;
+  }
 
-.wg-shell:has(.vac-wizard) .wg-shell__sidebar--desktop .wg-sidebar {
-  flex: 1 1 0;
-  min-height: 0;
-}
+  .wg-shell:has(.vac-wizard) .wg-shell__sidebar--desktop .wg-sidebar {
+    flex: 1 1 0;
+    min-height: 0;
+  }
 
-.wg-main:has(.vac-wizard) {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 0;
-  padding: 0;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden;
-}
+  .wg-main:has(.vac-wizard) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    padding: 0;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
 
-.wg-main:has(.vac-wizard) .vac-wizard {
-  flex: 1 1 0;
-  min-height: 0;
+  .wg-main:has(.vac-wizard) .vac-wizard {
+    flex: 1 1 0;
+    min-height: 0;
+  }
 }
 
 .wg-shell:has(.vac-wizard) .vac-wizard .btn,

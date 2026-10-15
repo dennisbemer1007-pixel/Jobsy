@@ -43,10 +43,33 @@ public class VacancyWizardPlaywrightTests
         Guid? vacancyId = null;
 
         Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, VacancyWizardE2e.EmployerEmail, VacancyWizardE2e.EmployerPassword));
+
+        if (width <= 1023)
+        {
+            await page.GotoAsync(baseUrl + "/werkgever",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await KbE2e.WaitForStyledAppAsync(page);
+            await AssertMobileEmployerSidebarHiddenAsync(page);
+            await VacancyWizardE2e.ShotAsync(page, viewportTag, "00-werkgever-dashboard");
+
+            await page.GotoAsync(baseUrl + "/werkgever/vacatures",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator(".wg-vac__title, .wg-page-header, .ent-filter-bar").First.WaitForAsync(new() { Timeout = 60_000 });
+            await KbE2e.WaitForStyledAppAsync(page);
+            await AssertMobileEmployerSidebarHiddenAsync(page);
+            await VacancyWizardE2e.ShotAsync(page, viewportTag, "00-werkgever-vacaturelijst");
+        }
+
         await page.GotoAsync(baseUrl + "/werkgever/vacatures/nieuw",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator("[data-testid='vacancy-wizard']").WaitForAsync();
         await KbE2e.WaitForStyledAppAsync(page);
+        if (width <= 1023)
+        {
+            await AssertMobileEmployerSidebarHiddenAsync(page);
+            await AssertVacancyWizardNoHorizontalOverflowAsync(page);
+        }
+
         await VacancyWizardE2e.ShotAsync(page, viewportTag, "01-step-basis");
 
         await FillStep1Async(page, title);
@@ -415,6 +438,31 @@ public class VacancyWizardPlaywrightTests
         }
 
         Assert.Fail($"Vacancy {idText} not visible in discovery index within timeout.");
+    }
+
+    private static async Task AssertMobileEmployerSidebarHiddenAsync(IPage page)
+    {
+        var sidebar = page.Locator(".wg-shell__sidebar--desktop");
+        Assert.False(await sidebar.IsVisibleAsync(),
+            "Desktop sidebar should not be visible on mobile viewports.");
+        var box = await sidebar.BoundingBoxAsync();
+        Assert.True(box is null || box.Width < 2,
+            "Desktop sidebar should not occupy width on mobile viewports.");
+    }
+
+    private static async Task AssertVacancyWizardNoHorizontalOverflowAsync(IPage page)
+    {
+        var ok = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const wizard = document.querySelector('[data-testid="vacancy-wizard"]');
+              if (!wizard) return false;
+              const docOverflow = document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1;
+              const wizardOverflow = wizard.scrollWidth <= wizard.clientWidth + 1;
+              return docOverflow && wizardOverflow;
+            }
+            """);
+        Assert.True(ok, "Vacancy wizard should not cause horizontal overflow at mobile width.");
     }
 
 }
