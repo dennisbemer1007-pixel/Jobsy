@@ -107,15 +107,23 @@ async function assertNoEllipsis(page) {
   }
 }
 
-async function shot(page, name, fitLabel) {
-  await resetScroll(page);
+async function selectStep6Dislikes(page) {
+  for (const label of ['Nachtdiensten', 'Lawaai']) {
+    await page.locator('.lobsy-choice-tile', { hasText: label }).first().click();
+  }
+}
+
+async function shot(page, name, fitLabel, options = {}) {
+  if (!options.skipReset) {
+    await resetScroll(page);
+  }
   const fit = await measureFit(page);
   if (fitLabel) {
     console.log(fitLabel, JSON.stringify(fit));
   }
   await assertNoEllipsis(page);
   const file = path.join(outDir, name);
-  await page.screenshot({ path: file, fullPage: false });
+  await page.screenshot({ path: file, fullPage: options.fullPage === true });
   console.log('wrote', file);
 }
 
@@ -132,9 +140,7 @@ const shots = [
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=6`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
-      for (const label of ['Nachtdiensten', 'Lawaai']) {
-        await page.locator('.lobsy-choice-tile', { hasText: label }).first().click();
-      }
+      await selectStep6Dislikes(page);
       await shot(page, this.name, 'fit-stap6-390');
     },
   },
@@ -150,6 +156,7 @@ const shots = [
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=6`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
+      await selectStep6Dislikes(page);
       await shot(page, this.name, 'fit-stap6-360');
     },
   },
@@ -165,6 +172,7 @@ const shots = [
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=6`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
+      await selectStep6Dislikes(page);
       await shot(page, this.name, 'fit-stap6-desktop');
     },
   },
@@ -173,6 +181,7 @@ const shots = [
     width: 390,
     height: 844,
     mobile: true,
+    optional: true,
     async prepare() {
       prepareDiscoveryStep(5);
     },
@@ -188,6 +197,7 @@ const shots = [
     width: 390,
     height: 844,
     mobile: true,
+    optional: true,
     async prepare() {
       prepareDiscoveryStep(3);
     },
@@ -211,13 +221,9 @@ const shots = [
       await page.waitForSelector('.ob-wizard__presets .lobsy-choice-tile', { timeout: 60_000 });
       await page.waitForSelector('text=Kies wat bij je past', { timeout: 60_000 });
       await resetScroll(page);
-      await page.waitForFunction(() => {
-        const foot = document.querySelector('.ob-wizard__footer .ob-wizard__cta');
-        if (!foot) return false;
-        const r = foot.getBoundingClientRect();
-        return r.bottom <= window.innerHeight + 2 || r.top > window.innerHeight * 0.55;
-      });
-      await shot(page, this.name);
+      await page.locator('.ob-wizard__start-options').scrollIntoViewIfNeeded();
+      await page.waitForTimeout(300);
+      await shot(page, this.name, null, { fullPage: true, skipReset: true });
     },
   },
   {
@@ -225,6 +231,7 @@ const shots = [
     width: 390,
     height: 844,
     mobile: true,
+    optional: true,
     async prepare() {
       prepareOnboardingStep(5);
     },
@@ -258,10 +265,6 @@ const shots = [
     },
     async run(page) {
       await page.goto(`${base}/candidate/paspoort?tab=data`, { waitUntil: 'domcontentloaded' });
-      const dataTab = page.getByRole('tab', { name: /Mijn gegevens|My details/i });
-      if (await dataTab.count()) {
-        await dataTab.click();
-      }
       await page.waitForFunction(
         () => {
           const panel = document.querySelector('#passport-panel-data');
@@ -300,7 +303,21 @@ const page = await context.newPage();
 page.setDefaultTimeout(90_000);
 await login(page);
 
-for (const s of shots) {
+const round4Names = new Set([
+  'choice-tiles-discovery-stap6-390x844.png',
+  'choice-tiles-discovery-stap6-360x740.png',
+  'choice-tiles-discovery-stap6-1440x900.png',
+  'choice-tiles-onboarding-step2-390x844.png',
+  'choice-tiles-profile-dislikes-390x844.png',
+  'choice-tiles-onboarding-workstatus-390x844.png',
+]);
+
+const activeShots =
+  process.env.SHOT_SET === 'round4'
+    ? shots.filter((s) => round4Names.has(s.name))
+    : shots.filter((s) => !s.optional || process.env.FULL_SHOTS === '1');
+
+for (const s of activeShots) {
   if (s.prepare) {
     s.prepare();
   }

@@ -24,7 +24,47 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--lobsy-choice-gap);
   margin-top: 10px;
+  width: 100%;
+  min-width: 0;
   max-width: 100%;
+  justify-items: stretch;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+/* Legacy fieldset wrappers (profile-roles auto-fill, etc.) must not shrink the raster */
+.profile-roles:has(> .lobsy-choice-grid),
+.ob-wizard__presets-field:has(> .lobsy-choice-grid),
+.ob-wizard__start-options:has(> .lobsy-choice-grid),
+fieldset:has(> .lobsy-choice-grid) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.profile-roles > .lobsy-choice-grid,
+.ob-wizard__presets-field > .lobsy-choice-grid,
+.ob-wizard__start-options > .lobsy-choice-grid,
+fieldset > .lobsy-choice-grid {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-inline: 0;
+}
+
+.lobsy-choice-grid > .lobsy-choice-tile,
+.lobsy-choice-grid > button.lobsy-choice-tile,
+.lobsy-choice-grid > .journey-chip.lobsy-choice-tile,
+.lobsy-choice-grid > .kompas-chip.lobsy-choice-tile,
+.lobsy-choice-grid > .work-status-chip.lobsy-choice-tile {
+  width: 100%;
+  max-width: none;
+  justify-self: stretch;
+  align-self: stretch;
 }
 
 @media (min-width: 900px) {
@@ -85,7 +125,7 @@
   cursor: pointer;
   touch-action: manipulation;
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 4px;
   white-space: normal;
   -webkit-tap-highlight-color: transparent;
@@ -129,12 +169,17 @@
   justify-content: center;
   width: 16px;
   height: 16px;
-  margin-top: 2px;
+  margin-top: 0;
   color: var(--muted);
 }
 
 .lobsy-choice-tile.is-selected .lobsy-choice-tile__icon {
   color: var(--lobsy-choice-navy);
+}
+
+.lobsy-choice-tile.is-selected .lobsy-choice-tile__label,
+.lobsy-choice-tile.is-selected .lobsy-choice-tile__stack {
+  padding-inline-end: 12px;
 }
 
 .lobsy-choice-tile__icon svg {
@@ -221,9 +266,9 @@
 }
 
 .lobsy-choice-tile--tall {
-  height: auto;
+  height: 100%;
   min-height: 64px;
-  align-items: flex-start;
+  align-items: center;
   padding-block: 8px;
 }
 
@@ -319,7 +364,48 @@
 
   .journey-step--fit-mobile .journey-step__foot {
     margin-top: 12px;
-    gap: 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .journey-step--fit-mobile .journey-step__foot .btn-primary,
+  .journey-step--fit-mobile .journey-step__foot .btn-secondary {
+    min-inline-size: 0;
+    flex: 0 1 auto;
+    padding-inline: 10px;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+  }
+
+  .journey-step--fit-mobile .journey-step__foot .btn-secondary {
+    padding-inline: 8px;
+  }
+
+  .journey-step--fit-mobile .journey-step__foot .journey-later {
+    min-height: 44px;
+    padding-inline: 4px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .journey-step--fit-mobile .journey-step__sp {
+    flex: 1 1 0;
+    min-width: 4px;
+  }
+
+  .journey-step--fit-mobile .journey-skip-badge {
+    font-size: 0.625rem;
+    padding: 1px 6px;
+    letter-spacing: 0;
+  }
+
+  .journey-step--fit-mobile .journey-step__eyebrow-line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
   }
 
   .journey:has(.journey-step--fit-mobile) .journey-stage {

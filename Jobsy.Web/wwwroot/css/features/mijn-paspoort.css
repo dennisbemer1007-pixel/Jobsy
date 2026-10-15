@@ -526,7 +526,7 @@
         z-index: 48;
         margin-block: 0;
         padding-inline: max(var(--space-3), env(safe-area-inset-inline-start, 0px))
-            max(var(--space-3), env(safe-area-inset-inline-end, 0px));
+            calc(max(var(--space-3), env(safe-area-inset-inline-end, 0px)) + 4.25rem);
         background: color-mix(in srgb, var(--bg) 96%, transparent);
         box-shadow: 0 -6px 16px color-mix(in srgb, var(--text) 8%, transparent);
     }
@@ -2105,7 +2105,7 @@
     margin-block-end: var(--space-2, 0.5rem);
 }
 
-.profile-chip-grid {
+.profile-chip-grid:not(.lobsy-choice-grid) {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2, 0.5rem);
