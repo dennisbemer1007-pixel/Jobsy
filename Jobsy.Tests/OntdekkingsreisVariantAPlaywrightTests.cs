@@ -129,39 +129,162 @@ public class OntdekkingsreisVariantAPlaywrightTests
 
     private static async Task CaptureMobileEarlyStepsAsync(IBrowser browser, string baseUrl, string artifacts)
     {
-        foreach (var (step, name) in new[]
-                 {
-                     (1, "ontdekkingsreis-live-390x844-stap1.png"),
-                     (2, "ontdekkingsreis-live-390x844-stap2.png"),
-                     (6, "ontdekkingsreis-live-390x844-stap6.png"),
-                 })
+        await CaptureMobileStepScreenshotsAsync(browser, baseUrl, artifacts, step: 1, 390, 844,
+        [
+            ("ontdekkingsreis-live-390x844-stap1.png", false),
+        ]);
+
+        await CaptureMobileStepScreenshotsAsync(browser, baseUrl, artifacts, step: 2, 390, 844,
+        [
+            ("ontdekkingsreis-live-390x844-stap2-top.png", false),
+            ("ontdekkingsreis-live-390x844-stap2-bottom.png", true),
+        ]);
+
+        await CaptureMobileStepScreenshotsAsync(browser, baseUrl, artifacts, step: 6, 390, 844,
+        [
+            ("ontdekkingsreis-live-390x844-stap6-top.png", false),
+            ("ontdekkingsreis-live-390x844-stap6-bottom.png", true),
+        ],
+        extraBottomShot: ("ontdekkingsreis-live-360x780-stap6-bottom.png", 360, 780));
+    }
+
+    private static async Task CaptureMobileStepScreenshotsAsync(
+        IBrowser browser,
+        string baseUrl,
+        string artifacts,
+        int step,
+        int width,
+        int height,
+        IReadOnlyList<(string FileName, bool ScrollBottom)> shots,
+        (string FileName, int Width, int Height)? extraBottomShot = null)
+    {
+        await CandidateJourneyE2e.PrepareDiscoveryStepForE2eAsync(KbE2e.DefaultCompleteEmail, step);
+
+        await using var context = await browser.NewContextAsync(new()
         {
-            await CandidateJourneyE2e.PrepareDiscoveryStepForE2eAsync(KbE2e.DefaultCompleteEmail, step);
+            ViewportSize = new() { Width = width, Height = height },
+            IsMobile = true,
+            HasTouch = true,
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
 
-            await using var context = await browser.NewContextAsync(new()
+        await LoginAndOpenDiscoveryAsync(page, baseUrl, stap: step);
+        await WaitForDiscoveryMobileStepAsync(page, step);
+
+        Assert.Equal(0, await page.Locator("[data-lobsy-coach]").CountAsync());
+        var mobileCoach = page.Locator(".journey-coach--mobile .journey-coach__tap");
+        await Assertions.Expect(mobileCoach.First).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".journey-coach--mobile.is-bubble-open")).ToHaveCountAsync(0);
+
+        var inlineCoach = page.Locator(".journey-coach-inline--card");
+        await Assertions.Expect(inlineCoach.First).ToBeVisibleAsync();
+
+        foreach (var (fileName, scrollBottom) in shots)
+        {
+            if (scrollBottom)
             {
-                ViewportSize = new() { Width = 390, Height = 844 },
-                IsMobile = true,
-                HasTouch = true,
-                IgnoreHTTPSErrors = true,
-            });
-            await PlaywrightCookieConsent.AcceptAsync(context);
-            var page = await context.NewPageAsync();
-            page.SetDefaultTimeout(90_000);
+                var scrolled = await ScrollJourneyStageToBottomAsync(page);
+                Assert.True(scrolled > 40, $"Expected journey-stage scroll >40px, got {scrolled}.");
+                await page.WaitForTimeoutAsync(300);
+            }
+            else
+            {
+                await page.EvaluateAsync(@"() => { const s = document.querySelector('.journey-stage'); if (s) s.scrollTop = 0; }");
+                await page.WaitForTimeoutAsync(200);
+            }
 
-            await LoginAndOpenDiscoveryAsync(page, baseUrl, stap: step);
-            await WaitForDiscoveryMobileStepAsync(page, step);
-
-            Assert.Equal(0, await page.Locator("[data-lobsy-coach]").CountAsync());
-            var mobileCoach = page.Locator(".journey-coach--mobile .journey-lob, .journey-coach--mobile svg.journey-lob");
-            await Assertions.Expect(mobileCoach.First).ToBeVisibleAsync();
+            if (step is 2 or 6)
+            {
+                await AssertMobileCoachDoesNotCoverChoicesAsync(page);
+            }
 
             await page.ScreenshotAsync(new()
             {
-                Path = Path.Combine(artifacts, name),
+                Path = Path.Combine(artifacts, fileName),
                 FullPage = false,
             });
         }
+
+        if (extraBottomShot is { } alt)
+        {
+            await page.SetViewportSizeAsync(alt.Width, alt.Height);
+            await page.WaitForTimeoutAsync(300);
+            var scrolled = await ScrollJourneyStageToBottomAsync(page);
+            Assert.True(scrolled > 40, $"Expected journey-stage scroll >40px at {alt.Width}x{alt.Height}, got {scrolled}.");
+            if (step is 2 or 6)
+            {
+                await AssertMobileCoachDoesNotCoverChoicesAsync(page);
+            }
+
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(artifacts, alt.FileName),
+                FullPage = false,
+            });
+        }
+    }
+
+    private static async Task<double> ScrollJourneyStageToBottomAsync(IPage page)
+    {
+        return await page.EvaluateAsync<double>(
+            @"() => {
+                const stage = document.querySelector('.journey-stage');
+                if (!stage) {
+                    return 0;
+                }
+                stage.scrollTop = stage.scrollHeight;
+                return stage.scrollTop;
+            }");
+    }
+
+    private static async Task AssertMobileCoachDoesNotCoverChoicesAsync(IPage page)
+    {
+        var overlapDetail = await page.EvaluateAsync<string?>(
+            @"() => {
+                const coachTap = document.querySelector('.journey-coach--mobile .journey-coach__tap');
+                if (!coachTap) {
+                    return null;
+                }
+                const coachBox = coachTap.getBoundingClientRect();
+                const bubble = document.querySelector('.journey-coach--mobile .journey-coach__bubble');
+                const targets = document.querySelectorAll(
+                    '.journey-step .journey-chip, .journey-step button.btn, .journey-step input, .journey-step textarea, .journey-step select, .journey-step .ob-wizard__preset');
+                function overlaps(a, b) {
+                    return !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+                }
+                for (const el of targets) {
+                    if (el.closest('.journey-coach-inline--card')) {
+                        continue;
+                    }
+                    if (!el.offsetParent && el.tagName !== 'BODY') {
+                        continue;
+                    }
+                    const style = window.getComputedStyle(el);
+                    if (style.visibility === 'hidden' || style.display === 'none') {
+                        continue;
+                    }
+                    const box = el.getBoundingClientRect();
+                    if (box.width < 2 || box.height < 2) {
+                        continue;
+                    }
+                    if (overlaps(coachBox, box)) {
+                        return 'coach×' + (el.getAttribute('data-testid') || el.className || el.tagName);
+                    }
+                    if (bubble) {
+                        const bubbleBox = bubble.getBoundingClientRect();
+                        if (overlaps(bubbleBox, box)) {
+                            return 'bubble×' + (el.getAttribute('data-testid') || el.className || el.tagName);
+                        }
+                    }
+                }
+                return null;
+            }");
+
+        Assert.True(string.IsNullOrEmpty(overlapDetail),
+            $"Mobile coach must not overlap journey choices or inputs (overlap: {overlapDetail}).");
     }
 
     private static async Task<double> ScrollDiscoveryPageAsync(IPage page, int pixels)
@@ -221,7 +344,8 @@ public class OntdekkingsreisVariantAPlaywrightTests
         }
         else
         {
-            await page.Locator(".journey-coach--mobile").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+            await page.Locator(".journey-coach--mobile .journey-coach__tap").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+            await page.Locator(".journey-coach-inline--card").WaitForAsync(new() { Timeout = 60_000 });
         }
 
         await page.WaitForTimeoutAsync(400);
@@ -235,8 +359,19 @@ public class OntdekkingsreisVariantAPlaywrightTests
             await page.FillAsync("input[name=\"email\"]", KbE2e.DefaultCompleteEmail);
             await page.FillAsync("input[name=\"password\"]", KbE2e.DefaultPassword);
             await page.ClickAsync("button.login-submit");
-            await page.WaitForURLAsync(u => !u.ToString().Contains("/login", StringComparison.OrdinalIgnoreCase),
-                new() { Timeout = 60_000 });
+            try
+            {
+                await page.WaitForURLAsync(u => !u.ToString().Contains("/login", StringComparison.OrdinalIgnoreCase),
+                    new() { Timeout = 60_000 });
+            }
+            catch (TimeoutException)
+            {
+                await page.GotoAsync($"{baseUrl}/candidate/start", new()
+                {
+                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    Timeout = 90_000,
+                });
+            }
         }
 
         await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis?stap={stap}", new()
