@@ -1379,10 +1379,12 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261012-01"
-        : "/service-worker.js?v=20261010-02";
+        ? "/service-worker.published.js?v=20261015-01"
+        : "/service-worker.js?v=20261015-01";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
+    var userRequestedReload = false;
+    var updateBannerVisible = false;
 
     function circuitReady() {
         try {
@@ -1392,8 +1394,89 @@ window.jobsyDialog = (function () {
         }
     }
 
+    function ensureUpdateBanner() {
+        var el = document.getElementById("lobsy-app-update");
+        if (el) {
+            return el;
+        }
+        el = document.createElement("div");
+        el.id = "lobsy-app-update";
+        el.className = "lobsy-app-update";
+        el.setAttribute("role", "status");
+        el.setAttribute("aria-live", "polite");
+        el.innerHTML = '<div class="lobsy-app-update__panel">Nieuwe versie beschikbaar.<button type="button" class="lobsy-app-update__action" data-lobsy-app-update>Vernieuwen</button></div>';
+        el.addEventListener("click", function (ev) {
+            var btn = ev.target && ev.target.closest ? ev.target.closest("[data-lobsy-app-update]") : null;
+            if (!btn) {
+                return;
+            }
+            ev.preventDefault();
+            userRequestedReload = true;
+            try {
+                console.info("[lobsy] user reload (app update)");
+            } catch (e) { }
+            navigator.serviceWorker.getRegistration().then(function (reg) {
+                if (reg && reg.waiting) {
+                    reg.waiting.postMessage({ type: "SKIP_WAITING" });
+                } else {
+                    window.location.reload();
+                }
+            }).catch(function () {
+                window.location.reload();
+            });
+        });
+        document.body.appendChild(el);
+        return el;
+    }
+
+    function showUpdateBanner() {
+        if (updateBannerVisible) {
+            return;
+        }
+        updateBannerVisible = true;
+        var el = ensureUpdateBanner();
+        el.classList.add("is-visible");
+    }
+
+    function wireWaitingWorker(reg, worker) {
+        if (!worker) {
+            return;
+        }
+        worker.addEventListener("statechange", function () {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                showUpdateBanner();
+            }
+        });
+        if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            showUpdateBanner();
+        }
+    }
+
+    function wireRegistration(reg) {
+        if (!reg) {
+            return;
+        }
+        if (reg.waiting && navigator.serviceWorker.controller) {
+            showUpdateBanner();
+        }
+        reg.addEventListener("updatefound", function () {
+            wireWaitingWorker(reg, reg.installing);
+        });
+    }
+
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (userRequestedReload) {
+            window.location.reload();
+        }
+    });
+
     function register() {
-        navigator.serviceWorker.register(swUrl, { scope: "/", updateViaCache: "none" }).catch(function () { });
+        navigator.serviceWorker.register(swUrl, { scope: "/", updateViaCache: "none" })
+            .then(function (reg) {
+                wireRegistration(reg);
+                return reg.update().catch(function () { });
+            })
+            .catch(function () { });
     }
 
     function scheduleRegister() {
@@ -1407,6 +1490,17 @@ window.jobsyDialog = (function () {
         }
         tick();
     }
+
+    document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState !== "visible") {
+            return;
+        }
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+            if (reg) {
+                return reg.update().catch(function () { });
+            }
+        }).catch(function () { });
+    });
 
     window.addEventListener("load", function () {
         window.setTimeout(scheduleRegister, isWebKit ? 1200 : 0);
