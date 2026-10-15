@@ -360,18 +360,25 @@ const shots = [
       await page.waitForSelector('.passport-data__accordions', { timeout: 60_000 });
       await motivationToggle.click({ timeout: 60_000 });
       await page.waitForSelector('#passport-data-panel-motivation', { timeout: 60_000 });
-      await motivationToggle.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(350);
-      const coachBox = await page.locator('.lobsy-coach-dock__btn').first().boundingBox();
-      const rowBox = await motivationToggle.boundingBox();
-      if (rowBox && coachBox) {
-        const overlap = rowBox.y + rowBox.height - (coachBox.y - 12);
-        if (overlap > 0) {
-          await page.mouse.wheel(0, overlap);
-          await page.waitForTimeout(200);
-        }
-      }
+      await page.locator('#passport-data-panel-motivation textarea').first().scrollIntoViewIfNeeded();
       await page.waitForTimeout(450);
+      await shot(page, this.name, null, { skipReset: true });
+    },
+  },
+  {
+    name: 'choice-tiles-paspoort-bottom-export-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    async run(page) {
+      await page.goto(`${base}/candidate/paspoort?tab=data`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('#passport-panel-data:not([hidden])', { timeout: 60_000 });
+      await page.waitForSelector('.passport-data__accordions', { timeout: 60_000 });
+      const exportRow = page.locator('[data-testid="passport-download-data"]').first();
+      await exportRow.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(400);
+      const coachVisible = await page.locator('.lobsy-coach-dock__btn').isVisible().catch(() => false);
+      console.log('paspoort-bottom-coach-visible', coachVisible);
       await shot(page, this.name, null, { skipReset: true });
     },
   },
@@ -472,10 +479,17 @@ const polish2Names = new Set([
   'choice-tiles-paspoort-coach-motivation-390x844.png',
 ]);
 
+const polish3Names = new Set([
+  'choice-tiles-paspoort-coach-motivation-390x844.png',
+  'choice-tiles-paspoort-bottom-export-390x844.png',
+]);
+
 const activeShots =
-  process.env.SHOT_SET === 'polish2'
-    ? shots.filter((s) => polish2Names.has(s.name))
-    : process.env.SHOT_SET === 'polish'
+  process.env.SHOT_SET === 'polish3'
+    ? shots.filter((s) => polish3Names.has(s.name))
+    : process.env.SHOT_SET === 'polish2'
+      ? shots.filter((s) => polish2Names.has(s.name))
+      : process.env.SHOT_SET === 'polish'
       ? shots.filter((s) => polishNames.has(s.name))
       : process.env.SHOT_SET === 'round5'
       ? shots.filter((s) => round5Names.has(s.name))
