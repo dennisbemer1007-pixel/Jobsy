@@ -3569,6 +3569,7 @@ public static class UiStrings
         UiStringsRun8.MergeAll(nl, en, pl, ro, ar);
         UiStringsProactive.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateHub.MergeAll(nl, en, pl, ro, ar);
+        UiStringsProfileReset.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

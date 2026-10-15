@@ -719,6 +719,7 @@ public static class DependencyInjection
         services.AddScoped<IAssistantChatService, AssistantChatService>();
         services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
+        services.AddScoped<ICandidateProfileResetService, CandidateProfileResetService>();
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<ReferenceConfirmationService>();
