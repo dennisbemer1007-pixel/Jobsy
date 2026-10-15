@@ -6,24 +6,26 @@
 
 <fieldset class="ob-wizard__start-options" role="radiogroup" aria-labelledby="@_legendId">
     <legend id="@_legendId" class="ob-wizard__section-title">@Culture[LegendKey]</legend>
-    <div class="ob-wizard__start-grid">
-        <button type="button"
-                role="radio"
-                aria-checked="@(Immediate ? "true" : "false")"
-                class="ob-wizard__start-option @(Immediate ? "is-selected" : null)"
-                @onclick="SelectImmediateAsync">
+    <ChoiceTileGrid Class="ob-wizard__start-grid" Role="presentation" DesktopThreeColumns="false">
+        <ChoiceTile Role="radio"
+                    Tall="true"
+                    Icon="@ChoiceTileIcons.Clock"
+                    Selected="Immediate"
+                    ShowCheckBadge="false"
+                    OnClick="@SelectImmediateAsync">
             <strong>@Culture[ImmediateLabelKey]</strong>
             <small>@Culture[ImmediateHintKey]</small>
-        </button>
-        <button type="button"
-                role="radio"
-                aria-checked="@(!Immediate ? "true" : "false")"
-                class="ob-wizard__start-option @(!Immediate ? "is-selected" : null)"
-                @onclick="SelectFromDateAsync">
+        </ChoiceTile>
+        <ChoiceTile Role="radio"
+                    Tall="true"
+                    Icon="@ChoiceTileIcons.Calendar"
+                    Selected="@(!Immediate)"
+                    ShowCheckBadge="false"
+                    OnClick="@SelectFromDateAsync">
             <strong>@Culture[FromDateLabelKey]</strong>
             <small>@Culture[FromDateHintKey]</small>
-        </button>
-    </div>
+        </ChoiceTile>
+    </ChoiceTileGrid>
     @if (!Immediate)
     {
         <label class="ob-wizard__start-date">

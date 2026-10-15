@@ -12,19 +12,20 @@
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
     <fieldset class="ob-wizard__presets-field">
         <legend class="visually-hidden">@Culture["Onboarding.AvailabilityPresetsLegend"]</legend>
-        <div class="ob-wizard__presets">
+        <ChoiceTileGrid Class="ob-wizard__presets" AriaLabel="@Culture["Onboarding.AvailabilityPresetsLegend"]">
             @foreach (var preset in Presets)
             {
                 var isSelected = Draft.Presets.Contains(preset.Code);
-                <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                        class="@(isSelected ? "is-selected" : null)"
-                        @onclick="() => TogglePreset.InvokeAsync(preset.Code)">
-                    <span>@(isSelected ? "✓" : "")</span>
-                    <b>@Culture[preset.Title]</b>
+                <ChoiceTile Tall="true"
+                            Icon="@ChoiceTileIcons.ForAvailabilityPreset(preset.Code)"
+                            Selected="isSelected"
+                            ShowCheckBadge="true"
+                            OnClick="@(() => TogglePreset.InvokeAsync(preset.Code))">
+                    <strong>@Culture[preset.Title]</strong>
                     <small>@Culture[preset.Lead]</small>
-                </button>
+                </ChoiceTile>
             }
-        </div>
+        </ChoiceTileGrid>
         @if (ShowValidation && !HasSelection)
         {
             <p class="error ob-wizard__preset-required" role="alert">@Culture["Onboarding.AvailabilityRequired"]</p>

@@ -7,6 +7,7 @@
 @using Jobsy.Web.Components.Candidate.Discovery
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Components.Shared.Questionnaire
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Core.Contracts
@@ -250,17 +251,17 @@
                         <section>
                             <h2 class="journey-q">@Culture["Discovery.Step3.EmployerWant"]</h2>
                             <p class="journey-qs">@Culture["Discovery.Step3.EmployerWantHint"]</p>
-                            <div class="journey-chips" role="group" aria-label="@Culture["Discovery.Step3.EmployerWant"]">
+                            <ChoiceTileGrid Class="journey-chips" AriaLabel="@Culture["Discovery.Step3.EmployerWant"]">
                                 @foreach (var code in DiscoveryCatalogs.EmployerPreferenceCodes)
                                 {
                                     var selected = Draft.EmployerPreferences.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
-                                            aria-pressed="@(selected ? "true" : "false")"
-                                            @onclick="() => ToggleEmployerPref(code)">
-                                        @Culture[DiscoveryCatalogs.EmployerLabelKey(code)]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip"
+                                                Label="@Culture[DiscoveryCatalogs.EmployerLabelKey(code)]"
+                                                Icon="@ChoiceTileIcons.ForEmployer(code)"
+                                                Selected="selected"
+                                                OnClick="@(() => ToggleEmployerPref(code))" />
                                 }
-                            </div>
+                            </ChoiceTileGrid>
                         </section>
                         <details class="journey-more">
                             <summary>
@@ -415,15 +416,15 @@
                         <section>
                             <h2 class="journey-q">@Culture["Discovery.Step5.Hobbies"]</h2>
                             <p class="journey-qs">@Culture["Discovery.Step5.HobbiesHint"]</p>
-                            <div class="journey-chips">
+                            <ChoiceTileGrid Class="journey-chips">
                                 @foreach (var code in DiscoveryCatalogs.HobbyCodes)
                                 {
                                     var selected = Draft.Hobbies.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
-                                            aria-pressed="@(selected ? "true" : "false")"
-                                            @onclick="() => ToggleHobby(code)">
-                                        @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip"
+                                                Label="@Culture[DiscoveryCatalogs.HobbyLabelKey(code)]"
+                                                Icon="@ChoiceTileIcons.ForHobby(code)"
+                                                Selected="selected"
+                                                OnClick="@(() => ToggleHobby(code))" />
                                 }
                                 @for (var i = 0; i < Draft.HobbyFreeText.Count; i++)
                                 {
@@ -439,11 +440,12 @@
                                 }
                                 @if (Draft.HobbyFreeText.Count < 3)
                                 {
-                                    <button type="button" class="journey-chip journey-chip--add" @onclick="AddHobbyFree">
-                                        + @Culture["Discovery.Dislike.SomethingElse"]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip journey-chip--add"
+                                                IsAdd="true"
+                                                Label="@Culture["Discovery.Dislike.SomethingElse"]"
+                                                OnClick="@AddHobbyFree" />
                                 }
-                            </div>
+                            </ChoiceTileGrid>
                         </section>
                         <section>
                             <label>
@@ -472,19 +474,19 @@
                             @Culture["Discovery.Step6.LeadEmployersOff"]
                         </FeatureVisible>
                     </p>
-                    <div class="journey-body">
+                    <div class="journey-body journey-body--compact">
                         <section>
                             <h2 class="journey-q">@Culture["Discovery.Step6.Question"]</h2>
                             <p class="journey-qs">@Culture["Discovery.Step6.QuestionHint"]</p>
-                            <div class="journey-chips" role="group" aria-label="@Culture["Discovery.Step6.Question"]">
+                            <ChoiceTileGrid Class="journey-chips" AriaLabel="@Culture["Discovery.Step6.Question"]">
                                 @foreach (var code in DiscoveryCatalogs.DislikeCodes)
                                 {
                                     var selected = Draft.Dislikes.Contains(code);
-                                    <button type="button" class="journey-chip @(selected ?"is-selected" : null)"
-                                            aria-pressed="@(selected ? "true" : "false")"
-                                            @onclick="() => ToggleDislike(code)">
-                                        @Culture[DiscoveryCatalogs.DislikeLabelKey(code)]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip"
+                                                Label="@Culture[DiscoveryCatalogs.DislikeLabelKey(code)]"
+                                                Icon="@ChoiceTileIcons.ForDislike(code)"
+                                                Selected="selected"
+                                                OnClick="@(() => ToggleDislike(code))" />
                                 }
                                 @for (var i = 0; i < Draft.CustomDislikes.Count; i++)
                                 {
@@ -500,11 +502,12 @@
                                 }
                                 @if (Draft.CustomDislikes.Count < DiscoveryCatalogs.MaxCustomDislikes)
                                 {
-                                    <button type="button" class="journey-chip journey-chip--add" @onclick="AddCustomDislike">
-                                        + @Culture["Discovery.Dislike.SomethingElse"]
-                                    </button>
+                                    <ChoiceTile Class="journey-chip journey-chip--add"
+                                                IsAdd="true"
+                                                Label="@Culture["Discovery.Dislike.SomethingElse"]"
+                                                OnClick="@AddCustomDislike" />
                                 }
-                            </div>
+                            </ChoiceTileGrid>
                         </section>
                         <p class="journey-private-note">
                             <svg viewBox="0 0 24 24" aria-hidden="true">

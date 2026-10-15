@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
 @if (ShowHeading)
@@ -12,36 +13,34 @@
 
 <section class="ob-wizard__section" aria-labelledby="ob-edu-level">
     <h2 id="ob-edu-level" class="ob-wizard__section-title">@Culture["Onboarding.EducationPickLevel"]</h2>
-    <div class="ob-wizard__education-grid" role="radiogroup" aria-labelledby="ob-edu-level">
+    <ChoiceTileGrid Class="ob-wizard__education-grid" Role="radiogroup" AriaLabel="@Culture["Onboarding.EducationPickLevel"]">
         @foreach (var level in OnboardingWizardCatalog.EducationRadioLevels)
         {
             var isSelected = EducationSelected(level);
-            <button type="button"
-                    role="radio"
-                    aria-checked="@(isSelected ? "true" : "false")"
-                    class="@(isSelected ? "is-selected" : null)"
-                    @onclick="() => SelectEducation.InvokeAsync(level)">
-                @EducationLabel(level)
-            </button>
+            <ChoiceTile Role="radio"
+                        Label="@EducationLabel(level)"
+                        Selected="isSelected"
+                        ShowCheckBadge="false"
+                        AlignIcons="false"
+                        OnClick="@(() => SelectEducation.InvokeAsync(level))" />
         }
-    </div>
+    </ChoiceTileGrid>
 </section>
 
 @if (Draft.Education.StartsWith("MBO", StringComparison.Ordinal))
 {
     <section class="ob-wizard__section" aria-labelledby="ob-edu-mbo">
         <h2 id="ob-edu-mbo" class="ob-wizard__section-title">@Culture["Onboarding.EducationMboLegend"]</h2>
-        <div class="ob-wizard__mbo-levels">
+        <ChoiceTileGrid Class="ob-wizard__mbo-levels" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.EducationMboLegend"]">
             @foreach (var mboLevel in MboLevels)
             {
                 var isSelected = MboLevelSelected(mboLevel);
-                <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                        class="@(isSelected ? "is-selected" : null)"
-                        @onclick="() => SelectEducation.InvokeAsync(MboEducation(mboLevel))">
-                    @Culture.Format("Onboarding.EducationMboLevel", mboLevel)
-                </button>
+                <ChoiceTile Label="@Culture.Format("Onboarding.EducationMboLevel", mboLevel)"
+                            Selected="isSelected"
+                            AlignIcons="false"
+                            OnClick="@(() => SelectEducation.InvokeAsync(MboEducation(mboLevel)))" />
             }
-        </div>
+        </ChoiceTileGrid>
     </section>
 }
 
@@ -52,18 +51,17 @@
         <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.EducationDirectionHint"]</p>
         @if (DirectionSuggestions.Count > 0)
         {
-            <div class="ob-wizard__direction-chips" role="group" aria-label="@Culture["Onboarding.EducationDirection"]">
+            <ChoiceTileGrid Class="ob-wizard__direction-chips" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.EducationDirection"]">
                 @foreach (var suggestion in DirectionSuggestions)
                 {
                     var picked = string.Equals(Draft.EducationDirection, suggestion, StringComparison.OrdinalIgnoreCase);
-                    <button type="button"
-                            class="@(picked ? "is-selected" : null)"
-                            aria-pressed="@(picked ? "true" : "false")"
-                            @onclick="() => PickDirection(suggestion)">
-                        @suggestion
-                    </button>
+                    <ChoiceTile Label="@suggestion"
+                                Selected="picked"
+                                AlignIcons="false"
+                                Inline="true"
+                                OnClick="@(() => PickDirection(suggestion))" />
                 }
-            </div>
+            </ChoiceTileGrid>
         }
         <label>
             @Culture["Onboarding.EducationDirectionField"]

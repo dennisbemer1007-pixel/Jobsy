@@ -912,7 +912,8 @@
   margin: 2px 0 0;
 }
 
-.journey-chips {
+/* Multi-choice tiles: shared lobsy-choice-* (choice-tiles.css). Legacy aliases: */
+.journey-chips:not(.lobsy-choice-grid) {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -921,7 +922,7 @@
   max-width: 100%;
 }
 
-.journey-chip {
+.journey-chip:not(.lobsy-choice-tile) {
   width: auto;
   max-width: 100%;
   min-height: 44px;
@@ -940,14 +941,14 @@
   cursor: pointer;
 }
 
-.journey-chip.is-selected {
+.journey-chip:not(.lobsy-choice-tile).is-selected {
   background: var(--accent-soft);
   border-color: var(--brand);
   color: var(--brand);
   font-weight: 600;
 }
 
-.journey-chip--add {
+.journey-chip--add:not(.lobsy-choice-tile) {
   border-style: dashed;
   color: var(--brand);
   font-weight: 600;

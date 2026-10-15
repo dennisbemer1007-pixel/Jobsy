@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
 @if (ShowHeading)
@@ -15,17 +16,16 @@ else
 <fieldset id="onboarding-field-transport">
     <legend>@Culture["Onboarding.Transport"]</legend>
     <p class="ob-wizard__hint">@Culture["Onboarding.TransportMulti"]</p>
-    <div class="ob-wizard__transport">
+    <ChoiceTileGrid Class="ob-wizard__transport" AriaLabel="@Culture["Onboarding.Transport"]">
         @foreach (var transport in TransportOptions)
         {
             var isSelected = Selected.Contains(transport);
-            <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                    class="@(isSelected ?"is-selected" : null)"
-                    @onclick="() => SelectTransport.InvokeAsync(transport)">
-                @TransportLabel(transport)
-            </button>
+            <ChoiceTile Label="@TransportLabel(transport)"
+                        Icon="@ChoiceTileIcons.ForTransport(transport)"
+                        Selected="isSelected"
+                        OnClick="@(() => SelectTransport.InvokeAsync(transport))" />
         }
-    </div>
+    </ChoiceTileGrid>
     @if (ShowValidation && string.IsNullOrWhiteSpace(Draft.Transport))
     {
         <p class="error" role="alert">@Culture["Onboarding.Validation.Transport"]</p>
@@ -33,16 +33,17 @@ else
 </fieldset>
 <fieldset>
     <legend>@Culture["Onboarding.MaxTravel"] <strong>@Draft.MaxTravel @Culture["Onboarding.Minutes"]</strong></legend>
-    <div class="ob-wizard__transport">
+    <ChoiceTileGrid Class="ob-wizard__transport" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.MaxTravel"]">
         @foreach (var minutes in TravelChoices)
         {
             var selected = Draft.MaxTravel == minutes;
-            <button type="button" aria-pressed="@(selected ? "true" : "false")"
-                    @onclick="() => SelectTravelTime.InvokeAsync(minutes)">
-                @minutes
-            </button>
+            <ChoiceTile Label="@minutes.ToString()"
+                        Icon="@ChoiceTileIcons.Clock"
+                        Selected="selected"
+                        Inline="true"
+                        OnClick="@(() => SelectTravelTime.InvokeAsync(minutes))" />
         }
-    </div>
+    </ChoiceTileGrid>
     <button type="button" class="ob-wizard__inline-link" @onclick="ShowCustomTravel">
         @Culture["Onboarding.Other"]
     </button>
@@ -60,17 +61,17 @@ else
 {
     <fieldset>
         <legend>@Culture["Profile.Licenses"]</legend>
-        <div class="ob-wizard__transport">
+        <ChoiceTileGrid Class="ob-wizard__transport" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Profile.Licenses"]">
             @foreach (var license in DrivingLicenseLabels.All)
             {
                 var isSelected = Draft.DrivingLicenses.Contains(license);
-                <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                        class="@(isSelected ?"is-selected" : null)"
-                        @onclick="() => ToggleLicense.InvokeAsync(license)">
-                    @license
-                </button>
+                <ChoiceTile Label="@license"
+                            Selected="isSelected"
+                            AlignIcons="false"
+                            Inline="true"
+                            OnClick="@(() => ToggleLicense.InvokeAsync(license))" />
             }
-        </div>
+        </ChoiceTileGrid>
     </fieldset>
 }
 

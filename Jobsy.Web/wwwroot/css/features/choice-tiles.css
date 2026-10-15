@@ -1,0 +1,312 @@
+/* Shared variant A — compact raster choice tiles (multi-select toggles + aligned singles) */
+:root {
+  --lobsy-choice-navy: #1f2f55;
+  --lobsy-choice-fill: var(--pearl, #f7f4f0);
+  --lobsy-choice-surface: var(--surface, #fffcfa);
+  --lobsy-choice-selected-bg: color-mix(in srgb, var(--lobsy-choice-navy) 10%, var(--pearl-cool, #e8eef5));
+  --lobsy-choice-border: color-mix(in srgb, var(--border, #ddd5cc) 92%, transparent);
+  --lobsy-choice-border-selected: var(--lobsy-choice-navy);
+  --lobsy-choice-tile-h: 46px;
+  --lobsy-choice-gap: 8px;
+}
+
+.lobsy-choice-grid,
+.journey-chips.lobsy-choice-grid,
+.profile-chip-grid.lobsy-choice-grid,
+.work-status-chips.lobsy-choice-grid,
+.ob-wizard__presets.lobsy-choice-grid,
+.ob-wizard__education-grid.lobsy-choice-grid,
+.ob-wizard__mbo-levels.lobsy-choice-grid,
+.ob-wizard__direction-chips.lobsy-choice-grid,
+.ob-wizard__transport.lobsy-choice-grid,
+.ob-wizard__start-grid.lobsy-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--lobsy-choice-gap);
+  margin-top: 10px;
+  max-width: 100%;
+}
+
+@media (min-width: 900px) {
+  .lobsy-choice-grid--desktop-3,
+  .journey-chips.lobsy-choice-grid,
+  .profile-chip-grid.lobsy-choice-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.lobsy-choice-grid > .journey-goal-row,
+.lobsy-choice-grid > .profile-language-row,
+.lobsy-choice-grid > .profile-custom-dislikes > .profile-language-row {
+  grid-column: 1 / -1;
+}
+
+.lobsy-choice-grid--wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lobsy-choice-gap);
+}
+
+.lobsy-choice-tile,
+.journey-chip.lobsy-choice-tile,
+.kompas-chip.lobsy-choice-tile,
+.work-status-chip.lobsy-choice-tile,
+.ob-wizard__presets.lobsy-choice-grid > button,
+.ob-wizard__education-grid > button,
+.ob-wizard__mbo-levels > button,
+.ob-wizard__direction-chips > button,
+.ob-wizard__transport > button,
+.ob-wizard__start-grid > button,
+.kb-chip-preset.lobsy-choice-tile,
+.filter-sheet__chip.lobsy-choice-tile,
+.kb-chip.lobsy-choice-tile {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-height: var(--lobsy-choice-tile-h);
+  height: var(--lobsy-choice-tile-h);
+  margin: 0;
+  padding: 0 10px 0 8px;
+  border: 1px solid var(--lobsy-choice-border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--lobsy-choice-fill);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lobsy-choice-tile--inline,
+.kb-chip-preset.lobsy-choice-tile--inline,
+.filter-sheet__chip.lobsy-choice-tile--inline {
+  width: auto;
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.lobsy-choice-tile:focus-visible {
+  outline: 2px solid var(--lobsy-choice-navy);
+  outline-offset: 2px;
+}
+
+.lobsy-choice-tile.is-selected,
+.journey-chip.lobsy-choice-tile.is-selected,
+.kompas-chip.lobsy-choice-tile.is-selected,
+.work-status-chip.lobsy-choice-tile.is-selected,
+.ob-wizard__presets.lobsy-choice-grid > button.is-selected,
+.ob-wizard__education-grid > button.is-selected,
+.ob-wizard__mbo-levels > button.is-selected,
+.ob-wizard__direction-chips > button.is-selected,
+.ob-wizard__transport > button.is-selected,
+.ob-wizard__start-grid > button.is-selected,
+.kb-chip-preset.lobsy-choice-tile.is-selected,
+.filter-sheet__chip.lobsy-choice-tile.is-selected {
+  background: var(--lobsy-choice-selected-bg);
+  border-color: var(--lobsy-choice-border-selected);
+  color: var(--lobsy-choice-navy);
+  font-weight: 600;
+}
+
+.lobsy-choice-tile__icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.lobsy-choice-tile.is-selected .lobsy-choice-tile__icon {
+  color: var(--lobsy-choice-navy);
+}
+
+.lobsy-choice-tile__icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.lobsy-choice-tile__icon--spacer {
+  visibility: hidden;
+}
+
+.lobsy-choice-tile__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lobsy-choice-tile__stack {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.lobsy-choice-tile__stack strong,
+.lobsy-choice-tile__stack b {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lobsy-choice-tile__stack small {
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lobsy-choice-tile.is-selected .lobsy-choice-tile__stack small {
+  color: color-mix(in srgb, var(--lobsy-choice-navy) 65%, var(--muted));
+}
+
+.lobsy-choice-tile__check {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--lobsy-choice-navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--lobsy-choice-navy) 35%, transparent);
+  pointer-events: none;
+}
+
+.lobsy-choice-tile__check svg {
+  width: 11px;
+  height: 11px;
+}
+
+.lobsy-choice-tile--add,
+.journey-chip--add.lobsy-choice-tile {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--lobsy-choice-navy) 35%, var(--border));
+  color: var(--lobsy-choice-navy);
+  font-weight: 600;
+  justify-content: flex-start;
+}
+
+.lobsy-choice-tile--add .lobsy-choice-tile__icon {
+  color: var(--lobsy-choice-navy);
+}
+
+.lobsy-choice-tile--tall {
+  height: auto;
+  min-height: 64px;
+  align-items: flex-start;
+  padding-block: 8px;
+}
+
+.ob-wizard__presets.lobsy-choice-grid > button.lobsy-choice-tile--tall {
+  height: auto;
+  min-height: 64px;
+}
+
+.ob-wizard__presets.lobsy-choice-grid > button.lobsy-choice-tile--tall > span:first-child {
+  display: none;
+}
+
+.ob-wizard__start-grid > button.lobsy-choice-tile--tall {
+  height: auto;
+  min-height: 58px;
+}
+
+@media (max-width: 899px) {
+  .app-shell--questionnaire:has(.journey) .journey-stage {
+    padding-inline: 10px;
+  }
+
+  .journey--mobile .journey-step {
+    padding-inline: 16px;
+  }
+
+  .journey-body--compact {
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .journey-body--compact .journey-qs {
+    margin-bottom: 4px;
+  }
+}
+
+/* Availability matrix — align selected colors, keep grid behaviour */
+.availability-matrix__cell--btn.is-on {
+  background: var(--lobsy-choice-selected-bg);
+  border-color: var(--lobsy-choice-border-selected);
+  color: var(--lobsy-choice-navy);
+}
+
+.availability-matrix__cell--btn:not(.is-on) {
+  background: var(--lobsy-choice-fill);
+  border-color: var(--lobsy-choice-border);
+  color: transparent;
+}
+
+.availability-matrix__mark {
+  color: var(--lobsy-choice-navy);
+}
+
+.ob-wizard__dream-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--lobsy-choice-gap);
+}
+
+.ob-wizard__dream-grid > button {
+  position: relative;
+  min-height: var(--lobsy-choice-tile-h);
+  padding: 0 10px;
+  border: 1px solid var(--lobsy-choice-border);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--lobsy-choice-fill);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.ob-wizard__dream-grid > button.is-selected {
+  background: var(--lobsy-choice-selected-bg);
+  border-color: var(--lobsy-choice-border-selected);
+  color: var(--lobsy-choice-navy);
+  font-weight: 600;
+}
+
+.ob-wizard__dream-grid > button span svg {
+  width: 16px;
+  height: 16px;
+}
+
+.test-likert__btn.is-selected,
+.test-likert button.is-selected,
+.likert-btn.is-selected {
+  background: var(--lobsy-choice-selected-bg);
+  border-color: var(--lobsy-choice-border-selected);
+  color: var(--lobsy-choice-navy);
+}
