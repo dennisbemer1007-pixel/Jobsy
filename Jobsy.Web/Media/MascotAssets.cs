@@ -51,7 +51,7 @@ public sealed record MascotSource(
 public static class MascotAssets
 {
     public const string Folder = "images/brand/mascot";
-    public const string InlineVersion = "20261015-coral-mascot-traced";
+    public const string InlineVersion = "20261015-coral-mascot-traced-v2";
 
     private static readonly MascotArt[] DefaultArts =
     [
