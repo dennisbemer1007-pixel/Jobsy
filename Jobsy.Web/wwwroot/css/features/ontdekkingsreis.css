@@ -693,8 +693,6 @@
 
 /* ---- mobile progress ---- */
 .journey-mprog {
-  position: sticky;
-  top: 56px;
   z-index: 20;
   background: var(--surface);
   padding: 10px 14px 14px;
@@ -750,6 +748,7 @@
 
 .journey-mprog__sep {
   flex-shrink: 0;
+  margin-inline: 0.2em;
 }
 
 .journey-mprog__step-name {
@@ -1918,4 +1917,35 @@
 
 .journey:not(.journey--fit) .journey-stage {
   min-height: calc(100vh - 64px);
+}
+
+/* Questionnaire focus: no app header — journey owns the viewport scroll. */
+.app-shell--questionnaire:has(.journey) .app-main {
+  overflow: hidden;
+}
+
+@media (max-width: 899px) {
+  .app-shell--questionnaire:has(.journey) .journey {
+    min-height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  .app-shell--questionnaire:has(.journey) .journey-mprog.journey-only-mobile {
+    position: relative;
+    top: auto;
+    flex-shrink: 0;
+  }
+
+  .app-shell--questionnaire:has(.journey:not(.journey--fit)) .journey-stage {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-shell--questionnaire:has(.journey:not(.journey--fit)) .journey-chips {
+    padding-inline-end: max(8px, min(72px, 20vw));
+  }
+
+  .app-shell--questionnaire:has(.journey:not(.journey--fit)) .journey-step__foot {
+    padding-inline-end: max(12px, min(88px, 24vw));
+    margin-block-end: 0.5rem;
+  }
 }

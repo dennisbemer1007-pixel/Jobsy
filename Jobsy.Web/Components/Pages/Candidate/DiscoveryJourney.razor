@@ -43,7 +43,7 @@
                 <p class="journey-mprog__t journey-mprog__t--question">
                     <span class="journey-mprog__line">
                         <b class="journey-mprog__step-no">@Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)</b>
-                        <span class="journey-mprog__sep muted" aria-hidden="true"> · </span>
+                        <span class="journey-mprog__sep muted" aria-hidden="true">@((MarkupString)"&nbsp;·&nbsp;")</span>
                         <span class="journey-mprog__step-name muted">@CurrentStepTitle</span>
                     </span>
                     @if (_saveStatus == "saved")
