@@ -150,11 +150,11 @@ public class JourneyProgressRailBunitTests : BunitContext
     [Fact]
     public void Rail_shows_open_dots_for_todo_and_check_for_done()
     {
-        var done = new HashSet<int> { 1 };
+        var done = new HashSet<int> { 3, 4 };
         var cut = Render(builder =>
         {
             builder.OpenComponent<JourneyProgressRail>(0);
-            builder.AddAttribute(1, "ActiveStep", 2);
+            builder.AddAttribute(1, "ActiveStep", 5);
             builder.AddAttribute(2, "CompletedSteps", done);
             builder.AddAttribute(3, "OnGoToStep", EventCallback.Factory.Create<int>(this, _ => Task.CompletedTask));
             builder.CloseComponent();
@@ -185,8 +185,10 @@ public class JourneyProgressRailBunitTests : BunitContext
         Assert.Contains("journey-rail__phase--fold", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Stap 8 van 10 · 7 van 10 afgerond", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("journey-rail__layers", cut.Markup, StringComparison.Ordinal);
-        Assert.True(CountOccurrences(cut.Markup, "journey-rail__dot--check") >= 7);
+        Assert.Contains("✓ klaar", cut.Markup, StringComparison.Ordinal);
+        Assert.True(CountOccurrences(cut.Markup, "journey-rail__phase--fold") >= 3);
         Assert.Contains("journey-rail__dot--current", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("journey-rail__dot--check", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Klaar · 10 van 10", cut.Markup, StringComparison.Ordinal);
     }
 
