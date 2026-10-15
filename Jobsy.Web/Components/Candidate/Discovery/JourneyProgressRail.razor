@@ -7,8 +7,8 @@
     <p class="journey-rail__count">@CountText</p>
     <ol class="journey-rail__route" aria-label="@Culture["Discovery.Rail.Aria"]">
         @{
-            var beachDone = ActiveStep > 0 || CompletedSteps.Any(s => s is >= 1 and <= 10);
-            var beachCurrent = ActiveStep == 0 && !LightStepComplete;
+            var beachDone = LayersOff > 0;
+            var beachCurrent = ActiveStep == 0 && !LightStepComplete && !beachDone;
         }
         <li class="journey-rail__step @(beachCurrent ? "is-current" : beachDone ? "is-done" : "is-todo")"
             aria-current="@(beachCurrent ? "step" : null)"

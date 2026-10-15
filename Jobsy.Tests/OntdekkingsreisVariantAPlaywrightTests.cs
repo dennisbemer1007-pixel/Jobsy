@@ -26,6 +26,7 @@ public class OntdekkingsreisVariantAPlaywrightTests
         foreach (var (width, height, name, mobile) in new[]
                  {
                      (1280, 800, "ontdekkingsreis-vraag-desktop-1280x800.png", false),
+                     (1440, 900, "ontdekkingsreis-vraag-desktop-1440x900.png", false),
                      (390, 844, "ontdekkingsreis-vraag-mobile-390x844.png", true),
                  })
         {

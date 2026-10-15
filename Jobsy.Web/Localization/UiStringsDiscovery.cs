@@ -166,9 +166,9 @@ public static class UiStringsDiscovery
         Add("Discovery.Rail.LayerOff",
             "Laag {0} eraf", "Layer {0} off", "Warstwa {0} zdjęta", "Stratul {0} jos", "الطبقة {0} انتهت");
         Add("Discovery.Rail.LayersAria",
-            "Oude schaal: {0} van 10 lagen eraf", "Old shell: {0} of 10 layers off", "Stara skorupa: {0} z 10 warstw", "Carapacea veche: {0} din 10 straturi", "الصدفة القديمة: {0} من 10 طبقات");
+            "Voortgang: {0} van 10 stappen afgerond", "Progress: {0} of 10 steps done", "Postęp: {0} z 10 kroków", "Progres: {0} din 10 pași", "التقدم: {0} من 10 خطوات");
         Add("Discovery.Rail.LayersCount",
-            "{0} van 10 lagen eraf", "{0} of 10 layers off", "{0} z 10 warstw", "{0} din 10 straturi", "{0} من 10 طبقات");
+            "{0} van 10 afgerond", "{0} of 10 done", "{0} z 10 gotowych", "{0} din 10 gata", "{0} من 10 منجزة");
         Add("Discovery.Rail.StartCount",
             "10 stappen · ± 12 minuten", "10 steps · ± 12 minutes", "10 kroków · ± 12 minut", "10 pași · ± 12 minute", "10 خطوات · ± 12 دقيقة");
         Add("Discovery.Rail.StartCountShort",
@@ -176,7 +176,7 @@ public static class UiStringsDiscovery
         Add("Discovery.Rail.StepCount",
             "Stap {0} van 10", "Step {0} of 10", "Krok {0} z 10", "Pasul {0} din 10", "الخطوة {0} من 10");
         Add("Discovery.Rail.StepLayersCount",
-            "Stap {0} van 10 · laag {1} eraf", "Step {0} of 10 · layer {1} off", "Krok {0} z 10 · warstwa {1} zdjęta", "Pasul {0} din 10 · stratul {1} jos", "الخطوة {0} من 10 · الطبقة {1} انتهت");
+            "Stap {0} van 10 · {1} van 10 afgerond", "Step {0} of 10 · {1} of 10 done", "Krok {0} z 10 · {1} z 10 gotowych", "Pasul {0} din 10 · {1} din 10 gata", "الخطوة {0} من 10 · {1} من 10 منجزة");
         Add("Discovery.Rail.ProgressCount",
             "{0} van 10 afgerond", "{0} of 10 done", "{0} z 10 gotowych", "{0} din 10 gata", "{0} من 10 منجزة");
         Add("Discovery.Rail.DoneCount",

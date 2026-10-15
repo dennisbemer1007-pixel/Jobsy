@@ -180,8 +180,8 @@ public class JourneyProgressRailBunitTests : BunitContext
             builder.CloseComponent();
         });
 
-        Assert.Contains("7 van 10 lagen eraf", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("Stap 8 van 10 · laag 7 eraf", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("7 van 10 afgerond", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Stap 8 van 10 · 7 van 10 afgerond", cut.Markup, StringComparison.Ordinal);
         Assert.True(CountOccurrences(cut.Markup, "journey-rail__dot--check") >= 7);
         Assert.Contains("journey-rail__dot--current", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Klaar · 10 van 10", cut.Markup, StringComparison.Ordinal);

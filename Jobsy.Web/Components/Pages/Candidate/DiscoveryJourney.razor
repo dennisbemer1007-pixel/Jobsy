@@ -85,6 +85,7 @@
                                        OnGoToStep="GoToRailStepAsync" />
             </div>
 
+            <div class="@StageMainClass">
             <section class="journey-step card" aria-live="polite">
                 @if (!string.IsNullOrWhiteSpace(_error))
                 {
@@ -559,7 +560,21 @@
                 }
             </section>
 
-            @if (ShowDesktopCoach)
+            @if (UseQuestionCardLayout && ShowDesktopCoach)
+            {
+                <div class="journey-lz journey-only-desktop">
+                    <div class="journey-bubble">
+                        <p>@LobsterSay</p>
+                    </div>
+                    <JourneyLobster PlatesShed="@_platesShed"
+                                    Size="72"
+                                    NewShell="@IsLightScreen"
+                                    Label="@Culture["Discovery.Lobster.Aria"]" />
+                </div>
+            }
+            </div>
+
+            @if (ShowDesktopCoachInGrid)
             {
                 <div class="journey-lz journey-only-desktop @(IsLightScreen ? "is-rising" : null)">
                     <div class="journey-bubble">
@@ -672,11 +687,20 @@
     private bool FitViewport => _screen is "shed" or "klaar"
         || (_countedStep is >= 7 and <= 10 && _screen is not "overview" and not "start");
 
-    private string JourneyRootClass => FitViewport ? "journey journey--fit" : "journey";
+    private string JourneyRootClass => FitViewport
+        ? $"journey journey--fit journey--depth-{_depth}"
+        : "journey";
+
+    private string StageMainClass => UseQuestionCardLayout ? "journey-card-wrap" : "journey-stage__main";
+
+    private bool UseQuestionCardLayout => _countedStep is >= 7 and <= 10
+        && _screen is not "overview" and not "start" and not "shed";
 
     private bool ShowDesktopCoach => _screen is not "start" and not "overview";
 
-    private bool ShowMobileCoachInline => _screen is not "start" and not "overview" and not "klaar";
+    private bool ShowDesktopCoachInGrid => ShowDesktopCoach && !UseQuestionCardLayout;
+
+    private bool ShowMobileCoachInline => UseQuestionCardLayout;
 
     private HashSet<int> CompletedStepNumbers
     {
@@ -789,10 +813,10 @@
     {
         "start" => Culture["Discovery.Rail.StartCountShort"],
         "klaar" or "overview" when CompletedLayerCount >= 10 => Culture["Discovery.Rail.DoneCountShort"],
-        _ => Culture.Format("Discovery.Rail.StepCount", Math.Max(Math.Min(RailStep, 10), 1))
+        _ => Culture.Format("Discovery.Rail.StepLayersCount", Math.Max(Math.Min(RailStep, 10), 1), CompletedLayerCount)
     };
 
-    private string MobileProgressAria => $"{MobileProgressLabel}, {CompletedLayerCount} lagen eraf";
+    private string MobileProgressAria => Culture.Format("Discovery.Rail.StepLayersCount", Math.Max(Math.Min(RailStep, 10), 1), CompletedLayerCount);
 
     private string RolesSummary => Draft.Roles.Count == 0
         ? ""

@@ -68,7 +68,7 @@
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && _isCandidate)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && _isCandidate && !_hideCoachDock)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
@@ -98,6 +98,7 @@
     private bool _hasBottomNav;
     private bool _isMatchPage;
     private bool _isQuestionnairePage;
+    private bool _hideCoachDock;
     private bool _isCandidate;
     private bool _suppressInstallBanner;
 
@@ -294,7 +295,64 @@
             changed = true;
         }
 
+        var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative);
+        if (_hideCoachDock != hideCoach)
+        {
+            _hideCoachDock = hideCoach;
+            changed = true;
+        }
+
         return changed;
+    }
+
+    /// <summary>Discovery mini-test (stap 7–10): journey lobster only — no sticky coach dock.</summary>
+    public static bool IsDiscoveryQuestionCoachHidden(string path, string relativeUri)
+    {
+        path = path.TrimStart('/');
+        if (!path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!TryGetJourneyStap(relativeUri, out var stap))
+        {
+            return false;
+        }
+
+        return int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n)
+               && n is >= 7 and <= 10;
+    }
+
+    private static bool TryGetJourneyStap(string relativeUri, out string stap)
+    {
+        stap = "";
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0)
+        {
+            return false;
+        }
+
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0)
+        {
+            query = query[..hash];
+        }
+
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            stap = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]).Trim();
+            return !string.IsNullOrWhiteSpace(stap);
+        }
+
+        return false;
     }
 
     public static bool SuppressesInstallBanner(string path)

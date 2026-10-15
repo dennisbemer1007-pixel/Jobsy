@@ -34,6 +34,7 @@ prepareDb();
 
 const shots = [
   { name: 'ontdekkingsreis-vraag-desktop-1280x800.png', width: 1280, height: 800, mobile: false },
+  { name: 'ontdekkingsreis-vraag-desktop-1440x900.png', width: 1440, height: 900, mobile: false },
   { name: 'ontdekkingsreis-vraag-mobile-390x844.png', width: 390, height: 844, mobile: true },
 ];
 
