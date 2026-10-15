@@ -19,6 +19,9 @@ internal static class UiStringsOnboardingV2
         PatchAvailabilityEducationPl(pl);
         PatchAvailabilityEducationRo(ro);
         PatchAvailabilityEducationAr(ar);
+        PatchWorkStatusPl(pl);
+        PatchWorkStatusRo(ro);
+        PatchWorkStatusAr(ar);
 
         nl["Onboarding.Age.TooYoung"] = "Je moet minstens {0} jaar zijn om Lobsy te gebruiken.";
         en["Onboarding.Age.TooYoung"] = "You must be at least {0} to use Lobsy.";
@@ -152,7 +155,84 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who are you" : "Wie ben jij";
         map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
         AddPresets(map, english);
+        AddWorkStatuses(map, english);
         AddDreamJobs(map, language);
+    }
+
+    private static void AddWorkStatuses(Dictionary<string, string> map, bool english)
+    {
+        map["WorkStatus.Legend"] = english ? "What is your current work status?" : "Wat is je huidige werkstatus?";
+        map["WorkStatus.Hint"] = english ? "Optional. You can pick more than one." : "Optioneel. Je mag er meer dan één kiezen.";
+        foreach (var (code, nl, en) in WorkStatusLabelRows())
+        {
+            map[$"WorkStatus.{code}"] = english ? en : nl;
+        }
+    }
+
+    private static IEnumerable<(string Code, string Nl, string En)> WorkStatusLabelRows()
+    {
+        yield return ("scholier", "Scholier", "School pupil");
+        yield return ("student", "Student (mbo/hbo/wo)", "Student (vocational / university)");
+        yield return ("stagiair", "Stagiair / afstudeerder", "Intern / graduate");
+        yield return ("loondienst-fulltime", "In loondienst – fulltime", "Employed – full-time");
+        yield return ("loondienst-parttime", "In loondienst – parttime", "Employed – part-time");
+        yield return ("flex", "Flexwerker / uitzendkracht / oproepkracht", "Flexible / temp / on-call worker");
+        yield return ("zzp", "Zzp'er / freelancer", "Self-employed / freelancer");
+        yield return ("zoekend", "Op dit moment geen baan (zoekend)", "Currently unemployed (looking)");
+        yield return ("herintreder", "Herintreder (terug na zorg, ziekte of pauze)", "Returner (after care, illness or break)");
+        yield return ("gepensioneerd-werkt", "Gepensioneerd, wil nog werken", "Retired, still wants to work");
+        yield return ("ondernemer", "Ondernemer met eigen bedrijf", "Business owner");
+    }
+
+    private static void PatchWorkStatusPl(Dictionary<string, string> map)
+    {
+        map["WorkStatus.Legend"] = "Jaki jest Twój obecny status zawodowy?";
+        map["WorkStatus.Hint"] = "Opcjonalnie. Możesz wybrać więcej niż jedną opcję.";
+        map["WorkStatus.scholier"] = "Uczeń";
+        map["WorkStatus.student"] = "Student (zawodowe/technikum/studia)";
+        map["WorkStatus.stagiair"] = "Stażysta / absolwent";
+        map["WorkStatus.loondienst-fulltime"] = "Etat – pełny";
+        map["WorkStatus.loondienst-parttime"] = "Etat – niepełny";
+        map["WorkStatus.flex"] = "Praca tymczasowa / zlecenie / na wezwanie";
+        map["WorkStatus.zzp"] = "Samozatrudniony / freelancer";
+        map["WorkStatus.zoekend"] = "Obecnie bez pracy (szukam)";
+        map["WorkStatus.herintreder"] = "Powrót po opiece, chorobie lub przerwie";
+        map["WorkStatus.gepensioneerd-werkt"] = "Emeryt, chcę jeszcze pracować";
+        map["WorkStatus.ondernemer"] = "Właściciel firmy";
+    }
+
+    private static void PatchWorkStatusRo(Dictionary<string, string> map)
+    {
+        map["WorkStatus.Legend"] = "Care este situația ta profesională actuală?";
+        map["WorkStatus.Hint"] = "Opțional. Poți alege mai multe opțiuni.";
+        map["WorkStatus.scholier"] = "Elev";
+        map["WorkStatus.student"] = "Student (profesional / universitate)";
+        map["WorkStatus.stagiair"] = "Stagiar / absolvent";
+        map["WorkStatus.loondienst-fulltime"] = "Angajat – full-time";
+        map["WorkStatus.loondienst-parttime"] = "Angajat – part-time";
+        map["WorkStatus.flex"] = "Muncitor flexibil / temp / la apel";
+        map["WorkStatus.zzp"] = "Independent / freelancer";
+        map["WorkStatus.zoekend"] = "Fără job momentan (caut)";
+        map["WorkStatus.herintreder"] = "Revenire după îngrijire, boală sau pauză";
+        map["WorkStatus.gepensioneerd-werkt"] = "Pensionar, vreau să mai lucrez";
+        map["WorkStatus.ondernemer"] = "Antreprenor cu firmă proprie";
+    }
+
+    private static void PatchWorkStatusAr(Dictionary<string, string> map)
+    {
+        map["WorkStatus.Legend"] = "‏ما وضعك المهني الحالي؟";
+        map["WorkStatus.Hint"] = "‏اختياري. يمكنك اختيار أكثر من خيار.";
+        map["WorkStatus.scholier"] = "‏طالب مدرسة";
+        map["WorkStatus.student"] = "‏طالب (مهني / جامعي)";
+        map["WorkStatus.stagiair"] = "‏متدرب / خريج";
+        map["WorkStatus.loondienst-fulltime"] = "‏موظف – دوام كامل";
+        map["WorkStatus.loondienst-parttime"] = "‏موظف – دوام جزئي";
+        map["WorkStatus.flex"] = "‏عمل مرن / مؤقت / عند الطلب";
+        map["WorkStatus.zzp"] = "‏عمل حر / مستقل";
+        map["WorkStatus.zoekend"] = "‏بدون عمل حالياً (أبحث)";
+        map["WorkStatus.herintreder"] = "‏عودة بعد رعاية أو مرض أو استراحة";
+        map["WorkStatus.gepensioneerd-werkt"] = "‏متقاعد وأرغب بالعمل";
+        map["WorkStatus.ondernemer"] = "‏صاحب عمل";
     }
 
     private static void AddPresets(Dictionary<string, string> map, bool english)

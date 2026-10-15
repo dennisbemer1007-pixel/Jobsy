@@ -331,7 +331,8 @@ public partial class MeController : ControllerBase
                 request.Preferences.ShareEmployerPreferences ?? existing.ShareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(request.Preferences.WorkRegion, existing.WorkRegion),
                 request.Preferences.HasOwnCar ?? existing.HasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences));
+                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences),
+                request.Preferences.WorkStatuses ?? existing.WorkStatuses);
 
             user.PreferencesJson = SerializePreferences(merged);
         }
@@ -1922,6 +1923,13 @@ public partial class MeController : ControllerBase
                 contractPreferences = ReadStringArray(contractEl);
             }
 
+            List<string>? workStatuses = null;
+            if (root.TryGetProperty("workStatuses", out var workStatusEl)
+                && workStatusEl.ValueKind == JsonValueKind.Array)
+            {
+                workStatuses = ReadStringArray(workStatusEl);
+            }
+
             var parsed = new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -1953,7 +1961,8 @@ public partial class MeController : ControllerBase
                 shareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(workRegion, null),
                 hasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null));
+                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null),
+                workStatuses);
 
             return CandidatePreferencesValidator.Sanitize(parsed);
         }
@@ -2180,7 +2189,8 @@ public partial class MeController : ControllerBase
             shareEmployerPreferences = sanitized.ShareEmployerPreferences,
             workRegion = sanitized.WorkRegion,
             hasOwnCar = sanitized.HasOwnCar,
-            contractPreferences = sanitized.ContractPreferences
+            contractPreferences = sanitized.ContractPreferences,
+            workStatuses = sanitized.WorkStatuses
         }, JsonOptions);
     }
 

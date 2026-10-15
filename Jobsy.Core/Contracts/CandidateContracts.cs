@@ -47,7 +47,9 @@ public record CandidatePreferencesDto(
     string? WorkRegion = null,
     bool? HasOwnCar = null,
     /// <summary>Contract codes, max 3. <c>geen-voorkeur</c> is exclusive.</summary>
-    IReadOnlyList<string>? ContractPreferences = null);
+    IReadOnlyList<string>? ContractPreferences = null,
+    /// <summary>Optional work-status chips (WorkStatusCatalog). Not used in match scoring.</summary>
+    IReadOnlyList<string>? WorkStatuses = null);
 
 /// <summary>Positive, shareable work preferences. Not private dislikes.</summary>
 public record SharedWorkPreferences(

@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "8e5b77727c2d57a04d8c20db5459d2b1a002934673ac9ba12dc4029af8c0feef",
+    "sha256": "5c3114ae774c9534b571cafd4f399ebca9c4a1cea3c8997eb37ff2bb90876946",
     "v": "20261015-02"
   },
   "css/critical.css": {
@@ -164,11 +164,11 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "4f9280becb6a6ca3e8b9bb76eb5e0323640bfd3b1613f5d561aa9e5888d3037e",
-    "v": "20261015-02"
+    "sha256": "43e76fc733616a8267975db2ebd736a6ed51eb22f8ec20791bc474b6f751e375",
+    "v": "20261015-03"
   },
   "js/app-extras.js": {
-    "sha256": "766c6b30c5eb689319309e1b3f6bd29871a9d93e9f57468be1937a2aee6f9823",
+    "sha256": "800a3e3b4062c0d64df1763b61c245aa20a9d96653d485bf09a2cc2eaf53d02b",
     "v": "20260902-bw1"
   },
   "js/blazor-boot.js": {

@@ -1116,6 +1116,15 @@
             }
         }
 
+        Draft.WorkStatuses.Clear();
+        foreach (var code in preferences.WorkStatuses ?? [])
+        {
+            if (WorkStatusCatalog.IsKnown(code))
+            {
+                Draft.WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
+            }
+        }
+
         Draft.Roles.Clear();
         foreach (var role in preferences.Roles ?? [])
         {
@@ -2558,7 +2567,8 @@
                     Hobbies = Draft.Hobbies
                         .Concat(Draft.HobbyFreeText.Where(h => !string.IsNullOrWhiteSpace(h)).Select(h => h.Trim()))
                         .Take(DiscoveryCatalogs.MaxHobbies)
-                        .ToList()
+                        .ToList(),
+                    WorkStatuses = Draft.WorkStatuses.OrderBy(x => x).ToList()
                 },
                 availableFromDate: Draft.Immediate ? null : Draft.AvailableFrom,
                 clearAvailableFromDate: Draft.Immediate);

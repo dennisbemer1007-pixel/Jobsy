@@ -24,7 +24,10 @@
                         aria-pressed="@(on ? "true" : "false")"
                         aria-label="@CellLabel(day, slot)"
                         @onclick="() => OnToggle.InvokeAsync(key)">
-                    @(on ? "✓" : "–")
+                    @if (on)
+                    {
+                        <span class="availability-matrix__mark" aria-hidden="true">✓</span>
+                    }
                 </button>
             }
             else

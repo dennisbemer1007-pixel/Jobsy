@@ -15,10 +15,9 @@
 <body class="ob-wizard">
   <div class="preview">
     <h1>Wanneer kun je werken?</h1>
-    <p class="lead">1. Kies wat bij je past — optie <strong>Zelf aangeven</strong> actief.</p>
+    <p class="lead">1. Kies wat bij je past — optie <strong>Zelf aangeven</strong> (alle 7 dagen).</p>
     <section class="ob-wizard__fine-tune ob-wizard__fine-tune--custom">
       <h2 class="ob-wizard__section-title">Wanneer ben je beschikbaar?</h2>
-      <p class="ob-wizard__hint ob-wizard__section-hint">Tik per dag aan: ochtend, middag, avond of nacht.</p>
       <fieldset>
         <legend>Beschikbaarheid</legend>
         <div class="availability-matrix availability-matrix--touch" role="grid">
@@ -27,21 +26,48 @@
           <div class="availability-matrix__slot" role="columnheader">Middag</div>
           <div class="availability-matrix__slot" role="columnheader">Avond</div>
           <div class="availability-matrix__slot" role="columnheader">Nacht</div>
+          <!-- Ma -->
           <div class="availability-matrix__day" role="rowheader">Ma</div>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <!-- Di -->
           <div class="availability-matrix__day" role="rowheader">Di</div>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <!-- Wo -->
+          <div class="availability-matrix__day" role="rowheader">Wo</div>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <!-- Do -->
+          <div class="availability-matrix__day" role="rowheader">Do</div>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <!-- Vr -->
+          <div class="availability-matrix__day" role="rowheader">Vr</div>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <!-- Za -->
           <div class="availability-matrix__day" role="rowheader">Za</div>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true">✓</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
-          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false">–</button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <!-- Zo -->
+          <div class="availability-matrix__day" role="rowheader">Zo</div>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn is-on" aria-pressed="true"><span class="availability-matrix__mark">✓</span></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
+          <button type="button" class="availability-matrix__cell availability-matrix__cell--btn" aria-pressed="false"></button>
         </div>
       </fieldset>
     </section>

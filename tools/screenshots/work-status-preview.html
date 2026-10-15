@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Work status chips preview</title>
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/app.min.css" />
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/features/onboarding-wizard.css" />
+  <style>
+    body { margin: 0; background: var(--bg); font-family: system-ui, sans-serif; }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 20px; }
+    h1 { color: var(--brand); font-size: 1.35rem; margin: 0 0 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap ob-fields">
+    <h1>Even kennismaken</h1>
+    <fieldset class="work-status-field">
+      <legend class="ob-wizard__section-title">Wat is je huidige werkstatus?</legend>
+      <p class="ob-wizard__hint ob-wizard__section-hint">Optioneel. Je mag er meer dan één kiezen.</p>
+      <div class="work-status-chips" role="group">
+        <button type="button" class="work-status-chip is-selected">Student (mbo/hbo/wo)</button>
+        <button type="button" class="work-status-chip">In loondienst – parttime</button>
+        <button type="button" class="work-status-chip is-selected">Stagiair / afstudeerder</button>
+        <button type="button" class="work-status-chip">Flexwerker / uitzendkracht / oproepkracht</button>
+        <button type="button" class="work-status-chip">Op dit moment geen baan (zoekend)</button>
+      </div>
+    </fieldset>
+  </div>
+</body>
+</html>

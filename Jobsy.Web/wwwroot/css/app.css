@@ -15733,10 +15733,22 @@ html.cookie-consent-known .cookie-consent {
     min-height: 3rem;
 }
 
+.availability-matrix__mark {
+    color: inherit;
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
 .availability-matrix__cell--btn.is-on {
     background: var(--brand);
-    border-color: var(--brand);
+    border-color: var(--brand-deep, var(--brand));
     color: #fff;
+}
+
+.availability-matrix__cell--btn:not(.is-on) {
+    background: var(--surface);
+    border-color: color-mix(in srgb, var(--border) 88%, transparent);
+    color: transparent;
 }
 
 .availability-matrix__cell input {
@@ -15746,7 +15758,7 @@ html.cookie-consent-known .cookie-consent {
     accent-color: var(--brand);
 }
 
-.availability-matrix__cell.is-on {
+.availability-matrix__cell.is-on:not(.availability-matrix__cell--btn) {
     background: color-mix(in srgb, var(--brand) 14%, var(--surface));
     border-color: var(--brand);
 }

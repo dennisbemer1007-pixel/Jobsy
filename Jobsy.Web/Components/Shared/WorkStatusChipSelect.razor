@@ -1,0 +1,26 @@
+@namespace Jobsy.Web.Components.Shared
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<fieldset class="work-status-field">
+    <legend class="ob-wizard__section-title">@Culture["WorkStatus.Legend"]</legend>
+    <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["WorkStatus.Hint"]</p>
+    <div class="work-status-chips" role="group" aria-label="@Culture["WorkStatus.Legend"]">
+        @foreach (var code in WorkStatusCatalog.AllCodes)
+        {
+            var selected = Selected.Contains(code);
+            <button type="button"
+                    class="work-status-chip @(selected ? "is-selected" : null)"
+                    aria-pressed="@(selected ? "true" : "false")"
+                    @onclick="() => OnToggle.InvokeAsync(code)">
+                @Culture[WorkStatusCatalog.LabelKey(code)]
+            </button>
+        }
+    </div>
+</fieldset>
+
+@code {
+    [Parameter] public IReadOnlySet<string> Selected { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    [Parameter] public EventCallback<string> OnToggle { get; set; }
+}
