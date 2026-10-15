@@ -39,6 +39,44 @@ public class EmployersSwitchTests
     }
 
     [Fact]
+    public async Task ForceVariant_honoured_on_Acceptatie_deployment()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Landing:ForceVariant"] = "on",
+                ["Lobsy:DeploymentEnvironment"] = "Acceptatie"
+            })
+            .Build();
+
+        var resolver = new LandingVariantResolver(
+            new FixedEmployersSwitch(false),
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() },
+            new FakeEnv(Environments.Production),
+            config);
+        Assert.Equal(LandingVariant.On, await resolver.GetAsync());
+    }
+
+    [Fact]
+    public async Task ForceVariant_ignored_on_Production_deployment()
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Landing:ForceVariant"] = "on",
+                ["Lobsy:DeploymentEnvironment"] = "Production"
+            })
+            .Build();
+
+        var resolver = new LandingVariantResolver(
+            new FixedEmployersSwitch(false),
+            new HttpContextAccessor { HttpContext = new DefaultHttpContext() },
+            new FakeEnv(Environments.Production),
+            config);
+        Assert.Equal(LandingVariant.Zw, await resolver.GetAsync());
+    }
+
+    [Fact]
     public async Task Query_variant_ignored_in_Staging()
     {
         var http = new DefaultHttpContext();

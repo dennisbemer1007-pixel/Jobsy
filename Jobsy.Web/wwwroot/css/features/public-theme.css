@@ -551,6 +551,20 @@
   color: var(--muted);
 }
 
+.pub-theme .cookie-consent__text-short {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .pub-theme .cookie-consent__text-full {
+    display: none;
+  }
+
+  .pub-theme .cookie-consent__text-short {
+    display: inline;
+  }
+}
+
 .pub-theme .cookie-consent a {
   color: var(--brand);
 }

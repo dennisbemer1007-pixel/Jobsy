@@ -30,6 +30,10 @@ public class CookieConsentStaticModeTests : BunitContext
             .Build());
         Services.AddSingleton<ICookieConsentTokenService, CookieConsentTokenService>();
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
+        Services.AddScoped(sp => new CultureState(
+            sp.GetRequiredService<IJSRuntime>(),
+            sp,
+            sp.GetRequiredService<AuthenticationStateProvider>()));
     }
 
     [Fact]

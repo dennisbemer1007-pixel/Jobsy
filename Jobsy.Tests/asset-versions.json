@@ -35,6 +35,10 @@
     "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
     "v": "20261011-01"
   },
+  "css/features/choice-tiles.css": {
+    "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
+    "v": "20261015-06"
+  },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
     "v": "20261004-10"
@@ -44,8 +48,8 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "d1210f974f134556ff6e4ff44a93686b3ed7c05baa158287acb34613c9e8ca5b",
-    "v": "20261012-03"
+    "sha256": "66915959ccef9bebdf176b1164fc9c3585616402f93a2defa0e818bc02a551f6",
+    "v": "20261015-03"
   },
   "css/features/future-jobs.css": {
     "sha256": "78bf18d1a684c393bd4c61a439436f74488ba496619ab71063a935bee494e3b2",
@@ -72,8 +76,8 @@
     "v": "20261011-03"
   },
   "css/features/landing.css": {
-    "sha256": "fa784797cf21626a06bd7b7d8e8c18498071f2d7496200cfe5c3f1300e95e1f3",
-    "v": "20261004-10"
+    "sha256": "67e0a9d9865981bf575baa2282bfa8eeb4185ec94a039fcf93bc2066542d3286",
+    "v": "20261015-03"
   },
   "css/features/match-desktop.css": {
     "sha256": "8a93b7c3157f521af81598edb8ffe256de3b19076ef8ee2bdd26c4d963fa45bb",
@@ -96,8 +100,8 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "fff0a875b99f9a76b7797a7f3c1b1a01ece63fbe1cd38a4600ea5aa81ecd9c54",
-    "v": "20261015-02"
+    "sha256": "b323f9555e8eb4489cab783c45c17800de6e7c56e4b9bdaa601f2cf8a94c1090",
+    "v": "20261015-06"
   },
   "css/features/ontdekkingsreis.css": {
     "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
@@ -112,7 +116,7 @@
     "v": "20261004-10"
   },
   "css/features/public-theme.css": {
-    "sha256": "92e73fda8b6ce147006d097245b10eee95dabb43ad75d9af8999a5009a0daa99",
+    "sha256": "256cbf9b5136a3d6feb68523ee81d1a14ae5c0ea1821aa207b920d01545cda5f",
     "v": "20261004-11"
   },
   "css/features/questionnaire.css": {
@@ -164,8 +168,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "b81c42e1db3a23b13579802be1381bfe27583811836a4d7760ea429cef1372b2",
-    "v": "20261015-05"
+    "sha256": "f53f233ff38f38dd42639f0a7c31d93c207339c7a820dbd40777053d796bc45f",
+    "v": "20261015-10"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -216,8 +220,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "68ce448f1b788a0124d2da185c8a1e29dbc09b47c7f62ed7678f6b30412fc65d",
-    "v": "20261015-01"
+    "sha256": "fbf69f42ee6e7424e8e214a80944ee15401011fdf66ce20fd96b1c074de4b42c",
+    "v": "20261015-04"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -240,11 +244,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "136cc26c1da7d62f9bb003d33fc3de55b7ce95ae4becfacbe124c01ea85ff552",
-    "v": "20261015-02"
+    "sha256": "9c37261b443d8b0879f2b27ed655cd60b76d47c6382c2272e3716369a777013d",
+    "v": "20261015-08"
   },
   "service-worker.published.js": {
-    "sha256": "38cf9a0597f4802d5e368ea57ec4ff6d31fd9589060c40be72f0ad0eb5dea5ed",
-    "v": "20261015-02"
+    "sha256": "742ce24154eda79a492ed03f0bf39a36d72260b2ecba5a244d9ec77d73ef1607",
+    "v": "20261015-08"
   }
 }
