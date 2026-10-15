@@ -94,6 +94,15 @@ public static class ChoiceTileIcons
         };
     }
 
+    public static string ForVacancyDayPart(string slot) => slot switch
+    {
+        "Ochtend" => SunRise,
+        "Middag" => SunHigh,
+        "Avond" => SunSet,
+        "Nacht" => Moon,
+        _ => Clock
+    };
+
     public static string? ForAvailabilityPreset(string? code) => Canonical(code) switch
     {
         "school" => Book,
@@ -110,7 +119,15 @@ public static class ChoiceTileIcons
     private static string? Canonical(string? code)
         => string.IsNullOrWhiteSpace(code) ? null : code.Trim().ToLowerInvariant();
 
-    private const string Moon = $"<svg {SvgAttrs}><path d=\"M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z\"/></svg>";
+    public const string Moon = $"<svg {SvgAttrs}><path d=\"M21 14.5A8.5 8.5 0 0 1 9.5 3 7 7 0 1 0 21 14.5z\"/></svg>";
+
+    public const string SunHigh = $"<svg {SvgAttrs}><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4\"/></svg>";
+
+    public const string SunRise =
+        $"<svg {SvgAttrs}><path d=\"M4 16h16\"/><path d=\"M12 6v6l2.5 2.5\"/><path d=\"M6 12a6 6 0 0 1 12 0\"/><path d=\"M4 16 7 13M20 16l-3-3\"/></svg>";
+
+    public const string SunSet =
+        $"<svg {SvgAttrs}><path d=\"M4 16h16\"/><path d=\"M6 12a6 6 0 0 1 12 0\"/><path d=\"M12 10V6l-2.5 2.5\"/><path d=\"M4 16 7 13M20 16l-3-3\"/></svg>";
     private const string Dumbbell = $"<svg {SvgAttrs}><path d=\"M6 9v6M18 9v6M4 10h4M16 10h4M8 12h8\"/></svg>";
     private const string Person = $"<svg {SvgAttrs}><circle cx=\"12\" cy=\"8\" r=\"3\"/><path d=\"M6 20v-1a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1\"/></svg>";
     private const string Phone = $"<svg {SvgAttrs}><path d=\"M6.5 4.5 9 3l2 4.5-1.5 1a11 11 0 0 0 5 5l1-1.5L20 14l-1.5 2.5a2 2 0 0 1-2.2.9 15 15 0 0 1-8.8-8.8 2 2 0 0 1 .9-2.2z\"/></svg>";
