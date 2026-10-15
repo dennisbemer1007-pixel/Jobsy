@@ -229,7 +229,41 @@ public static class UiStringsDiscovery
             "Altă limbă? Alege-o sus în dreapta.",
             "لغة أخرى؟ اخترها أعلى اليمين.");
         Add("Discovery.Start.Cta",
-            "Begin de reis", "Start the journey", "Zacznij podróż", "Începe călătoria", "ابدأ الرحلة");
+            "Start de reis", "Start the journey", "Zacznij podróż", "Începe călătoria", "ابدأ الرحلة");
+        Add("Discovery.Intro.Why",
+            "In een paar korte stappen vul je je paspoort in. Zo zien we beter welk werk bij jou past — en jij snapt wat Lobsy voor je doet.",
+            "In a few short steps you fill in your passport. That helps us see what work fits you — and you know what Lobsy does for you.",
+            "W kilku krótkich krokach uzupełnisz paszport. Dzięki temu lepiej widzimy, jaka praca do Ciebie pasuje — a Ty wiesz, co robi Lobsy.",
+            "În câțiva pași scurți completezi pașaportul. Așa vedem mai bine ce muncă ți se potrivește — și tu înțelegi ce face Lobsy pentru tine.",
+            "في خطوات قصيرة تملأ جوازك. هكذا نرى أفضل أي عمل يناسبك — وأنت تفهم ما يفعله Lobsy من أجلك.");
+        Add("Discovery.Intro.After",
+            "Je kunt stoppen wanneer je wilt; alles wordt bewaard. Klaar? Dan staat je paspoort klaar en kun je matches en je carrière verkennen.",
+            "You can stop anytime; everything is saved. Done? Your passport is ready and you can explore matches and your career.",
+            "Możesz przerwać kiedy chcesz; wszystko jest zapisywane. Gotowe? Paszport czeka i możesz odkrywać dopasowania i karierę.",
+            "Poți opri oricând; totul se salvează. Gata? Pașaportul e pregătit și poți explora potriviri și cariera.",
+            "يمكنك التوقف متى شئت؛ يُحفظ كل شيء. انتهيت؟ جوازك جاهز ويمكنك استكشاف المطابقات ومسارك.");
+        Add("Discovery.Intro.Lobsy",
+            "Lobsy matcht op wie je bent: waarden, cultuur en competenties — niet alleen op cv-trefwoorden. Geen beloftes die we niet kunnen waarmaken.",
+            "Lobsy matches who you are: values, culture and competencies — not just CV keywords. No promises we can’t keep.",
+            "Lobsy dopasowuje to, kim jesteś: wartości, kultura i kompetencje — nie tylko słowa kluczowe z CV. Bez obietnic, których nie dotrzymamy.",
+            "Lobsy potrivește cine ești: valori, cultură și competențe — nu doar cuvinte din CV. Fără promisiuni pe care nu le putem ține.",
+            "Lobsy يطابق من أنت: القيم والثقافة والكفاءات — لا كلمات السيرة فقط. بلا وعود لا نستطيع الوفاء بها.");
+        Add("Discovery.Intro.LightLead",
+            "Je paspoort is klaar — tijd voor nieuwe matches.",
+            "Your passport is ready — time for new matches.",
+            "Paszport gotowy — czas na nowe dopasowania.",
+            "Pașaportul e gata — timp pentru potriviri noi.",
+            "جوازك جاهز — وقت لمطابقات جديدة.");
+        Add("Discovery.Start.LightTime",
+            "klaar", "done", "gotowe", "gata", "تم");
+        Add("Discovery.Rail.StatusDone",
+            "afgerond", "completed", "ukończone", "finalizat", "مكتمل");
+        Add("Discovery.Rail.StatusTodo",
+            "nog te doen", "still to do", "do zrobienia", "de făcut", "متبقٍ");
+        Add("Discovery.Rail.StatusCurrent",
+            "huidige stap", "current step", "bieżący krok", "pasul curent", "الخطوة الحالية");
+        Add("Discovery.Rail.StepName",
+            "Stap {0}: {1}", "Step {0}: {1}", "Krok {0}: {1}", "Pasul {0}: {1}", "الخطوة {0}: {1}");
         Add("Discovery.Step1.Title", "Over jou", "About you", "O Tobie", "Despre tine", "عنك");
         Add("Discovery.Step1.Sub", "Persoonlijke gegevens", "Personal details", "Dane osobowe", "Date personale", "بيانات شخصية");
         Add("Discovery.Step1.PostcodeResolved",

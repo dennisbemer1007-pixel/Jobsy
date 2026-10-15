@@ -6,6 +6,8 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @inject CultureState Culture
+@inject IJSRuntime Js
+@inject IGeocodingClient Geocoder
 
 <div class="ob-fields">
 <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
@@ -24,9 +26,25 @@
 </div>
 <label>
     @Culture["Onboarding.Postcode"]
-    <input inputmode="text" autocomplete="postal-code" maxlength="7"
-           @bind="Draft.Postcode" @bind:event="oninput" @bind:after="OnAddressChangedAsync" />
+    <div class="ob-wizard__postcode-row">
+        <input inputmode="text" autocomplete="postal-code" maxlength="7"
+               @bind="Draft.Postcode" @bind:event="oninput" @bind:after="OnAddressChangedAsync" />
+        @if (ShowGeolocation)
+        {
+            <button type="button"
+                    class="btn btn-secondary ob-wizard__geo"
+                    disabled="@_locating"
+                    aria-busy="@(_locating ? "true" : "false")"
+                    @onclick="UseMyLocationAsync">
+                @Culture["Onboarding.UseMyLocation"]
+            </button>
+        }
+    </div>
 </label>
+@if (!string.IsNullOrWhiteSpace(_locationError))
+{
+    <p class="error" role="status">@_locationError</p>
+}
 @if (Draft.PostcodeResolved)
 {
     <p class="ob-wizard__hint">✓ @PostcodeHint</p>
@@ -105,6 +123,10 @@
     [Parameter] public bool EmployersEnabled { get; set; } = true;
     /// <summary>When true, postcode hint mentions employers never see the address.</summary>
     [Parameter] public bool UseDiscoveryPostcodeHint { get; set; }
+    [Parameter] public bool ShowGeolocation { get; set; } = true;
+
+    private bool _locating;
+    private string? _locationError;
 
     private string? AgeMessage
     {
@@ -164,4 +186,53 @@
     }
     private Task OnShowCityAsync() => ShowCity.InvokeAsync();
     private Task OnSelectAddressAsync(AddressSuggestion suggestion) => SelectAddress.InvokeAsync(suggestion);
+
+    private async Task UseMyLocationAsync()
+    {
+        _locationError = null;
+        _locating = true;
+        try
+        {
+            var dict = await Js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
+            var lat = dict["lat"];
+            var lng = dict["lng"];
+            var label = await Geocoder.ReverseAsync(lat, lng);
+            Draft.HomeLat = null;
+            Draft.HomeLng = null;
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                var (postcode, city) = PostcodeMatch.SplitHomeAddress(label);
+                if (!string.IsNullOrWhiteSpace(postcode))
+                {
+                    Draft.Postcode = postcode;
+                }
+
+                if (!string.IsNullOrWhiteSpace(city))
+                {
+                    Draft.City = city;
+                    Draft.ShowCity = false;
+                }
+                else
+                {
+                    Draft.ShowCity = true;
+                }
+            }
+            else
+            {
+                _locationError = Culture["Onboarding.LocationFailed"];
+            }
+
+            await OnAddressChangedAsync();
+        }
+        catch (Exception ex)
+        {
+            _locationError = string.IsNullOrWhiteSpace(ex.Message)
+                ? Culture["Onboarding.LocationDenied"]
+                : ex.Message;
+        }
+        finally
+        {
+            _locating = false;
+        }
+    }
 }

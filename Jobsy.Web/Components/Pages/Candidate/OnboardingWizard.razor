@@ -323,7 +323,8 @@
         new("office", "Onboarding.Preset.Office", "Onboarding.Preset.Office.Lead"),
         new("holiday", "Onboarding.Preset.Holiday", "Onboarding.Preset.Holiday.Lead"),
         new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
-        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
+        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead"),
+        new("custom", "Onboarding.Preset.Custom", "Onboarding.Preset.Custom.Lead")
     ];
     private static readonly TestConsentStep.TestTab[] ConsentTabs =
     [
@@ -503,6 +504,9 @@
         {
             foreach (var part in parts) Draft.Availability.Add($"{day}:{part}");
         }
+
+        Draft.FineTune = Draft.Presets.Contains(AvailabilityPresetRules.Custom);
+
         Draft.NoWork = preferences.NoWorkExperience == true;
         Draft.Jobs.Clear();
         Draft.Jobs.AddRange(preferences.Employers.Take(3));
@@ -704,24 +708,42 @@
 
     private void TogglePreset(string code)
     {
-        if (!Draft.Presets.Add(code)) Draft.Presets.Remove(code);
-        if (!Draft.PresetsOverridden) ApplyPresets();
+        var min = Draft.MinHours;
+        var max = Draft.MaxHours;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.Toggle(
+            code,
+            Draft.Presets,
+            Draft.Availability,
+            ref overridden,
+            ref fineTune,
+            ref min,
+            ref max);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
+        Draft.MinHours = min;
+        Draft.MaxHours = max;
         ScheduleProfileSave();
-    }
-
-    private void ApplyPresets()
-    {
-        var result = AvailabilityPresetRules.Compute(Draft.Presets, Draft.MinHours, Draft.MaxHours);
-        Draft.MinHours = result.MinHours;
-        Draft.MaxHours = result.MaxHours;
-        Draft.Availability.Clear();
-        foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
     }
 
     private void ResetPresets()
     {
-        Draft.PresetsOverridden = false;
-        ApplyPresets();
+        var min = Draft.MinHours;
+        var max = Draft.MaxHours;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.ResetToPresets(
+            Draft.Presets,
+            Draft.Availability,
+            ref overridden,
+            ref fineTune,
+            ref min,
+            ref max);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
+        Draft.MinHours = min;
+        Draft.MaxHours = max;
         ScheduleProfileSave();
     }
 

@@ -1,4 +1,5 @@
 using Bunit;
+using Microsoft.AspNetCore.Components;
 using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Discovery;
@@ -121,7 +122,7 @@ public class JourneyProgressRailBunitTests : BunitContext
         var cut = Render(builder =>
         {
             builder.OpenComponent<JourneyProgressRail>(0);
-            builder.AddAttribute(1, "CurrentStep", 3);
+            builder.AddAttribute(1, "ActiveStep", 3);
             builder.AddAttribute(2, "SaveStatus", "saved");
             builder.CloseComponent();
         });
@@ -137,13 +138,34 @@ public class JourneyProgressRailBunitTests : BunitContext
         var cut = Render(builder =>
         {
             builder.OpenComponent<JourneyProgressRail>(0);
-            builder.AddAttribute(1, "CurrentStep", 2);
+            builder.AddAttribute(1, "ActiveStep", 2);
             builder.AddAttribute(2, "SaveStatus", "error");
             builder.CloseComponent();
         });
 
         Assert.Contains("Niet bewaard", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("is-error", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Rail_shows_open_dots_for_todo_and_check_for_done()
+    {
+        var done = new HashSet<int> { 1 };
+        var cut = Render(builder =>
+        {
+            builder.OpenComponent<JourneyProgressRail>(0);
+            builder.AddAttribute(1, "ActiveStep", 2);
+            builder.AddAttribute(2, "CompletedSteps", done);
+            builder.AddAttribute(3, "OnGoToStep", EventCallback.Factory.Create<int>(this, _ => Task.CompletedTask));
+            builder.CloseComponent();
+        });
+
+        Assert.Contains("journey-rail__dot--open", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("journey-rail__dot--check", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("is-clickable", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("aria-current=\"step\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("nog te doen", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("afgerond", cut.Markup, StringComparison.Ordinal);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

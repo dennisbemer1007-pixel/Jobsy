@@ -61,7 +61,11 @@
 
         <div class="journey-stage">
             <div class="journey-only-desktop">
-                <JourneyProgressRail CurrentStep="@RailStep" IsEnd="@ShowFinishedChrome" SaveStatus="@_saveStatus" />
+                <JourneyProgressRail ActiveStep="@RailStep"
+                                       IsEnd="@ShowFinishedChrome"
+                                       SaveStatus="@_saveStatus"
+                                       CompletedSteps="@CompletedStepNumbers"
+                                       OnGoToStep="GoToRailStepAsync" />
             </div>
 
             <section class="journey-step card" aria-live="polite">
@@ -75,6 +79,7 @@
                     <p class="journey-step__eyebrow">@Culture["Discovery.Eyebrow"]</p>
                     <h1 tabindex="-1" @ref="_heading">@Culture.Format("Discovery.Start.Title", Draft.FirstName)</h1>
                     <p class="journey-step__lead">@_startLead</p>
+                    <p class="journey-intro">@Culture["Discovery.Intro.Why"]</p>
                     <ul class="journey-zones">
                         <li>
                             <div>
@@ -97,7 +102,16 @@
                             </div>
                             <span>@Culture["Discovery.Start.DeepTime"]</span>
                         </li>
+                        <li>
+                            <div>
+                                <b>@Culture["Discovery.Zone.Light"]</b>
+                                <small>@Culture["Discovery.Intro.LightLead"]</small>
+                            </div>
+                            <span>@Culture["Discovery.Start.LightTime"]</span>
+                        </li>
                     </ul>
+                    <p class="journey-intro">@Culture["Discovery.Intro.After"]</p>
+                    <p class="journey-intro journey-intro--lobsy">@Culture["Discovery.Intro.Lobsy"]</p>
                     <p class="journey-hint">@Culture["Discovery.Start.HintAnswers"]</p>
                     <p class="journey-hint">@Culture["Discovery.Start.HintSaved"]</p>
                     <p class="journey-hint">@Culture["Discovery.Start.HintLanguage"]</p>
@@ -554,7 +568,8 @@
         new("office", "Onboarding.Preset.Office", "Onboarding.Preset.Office.Lead"),
         new("holiday", "Onboarding.Preset.Holiday", "Onboarding.Preset.Holiday.Lead"),
         new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
-        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
+        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead"),
+        new("custom", "Onboarding.Preset.Custom", "Onboarding.Preset.Custom.Lead")
     ];
 
     /// <summary>School and holiday presets are for younger candidates. Adults keep the work-shaped ones.</summary>
@@ -626,6 +641,28 @@
     private bool IsLightScreen => _screen is "klaar" or "overview";
 
     private bool JourneyFinished => _state?.IsComplete == true || _state?.FinishReached == true;
+
+    private HashSet<int> CompletedStepNumbers
+    {
+        get
+        {
+            var set = new HashSet<int>();
+            if (_state?.Steps is null)
+            {
+                return set;
+            }
+
+            foreach (var ev in _state.Steps)
+            {
+                if (ev.CompletedAtUtc is not null || ev.SkippedAtUtc is not null)
+                {
+                    set.Add(ev.Step);
+                }
+            }
+
+            return set;
+        }
+    }
 
     /// <summary>A finished journey keeps 10/10 on every revisited step, not only the end screens.</summary>
     private bool ShowFinishedChrome => JourneyChrome.ShowFinished(JourneyFinished, IsLightScreen);
@@ -1039,6 +1076,8 @@
         {
             foreach (var part in parts) Draft.Availability.Add($"{day}:{part}");
         }
+
+        Draft.FineTune = Draft.Presets.Contains(AvailabilityPresetRules.Custom);
 
         Draft.DrivingLicenses.Clear();
         foreach (var license in preferences.DrivingLicenses ?? [])
@@ -1659,11 +1698,26 @@
             return;
         }
 
+        await GoToRailStepAsync(row.Step);
+    }
+
+    private async Task GoToRailStepAsync(int step)
+    {
+        if (step is < 1 or > 10 || !CompletedStepNumbers.Contains(step))
+        {
+            return;
+        }
+
         _reviewMode = true;
-        _countedStep = row.Step;
-        _screen = row.Step.ToString();
-        _depth = row.Step;
+        _countedStep = step;
+        _screen = step.ToString();
+        _depth = step;
         NavigateStep(_screen);
+        if (step is >= 7 and <= 10 && Draft.HasConsent)
+        {
+            await PrepareMiniAsync();
+        }
+
         await Task.CompletedTask;
     }
 
@@ -2064,24 +2118,42 @@
 
     private void TogglePreset(string code)
     {
-        if (!Draft.Presets.Add(code)) Draft.Presets.Remove(code);
-        if (!Draft.PresetsOverridden) ApplyPresets();
+        var min = Draft.MinHours;
+        var max = Draft.MaxHours;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.Toggle(
+            code,
+            Draft.Presets,
+            Draft.Availability,
+            ref overridden,
+            ref fineTune,
+            ref min,
+            ref max);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
+        Draft.MinHours = min;
+        Draft.MaxHours = max;
         ScheduleProfileSave();
-    }
-
-    private void ApplyPresets()
-    {
-        var result = AvailabilityPresetRules.Compute(Draft.Presets, Draft.MinHours, Draft.MaxHours);
-        Draft.MinHours = result.MinHours;
-        Draft.MaxHours = result.MaxHours;
-        Draft.Availability.Clear();
-        foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
     }
 
     private void ResetPresets()
     {
-        Draft.PresetsOverridden = false;
-        ApplyPresets();
+        var min = Draft.MinHours;
+        var max = Draft.MaxHours;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.ResetToPresets(
+            Draft.Presets,
+            Draft.Availability,
+            ref overridden,
+            ref fineTune,
+            ref min,
+            ref max);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
+        Draft.MinHours = min;
+        Draft.MaxHours = max;
         ScheduleProfileSave();
     }
 

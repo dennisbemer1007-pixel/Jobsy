@@ -14,10 +14,11 @@ public static class AvailabilityPresetRules
     public const string Holiday = "holiday";
     public const string Parttime = "parttime";
     public const string Fulltime = "fulltime";
+    public const string Custom = "custom";
 
     public static readonly string[] AllCodes =
     [
-        Direct, School, Weekend, Evening, Office, Holiday, Parttime, Fulltime
+        Direct, School, Weekend, Evening, Office, Holiday, Parttime, Fulltime, Custom
     ];
 
     /// <summary>Presets that contribute specific day-parts (not only hours).</summary>
@@ -78,7 +79,8 @@ public static class AvailabilityPresetRules
                 "Ma:Ochtend", "Ma:Middag", "Di:Ochtend", "Di:Middag",
                 "Wo:Ochtend", "Wo:Middag", "Do:Ochtend", "Do:Middag",
                 "Vr:Ochtend", "Vr:Middag"
-            ])
+            ]),
+            [Custom] = new(Custom, null, null, [])
         };
 
     public static bool IsKnown(string? code)

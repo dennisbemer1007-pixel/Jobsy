@@ -46,9 +46,16 @@ internal static class UiStringsOnboardingV2
         var english = language != "nl";
         map["Onboarding.Step1.Title"] = english ? "Let’s get acquainted" : "Even kennismaken";
         map["Onboarding.Step1.Lead"] = english ? "Is this correct? We copied your name from your account." : "Klopt dit? We hebben je naam overgenomen van je account.";
+        map["Onboarding.UseMyLocation"] = english ? "Use my location" : "Gebruik mijn locatie";
+        map["Onboarding.LocationDenied"] = english
+            ? "Location access was denied. You can enter your postcode manually."
+            : "Locatie is geweigerd. Je kunt je postcode handmatig invullen.";
+        map["Onboarding.LocationFailed"] = english
+            ? "We couldn’t determine your postcode. Try entering it manually."
+            : "We konden je postcode niet bepalen. Vul hem handmatig in.";
         map["Onboarding.Step2.Title"] = english ? "When can you work?" : "Wanneer kun je werken?";
         map["Onboarding.Step2.Lead"] = english ? "Pick one or more options. We fill in the hours and days for you." : "Kies één of meer opties. Wij zetten uren en dagen voor je klaar.";
-        map["Onboarding.AvailabilityPresetsLegend"] = english ? "1. Pick what fits you" : "1. Kies wat op jou lijkt";
+        map["Onboarding.AvailabilityPresetsLegend"] = english ? "1. Choose what suits you" : "1. Kies wat bij je past";
         map["Onboarding.AvailabilityPresetsHint"] = english ? "You can pick more than one." : "Je mag er meer dan één kiezen.";
         map["Onboarding.AvailabilityStartLegend"] = english ? "2. When can you start?" : "2. Wanneer kun je beginnen?";
         map["Onboarding.AvailabilityStartImmediate"] = english ? "Right away" : "Per direct";
@@ -64,6 +71,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = english ? "Hide details" : "Details verbergen";
         map["Onboarding.AvailabilityFineTuneLegend"] = english ? "Set hours and days yourself" : "Stel zelf uren en dagen in";
         map["Onboarding.AvailabilityMatrixHint"] = english ? "Tap a block for each time you can work." : "Tik op elk vakje waarop je kunt werken.";
+        map["Onboarding.Preset.Custom.GridLegend"] = english ? "When are you available?" : "Wanneer ben je beschikbaar?";
+        map["Onboarding.Preset.Custom.GridHint"] = english
+            ? "Tap morning, afternoon, evening or night for each day."
+            : "Tik per dag aan: ochtend, middag, avond of nacht.";
         map["Onboarding.Step3.Title"] = english ? "How do you get to work?" : "Hoe kom je op je werk?";
         map["Onboarding.Step3.Lead"] = english ? "We only show jobs that are easy to reach." : "Dan laten we alleen banen zien die goed te bereiken zijn.";
         map["Onboarding.Step4.Title"] = english ? "Have you worked before?" : "Heb je al gewerkt?";
@@ -146,7 +157,7 @@ internal static class UiStringsOnboardingV2
 
     private static void AddPresets(Dictionary<string, string> map, bool english)
     {
-        var values = new[] { ("Direct", "Per direct", "Ik kan meteen beginnen", "Immediately", "I can start right away"), ("School", "Bijbaan naast school", "Na school en in het weekend", "Job alongside school", "After school and weekends"), ("Weekend", "Weekenden", "Za en zo", "Weekends", "Saturday and Sunday"), ("Evening", "Avonden", "Ma–vr na 18:00", "Evenings", "Weekdays after 18:00"), ("Office", "Kantoordagen", "Ma–vr, 9–17 uur", "Office days", "Weekdays, 9–17"), ("Holiday", "Vakantiewerk", "In de schoolvakanties", "Holiday work", "During school holidays"), ("Parttime", "Parttime", "12–32 uur per week", "Part-time", "12–32 hours a week"), ("Fulltime", "Fulltime", "36–40 uur per week", "Full-time", "36–40 hours a week") };
+        var values = new[] { ("Direct", "Per direct", "Ik kan meteen beginnen", "Immediately", "I can start right away"), ("School", "Bijbaan naast school", "Na school en in het weekend", "Job alongside school", "After school and weekends"), ("Weekend", "Weekenden", "Za en zo", "Weekends", "Saturday and Sunday"), ("Evening", "Avonden", "Ma–vr na 18:00", "Evenings", "Weekdays after 18:00"), ("Office", "Kantoordagen", "Ma–vr, 9–17 uur", "Office days", "Weekdays, 9–17"), ("Holiday", "Vakantiewerk", "In de schoolvakanties", "Holiday work", "During school holidays"), ("Parttime", "Parttime", "12–32 uur per week", "Part-time", "12–32 hours a week"), ("Fulltime", "Fulltime", "36–40 uur per week", "Full-time", "36–40 hours a week"), ("Custom", "Zelf aangeven", "Kies zelf je dagen en dagdelen", "Specify yourself", "Pick your own days and times") };
         foreach (var item in values) { map[$"Onboarding.Preset.{item.Item1}"] = english ? item.Item4 : item.Item2; map[$"Onboarding.Preset.{item.Item1}.Lead"] = english ? item.Item5 : item.Item3; }
     }
 
@@ -182,7 +193,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchAvailabilityEducationPl(Dictionary<string, string> map)
     {
         map["Onboarding.Step2.Lead"] = "Wybierz jedną lub więcej opcji. Uzupełnimy godziny i dni za Ciebie.";
-        map["Onboarding.AvailabilityPresetsLegend"] = "1. Wybierz, co do Ciebie pasuje";
+        map["Onboarding.AvailabilityPresetsLegend"] = "1. Wybierz, co Ci pasuje";
         map["Onboarding.AvailabilityPresetsHint"] = "Możesz wybrać więcej niż jedną opcję.";
         map["Onboarding.AvailabilityStartLegend"] = "2. Kiedy możesz zacząć?";
         map["Onboarding.AvailabilityStartImmediate"] = "Od razu";
@@ -198,6 +209,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = "Ukryj szczegóły";
         map["Onboarding.AvailabilityFineTuneLegend"] = "Ustaw godziny i dni samodzielnie";
         map["Onboarding.AvailabilityMatrixHint"] = "Dotknij każdego pola, w którym możesz pracować.";
+        map["Onboarding.Preset.Custom"] = "Podaj samodzielnie";
+        map["Onboarding.Preset.Custom.Lead"] = "Wybierz dni i pory dnia";
+        map["Onboarding.Preset.Custom.GridLegend"] = "Kiedy jesteś dostępny/a?";
+        map["Onboarding.Preset.Custom.GridHint"] = "Dotknij: rano, popołudnie, wieczór lub noc dla każdego dnia.";
         map["Onboarding.Step5.Lead"] = "Wybierz najwyższy ukończony poziom. Brak dyplomu? Wybierz Brak.";
         map["Onboarding.EducationPickLevel"] = "Wybierz poziom wykształcenia";
         map["Onboarding.EducationMboLegend"] = "Który poziom MBO?";
@@ -224,6 +239,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = "Ascunde detaliile";
         map["Onboarding.AvailabilityFineTuneLegend"] = "Setează orele și zilele singur";
         map["Onboarding.AvailabilityMatrixHint"] = "Atinge fiecare pătrat când poți lucra.";
+        map["Onboarding.Preset.Custom"] = "Specifică tu";
+        map["Onboarding.Preset.Custom.Lead"] = "Alege zilele și intervalele";
+        map["Onboarding.Preset.Custom.GridLegend"] = "Când ești disponibil/ă?";
+        map["Onboarding.Preset.Custom.GridHint"] = "Atinge dimineața, după-amiaza, seara sau noaptea pentru fiecare zi.";
         map["Onboarding.Step5.Lead"] = "Alege cel mai înalt nivel terminat. Fără diplomă? Alege Niciunul.";
         map["Onboarding.EducationPickLevel"] = "Alege nivelul de școală";
         map["Onboarding.EducationMboLegend"] = "Ce nivel MBO?";
@@ -250,6 +269,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = "‏إخفاء التفاصيل";
         map["Onboarding.AvailabilityFineTuneLegend"] = "‏حدّد الساعات والأيام بنفسك";
         map["Onboarding.AvailabilityMatrixHint"] = "‏المس كل مربع يمكنك العمل فيه.";
+        map["Onboarding.Preset.Custom"] = "‏حدّد بنفسك";
+        map["Onboarding.Preset.Custom.Lead"] = "‏اختر الأيام والفترات";
+        map["Onboarding.Preset.Custom.GridLegend"] = "‏متى أنت متاح؟";
+        map["Onboarding.Preset.Custom.GridHint"] = "‏المس الصباح أو الظهر أو المساء أو الليل لكل يوم.";
         map["Onboarding.Step5.Lead"] = "‏اختر أعلى مستوى أنهيتَه. لا شهادة؟ اختر لا يوجد.";
         map["Onboarding.EducationPickLevel"] = "‏اختر مستوى التعليم";
         map["Onboarding.EducationMboLegend"] = "‏أي مستوى MBO؟";
