@@ -76,7 +76,12 @@ public class LandingComboOverlapPlaywrightTests
 
             if (root.TryGetProperty("svgOverlaps", out var svgOverlaps) && svgOverlaps.GetArrayLength() > 0)
             {
-                failures.Add($"{w}x{h} radar svg: {svgOverlaps}");
+                failures.Add($"{w}x{h} radar overlap: {svgOverlaps}");
+            }
+
+            if (root.TryGetProperty("radarChecks", out var radarChecks) && radarChecks.GetArrayLength() > 0)
+            {
+                failures.Add($"{w}x{h} radar size: {radarChecks}");
             }
         }
 
@@ -164,6 +169,7 @@ public class LandingComboOverlapPlaywrightTests
 
           for (const el of root.querySelectorAll(overflowSel)) {
             if (!(el instanceof HTMLElement)) continue;
+            if (el.classList.contains('pub-landing__radar-html-lbl')) continue;
             const st = getComputedStyle(el);
             if (st.display === 'none' || st.visibility === 'hidden') continue;
             const t = (el.textContent || '').trim();
@@ -176,46 +182,52 @@ public class LandingComboOverlapPlaywrightTests
 
           const svgGap = 8;
           const svgOverlaps = [];
+          const radarChecks = [];
           const radar = root.querySelector('.pub-landing__radar-svg');
           if (radar) {
             const outer = radar.querySelector('.pub-landing__radar-outer');
-            const texts = [...radar.querySelectorAll('text')].filter(t => t.getBoundingClientRect().width > 0);
+            const labels = [...root.querySelectorAll('.pub-landing__radar-html-lbl')].filter(l => l.getBoundingClientRect().width > 0);
             const outerR = outer?.getBoundingClientRect();
             const radCol = radar.closest('.pub-landing__passport-rad')?.getBoundingClientRect();
             const hit = (ra, rb) => !(ra.right <= rb.left + svgGap || rb.right <= ra.left + svgGap || ra.bottom <= rb.top + svgGap || rb.bottom <= ra.top + svgGap);
-            for (let i = 0; i < texts.length; i++) {
-              for (let j = i + 1; j < texts.length; j++) {
-                const ri = texts[i].getBoundingClientRect();
-                const rj = texts[j].getBoundingClientRect();
-                if (hit(ri, rj)) {
-                  svgOverlaps.push({ a: texts[i].textContent?.trim(), b: texts[j].textContent?.trim() });
+            const hexW = outerR?.width ?? 0;
+            const vw = window.innerWidth;
+            if (vw === 1440 && hexW < 170) radarChecks.push(`outerHexWidth=${hexW.toFixed(1)}px (min 170)`);
+            if (vw === 390 && hexW < 190) radarChecks.push(`outerHexWidth=${hexW.toFixed(1)}px (min 190)`);
+            for (const l of labels) {
+              const lh = l.getBoundingClientRect().height;
+              if (lh < 12) radarChecks.push(`labelHeight=${lh.toFixed(1)}px "${(l.textContent || '').trim()}" (min 12)`);
+            }
+            for (let i = 0; i < labels.length; i++) {
+              for (let j = i + 1; j < labels.length; j++) {
+                if (hit(labels[i].getBoundingClientRect(), labels[j].getBoundingClientRect())) {
+                  svgOverlaps.push({ a: labels[i].textContent?.trim(), b: labels[j].textContent?.trim() });
                   if (svgOverlaps.length >= 6) break;
                 }
               }
               if (svgOverlaps.length >= 6) break;
             }
             if (outerR) {
-              for (const t of texts) {
-                const tr = t.getBoundingClientRect();
-                if (hit(tr, outerR)) {
-                  svgOverlaps.push({ a: t.textContent?.trim(), b: 'radar-outer-ring' });
+              for (const l of labels) {
+                if (hit(l.getBoundingClientRect(), outerR)) {
+                  svgOverlaps.push({ a: l.textContent?.trim(), b: 'radar-outer-ring' });
                   if (svgOverlaps.length >= 6) break;
                 }
               }
             }
             if (radCol) {
-              for (const t of texts) {
-                const tr = t.getBoundingClientRect();
+              for (const l of labels) {
+                const tr = l.getBoundingClientRect();
                 if (tr.left < radCol.left + svgGap - 1 || tr.right > radCol.right - svgGap + 1
                     || tr.top < radCol.top + svgGap - 1 || tr.bottom > radCol.bottom - svgGap + 1) {
-                  svgOverlaps.push({ a: t.textContent?.trim(), b: 'radar-column-edge' });
+                  svgOverlaps.push({ a: l.textContent?.trim(), b: 'radar-column-edge' });
                   if (svgOverlaps.length >= 6) break;
                 }
               }
             }
           }
 
-          return JSON.stringify({ overlaps, overflows, svgOverlaps });
+          return JSON.stringify({ overlaps, overflows, svgOverlaps, radarChecks });
         }
         """;
 
