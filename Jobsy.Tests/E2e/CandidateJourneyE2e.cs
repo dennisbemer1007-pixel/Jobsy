@@ -433,6 +433,85 @@ public static class CandidateJourneyE2e
         await db.SaveChangesAsync();
     }
 
+    /// <summary>Ensures seeded demo users can open discovery mini-tests (Playwright / local screenshots).</summary>
+    public static async Task EnsureTestAiConsentForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        user.TestAiConsentAt ??= DateTime.UtcNow;
+        user.TestAiConsentVersion = PrivacyConstants.CurrentConsentVersion;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears career (step 8) Quick-Scan answers so the journey question UI shows open likert items.</summary>
+    public static async Task ResetDemoCareerInterestsForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateCareerInterests.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateCareerInterests.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Career)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Consent + cleared answers for discovery journey step 7–10 question screenshots.</summary>
+    public static async Task PrepareDiscoveryQuestionScreenForE2eAsync(string candidateEmail, int step = 8)
+    {
+        await EnsureTestAiConsentForE2eAsync(candidateEmail);
+        switch (step)
+        {
+            case 7:
+                await ResetDemoCompetencyForE2eAsync(candidateEmail);
+                break;
+            case 8:
+                await ResetDemoCareerInterestsForE2eAsync(candidateEmail);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(step), step, "Only steps 7–8 are supported for E2E question fixtures.");
+        }
+    }
+
     /// <summary>
     /// Completes the vacancy apply form via real UI (consent + submit + optional safety-net + email verify). No DB shortcuts.
     /// </summary>

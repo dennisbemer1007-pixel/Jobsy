@@ -24,9 +24,17 @@
     {
         @if (Target != TestDepthLevel.Bottom)
         {
-            <p class="test-flow__counter" id="@($"tf-counter-{Kind}")">
-                @Culture.Format("TestFlow.QuestionOf", index + 1, targetCount)
-            </p>
+            <div class="test-flow__progress-head" id="@($"tf-counter-{Kind}")">
+                <p class="test-flow__counter">
+                    @Culture.Format("TestFlow.QuestionOf", index + 1, targetCount)
+                </p>
+                @if (Compact && PartTotal is > 0 && PartIndex is > 0)
+                {
+                    <p class="test-flow__part">
+                        @Culture.Format("Discovery.Test.PartOf", PartIndex, PartTotal)
+                    </p>
+                }
+            </div>
         }
         <div class="test-flow__bar" aria-hidden="true">
             @for (var i = 0; i < blocks; i++)
@@ -69,10 +77,23 @@
 
         var spokenQuestion = StripIdPrefix(question.Text);
         <div class="test-flow__speak">
+            <div class="test-flow__question-head">
+                @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle))
+                {
+                    <h2 class="test-flow__title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
+                }
+                <ReadAloudButton Text="@spokenQuestion"
+                                 SpeechKey="@($"q-{Kind}-{question.Id}")"
+                                 IconOnly="@Compact"
+                                 PlayAria="@Culture["ReadAloud.Play"]" />
+            </div>
+            @if (Compact && !string.IsNullOrWhiteSpace(QuestionLead))
+            {
+                <p class="test-flow__lead">@QuestionLead</p>
+            }
             <blockquote class="test-flow__statement" id="@($"tf-stmt-{question.Id}")">
                 “@spokenQuestion”
             </blockquote>
-            <ReadAloudButton Text="@spokenQuestion" SpeechKey="@($"q-{Kind}-{question.Id}")" />
         </div>
         @if (!string.IsNullOrWhiteSpace(question.Example))
         {
@@ -92,6 +113,11 @@
                           StatementId="@($"tf-stmt-{question.Id}")"
                           RequestFocus="_focusRequest"
                           ValueChanged="OnAnswerAsync" />
+
+        @if (AfterLikert is not null)
+        {
+            @AfterLikert
+        }
 
         @if (!Compact)
         {
@@ -150,6 +176,10 @@
     [Parameter] public TestDepthLevel Target { get; set; } = TestDepthLevel.Full;
     [Parameter] public QuestionnaireAutosave? Autosave { get; set; }
     [Parameter] public bool Compact { get; set; }
+    [Parameter] public string? QuestionTitle { get; set; }
+    [Parameter] public string? QuestionLead { get; set; }
+    [Parameter] public int PartIndex { get; set; }
+    [Parameter] public int PartTotal { get; set; }
     [Parameter] public string InputPrefix { get; set; } = "tf";
     [Parameter] public EventCallback<TestDepthLevel> OnLevelReached { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
@@ -164,6 +194,7 @@
     [Parameter] public Func<int, bool>? ShouldPauseAfterIndex { get; set; }
     [Parameter] public EventCallback<int> OnPauseAfter { get; set; }
     [Parameter] public int? ExternalIndex { get; set; }
+    [Parameter] public RenderFragment? AfterLikert { get; set; }
 
     private int _index;
     private int? _appliedExternalIndex;

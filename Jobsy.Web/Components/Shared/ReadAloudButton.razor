@@ -8,7 +8,7 @@
 @if (_show)
 {
     <button type="button"
-            class="read-aloud @(_speaking ? "is-speaking" : null)"
+            class="read-aloud @(IconOnly ? "read-aloud--icon" : null) @(_speaking ? "is-speaking" : null)"
             data-read-aloud
             data-read-aloud-state="@(_speaking ? "stop" : "play")"
             aria-pressed="@(_speaking ? "true" : "false")"
@@ -16,7 +16,10 @@
             @onclick="ToggleAsync"
             @onclick:stopPropagation="true">
         <span class="read-aloud__icon" aria-hidden="true">@(_speaking ? "■" : "▶")</span>
-        <span class="read-aloud__label">@LabelText</span>
+        @if (!IconOnly)
+        {
+            <span class="read-aloud__label">@LabelText</span>
+        }
     </button>
     @if (!string.IsNullOrWhiteSpace(_error))
     {
@@ -31,6 +34,9 @@
 
     /// <summary>Overrides the play aria-label. Pupil pages use the short "Lees voor".</summary>
     [Parameter] public string? PlayAria { get; set; }
+
+    /// <summary>Icon-only control (no visible label text).</summary>
+    [Parameter] public bool IconOnly { get; set; }
 
     private bool _show;
     private bool _speaking;
