@@ -1,10 +1,49 @@
 import { chromium } from 'playwright';
+import { execSync } from 'node:child_process';
 import path from 'path';
 
 const base = process.env.JOBSY_E2E_BASE_URL || 'http://127.0.0.1:5201';
 const outDir = process.env.OUT_DIR || '/opt/cursor/artifacts/screenshots';
 const password = process.env.JOBSY_E2E_PASSWORD || 'Jobsy123!';
 const email = process.env.JOBSY_E2E_EMAIL || 'kandidaat@jobsy.local';
+
+const conn =
+  process.env.ConnectionStrings__JobsyDb ||
+  'Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres';
+
+function sql(query) {
+  if (!conn.includes('127.0.0.1') && !conn.includes('localhost')) {
+    return;
+  }
+  execSync(
+    `PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d JobsyCi -v ON_ERROR_STOP=1 -c "${query.replace(/"/g, '\\"')}"`,
+    { stdio: 'inherit' },
+  );
+}
+
+function prepareDiscoveryStep(step) {
+  sql(`
+UPDATE "Users" SET "TestAiConsentAt"=COALESCE("TestAiConsentAt", NOW()), "TestAiConsentVersion"='2026-09-26'
+WHERE lower("Email")=lower('${email.replace(/'/g, "''")}');
+`);
+  const completed = Math.max(0, step - 1);
+  // Minimal steps json: mark prior steps completed via analytics is complex; discovery URL stap= works with journey state API from seeded user.
+  sql(`
+UPDATE "CandidateOnboardings" o SET "CurrentStep"=${step}, "FinishReached"=false, "CompletedAtUtc"=NULL
+FROM "Users" u WHERE o."UserId"=u."Id" AND lower(u."Email")=lower('${email.replace(/'/g, "''")}');
+`);
+}
+
+function prepareOnboardingStep(step) {
+  const esc = email.replace(/'/g, "''");
+  sql(`
+UPDATE "Users" SET "TestAiConsentAt"=COALESCE("TestAiConsentAt", NOW()), "TestAiConsentVersion"='2026-09-26'
+WHERE lower("Email")=lower('${esc}');
+UPDATE "CandidateOnboardings" o SET "CurrentStep"=${step}, "FinishReached"=false, "CompletedAtUtc"=NULL,
+  "StartedAtUtc"=COALESCE("StartedAtUtc", NOW()), "WizardVersion"=3
+FROM "Users" u WHERE o."UserId"=u."Id" AND lower(u."Email")=lower('${esc}');
+`);
+}
 
 async function login(page) {
   await page.goto(`${base}/login`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
@@ -37,27 +76,66 @@ async function resetScroll(page) {
   await page.waitForTimeout(350);
 }
 
-async function shot(page, name) {
+async function measureFit(page) {
+  return page.evaluate(() => {
+    const stage = document.querySelector('.journey-stage');
+    const foot = document.querySelector('.journey-step__foot .btn-primary, .journey-step__foot [data-testid="onboarding-next"]');
+    const footBox = foot?.getBoundingClientRect();
+    const vh = window.innerHeight;
+    return {
+      stageScrollOverflow: stage ? stage.scrollHeight - stage.clientHeight : null,
+      docScrollOverflow: document.documentElement.scrollHeight - vh,
+      footBottom: footBox ? Math.round(footBox.bottom) : null,
+      viewportHeight: vh,
+      footVisible: footBox ? footBox.bottom <= vh && footBox.top >= 0 : false,
+      ellipsisTiles: [...document.querySelectorAll('.lobsy-choice-tile__label')].filter((el) => {
+        const s = getComputedStyle(el);
+        return s.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1;
+      }).length,
+    };
+  });
+}
+
+async function assertNoEllipsis(page) {
+  const bad = await page.evaluate(() =>
+    [...document.querySelectorAll('.lobsy-choice-tile__label, .lobsy-choice-tile__stack strong')]
+      .filter((el) => el.scrollWidth > el.clientWidth + 1)
+      .map((el) => el.textContent?.trim().slice(0, 24)),
+  );
+  if (bad.length) {
+    console.warn('Possible clipped labels:', bad);
+  }
+}
+
+async function shot(page, name, fitLabel) {
   await resetScroll(page);
+  const fit = await measureFit(page);
+  if (fitLabel) {
+    console.log(fitLabel, JSON.stringify(fit));
+  }
+  await assertNoEllipsis(page);
   const file = path.join(outDir, name);
   await page.screenshot({ path: file, fullPage: false });
   console.log('wrote', file);
 }
 
-const browser = await chromium.launch();
 const shots = [
   {
     name: 'choice-tiles-discovery-stap6-390x844.png',
     width: 390,
     height: 844,
     mobile: true,
-    async prepare(page) {
+    async prepare() {
+      prepareDiscoveryStep(6);
+    },
+    async run(page) {
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=6`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
       for (const label of ['Nachtdiensten', 'Lawaai']) {
         await page.locator('.lobsy-choice-tile', { hasText: label }).first().click();
       }
+      await shot(page, this.name, 'fit-stap6-390');
     },
   },
   {
@@ -65,10 +143,14 @@ const shots = [
     width: 360,
     height: 740,
     mobile: true,
-    async prepare(page) {
+    async prepare() {
+      prepareDiscoveryStep(6);
+    },
+    async run(page) {
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=6`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
+      await shot(page, this.name, 'fit-stap6-360');
     },
   },
   {
@@ -76,10 +158,14 @@ const shots = [
     width: 1440,
     height: 900,
     mobile: false,
-    async prepare(page) {
+    async prepare() {
+      prepareDiscoveryStep(6);
+    },
+    async run(page) {
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=6`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
+      await shot(page, this.name, 'fit-stap6-desktop');
     },
   },
   {
@@ -87,20 +173,14 @@ const shots = [
     width: 390,
     height: 844,
     mobile: true,
-    async prepare(page) {
+    async prepare() {
+      prepareDiscoveryStep(5);
+    },
+    async run(page) {
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=5`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
-    },
-  },
-  {
-    name: 'choice-tiles-onboarding-step2-390x844.png',
-    width: 390,
-    height: 844,
-    mobile: true,
-    async prepare(page) {
-      await page.goto(`${base}/candidate/start?stap=2`, { waitUntil: 'domcontentloaded' });
-      await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
+      await shot(page, this.name);
     },
   },
   {
@@ -108,15 +188,85 @@ const shots = [
     width: 390,
     height: 844,
     mobile: true,
-    async prepare(page) {
+    async prepare() {
+      prepareDiscoveryStep(3);
+    },
+    async run(page) {
       await page.goto(`${base}/candidate/ontdekkingsreis?stap=3`, { waitUntil: 'domcontentloaded' });
       await waitJourneyReady(page);
       await page.waitForSelector('.lobsy-choice-tile', { timeout: 60_000 });
+      await shot(page, this.name);
+    },
+  },
+  {
+    name: 'choice-tiles-onboarding-step2-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    async prepare() {
+      prepareOnboardingStep(2);
+    },
+    async run(page) {
+      await page.goto(`${base}/candidate/start`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.ob-wizard__presets .lobsy-choice-tile', { timeout: 60_000 });
+      await page.waitForSelector('text=Kies wat bij je past', { timeout: 60_000 });
+      await shot(page, this.name);
+    },
+  },
+  {
+    name: 'choice-tiles-onboarding-education-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    async prepare() {
+      prepareOnboardingStep(5);
+    },
+    async run(page) {
+      await page.goto(`${base}/candidate/start`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.ob-wizard__education-grid .lobsy-choice-tile', { timeout: 60_000 });
+      await shot(page, this.name);
+    },
+  },
+  {
+    name: 'choice-tiles-onboarding-workstatus-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    async prepare() {
+      prepareOnboardingStep(1);
+    },
+    async run(page) {
+      await page.goto(`${base}/candidate/start`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.work-status-chip', { timeout: 60_000 });
+      await shot(page, this.name);
+    },
+  },
+  {
+    name: 'choice-tiles-profile-dislikes-390x844.png',
+    width: 390,
+    height: 844,
+    mobile: true,
+    async prepare() {
+      prepareDiscoveryStep(6);
+    },
+    async run(page) {
+      await page.goto(`${base}/candidate/profile`, { waitUntil: 'domcontentloaded' });
+      await page.waitForSelector('.passport-data, .profile-page', { timeout: 60_000 }).catch(() => {});
+      const dislikes = page.locator('text=Waar houd ik niet van').first();
+      if (await dislikes.count()) {
+        await dislikes.click().catch(() => {});
+      }
+      await page.waitForSelector('.profile-chip-grid .lobsy-choice-tile', { timeout: 60_000 });
+      await shot(page, this.name);
     },
   },
 ];
 
+const browser = await chromium.launch();
 for (const s of shots) {
+  if (s.prepare) {
+    s.prepare();
+  }
   const context = await browser.newContext({
     viewport: { width: s.width, height: s.height },
     isMobile: s.mobile,
@@ -130,9 +280,7 @@ for (const s of shots) {
   const page = await context.newPage();
   page.setDefaultTimeout(90_000);
   await login(page);
-  await s.prepare(page);
-  await shot(page, s.name);
+  await s.run(page);
   await context.close();
 }
-
 await browser.close();

@@ -28,10 +28,15 @@
 }
 
 @media (min-width: 900px) {
-  .lobsy-choice-grid--desktop-3,
-  .journey-chips.lobsy-choice-grid,
+  .lobsy-choice-grid--desktop-3:not(.journey-chips):not(.profile-chip-grid),
   .profile-chip-grid.lobsy-choice-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Journey + profile: keep 2 columns so Dutch labels stay fully readable */
+  .journey-chips.lobsy-choice-grid,
+  .profile-chip-grid.lobsy-choice-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -65,24 +70,24 @@
   width: 100%;
   max-width: 100%;
   min-height: var(--lobsy-choice-tile-h);
-  height: var(--lobsy-choice-tile-h);
+  height: auto;
   margin: 0;
-  padding: 0 10px 0 8px;
+  padding: 6px 8px 6px 6px;
   border: 1px solid var(--lobsy-choice-border);
   border-radius: var(--radius-sm, 8px);
   background: var(--lobsy-choice-fill);
   color: var(--text);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: 1.25;
   text-align: start;
   cursor: pointer;
   touch-action: manipulation;
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
+  align-items: flex-start;
+  gap: 4px;
+  white-space: normal;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -122,8 +127,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
   color: var(--muted);
 }
 
@@ -132,8 +138,8 @@
 }
 
 .lobsy-choice-tile__icon svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   display: block;
 }
 
@@ -144,8 +150,11 @@
 .lobsy-choice-tile__label {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: normal;
+  hyphens: none;
 }
 
 .lobsy-choice-tile__stack {
@@ -154,25 +163,23 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .lobsy-choice-tile__stack strong,
 .lobsy-choice-tile__stack b {
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .lobsy-choice-tile__stack small {
   font-size: 0.6875rem;
   font-weight: 400;
   color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .lobsy-choice-tile.is-selected .lobsy-choice-tile__stack small {
@@ -244,12 +251,102 @@
   }
 
   .journey-body--compact {
-    gap: 12px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 10px;
   }
 
   .journey-body--compact .journey-qs {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+  }
+
+  /* Floating coach must not cover tappable tiles */
+  .journey:has(.journey-chips.lobsy-choice-grid) .journey-coach--mobile {
+    display: none !important;
+  }
+
+  .journey:has(.journey-chips.lobsy-choice-grid) .journey-stage {
+    padding-bottom: calc(var(--bottom-nav-clearance, 7rem) + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+
+  .journey:has(.journey-chips.lobsy-choice-grid) .journey-step {
+    padding-inline-end: 16px;
+    padding-bottom: 12px;
+  }
+
+  .journey:has(.journey-chips.lobsy-choice-grid) .journey-step__foot {
+    padding-inline-end: 0;
+  }
+
+  .journey-step--fit-mobile {
+    padding-top: 10px;
+  }
+
+  .journey-step--fit-mobile .journey-step__lead {
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    margin-top: 4px;
+  }
+
+  .journey-step--fit-mobile h1 {
+    font-size: 1.35rem;
+    line-height: 1.2;
+    margin-top: 4px;
+  }
+
+  .journey-step--fit-mobile .journey-q {
+    font-size: 1rem;
+  }
+
+  .journey-step--fit-mobile .journey-qs {
+    display: none;
+  }
+
+  .journey-step--fit-mobile .journey-private-note {
+    font-size: 0.6875rem;
+    margin-top: 0;
+  }
+
+  .journey-step--fit-mobile .journey-body--compact {
+    margin-top: 8px;
+    gap: 8px;
+  }
+
+  .journey-step--fit-mobile .journey-step__foot {
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  .journey:has(.journey-step--fit-mobile) .journey-stage {
+    padding-bottom: calc(var(--bottom-nav-clearance, 7rem) + env(safe-area-inset-bottom, 0px) + 4px);
+  }
+
+  .journey:has(.journey-step--fit-mobile) .journey-mtrack {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 639px) {
+  .work-status-chips.lobsy-choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 899px) and (max-height: 820px) {
+  .journey-step--fit-mobile h1 {
+    font-size: 1.2rem;
+  }
+
+  .journey-step--fit-mobile .journey-step__lead {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  .journey-chips.lobsy-choice-grid {
+    gap: 6px;
+  }
+
+  .journey-step--fit-mobile .journey-private-note {
+    display: none;
   }
 }
 

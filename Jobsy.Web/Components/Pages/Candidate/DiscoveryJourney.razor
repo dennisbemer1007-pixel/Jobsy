@@ -124,7 +124,7 @@
             </div>
 
             <div class="@StageMainClass">
-            <section class="journey-step card" aria-live="polite">
+            <section class="@JourneyStepClass" aria-live="polite">
                 @if (!string.IsNullOrWhiteSpace(_error))
                 {
                     <p class="state-message error">@_error</p>
@@ -462,7 +462,7 @@
                 else if (_countedStep == 6)
                 {
                     <p class="journey-step__eyebrow">
-                        @Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 6)
+                        <span class="journey-step__eyebrow-line">@Culture["Discovery.Zone.Rocks"] · @Culture.Format("Discovery.StepOf", 6)</span>
                         <span class="journey-skip-badge">@Culture["Discovery.Step6.SkipBadge"]</span>
                     </p>
                     <h1 tabindex="-1" @ref="_heading">@Culture["Discovery.Step6.Heading"]</h1>
@@ -728,6 +728,10 @@
 
     private string StageMainClass => UseQuestionCardLayout ? "journey-card-wrap" : "journey-stage__main";
 
+    private string JourneyStepClass => _countedStep == 6 && _screen is not ("start" or "overview" or "klaar")
+        ? "journey-step card journey-step--fit-mobile"
+        : "journey-step card";
+
     private bool UseQuestionCardLayout => _countedStep is >= 7 and <= 10
         && _screen is not "overview" and not "start" and not "shed";
 
@@ -737,7 +741,8 @@
 
     private bool ShowMobileCoachInline => UseQuestionCardLayout;
 
-    private bool ShowMobileCoachInlineOnCard => ShowDesktopCoachInGrid;
+    private bool ShowMobileCoachInlineOnCard =>
+        ShowDesktopCoachInGrid && _countedStep is not (3 or 5 or 6);
 
     private bool _mobileCoachBubbleOpen;
 
@@ -1046,7 +1051,10 @@
             }
             else
             {
-                <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                @if (!showSkip)
+                {
+                    <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
+                }
                 @if (showPrimary)
                 {
                     <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">
