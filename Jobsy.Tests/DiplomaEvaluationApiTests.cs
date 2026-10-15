@@ -121,7 +121,7 @@ public class DiplomaEvaluationApiTests : IClassFixture<DiplomaEvaluationApiFacto
         string? ReferenceNumber);
 }
 
-public sealed class DiplomaEvaluationApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class DiplomaEvaluationApiFactory : ApiWebApplicationFactory
 {
     public Guid CandidateId { get; } = Guid.Parse("d1a10000-0000-0000-0000-000000000001");
     public Guid OtherCandidateId { get; } = Guid.Parse("d1a10000-0000-0000-0000-000000000002");

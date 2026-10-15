@@ -12,8 +12,8 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Unit (~30m) + Playwright smoke (~45m); 90m was too tight and cancelled mid-unit.
-    timeout-minutes: 150
+    # Unit (~15m) + Playwright smoke (~45m); cap job so teardown hangs fail fast.
+    timeout-minutes: 75
     services:
       postgres:
         # PostGIS required — API migrate runs CREATE EXTENSION postgis.
@@ -51,21 +51,7 @@ jobs:
           # Stack is not up yet — unset E2E URLs so soft-skip browser tests do not hit :5201.
           JOBSY_E2E_BASE_URL: ""
           JOBSY_CI_WEB_URL: ""
-        run: |
-          # Exclude browser E2E classes here — Chromium is installed only for the smoke step.
-          # xunit.v3 + MTP (.NET 10): pass filters as first-class options (no `--` separator).
-          # *Playwright* is necessary but not sufficient: screenshot/a11y classes also install Chromium.
-          mkdir -p test-results
-          dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
-            --results-directory test-results \
-            --report-trx \
-            --timeout 85m \
-            --filter-not-class '*Playwright*' \
-            --filter-not-class '*Screenshot*' \
-            --filter-not-class 'AcceptatieOct2026BugfixTests' \
-            --filter-not-class 'BlazorReconnectAndHealthzTests' \
-            --filter-not-class 'LandingA11yTests' \
-            --filter-not-class 'ProactiveMatchingRealStackE2eTests'
+        run: .github/scripts/run-pr-unit-tests.sh
 
       - name: Install Playwright Chromium
         run: |
@@ -130,6 +116,18 @@ jobs:
         with:
           name: test-results
           path: "**/test-results/*.trx"
+          if-no-files-found: ignore
+
+      - name: Upload unit hang dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-hang-dumps
+          path: |
+            test-results/*hang.dmp
+            test-results/*hang.log
+            TestResults/*hang.dmp
+            TestResults/*hang.log
           if-no-files-found: ignore
 
       - name: Upload Playwright screenshots

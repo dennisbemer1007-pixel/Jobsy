@@ -361,7 +361,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
 
     private sealed record Seed(Guid SchoolId, Guid ClassId, string PlainCode);
 
-    private sealed class PupilWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class PupilWebFactory : WebWebApplicationFactory
     {
         private readonly HttpMessageHandler _api;
 

@@ -77,7 +77,7 @@ public sealed class AuthAccessibilityGuardTests
     }
 }
 
-file sealed class AuthA11yWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class AuthA11yWebFactory : WebWebApplicationFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

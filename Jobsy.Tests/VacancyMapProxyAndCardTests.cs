@@ -211,7 +211,7 @@ public class VacancyMapProxyAndCardTests : IClassFixture<RoleFunctionalWebAppFac
 /// <summary>
 /// Jobsy.Web TestServer that forwards map proxy calls to the API test factory.
 /// </summary>
-public sealed class VacancyMapWebProxyFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+public sealed class VacancyMapWebProxyFactory : WebWebApplicationFactory
 {
     private readonly RoleFunctionalWebAppFactory _api;
 

@@ -272,7 +272,7 @@ public class BlazorReconnectAndHealthzTests
 }
 
 /// <summary>Minimal web host for /healthz — counting API client construction.</summary>
-file sealed class HealthzWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class HealthzWebFactory : WebWebApplicationFactory
 {
     public static int ApiClientCreations;
 

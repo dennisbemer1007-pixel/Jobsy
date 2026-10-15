@@ -72,7 +72,7 @@ public class HowLobsyAnonymousAccessTests
     }
 }
 
-file sealed class HowLobsyWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class HowLobsyWebFactory : WebWebApplicationFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

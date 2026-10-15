@@ -20,7 +20,7 @@ namespace Jobsy.Tests.Errors;
 /// Web host for the status / error pages. Every outbound dependency is replaced by one that
 /// throws, so a green test proves the pages render without the API (errors 01 success criteria).
 /// </summary>
-public sealed class ErrorPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+public sealed class ErrorPagesWebFactory : WebWebApplicationFactory
 {
     public const string ThrowPath = "/__test/throw";
 

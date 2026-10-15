@@ -115,7 +115,7 @@ public class PassportPartnersApiTests
     };
 }
 
-public sealed class PassportPartnersApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class PassportPartnersApiFactory : ApiWebApplicationFactory
 {
     private readonly string _dbName = "PassportPartners-" + Guid.NewGuid();
 
