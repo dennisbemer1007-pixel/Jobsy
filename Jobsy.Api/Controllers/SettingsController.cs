@@ -498,7 +498,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
                     CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
                     CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
-                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit),
+                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit,
+                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -534,6 +535,18 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         catch (ArgumentException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new
+                {
+                    message =
+                        "Platforminstellingen konden niet worden opgeslagen. Waarschijnlijk loopt de productie-database achter op de API (ontbrekende migratie). "
+                        + "Deploy de nieuwste API naar main en voer database-migraties uit, of neem contact op met beheer. "
+                        + $"Technisch: {ex.InnerException?.Message ?? ex.Message}"
+                });
         }
     }
 
@@ -928,6 +941,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.EmployerPhase2Enabled,
             snap.CandidateExternalVacanciesEnabled,
             snap.ProactiveMatchingEnabled,
+            snap.MatchCalibrationV1Enabled,
             snap.CandidateApplyPerMinuteLimit,
             snap.CandidateApplyPerHourLimit,
             snap.CandidateApplyPerDayLimit);

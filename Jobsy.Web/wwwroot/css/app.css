@@ -7478,17 +7478,35 @@ button.bottom-nav__item {
         display: none;
     }
 
+    /* Candidates have no werkgever-style sidebar; keep primary nav on desktop too. */
+    .app-shell--candidate .bottom-nav {
+        display: flex;
+    }
+
     .app-shell.has-bottom-nav .app-main,
     .app-shell:has(.bottom-nav) .app-main {
         padding-bottom: 0;
+    }
+
+    .app-shell--candidate.has-bottom-nav .app-main,
+    .app-shell--candidate:has(.bottom-nav) .app-main {
+        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant.has-bottom-nav {
         bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
     }
 
+    .app-shell--candidate .lobsy-assistant.has-bottom-nav {
+        bottom: calc(var(--bottom-nav-h, 4.75rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+
     .feedback-widget.has-bottom-nav {
         bottom: 1rem;
+    }
+
+    .app-shell--candidate .feedback-widget.has-bottom-nav {
+        bottom: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
     }
 }
 
