@@ -1,3 +1,4 @@
+using Jobsy.Tests.E2e;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -39,6 +40,8 @@ public class OntdekkingsreisVariantAPlaywrightTests
             var page = await context.NewPageAsync();
             page.SetDefaultTimeout(90_000);
 
+            await CandidateJourneyE2e.PrepareDiscoveryQuestionScreenForE2eAsync(KbE2e.DefaultCompleteEmail, step: 8);
+
             await page.GotoAsync($"{baseUrl}/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             if (await page.Locator("input[name=\"email\"]").CountAsync() > 0)
             {
@@ -51,12 +54,19 @@ public class OntdekkingsreisVariantAPlaywrightTests
 
             await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis?stap=8", new()
             {
-                WaitUntil = WaitUntilState.NetworkIdle,
+                WaitUntil = WaitUntilState.DOMContentLoaded,
                 Timeout = 90_000,
             });
 
-            await page.WaitForSelectorAsync(".journey-step .test-flow--compact, .journey-step h1, .journey-shed",
-                new() { Timeout = 45_000 });
+            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+                null,
+                new() { Timeout = 90_000 });
+
+            await page.WaitForSelectorAsync(".journey-step .test-flow--compact",
+                new() { Timeout = 60_000 });
+            await page.WaitForTimeoutAsync(400);
 
             await page.ScreenshotAsync(new()
             {
