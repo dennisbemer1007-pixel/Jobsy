@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "855d58c40f780fd4209d51b3205ad8a36ec680ac91b80f85208a2cbc3d509b8d",
-    "v": "20261015-05"
+    "sha256": "4e35543c3b1bb3293ddb824176c2f3cfeeb3b563a9c4985593eb582da7dcd041",
+    "v": "20261015-07"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -84,8 +84,8 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "ae180d86fc41264aad46296c689f8cb9df9967d8dd6f889f3a7cc8c70d4fe5ca",
-    "v": "20261012-05"
+    "sha256": "5aa8b568c67bcfb60471e4c806b0289257f2e6362244216d67477d1451d6c4ea",
+    "v": "20261015-09"
   },
   "css/features/nav-feedback.css": {
     "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
@@ -100,8 +100,8 @@
     "v": "20261015-02"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "39e2c7cb1c6f7ebcc5bdc43e9f9fe41816f5e34eae2c155224452c0b758dcf55",
-    "v": "20261015-12"
+    "sha256": "8706fd2bf5b8ac918e0c1ddae430a9c1e2d2d5e8b18bfdd037254ad5cad6aea4",
+    "v": "20261015-20"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",

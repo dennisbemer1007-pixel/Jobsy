@@ -225,9 +225,9 @@
 @media (min-width: 900px) {
   .journey-stage .journey-rail {
     position: sticky;
-    top: 24px;
+    top: calc(var(--app-header-height, 4.25rem) + 24px);
     align-self: start;
-    max-height: calc(100dvh - 48px);
+    max-height: calc(100dvh - var(--app-header-height, 4.25rem) - 48px);
   }
 
   .journey-rail-drawer .journey-rail {
