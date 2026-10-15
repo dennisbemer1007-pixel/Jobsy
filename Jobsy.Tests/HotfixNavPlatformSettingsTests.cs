@@ -32,7 +32,7 @@ public class HotfixNavPlatformSettingsTests
         var editor = File.ReadAllText(Path.Combine(
             FindRepoRoot(),
             "Jobsy.Web/Components/Admin/Sections/PlatformSettingsEditor.razor"));
-        Assert.Contains("state-message @(_messageIsError ? \"error\" : null)", editor, StringComparison.Ordinal);
+        Assert.Contains("_messageIsError ? \"error\" : \"success\"", editor, StringComparison.Ordinal);
         Assert.Contains("VerifySavedValues", editor, StringComparison.Ordinal);
         Assert.Contains("FeatureFlags.Invalidate()", editor, StringComparison.Ordinal);
         Assert.Contains("if (saved is null)", editor, StringComparison.Ordinal);
