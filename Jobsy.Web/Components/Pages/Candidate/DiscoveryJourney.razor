@@ -43,10 +43,6 @@
             {
                 <p class="journey-mprog__t journey-mprog__t--question">
                     <span class="journey-mprog__line">
-                        @if (MobileZoneLabelKey is { } zoneKey)
-                        {
-                            <span class="journey-mprog__zone-only">@Culture[zoneKey]</span>
-                        }
                         <b class="journey-mprog__step-no">@Culture.Format("Discovery.Rail.StepCount", MobileProgressStep)</b>
                         <span class="journey-mprog__sep muted" aria-hidden="true">@((MarkupString)"&nbsp;·&nbsp;")</span>
                         <span class="journey-mprog__step-name muted">@CurrentStepTitle</span>
@@ -751,19 +747,9 @@
                 parts.Add($"journey--depth-{_depth}");
             }
 
-            if (_countedStep is >= 1 and <= 6 && _screen is not "start" and not "overview" and not "klaar")
-            {
-                parts.Add("journey--zone-header");
-            }
-
             return string.Join(' ', parts);
         }
     }
-
-    private string? MobileZoneLabelKey => _countedStep is >= 1 and <= 6
-        && JourneyCatalog.ZoneKeys.TryGetValue(JourneyCatalog.Steps[_countedStep - 1].ZoneKey, out var key)
-        ? key
-        : null;
 
     private string StageMainClass => UseQuestionCardLayout ? "journey-card-wrap" : "journey-stage__main";
 
