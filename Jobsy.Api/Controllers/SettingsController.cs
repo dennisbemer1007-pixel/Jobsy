@@ -543,9 +543,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                 new
                 {
                     message =
-                        "Platforminstellingen konden niet worden opgeslagen. Waarschijnlijk loopt de productie-database achter op de API (ontbrekende migratie). "
-                        + "Deploy de nieuwste API naar main en voer database-migraties uit, of neem contact op met beheer. "
-                        + $"Technisch: {ex.InnerException?.Message ?? ex.Message}"
+                        "Platforminstellingen konden niet worden opgeslagen (database-schema loopt achter). "
+                        + "Voer de nieuwste EF-migraties uit op de database en herstart de API. "
+                        + "Technisch: "
+                        + (ex.InnerException?.Message ?? ex.Message)
                 });
         }
     }

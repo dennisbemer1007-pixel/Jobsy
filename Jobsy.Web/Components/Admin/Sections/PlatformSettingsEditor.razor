@@ -4,13 +4,15 @@
 @using Jobsy.Web.Admin
 @using Jobsy.Web.Components
 @using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject DeploymentEnvironmentLabel Env
-@using Jobsy.Core.Features
 @inject IFeatureFlags FeatureFlags
+@inject BottomNavRefreshService NavRefresh
 @implements IDisposable
 
 @if (_loading)
@@ -444,9 +446,10 @@ else if (_snapshot is not null)
         _busy = true;
         _message = null;
         _messageIsError = false;
+        var pending = _draft.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.Ordinal);
         try
         {
-            var parts = _draft.Select(kv =>
+            var parts = pending.Select(kv =>
             {
                 var entry = _entries.First(e => e.Key == kv.Key);
                 return entry.Write(kv.Value);
@@ -455,23 +458,53 @@ else if (_snapshot is not null)
             var patch = ToPatch(merged);
             patch.Reason = string.IsNullOrWhiteSpace(_reason) ? null : _reason.Trim();
             LastPatch = patch;
-            var saved = await Api.PatchPlatformFeaturesAsync(patch) ?? new PlatformFeatureItem();
-            ApplySnapshot(ToSnapshot(saved));
+            var saved = await Api.PatchPlatformFeaturesAsync(patch);
+            if (saved is null)
+            {
+                throw new InvalidOperationException(Culture["AdminSettings.SaveFailedEmpty"]);
+            }
+
+            var snap = ToSnapshot(saved);
+            VerifySavedValues(pending, snap);
+            ApplySnapshot(snap);
             _reason = "";
             await LoadRecentChangesAsync();
             FeatureFlags.Invalidate();
+            await NavRefresh.RequestRefreshAsync();
             _message = Culture["AdminSettings.Saved"];
         }
         catch (Exception ex)
         {
             _messageIsError = true;
-            _message = string.IsNullOrWhiteSpace(ex.Message)
-                ? Culture["AdminSettings.SaveFailed"]
-                : ex.Message;
+            _message = string.Format(
+                Culture["AdminSettings.SaveFailed"],
+                string.IsNullOrWhiteSpace(ex.Message) ? "onbekende fout" : ex.Message);
         }
         finally
         {
             _busy = false;
+        }
+    }
+
+    private void VerifySavedValues(IReadOnlyDictionary<string, object?> pending, PlatformFeatureSnapshot saved)
+    {
+        var mismatches = new List<string>();
+        foreach (var (key, expected) in pending)
+        {
+            var entry = _entries.First(e => e.Key == key);
+            var actual = entry.Read(saved);
+            if (!ValuesEqual(expected, actual))
+            {
+                mismatches.Add(Culture[entry.TitleKey]);
+            }
+        }
+
+        if (mismatches.Count > 0)
+        {
+            throw new InvalidOperationException(
+                "De server bewaarde niet alle wijzigingen ("
+                + string.Join(", ", mismatches)
+                + "). Controleer of acceptatie-web en acceptatie-API dezelfde versie draaien en of de database-migraties up-to-date zijn.");
         }
     }
 
