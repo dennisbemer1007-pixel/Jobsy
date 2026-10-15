@@ -679,8 +679,15 @@
   }
 
   .journey-step__foot {
-    padding-inline-end: 0;
+    position: relative;
+    z-index: 36;
+    padding-inline-end: max(12px, min(96px, 26vw));
     margin-inline-end: 0;
+    gap: 8px;
+  }
+
+  .journey-step__foot .btn-primary {
+    min-inline-size: min(100%, 220px);
   }
 }
 

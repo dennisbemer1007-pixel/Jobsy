@@ -7,7 +7,7 @@
 <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
 
-<section class="ob-wizard__section" aria-labelledby="ob-avail-presets">
+<section class="ob-wizard__section" id="onboarding-field-availability-presets" aria-labelledby="ob-avail-presets">
     <h2 id="ob-avail-presets" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityPresetsLegend"]</h2>
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
     <fieldset class="ob-wizard__presets-field">
@@ -25,9 +25,9 @@
                 </button>
             }
         </div>
-        @if (!HasSelection)
+        @if (ShowValidation && !HasSelection)
         {
-            <p class="ob-wizard__hint ob-wizard__preset-required" role="status">@Culture["Onboarding.AvailabilityRequired"]</p>
+            <p class="error ob-wizard__preset-required" role="alert">@Culture["Onboarding.AvailabilityRequired"]</p>
         }
     </fieldset>
 </section>
@@ -63,7 +63,9 @@
 
 @if (ShowMatrix)
 {
-    <section class="ob-wizard__fine-tune @(CustomMode ? "ob-wizard__fine-tune--custom" : null)" aria-labelledby="ob-avail-finetune">
+    <section class="ob-wizard__fine-tune @(CustomMode ? "ob-wizard__fine-tune--custom" : null)"
+             id="onboarding-field-availability-grid"
+             aria-labelledby="ob-avail-finetune">
         <h2 id="ob-avail-finetune" class="ob-wizard__section-title">
             @(CustomMode ? Culture["Onboarding.Preset.Custom.GridLegend"] : Culture["Onboarding.AvailabilityFineTuneLegend"])
         </h2>
@@ -91,6 +93,10 @@
                                        AriaLabel="@Culture["Profile.Availability"]"
                                        OnToggle="ToggleAvailability" />
         </fieldset>
+        @if (ShowValidation && Draft.Availability.Count == 0)
+        {
+            <p class="error" role="alert">@Culture["Onboarding.Validation.AvailabilityGrid"]</p>
+        }
         @if (Draft.PresetsOverridden)
         {
             <p class="ob-wizard__hint">
@@ -107,11 +113,11 @@
                             ImmediateChanged="OnImmediateChanged"
                             AvailableFrom="Draft.AvailableFrom"
                             AvailableFromChanged="OnAvailableFromChanged"
-                            ShowValidation="true" />
+                            ShowValidation="ShowValidation" />
 
-@if (!StartDateValid && !Draft.Immediate)
+@if (ShowValidation && !StartDateValid && !Draft.Immediate)
 {
-    <p class="ob-wizard__hint error ob-wizard__start-date-error" role="alert">@Culture["Onboarding.AvailabilityStartDateInvalid"]</p>
+    <p class="error ob-wizard__start-date-error" id="onboarding-field-availability-start" role="alert">@Culture["Onboarding.AvailabilityStartDateInvalid"]</p>
 }
 
 @code {
@@ -126,6 +132,7 @@
     [Parameter] public EventCallback ManualAvailability { get; set; }
     [Parameter] public EventCallback<string> ToggleAvailability { get; set; }
     [Parameter] public EventCallback ResetPresets { get; set; }
+    [Parameter] public bool ShowValidation { get; set; }
 
     private bool CustomMode => Draft.Presets.Contains(AvailabilityPresetRules.Custom);
     private bool ShowMatrix => CustomMode || Draft.FineTune;
