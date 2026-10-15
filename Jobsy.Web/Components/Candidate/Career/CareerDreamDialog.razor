@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components.Candidate.Career
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @inject CultureState Culture
@@ -14,7 +16,11 @@
                      CloseOnBackdrop="@(!Busy)"
                      OnClose="OnCancel">
     <div class="career-dialog__lob" aria-hidden="true">
-        <img class="lobsy-coach-art" src="/images/brand/mascot-coach.webp" alt="" width="56" height="56" />
+        <LobsyMascot Pose="MascotPose.Nieuwsgierig"
+                     Variant="LobsyMascotArt.MascotVariant.Avatar"
+                     Size="MascotSize.Tiny"
+                     Alt=""
+                     Class="lobsy-coach-art" />
     </div>
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))

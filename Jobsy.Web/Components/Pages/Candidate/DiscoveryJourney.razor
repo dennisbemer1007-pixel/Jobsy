@@ -30,7 +30,10 @@
 <div class="journey">
     @if (_loading && _screen != "overview")
     {
-        <p class="journey__loading" aria-busy="true">@Culture["Common.Loading"]</p>
+        <div class="journey__loading" aria-busy="true">
+            <JourneyLobster Size="96" CoachPose="MascotPose.Nadenken" Label="@Culture["Discovery.Lobster.Aria"]" />
+            <p>@Culture["Common.Loading"]</p>
+        </div>
     }
     else
     {

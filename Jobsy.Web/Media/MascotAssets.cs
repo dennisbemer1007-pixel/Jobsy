@@ -1,22 +1,24 @@
 namespace Jobsy.Web.Media;
 
-/// <summary>Mascot pose slug used by LobsyMascot and the asset contract.</summary>
+/// <summary>Mascot expression used by <see cref="Components.Brand.LobsyMascot"/>.</summary>
 public enum MascotPose
 {
-    Default = 0,
-    Waving = 1,
-    Diving = 2,
-    Sitting = 3,
-    Celebrating = 4,
-    Shell = 5,
+    Rustig = 0,
+    Uitleggen = 1,
+    Nieuwsgierig = 2,
+    GoedGedaan = 3,
+    Nadenken = 4,
+    Juichen = 5,
+    Shell = 6,
 }
 
-/// <summary>How art is resolved for a pose. Every pose starts as <see cref="Fallback"/>.</summary>
+/// <summary>How art is resolved for a pose.</summary>
 public enum MascotArtFormat
 {
     Fallback = 0,
     Svg = 1,
     Raster = 2,
+    Inline = 3,
 }
 
 /// <summary>CSS box / intrinsic size token for <c>LobsyMascot</c>.</summary>
@@ -38,27 +40,28 @@ public sealed record MascotSource(
     string? SrcSet,
     string? AvifSrcSet,
     bool IsVector,
+    bool IsInline,
     bool IsFallback,
     string? FallbackTransformClass,
     string Version);
 
 /// <summary>
-/// Manifest for public mascot art. Flip <see cref="MascotArt.Format"/> and bump
-/// <see cref="MascotArt.Version"/> when designer files land — no markup changes.
-/// See <c>docs/brand/mascot-assets.md</c>.
+/// Manifest for public mascot art. Production uses hand-made inline SVG (see <see cref="Components.Brand.LobsyMascotArt"/>).
 /// </summary>
 public static class MascotAssets
 {
     public const string Folder = "images/brand/mascot";
+    public const string InlineVersion = "20261015-coral-mascot";
 
     private static readonly MascotArt[] DefaultArts =
     [
-        new(MascotPose.Default, MascotArtFormat.Fallback, BrandImages.MascotVersion),
-        new(MascotPose.Waving, MascotArtFormat.Fallback, BrandImages.MascotVersion),
-        new(MascotPose.Diving, MascotArtFormat.Fallback, BrandImages.MascotVersion),
-        new(MascotPose.Sitting, MascotArtFormat.Fallback, BrandImages.MascotVersion),
-        new(MascotPose.Celebrating, MascotArtFormat.Fallback, BrandImages.MascotVersion),
-        new(MascotPose.Shell, MascotArtFormat.Fallback, BrandImages.MascotVersion),
+        new(MascotPose.Rustig, MascotArtFormat.Inline, InlineVersion),
+        new(MascotPose.Uitleggen, MascotArtFormat.Inline, InlineVersion),
+        new(MascotPose.Nieuwsgierig, MascotArtFormat.Inline, InlineVersion),
+        new(MascotPose.GoedGedaan, MascotArtFormat.Inline, InlineVersion),
+        new(MascotPose.Nadenken, MascotArtFormat.Inline, InlineVersion),
+        new(MascotPose.Juichen, MascotArtFormat.Inline, InlineVersion),
+        new(MascotPose.Shell, MascotArtFormat.Inline, InlineVersion),
     ];
 
     private static readonly AsyncLocal<IReadOnlyDictionary<MascotPose, MascotArt>?> Override = new();
@@ -95,6 +98,19 @@ public static class MascotAssets
         var art = GetArt(pose);
         var slug = PoseSlug(pose);
 
+        if (art.Format == MascotArtFormat.Inline)
+        {
+            return new MascotSource(
+                Src: "",
+                SrcSet: null,
+                AvifSrcSet: null,
+                IsVector: true,
+                IsInline: true,
+                IsFallback: false,
+                FallbackTransformClass: pose == MascotPose.Shell ? "pub-mascot--ghost" : $"pub-mascot--pose-{slug}",
+                Version: art.Version);
+        }
+
         if (art.Format == MascotArtFormat.Svg)
         {
             var src = $"{Folder}/mascot-{slug}.svg?v={art.Version}";
@@ -103,6 +119,7 @@ public static class MascotAssets
                 SrcSet: null,
                 AvifSrcSet: null,
                 IsVector: true,
+                IsInline: false,
                 IsFallback: false,
                 FallbackTransformClass: null,
                 Version: art.Version);
@@ -111,21 +128,21 @@ public static class MascotAssets
         if (art.Format == MascotArtFormat.Raster)
         {
             var webp = string.Join(", ",
-sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.webp?v={art.Version} {w}w"));
+                sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.webp?v={art.Version} {w}w"));
             var avif = string.Join(", ",
-sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.avif?v={art.Version} {w}w"));
+                sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.avif?v={art.Version} {w}w"));
             var src = $"{Folder}/mascot-{slug}-256.webp?v={art.Version}";
             return new MascotSource(
                 Src: src,
                 SrcSet: webp,
                 AvifSrcSet: avif,
                 IsVector: false,
+                IsInline: false,
                 IsFallback: false,
                 FallbackTransformClass: null,
                 Version: art.Version);
         }
 
-        // Fallback: today's single-pose mascot (+ CSS transform / ghost).
         var fbClass = pose == MascotPose.Shell
             ? "pub-mascot--ghost"
             : $"pub-mascot--fb-{slug}";
@@ -135,6 +152,7 @@ sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.avif?v={art.Version} {w}w")
             SrcSet: BrandImages.MascotSrcSet56,
             AvifSrcSet: null,
             IsVector: false,
+            IsInline: false,
             IsFallback: true,
             FallbackTransformClass: fbClass,
             Version: BrandImages.MascotVersion);
@@ -142,13 +160,14 @@ sourceArray.Select(w => $"{Folder}/mascot-{slug}-{w}.avif?v={art.Version} {w}w")
 
     public static string PoseSlug(MascotPose pose) => pose switch
     {
-        MascotPose.Default => "default",
-        MascotPose.Waving => "waving",
-        MascotPose.Diving => "diving",
-        MascotPose.Sitting => "sitting",
-        MascotPose.Celebrating => "celebrating",
+        MascotPose.Rustig => "rustig",
+        MascotPose.Uitleggen => "uitleggen",
+        MascotPose.Nieuwsgierig => "nieuwsgierig",
+        MascotPose.GoedGedaan => "goed-gedaan",
+        MascotPose.Nadenken => "nadenken",
+        MascotPose.Juichen => "juichen",
         MascotPose.Shell => "shell",
-        _ => "default",
+        _ => "rustig",
     };
 
     public static string SizeCssClass(MascotSize size) => size switch

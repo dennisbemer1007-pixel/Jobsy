@@ -1,9 +1,11 @@
+using Jobsy.Web.Components.Brand;
+
 namespace Jobsy.Web.Components.Candidate.Discovery;
 
 /// <summary>Plate SVG paths and size helpers from docs/mockups/ontdekkingsreis/build.py.</summary>
 public static class JourneyLobsterPlates
 {
-    public const string BodyPath = "M95 150C93 190 112 214 128 241C144 214 165 190 165 150Z";
+    public const string BodyPath = LobsyMascotArt.JourneyBodyPath;
 
     public const string CracksPath =
         "M108 158l6 8-3 7M150 196l-5 6 3 5M120 222l5 6M104 128l5 4M160 142l-4 3M118 56l4 6";

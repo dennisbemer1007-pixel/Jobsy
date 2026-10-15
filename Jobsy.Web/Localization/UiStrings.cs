@@ -3550,6 +3550,7 @@ public static class UiStrings
         UiStringsCareer.MergeAll(nl, en, pl, ro, ar);
         UiStringsTalentCandidate.MergeAll(nl, en, pl, ro, ar);
         UiStringsDiscovery.MergeAll(nl, en, pl, ro, ar);
+        UiStringsMascot.MergeAll(nl, en, pl, ro, ar);
         UiStringsConsent.MergeAll(nl, en, pl, ro, ar);
         UiStringsSetPassword.MergeAll(nl, en, pl, ro, ar);
         UiStringsMailSettings.MergeAll(nl, en, pl, ro, ar);

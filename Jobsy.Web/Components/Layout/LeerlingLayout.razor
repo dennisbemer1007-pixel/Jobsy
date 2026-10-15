@@ -1,7 +1,9 @@
 @namespace Jobsy.Web.Components.Layout
 @using System.Security.Claims
 @using Jobsy.Core.Authorization
+@using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Media
 @using Jobsy.Web.Security
 @using Jobsy.Web.Services
 @inherits LayoutComponentBase
@@ -14,7 +16,11 @@
 <div class="ll-shell" lang="nl">
     <header class="ll-topbar">
         <a class="ll-topbar__brand" href="/leerling">
-            <img class="ll-topbar__logo" src="/images/brand/mascot-256.webp" width="28" height="28" alt="" />
+            <LobsyMascot Pose="MascotPose.Rustig"
+                         Variant="LobsyMascotArt.MascotVariant.Avatar"
+                         Size="MascotSize.Tiny"
+                         Alt=""
+                         Class="ll-topbar__logo" />
             <span>Lobsy</span>
         </a>
         @if (!string.IsNullOrEmpty(_chip))

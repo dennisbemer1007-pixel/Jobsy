@@ -590,12 +590,46 @@ html:not(.cookie-consent-known) .pub-theme .pub-fixed-bottom {
 .pub-theme .pub-mascot--large { --pub-mascot-size: 12.5rem; }
 .pub-theme .pub-mascot--hero { --pub-mascot-size: 16rem; }
 
-.pub-theme .pub-mascot__img {
+.pub-theme .pub-mascot__img,
+.pub-theme .pub-mascot__svg {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   transform-origin: 50% 90%;
+}
+
+.pub-theme .pub-mascot--avatar {
+  --pub-mascot-size: 3.5rem;
+}
+
+.pub-theme .pub-mascot--ghost .pub-mascot__svg,
+.pub-theme .pub-mascot--ghost .pub-mascot__ghost {
+  filter: brightness(0);
+  opacity: 0.12;
+}
+
+.pub-theme .pub-mascot--pose-uitleggen .pub-mascot__svg {
+  animation: pub-mascot-claw-hint 2.8s ease-in-out infinite;
+}
+
+.pub-theme .pub-mascot--pose-juichen .pub-mascot__svg {
+  animation: pub-mascot-bounce 1.8s ease-in-out infinite;
+}
+
+.pub-theme .pub-mascot--pose-nadenken .pub-mascot__svg {
+  animation: pub-mascot-breathe 4s ease-in-out infinite;
+}
+
+@keyframes pub-mascot-claw-hint {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(-3deg); }
+  60% { transform: rotate(2deg); }
+}
+
+@keyframes pub-mascot-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
 }
 
 .pub-theme .pub-mascot--mirror {
@@ -609,6 +643,14 @@ html:not(.cookie-consent-known) .pub-theme .pub-fixed-bottom {
 .pub-theme .pub-mascot--ghost .pub-mascot__img {
   filter: brightness(0);
   opacity: 0.09;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pub-theme .pub-mascot--pose-uitleggen .pub-mascot__svg,
+  .pub-theme .pub-mascot--pose-juichen .pub-mascot__svg,
+  .pub-theme .pub-mascot--pose-nadenken .pub-mascot__svg {
+    animation: none;
+  }
 }
 
 .pub-theme .pub-mascot--fb-diving .pub-mascot__img {

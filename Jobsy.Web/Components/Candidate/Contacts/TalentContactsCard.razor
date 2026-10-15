@@ -1,7 +1,9 @@
 @namespace Jobsy.Web.Components.Candidate.Contacts
 @using System.Globalization
 @using Jobsy.Core.Localization
+@using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Services
 @inject CultureState Culture
 
@@ -29,7 +31,11 @@
     {
         <div class="talent-empty">
             <div class="talent-empty__lob" aria-hidden="true">
-                <img class="lobsy-coach-art" src="/images/brand/mascot-coach.webp" alt="" width="72" height="72" />
+                <LobsyMascot Pose="MascotPose.Nadenken"
+                             Variant="LobsyMascotArt.MascotVariant.Avatar"
+                             Size="MascotSize.Small"
+                             Alt=""
+                             Class="lobsy-coach-art" />
             </div>
             <p class="talent-empty__text">@Culture.Format("TalentC.Empty.Text", Word)</p>
             <p class="career-card__discovery">

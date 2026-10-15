@@ -1,4 +1,6 @@
 @namespace Jobsy.Web.Components
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
 @inject CultureState Culture
 @inject IJSRuntime Js
 
@@ -18,12 +20,10 @@
         @if (Mood == LobsyDialogMood.Celebrate)
         {
             <div class="lobsy-dialog__celebrate">
-                <img src="@MascotSrc"
-                     alt="@MascotAltResolved"
-                     class="lobsy-dialog__mascot lobsy-dialog__mascot--party"
-                     width="140"
-                     height="140"
-                     draggable="false" />
+                <LobsyMascot Pose="MascotPose.Juichen"
+                             Size="MascotSize.Medium"
+                             Alt="@MascotAltResolved"
+                             Class="lobsy-dialog__mascot lobsy-dialog__mascot--party" />
                 <div class="share-modal__header lobsy-dialog__header--centered">
                     <h2 id="@TitleId" class="lobsy-dialog__title lobsy-dialog__title--celebrate">@Title</h2>
                     @if (ShowClose)
@@ -45,12 +45,10 @@
         else
         {
             <div class="lobsy-dialog__banner">
-                <img src="@MascotSrc"
-                     alt="@MascotAltResolved"
-                     class="lobsy-dialog__mascot lobsy-dialog__mascot--friendly"
-                     width="72"
-                     height="72"
-                     draggable="false" />
+                <LobsyMascot Pose="MascotPose.Uitleggen"
+                             Size="MascotSize.Small"
+                             Alt="@MascotAltResolved"
+                             Class="lobsy-dialog__mascot lobsy-dialog__mascot--friendly" />
                 <div class="lobsy-dialog__banner-text">
                     <div class="share-modal__header">
                         <h2 id="@TitleId" class="lobsy-dialog__title">@Title</h2>
@@ -79,8 +77,6 @@
 }
 
 @code {
-    private const string MascotSrc = Jobsy.Web.Media.BrandImages.AbsoluteWebp256;
-
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string TitleId { get; set; } = "lobsy-dialog-title";

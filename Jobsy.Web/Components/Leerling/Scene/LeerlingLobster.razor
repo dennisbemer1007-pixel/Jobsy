@@ -1,4 +1,6 @@
 @namespace Jobsy.Web.Components.Leerling.Scene
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
 
 @{
     var gone = Math.Clamp(PlatesShed, 0, 10);
@@ -6,6 +8,9 @@
     var size = Size > 0 ? Size : LeerlingLobsterPlates.SizeForStep(PlatesShed, Mobile);
     var plates = LeerlingLobsterPlates.PlateMarkup(gone, maskId);
     var showCracks = gone < 6;
+    var sb = new System.Text.StringBuilder(2200);
+    LobsyMascotArt.AppendCharacter(sb, CoachPose, $"ll-{_uid}");
+    var characterMarkup = sb.ToString();
 }
 
 <svg class="ll-lob @(NewShell ? "ll-lob--new" : null)"
@@ -25,7 +30,9 @@
             <stop offset="1" style="stop-color:color-mix(in srgb,var(--shell-old) 80%,var(--brand-deep))" />
         </linearGradient>
     </defs>
-    <image href="/images/brand/mascot-256.webp" width="256" height="256" />
+    <g class="ll-lob__mascot" transform="translate(64 36) scale(1.05)">
+        @((MarkupString)characterMarkup)
+    </g>
     @if (NewShell)
     {
         <g class="ll-lob__nshell">
@@ -61,5 +68,6 @@
     [Parameter] public int? FallingPlate { get; set; }
     [Parameter] public int Size { get; set; }
     [Parameter] public bool Mobile { get; set; }
+    [Parameter] public MascotPose CoachPose { get; set; } = MascotPose.Uitleggen;
     [Parameter] public string Label { get; set; } = "Lobsy de kreeft";
 }

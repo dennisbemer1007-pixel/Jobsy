@@ -1,4 +1,6 @@
 @namespace Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
 @using Jobsy.Web.Services
 @using Microsoft.Extensions.DependencyInjection
 @implements IDisposable
@@ -16,11 +18,11 @@
         </div>
     }
     <div class="ll-coach__figure" aria-hidden="true">
-        <img src="/images/brand/mascot-coach.webp"
-             alt=""
-             width="72"
-             height="72"
-             decoding="async" />
+        <LobsyMascot Pose="MascotPose.Uitleggen"
+                     Variant="LobsyMascotArt.MascotVariant.Avatar"
+                     Size="MascotSize.Small"
+                     Alt=""
+                     Class="ll-coach__mascot" />
     </div>
 </div>
 

@@ -1,4 +1,6 @@
 @namespace Jobsy.Web.Components
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @implements IDisposable
 @inject NavigationManager Navigation
@@ -22,12 +24,11 @@
             aria-haspopup="dialog"
             aria-expanded="@(ChatHost.IsOpen ? "true" : "false")"
             aria-controls="lobsy-assistant-panel">
-        <img src="/images/brand/mascot-coach.webp"
-             srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
-             alt=""
-             width="128"
-             height="128"
-             decoding="async" />
+        <LobsyMascot Pose="MascotPose.Uitleggen"
+                     Variant="LobsyMascotArt.MascotVariant.Avatar"
+                     Size="MascotSize.Small"
+                     Class="lobsy-coach-dock__mascot"
+                     Alt="" />
         <span class="visually-hidden">@AskLabel</span>
     </button>
 </div>

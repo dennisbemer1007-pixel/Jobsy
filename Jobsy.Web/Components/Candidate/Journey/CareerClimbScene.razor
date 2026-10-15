@@ -1,5 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Journey
 @using System.Globalization
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
 <div class="career-scene @(Mobile ?"career-scene--mobile" : "career-scene--desktop") @(Celebrate ? "career-scene--celebrate" : null)"
      aria-hidden="true">
     @((MarkupString)_svg)
@@ -7,11 +9,11 @@
     @if ((Variant != ClimbVariant.Stones || ShowLobster) && _points.Count > 0)
     {
         <div class="career-scene__lob" style="--x:@(LobsterX)%;--y:@(LobsterY)%;--size:@(LobsterSize)px">
-            <img class="lobsy-coach-art"
-                 src="/images/brand/mascot-coach.webp"
-                 alt=""
-                 width="@LobsterSize"
-                 height="@LobsterSize" />
+            <LobsyMascot Pose="@(Celebrate ? MascotPose.Juichen : MascotPose.GoedGedaan)"
+                         Variant="LobsyMascotArt.MascotVariant.Avatar"
+                         Size="MascotSize.Small"
+                         Alt=""
+                         Class="lobsy-coach-art career-scene__mascot" />
         </div>
     }
 

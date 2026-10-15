@@ -3,7 +3,9 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Careers
 @using Jobsy.Core.Localization
+@using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Media
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
@@ -15,13 +17,10 @@
 <div class="journey-page day-life">
     <section class="day-life__card" aria-labelledby="day-title">
         <div class="day-life__hello">
-            <img class="day-life__mascot"
-                 src="/images/brand/mascot-coach.webp"
-                 srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
-                 alt=""
-                 width="96"
-                 height="96"
-                 decoding="async" />
+            <LobsyMascot Pose="MascotPose.Uitleggen"
+                         Size="MascotSize.Small"
+                         Alt=""
+                         Class="day-life__mascot" />
             <p class="day-life__speech">@Culture["Day.Invite"]</p>
         </div>
         <h1 id="day-title">@Heading</h1>
@@ -111,13 +110,11 @@
         {
             <aside class="day-life__fit" aria-labelledby="day-fit-title">
                 <div class="day-life__tip">
-                    <img class="day-life__mascot day-life__mascot--tip"
-                         src="/images/brand/mascot-coach.webp"
-                         srcset="/images/brand/mascot-coach.webp 1x, /images/brand/mascot-coach@2x.webp 2x"
-                         alt=""
-                         width="72"
-                         height="72"
-                         decoding="async" />
+                    <LobsyMascot Pose="MascotPose.Nieuwsgierig"
+                                 Variant="LobsyMascotArt.MascotVariant.Avatar"
+                                 Size="MascotSize.Small"
+                                 Alt=""
+                                 Class="day-life__mascot day-life__mascot--tip" />
                     <p class="day-life__speech">@Culture["Day.FitLead"]</p>
                 </div>
                 <h2 id="day-fit-title">@Culture["Day.FitTitle"]</h2>

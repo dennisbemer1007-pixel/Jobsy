@@ -5,7 +5,7 @@ namespace Jobsy.Web.Components.Leerling.Scene;
 /// <summary>Plate SVG paths from docs/mockups/scholen/base/ontdekkingsreis_build.py (10 plates).</summary>
 public static class LeerlingLobsterPlates
 {
-    public const string BodyPath = "M95 150C93 190 112 214 128 241C144 214 165 190 165 150Z";
+    public const string BodyPath = Jobsy.Web.Components.Brand.LobsyMascotArt.JourneyBodyPath;
 
     public const string CracksPath =
         "M108 158l6 8-3 7M150 196l-5 6 3 5M120 222l5 6M104 128l5 4M160 142l-4 3M118 56l4 6";

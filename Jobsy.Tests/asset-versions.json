@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "855d58c40f780fd4209d51b3205ad8a36ec680ac91b80f85208a2cbc3d509b8d",
+    "sha256": "bb6079d70cb24de244568a3d725601abc5090ff47b66f0e351fd1f78efb5cb0f",
     "v": "20261015-05"
   },
   "css/critical.css": {
@@ -100,7 +100,7 @@
     "v": "20261015-02"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "a20ce89f5c11e4fd2d53febcc6d68d16ca3de7939d1f9ed478a35f07029681f6",
+    "sha256": "e42a7f40d494d7de302ae5b0606aeb781110e7b319a217f85bb3fa7cff52197c",
     "v": "20261015-06"
   },
   "css/features/proactive-matching.css": {
@@ -112,7 +112,7 @@
     "v": "20261004-10"
   },
   "css/features/public-theme.css": {
-    "sha256": "92e73fda8b6ce147006d097245b10eee95dabb43ad75d9af8999a5009a0daa99",
+    "sha256": "da71f0b0db87c50777354e53012ec3f90a3dfe8e15d7f16ae969ab6191625267",
     "v": "20261004-11"
   },
   "css/features/questionnaire.css": {
@@ -149,18 +149,18 @@
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
-    "v": "20261004-13"
+    "v": "20261015-coral-mascot"
   },
   "favicon.png": {
-    "sha256": "71d7450b21a8326241ce974f03b8e1aea59cceb2c493b163d731c5e8f875d278",
-    "v": "20261004-13"
+    "sha256": "3c0151450ba116c4e2856cd0302d59df12905fa3e16d95057eb4d2d9f00f7136",
+    "v": "20261015-coral-mascot"
   },
   "icons/apple-touch-icon.png": {
-    "sha256": "226498db3c36a03789a4d3d80af373c11fcdd52635bab0327a9e8004930aff4c",
-    "v": "20261004-13"
+    "sha256": "98ecbd3511876d75b3527eaeb8e46253fb77ce8bf63f948e5489883474351a04",
+    "v": "20261015-coral-mascot"
   },
   "images/brand/mascot-128.png": {
-    "sha256": "a9cd27038f64cc06840f62837b92ccb0aa918261f3d86d756b2f8e53bbd1a352",
+    "sha256": "b85f4d18ba92a973094f3d6a5463121843f9c179eae0819568812baeb50da8bf",
     "v": "20261004-13"
   },
   "js/app-core.js": {
@@ -236,15 +236,15 @@
     "v": "20261004-13"
   },
   "manifest.webmanifest": {
-    "sha256": "fe76719e490f6c2dc046d7049216f82dd5422e5ba529ff1aec1f1bfa517d682b",
+    "sha256": "e611c04512959155e8705b52b51a875ab198ee3911bbc84b17a4ff95e764016c",
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "136cc26c1da7d62f9bb003d33fc3de55b7ce95ae4becfacbe124c01ea85ff552",
+    "sha256": "0af06fb0a4af293896e10cadf6ef3bc9434d4ad4cf30781db083b8283ffb6ccc",
     "v": "20261015-02"
   },
   "service-worker.published.js": {
-    "sha256": "38cf9a0597f4802d5e368ea57ec4ff6d31fd9589060c40be72f0ad0eb5dea5ed",
+    "sha256": "9957b13c94f86b48f11704b16430e70b6e6f7e6252ad03eabd07bfc5e4ab4fe9",
     "v": "20261015-02"
   }
 }

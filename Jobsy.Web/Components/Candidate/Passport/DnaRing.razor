@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
 @using System.Globalization
+@using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Components.Candidate.Dna
+@using Jobsy.Web.Media
 
 <svg class="passport-dna-ring @CssClass"
      viewBox="0 0 120 120"
@@ -36,12 +38,23 @@
             stroke="var(--gold-light)"
             stroke-width="1.5"
             stroke-dasharray="3 3" />
-    <image href="/images/brand/mascot-128.webp"
-           x="36" y="36" width="48" height="48"
-           preserveAspectRatio="xMidYMid meet" />
+    <g transform="translate(36 36) scale(0.375)" aria-hidden="true">
+        @((MarkupString)_centerMarkup)
+    </g>
 </svg>
 
 @code {
+    private static int _nextUid;
+    private readonly int _uid = Interlocked.Increment(ref _nextUid);
+    private string _centerMarkup = "";
+
+    protected override void OnParametersSet()
+    {
+        var sb = new System.Text.StringBuilder(2200);
+        LobsyMascotArt.AppendCharacter(sb, MascotPose.Rustig, $"dna-{_uid}");
+        _centerMarkup = sb.ToString();
+    }
+
     [Parameter] public double CompetenceProgress { get; set; }
     [Parameter] public double CareerProgress { get; set; }
     [Parameter] public double CultureProgress { get; set; }

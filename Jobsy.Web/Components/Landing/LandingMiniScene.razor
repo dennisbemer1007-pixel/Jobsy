@@ -5,11 +5,21 @@
     <svg viewBox="0 0 380 118" preserveAspectRatio="xMidYMid slice">
         @((MarkupString)SvgInner)
     </svg>
-    <LobsyMascot Pose="MascotPose.Default" Size="MascotSize.Tiny" Alt="" Class="pub-landing__mini-mascot" />
+    <LobsyMascot Pose="@MiniPose" Size="MascotSize.Tiny" Alt="" Class="pub-landing__mini-mascot" />
 </div>
 
 @code {
     [Parameter] public string Kind { get; set; } = "dive";
+
+    private MascotPose MiniPose => Kind switch
+    {
+        "dive" => MascotPose.Nieuwsgierig,
+        "antenna" => MascotPose.Rustig,
+        "rock" => MascotPose.Nadenken,
+        "claw" => MascotPose.GoedGedaan,
+        "grow" => MascotPose.Juichen,
+        _ => MascotPose.Uitleggen,
+    };
 
     private string SvgInner => Kind switch
     {

@@ -67,7 +67,8 @@ public class EmailAssetTests
         var assistant = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyAssistantChat.razor"));
         Assert.Contains("UseMascot=\"true\"", assistant);
         var coach = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyCoachAvatar.razor"));
-        Assert.Contains("BrandImages.MascotWebp128", coach);
+        Assert.Contains("<LobsyMascot", coach);
+        Assert.Contains("MascotVariant.Avatar", coach);
         Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "images", "brand", "mascot-128.png")));
     }
 

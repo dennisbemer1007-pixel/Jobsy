@@ -4,7 +4,9 @@
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]
+@using Jobsy.Web.Components.Brand
 @using Jobsy.Web.Components.Match
+@using Jobsy.Web.Media
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Models
@@ -23,12 +25,11 @@
      data-testid="match-page">
     <header class="match-page__top">
         <div class="match-page__brand">
-            <img class="match-page__mascot"
-                 src="/images/brand/mascot-128.png?v=20261004-13"
-                 width="40"
-                 height="40"
-                 alt=""
-                 aria-hidden="true" />
+            <LobsyMascot Pose="MascotPose.Rustig"
+                         Variant="LobsyMascotArt.MascotVariant.Avatar"
+                         Size="MascotSize.Tiny"
+                         Alt=""
+                         Class="match-page__mascot" />
             <div>
                 <h1 class="match-page__title">@Culture["Match.DialogTitle"]</h1>
                 @if (_deck.Gate.IsProfileComplete && _deck.Gate.FitGateOpen && _deck.Count > 0 && !_deck.IsFinished)

@@ -20489,12 +20489,18 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     overflow: visible;
 }
 
-.lobsy-coach-dock__btn img {
+.lobsy-coach-dock__btn img,
+.lobsy-coach-dock__btn .lobsy-coach-dock__mascot,
+.lobsy-coach-dock__btn .pub-mascot {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: contain;
     background: transparent;
+}
+
+.lobsy-coach-dock__btn .pub-mascot {
+    --pub-mascot-size: 100%;
 }
 
 .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
@@ -20721,6 +20727,13 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     max-width: 100%;
     object-fit: contain;
     background: transparent;
+}
+
+.career-scene__lob .pub-mascot,
+.career-scene__lob .lobsy-coach-art {
+    --pub-mascot-size: var(--size, 64px);
+    width: var(--size, 64px);
+    height: var(--size, 64px);
 }
 
 .career-scene__lob .lobsy-coach-art {

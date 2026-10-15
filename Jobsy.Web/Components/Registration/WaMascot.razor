@@ -1,15 +1,12 @@
 @namespace Jobsy.Web.Components.Registration
+@using Jobsy.Web.Components.Brand
+@using Jobsy.Web.Media
 
-<div class="wa-mascot wa-mascot--@Pose.ToString().ToLowerInvariant() @(SizeClass)" aria-hidden="true">
-    <img class="wa-mascot__img"
-         src="@Jobsy.Web.Media.BrandImages.MascotWebp256"
-         srcset="@Jobsy.Web.Media.BrandImages.MascotSrcSet56"
-         sizes="(max-width: 640px) 96px, 150px"
-         width="150"
-         height="150"
-         alt=""
-         loading="lazy"
-         decoding="async" />
+<div class="wa-mascot wa-mascot--@PoseSlug @(SizeClass)" aria-hidden="true">
+    <LobsyMascot Pose="@MappedPose"
+                 Size="@MascotSizeValue"
+                 Class="wa-mascot__svg"
+                 Alt="" />
 </div>
 
 @code {
@@ -22,6 +19,22 @@
 
     [Parameter] public MascotPose Pose { get; set; } = MascotPose.Waving;
     [Parameter] public string Size { get; set; } = "md";
+
+    private Media.MascotPose MappedPose => Pose switch
+    {
+        MascotPose.Celebrating => Media.MascotPose.Juichen,
+        MascotPose.Default => Media.MascotPose.Rustig,
+        _ => Media.MascotPose.Uitleggen,
+    };
+
+    private MascotSize MascotSizeValue => Size switch
+    {
+        "sm" => MascotSize.Small,
+        "lg" => MascotSize.Large,
+        _ => MascotSize.Medium,
+    };
+
+    private string PoseSlug => Pose.ToString().ToLowerInvariant();
 
     private string SizeClass => Size switch
     {

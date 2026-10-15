@@ -15,8 +15,8 @@ public class CandidateRun6GuardTests
         var assistant = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/LobsyAssistantChat.razor"));
 
         Assert.Contains("id=\"lobsy-coach-btn\"", coach, StringComparison.Ordinal);
-        Assert.Contains("/images/brand/mascot-coach.webp", coach, StringComparison.Ordinal);
-        Assert.Contains("alt=\"\"", coach, StringComparison.Ordinal);
+        Assert.Contains("<LobsyMascot", coach, StringComparison.Ordinal);
+        Assert.Contains("MascotPose.Uitleggen", coach, StringComparison.Ordinal);
         Assert.Contains("<LobsyCoach", layout, StringComparison.Ordinal);
         Assert.Contains("HideEdgeTab=\"true\"", layout, StringComparison.Ordinal);
         Assert.Contains("Coach.Feedback", assistant, StringComparison.Ordinal);

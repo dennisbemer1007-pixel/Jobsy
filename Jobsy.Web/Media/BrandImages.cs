@@ -4,7 +4,7 @@ namespace Jobsy.Web.Media;
 public static class BrandImages
 {
     public const string Version = "20261004-13";
-    public const string MascotVersion = "20261004-13";
+    public const string MascotVersion = "20261015-coral-mascot";
 
     public const string Webp64 = $"images/brand/lobsy-64.webp?v={Version}";
     public const string Webp128 = $"images/brand/lobsy-128.webp?v={Version}";

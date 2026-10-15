@@ -23,8 +23,13 @@
 }
 
 .journey__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
   padding: var(--space-5);
   color: var(--muted);
+  text-align: center;
 }
 
 /* ---- scene (illustration; gradients allowed) ---- */

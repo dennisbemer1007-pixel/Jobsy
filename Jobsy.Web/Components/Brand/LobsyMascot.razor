@@ -1,13 +1,16 @@
 @namespace Jobsy.Web.Components.Brand
 @using Jobsy.Web.Media
 @*
-  One public mascot component. Fallback = today's BrandImages mascot + CSS pose approx.
-  Designer art = file swap in MascotAssets (docs/brand/mascot-assets.md). No JS.
+  Inline SVG mascot (6 expressions + shell ghost). External Svg/Raster still supported for tests.
 *@
 
 <span class="@RootClass"
       @attributes="RootAttributes">
-@if (Source.IsVector)
+@if (Source.IsInline)
+{
+    @((MarkupString)InlineSvg)
+}
+else if (Source.IsVector)
 {
     <img class="pub-mascot__img"
          src="@Abs(Source.Src)"
@@ -53,14 +56,18 @@ else
 </span>
 
 @code {
-    [Parameter] public MascotPose Pose { get; set; } = MascotPose.Default;
+    private static int _nextUid;
+
+    [Parameter] public MascotPose Pose { get; set; } = MascotPose.Rustig;
     [Parameter] public MascotSize Size { get; set; } = MascotSize.Medium;
+    [Parameter] public LobsyMascotArt.MascotVariant Variant { get; set; } = LobsyMascotArt.MascotVariant.Full;
     [Parameter] public bool Mirror { get; set; }
-    /// <summary>When true: eager + fetchpriority=high. Else lazy + async decode.</summary>
     [Parameter] public bool Priority { get; set; }
     /// <summary>Empty = decorative (aria-hidden). Non-empty = accessible name.</summary>
     [Parameter] public string Alt { get; set; } = "";
     [Parameter] public string? Class { get; set; }
+
+    private readonly int _uid = Interlocked.Increment(ref _nextUid);
 
     private MascotSource Source => MascotAssets.Resolve(Pose);
     private int BoxPx => (int)Size;
@@ -71,17 +78,41 @@ else
     private const string Decoding = "async";
     private string? FetchPriority => Priority ? "high" : null;
 
+    private string InlineSvg
+    {
+        get
+        {
+            var sb = new System.Text.StringBuilder(2200);
+            LobsyMascotArt.AppendSvg(sb, Pose, _uid.ToString(), Variant, shellGhost: Pose == MascotPose.Shell);
+            var svg = sb.ToString();
+            if (Mirror)
+            {
+                svg = svg.Replace(
+                    "class=\"pub-mascot__svg\"",
+                    "class=\"pub-mascot__svg pub-mascot__svg--mirror\"",
+                    StringComparison.Ordinal);
+            }
+
+            return svg;
+        }
+    }
+
     private string RootClass
     {
         get
         {
             var parts = new List<string> { "pub-mascot", MascotAssets.SizeCssClass(Size) };
+            if (Variant == LobsyMascotArt.MascotVariant.Avatar)
+            {
+                parts.Add("pub-mascot--avatar");
+            }
+
             if (Mirror)
             {
                 parts.Add("pub-mascot--mirror");
             }
 
-            if (Source.IsFallback && !string.IsNullOrEmpty(Source.FallbackTransformClass))
+            if (!string.IsNullOrEmpty(Source.FallbackTransformClass))
             {
                 parts.Add(Source.FallbackTransformClass);
             }
@@ -119,7 +150,6 @@ else
 
     private static string AbsSrcSet(string srcSet)
     {
-        // "a.webp?v=x 64w, b.webp?v=y 128w" → leading slash on each URL.
         return string.Join(", ",
             srcSet.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
                 .Select(part =>
@@ -134,12 +164,15 @@ else
                 }));
     }
 
-    /// <summary>
-    /// Preload link for HeadContent (landing hero). Prefer calling with the same pose/size as the visible mascot.
-    /// </summary>
+    /// <summary>Preload link for HeadContent. Inline SVG needs no preload.</summary>
     public static MarkupString PreloadLink(MascotPose pose, MascotSize size)
     {
         var source = MascotAssets.Resolve(pose);
+        if (source.IsInline)
+        {
+            return default;
+        }
+
         var sizes = MascotAssets.SizesAttribute(size);
         if (source.IsVector)
         {
@@ -148,13 +181,6 @@ else
         }
 
         var srcset = source.SrcSet is null ? Abs(source.Src) : AbsSrcSet(source.SrcSet);
-        if (source.AvifSrcSet is not null)
-        {
-            // Browsers that understand imagesrcset pick the best candidate; include WebP set (AVIF via picture at render).
-            return new MarkupString(
-                $"""<link rel="preload" as="image" imagesrcset="{srcset}" imagesizes="{sizes}" fetchpriority="high" />""");
-        }
-
         return new MarkupString(
             $"""<link rel="preload" as="image" imagesrcset="{srcset}" imagesizes="{sizes}" fetchpriority="high" />""");
     }
