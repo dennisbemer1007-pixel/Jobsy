@@ -4,104 +4,123 @@
 
 <aside class="journey-rail card" aria-labelledby="journey-rail-title">
     <h2 id="journey-rail-title">@Culture["Discovery.Rail.Title"]</h2>
-    <p class="journey-rail__count">@CountText</p>
-    <ol class="journey-rail__route" aria-label="@Culture["Discovery.Rail.Aria"]">
-        @{
-            var beachDone = LayersOff > 0;
-            var beachCurrent = ActiveStep == 0 && !LightStepComplete && !beachDone;
-        }
-        <li class="journey-rail__step @(beachCurrent ? "is-current" : beachDone ? "is-done" : "is-todo")"
-            aria-current="@(beachCurrent ? "step" : null)"
-            aria-label="@BeachAria(beachCurrent, beachDone)">
-            @if (beachCurrent)
-            {
-                <span class="journey-rail__dot journey-rail__dot--current" aria-hidden="true"></span>
-            }
-            else if (beachDone)
-            {
-                <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
-            }
-            else
-            {
-                <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true"></span>
-            }
-            <div>
-                <b>@Culture["Discovery.Zone.Beach"]</b>
-                <small>@Culture["Discovery.Rail.Start"]</small>
-            </div>
-        </li>
-        @{
-            string? zone = null;
-        }
-        @foreach (var step in JourneyCatalog.Steps)
+    @if (!string.IsNullOrEmpty(ProgressHeadText))
+    {
+        <p class="journey-rail__head">@ProgressHeadText</p>
+    }
+    <div class="journey-rail__track" role="progressbar"
+         aria-valuemin="0"
+         aria-valuemax="10"
+         aria-valuenow="@LayersOff"
+         aria-label="@Culture.Format("Discovery.Rail.LayersAria", LayersOff)">
+        @for (var k = 0; k < 10; k++)
         {
-            if (zone != step.ZoneKey)
+            var segClass = k < LayersOff ? "is-done" : ActiveStep == k + 1 ? "is-here" : null;
+            <i class="@segClass"></i>
+        }
+    </div>
+    <ol class="journey-rail__route" aria-label="@Culture["Discovery.Rail.Aria"]">
+        @foreach (var phase in Phases)
+        {
+            if (IsPhaseCollapsed(phase))
             {
-                zone = step.ZoneKey;
-                <li class="journey-rail__zone" aria-hidden="true">@Culture[JourneyCatalog.ZoneKeys[zone]]</li>
+                <li class="journey-rail__phase journey-rail__phase--fold">
+                    <span class="journey-rail__phase-label">@Culture[phase.TitleKey]</span>
+                    <span class="journey-rail__phase-meta">@PhaseFoldMeta(phase)</span>
+                </li>
+                continue;
             }
 
-            var done = CompletedSteps.Contains(step.Number);
-            var current = ActiveStep == step.Number;
-            var clickable = done && !current && OnGoToStep.HasDelegate;
-            var rowClass = current ? "is-current" : done ? "is-done" : "is-todo";
-            if (clickable)
-            {
-                rowClass += " is-clickable";
-            }
+            <li class="journey-rail__phase journey-rail__phase--open">
+                <p class="journey-rail__phase-label">@Culture[phase.TitleKey]</p>
+                <ul class="journey-rail__steps">
+                    @if (phase.IsBeach)
+                    {
+                        var beachDone = LayersOff > 0;
+                        var beachCurrent = ActiveStep == 0 && !LightStepComplete && !beachDone;
+                        <li class="journey-rail__step @(beachCurrent ? "is-current" : beachDone ? "is-done" : "is-todo")"
+                            aria-current="@(beachCurrent ? "step" : null)"
+                            aria-label="@BeachAria(beachCurrent, beachDone)">
+                            @StepMarker(0, beachCurrent, beachDone)
+                            <div>
+                                <b>@Culture["Discovery.Zone.Beach"]</b>
+                                @if (beachCurrent)
+                                {
+                                    <small>@Culture["Discovery.Rail.Start"]</small>
+                                }
+                            </div>
+                        </li>
+                    }
+                    else if (phase.IsLight)
+                    {
+                        <li class="journey-rail__step @(LightStepComplete ? "is-done" : "is-todo is-end")"
+                            aria-label="@EndAria()">
+                            @if (LightStepComplete)
+                            {
+                                <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
+                            }
+                            else
+                            {
+                                <span class="journey-rail__dot journey-rail__dot--open journey-rail__dot--sun" aria-hidden="true">☼</span>
+                            }
+                            <div>
+                                <b>@Culture["Discovery.Zone.Light"]</b>
+                                @if (IsLightCurrent)
+                                {
+                                    <small>@Culture["Discovery.Rail.NewShell"]</small>
+                                }
+                            </div>
+                        </li>
+                    }
+                    else
+                    {
+                        @foreach (var step in StepsInPhase(phase))
+                        {
+                            var done = CompletedSteps.Contains(step.Number);
+                            var current = ActiveStep == step.Number;
+                            var clickable = done && !current && OnGoToStep.HasDelegate;
+                            var rowClass = current ? "is-current" : done ? "is-done" : "is-todo";
+                            if (clickable)
+                            {
+                                rowClass += " is-clickable";
+                            }
 
-            <li class="journey-rail__step @rowClass"
-                aria-current="@(current ? "step" : null)"
-                aria-label="@StepAria(step.Number, step.TitleKey, current, done)">
-                @if (clickable)
-                {
-                    <button type="button"
-                            class="journey-rail__jump"
-                            @onclick="() => OnGoToStep.InvokeAsync(step.Number)">
-                        @StepMarker(step.Number, current, done)
-                        <div>
-                            <b>@Culture[step.TitleKey]</b>
-                            <small>@Culture.Format("Discovery.Rail.LayerOff", step.Number)</small>
-                        </div>
-                    </button>
-                }
-                else
-                {
-                    @StepMarker(step.Number, current, done)
-                    <div>
-                        <b>@Culture[step.TitleKey]</b>
-                        <small>@(done
-                            ? Culture.Format("Discovery.Rail.LayerOff", step.Number)
-                            : Culture[step.SubKey])</small>
-                    </div>
-                }
+                            <li class="journey-rail__step @rowClass"
+                                aria-current="@(current ? "step" : null)"
+                                aria-label="@StepAria(step.Number, step.TitleKey, current, done)">
+                                @if (clickable)
+                                {
+                                    <button type="button"
+                                            class="journey-rail__jump"
+                                            @onclick="() => OnGoToStep.InvokeAsync(step.Number)">
+                                        @StepMarker(step.Number, current, done)
+                                        <div>
+                                            <b>@Culture[step.TitleKey]</b>
+                                            @if (current)
+                                            {
+                                                <small>@Culture[step.SubKey]</small>
+                                            }
+                                        </div>
+                                    </button>
+                                }
+                                else
+                                {
+                                    @StepMarker(step.Number, current, done)
+                                    <div>
+                                        <b>@Culture[step.TitleKey]</b>
+                                        @if (current)
+                                        {
+                                            <small>@Culture[step.SubKey]</small>
+                                        }
+                                    </div>
+                                }
+                            </li>
+                        }
+                    }
+                </ul>
             </li>
         }
-        <li class="journey-rail__step @(LightStepComplete ? "is-done" : "is-todo is-end")"
-            aria-label="@EndAria()">
-            @if (LightStepComplete)
-            {
-                <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
-            }
-            else
-            {
-                <span class="journey-rail__dot journey-rail__dot--open journey-rail__dot--sun" aria-hidden="true">☼</span>
-            }
-            <div>
-                <b>@Culture["Discovery.Zone.Light"]</b>
-                <small>@Culture["Discovery.Rail.NewShell"]</small>
-            </div>
-        </li>
     </ol>
-    <div class="journey-rail__layers" aria-label="@Culture.Format("Discovery.Rail.LayersAria", LayersOff)">
-        <span class="journey-rail__segs">
-            @for (var k = 0; k < 10; k++)
-            {
-                <i class="@(k < LayersOff ? "is-off" : null)"></i>
-            }
-        </span>
-        <span>@Culture.Format("Discovery.Rail.LayersCount", LayersOff)</span>
-    </div>
     @if (ActiveStep > 0 || LayersOff > 0)
     {
         <p class="journey-rail__saved @SaveClass" aria-live="polite">@SaveText</p>
@@ -117,6 +136,17 @@
 
     private static readonly HashSet<int> EmptySteps = [];
 
+    private sealed record PhaseInfo(string Id, string TitleKey, string? ZoneKey, bool IsBeach, bool IsLight);
+
+    private static readonly PhaseInfo[] Phases =
+    [
+        new("beach", "Discovery.Zone.Beach", null, true, false),
+        new("kust", "Discovery.Zone.Coast", "kust", false, false),
+        new("rots", "Discovery.Zone.Rocks", "rots", false, false),
+        new("diep", "Discovery.Zone.Deep", "diep", false, false),
+        new("light", "Discovery.Zone.Light", null, false, true)
+    ];
+
     private int LayersOff
     {
         get
@@ -126,27 +156,77 @@
         }
     }
 
-    private string CountText
+    private string CurrentPhaseId => ActiveStep switch
+    {
+        0 when LayersOff == 0 && !LightStepComplete => "beach",
+        >= 1 and <= 2 => "kust",
+        >= 3 and <= 6 => "rots",
+        >= 7 and <= 10 => "diep",
+        _ => "light"
+    };
+
+    private bool IsLightCurrent => CurrentPhaseId == "light";
+
+    private string? ProgressHeadText
     {
         get
         {
             if (ActiveStep == 0 && LayersOff == 0)
             {
-                return Culture["Discovery.Rail.StartCount"];
+                return Culture["Discovery.Rail.StartCountShort"];
             }
 
             if (LightStepComplete && LayersOff >= 10)
             {
-                return Culture["Discovery.Rail.DoneCount"];
+                return Culture["Discovery.Rail.DoneCountShort"];
             }
 
             if (ActiveStep is >= 1 and <= 10)
             {
-                return Culture.Format("Discovery.Rail.StepLayersCount", ActiveStep, LayersOff);
+                return Culture.Format("Discovery.Rail.StepCount", ActiveStep);
             }
 
-            return Culture.Format("Discovery.Rail.ProgressCount", LayersOff);
+            return null;
         }
+    }
+
+    private IEnumerable<JourneyCatalog.StepInfo> StepsInPhase(PhaseInfo phase)
+        => string.IsNullOrEmpty(phase.ZoneKey)
+            ? []
+            : JourneyCatalog.Steps.Where(s => s.ZoneKey == phase.ZoneKey);
+
+    private bool IsPhaseCollapsed(PhaseInfo phase)
+        => phase.Id != CurrentPhaseId;
+
+    private string PhaseFoldMeta(PhaseInfo phase)
+    {
+        if (phase.IsLight)
+        {
+            return LightStepComplete
+                ? Culture["Discovery.Rail.PhaseDone"]
+                : Culture["Discovery.Rail.PhaseOneStep"];
+        }
+
+        if (phase.IsBeach)
+        {
+            return LayersOff > 0 || ActiveStep > 0
+                ? Culture["Discovery.Rail.PhaseDone"]
+                : Culture["Discovery.Rail.PhaseOneStep"];
+        }
+
+        var steps = StepsInPhase(phase).ToList();
+        if (steps.Count == 0)
+        {
+            return "";
+        }
+
+        if (steps.All(s => CompletedSteps.Contains(s.Number)))
+        {
+            return Culture["Discovery.Rail.PhaseDone"];
+        }
+
+        var remaining = steps.Count(s => !CompletedSteps.Contains(s.Number));
+        return Culture.Format("Discovery.Rail.PhaseSteps", remaining);
     }
 
     private RenderFragment StepMarker(int number, bool current, bool done) => __builder =>
@@ -161,7 +241,7 @@
         }
         else
         {
-            <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true">@number</span>
+            <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true"></span>
         }
     };
 

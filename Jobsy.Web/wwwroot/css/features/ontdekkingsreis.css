@@ -204,7 +204,7 @@
 
 /* ---- rail ---- */
 .journey-rail {
-  padding: 14px 16px;
+  padding: 18px 18px 16px;
   background: var(--surface);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
@@ -220,48 +220,104 @@
   font-weight: 600;
   color: var(--brand);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.journey-rail__count {
+.journey-rail__head {
   font-size: var(--text-sm);
   color: var(--muted);
-  margin: var(--space-1) 0 0;
+  margin: 0.35rem 0 0;
+  line-height: 1.4;
+}
+
+.journey-rail__track {
+  display: flex;
+  gap: 4px;
+  margin-top: 0.65rem;
+}
+
+.journey-rail__track i {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.journey-rail__track i.is-done {
+  background: color-mix(in srgb, var(--brand) 55%, var(--accent-soft));
+}
+
+.journey-rail__track i.is-here {
+  background: var(--brand);
 }
 
 .journey-rail__route {
-  position: relative;
-  margin: var(--space-3) 0 0;
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.journey-rail__phase {
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.journey-rail__route::before {
-  content: "";
-  position: absolute;
-  inset-inline-start: 13px;
-  top: 10px;
-  bottom: 10px;
-  width: 4px;
-  border-radius: 4px;
-  background: var(--sea-3);
+.journey-rail__phase--fold {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0.45rem 0.15rem;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--muted);
 }
 
-.journey-rail__zone {
+.journey-rail__phase--fold .journey-rail__phase-label {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+}
+
+.journey-rail__phase-meta {
+  flex-shrink: 0;
   font-size: var(--text-xs);
-  font-weight: 600;
   color: var(--muted);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: var(--space-2) 0 2px 40px;
+}
+
+.journey-rail__phase--open {
+  padding: 0.15rem 0 0.35rem;
+}
+
+.journey-rail__phase--open .journey-rail__phase-label {
+  margin: 0 0 0.35rem;
+  padding: 0 0.15rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.journey-rail__steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
 }
 
 .journey-rail__step {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 30px;
-  padding-inline-start: 2px;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-height: 34px;
+  padding: 0.35rem 0.35rem 0.35rem 0.15rem;
+  border-radius: var(--radius-sm);
 }
 
 .journey-rail__jump {
@@ -293,58 +349,51 @@
   display: block;
   font-size: var(--text-sm);
   font-weight: 600;
-  line-height: 1.25;
+  line-height: 1.35;
 }
 
 .journey-rail__step small {
   display: block;
+  margin-top: 0.15rem;
   font-size: var(--text-xs);
   color: var(--muted);
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
-.journey-rail__step.is-todo b { font-weight: 400; color: var(--muted); }
+.journey-rail__step.is-todo b { font-weight: 500; color: color-mix(in srgb, var(--text) 70%, var(--muted)); }
 
 .journey-rail__step.is-current {
-  background: var(--accent-soft);
-  border-radius: var(--radius-sm);
-  margin-inline-start: -4px;
-  padding-inline: 4px 6px;
-  min-height: 40px;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 22%, transparent);
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
 }
 
 .journey-rail__step.is-current b { color: var(--brand); }
 
 .journey-rail__dot {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
+  margin-top: 0.1rem;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--surface);
-  border: 2px solid var(--border);
+  border: 1.5px solid color-mix(in srgb, var(--border) 90%, var(--muted));
   color: var(--muted);
   font-size: var(--text-xs);
   font-weight: 600;
   flex: none;
-  position: relative;
-  z-index: 1;
 }
 
 .journey-rail__dot--open {
   background: transparent;
-  color: var(--muted);
-  font-size: 0.68rem;
 }
 
 .journey-rail__dot--check,
 .journey-rail__step.is-done .journey-rail__dot {
-  background: var(--brand);
-  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 88%, var(--surface));
+  border-color: transparent;
   color: #fff;
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 700;
 }
 
@@ -366,40 +415,14 @@
   justify-content: center;
 }
 
-.journey-rail__layers {
-  margin-top: 14px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-
-.journey-rail__segs {
-  display: flex;
-  gap: 3px;
-  flex: 1;
-}
-
-.journey-rail__segs i {
-  flex: 1;
-  height: 10px;
-  border-radius: 9px 9px 3px 3px;
-  background: var(--shell-old);
-}
-
-.journey-rail__segs i.is-off {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--border);
-}
-
 .journey-rail__saved {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: var(--text-xs);
   color: var(--success);
-  margin-top: 10px;
+  margin-top: var(--space-4);
+  line-height: 1.45;
 }
 
 .journey-rail__saved.is-error { color: var(--warn); }
@@ -1486,8 +1509,8 @@
 /* ---- Variant A: calm question shell (ontdekkingsreis vraag) ---- */
 .journey-rail__dot--current {
   background: var(--surface);
-  border: 2px solid var(--brand);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent);
+  border: 2px solid color-mix(in srgb, var(--brand) 70%, var(--border));
+  box-shadow: none;
   color: transparent;
 }
 

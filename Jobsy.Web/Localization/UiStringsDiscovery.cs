@@ -699,6 +699,12 @@ public static class UiStringsDiscovery
             "Zakończ bez testów",
             "Finalizează fără teste",
             "إنهاء بدون اختبارات");
+        Add("Discovery.Rail.PhaseSteps",
+            "{0} stappen", "{0} steps", "{0} kroków", "{0} pași", "{0} خطوات");
+        Add("Discovery.Rail.PhaseOneStep",
+            "1 stap", "1 step", "1 krok", "1 pas", "خطوة واحدة");
+        Add("Discovery.Rail.PhaseDone",
+            "✓ klaar", "✓ done", "✓ gotowe", "✓ gata", "✓ تم");
         Add("Discovery.Rail.DoneCountShort",
             "Klaar · 10 van 10", "Done · 10 of 10", "Gotowe · 10 z 10", "Gata · 10 din 10", "جاهز · 10 من 10");
 

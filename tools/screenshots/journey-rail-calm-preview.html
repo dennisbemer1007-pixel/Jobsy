@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Journey rail calm — preview</title>
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/critical.css" />
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/app.min.css" />
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/features/ontdekkingsreis.css?v=20261015-13" />
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/features/questionnaire.css?v=20261004-10" />
+  <style>
+    body { margin: 0; background: linear-gradient(180deg, var(--sea-7) 0%, var(--sea-8) 100%); font-family: var(--font); }
+    .app-shell--questionnaire { min-height: 100dvh; }
+    .app-main { padding: 0; }
+    .preview-bar {
+      position: sticky; top: 0; z-index: 90;
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 8px 16px; font-size: var(--text-xs); color: var(--muted);
+    }
+  </style>
+</head>
+<body class="app-shell app-shell--questionnaire">
+  <div class="app-main">
+    <p class="preview-bar" id="preview-label">Desktop preview</p>
+    <div class="journey journey--fit journey--depth-8">
+      <div class="journey-mprog journey-only-mobile" role="group" aria-label="Voortgang">
+        <p class="journey-mprog__t journey-mprog__t--question">
+          <span class="journey-mprog__line">
+            <b class="journey-mprog__step-no">Stap 8 van 10</b>
+            <span class="journey-mprog__sep muted">&nbsp;·&nbsp;</span>
+            <span class="journey-mprog__step-name muted">Beroepen</span>
+          </span>
+          <span class="journey-mprog__ok">✓ Bewaard</span>
+        </p>
+        <div class="journey-mtrack">
+          <i class="is-off"></i><i class="is-off"></i><i class="is-off"></i><i class="is-off"></i><i class="is-off"></i><i class="is-off"></i><i class="is-off"></i><i class="is-here"></i><i></i><i></i>
+        </div>
+        <button type="button" class="journey-mprog__drawer">Jouw reis · 7 van 10 afgerond</button>
+      </div>
+
+      <div class="journey-stage">
+        <div class="journey-only-desktop">
+          <aside class="journey-rail card" aria-labelledby="journey-rail-title">
+            <h2 id="journey-rail-title">Jouw reis</h2>
+            <p class="journey-rail__head">Stap 8 van 10</p>
+            <div class="journey-rail__track" role="progressbar" aria-valuemin="0" aria-valuemax="10" aria-valuenow="7">
+              <i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i class="is-done"></i><i class="is-here"></i><i></i><i></i>
+            </div>
+            <ol class="journey-rail__route" aria-label="Jouw reis, van het strand naar de diepte">
+              <li class="journey-rail__phase journey-rail__phase--fold">
+                <span class="journey-rail__phase-label">Het strand</span>
+                <span class="journey-rail__phase-meta">✓ klaar</span>
+              </li>
+              <li class="journey-rail__phase journey-rail__phase--fold">
+                <span class="journey-rail__phase-label">Aan de kust</span>
+                <span class="journey-rail__phase-meta">✓ klaar</span>
+              </li>
+              <li class="journey-rail__phase journey-rail__phase--fold">
+                <span class="journey-rail__phase-label">Tussen de rotsen</span>
+                <span class="journey-rail__phase-meta">✓ klaar</span>
+              </li>
+              <li class="journey-rail__phase journey-rail__phase--open">
+                <p class="journey-rail__phase-label">In de diepte</p>
+                <ul class="journey-rail__steps">
+                  <li class="journey-rail__step is-done is-clickable">
+                    <button type="button" class="journey-rail__jump">
+                      <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
+                      <div><b>Wat je kunt</b></div>
+                    </button>
+                  </li>
+                  <li class="journey-rail__step is-current" aria-current="step">
+                    <span class="journey-rail__dot journey-rail__dot--current" aria-hidden="true"></span>
+                    <div><b>Beroepen</b><small>Leuk · 5 vragen</small></div>
+                  </li>
+                  <li class="journey-rail__step is-todo">
+                    <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true"></span>
+                    <div><b>Cultuur</b></div>
+                  </li>
+                  <li class="journey-rail__step is-todo">
+                    <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true"></span>
+                    <div><b>Waarden</b></div>
+                  </li>
+                </ul>
+              </li>
+              <li class="journey-rail__phase journey-rail__phase--fold">
+                <span class="journey-rail__phase-label">Naar het licht</span>
+                <span class="journey-rail__phase-meta">1 stap</span>
+              </li>
+            </ol>
+            <p class="journey-rail__saved is-saved">Alles is bewaard. Stoppen mag altijd.</p>
+          </aside>
+        </div>
+
+        <div class="journey-card-wrap">
+          <section class="journey-step card">
+            <div class="ob-wizard__test-tabs journey-segments" role="tablist">
+              <span class="is-done">Hoe je werkt</span>
+              <span class="is-current">Leuk</span>
+              <span>Sfeer</span>
+              <span>Waarden</span>
+            </div>
+            <div class="test-flow test-flow--compact">
+              <div class="test-flow__progress-head">
+                <span class="test-flow__part">Deel 2 van 4</span>
+                <span>Vraag 1 van 5</span>
+              </div>
+              <div class="test-flow__question-head">
+                <h2 class="test-flow__title">Wat vind je leuk?</h2>
+              </div>
+              <p class="test-flow__statement">Ik werk het liefst met mensen.</p>
+              <div class="journey-step__foot">
+                <button type="button" class="btn btn-secondary">Terug</button>
+                <span class="journey-step__sp"></span>
+                <button type="button" class="btn btn-primary">Volgende</button>
+              </div>
+            </div>
+          </section>
+          <div class="journey-lz">
+            <div class="journey-bubble"><p>Neem je tijd — er is geen goed of fout.</p></div>
+            <svg class="journey-lob" width="100" height="100" viewBox="0 0 256 256" aria-hidden="true">
+              <image href="../../Jobsy.Web/wwwroot/images/brand/mascot-256.webp" width="256" height="256" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
