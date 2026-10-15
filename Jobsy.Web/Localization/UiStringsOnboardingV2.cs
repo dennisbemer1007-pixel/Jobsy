@@ -109,6 +109,20 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.ManualOverride"] = english ? "You adjusted this yourself." : "Je hebt het zelf aangepast";
         map["Onboarding.Refill"] = english ? "Fill in again" : "Opnieuw invullen";
         map["Onboarding.AvailabilityRequired"] = english ? "Choose at least one moment when you can work." : "Kies minstens één moment waarop je kunt";
+        map["Onboarding.Validation.FirstName"] = english ? "Enter your first name." : "Vul je voornaam in.";
+        map["Onboarding.Validation.LastName"] = english ? "Enter your last name." : "Vul je achternaam in.";
+        map["Onboarding.Validation.BirthDate"] = english ? "Choose your date of birth." : "Kies je geboortedatum.";
+        map["Onboarding.Validation.Location"] = english
+            ? "Enter your postcode or city, or use your location."
+            : "Vul je postcode of woonplaats in, of gebruik je locatie.";
+        map["Onboarding.Validation.AvailabilityGrid"] = english
+            ? "Tap at least one time block when you can work."
+            : "Tik minstens één vakje aan waarop je kunt werken.";
+        map["Onboarding.Validation.HoursRange"] = english ? "Set a valid hours range." : "Stel een geldig urenbereik in.";
+        map["Onboarding.Validation.Transport"] = english ? "Choose how you travel to work." : "Kies hoe je naar werk reist.";
+        map["Onboarding.Validation.MaxTravel"] = english ? "Choose a maximum travel time." : "Kies een maximale reistijd.";
+        map["Onboarding.Validation.Dream"] = english ? "Pick or type a dream job." : "Kies of typ een droombaan.";
+        map["Onboarding.Validation.Consent"] = english ? "Tick consent to continue with the mini tests." : "Vink toestemming aan om verder te gaan met de mini-tests.";
         map["Onboarding.Transport"] = english ? "Transport" : "Vervoer"; map["Onboarding.MaxTravel"] = english ? "Maximum travel" : "Maximaal reizen"; map["Onboarding.Minutes"] = english ? "min" : "min"; map["Onboarding.Other"] = english ? "Other" : "Anders";
         map["Profile.CurrentJob"] = language switch
         {

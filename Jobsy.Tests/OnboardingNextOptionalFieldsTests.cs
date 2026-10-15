@@ -9,21 +9,21 @@ public class OnboardingNextOptionalFieldsTests
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
 
     [Fact]
-    public void Wizard_CanNext_step1_does_not_require_work_status()
+    public void Wizard_step1_validation_does_not_require_work_status()
     {
         var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
-        var canNext = ExtractSwitchArm(src, "private bool CanNext => _step switch", "};");
-        var step1 = ExtractCaseBlock(canNext, "1 =>");
-        Assert.DoesNotContain("WorkStatus", step1, StringComparison.Ordinal);
+        var validation = ExtractMethodBody(src, "GetValidationIssues()");
+        Assert.DoesNotContain("WorkStatus", validation, StringComparison.Ordinal);
+        Assert.Contains("ValidatePersonal", validation, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Discovery_CanNext_step1_does_not_require_work_status()
+    public void Discovery_step1_validation_does_not_require_work_status()
     {
         var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Pages/Candidate/DiscoveryJourney.razor"));
-        var canNext = ExtractSwitchArm(src, "_countedStep switch", "};");
-        var step1 = ExtractCaseBlock(canNext, "1 =>");
-        Assert.DoesNotContain("WorkStatus", step1, StringComparison.Ordinal);
+        var validation = ExtractMethodBody(src, "GetValidationIssues()");
+        Assert.DoesNotContain("WorkStatus", validation, StringComparison.Ordinal);
+        Assert.Contains("ValidatePersonal", validation, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -42,25 +42,30 @@ public class OnboardingNextOptionalFieldsTests
         Assert.Contains("ShowMatrix => CustomMode || Draft.FineTune", src, StringComparison.Ordinal);
     }
 
-    private static string ExtractSwitchArm(string src, string startMarker, string endMarker)
+    private static string ExtractMethodBody(string src, string startMarker)
     {
         var start = src.IndexOf(startMarker, StringComparison.Ordinal);
         Assert.True(start >= 0, startMarker);
-        var end = src.IndexOf(endMarker, start, StringComparison.Ordinal);
-        Assert.True(end > start, endMarker);
-        return src[start..end];
-    }
-
-    private static string ExtractCaseBlock(string switchBody, string caseMarker)
-    {
-        var start = switchBody.IndexOf(caseMarker, StringComparison.Ordinal);
-        Assert.True(start >= 0, caseMarker);
-        var nextCase = switchBody.IndexOf("\n            ", start + caseMarker.Length, StringComparison.Ordinal);
-        if (nextCase < 0)
+        var brace = src.IndexOf('{', start);
+        Assert.True(brace >= 0, "{");
+        var depth = 0;
+        for (var i = brace; i < src.Length; i++)
         {
-            nextCase = switchBody.Length;
+            if (src[i] == '{')
+            {
+                depth++;
+            }
+            else if (src[i] == '}')
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    return src[brace..(i + 1)];
+                }
+            }
         }
 
-        return switchBody[start..nextCase];
+        Assert.Fail("Unclosed method body");
+        return "";
     }
 }

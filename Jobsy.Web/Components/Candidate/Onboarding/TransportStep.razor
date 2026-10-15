@@ -12,7 +12,7 @@ else
 {
     <h2 class="ob-wizard__subhead">@Culture["Onboarding.Step3.Title"]</h2>
 }
-<fieldset>
+<fieldset id="onboarding-field-transport">
     <legend>@Culture["Onboarding.Transport"]</legend>
     <p class="ob-wizard__hint">@Culture["Onboarding.TransportMulti"]</p>
     <div class="ob-wizard__transport">
@@ -26,6 +26,10 @@ else
             </button>
         }
     </div>
+    @if (ShowValidation && string.IsNullOrWhiteSpace(Draft.Transport))
+    {
+        <p class="error" role="alert">@Culture["Onboarding.Validation.Transport"]</p>
+    }
 </fieldset>
 <fieldset>
     <legend>@Culture["Onboarding.MaxTravel"] <strong>@Draft.MaxTravel @Culture["Onboarding.Minutes"]</strong></legend>
@@ -46,6 +50,10 @@ else
     {
         <input type="number" min="1" max="180"
                @bind="Draft.MaxTravel" @bind:after="NotifyAsync" />
+    }
+    @if (ShowValidation && Draft.MaxTravel <= 0)
+    {
+        <p class="error" role="alert">@Culture["Onboarding.Validation.MaxTravel"]</p>
     }
 </fieldset>
 @if (ShowDrivingLicenses)
@@ -74,6 +82,7 @@ else
     [Parameter] public EventCallback<string> ToggleLicense { get; set; }
     [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public bool ShowDrivingLicenses { get; set; }
+    [Parameter] public bool ShowValidation { get; set; }
 
     private static readonly string[] TransportOptions = TransportLabels.Selectable;
     private static readonly int[] TravelChoices = [10, 20, 30, 45];

@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Privacy
 @using Jobsy.Core.Rules
+@using static Jobsy.Core.Rules.OnboardingWizardValidation
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -13,18 +14,28 @@
 <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step1.Lead"]</p>
 <div class="ob-wizard__field-row">
-    <label>
+    <label id="onboarding-field-firstname">
         @Culture["Profile.FirstName"]
         <input autocomplete="given-name" maxlength="128"
+               aria-invalid="@(ShowValidation && string.IsNullOrWhiteSpace(Draft.FirstName) ? "true" : "false")"
                @bind="Draft.FirstName" @bind:event="oninput" @bind:after="NotifyAsync" />
+        @if (ShowValidation && string.IsNullOrWhiteSpace(Draft.FirstName))
+        {
+            <span class="error" role="alert">@Culture["Onboarding.Validation.FirstName"]</span>
+        }
     </label>
-    <label>
+    <label id="onboarding-field-lastname">
         @Culture["Profile.LastName"]
         <input autocomplete="family-name" maxlength="128"
+               aria-invalid="@(ShowValidation && string.IsNullOrWhiteSpace(Draft.LastName) ? "true" : "false")"
                @bind="Draft.LastName" @bind:event="oninput" @bind:after="NotifyAsync" />
+        @if (ShowValidation && string.IsNullOrWhiteSpace(Draft.LastName))
+        {
+            <span class="error" role="alert">@Culture["Onboarding.Validation.LastName"]</span>
+        }
     </label>
 </div>
-<label>
+<label id="onboarding-field-location">
     @Culture["Onboarding.Postcode"]
     <div class="ob-wizard__postcode-row">
         <input inputmode="text" autocomplete="postal-code" maxlength="7"
@@ -40,6 +51,10 @@
             </button>
         }
     </div>
+    @if (ShowValidation && !LocationValid)
+    {
+        <span class="error" role="alert">@Culture["Onboarding.Validation.Location"]</span>
+    }
 </label>
 @if (!string.IsNullOrWhiteSpace(_locationError))
 {
@@ -79,7 +94,7 @@
         }
     </ul>
 }
-<fieldset>
+<fieldset id="onboarding-field-birthdate">
     <legend>@Culture["Onboarding.BirthDate"]</legend>
     <div class="ob-wizard__birth-date">
         <JobsyDateField Constraint="JobsyDateConstraint.CandidateBirthDate"
@@ -89,6 +104,10 @@
                         InputId="onboarding-birth-date-input" />
     </div>
     <small>@BirthHint</small>
+    @if (ShowValidation && Draft.BirthDate is null)
+    {
+        <p class="error" role="alert">@Culture["Onboarding.Validation.BirthDate"]</p>
+    }
     @if (AgeMessage is not null)
     {
         <p class="error" role="status">@AgeMessage</p>
@@ -127,6 +146,14 @@
     /// <summary>When true, postcode hint mentions employers never see the address.</summary>
     [Parameter] public bool UseDiscoveryPostcodeHint { get; set; }
     [Parameter] public bool ShowGeolocation { get; set; } = true;
+    [Parameter] public bool ShowValidation { get; set; }
+
+    private bool LocationValid => HasResolvableLocation(
+        Draft.City,
+        Draft.HomeLat,
+        Draft.HomeLng,
+        Draft.Postcode,
+        Draft.PostcodeResolved);
 
     private bool _locating;
     private string? _locationError;
@@ -209,9 +236,11 @@
             var dict = await Js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
             var lat = dict["lat"];
             var lng = dict["lng"];
+            Draft.HomeLat = lat;
+            Draft.HomeLng = lng;
+            Draft.PostcodeResolved = true;
+            Draft.PostcodeMissing = false;
             var label = await Geocoder.ReverseAsync(lat, lng);
-            Draft.HomeLat = null;
-            Draft.HomeLng = null;
             if (!string.IsNullOrWhiteSpace(label))
             {
                 var (postcode, city) = PostcodeMatch.SplitHomeAddress(label);
@@ -235,7 +264,7 @@
                 _locationError = Culture["Onboarding.LocationFailed"];
             }
 
-            await OnAddressChangedAsync();
+            await NotifyAsync();
         }
         catch (Exception ex)
         {

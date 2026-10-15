@@ -143,7 +143,7 @@
                         <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                         <span class="journey-step__sp"></span>
                         <button type="button" class="journey-later" @onclick="DeclineConsentAndFinishAsync">@Culture["Discovery.Consent.Decline"]</button>
-                        <button type="button" class="btn btn-primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                        <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">
                             @Culture["Onboarding.Consent.Cta"]
                         </button>
                     </div>
@@ -152,6 +152,7 @@
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 1)</p>
                     <PersonalStep Draft="Draft"
+                                  ShowValidation="_showValidation"
                                   AddressChanged="AddressChanged"
                                   BirthDateChanged="BirthDateChanged"
                                   ShowCity="ShowCity"
@@ -166,6 +167,7 @@
                     <p class="journey-step__eyebrow">@Culture["Discovery.Zone.Coast"] · @Culture.Format("Discovery.StepOf", 2)</p>
                     <div class="journey-stack">
                         <AvailabilityStep Draft="Draft"
+                                          ShowValidation="_showValidation"
                                           Presets="VisiblePresets"
                                           TogglePreset="TogglePreset"
                                           ToggleFineTune="ToggleFineTune"
@@ -176,6 +178,7 @@
                                           ResetPresets="ResetPresets" />
                         <div class="journey-stack__divider" role="separator" aria-hidden="true"></div>
                         <TransportStep Draft="Draft"
+                                       ShowValidation="_showValidation"
                                        ShowHeading="false"
                                        ShowDrivingLicenses="true"
                                        SelectTransport="SelectTransport"
@@ -595,6 +598,7 @@
     private bool _overviewLoading;
     private CandidateDiscoveryOverviewPanelDto? _overviewPanel;
     private bool _busy;
+    private bool _showValidation;
     private bool _employersEnabled = true;
     private bool _miniArrivedViaBack;
     private string _screen = "start";
@@ -811,22 +815,61 @@
         StateHasChanged();
     }
 
-    private bool CanNext => _screen == "toestemming"
-        ? Draft.ConsentRequested
-        : _countedStep switch
+    private bool CanNext => GetValidationIssues().Count == 0
+                            && (_countedStep is not (>= 7 and <= 10) || _screen == "toestemming"
+                                || (_miniQuestions.Count > 0 && _miniQuestions.All(q => MiniAnswered(q.Id))));
+
+    private IReadOnlyList<OnboardingValidationIssue> GetValidationIssues()
+    {
+        if (_screen == "toestemming")
         {
-            1 => !string.IsNullOrWhiteSpace(Draft.FirstName)
-                 && !string.IsNullOrWhiteSpace(Draft.LastName)
-                 && Draft.BirthDate is DateOnly born
-                 && !Jobsy.Core.Privacy.CandidateConsentRules.IsBelowMinimumAge(born, DateOnly.FromDateTime(DateTime.Today))
-                 && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
-            2 => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0
-                 && AvailabilityStartRules.StepIsValid(Draft.Immediate, Draft.AvailableFrom)
-                 && !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
-            >= 7 and <= 10 => _miniQuestions.Count > 0
-                && _miniQuestions.All(q => MiniAnswered(q.Id)),
-            _ => true
+            return OnboardingWizardValidation.ValidateConsent(Draft.ConsentRequested);
+        }
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        return _countedStep switch
+        {
+            1 => OnboardingWizardValidation.ValidatePersonal(
+                Draft.FirstName,
+                Draft.LastName,
+                Draft.BirthDate,
+                Draft.City,
+                Draft.HomeLat,
+                Draft.HomeLng,
+                Draft.Postcode,
+                Draft.PostcodeResolved,
+                today),
+            2 => OnboardingWizardValidation.ValidateAvailability(
+                    Draft.MinHours,
+                    Draft.MaxHours,
+                    Draft.Availability.Count,
+                    Draft.Immediate,
+                    Draft.AvailableFrom,
+                    requirePresetSelection: Draft.Presets.Count == 0 && Draft.Availability.Count == 0)
+                .Concat(OnboardingWizardValidation.ValidateTransport(Draft.Transport, Draft.MaxTravel))
+                .ToList(),
+            >= 7 and <= 10 when Draft.HasConsent => [],
+            _ => []
         };
+    }
+
+    private async Task ScrollToFirstIssueAsync(IReadOnlyList<OnboardingValidationIssue> issues)
+    {
+        if (issues.Count == 0)
+        {
+            return;
+        }
+
+        var anchor = OnboardingWizardValidation.FieldAnchorId(issues[0].Field);
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyDom.scrollToId", anchor);
+        }
+        catch
+        {
+            // optional
+        }
+    }
 
     private RenderFragment RenderFooter(bool showBack = true, bool showSkip = false, bool showPrimary = true) => __builder =>
     {
@@ -843,7 +886,7 @@
             @if (_reviewMode)
             {
                 <button type="button" class="journey-later" @onclick="ShowOverviewAsync">@Culture["Discovery.Overview.Back"]</button>
-                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="NextAsync">
+                <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">
                     @Culture["Discovery.Overview.Save"]
                 </button>
             }
@@ -852,7 +895,7 @@
                 <button type="button" class="journey-later" @onclick="LaterAsync">@Culture["Discovery.Later"]</button>
                 @if (showPrimary)
                 {
-                    <button type="button" class="btn btn-primary" disabled="@(!CanNext || _busy)" @onclick="NextAsync">
+                    <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">
                         @Culture["Onboarding.Next"]
                     </button>
                 }
@@ -1226,17 +1269,33 @@
 
     private async Task NextAsync()
     {
-        if (!CanNext || _busy)
+        if (_busy)
         {
-            // Afronden used to return here with no message when saved answers
-            // were missing from _miniAnswers. Land on the first open question.
-            if (!_busy && _countedStep is >= 7 and <= 10)
-            {
-                FocusFirstOpenMini();
-            }
-
             return;
         }
+
+        if (_countedStep == 1)
+        {
+            await EnsureAddressResolvedAsync();
+        }
+
+        var issues = GetValidationIssues();
+        if (issues.Count > 0)
+        {
+            _showValidation = true;
+            _error = Culture[issues[0].MessageKey];
+            await ScrollToFirstIssueAsync(issues);
+            return;
+        }
+
+        if (_countedStep is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0
+            && _miniQuestions.Any(q => !MiniAnswered(q.Id)))
+        {
+            FocusFirstOpenMini();
+            return;
+        }
+
+        _showValidation = false;
         _busy = true;
         _error = null;
         _miniArrivedViaBack = false;
@@ -2094,11 +2153,27 @@
         _ = GeocodeAsync(_geocodeCts.Token);
     }
 
-    private async Task GeocodeAsync(CancellationToken cancellationToken)
+    private async Task EnsureAddressResolvedAsync()
+    {
+        if (OnboardingWizardValidation.HasResolvableLocation(
+                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved))
+        {
+            return;
+        }
+
+        _geocodeCts?.Cancel();
+        _geocodeCts = new CancellationTokenSource();
+        await GeocodeAsync(_geocodeCts.Token, debounce: false);
+    }
+
+    private async Task GeocodeAsync(CancellationToken cancellationToken, bool debounce = true)
     {
         try
         {
-            await Task.Delay(350, cancellationToken);
+            if (debounce)
+            {
+                await Task.Delay(350, cancellationToken);
+            }
             var postcode = NormalizePostcode(Draft.Postcode);
             if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
             var result = PostcodeMatch.Pick(await Geocoder.SuggestAsync(postcode, cancellationToken), postcode);
@@ -2110,6 +2185,7 @@
             }
 
             SelectAddress(result);
+            await InvokeAsync(StateHasChanged);
         }
         catch (OperationCanceledException)
         {

@@ -1408,8 +1408,8 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261015-01"
-        : "/service-worker.js?v=20261015-01";
+        ? "/service-worker.published.js?v=20261015-02"
+        : "/service-worker.js?v=20261015-02";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
     var userRequestedReload = false;
