@@ -512,6 +512,53 @@ public partial class VacancyCreateWizard : IDisposable
     private VacancyCategoryItem? SelectedCategory
         => _categories.FirstOrDefault(c => c.Id.ToString() == _categoryId);
 
+    private IReadOnlyList<VacancyCategoryItem> CategoryPickerCategories
+    {
+        get
+        {
+            if (_categories.Count == 0)
+            {
+                return [];
+            }
+
+            var primary = _categories
+                .Where(c => string.Equals(c.Slug, "regulier", StringComparison.OrdinalIgnoreCase)
+                            || string.Equals(c.Slug, "uitzendbureau", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            return primary.Count >= 2 ? primary : _categories;
+        }
+    }
+
+    private void SelectCategory(VacancyCategoryItem category)
+    {
+        _categoryId = category.Id.ToString("D");
+        OnCategoryChanged();
+    }
+
+    private static string CategoryPickerHint(VacancyCategoryItem category)
+    {
+        if (string.Equals(category.Slug, "regulier", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Zelf werven";
+        }
+
+        if (string.Equals(category.Slug, "uitzendbureau", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Via bureau";
+        }
+
+        if (string.Equals(category.PlacementKind, "Internship", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Stageplek";
+        }
+
+        return category.PlacementKind switch
+        {
+            "Temporary" => "Tijdelijk",
+            _ => "Vacaturetype"
+        };
+    }
+
     private void OnCategoryChanged()
     {
         var selected = SelectedCategory;

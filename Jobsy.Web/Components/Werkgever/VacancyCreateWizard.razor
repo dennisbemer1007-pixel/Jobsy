@@ -20,7 +20,12 @@
     {
         <section class="vac-wizard-saved" data-testid="vacancy-draft-saved" data-vacancy-id="@(_savedVacancyId?.ToString("D"))">
             <div class="vac-wizard-saved__card">
-                <p class="vac-wizard-saved__icon" aria-hidden="true">✓</p>
+                <div class="vac-wizard-saved__icon" aria-hidden="true">
+                    <svg viewBox="0 0 48 48" width="48" height="48" role="presentation">
+                        <circle cx="24" cy="24" r="24" fill="var(--success-soft)" />
+                        <path d="M14 25l7 7 13-14" fill="none" stroke="var(--success)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
                 <h1>Concept opgeslagen</h1>
                 <p class="vac-wizard-saved__lead">
                     Je vacature staat als concept in je vacaturelijst. Kandidaten zien hem pas als je publiceert. Publiceren kost geen tokens.
@@ -39,10 +44,14 @@
                     <div><dt>Status</dt><dd>Concept, nog niet zichtbaar</dd></div>
                 </dl>
                 <div class="vac-wizard-saved__actions">
-                    <button type="button" class="btn btn-primary" data-testid="vacancy-publish-now" @onclick="OpenPublishAsync">Nu publiceren</button>
-                    <button type="button" class="btn ghost" @onclick="ContinueEditingFromSavedAsync">Verder bewerken</button>
+                    <button type="button" class="btn btn-primary vac-wizard-saved__publish" data-testid="vacancy-publish-now" @onclick="OpenPublishAsync">
+                        Nu publiceren
+                    </button>
+                    <button type="button" class="btn btn-secondary vac-wizard-saved__edit" @onclick="ContinueEditingFromSavedAsync">
+                        Verder bewerken
+                    </button>
+                    <a class="btn btn-secondary vac-wizard-saved__list" href="/werkgever/vacatures">Naar vacaturelijst</a>
                 </div>
-                <a class="vac-wizard-saved__link" href="/werkgever/vacatures">Naar vacaturelijst</a>
             </div>
         </section>
     }
@@ -169,7 +178,7 @@
                 </label>
             }
             <label>
-                Titel
+                Functietitel
                 <input @bind="_title" @bind:event="oninput" required />
             </label>
             @if (_isIntermediary)
@@ -199,22 +208,30 @@
             }
             else
             {
-                <label>
-                    Categorie
-                    <select @bind="_categoryId" @bind:after="OnCategoryChanged" required>
-                        @if (_categories.Count == 0)
-                        {
-                            <option value="">Laden…</option>
-                        }
-                        else
-                        {
-                            @foreach (var cat in _categories)
+                <fieldset class="vac-wizard-field" data-testid="vacancy-category-picker">
+                    <legend>Categorie</legend>
+                    @if (_categories.Count == 0)
+                    {
+                        <p class="muted">Categorieën laden…</p>
+                    }
+                    else
+                    {
+                        <ChoiceTileGrid DesktopThreeColumns="false" Class="vac-wizard-category-grid">
+                            @foreach (var cat in CategoryPickerCategories)
                             {
-                                <option value="@cat.Id.ToString()">@cat.Name</option>
+                                var selected = _categoryId == cat.Id.ToString("D");
+                                <ChoiceTile Role="radio"
+                                            Tall="true"
+                                            AlignIcons="false"
+                                            Selected="selected"
+                                            OnClick="() => SelectCategory(cat)">
+                                    <strong>@cat.Name</strong>
+                                    <small>@CategoryPickerHint(cat)</small>
+                                </ChoiceTile>
                             }
-                        }
-                    </select>
-                </label>
+                        </ChoiceTileGrid>
+                    }
+                </fieldset>
             }
             @if (!_isIntermediary && SelectedCategory?.PlacementKind == "Internship")
             {
@@ -329,11 +346,11 @@
                         <div class="vac-wizard__step" data-testid="vac-wizard-step-2">
 <VacancyRichTextEditor @bind-Value="_description" Required="true" />
                 <label>
-                    Afbeelding-URL
+                    Afbeelding-url
                     <input @bind="_imageUrl" @bind:event="oninput" placeholder="https://…" />
                 </label>
                 <label>
-                    Video-URL
+                    Video-url
                     <input @bind="_videoUrl" @bind:event="oninput" placeholder="https://… (YouTube/Vimeo)" />
                 </label>
                         </div>
@@ -715,34 +732,79 @@
                         <p class="state-message error" role="alert">@_stepMessage</p>
                     }
                     <footer class="vac-wizard-actionbar" data-testid="vacancy-wizard-actionbar">
-                        <div class="vac-wizard-actionbar__left">
+                        <div class="vac-wizard-actionbar__mobile">
                             @if (_step > 1)
                             {
-                                <button type="button" class="btn ghost vac-wizard__back" @onclick="GoBackAsync">Terug</button>
-                            }
-                            <span class="vac-wizard-actionbar__step muted">Stap @_step van @TotalSteps</span>
-                        </div>
-                        <div class="vac-wizard-actionbar__right">
-                            <button type="button"
-                                    class="btn ghost vac-wizard__preview-actionbar"
-                                    data-testid="vacancy-preview-actionbar"
-                                    @onclick="OpenPreviewFromActionBarAsync">
-                                <span class="vac-wizard__preview-actionbar-icon" aria-hidden="true">👁</span>
-                                <span class="vac-wizard__preview-actionbar-label">Bekijk als kandidaat</span>
-                            </button>
-                            <button type="button" class="btn ghost vac-wizard__save-inline" disabled="@_saving" @onclick="SaveAsync" data-testid="vacancy-save-draft">
-                                @(_saving ? "Opslaan…" : "Opslaan als concept")
-                            </button>
-                            @if (_step < TotalSteps)
-                            {
-                                <button type="button" class="btn btn-primary vac-wizard__next" @onclick="GoNextAsync">@NextStepButtonLabel</button>
+                                <button type="button" class="btn btn-secondary vac-wizard-actionbar__icon-btn vac-wizard__back" aria-label="Terug" @onclick="GoBackAsync">
+                                    <span aria-hidden="true">‹</span>
+                                </button>
                             }
                             else
                             {
-                                <button class="btn btn-primary vac-wizard__save" type="submit" disabled="@_saving" data-testid="vacancy-save-draft-submit">
-                                    @(_saving ? "Opslaan…" : "Opslaan als concept")
+                                <span class="vac-wizard-actionbar__icon-spacer" aria-hidden="true"></span>
+                            }
+                            <button type="button"
+                                    class="btn btn-secondary vac-wizard-actionbar__icon-btn vac-wizard__preview-actionbar"
+                                    data-testid="vacancy-preview-actionbar"
+                                    aria-label="Bekijk als kandidaat"
+                                    @onclick="OpenPreviewFromActionBarAsync">
+                                <span class="vac-wizard__preview-actionbar-icon" aria-hidden="true">👁</span>
+                                <span class="vac-wizard__preview-actionbar-label">Bekijk</span>
+                            </button>
+                            <button type="button"
+                                    class="btn btn-secondary vac-wizard-actionbar__save-btn vac-wizard__save-inline"
+                                    disabled="@_saving"
+                                    @onclick="SaveAsync"
+                                    data-testid="vacancy-save-draft">
+                                <span class="vac-wizard-actionbar__save-icon" aria-hidden="true">💾</span>
+                                <span>@(_saving ? "Opslaan…" : "Opslaan")</span>
+                            </button>
+                            @if (_step < TotalSteps)
+                            {
+                                <button type="button"
+                                        class="btn btn-primary vac-wizard__next vac-wizard-actionbar__next-btn"
+                                        aria-label="@NextStepButtonLabel"
+                                        @onclick="GoNextAsync">
+                                    Volgende
                                 </button>
                             }
+                            else
+                            {
+                                <button class="btn btn-primary vac-wizard__save vac-wizard-actionbar__next-btn" type="submit" disabled="@_saving" data-testid="vacancy-save-draft-submit">
+                                    @(_saving ? "Opslaan…" : "Opslaan")
+                                </button>
+                            }
+                        </div>
+                        <div class="vac-wizard-actionbar__desktop">
+                            <div class="vac-wizard-actionbar__left">
+                                @if (_step > 1)
+                                {
+                                    <button type="button" class="btn btn-secondary vac-wizard__back" @onclick="GoBackAsync">Terug</button>
+                                }
+                                <span class="vac-wizard-actionbar__step muted">Stap @_step van @TotalSteps</span>
+                            </div>
+                            <div class="vac-wizard-actionbar__right">
+                                <button type="button"
+                                        class="btn btn-secondary vac-wizard__preview-actionbar"
+                                        data-testid="vacancy-preview-actionbar"
+                                        @onclick="OpenPreviewFromActionBarAsync">
+                                    <span class="vac-wizard__preview-actionbar-icon" aria-hidden="true">👁</span>
+                                    <span class="vac-wizard__preview-actionbar-label">Bekijk als kandidaat</span>
+                                </button>
+                                <button type="button" class="btn btn-secondary vac-wizard__save-inline" disabled="@_saving" @onclick="SaveAsync" data-testid="vacancy-save-draft">
+                                    @(_saving ? "Opslaan…" : "Opslaan als concept")
+                                </button>
+                                @if (_step < TotalSteps)
+                                {
+                                    <button type="button" class="btn btn-primary vac-wizard__next" @onclick="GoNextAsync">@NextStepButtonLabel</button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-primary vac-wizard__save" type="submit" disabled="@_saving" data-testid="vacancy-save-draft-submit">
+                                        @(_saving ? "Opslaan…" : "Opslaan als concept")
+                                    </button>
+                                }
+                            </div>
                         </div>
                     </footer>
                 </form>

@@ -81,7 +81,7 @@ public class VacancyWizardPlaywrightTests
         await page.Locator("[data-testid='vac-wizard-step-6']").WaitForAsync();
         await VacancyWizardE2e.ShotAsync(page, viewportTag, "08-step-controleren");
 
-        await page.Locator("[data-testid='vacancy-save-draft-submit']").ClickAsync();
+        await page.Locator("[data-testid='vacancy-save-draft-submit']:visible").ClickAsync();
         var moderation = page.Locator(".moderation-modal");
         try
         {
@@ -162,7 +162,7 @@ public class VacancyWizardPlaywrightTests
             title.Split(' ')[0],
             new() { Timeout = 60_000 });
         await titleInput.FillAsync(editedTitle);
-        await page.Locator("[data-testid='vacancy-save-draft']").ClickAsync();
+        await page.Locator("[data-testid='vacancy-save-draft']:visible").ClickAsync();
         await page.Locator("[data-testid='vacancy-draft-saved']").WaitForAsync(new() { Timeout = 120_000 });
         await VacancyWizardE2e.ShotAsync(page, viewportTag, "13-bewerken-opgeslagen");
 
@@ -213,7 +213,7 @@ public class VacancyWizardPlaywrightTests
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
 
         await page.Locator("[data-testid='vacancy-wizard']").WaitForAsync(new() { Timeout = 30_000 });
-        await page.Locator("[data-testid='vacancy-preview-actionbar']").WaitForAsync();
+        await page.Locator("[data-testid='vacancy-preview-actionbar']:visible").WaitForAsync();
         var toolbarColors = page.Locator(".vac-wizard-richtext__color");
         await FillStep1Async(page, "Playwright testvacature");
         await page.GetByRole(AriaRole.Button, new() { Name = "Volgende: Omschrijving" }).ClickAsync();
@@ -237,6 +237,14 @@ public class VacancyWizardPlaywrightTests
 
     private static async Task SelectFirstCategoryAsync(IPage page)
     {
+        var picker = page.Locator("[data-testid='vacancy-category-picker'] .lobsy-choice-tile");
+        if (await picker.CountAsync() > 0)
+        {
+            await picker.First.ClickAsync();
+            await page.WaitForTimeoutAsync(400);
+            return;
+        }
+
         var category = page.Locator("[data-testid='vac-wizard-step-1'] select").First;
         if (await category.CountAsync() == 0)
         {
@@ -328,7 +336,7 @@ public class VacancyWizardPlaywrightTests
         string title,
         bool expectFormattedDescription)
     {
-        await page.Locator("[data-testid='vacancy-preview-actionbar']").ClickAsync();
+        await page.Locator("[data-testid='vacancy-preview-actionbar']:visible").ClickAsync();
         var overlay = page.Locator("[data-testid='vacancy-candidate-preview-overlay']");
         await overlay.WaitForAsync();
         await page.Locator("[data-testid='kb-detail-preview']").WaitForAsync();
