@@ -152,6 +152,7 @@ public class AcceptatieLayoutSweepTests
         Assert.Contains("position: sticky;\n        top: 0;\n        z-index: 40;", css, StringComparison.Ordinal);
 
         var journey = Read("Jobsy.Web", "wwwroot", "css", "features", "ontdekkingsreis.css");
+        Assert.Contains(".app-shell:has(.app-header) .journey-stage .journey-rail", journey, StringComparison.Ordinal);
         Assert.Contains("top: calc(var(--app-header-height, 4.25rem) + 24px);", journey, StringComparison.Ordinal);
         Assert.Contains("max-height: calc(100dvh - var(--app-header-height, 4.25rem) - 48px);", journey, StringComparison.Ordinal);
 

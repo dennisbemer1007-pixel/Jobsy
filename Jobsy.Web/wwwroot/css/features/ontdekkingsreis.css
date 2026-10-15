@@ -225,8 +225,14 @@
 @media (min-width: 900px) {
   .journey-stage .journey-rail {
     position: sticky;
-    top: calc(var(--app-header-height, 4.25rem) + 24px);
+    top: 24px;
     align-self: start;
+    max-height: calc(100dvh - 48px);
+  }
+
+  /* Candidate shell with sticky app header: offset the rail below the header. */
+  .app-shell:has(.app-header) .journey-stage .journey-rail {
+    top: calc(var(--app-header-height, 4.25rem) + 24px);
     max-height: calc(100dvh - var(--app-header-height, 4.25rem) - 48px);
   }
 
