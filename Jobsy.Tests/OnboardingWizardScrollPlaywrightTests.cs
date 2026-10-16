@@ -135,7 +135,13 @@ public sealed class OnboardingWizardScrollPlaywrightTests
 
             using var left = Image.Load<Rgba32>(mockup);
             using var right = Image.Load<Rgba32>(impl);
-            var height = Math.Max(left.Height, right.Height);
+            right.Mutate(ctx => ctx.Resize(new ResizeOptions
+            {
+                Size = new Size(left.Width, left.Height),
+                Mode = ResizeMode.Pad,
+                PadColor = SixLabors.ImageSharp.Color.FromRgb(245, 242, 238),
+            }));
+            var height = left.Height;
             var width = left.Width + right.Width + 8;
             using var canvas = new Image<Rgba32>(width, height);
             canvas.Mutate(ctx =>
@@ -195,6 +201,7 @@ public sealed class OnboardingWizardScrollPlaywrightTests
             await WaitWizardStepAsync(page, step);
             await ScrollWizardToTopAsync(page);
             await AssertMobileActionBarAsync(page, step, width, height);
+            await AssertContentUsesMainScrollAsync(page, step);
 
             if (step >= lastStep)
             {
@@ -255,7 +262,9 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         var audit = await page.EvaluateAsync<ScrollAudit>(
             """
             () => {
-              const root = document.querySelector('.ob-wizard__content') || document.querySelector('.app-main');
+              const main = document.querySelector('.app-main');
+              const content = document.querySelector('.ob-wizard__content');
+              const root = (main && main.scrollHeight > main.clientHeight + 2) ? main : (content || main);
               const mainScroll = root ? root.scrollTop : 0;
               const winScroll = window.scrollY || 0;
               const h1 = document.querySelector('.ob-wizard__content h1, .ob-fields h1');
@@ -263,10 +272,7 @@ public sealed class OnboardingWizardScrollPlaywrightTests
                 return { ok: false, reason: 'no-h1', mainScroll, winScroll, headingTop: null };
               }
               const rect = h1.getBoundingClientRect();
-              const rootRect = root ? root.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
-              const inView = rect.top >= rootRect.top - 2
-                && rect.top < rootRect.bottom - 40
-                && rect.height > 0;
+              const inView = rect.top >= 0 && rect.top < window.innerHeight * 0.55 && rect.height > 0;
               const ok = mainScroll <= 1 && winScroll <= 1 && inView;
               let reason = 'ok';
               if (mainScroll > 1) reason = 'scroll-' + mainScroll;
@@ -296,7 +302,7 @@ public sealed class OnboardingWizardScrollPlaywrightTests
               const footerRect = footer ? footer.getBoundingClientRect() : null;
               const footerFull = footerRect && footerRect.width >= window.innerWidth - 40;
               const minWidth = footerFull
-                ? Math.max(200, footerRect.width - 110)
+                ? Math.max(190, footerRect.width - 120)
                 : window.innerWidth - 40;
               const wideEnough = rect.width >= minWidth - 1;
               const bottomOk = bottomGap >= -2 && bottomGap <= 24;
@@ -329,6 +335,12 @@ public sealed class OnboardingWizardScrollPlaywrightTests
               else if (!backVisible && !(parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10) === 1)) {
                 reason = 'no-back';
               }
+              const backBtn = document.querySelector('[data-testid=onboarding-back], button.test-flow__back');
+              if (backBtn && footerRect && reason === 'ok') {
+                const backRect = backBtn.getBoundingClientRect();
+                if (backRect.left < 14) reason = 'back-flush-left-' + backRect.left.toFixed(0);
+                else if (rect.right > window.innerWidth - 14) reason = 'next-flush-right-' + rect.right.toFixed(0);
+              }
               const ok = reason === 'ok';
               const styles = [...document.querySelectorAll('link[rel=stylesheet]')]
                 .map(l => l.href)
@@ -352,6 +364,44 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         Assert.True(audit.Ok, $"Step {step} @ {width}x{height}: {audit.Reason} gap={audit.BottomGap} w={audit.Width} overlap={audit.Overlap} footerBg={audit.FooterBg} pos={audit.FooterPosition} tag={audit.FooterTag} styles={audit.Styles}");
     }
 
+    private static async Task AssertContentUsesMainScrollAsync(IPage page, int step)
+    {
+        var audit = await page.EvaluateAsync<ContentFlowAudit>(
+            """
+            () => {
+              const wizard = document.querySelector('.ob-wizard--richting-a');
+              if (!wizard) return { ok: true, reason: 'no-richting-a' };
+              const content = document.querySelector('.ob-wizard__content');
+              const card = document.querySelector('.ob-wizard__card');
+              if (!content) return { ok: false, reason: 'no-content' };
+              const cs = getComputedStyle(content);
+              const oy = cs.overflowY;
+              const ch = content.clientHeight;
+              const sh = content.scrollHeight;
+              const vh = window.innerHeight;
+              if (oy === 'auto' || oy === 'scroll' || oy === 'hidden') {
+                return { ok: false, reason: 'content-overflow-' + oy, contentH: ch, vh };
+              }
+              if (sh > ch + 24) {
+                return { ok: false, reason: 'content-inner-scroll-' + sh + '>' + ch, contentH: ch, vh };
+              }
+              if (card && ch > 0 && ch < vh * 0.42) {
+                return { ok: false, reason: 'content-pane-too-short', contentH: ch, vh };
+              }
+              const main = document.querySelector('.app-main');
+              if (main) {
+                const mainOy = getComputedStyle(main).overflowY;
+                if (mainOy === 'hidden') {
+                  return { ok: false, reason: 'main-overflow-hidden', contentH: ch, vh };
+                }
+              }
+              return { ok: true, reason: 'ok', contentH: ch, vh };
+            }
+            """);
+
+        Assert.True(audit.Ok, $"Step {step} content flow: {audit.Reason} contentH={audit.ContentH} vh={audit.Vh}");
+    }
+
     private static Task ScrollWizardToTopAsync(IPage page)
         => page.EvaluateAsync(
             """
@@ -361,6 +411,8 @@ public sealed class OnboardingWizardScrollPlaywrightTests
               const main = document.querySelector('.app-main');
               if (main) main.scrollTop = 0;
               window.scrollTo(0, 0);
+              const scrollEl = document.scrollingElement;
+              if (scrollEl) scrollEl.scrollTop = 0;
             }
             """);
 
@@ -368,10 +420,13 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         => page.EvaluateAsync(
             """
             () => {
+              const main = document.querySelector('.app-main');
+              const scrollRoot = (main && main.scrollHeight > main.clientHeight + 2)
+                ? main
+                : (document.scrollingElement || document.documentElement);
+              scrollRoot.scrollTop = scrollRoot.scrollHeight;
               const content = document.querySelector('.ob-wizard__content');
               if (content) content.scrollTop = content.scrollHeight;
-              const main = document.querySelector('.app-main');
-              if (main) main.scrollTop = main.scrollHeight;
             }
             """);
 
@@ -380,8 +435,11 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         await page.EvaluateAsync(
             """
             () => {
-              const root = document.querySelector('.ob-wizard__content') || document.querySelector('.app-main');
-              const amount = Math.min(480, (root?.scrollHeight || 800) - (root?.clientHeight || 400));
+              const main = document.querySelector('.app-main');
+              const root = (main && main.scrollHeight > main.clientHeight + 2)
+                ? main
+                : (document.querySelector('.ob-wizard__content') || main);
+              const amount = Math.min(480, Math.max(0, (root?.scrollHeight || 800) - (root?.clientHeight || 400)));
               if (root) root.scrollTop = amount;
               window.scrollTo(0, amount);
             }
@@ -577,5 +635,13 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         public string? ShellClass { get; set; }
         public string? Styles { get; set; }
         public string? FooterTag { get; set; }
+    }
+
+    private sealed class ContentFlowAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public double? ContentH { get; set; }
+        public double? Vh { get; set; }
     }
 }

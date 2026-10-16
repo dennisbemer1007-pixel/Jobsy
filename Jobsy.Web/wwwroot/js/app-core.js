@@ -1100,14 +1100,18 @@ window.jobsyPageVisible = function () {
 
 window.jobsyDom = {
     scrollRoot: function () {
+        var richtingA = document.querySelector(".ob-wizard--richting-a");
+        var main = document.querySelector(".app-shell--questionnaire .app-main")
+            || document.querySelector(".app-main");
+        if (richtingA && main) {
+            return main;
+        }
         var wizardContent = document.querySelector(".app-shell--questionnaire .ob-wizard__content");
         if (wizardContent && wizardContent.scrollHeight > wizardContent.clientHeight + 1) {
             return wizardContent;
         }
-        var shell = document.querySelector(".app-shell--questionnaire .app-main")
-            || document.querySelector(".app-main");
-        if (shell && shell.scrollHeight > shell.clientHeight + 1) {
-            return shell;
+        if (main && main.scrollHeight > main.clientHeight + 1) {
+            return main;
         }
         return document.scrollingElement || document.documentElement;
     },

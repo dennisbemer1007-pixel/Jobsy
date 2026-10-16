@@ -1,5 +1,58 @@
 /* Richting A — verfijnde kaarten (mobile onboarding only, ≤1023px). Desktop unchanged. */
 @media (max-width: 1023px) {
+  /*
+   * Single scroll surface: .app-main (not a short inner .ob-wizard__content pane).
+   * Avoids clipped cards + empty beige gap above the sticky bar.
+   */
+  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .app-main {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    display: block !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .app-main > * {
+    flex: none !important;
+    min-height: auto !important;
+    display: block !important;
+  }
+
+  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard,
+  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard__layout,
+  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard__main {
+    flex: none !important;
+    min-height: auto !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .ob-wizard__content {
+    flex: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+  }
+
+  .app-main:has(.ob-wizard--richting-a) {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    display: block !important;
+    min-height: 0 !important;
+  }
+
+  .ob-wizard--richting-a.ob-wizard,
+  .ob-wizard--richting-a .ob-wizard__layout,
+  .ob-wizard--richting-a .ob-wizard__main {
+    min-height: auto !important;
+    max-height: none !important;
+    height: auto !important;
+    flex: none !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
   .ob-wizard--richting-a .ob-wizard__header {
     display: none !important;
   }
@@ -75,7 +128,37 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__content {
-    padding: 0.85rem 1rem calc(var(--sticky-footer-h, 5.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
+    flex: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    padding: 0.85rem 1rem calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 16px);
+    font-size: 16px;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__content label,
+  .ob-wizard--richting-a .ob-wizard__content legend,
+  .ob-wizard--richting-a .ob-wizard__section-title,
+  .ob-wizard--richting-a .kb-address__label {
+    font-size: 0.875rem !important;
+    font-weight: 600;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__content input,
+  .ob-wizard--richting-a .ob-wizard__content select,
+  .ob-wizard--richting-a .ob-wizard__content textarea,
+  .ob-wizard--richting-a .ob-fields input,
+  .ob-wizard--richting-a .ob-fields select,
+  .ob-wizard--richting-a .ob-fields textarea {
+    font-size: 16px !important;
+    min-height: 48px !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__hint,
+  .ob-wizard--richting-a .ob-wizard__section-hint,
+  .ob-wizard--richting-a fieldset small {
+    font-size: 0.8125rem !important;
   }
 
   .ob-wizard--richting-a .ob-wizard__step-pill {
@@ -92,7 +175,7 @@
 
   .ob-wizard--richting-a .ob-wizard__content h1 {
     margin: 0;
-    font-size: 1.45rem;
+    font-size: 1.5rem;
     line-height: 1.25;
     font-weight: 700;
     color: var(--text);
@@ -112,19 +195,6 @@
     padding: 1rem 1rem 0.35rem;
     box-shadow: var(--shadow-lg);
     margin-bottom: 0.35rem;
-  }
-
-  .ob-wizard--richting-a .ob-wizard__mobile-mascot {
-    display: flex;
-    justify-content: flex-end;
-    padding: 0.15rem 0 0;
-    pointer-events: none;
-  }
-
-  .ob-wizard--richting-a .ob-wizard__mobile-mascot img {
-    width: 40px;
-    height: 40px;
-    object-fit: contain;
   }
 
   .ob-wizard--richting-a .passport-privacy-promise {
@@ -174,14 +244,25 @@
     min-block-size: auto !important;
   }
 
+  .ob-wizard--richting-a .ob-wizard__card .lobsy-choice-tile__icon,
+  .ob-wizard--richting-a .ob-wizard__card .lobsy-choice-tile__check {
+    display: none !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__card .lobsy-choice-tile {
+    min-height: 48px;
+    font-size: 0.9375rem;
+  }
+
   .ob-wizard--richting-a .work-status-field .lobsy-choice-tile,
   .ob-wizard--richting-a .work-status-chips .lobsy-choice-tile {
-    min-height: 44px;
-    padding: 0.35rem 0.65rem;
+    min-height: 48px;
+    padding: 0.35rem 0.75rem;
     border-radius: 999px;
     font-size: 0.8125rem;
     line-height: 1.2;
     text-align: left;
+    justify-content: flex-start;
   }
 
   .ob-wizard--richting-a .work-status-chips .lobsy-choice-grid {
@@ -203,6 +284,12 @@
     text-align: left;
     font-weight: 600;
     font-size: 0.9375rem;
+    justify-content: flex-start;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__transport .lobsy-choice-tile--inline {
+    justify-content: center;
+    text-align: center;
   }
 
   .ob-wizard--richting-a .ob-wizard__transport .lobsy-choice-grid:not(.lobsy-choice-grid--wrap) {
@@ -384,20 +471,30 @@
     color: var(--muted);
   }
 
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] {
+    padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    box-sizing: border-box;
+  }
+
   .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-wizard__actionbar {
     display: grid !important;
     grid-template-columns: auto 1fr;
     gap: 0.65rem;
     align-items: center;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
   .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-wizard__back-footer {
-    width: auto;
+    width: auto !important;
+    inline-size: auto !important;
     justify-self: start;
-    padding: 0 0.75rem;
+    padding: 0 0.5rem;
     min-height: 48px;
     text-decoration: none;
     font-weight: 600;
+    margin: 0;
   }
 
   .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-wizard__cta {
@@ -410,6 +507,8 @@
     grid-template-columns: auto 1fr;
     gap: 0.65rem;
     align-items: center;
+    padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    box-sizing: border-box;
   }
 
   .ob-wizard--richting-a .ob-wizard__content footer.test-flow__footer[data-sticky-footer] .test-flow__back {
@@ -428,8 +527,14 @@
 }
 
 .app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock {
-  transform: scale(0.82);
+  transform: scale(0.78);
   transform-origin: bottom right;
+  z-index: 44;
+  pointer-events: none;
+}
+
+.app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock__btn {
+  pointer-events: auto;
 }
 
 @media (max-width: 1023px) {
@@ -440,8 +545,7 @@
 
 @media (min-width: 1024px) {
   .ob-wizard--richting-a .ob-wizard__mobile-top,
-  .ob-wizard--richting-a .ob-wizard__step-pill,
-  .ob-wizard--richting-a .ob-wizard__mobile-mascot {
+  .ob-wizard--richting-a .ob-wizard__step-pill {
     display: none !important;
   }
 }

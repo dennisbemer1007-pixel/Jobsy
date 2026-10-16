@@ -1,22 +1,23 @@
 /* Mobile onboarding action bar — loaded after onboarding-wizard.css (see PageAssetCatalog). */
 @media (max-width: 1023px) {
-  .app-main:has(.ob-wizard) {
+  /* Richting A scrolls in .app-main (see onboarding-wizard-richting-a.css), not a nested pane. */
+  .app-main:has(.ob-wizard:not(.ob-wizard--richting-a)) {
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
     min-height: 0 !important;
   }
 
-  .ob-wizard,
-  .ob-wizard__layout,
-  .ob-wizard__main {
+  .ob-wizard:not(.ob-wizard--richting-a),
+  .ob-wizard:not(.ob-wizard--richting-a) .ob-wizard__layout,
+  .ob-wizard:not(.ob-wizard--richting-a) .ob-wizard__main {
     flex: 1 1 auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
   }
 
-  .ob-wizard__content {
+  .ob-wizard:not(.ob-wizard--richting-a) .ob-wizard__content {
     flex: 1 1 auto;
     min-height: 0;
     overflow-x: hidden;
