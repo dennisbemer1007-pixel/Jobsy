@@ -12,10 +12,18 @@ const afterBase = (process.env.AFTER_BASE_URL || process.env.JOBSY_E2E_BASE_URL 
 const email = process.env.JOBSY_E2E_EMAIL || 'kandidaat@jobsy.local';
 const password = process.env.JOBSY_E2E_PASSWORD || 'Jobsy123!';
 
-const viewports = [
+const allViewports = [
   { w: 390, h: 844, tag: 'mobile' },
   { w: 1280, h: 800, tag: 'desktop' },
 ];
+const viewportFilter = (process.env.CAPTURE_VIEWPORTS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+const viewports =
+  viewportFilter.length > 0
+    ? allViewports.filter((vp) => viewportFilter.includes(vp.tag))
+    : allViewports;
 
 function ensureDir(p) {
   fs.mkdirSync(p, { recursive: true });
@@ -48,19 +56,11 @@ async function login(page, base) {
 }
 
 async function waitCircuitReady(page) {
-  await page.waitForFunction(
-    () => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready',
-    null,
-    { timeout: 90_000 },
-  );
+  await page.locator('html[data-lobsy-circuit="ready"]').waitFor({ timeout: 90_000 });
 }
 
 async function waitWizardWithoutLoadError(page, { strict = true } = {}) {
-  await page.waitForFunction(
-    () => !document.body?.textContent?.includes('Laden…') && !document.body?.textContent?.includes('Laden...'),
-    null,
-    { timeout: 90_000 },
-  ).catch(() => {});
+  await page.getByText(/^Laden[….]{1,3}$/).waitFor({ state: 'hidden', timeout: 90_000 }).catch(() => {});
   const err = page.locator('.ob-wizard__content .state-message.error');
   if (await err.count()) {
     const text = await err.first().textContent();
@@ -159,14 +159,8 @@ async function prepareAddressSuggestionsShot(page) {
   await page.waitForTimeout(900);
   const list = page.locator('.address-suggestions');
   await list.waitFor({ state: 'visible', timeout: 20_000 });
-  await page.waitForFunction(
-    () => {
-      const loading = document.querySelector('.address-suggestions__status');
-      return loading === null || !loading.textContent?.includes('Laden');
-    },
-    null,
-    { timeout: 20_000 },
-  );
+  await page.locator('.address-suggestions__status:has-text("Laden")').waitFor({ state: 'hidden', timeout: 20_000 }).catch(() => {});
+  await page.locator('.address-suggestions__item').first().waitFor({ state: 'visible', timeout: 20_000 });
   if ((await page.locator('.address-suggestions__item').count()) < 1) {
     throw new Error('Expected address suggestions to be visible');
   }
@@ -189,6 +183,14 @@ async function captureOneShot(browser, base, vp, outPath, { strictNoError, prepa
   try {
     await login(page, base);
     await gotoOnboardingStep1(page, base, { strictNoError });
+    if (!prepareSuggestions) {
+      const { input, legacy } = await addressInput(page);
+      if (!legacy && (await input.inputValue()).trim().length > 0) {
+        await input.fill('');
+        await input.blur();
+        await page.waitForTimeout(400);
+      }
+    }
     let showSuggestionsFrame = suggestionsFrame;
     if (prepareSuggestions) {
       const { legacy } = await prepareAddressSuggestionsShot(page);

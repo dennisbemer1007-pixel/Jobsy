@@ -1,7 +1,7 @@
 @inject CultureState Culture
 @using Jobsy.Web.Services
 
-<div class="kb-address @CssClass @(_originSet ? "kb-address--with-clear" : null)">
+<div class="kb-address @CssClass @(_showClear ? "kb-address--with-clear" : null)">
     @if (!string.IsNullOrWhiteSpace(Label))
     {
         <label class="kb-address__label" for="@InputId">@Label</label>
@@ -44,7 +44,7 @@
                 </span>
             </button>
         }
-        @if (_originSet)
+        @if (_showClear)
         {
             <button type="button"
                     class="kb-address__clear"
@@ -118,6 +118,8 @@
     private string ListboxId => InputId + "-listbox";
 
     private string OptionId(int index) => InputId + "-opt-" + index;
+
+    private bool _showClear => !string.IsNullOrWhiteSpace(_query);
 
     protected override void OnParametersSet()
     {
