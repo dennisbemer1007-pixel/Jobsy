@@ -76,7 +76,7 @@ public class OnboardingWizardNextPlaywrightTests
 
         await first.FillAsync("Alex");
         await page.Locator(".ob-fields input").Nth(1).FillAsync("Jansen");
-        await page.Locator(".ob-fields input[inputmode=text], .ob-fields input[autocomplete=postal-code]").First.FillAsync("2671GB");
+        await page.Locator("#onboarding-home-address, .ob-fields input[inputmode=text], .ob-fields input[autocomplete=postal-code]").First.FillAsync("2671GB");
         await page.WaitForTimeoutAsync(500);
         var suggestion = page.Locator(".ob-wizard__suggestions button").First;
         if (await suggestion.CountAsync() > 0)

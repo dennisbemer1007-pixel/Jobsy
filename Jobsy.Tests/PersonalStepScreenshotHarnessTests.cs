@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
-/// <summary>Exports PersonalStep markup for Playwright viewport screenshots (dev/CI tooling).</summary>
+/// <summary>Exports styled PersonalStep HTML for Playwright screenshots (not a production code path).</summary>
 public class PersonalStepScreenshotHarnessTests : BunitContext
 {
     public PersonalStepScreenshotHarnessTests()
@@ -20,24 +20,29 @@ public class PersonalStepScreenshotHarnessTests : BunitContext
             sp.GetRequiredService<IJSRuntime>(),
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
-        Services.AddSingleton<IGeocodingClient, NoopGeocoder>();
+        Services.AddSingleton<IGeocodingClient, FakeGeocoder>();
     }
 
     [Fact]
     public async Task Export_current_personal_step_markup()
     {
         var dir = Environment.GetEnvironmentVariable("PERSONAL_STEP_HTML_DIR");
-        if (string.IsNullOrWhiteSpace(dir))
+        var staticBase = Environment.GetEnvironmentVariable("PERSONAL_STEP_STATIC_BASE");
+        if (string.IsNullOrWhiteSpace(dir) || string.IsNullOrWhiteSpace(staticBase))
         {
             return;
         }
 
         Directory.CreateDirectory(dir);
-        File.WriteAllText(Path.Combine(dir, "personal-step.html"), await RenderStepHtmlAsync(openSuggestions: false));
-        File.WriteAllText(Path.Combine(dir, "personal-step-suggestions.html"), await RenderStepHtmlAsync(openSuggestions: true));
+        File.WriteAllText(
+            Path.Combine(dir, "personal-step.html"),
+            await RenderDocumentAsync(openSuggestions: false, staticBase));
+        File.WriteAllText(
+            Path.Combine(dir, "personal-step-suggestions.html"),
+            await RenderDocumentAsync(openSuggestions: true, staticBase));
     }
 
-    internal static async Task<string> RenderStepHtmlAsync(bool openSuggestions)
+    internal static async Task<string> RenderDocumentAsync(bool openSuggestions, string staticBase)
     {
         using var ctx = new PersonalStepScreenshotHarnessTests();
         var draft = new OnboardingProfileDraft
@@ -51,49 +56,18 @@ public class PersonalStepScreenshotHarnessTests : BunitContext
             .Add(p => p.ShowValidation, false)
             .Add(p => p.UseDiscoveryPostcodeHint, true));
 
-        var input = cut.FindAll("input").FirstOrDefault(i =>
-                         i.GetAttribute("id") == "onboarding-home-address"
-                         || i.GetAttribute("autocomplete") == "postal-code")
-                     ?? cut.Find("input");
-        input.Input(openSuggestions ? "2671 GB" : "2671 GB Naaldwijk");
-        await cut.InvokeAsync(async () =>
-        {
-            await Task.Delay(openSuggestions ? 400 : 50);
-        });
+        var addressInput = cut.Find("#onboarding-home-address");
+        var query = openSuggestions ? "Kerkstraat Naaldwijk" : "2671 GB Naaldwijk";
+        addressInput.Input(query);
+        await cut.InvokeAsync(async () => await Task.Delay(openSuggestions ? 700 : 100));
 
-        if (openSuggestions && draft.Suggestions.Count == 0)
+        if (openSuggestions)
         {
-            draft.Suggestions.Add(new AddressSuggestion("2671 AA Naaldwijk", 51.99, 4.21));
-            draft.Suggestions.Add(new AddressSuggestion("2671 AB Naaldwijk", 51.98, 4.22));
-            cut.Render(ps => ps
-                .Add(p => p.Draft, draft)
-                .Add(p => p.ShowValidation, false)
-                .Add(p => p.UseDiscoveryPostcodeHint, true));
+            cut.Find(".address-suggestions");
         }
 
-        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Jobsy.Web", "wwwroot"));
-        var css = new[]
-        {
-            $"css/critical.css?v=1",
-            $"css/app.min.css?v=1",
-            $"css/features/onboarding-wizard.css?v=20261016-06",
-        };
-
-        var links = string.Join("\n", css.Select(h =>
-            $"""<link rel="stylesheet" href="file://{root}/{h.Split('?')[0]}" />"""));
-
-        return $$"""
-            <!DOCTYPE html>
-            <html lang="nl">
-            <head>
-              <meta charset="utf-8" />
-              <meta name="viewport" content="width=device-width, initial-scale=1" />
-              {{links}}
-              <style>body{margin:0;background:#f5f2ee;font-family:system-ui,sans-serif}.ob-wizard{padding:12px}</style>
-            </head>
-            <body><div class="ob-wizard">{{cut.Find(".ob-fields").InnerHtml}}</div></body>
-            </html>
-            """;
+        var fieldsHtml = cut.Find(".ob-fields").InnerHtml;
+        return PersonalStepScreenshotExporter.BuildDocument(fieldsHtml, staticBase);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider
@@ -102,21 +76,24 @@ public class PersonalStepScreenshotHarnessTests : BunitContext
             => Task.FromResult(new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity())));
     }
 
-    private sealed class NoopGeocoder : IGeocodingClient
+    private sealed class FakeGeocoder : IGeocodingClient
     {
-        public Task<IReadOnlyList<AddressSuggestion>> SuggestAsync(string query, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<AddressSuggestion>> SuggestAsync(
+            string query,
+            CancellationToken cancellationToken = default)
         {
+            await Task.Delay(50, cancellationToken);
             if ((query ?? "").Trim().Length < 3)
             {
-                return Task.FromResult<IReadOnlyList<AddressSuggestion>>([]);
+                return [];
             }
 
-            return Task.FromResult<IReadOnlyList<AddressSuggestion>>(new[]
-            {
+            return
+            [
+                new AddressSuggestion("Kerkstraat, 2671 Naaldwijk", 51.994, 4.205),
+                new AddressSuggestion("Kerkstraat 20, 2671 AA Naaldwijk", 51.991, 4.211),
                 new AddressSuggestion("2671 AA Naaldwijk", 51.99, 4.21),
-                new AddressSuggestion("2671 AB Naaldwijk", 51.98, 4.22),
-                new AddressSuggestion("Herenstraat 20, 2671 AA Naaldwijk", 51.991, 4.211),
-            });
+            ];
         }
 
         public Task<string?> ReverseAsync(double latitude, double longitude, CancellationToken cancellationToken = default)
