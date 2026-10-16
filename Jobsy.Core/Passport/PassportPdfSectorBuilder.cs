@@ -11,7 +11,7 @@ public static class PassportPdfSectorBuilder
         ("greenhouse", "Sector.Greenhouse", ["tuin", "oogst", "kas", "glas", "groen", "kweker", "teelt", "horti"]),
         ("logistics", "Sector.Logistics", ["logistiek", "orderpick", "magazijn", "warehouse", "heftruck", "inpak"]),
         ("tech", "Sector.Tech", ["techniek", "productie", "machine", "operator", "montage", "werkplaats"]),
-        ("care", "Sector.Care", ["zorg", "welzijn", "helpende", "verzorg"]),
+        ("care", "Sector.Care", ["zorg", "welzijn", "helpende", "verzorg", "verpleeg", "stage", "bhv"]),
         ("horeca", "Sector.Horeca", ["horeca", "keuken", "bediening", "hotel"]),
         ("retail", "Sector.Retail", ["retail", "winkel", "kassa", "verkoop"])
     ];
@@ -227,6 +227,24 @@ public static class PassportPdfSectorBuilder
                 }
 
                 TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCareer: true);
+                break;
+            }
+            case "care":
+            {
+                var role = facts.Roles?.FirstOrDefault(r =>
+                    MatchSector(r) == "care" || r.Contains("zorg", StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(role))
+                {
+                    TryAdd("care-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                }
+
+                var exp = ExperienceHint(facts, ["zorg", "verpleeg", "stage", "bhv", "ziekenhuis"]);
+                if (!string.IsNullOrWhiteSpace(exp))
+                {
+                    TryAdd("care-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
+                }
+
+                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true, preferCareer: true);
                 break;
             }
             default:

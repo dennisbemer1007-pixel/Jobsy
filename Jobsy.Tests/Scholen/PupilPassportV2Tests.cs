@@ -118,6 +118,20 @@ public class PupilPassportV2Tests
     }
 
     [Fact]
+    public void Student_yara_model_uses_student_layout_and_nursing_copy()
+    {
+        var model = PassportPdfModelBuilder.Build(StudentPassportDemoSeed.YaraFacts());
+        Assert.True(model.StudentLayout);
+        Assert.Equal(3, model.StageVacancyMatches.Count);
+        Assert.True(model.SingleSectorFullWidth);
+        Assert.Contains("Zorgzaam en rustig", model.Tagline ?? "", StringComparison.Ordinal);
+        Assert.DoesNotContain("Samen & aardig", model.Tagline ?? "", StringComparison.Ordinal);
+        Assert.Contains("Hbo Verpleegkunde", model.Chips[0].Text, StringComparison.Ordinal);
+        Assert.Equal(4, model.Direction.Count);
+        Assert.DoesNotContain("vaste ploeg", string.Join(' ', model.BestOutTips), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Writes_demo_artifacts_to_v3_store()
     {
         var outDir = "/cursor/stores/self/leerlingpaspoort/v3";

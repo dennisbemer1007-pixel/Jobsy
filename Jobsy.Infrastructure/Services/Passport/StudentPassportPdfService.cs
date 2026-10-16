@@ -34,7 +34,7 @@ public sealed class StudentPassportPdfService : IStudentPassportPdfService
         var preferences = ParsePreferences(user.PreferencesJson);
         var language = JobsyLanguages.Normalize(preferences.Language);
         var layers = await _dna.ReadAsync(user.Id, language, cancellationToken);
-        var facts = PassportPdfFactsFactory.FromUser(
+        var baseFacts = PassportPdfFactsFactory.FromUser(
             user,
             preferences,
             layers,
@@ -43,16 +43,13 @@ public sealed class StudentPassportPdfService : IStudentPassportPdfService
             DateTime.UtcNow);
 
         var matches = await _competencies.GetTopMatchesAsync(user.Id, cancellationToken);
-        var jobFits = matches.Take(3).Select(m => new PassportJobFit(
-            m.Title,
-            m.Why.Count > 0 ? string.Join(" ", m.Why) : m.CompanyName)).ToList();
-
-        var baseModel = PassportPdfModelBuilder.Build(facts);
-        var model = baseModel with
+        var facts = StudentPassportPdfFactsEnricher.Apply(baseFacts, preferences, matches);
+        if (!string.IsNullOrWhiteSpace(preferences.AboutMe))
         {
-            JobFits = jobFits.Count > 0 ? jobFits : baseModel.JobFits
-        };
+            facts = facts with { StudentTagline = null };
+        }
 
+        var model = PassportPdfModelBuilder.Build(facts);
         var pdf = await _pdf.RenderAsync(model, cancellationToken);
         return (pdf, _pdf.BuildFileName(model));
     }

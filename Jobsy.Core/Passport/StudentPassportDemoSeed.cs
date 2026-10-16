@@ -46,7 +46,7 @@ public static class StudentPassportDemoSeed
             Motivation: null,
             Dna:
             [
-                new(PassportDnaLayer.Competence, true, Generated.AddDays(-14), ["Samenwerken"], ["Samenwerken"]),
+                new(PassportDnaLayer.Competence, true, Generated.AddDays(-14), ["Samenwerken in team"], []),
                 new(PassportDnaLayer.Career, false, null, [], []),
                 new(PassportDnaLayer.Culture, false, null, [], []),
                 new(PassportDnaLayer.Values, false, null, [], [])
@@ -60,7 +60,10 @@ public static class StudentPassportDemoSeed
             LearningGoals: null,
             ShowDnaBlocks: true,
             QrVerifyUrl: "https://lobsy.nl/candidate/paspoort/share/demo-yara-sparse",
-            QrValidUntilLabel: "Geldig t/m 14 okt 2026");
+            QrValidUntilLabel: "Geldig t/m 14 okt 2026",
+            StudentPassportLayout: true,
+            StudentStudyChip: "Hbo Verpleegkunde · jaar 3",
+            StudentInternshipChip: "Stage sep–dec 2026");
 
     private static PassportPdfFacts FullFacts()
         => new(
@@ -92,13 +95,13 @@ public static class StudentPassportDemoSeed
             SpokenLanguages: [new("nl", "moedertaal")],
             DutchLevel: "vloeiend",
             WorkPreferences: null,
-            ShareEmployerPreferences: true,
-            EmployerPreferences: ["small-team", "learn-on-the-job", "fixed-workplace"],
+            ShareEmployerPreferences: false,
+            EmployerPreferences: null,
             Roles:
             [
                 "Stage verpleegafdeling",
                 "Bijbaan zorginstelling",
-                "Vrijwilligerswerk buurtcentrum"
+                "Assistent zorg"
             ],
             ContractPreferences: ["stage", "bijbaan"],
             Experience:
@@ -129,35 +132,35 @@ public static class StudentPassportDemoSeed
                 "Hbo Verpleegkunde",
                 "Jaar 3 · stageperiode sep–dec 2026"
             ],
-            EducationDirection: "Verpleegkundige · ziekenhuis of thuiszorg",
+            EducationDirection: "Verpleegkundige · ziekenhuis",
             OwnWords:
             "Ik wil mensen echt helpen als ze bang of onzeker zijn — rustig blijven en uitleggen wat er gebeurt.",
-            Motivation: "Verpleegkundige in het ziekenhuis · daarna specialisatie",
+            Motivation: "Verpleegkundige in het ziekenhuis",
+            DreamTitle: "Verpleegkundige",
             Dna:
             [
                 new(PassportDnaLayer.Competence, true, Generated.AddDays(-21), [
                     "Zorgzaam en betrouwbaar",
-                    "Samenwerken in team",
-                    "Rustig onder druk"
-                ], ["Samenwerken", "Stressbestendigheid", "Resultaatgerichtheid"]),
+                    "Rustig onder druk",
+                    "Zorgvuldig in de praktijk"
+                ], []),
                 new(PassportDnaLayer.Career, true, Generated.AddDays(-20), [
                     "Helpen en uitleggen",
-                    "Werken met mensen"
-                ], ["Social", "Investigative"]),
+                    "Werken met mensen in zorg"
+                ], []),
                 new(PassportDnaLayer.Culture, true, Generated.AddDays(-10), [
-                    "Vast team",
-                    "Duidelijke afspraken"
-                ], ["Collaboration", "PeopleFirst"]),
+                    "Vast team op afdeling",
+                    "Duidelijke afspraken met begeleider"
+                ], []),
                 new(PassportDnaLayer.Values, true, Generated.AddDays(-3), [
-                    "Veiligheid en respect",
-                    "Verbinding"
-                ], ["Connection", "Stability"])
+                    "Veiligheid voor patiënt",
+                    "Respectvol contact"
+                ], [])
             ],
             EmailVerified: true,
             PhoneVerified: false,
             PhoneVerificationRequired: false,
             GeneratedAtUtc: Generated,
-            DreamTitle: "Verpleegkundige",
             ReferenceQuotes: null,
             LearningGoals:
             [
@@ -168,5 +171,28 @@ public static class StudentPassportDemoSeed
             ShowDnaBlocks: true,
             QrVerifyUrl: "https://lobsy.nl/candidate/paspoort/share/demo-yara",
             QrValidUntilLabel: "Geldig t/m 14 okt 2026",
-            FirstName: "Yara");
+            FirstName: "Yara",
+            StudentPassportLayout: true,
+            StudentTagline: "Zorgzaam en rustig — wil weten hoe het zit en rustig uitleggen",
+            StudentStudyChip: "Hbo Verpleegkunde · jaar 3",
+            StudentInternshipChip: "Stage sep–dec 2026",
+            StageVacancyMatches:
+            [
+                new("Stage verpleegafdeling", "Past bij zorgzaam en zorgvuldig · Meelopen met verpleegkundigen · Binnen 25 km"),
+                new("Bijbaan zorginstelling (16+)", "Rustige uren na school · Helpen bij basiszorg · Avond/middag"),
+                new("Vrijwilligerswerk buurtcentrum", "Contact met mensen · Korte shifts · Om te ontdekken")
+            ],
+            StudyDirectionSteps:
+            [
+                new("Hbo Verpleegkunde · jaar 3", "Nu"),
+                new("Stage verpleegafdeling sep–dec 2026", "Stageperiode"),
+                new("Afronden hbo · BIG-register", "Daarna"),
+                new("Verpleegkundige ziekenhuis", "Doel")
+            ],
+            StudentBestOutTips:
+            [
+                "Laat haar eerst observeren en stel daarna korte, concrete vragen",
+                "Geef een vaste begeleider op de afdeling tijdens stage",
+                "Plan medicatie-momenten stap voor stap met dubbelcheck"
+            ]);
 }
