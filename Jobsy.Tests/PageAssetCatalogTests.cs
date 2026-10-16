@@ -12,6 +12,7 @@ public class PageAssetCatalogTests
     [InlineData("/admin/users", 3 + 2)]
     [InlineData("/sales/dashboard", 3 + 1)]
     [InlineData("/leerling", 3 + 1)]
+    [InlineData("/leerling/vo-paspoort", 3 + 1)]
     public void Route_stylesheets_use_area_bundles_not_the_full_catalog(string path, int expectedMinLinks)
     {
         var areas = Jobsy.Web.Hosting.PageAssetCatalog.ResolveAreas(path);
@@ -31,6 +32,12 @@ public class PageAssetCatalogTests
             Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
             Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/vacancy-wizard.css", StringComparison.Ordinal));
         }
+
+        if (path.StartsWith("/leerling", StringComparison.Ordinal))
+        {
+            Assert.Contains(sheets, s => s.StartsWith("css/features/scholen.css", StringComparison.Ordinal));
+            Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
+        }
     }
 
     [Fact]
@@ -46,6 +53,7 @@ public class PageAssetCatalogTests
     [InlineData("/banenkaart", false, false, false, false)]
     [InlineData("/", true, false, false, false)]
     [InlineData("/leerling", false, false, true, false)]
+    [InlineData("/leerling/vo-paspoort", false, false, true, false)]
     [InlineData("/werkgever/vacatures/nieuw", false, false, false, true)]
     [InlineData("/account-maken", false, true, false, false)]
     public void Page_scripts_are_gated(
