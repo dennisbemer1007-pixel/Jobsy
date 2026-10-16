@@ -26,9 +26,7 @@ public static class PassportPdfModelBuilder
         var strengths = Strengths(facts.Dna);
         var generated = AmsterdamTime.ToLocal(facts.GeneratedAtUtc);
         var testsDone = facts.Dna.Count(layer => layer.Done);
-        var showBadge = testsDone == PassportDnaLayer.Keys.Length
-                        && facts.EmailVerified
-                        && (!facts.PhoneVerificationRequired || facts.PhoneVerified);
+        var showBadge = testsDone == PassportDnaLayer.Keys.Length && facts.EmailVerified;
         var lastTest = facts.Dna
             .Where(layer => layer.Done && layer.CompletedAtUtc is not null)
             .Select(layer => layer.CompletedAtUtc!.Value)
@@ -40,7 +38,9 @@ public static class PassportPdfModelBuilder
             ? lastTest is DateTime doneAt
                 ? testsStatus + " · " + doneAt.ToLocalAmsterdam(culture)
                 : testsStatus
-            : null;
+            : testsDone > 0
+                ? testsStatus
+                : null;
 
         var experience = Experience(facts);
         var certificates = Certificates(facts);
@@ -50,6 +50,17 @@ public static class PassportPdfModelBuilder
                                     || shifts.Count > 0
                                     || facts.AvailableFrom is not null;
         var traits = Traits(lang, facts.Dna);
+        var sectors = PassportPdfSectorBuilder.Build(lang, facts);
+        var strengthCards = StrengthCards(traits);
+        var strengthTags = StrengthTags(lang, facts, traits);
+        var tagline = Tagline(lang, facts, traits);
+        var howWorkLines = HowWorkLines(lang, facts);
+        var bestOut = BestOutTips(lang, facts);
+        var dnaLayers = facts.ShowDnaBlocks ? DnaLayerCards(lang, facts.Dna, culture) : [];
+        var verifiedChecked = VerifiedChecked(lang, facts, testsDone);
+        var verifiedNot = VerifiedNot(lang);
+        var firstName = FirstName(facts);
+        var conversationFooter = PassportPdfStrings.T(lang, "ConversationInput");
         var home = Home(lang, facts);
         var valueLines = ValueLines(lang, facts.Dna);
         var jobFits = JobFits(lang, facts);
@@ -61,7 +72,7 @@ public static class PassportPdfModelBuilder
             Language: lang,
             FullName: string.IsNullOrWhiteSpace(facts.FullName) ? "—" : facts.FullName.Trim(),
             Initials: Initials(facts.FullName),
-            Tagline: null,
+            Tagline: tagline,
             Region: Blank(facts.WorkRegion),
             OpenForWork: facts.OpenForWork,
             PassportNumber: facts.UserId is Guid id && id != Guid.Empty
@@ -131,9 +142,199 @@ public static class PassportPdfModelBuilder
             PracticalSeek: PracticalSeek(lang, facts),
             Quotes: quotes,
             Direction: direction,
-            ShowRadar: facts.Dna.Count(layer => layer.Done) >= 2,
-            LearningLines: CleanList(facts.LearningGoals, 5));
+            ShowRadar: false,
+            LearningLines: CleanList(facts.LearningGoals, 5),
+            ShowDnaBlocks: facts.ShowDnaBlocks,
+            StrengthCards: strengthCards,
+            StrengthTags: strengthTags,
+            Sectors: sectors,
+            HowWorkLines: howWorkLines,
+            BestOutTips: bestOut,
+            QrVerifyUrl: facts.QrVerifyUrl,
+            QrValidUntilLabel: facts.QrValidUntilLabel,
+            ConversationFooter: conversationFooter,
+            DnaLayers: dnaLayers,
+            VerifiedChecked: verifiedChecked,
+            VerifiedNotChecked: verifiedNot,
+            FirstName: firstName);
     }
+
+    private static string? FirstName(PassportPdfFacts facts)
+    {
+        if (!string.IsNullOrWhiteSpace(facts.FirstName))
+        {
+            return facts.FirstName.Trim();
+        }
+
+        var parts = facts.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length == 0 ? null : parts[0];
+    }
+
+    private static IReadOnlyList<PassportStrengthCard> StrengthCards(IReadOnlyList<PassportGlossLine> traits)
+        => traits.Take(3)
+            .Select(line => new PassportStrengthCard(line.Label, line.Gloss))
+            .ToArray();
+
+    private static IReadOnlyList<string> StrengthTags(
+        string lang,
+        PassportPdfFacts facts,
+        IReadOnlyList<PassportGlossLine> traits)
+    {
+        var tags = traits.Select(t => t.Label).Take(4).ToList();
+        if (facts.ShareEmployerPreferences)
+        {
+            foreach (var code in (facts.EmployerPreferences ?? []).Take(2))
+            {
+                var key = "Employer." + DiscoveryCatalogs.CanonicalEmployer(code);
+                if (PassportPdfStrings.HasKey(key))
+                {
+                    tags.Add(Capitalize(PassportPdfStrings.T(lang, key)));
+                }
+            }
+        }
+
+        return tags.Distinct(StringComparer.OrdinalIgnoreCase).Take(6).ToArray();
+    }
+
+    private static string? Tagline(string lang, PassportPdfFacts facts, IReadOnlyList<PassportGlossLine> traits)
+    {
+        if (traits.Count >= 2)
+        {
+            return PassportPdfStrings.F(lang, "TaglineDerived", traits[0].Label, traits[1].Gloss);
+        }
+
+        if (traits.Count == 1)
+        {
+            return traits[0].Label + " — " + traits[0].Gloss;
+        }
+
+        return Blank(facts.OwnWords) is { Length: <= 80 } shortText ? shortText : null;
+    }
+
+    private static IReadOnlyList<PassportHowWorkLine> HowWorkLines(string lang, PassportPdfFacts facts)
+    {
+        if (!facts.ShowDnaBlocks)
+        {
+            return [];
+        }
+
+        var lines = new List<PassportHowWorkLine>();
+        foreach (var pref in WorkPreferences(lang, facts).Take(4))
+        {
+            lines.Add(new PassportHowWorkLine(pref.Label, pref.Value));
+        }
+
+        foreach (var home in Home(lang, facts).Take(2))
+        {
+            lines.Add(new PassportHowWorkLine(home, null));
+        }
+
+        return lines;
+    }
+
+    private static IReadOnlyList<string> BestOutTips(string lang, PassportPdfFacts facts)
+    {
+        if (!facts.ShowDnaBlocks || !facts.ShareEmployerPreferences)
+        {
+            return [];
+        }
+
+        var tips = new List<string>();
+        foreach (var code in facts.EmployerPreferences ?? [])
+        {
+            var canonical = DiscoveryCatalogs.CanonicalEmployer(code);
+            if (canonical is null)
+            {
+                continue;
+            }
+
+            var key = "EmployerTip." + canonical;
+            if (PassportPdfStrings.HasKey(key))
+            {
+                tips.Add(PassportPdfStrings.T(lang, key));
+            }
+
+            if (tips.Count == 4)
+            {
+                break;
+            }
+        }
+
+        return tips;
+    }
+
+    private static IReadOnlyList<PassportDnaLayerCard> DnaLayerCards(
+        string lang,
+        IReadOnlyList<PassportDnaLayerFact> layers,
+        CultureInfo culture)
+    {
+        var cards = new List<PassportDnaLayerCard>(4);
+        foreach (var key in PassportDnaLayer.Keys)
+        {
+            var layer = layers.FirstOrDefault(x => x.Key == key);
+            if (layer is not { Done: true })
+            {
+                continue;
+            }
+
+            var items = LayerItems(layer, lang);
+            var body = items.Count == 0
+                ? PassportPdfStrings.T(lang, "Done")
+                : string.Join(" · ", items.Select(i => i.Label).Take(3));
+            var completed = layer.CompletedAtUtc is DateTime done
+                ? PassportPdfStrings.F(lang, "LayerDone", done.ToLocalAmsterdam(culture))
+                : null;
+            var tone = key switch
+            {
+                PassportDnaLayer.Competence => "coral",
+                PassportDnaLayer.Career => "purple",
+                PassportDnaLayer.Culture => "mint",
+                _ => "sand"
+            };
+            cards.Add(new PassportDnaLayerCard(
+                PassportPdfStrings.T(lang, "LayerNick." + key),
+                PassportPdfStrings.T(lang, "Layer." + key),
+                body,
+                completed,
+                tone));
+        }
+
+        return cards;
+    }
+
+    private static IReadOnlyList<string> VerifiedChecked(string lang, PassportPdfFacts facts, int testsDone)
+    {
+        var lines = new List<string>();
+        if (testsDone > 0)
+        {
+            lines.Add(PassportPdfStrings.F(lang, "DnaChecked", testsDone));
+        }
+
+        if (facts.EmailVerified)
+        {
+            lines.Add(PassportPdfStrings.T(lang, "EmailOk"));
+        }
+
+        if (facts.PhoneVerified)
+        {
+            lines.Add(PassportPdfStrings.T(lang, "PhoneOk"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(facts.QrVerifyUrl))
+        {
+            lines.Add(PassportPdfStrings.T(lang, "VerifiedContentLive"));
+        }
+
+        return lines;
+    }
+
+    private static IReadOnlyList<string> VerifiedNot(string lang)
+        =>
+        [
+            PassportPdfStrings.T(lang, "NotIdentity"),
+            PassportPdfStrings.T(lang, "NotDiplomas"),
+            PassportPdfStrings.T(lang, "NotReferences")
+        ];
 
     public static IReadOnlyList<(string Code, PassportShiftKind Kind)> DeriveShifts(
         IReadOnlyDictionary<string, string[]>? availability,
@@ -464,7 +665,23 @@ public static class PassportPdfModelBuilder
             duties,
             period,
             place,
-            ExperienceKind(item));
+            ExperienceKind(item),
+            DurationLabel(lang, item));
+    }
+
+    private static string? DurationLabel(string lang, PassportExperienceFact item)
+    {
+        if (item.Years is int years && years > 0)
+        {
+            return PassportPdfStrings.F(lang, "ExperienceDurationYears", years);
+        }
+
+        if (string.IsNullOrWhiteSpace(item.StartMonth))
+        {
+            return null;
+        }
+
+        return null;
     }
 
     private static string ExperienceKind(PassportExperienceFact item)
