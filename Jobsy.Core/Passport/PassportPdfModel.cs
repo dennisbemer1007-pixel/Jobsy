@@ -70,7 +70,8 @@ public sealed record PassportPdfModel(
     bool SinglePageLayout = false,
     bool ShowHeroAvatar = true,
     string? SparseCandidateNote = null,
-    string? FooterOmissionLine = null);
+    string? FooterOmissionLine = null,
+    IReadOnlyList<string> SparseTodoLines = null!);
 
 public sealed record PassportStrengthCard(string Title, string Subtitle);
 

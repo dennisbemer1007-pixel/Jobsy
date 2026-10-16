@@ -132,9 +132,10 @@ public class PassportPdfV2Tests
         Assert.Equal(1, pdf.Pages);
         Assert.Contains("Marta Kowalska", text, StringComparison.Ordinal);
         Assert.Contains("0/4 DNA-tests", text, StringComparison.Ordinal);
+        Assert.Contains("Nog niets gecontroleerd", text, StringComparison.Ordinal);
+        Assert.Contains("Nog aan te vullen", text, StringComparison.Ordinal);
         Assert.Contains("Vul je paspoort aan", text, StringComparison.Ordinal);
         Assert.DoesNotContain("4/4", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("Werkvoorkeuren", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Sterke punten", text, StringComparison.Ordinal);
         Assert.DoesNotContain("In mijn eigen woorden", text, StringComparison.Ordinal);
         Assert.DoesNotContain("4/4 DNA-tests", text, StringComparison.Ordinal);
@@ -291,7 +292,12 @@ public class PassportPdfV2Tests
         Directory.CreateDirectory(dir);
         var scenarios = new (string Slug, PassportPdfFacts Facts)[]
         {
-            ("marta-nl", FullFacts() with { Language = "nl" }),
+            ("marta-nl", FullFacts() with
+            {
+                Language = "nl",
+                QrVerifyUrl = "https://lobsy.nl/candidate/paspoort/share/demo-marta",
+                QrValidUntilLabel = "Geldig tot 3 okt 2027"
+            }),
             ("rich-nl", RichSample() with { Language = "nl" }),
             ("thin-nl", ThinSample()),
             ("full-en", FullFacts() with { Language = "en" }),
@@ -515,7 +521,7 @@ public class PassportPdfV2Tests
             DateOfBirth = new DateOnly(1994, 5, 12)
         };
         var prefs = new CandidatePreferencesDto(
-            Roles: ["Orderpicker", "Medewerker tuinbouw"],
+            Roles: ["Orderpicker", "Medewerker tuinbouw", "Productiemedewerker"],
             MaxTravelMinutes: 30,
             PreferredTransport: "Fiets",
             Language: "nl",

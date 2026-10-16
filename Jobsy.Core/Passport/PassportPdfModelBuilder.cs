@@ -58,6 +58,11 @@ public static class PassportPdfModelBuilder
         var bestOut = BestOutTips(lang, facts);
         var dnaLayers = facts.ShowDnaBlocks ? DnaLayerCards(lang, facts.Dna, culture) : [];
         var verifiedChecked = VerifiedChecked(lang, facts, testsDone);
+        if (verifiedChecked.Count == 0)
+        {
+            verifiedChecked = [PassportPdfStrings.T(lang, "NothingVerifiedYet")];
+        }
+
         var verifiedNot = VerifiedNot(lang);
         var firstName = FirstName(facts);
         var conversationFooter = PassportPdfStrings.T(lang, "ConversationInput");
@@ -78,10 +83,10 @@ public static class PassportPdfModelBuilder
             bestOut,
             facts.OwnWords,
             facts.ShowDnaBlocks);
-        var showHeroAvatar = !singlePage
-                             || !string.IsNullOrWhiteSpace(tagline)
-                             || Chips(lang, facts, hasAvailabilitySignal).Count > 0;
+        var showHeroAvatar = !singlePage;
         var sparseNote = singlePage ? PassportPdfStrings.T(lang, "SparseFill") : null;
+        var sparseTodo = singlePage ? SparseTodoLines(lang, facts, testsDone) : [];
+        var soughtLine = Sought(lang, facts);
 
         return new PassportPdfModel(
             Language: lang,
@@ -122,7 +127,7 @@ public static class PassportPdfModelBuilder
             StrengthSource: strengths.Count == 0 || lastTest is null
                 ? null
                 : PassportPdfStrings.F(lang, "StrengthSource", lastTest.Value.ToLocalAmsterdam(culture)),
-            SoughtLine: Sought(lang, facts),
+            SoughtLine: soughtLine,
             Experience: experience.Lines,
             ExperienceMore: experience.More,
             Certificates: certificates.Lines,
@@ -148,7 +153,7 @@ public static class PassportPdfModelBuilder
             GeneratedAtUtc: facts.GeneratedAtUtc,
             Story: story,
             HeroMeta: HeroMeta(lang, facts, showBadge, testsStatus),
-            Chips: Chips(lang, facts, hasAvailabilitySignal),
+            Chips: Chips(lang, facts, hasAvailabilitySignal, soughtLine, singlePage),
             Traits: traits,
             HomeLines: home,
             ValueLines: valueLines,
@@ -175,7 +180,39 @@ public static class PassportPdfModelBuilder
             SinglePageLayout: singlePage,
             ShowHeroAvatar: showHeroAvatar,
             SparseCandidateNote: sparseNote,
-            FooterOmissionLine: footerOmission);
+            FooterOmissionLine: footerOmission,
+            SparseTodoLines: sparseTodo);
+    }
+
+    private static IReadOnlyList<string> SparseTodoLines(string lang, PassportPdfFacts facts, int testsDone)
+    {
+        var lines = new List<string>();
+        if (testsDone < PassportDnaLayer.Keys.Length)
+        {
+            lines.Add(PassportPdfStrings.F(lang, "TestsProgress", testsDone));
+        }
+
+        if (facts.Experience is not { Count: > 0 })
+        {
+            lines.Add(PassportPdfStrings.T(lang, "SparseTodo.Experience"));
+        }
+
+        if (Languages(lang, facts).Count == 0)
+        {
+            lines.Add(PassportPdfStrings.T(lang, "SparseTodo.Languages"));
+        }
+
+        if (WorkPreferences(lang, facts).Count == 0)
+        {
+            lines.Add(PassportPdfStrings.T(lang, "SparseTodo.Preferences"));
+        }
+
+        if (facts.Roles is not { Count: > 0 })
+        {
+            lines.Add(PassportPdfStrings.T(lang, "SparseTodo.Roles"));
+        }
+
+        return lines;
     }
 
     private static bool ComputeSinglePageLayout(
@@ -1321,7 +1358,12 @@ public static class PassportPdfModelBuilder
         return string.Join(" · ", bits);
     }
 
-    private static IReadOnlyList<PassportChip> Chips(string lang, PassportPdfFacts facts, bool available)
+    private static IReadOnlyList<PassportChip> Chips(
+        string lang,
+        PassportPdfFacts facts,
+        bool available,
+        string? soughtLine,
+        bool singlePage)
     {
         var chips = new List<PassportChip>();
         if (!string.IsNullOrWhiteSpace(facts.WorkRegion))
@@ -1343,6 +1385,11 @@ public static class PassportPdfModelBuilder
         if (facts.OpenForWork)
         {
             chips.Add(new PassportChip(PassportPdfStrings.T(lang, "OpenForWork"), "open"));
+        }
+
+        if (!singlePage && !string.IsNullOrWhiteSpace(soughtLine))
+        {
+            chips.Add(new PassportChip(Clip(soughtLine, 88)!, "seek"));
         }
 
         return chips;
