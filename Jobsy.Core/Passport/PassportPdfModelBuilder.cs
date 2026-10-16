@@ -51,11 +51,16 @@ public static class PassportPdfModelBuilder
                                     || facts.AvailableFrom is not null;
         var traits = Traits(lang, facts.Dna);
         var sectors = PassportPdfSectorBuilder.Build(lang, facts);
-        var strengthCards = StrengthCards(traits);
+        var strengthCards = facts.StudentStrengthCards ?? StrengthCards(traits);
         var strengthTags = StrengthTags(lang, facts, traits);
-        var tagline = Tagline(lang, facts, traits);
-        var howWorkLines = HowWorkLines(lang, facts);
-        var bestOut = BestOutTips(lang, facts);
+        var studentLayout = facts.StudentPassportLayout;
+        var tagline = studentLayout && !string.IsNullOrWhiteSpace(facts.StudentTagline)
+            ? facts.StudentTagline!.Trim()
+            : Tagline(lang, facts, traits);
+        var howWorkLines = facts.StudentHowWorkLines ?? HowWorkLines(lang, facts);
+        var bestOut = studentLayout
+            ? facts.StudentBestOutTips ?? []
+            : BestOutTips(lang, facts);
         var dnaLayers = facts.ShowDnaBlocks ? DnaLayerCards(lang, facts.Dna, culture) : [];
         var verifiedChecked = VerifiedChecked(lang, facts, testsDone);
         if (verifiedChecked.Count == 0)
@@ -71,7 +76,14 @@ public static class PassportPdfModelBuilder
         var valueLines = ValueLines(lang, facts.Dna);
         var jobFits = JobFits(lang, facts);
         var quotes = Quotes(facts.ReferenceQuotes);
-        var direction = Direction(lang, facts);
+        var direction = studentLayout && facts.StudyDirectionSteps is { Count: > 0 }
+            ? facts.StudyDirectionSteps
+            : Direction(lang, facts);
+        var stageVacancyMatches = studentLayout ? facts.StageVacancyMatches ?? [] : [];
+        var stageVacanciesEmpty = studentLayout && stageVacancyMatches.Count == 0
+            ? PassportPdfStrings.T(lang, "StageVacanciesEmpty")
+            : null;
+        var singleSectorFullWidth = studentLayout && sectors.Count == 1;
         var story = Story(lang, facts);
         var singlePage = ComputeSinglePageLayout(
             facts,
@@ -155,11 +167,13 @@ public static class PassportPdfModelBuilder
             GeneratedAtUtc: facts.GeneratedAtUtc,
             Story: story,
             HeroMeta: HeroMeta(lang, facts, showBadge, testsStatus),
-            Chips: Chips(lang, facts, hasAvailabilitySignal, soughtParts, singlePage),
+            Chips: studentLayout
+                ? StudentChips(lang, facts, hasAvailabilitySignal)
+                : Chips(lang, facts, hasAvailabilitySignal, soughtParts, singlePage),
             Traits: traits,
             HomeLines: home,
             ValueLines: valueLines,
-            JobFits: jobFits,
+            JobFits: studentLayout ? [] : jobFits,
             PracticalLine: PracticalLine(lang, facts, hasAvailabilitySignal, culture),
             PracticalSeek: PracticalSeek(lang, facts),
             Quotes: quotes,
@@ -183,7 +197,45 @@ public static class PassportPdfModelBuilder
             ShowHeroAvatar: showHeroAvatar,
             SparseCandidateNote: sparseIntro,
             FooterOmissionLine: footerOmission,
-            SparseTodoLines: sparseTodo);
+            SparseTodoLines: sparseTodo,
+            StudentLayout: studentLayout,
+            StageVacancyMatches: stageVacancyMatches,
+            StageVacanciesEmpty: stageVacanciesEmpty,
+            SingleSectorFullWidth: singleSectorFullWidth);
+    }
+
+    private static IReadOnlyList<PassportChip> StudentChips(
+        string lang,
+        PassportPdfFacts facts,
+        bool available)
+    {
+        var chips = new List<PassportChip>();
+        if (!string.IsNullOrWhiteSpace(facts.StudentStudyChip))
+        {
+            chips.Add(new PassportChip(Clip(facts.StudentStudyChip!.Trim(), 42)!, "study"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(facts.StudentInternshipChip))
+        {
+            chips.Add(new PassportChip(Clip(facts.StudentInternshipChip!.Trim(), 42)!, "internship"));
+        }
+
+        if (!string.IsNullOrWhiteSpace(facts.WorkRegion))
+        {
+            chips.Add(new PassportChip(Clip(facts.WorkRegion.Trim(), 32)!, "region"));
+        }
+
+        if (available)
+        {
+            chips.Add(new PassportChip(PassportPdfStrings.T(lang, "AvailableChip"), "available"));
+        }
+
+        if (facts.OpenForWork)
+        {
+            chips.Add(new PassportChip(PassportPdfStrings.T(lang, "OpenForWork"), "open"));
+        }
+
+        return chips;
     }
 
     private static IReadOnlyList<string> SparseTodoLines(string lang, PassportPdfFacts facts, int testsDone)
@@ -1168,8 +1220,7 @@ public static class PassportPdfModelBuilder
         var lines = new List<PassportGlossLine>();
         foreach (var item in items.Take(take))
         {
-            var gloss = PassportTraitCopy.Gloss(layer, item.Code, lang)
-                        ?? PassportPdfStrings.T(lang, "TraitFallback");
+            var gloss = PassportTraitCopy.Gloss(layer, item.Code, lang) ?? "";
             lines.Add(new PassportGlossLine(item.Label, gloss));
         }
 

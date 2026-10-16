@@ -308,15 +308,38 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             db.PlatformFeatureSettings.Add(new PlatformFeatureSettings
             {
                 Id = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"),
-                SchoolsEnabled = true
+                SchoolsEnabled = true,
+                PupilPassportV2Enabled = true
             });
         }
         else
         {
             row.SchoolsEnabled = true;
+            row.PupilPassportV2Enabled = true;
         }
 
         await db.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Vo_paspoort_page_includes_school_styles_and_form()
+    {
+        await EnableSchoolsAsync();
+        var seed = await SeedVoClassAsync();
+        var apiHandler = _api.Server.CreateHandler();
+        using var web = new PupilWebFactory(apiHandler);
+        using var client = HtmlClient(web);
+
+        var login = await PostLoginAsync(client, seed);
+        Assert.Equal(HttpStatusCode.Redirect, login.StatusCode);
+
+        var page = await client.GetAsync("/leerling/vo-paspoort");
+        var html = await page.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        Assert.Contains("css/features/scholen.css", html, StringComparison.Ordinal);
+        Assert.Contains("css/app.min.css?v=20261016-05", html, StringComparison.Ordinal);
+        Assert.Contains("js/leerling-login.js", html, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"leerling-vo-paspoort\"", html, StringComparison.Ordinal);
     }
 
     private async Task<Seed> SeedOpenClassAsync()
@@ -344,6 +367,46 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
             Level = SchoolLevel.Groep78,
             Year = 7,
             QuestionSet = PupilQuestionSet.Groep78,
+            SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
+            PupilCount = 1,
+            TestWindow = TestWindowState.Open,
+            ParentalInfoConfirmedAtUtc = DateTime.UtcNow,
+            ParentalInfoConfirmedByUserId = _api.AdminId,
+            ParentalInfoTextVersion = "1",
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        db.Schools.Add(school);
+        db.SchoolClasses.Add(cls);
+        await db.SaveChangesAsync();
+        var generated = await codes.GenerateAsync(1, cls);
+        return new Seed(school.Id, cls.Id, codes.Unprotect(generated[0].CodeProtected)!);
+    }
+
+    private async Task<Seed> SeedVoClassAsync()
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var codes = scope.ServiceProvider.GetRequiredService<IPupilCodeService>();
+        var school = new School
+        {
+            Id = Guid.NewGuid(),
+            Name = "Web VO " + Guid.NewGuid().ToString("N")[..6],
+            City = "Amersfoort",
+            AllowedEmailDomains = "[\"voorbeeldcollege.nl\"]",
+            IsActive = true,
+            ProcessorAgreementSignedOn = DateOnly.FromDateTime(DateTime.UtcNow),
+            ProcessorAgreementVersion = "1.0",
+            CreatedAtUtc = DateTime.UtcNow,
+            CreatedByUserId = _api.AdminId
+        };
+        var cls = new SchoolClass
+        {
+            Id = Guid.NewGuid(),
+            SchoolId = school.Id,
+            Name = "4B",
+            Level = SchoolLevel.Havo,
+            Year = 4,
+            QuestionSet = PupilQuestionSet.Vo,
             SchoolYearStart = SchoolYear.Current(DateOnly.FromDateTime(DateTime.UtcNow)),
             PupilCount = 1,
             TestWindow = TestWindowState.Open,

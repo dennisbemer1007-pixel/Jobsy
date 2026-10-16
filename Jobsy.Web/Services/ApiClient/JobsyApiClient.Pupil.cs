@@ -62,6 +62,22 @@ public sealed partial class JobsyApiClient
         return await ReadApiJsonAsync<PupilDreamJobResponse>(response.Content, ct);
     }
 
+    public async Task<PupilVoPassportDto?> GetPupilVoPassportAsync(CancellationToken ct = default)
+        => await GetApiJsonAsync<PupilVoPassportDto>("api/pupil/vo-passport", ct);
+
+    public async Task<PupilVoPassportDto?> SavePupilVoPassportAsync(
+        PupilVoPassportSaveRequest request,
+        CancellationToken ct = default)
+    {
+        using var response = await PutApiJsonAsync("api/pupil/vo-passport", request, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await ReadApiJsonAsync<PupilVoPassportDto>(response.Content, ct);
+    }
+
     /// <summary>
     /// Story PDF from the API (<c>GET /leerling/pdf</c>). The web host proxies this
     /// so the pupil link does not 404 on the web origin.

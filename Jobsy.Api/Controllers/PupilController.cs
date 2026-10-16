@@ -119,12 +119,32 @@ public sealed class PupilController : ControllerBase
         return ok is null ? StatusCode(status, error) : Ok(ok);
     }
 
-    [HttpGet("~/leerling/pdf")]
+    [HttpGet("vo-passport")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
-    public async Task<IActionResult> Pdf(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetVoPassport(CancellationToken cancellationToken)
     {
         NoStore();
-        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, cancellationToken);
+        var (ok, error, status) = await _portal.GetVoPassportAsync(User, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpPut("vo-passport")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> SaveVoPassport(
+        [FromBody] PupilVoPassportSaveRequest request,
+        CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (ok, error, status) = await _portal.SaveVoPassportAsync(User, request, cancellationToken);
+        return ok is null ? StatusCode(status, error) : Ok(ok);
+    }
+
+    [HttpGet("~/leerling/pdf")]
+    [Authorize(Policy = JobsyPolicies.PupilSession)]
+    public async Task<IActionResult> Pdf([FromQuery] string? naam, CancellationToken cancellationToken)
+    {
+        NoStore();
+        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, naam, cancellationToken);
         if (bytes is null)
         {
             return StatusCode(status, error);

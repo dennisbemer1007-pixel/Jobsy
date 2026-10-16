@@ -20,4 +20,17 @@ public class PupilProgress
     public DateTime StartedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+
+    // VO-only optional fields (D3/D8: no names; wiped with progress after school year).
+    /// <summary>JSON array of subject chip keys (VO flow).</summary>
+    public string? VoFavoriteSubjectsJson { get; set; }
+    /// <summary>e.g. natuur-gezondheid, economie (VO flow).</summary>
+    public string? VoProfileKey { get; set; }
+    /// <summary>JSON side-job availability windows (VO flow).</summary>
+    public string? VoSideJobAvailabilityJson { get; set; }
+    /// <summary>fiets, ov, etc.</summary>
+    public string? VoTravelModeKey { get; set; }
+    public string? VoOwnWords { get; set; }
+    /// <summary>JSON array of learning-goal strings (VO flow).</summary>
+    public string? VoLearningGoalsJson { get; set; }
 }

@@ -71,7 +71,11 @@ public sealed record PassportPdfModel(
     bool ShowHeroAvatar = true,
     string? SparseCandidateNote = null,
     string? FooterOmissionLine = null,
-    IReadOnlyList<string> SparseTodoLines = null!);
+    IReadOnlyList<string> SparseTodoLines = null!,
+    bool StudentLayout = false,
+    IReadOnlyList<PassportJobFit> StageVacancyMatches = null!,
+    string? StageVacanciesEmpty = null,
+    bool SingleSectorFullWidth = false);
 
 public sealed record PassportStrengthCard(string Title, string Subtitle);
 

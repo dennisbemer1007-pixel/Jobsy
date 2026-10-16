@@ -46,6 +46,8 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.CandidatePassportEnabled,
                 snap.PassportPartnersEnabled,
                 snap.PassportPdfV2Enabled,
+                snap.PupilPassportV2Enabled,
+                snap.StudentPassportEnabled,
                 snap.PhoneVerificationEnabled,
                 snap.SchoolsEnabled,
                 snap.AmbassadorsEnabled,

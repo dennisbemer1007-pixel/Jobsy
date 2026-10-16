@@ -107,6 +107,12 @@ public class PlatformFeatureSettings
     /// <summary>Passport PDF v2 and the shareable-preferences editor. Default false.</summary>
     public bool PassportPdfV2Enabled { get; set; }
 
+    /// <summary>Age-specific school DNA-paspoort PDFs (groep 7/8 + VO). Default false; on in non-production when unset.</summary>
+    public bool PupilPassportV2Enabled { get; set; }
+
+    /// <summary>Student/stagiair DNA-paspoort (2-page, with vacancies). Default false; on in non-production when unset.</summary>
+    public bool StudentPassportEnabled { get; set; }
+
     /// <summary>
     /// When true, the DNA paspoort PDF shows the four DNA layer cards plus “Hoe ik graag werk”
     /// and “Zo haal je het beste uit …”. Default true (acceptatie/dev); can be turned off per platform.

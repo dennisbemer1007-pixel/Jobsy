@@ -7,10 +7,12 @@ using Jobsy.Core.Geo;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Reminders;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
@@ -512,6 +514,8 @@ public static class DependencyInjection
         services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
         services.AddScoped<IPupilPortalService, PupilPortalService>();
         services.AddSingleton<IPupilReportPdfService, PupilReportPdfService>();
+        services.AddSingleton<IPupilPassportPdfService, Scholen.Passport.PupilPassportPdfService>();
+        services.AddSingleton<PupilPassportPdfModelBuilder>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();
         services.AddHostedService<SchoolRetentionHostedService>();
@@ -526,6 +530,7 @@ public static class DependencyInjection
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddScoped<IPassportPdfService, Jobsy.Infrastructure.Services.Passport.PassportPdfService>();
+        services.AddScoped<IStudentPassportPdfService, Jobsy.Infrastructure.Services.Passport.StudentPassportPdfService>();
         services.AddScoped<IPassportDnaReader, Jobsy.Infrastructure.Services.Passport.PassportDnaReader>();
         services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
         {
