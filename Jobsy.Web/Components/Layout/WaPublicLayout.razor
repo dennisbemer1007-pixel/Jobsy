@@ -13,7 +13,13 @@
     <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
     <PublicHeader Variant="_variant" EmployerWizard="true" />
     <main id="main" class="pub-main wa-main">
-        @Body
+        <section class="au-stage wa-register-stage" aria-label="@Culture["Wa.Layout.Title"]">
+            <div class="au-blob au-blob--a" aria-hidden="true"></div>
+            <div class="au-blob au-blob--b" aria-hidden="true"></div>
+            <div class="au-col wa-register-col">
+                @Body
+            </div>
+        </section>
     </main>
     <PublicFooter Variant="_variant" />
     <CookieConsentBanner />

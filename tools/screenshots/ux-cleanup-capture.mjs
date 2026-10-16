@@ -39,20 +39,18 @@ if (!base) {
   process.exit(1);
 }
 
-async function dismiss(page) {
-  const accept = page.locator('.cookie-consent [data-consent="analytics"], .cookie-consent .btn-compact--primary');
-  if (await accept.count()) {
-    try { await accept.first().click({ timeout: 3000 }); } catch { /* */ }
-  }
-}
+const consentInitScript = `
+  try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
+  document.documentElement.classList.add('cookie-consent-known');
+`;
 
 const browser = await chromium.launch({ headless: true });
 for (const [name, route] of pages) {
   for (const [tag, w, h] of viewports) {
     const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+    await ctx.addInitScript(consentInitScript);
     const page = await ctx.newPage();
     await page.goto(`${base}${route}`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-    await dismiss(page);
     if (name === 'banenkaart-filter-drawer') {
       const btn = page.locator('[data-testid="kb-filters-button"]').first();
       if (await btn.count()) await btn.click({ timeout: 8000 }).catch(() => {});

@@ -15,13 +15,17 @@
 @inject IGeocodingClient Geocoder
 @inject IConfiguration Configuration
 
-<div class="wa-wizard">
-    <WaWizardChrome CurrentStep="@ChromeStep"
-                    Speech="@Speech"
-                    Pose="@(State.Done ? WaMascot.MascotPose.Celebrating : WaMascot.MascotPose.Waving)"
-                    DoneOnCurrent="State.Done" />
-
-    <div class="wa-card">
+<div class="wa-wizard wa-wizard--calm">
+    <div class="wa-card au-card wa-register-card">
+        <div class="au-card__mascot wa-register-card__mascot" aria-hidden="true">
+            <Jobsy.Web.Components.Brand.LobsyMascot Pose="@(State.Done ? Jobsy.Web.Media.MascotPose.Celebrating : Jobsy.Web.Media.MascotPose.Waving)"
+                                                     Size="Jobsy.Web.Media.MascotSize.Small"
+                                                     Alt="" />
+        </div>
+        <WaWizardChrome CurrentStep="@ChromeStep"
+                        Speech="@Speech"
+                        Compact="true"
+                        DoneOnCurrent="State.Done" />
         @if (!string.IsNullOrWhiteSpace(_error))
         {
             <p class="wa-error" role="alert">@_error</p>
@@ -49,8 +53,8 @@
             }
 
             <div class="wa-need">
-                <h3>@Culture["Wa.Search.NeedTitle"]</h3>
-                <ul>
+                <h3 class="wa-need__title">@Culture["Wa.Search.NeedTitle"]</h3>
+                <ul class="wa-need__list">
                     <li>@Culture["Wa.Search.Need1"]</li>
                     <li>@Culture["Wa.Search.Need2"]</li>
                     <li>@Culture["Wa.Search.Need3"]</li>
