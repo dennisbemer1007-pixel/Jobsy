@@ -144,6 +144,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public List<AddressSuggestion> Suggestions { get; private set; } = [];
     public bool ShowSuggestions { get; set; }
     public bool Suggesting { get; private set; }
+    public bool LocatingHome { get; private set; }
+    public string? LocationError { get; private set; }
 
     public bool IsUnder16 => DobInput is DateOnly dob
         && Jobsy.Core.Privacy.CandidateConsentRules.AgeYears(dob) is int age
@@ -797,13 +799,56 @@ public sealed class CandidateProfileEditor : IDisposable
 
     public async Task OnAddressInputAsync(ChangeEventArgs e)
     {
-        HomeAddress = e.Value?.ToString() ?? string.Empty;
+        await OnAddressQueryInputAsync(e.Value?.ToString() ?? string.Empty);
+    }
+
+    public async Task OnAddressQueryInputAsync(string value)
+    {
+        HomeAddress = value ?? string.Empty;
         HomeLat = null;
         HomeLng = null;
         HomeLocationDirty = true;
         Message = null;
+        LocationError = null;
         await SuggestAddressesAsync(HomeAddress);
         Notify();
+    }
+
+    public async Task RequestHomeLocationAsync()
+    {
+        LocatingHome = true;
+        LocationError = null;
+        ShowSuggestions = false;
+        Notify();
+        try
+        {
+            var dict = await _js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
+            var lat = dict["lat"];
+            var lng = dict["lng"];
+            HomeLat = lat;
+            HomeLng = lng;
+            HomeLocationDirty = true;
+            var label = await CandidateHomeAddressLookup.ReverseGeocodeLabelAsync(_geocoder, lat, lng);
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                HomeAddress = label;
+            }
+            else
+            {
+                LocationError = _culture["Onboarding.LocationFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            LocationError = string.IsNullOrWhiteSpace(ex.Message)
+                ? _culture["Onboarding.LocationDenied"]
+                : ex.Message;
+        }
+        finally
+        {
+            LocatingHome = false;
+            Notify();
+        }
     }
 
     public void OnAddressFocus()
@@ -898,6 +943,7 @@ public sealed class CandidateProfileEditor : IDisposable
         Suggestions = [];
         ShowSuggestions = false;
         Message = null;
+        LocationError = null;
         Notify();
     }
 

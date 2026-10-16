@@ -25,6 +25,11 @@
 .ob-fields .ob-wizard__hint{font-size:var(--text-xs);color:var(--muted)}
 .ob-fields .ob-wizard__inline-link{text-decoration:underline;padding:0;border:0;background:none;color:var(--brand);font:inherit;cursor:pointer}
 .ob-fields h1{margin-block:0 8px}
+.ob-fields__address{margin-block:12px}
+.ob-fields__address .kb-address__field input{min-block-size:52px}
+.ob-fields__address .address-suggestions{z-index:6;max-block-size:min(40dvh,280px);overflow:auto}
+.ob-fields__address .error{display:block;margin-block-start:6px;font-size:var(--text-xs);font-weight:600;color:var(--danger)}
+.profile-address__kb .kb-address__field input{min-block-size:48px}
 .ob-fields .ob-wizard__check{flex-direction:row;align-items:center}
 @media (max-width:420px){.ob-fields .ob-wizard__field-row{grid-template-columns:1fr}.ob-fields .ob-wizard__birth{grid-template-columns:1fr 1fr 1.4fr}}
 @media (max-width:359px){.ob-fields .ob-wizard__field-row,.ob-fields .ob-wizard__birth{grid-template-columns:1fr}}

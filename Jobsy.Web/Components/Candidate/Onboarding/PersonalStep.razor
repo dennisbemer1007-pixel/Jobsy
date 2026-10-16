@@ -2,6 +2,7 @@
 @using Jobsy.Core.Privacy
 @using Jobsy.Core.Rules
 @using static Jobsy.Core.Rules.OnboardingWizardValidation
+@using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -9,6 +10,7 @@
 @inject CultureState Culture
 @inject IJSRuntime Js
 @inject IGeocodingClient Geocoder
+@implements IAsyncDisposable
 
 <div class="ob-fields">
 <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
@@ -35,34 +37,34 @@
         }
     </label>
 </div>
-<label id="onboarding-field-location">
-    @Culture["Onboarding.Postcode"]
-    <div class="ob-wizard__postcode-row">
-        <input inputmode="text" autocomplete="postal-code" maxlength="7"
-               @bind="Draft.Postcode" @bind:event="oninput" @bind:after="OnAddressChangedAsync" />
-        @if (ShowGeolocation)
-        {
-            <button type="button"
-                    class="btn btn-secondary ob-wizard__geo"
-                    disabled="@_locating"
-                    aria-busy="@(_locating ? "true" : "false")"
-                    @onclick="UseMyLocationAsync">
-                @Culture["Onboarding.UseMyLocation"]
-            </button>
-        }
-    </div>
+<div id="onboarding-field-location" class="ob-fields__address">
+    <KbAddressField InputId="onboarding-home-address"
+                    CssClass="ob-fields__kb-address"
+                    Label="@Culture["Discovery.Address"]"
+                    Placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                    Query="@Draft.AddressQuery"
+                    QueryChanged="OnAddressQueryChangedAsync"
+                    OnQueryInput="OnAddressInputAsync"
+                    Suggestions="Draft.Suggestions"
+                    Suggesting="_suggesting"
+                    @bind-ShowSuggestions="_showSuggestions"
+                    OriginSet="@(Draft.HomeLat is not null && Draft.HomeLng is not null)"
+                    Locating="_locating"
+                    OnLocate="UseMyLocationAsync"
+                    OnClear="ClearLocationAsync"
+                    OnSelect="SelectSuggestionAsync" />
     @if (ShowValidation && !LocationValid)
     {
         <span class="error" role="alert">@Culture["Onboarding.Validation.Location"]</span>
     }
-</label>
+</div>
 @if (!string.IsNullOrWhiteSpace(_locationError))
 {
     <p class="error" role="status">@_locationError</p>
 }
-@if (Draft.PostcodeResolved)
+@if (Draft.PostcodeResolved && !string.IsNullOrWhiteSpace(LocationHint))
 {
-    <p class="ob-wizard__hint">✓ @PostcodeHint</p>
+    <p class="ob-wizard__hint">✓ @LocationHint</p>
 }
 @if (Draft.PostcodeMissing)
 {
@@ -78,21 +80,8 @@
     <label>
         @Culture["Onboarding.City"]
         <input autocomplete="address-level2"
-               @bind="Draft.City" @bind:event="oninput" @bind:after="OnAddressChangedAsync" />
+               @bind="Draft.City" @bind:event="oninput" @bind:after="OnCityChangedAsync" />
     </label>
-}
-@if (Draft.Suggestions.Count > 0)
-{
-    <ul class="ob-wizard__suggestions">
-        @foreach (var suggestion in Draft.Suggestions)
-        {
-            <li>
-                <button type="button" @onclick="() => OnSelectAddressAsync(suggestion)">
-                    @suggestion.Label
-                </button>
-            </li>
-        }
-    </ul>
 }
 <fieldset id="onboarding-field-birthdate">
     <legend>@Culture["Onboarding.BirthDate"]</legend>
@@ -139,11 +128,8 @@
     [Parameter] public EventCallback BirthDateChanged { get; set; }
     [Parameter] public EventCallback ShowCity { get; set; }
     [Parameter] public EventCallback<AddressSuggestion> SelectAddress { get; set; }
-    /// <summary>When true, show WhatsApp consent (journey + employers on).</summary>
     [Parameter] public bool ShowWhatsApp { get; set; }
-    /// <summary>When false, use the parental-consent birth hint instead of job-age wording.</summary>
     [Parameter] public bool EmployersEnabled { get; set; } = true;
-    /// <summary>When true, postcode hint mentions employers never see the address.</summary>
     [Parameter] public bool UseDiscoveryPostcodeHint { get; set; }
     [Parameter] public bool ShowGeolocation { get; set; } = true;
     [Parameter] public bool ShowValidation { get; set; }
@@ -156,7 +142,27 @@
         Draft.PostcodeResolved);
 
     private bool _locating;
+    private bool _suggesting;
+    private bool _showSuggestions;
     private string? _locationError;
+    private CancellationTokenSource? _suggestCts;
+    private CancellationTokenSource? _postcodeCts;
+    private int _suggestGeneration;
+
+    private string? LocationHint
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Draft.City))
+            {
+                return UseDiscoveryPostcodeHint
+                    ? Culture.Format("Discovery.Step1.PostcodeResolved", Draft.City)
+                    : Culture.Format("Onboarding.PostcodeResolved", Draft.City);
+            }
+
+            return null;
+        }
+    }
 
     private string? AgeMessage
     {
@@ -190,10 +196,6 @@
         ? Culture["Onboarding.BirthHint"]
         : Culture["Discovery.Step1.BirthHintEmployersOff"];
 
-    private string PostcodeHint => UseDiscoveryPostcodeHint && !string.IsNullOrWhiteSpace(Draft.City)
-        ? Culture.Format("Discovery.Step1.PostcodeResolved", Draft.City)
-        : Culture.Format("Onboarding.PostcodeResolved", Draft.City);
-
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
 
     private async Task ToggleWorkStatusAsync(string code)
@@ -205,7 +207,36 @@
 
         await NotifyAsync();
     }
-    private Task OnAddressChangedAsync() => AddressChanged.InvokeAsync();
+
+    private async Task OnAddressQueryChangedAsync(string value)
+    {
+        Draft.AddressQuery = value ?? string.Empty;
+        await Task.CompletedTask;
+    }
+
+    private async Task OnAddressInputAsync(string value)
+    {
+        _locationError = null;
+        Draft.AddressQuery = value ?? string.Empty;
+        CandidateHomeAddressLookup.MarkDraftInputChanged(Draft);
+        var split = PostcodeMatch.SplitHomeAddress(Draft.AddressQuery);
+        if (!string.IsNullOrWhiteSpace(split.Postcode))
+        {
+            Draft.Postcode = split.Postcode;
+        }
+
+        if (!string.IsNullOrWhiteSpace(split.City))
+        {
+            Draft.City = split.City;
+        }
+
+        await AddressChanged.InvokeAsync();
+        await SuggestAddressesAsync(Draft.AddressQuery);
+        SchedulePostcodeResolve();
+    }
+
+    private async Task OnCityChangedAsync() => await AddressChanged.InvokeAsync();
+
     private async Task OnBirthDatePickedAsync(DateOnly? value)
     {
         Draft.BirthDate = value;
@@ -224,13 +255,32 @@
 
         await BirthDateChanged.InvokeAsync();
     }
+
     private Task OnShowCityAsync() => ShowCity.InvokeAsync();
-    private Task OnSelectAddressAsync(AddressSuggestion suggestion) => SelectAddress.InvokeAsync(suggestion);
+
+    private async Task SelectSuggestionAsync(AddressSuggestion suggestion)
+    {
+        _showSuggestions = false;
+        await SelectAddress.InvokeAsync(suggestion);
+    }
+
+    private async Task ClearLocationAsync()
+    {
+        CandidateHomeAddressLookup.ClearDraftLocation(Draft);
+        _showSuggestions = false;
+        await AddressChanged.InvokeAsync();
+    }
 
     private async Task UseMyLocationAsync()
     {
+        if (!ShowGeolocation)
+        {
+            return;
+        }
+
         _locationError = null;
         _locating = true;
+        _showSuggestions = false;
         try
         {
             var dict = await Js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
@@ -240,9 +290,10 @@
             Draft.HomeLng = lng;
             Draft.PostcodeResolved = true;
             Draft.PostcodeMissing = false;
-            var label = await Geocoder.ReverseAsync(lat, lng);
+            var label = await CandidateHomeAddressLookup.ReverseGeocodeLabelAsync(Geocoder, lat, lng);
             if (!string.IsNullOrWhiteSpace(label))
             {
+                Draft.AddressQuery = label;
                 var (postcode, city) = PostcodeMatch.SplitHomeAddress(label);
                 if (!string.IsNullOrWhiteSpace(postcode))
                 {
@@ -264,7 +315,7 @@
                 _locationError = Culture["Onboarding.LocationFailed"];
             }
 
-            await NotifyAsync();
+            await AddressChanged.InvokeAsync();
         }
         catch (Exception ex)
         {
@@ -276,5 +327,89 @@
         {
             _locating = false;
         }
+    }
+
+    private void SchedulePostcodeResolve()
+    {
+        _postcodeCts?.Cancel();
+        _postcodeCts?.Dispose();
+        _postcodeCts = new CancellationTokenSource();
+        _ = ResolvePostcodeAsync(_postcodeCts.Token);
+    }
+
+    private async Task ResolvePostcodeAsync(CancellationToken cancellationToken)
+    {
+        var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
+            Draft, Geocoder, cancellationToken);
+        if (resolved)
+        {
+            await AddressChanged.InvokeAsync();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SuggestAddressesAsync(string query)
+    {
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        _suggestCts = new CancellationTokenSource();
+        var token = _suggestCts.Token;
+        var generation = ++_suggestGeneration;
+
+        var trimmed = (query ?? string.Empty).Trim();
+        if (trimmed.Length < 3)
+        {
+            Draft.Suggestions.Clear();
+            _showSuggestions = false;
+            _suggesting = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        _showSuggestions = true;
+        _suggesting = true;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await Task.Delay(280, token);
+            var results = await Geocoder.SuggestAsync(trimmed, token);
+            if (generation != _suggestGeneration || token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            Draft.Suggestions.Clear();
+            Draft.Suggestions.AddRange(results);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch
+        {
+            if (generation == _suggestGeneration)
+            {
+                Draft.Suggestions.Clear();
+            }
+        }
+        finally
+        {
+            if (generation == _suggestGeneration)
+            {
+                _suggesting = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _suggestCts?.Cancel();
+        _suggestCts?.Dispose();
+        _postcodeCts?.Cancel();
+        _postcodeCts?.Dispose();
+        await Task.CompletedTask;
     }
 }

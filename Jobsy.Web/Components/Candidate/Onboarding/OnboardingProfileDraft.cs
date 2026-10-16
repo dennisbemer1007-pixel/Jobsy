@@ -16,6 +16,8 @@ public sealed class OnboardingProfileDraft
     public bool WhatsAppAllowed { get; set; }
     public string Postcode { get; set; } = "";
     public string City { get; set; } = "";
+    /// <summary>Visible address line in autocomplete (banenkaart-style).</summary>
+    public string AddressQuery { get; set; } = "";
     public string BirthDay { get; set; } = "";
     public string BirthMonth { get; set; } = "";
     public string BirthYear { get; set; } = "";

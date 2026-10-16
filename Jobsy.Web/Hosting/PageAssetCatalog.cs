@@ -43,7 +43,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidateAppCss =
     [
         "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/onboarding-wizard.css?v=20261016-05",
+        "css/features/onboarding-wizard.css?v=20261016-06",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",

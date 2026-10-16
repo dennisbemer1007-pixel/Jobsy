@@ -7,6 +7,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
@@ -530,7 +531,7 @@
         Draft.HomeLat = profile.HomeLatitude;
         Draft.HomeLng = profile.HomeLongitude;
         var preferences = profile.Preferences ?? new();
-        SplitAddress(preferences.HomeAddress);
+        CandidateHomeAddressLookup.HydrateDraftFromStored(Draft, preferences.HomeAddress);
         Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
         Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
         Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
@@ -691,31 +692,9 @@
 
     private void ShowCity() => Draft.ShowCity = true;
 
-    private void SplitAddress(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return;
-        var index = value.Trim().IndexOf(' ');
-        Draft.Postcode = index > 0 ? value[..index].Trim() : value.Trim();
-        Draft.City = index > 0 ? value[(index + 1)..].Trim() : "";
-    }
+    private string HomeAddress() => CandidateHomeAddressLookup.BuildHomeAddressForSave(Draft);
 
-    private string HomeAddress() => $"{NormalizePostcode(Draft.Postcode)} {Draft.City.Trim()}".Trim();
-
-    private static string NormalizePostcode(string value)
-    {
-        var raw = value.Replace(" ", "").ToUpperInvariant();
-        return raw.Length == 6 ? raw[..4] + " " + raw[4..] : value.Trim().ToUpperInvariant();
-    }
-
-    private void AddressChanged()
-    {
-        Draft.HomeLat = Draft.HomeLng = null;
-        Draft.PostcodeResolved = false;
-        ScheduleProfileSave();
-        _geocodeCts?.Cancel();
-        _geocodeCts = new();
-        _ = GeocodeAsync(_geocodeCts.Token);
-    }
+    private void AddressChanged() => ScheduleProfileSave();
 
     private async Task EnsureAddressResolvedAsync()
     {
@@ -732,65 +711,19 @@
 
     private async Task GeocodeAsync(CancellationToken cancellationToken, bool debounce = true)
     {
-        try
+        var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
+            Draft, Geocoder, cancellationToken, debounce);
+        if (resolved)
         {
-            if (debounce)
-            {
-                await Task.Delay(350, cancellationToken);
-            }
-            var postcode = NormalizePostcode(Draft.Postcode);
-            if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
-            var result = PostcodeMatch.Pick(await Geocoder.SuggestAsync(postcode, cancellationToken), postcode);
-            if (result is null)
-            {
-                MarkPostcodeMiss();
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
-            SelectAddress(result);
-            await InvokeAsync(StateHasChanged);
+            ScheduleProfileSave();
         }
-        catch (OperationCanceledException)
-        {
-        }
-        catch
-        {
-            MarkPostcodeMiss();
-            await InvokeAsync(StateHasChanged);
-        }
-    }
 
-    private void MarkPostcodeMiss()
-    {
-        Draft.PostcodeMissing = true;
-        Draft.ShowCity = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
-        Draft.HomeLat = item.Latitude;
-        Draft.HomeLng = item.Longitude;
-        var postcode = NormalizePostcode(Draft.Postcode);
-        if (PostcodeMatch.IsNlPostcode(postcode))
-        {
-            Draft.Postcode = postcode;
-            var city = PostcodeMatch.CityFromLabel(item.Label, postcode);
-            if (!string.IsNullOrWhiteSpace(city))
-            {
-                Draft.City = city;
-            }
-            else
-            {
-                Draft.ShowCity = true;
-            }
-        }
-        else
-        {
-            SplitAddress(item.Label);
-            Draft.Postcode = NormalizePostcode(Draft.Postcode);
-        }
-        Draft.PostcodeResolved = true;
-        Draft.PostcodeMissing = false;
+        CandidateHomeAddressLookup.ApplySuggestionToDraft(Draft, item);
         ScheduleProfileSave();
     }
 

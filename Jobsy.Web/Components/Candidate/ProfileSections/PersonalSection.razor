@@ -1,7 +1,9 @@
 @namespace Jobsy.Web.Components.Candidate.ProfileSections
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Models
 @inject CultureState Culture
 
                             <label class="profile-toggle">
@@ -47,50 +49,24 @@
                             </label>
 
                             <div class="profile-address">
-                                <label for="profile-home-address">@Culture["Profile.HomeAddress"]</label>
-                                <div class="address-field">
-                                    <input id="profile-home-address"
-                                           type="text"
-                                           autocomplete="off"
-                                           placeholder="@Culture["Discovery.AddressPlaceholder"]"
-                                           value="@Editor.HomeAddress"
-                                           @oninput="Editor.OnAddressInputAsync"
-                                           @onfocus="Editor.OnAddressFocus"
-                                           @onkeydown="Editor.OnAddressKeyDown" />
-                                    @if (!string.IsNullOrWhiteSpace(Editor.HomeAddress) || Editor.HomeLat is not null)
-                                    {
-                                        <button type="button"
-                                                class="btn btn-primary address-field__clear"
-                                                @onclick="Editor.ClearHomeAddress">
-                                            @Culture["Common.Clear"]
-                                        </button>
-                                    }
-                                </div>
-                                @if (Editor.ShowSuggestions)
+                                <KbAddressField InputId="profile-home-address"
+                                                CssClass="profile-address__kb"
+                                                Label="@Culture["Profile.HomeAddress"]"
+                                                Placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                                                Query="@Editor.HomeAddress"
+                                                QueryChanged="OnAddressQueryChangedAsync"
+                                                OnQueryInput="OnAddressInputAsync"
+                                                Suggestions="Editor.Suggestions"
+                                                Suggesting="Editor.Suggesting"
+                                                @bind-ShowSuggestions="Editor.ShowSuggestions"
+                                                OriginSet="@(Editor.HomeLat is not null && Editor.HomeLng is not null)"
+                                                Locating="Editor.LocatingHome"
+                                                OnLocate="Editor.RequestHomeLocationAsync"
+                                                OnClear="Editor.ClearHomeAddress"
+                                                OnSelect="Editor.SelectSuggestion" />
+                                @if (!string.IsNullOrWhiteSpace(Editor.LocationError))
                                 {
-                                    <ul class="address-suggestions" role="listbox">
-                                        @if (Editor.Suggesting)
-                                        {
-                                            <li class="address-suggestions__status">@Culture["Common.Loading"]</li>
-                                        }
-                                        else if (Editor.Suggestions.Count == 0 && Editor.HomeAddress.Trim().Length >= 3)
-                                        {
-                                            <li class="address-suggestions__status">@Culture["Discovery.AddressNoResults"]</li>
-                                        }
-                                        else
-                                        {
-                                            @foreach (var suggestion in Editor.Suggestions)
-                                            {
-                                                <li>
-                                                    <button type="button"
-                                                            class="address-suggestions__item"
-                                                            @onclick="() => Editor.SelectSuggestion(suggestion)">
-                                                        @suggestion.Label
-                                                    </button>
-                                                </li>
-                                            }
-                                        }
-                                    </ul>
+                                    <p class="state-message error">@Editor.LocationError</p>
                                 }
                                 <p class="profile-address__hint">@Culture["Profile.AddressHint"]</p>
                                 <p class="profile-address__hint">@Culture["Profile.CvMapPrivacyHint"]</p>
@@ -178,6 +154,15 @@
         Editor.Notify();
         return Task.CompletedTask;
     }
+
+    private Task OnAddressQueryChangedAsync(string value)
+    {
+        Editor.HomeAddress = value ?? string.Empty;
+        return Task.CompletedTask;
+    }
+
+    private Task OnAddressInputAsync(string value)
+        => Editor.OnAddressQueryInputAsync(value);
 
     private void OnAddLanguage(ChangeEventArgs e)
     {
