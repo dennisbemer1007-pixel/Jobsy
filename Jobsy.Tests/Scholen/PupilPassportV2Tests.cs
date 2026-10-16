@@ -11,6 +11,7 @@ using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Scholen.Passport;
 using Jobsy.Infrastructure.Services.Passport;
 using QuestPDF.Infrastructure;
+using UglyToad.PdfPig;
 
 namespace Jobsy.Tests.Scholen;
 
@@ -115,6 +116,8 @@ public class PupilPassportV2Tests
         var pdf = svc.RenderDemoPdf(sparse: false);
         Assert.True(pdf.Length > 8000);
         Assert.StartsWith("%PDF", Encoding.ASCII.GetString(pdf.AsSpan(0, 4)));
+        using var doc = PdfDocument.Open(pdf);
+        Assert.Equal(2, doc.NumberOfPages);
     }
 
     [Fact]
@@ -129,6 +132,7 @@ public class PupilPassportV2Tests
         Assert.Contains("Hbo Verpleegkunde", model.Chips[0].Text, StringComparison.Ordinal);
         Assert.Equal(4, model.Direction.Count);
         Assert.DoesNotContain("vaste ploeg", string.Join(' ', model.BestOutTips), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Dit kwam naar voren in je test", string.Join(' ', model.StrengthCards.Select(c => c.Subtitle)), StringComparison.Ordinal);
     }
 
     [Fact]

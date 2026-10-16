@@ -8,12 +8,10 @@ public partial class AddPassportPdfDnaBlocksEnabled : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.AddColumn<bool>(
-            name: "PassportPdfDnaBlocksEnabled",
-            table: "PlatformFeatureSettings",
-            type: "boolean",
-            nullable: false,
-            defaultValue: true);
+        migrationBuilder.Sql(
+            """
+            ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "PassportPdfDnaBlocksEnabled" boolean NOT NULL DEFAULT true;
+            """);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)

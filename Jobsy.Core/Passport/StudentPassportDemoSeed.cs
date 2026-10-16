@@ -194,5 +194,16 @@ public static class StudentPassportDemoSeed
                 "Laat haar eerst observeren en stel daarna korte, concrete vragen",
                 "Geef een vaste begeleider op de afdeling tijdens stage",
                 "Plan medicatie-momenten stap voor stap met dubbelcheck"
+            ],
+            StudentStrengthCards:
+            [
+                new("Zorgzaam en betrouwbaar", "checkt afspraken en volgt het zorgplan"),
+                new("Rustig onder druk", "blijft kalm als het druk is op afdeling"),
+                new("Zorgvuldig in de praktijk", "werkt stap voor stap volgens protocol")
+            ],
+            StudentHowWorkLines:
+            [
+                new("Veiligheid voor patiënt", "controleert naam en polsbandje"),
+                new("Respectvol contact", "legt rustig uit wat er gebeurt")
             ]);
 }

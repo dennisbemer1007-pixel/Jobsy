@@ -60,7 +60,9 @@ public sealed record PassportPdfFacts(
     string? StudentInternshipChip = null,
     IReadOnlyList<PassportJobFit>? StageVacancyMatches = null,
     IReadOnlyList<PassportDirectionStep>? StudyDirectionSteps = null,
-    IReadOnlyList<string>? StudentBestOutTips = null);
+    IReadOnlyList<string>? StudentBestOutTips = null,
+    IReadOnlyList<PassportStrengthCard>? StudentStrengthCards = null,
+    IReadOnlyList<PassportHowWorkLine>? StudentHowWorkLines = null);
 
 public static class PassportPdfFactsFactory
 {

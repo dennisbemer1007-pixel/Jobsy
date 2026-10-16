@@ -51,13 +51,13 @@ public static class PassportPdfModelBuilder
                                     || facts.AvailableFrom is not null;
         var traits = Traits(lang, facts.Dna);
         var sectors = PassportPdfSectorBuilder.Build(lang, facts);
-        var strengthCards = StrengthCards(traits);
+        var strengthCards = facts.StudentStrengthCards ?? StrengthCards(traits);
         var strengthTags = StrengthTags(lang, facts, traits);
         var studentLayout = facts.StudentPassportLayout;
         var tagline = studentLayout && !string.IsNullOrWhiteSpace(facts.StudentTagline)
             ? facts.StudentTagline!.Trim()
             : Tagline(lang, facts, traits);
-        var howWorkLines = HowWorkLines(lang, facts);
+        var howWorkLines = facts.StudentHowWorkLines ?? HowWorkLines(lang, facts);
         var bestOut = studentLayout
             ? facts.StudentBestOutTips ?? []
             : BestOutTips(lang, facts);
@@ -1220,8 +1220,7 @@ public static class PassportPdfModelBuilder
         var lines = new List<PassportGlossLine>();
         foreach (var item in items.Take(take))
         {
-            var gloss = PassportTraitCopy.Gloss(layer, item.Code, lang)
-                        ?? PassportPdfStrings.T(lang, "TraitFallback");
+            var gloss = PassportTraitCopy.Gloss(layer, item.Code, lang) ?? "";
             lines.Add(new PassportGlossLine(item.Label, gloss));
         }
 
