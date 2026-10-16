@@ -1099,6 +1099,56 @@ window.jobsyPageVisible = function () {
 };
 
 window.jobsyDom = {
+    scrollRoot: function () {
+        var shell = document.querySelector(".app-shell--questionnaire .app-main")
+            || document.querySelector(".app-main");
+        if (shell && shell.scrollHeight > shell.clientHeight + 1) {
+            return shell;
+        }
+        return document.scrollingElement || document.documentElement;
+    },
+    scrollToTop: function () {
+        var root = window.jobsyDom.scrollRoot();
+        root.scrollTop = 0;
+        try {
+            window.scrollTo(0, 0);
+        } catch (e) { }
+    },
+    scrollToId: function (id) {
+        var el = document.getElementById(id);
+        if (!el) {
+            return;
+        }
+        try {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (e) {
+            try {
+                el.scrollIntoView(true);
+            } catch (e2) { }
+        }
+    },
+    focusWizardStepHeading: function () {
+        var scope = document.querySelector(".ob-wizard__content")
+            || document.querySelector(".ob-wizard");
+        if (!scope) {
+            return;
+        }
+        var h = scope.querySelector("h1[tabindex], h1");
+        if (!h || typeof h.focus !== "function") {
+            return;
+        }
+        try {
+            h.focus({ preventScroll: true });
+        } catch (e) {
+            try {
+                h.focus();
+            } catch (e2) { }
+        }
+    },
+    resetWizardStepScroll: function () {
+        window.jobsyDom.scrollToTop();
+        window.jobsyDom.focusWizardStepHeading();
+    },
     matchesMedia: function (query) {
         try {
             return !!(window.matchMedia && window.matchMedia(query).matches);

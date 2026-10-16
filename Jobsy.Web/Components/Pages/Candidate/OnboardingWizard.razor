@@ -308,6 +308,7 @@
     private bool _savedVisible;
     private bool _saveError;
     private bool _showValidation;
+    private bool _pendingStepScroll;
     private int _step = 1;
     private int _currentQuestion;
     private string _installMessage = "";
@@ -449,6 +450,29 @@
         }
     }
 
+    private void RequestStepScrollReset()
+    {
+        _pendingStepScroll = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pendingStepScroll)
+        {
+            return;
+        }
+
+        _pendingStepScroll = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyDom.resetWizardStepScroll");
+        }
+        catch
+        {
+            // optional
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += CultureChanged;
@@ -501,6 +525,7 @@
                 await MarkStartedAsync();
                 await PrepareMiniAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
+                RequestStepScrollReset();
             }
         }
         catch (Exception ex)
@@ -575,6 +600,7 @@
     {
         _welcome = false;
         await MarkStartedAsync();
+        RequestStepScrollReset();
     }
 
     private async Task MarkStartedAsync()
@@ -591,6 +617,7 @@
         _step--;
         await MarkStartedAsync();
         await PrepareMiniAsync();
+        RequestStepScrollReset();
     }
 
     private async Task NextAsync(bool fromMiniTestFinish = false)
@@ -654,6 +681,7 @@
             FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
+            RequestStepScrollReset();
         }
         catch (Exception ex)
         {
@@ -674,6 +702,7 @@
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
         await TryAutoAdvanceEmptyMiniStepAsync();
+        RequestStepScrollReset();
     }
 
     private async Task LaterAsync()
@@ -916,6 +945,7 @@
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
         await TryAutoAdvanceEmptyMiniStepAsync();
+        RequestStepScrollReset();
     }
 
     private void ScheduleDreamSave()
@@ -1071,6 +1101,7 @@
             FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
+            RequestStepScrollReset();
         }
         catch (Exception ex)
         {
