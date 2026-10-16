@@ -2649,6 +2649,11 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 @media (min-width: 900px) {
+    /* Sheet stays in DOM for perf; match pre-variant-B behaviour when closed (not in DOM). */
+    .jobsy-discovery:not(.filters-open) .filter-sheet.kb-filter-drawer {
+        display: none;
+    }
+
     .app-shell:has(.jobsy-discovery.filters-open) .app-main {
         z-index: 45;
     }
