@@ -203,8 +203,10 @@ public sealed class OnboardingWizardScrollPlaywrightTests
             await AssertMobileActionBarAsync(page, step, width, height);
             await AssertContentUsesMainScrollAsync(page, step);
             await AssertSingleVisibleMascotAsync(page, step);
-            await AssertMascotDoesNotOverlapContentAsync(page, step);
-            await AssertMascotBottomRightAboveBarAsync(page, step, width);
+            await AssertMascotDoesNotOverlapCardAsync(page, step, "scroll-top", checkFooter: false);
+            await ScrollWizardToBottomAsync(page);
+            await AssertMascotDoesNotOverlapCardAsync(page, step, "scroll-bottom", checkFooter: true);
+            await ScrollWizardToTopAsync(page);
 
             if (step == 3)
             {
@@ -337,6 +339,8 @@ public sealed class OnboardingWizardScrollPlaywrightTests
                 if (st.display === 'none' || st.visibility === 'hidden') continue;
                 const r = el.getBoundingClientRect();
                 if (r.width < 4 || r.height < 4) continue;
+                const elCy = r.top + r.height / 2;
+                if (elCy >= footerTop - 8) continue;
                 const overlapH = Math.min(r.bottom, rect.bottom) - Math.max(r.top, rect.top);
                 const overlapW = Math.min(r.right, rect.right) - Math.max(r.left, rect.left);
                 if (overlapH < 16 || overlapW < 16) continue;
@@ -450,88 +454,60 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         Assert.True(count == 1, $"Step {step}: expected 1 visible mascot, got {count}");
     }
 
-    private static async Task AssertMascotDoesNotOverlapContentAsync(IPage page, int step)
+    private static async Task AssertMascotDoesNotOverlapCardAsync(IPage page, int step, string scrollPosition, bool checkFooter)
     {
-        if (page.ViewportSize?.Height is < 760)
-        {
-            return;
-        }
-
-        var audit = await page.EvaluateAsync<MascotOverlapAudit>(
+        var audit = await page.EvaluateAsync<MascotCardOverlapAudit>(
             """
-            () => {
+            (checkFooter) => {
               function isVisible(el) {
                 const r = el.getBoundingClientRect();
-                if (r.width < 6 || r.height < 6) return false;
+                if (r.width < 4 || r.height < 4) return false;
                 const st = getComputedStyle(el);
                 if (st.display === 'none' || st.visibility === 'hidden') return false;
                 return true;
               }
               function hits(a, b) {
-                return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+                return a.left < b.right - 0.5 && a.right > b.left + 0.5
+                  && a.top < b.bottom - 0.5 && a.bottom > b.top + 0.5;
               }
               const mascot = [...document.querySelectorAll('img')].find(img => {
                 const src = (img.currentSrc || img.src || '').toLowerCase();
                 return src.includes('mascot') && isVisible(img);
               });
-              if (!mascot) return { ok: false, reason: 'no-mascot' };
+              if (!mascot) return { ok: false, reason: 'no-mascot', cardTop: null, cardBottom: null, mascotTop: null, mascotBottom: null };
               const m = mascot.getBoundingClientRect();
-              const footer = document.querySelector('.ob-wizard__footer[data-sticky-footer], .test-flow__footer[data-sticky-footer]');
-              if (footer && isVisible(footer)) {
-                const f = footer.getBoundingClientRect();
-                if (hits(m, f)) return { ok: false, reason: 'over-footer' };
+              const card = document.querySelector('.ob-wizard__content .ob-wizard__card');
+              if (!card || !isVisible(card)) {
+                return { ok: false, reason: 'no-card', cardTop: null, cardBottom: null, mascotTop: m.top, mascotBottom: m.bottom };
               }
-              const blockers = document.querySelectorAll(
-                '.ob-wizard__content input, .ob-wizard__content select, .ob-wizard__content textarea, .ob-wizard__content button:not([data-testid=onboarding-next]):not([data-testid=onboarding-back]), .ob-wizard__content label, .ob-wizard__content .lobsy-choice-tile, .ob-wizard__content .test-likert__opt');
-              for (const el of blockers) {
-                if (!isVisible(el)) continue;
-                if (footer && footer.contains(el)) continue;
-                const r = el.getBoundingClientRect();
-                if (!hits(m, r)) continue;
-                if (r.right <= m.left + 4) continue;
-                if (r.bottom <= m.top + 4) continue;
-                return { ok: false, reason: 'over-' + el.tagName };
+              const c = card.getBoundingClientRect();
+              if (hits(m, c)) {
+                return { ok: false, reason: 'intersects-card', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
               }
-              return { ok: true, reason: 'ok' };
+              const pos = getComputedStyle(mascot.closest('.ob-wizard__mascot-anchor') || mascot).position;
+              if (pos === 'fixed') {
+                return { ok: false, reason: 'mascot-still-fixed', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+              }
+              if (m.top < c.bottom - 2) {
+                return { ok: false, reason: 'mascot-above-card-bottom', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+              }
+              if (checkFooter) {
+                const footer = document.querySelector('.ob-wizard__footer[data-sticky-footer], .test-flow__footer[data-sticky-footer]');
+                if (footer && isVisible(footer)) {
+                  const f = footer.getBoundingClientRect();
+                  if (hits(m, f)) {
+                    return { ok: false, reason: 'intersects-footer', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+                  }
+                }
+              }
+              return { ok: true, reason: 'ok', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
             }
-            """);
+            """,
+            checkFooter);
 
-        Assert.True(audit.Ok, $"Step {step} mascot overlap: {audit.Reason}");
-    }
-
-    private static async Task AssertMascotBottomRightAboveBarAsync(IPage page, int step, int viewportWidth)
-    {
-        var audit = await page.EvaluateAsync<MascotPositionAudit>(
-            """
-            () => {
-              function isVisible(el) {
-                const r = el.getBoundingClientRect();
-                if (r.width < 6 || r.height < 6) return false;
-                const st = getComputedStyle(el);
-                return st.display !== 'none' && st.visibility !== 'hidden';
-              }
-              const mascot = [...document.querySelectorAll('img')].find(img => {
-                const src = (img.currentSrc || img.src || '').toLowerCase();
-                return src.includes('mascot') && isVisible(img);
-              });
-              if (!mascot) return { ok: false, reason: 'no-mascot', right: null, left: null, bottom: null };
-              const m = mascot.getBoundingClientRect();
-              const footer = document.querySelector('.ob-wizard__footer[data-sticky-footer], .test-flow__footer[data-sticky-footer]');
-              const footerTop = footer ? footer.getBoundingClientRect().top : window.innerHeight;
-              const rightGap = window.innerWidth - m.right;
-              const leftGap = m.left;
-              const aboveBar = m.bottom <= footerTop + 2;
-              const onRight = rightGap <= 56 && rightGap >= -4;
-              const notLeft = leftGap > window.innerWidth * 0.45;
-              let reason = 'ok';
-              if (!aboveBar) reason = 'below-footer';
-              else if (!onRight) reason = 'right-gap-' + rightGap.toFixed(0);
-              else if (!notLeft) reason = 'left-side-' + leftGap.toFixed(0);
-              return { ok: reason === 'ok', reason, right: m.right, left: m.left, bottom: m.bottom };
-            }
-            """);
-
-        Assert.True(audit.Ok, $"Step {step} @ {viewportWidth}px mascot position: {audit.Reason} right={audit.Right} left={audit.Left} bottom={audit.Bottom}");
+        Assert.True(
+            audit.Ok,
+            $"Step {step} @ {scrollPosition}: mascot/card {audit.Reason} card=[{audit.CardTop?.ToString("F0")},{audit.CardBottom?.ToString("F0")}] mascot=[{audit.MascotTop?.ToString("F0")},{audit.MascotBottom?.ToString("F0")}]");
     }
 
     private static async Task AssertTravelTimesSingleRowAsync(IPage page, int viewportWidth)
@@ -840,19 +816,14 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         public double? Vh { get; set; }
     }
 
-    private sealed class MascotOverlapAudit
+    private sealed class MascotCardOverlapAudit
     {
         public bool Ok { get; set; }
         public string? Reason { get; set; }
-    }
-
-    private sealed class MascotPositionAudit
-    {
-        public bool Ok { get; set; }
-        public string? Reason { get; set; }
-        public double? Right { get; set; }
-        public double? Left { get; set; }
-        public double? Bottom { get; set; }
+        public double? CardTop { get; set; }
+        public double? CardBottom { get; set; }
+        public double? MascotTop { get; set; }
+        public double? MascotBottom { get; set; }
     }
 
     private sealed class TravelRowAudit
