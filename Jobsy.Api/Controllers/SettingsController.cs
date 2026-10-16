@@ -489,6 +489,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CandidatePassportEnabled: request.CandidatePassportEnabled,
                     PassportPartnersEnabled: request.PassportPartnersEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
+                    PassportPdfDnaBlocksEnabled: request.PassportPdfDnaBlocksEnabled,
                     TestsV2Enabled: request.TestsV2Enabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
@@ -587,6 +588,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidatePassportEnabled", before.CandidatePassportEnabled.ToString(), after.CandidatePassportEnabled.ToString());
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
+        Add("PassportPdfDnaBlocksEnabled", before.PassportPdfDnaBlocksEnabled.ToString(), after.PassportPdfDnaBlocksEnabled.ToString());
         Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
@@ -937,6 +939,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.CandidatePassportEnabled,
             snap.PassportPartnersEnabled,
             snap.PassportPdfV2Enabled,
+            snap.PassportPdfDnaBlocksEnabled,
             snap.TestsV2Enabled,
             snap.PhoneVerificationEnabled,
             snap.WhatsAppRemindersEnabled,

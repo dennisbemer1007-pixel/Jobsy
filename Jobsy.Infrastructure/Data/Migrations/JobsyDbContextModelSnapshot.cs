@@ -5420,6 +5420,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("PassportPdfDnaBlocksEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("PhoneVerificationEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")

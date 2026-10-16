@@ -107,6 +107,12 @@ public class PlatformFeatureSettings
     /// <summary>Passport PDF v2 and the shareable-preferences editor. Default false.</summary>
     public bool PassportPdfV2Enabled { get; set; }
 
+    /// <summary>
+    /// When true, the DNA paspoort PDF shows the four DNA layer cards plus “Hoe ik graag werk”
+    /// and “Zo haal je het beste uit …”. Default true (acceptatie/dev); can be turned off per platform.
+    /// </summary>
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
+
     /// <summary>SMS phone verification. Stays false until an SMS provider is chosen.</summary>
     public bool PhoneVerificationEnabled { get; set; }
 

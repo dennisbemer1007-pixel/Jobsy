@@ -49,7 +49,11 @@ public sealed record PassportPdfFacts(
     DateTime GeneratedAtUtc,
     string? DreamTitle = null,
     IReadOnlyList<PassportReferenceQuote>? ReferenceQuotes = null,
-    IReadOnlyList<string>? LearningGoals = null);
+    IReadOnlyList<string>? LearningGoals = null,
+    bool ShowDnaBlocks = true,
+    string? QrVerifyUrl = null,
+    string? QrValidUntilLabel = null,
+    string? FirstName = null);
 
 public static class PassportPdfFactsFactory
 {
