@@ -12,7 +12,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class OnboardingWizardScrollPlaywrightTests
 {
-    /// <summary>JOBSY_CAPTURE_ONBOARDING_SCROLL=before|after → saves steps 1,3,5,8 to agent store.</summary>
+    /// <summary>JOBSY_CAPTURE_ONBOARDING_SCROLL=before|after → saves steps 1–10 (390×844 viewport top) to store and repo <c>onboarding-scroll/</c>.</summary>
     [Fact]
     public async Task Capture_onboarding_scroll_screenshots_when_requested()
     {
@@ -23,8 +23,15 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         }
 
         var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
-        var outDir = $"/cursor/stores/self/onboarding-scroll/{mode}";
-        Directory.CreateDirectory(outDir);
+        var outDirs = new[]
+        {
+            $"/cursor/stores/self/onboarding-scroll/{mode}",
+            Path.Combine(Directory.GetCurrentDirectory(), "onboarding-scroll", mode),
+        };
+        foreach (var dir in outDirs)
+        {
+            Directory.CreateDirectory(dir);
+        }
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
@@ -43,39 +50,29 @@ public sealed class OnboardingWizardScrollPlaywrightTests
 
         await RegisterAndBeginWizardAsync(page, baseUrl);
 
-        var captureSteps = new[] { 1, 3, 5, 8 };
-        var current = 1;
-        while (current <= 8)
+        const int lastCaptureStep = 10;
+        for (var step = 1; step <= lastCaptureStep; step++)
         {
-            await WaitWizardStepAsync(page, current);
+            await WaitWizardStepAsync(page, step);
+            await page.EvaluateAsync("() => { document.querySelector('.app-main')?.scrollTo(0,0); window.scrollTo(0,0); }");
+            await page.WaitForTimeoutAsync(300);
 
-            if (captureSteps.Contains(current))
+            foreach (var outDir in outDirs)
             {
-                if (mode == "after")
-                {
-                    await page.EvaluateAsync("() => { document.querySelector('.app-main')?.scrollTo(0,0); window.scrollTo(0,0); }");
-                    await page.WaitForTimeoutAsync(250);
-                }
-
                 await page.ScreenshotAsync(new()
                 {
-                    Path = Path.Combine(outDir, $"step-{current:00}.png"),
+                    Path = Path.Combine(outDir, $"step-{step:00}.png"),
                     FullPage = false,
                 });
             }
 
-            if (current >= 8)
+            if (step >= lastCaptureStep)
             {
                 break;
             }
 
-            if (mode == "before")
-            {
-                await ScrollMainDownAsync(page);
-            }
-
-            await AdvanceWizardStepAsync(page, current);
-            current++;
+            await ScrollMainDownAsync(page);
+            await AdvanceWizardStepAsync(page, step);
         }
     }
 
@@ -240,35 +237,94 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         }
         else if (step == 7)
         {
-            foreach (var cb in await page.Locator(".ob-wizard__consent input:not(:checked)").AllAsync())
+            if (await page.Locator(".ob-wizard__consent input").CountAsync() > 0)
             {
-                await cb.CheckAsync(new() { Force = true });
+                foreach (var cb in await page.Locator(".ob-wizard__consent input:not(:checked)").AllAsync())
+                {
+                    await cb.CheckAsync(new() { Force = true });
+                }
+
+                await ClickOnboardingNextAsync(page);
+                await page.WaitForSelectorAsync(".test-likert", new() { Timeout = 30_000 });
             }
+
+            await FinishCurrentMiniTestAsync(page);
+            return;
         }
-        else if (step is >= 7 and <= 9)
+        else if (step is >= 8 and <= 9)
         {
-            for (var q = 0; q < 6; q++)
-            {
-                var likert = page.Locator(".test-likert input[value=\"4\"]").First;
-                if (await likert.CountAsync() == 0)
-                {
-                    break;
-                }
-
-                await likert.ClickAsync(new() { Force = true });
-                await page.WaitForTimeoutAsync(350);
-                var miniNext = page.Locator("button.test-flow__next:not([disabled])").First;
-                if (await miniNext.CountAsync() > 0)
-                {
-                    await miniNext.ClickAsync(new() { Force = true });
-                    await page.WaitForTimeoutAsync(400);
-                }
-            }
-
+            await FinishCurrentMiniTestAsync(page);
+            return;
+        }
+        else if (step == 10)
+        {
+            await FinishCurrentMiniTestAsync(page);
             return;
         }
 
         await ClickOnboardingNextAsync(page);
+    }
+
+    private static async Task AnswerCurrentMiniQuestionAsync(IPage page)
+    {
+        var option = page.Locator(".test-likert .test-likert__opt").Filter(new() { HasTextRegex = new Regex("^4$") }).First;
+        if (await option.CountAsync() > 0)
+        {
+            await option.ClickAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(400);
+            return;
+        }
+
+        var likert = page.Locator(".test-likert input[value=\"4\"]").First;
+        if (await likert.CountAsync() > 0)
+        {
+            await likert.ClickAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(400);
+        }
+    }
+
+    private static async Task FinishCurrentMiniTestAsync(IPage page)
+    {
+        var startStep = await page.EvaluateAsync<int>(
+            "() => parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10)");
+
+        for (var q = 0; q < 6; q++)
+        {
+            var stepNow = await page.EvaluateAsync<int>(
+                "() => parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10)");
+            if (stepNow > startStep)
+            {
+                return;
+            }
+
+            if (await page.Locator(".test-likert").CountAsync() == 0)
+            {
+                await page.WaitForTimeoutAsync(500);
+                continue;
+            }
+
+            await AnswerCurrentMiniQuestionAsync(page);
+            var miniNext = page.Locator("button.test-flow__next:not([disabled])").First;
+            if (await miniNext.CountAsync() > 0)
+            {
+                await miniNext.ClickAsync(new() { Force = true });
+                await page.WaitForTimeoutAsync(550);
+            }
+            else
+            {
+                await page.WaitForTimeoutAsync(900);
+            }
+        }
+
+        await page.WaitForFunctionAsync(
+            """
+            start => {
+              const n = parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10);
+              return n > start || !!document.querySelector('.ob-wizard__finish');
+            }
+            """,
+            startStep,
+            new() { Timeout = 90_000 });
     }
 
     private static async Task RegisterAndBeginWizardAsync(IPage page, string baseUrl)

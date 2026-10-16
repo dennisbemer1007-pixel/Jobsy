@@ -257,6 +257,7 @@
                                                 InputPrefix="@MiniPrefix"
                                                 Answer="OnMiniAnswer"
                                                 OnFinished="FinishMiniAsync"
+                                                OnLeave="BackAsync"
                                                 ExpandQuestion="ExpandQuestion"
                                                 ResolveQuestionText="QuestionText" />
                             break;
@@ -265,24 +266,31 @@
 
                 @if (!ShowMiniTestFooter)
                 {
-                    <footer class="ob-wizard__footer">
-                        <button type="button"
-                                class="btn btn-primary ob-wizard__cta"
-                                data-testid="onboarding-next"
-                                disabled="@_busy"
-                                @onclick="@(() => NextAsync())">@NextLabel</button>
+                    <footer class="ob-wizard__footer" data-sticky-footer>
                         @if (_step is 4 or 5)
                         {
-                            <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
+                            <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="SkipOptionalAsync">
                                 @Culture["Onboarding.Skip"]
                             </button>
                         }
                         else if (_step == 6)
                         {
-                            <button type="button" class="ob-wizard__ghost" @onclick="DreamUnknownAsync">
+                            <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="DreamUnknownAsync">
                                 @Culture["Onboarding.DreamUnknown"]
                             </button>
                         }
+                        <div class="ob-wizard__actionbar">
+                            <button type="button"
+                                    class="btn btn-primary ob-wizard__cta"
+                                    data-testid="onboarding-next"
+                                    disabled="@_busy"
+                                    @onclick="@(() => NextAsync())">@NextLabel</button>
+                            <button type="button"
+                                    class="ob-wizard__back-footer"
+                                    data-testid="onboarding-back"
+                                    disabled="@(_step == 1 || _busy)"
+                                    @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                        </div>
                     </footer>
                 }
             </main>

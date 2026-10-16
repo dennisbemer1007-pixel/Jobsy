@@ -20743,6 +20743,17 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     .app-shell:not(.has-bottom-nav):has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock {
         bottom: calc(var(--sticky-footer-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
     }
+
+    .app-shell:has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock {
+        inset-inline-end: auto;
+        inset-inline-start: max(12px, env(safe-area-inset-left, 0px));
+        align-items: flex-start;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock,
+    .app-shell:not(.has-bottom-nav):has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock {
+        bottom: calc(var(--sticky-footer-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 .lobsy-coach-dock--tip-above {
