@@ -436,7 +436,7 @@ window.jobsyGeo = (function () {
         wasLocationPrompted,
         markLocationPrompted,
         ensureLocationOnLaunch,
-        replaceQuery, // jobsyGeo.replaceQuery
+        replaceQuery,
         getOrCreateAnonymousKey,
         tryClaimClick,
         tryClaimSiteVisit,
@@ -1000,6 +1000,7 @@ window.jobsyMaps = (function () {
         }).catch(function () { });
     }
 
+    // VacancyDiscovery transport toggles call jobsyGeo.replaceQuery on the query string.
     // Kick off pins fetch immediately; MapLibre after FCP/idle; boot when circuit is ready.
     function warmBootPins() {
         try {
@@ -1482,7 +1483,7 @@ window.jobsyDialog = (function () {
             ev.preventDefault();
             userRequestedReload = true;
             try {
-                console.info("[lobsy] user reload (app update)");
+                console.info("[lobsy] manual reload (app update)");
             } catch (e) { }
             navigator.serviceWorker.getRegistration().then(function (reg) {
                 if (reg && reg.waiting) {

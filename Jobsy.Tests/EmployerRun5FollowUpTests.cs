@@ -36,7 +36,8 @@ public class EmployerRun5FollowUpTests
         Assert.Contains("z-index: 100", css, StringComparison.Ordinal);
 
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".filter-sheet-backdrop,\n    .filter-sheet {\n        display: none !important;", app, StringComparison.Ordinal);
+        Assert.Contains(".jobsy-discovery:not(.filters-open) .filter-sheet-backdrop.kb-filter-drawer-backdrop", app, StringComparison.Ordinal);
+        Assert.Contains("transform: translate3d(0, 100%, 0)", app, StringComparison.Ordinal);
     }
 
     [Fact]
