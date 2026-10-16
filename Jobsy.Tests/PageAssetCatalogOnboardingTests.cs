@@ -13,6 +13,7 @@ public class PageAssetCatalogOnboardingTests
 
         var sheets = PageAssetCatalog.StylesheetsFor(areas);
         Assert.Contains(sheets, s => s.Contains("onboarding-wizard.css", StringComparison.Ordinal));
+        Assert.Contains(sheets, s => s.Contains("onboarding-wizard-mobile-bar.css", StringComparison.Ordinal));
         Assert.Contains(sheets, s => s.Contains("kandidaat-banen.css", StringComparison.Ordinal));
         Assert.Contains(sheets, s => s.Contains("choice-tiles.css", StringComparison.Ordinal));
         Assert.Contains(sheets, s => s.Contains("form-fields.css", StringComparison.Ordinal));

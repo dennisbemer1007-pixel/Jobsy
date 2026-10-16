@@ -1100,6 +1100,10 @@ window.jobsyPageVisible = function () {
 
 window.jobsyDom = {
     scrollRoot: function () {
+        var wizardContent = document.querySelector(".app-shell--questionnaire .ob-wizard__content");
+        if (wizardContent && wizardContent.scrollHeight > wizardContent.clientHeight + 1) {
+            return wizardContent;
+        }
         var shell = document.querySelector(".app-shell--questionnaire .app-main")
             || document.querySelector(".app-main");
         if (shell && shell.scrollHeight > shell.clientHeight + 1) {
