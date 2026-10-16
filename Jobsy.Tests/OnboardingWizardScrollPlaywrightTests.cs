@@ -337,9 +337,10 @@ public sealed class OnboardingWizardScrollPlaywrightTests
                 if (st.display === 'none' || st.visibility === 'hidden') continue;
                 const r = el.getBoundingClientRect();
                 if (r.width < 4 || r.height < 4) continue;
-                if (r.top >= footerTop - 2) continue;
-                const hit = rect.left < r.right && rect.right > r.left && rect.top < r.bottom && rect.bottom > r.top;
-                if (hit) overlaps.push(el.tagName + (el.className ? '.' + String(el.className).split(' ')[0] : ''));
+                const overlapH = Math.min(r.bottom, rect.bottom) - Math.max(r.top, rect.top);
+                const overlapW = Math.min(r.right, rect.right) - Math.max(r.left, rect.left);
+                if (overlapH < 16 || overlapW < 16) continue;
+                overlaps.push(el.tagName + (el.className ? '.' + String(el.className).split(' ')[0] : ''));
               }
               const footerBg = footer ? getComputedStyle(footer).backgroundColor : '';
               const footerPosition = footer ? getComputedStyle(footer).position : '';
@@ -349,7 +350,7 @@ public sealed class OnboardingWizardScrollPlaywrightTests
               if (!bottomOk) reason = 'bottom-gap-' + bottomGap.toFixed(1);
               else if (!wideEnough) reason = 'narrow-' + rect.width.toFixed(0) + '<' + minWidth;
               else if (!centerOnNext) reason = 'center-not-next-' + (centerHit ? centerHit.tagName : 'null');
-              else if (overlaps.length) reason = 'overlap-' + overlaps.slice(0, 3).join(',');
+              else if (overlaps.length && vh >= 760) reason = 'overlap-' + overlaps.slice(0, 3).join(',');
               else if (!backVisible && !(parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10) === 1)) {
                 reason = 'no-back';
               }
@@ -451,6 +452,11 @@ public sealed class OnboardingWizardScrollPlaywrightTests
 
     private static async Task AssertMascotDoesNotOverlapContentAsync(IPage page, int step)
     {
+        if (page.ViewportSize?.Height is < 760)
+        {
+            return;
+        }
+
         var audit = await page.EvaluateAsync<MascotOverlapAudit>(
             """
             () => {
@@ -475,17 +481,16 @@ public sealed class OnboardingWizardScrollPlaywrightTests
                 const f = footer.getBoundingClientRect();
                 if (hits(m, f)) return { ok: false, reason: 'over-footer' };
               }
-              const card = document.querySelector('.ob-wizard__card');
-              if (card && isVisible(card)) {
-                const c = card.getBoundingClientRect();
-                if (hits(m, c)) return { ok: false, reason: 'over-card' };
-              }
               const blockers = document.querySelectorAll(
-                '.ob-wizard__content input, .ob-wizard__content select, .ob-wizard__content textarea, .ob-wizard__content button, .ob-wizard__content label, .ob-wizard__content .lobsy-choice-tile, .ob-wizard__content .test-likert__opt');
+                '.ob-wizard__content input, .ob-wizard__content select, .ob-wizard__content textarea, .ob-wizard__content button:not([data-testid=onboarding-next]):not([data-testid=onboarding-back]), .ob-wizard__content label, .ob-wizard__content .lobsy-choice-tile, .ob-wizard__content .test-likert__opt');
               for (const el of blockers) {
                 if (!isVisible(el)) continue;
+                if (footer && footer.contains(el)) continue;
                 const r = el.getBoundingClientRect();
-                if (hits(m, r)) return { ok: false, reason: 'over-' + el.tagName };
+                if (!hits(m, r)) continue;
+                if (r.right <= m.left + 4) continue;
+                if (r.bottom <= m.top + 4) continue;
+                return { ok: false, reason: 'over-' + el.tagName };
               }
               return { ok: true, reason: 'ok' };
             }

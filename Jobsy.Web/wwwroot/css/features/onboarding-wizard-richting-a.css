@@ -132,7 +132,7 @@
     min-height: auto !important;
     overflow: visible !important;
     overflow-y: visible !important;
-    padding: 0.85rem 1rem calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 16px);
+    padding: 0.85rem 1rem calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 88px);
     font-size: 16px;
   }
 
@@ -180,7 +180,7 @@
     left: auto !important;
     inset-inline-end: max(20px, env(safe-area-inset-right, 0px)) !important;
     inset-inline-start: auto !important;
-    bottom: calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 6px);
+    bottom: calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 10px);
     pointer-events: none;
   }
 
@@ -189,6 +189,12 @@
     width: 36px;
     height: 36px;
     object-fit: contain;
+  }
+
+  @media (max-height: 780px) {
+    .ob-wizard--richting-a .ob-wizard__mascot-anchor {
+      bottom: calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 28px);
+    }
   }
 
   .app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock {
@@ -220,6 +226,7 @@
     padding: 1rem 1rem 0.35rem;
     box-shadow: var(--shadow-lg);
     margin-bottom: 0.35rem;
+    padding-bottom: 2.75rem;
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
