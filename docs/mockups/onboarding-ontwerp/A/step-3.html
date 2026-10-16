@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding A — Stap 3</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="36" height="36" />
+        Lobsy
+      </div>
+      <p class="topbar__meta">Stap 3 · ± 4 min</p>
+    </header>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Voortgang">
+        <p class="sidebar__title">Startprofiel</p>
+        <div class="sidebar__group is-done">Over jou</div>
+        <div class="sidebar__group is-active">Achtergrond</div>
+        <div class="sidebar__group">Droom</div>
+        <div class="sidebar__group">Wie ben jij</div>
+        <div class="sidebar__group">Jouw Kompas</div>
+        <div class="sidebar__mascot-wrap">
+          <img class="mascot-corner" src="../../../Jobsy.Web/wwwroot/images/brand/mascot-64.webp" alt="" width="44" height="44" />
+          <p>Geen verkeerd antwoord — kies wat het meest klopt.</p>
+        </div>
+      </aside>
+      <div class="main-col">
+        <main class="main page-pad">
+          <div class="progress" role="progressbar" aria-valuenow="3" aria-valuemin="1" aria-valuemax="10"><span class="progress__fill" style="width:30%"></span></div>
+          <p class="step-badge">Stap 3 van 10</p>
+          <h1 class="hero-title">Hoe kom je op je werk?</h1>
+          <p class="hero-lead">Zo tonen we vacatures binnen een haalbare reistijd voor jou.</p>
+          <div class="card">
+            <p style="margin:0 0 0.65rem;font-size:0.875rem;font-weight:600">Hoe reis je meestal?</p>
+            <div class="transport-grid" role="group" aria-label="Vervoer">
+              <button type="button" class="transport-tile is-selected">Fiets<small>Meest gekozen in Westland</small></button>
+              <button type="button" class="transport-tile">E-bike</button>
+              <button type="button" class="transport-tile">Auto</button>
+              <button type="button" class="transport-tile">OV</button>
+              <button type="button" class="transport-tile">Lopend</button>
+              <button type="button" class="transport-tile">Anders<small>Bijv. scooter, carpool</small></button>
+            </div>
+            <label class="field"><span>Maximaal reizen (minuten)</span><input type="number" value="30" min="5" max="120" inputmode="numeric" /></label>
+          </div>
+          <div class="mobile-mascot"><img class="mascot-corner" src="../../../Jobsy.Web/wwwroot/images/brand/mascot-64.webp" alt="" width="44" height="44" /></div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

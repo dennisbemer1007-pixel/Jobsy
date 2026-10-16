@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding C — Stap 1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="Lobsy" width="40" height="40" />
+      <span class="topbar__step">1/10</span>
+    </header>
+    <div class="shell">
+      <nav class="rail" aria-hidden="true">
+        <span class="rail__dot is-active"></span>
+        <span class="rail__dot"></span>
+        <span class="rail__dot"></span>
+        <span class="rail__dot"></span>
+        <span class="rail__dot"></span>
+        <span class="rail__label">Start</span>
+      </nav>
+      <nav class="desktop-groups" aria-label="Stappen">
+        <ol>
+          <li class="is-active">Over jou</li>
+          <li>Achtergrond</li>
+          <li>Droom</li>
+          <li>Wie ben jij</li>
+          <li>Jouw Kompas</li>
+        </ol>
+      </nav>
+      <div class="main-col">
+        <main class="main page-pad">
+          <p class="eyebrow">Even kennismaken</p>
+          <h1 class="hero-title">Waar woon je ongeveer?</h1>
+          <p class="hero-lead">We gebruiken dit alleen voor reistijd — je volledige adres delen we niet openbaar.</p>
+          <label class="field"><span>Voornaam &amp; achternaam</span><input type="text" value="Sam de Vries" /></label>
+          <label class="field"><span>Woonadres</span></label>
+          <div class="address-row">
+            <label class="field"><span class="visually-hidden">Adres</span><input type="text" value="Molenstraat 12, Naaldwijk" /></label>
+            <button type="button" class="btn-gps" aria-label="Gebruik GPS">GPS</button>
+          </div>
+          <label class="field"><span>Telefoon</span><input type="tel" value="06 12345678" /></label>
+          <label class="field"><span>Geboortedatum</span><input type="date" value="1998-04-15" /></label>
+          <div class="mascot-float"><img class="mascot-corner" src="../../../Jobsy.Web/wwwroot/images/brand/mascot-64.webp" alt="" width="40" height="40" /></div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding B — Stap 1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="32" height="32" />
+        <span>Lobsy</span>
+      </div>
+      <span style="font-size:0.8125rem;color:var(--muted)">1 / 10</span>
+    </header>
+    <div class="shell">
+      <aside class="sidebar">
+        <p class="sidebar__progress">Stap 1 · nog ± 6 min</p>
+        <h1 class="sidebar__title">Even kennismaken</h1>
+        <p class="sidebar__why">Je gegevens blijven privé. We gebruiken je woonplaats alleen om reistijd naar vacatures te berekenen — werkgevers zien dit pas als jullie echt contact hebben.</p>
+        <ul class="sidebar__steps">
+          <li class="is-active"><span class="dot"></span>Over jou</li>
+          <li><span class="dot"></span>Achtergrond</li>
+          <li><span class="dot"></span>Droom</li>
+          <li><span class="dot"></span>Wie ben jij</li>
+          <li><span class="dot"></span>Jouw Kompas</li>
+        </ul>
+        <div class="sidebar__mascot">
+          <img class="mascot-corner" src="../../../Jobsy.Web/wwwroot/images/brand/mascot-64.webp" alt="" width="40" height="40" />
+          <span>Geen formulier-stress — je kunt altijd later verder.</span>
+        </div>
+      </aside>
+      <div class="main-col">
+        <aside class="context-panel">
+          <h2>Waarom vragen we dit?</h2>
+          <p>Je adres helpt ons vacatures te tonen die écht bij jou in de buurt zijn. GPS is optioneel en versnelt alleen het invullen.</p>
+        </aside>
+        <main class="main page-pad">
+          <p class="step-line">Stap 1 van 10</p>
+          <h2 class="hero-title">Hoi! Wie ben je?</h2>
+          <p class="hero-lead">Vertel ons kort wie je bent — daarna gaan we verder met wanneer je kunt werken.</p>
+          <div class="content-surface">
+            <div class="field-row">
+              <label class="field"><span>Voornaam</span><input type="text" value="Sam" /></label>
+              <label class="field"><span>Achternaam</span><input type="text" value="de Vries" /></label>
+            </div>
+            <label class="field"><span>Woonadres</span></label>
+            <div class="address-row">
+              <label class="field" style="margin:0"><span class="visually-hidden">Adres</span><input type="text" value="Molenstraat 12, Naaldwijk" /></label>
+              <button type="button" class="btn-gps">GPS</button>
+            </div>
+            <label class="field"><span>Telefoon</span><input type="tel" value="06 12345678" /></label>
+            <label class="field"><span>Geboortedatum</span><input type="date" value="1998-04-15" /></label>
+          </div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

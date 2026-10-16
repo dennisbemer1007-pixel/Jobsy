@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding B — Stap 3</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="32" height="32" />
+        <span>Lobsy</span>
+      </div>
+      <span style="font-size:0.8125rem;color:var(--muted)">3 / 10</span>
+    </header>
+    <div class="shell">
+      <aside class="sidebar">
+        <p class="sidebar__progress">Stap 3 · nog ± 4 min</p>
+        <h1 class="sidebar__title">Hoe kom je op je werk?</h1>
+        <p class="sidebar__why">Westland is breed — met fiets, auto of OV filteren we vacatures die voor jou haalbaar zijn. Geen verrassingen achteraf.</p>
+        <ul class="sidebar__steps">
+          <li class="is-done"><span class="dot"></span>Over jou</li>
+          <li class="is-active"><span class="dot"></span>Achtergrond</li>
+          <li><span class="dot"></span>Droom</li>
+          <li><span class="dot"></span>Wie ben jij</li>
+          <li><span class="dot"></span>Jouw Kompas</li>
+        </ul>
+        <div class="sidebar__mascot">
+          <img class="mascot-corner" src="../../../Jobsy.Web/wwwroot/images/brand/mascot-64.webp" alt="" width="40" height="40" />
+          <span>“Anders” mag — kies wat het dichtst in de buurt komt.</span>
+        </div>
+      </aside>
+      <div class="main-col">
+        <aside class="context-panel">
+          <h2>Waarom vragen we dit?</h2>
+          <p>Reistijd bepaalt of een baan in het dagelijks leven past. Zo sturen we geen matches naar de andere kant van de regio als dat voor jou te ver is.</p>
+        </aside>
+        <main class="main page-pad">
+          <p class="step-line">Stap 3 van 10</p>
+          <h2 class="hero-title">Hoe reis jij het liefst?</h2>
+          <p class="hero-lead">Kies je vaste manier — je kunt dit later altijd aanpassen in je profiel.</p>
+          <div class="content-surface">
+            <div class="transport-grid">
+              <button type="button" class="transport-tile is-selected">Fiets</button>
+              <button type="button" class="transport-tile">E-bike</button>
+              <button type="button" class="transport-tile">Auto</button>
+              <button type="button" class="transport-tile">OV</button>
+              <button type="button" class="transport-tile">Lopend</button>
+              <button type="button" class="transport-tile">Anders</button>
+            </div>
+            <label class="field"><span>Maximaal reizen (minuten)</span><input type="number" value="30" /></label>
+          </div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

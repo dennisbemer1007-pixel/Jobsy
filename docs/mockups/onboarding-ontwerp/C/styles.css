@@ -1,0 +1,322 @@
+@import url("../shared/base.css");
+
+/* Direction C — één vraag per scherm, grote type, zacht accent, veel witruimte */
+
+:root {
+    --soft-accent: #dce8f4;
+    --soft-accent-ink: #1a4a7a;
+    --focus-ring: color-mix(in srgb, var(--gold) 35%, var(--brand));
+}
+
+.layout {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--pearl-shine);
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    position: relative;
+}
+
+.topbar img.logo {
+    width: 40px;
+    height: 40px;
+}
+
+.topbar__step {
+    position: absolute;
+    right: 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.shell {
+    flex: 1;
+    display: flex;
+    max-width: 1280px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.rail {
+    display: none;
+}
+
+@media (min-width: 900px) {
+    .rail {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 72px;
+        padding: 1.5rem 0;
+        gap: 0.65rem;
+        border-right: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    }
+
+    .rail__dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--border);
+    }
+
+    .rail__dot.is-active {
+        height: 28px;
+        border-radius: 999px;
+        background: var(--soft-accent);
+        border: 2px solid var(--soft-accent-ink);
+    }
+
+    .rail__dot.is-done {
+        background: var(--brand);
+    }
+
+    .rail__label {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        margin-top: auto;
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding-bottom: 0.5rem;
+    }
+}
+
+.main-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.main {
+    flex: 1;
+    padding: 0.5rem 1.25rem 0;
+    max-width: 560px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+@media (min-width: 900px) {
+    .main {
+        max-width: 640px;
+        padding-top: 1.25rem;
+    }
+}
+
+.eyebrow {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--soft-accent-ink);
+    letter-spacing: 0.02em;
+}
+
+.hero-title {
+    margin: 0;
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.hero-lead {
+    margin: 0.75rem 0 1.5rem;
+    font-size: 1.0625rem;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.field {
+    margin-bottom: 1.25rem;
+}
+
+.field input {
+    border: none;
+    border-bottom: 2px solid var(--border);
+    border-radius: 0;
+    padding: 0.65rem 0;
+    background: transparent;
+}
+
+.field input:focus {
+    outline: none;
+    border-bottom-color: var(--soft-accent-ink);
+}
+
+.address-row {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-end;
+    margin-bottom: 1.25rem;
+}
+
+.address-row .field {
+    flex: 1;
+    margin: 0;
+}
+
+.btn-gps {
+    min-height: var(--touch);
+    min-width: var(--touch);
+    border: none;
+    border-radius: 999px;
+    background: var(--soft-accent);
+    color: var(--soft-accent-ink);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    cursor: pointer;
+}
+
+.transport-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.transport-option {
+    min-height: var(--touch);
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: none;
+    border-radius: var(--radius);
+    background: transparent;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.transport-option.is-selected {
+    background: var(--soft-accent);
+    color: var(--soft-accent-ink);
+}
+
+.transport-option span {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--muted);
+}
+
+.phase-row {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding-bottom: 0.35rem;
+    margin-bottom: 1.25rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.phase-pill {
+    flex-shrink: 0;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--bg) 80%, transparent);
+}
+
+.phase-pill.is-active {
+    background: var(--gold-soft);
+    color: var(--gold-ink, #5c4a0f);
+}
+
+.likert-q {
+    margin: 0 0 1.75rem;
+    font-size: clamp(1.25rem, 4.5vw, 1.65rem);
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.likert-scale {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.likert-scale button {
+    flex: 1;
+    aspect-ratio: 1;
+    max-width: 56px;
+    border-radius: 999px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--brand);
+    cursor: pointer;
+}
+
+.likert-scale button.is-selected {
+    border-color: var(--soft-accent-ink);
+    background: var(--soft-accent);
+    color: var(--soft-accent-ink);
+    transform: scale(1.05);
+}
+
+.likert-caption {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8125rem;
+    color: var(--muted);
+}
+
+.mascot-float {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 0;
+    opacity: 0.95;
+}
+
+.desktop-groups {
+    display: none;
+}
+
+@media (min-width: 900px) {
+    .desktop-groups {
+        display: block;
+        width: 220px;
+        flex-shrink: 0;
+        padding: 1.5rem 1rem;
+        font-size: 0.8125rem;
+        color: var(--muted);
+    }
+
+    .desktop-groups ol {
+        margin: 0;
+        padding: 0 0 0 1.1rem;
+        line-height: 1.8;
+    }
+
+    .desktop-groups li.is-active {
+        color: var(--brand);
+        font-weight: 700;
+    }
+
+    .layout {
+        min-height: 800px;
+    }
+
+    .sticky-bar {
+        position: sticky;
+        bottom: 0;
+        max-width: 640px;
+        margin: 0 auto;
+        left: 0;
+        right: 0;
+        background: color-mix(in srgb, var(--pearl-shine) 90%, transparent);
+    }
+}
