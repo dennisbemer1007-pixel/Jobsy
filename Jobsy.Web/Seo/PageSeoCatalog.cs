@@ -156,6 +156,8 @@ public static partial class PageSeoCatalog
             ["/algemene-voorwaarden"] = Public("Legal.Terms", "Seo.TermsDescription"),
             ["/gebruiksvoorwaarden"] = Public("Legal.Usage", "Seo.UsageDescription"),
             ["/wie-zijn-wij"] = Public("Seo.AboutTitle", "Seo.AboutDescription"),
+            ["/contact"] = Public("Contact.Seo.Title", "About.Contact.Lead"),
+            ["/info/onderzoek"] = Public("Research.Info.Title", "Research.Info.Lead"),
             ["/toegankelijkheid"] = Public("A11y.Seo.Title", "A11y.Seo.Description"),
             ["/bronnen"] = Public("Seo.SourcesTitle", "Seo.SourcesDescription"),
             ["/westland"] = Public("Seo.WestlandTitle", "Seo.WestlandDescription"),

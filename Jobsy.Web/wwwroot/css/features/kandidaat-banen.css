@@ -1122,6 +1122,15 @@
 }
 
 @media (max-width: 899px) {
+  .jobsy-discovery.show-list .kb-filter-bar__row.kb-panel-head__search-row,
+  .jobsy-discovery.show-list .kb-filter-bar__row.kb-panel-head__address-row {
+    display: none;
+  }
+
+  .jobsy-discovery.show-list .results-meta {
+    display: none;
+  }
+
   .jobsy-discovery.show-list .kb-map-fab {
     display: inline-flex;
     position: fixed;

@@ -20,13 +20,17 @@
 
 <PageTitle>@Culture["Signup.Title"] · Lobsy</PageTitle>
 
-<section class="pub-section pub-signup" aria-labelledby="signup-title">
-    <div class="pub-card pub-signup__card">
-        <div class="pub-signup__mascot">
-            <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Medium" Alt="" />
-        </div>
-        <h1 id="signup-title" class="pub-signup__title">@Culture["Signup.Title"]</h1>
-        <p class="pub-signup__lead">@Culture["Signup.Lead"]</p>
+<section class="au-stage pub-signup" aria-labelledby="signup-title">
+    <div class="au-blob au-blob--a" aria-hidden="true"></div>
+    <div class="au-blob au-blob--b" aria-hidden="true"></div>
+    <div class="au-blob au-blob--c" aria-hidden="true"></div>
+    <div class="au-col">
+        <div class="au-card">
+            <div class="au-card__mascot" aria-hidden="true">
+                <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Small" Alt="" />
+            </div>
+            <h1 id="signup-title" class="au-title">@Culture["Signup.Title"]</h1>
+            <p class="au-lead">@Culture["Signup.Lead"]</p>
 
         @if (_fromTest)
         {
@@ -46,7 +50,7 @@
             <p class="login-error" role="alert">@_errorMessage</p>
         }
 
-        <div class="login-providers pub-signup__providers">
+        <div class="au-stack pub-signup__providers">
             @if (_googleEnabled)
             {
                 <ExternalProviderLink Class="provider-btn provider-btn--google"
@@ -109,12 +113,12 @@
                        autocomplete="given-name"
                        maxlength="60" />
             </label>
-            <button type="submit" class="login-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
+            <button type="submit" class="au-submit" disabled="@(string.IsNullOrEmpty(_antiforgeryToken))">
                 @Culture["Signup.SendCode"]
             </button>
         </form>
 
-        <p class="pub-signup__consent">
+        <p class="au-foot pub-signup__consent">
             @((MarkupString)string.Format(
                 System.Globalization.CultureInfo.InvariantCulture,
                 Culture["Signup.Consent"],
@@ -122,7 +126,7 @@
                 $"<a class=\"auth-link\" href=\"{PublicRoutes.Privacy}\">{Culture["Signup.ConsentPrivacy"]}</a>"))
         </p>
 
-        <div class="pub-signup__footer">
+        <div class="au-foot pub-signup__footer">
             <p>
                 @Culture["Signup.HaveAccount"]
                 <a class="auth-link" href="@($"/login?returnUrl={Uri.EscapeDataString(_returnUrl)}")">@Culture["Signup.Login"]</a>
@@ -134,6 +138,7 @@
                     <a class="auth-link" href="@PublicRoutes.CompanyRegister">@Culture["Signup.EmployerCta"]</a>
                 </p>
             }
+        </div>
         </div>
     </div>
 </section>

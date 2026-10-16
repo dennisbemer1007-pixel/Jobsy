@@ -8,6 +8,7 @@ public class PageAssetCatalogTests
     [InlineData("/account-maken", 3 + 15)]
     [InlineData("/banenkaart", 3 + 5)]
     [InlineData("/candidate/paspoort", 3 + 5 + 15)]
+    [InlineData("/register", 3 + 4)]
     [InlineData("/werkgever/vacatures", 3 + 4)]
     [InlineData("/admin/users", 3 + 2)]
     [InlineData("/sales/dashboard", 3 + 1)]
@@ -31,6 +32,11 @@ public class PageAssetCatalogTests
             Assert.Contains(sheets, s => s.StartsWith("css/features/banenkaart.css", StringComparison.Ordinal));
             Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/admin.css", StringComparison.Ordinal));
             Assert.DoesNotContain(sheets, s => s.StartsWith("css/features/vacancy-wizard.css", StringComparison.Ordinal));
+        }
+
+        if (path is "/register")
+        {
+            Assert.Contains(sheets, s => s.StartsWith("css/features/werkgever-aanmelding.css", StringComparison.Ordinal));
         }
 
         if (path.StartsWith("/leerling", StringComparison.Ordinal))

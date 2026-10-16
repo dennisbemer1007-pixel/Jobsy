@@ -62,6 +62,7 @@ public static class UiStringsLanding
         Add("PublicFooter.Terms", "Algemene voorwaarden", "Terms and conditions", "Regulamin", "Termeni și condiții", "الشروط العامة");
         Add("PublicFooter.UsageTerms", "Gebruiksvoorwaarden", "Terms of use", "Warunki użytkowania", "Condiții de utilizare", "شروط الاستخدام");
         Add("PublicFooter.About", "Wie zijn wij", "About us", "O nas", "Despre noi", "من نحن");
+        Add("PublicFooter.Contact", "Contact", "Contact", "Kontakt", "Contact", "اتصل");
         Add("PublicFooter.Accessibility", "Toegankelijkheid", "Accessibility", "Dostępność", "Accesibilitate", "إمكانية الوصول");
         Add("PublicFooter.MadeWith", "gemaakt met", "made with", "stworzone z", "realizat cu", "صُنع بـ");
         Add("PublicFooter.Copyright",

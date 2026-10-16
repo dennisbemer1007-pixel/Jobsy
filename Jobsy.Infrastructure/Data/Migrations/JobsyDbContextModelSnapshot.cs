@@ -5415,25 +5415,15 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
-                    b.Property<bool>("PassportPdfV2Enabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("PupilPassportV2Enabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("StudentPassportEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
                     b.Property<bool>("PassportPdfDnaBlocksEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
+
+                    b.Property<bool>("PassportPdfV2Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("PhoneVerificationEnabled")
                         .ValueGeneratedOnAdd()
@@ -5446,6 +5436,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("PublicWebBaseUrl")
                         .HasMaxLength(512)
                         .HasColumnType("character varying(512)");
+
+                    b.Property<bool>("PupilPassportV2Enabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("ResearchConsentEnabled")
                         .ValueGeneratedOnAdd()
@@ -5466,6 +5461,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("SessionInactivityTimeoutMinutes")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("StudentPassportEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("SupportAccessNotifyAdmins")
                         .HasColumnType("boolean");
@@ -6847,6 +6847,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("StartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("VoFavoriteSubjectsJson")
                         .HasColumnType("text");
 
@@ -6867,12 +6873,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("VoTravelModeKey")
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
-
-                    b.Property<DateTime>("StartedAtUtc")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("PupilCodeId");
 

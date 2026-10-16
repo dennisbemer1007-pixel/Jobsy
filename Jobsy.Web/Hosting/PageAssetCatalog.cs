@@ -26,7 +26,7 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
-        "css/app.min.css?v=20261016-07",
+        "css/app.min.css?v=20261016-08",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261004-10",
     ];
@@ -34,7 +34,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidatePublicCss =
     [
         "css/features/banenkaart.css?v=20261016-02",
-        "css/features/kandidaat-banen.css?v=20261015-27",
+        "css/features/kandidaat-banen.css?v=20261016-01",
         "css/features/match-desktop.css?v=20261013-01",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
@@ -64,7 +64,7 @@ public static class PageAssetCatalog
     [
         "css/features/werkgever.css?v=20261012-01",
         "css/features/vacancy-wizard.css?v=20261015-20",
-        "css/features/werkgever-aanmelding.css?v=20261004-10",
+        "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",
     ];
 
@@ -106,6 +106,12 @@ public static class PageAssetCatalog
         if (path is "/" or "/partner" or "/westland" or "/lancering" or "/werkgevers")
         {
             return Area.None;
+        }
+
+        if (path is "/register"
+            || path.StartsWith("/register/", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.Werkgever;
         }
 
         if (path is "/login")
