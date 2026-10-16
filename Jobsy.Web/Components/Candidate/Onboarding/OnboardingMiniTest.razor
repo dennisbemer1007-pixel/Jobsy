@@ -30,6 +30,7 @@
 }
 else
 {
+    <div class="ob-wizard__card">
     <TestQuestionFlow @key="FlowEpoch"
                       Kind="_kind"
                       Questions="_flowQuestions"
@@ -47,6 +48,7 @@ else
                       OnAnswer="OnFlowAnswer"
                       OnFinished="OnFlowFinished"
                       OnLeave="OnLeave" />
+    </div>
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint && !JourneyShell)
 {

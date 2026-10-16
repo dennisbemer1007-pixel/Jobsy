@@ -11,6 +11,7 @@
     <p class="ob-wizard__lead">@Culture["Onboarding.Step5.Lead"]</p>
 }
 
+<div class="ob-wizard__card">
 <section class="ob-wizard__section" aria-labelledby="ob-edu-level">
     <h2 id="ob-edu-level" class="ob-wizard__section-title">@Culture["Onboarding.EducationPickLevel"]</h2>
     <ChoiceTileGrid Class="ob-wizard__education-grid" Role="radiogroup" AriaLabel="@Culture["Onboarding.EducationPickLevel"]">
@@ -73,6 +74,7 @@
         </label>
     </section>
 }
+</div>
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;

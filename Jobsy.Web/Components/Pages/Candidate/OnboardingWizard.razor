@@ -22,9 +22,10 @@
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261016-01" />
 </HeadContent>
 
-<div class="ob-wizard">
+<div class="ob-wizard ob-wizard--richting-a">
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -155,6 +156,26 @@
             </aside>
 
             <main class="ob-wizard__main">
+                <div class="ob-wizard__mobile-top">
+                    <div class="ob-wizard__topbar">
+                        <div class="ob-wizard__topbar-brand">
+                            <img src="/images/brand/lobsy-128.png" width="36" height="36" alt="" />
+                            <span>Lobsy</span>
+                        </div>
+                        <div class="ob-wizard__topbar-actions">
+                            <p class="ob-wizard__topbar-meta">@MobileTopMeta</p>
+                            <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                        </div>
+                    </div>
+                    <div class="ob-wizard__progress-thin"
+                         role="progressbar"
+                         aria-valuemin="1"
+                         aria-valuemax="10"
+                         aria-valuenow="@_step"
+                         aria-label="@Culture.Format("Onboarding.ProgressAria", _step, 10)">
+                        <span style="width:@(_step * 10)%"></span>
+                    </div>
+                </div>
                 <header class="ob-wizard__header">
                     <div class="ob-wizard__header-row">
                         <button type="button"
@@ -191,6 +212,8 @@
                     {
                         <p class="state-message error">@_error</p>
                     }
+
+                    <p class="ob-wizard__step-pill">@MobileStepBadge</p>
 
                     @switch (_step)
                     {
@@ -265,6 +288,10 @@
                                                 ResolveQuestionText="QuestionText" />
                             break;
                     }
+
+                    <div class="ob-wizard__mobile-mascot" aria-hidden="true">
+                        <img src="/images/brand/mascot-64.webp" width="40" height="40" alt="" />
+                    </div>
                 </section>
 
                 @if (!ShowMiniTestFooter)
@@ -394,6 +421,15 @@
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
     private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
     private bool AvailabilityValid => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0;
+    private string MobileStepBadge => Culture.Format("Discovery.StepOf", _step);
+
+    private string MobileTopMeta =>
+        Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
+            .Replace(" van 10 ·", " ·", StringComparison.Ordinal)
+            .Replace(" of 10 ·", " ·", StringComparison.Ordinal)
+            .Replace(" minuten", " min", StringComparison.Ordinal)
+            .Replace(" min left", " min", StringComparison.Ordinal);
+
     private string NextLabel => _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
         : _step == 10 ? Culture["Onboarding.ViewKompas"]

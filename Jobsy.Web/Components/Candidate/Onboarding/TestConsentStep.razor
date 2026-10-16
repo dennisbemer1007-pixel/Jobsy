@@ -6,6 +6,7 @@
 <PassportPrivacyPromise />
 <h1 tabindex="-1">@Culture["Onboarding.Consent.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Consent.Lead"]</p>
+<div class="ob-wizard__card">
 <ol class="ob-wizard__test-list">
     @foreach (var tab in TestTabs)
     {
@@ -24,6 +25,7 @@
     <p>@Culture["Onboarding.Consent.MoreText"]</p>
 </details>
 <p class="ob-wizard__hint"><span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span> @Culture["Onboarding.Consent.Private"]</p>
+</div>
 
 @code {
     public sealed record TestTab(int Step, string Title, string Lead);

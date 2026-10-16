@@ -1,6 +1,9 @@
 using System.Text.RegularExpressions;
 using Jobsy.Tests.E2e;
 using Microsoft.Playwright;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 namespace Jobsy.Tests;
 
@@ -67,6 +70,22 @@ public sealed class OnboardingWizardScrollPlaywrightTests
                 });
             }
 
+            if (step == 1)
+            {
+                await page.Locator("#onboarding-home-address, .ob-fields input[inputmode=text]").First.FillAsync("2671");
+                await page.WaitForTimeoutAsync(600);
+                foreach (var outDir in outDirs)
+                {
+                    await page.ScreenshotAsync(new()
+                    {
+                        Path = Path.Combine(outDir, "step-01-suggestions.png"),
+                        FullPage = false,
+                    });
+                }
+
+                await ScrollWizardToTopAsync(page);
+            }
+
             if (mode == "after" && step is 1 or 3)
             {
                 await ScrollWizardToBottomAsync(page);
@@ -90,6 +109,45 @@ public sealed class OnboardingWizardScrollPlaywrightTests
 
             await ScrollMainDownAsync(page);
             await AdvanceWizardStepAsync(page, step);
+        }
+
+        if (mode == "after")
+        {
+            BuildMockupCompareSheet(repoScrollDir);
+        }
+    }
+
+    private static void BuildMockupCompareSheet(string afterDir)
+    {
+        var repoRoot = Path.GetFullPath(Path.Combine(afterDir, "..", ".."));
+        var compareDir = Path.Combine(repoRoot, "onboarding-scroll", "compare");
+        Directory.CreateDirectory(compareDir);
+        var mockupDir = Path.Combine(repoRoot, "docs", "mockups", "onboarding-ontwerp", "A");
+        foreach (var step in new[] { 1, 3, 5, 7, 8 })
+        {
+            var mockup = Path.Combine(mockupDir, $"step-{step}-mobile-390x844.png");
+            var impl = Path.Combine(afterDir, $"step-{step:00}.png");
+            var dest = Path.Combine(compareDir, $"step-{step:00}-mockup-vs-impl.png");
+            if (!File.Exists(mockup) || !File.Exists(impl))
+            {
+                continue;
+            }
+
+            using var left = Image.Load<Rgba32>(mockup);
+            using var right = Image.Load<Rgba32>(impl);
+            var height = Math.Max(left.Height, right.Height);
+            var width = left.Width + right.Width + 8;
+            using var canvas = new Image<Rgba32>(width, height);
+            canvas.Mutate(ctx =>
+            {
+                ctx.BackgroundColor(SixLabors.ImageSharp.Color.FromRgb(245, 242, 238));
+                ctx.DrawImage(left, new Point(0, 0), 1f);
+                ctx.DrawImage(right, new Point(left.Width + 8, 0), 1f);
+            });
+            canvas.SaveAsPng(dest);
+            var storeCompare = "/cursor/stores/self/onboarding-scroll/compare";
+            Directory.CreateDirectory(storeCompare);
+            canvas.SaveAsPng(Path.Combine(storeCompare, $"step-{step:00}-mockup-vs-impl.png"));
         }
     }
 
@@ -234,14 +292,18 @@ public sealed class OnboardingWizardScrollPlaywrightTests
               const rect = next.getBoundingClientRect();
               const vh = window.innerHeight;
               const bottomGap = vh - rect.bottom;
-              const minWidth = window.innerWidth - 40;
+              const footer = next.closest('.ob-wizard__footer, .test-flow__footer');
+              const footerRect = footer ? footer.getBoundingClientRect() : null;
+              const footerFull = footerRect && footerRect.width >= window.innerWidth - 40;
+              const minWidth = footerFull
+                ? Math.max(200, footerRect.width - 110)
+                : window.innerWidth - 40;
               const wideEnough = rect.width >= minWidth - 1;
               const bottomOk = bottomGap >= -2 && bottomGap <= 24;
               const cx = Math.min(rect.right - 4, window.innerWidth - 2);
               const cy = rect.top + rect.height / 2;
               const centerHit = document.elementFromPoint(cx, cy);
               const centerOnNext = centerHit === next || (centerHit && next.contains(centerHit));
-              const footer = next.closest('.ob-wizard__footer, .test-flow__footer');
               const blockers = document.querySelectorAll(
                 '.ob-wizard__content input:not([type=hidden]), .ob-wizard__content select, .ob-wizard__content textarea, .ob-wizard__content .lobsy-choice-tile, .ob-wizard__content .test-likert__opt');
               const overlaps = [];
