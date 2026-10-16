@@ -164,6 +164,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.StudentPassportEnabled = studentPassport;
         }
 
+        if (update.PassportPdfDnaBlocksEnabled is bool dnaBlocksEnabled)
+        {
+            row.PassportPdfDnaBlocksEnabled = dnaBlocksEnabled;
+        }
+
         if (update.PhoneVerificationEnabled is bool phoneVerificationEnabled)
         {
             row.PhoneVerificationEnabled = phoneVerificationEnabled;
@@ -441,6 +446,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.PassportPdfV2Enabled ?? false,
             ResolvePupilPassportV2Enabled(row),
             ResolveStudentPassportEnabled(row),
+            row?.PassportPdfDnaBlocksEnabled ?? true,
             row?.PhoneVerificationEnabled ?? false,
             row?.WhatsAppRemindersEnabled ?? false,
             row?.CompactTestPdfEnabled ?? false,
