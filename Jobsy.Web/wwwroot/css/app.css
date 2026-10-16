@@ -14871,6 +14871,12 @@ html.cookie-consent-known .cookie-consent {
         transform: none;
     }
 
+    /* Sticky test/wizard footers: coach tab must not cover Volgende / controls. */
+    .app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-assistant-tab {
+        visibility: hidden;
+        pointer-events: none;
+    }
+
     .feedback-widget__tab--edge {
         display: none !important;
     }

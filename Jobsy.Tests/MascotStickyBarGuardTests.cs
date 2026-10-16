@@ -17,6 +17,10 @@ public sealed class MascotStickyBarGuardTests
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".lobsy-coach-dock", css, StringComparison.Ordinal);
         Assert.Contains("var(--sticky-footer-h", css, StringComparison.Ordinal);
+        Assert.Contains(
+            ".app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-assistant-tab",
+            css,
+            StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

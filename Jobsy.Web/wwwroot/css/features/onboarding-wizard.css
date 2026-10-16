@@ -38,5 +38,5 @@
 .ob-wizard__dream-grid{grid-template-columns:repeat(auto-fit,minmax(96px,1fr))}
 .ob-wizard__dream-grid button{min-inline-size:0;overflow-wrap:anywhere}
 .ob-wizard__fine-tune fieldset{margin:12px 0;padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm)}
-@media (max-width:639px){.ob-wizard__footer{padding-inline-end:calc(56px + 12px);flex-wrap:wrap}}
+@media (max-width:639px){.ob-wizard__footer{padding-inline-end:calc(56px + 12px);flex-wrap:wrap}.ob-wizard__content:has(.test-flow--compact){padding-block-end:calc(var(--sticky-footer-h,4.25rem) + var(--bottom-nav-h,4.75rem) + env(safe-area-inset-bottom,0px) + 0.5rem)}.ob-wizard__content .test-flow--compact{gap:0.5rem}.ob-wizard__content:has(.test-flow--compact) h1{font-size:var(--text-xl);margin-block-end:4px}.ob-wizard__content:has(.test-flow--compact) .ob-wizard__lead{margin-block:4px 10px;font-size:var(--text-sm);line-height:1.35}.ob-wizard__content .test-flow--compact .test-flow__statement{font-size:1rem;line-height:1.3}.ob-wizard__content .test-flow--compact .test-likert__opt label{min-block-size:48px}}
 @media (max-width:1023px){.ob-wizard__sidebar{display:none}.ob-wizard__footer{position:static;background:var(--bg)}}
