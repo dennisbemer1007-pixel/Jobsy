@@ -564,16 +564,18 @@
         </div>
     </section>
 
-    @if (_filtersOpen)
-    {
-        <div class="filter-sheet-backdrop kb-filter-drawer-backdrop" data-testid="kb-filter-backdrop" @onclick="CloseFiltersAsync"></div>
-        <div @ref="_filterSheetPanel"
-             id="discovery-filters"
-             class="filter-sheet kb-filter-drawer"
-             role="dialog"
-             aria-modal="true"
-             aria-labelledby="filter-sheet-title"
-             data-testid="kb-filter-sheet">
+    <div class="filter-sheet-backdrop kb-filter-drawer-backdrop"
+         data-testid="kb-filter-backdrop"
+         aria-hidden="@(_filtersOpen ? "false" : "true")"
+         @onclick="CloseFiltersAsync"></div>
+    <div @ref="_filterSheetPanel"
+         id="discovery-filters"
+         class="filter-sheet kb-filter-drawer"
+         role="dialog"
+         aria-modal="@(_filtersOpen ? "true" : "false")"
+         aria-hidden="@(_filtersOpen ? "false" : "true")"
+         aria-labelledby="filter-sheet-title"
+         data-testid="kb-filter-sheet">
             <div class="filter-sheet__header">
                 <h2 id="filter-sheet-title">
                     @Culture["Discovery.Filters"]
@@ -907,7 +909,6 @@
                 </button>
             </div>
         </div>
-    }
     <button type="button"
             class="kb-map-fab"
             data-testid="kb-map-fab"
@@ -4262,6 +4263,7 @@
         _pendingResultCount = _vacancies.Count;
         _filtersOpen = true;
         SchedulePendingCountRefresh();
+        _ = NotifyFilterDrawerToggleAsync();
     }
 
     private async Task CloseFiltersAsync()
@@ -4283,6 +4285,24 @@
         if (wasOpen)
         {
             await ReloadFiltersIfAppliedAsync();
+            await NotifyFilterDrawerToggleAsync();
+        }
+    }
+
+    private async Task NotifyFilterDrawerToggleAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("jobMap.notifyFilterDrawerToggle");
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
         }
     }
 

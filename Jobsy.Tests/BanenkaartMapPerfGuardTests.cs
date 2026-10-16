@@ -34,7 +34,8 @@ public class BanenkaartMapPerfGuardTests
 
         Assert.Contains("reloadMapPins: false", discovery, StringComparison.Ordinal);
         Assert.Contains("OnTransportChanged", discovery, StringComparison.Ordinal);
-        Assert.Contains("whenCircuitOrIdle", maps, StringComparison.Ordinal);
+        Assert.Contains("whenAfterFirstPaint", maps, StringComparison.Ordinal);
+        Assert.Contains("whenCircuitReady", maps, StringComparison.Ordinal);
         Assert.Contains("requestIdleCallback", maps, StringComparison.Ordinal);
         Assert.Contains("timeout: 1500", maps, StringComparison.Ordinal);
         Assert.Contains("script.defer = true", maps, StringComparison.Ordinal);

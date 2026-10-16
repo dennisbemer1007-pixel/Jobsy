@@ -2221,6 +2221,20 @@ html[dir="rtl"] .account-menu__panel {
     background: rgba(15, 23, 42, 0.45);
 }
 
+.jobsy-discovery:not(.filters-open) .filter-sheet-backdrop.kb-filter-drawer-backdrop {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+}
+
+.jobsy-discovery.filters-open .filter-sheet-backdrop.kb-filter-drawer-backdrop {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 200ms ease;
+}
+
 .filter-sheet {
     position: fixed;
     left: 0;
@@ -2662,7 +2676,7 @@ html[dir="rtl"] .account-menu__panel {
 }
 
 @media (max-width: 899px) {
-    .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+    .jobsy-discovery .filter-sheet.kb-filter-drawer {
         top: auto;
         bottom: 0;
         left: 0;
@@ -2670,6 +2684,19 @@ html[dir="rtl"] .account-menu__panel {
         height: min(88dvh, 720px);
         max-height: min(88dvh, 720px);
         border-radius: 16px 16px 0 0;
+        transform: translate3d(0, 100%, 0);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        will-change: transform, opacity;
+        transition: transform 220ms ease, opacity 220ms ease;
+    }
+
+    .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
     }
 
     .filter-sheet.kb-filter-drawer::before {

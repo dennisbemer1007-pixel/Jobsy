@@ -25,6 +25,9 @@ def collect_sources() -> list[Path]:
         [
             WWW / "js" / "app-core.js",
             WWW / "js" / "lobsyPush.js",
+            ROOT / "Jobsy.Web" / "Hosting" / "PageAssetCatalog.cs",
+            WWW / "service-worker.js",
+            WWW / "service-worker.published.js",
         ]
     )
     seen: set[Path] = set()

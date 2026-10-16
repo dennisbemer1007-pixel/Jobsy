@@ -36,6 +36,7 @@ window.jobMap = (function () {
     let viewportListDotNet = null;
     /** Suppress moveend-driven pin/discover churn during programmatic camera moves / resize. */
     let viewportNotifySuppressed = 0;
+    let mapResizePausedUntil = 0;
     let viewportBootstrapDone = false;
     let lastUserGestureAt = 0;
     let userGesturePending = false;
@@ -4552,8 +4553,19 @@ window.jobMap = (function () {
         firstSizedFit = true;
     }
 
+    function notifyFilterDrawerToggle() {
+        mapResizePausedUntil = (typeof performance !== "undefined" ? performance.now() : Date.now()) + 380;
+        setTimeout(function () {
+            mapResizePausedUntil = 0;
+            invalidate();
+        }, 400);
+    }
+
     function invalidate() {
         if (!map) {
+            return;
+        }
+        if (mapResizePausedUntil && typeof performance !== "undefined" && performance.now() < mapResizePausedUntil) {
             return;
         }
         runWithViewportNotifySuppressed(function () {
@@ -4735,6 +4747,7 @@ window.jobMap = (function () {
         focusCompany,
         dispose,
         invalidate,
+        notifyFilterDrawerToggle,
         isAlive,
         /** @internal Playwright / diagnostics */
         __testGetMap: function () { return map; },
