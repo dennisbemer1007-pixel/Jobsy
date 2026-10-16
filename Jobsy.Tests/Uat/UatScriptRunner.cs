@@ -636,7 +636,8 @@ public static class UatScriptRunner
             Assert.Equal(5, CulturePillarCatalog.MaxSelected);
             Assert.Contains("CultureFitPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs")), StringComparison.Ordinal);
             Assert.Contains("CulturePillarsJson", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Entities/Vacancy.cs")), StringComparison.Ordinal);
-            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
+            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/VacancyCreateWizard.razor"))
+                + File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/VacancyCreateWizard.razor.cs"));
             Assert.Contains("CulturePillarCatalog", create, StringComparison.Ordinal);
             var map = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/jobMap.js"));
             Assert.Contains("cultureFitHtml", map, StringComparison.Ordinal);
