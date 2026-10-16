@@ -64,7 +64,7 @@ public static class PageAssetCatalog
     [
         "css/features/werkgever.css?v=20261012-01",
         "css/features/vacancy-wizard.css?v=20261015-20",
-        "css/features/werkgever-aanmelding.css?v=20261016-05",
+        "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",
     ];
 

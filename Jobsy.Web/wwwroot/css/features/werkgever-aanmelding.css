@@ -80,6 +80,25 @@
   font-size: 0.95rem;
   line-height: 1.45;
 }
+.wa-wizard--calm .wa-search__row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+.wa-wizard--calm .wa-search__row > .wa-field:first-of-type {
+  grid-column: 1 / -1;
+}
+.wa-wizard--calm .wa-search__row .wa-field__label {
+  white-space: nowrap;
+}
+.wa-wizard--calm .wa-search__row .wa-input input {
+  width: 100%;
+  min-width: 0;
+}
+.wa-wizard--calm .wa-search__row .wa-btn {
+  min-height: 2.85rem;
+  padding-inline: 1.35rem;
+  white-space: nowrap;
+}
 @media (max-width: 639px) {
   .wa-wizard--calm .wa-need,
   .wa-wizard--calm .wa-note {
