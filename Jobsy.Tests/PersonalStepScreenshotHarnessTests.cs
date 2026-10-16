@@ -51,18 +51,26 @@ public class PersonalStepScreenshotHarnessTests : BunitContext
             LastName = "Jansen",
         };
 
+        if (!openSuggestions)
+        {
+            draft.AddressQuery = "2671 GB Naaldwijk";
+            draft.HomeLat = 51.99;
+            draft.HomeLng = 4.21;
+            draft.PostcodeResolved = true;
+            draft.Postcode = "2671GB";
+            draft.City = "Naaldwijk";
+        }
+
         var cut = ctx.Render<PersonalStep>(ps => ps
             .Add(p => p.Draft, draft)
             .Add(p => p.ShowValidation, false)
             .Add(p => p.UseDiscoveryPostcodeHint, true));
 
-        var addressInput = cut.Find("#onboarding-home-address");
-        var query = openSuggestions ? "Kerkstraat Naaldwijk" : "2671 GB Naaldwijk";
-        addressInput.Input(query);
-        await cut.InvokeAsync(async () => await Task.Delay(openSuggestions ? 700 : 100));
-
         if (openSuggestions)
         {
+            var addressInput = cut.Find("#onboarding-home-address");
+            addressInput.Input("Kerkstraat Naaldwijk");
+            await cut.InvokeAsync(async () => await Task.Delay(700));
             cut.Find(".address-suggestions");
         }
 

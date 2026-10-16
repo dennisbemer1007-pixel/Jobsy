@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Styled before (acceptatie live) + after (branch PersonalStep via full PageAssetCatalog CSS).
+# Before: acceptatie.lobsy.nl (legacy postcode UI). After: local stack (API :5200 + Web :5201).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export PATH="$PATH:${HOME}/.dotnet"

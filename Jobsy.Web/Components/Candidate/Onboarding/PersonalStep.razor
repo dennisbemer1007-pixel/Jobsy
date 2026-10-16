@@ -144,6 +144,7 @@
     private bool _locating;
     private bool _suggesting;
     private bool _showSuggestions;
+    private bool _addressSuggestFromUser;
     private string? _locationError;
     private CancellationTokenSource? _suggestCts;
     private CancellationTokenSource? _postcodeCts;
@@ -216,6 +217,7 @@
 
     private async Task OnAddressInputAsync(string value)
     {
+        _addressSuggestFromUser = true;
         _locationError = null;
         Draft.AddressQuery = value ?? string.Empty;
         CandidateHomeAddressLookup.MarkDraftInputChanged(Draft);
@@ -351,6 +353,11 @@
 
     private async Task SuggestAddressesAsync(string query)
     {
+        if (!_addressSuggestFromUser)
+        {
+            return;
+        }
+
         _suggestCts?.Cancel();
         _suggestCts?.Dispose();
         _suggestCts = new CancellationTokenSource();
@@ -382,6 +389,7 @@
 
             Draft.Suggestions.Clear();
             Draft.Suggestions.AddRange(results);
+            _showSuggestions = results.Count > 0;
         }
         catch (OperationCanceledException)
         {
@@ -392,6 +400,7 @@
             if (generation == _suggestGeneration)
             {
                 Draft.Suggestions.Clear();
+                _showSuggestions = false;
             }
         }
         finally
@@ -399,6 +408,11 @@
             if (generation == _suggestGeneration)
             {
                 _suggesting = false;
+                if (Draft.Suggestions.Count == 0)
+                {
+                    _showSuggestions = false;
+                }
+
                 await InvokeAsync(StateHasChanged);
             }
         }

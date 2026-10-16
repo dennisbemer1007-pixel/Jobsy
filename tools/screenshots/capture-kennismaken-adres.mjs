@@ -1,7 +1,5 @@
 import { chromium } from 'playwright';
-import { execSync } from 'node:child_process';
 import fs from 'node:fs';
-import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -10,6 +8,7 @@ const repoRoot = path.resolve(__dirname, '../..');
 const storeRoot =
   process.env.KENNISMAKEN_STORE || '/cursor/stores/self/kennismaken-adres';
 const accBase = (process.env.ACCEPTATIE_BASE_URL || 'https://acceptatie.lobsy.nl').replace(/\/$/, '');
+const afterBase = (process.env.AFTER_BASE_URL || process.env.JOBSY_E2E_BASE_URL || 'http://127.0.0.1:5201').replace(/\/$/, '');
 const email = process.env.JOBSY_E2E_EMAIL || 'kandidaat@jobsy.local';
 const password = process.env.JOBSY_E2E_PASSWORD || 'Jobsy123!';
 
@@ -56,23 +55,48 @@ async function waitCircuitReady(page) {
   );
 }
 
-async function gotoOnboardingStep1(page, base) {
-  await page.goto(`${base}/candidate/start`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
-  await waitCircuitReady(page);
-  await page.waitForSelector('.ob-fields h1, .ob-wizard__welcome', { timeout: 90_000 });
-  const welcome = page.locator('.ob-wizard__welcome button, .ob-wizard__welcome .btn-primary').first();
-  if (await welcome.isVisible().catch(() => false)) {
-    await welcome.click();
-    await page.waitForSelector('.ob-fields', { timeout: 60_000 });
-    await waitCircuitReady(page);
-  }
-  await page.waitForSelector('.ob-fields', { timeout: 60_000 });
-  await page.locator('.ob-fields h1').first().waitFor({ timeout: 60_000 });
+async function waitWizardWithoutLoadError(page, { strict = true } = {}) {
   await page.waitForFunction(
     () => !document.body?.textContent?.includes('Laden…') && !document.body?.textContent?.includes('Laden...'),
     null,
     { timeout: 90_000 },
   ).catch(() => {});
+  const err = page.locator('.ob-wizard__content .state-message.error');
+  if (await err.count()) {
+    const text = await err.first().textContent();
+    const message = `Wizard load/save error banner visible: ${text?.trim()}`;
+    if (strict) {
+      throw new Error(message);
+    }
+    console.warn(message);
+  }
+}
+
+async function gotoOnboardingStep1(page, base, { strictNoError = true } = {}) {
+  await page.goto(`${base}/candidate/start`, { waitUntil: 'networkidle', timeout: 120_000 });
+  await waitCircuitReady(page);
+  await page.waitForSelector('.ob-fields h1, .ob-wizard__welcome, .ob-wizard__welcome .ob-wizard__cta', {
+    timeout: 90_000,
+  });
+  if ((await page.locator('.ob-fields h1').count()) === 0) {
+    const welcome = page.locator('.ob-wizard__welcome .ob-wizard__cta, .ob-wizard__welcome .btn-primary').first();
+    if (await welcome.count()) {
+      await welcome.click();
+    } else {
+      const cta = page.getByRole('button', { name: /Start|Begin|startprofiel|profiel/i }).first();
+      if (await cta.count()) {
+        await cta.click();
+      }
+    }
+    await page.waitForSelector('.ob-fields', { timeout: 60_000 });
+    await waitCircuitReady(page);
+  }
+  await page.waitForSelector('.ob-fields', { timeout: 60_000 });
+  await page.locator('.ob-fields h1').first().waitFor({ timeout: 60_000 });
+  await waitWizardWithoutLoadError(page, { strict: strictNoError });
+  await page.waitForSelector('.ob-wizard__footer .ob-wizard__cta, .ob-wizard__footer button', {
+    timeout: 60_000,
+  }).catch(() => {});
 }
 
 async function scrollStepTop(page) {
@@ -100,6 +124,10 @@ async function screenshotStep(page, outPath, { suggestions = false } = {}) {
     await scrollAddressSuggestionsIntoView(page);
   } else {
     await scrollStepTop(page);
+    const openList = page.locator('.address-suggestions');
+    if (await openList.count()) {
+      throw new Error('Expected no open address suggestions on baseline screenshot');
+    }
   }
   await page.screenshot({ path: outPath, fullPage: false });
   console.log('wrote', outPath);
@@ -120,145 +148,97 @@ async function addressInput(page) {
 async function prepareAddressSuggestionsShot(page) {
   const { input, legacy } = await addressInput(page);
   if (legacy) {
-    // Acceptatie (pre-PR): postcode-only field; geocoder resolves inline (no dropdown).
     await input.click();
     await input.fill('2671GB');
     await page.waitForTimeout(2000);
-    await page.locator('.ob-fields h1').waitFor({ state: 'visible', timeout: 60_000 });
     return { legacy: true };
   }
+  await input.click();
   await input.fill('');
   await input.fill('Kerkstraat Naaldwijk');
   await page.waitForTimeout(900);
   const list = page.locator('.address-suggestions');
   await list.waitFor({ state: 'visible', timeout: 20_000 });
+  await page.waitForFunction(
+    () => {
+      const loading = document.querySelector('.address-suggestions__status');
+      return loading === null || !loading.textContent?.includes('Laden');
+    },
+    null,
+    { timeout: 20_000 },
+  );
   if ((await page.locator('.address-suggestions__item').count()) < 1) {
     throw new Error('Expected address suggestions to be visible');
   }
   return { legacy: false };
 }
 
-async function captureAcceptatieBefore(outDir) {
+async function captureOneShot(browser, base, vp, outPath, { strictNoError, prepareSuggestions, allowLegacy, suggestionsFrame }) {
+  const context = await browser.newContext({
+    viewport: { width: vp.w, height: vp.h },
+    isMobile: vp.w < 600,
+    hasTouch: vp.w < 600,
+  });
+  await context.addInitScript(() => {
+    try {
+      localStorage.setItem('Jobsy.CookieConsent', 'necessary');
+    } catch (_) {}
+  });
+  const page = await context.newPage();
+  page.setDefaultTimeout(90_000);
+  try {
+    await login(page, base);
+    await gotoOnboardingStep1(page, base, { strictNoError });
+    let showSuggestionsFrame = suggestionsFrame;
+    if (prepareSuggestions) {
+      const { legacy } = await prepareAddressSuggestionsShot(page);
+      if (!allowLegacy && legacy) {
+        throw new Error('Expected KbAddressField on after capture');
+      }
+      showSuggestionsFrame = !legacy;
+    }
+    await screenshotStep(page, outPath, { suggestions: showSuggestionsFrame });
+  } finally {
+    await context.close();
+  }
+}
+
+async function captureLiveWizard(outDir, base, { allowLegacy = true, strictNoError = true } = {}) {
   ensureDir(outDir);
   const browser = await chromium.launch({ headless: true });
   for (const vp of viewports) {
-    const context = await browser.newContext({
-      viewport: { width: vp.w, height: vp.h },
-      isMobile: vp.w < 600,
-      hasTouch: vp.w < 600,
+    await captureOneShot(browser, base, vp, path.join(outDir, `even-kennismaken-${vp.tag}.png`), {
+      strictNoError,
+      prepareSuggestions: false,
+      allowLegacy,
+      suggestionsFrame: false,
     });
-    await context.addInitScript(() => {
-      try {
-        localStorage.setItem('Jobsy.CookieConsent', 'necessary');
-      } catch (_) {}
-    });
-    const page = await context.newPage();
-    page.setDefaultTimeout(90_000);
-    await login(page, accBase);
-    // Suggesties first: on mobile acceptatie, a prior screenshot + postcode fill drops the circuit.
-    await gotoOnboardingStep1(page, accBase);
-    const { legacy } = await prepareAddressSuggestionsShot(page);
-    await screenshotStep(page, path.join(outDir, `even-kennismaken-suggesties-${vp.tag}.png`), {
-      suggestions: !legacy,
-    });
-    await gotoOnboardingStep1(page, accBase);
-    await screenshotStep(page, path.join(outDir, `even-kennismaken-${vp.tag}.png`));
-    await context.close();
+    await captureOneShot(
+      browser,
+      base,
+      vp,
+      path.join(outDir, `even-kennismaken-suggesties-${vp.tag}.png`),
+      {
+        strictNoError,
+        prepareSuggestions: true,
+        allowLegacy,
+        suggestionsFrame: true,
+      },
+    );
   }
   await browser.close();
 }
 
-function startStaticServer(wwwroot, port) {
-  const server = http.createServer((req, res) => {
-    const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
-    const filePath = path.join(wwwroot, urlPath === '/' ? 'index.html' : urlPath);
-    if (!filePath.startsWith(wwwroot)) {
-      res.writeHead(403);
-      res.end();
-      return;
-    }
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(404);
-        res.end('not found');
-        return;
-      }
-      const ext = path.extname(filePath);
-      const type =
-        ext === '.css'
-          ? 'text/css'
-          : ext === '.html'
-            ? 'text/html'
-            : 'application/octet-stream';
-      res.writeHead(200, { 'Content-Type': type });
-      res.end(data);
-    });
-  });
-  return new Promise((resolve, reject) => {
-    server.listen(port, '127.0.0.1', () => resolve(server));
-    server.on('error', reject);
-  });
-}
-
-function dotnetExportHtml(exportDir, staticBase) {
-  const env = {
-    ...process.env,
-    PATH: `${process.env.HOME}/.dotnet:${process.env.PATH}`,
-    PERSONAL_STEP_HTML_DIR: exportDir,
-    PERSONAL_STEP_STATIC_BASE: staticBase,
-  };
-  execSync(
-    'dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter FullyQualifiedName~PersonalStepScreenshotHarnessTests.Export_current --no-build',
-    { cwd: repoRoot, env, stdio: 'inherit' },
-  );
-}
-
-async function captureStyledAfter(outDir, port = 8765) {
-  ensureDir(outDir);
-  const wwwroot = path.join(repoRoot, 'Jobsy.Web/wwwroot');
-  const exportDir = path.join(wwwroot, 'kennismaken-export');
-  ensureDir(exportDir);
-  const staticBase = `http://127.0.0.1:${port}`;
-  execSync('dotnet build Jobsy.sln -v q', {
-    cwd: repoRoot,
-    env: { ...process.env, PATH: `${process.env.HOME}/.dotnet:${process.env.PATH}` },
-    stdio: 'inherit',
-  });
-  dotnetExportHtml(exportDir, staticBase);
-  const server = await startStaticServer(wwwroot, port);
-  const browser = await chromium.launch({ headless: true });
-  try {
-    for (const vp of viewports) {
-      const context = await browser.newContext({
-        viewport: { width: vp.w, height: vp.h },
-        isMobile: vp.w < 600,
-        hasTouch: vp.w < 600,
-      });
-      const page = await context.newPage();
-      await page.goto(`${staticBase}/kennismaken-export/personal-step.html`, {
-        waitUntil: 'networkidle',
-      });
-      await page.waitForSelector('.kb-address__field input', { timeout: 30_000 });
-      await screenshotStep(page, path.join(outDir, `even-kennismaken-${vp.tag}.png`));
-      await page.goto(`${staticBase}/kennismaken-export/personal-step-suggestions.html`, {
-        waitUntil: 'networkidle',
-      });
-      await page.waitForSelector('.address-suggestions', { state: 'visible', timeout: 30_000 });
-      await screenshotStep(page, path.join(outDir, `even-kennismaken-suggesties-${vp.tag}.png`), {
-        suggestions: true,
-      });
-      await context.close();
-    }
-  } finally {
-    await browser.close();
-    server.close();
-  }
-}
-
 const mode = process.env.CAPTURE_MODE || 'all';
 if (mode === 'before' || mode === 'all') {
-  await captureAcceptatieBefore(path.join(storeRoot, 'before'));
+  await captureLiveWizard(path.join(storeRoot, 'before'), accBase, {
+    allowLegacy: true,
+    strictNoError: false,
+  });
 }
 if (mode === 'after' || mode === 'all') {
-  await captureStyledAfter(path.join(storeRoot, 'after'));
+  await captureLiveWizard(path.join(storeRoot, 'after'), afterBase, {
+    allowLegacy: false,
+    strictNoError: true,
+  });
 }

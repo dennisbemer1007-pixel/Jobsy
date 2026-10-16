@@ -78,6 +78,8 @@
                     <li id="@OptionId(index)" role="option" aria-selected="@(index == _activeIndex ? "true" : "false")">
                         <button type="button"
                                 class="address-suggestions__item @(index == _activeIndex ? "is-active" : null)"
+                                @onmousedown="@(() => _suppressBlurClose = true)"
+                                @onmousedown:preventDefault
                                 @onclick="() => SelectAsync(suggestion)">
                             @suggestion.Label
                         </button>
@@ -112,6 +114,7 @@
     private bool _originSet;
     private int _activeIndex = -1;
     private bool _focused;
+    private bool _suppressBlurClose;
     private string ListboxId => InputId + "-listbox";
 
     private string OptionId(int index) => InputId + "-opt-" + index;
@@ -142,16 +145,31 @@
     private async Task OnFocus()
     {
         _focused = true;
-        if (Suggestions.Count > 0 || (_query.Trim().Length >= 3 && Suggesting))
+        if (Suggestions.Count > 0)
         {
             _showSuggestions = true;
             await ShowSuggestionsChanged.InvokeAsync(true);
         }
     }
 
-    private void OnBlur()
+    private async Task OnBlur()
     {
         _focused = false;
+        if (_suppressBlurClose)
+        {
+            _suppressBlurClose = false;
+            return;
+        }
+
+        await Task.Delay(120);
+        if (_focused)
+        {
+            return;
+        }
+
+        _showSuggestions = false;
+        _activeIndex = -1;
+        await ShowSuggestionsChanged.InvokeAsync(false);
     }
 
     private Task LocateAsync() => OnLocate.InvokeAsync();
