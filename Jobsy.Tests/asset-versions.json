@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "8562e2357c7eef860bafd691d4b4fdf85677591ca1cab66fac036e9d2989561e",
-    "v": "20261016-06"
+    "sha256": "c6912a250c0ffd23cf1a991dc7bfc5b56793c5ced39289ee16c655c552d1c0ce",
+    "v": "20261016-07"
   },
   "css/critical.css": {
     "sha256": "3a99a9a216cdf8bc2e4410503115fd778c06884a9727d734b3d3dad1cff9a075",
@@ -100,7 +100,7 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "59f858ea133eceefbe69072c266d689a43304ee8e755154f39c433c37b37a29d",
+    "sha256": "96d7271f115ea507c21ae77e9b6ae25bfd7b62acf2fe6a7a9885428c71fe7848",
     "v": "20261015-06"
   },
   "css/features/ontdekkingsreis.css": {
@@ -140,7 +140,7 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "63855d81af902fa115fa72a65374233f328b1eb37f5879f31e716c04cf96aa25",
+    "sha256": "eaa4c8708184635f30a7c97b4a919808d2422f85e9e1462f87405fbb0e64daed",
     "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {
@@ -173,7 +173,7 @@
   },
   "js/app-core.js": {
     "sha256": "7ad2c627059d2c94fc6c0486a194f13a1cb06d79e512c276a4c09d2d79502042",
-    "v": "20261016-04"
+    "v": "20261016-05"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -256,11 +256,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "d3d61beb4f0a5a08265f7035ff7210a89f9e177d5f3a676bcbd314f7249ae27e",
+    "sha256": "8d9abe2bd4fa7361e3edf86ef5c85ec2506414f3720f98d696abdc1ae6e11442",
     "v": "20261016-04"
   },
   "service-worker.published.js": {
-    "sha256": "eb2e157da54c2a2556addd29e4f1d7b9ec8c59255690a87d9bae115a69ed392f",
+    "sha256": "b4091b3d23972214c35c2000f98c97d467802255daf972147e1e1d93f13962a1",
     "v": "20261016-04"
   }
 }

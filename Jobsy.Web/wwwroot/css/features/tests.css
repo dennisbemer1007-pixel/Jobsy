@@ -224,6 +224,11 @@
     );
   }
 
+  .app-shell.app-shell--questionnaire .test-flow:has(.test-flow__footer),
+  .app-shell:not(.has-bottom-nav) .test-flow:has(.test-flow__footer) {
+    padding-bottom: calc(var(--sticky-footer-h, 4.25rem) + env(safe-area-inset-bottom, 0px) + 0.75rem);
+  }
+
   .test-flow__footer {
     position: fixed;
     inset-inline: 0;
@@ -232,12 +237,18 @@
     inline-size: 100%;
     margin-inline: 0;
     padding: 0.75rem max(0.75rem, env(safe-area-inset-inline-end, 0px))
-      0.75rem max(0.75rem, env(safe-area-inset-inline-start, 0px));
+      calc(0.75rem + env(safe-area-inset-bottom, 0px))
+      max(0.75rem, env(safe-area-inset-inline-start, 0px));
     box-sizing: border-box;
     background-color: var(--surface);
     background-image: linear-gradient(var(--surface), var(--surface));
     border-top: 1px solid var(--border);
     box-shadow: 0 -8px 16px color-mix(in srgb, var(--brand) 10%, transparent);
+  }
+
+  .app-shell.app-shell--questionnaire .test-flow__footer[data-sticky-footer],
+  .app-shell:not(.has-bottom-nav) .test-flow__footer[data-sticky-footer] {
+    bottom: 0;
   }
 }
 

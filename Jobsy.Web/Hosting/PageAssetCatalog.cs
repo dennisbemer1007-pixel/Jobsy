@@ -26,7 +26,7 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
-        "css/app.min.css?v=20261016-06",
+        "css/app.min.css?v=20261016-07",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261004-10",
     ];
@@ -43,7 +43,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidateAppCss =
     [
         "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/onboarding-wizard.css?v=20261016-03",
+        "css/features/onboarding-wizard.css?v=20261016-05",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",
@@ -51,7 +51,7 @@ public static class PageAssetCatalog
         "css/features/testresultaten.css?v=20261004-10",
         "css/features/mijn-paspoort.css?v=20261015-09",
         "css/features/ontdekkingsreis.css?v=20261015-21",
-        "css/features/tests.css?v=20261012-06",
+        "css/features/tests.css?v=20261016-02",
         "css/features/carriere.css?v=20261011-01",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",

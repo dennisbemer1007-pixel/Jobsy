@@ -47,7 +47,7 @@ public sealed class OnboardingMiniCoachDockPlaywrightTests
 
             var audit = await page.EvaluateAsync<MiniFooterAudit>(
                 """
-                () => {
+                (miniStep) => {
                   const next = document.querySelector('button.test-flow__next');
                   if (!next) return { ok: false, reason: 'no-next' };
                   const nextBox = next.getBoundingClientRect();
@@ -81,12 +81,34 @@ public sealed class OnboardingMiniCoachDockPlaywrightTests
                     Math.min(nextBox.right - 2, window.innerWidth - 1),
                     nextBox.top + nextBox.height / 2);
                   const centerOnNext = centerHit === next || next.contains(centerHit);
-                  const ok = overlaps.length === 0 && !truncated && !clipped && centerOnNext;
+                  const footer = document.querySelector('.test-flow__footer[data-sticky-footer]');
+                  const footerBottom = footer ? footer.getBoundingClientRect().bottom : 0;
+                  const vh = window.innerHeight;
+                  const footerFlush = footer ? Math.abs(footerBottom - vh) <= 1.5 : false;
+                  const currentChip = document.querySelector('.ob-wizard__test-tab.is-current');
+                  const currentBg = currentChip ? getComputedStyle(currentChip).backgroundColor : '';
+                  const currentHasClass = !!currentChip;
+                  const currentStyle = currentChip ? getComputedStyle(currentChip) : null;
+                  const brandish = currentStyle
+                    && (currentStyle.color === 'rgb(255, 255, 255)' || currentStyle.color === '#ffffff')
+                    && currentStyle.backgroundColor !== 'rgba(0, 0, 0, 0)'
+                    && !currentStyle.backgroundColor.includes('221, 213, 204');
+                  const doneChip = document.querySelector('.ob-wizard__test-tab.is-done');
+                  const doneStyle = doneChip ? getComputedStyle(doneChip) : null;
+                  const doneBg = doneStyle ? doneStyle.backgroundColor : '';
+                  const doneGreen = doneStyle
+                    && (doneStyle.color === 'rgb(21, 128, 61)' || doneStyle.color.includes('128, 61)'));
+                  const doneOk = miniStep <= 7 || (doneChip && doneGreen);
+                  const ok = overlaps.length === 0 && !truncated && !clipped && centerOnNext
+                    && footerFlush && currentHasClass && brandish && doneOk;
                   let reason = 'ok';
                   if (overlaps.length) reason = 'mascot-overlap';
                   else if (truncated) reason = 'truncated-label';
                   else if (clipped) reason = 'clipped-label';
                   else if (!centerOnNext) reason = 'elementFromPoint-not-next';
+                  else if (!footerFlush) reason = 'footer-not-flush bottom=' + footerBottom + ' vh=' + vh;
+                  else if (!currentHasClass || !brandish) reason = 'active-chip-color currentBg=' + currentBg;
+                  else if (!doneOk) reason = 'done-chip-color doneBg=' + doneBg;
                   return {
                     ok,
                     reason,
@@ -94,12 +116,17 @@ public sealed class OnboardingMiniCoachDockPlaywrightTests
                     overlaps,
                     centerTag: centerHit ? centerHit.tagName + (centerHit.className ? '.' + centerHit.className : '') : null,
                     truncated,
-                    clipped
+                    clipped,
+                    footerBottom,
+                    vh,
+                    currentBg,
+                    doneBg
                   };
                 }
-                """);
+                """,
+                miniStep);
 
-            Assert.True(audit.Ok, $"Step {miniStep} @ {width}x{height}: {audit.Reason} label={audit.Label} overlaps=[{string.Join(',', audit.Overlaps ?? [])}] center={audit.CenterTag}");
+            Assert.True(audit.Ok, $"Step {miniStep} @ {width}x{height}: {audit.Reason} label={audit.Label} overlaps=[{string.Join(',', audit.Overlaps ?? [])}] footer={audit.FooterBottom}/{audit.Vh} currentBg={audit.CurrentBg}");
 
             if (miniStep == 10)
             {
@@ -147,6 +174,10 @@ public sealed class OnboardingMiniCoachDockPlaywrightTests
         public string? CenterTag { get; set; }
         public bool Truncated { get; set; }
         public bool Clipped { get; set; }
+        public double FooterBottom { get; set; }
+        public double Vh { get; set; }
+        public string? CurrentBg { get; set; }
+        public string? DoneBg { get; set; }
     }
 
     private static async Task RegisterAndReachMiniStep7Async(IPage page, string baseUrl)
