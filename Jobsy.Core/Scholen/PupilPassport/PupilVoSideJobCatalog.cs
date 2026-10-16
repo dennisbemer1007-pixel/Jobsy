@@ -59,4 +59,6 @@ public static class PupilVoSideJobCatalog
                     def.MinAge)
             ],
             PupilPassportCopy.Get($"LeerlingPassport.Vo.SideJob.{def.Key}.Why"));
+
+    internal static IReadOnlyList<string> AllKeysForTests() => All.Select(a => a.Key).ToList();
 }

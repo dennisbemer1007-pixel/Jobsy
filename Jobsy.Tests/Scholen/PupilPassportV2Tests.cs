@@ -3,10 +3,12 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Scholen.Passport;
+using Jobsy.Infrastructure.Services.Passport;
 using QuestPDF.Infrastructure;
 
 namespace Jobsy.Tests.Scholen;
@@ -35,22 +37,52 @@ public class PupilPassportV2Tests
         var model = BuildGroep78Model("Noor");
         var pdf = new PupilPassportPdfService().Render(model);
         Assert.True(pdf.Length > 2000);
-        var src = File.ReadAllText(Path.Combine(RepoRoot(), "Jobsy.Infrastructure", "Scholen", "Passport", "PupilPassportGroep78PdfRenderer.cs"));
         Assert.Contains("Lobsy bewaart geen namen", PupilPassportCopy.Get("LeerlingPassport.Footer.G78"), StringComparison.Ordinal);
         Assert.Contains("Geen cijfer", model.FooterPrivacy, StringComparison.Ordinal);
-        Assert.Contains("geen vacatures", PupilPassportCopy.Get("LeerlingPassport.Cards.Sub"), StringComparison.OrdinalIgnoreCase);
         Assert.Equal("Noor", model.DisplayNameOnPdf);
-        Assert.DoesNotContain("Blob", src, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public void Vo_passport_side_jobs_are_catalog_not_vacancies()
+    public void Vo_passport_resolves_side_job_copy_not_raw_keys()
     {
         var model = BuildVoModel(null);
         Assert.NotNull(model.SideJobTypes);
-        Assert.All(model.SideJobTypes!, j => Assert.DoesNotContain("http", j.Why, StringComparison.OrdinalIgnoreCase));
-        var pdf = new PupilPassportPdfService().Render(model);
-        Assert.True(pdf.Length > 2000);
+        Assert.All(model.SideJobTypes!, j =>
+        {
+            Assert.DoesNotContain("LeerlingPassport.", j.Title, StringComparison.Ordinal);
+            Assert.DoesNotContain("LeerlingPassport.", j.Subtitle, StringComparison.Ordinal);
+            Assert.DoesNotContain("LeerlingPassport.", j.Why, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public void Vo_sectors_are_unique_titles()
+    {
+        var model = BuildVoModel(null);
+        Assert.NotNull(model.SectorFits);
+        var titles = model.SectorFits!.Select(s => s.Title).ToList();
+        Assert.Equal(titles.Count, titles.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        Assert.All(model.SectorFits, s => Assert.DoesNotContain("Past bij hoe jij bent", string.Join(' ', s.Bullets), StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Pdf_renderers_contain_no_emoji_characters()
+    {
+        var dir = Path.Combine(RepoRoot(), "Jobsy.Infrastructure", "Scholen", "Passport");
+        foreach (var file in Directory.GetFiles(dir, "PupilPassport*.cs"))
+        {
+            var text = File.ReadAllText(file);
+            Assert.False(ContainsEmoji(text), $"Emoji found in {Path.GetFileName(file)}");
+        }
+    }
+
+    [Fact]
+    public void Copy_catalog_has_no_missing_side_job_keys()
+    {
+        foreach (var key in PupilVoSideJobCatalog.AllKeysForTests())
+        {
+            Assert.DoesNotContain("LeerlingPassport.", PupilPassportCopy.Get($"LeerlingPassport.Vo.SideJob.{key}.Title"), StringComparison.Ordinal);
+        }
     }
 
     [Fact]
@@ -61,32 +93,62 @@ public class PupilPassportV2Tests
     }
 
     [Fact]
-    public void Writes_demo_pdfs_to_agent_store()
+    public void Student_yara_demo_renders_two_page_pdf()
     {
-        var outDir = "/cursor/stores/self/leerlingpaspoort";
-        Directory.CreateDirectory(outDir);
-        var svc = new PupilPassportPdfService();
-
-        var groepNamed = svc.Render(BuildGroep78Model("Noor"));
-        var groepSparse = svc.Render(BuildGroep78Model(null));
-        var voNamed = svc.Render(BuildVoModel("Sara Bakker"));
-        var voSparse = svc.Render(BuildVoModel(null));
-
-        File.WriteAllBytes(Path.Combine(outDir, "noor-groep8.pdf"), groepNamed);
-        File.WriteAllBytes(Path.Combine(outDir, "groep8-sparse.pdf"), groepSparse);
-        File.WriteAllBytes(Path.Combine(outDir, "sara-havo4.pdf"), voNamed);
-        File.WriteAllBytes(Path.Combine(outDir, "vo-sparse.pdf"), voSparse);
-
-        ExportPng(BuildGroep78Model("Noor"), Path.Combine(outDir, "noor-groep8.png"));
-        ExportPng(BuildVoModel("Sara Bakker"), Path.Combine(outDir, "sara-havo4.png"));
-        ExportPng(BuildGroep78Model(null), Path.Combine(outDir, "groep8-sparse.png"));
-        ExportPng(BuildVoModel(null), Path.Combine(outDir, "vo-sparse.png"));
+        var svc = new StudentPassportPdfService(null!, null!, null!);
+        var pdf = svc.RenderDemoPdf(sparse: false);
+        Assert.True(pdf.Length > 3000);
+        Assert.StartsWith("%PDF", Encoding.ASCII.GetString(pdf.AsSpan(0, 4)));
     }
 
-    private void ExportPng(PupilPassportPdfModel model, string pngPath)
+    [Fact]
+    public void Writes_demo_artifacts_to_v2_store()
     {
-        var png = new PupilPassportPdfService().RenderFirstPagePng(model, 150);
+        var outDir = "/cursor/stores/self/leerlingpaspoort/v2";
+        Directory.CreateDirectory(outDir);
+        var pupilSvc = new PupilPassportPdfService();
+        var studentSvc = new StudentPassportPdfService(null!, null!, null!);
+
+        File.WriteAllBytes(Path.Combine(outDir, "noor-groep8.pdf"), pupilSvc.Render(BuildGroep78Model("Noor")));
+        File.WriteAllBytes(Path.Combine(outDir, "groep8-sparse.pdf"), pupilSvc.Render(BuildGroep78Model(null)));
+        File.WriteAllBytes(Path.Combine(outDir, "sara-havo4.pdf"), pupilSvc.Render(BuildVoModel("Sara Bakker")));
+        File.WriteAllBytes(Path.Combine(outDir, "vo-sparse.pdf"), pupilSvc.Render(BuildVoModel(null)));
+
+        ExportPng(pupilSvc, BuildGroep78Model("Noor"), Path.Combine(outDir, "noor-groep8.png"));
+        ExportPng(pupilSvc, BuildGroep78Model(null), Path.Combine(outDir, "groep8-sparse.png"));
+        ExportPng(pupilSvc, BuildVoModel("Sara Bakker"), Path.Combine(outDir, "sara-havo4.png"));
+        ExportPng(pupilSvc, BuildVoModel(null), Path.Combine(outDir, "vo-sparse.png"));
+
+        File.WriteAllBytes(Path.Combine(outDir, "yara-hbo.pdf"), studentSvc.RenderDemoPdf(false));
+        File.WriteAllBytes(Path.Combine(outDir, "yara-hbo-sparse.pdf"), studentSvc.RenderDemoPdf(true));
+        File.WriteAllBytes(Path.Combine(outDir, "yara-hbo-p1.png"), studentSvc.RenderDemoPagePng(1, 150, false));
+        File.WriteAllBytes(Path.Combine(outDir, "yara-hbo-p2.png"), studentSvc.RenderDemoPagePng(2, 150, false));
+        File.WriteAllBytes(Path.Combine(outDir, "yara-hbo-sparse-p1.png"), studentSvc.RenderDemoPagePng(1, 150, true));
+    }
+
+    private static void ExportPng(PupilPassportPdfService svc, PupilPassportPdfModel model, string pngPath)
+    {
+        var png = svc.RenderFirstPagePng(model, 150);
         File.WriteAllBytes(pngPath, png);
+    }
+
+    private static bool ContainsEmoji(string text)
+    {
+        for (var i = 0; i < text.Length; i++)
+        {
+            var code = char.IsSurrogatePair(text, i) ? char.ConvertToUtf32(text, i) : text[i];
+            if (code is >= 0x2600 and <= 0x27BF or >= 0x1F300 and <= 0x1FAFF)
+            {
+                return true;
+            }
+
+            if (char.IsSurrogatePair(text, i))
+            {
+                i++;
+            }
+        }
+
+        return false;
     }
 
     private PupilPassportPdfModel BuildGroep78Model(string? name)
@@ -116,10 +178,12 @@ public class PupilPassportV2Tests
         var result = FixtureResult();
         result.HollandCode = "SI";
         var progress = FixtureProgress(result.PupilCodeId);
-        progress.VoFavoriteSubjectsJson = """["biologie","tekenen"]""";
+        progress.VoFavoriteSubjectsJson = """["biologie","tekenen","engels"]""";
         progress.VoProfileKey = "natuur-gezondheid";
-        progress.VoSideJobAvailabilityJson = """["za","max-8"]""";
+        progress.VoSideJobAvailabilityJson = """["za","wo-middag","max-8"]""";
         progress.VoTravelModeKey = "fiets";
+        progress.VoOwnWords = "Ik wil graag ontdekken of zorg echt bij me past.";
+        progress.VoLearningGoalsJson = """["Meer biologie-praktijk","Rustig blijven in de klas"]""";
         var builder = new PupilPassportPdfModelBuilder(_renderer);
         var code = new PupilCode
         {

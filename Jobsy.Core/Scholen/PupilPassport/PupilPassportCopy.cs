@@ -9,6 +9,8 @@ public static class PupilPassportCopy
 {
     private static readonly IReadOnlyDictionary<string, string> Strings = Build();
 
+    public static IReadOnlyDictionary<string, string> All => Strings;
+
     public static string Get(string key) => Strings.TryGetValue(key, out var v) ? v : key;
 
     public static string JobDomain(string jobKey)
@@ -195,6 +197,20 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Vo.Derived"] = "AFGELEID";
         d["LeerlingPassport.Vo.NamePrompt"] = "Naam op je paspoort (optioneel, alleen op de PDF)";
 
+        d["LeerlingPassport.Vo.Form.Title"] = "Extra voor je DNA-paspoort";
+        d["LeerlingPassport.Vo.Form.Lead"] = "Optioneel · staat op je PDF als je het invult";
+        d["LeerlingPassport.Vo.Form.Subjects"] = "Leukste vakken";
+        d["LeerlingPassport.Vo.Form.Profile"] = "Profiel";
+        d["LeerlingPassport.Vo.Form.SideJob"] = "Wanneer kun je een bijbaan?";
+        d["LeerlingPassport.Vo.Form.Travel"] = "Hoe kom je naar werk of stage?";
+        d["LeerlingPassport.Vo.Form.Learn"] = "Wat wil je leren?";
+        d["LeerlingPassport.Vo.Form.OwnWords"] = "In mijn eigen woorden";
+        d["LeerlingPassport.Vo.Form.Save"] = "Opslaan en verder";
+        d["LeerlingPassport.Vo.Form.Skip"] = "Overslaan";
+        d["LeerlingPassport.Vo.Travel.Fiets"] = "Fiets";
+        d["LeerlingPassport.Vo.Travel.Ov"] = "Openbaar vervoer";
+        d["LeerlingPassport.Vo.Travel.FietsOv"] = "Fiets + OV";
+
         d["LeerlingPassport.Vo.SideJob.kinderboerderij.Title"] = "Hulp op een kinderboerderij";
         d["LeerlingPassport.Vo.SideJob.kinderboerderij.Sub"] = "dieren & buiten";
         d["LeerlingPassport.Vo.SideJob.kinderboerderij.Why"] = "Past bij zorgzaam zijn en dieren — rustig meelopen en vragen stellen.";
@@ -204,22 +220,63 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Vo.SideJob.drogisterij-vakken.Title"] = "Vakkenvuller drogisterij";
         d["LeerlingPassport.Vo.SideJob.drogisterij-vakken.Sub"] = "netjes & zorgvuldig";
         d["LeerlingPassport.Vo.SideJob.drogisterij-vakken.Why"] = "Leuk als je van ordenen houdt; let op tijden (tot 19:00 als je 15 bent).";
+        d["LeerlingPassport.Vo.SideJob.bibliotheek.Title"] = "Hulp in de bibliotheek";
+        d["LeerlingPassport.Vo.SideJob.bibliotheek.Sub"] = "rustig & netjes";
+        d["LeerlingPassport.Vo.SideJob.bibliotheek.Why"] = "Past bij lezen en puzzels — boeken terugzetten en lezers helpen.";
+        d["LeerlingPassport.Vo.SideJob.sportclub.Title"] = "Assistent bij een sportclub";
+        d["LeerlingPassport.Vo.SideJob.sportclub.Sub"] = "team & buiten";
+        d["LeerlingPassport.Vo.SideJob.sportclub.Why"] = "Leuk als je van sport houdt — meehelpen met training of wedstrijddag.";
+        d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Title"] = "Snuffelen in een werkplaats";
+        d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Sub"] = "techniek · kort kijken";
+        d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Why"] = "Om te zien hoe monteurs of makers werken — vaak met begeleiding.";
+        d["LeerlingPassport.Vo.SideJob.horeca-help.Title"] = "Hulp in de horeca";
+        d["LeerlingPassport.Vo.SideJob.horeca-help.Sub"] = "avond · vanaf 16 jaar";
+        d["LeerlingPassport.Vo.SideJob.horeca-help.Why"] = "Past bij koken en contact — vaak in de avond, let op schooltijden.";
+        d["LeerlingPassport.Vo.SideJob.zorg-thuis.Title"] = "Hulp bij thuiszorg (indirect)";
+        d["LeerlingPassport.Vo.SideJob.zorg-thuis.Sub"] = "zorg · 16+";
+        d["LeerlingPassport.Vo.SideJob.zorg-thuis.Why"] = "Alleen via erkende organisaties — om te ontdekken of zorg bij je past.";
         d["LeerlingPassport.Vo.SideJob.Meta.Weekend"] = "zaterdag";
-        d["LeerlingPassport.Vo.SideJob.Meta.FromAge"] = "vanaf {0}";
+        d["LeerlingPassport.Vo.SideJob.Meta.Weekday"] = "wo-middag";
+        d["LeerlingPassport.Vo.SideJob.Meta.FromAge"] = "vanaf {0} jaar";
+        d["LeerlingPassport.Vo.SideJob.Meta.WhyPrefix"] = "Waarom:";
 
-        foreach (var (letter, title) in new (string, string)[]
-                 {
-                     ("S", "Zorg & welzijn"), ("I", "Onderzoek & lab"), ("A", "Creatief & media"),
-                     ("R", "Techniek & buiten"), ("E", "Handel & organisatie"), ("C", "Administratie & zorgvuldig werk")
-                 })
-        {
-            d[$"LeerlingPassport.Vo.Sector.{letter}.Title"] = title;
-            d[$"LeerlingPassport.Vo.Sector.{letter}.B1"] = "Past bij hoe jij bent in de test";
-            d[$"LeerlingPassport.Vo.Sector.{letter}.B2"] = "Sluit aan bij je interesses";
-            d[$"LeerlingPassport.Vo.Sector.{letter}.B3"] = "Om verder te verkennen — geen vacature";
-            d[$"LeerlingPassport.Vo.Sector.{letter}.Role1"] = "Voorbeeldberoep A";
-            d[$"LeerlingPassport.Vo.Sector.{letter}.Role2"] = "Voorbeeldberoep B";
-        }
+        d["LeerlingPassport.Vo.Info.ExamAfterHbo"] = "examen in {0} · daarna hbo";
+        d["LeerlingPassport.Vo.Info.SubjectsAlso"] = "ook {0}";
+        d["LeerlingPassport.Vo.Info.SideJobHours"] = "max. 8 uur per week · overdag";
+        d["LeerlingPassport.Vo.Info.TravelMax"] = "max. 20 min vanaf huis";
+        d["LeerlingPassport.Vo.Learn.Placeholder"] = "Schrijf hier wat je wilt leren (optioneel).";
+        d["LeerlingPassport.Vo.OwnWords.Placeholder"] = "Een korte zin in je eigen woorden (optioneel).";
+
+        d["LeerlingPassport.Vo.Sector.dieren-natuur.Title"] = "Dieren & natuur";
+        d["LeerlingPassport.Vo.Sector.dieren-natuur.B1"] = "Houdt van dieren en buiten zijn";
+        d["LeerlingPassport.Vo.Sector.dieren-natuur.B2"] = "Zorgzaam én nieuwsgierig";
+        d["LeerlingPassport.Vo.Sector.dieren-natuur.B3"] = "Stages in dierentuin, boerderij of natuur";
+        d["LeerlingPassport.Vo.Sector.zorg.Title"] = "Zorg & welzijn";
+        d["LeerlingPassport.Vo.Sector.zorg.B1"] = "Helpt graag, blijft rustig";
+        d["LeerlingPassport.Vo.Sector.zorg.B2"] = "Werkt fijn in een vast team";
+        d["LeerlingPassport.Vo.Sector.zorg.B3"] = "Verpleging, begeleiding of welzijn verkennen";
+        d["LeerlingPassport.Vo.Sector.lab.Title"] = "Onderzoek & lab";
+        d["LeerlingPassport.Vo.Sector.lab.B1"] = "Wil weten hoe iets werkt";
+        d["LeerlingPassport.Vo.Sector.lab.B2"] = "Precies en zorgvuldig";
+        d["LeerlingPassport.Vo.Sector.lab.B3"] = "Biologie, lab of data verkennen";
+        d["LeerlingPassport.Vo.Sector.techniek.Title"] = "Techniek & buiten";
+        d["LeerlingPassport.Vo.Sector.techniek.B1"] = "Houdt van praktisch aanpakken";
+        d["LeerlingPassport.Vo.Sector.techniek.B2"] = "Buiten of in een werkplaats";
+        d["LeerlingPassport.Vo.Sector.techniek.B3"] = "Monteur, bouw of duurzaamheid";
+        d["LeerlingPassport.Vo.Sector.creatief.Title"] = "Creatief & media";
+        d["LeerlingPassport.Vo.Sector.creatief.B1"] = "Tekent, maakt of bedenkt graag";
+        d["LeerlingPassport.Vo.Sector.creatief.B2"] = "Visueel of met verhaal";
+        d["LeerlingPassport.Vo.Sector.creatief.B3"] = "Design, media of vormgeving";
+        d["LeerlingPassport.Vo.Sector.handel.Title"] = "Handel & organisatie";
+        d["LeerlingPassport.Vo.Sector.handel.B1"] = "Houdt van plannen en regelen";
+        d["LeerlingPassport.Vo.Sector.handel.B2"] = "Praat graag met mensen";
+        d["LeerlingPassport.Vo.Sector.handel.B3"] = "Retail, events of ondernemen";
+        d["LeerlingPassport.Vo.Sector.admin.Title"] = "Administratie & zorgvuldig werk";
+        d["LeerlingPassport.Vo.Sector.admin.B1"] = "Netjes en gestructureerd";
+        d["LeerlingPassport.Vo.Sector.admin.B2"] = "Houdt van duidelijke afspraken";
+        d["LeerlingPassport.Vo.Sector.admin.B3"] = "Kantoor, finance of ordening";
+
+        d["LeerlingPassport.Card.Fit.Curious"] = "nieuwsgierig";
 
         return d;
     }

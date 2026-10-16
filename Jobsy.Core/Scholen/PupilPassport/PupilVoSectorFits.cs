@@ -2,47 +2,117 @@ namespace Jobsy.Core.Scholen.PupilPassport;
 
 public static class PupilVoSectorFits
 {
+    private sealed class SectorDef
+    {
+        public required string Key { get; init; }
+        public required Func<string?, IReadOnlyList<string>, int> Score { get; init; }
+    }
+
+    private static readonly SectorDef[] Catalog =
+    [
+        new() { Key = "dieren-natuur", Score = (h, likes) =>
+        {
+            var s = 0;
+            if (likes.Any(l => l is "dieren" or "natuur" or "buiten")) s += 4;
+            if (h?.Contains('S', StringComparison.Ordinal) == true) s += 1;
+            if (h?.Contains('R', StringComparison.Ordinal) == true) s += 1;
+            return s;
+        }},
+        new() { Key = "zorg", Score = (h, likes) =>
+        {
+            var s = 0;
+            if (h?.Contains('S', StringComparison.Ordinal) == true) s += 3;
+            if (likes.Any(l => l is "kleine-kinderen" or "dieren")) s += 2;
+            return s;
+        }},
+        new() { Key = "lab", Score = (h, likes) =>
+        {
+            var s = 0;
+            if (h?.Contains('I', StringComparison.Ordinal) == true) s += 3;
+            if (likes.Any(l => l is "puzzels" or "techniek" or "natuur")) s += 1;
+            return s;
+        }},
+        new() { Key = "techniek", Score = (h, likes) =>
+        {
+            var s = 0;
+            if (h?.Contains('R', StringComparison.Ordinal) == true) s += 3;
+            if (likes.Any(l => l is "techniek" or "bouwen" or "sport")) s += 2;
+            return s;
+        }},
+        new() { Key = "creatief", Score = (h, likes) =>
+        {
+            var s = 0;
+            if (h?.Contains('A', StringComparison.Ordinal) == true) s += 3;
+            if (likes.Any(l => l is "tekenen" or "muziek")) s += 2;
+            return s;
+        }},
+        new() { Key = "handel", Score = (h, _) => h?.Contains('E', StringComparison.Ordinal) == true ? 3 : 0 },
+        new() { Key = "admin", Score = (h, likes) =>
+        {
+            var s = h?.Contains('C', StringComparison.Ordinal) == true ? 3 : 0;
+            if (likes.Any(l => l is "puzzels" or "lezen")) s += 1;
+            return s;
+        }},
+    ];
+
     public static IReadOnlyList<PupilPassportSectorFit> Build(
         string? hollandCode,
         IReadOnlyList<string> likeKeys)
     {
-        var letter = string.IsNullOrWhiteSpace(hollandCode) ? 'S' : char.ToUpperInvariant(hollandCode[0]);
-        var primary = SectorFor(letter, 1, "Mijn eerste keus");
-        var secondary = SectorFor(hollandCode?.Length > 1 ? hollandCode[1] : 'I', 2, "Ook interessant");
-        var tertiary = SectorFor(LikeLetter(likeKeys), 3, "Wil ik in groeien");
-        return [primary, secondary, tertiary];
-    }
+        var ranked = Catalog
+            .Select(def => (def, score: def.Score(hollandCode, likeKeys)))
+            .Where(x => x.score > 0)
+            .OrderByDescending(x => x.score)
+            .ThenBy(x => x.def.Key, StringComparer.Ordinal)
+            .Take(3)
+            .ToList();
 
-    private static char LikeLetter(IReadOnlyList<string> likes)
-    {
-        if (likes.Any(l => l is "dieren" or "natuur"))
+        if (ranked.Count < 3)
         {
-            return 'S';
+            foreach (var def in Catalog)
+            {
+                if (ranked.Any(r => r.def.Key == def.Key))
+                {
+                    continue;
+                }
+
+                ranked.Add((def, 1));
+                if (ranked.Count == 3)
+                {
+                    break;
+                }
+            }
         }
 
-        if (likes.Any(l => l is "techniek" or "programmeren" or "computers"))
+        var subtitles = new[] { "Mijn eerste keus", "Ook interessant", "Wil ik verkennen" };
+        var fits = new List<PupilPassportSectorFit>();
+        for (var i = 0; i < ranked.Count; i++)
         {
-            return 'I';
+            var key = ranked[i].def.Key;
+            fits.Add(new PupilPassportSectorFit(
+                i + 1,
+                PupilPassportCopy.Get($"LeerlingPassport.Vo.Sector.{key}.Title"),
+                subtitles[i],
+                Bullets(key),
+                []));
         }
 
-        return 'A';
+        return fits;
     }
 
-    private static PupilPassportSectorFit SectorFor(char letter, int rank, string subtitle)
+    private static IReadOnlyList<string> Bullets(string sectorKey)
     {
-        var key = char.ToUpperInvariant(letter);
-        return new PupilPassportSectorFit(
-            rank,
-            PupilPassportCopy.Get($"LeerlingPassport.Vo.Sector.{key}.Title"),
-            subtitle,
-            [
-                PupilPassportCopy.Get($"LeerlingPassport.Vo.Sector.{key}.B1"),
-                PupilPassportCopy.Get($"LeerlingPassport.Vo.Sector.{key}.B2"),
-                PupilPassportCopy.Get($"LeerlingPassport.Vo.Sector.{key}.B3"),
-            ],
-            [
-                PupilPassportCopy.Get($"LeerlingPassport.Vo.Sector.{key}.Role1"),
-                PupilPassportCopy.Get($"LeerlingPassport.Vo.Sector.{key}.Role2"),
-            ]);
+        var list = new List<string>();
+        for (var n = 1; n <= 3; n++)
+        {
+            var k = $"LeerlingPassport.Vo.Sector.{sectorKey}.B{n}";
+            var text = PupilPassportCopy.Get(k);
+            if (!text.StartsWith("LeerlingPassport.", StringComparison.Ordinal))
+            {
+                list.Add(text);
+            }
+        }
+
+        return list;
     }
 }

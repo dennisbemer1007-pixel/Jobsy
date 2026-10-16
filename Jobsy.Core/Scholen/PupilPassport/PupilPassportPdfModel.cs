@@ -15,7 +15,7 @@ public sealed record PupilPassportWorldStamp(
     int WorldNumber,
     string ToneKey);
 
-public sealed record PupilPassportStrength(string Title, string Subtitle, string Emoji);
+public sealed record PupilPassportStrength(string Title, string Subtitle, string IconKey);
 
 public sealed record PupilPassportOccupationCard(
     int Rank,
@@ -23,7 +23,7 @@ public sealed record PupilPassportOccupationCard(
     string Title,
     string Blurb,
     IReadOnlyList<string> FitTags,
-    string Emoji);
+    string IconKey);
 
 public sealed record PupilPassportRouteStep(string Title, string Detail, bool IsGoal);
 
@@ -82,4 +82,8 @@ public sealed record PupilPassportPdfModel(
     IReadOnlyList<PupilPassportSectorFit>? SectorFits,
     IReadOnlyList<string>? LearningGoals,
     string? OwnWords,
-    IReadOnlyList<(string Label, string Value)> DnaTiles);
+    IReadOnlyList<(string Label, string Value)> DnaTiles,
+    string? LevelInfoSubline = null,
+    string? FavoriteSubjectsSubline = null,
+    string? SideJobInfoSubline = null,
+    string? TravelInfoSubline = null);

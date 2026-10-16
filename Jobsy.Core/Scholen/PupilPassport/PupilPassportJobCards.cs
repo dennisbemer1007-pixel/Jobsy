@@ -24,7 +24,7 @@ public static class PupilPassportJobCards
                 title,
                 blurb,
                 tags,
-                EmojiFor(key)));
+                IconFor(key)));
             rank++;
         }
 
@@ -47,17 +47,17 @@ public static class PupilPassportJobCards
         return tags;
     }
 
-    private static string EmojiFor(string key) => key switch
+    private static string IconFor(string key) => key switch
     {
-        "dierenverzorger" or "dierenarts" => "🦒",
-        "bioloog" or "wetenschapper" => "🔬",
-        "hovenier" => "🌷",
-        "kok" or "bakker" => "🍳",
-        "programmeur" or "ict-medewerker" => "💻",
-        "leraar" => "📚",
-        "verpleegkundige" => "💊",
-        "brandweer" => "🚒",
-        "politie" => "👮",
-        _ => "✨"
+        "dierenverzorger" or "dierenarts" => "giraffe",
+        "bioloog" or "wetenschapper" => "microscope",
+        "hovenier" => "flower",
+        "kok" or "bakker" => "brief",
+        "programmeur" or "ict-medewerker" => "microscope",
+        "leraar" => "cap",
+        "verpleegkundige" => "heart",
+        "brandweer" => "shield",
+        "politie" => "shield",
+        _ => "spark"
     };
 }

@@ -88,6 +88,36 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             sectors = PupilVoSectorFits.Build(holland, likeKeys);
         }
 
+        string? levelSub = null;
+        string? favSub = null;
+        string? sideSub = null;
+        string? travelSub = null;
+        if (variant == PupilPassportVariant.Vo)
+        {
+            var examYear = date.Year + Math.Max(1, 6 - ctx.Year);
+            levelSub = string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                PupilPassportCopy.Get("LeerlingPassport.Vo.Info.ExamAfterHbo"),
+                examYear);
+            if (favSubjects is { Count: > 2 })
+            {
+                favSub = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    PupilPassportCopy.Get("LeerlingPassport.Vo.Info.SubjectsAlso"),
+                    favSubjects[2]);
+            }
+
+            if (!string.IsNullOrWhiteSpace(sideJobLine))
+            {
+                sideSub = PupilPassportCopy.Get("LeerlingPassport.Vo.Info.SideJobHours");
+            }
+
+            if (!string.IsNullOrWhiteSpace(travelLine))
+            {
+                travelSub = PupilPassportCopy.Get("LeerlingPassport.Vo.Info.TravelMax");
+            }
+        }
+
         return new PupilPassportPdfModel(
             Variant: variant,
             Language: language,
@@ -132,7 +162,11 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             SectorFits: sectors,
             LearningGoals: learningGoals,
             OwnWords: ownWords,
-            DnaTiles: dnaTiles);
+            DnaTiles: dnaTiles,
+            LevelInfoSubline: levelSub,
+            FavoriteSubjectsSubline: favSub,
+            SideJobInfoSubline: sideSub,
+            TravelInfoSubline: travelSub);
     }
 
     private static IReadOnlyList<PupilPassportWorldStamp> BuildWorlds(PupilStoryViewDto story)

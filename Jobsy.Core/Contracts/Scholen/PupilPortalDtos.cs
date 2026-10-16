@@ -102,3 +102,20 @@ public sealed record PupilResultPageDto(
 public sealed record PupilDreamJobRequest(string? Key);
 
 public sealed record PupilDreamJobResponse(string Key, DreamJobRouteStubDto DreamJob);
+
+public sealed record PupilVoPassportDto(
+    bool Enabled,
+    IReadOnlyList<string> FavoriteSubjects,
+    string? ProfileKey,
+    IReadOnlyList<string> SideJobAvailability,
+    string? TravelModeKey,
+    string? OwnWords,
+    IReadOnlyList<string> LearningGoals);
+
+public sealed record PupilVoPassportSaveRequest(
+    IReadOnlyList<string>? FavoriteSubjects,
+    string? ProfileKey,
+    IReadOnlyList<string>? SideJobAvailability,
+    string? TravelModeKey,
+    string? OwnWords,
+    IReadOnlyList<string>? LearningGoals);

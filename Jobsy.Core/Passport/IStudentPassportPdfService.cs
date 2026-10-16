@@ -8,4 +8,8 @@ public interface IStudentPassportPdfService
         User user,
         bool phoneVerificationRequired,
         CancellationToken cancellationToken = default);
+
+    byte[] RenderDemoPdf(bool sparse = false);
+
+    byte[] RenderDemoPagePng(int pageNumber, int dpi, bool sparse = false);
 }

@@ -52,9 +52,16 @@ public sealed class StudentPassportPdfService : IStudentPassportPdfService
             JobFits = jobFits.Count > 0 ? jobFits : baseModel.JobFits
         };
 
-        var pdf = await _pdf.RenderAsync(model, cancellationToken);
+        var studentModel = StudentPassportPdfModelMapper.FromPassport(model);
+        var pdf = StudentPassportPdfRenderer.RenderPdf(studentModel);
         return (pdf, _pdf.BuildFileName(model));
     }
+
+    public byte[] RenderDemoPdf(bool sparse = false)
+        => StudentPassportPdfRenderer.RenderPdf(StudentPassportDemoSeed.Yara(sparse));
+
+    public byte[] RenderDemoPagePng(int pageNumber, int dpi, bool sparse = false)
+        => StudentPassportPdfRenderer.RenderPagePng(StudentPassportDemoSeed.Yara(sparse), pageNumber, dpi);
 
     private static CandidatePreferencesDto ParsePreferences(string? json)
     {
