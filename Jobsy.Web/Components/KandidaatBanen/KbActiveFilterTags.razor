@@ -1,0 +1,121 @@
+@inject CultureState Culture
+@using Jobsy.Web.Services
+
+<div class="kb-active-filters" data-testid="kb-active-filters">
+    @if (ShowTravelTag)
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-travel"
+                aria-label="@Culture.Format("Kb.Filter.RemoveTag", TravelLabel)"
+                @onclick="OnClearTravel">
+            <span>@TravelLabel</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @foreach (var wt in WorkTypes)
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-worktype"
+                @onclick="() => OnClearWorkType.InvokeAsync(wt)">
+            <span>@UiLabels.WorkType(Culture, wt)</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @foreach (var cat in Categories)
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-category"
+                @onclick="() => OnClearCategory.InvokeAsync(cat.Id)">
+            <span>@cat.Name</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @if (ShowHoursTag)
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-hours"
+                @onclick="OnClearHours">
+            <span>@HoursLabel</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @if (ShowWageTag)
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-wage"
+                @onclick="OnClearWage">
+            <span>@Culture["Kb.Filter.Wage"]</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @if (!string.IsNullOrWhiteSpace(SearchQuery))
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-search"
+                @onclick="OnClearSearch">
+            <span>@SearchQuery</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @if (AgeYears is not null)
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-age"
+                @onclick="OnClearAge">
+            <span>@Culture.Format("Kb.Filter.AgeTag", AgeYears)</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @if (MinMatchPercent > 0)
+    {
+        <button type="button"
+                class="kb-active-tag"
+                data-testid="kb-active-tag-match"
+                @onclick="OnClearMatch">
+            <span>@Culture.Format("Kb.Filter.MatchTag", MinMatchPercent)</span>
+            <span class="kb-active-tag__remove" aria-hidden="true">×</span>
+        </button>
+    }
+    @if (ShowClearAll)
+    {
+        <button type="button"
+                class="kb-active-filters__clear"
+                data-testid="kb-active-filters-clear"
+                @onclick="OnClearAll">
+            @Culture["Kb.Filter.Wissen"]
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public bool ShowTravelTag { get; set; }
+    [Parameter] public string TravelLabel { get; set; } = "";
+    [Parameter] public IEnumerable<string> WorkTypes { get; set; } = Array.Empty<string>();
+    [Parameter] public IReadOnlyList<KbActiveCategoryTag> Categories { get; set; } = [];
+    [Parameter] public bool ShowHoursTag { get; set; }
+    [Parameter] public string HoursLabel { get; set; } = "";
+    [Parameter] public bool ShowWageTag { get; set; }
+    [Parameter] public string? SearchQuery { get; set; }
+    [Parameter] public int? AgeYears { get; set; }
+    [Parameter] public int MinMatchPercent { get; set; }
+    [Parameter] public bool ShowClearAll { get; set; }
+
+    [Parameter] public EventCallback OnClearTravel { get; set; }
+    [Parameter] public EventCallback<string> OnClearWorkType { get; set; }
+    [Parameter] public EventCallback<Guid> OnClearCategory { get; set; }
+    [Parameter] public EventCallback OnClearHours { get; set; }
+    [Parameter] public EventCallback OnClearWage { get; set; }
+    [Parameter] public EventCallback OnClearSearch { get; set; }
+    [Parameter] public EventCallback OnClearAge { get; set; }
+    [Parameter] public EventCallback OnClearMatch { get; set; }
+    [Parameter] public EventCallback OnClearAll { get; set; }
+
+    public sealed record KbActiveCategoryTag(Guid Id, string Name);
+}

@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "4e35543c3b1bb3293ddb824176c2f3cfeeb3b563a9c4985593eb582da7dcd041",
-    "v": "20261015-07"
+    "sha256": "432fb3714a9fca146647b04acbea351dd815dba910b8910d197d4f4503f96745",
+    "v": "20261016-02"
   },
   "css/critical.css": {
     "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
@@ -24,8 +24,8 @@
     "v": "20261004-10"
   },
   "css/features/banenkaart.css": {
-    "sha256": "a6a392c09fe4b4d6ba05d4718d82d44bb18d4786ad10bd49f23f967f4eb250d0",
-    "v": "20261004-14"
+    "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
+    "v": "20261016-02"
   },
   "css/features/candidate-hub.css": {
     "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
@@ -64,8 +64,8 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "7347e7943e2074351a18c3da91c08775d92659bd822595b1cd96036614e75b95",
-    "v": "20261012-08"
+    "sha256": "0ba62c0c9bb8dbde540e25a6c07cc280b9567e198e365567a0f3fd13ded7484e",
+    "v": "20261015-27"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -143,6 +143,10 @@
     "sha256": "63855d81af902fa115fa72a65374233f328b1eb37f5879f31e716c04cf96aa25",
     "v": "20261012-06"
   },
+  "css/features/vacancy-wizard.css": {
+    "sha256": "4717d3ca912e13ba252c4eddf01d5fa5674c65594c499fe1b033332d86157d69",
+    "v": "20261015-20"
+  },
   "css/features/werkgever-aanmelding.css": {
     "sha256": "61ab5ba72e934f78dde05395a0af29eb0cf55ab4d3d3dfae4c1c19091d799a09",
     "v": "20261004-10"
@@ -168,8 +172,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "ba776c3b9614fdf195010e9da460a417279dd33323690ce07be7a8fd53f45fe9",
-    "v": "20261015-11"
+    "sha256": "06bd31088818cc6b1a24387f0a00c577da030bda3142122206fab342136b8e86",
+    "v": "20261016-02"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -220,8 +224,8 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "f146a9ce247c37a2fc68fa30d110782840b4401d91bed6d4f9573789d916f1fd",
-    "v": "20261015-04"
+    "sha256": "1d140384c2517bd895ac3aa3256d5a1c0e12842080872d5588a5f31b0ac62c6e",
+    "v": "20261016-02"
   },
   "js/navFeedback.js": {
     "sha256": "75b115c64e48f5e220a73ac1d730177fd0e93c812052e5cfe24e73e8f9cb4989",
@@ -235,6 +239,10 @@
     "sha256": "48461623f48be4c5c47b4896ff7ccd38c1cc86f4a7e11922344f3941ce663044",
     "v": "20261015-01"
   },
+  "js/vacancy-wizard.js": {
+    "sha256": "e267d43b5e51a3a8972358357471c74fe7bf2ccf7ee4d1bed91f16a6c362f19d",
+    "v": "20261015-03"
+  },
   "js/vacancyDetailMap.min.js": {
     "sha256": "a4cf52ee4b1ecf0658692206cb15d175c77075253cef7bc6afab2a174edf24ef",
     "v": "20261004-13"
@@ -244,11 +252,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "252cfae1225f7a05c876a84357c9b7570f8e771792f563ced7e0f76a7cd84940",
-    "v": "20261015-09"
+    "sha256": "fef266fd602caa3781adee0a45d8c248754b9154a03a761d60f90db3ed8fbba5",
+    "v": "20261016-02"
   },
   "service-worker.published.js": {
-    "sha256": "e681ed0d6f58ab47b5f01ef115c6959bd71a2a3c1635dbbc2a3e0b6b59ef6e19",
-    "v": "20261015-09"
+    "sha256": "a8e79f01b4242ec6f7b8b0cacdc7bbe4d1e7a6a05a680a97f1fecae175e1932a",
+    "v": "20261016-02"
   }
 }

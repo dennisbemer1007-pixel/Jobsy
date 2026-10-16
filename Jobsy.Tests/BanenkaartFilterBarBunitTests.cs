@@ -17,30 +17,14 @@ public class BanenkaartFilterBarBunitTests
         Assert.Contains("discovery-keyword-mobile", discovery, StringComparison.Ordinal);
         Assert.Contains("Kb.Filter.KeywordPlaceholder", discovery, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"kb-filters-button\"", discovery, StringComparison.Ordinal);
-        Assert.Contains("data-testid=\"kb-travel-chip\"", discovery, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"kb-match-button\"", discovery, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"kb-view-toggle\"", discovery, StringComparison.Ordinal);
-        Assert.Contains("TravelChipModes", discovery, StringComparison.Ordinal);
-        Assert.Contains("TravelChipMinutes", discovery, StringComparison.Ordinal);
-        Assert.Contains("\"E-bike\"", discovery, StringComparison.Ordinal);
-
-        // Mobile no longer exposes work-type / hours / wage / clear as separate chips.
-        var mobileBarStart = discovery.IndexOf("class=\"kb-filter-bar\"", StringComparison.Ordinal);
-        Assert.True(mobileBarStart > 0);
-        var desktopStart = discovery.IndexOf("kb-filter-chips--desktop", StringComparison.Ordinal);
-        Assert.True(desktopStart > mobileBarStart);
-        var mobileSection = discovery[mobileBarStart..desktopStart];
-        Assert.DoesNotContain("Kb.Filter.WorkType", mobileSection, StringComparison.Ordinal);
-        Assert.DoesNotContain("Kb.Filter.Hours", mobileSection, StringComparison.Ordinal);
-        Assert.DoesNotContain("Kb.Filter.Wage", mobileSection, StringComparison.Ordinal);
-        Assert.DoesNotContain("Kb.Filter.Clear", mobileSection, StringComparison.Ordinal);
-        Assert.DoesNotContain("Kb.Filter.More", mobileSection, StringComparison.Ordinal);
-
-        // Desktop keeps chips and gains Filters + Match.
-        var desktopSection = discovery[desktopStart..];
-        Assert.Contains("Kb.Filter.WorkType", desktopSection, StringComparison.Ordinal);
-        Assert.Contains("data-testid=\"kb-filters-button\"", desktopSection, StringComparison.Ordinal);
-        Assert.Contains("data-testid=\"kb-match-button\"", desktopSection, StringComparison.Ordinal);
+        Assert.Contains("FilterDrawerTransportModes", discovery, StringComparison.Ordinal);
+        Assert.Contains("KbActiveFilterTags", discovery, StringComparison.Ordinal);
+        Assert.Contains("data-testid=\"kb-panel-head\"", discovery, StringComparison.Ordinal);
+        Assert.DoesNotContain("discovery-filters-desktop", discovery, StringComparison.Ordinal);
+        Assert.DoesNotContain("kb-filter-chips--desktop", discovery, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-testid=\"kb-travel-chip\"", discovery, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -87,10 +71,12 @@ public class BanenkaartFilterBarBunitTests
         var css = File.ReadAllText(Path.Combine(
             FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "kandidaat-banen.css"));
         Assert.Contains(".kb-address__field input", css, StringComparison.Ordinal);
-        Assert.Contains("height: 44px", css, StringComparison.Ordinal);
+        Assert.Contains("height: 40px", css, StringComparison.Ordinal);
+        Assert.Contains(".kb-panel-head", css, StringComparison.Ordinal);
+        Assert.Contains(".kb-active-tag", css, StringComparison.Ordinal);
         Assert.Contains("font-size: 16px", css, StringComparison.Ordinal);
         Assert.Contains(".kb-address__geo", css, StringComparison.Ordinal);
-        Assert.Contains("width: 44px", css, StringComparison.Ordinal);
+        Assert.Contains("width: 40px", css, StringComparison.Ordinal);
         Assert.Contains(".kb-filter-bar", css, StringComparison.Ordinal);
         Assert.Contains(".kb-filters-button", css, StringComparison.Ordinal);
         Assert.Contains(".kb-match-button", css, StringComparison.Ordinal);

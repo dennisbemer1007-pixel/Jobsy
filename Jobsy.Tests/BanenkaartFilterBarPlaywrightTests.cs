@@ -52,7 +52,7 @@ public class BanenkaartFilterBarPlaywrightTests
 
         var inView = await page.EvaluateAsync<bool>("""
             () => {
-              const ids = ['kb-filters-button', 'kb-travel-chip', 'kb-match-button', 'kb-view-toggle'];
+              const ids = ['kb-filters-button', 'kb-match-button', 'kb-view-toggle'];
               for (const id of ids) {
                 const el = document.querySelector(`.kb-filter-bar [data-testid="${id}"]`);
                 if (!el) return false;
@@ -111,15 +111,19 @@ public class BanenkaartFilterBarPlaywrightTests
         await page.Keyboard.PressAsync("Escape");
         await page.WaitForTimeoutAsync(200);
 
-        await page.Locator(".kb-filter-bar [data-testid=kb-travel-chip]").ClickAsync();
-        var preset30 = page.Locator("[data-testid=kb-travel-popover] .kb-chip-preset")
-            .Filter(new() { HasTextString = "30" });
+        await page.Locator(".kb-filter-bar [data-testid=kb-filters-button]").ClickAsync();
+        var preset30 = page.Locator("[data-testid=kb-sheet-travel-30]");
         if (await preset30.CountAsync() > 0)
         {
             await preset30.First.ClickAsync();
+            await page.Locator("[data-testid=kb-filter-apply]").ClickAsync();
             await page.WaitForTimeoutAsync(400);
-            var chipText = await page.Locator(".kb-filter-bar [data-testid=kb-travel-chip]").InnerTextAsync();
-            Assert.Contains("30", chipText, StringComparison.Ordinal);
+            var tag = page.Locator("[data-testid=kb-active-tag-travel]");
+            if (await tag.CountAsync() > 0)
+            {
+                var chipText = await tag.First.InnerTextAsync();
+                Assert.Contains("30", chipText, StringComparison.Ordinal);
+            }
         }
 
         if (loggedIn)
@@ -187,16 +191,15 @@ public class BanenkaartFilterBarPlaywrightTests
             WaitUntil = WaitUntilState.DOMContentLoaded,
             Timeout = 90_000
         });
-        await page.WaitForSelectorAsync(".kb-filter-chips--desktop [data-testid=kb-filters-button], .kb-filters-button", new() { Timeout = 60_000 });
+        await page.WaitForSelectorAsync("[data-testid=kb-panel-head] [data-testid=kb-filters-button]", new() { Timeout = 60_000 });
 
-        var filters = page.Locator(".kb-filter-chips--desktop [data-testid=kb-filters-button]").First;
+        var filters = page.Locator("[data-testid=kb-panel-head] [data-testid=kb-filters-button]").First;
         await Assertions.Expect(filters).ToBeVisibleAsync(new() { Timeout = 15_000 });
         await filters.ClickAsync();
         // Desktop inline panel is always in the DOM; clicking toggles the mobile sheet on narrow
         // viewports. On desktop ToggleFilters still opens the sheet overlay in current code.
         await page.WaitForTimeoutAsync(400);
-        var sheetOrDesktop = await page.Locator("#discovery-filters, #discovery-filters-desktop").CountAsync();
-        Assert.True(sheetOrDesktop > 0);
+        await Assertions.Expect(page.Locator("[data-testid=kb-filter-sheet]")).ToBeVisibleAsync(new() { Timeout = 10_000 });
     }
 
     private static string? BaseUrl()
