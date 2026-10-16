@@ -1,34 +1,34 @@
 @inherits LayoutComponentBase
+@using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
+@inject LandingVariantResolver VariantResolver
 @inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
 <PageSeoHead />
-<div class="teaser-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
-    <header class="teaser-shell__bar">
-        <a class="teaser-shell__brand" href="@PublicRoutes.Landing" aria-label="Lobsy">
-            <LobsyLogo Class="teaser-shell__logo" Alt="" Animate="false" />
-            <span class="teaser-shell__name">Lobsy</span>
-        </a>
-        <nav class="teaser-shell__nav" aria-label="@Culture["PublicNav.QuickLinks"]">
-            <a class="teaser-shell__link" href="@PublicRoutes.CreateAccount">@Culture["PublicNav.CreateAccount"]</a>
-            <a class="teaser-shell__link teaser-shell__link--quiet" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-        </nav>
-    </header>
-    <main class="teaser-shell__main">
+<div class="pub-theme teaser-shell"
+     dir="@(Culture.IsRightToLeft ? "rtl" : null)"
+     lang="@Culture.Language">
+    <a class="pub-skip" href="#main">@Culture["PublicNav.SkipToContent"]</a>
+    <PublicHeader Variant="_variant" TeaserCampaign="true" />
+    <main id="main" class="pub-main teaser-shell__main">
         @Body
     </main>
+    <PublicFooter Variant="_variant" />
     <CookieConsentBanner />
     <FeedbackWidget />
 </div>
 
 @code {
+    private LandingVariant _variant = LandingVariant.On;
+
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += OnCultureChanged;
         Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
+        _variant = await VariantResolver.GetAsync();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
     }

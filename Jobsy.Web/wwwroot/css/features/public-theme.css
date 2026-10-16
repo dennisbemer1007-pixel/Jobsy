@@ -125,6 +125,46 @@
   outline: none;
 }
 
+.pub-theme .pub-nav__link--quiet {
+  font-weight: 500;
+}
+
+.pub-theme .pub-header__ctx {
+  margin: 0 0 0 auto;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.pub-theme .pub-header__hint {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+@media (max-width: 899px) {
+  .pub-theme .pub-header__ctx,
+  .pub-theme .pub-header__hint {
+    display: none;
+  }
+}
+
+.pub-theme .pub-main a:not([class]),
+.pub-theme .pp-sec__body a:not(.pub-btn),
+.pub-theme .pp-doc__lead a,
+.pub-theme .pp-about a.auth-link {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--brand) 35%, transparent);
+  text-underline-offset: 0.15em;
+}
+
+.pub-theme .pub-main a:not([class]):hover,
+.pub-theme .pp-sec__body a:not(.pub-btn):hover,
+.pub-theme .pp-about a.auth-link:hover {
+  text-decoration-color: var(--brand);
+}
+
 .pub-theme .pub-header__actions {
   display: none;
   align-items: center;

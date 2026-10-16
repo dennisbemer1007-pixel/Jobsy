@@ -21,7 +21,7 @@
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    @if (!_isMatchPage && !_isQuestionnairePage)
+    @if (!_isMatchPage && !_isQuestionnairePage && !_isBanenkaartPage)
     {
         <header class="app-header">
             <div class="app-header__brand">
@@ -58,28 +58,28 @@
             }
             @Body
         </CircuitErrorBoundary>
-        @if (!_isMatchPage && !_isQuestionnairePage)
+        @if (!_isMatchPage && !_isQuestionnairePage && !_isBanenkaartPage)
         {
             <AppFooter />
         }
     </main>
 
-    @if (!_isQuestionnairePage)
+    @if (!_isQuestionnairePage && !_isBanenkaartPage)
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && _isCandidate && !_hideCoachDock)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && _isCandidate && !_hideCoachDock)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
-    else if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage)
     {
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage)
     {
         <GratisDnaMerge />
         <PushPermissionBanner />
@@ -97,13 +97,14 @@
     private bool _siteVisitRecorded;
     private bool _hasBottomNav;
     private bool _isMatchPage;
+    private bool _isBanenkaartPage;
     private bool _isQuestionnairePage;
     private bool _hideCoachDock;
     private bool _isCandidate;
     private bool _suppressInstallBanner;
 
     private bool ShowInstallBanner =>
-        RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage && !_suppressInstallBanner;
+        RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage && !_suppressInstallBanner;
     private string _homeHref = "/";
 
     protected override void OnInitialized()
@@ -269,12 +270,20 @@
         var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
+        var banenkaart = path.Equals("banenkaart", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("banen", StringComparison.OrdinalIgnoreCase);
         var questionnaire = IsQuestionnairePath(path, relative);
         var suppressInstall = SuppressesInstallBanner(path);
         var changed = false;
         if (_isMatchPage != match)
         {
             _isMatchPage = match;
+            changed = true;
+        }
+
+        if (_isBanenkaartPage != banenkaart)
+        {
+            _isBanenkaartPage = banenkaart;
             changed = true;
         }
 

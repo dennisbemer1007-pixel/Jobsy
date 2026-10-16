@@ -37,7 +37,6 @@
             </p>
             <div class="wl-hero__cta">
                 <a class="wl-btn wl-btn--primary" href="/register">
-                    <span class="wl-btn__emoji" aria-hidden="true">🦞</span>
                     Zet je vacature gratis online
                 </a>
                 @if (_whatsAppUrl is not null)
@@ -87,15 +86,7 @@
                      width="640"
                      height="800"
                      loading="lazy"
-                     decoding="async"
-                     @onerror="OnPortraitError" />
-                @if (_portraitMissing)
-                {
-                    <div class="wl-portrait__fallback" aria-hidden="true">
-                        <span class="wl-portrait__initials">DB</span>
-                        <span class="wl-portrait__hint">Plaats dennis.jpg in images/brand/</span>
-                    </div>
-                }
+                     decoding="async" />
             </div>
             <figcaption class="wl-portrait__caption">
                 <blockquote class="wl-portrait__quote">
@@ -131,7 +122,6 @@
                 </li>
             </ul>
             <a class="wl-btn wl-btn--primary wl-btn--on-dark" href="/register">
-                <span class="wl-btn__emoji" aria-hidden="true">🦞</span>
                 Ik doe mee — gratis starten
             </a>
         </div>
@@ -184,7 +174,7 @@
             <h3>Belangrijk over de gratis periode</h3>
             <ul>
                 <li>Aanmeldingen <strong>vóór 18 november</strong> krijgen <strong>geen welkomsttoken</strong>.</li>
-                <li>Extra’s zoals <strong>Highlights</strong> en <strong>Pushboms</strong> zitten <strong>niet</strong> in de gratis periode.</li>
+                <li>Extra’s zoals <strong>Highlights</strong> en <strong>Push boms</strong> zitten <strong>niet</strong> in de gratis periode.</li>
                 <li>Vanaf 18 november gelden bovenstaande standaardtarieven.</li>
             </ul>
         </aside>
@@ -199,7 +189,6 @@
         </p>
         <div class="wl-finale__cta">
             <a class="wl-btn wl-btn--primary" href="/register">
-                <span class="wl-btn__emoji" aria-hidden="true">🦞</span>
                 Registreren &amp; vacature plaatsen
             </a>
             @if (_whatsAppUrl is not null)
@@ -221,16 +210,9 @@
 
 @code {
     private string? _whatsAppUrl;
-    private bool _portraitMissing;
 
     protected override void OnInitialized()
     {
         _whatsAppUrl = WestlandTeaserContacts.TryBuildWhatsAppUrl(Config["TeaserLanding:WhatsAppE164"]);
-    }
-
-    private async Task OnPortraitError()
-    {
-        _portraitMissing = true;
-        await InvokeAsync(StateHasChanged);
     }
 }

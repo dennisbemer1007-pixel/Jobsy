@@ -23,6 +23,7 @@ public static class PublicNavCatalog
             new("PublicFooter.Terms", PublicRoutes.Terms),
             new("PublicFooter.UsageTerms", PublicRoutes.UsageTerms),
             new("PublicFooter.About", PublicRoutes.About),
+            new("PublicFooter.Contact", PublicRoutes.Contact),
             new("PublicFooter.Accessibility", PublicRoutes.Accessibility),
             new("Footer.Sources", PublicRoutes.Sources)
         ]);
@@ -38,6 +39,7 @@ public static class PublicNavCatalog
             new("PublicFooter.Cookies", PublicRoutes.PrivacyCookies),
             new("PublicFooter.UsageTerms", PublicRoutes.UsageTerms),
             new("PublicFooter.About", PublicRoutes.About),
+            new("PublicFooter.Contact", PublicRoutes.Contact),
             new("PublicFooter.Accessibility", PublicRoutes.Accessibility),
             new("Footer.Sources", PublicRoutes.Sources)
         ]);

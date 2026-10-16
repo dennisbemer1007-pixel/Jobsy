@@ -896,6 +896,24 @@ public static class UiStringsPublicInfo
             "Wyślij e-mail",
             "Trimite un e-mail",
             "أرسل بريداً");
+        Add("Contact.Seo.Title",
+            "Contact",
+            "Contact",
+            "Kontakt",
+            "Contact",
+            "اتصل");
+        Add("Contact.Eyebrow",
+            "We horen graag van je",
+            "We would love to hear from you",
+            "Chętnie Cię wysłuchamy",
+            "Ne-ar face plăcere să auzim de la tine",
+            "يسعدنا سماعك");
+        Add("Contact.ReportHint",
+            "Illegale of misleidende content melden? Gebruik het meldformulier:",
+            "Report illegal or misleading content? Use the report form:",
+            "Zgłaszasz nielegalną treść? Użyj formularza zgłoszeń:",
+            "Raportează conținut ilegal? Folosește formularul:",
+            "للإبلاغ عن محتوى مخالف استخدم نموذج الإبلاغ:");
         Add("A11y.Seo.Title",
             "Toegankelijkheid",
             "Accessibility",

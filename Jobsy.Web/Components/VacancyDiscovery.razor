@@ -631,6 +631,31 @@
                     </label>
                 </section>
 
+                @if (ShowSheetAddress)
+                {
+                    <section class="filter-section" data-filter-section="address">
+                        <h3>
+                            <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Map)</span>
+                            @Culture["Discovery.Address"]
+                        </h3>
+                        <KbAddressField InputId="discovery-address-sheet"
+                                        CssClass="kb-panel-head__address"
+                                        Label="@Culture["Discovery.Address"]"
+                                        Placeholder="@Culture["Discovery.AddressPlaceholder"]"
+                                        Query="@_addressQuery"
+                                        QueryChanged="OnAddressQueryChanged"
+                                        OnQueryInput="OnAddressInputAsync"
+                                        Suggestions="_suggestions"
+                                        Suggesting="_suggesting"
+                                        @bind-ShowSuggestions="_showSuggestions"
+                                        OriginSet="@(_origin is not null)"
+                                        Locating="_locating"
+                                        OnLocate="RequestLocationAsync"
+                                        OnClear="ClearOriginAsync"
+                                        OnSelect="SelectSuggestionAsync" />
+                    </section>
+                }
+
                 <section class="filter-section" data-filter-section="travel">
                     <h3>
                         <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Map)</span>
@@ -726,35 +751,38 @@
                     </div>
                 </section>
 
-                <section class="filter-section" data-filter-section="category">
-                    <h3>
-                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Users)</span>
-                        @Culture["Kb.Filter.WorkType"]
-                    </h3>
-                    <div class="filter-sheet__chips" role="group" aria-label="@Culture["Kb.Filter.WorkType"]">
-                        @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
-                        {
-                            var selected = _selectedCategoryIds.Contains(cat.Id);
-                            <button type="button"
-                                    class="filter-sheet__chip filter-sheet__chip--category lobsy-choice-tile lobsy-choice-tile--inline @(selected ? "is-selected" : null)"
-                                    data-testid="kb-sheet-category-@cat.Slug"
-                                    aria-pressed="@(selected ? "true" : "false")"
-                                    @onclick="() => ToggleCategoryChipAsync(cat.Id)">
-                                <span class="filter-sheet__dot" style="@KbCategoryColor.Style(cat.ColorHex)" aria-hidden="true"></span>
-                                <span>@cat.Name</span>
-                                @if (selected)
-                                {
-                                    <span class="filter-sheet__check" aria-hidden="true">✓</span>
-                                }
-                            </button>
-                        }
-                    </div>
-                </section>
+                @if (_categories.Any(c => c.ShowInMapFilter && c.IsActive))
+                {
+                    <section class="filter-section" data-filter-section="category">
+                        <h3>
+                            <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Users)</span>
+                            @Culture["Kb.Filter.Category"]
+                        </h3>
+                        <div class="filter-sheet__chips" role="group" aria-label="@Culture["Kb.Filter.Category"]">
+                            @foreach (var cat in _categories.Where(c => c.ShowInMapFilter && c.IsActive))
+                            {
+                                var selected = _selectedCategoryIds.Contains(cat.Id);
+                                <button type="button"
+                                        class="filter-sheet__chip filter-sheet__chip--category lobsy-choice-tile lobsy-choice-tile--inline @(selected ? "is-selected" : null)"
+                                        data-testid="kb-sheet-category-@cat.Slug"
+                                        aria-pressed="@(selected ? "true" : "false")"
+                                        @onclick="() => ToggleCategoryChipAsync(cat.Id)">
+                                    <span class="filter-sheet__dot" style="@KbCategoryColor.Style(cat.ColorHex)" aria-hidden="true"></span>
+                                    <span>@cat.Name</span>
+                                    @if (selected)
+                                    {
+                                        <span class="filter-sheet__check" aria-hidden="true">✓</span>
+                                    }
+                                </button>
+                            }
+                        </div>
+                    </section>
+                }
 
                 <section class="filter-section" data-filter-section="branch">
                     <h3>
                         <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Branches)</span>
-                        @Culture["Discovery.WorkType"]
+                        @Culture["Kb.Filter.WorkType"]
                     </h3>
                     <div class="branch-multiselect branch-multiselect--sheet @(_branchMenuOpen ? "is-open" : null)">
                         <button type="button"
@@ -778,7 +806,7 @@
                                  class="branch-multiselect__panel"
                                  role="listbox"
                                  aria-multiselectable="true"
-                                 aria-label="@Culture["Discovery.WorkType"]">
+                                 aria-label="@Culture["Kb.Filter.WorkType"]">
                                 @foreach (var label in _branchOptions)
                                 {
                                     <label class="filter-check branch-multiselect__option">
@@ -845,27 +873,31 @@
                     </select>
                 </section>
 
-                <section class="filter-section" data-filter-section="distance">
-                    <h3>
-                        <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Regions)</span>
-                        @Culture["Kb.Filter.Distance"]
-                        <span class="filter-section__value">@Culture.Format("Kb.Filter.DistanceValue", _radiusKm)</span>
-                    </h3>
-                    <div class="filter-sheet__slider">
-                        <input type="range"
-                               min="1"
-                               max="50"
-                               step="1"
-                               value="@_radiusKm"
-                               data-testid="kb-sheet-distance"
-                               aria-label="@Culture["Kb.Filter.Distance"]"
-                               @oninput="OnRadiusSliderInput"
-                               @onchange="OnRadiusChanged" />
-                        <div class="filter-sheet__ticks" aria-hidden="true">
-                            <span>1 km</span><span>25</span><span>50 km</span>
+                @if (_origin is null)
+                {
+                    <section class="filter-section" data-filter-section="distance">
+                        <h3>
+                            <span class="filter-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Regions)</span>
+                            @Culture["Kb.Filter.Distance"]
+                            <span class="filter-section__value">@Culture.Format("Kb.Filter.DistanceValue", _radiusKm)</span>
+                        </h3>
+                        <p class="filter-section__hint">@Culture["Kb.Filter.DistanceHint"]</p>
+                        <div class="filter-sheet__slider">
+                            <input type="range"
+                                   min="1"
+                                   max="50"
+                                   step="1"
+                                   value="@_radiusKm"
+                                   data-testid="kb-sheet-distance"
+                                   aria-label="@Culture["Kb.Filter.Distance"]"
+                                   @oninput="OnRadiusSliderInput"
+                                   @onchange="OnRadiusChanged" />
+                            <div class="filter-sheet__ticks" aria-hidden="true">
+                                <span>1 km</span><span>25</span><span>50 km</span>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                }
 
                 <section class="filter-section" data-filter-section="sort">
                     <h3>
@@ -1275,6 +1307,9 @@
     /// <summary>Full-width list rows (desktop list mode or mobile list).</summary>
     private bool _useListRows =>
         (_wideViewport && _desktopListMode) || (!_wideViewport && !showMapOnMobile);
+
+    /// <summary>Mobile list: address lives in the filter sheet; map mode keeps it in the toolbar.</summary>
+    private bool ShowSheetAddress => !_wideViewport && !showMapOnMobile;
 
     private IReadOnlyList<VacancyListItem> HighlightedVacanciesForUi
     {

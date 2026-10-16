@@ -527,6 +527,41 @@ html.pp-js .pub-theme .pp-toc__print {
   opacity: 0.8;
 }
 
+.pub-theme .pp-report-form {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.pub-theme .pp-report__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  min-height: 2.75rem;
+  padding: 0.35rem 0;
+  cursor: pointer;
+}
+
+.pub-theme .pp-report__field {
+  font-weight: 600;
+  margin-top: 0.75rem;
+}
+
+.pub-theme .pp-report__input,
+.pub-theme .pp-report__textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--pub-line, var(--border));
+  border-radius: var(--pub-radius-sm, 8px);
+  font: inherit;
+  background: var(--pub-card, var(--surface));
+}
+
+.pub-theme .pp-report__submit {
+  margin-top: 0.75rem;
+  justify-self: start;
+}
+
 /* —— /privacy/data Mijn gegevens (public-pages 07) —— */
 .pub-theme .pp-mydata__grid {
   display: grid;

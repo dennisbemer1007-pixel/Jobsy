@@ -579,6 +579,15 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Filter.WorkType",
             "Soort werk", "Type of work",
             "Rodzaj pracy", "Tip de muncă", "نوع العمل");
+        Add("Kb.Filter.Category",
+            "Sector op de kaart", "Sector on the map",
+            "Sektor na mapie", "Sector pe hartă", "القطاع على الخريطة");
+        Add("Kb.Filter.DistanceHint",
+            "Alleen nodig zonder adres: zoek op vogelvlucht-afstand tot je een vertrekpunt kiest.",
+            "Only without an address: filter by crow-flies distance until you pick a starting point.",
+            "Tylko bez adresu: filtruj po linii prostej, dopóki nie wybierzesz punktu startu.",
+            "Doar fără adresă: filtrează după distanță în linie dreaptă până alegi un punct de plecare.",
+            "فقط بدون عنوان: رشّح حسب المسافة حتى تختار نقطة انطلاق.");
         Add("Kb.Filter.Hours",
             "Uren", "Hours",
             "Godziny", "Ore", "ساعات");
