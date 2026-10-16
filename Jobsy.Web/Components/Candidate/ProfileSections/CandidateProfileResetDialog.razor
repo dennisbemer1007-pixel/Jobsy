@@ -3,6 +3,7 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Privacy
 @using Jobsy.Web.Hosting
+@using Jobsy.Web.Navigation
 @using Jobsy.Web.Localization
 @using Microsoft.AspNetCore.Antiforgery
 @inherits CultureAwareComponentBase
@@ -114,7 +115,7 @@
             var result = await response.Content.ReadFromJsonAsync<ResetCandidateProfileResponse>();
             _completed = true;
             await Task.Delay(400);
-            Navigation.NavigateTo(result?.RedirectPath ?? "/candidate/start", forceLoad: true);
+            Navigation.NavigateTo(result?.RedirectPath ?? OnboardingRoutes.ClassicStartPath, forceLoad: true);
         }
         catch (Exception)
         {

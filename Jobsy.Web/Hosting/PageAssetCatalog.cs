@@ -1,3 +1,4 @@
+using Jobsy.Web.Navigation;
 using Jobsy.Web.Seo;
 
 namespace Jobsy.Web.Hosting;
@@ -193,7 +194,7 @@ public static class PageAssetCatalog
     {
         var path = PageSeoCatalog.Normalize(rawPath);
         return path is "/gratis-dna"
-            || path.StartsWith("/candidate/start", StringComparison.Ordinal)
+            || path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal)
             || path.StartsWith("/account-maken", StringComparison.Ordinal);
     }
 

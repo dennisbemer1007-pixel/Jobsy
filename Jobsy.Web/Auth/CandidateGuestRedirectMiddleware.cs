@@ -1,3 +1,5 @@
+using Jobsy.Web.Navigation;
+
 namespace Jobsy.Web.Auth;
 
 /// <summary>
@@ -7,7 +9,7 @@ public sealed class CandidateGuestRedirectMiddleware(RequestDelegate next)
 {
     private static readonly HashSet<string> GuestOnlyPaths = new(StringComparer.OrdinalIgnoreCase)
     {
-        "/candidate/start",
+        OnboardingRoutes.ClassicStartPath,
         "/candidate/paspoort",
     };
 
