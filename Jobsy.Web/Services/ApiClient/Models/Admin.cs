@@ -248,6 +248,7 @@ public sealed class PlatformFeatureItem
     public bool CandidatePassportEnabled { get; set; } = true;
     public bool PassportPartnersEnabled { get; set; }
     public bool PassportPdfV2Enabled { get; set; }
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
     public bool TestsV2Enabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
     public bool WhatsAppRemindersEnabled { get; set; }
@@ -295,6 +296,7 @@ public sealed class PlatformFeaturePatch
     public bool? CandidatePassportEnabled { get; set; }
     public bool? PassportPartnersEnabled { get; set; }
     public bool? PassportPdfV2Enabled { get; set; }
+    public bool? PassportPdfDnaBlocksEnabled { get; set; }
     public bool? TestsV2Enabled { get; set; }
     public bool? PhoneVerificationEnabled { get; set; }
     public bool? WhatsAppRemindersEnabled { get; set; }
