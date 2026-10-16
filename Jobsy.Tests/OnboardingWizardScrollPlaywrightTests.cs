@@ -446,7 +446,7 @@ public sealed class OnboardingWizardScrollPlaywrightTests
             }
             """);
 
-        Assert.Equal(1, count);
+        Assert.True(count == 1, $"Step {step}: expected 1 visible mascot, got {count}");
     }
 
     private static async Task AssertMascotDoesNotOverlapContentAsync(IPage page, int step)
