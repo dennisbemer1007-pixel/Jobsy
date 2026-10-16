@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @using Jobsy.Core.Localization
+@using Jobsy.Core.Features
 @using Jobsy.Web.Features
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
@@ -7,6 +8,7 @@
 @inject CultureState Culture
 @inject IErrorChromeProvider ChromeProvider
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IEmployersSwitch EmployersSwitch
 @*
   Static SSR shell for 404 / 500 and the later status pages.
   Hard rule: no API or DB call, no interactive render mode, no component that needs either.
@@ -124,32 +126,16 @@
     private bool _showHeaderStart = true;
     private LandingVariant _variant = LandingVariant.On;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         var http = HttpContextAccessor.HttpContext;
         var path = http?.Request.Path.Value ?? "";
         _showHeaderStart = !path.StartsWith("/access-denied", StringComparison.OrdinalIgnoreCase)
                            && !path.StartsWith("/status/403", StringComparison.OrdinalIgnoreCase);
         _chrome = ChromeProvider.Build(http);
-        _variant = ResolveVariant(http);
+        _variant = await EmployersSwitch.VariantAsync();
         Culture.InitializeFromLanguage(_chrome.Language);
         ErrorResponse.ApplyHeaders(http);
     }
 
-    /// <summary>Config-only variant for error chrome (no employers switch / DB).</summary>
-    private static LandingVariant ResolveVariant(HttpContext? http)
-    {
-        var force = http?.RequestServices.GetService<IConfiguration>()?[LandingVariantResolver.ConfigKey];
-        if (string.Equals(force, "zw", StringComparison.OrdinalIgnoreCase))
-        {
-            return LandingVariant.Zw;
-        }
-
-        if (string.Equals(force, "on", StringComparison.OrdinalIgnoreCase))
-        {
-            return LandingVariant.On;
-        }
-
-        return LandingVariant.On;
-    }
 }

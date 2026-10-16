@@ -11,20 +11,22 @@ import path from 'node:path';
 const base = (process.env.BASE || process.env.AFTER_BASE || process.env.BEFORE_BASE || '').replace(/\/$/, '');
 const outRoot = process.env.OUT || '/cursor/stores/self/ux-cleanup/after';
 
+const variantQuery = process.env.LANDING_VARIANT === 'on' ? '?_variant=on' : '';
+
 const pages = [
-  ['westland', '/westland'],
-  ['lancering', '/lancering'],
+  ['westland', `/westland${variantQuery}`],
+  ['lancering', `/lancering${variantQuery}`],
   ['melden', '/melden?type=vacancy&id=00000000-0000-0000-0000-000000000001'],
   ['contact', '/contact'],
   ['info-onderzoek', '/info/onderzoek'],
   ['privacy', '/privacy'],
   ['login', '/login'],
   ['account-maken', '/account-maken'],
-  ['banenkaart', '/banenkaart'],
-  ['partner', '/partner'],
-  ['register', '/register'],
-  ['banenkaart-filter-drawer', '/banenkaart?filters=1'],
-  ['banenkaart-mobile-list', '/banenkaart'],
+  ['banenkaart', `/banenkaart${variantQuery}`],
+  ['partner', `/partner${variantQuery}`],
+  ['register', `/register${variantQuery}`],
+  ['banenkaart-filter-drawer', `/banenkaart${variantQuery}${variantQuery ? '&' : '?'}filters=1`],
+  ['banenkaart-mobile-list', `/banenkaart${variantQuery}`],
 ];
 
 const viewports = [
