@@ -75,6 +75,7 @@ public static class PassportPdfSectorBuilder
         }
 
         var cards = new List<PassportSectorCard>(ordered.Count);
+        var usedReasons = new HashSet<string>(StringComparer.Ordinal);
         for (var i = 0; i < ordered.Count; i++)
         {
             var id = ordered[i];
@@ -91,7 +92,7 @@ public static class PassportPdfSectorBuilder
                 Title: title,
                 RankSubtitle: rankSubtitle,
                 P1Teaser: Teaser(lang, id, facts),
-                WhyBullets: Why(lang, id, facts),
+                WhyBullets: Why(lang, id, facts, usedReasons),
                 ExampleRoles: Examples(lang, id, facts)));
         }
 
@@ -139,38 +140,98 @@ public static class PassportPdfSectorBuilder
         };
     }
 
-    private static IReadOnlyList<string> Why(string lang, string sectorId, PassportPdfFacts facts)
+    private static IReadOnlyList<string> Why(
+        string lang,
+        string sectorId,
+        PassportPdfFacts facts,
+        HashSet<string> usedReasons)
     {
         var lines = new List<string>(4);
-        var career = facts.Dna.FirstOrDefault(x => x.Key == PassportDnaLayer.Career);
-        if (career is { Done: true } && career.Words.Count > 0)
+
+        void TryAdd(string key, string line)
         {
-            lines.Add(PassportPdfStrings.F(lang, "Sector.Why.Career", string.Join(", ", career.Words.Take(2))));
+            if (lines.Count >= 4 || !usedReasons.Add(key))
+            {
+                return;
+            }
+
+            lines.Add(line);
         }
 
-        var competence = facts.Dna.FirstOrDefault(x => x.Key == PassportDnaLayer.Competence);
-        if (competence is { Done: true } && competence.Words.Count > 0)
+        switch (sectorId)
         {
-            lines.Add(PassportPdfStrings.F(lang, "Sector.Why.Competence", string.Join(" + ", competence.Words.Take(2))));
-        }
+            case "greenhouse":
+            {
+                var exp = ExperienceHint(facts, ["oogst", "tuin", "kas", "kweker", "teelt"]);
+                if (!string.IsNullOrWhiteSpace(exp))
+                {
+                    TryAdd("gh-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
+                }
 
-        var indoor = facts.WorkPreferences is not null
-            ? WorkPreferenceCatalogs.CanonicalIndoor(facts.WorkPreferences.Indoor)
-            : null;
-        if (indoor is "prefer" or "ok")
-        {
-            lines.Add(PassportPdfStrings.T(lang, "Sector.Why.Indoor"));
-        }
+                var role = facts.Roles?.FirstOrDefault(r =>
+                    MatchSector(r) == "greenhouse" || r.Contains("tuin", StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(role))
+                {
+                    TryAdd("gh-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                }
 
-        var exp = ExperienceHint(facts, sectorId switch
-        {
-            "greenhouse" => ["oogst", "tuin", "kas"],
-            "logistics" => ["orderpick", "magazijn"],
-            _ => []
-        });
-        if (!string.IsNullOrWhiteSpace(exp))
-        {
-            lines.Add(PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
+                var indoor = facts.WorkPreferences is not null
+                    ? WorkPreferenceCatalogs.CanonicalIndoor(facts.WorkPreferences.Indoor)
+                    : null;
+                if (indoor is "prefer" or "ok")
+                {
+                    TryAdd("gh-indoor", PassportPdfStrings.T(lang, "Sector.Why.Greenhouse.Indoor"));
+                }
+
+                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true);
+                break;
+            }
+            case "logistics":
+            {
+                var cert = PaperHint(facts, ["heftruck", "vca"]);
+                if (!string.IsNullOrWhiteSpace(cert))
+                {
+                    TryAdd("log-cert", PassportPdfStrings.F(lang, "Sector.Why.Certificate", cert));
+                }
+
+                var exp = ExperienceHint(facts, ["orderpick", "magazijn", "logistiek"]);
+                if (!string.IsNullOrWhiteSpace(exp))
+                {
+                    TryAdd("log-exp", PassportPdfStrings.F(lang, "Sector.Why.Experience", exp));
+                }
+
+                var role = RoleHint(facts, ["orderpick", "magazijn"]);
+                if (!string.IsNullOrWhiteSpace(role))
+                {
+                    TryAdd("log-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                }
+
+                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCareer: true);
+                break;
+            }
+            case "tech":
+            {
+                var role = facts.Roles?.FirstOrDefault(r =>
+                    MatchSector(r) == "tech" || r.Contains("productie", StringComparison.OrdinalIgnoreCase));
+                if (!string.IsNullOrWhiteSpace(role))
+                {
+                    TryAdd("tech-role", PassportPdfStrings.F(lang, "Sector.Why.RoleMatch", role.Trim()));
+                }
+
+                var physical = facts.WorkPreferences is not null
+                    ? WorkPreferenceCatalogs.CanonicalPhysicalWork(facts.WorkPreferences.PhysicalWork)
+                    : null;
+                if (physical is "lifting-15" or "heavy")
+                {
+                    TryAdd("tech-physical", PassportPdfStrings.T(lang, "Sector.Why.Tech.Physical"));
+                }
+
+                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCareer: true);
+                break;
+            }
+            default:
+                TryAddOnceDna(lang, facts, sectorId, usedReasons, lines, preferCompetence: true, preferCareer: true);
+                break;
         }
 
         if (lines.Count == 0)
@@ -179,6 +240,41 @@ public static class PassportPdfSectorBuilder
         }
 
         return lines.Take(4).ToArray();
+    }
+
+    private static void TryAddOnceDna(
+        string lang,
+        PassportPdfFacts facts,
+        string sectorId,
+        HashSet<string> usedReasons,
+        List<string> lines,
+        bool preferCompetence = false,
+        bool preferCareer = false)
+    {
+        if (lines.Count >= 4)
+        {
+            return;
+        }
+
+        var career = facts.Dna.FirstOrDefault(x => x.Key == PassportDnaLayer.Career);
+        var competence = facts.Dna.FirstOrDefault(x => x.Key == PassportDnaLayer.Competence);
+
+        if (preferCareer && career is { Done: true, Words.Count: > 0 })
+        {
+            var key = "dna-career-" + sectorId;
+            if (usedReasons.Add(key))
+            {
+                lines.Add(PassportPdfStrings.F(lang, "Sector.Why.Career", career.Words[0]));
+            }
+        }
+        else if (preferCompetence && competence is { Done: true, Words.Count: > 0 })
+        {
+            var key = "dna-comp-" + sectorId;
+            if (usedReasons.Add(key))
+            {
+                lines.Add(PassportPdfStrings.F(lang, "Sector.Why.Competence", competence.Words[0]));
+            }
+        }
     }
 
     private static string? Examples(string lang, string sectorId, PassportPdfFacts facts)

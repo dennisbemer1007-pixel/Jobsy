@@ -84,9 +84,9 @@ public static class PassportPdfModelBuilder
             facts.OwnWords,
             facts.ShowDnaBlocks);
         var showHeroAvatar = !singlePage;
-        var sparseNote = singlePage ? PassportPdfStrings.T(lang, "SparseFill") : null;
         var sparseTodo = singlePage ? SparseTodoLines(lang, facts, testsDone) : [];
-        var soughtLine = Sought(lang, facts);
+        var sparseIntro = singlePage ? PassportPdfStrings.T(lang, "SparseFill") : null;
+        var soughtParts = SoughtParts(lang, facts);
 
         return new PassportPdfModel(
             Language: lang,
@@ -127,7 +127,9 @@ public static class PassportPdfModelBuilder
             StrengthSource: strengths.Count == 0 || lastTest is null
                 ? null
                 : PassportPdfStrings.F(lang, "StrengthSource", lastTest.Value.ToLocalAmsterdam(culture)),
-            SoughtLine: soughtLine,
+            SoughtLine: soughtParts.RolesChip is null && soughtParts.ContractChip is null
+                ? null
+                : string.Join(" ", new[] { soughtParts.RolesChip, soughtParts.ContractChip }.Where(s => s is not null)),
             Experience: experience.Lines,
             ExperienceMore: experience.More,
             Certificates: certificates.Lines,
@@ -153,7 +155,7 @@ public static class PassportPdfModelBuilder
             GeneratedAtUtc: facts.GeneratedAtUtc,
             Story: story,
             HeroMeta: HeroMeta(lang, facts, showBadge, testsStatus),
-            Chips: Chips(lang, facts, hasAvailabilitySignal, soughtLine, singlePage),
+            Chips: Chips(lang, facts, hasAvailabilitySignal, soughtParts, singlePage),
             Traits: traits,
             HomeLines: home,
             ValueLines: valueLines,
@@ -179,7 +181,7 @@ public static class PassportPdfModelBuilder
             FirstName: firstName,
             SinglePageLayout: singlePage,
             ShowHeroAvatar: showHeroAvatar,
-            SparseCandidateNote: sparseNote,
+            SparseCandidateNote: sparseIntro,
             FooterOmissionLine: footerOmission,
             SparseTodoLines: sparseTodo);
     }
@@ -691,7 +693,9 @@ public static class PassportPdfModelBuilder
         return words;
     }
 
-    private static string? Sought(string lang, PassportPdfFacts facts)
+    private sealed record SoughtChipPair(string? RolesChip, string? ContractChip);
+
+    private static SoughtChipPair SoughtParts(string lang, PassportPdfFacts facts)
     {
         var roles = new List<string>();
         foreach (var role in facts.Roles ?? [])
@@ -702,7 +706,7 @@ public static class PassportPdfModelBuilder
                 continue;
             }
 
-            roles.Add(text.Length > 40 ? text[..40].TrimEnd() + "…" : text);
+            roles.Add(text);
             if (roles.Count == 3)
             {
                 break;
@@ -719,18 +723,16 @@ public static class PassportPdfModelBuilder
         }
 
         var rolePart = roles.Count == 0 ? null : string.Join(" · ", roles);
-        var contractPart = contracts.Count == 0 ? null : string.Join(" → ", contracts);
-        if (rolePart is not null && contractPart is not null)
+        var contractPart = contracts.Count switch
         {
-            return PassportPdfStrings.F(lang, "SoughtRolesAndContract", rolePart, contractPart);
-        }
+            0 => null,
+            1 => contracts[0],
+            _ => string.Join(" of ", contracts)
+        };
 
-        if (rolePart is not null)
-        {
-            return PassportPdfStrings.F(lang, "SoughtRolesOnly", rolePart);
-        }
-
-        return contractPart is null ? null : PassportPdfStrings.F(lang, "SoughtContractOnly", contractPart);
+        string? rolesChip = rolePart is null ? null : PassportPdfStrings.F(lang, "SoughtRolesOnly", rolePart);
+        string? contractChip = contractPart is null ? null : PassportPdfStrings.F(lang, "SoughtContractOnly", contractPart);
+        return new SoughtChipPair(rolesChip, contractChip);
     }
 
     private static (IReadOnlyList<PassportExperienceLine> Lines, int More) Experience(PassportPdfFacts facts)
@@ -1362,7 +1364,7 @@ public static class PassportPdfModelBuilder
         string lang,
         PassportPdfFacts facts,
         bool available,
-        string? soughtLine,
+        SoughtChipPair sought,
         bool singlePage)
     {
         var chips = new List<PassportChip>();
@@ -1376,20 +1378,22 @@ public static class PassportPdfModelBuilder
             chips.Add(new PassportChip(PassportPdfStrings.T(lang, "AvailableChip"), "available"));
         }
 
-        var role = CleanList(facts.Roles, 1).FirstOrDefault();
-        if (role is not null)
-        {
-            chips.Add(new PassportChip(Clip(role, 28)!, "role"));
-        }
-
         if (facts.OpenForWork)
         {
             chips.Add(new PassportChip(PassportPdfStrings.T(lang, "OpenForWork"), "open"));
         }
 
-        if (!singlePage && !string.IsNullOrWhiteSpace(soughtLine))
+        if (!singlePage)
         {
-            chips.Add(new PassportChip(Clip(soughtLine, 88)!, "seek"));
+            if (!string.IsNullOrWhiteSpace(sought.RolesChip))
+            {
+                chips.Add(new PassportChip(sought.RolesChip, "seek"));
+            }
+
+            if (!string.IsNullOrWhiteSpace(sought.ContractChip))
+            {
+                chips.Add(new PassportChip(sought.ContractChip, "seek"));
+            }
         }
 
         return chips;

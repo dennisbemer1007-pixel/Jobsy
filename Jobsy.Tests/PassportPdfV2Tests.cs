@@ -70,6 +70,9 @@ public class PassportPdfV2Tests
         Assert.Contains("marta@example.com", text, StringComparison.Ordinal);
         Assert.Contains("Gespreksinput", text, StringComparison.Ordinal);
         Assert.Contains("Zoekt:", text, StringComparison.Ordinal);
+        Assert.Contains("Contract:", text, StringComparison.Ordinal);
+        Assert.Contains("uitzend of vast", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("→", text, StringComparison.Ordinal);
         Assert.Contains("Magazijnmedewerker", text, StringComparison.Ordinal);
         Assert.Contains("Heftruck", text, StringComparison.Ordinal);
         Assert.DoesNotContain("%", text, StringComparison.Ordinal);
@@ -536,8 +539,8 @@ public class PassportPdfV2Tests
             },
             Employers:
             [
-                new CandidateEmployerHistoryDto("Kwekerij De Voorbeeldtuin", "Oogstmedewerker", 2, "Tomaten oogsten", "2024-03", null),
-                new CandidateEmployerHistoryDto("Logistiek Voorbeeld BV", "Magazijnmedewerker", 2, "Orderpicken", "2021-06", "2023-12")
+                new CandidateEmployerHistoryDto("Kwekerij De Voorbeeldtuin", "Oogstmedewerker", 2, "Tomaten oogsten\nKwaliteit controleren en doorzetten", "2024-03", null),
+                new CandidateEmployerHistoryDto("Logistiek Voorbeeld BV", "Magazijnmedewerker", 2, "Orderpicken\nHeftruck rijden binnen het magazijn", "2021-06", "2023-12")
             ],
             Educations: ["MBO 1 / Entree"],
             HomeAddress: "Voorbeeldstraat 1, 2671 AB Naaldwijk",
