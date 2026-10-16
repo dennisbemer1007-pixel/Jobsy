@@ -6,7 +6,9 @@ using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +57,7 @@ public interface IPupilPortalService
 
     Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
         CancellationToken cancellationToken = default);
 
     Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
@@ -83,6 +86,9 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IMemoryCache _cache;
     private readonly IPupilStoryRenderer _story;
     private readonly IPupilReportPdfService _pdf;
+    private readonly IPupilPassportPdfService _passportV2;
+    private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
+    private readonly IPlatformFeatureService _features;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
 
@@ -96,6 +102,9 @@ public sealed class PupilPortalService : IPupilPortalService
         IMemoryCache cache,
         IPupilStoryRenderer story,
         IPupilReportPdfService pdf,
+        IPupilPassportPdfService passportV2,
+        PupilPassportPdfModelBuilder passportModelBuilder,
+        IPlatformFeatureService features,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
     {
@@ -108,6 +117,9 @@ public sealed class PupilPortalService : IPupilPortalService
         _cache = cache;
         _story = story;
         _pdf = pdf;
+        _passportV2 = passportV2;
+        _passportModelBuilder = passportModelBuilder;
+        _features = features;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
     }
@@ -733,6 +745,7 @@ public sealed class PupilPortalService : IPupilPortalService
 
     public async Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
         CancellationToken cancellationToken = default)
     {
         var ctx = await ResolveSessionAsync(pupil, cancellationToken);
@@ -753,10 +766,41 @@ public sealed class PupilPortalService : IPupilPortalService
             .Select(s => s.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "";
         var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
-        var model = BuildPdfModel(code, schoolClass, schoolName, display);
-        var bytes = _pdf.Render(model);
-        var fileName = $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
+        displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
+        var features = await _features.GetAsync(cancellationToken);
+        byte[] bytes;
+        if (features.PupilPassportV2Enabled)
+        {
+            var passportModel = _passportModelBuilder.Build(
+                code, schoolClass, schoolName, display, displayNameOnPdf);
+            bytes = _passportV2.Render(passportModel);
+        }
+        else
+        {
+            var model = BuildPdfModel(code, schoolClass, schoolName, display);
+            bytes = _pdf.Render(model);
+        }
+
+        var fileName = features.PupilPassportV2Enabled
+            ? $"lobsy-dna-paspoort-{SanitizeFilePart(schoolClass.Name)}.pdf"
+            : $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
         return (bytes, fileName, null, 200);
+    }
+
+    private static string? SanitizeDisplayName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        var trimmed = name.Trim();
+        if (trimmed.Length > 48)
+        {
+            trimmed = trimmed[..48];
+        }
+
+        return trimmed;
     }
 
     private PupilReportPdfModel BuildPdfModel(

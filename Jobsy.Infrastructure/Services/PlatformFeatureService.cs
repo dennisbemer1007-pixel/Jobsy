@@ -154,6 +154,16 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.PassportPdfV2Enabled = pdfV2Enabled;
         }
 
+        if (update.PupilPassportV2Enabled is bool pupilPassportV2)
+        {
+            row.PupilPassportV2Enabled = pupilPassportV2;
+        }
+
+        if (update.StudentPassportEnabled is bool studentPassport)
+        {
+            row.StudentPassportEnabled = studentPassport;
+        }
+
         if (update.PhoneVerificationEnabled is bool phoneVerificationEnabled)
         {
             row.PhoneVerificationEnabled = phoneVerificationEnabled;
@@ -303,6 +313,26 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         return false;
     }
 
+    private bool ResolvePupilPassportV2Enabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:PupilPassportV2Enabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.PupilPassportV2Enabled ?? false;
+    }
+
+    private bool ResolveStudentPassportEnabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:StudentPassportEnabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.StudentPassportEnabled ?? false;
+    }
+
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
     {
         row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
@@ -409,6 +439,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MaintenanceNote,
             row?.PassportPartnersEnabled ?? false,
             row?.PassportPdfV2Enabled ?? false,
+            ResolvePupilPassportV2Enabled(row),
+            ResolveStudentPassportEnabled(row),
             row?.PhoneVerificationEnabled ?? false,
             row?.WhatsAppRemindersEnabled ?? false,
             row?.CompactTestPdfEnabled ?? false,

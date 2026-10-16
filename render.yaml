@@ -250,6 +250,10 @@ projects:
                 value: "true"
               - key: Seed__Enabled
                 value: "true"
+              - key: Jobsy__PupilPassportV2Enabled
+                value: "true"
+              - key: Jobsy__StudentPassportEnabled
+                value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true
               - key: JobsyAuth__LocalSessionSigningKey

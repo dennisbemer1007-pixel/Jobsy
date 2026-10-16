@@ -121,10 +121,10 @@ public sealed class PupilController : ControllerBase
 
     [HttpGet("~/leerling/pdf")]
     [Authorize(Policy = JobsyPolicies.PupilSession)]
-    public async Task<IActionResult> Pdf(CancellationToken cancellationToken)
+    public async Task<IActionResult> Pdf([FromQuery] string? naam, CancellationToken cancellationToken)
     {
         NoStore();
-        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, cancellationToken);
+        var (bytes, fileName, error, status) = await _portal.BuildPdfAsync(User, naam, cancellationToken);
         if (bytes is null)
         {
             return StatusCode(status, error);

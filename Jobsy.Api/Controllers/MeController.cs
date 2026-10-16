@@ -13,6 +13,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
 using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Security;
@@ -47,6 +48,7 @@ public partial class MeController : ControllerBase
     private readonly ITranslationService _translation;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly PassportPdfDownload _passportPdf;
+    private readonly IStudentPassportPdfService _studentPassportPdf;
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
     private readonly ICandidateInsightsQueue _insightsQueue;
@@ -66,6 +68,7 @@ public partial class MeController : ControllerBase
         ITranslationService translation,
         ILobsyCvPdfService lobsyCvPdf,
         PassportPdfDownload passportPdf,
+        IStudentPassportPdfService studentPassportPdf,
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
         ICandidateInsightsQueue insightsQueue,
@@ -83,6 +86,7 @@ public partial class MeController : ControllerBase
         _translation = translation;
         _lobsyCvPdf = lobsyCvPdf;
         _passportPdf = passportPdf;
+        _studentPassportPdf = studentPassportPdf;
         _cvText = cvText;
         _cvExtraction = cvExtraction;
         _insightsQueue = insightsQueue;
@@ -805,6 +809,16 @@ public partial class MeController : ControllerBase
         {
             try
             {
+                var prefsForStudent = ParsePreferences(user.PreferencesJson);
+                if (features.StudentPassportEnabled && StudentPassportRules.Qualifies(prefsForStudent))
+                {
+                    var student = await _studentPassportPdf.RenderForCandidateAsync(
+                        user,
+                        features.PhoneVerificationEnabled,
+                        cancellationToken);
+                    return File(student.Pdf, "application/pdf", student.FileName);
+                }
+
                 var passport = await _passportPdf.ForCandidateAsync(
                     user,
                     features.PhoneVerificationEnabled,
