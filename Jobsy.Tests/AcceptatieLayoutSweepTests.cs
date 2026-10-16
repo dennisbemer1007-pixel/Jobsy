@@ -123,13 +123,19 @@ public class AcceptatieLayoutSweepTests
     public void Service_worker_precache_matches_app_razor()
     {
         var app = Read("Jobsy.Web", "Components", "App.razor");
+        var catalog = Read("Jobsy.Web", "Hosting", "PageAssetCatalog.cs");
+        var core = Read("Jobsy.Web", "wwwroot", "js", "app-core.js");
         foreach (var name in new[] { "service-worker.js", "service-worker.published.js" })
         {
             var text = Read("Jobsy.Web", "wwwroot", name);
             foreach (Match match in Regex.Matches(text, """/(?:css|js)/[^"' ]+\?v=[^"' ]+"""))
             {
                 var url = match.Value.TrimStart('/');
-                Assert.Contains(url, app, StringComparison.Ordinal);
+                Assert.True(
+                    app.Contains(url, StringComparison.Ordinal)
+                    || catalog.Contains(url, StringComparison.Ordinal)
+                    || core.Contains(url, StringComparison.Ordinal),
+                    $"Precache {url} must be referenced from App.razor, PageAssetCatalog, or app-core.js.");
             }
         }
     }

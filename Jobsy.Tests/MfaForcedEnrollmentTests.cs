@@ -566,8 +566,9 @@ public class MfaWebSsrGuardTests
     {
         var root = FindRepoRoot();
         var app = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/App.razor"));
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
         Assert.Contains("AcceptsInteractiveRouting()", app, StringComparison.Ordinal);
-        Assert.Contains("account-mfa.css", app, StringComparison.Ordinal);
+        Assert.Contains("account-mfa.css", catalog, StringComparison.Ordinal);
 
         foreach (var file in Directory.GetFiles(
                      Path.Combine(root, "Jobsy.Web/Components/Pages/Account"), "Mfa*.razor"))
