@@ -20732,6 +20732,20 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
 }
 
+@media (max-width: 639px) {
+    /* Sticky test footers keep Volgende on the inline end; coach moves to inline start. */
+    .app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock {
+        inset-inline-end: auto;
+        inset-inline-start: max(12px, env(safe-area-inset-left, 0px));
+        align-items: flex-start;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock,
+    .app-shell:not(.has-bottom-nav):has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock {
+        bottom: calc(var(--sticky-footer-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 .lobsy-coach-dock--tip-above {
     flex-direction: column;
     align-items: flex-end;

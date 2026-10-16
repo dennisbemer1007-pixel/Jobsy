@@ -1937,6 +1937,9 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
 
     document.querySelectorAll("[data-sticky-footer]").forEach(observeEl);
     measure();
+    document.querySelectorAll("[data-lobsy-coach], .lobsy-coach-dock").forEach(function (dock) {
+      window.jobsyCoachDock.syncClearance(dock);
+    });
 
     if (!window.jobsyCoachDock._stickyMo) {
       window.jobsyCoachDock._stickyMo = new MutationObserver(function () {
