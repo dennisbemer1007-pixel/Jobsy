@@ -6,6 +6,11 @@ public interface IPassportPdfService
 {
     Task<byte[]> RenderAsync(PassportPdfModel model, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<byte[]>> RenderPageImagesAsync(
+        PassportPdfModel model,
+        int dpi,
+        CancellationToken cancellationToken = default);
+
     string BuildFileName(PassportPdfModel model);
 }
 

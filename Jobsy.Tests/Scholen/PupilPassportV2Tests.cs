@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Jobsy.Core.Contracts.Scholen;
 using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
 using Jobsy.Core.Passport;
 using Jobsy.Core.Scholen;
 using Jobsy.Core.Scholen.PupilPassport;
@@ -40,6 +41,21 @@ public class PupilPassportV2Tests
         Assert.Contains("Lobsy bewaart geen namen", PupilPassportCopy.Get("LeerlingPassport.Footer.G78"), StringComparison.Ordinal);
         Assert.Contains("Geen cijfer", model.FooterPrivacy, StringComparison.Ordinal);
         Assert.Equal("Noor", model.DisplayNameOnPdf);
+    }
+
+    [Fact]
+    public void Vo_side_job_availability_splits_days_and_hours()
+    {
+        var model = BuildVoModel(null);
+        Assert.Equal("Za + wo-middag", model.SideJobAvailabilityLine);
+        Assert.Equal(PupilPassportCopy.Get("LeerlingPassport.Vo.Info.SideJobHours"), model.SideJobInfoSubline);
+    }
+
+    [Fact]
+    public void Vo_full_model_carries_own_words()
+    {
+        var model = BuildVoModel("Sara Bakker");
+        Assert.Contains("zorg", model.OwnWords ?? "", StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -95,19 +111,19 @@ public class PupilPassportV2Tests
     [Fact]
     public void Student_yara_demo_renders_two_page_pdf()
     {
-        var svc = new StudentPassportPdfService(null!, null!, null!);
+        var svc = StudentPdfService();
         var pdf = svc.RenderDemoPdf(sparse: false);
-        Assert.True(pdf.Length > 3000);
+        Assert.True(pdf.Length > 8000);
         Assert.StartsWith("%PDF", Encoding.ASCII.GetString(pdf.AsSpan(0, 4)));
     }
 
     [Fact]
-    public void Writes_demo_artifacts_to_v2_store()
+    public void Writes_demo_artifacts_to_v3_store()
     {
-        var outDir = "/cursor/stores/self/leerlingpaspoort/v2";
+        var outDir = "/cursor/stores/self/leerlingpaspoort/v3";
         Directory.CreateDirectory(outDir);
         var pupilSvc = new PupilPassportPdfService();
-        var studentSvc = new StudentPassportPdfService(null!, null!, null!);
+        var studentSvc = StudentPdfService();
 
         File.WriteAllBytes(Path.Combine(outDir, "noor-groep8.pdf"), pupilSvc.Render(BuildGroep78Model("Noor")));
         File.WriteAllBytes(Path.Combine(outDir, "groep8-sparse.pdf"), pupilSvc.Render(BuildGroep78Model(null)));
@@ -241,6 +257,9 @@ public class PupilPassportV2Tests
             [],
             null);
 
+    private static StudentPassportPdfService StudentPdfService()
+        => new(null!, new PassportPdfService(new FakeCompanySettings()), null!);
+
     private static string RepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
@@ -255,5 +274,19 @@ public class PupilPassportV2Tests
         }
 
         throw new InvalidOperationException("Jobsy.sln not found");
+    }
+
+    private sealed class FakeCompanySettings : IPlatformCompanySettingsService
+    {
+        public Task<PlatformCompanySnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new PlatformCompanySnapshot(
+                "Lobsy", "Test", null, null, null, null, null, null, null, null, null, null));
+
+        public Task<PlatformCompanySnapshot> UpdateAsync(PlatformCompanyUpdate update, CancellationToken cancellationToken = default)
+            => GetAsync(cancellationToken);
+
+        public byte[] GetBrandLogoPng() => [];
+
+        public byte[] GetBrandWatermarkPng() => [];
     }
 }

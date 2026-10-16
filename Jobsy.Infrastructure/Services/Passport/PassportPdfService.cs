@@ -79,6 +79,33 @@ public sealed class PassportPdfService : IPassportPdfService
         return Task.FromResult(bytes);
     }
 
+    public Task<IReadOnlyList<byte[]>> RenderPageImagesAsync(
+        PassportPdfModel model,
+        int dpi,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        cancellationToken.ThrowIfCancellationRequested();
+        var lang = model.Language;
+        var images = Document.Create(container =>
+        {
+            if (model.SinglePageLayout)
+            {
+                container.Page(page => Compose(page, model, lang, page2: false, singlePage: true));
+            }
+            else
+            {
+                container.Page(page => Compose(page, model, lang, page2: false, singlePage: false));
+                container.Page(page => Compose(page, model, lang, page2: true, singlePage: false));
+            }
+        }).GenerateImages(new ImageGenerationSettings
+        {
+            RasterDpi = dpi,
+            ImageFormat = ImageFormat.Png
+        });
+        return Task.FromResult((IReadOnlyList<byte[]>)images);
+    }
+
     private static bool IsRtl(string lang) => string.Equals(lang, "ar", StringComparison.OrdinalIgnoreCase);
 
     private static void Compose(PageDescriptor page, PassportPdfModel model, string lang, bool page2, bool singlePage)

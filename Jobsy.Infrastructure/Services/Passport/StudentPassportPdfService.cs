@@ -4,9 +4,10 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Localization;
 using Jobsy.Core.Passport;
+
 namespace Jobsy.Infrastructure.Services.Passport;
 
-/// <summary>Student/stagiair DNA-paspoort (2-page). Reuses passport v2 renderer; top vacancies from live matching.</summary>
+/// <summary>Student/stagiair DNA-paspoort (2-page v3 layout). Top vacancies from live matching when available.</summary>
 public sealed class StudentPassportPdfService : IStudentPassportPdfService
 {
     private static readonly JsonSerializerOptions PreferenceJson = new() { PropertyNameCaseInsensitive = true };
@@ -52,16 +53,23 @@ public sealed class StudentPassportPdfService : IStudentPassportPdfService
             JobFits = jobFits.Count > 0 ? jobFits : baseModel.JobFits
         };
 
-        var studentModel = StudentPassportPdfModelMapper.FromPassport(model);
-        var pdf = StudentPassportPdfRenderer.RenderPdf(studentModel);
+        var pdf = await _pdf.RenderAsync(model, cancellationToken);
         return (pdf, _pdf.BuildFileName(model));
     }
 
     public byte[] RenderDemoPdf(bool sparse = false)
-        => StudentPassportPdfRenderer.RenderPdf(StudentPassportDemoSeed.Yara(sparse));
+    {
+        var model = PassportPdfModelBuilder.Build(StudentPassportDemoSeed.YaraFacts(sparse));
+        return _pdf.RenderAsync(model).GetAwaiter().GetResult();
+    }
 
     public byte[] RenderDemoPagePng(int pageNumber, int dpi, bool sparse = false)
-        => StudentPassportPdfRenderer.RenderPagePng(StudentPassportDemoSeed.Yara(sparse), pageNumber, dpi);
+    {
+        var model = PassportPdfModelBuilder.Build(StudentPassportDemoSeed.YaraFacts(sparse));
+        var pages = _pdf.RenderPageImagesAsync(model, dpi).GetAwaiter().GetResult();
+        var index = Math.Clamp(pageNumber, 1, pages.Count) - 1;
+        return pages[index];
+    }
 
     private static CandidatePreferencesDto ParsePreferences(string? json)
     {

@@ -46,7 +46,8 @@ internal static class PupilPassportIcons
         };
 
         _ = sizePt;
-        return $"""{SvgOpen.Replace("currentColor", colorHex)}{body}{SvgClose}""";
+        var svg = $"{SvgOpen}{body}{SvgClose}";
+        return svg.Replace("currentColor", colorHex, StringComparison.Ordinal);
     }
 
     internal static string RoutePathSvg(string strokeHex)

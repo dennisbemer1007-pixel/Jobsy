@@ -61,6 +61,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         IReadOnlyList<string>? favSubjects = null;
         IReadOnlyList<string>? learningGoals = null;
         string? sideJobLine = null;
+        string? sideSub = null;
         string? travelLine = null;
         string? ownWords = null;
         string? profileLine = null;
@@ -74,7 +75,7 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
             }
 
             profileLine = ProfileLabel(progress?.VoProfileKey);
-            sideJobLine = SideJobAvailabilityLabel(progress?.VoSideJobAvailabilityJson);
+            (sideJobLine, sideSub) = SideJobAvailabilityParts(progress?.VoSideJobAvailabilityJson);
             travelLine = TravelLabel(progress?.VoTravelModeKey);
             ownWords = string.IsNullOrWhiteSpace(progress?.VoOwnWords) ? null : progress!.VoOwnWords!.Trim();
             learningGoals = ParseTagList(progress?.VoLearningGoalsJson);
@@ -90,7 +91,6 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
 
         string? levelSub = null;
         string? favSub = null;
-        string? sideSub = null;
         string? travelSub = null;
         if (variant == PupilPassportVariant.Vo)
         {
@@ -105,11 +105,6 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
                     System.Globalization.CultureInfo.InvariantCulture,
                     PupilPassportCopy.Get("LeerlingPassport.Vo.Info.SubjectsAlso"),
                     favSubjects[2]);
-            }
-
-            if (!string.IsNullOrWhiteSpace(sideJobLine))
-            {
-                sideSub = PupilPassportCopy.Get("LeerlingPassport.Vo.Info.SideJobHours");
             }
 
             if (!string.IsNullOrWhiteSpace(travelLine))
@@ -261,22 +256,28 @@ public sealed class PupilPassportPdfModelBuilder(IPupilStoryRenderer story)
         _ => string.IsNullOrWhiteSpace(key) ? null : key
     };
 
-    private static string? SideJobAvailabilityLabel(string? json)
+    private static (string? main, string? sub) SideJobAvailabilityParts(string? json)
     {
         var keys = ParseTagList(json);
         if (keys.Count == 0)
         {
-            return null;
+            return (null, null);
         }
 
-        return string.Join(" · ", keys.Select(k => k switch
+        static string DayLabel(string k) => k switch
         {
             "za" => "Za",
             "zo" => "Zo",
             "wo-middag" => "wo-middag",
-            "max-8" => "max. 8 uur per week",
             _ => k
-        }));
+        };
+
+        var days = keys.Where(k => !string.Equals(k, "max-8", StringComparison.Ordinal)).Select(DayLabel).ToList();
+        var main = days.Count == 0 ? null : string.Join(" + ", days);
+        var sub = keys.Any(k => string.Equals(k, "max-8", StringComparison.Ordinal))
+            ? PupilPassportCopy.Get("LeerlingPassport.Vo.Info.SideJobHours")
+            : null;
+        return (main, sub);
     }
 
     private static string SubjectLabel(string key) => key switch
