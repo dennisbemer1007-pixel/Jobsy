@@ -61,6 +61,8 @@ public sealed class BanenkaartFilterladeScreenshotTests
         await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
         await DismissStartAsync(page);
         await WaitForMapReadyAsync(page);
+        await AssertMobileMapFramingAsync(page);
+        await AssertMobileSearchChromeAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "mobile-390-closed-logged-out.png") });
         await page.Locator(".kb-filter-bar [data-testid=kb-filters-button]").ClickAsync();
         await page.WaitForSelectorAsync("[data-testid=kb-filter-sheet]", new() { Timeout = 15_000 });
@@ -115,13 +117,17 @@ public sealed class BanenkaartFilterladeScreenshotTests
             async () => {
               const map = window.jobMap;
               if (!map) return;
-              const pinCount = () => (map.__testGetPinCount && map.__testGetPinCount()) || 0;
-              if (pinCount() > 0) return;
-              if (typeof map.setOrigin === 'function') {
+              const m = map.__testGetMap && map.__testGetMap();
+              const needsRegion = !m || typeof m.getZoom !== 'function' || m.getZoom() < 9.5;
+              if (needsRegion && typeof map.setOrigin === 'function') {
                 map.setOrigin(52.011, 4.357, { maxMinutes: 30, transport: 'Fiets', radiusKm: 20 });
               }
-              if (typeof map.reloadPins === 'function') {
+              if (needsRegion && typeof map.reloadPins === 'function') {
                 await map.reloadPins('/api/vacancies/pins?transport=Fiets&maxMinutes=30&originLat=52.011&originLng=4.357&radiusKm=20');
+              }
+              const live = map.__testGetMap && map.__testGetMap();
+              if (live && typeof live.getZoom === 'function' && live.getZoom() < 9.5 && typeof live.jumpTo === 'function') {
+                live.jumpTo({ center: [4.357, 52.011], zoom: 11, animate: false });
               }
             }
             """);
@@ -160,7 +166,35 @@ public sealed class BanenkaartFilterladeScreenshotTests
             null,
             new() { Timeout = 45_000 });
 
-        await page.WaitForTimeoutAsync(800);
+        await page.WaitForTimeoutAsync(600);
+    }
+
+    private static async Task AssertMobileSearchChromeAsync(IPage page)
+    {
+        var search = page.Locator("#discovery-keyword-mobile");
+        await search.WaitForAsync(new() { Timeout = 15_000 });
+        var paddingLeft = await search.EvaluateAsync<string>("el => getComputedStyle(el).paddingLeft");
+        Assert.True(double.TryParse(paddingLeft.TrimEnd("px"), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var pl) && pl >= 32,
+            "Mobile search needs left padding for the icon.");
+        var bg = await search.EvaluateAsync<string>("el => getComputedStyle(el).backgroundImage");
+        Assert.Contains("svg", bg, StringComparison.OrdinalIgnoreCase);
+        var matchInSearchRow = page.Locator("[data-testid=kb-panel-head-mobile] .kb-panel-head__search-row .kb-match-button");
+        await Assertions.Expect(matchInSearchRow).ToHaveCountAsync(0);
+        var matchInSummary = page.Locator("[data-testid=kb-panel-head-mobile] .kb-filter-bar__summary [data-testid=kb-match-button]");
+        await Assertions.Expect(matchInSummary).ToHaveCountAsync(1);
+    }
+
+    private static async Task AssertMobileMapFramingAsync(IPage page)
+    {
+        var zoom = await page.EvaluateAsync<double?>(
+            """
+            () => {
+              const map = window.jobMap && window.jobMap.__testGetMap ? window.jobMap.__testGetMap() : null;
+              return map && typeof map.getZoom === 'function' ? map.getZoom() : null;
+            }
+            """);
+        Assert.NotNull(zoom);
+        Assert.True(zoom >= 9.5, $"Expected regional map zoom, got {zoom}.");
     }
 
     private static async Task EnsureDesktopOriginAsync(IPage page)
