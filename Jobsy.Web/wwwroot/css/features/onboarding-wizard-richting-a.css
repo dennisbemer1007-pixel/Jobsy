@@ -170,13 +170,16 @@
     color: var(--brand);
     font-size: 0.72rem;
     font-weight: 700;
+    text-transform: none !important;
   }
 
   .ob-wizard--richting-a .ob-wizard__mascot-anchor {
-    position: fixed;
+    position: fixed !important;
     z-index: 43;
-    inset-inline-end: max(20px, env(safe-area-inset-right, 0px));
-    inset-inline-start: auto;
+    right: max(20px, env(safe-area-inset-right, 0px)) !important;
+    left: auto !important;
+    inset-inline-end: max(20px, env(safe-area-inset-right, 0px)) !important;
+    inset-inline-start: auto !important;
     bottom: calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 6px);
     pointer-events: none;
   }
@@ -208,12 +211,18 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 1rem 1rem 0.35rem;
     box-shadow: var(--shadow-lg);
     margin-bottom: 0.35rem;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
   }
 
   .ob-wizard--richting-a .passport-privacy-promise {
@@ -328,11 +337,20 @@
     justify-content: center;
   }
 
-  .ob-wizard--richting-a .ob-wizard__transport .lobsy-choice-grid--wrap {
+  .ob-wizard--richting-a .ob-wizard__travel-times.lobsy-choice-grid.ob-wizard__transport.lobsy-choice-grid--wrap {
     display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    flex-wrap: nowrap !important;
     gap: 0.4rem;
     width: 100%;
+    min-width: 0;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__travel-times.lobsy-choice-grid--wrap > .lobsy-choice-tile {
+    width: 100% !important;
+    max-width: none !important;
+    flex: none !important;
+    justify-self: stretch;
   }
 
   .ob-wizard--richting-a .ob-wizard__card .ob-wizard__check {
@@ -358,13 +376,19 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__dream-search {
+    align-self: stretch;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     margin-bottom: 0.65rem;
+    box-sizing: border-box;
   }
 
   .ob-wizard--richting-a .ob-wizard__dream-search > input {
     display: block;
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    inline-size: 100% !important;
     box-sizing: border-box;
     min-height: 48px !important;
     font-size: 16px !important;

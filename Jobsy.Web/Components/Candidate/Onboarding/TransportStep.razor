@@ -34,7 +34,7 @@ else
 </fieldset>
 <fieldset>
     <legend>@Culture["Onboarding.MaxTravel"] <strong>@Draft.MaxTravel @Culture["Onboarding.Minutes"]</strong></legend>
-    <ChoiceTileGrid Class="ob-wizard__transport" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.MaxTravel"]">
+    <ChoiceTileGrid Class="ob-wizard__transport ob-wizard__travel-times" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.MaxTravel"]">
         @foreach (var minutes in TravelChoices)
         {
             var selected = Draft.MaxTravel == minutes;
