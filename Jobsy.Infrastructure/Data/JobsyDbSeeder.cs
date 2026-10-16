@@ -1,3 +1,4 @@
+using Jobsy.Infrastructure.Data.Migrations;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -8,6 +9,25 @@ namespace Jobsy.Infrastructure.Data;
 
 public static class JobsyDbSeeder
 {
+    /// <summary>
+    /// Ensures <see cref="PlatformFeatureSettings.PassportPdfDnaBlocksEnabled"/> exists before the API
+    /// serves feature-gated public reads (banenkaart pins, partner catalog). Idempotent on Postgres.
+    /// </summary>
+    public static async Task EnsurePassportPdfDnaBlocksColumnAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(PlatformFeatureSchemaIdempotentSql.EnsurePassportPdfDnaBlocksEnabled);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Passport PDF DNA blocks column ensure failed; migrate may repair.");
+        }
+    }
+
     public static async Task SeedAsync(IServiceProvider services)
     {
         await MigrateAsync(services);
@@ -16,6 +36,8 @@ public static class JobsyDbSeeder
 
     public static async Task MigrateAsync(IServiceProvider services)
     {
+        await EnsurePassportPdfDnaBlocksColumnAsync(services);
+
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
