@@ -8,10 +8,8 @@ public partial class AddPassportPdfDnaBlocksEnabled : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.Sql(
-            """
-            ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "PassportPdfDnaBlocksEnabled" boolean NOT NULL DEFAULT true;
-            """);
+        // Idempotent: acceptatie may serve traffic before background migrate completes (#692 outage).
+        migrationBuilder.Sql(PlatformFeatureSchemaIdempotentSql.EnsurePassportPdfDnaBlocksEnabled);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)

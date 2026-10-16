@@ -4,7 +4,6 @@ namespace Jobsy.Infrastructure.Data.Migrations;
 internal static class PupilPassportV2SchemaIdempotentSql
 {
     internal const string EnsureColumns = """
-        ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "PassportPdfDnaBlocksEnabled" boolean NOT NULL DEFAULT true;
         ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "PupilPassportV2Enabled" boolean NOT NULL DEFAULT false;
         ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "StudentPassportEnabled" boolean NOT NULL DEFAULT false;
         ALTER TABLE "PupilProgress" ADD COLUMN IF NOT EXISTS "VoFavoriteSubjectsJson" text;
