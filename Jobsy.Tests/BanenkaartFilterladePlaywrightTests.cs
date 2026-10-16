@@ -156,6 +156,125 @@ public sealed class BanenkaartFilterladePlaywrightTests
         Assert.True(failures.Count == 0, string.Join(Environment.NewLine, failures));
     }
 
+    [Theory]
+    [InlineData(1440, 900, false)]
+    [InlineData(390, 844, true)]
+    public async Task Map_carousel_legend_and_zoom_attrib_do_not_overlap(int width, int height, bool mobile)
+    {
+        var baseUrl = BaseUrl();
+        if (baseUrl is null || !await IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        await using var browser = await LaunchAsync();
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            HasTouch = mobile,
+            IsMobile = mobile,
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(baseUrl + "/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
+        await DismissStartPromptAsync(page);
+        await WaitForBanenkaartMapChromeAsync(page);
+
+        var carouselJson = await page.EvaluateAsync<string>(CarouselLegendOverlapScript);
+        using (var doc = System.Text.Json.JsonDocument.Parse(carouselJson))
+        {
+            var root = doc.RootElement;
+            if (root.TryGetProperty("layout", out var layout) && layout.GetArrayLength() > 0)
+            {
+                Assert.Fail($"{width}x{height} carousel must end before category legend: {layout}");
+            }
+
+            if (root.TryGetProperty("overlaps", out var overlaps) && overlaps.GetArrayLength() > 0)
+            {
+                Assert.Fail($"{width}x{height} visible carousel card vs category legend: {overlaps}");
+            }
+        }
+
+        if (mobile)
+        {
+            await page.WaitForSelectorAsync(".job-map .maplibregl-ctrl-zoom-in", new() { Timeout = 90_000 });
+            var zoomJson = await page.EvaluateAsync<string>(ZoomAttribOverlapScript);
+            using var zoomDoc = System.Text.Json.JsonDocument.Parse(zoomJson);
+            var zoomRoot = zoomDoc.RootElement;
+            if (zoomRoot.TryGetProperty("overlaps", out var zoomOverlaps) && zoomOverlaps.GetArrayLength() > 0)
+            {
+                Assert.Fail($"{width}x{height} zoom vs attribution: {zoomOverlaps}");
+            }
+
+            if (zoomRoot.TryGetProperty("gapY", out var gapY) && gapY.TryGetDouble(out var gy))
+            {
+                Assert.True(gy >= -2, $"{width}x{height} zoom +/− should be adjacent (gapY={gy}).");
+            }
+        }
+    }
+
+    private const string CarouselLegendOverlapScript = """
+        () => {
+          const gap = 2;
+          const carousel = document.querySelector('.map-pane__top-chrome .highlight-carousel--map');
+          const toggle = document.querySelector('.map-pane__top-chrome .map-legend__toggle');
+          if (!carousel || !toggle) {
+            return JSON.stringify({ error: 'missing carousel or legend toggle' });
+          }
+          const slot = carousel.getBoundingClientRect();
+          const t = toggle.getBoundingClientRect();
+          const layout = [];
+          if (slot.right > t.left - gap) {
+            layout.push({ kind: 'carousel-vs-toggle', carouselRight: slot.right, toggleLeft: t.left });
+          }
+          const cards = [...document.querySelectorAll('.map-pane__top-chrome .highlight-carousel__card')];
+          const overlaps = [];
+          for (const card of cards) {
+            const c = card.getBoundingClientRect();
+            const inSlotX = Math.min(c.right, slot.right) - Math.max(c.left, slot.left);
+            const inSlotY = Math.min(c.bottom, slot.bottom) - Math.max(c.top, slot.top);
+            if (inSlotX <= 10 || inSlotY <= 10) continue;
+            const xOverlap = Math.min(t.right, c.right, slot.right) - Math.max(t.left, c.left, slot.left);
+            const yOverlap = Math.min(t.bottom, c.bottom, slot.bottom) - Math.max(t.top, c.top, slot.top);
+            if (xOverlap > gap && yOverlap > gap) {
+              overlaps.push({ card: card.textContent?.slice(0, 40), xOverlap, yOverlap });
+            }
+          }
+          return JSON.stringify({ overlaps, layout });
+        }
+        """;
+
+    private const string ZoomAttribOverlapScript = """
+        () => {
+          const gap = 2;
+          const zoomIn = document.querySelector('.job-map .maplibregl-ctrl-zoom-in');
+          const zoomOut = document.querySelector('.job-map .maplibregl-ctrl-zoom-out');
+          const attrib = document.querySelector('.job-map .maplibregl-ctrl-attrib');
+          if (!zoomIn || !zoomOut || !attrib) {
+            return JSON.stringify({ error: 'missing zoom or attribution' });
+          }
+          const a = zoomIn.getBoundingClientRect();
+          const b = zoomOut.getBoundingClientRect();
+          const i = attrib.getBoundingClientRect();
+          const overlaps = [];
+          const pairs = [[zoomIn, attrib, 'zoom-in', 'attrib'], [zoomOut, attrib, 'zoom-out', 'attrib']];
+          for (const [el1, el2, n1, n2] of pairs) {
+            const r1 = el1.getBoundingClientRect();
+            const r2 = el2.getBoundingClientRect();
+            const xOverlap = Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left);
+            const yOverlap = Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top);
+            if (xOverlap > gap && yOverlap > gap) {
+              overlaps.push({ a: n1, b: n2, xOverlap, yOverlap });
+            }
+          }
+          const gapY = b.top - a.bottom;
+          return JSON.stringify({ overlaps, gapY });
+        }
+        """;
+
     private const string OverlapScript = """
         () => {
           const root = document.querySelector('[data-testid=kb-panel-head], [data-testid=kb-panel-head-mobile]');
@@ -196,6 +315,22 @@ public sealed class BanenkaartFilterladePlaywrightTests
         {
             await later.ClickAsync();
         }
+    }
+
+    private static async Task WaitForBanenkaartMapChromeAsync(IPage page)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const toggle = document.querySelector('.map-pane__top-chrome .map-legend__toggle');
+              const card = document.querySelector('.map-pane__top-chrome .highlight-carousel__card');
+              if (!toggle || !card) return false;
+              const r = card.getBoundingClientRect();
+              return r.width > 10 && r.height > 10;
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
     }
 
     private static string? BaseUrl()

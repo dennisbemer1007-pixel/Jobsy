@@ -461,13 +461,51 @@
     <section class="map-pane" aria-label="@Culture["Page.JobMapTitle"]">
         @if (RendererInfo.IsInteractive && _mapPainted && (_vacancies.Count > 0 || ShowTopMatchTile))
         {
-            <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
-                                      ActiveId="_hoveredId"
-                                      ModifierClass="highlight-carousel--map"
-                                      FormatTravel="FormatCarouselTravel"
-                                      OnHover="OnHover"
-                                      OnSelect="OnCarouselSelect"
-                                      LeadingItem="@(ShowTopMatchTile ? TopMatchLeadingFragment : null)" />
+            <div class="map-pane__top-chrome">
+                <HighlightVacancyCarousel Vacancies="HighlightedVacanciesForUi"
+                                          ActiveId="_hoveredId"
+                                          ModifierClass="highlight-carousel--map"
+                                          FormatTravel="FormatCarouselTravel"
+                                          OnHover="OnHover"
+                                          OnSelect="OnCarouselSelect"
+                                          LeadingItem="@(ShowTopMatchTile ? TopMatchLeadingFragment : null)" />
+                @if (_categories.Any(c => c.ShowInLegend && c.IsActive))
+                {
+                    <div class="map-legend @(_legendOpen ? "is-open" : null)">
+                        <button type="button"
+                                class="map-legend__toggle"
+                                aria-expanded="@(_legendOpen ? "true" : "false")"
+                                aria-controls="map-legend-panel"
+                                title="@(_legendOpen ? Culture["Kb.Legend.Hide"] : Culture["Kb.Legend.Title"])"
+                                @onclick="ToggleLegend"
+                                @onclick:stopPropagation="true"
+                                @onpointerdown:stopPropagation="true">
+                            <span class="map-legend__toggle-dots" aria-hidden="true">
+                                @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive).Take(4))
+                                {
+                                    <i style="@KbCategoryColor.Style(cat.ColorHex)"></i>
+                                }
+                            </span>
+                            <span class="visually-hidden">@(_legendOpen ? Culture["Kb.Legend.Hide"] : Culture["Kb.Legend.Show"])</span>
+                        </button>
+                        <aside id="map-legend-panel"
+                               class="map-legend__panel"
+                               hidden="@(!_legendOpen)"
+                               aria-hidden="@(!_legendOpen ? "true" : "false")"
+                               aria-label="@Culture["Kb.Legend.CategoriesAria"]">
+                            <ul class="map-legend__list">
+                                @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive))
+                                {
+                                    <li class="map-legend__item">
+                                        <span class="map-legend__swatch" style="@KbCategoryColor.Style(cat.ColorHex)" aria-hidden="true"></span>
+                                        <span>@cat.Name</span>
+                                    </li>
+                                }
+                            </ul>
+                        </aside>
+                    </div>
+                }
+            </div>
         }
         <MatchDeckDialog Deck="_matchDeck"
                          IsOpen="_matchDialogOpen"
@@ -522,39 +560,6 @@
                         <p class="kb-travel-legend__sub">@Culture["Kb.Legend.TravelApproxHint"]</p>
                     }
                 </aside>
-                <div class="map-legend @(_legendOpen ? "is-open" : null)">
-                    <button type="button"
-                            class="map-legend__toggle"
-                            aria-expanded="@(_legendOpen ? "true" : "false")"
-                            aria-controls="map-legend-panel"
-                            title="@(_legendOpen ? Culture["Kb.Legend.Hide"] : Culture["Kb.Legend.Title"])"
-                            @onclick="ToggleLegend"
-                            @onclick:stopPropagation="true"
-                            @onpointerdown:stopPropagation="true">
-                        <span class="map-legend__toggle-dots" aria-hidden="true">
-                            @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive).Take(4))
-                            {
-                                <i style="@KbCategoryColor.Style(cat.ColorHex)"></i>
-                            }
-                        </span>
-                        <span class="visually-hidden">@(_legendOpen ? Culture["Kb.Legend.Hide"] : Culture["Kb.Legend.Show"])</span>
-                    </button>
-                    <aside id="map-legend-panel"
-                           class="map-legend__panel"
-                           hidden="@(!_legendOpen)"
-                           aria-hidden="@(!_legendOpen ? "true" : "false")"
-                           aria-label="@Culture["Kb.Legend.CategoriesAria"]">
-                        <ul class="map-legend__list">
-                            @foreach (var cat in _categories.Where(c => c.ShowInLegend && c.IsActive))
-                            {
-                                <li class="map-legend__item">
-                                    <span class="map-legend__swatch" style="@KbCategoryColor.Style(cat.ColorHex)" aria-hidden="true"></span>
-                                    <span>@cat.Name</span>
-                                </li>
-                            }
-                        </ul>
-                    </aside>
-                </div>
             }
         </div>
     </section>

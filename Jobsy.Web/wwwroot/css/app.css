@@ -3650,13 +3650,40 @@ html[dir="rtl"] .account-menu__panel {
     height: 100%;
 }
 
-.map-pane > .highlight-carousel--map {
+.map-pane__top-chrome {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     z-index: 3;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.map-pane__top-chrome > .highlight-carousel--map,
+.map-pane__top-chrome > .map-legend {
     pointer-events: auto;
+}
+
+.map-pane__top-chrome .highlight-carousel--map {
+    position: static;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding-inline-end: 0;
+    overflow: hidden;
+}
+
+.map-pane__top-chrome .map-legend {
+    position: static;
+    flex: 0 0 auto;
+    align-self: center;
+    margin: 0.55rem 0.55rem 0 0;
+    z-index: 1;
+    max-width: min(12rem, 40vw);
 }
 
 .job-map-placeholder {
@@ -3774,10 +3801,15 @@ html[dir="rtl"] .account-menu__panel {
     right: 10px;
 }
 
-.jobsy-discovery .map-legend {
+.jobsy-discovery .map-stage .map-legend {
     top: 0.75rem;
     right: 0.75rem;
     z-index: 6;
+}
+
+.jobsy-discovery .map-pane__top-chrome .map-legend {
+    top: auto;
+    right: auto;
 }
 
 .app-shell:has(.jobsy-discovery) .feedback-widget__tab--edge {
@@ -3849,13 +3881,17 @@ html[dir="rtl"] .account-menu__panel {
         right: 8px;
     }
 
-    .jobsy-discovery.show-map .map-legend {
+    .jobsy-discovery.show-map .map-stage .map-legend {
         top: 0.55rem;
         right: 0.55rem;
     }
 
-    .jobsy-discovery.show-map .map-legend {
+    .jobsy-discovery.show-map .map-stage .map-legend {
         top: calc(0.55rem + var(--jobsy-map-mobile-clearance-top, 0px));
+    }
+
+    .jobsy-discovery.show-map .map-pane__top-chrome .map-legend {
+        margin-top: calc(0.55rem + var(--jobsy-map-mobile-clearance-top, 0px));
     }
 }
 
@@ -13791,6 +13827,15 @@ html.cookie-consent-known .cookie-consent {
         top: 0.4rem;
         right: 0.4rem;
     }
+}
+
+.map-pane__top-chrome .map-legend {
+    position: static;
+    inset: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
 }
 
 /* Geschikt voor 65+ label */
