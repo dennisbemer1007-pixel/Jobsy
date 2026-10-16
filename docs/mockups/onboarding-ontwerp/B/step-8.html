@@ -10,45 +10,25 @@
   <div class="layout">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:0.5rem">
-        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="32" height="32" />
+        <img class="logo" src="../shared/assets/lobsy-64.webp" alt="" width="32" height="32" />
         <span>Lobsy</span>
       </div>
       <span style="font-size:0.8125rem;color:var(--muted)">8 / 10</span>
     </header>
     <div class="shell">
-      <aside class="sidebar">
-        <p class="sidebar__progress">Stap 8 · nog ± 2 min</p>
-        <h1 class="sidebar__title">Jouw manier van werken</h1>
-        <p class="sidebar__why">Deze korte vragen zijn geen examen. Ze helpen ons werk te laten zien waar jij je op je gemak voelt — warm, eerlijk, zonder labeltjes.</p>
-        <ul class="sidebar__steps">
-          <li class="is-done"><span class="dot"></span>Over jou</li>
-          <li class="is-done"><span class="dot"></span>Achtergrond</li>
-          <li class="is-done"><span class="dot"></span>Droom</li>
-          <li class="is-done"><span class="dot"></span>Wie ben jij</li>
-          <li class="is-active"><span class="dot"></span>Jouw Kompas</li>
-        </ul>
-        <div class="sidebar__mascot">
-          <img class="mascot-corner" src="../../../Jobsy.Web/wwwroot/images/brand/mascot-64.webp" alt="" width="40" height="40" />
-          <span>Eerste gevoel is genoeg — geen nadenken tot je hoofd pijn doet.</span>
-        </div>
-      </aside>
       <div class="main-col">
-        <aside class="context-panel">
-          <h2>Waarom vragen we dit?</h2>
-          <p>Employers zoeken ook cultuurfit. Met jouw antwoorden tonen we vacatures die beter bij je passen dan alleen op functietitel.</p>
-        </aside>
         <main class="main page-pad">
-          <p class="step-line">Stap 8 van 10 · Mini-test</p>
-          <h2 class="hero-title">Hoe je werkt</h2>
-          <p class="hero-lead">Wat voelt voor jou het meest waar — op een schaal van 1 tot 5?</p>
+          <div class="phase-chips">
+            <span class="phase-chip is-done">✓ Hoe je werkt</span>
+            <span class="phase-chip is-active">Leuk</span>
+            <span class="phase-chip">Sfeer</span>
+            <span class="phase-chip">Waarden</span>
+          </div>
+          <h2 class="hero-title">Wat vind je leuk?</h2>
+          <p class="hero-lead">Hoe goed past deze zin bij jou? Er zijn geen foute antwoorden.</p>
           <div class="content-surface">
-            <div class="phase-chips">
-              <span class="phase-chip is-active">Hoe je werkt</span>
-              <span class="phase-chip">Leuk</span>
-              <span class="phase-chip">Sfeer</span>
-              <span class="phase-chip">Waarden</span>
-            </div>
-            <p class="likert-q">Ik blijf het beste overzicht houden als taken en verwachtingen duidelijk zijn.</p>
+            <p class="question-counter">Vraag 1 van 5</p>
+            <p class="likert-q">Ik werk graag met machines, gereedschap of buiten in de praktijk.</p>
             <div class="likert-row">
               <button type="button" class="likert-btn">1</button>
               <button type="button" class="likert-btn">2</button>
@@ -56,7 +36,7 @@
               <button type="button" class="likert-btn is-selected">4</button>
               <button type="button" class="likert-btn">5</button>
             </div>
-            <p class="likert-hint">1 = helemaal niet · 5 = helemaal wel</p>
+            <p class="likert-hint">Past niet · Past heel goed</p>
           </div>
         </main>
         <footer class="sticky-bar">

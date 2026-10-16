@@ -10,7 +10,7 @@
   <div class="layout">
     <header class="topbar">
       <div class="topbar__brand">
-        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="36" height="36" />
+        <img class="logo" src="../shared/assets/lobsy-64.webp" alt="" width="36" height="36" />
         Lobsy
       </div>
       <p class="topbar__meta">Stap 1 · ± 6 min</p>
@@ -21,23 +21,23 @@
           <div class="progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="10"><span class="progress__fill" style="width:10%"></span></div>
           <p class="step-badge">Stap 1 van 10</p>
           <h1 class="hero-title">Even kennismaken</h1>
-          <p class="hero-lead">Zodat werkgevers je kunnen bereiken en we reistijd realistisch kunnen inschatten.</p>
+          <p class="hero-lead">Klopt dit? We hebben je naam overgenomen van je account.</p>
           <div class="card">
             <div class="field-row">
               <label class="field"><span>Voornaam</span><input type="text" value="Sam" /></label>
               <label class="field"><span>Achternaam</span><input type="text" value="de Vries" /></label>
             </div>
-            <label class="field"><span>Woonadres</span></label>
+            <label class="field"><span>Jouw adres</span></label>
             <div class="address-row">
-              <label class="field" style="margin:0"><span class="visually-hidden">Adres</span><input type="text" value="Molen" autocomplete="street-address" /></label>
-              <button type="button" class="btn-gps" aria-label="Gebruik mijn locatie">📍 GPS</button>
+              <label class="field" style="margin:0"><span class="visually-hidden">Adres</span><input type="text" value="Molen" placeholder="Straat, postcode of plaats…" /></label>
+              <button type="button" class="btn-gps">GPS</button>
             </div>
             <ul class="suggest-list" role="listbox" aria-label="Adresuggesties">
               <li><button type="button" class="is-highlight">Molenstraat 12, 2671 Naaldwijk</button></li>
               <li><button type="button">Molenweg 4, 2675 KB Honselersdijk</button></li>
               <li><button type="button">Molenvliet 88, 3144 AB Maassluis</button></li>
             </ul>
-            <label class="field"><span>Telefoon</span><input type="tel" value="06 12345678" /></label>
+            <label class="field"><span>Geboortedatum</span><input class="date-nl" type="text" value="15-04-1998" /></label>
           </div>
         </main>
         <footer class="sticky-bar">

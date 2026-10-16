@@ -10,7 +10,7 @@
   <div class="layout">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:0.5rem">
-        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="32" height="32" />
+        <img class="logo" src="../shared/assets/lobsy-64.webp" alt="" width="32" height="32" />
         <span>Lobsy</span>
       </div>
       <span style="font-size:0.8125rem;color:var(--muted)">7 / 10</span>
@@ -19,27 +19,29 @@
       <div class="main-col">
         <aside class="context-panel">
           <h2>Waarom vragen we dit?</h2>
-          <p>AVG-verplicht: we leggen uit wat we met je testantwoorden doen voordat je verder gaat.</p>
+          <p>AVG: we leggen uit wat we met je testantwoorden doen voordat je verder gaat.</p>
         </aside>
         <main class="main page-pad">
           <p class="step-line">Stap 7 van 10</p>
           <h2 class="hero-title">Nu even over jou</h2>
-          <p class="hero-lead">Eerlijk en transparant — jij houdt de regie over je gegevens.</p>
+          <p class="hero-lead">4 korte tests met een paar vragen per test. Er zijn geen foute antwoorden: kies wat het eerst in je opkomt.</p>
           <div class="content-surface">
-            <div class="consent-panel">
-              <p><strong>Toestemming voor analyse en matches</strong></p>
-              <ul>
-                <li>Testantwoorden voor vacaturematches op Lobsy.</li>
-                <li>Geen doorverkoop aan derden.</li>
-                <li>Intrekken kan altijd in je account.</li>
-              </ul>
-              <button type="button" class="btn-primary">Akkoord — ga verder</button>
-            </div>
+            <ul class="consent-tests">
+              <li><strong>Hoe je werkt</strong><small>Bijvoorbeeld samenwerken</small></li>
+              <li><strong>Leuk</strong><small>Beroepen die bij je passen</small></li>
+              <li><strong>Sfeer</strong><small>Waar je je thuis voelt</small></li>
+              <li><strong>Waarden</strong><small>Wat je belangrijk vindt</small></li>
+            </ul>
+            <label class="consent-check">
+              <input type="checkbox" checked />
+              <span>Ik geef toestemming om mijn antwoorden te analyseren voor mijn Kompas.</span>
+            </label>
+            <p style="margin:0;font-size:0.8125rem;color:var(--muted)">🔒 Werkgevers zien je antwoorden niet.</p>
           </div>
         </main>
-        <footer class="sticky-bar">
+        <footer class="sticky-bar sticky-bar--consent">
           <button type="button" class="btn-ghost">Terug</button>
-          <button type="button" class="btn-primary" disabled style="opacity:0.45">Volgende</button>
+          <button type="button" class="btn-primary">Start de eerste test</button>
         </footer>
       </div>
     </div>

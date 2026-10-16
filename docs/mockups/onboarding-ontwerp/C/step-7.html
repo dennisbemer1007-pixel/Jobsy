@@ -9,24 +9,24 @@
 <body>
   <div class="layout">
     <header class="topbar">
-      <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="Lobsy" width="40" height="40" />
+      <img class="logo" src="../shared/assets/lobsy-64.webp" alt="Lobsy" width="40" height="40" />
       <span class="topbar__step">7/10</span>
     </header>
     <div class="shell">
       <div class="main-col">
         <main class="main page-pad">
           <p class="eyebrow">Nu even over jou</p>
-          <h1 class="hero-title">Mag Lobsy je antwoorden gebruiken voor matches?</h1>
-          <p class="hero-lead">Kort en helder — daarna volgen de mini-tests.</p>
-          <div class="consent-panel">
-            <p>We gebruiken je testantwoorden alleen om passende vacatures te tonen. Geen spam, geen verkoop aan derden.</p>
-            <button type="button" class="btn-primary">Ja, dat is oké</button>
-          </div>
-          <p style="font-size:0.8125rem;color:var(--muted)"><a href="#" style="color:var(--soft-accent-ink);font-weight:600">Privacybeleid</a></p>
+          <h1 class="hero-title">Toestemming voor je Kompas</h1>
+          <p class="hero-lead">4 korte tests met een paar vragen per test. Er zijn geen foute antwoorden.</p>
+          <label class="consent-check">
+            <input type="checkbox" checked />
+            <span>Ik geef toestemming om mijn antwoorden te analyseren voor mijn Kompas.</span>
+          </label>
+          <p style="font-size:0.8125rem;color:var(--muted)">🔒 Werkgevers zien je antwoorden niet.</p>
         </main>
-        <footer class="sticky-bar">
+        <footer class="sticky-bar sticky-bar--consent">
           <button type="button" class="btn-ghost">Terug</button>
-          <button type="button" class="btn-primary" disabled style="opacity:0.45">Volgende</button>
+          <button type="button" class="btn-primary">Start de eerste test</button>
         </footer>
       </div>
     </div>

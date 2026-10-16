@@ -4,7 +4,7 @@ Statische HTML/CSS mockups voor kandidaat-onboarding (`/candidate/start`), geen 
 
 ## Bekijken
 
-Open lokaal bijv. `A/step-1.html` in de browser (paden naar logo/mascot zijn relatief naar `wwwroot`).
+Open lokaal bijv. `A/step-1.html` in de browser. Logo en mascot staan in `shared/assets/` (kopie uit `Jobsy.Web/wwwroot/images/brand/`).
 
 ## Screenshots genereren
 

@@ -1,4 +1,5 @@
 @import url("../shared/base.css");
+@import url("../shared/forms.css");
 
 /* Direction C — één vraag per scherm, grote type, zacht accent, veel witruimte */
 
@@ -231,6 +232,11 @@
 .phase-pill.is-active {
     background: var(--gold-soft);
     color: var(--gold-ink, #5c4a0f);
+}
+
+.phase-pill.is-done {
+    background: var(--soft-accent);
+    color: var(--soft-accent-ink);
 }
 
 .likert-q {

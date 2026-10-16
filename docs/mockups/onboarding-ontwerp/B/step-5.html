@@ -10,7 +10,7 @@
   <div class="layout">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:0.5rem">
-        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="32" height="32" />
+        <img class="logo" src="../shared/assets/lobsy-64.webp" alt="" width="32" height="32" />
         <span>Lobsy</span>
       </div>
       <span style="font-size:0.8125rem;color:var(--muted)">5 / 10</span>
@@ -19,20 +19,24 @@
       <div class="main-col">
         <aside class="context-panel">
           <h2>Waarom vragen we dit?</h2>
-          <p>Sommige vacatures vragen een bepaald niveau. Zo tonen we geen functies waar je niet voor in aanmerking komt.</p>
+          <p>Sommige vacatures vragen een bepaald opleidingsniveau.</p>
         </aside>
         <main class="main page-pad">
-          <p class="step-line">Stap 5 van 10</p>
-          <h2 class="hero-title">Opleiding</h2>
-          <p class="hero-lead">Welk diploma heb je als laatste behaald?</p>
+          <p class="step-line">Stap 5 van 10 · Optioneel</p>
+          <h2 class="hero-title">Wat is je opleiding?</h2>
+          <p class="hero-lead">Kies je hoogste afgeronde opleiding. Geen diploma? Kies Geen.</p>
           <div class="content-surface">
+            <p style="margin:0 0 0.65rem;font-weight:600;font-size:0.875rem">Kies je opleidingsniveau</p>
             <div class="chip-grid">
+              <button type="button" class="chip">Geen</button>
+              <button type="button" class="chip">Basisschool</button>
               <button type="button" class="chip">VMBO</button>
-              <button type="button" class="chip is-selected">MBO 3</button>
-              <button type="button" class="chip">MBO 4</button>
+              <button type="button" class="chip">HAVO</button>
+              <button type="button" class="chip">VWO</button>
+              <button type="button" class="chip is-selected">MBO</button>
               <button type="button" class="chip">HBO</button>
+              <button type="button" class="chip">WO</button>
             </div>
-            <label class="field"><span>Richting (optioneel)</span><input type="text" value="Groen &amp; tuin" /></label>
           </div>
         </main>
         <footer class="sticky-bar">

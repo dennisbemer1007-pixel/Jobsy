@@ -10,7 +10,7 @@
   <div class="layout">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:0.5rem">
-        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="32" height="32" />
+        <img class="logo" src="../shared/assets/lobsy-64.webp" alt="" width="32" height="32" />
         <span>Lobsy</span>
       </div>
       <span style="font-size:0.8125rem;color:var(--muted)">1 / 10</span>
@@ -23,12 +23,11 @@
         </aside>
         <main class="main page-pad">
           <p class="step-line">Stap 1 van 10</p>
-          <h2 class="hero-title">Waar woon je?</h2>
-          <p class="hero-lead">Typ je straat of postcode; we vullen de rest aan.</p>
+          <h2 class="hero-title">Even kennismaken</h2>
           <div class="content-surface">
-            <label class="field"><span>Woonadres</span></label>
+            <label class="field"><span>Jouw adres</span></label>
             <div class="address-row">
-              <label class="field" style="margin:0"><span class="visually-hidden">Adres</span><input type="text" value="Molen" /></label>
+              <label class="field" style="margin:0"><input type="text" value="Molen" placeholder="Straat, postcode of plaats…" /></label>
               <button type="button" class="btn-gps">GPS</button>
             </div>
             <ul class="suggest-list" role="listbox">
@@ -36,7 +35,6 @@
               <li><button type="button">Molenweg 4, 2675 KB Honselersdijk</button></li>
               <li><button type="button">Molenvliet 88, 3144 AB Maassluis</button></li>
             </ul>
-            <label class="field"><span>Telefoon</span><input type="tel" value="06 12345678" /></label>
           </div>
         </main>
         <footer class="sticky-bar">

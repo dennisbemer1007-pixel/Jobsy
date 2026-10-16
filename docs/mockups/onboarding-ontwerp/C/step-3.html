@@ -9,41 +9,30 @@
 <body>
   <div class="layout">
     <header class="topbar">
-      <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="Lobsy" width="40" height="40" />
+      <img class="logo" src="../shared/assets/lobsy-64.webp" alt="Lobsy" width="40" height="40" />
       <span class="topbar__step">3/10</span>
     </header>
     <div class="shell">
-      <nav class="rail" aria-hidden="true">
-        <span class="rail__dot is-done"></span>
-        <span class="rail__dot is-done"></span>
-        <span class="rail__dot is-active"></span>
-        <span class="rail__dot"></span>
-        <span class="rail__dot"></span>
-      </nav>
-      <nav class="desktop-groups" aria-label="Stappen">
-        <ol>
-          <li>Over jou</li>
-          <li class="is-active">Achtergrond</li>
-          <li>Droom</li>
-          <li>Wie ben jij</li>
-          <li>Jouw Kompas</li>
-        </ol>
-      </nav>
       <div class="main-col">
         <main class="main page-pad">
           <p class="eyebrow">Hoe kom je op je werk?</p>
-          <h1 class="hero-title">Hoe reis je meestal?</h1>
-          <p class="hero-lead">Kies één optie. Staat jouw manier er niet bij? Kies Anders.</p>
+          <h1 class="hero-title">Vervoer</h1>
+          <p class="hero-lead">Dan laten we alleen banen zien die goed te bereiken zijn.</p>
           <div class="transport-list">
             <button type="button" class="transport-option is-selected">Fiets</button>
             <button type="button" class="transport-option">E-bike</button>
             <button type="button" class="transport-option">Auto</button>
             <button type="button" class="transport-option">OV</button>
             <button type="button" class="transport-option">Lopend</button>
-            <button type="button" class="transport-option">Anders <span>Scooter, carpool…</span></button>
           </div>
-          <label class="field"><span>Maximaal reizen (minuten)</span><input type="number" value="30" /></label>
-          <div class="mascot-float"><img class="mascot-corner" src="../../../Jobsy.Web/wwwroot/images/brand/mascot-64.webp" alt="" width="40" height="40" /></div>
+          <p style="margin:1rem 0 0.35rem;font-weight:600">Maximaal reizen · 30 min</p>
+          <div class="travel-time-row">
+            <button type="button" class="travel-time-tile">10</button>
+            <button type="button" class="travel-time-tile">20</button>
+            <button type="button" class="travel-time-tile is-selected">30</button>
+            <button type="button" class="travel-time-tile">45</button>
+          </div>
+          <button type="button" class="link-anders">Anders</button>
         </main>
         <footer class="sticky-bar">
           <button type="button" class="btn-ghost">Terug</button>
