@@ -139,7 +139,8 @@ public class Ontdekkingsreis08RoutesNavTests
             if (rel is "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"
                 or "Jobsy.Web/Navigation/OnboardingRoutes.cs"
                 or "Jobsy.Web/Auth/AuthRedirects.cs"
-                or "Jobsy.Web/Navigation/RoleNavCatalog.cs")
+                or "Jobsy.Web/Navigation/RoleNavCatalog.cs"
+                or "Jobsy.Web/Auth/CandidateGuestRedirectMiddleware.cs")
             {
                 continue;
             }

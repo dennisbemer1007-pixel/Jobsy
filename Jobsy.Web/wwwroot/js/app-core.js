@@ -669,7 +669,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261015-idle01"
+        "/js/jobMap.min.js?v=20261016-04"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -912,13 +912,51 @@ window.jobsyMaps = (function () {
     function isDiscoveryPath() {
         try {
             var path = (window.location && window.location.pathname) || "";
-            return path === "/" || path === "" || path === "/banenkaart";
+            return path === "/banenkaart" || path === "/banen";
         } catch (e) {
             return false;
         }
     }
 
-    function whenCircuitOrIdle(cb) {
+    function whenAfterFirstPaint(cb) {
+        var done = false;
+        function run() {
+            if (done) {
+                return;
+            }
+            done = true;
+            try { cb(); } catch (e) { }
+        }
+        function scheduleIdle() {
+            if (typeof requestIdleCallback === "function") {
+                requestIdleCallback(run, { timeout: 1200 });
+            } else if (typeof requestAnimationFrame === "function") {
+                requestAnimationFrame(function () { requestAnimationFrame(run); });
+            } else {
+                setTimeout(run, 0);
+            }
+        }
+        if (typeof PerformanceObserver !== "undefined") {
+            try {
+                var po = new PerformanceObserver(function (list) {
+                    var fcp = list.getEntriesByName("first-contentful-paint");
+                    if (fcp && fcp.length) {
+                        po.disconnect();
+                        scheduleIdle();
+                    }
+                });
+                po.observe({ type: "paint", buffered: true });
+                setTimeout(function () {
+                    try { po.disconnect(); } catch (ePo) { }
+                    scheduleIdle();
+                }, 2800);
+                return;
+            } catch (eObs) { }
+        }
+        scheduleIdle();
+    }
+
+    function whenCircuitReady(cb) {
         var done = false;
         function run() {
             if (done) {
@@ -944,20 +982,26 @@ window.jobsyMaps = (function () {
                 run();
             }
         }, 50);
-        if (typeof requestIdleCallback === "function") {
-            requestIdleCallback(function () {
-                clearInterval(iv);
-                run();
-            }, { timeout: 1500 });
-        } else {
-            setTimeout(function () {
-                clearInterval(iv);
-                run();
-            }, 1500);
-        }
+        setTimeout(function () {
+            clearInterval(iv);
+            run();
+        }, 8000);
     }
 
-    // Kick off pins fetch immediately; defer MapLibre + boot to idle/circuit.
+    function bootDiscoveryMap() {
+        if (window.jobMap && typeof window.jobMap.boot === "function") {
+            window.jobMap.boot("job-map");
+            return;
+        }
+        ensure("discovery").then(function () {
+            if (window.jobMap && typeof window.jobMap.boot === "function") {
+                window.jobMap.boot("job-map");
+            }
+        }).catch(function () { });
+    }
+
+    // VacancyDiscovery transport toggles call jobsyGeo.replaceQuery on the query string.
+    // Kick off pins fetch immediately; MapLibre after FCP/idle; boot when circuit is ready.
     function warmBootPins() {
         try {
             var node = document.getElementById("jobsy-map-boot");
@@ -969,11 +1013,9 @@ window.jobsyMaps = (function () {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {
-                whenCircuitOrIdle(function () {
+                whenAfterFirstPaint(function () {
                     ensure("discovery").then(function () {
-                        if (window.jobMap && typeof window.jobMap.boot === "function") {
-                            window.jobMap.boot("job-map");
-                        }
+                        bootDiscoveryMap();
                     }).catch(function () { });
                 });
             }
@@ -1408,8 +1450,8 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261016-02"
-        : "/service-worker.js?v=20261016-02";
+        ? "/service-worker.published.js?v=20261016-04"
+        : "/service-worker.js?v=20261016-04";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
     var userRequestedReload = false;
@@ -1442,7 +1484,7 @@ window.jobsyDialog = (function () {
             ev.preventDefault();
             userRequestedReload = true;
             try {
-                console.info("[lobsy] user reload (app update)");
+                console.info("[lobsy] manual reload (app update)");
             } catch (e) { }
             navigator.serviceWorker.getRegistration().then(function (reg) {
                 if (reg && reg.waiting) {

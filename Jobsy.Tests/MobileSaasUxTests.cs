@@ -191,8 +191,8 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("application-stepper", css);
         Assert.DoesNotContain("application-card__actions", css);
 
-        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/applications.css");
+        var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
+        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/applications.css");
 
         var appCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.DoesNotContain(".apps-tabs.admin-sublinks", appCss);

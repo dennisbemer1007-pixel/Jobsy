@@ -571,6 +571,7 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
+app.UseCandidateGuestRedirect();
 app.UseRateLimiter();
 app.UseLegacyAuthRouteRedirects();
 app.UseLoginProtection();

@@ -78,8 +78,8 @@ public static class UatScriptRunner
         if (Contains(blob, "cookie", "Alleen noodzakelijk", "Accepteer cookies"))
         {
             var cookie = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/CookieConsentBanner.razor"));
-            Assert.Contains("Alleen noodzakelijk", cookie, StringComparison.Ordinal);
-            Assert.Contains("Accepteer cookies", cookie, StringComparison.Ordinal);
+            Assert.Contains("CookieConsent.Necessary", cookie, StringComparison.Ordinal);
+            Assert.Contains("CookieConsent.Accept", cookie, StringComparison.Ordinal);
             Assert.Contains("href=\"/privacy\"", cookie, StringComparison.Ordinal);
         }
 
