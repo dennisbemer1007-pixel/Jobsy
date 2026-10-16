@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding B — Stap 1 suggesties</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <img class="logo" src="../../../Jobsy.Web/wwwroot/images/brand/lobsy-64.webp" alt="" width="32" height="32" />
+        <span>Lobsy</span>
+      </div>
+      <span style="font-size:0.8125rem;color:var(--muted)">1 / 10</span>
+    </header>
+    <div class="shell">
+      <div class="main-col">
+        <aside class="context-panel">
+          <h2>Waarom vragen we dit?</h2>
+          <p>Kies je adres uit de lijst — zo klopt de reistijd naar vacatures in Westland.</p>
+        </aside>
+        <main class="main page-pad">
+          <p class="step-line">Stap 1 van 10</p>
+          <h2 class="hero-title">Waar woon je?</h2>
+          <p class="hero-lead">Typ je straat of postcode; we vullen de rest aan.</p>
+          <div class="content-surface">
+            <label class="field"><span>Woonadres</span></label>
+            <div class="address-row">
+              <label class="field" style="margin:0"><span class="visually-hidden">Adres</span><input type="text" value="Molen" /></label>
+              <button type="button" class="btn-gps">GPS</button>
+            </div>
+            <ul class="suggest-list" role="listbox">
+              <li><button type="button" class="is-highlight">Molenstraat 12, 2671 Naaldwijk</button></li>
+              <li><button type="button">Molenweg 4, 2675 KB Honselersdijk</button></li>
+              <li><button type="button">Molenvliet 88, 3144 AB Maassluis</button></li>
+            </ul>
+            <label class="field"><span>Telefoon</span><input type="tel" value="06 12345678" /></label>
+          </div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -6,17 +6,23 @@ import fs from "fs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const directions = ["A", "B", "C"];
 const steps = [
-  { id: "step-1", file: "step-1.html" },
-  { id: "step-3", file: "step-3.html" },
-  { id: "step-8", file: "step-8.html" },
+  { id: "step-1", file: "step-1.html", label: "Stap 1 — Even kennismaken" },
+  { id: "step-1-suggestions", file: "step-1-suggestions.html", label: "Stap 1 — Adresuggesties" },
+  { id: "step-3", file: "step-3.html", label: "Stap 3 — Vervoer" },
+  { id: "step-5", file: "step-5.html", label: "Stap 5 — Opleiding" },
+  { id: "step-7", file: "step-7.html", label: "Stap 7 — Toestemming" },
+  { id: "step-8", file: "step-8.html", label: "Stap 8 — Mini-test" },
 ];
 
-const viewports = [
-  { suffix: "mobile-390x844", width: 390, height: 844 },
-  { suffix: "desktop-1280x800", width: 1280, height: 800 },
-];
+const MOBILE = { suffix: "mobile-390x844", width: 390, height: 844 };
 
 function writeOverview(dir, letter) {
+  const shots = steps
+    .map(
+      (s) => `<div class="shot"><h2>${s.label}</h2><img src="${s.id}-${MOBILE.suffix}.png" alt="" /></div>`
+    )
+    .join("\n    ");
+
   const html = `<!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -31,32 +37,21 @@ function writeOverview(dir, letter) {
       background: #e8e4de;
       color: #122033;
     }
-    h1 {
-      margin: 0 0 6px;
-      font-size: 1.35rem;
-      font-weight: 700;
-    }
-    p.lead {
-      margin: 0 0 24px;
-      color: #5a6a7d;
-      font-size: 0.9375rem;
-    }
-    .row {
-      display: flex;
-      flex-wrap: wrap;
+    h1 { margin: 0 0 6px; font-size: 1.35rem; font-weight: 700; }
+    p.lead { margin: 0 0 24px; color: #5a6a7d; font-size: 0.9375rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 390px);
       gap: 20px;
       justify-content: center;
-      align-items: flex-start;
-    }
-    .shot {
-      width: 390px;
-      flex-shrink: 0;
     }
     .shot h2 {
       margin: 0 0 8px;
-      font-size: 0.875rem;
+      font-size: 0.8125rem;
       font-weight: 700;
       text-align: center;
+      line-height: 1.25;
+      min-height: 2.5em;
     }
     .shot img {
       width: 390px;
@@ -72,15 +67,21 @@ function writeOverview(dir, letter) {
 </head>
 <body>
   <h1>Richting ${letter} — mobile (390×844)</h1>
-  <p class="lead">Stap 1 · Stap 3 · Stap 8 naast elkaar</p>
-  <div class="row">
-    <div class="shot"><h2>Stap 1 — Even kennismaken</h2><img src="step-1-mobile-390x844.png" alt="" /></div>
-    <div class="shot"><h2>Stap 3 — Vervoer</h2><img src="step-3-mobile-390x844.png" alt="" /></div>
-    <div class="shot"><h2>Stap 8 — Mini-test</h2><img src="step-8-mobile-390x844.png" alt="" /></div>
+  <p class="lead">Stappen 1, 1 (suggesties), 3, 5, 7 en 8 · desktop blijft huidige app</p>
+  <div class="grid">
+    ${shots}
   </div>
 </body>
 </html>`;
   fs.writeFileSync(path.join(dir, "overview.html"), html, "utf8");
+}
+
+function removeLegacyDesktopPngs(dir) {
+  for (const name of fs.readdirSync(dir)) {
+    if (name.includes("desktop-1280x800")) {
+      fs.unlinkSync(path.join(dir, name));
+    }
+  }
 }
 
 async function main() {
@@ -89,30 +90,27 @@ async function main() {
 
   for (const letter of directions) {
     const dir = path.join(root, letter);
+    removeLegacyDesktopPngs(dir);
     writeOverview(dir, letter);
 
-    for (const vp of viewports) {
-      const context = await browser.newContext({
-        viewport: { width: vp.width, height: vp.height },
-        deviceScaleFactor: 2,
-      });
-      const page = await context.newPage();
+    const context = await browser.newContext({
+      viewport: { width: MOBILE.width, height: MOBILE.height },
+      deviceScaleFactor: 2,
+    });
+    const page = await context.newPage();
 
-      for (const step of steps) {
-        const filePath = path.join(dir, step.file);
-        const url = `file://${filePath}`;
-        await page.goto(url, { waitUntil: "networkidle" });
-        await page.waitForTimeout(200);
-        const outName = `${step.id}-${vp.suffix}.png`;
-        const outPath = path.join(dir, outName);
-        await page.screenshot({ path: outPath, fullPage: false });
-        console.log("Wrote", outPath);
-      }
-      await context.close();
+    for (const step of steps) {
+      const filePath = path.join(dir, step.file);
+      await page.goto(`file://${filePath}`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(200);
+      const outPath = path.join(dir, `${step.id}-${MOBILE.suffix}.png`);
+      await page.screenshot({ path: outPath, fullPage: false });
+      console.log("Wrote", outPath);
     }
+    await context.close();
 
     const overviewContext = await browser.newContext({
-      viewport: { width: 1280, height: 920 },
+      viewport: { width: 1280, height: 1900 },
       deviceScaleFactor: 2,
     });
     const overviewPage = await overviewContext.newPage();

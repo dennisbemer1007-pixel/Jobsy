@@ -1,3 +1,3 @@
-# Richting B — Split met toelichting
+# Richting B — Split met toelichting (mobiel)
 
-Desktop: navy zijpaneel met voortgangsgroepen, “waarom vragen we dit?”-copy en rustige witte contentkolom. Mobiel: warme contextkaart boven het formulier plus conversationele microcopy. Professioneel door het duidelijke frame en merk-navy; warm door uitleg in plain Dutch en de vriendelijke mascot als begeleider, niet als speels decor.
+Op mobile een warme **contextkaart** (“Waarom vragen we dit?”) boven het formulier, plus conversationele microcopy — geen apart desktop-ontwerp (desktop blijft de huidige app). Professioneel door het duidelijke frame; warm door plain-Dutch uitleg vóór elk blok.

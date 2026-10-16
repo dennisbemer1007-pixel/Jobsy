@@ -14,4 +14,6 @@ npm init -y 2>/dev/null; npm install playwright
 node capture.mjs
 ```
 
-PNG’s per richting: stap 1, 3 en 8 × mobile 390×844 en desktop 1280×800, plus `overview-mobile-sheet.png`.
+**Alleen mobile (390×844)** — desktop blijft de huidige app; geen desktop-mockups.
+
+PNG’s per richting: stap **1**, **1 (adresuggesties open)**, **3**, **5**, **7**, **8**, plus `overview-mobile-sheet.png`.

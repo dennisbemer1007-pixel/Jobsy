@@ -1,3 +1,3 @@
-# Richting C — Eén vraag, veel lucht
+# Richting C — Eén vraag, veel lucht (mobiel)
 
-Minimal layout: grote titels, onderlijn-inputs, lijst-keuzes voor vervoer en ronde Likert-knoppen op `#dce8f4` accent. Desktop: dunne progress-rail + tekstuele stappenlijst links. Professioneel door focus en witruimte; warm door zachte accenten (goud op fase-chips) en menselijke, korte vragen — geen drukke kaarten of zware randen.
+Minimal **mobile** layout: grote titels, onderlijn-inputs, lijst-keuzes en ronde Likert-knoppen op `#dce8f4`. Desktop blijft de huidige app. Professioneel door focus en witruimte; warm door zachte accenten en menselijke, korte vragen.

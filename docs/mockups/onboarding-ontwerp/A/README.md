@@ -1,3 +1,3 @@
 # Richting A — Verfijnde kaarten
 
-Verfijning van het huidige Lobsy-onboardinggevoel: pearl-achtergrond, navy (`#0f2d5c`) acties en Segoe UI, met duidelijke typografie (badge, titel, lead) en inhoud in een witte kaart met `--shadow-lg`. Professioneel door strakke hiërarchie en consistente 48px-targets; warm door zachte beige tinten, korte begeleidende teksten en een kleine mascot in de zijbalk (desktop) of rechtsonder (mobiel), nooit over knoppen heen.
+Verfijning van het huidige Lobsy-onboardinggevoel op **mobiel (390×844)**: pearl-achtergrond, navy acties, kaarten met `--shadow-lg` en duidelijke typografie. Desktop blijft ongewijzigd in de app. Professioneel door hiërarchie en 48px-targets; warm door beige tinten, korte copy en een kleine mascot rechtsonder, nooit over knoppen.
