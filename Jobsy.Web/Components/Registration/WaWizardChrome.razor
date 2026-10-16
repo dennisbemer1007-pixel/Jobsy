@@ -8,8 +8,12 @@
         <p class="wa-progress__label">
             @Culture.Format("Wa.Progress.Step", CurrentStep, 5)
         </p>
-        <div class="wa-progress__bar" role="progressbar" aria-valuemin="1" aria-valuemax="5" aria-valuenow="@CurrentStep">
-            <span class="wa-progress__fill" style="width: @(CurrentStep * 20)%"></span>
+        <div class="wa-progress__bar wa-progress__bar--step@(CurrentStep)"
+             role="progressbar"
+             aria-valuemin="1"
+             aria-valuemax="5"
+             aria-valuenow="@CurrentStep">
+            <span class="wa-progress__fill"></span>
         </div>
     </div>
 }

@@ -124,9 +124,16 @@
 .wa-progress__fill {
   display: block;
   block-size: 100%;
+  width: 20%;
   border-radius: inherit;
   background: var(--brand);
+  transition: width 0.25s ease;
 }
+.wa-progress__bar--step1 .wa-progress__fill { width: 20%; }
+.wa-progress__bar--step2 .wa-progress__fill { width: 40%; }
+.wa-progress__bar--step3 .wa-progress__fill { width: 60%; }
+.wa-progress__bar--step4 .wa-progress__fill { width: 80%; }
+.wa-progress__bar--step5 .wa-progress__fill { width: 100%; }
 .wa-progress__hint {
   margin: 0.65rem 0 0;
   font-size: 0.95rem;
