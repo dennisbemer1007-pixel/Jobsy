@@ -69,6 +69,31 @@
   max-width: none;
   margin: 0;
 }
+.wa-wizard--calm .wa-register-title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.wa-wizard--calm .wa-register-lead {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+@media (max-width: 639px) {
+  .wa-wizard--calm .wa-need,
+  .wa-wizard--calm .wa-note {
+    display: none;
+  }
+  .wa-wizard--calm .wa-search__row {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  .wa-wizard--calm .wa-search__row .wa-btn {
+    width: 100%;
+    min-height: 2.85rem;
+  }
+}
 .wa-register-card.au-card {
   position: relative;
   padding-block-start: 2.5rem;
