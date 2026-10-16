@@ -66,7 +66,11 @@ public sealed record PassportPdfModel(
     IReadOnlyList<PassportDnaLayerCard> DnaLayers = null!,
     IReadOnlyList<string> VerifiedChecked = null!,
     IReadOnlyList<string> VerifiedNotChecked = null!,
-    string? FirstName = null);
+    string? FirstName = null,
+    bool SinglePageLayout = false,
+    bool ShowHeroAvatar = true,
+    string? SparseCandidateNote = null,
+    string? FooterOmissionLine = null);
 
 public sealed record PassportStrengthCard(string Title, string Subtitle);
 

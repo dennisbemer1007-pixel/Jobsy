@@ -45,6 +45,8 @@ internal static class PassportPdfMartaDemoSeeder
             user.FullName = "Marta Kowalska";
             user.OpenForWork = true;
             user.EmailVerifiedAtUtc ??= done;
+            user.PhoneNumber ??= "+31600000000";
+            user.WhatsAppContactAllowed = true;
             user.PreferencesJson = MartaPreferencesJson;
         }
 
@@ -126,6 +128,6 @@ internal static class PassportPdfMartaDemoSeeder
     }
 
     private const string MartaPreferencesJson = """
-        {"roles":["Orderpicker"],"maxTravelMinutes":30,"preferredTransport":"Fiets","language":"nl","aboutMe":"Ik werk graag met mijn handen.","drivingLicenses":["B"],"availability":{"Ma":["Ochtend","Middag"],"Di":["Ochtend","Middag"],"Wo":["Ochtend"]},"employers":[{"employerName":"Kwekerij De Voorbeeldtuin","role":"Oogstmedewerker","description":"Tomaten oogsten","startMonth":"2024-03"},{"employerName":"Logistiek Voorbeeld BV","role":"Magazijnmedewerker","description":"Orderpick","startMonth":"2022-01","endMonth":"2024-02"}],"educations":["MBO 1 / Entree"],"minHoursPerWeek":32,"maxHoursPerWeek":40,"certificates":[{"name":"VCA Basis","year":2024},{"name":"Heftruck","year":2023}],"spokenLanguages":[{"code":"pl","level":"moedertaal"}],"dutchLevel":"basis","workPreferences":{"indoor":"prefer","outdoor":"ok-not-frost","physicalWork":"lifting-15","pace":"norm-ok"},"shareEmployerPreferences":true,"employerPreferences":["small-team","clear-instructions"],"workRegion":"Westland","hasOwnCar":false,"contractPreferences":["vast"],"learningGoals":["Nederlands naar B1","Reachtruck-certificaat"]}
+        {"roles":["Orderpicker","Medewerker tuinbouw"],"maxTravelMinutes":30,"preferredTransport":"Fiets","language":"nl","aboutMe":"Ik werk graag met mijn handen en houd van duidelijke afspraken. In de kas of het magazijn voel ik me thuis. Ik wil doorgroeien met vaste collega's.","drivingLicenses":["B"],"availability":{"Ma":["Ochtend","Middag"],"Di":["Ochtend","Middag"],"Wo":["Ochtend","Avond"]},"employers":[{"employerName":"Kwekerij De Voorbeeldtuin","role":"Oogstmedewerker","description":"Tomaten oogsten","startMonth":"2024-03"},{"employerName":"Logistiek Voorbeeld BV","role":"Magazijnmedewerker","description":"Orderpicken","startMonth":"2021-06","endMonth":"2023-12"}],"educations":["MBO 1 / Entree"],"minHoursPerWeek":32,"maxHoursPerWeek":40,"certificates":[{"name":"VCA Basis","year":2024},{"name":"Heftruck","year":2023}],"spokenLanguages":[{"code":"pl","level":"moedertaal"},{"code":"en","level":"B1"}],"dutchLevel":"basis","workPreferences":{"indoor":"prefer","outdoor":"ok-not-frost","physicalWork":"lifting-15","pace":"norm-ok"},"shareEmployerPreferences":true,"employerPreferences":["small-team","learn-on-the-job","fixed-workplace","growth"],"workRegion":"Westland","hasOwnCar":false,"contractPreferences":["uitzend","vast"],"learningGoals":["Nederlands naar B1","Reachtruck-certificaat"]}
         """;
 }

@@ -65,10 +65,13 @@ public class PassportPdfV2Tests
         Assert.Contains("Lobsy-geverifieerd", text, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("4/4 DNA-tests", text, StringComparison.Ordinal);
         Assert.Contains("Samen & aardig", text, StringComparison.Ordinal);
-        Assert.Contains("Ik werk graag met mijn handen.", text, StringComparison.Ordinal);
+        Assert.Contains("Ik werk graag met mijn handen", text, StringComparison.Ordinal);
         Assert.Contains("Kwekerij De Voorbeeldtuin", text, StringComparison.Ordinal);
         Assert.Contains("marta@example.com", text, StringComparison.Ordinal);
         Assert.Contains("Gespreksinput", text, StringComparison.Ordinal);
+        Assert.Contains("Zoekt:", text, StringComparison.Ordinal);
+        Assert.Contains("Magazijnmedewerker", text, StringComparison.Ordinal);
+        Assert.Contains("Heftruck", text, StringComparison.Ordinal);
         Assert.DoesNotContain("%", text, StringComparison.Ordinal);
         Assert.DoesNotContain("1994", text, StringComparison.Ordinal);
         Assert.DoesNotContain("32 jaar", text, StringComparison.Ordinal);
@@ -77,6 +80,15 @@ public class PassportPdfV2Tests
         Assert.DoesNotContain("ZZ-AI-MARKER", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Voorbeeldstraat", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Jouw DNA in één oogopslag", text, StringComparison.Ordinal);
+        Assert.DoesNotContain('\uFFFD', text);
+    }
+
+    [Fact]
+    public async Task Pdf_has_no_replacement_glyphs()
+    {
+        var pdf = await Render(FullFacts());
+        var text = TextOf(pdf);
+        Assert.DoesNotContain('\uFFFD', text);
     }
 
     [Fact]
@@ -117,9 +129,10 @@ public class PassportPdfV2Tests
 
         var pdf = await Render(facts);
         var text = TextOf(pdf);
-        Assert.Equal(2, pdf.Pages);
+        Assert.Equal(1, pdf.Pages);
         Assert.Contains("Marta Kowalska", text, StringComparison.Ordinal);
         Assert.Contains("0/4 DNA-tests", text, StringComparison.Ordinal);
+        Assert.Contains("Vul je paspoort aan", text, StringComparison.Ordinal);
         Assert.DoesNotContain("4/4", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Werkvoorkeuren", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Sterke punten", text, StringComparison.Ordinal);
@@ -293,16 +306,27 @@ public class PassportPdfV2Tests
             ("sparse-nl", FullFacts() with
             {
                 OpenForWork = false,
+                WorkRegion = null,
+                AvailableFrom = null,
                 Roles = null,
                 Experience = null,
                 Certificates = null,
                 Educations = null,
                 OwnWords = null,
+                SpokenLanguages = null,
+                DutchLevel = null,
+                WorkPreferences = null,
+                ShareEmployerPreferences = false,
+                EmployerPreferences = null,
+                ContractPreferences = null,
                 Dna = PassportDnaLayer.None(),
+                EmailVerified = false,
                 DreamTitle = null,
                 ReferenceQuotes = null,
                 MinHours = null,
-                MaxHours = null
+                MaxHours = null,
+                FlexibleTimes = false,
+                Availability = null
             }),
             ("long-nl", FullFacts() with
             {
@@ -314,7 +338,8 @@ public class PassportPdfV2Tests
         foreach (var (slug, facts) in scenarios)
         {
             var pdf = await Render(facts);
-            Assert.Equal(2, pdf.Pages);
+            var expectedPages = slug == "sparse-nl" ? 1 : 2;
+            Assert.Equal(expectedPages, pdf.Pages);
             var pdfPath = Path.Combine(dir, $"{slug}.pdf");
             await File.WriteAllBytesAsync(pdfPath, pdf.Bytes);
             ExportPdfPagesAsPng(pdfPath, Path.Combine(dir, slug));
@@ -354,6 +379,8 @@ public class PassportPdfV2Tests
         var sparse = await Render(FullFacts() with
         {
             OpenForWork = false,
+            WorkRegion = null,
+            AvailableFrom = null,
             Roles = null,
             Experience = null,
             Certificates = null,
@@ -364,19 +391,22 @@ public class PassportPdfV2Tests
             WorkPreferences = null,
             ShareEmployerPreferences = false,
             EmployerPreferences = null,
+            ContractPreferences = null,
             Dna = PassportDnaLayer.None(),
             EmailVerified = false,
             DreamTitle = null,
             ReferenceQuotes = null,
             MinHours = null,
-            MaxHours = null
+            MaxHours = null,
+            FlexibleTimes = false,
+            Availability = null
         });
         await File.WriteAllBytesAsync(Path.Combine(dir, "rich.pdf"), rich.Bytes);
         await File.WriteAllBytesAsync(Path.Combine(dir, "thin.pdf"), thin.Bytes);
         await File.WriteAllBytesAsync(Path.Combine(dir, "sparse.pdf"), sparse.Bytes);
         Assert.Equal(2, rich.Pages);
         Assert.Equal(2, thin.Pages);
-        Assert.Equal(2, sparse.Pages);
+        Assert.Equal(1, sparse.Pages);
     }
 
     [Fact]
@@ -485,43 +515,53 @@ public class PassportPdfV2Tests
             DateOfBirth = new DateOnly(1994, 5, 12)
         };
         var prefs = new CandidatePreferencesDto(
-            Roles: ["Orderpicker"],
+            Roles: ["Orderpicker", "Medewerker tuinbouw"],
             MaxTravelMinutes: 30,
             PreferredTransport: "Fiets",
             Language: "nl",
             AgeYears: 32,
-            AboutMe: "Ik werk graag met mijn handen.",
+            AboutMe: "Ik werk graag met mijn handen en houd van duidelijke afspraken. In de kas of het magazijn voel ik me thuis. Ik wil doorgroeien met vaste collega's.",
             DrivingLicenses: ["B"],
             Availability: new Dictionary<string, string[]>
             {
                 ["Ma"] = ["Ochtend", "Middag"],
                 ["Di"] = ["Ochtend", "Middag"],
-                ["Wo"] = ["Ochtend"]
+                ["Wo"] = ["Ochtend", "Avond"]
             },
             Employers:
             [
-                new CandidateEmployerHistoryDto("Kwekerij De Voorbeeldtuin", "Oogstmedewerker", 2, "Tomaten oogsten", "2024-03", null)
+                new CandidateEmployerHistoryDto("Kwekerij De Voorbeeldtuin", "Oogstmedewerker", 2, "Tomaten oogsten", "2024-03", null),
+                new CandidateEmployerHistoryDto("Logistiek Voorbeeld BV", "Magazijnmedewerker", 2, "Orderpicken", "2021-06", "2023-12")
             ],
-            Educations: ["MBO 1"],
+            Educations: ["MBO 1 / Entree"],
             HomeAddress: "Voorbeeldstraat 1, 2671 AB Naaldwijk",
             MinHoursPerWeek: 32,
             MaxHoursPerWeek: 40,
-            Certificates: [new CandidateCertificateDto("VCA Basis", 2024)],
-            SpokenLanguages: [new CandidateLanguageDto("pl", "moedertaal")],
+            Certificates:
+            [
+                new CandidateCertificateDto("VCA Basis", 2024),
+                new CandidateCertificateDto("Heftruck", 2023)
+            ],
+            SpokenLanguages:
+            [
+                new CandidateLanguageDto("pl", "moedertaal"),
+                new CandidateLanguageDto("en", "B1")
+            ],
             DutchLevel: "basis",
-            EmployerPreferences: ["small-team"],
+            EmployerPreferences: ["small-team", "learn-on-the-job", "fixed-workplace", "growth"],
             WorkPreferences: new SharedWorkPreferences("prefer", "ok-not-frost", "lifting-15", "norm-ok"),
             ShareEmployerPreferences: true,
             WorkRegion: "Westland",
             HasOwnCar: false,
-            ContractPreferences: ["vast"]);
+            ContractPreferences: ["uitzend", "vast"],
+            LearningGoals: ["Nederlands naar B1", "Reachtruck-certificaat"]);
         var done = Generated;
         IReadOnlyList<PassportDnaLayerFact> dna =
         [
-            new(PassportDnaLayer.Competence, true, done, ["Samen & aardig"]),
-            new(PassportDnaLayer.Career, true, done, ["Aanpakken met je handen"]),
-            new(PassportDnaLayer.Culture, true, done, ["Samenwerken"]),
-            new(PassportDnaLayer.Values, true, done, ["Zekerheid & traditie"])
+            new(PassportDnaLayer.Competence, true, done.AddDays(-7), ["Samen & aardig", "Kalm blijven", "Afmaken & netjes werken"], ["Samenwerken", "Stressbestendigheid", "Resultaatgerichtheid"]),
+            new(PassportDnaLayer.Career, true, done.AddDays(-6), ["Aanpakken met je handen"], ["Realistic", "Conventional"]),
+            new(PassportDnaLayer.Culture, true, done.AddDays(-3), ["Samenwerken"], ["Collaboration", "PeopleFirst"]),
+            new(PassportDnaLayer.Values, true, done, ["Zekerheid & traditie", "Verbinding & zorg"], ["Stability", "Connection"])
         ];
         return PassportPdfFactsFactory.FromUser(user, prefs, dna, includeContact: true, phoneVerificationRequired: false, Generated);
     }
@@ -529,9 +569,9 @@ public class PassportPdfV2Tests
     [Fact]
     public void Story_stays_short_and_uses_only_entered_facts()
     {
-        var full = PassportPdfModelBuilder.Build(FullFacts());
+        var full = PassportPdfModelBuilder.Build(FullFacts() with { OwnWords = "Ik werk graag met mijn handen." });
         Assert.NotNull(full.Story);
-        Assert.Contains("Ik werk graag met mijn handen.", full.Story, StringComparison.Ordinal);
+        Assert.Contains("Ik werk graag met mijn handen", full.Story, StringComparison.Ordinal);
         Assert.Contains("Kwekerij De Voorbeeldtuin", full.Story, StringComparison.Ordinal);
         Assert.Contains("Uit je tests:", full.Story, StringComparison.Ordinal);
         Assert.DoesNotContain("Westland", full.Story, StringComparison.Ordinal);

@@ -61,12 +61,27 @@ public static class PassportPdfModelBuilder
         var verifiedNot = VerifiedNot(lang);
         var firstName = FirstName(facts);
         var conversationFooter = PassportPdfStrings.T(lang, "ConversationInput");
+        var footerOmission = PassportPdfStrings.T(lang, "FooterOmission");
         var home = Home(lang, facts);
         var valueLines = ValueLines(lang, facts.Dna);
         var jobFits = JobFits(lang, facts);
         var quotes = Quotes(facts.ReferenceQuotes);
         var direction = Direction(lang, facts);
         var story = Story(lang, facts);
+        var singlePage = ComputeSinglePageLayout(
+            facts,
+            strengthCards,
+            sectors,
+            experience.Lines,
+            dnaLayers,
+            howWorkLines,
+            bestOut,
+            facts.OwnWords,
+            facts.ShowDnaBlocks);
+        var showHeroAvatar = !singlePage
+                             || !string.IsNullOrWhiteSpace(tagline)
+                             || Chips(lang, facts, hasAvailabilitySignal).Count > 0;
+        var sparseNote = singlePage ? PassportPdfStrings.T(lang, "SparseFill") : null;
 
         return new PassportPdfModel(
             Language: lang,
@@ -156,7 +171,40 @@ public static class PassportPdfModelBuilder
             DnaLayers: dnaLayers,
             VerifiedChecked: verifiedChecked,
             VerifiedNotChecked: verifiedNot,
-            FirstName: firstName);
+            FirstName: firstName,
+            SinglePageLayout: singlePage,
+            ShowHeroAvatar: showHeroAvatar,
+            SparseCandidateNote: sparseNote,
+            FooterOmissionLine: footerOmission);
+    }
+
+    private static bool ComputeSinglePageLayout(
+        PassportPdfFacts facts,
+        IReadOnlyList<PassportStrengthCard> strengthCards,
+        IReadOnlyList<PassportSectorCard> sectors,
+        IReadOnlyList<PassportExperienceLine> experience,
+        IReadOnlyList<PassportDnaLayerCard> dnaLayers,
+        IReadOnlyList<PassportHowWorkLine> howWorkLines,
+        IReadOnlyList<string> bestOutTips,
+        string? ownWords,
+        bool showDnaBlocks)
+    {
+        var testsDone = facts.Dna.Count(layer => layer.Done);
+        if (showDnaBlocks && (dnaLayers.Count > 0 || howWorkLines.Count > 0 || bestOutTips.Count > 0 || !string.IsNullOrWhiteSpace(ownWords)))
+        {
+            return false;
+        }
+
+        if (sectors.Count > 0 && testsDone >= 2)
+        {
+            return false;
+        }
+
+        return testsDone == 0
+               && strengthCards.Count == 0
+               && experience.Count == 0
+               && (facts.Roles?.Count ?? 0) == 0
+               && string.IsNullOrWhiteSpace(ownWords);
     }
 
     private static string? FirstName(PassportPdfFacts facts)
@@ -219,17 +267,51 @@ public static class PassportPdfModelBuilder
         }
 
         var lines = new List<PassportHowWorkLine>();
-        foreach (var pref in WorkPreferences(lang, facts).Take(4))
+        foreach (var gloss in ValueLines(lang, facts.Dna).Take(2))
         {
-            lines.Add(new PassportHowWorkLine(pref.Label, pref.Value));
+            lines.Add(new PassportHowWorkLine(gloss.Label, gloss.Gloss));
         }
 
-        foreach (var home in Home(lang, facts).Take(2))
+        foreach (var home in Home(lang, facts))
         {
-            lines.Add(new PassportHowWorkLine(home, null));
+            if (lines.Count >= 4)
+            {
+                break;
+            }
+
+            var split = SplitLeadTail(home);
+            if (string.IsNullOrWhiteSpace(split.Lead))
+            {
+                continue;
+            }
+
+            lines.Add(new PassportHowWorkLine(split.Lead, split.Tail));
         }
 
-        return lines;
+        return lines.Take(4).ToArray();
+    }
+
+    private static (string Lead, string? Tail) SplitLeadTail(string line)
+    {
+        var trimmed = line.Trim();
+        var dash = trimmed.IndexOf(" — ", StringComparison.Ordinal);
+        if (dash < 0)
+        {
+            dash = trimmed.IndexOf(" - ", StringComparison.Ordinal);
+        }
+
+        if (dash > 0)
+        {
+            return (trimmed[..dash].Trim(), trimmed[(dash + 3)..].Trim());
+        }
+
+        var colon = trimmed.IndexOf(':');
+        if (colon > 0 && colon < trimmed.Length - 1)
+        {
+            return (trimmed[..colon].Trim(), trimmed[(colon + 1)..].Trim());
+        }
+
+        return (trimmed, null);
     }
 
     private static IReadOnlyList<string> BestOutTips(string lang, PassportPdfFacts facts)
@@ -574,7 +656,7 @@ public static class PassportPdfModelBuilder
 
     private static string? Sought(string lang, PassportPdfFacts facts)
     {
-        var bits = new List<string>();
+        var roles = new List<string>();
         foreach (var role in facts.Roles ?? [])
         {
             var text = role.Trim();
@@ -583,22 +665,35 @@ public static class PassportPdfModelBuilder
                 continue;
             }
 
-            bits.Add(text.Length > 40 ? text[..40].TrimEnd() + "…" : text);
-            if (bits.Count == 3)
+            roles.Add(text.Length > 40 ? text[..40].TrimEnd() + "…" : text);
+            if (roles.Count == 3)
             {
                 break;
             }
         }
 
+        var contracts = new List<string>();
         foreach (var code in WorkPreferenceCatalogs.NormalizeContracts(facts.ContractPreferences))
         {
             if (PassportPdfStrings.HasKey("Contract." + code))
             {
-                bits.Add(PassportPdfStrings.T(lang, "Contract." + code));
+                contracts.Add(PassportPdfStrings.T(lang, "Contract." + code));
             }
         }
 
-        return bits.Count == 0 ? null : string.Join(" · ", bits);
+        var rolePart = roles.Count == 0 ? null : string.Join(" · ", roles);
+        var contractPart = contracts.Count == 0 ? null : string.Join(" → ", contracts);
+        if (rolePart is not null && contractPart is not null)
+        {
+            return PassportPdfStrings.F(lang, "SoughtRolesAndContract", rolePart, contractPart);
+        }
+
+        if (rolePart is not null)
+        {
+            return PassportPdfStrings.F(lang, "SoughtRolesOnly", rolePart);
+        }
+
+        return contractPart is null ? null : PassportPdfStrings.F(lang, "SoughtContractOnly", contractPart);
     }
 
     private static (IReadOnlyList<PassportExperienceLine> Lines, int More) Experience(PassportPdfFacts facts)
@@ -676,12 +771,62 @@ public static class PassportPdfModelBuilder
             return PassportPdfStrings.F(lang, "ExperienceDurationYears", years);
         }
 
-        if (string.IsNullOrWhiteSpace(item.StartMonth))
+        var months = ExperienceMonths(item.StartMonth, item.EndMonth);
+        if (months is null or < 1)
         {
             return null;
         }
 
-        return null;
+        var yrs = months.Value / 12;
+        var rem = months.Value % 12;
+        if (yrs > 0 && rem > 0)
+        {
+            return PassportPdfStrings.F(lang, "ExperienceDurationYm", yrs, rem);
+        }
+
+        if (yrs > 0)
+        {
+            return PassportPdfStrings.F(lang, "ExperienceDurationYears", yrs);
+        }
+
+        return rem + " mnd";
+    }
+
+    private static int? ExperienceMonths(string? startMonth, string? endMonth)
+    {
+        if (!TryParseYearMonth(startMonth, out var start))
+        {
+            return null;
+        }
+
+        var end = TryParseYearMonth(endMonth, out var parsedEnd)
+            ? parsedEnd
+            : new DateOnly(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+        var months = (end.Year - start.Year) * 12 + (end.Month - start.Month) + 1;
+        return months < 1 ? null : months;
+    }
+
+    private static bool TryParseYearMonth(string? raw, out DateOnly date)
+    {
+        date = default;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        var parts = raw.Trim().Split('-', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length < 2 || !int.TryParse(parts[0], out var year) || !int.TryParse(parts[1], out var month))
+        {
+            return false;
+        }
+
+        if (month is < 1 or > 12)
+        {
+            return false;
+        }
+
+        date = new DateOnly(year, month, 1);
+        return true;
     }
 
     private static string ExperienceKind(PassportExperienceFact item)
