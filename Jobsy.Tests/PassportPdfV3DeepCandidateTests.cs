@@ -84,7 +84,7 @@ public class PassportPdfV3DeepCandidateTests
             new PassportDnaReader(db),
             new PassportPdfService(new FakeCompanySettings()));
 
-        var file = await download.ForCandidateAsync(user, phoneVerificationRequired: false, CancellationToken.None);
+        var file = await download.ForCandidateAsync(user, phoneVerificationRequired: false, showDnaBlocks: true, CancellationToken.None);
 
         Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(file.Pdf.AsSpan(0, 4)));
         Assert.Contains("DNA-paspoort", file.FileName, StringComparison.OrdinalIgnoreCase);

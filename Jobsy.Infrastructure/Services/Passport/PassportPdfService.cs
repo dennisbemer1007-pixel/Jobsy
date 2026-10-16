@@ -86,10 +86,10 @@ public sealed class PassportPdfService : IPassportPdfService
         });
 
         page.Header().Element(header => HeaderBlock(header, model, lang, page2));
-
+        page.Footer().Element(footer => FooterBlock(footer, model, lang));
         page.Content().Element(body =>
         {
-            var column = body.PaddingHorizontal(14).PaddingTop(6).PaddingBottom(4);
+            var column = body.PaddingHorizontal(14).PaddingTop(4).PaddingBottom(2);
             if (rtl)
             {
                 column = column.ContentFromRightToLeft();
@@ -97,7 +97,7 @@ public sealed class PassportPdfService : IPassportPdfService
 
             column.Column(col =>
             {
-                col.Spacing(5);
+                col.Spacing(2);
                 if (page2)
                 {
                     Page2(col, model, lang);
@@ -108,8 +108,6 @@ public sealed class PassportPdfService : IPassportPdfService
                 }
             });
         });
-
-        page.Footer().Element(footer => FooterBlock(footer, model, lang));
     }
 
     private static void HeaderBlock(IContainer container, PassportPdfModel model, string lang, bool page2)
@@ -145,16 +143,23 @@ public sealed class PassportPdfService : IPassportPdfService
                 if (model.ShowBadge)
                 {
                     row.ConstantItem(6);
-                    row.AutoItem().AlignMiddle().Background(White).PaddingHorizontal(7).PaddingVertical(4).Row(badge =>
+                    row.AutoItem().AlignMiddle().Background(White).PaddingHorizontal(6).PaddingVertical(3).Column(badge =>
                     {
-                        badge.ConstantItem(10).Height(10).AlignMiddle().Svg(CheckSvg("#127a5c"));
-                        badge.ConstantItem(4);
-                        badge.AutoItem().AlignMiddle().Text(PassportPdfStrings.T(lang, "BadgeVerified"))
-                            .FontSize(7.5f).Bold().FontColor(Purple);
+                        badge.Item().Row(badgeRow =>
+                        {
+                            badgeRow.ConstantItem(9).Height(9).AlignMiddle().Svg(CheckSvg("#127a5c"));
+                            badgeRow.ConstantItem(3);
+                            badgeRow.AutoItem().AlignMiddle().Text(PassportPdfStrings.T(lang, "BadgeVerified"))
+                                .FontSize(7f).Bold().FontColor(Purple);
+                        });
+                        if (!string.IsNullOrWhiteSpace(model.BadgeDetail))
+                        {
+                            badge.Item().PaddingTop(1).Text(model.BadgeDetail!).FontSize(6.5f).FontColor(Muted);
+                        }
                     });
                 }
             });
-            col.Item().Height(3).Svg(HeaderGradientSvg());
+            col.Item().Width(567).Height(3).Svg(HeaderGradientSvg());
         });
     }
 
@@ -167,12 +172,12 @@ public sealed class PassportPdfService : IPassportPdfService
             qrPng = QrPng(model.QrVerifyUrl!, pixelsPerModule: 4);
         }
 
-        container.BorderTop(1).BorderColor(Line).PaddingHorizontal(14).PaddingTop(5).PaddingBottom(7).Row(row =>
+        container.BorderTop(1).BorderColor(Line).PaddingTop(4).Row(row =>
         {
             if (qrPng is { Length: > 0 })
             {
                 row.ConstantItem(52).Height(52).Padding(2).Background(White).Border(1).BorderColor(Line)
-                    .Image(qrPng).FitArea();
+                    .AlignMiddle().AlignCenter().Width(48).Image(qrPng).FitWidth();
                 row.ConstantItem(8);
             }
 
@@ -190,7 +195,7 @@ public sealed class PassportPdfService : IPassportPdfService
                 if (!string.IsNullOrWhiteSpace(model.ConversationFooter))
                 {
                     textCol.Item().PaddingTop(hasQr ? 2 : 0).Text(model.ConversationFooter)
-                        .FontSize(6.5f).FontColor(Muted).LineHeight(1.2f);
+                        .FontSize(6.5f).FontColor(Muted).LineHeight(1.15f).ClampLines(3);
                 }
 
                 textCol.Item().PaddingTop(2).Text(model.GeneratedLabel).FontSize(6.5f).FontColor(Muted);
@@ -212,22 +217,9 @@ public sealed class PassportPdfService : IPassportPdfService
 
     private static void Page1(ColumnDescriptor col, PassportPdfModel model, string lang)
     {
-        if (model.ShowBadge && !string.IsNullOrWhiteSpace(model.BadgeDetail))
+        if (!model.ShowBadge && !string.IsNullOrWhiteSpace(model.TestsPlainStatus))
         {
-            col.Item().ShowEntire().Background(Mint).Border(1).BorderColor(Line).Padding(7).Row(row =>
-            {
-                row.ConstantItem(12).Height(12).AlignMiddle().Svg(CheckSvg("#127a5c"));
-                row.ConstantItem(6);
-                row.RelativeItem().Column(box =>
-                {
-                    box.Item().Text(PassportPdfStrings.T(lang, "BadgeVerified")).FontSize(9).Bold().FontColor(Green);
-                    box.Item().PaddingTop(1).Text(model.BadgeDetail!).FontSize(8).FontColor(Ink);
-                });
-            });
-        }
-        else if (!model.ShowBadge && !string.IsNullOrWhiteSpace(model.TestsPlainStatus))
-        {
-            col.Item().Text(model.TestsPlainStatus).FontSize(8).FontColor(Muted);
+            col.Item().Text(model.TestsPlainStatus).FontSize(7.5f).FontColor(Muted);
         }
 
         Hero(col, model, lang);
@@ -245,37 +237,38 @@ public sealed class PassportPdfService : IPassportPdfService
             col.Item().Column(block =>
             {
                 SectionTitle(block, PassportPdfStrings.T(lang, "SectorsTitle"));
-                block.Item().PaddingTop(3).Column(list =>
+                block.Item().PaddingTop(2).Row(row =>
                 {
-                    foreach (var sector in model.Sectors.Take(3))
+                    for (var i = 0; i < Math.Min(3, model.Sectors.Count); i++)
                     {
-                        list.Item().PaddingBottom(4).ShowEntire().Background(SoftP).Border(1).BorderColor(Line)
-                            .Padding(7).Column(card =>
-                            {
-                                card.Item().Row(title =>
-                                {
-                                    title.RelativeItem().Text(sector.Title).FontSize(10).Bold().FontColor(Purple);
-                                    if (!string.IsNullOrWhiteSpace(sector.RankSubtitle))
-                                    {
-                                        title.AutoItem().Text(sector.RankSubtitle).FontSize(7.5f).FontColor(Magenta);
-                                    }
-                                });
-                                card.Item().PaddingTop(2).Text(sector.P1Teaser).FontSize(8.5f).LineHeight(1.25f);
-                                foreach (var why in sector.WhyBullets.Take(4))
-                                {
-                                    card.Item().PaddingTop(2).Row(bullet =>
-                                    {
-                                        bullet.ConstantItem(8).Text("•").FontSize(8).FontColor(Coral);
-                                        bullet.RelativeItem().Text(why).FontSize(8);
-                                    });
-                                }
+                        if (i > 0)
+                        {
+                            row.ConstantItem(4);
+                        }
 
-                                if (!string.IsNullOrWhiteSpace(sector.ExampleRoles))
+                        var sector = model.Sectors[i];
+                        row.RelativeItem().Background(SoftP).Border(1).BorderColor(Line).Padding(5).Column(card =>
+                        {
+                            card.Item().Text(sector.Title).FontSize(8.5f).Bold().FontColor(Purple).ClampLines(1);
+                            if (!string.IsNullOrWhiteSpace(sector.RankSubtitle))
+                            {
+                                card.Item().PaddingTop(1).Text(sector.RankSubtitle).FontSize(7).FontColor(Magenta);
+                            }
+
+                            foreach (var why in sector.WhyBullets.Take(2))
+                            {
+                                card.Item().PaddingTop(1).Row(bullet =>
                                 {
-                                    card.Item().PaddingTop(3).Background(White).Padding(5)
-                                        .Text(sector.ExampleRoles).FontSize(7.5f).FontColor(Muted);
-                                }
-                            });
+                                    bullet.ConstantItem(6).Text("•").FontSize(7).FontColor(Coral);
+                                    bullet.RelativeItem().Text(why).FontSize(7).LineHeight(1.15f).ClampLines(2);
+                                });
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(sector.ExampleRoles))
+                            {
+                                card.Item().PaddingTop(2).Text(sector.ExampleRoles).FontSize(6.5f).FontColor(Muted).ClampLines(2);
+                            }
+                        });
                     }
                 });
             });
@@ -354,7 +347,9 @@ public sealed class PassportPdfService : IPassportPdfService
 
                             if (model.LearningLines.Count > 0)
                             {
-                                list.Item().PaddingTop(3).Inlined(chips =>
+                                list.Item().PaddingTop(3).Text(PassportPdfStrings.T(lang, "LearnTitle"))
+                                    .FontSize(7.5f).Bold().FontColor(Purple);
+                                list.Item().PaddingTop(2).Inlined(chips =>
                                 {
                                     chips.Spacing(3);
                                     chips.VerticalSpacing(3);
@@ -376,8 +371,8 @@ public sealed class PassportPdfService : IPassportPdfService
             col.Item().Column(block =>
             {
                 SectionTitle(block, PassportPdfStrings.T(lang, "OwnWords"));
-                block.Item().PaddingTop(3).Background(SoftP).Border(1).BorderColor(Line).Padding(7)
-                    .Text(model.OwnWords).FontSize(8.5f).LineHeight(1.3f).Italic();
+                block.Item().PaddingTop(2).Background(SoftP).Border(1).BorderColor(Line).Padding(6)
+                    .Text(model.OwnWords).FontSize(8f).LineHeight(1.25f).Italic().ClampLines(6);
             });
         }
 
@@ -692,9 +687,9 @@ public sealed class PassportPdfService : IPassportPdfService
 
     private static void ExperiencePapers(ColumnDescriptor col, PassportPdfModel model, string lang)
     {
-        var paid = PaidExperience(model);
+        var jobs = model.Experience.Take(2).ToList();
         var papers = model.Educations.Concat(model.Certificates).Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
-        if (paid.Count == 0 && papers.Count == 0)
+        if (jobs.Count == 0 && papers.Count == 0)
         {
             return;
         }
@@ -704,11 +699,11 @@ public sealed class PassportPdfService : IPassportPdfService
             SectionTitle(block, PassportPdfStrings.T(lang, "ExperiencePapers"));
             block.Item().PaddingTop(3).Row(row =>
             {
-                if (paid.Count > 0)
+                if (jobs.Count > 0)
                 {
                     row.RelativeItem().Column(left =>
                     {
-                        foreach (var job in paid.Take(2))
+                        foreach (var job in jobs)
                         {
                             left.Item().PaddingBottom(3).Background(White).Border(1).BorderColor(Line).Padding(6).Column(card =>
                             {
@@ -740,7 +735,7 @@ public sealed class PassportPdfService : IPassportPdfService
                     });
                 }
 
-                if (paid.Count > 0 && papers.Count > 0)
+                if (jobs.Count > 0 && papers.Count > 0)
                 {
                     row.ConstantItem(8);
                 }
@@ -787,7 +782,7 @@ public sealed class PassportPdfService : IPassportPdfService
             return;
         }
 
-        col.Item().ShowEntire().Column(block =>
+        col.Item().Column(block =>
         {
             SectionTitle(block, PassportPdfStrings.T(lang, "VerifiedMeans"));
             block.Item().PaddingTop(3).Row(row =>
@@ -928,11 +923,6 @@ public sealed class PassportPdfService : IPassportPdfService
 
         return 0;
     }
-
-    private static List<PassportExperienceLine> PaidExperience(PassportPdfModel model)
-        => model.Experience
-            .Where(line => string.Equals(line.Kind ?? "paid", "paid", StringComparison.Ordinal))
-            .ToList();
 
     private static void SectionTitle(ColumnDescriptor col, string title)
     {

@@ -808,6 +808,7 @@ public partial class MeController : ControllerBase
                 var passport = await _passportPdf.ForCandidateAsync(
                     user,
                     features.PhoneVerificationEnabled,
+                    features.PassportPdfDnaBlocksEnabled,
                     cancellationToken);
                 return File(passport.Pdf, "application/pdf", passport.FileName);
             }

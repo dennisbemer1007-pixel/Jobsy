@@ -1179,6 +1179,11 @@ public static class PassportPdfModelBuilder
     private static IReadOnlyList<PassportChip> Chips(string lang, PassportPdfFacts facts, bool available)
     {
         var chips = new List<PassportChip>();
+        if (!string.IsNullOrWhiteSpace(facts.WorkRegion))
+        {
+            chips.Add(new PassportChip(Clip(facts.WorkRegion.Trim(), 32)!, "region"));
+        }
+
         if (available)
         {
             chips.Add(new PassportChip(PassportPdfStrings.T(lang, "AvailableChip"), "available"));

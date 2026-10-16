@@ -28,6 +28,7 @@ public sealed class PassportPdfDownload
     public async Task<PassportPdfFile> ForCandidateAsync(
         User user,
         bool phoneVerificationRequired,
+        bool showDnaBlocks,
         CancellationToken cancellationToken)
     {
         var preferences = MeController.ParsePreferences(user.PreferencesJson);
@@ -41,6 +42,11 @@ public sealed class PassportPdfDownload
             phoneVerificationRequired,
             DateTime.UtcNow);
         facts = await WithShareFactsAsync(facts, user.Id, cancellationToken);
+        facts = facts with
+        {
+            ShowDnaBlocks = showDnaBlocks,
+            FirstName = string.IsNullOrWhiteSpace(user.FirstName) ? null : user.FirstName.Trim()
+        };
         return await RenderAsync(facts, cancellationToken);
     }
 
@@ -48,6 +54,7 @@ public sealed class PassportPdfDownload
         Application application,
         bool includeDirectContact,
         bool phoneVerificationRequired,
+        bool showDnaBlocks,
         CancellationToken cancellationToken)
     {
         User? user = null;
@@ -75,6 +82,7 @@ public sealed class PassportPdfDownload
             facts = await WithShareFactsAsync(facts, user.Id, cancellationToken);
         }
 
+        facts = facts with { ShowDnaBlocks = showDnaBlocks };
         return await RenderAsync(facts, cancellationToken);
     }
 

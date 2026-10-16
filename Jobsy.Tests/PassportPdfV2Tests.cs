@@ -62,19 +62,21 @@ public class PassportPdfV2Tests
         Assert.Contains("Marta Kowalska", text, StringComparison.Ordinal);
         Assert.Contains("Westland", text, StringComparison.Ordinal);
         Assert.Contains("DNA-paspoort", text, StringComparison.Ordinal);
-        Assert.Contains("Lobsy-compleet", text, StringComparison.Ordinal);
+        Assert.Contains("Lobsy-geverifieerd", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("4/4 DNA-tests", text, StringComparison.Ordinal);
         Assert.Contains("Samen & aardig", text, StringComparison.Ordinal);
         Assert.Contains("Ik werk graag met mijn handen.", text, StringComparison.Ordinal);
         Assert.Contains("Kwekerij De Voorbeeldtuin", text, StringComparison.Ordinal);
         Assert.Contains("marta@example.com", text, StringComparison.Ordinal);
+        Assert.Contains("Gespreksinput", text, StringComparison.Ordinal);
         Assert.DoesNotContain("%", text, StringComparison.Ordinal);
         Assert.DoesNotContain("1994", text, StringComparison.Ordinal);
         Assert.DoesNotContain("32 jaar", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("geverifieerd", text, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Past goed", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Huisvesting", text, StringComparison.Ordinal);
         Assert.DoesNotContain("ZZ-AI-MARKER", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Voorbeeldstraat", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Jouw DNA in één oogopslag", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -117,12 +119,12 @@ public class PassportPdfV2Tests
         var text = TextOf(pdf);
         Assert.Equal(2, pdf.Pages);
         Assert.Contains("Marta Kowalska", text, StringComparison.Ordinal);
-        Assert.Contains("Nog niet gedaan", text, StringComparison.Ordinal);
-        Assert.Contains("0/4 DNA-tests afgerond", text, StringComparison.Ordinal);
+        Assert.Contains("0/4 DNA-tests", text, StringComparison.Ordinal);
         Assert.DoesNotContain("4/4", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Werkvoorkeuren", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Sterke punten", text, StringComparison.Ordinal);
         Assert.DoesNotContain("In mijn eigen woorden", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("4/4 DNA-tests", text, StringComparison.Ordinal);
         Assert.DoesNotContain("%", text, StringComparison.Ordinal);
     }
 
@@ -151,16 +153,15 @@ public class PassportPdfV2Tests
         var pdf = await Render(FullFacts());
         var text = TextOf(pdf);
         Assert.Equal(2, pdf.Pages);
-        Assert.Contains("Mijn verhaal", text, StringComparison.Ordinal);
-        Assert.Contains("Jouw sterkste eigenschappen", text, StringComparison.Ordinal);
-        Assert.Contains("Hier voel je je thuis", text, StringComparison.Ordinal);
-        Assert.Contains("Wat je belangrijk vindt", text, StringComparison.Ordinal);
-        Assert.Contains("Jouw DNA in één oogopslag", text, StringComparison.Ordinal);
-        Assert.Contains("Werk dat bij je past", text, StringComparison.Ordinal);
-        Assert.Contains("Praktisch", text, StringComparison.Ordinal);
-        Assert.Contains("Werkervaring", text, StringComparison.Ordinal);
-        Assert.Contains("Deel alleen als jij dat wilt", text, StringComparison.Ordinal);
-        Assert.Contains("denkt mee in het team", text, StringComparison.Ordinal);
+        Assert.Contains("Sterke punten", text, StringComparison.Ordinal);
+        Assert.Contains("Talen", text, StringComparison.Ordinal);
+        Assert.Contains("Werkvoorkeuren", text, StringComparison.Ordinal);
+        Assert.Contains("Ervaring", text, StringComparison.Ordinal);
+        Assert.Contains("Sectoren die bij mij passen", text, StringComparison.Ordinal);
+        Assert.Contains("Mijn DNA in 4 lagen", text, StringComparison.Ordinal);
+        Assert.Contains("Hoe ik graag werk", text, StringComparison.Ordinal);
+        Assert.Contains("Zo haal je het beste uit", text, StringComparison.Ordinal);
+        Assert.Contains("Gespreksinput", text, StringComparison.Ordinal);
         Assert.Contains("Orderpicker", text, StringComparison.Ordinal);
         Assert.DoesNotContain("%", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Samira", text, StringComparison.Ordinal);
@@ -206,12 +207,10 @@ public class PassportPdfV2Tests
 
         var pdf = await Render(facts);
         var text = TextOf(pdf);
-        Assert.Contains("Je hebt nog geen werkervaring ingevuld.", text, StringComparison.Ordinal);
-        Assert.Contains("Nog geen referenties via Lobsy.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Je hebt nog geen werkervaring ingevuld.", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Nog geen referenties via Lobsy.", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Vrijwilligerswerk", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Mantelzorg", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("Wat ik wil leren", text, StringComparison.Ordinal);
-        Assert.Contains("Nog niet gedaan", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Kwekerij", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Orderpicker", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Ze pakt het werk rustig op.", text, StringComparison.Ordinal);
@@ -248,11 +247,8 @@ public class PassportPdfV2Tests
             ],
             DreamTitle = "Teamleider logistiek"
         });
-        var text = TextOf(pdf);
-        Assert.Contains("Ze pakt het werk rustig op.", text, StringComparison.Ordinal);
-        Assert.Contains("Teamleider logistiek", text, StringComparison.Ordinal);
-        Assert.Contains("later", text, StringComparison.Ordinal);
-        Assert.DoesNotContain("%", text, StringComparison.Ordinal);
+        Assert.Equal(2, pdf.Pages);
+        Assert.DoesNotContain("%", TextOf(pdf), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -282,6 +278,7 @@ public class PassportPdfV2Tests
         Directory.CreateDirectory(dir);
         var scenarios = new (string Slug, PassportPdfFacts Facts)[]
         {
+            ("marta-nl", FullFacts() with { Language = "nl" }),
             ("rich-nl", RichSample() with { Language = "nl" }),
             ("thin-nl", ThinSample()),
             ("full-en", FullFacts() with { Language = "en" }),
@@ -563,7 +560,7 @@ public class PassportPdfV2Tests
         Assert.False(one.ShowRadar);
 
         var full = PassportPdfModelBuilder.Build(FullFacts());
-        Assert.True(full.ShowRadar);
+        Assert.False(full.ShowRadar);
     }
 
     [Fact]
@@ -572,16 +569,35 @@ public class PassportPdfV2Tests
         var pdf = await Render(ThinSample());
         var text = TextOf(pdf);
         Assert.Equal(2, pdf.Pages);
-        Assert.Contains("Nog geen betaald werk ingevuld.", text, StringComparison.Ordinal);
-        Assert.Contains("Vrijwilligerswerk", text, StringComparison.Ordinal);
+        Assert.Contains("Vrijwillige zorghulp", text, StringComparison.Ordinal);
         Assert.Contains("Mantelzorg", text, StringComparison.Ordinal);
         Assert.Contains("Wat ik wil leren", text, StringComparison.Ordinal);
         Assert.Contains("Nederlands op het werk", text, StringComparison.Ordinal);
         Assert.Contains("MBO 1", text, StringComparison.Ordinal);
-        Assert.Contains("Nog geen referenties via Lobsy.", text, StringComparison.Ordinal);
-        Assert.Contains("Nog te weinig lagen voor een plaatje.", text, StringComparison.Ordinal);
         Assert.DoesNotContain("Kwekerij", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Jouw DNA in één oogopslag", text, StringComparison.Ordinal);
         Assert.DoesNotContain("%", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Dna_pdf_blocks_are_omitted_when_the_flag_is_off()
+    {
+        var model = PassportPdfModelBuilder.Build(FullFacts() with { ShowDnaBlocks = false });
+        Assert.False(model.ShowDnaBlocks);
+        Assert.Empty(model.DnaLayers);
+        Assert.Empty(model.HowWorkLines);
+        Assert.Empty(model.BestOutTips);
+    }
+
+    [Fact]
+    public async Task Dna_pdf_blocks_do_not_render_when_the_flag_is_off()
+    {
+        var pdf = await Render(FullFacts() with { ShowDnaBlocks = false });
+        var text = TextOf(pdf);
+        Assert.Equal(2, pdf.Pages);
+        Assert.DoesNotContain(PassportPdfStrings.T("nl", "DnaTitle"), text, StringComparison.Ordinal);
+        Assert.DoesNotContain(PassportPdfStrings.T("nl", "HowIWork"), text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Zo haal je het beste uit", text, StringComparison.Ordinal);
     }
 
     [Fact]
