@@ -18,7 +18,7 @@ public sealed class MascotStickyBarGuardTests
         Assert.Contains(".lobsy-coach-dock", css, StringComparison.Ordinal);
         Assert.Contains("var(--sticky-footer-h", css, StringComparison.Ordinal);
         Assert.Contains(
-            ".app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-assistant-tab",
+            ".app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock",
             css,
             StringComparison.Ordinal);
     }

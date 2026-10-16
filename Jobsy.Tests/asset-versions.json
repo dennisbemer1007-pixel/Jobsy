@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "a043907b78e2d2370e4936c2049dc3cc450ccdf1faadf8edd932733158a55624",
-    "v": "20261016-03"
+    "sha256": "8562e2357c7eef860bafd691d4b4fdf85677591ca1cab66fac036e9d2989561e",
+    "v": "20261016-05"
   },
   "css/critical.css": {
     "sha256": "3a99a9a216cdf8bc2e4410503115fd778c06884a9727d734b3d3dad1cff9a075",
@@ -100,7 +100,7 @@
     "v": "20261005-23"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "b323f9555e8eb4489cab783c45c17800de6e7c56e4b9bdaa601f2cf8a94c1090",
+    "sha256": "59f858ea133eceefbe69072c266d689a43304ee8e755154f39c433c37b37a29d",
     "v": "20261015-06"
   },
   "css/features/ontdekkingsreis.css": {
@@ -172,7 +172,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "4252dc2629f67a38e2192ec940c02f58f32ce9e8f84fb9006ac92d716e09d547",
+    "sha256": "7ad2c627059d2c94fc6c0486a194f13a1cb06d79e512c276a4c09d2d79502042",
     "v": "20261016-04"
   },
   "js/app-extras.js": {
@@ -256,11 +256,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "8dd8e327fe850321a3d314c585b8d0bbea6ed7dcfbc4c375b9be4f68a7e1e225",
+    "sha256": "d3d61beb4f0a5a08265f7035ff7210a89f9e177d5f3a676bcbd314f7249ae27e",
     "v": "20261016-04"
   },
   "service-worker.published.js": {
-    "sha256": "a483221ef43963fe762b2a52bcfdd8dcc19dedd60cae2d7f51d0664cf88884f2",
+    "sha256": "eb2e157da54c2a2556addd29e4f1d7b9ec8c59255690a87d9bae115a69ed392f",
     "v": "20261016-04"
   }
 }

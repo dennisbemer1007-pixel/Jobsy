@@ -14871,12 +14871,6 @@ html.cookie-consent-known .cookie-consent {
         transform: none;
     }
 
-    /* Sticky test/wizard footers: coach tab must not cover Volgende / controls. */
-    .app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-assistant-tab {
-        visibility: hidden;
-        pointer-events: none;
-    }
-
     .feedback-widget__tab--edge {
         display: none !important;
     }
@@ -20736,6 +20730,15 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 .app-shell.has-bottom-nav .lobsy-coach-dock,
 .app-shell:has(.bottom-nav) .lobsy-coach-dock {
     bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 639px) {
+    /* Sticky test footers keep Volgende on the inline end; coach moves to inline start. */
+    .app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock {
+        inset-inline-end: auto;
+        inset-inline-start: max(12px, env(safe-area-inset-left, 0px));
+        align-items: flex-start;
+    }
 }
 
 .lobsy-coach-dock--tip-above {
