@@ -3,6 +3,7 @@ namespace Jobsy.Tests;
 public class PageAssetCatalogTests
 {
     [Theory]
+    [InlineData("/", 3)]
     [InlineData("/login", 3)]
     [InlineData("/account-maken", 3 + 15)]
     [InlineData("/banenkaart", 3 + 5)]

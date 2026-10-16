@@ -26,8 +26,11 @@
     <link rel="icon" type="image/png" href="favicon.png?v=20261004-13" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=20261004-13" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=20261004-13" />
-    <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
-    <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+    @if (IncludeMapPreconnect)
+    {
+        <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
+        <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
+    }
     <link rel="stylesheet" href="css/critical.css?v=20261004-13" />
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261004-11" />
@@ -235,11 +238,18 @@
             }
         });
     </script>
-        <script src="js/app-core.js?v=20261016-03" nonce="@Nonce" defer></script>
+        @if (LoadBlazorRuntime)
+        {
+            <script src="js/app-core.js?v=20261016-04" nonce="@Nonce" defer></script>
+            <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
+            <script src="js/lobsyPush.js?v=20261016-02" nonce="@Nonce" defer></script>
+            <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
+        }
+        else
+        {
+            <script src="js/app-public.js?v=20261016-04" nonce="@Nonce" defer></script>
+        }
         <script src="js/public-pages.js?v=20261004-13" nonce="@Nonce" defer></script>
-        <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
-        <script src="js/lobsyPush.js?v=20261016-02" nonce="@Nonce" defer></script>
-        <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
         @if (IncludeLandingScript)
         {
             <script src="js/landing.js?v=20261004-13" nonce="@Nonce" defer></script>
@@ -336,6 +346,9 @@
 
     private bool IncludeVacancyWizardScript =>
         PageAssetCatalog.IncludeVacancyWizardScript(RequestPath);
+
+    private bool IncludeMapPreconnect =>
+        PageAssetCatalog.IncludeMapPreconnect(RequestPath);
 
     private bool SkipBlazorForPage =>
         HttpContextAccessor.HttpContext?.GetEndpoint()?.Metadata.GetMetadata<NoBlazorRuntimeAttribute>() is not null;

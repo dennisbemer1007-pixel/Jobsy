@@ -4,7 +4,7 @@
     "v": "20261016-03"
   },
   "css/critical.css": {
-    "sha256": "5c193eeecf54e4284522ae4f2148d306c4442427bf25cce45d5bef8084612a90",
+    "sha256": "bbc105f0f85f9930f8e481fffc30e93b8fc87c347c1abd3eb7c7bc65c76af02b",
     "v": "20261004-13"
   },
   "css/features/account-mfa.css": {
@@ -172,12 +172,16 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "52b8a0e1d48c305267d6b36cad620a2b989dc5d0d6a98c78ea5cdadc197dcf6a",
-    "v": "20261016-03"
+    "sha256": "4252dc2629f67a38e2192ec940c02f58f32ce9e8f84fb9006ac92d716e09d547",
+    "v": "20261016-04"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
     "v": "20261015-pdfdl"
+  },
+  "js/app-public.js": {
+    "sha256": "64ec8e13b6a48873f2295e5161ec884cc861dc5cc19ccdac5006a75fb4e224c7",
+    "v": "20261016-04"
   },
   "js/blazor-boot.js": {
     "sha256": "da99bbfd6b96fc6ff22bae5b41634c6460046a5a6cb300c5f6bdf719a06c018a",
@@ -209,7 +213,7 @@
   },
   "js/jobMap.min.js": {
     "sha256": "2ced790a83420ebfd3b738dae6da6940175eb5dcbd73acb3f4ecad7b35f6cb5c",
-    "v": "20261016-03"
+    "v": "20261016-04"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",
@@ -224,7 +228,7 @@
     "v": "20261004-13"
   },
   "js/lobsyPush.js": {
-    "sha256": "3f4c3054886c758186960369e4053672db568b6b65cb1e4bea2da1a47d01a5be",
+    "sha256": "f0f7d020f344e23c92d1579a8a024561103248deffb912d2e5c960241b05bc7a",
     "v": "20261016-02"
   },
   "js/navFeedback.js": {
@@ -252,11 +256,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "de880b44e17e68c024f1855f8e8d9315e43fa00483a8490953229ce725a19054",
-    "v": "20261016-03"
+    "sha256": "8dd8e327fe850321a3d314c585b8d0bbea6ed7dcfbc4c375b9be4f68a7e1e225",
+    "v": "20261016-04"
   },
   "service-worker.published.js": {
-    "sha256": "902a6d6a01ebabce0b75c539b9e971a4a0a30b7d92f343baeba928daebeea75a",
-    "v": "20261016-03"
+    "sha256": "a483221ef43963fe762b2a52bcfdd8dcc19dedd60cae2d7f51d0664cf88884f2",
+    "v": "20261016-04"
   }
 }

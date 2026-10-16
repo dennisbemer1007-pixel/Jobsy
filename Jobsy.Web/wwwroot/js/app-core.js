@@ -669,7 +669,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261016-03"
+        "/js/jobMap.min.js?v=20261016-04"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -912,7 +912,7 @@ window.jobsyMaps = (function () {
     function isDiscoveryPath() {
         try {
             var path = (window.location && window.location.pathname) || "";
-            return path === "/" || path === "" || path === "/banenkaart";
+            return path === "/banenkaart" || path === "/banen";
         } catch (e) {
             return false;
         }
@@ -1014,9 +1014,10 @@ window.jobsyMaps = (function () {
             }
             if (isDiscoveryPath()) {
                 whenAfterFirstPaint(function () {
-                    ensure("discovery").catch(function () { });
+                    ensure("discovery").then(function () {
+                        bootDiscoveryMap();
+                    }).catch(function () { });
                 });
-                whenCircuitReady(bootDiscoveryMap);
             }
         } catch (e) { }
     }
@@ -1449,8 +1450,8 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261016-03"
-        : "/service-worker.js?v=20261016-03";
+        ? "/service-worker.published.js?v=20261016-04"
+        : "/service-worker.js?v=20261016-04";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
     var userRequestedReload = false;

@@ -103,6 +103,11 @@ public static class PageAssetCatalog
             return Area.None;
         }
 
+        if (path is "/" or "/partner" or "/westland" or "/lancering" or "/werkgevers")
+        {
+            return Area.None;
+        }
+
         if (path is "/login")
         {
             return Area.None;
@@ -176,6 +181,12 @@ public static class PageAssetCatalog
         AppendUnique(list, areas, Area.Account, AccountCss);
         AppendUnique(list, areas, Area.GratisDna, GratisDnaCss);
         return list;
+    }
+
+    public static bool IncludeMapPreconnect(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path is "/banenkaart" or "/banen";
     }
 
     public static bool IncludeLandingScript(string? rawPath)
