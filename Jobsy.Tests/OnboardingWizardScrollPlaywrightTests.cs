@@ -202,6 +202,8 @@ public sealed class OnboardingWizardScrollPlaywrightTests
             await ScrollWizardToTopAsync(page);
             await AssertMobileActionBarAsync(page, step, width, height);
             await AssertContentUsesMainScrollAsync(page, step);
+            await AssertSingleVisibleMascotAsync(page, step);
+            await AssertMascotDoesNotOverlapContentAsync(page, step);
 
             if (step >= lastStep)
             {
@@ -400,6 +402,80 @@ public sealed class OnboardingWizardScrollPlaywrightTests
             """);
 
         Assert.True(audit.Ok, $"Step {step} content flow: {audit.Reason} contentH={audit.ContentH} vh={audit.Vh}");
+    }
+
+    private static async Task AssertSingleVisibleMascotAsync(IPage page, int step)
+    {
+        var count = await page.EvaluateAsync<int>(
+            """
+            () => {
+              function isVisible(el) {
+                const r = el.getBoundingClientRect();
+                if (r.width < 6 || r.height < 6) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden' || Number(st.opacity) === 0) return false;
+                let p = el;
+                while (p) {
+                  const ps = getComputedStyle(p);
+                  if (ps.display === 'none' || ps.visibility === 'hidden') return false;
+                  p = p.parentElement;
+                }
+                return true;
+              }
+              return [...document.querySelectorAll('img')].filter(img => {
+                const src = (img.currentSrc || img.src || '').toLowerCase();
+                if (!src.includes('mascot')) return false;
+                return isVisible(img);
+              }).length;
+            }
+            """);
+
+        Assert.Equal(1, count);
+    }
+
+    private static async Task AssertMascotDoesNotOverlapContentAsync(IPage page, int step)
+    {
+        var audit = await page.EvaluateAsync<MascotOverlapAudit>(
+            """
+            () => {
+              function isVisible(el) {
+                const r = el.getBoundingClientRect();
+                if (r.width < 6 || r.height < 6) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden') return false;
+                return true;
+              }
+              function hits(a, b) {
+                return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+              }
+              const mascot = [...document.querySelectorAll('img')].find(img => {
+                const src = (img.currentSrc || img.src || '').toLowerCase();
+                return src.includes('mascot') && isVisible(img);
+              });
+              if (!mascot) return { ok: false, reason: 'no-mascot' };
+              const m = mascot.getBoundingClientRect();
+              const footer = document.querySelector('.ob-wizard__footer[data-sticky-footer], .test-flow__footer[data-sticky-footer]');
+              if (footer && isVisible(footer)) {
+                const f = footer.getBoundingClientRect();
+                if (hits(m, f)) return { ok: false, reason: 'over-footer' };
+              }
+              const card = document.querySelector('.ob-wizard__card');
+              if (card && isVisible(card)) {
+                const c = card.getBoundingClientRect();
+                if (hits(m, c)) return { ok: false, reason: 'over-card' };
+              }
+              const blockers = document.querySelectorAll(
+                '.ob-wizard__content input, .ob-wizard__content select, .ob-wizard__content textarea, .ob-wizard__content button, .ob-wizard__content label, .ob-wizard__content .lobsy-choice-tile, .ob-wizard__content .test-likert__opt');
+              for (const el of blockers) {
+                if (!isVisible(el)) continue;
+                const r = el.getBoundingClientRect();
+                if (hits(m, r)) return { ok: false, reason: 'over-' + el.tagName };
+              }
+              return { ok: true, reason: 'ok' };
+            }
+            """);
+
+        Assert.True(audit.Ok, $"Step {step} mascot overlap: {audit.Reason}");
     }
 
     private static Task ScrollWizardToTopAsync(IPage page)
@@ -643,5 +719,11 @@ public sealed class OnboardingWizardScrollPlaywrightTests
         public string? Reason { get; set; }
         public double? ContentH { get; set; }
         public double? Vh { get; set; }
+    }
+
+    private sealed class MascotOverlapAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
     }
 }

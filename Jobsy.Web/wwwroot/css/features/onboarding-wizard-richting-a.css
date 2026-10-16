@@ -170,7 +170,26 @@
     color: var(--brand);
     font-size: 0.72rem;
     font-weight: 700;
-    text-transform: capitalize;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__mascot-anchor {
+    position: fixed;
+    z-index: 43;
+    inset-inline-end: max(20px, env(safe-area-inset-right, 0px));
+    inset-inline-start: auto;
+    bottom: calc(var(--sticky-footer-h, 5.75rem) + env(safe-area-inset-bottom, 0px) + 6px);
+    pointer-events: none;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__mascot-anchor img {
+    display: block;
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+  }
+
+  .app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock {
+    display: none !important;
   }
 
   .ob-wizard--richting-a .ob-wizard__content h1 {
@@ -310,9 +329,49 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__transport .lobsy-choice-grid--wrap {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.4rem;
+    width: 100%;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__card .ob-wizard__check {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 48px;
+    margin: 0.65rem 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    font-size: 0.9375rem;
+    font-weight: 600;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__card .ob-wizard__check input[type="checkbox"] {
+    width: 1.25rem;
+    height: 1.25rem;
+    min-height: auto !important;
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__dream-search {
+    width: 100%;
+    margin-bottom: 0.65rem;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__dream-search > input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 48px !important;
+    font-size: 16px !important;
+    padding: 0.5rem 0.75rem !important;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
   }
 
   .ob-wizard--richting-a .ob-wizard__education-grid .lobsy-choice-tile,
@@ -472,8 +531,19 @@
   }
 
   .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] {
+    display: flex !important;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
     padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px)) !important;
     box-sizing: border-box;
+  }
+
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-wizard__footer-extra {
+    margin: 0 !important;
+    padding: 0 0.5rem;
+    align-self: flex-start;
+    min-height: 44px;
   }
 
   .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-wizard__actionbar {
@@ -482,15 +552,18 @@
     gap: 0.65rem;
     align-items: center;
     width: 100%;
+    max-width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
   }
 
   .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-wizard__back-footer {
     width: auto !important;
     inline-size: auto !important;
+    max-inline-size: none !important;
     justify-self: start;
-    padding: 0 0.5rem;
+    padding: 0 0.25rem;
     min-height: 48px;
     text-decoration: none;
     font-weight: 600;
@@ -526,17 +599,6 @@
 
 }
 
-.app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock {
-  transform: scale(0.78);
-  transform-origin: bottom right;
-  z-index: 44;
-  pointer-events: none;
-}
-
-.app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock__btn {
-  pointer-events: auto;
-}
-
 @media (max-width: 1023px) {
   .ob-wizard--richting-a .ob-wizard__badge {
     display: none;
@@ -545,7 +607,8 @@
 
 @media (min-width: 1024px) {
   .ob-wizard--richting-a .ob-wizard__mobile-top,
-  .ob-wizard--richting-a .ob-wizard__step-pill {
+  .ob-wizard--richting-a .ob-wizard__step-pill,
+  .ob-wizard--richting-a .ob-wizard__mascot-anchor {
     display: none !important;
   }
 }

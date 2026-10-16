@@ -304,7 +304,8 @@
             changed = true;
         }
 
-        var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative);
+        var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
+                        || path.TrimStart('/').Equals("candidate/start", StringComparison.OrdinalIgnoreCase);
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;

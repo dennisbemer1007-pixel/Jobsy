@@ -22,7 +22,7 @@
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261016-03" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261016-04" />
 </HeadContent>
 
 <div class="ob-wizard ob-wizard--richting-a">
@@ -291,6 +291,10 @@
 
                 </section>
 
+                <div class="ob-wizard__mascot-anchor" aria-hidden="true">
+                    <img src="/images/brand/mascot-64.webp" width="36" height="36" alt="" />
+                </div>
+
                 @if (!ShowMiniTestFooter)
                 {
                     <footer class="ob-wizard__footer" data-sticky-footer="true">
@@ -418,7 +422,14 @@
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
     private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
     private bool AvailabilityValid => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0;
-    private string MobileStepBadge => Culture.Format("Discovery.StepOf", _step);
+    private string MobileStepBadge
+    {
+        get
+        {
+            var raw = Culture.Format("Discovery.StepOf", _step);
+            return raw.Length > 0 ? char.ToUpperInvariant(raw[0]) + raw[1..] : raw;
+        }
+    }
 
     private string MobileTopMeta =>
         Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
