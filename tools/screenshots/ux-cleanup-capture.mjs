@@ -61,9 +61,17 @@ for (const [name, route] of pages) {
       if (await list.count()) await list.click({ timeout: 8000 }).catch(() => {});
       await page.waitForTimeout(500);
     }
+    if (name.startsWith('banenkaart')) {
+      await page.waitForTimeout(name === 'banenkaart' ? 1500 : 800);
+    }
     const file = path.join(outRoot, `${name}-${tag}.png`);
     await mkdir(path.dirname(file), { recursive: true });
-    await page.screenshot({ path: file, fullPage: false });
+    try {
+      await page.screenshot({ path: file, fullPage: false, timeout: 60_000 });
+    } catch (err) {
+      await page.waitForTimeout(2000);
+      await page.screenshot({ path: file, fullPage: false, timeout: 60_000 });
+    }
     console.log('wrote', file);
     await ctx.close();
   }

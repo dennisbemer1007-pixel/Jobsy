@@ -47,7 +47,8 @@
                             OnManualRequested="ShowManual"
                             OnQueryChanged="OnSearchQueryChanged" />
 
-            @if (HostEnvironment.IsDevelopment())
+            @if (HostEnvironment.IsDevelopment()
+                 && Configuration.GetValue("Jobsy:ShowRegisterKvkStubs", false))
             {
                 <p class="wa-hint">Stub-KVK’s: 12345678 (werkgever), 55667788 (intermediair SBI 78)</p>
             }

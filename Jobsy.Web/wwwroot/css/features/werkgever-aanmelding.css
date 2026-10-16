@@ -70,10 +70,14 @@
   margin: 0;
 }
 .wa-register-card.au-card {
+  position: relative;
+  padding-block-start: 2.5rem;
   box-shadow: var(--shadow-md, 0 12px 40px color-mix(in srgb, var(--text) 8%, transparent));
 }
-.wa-register-card__mascot {
-  margin-block-end: 0.35rem;
+.wa-theme .wa-register-card .au-card__mascot {
+  width: 4rem;
+  top: -2.75rem;
+  inset-inline-end: 1rem;
 }
 .wa-progress {
   margin-block-end: 1.1rem;
