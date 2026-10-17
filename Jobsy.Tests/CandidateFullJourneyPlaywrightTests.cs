@@ -120,7 +120,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
         await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
         await page.Locator("input[name=firstName]").First.FillAsync(firstName);
-        await page.Locator("button.login-submit").First.ClickAsync();
+        await page.Locator("form.pub-signup__form button[type=submit], button.au-submit, button.login-submit").First.ClickAsync();
         await page.WaitForURLAsync("**/account-maken/code**", new() { Timeout = 60_000 });
 
         var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);

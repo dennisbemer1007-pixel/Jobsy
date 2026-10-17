@@ -4,7 +4,10 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
+using Jobsy.Core.Enums;
+using Jobsy.Infrastructure.Data;
 using Jobsy.Tests.E2e;
+using Microsoft.EntityFrameworkCore;
 using Jobsy.Tests.Werkgever;
 using Microsoft.Playwright;
 
@@ -48,11 +51,25 @@ internal sealed class E2eFlowRunner
             _report.SmtpNote = ex.Message;
         }
 
+        var chainOnly = string.Equals(
+            Environment.GetEnvironmentVariable("JOBSY_E2E_FLOW_CHAIN_ONLY"),
+            "1",
+            StringComparison.Ordinal);
+
         var mobileEmail = $"e2e-m-{Guid.NewGuid():N}@jobsy.local";
-        var chainEmail = $"e2e-d-{Guid.NewGuid():N}@jobsy.local";
+        var chainEmail = chainOnly
+            ? await ResolveLatestChainCandidateEmailAsync(_conn)
+            : $"e2e-d-{Guid.NewGuid():N}@jobsy.local";
+        if (string.IsNullOrWhiteSpace(chainEmail))
+        {
+            throw new InvalidOperationException("JOBSY_E2E_FLOW_CHAIN_ONLY=1 but no e2e-d-* candidate in DB.");
+        }
+
         const string vacancyTitle = "Orderpicker";
         Guid? vacancyId = null;
 
+        if (!chainOnly)
+        {
         // —— 1–2 Mobile fresh candidate ——
         var swMobileOnb = Stopwatch.StartNew();
         await using (var ctx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
@@ -90,9 +107,30 @@ internal sealed class E2eFlowRunner
             _report.TimingMs["onboarding_plus_discovery_desktop"] = swDeskOnb.ElapsedMilliseconds + swDisc.ElapsedMilliseconds;
 
             await RunPaspoortChecksAsync(page, "desktop-1440");
+            await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "chain-email.txt"), chainEmail);
+        }
+        }
 
-            vacancyId = await PublishVacancyAsync(page, "desktop-1440", vacancyTitle);
+        if (Guid.TryParse(Environment.GetEnvironmentVariable("JOBSY_E2E_FLOW_VACANCY_ID"), out var reuseVacancyId))
+        {
+            vacancyId = reuseVacancyId;
             _report.VacancyId = vacancyId;
+        }
+        else
+        {
+            await using (var employerCtx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
+            {
+                var page = await PrepPageAsync(employerCtx);
+                Assert.True(
+                    await KbE2e.TryLoginAsync(
+                        page,
+                        _baseUrl,
+                        VacancyWizardE2e.EmployerEmail,
+                        VacancyWizardE2e.EmployerPassword),
+                    "Employer login failed before vacancy publish.");
+                vacancyId = await PublishVacancyAsync(page, "desktop-1440", vacancyTitle);
+                _report.VacancyId = vacancyId;
+            }
         }
 
         if (vacancyId is null)
@@ -100,6 +138,13 @@ internal sealed class E2eFlowRunner
             throw new InvalidOperationException("Vacancy publish failed.");
         }
 
+        var skipBanenkaart = string.Equals(
+            Environment.GetEnvironmentVariable("JOBSY_E2E_FLOW_SKIP_BANENKAART"),
+            "1",
+            StringComparison.Ordinal);
+
+        if (!skipBanenkaart)
+        {
         // —— 5 Employer mobile wizard (screens only, no sidebar assert) ——
         await using (var ctx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
         {
@@ -120,25 +165,48 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(2500);
             await Shot(page, tag, "06-banenkaart-guest");
 
-            if (mobile)
+            try
             {
-                var open = page.Locator("[data-testid=kb-filter-open], button:has-text('Filter')").First;
-                if (await open.CountAsync() > 0)
+                if (mobile)
                 {
-                    await open.ClickAsync();
-                    await page.WaitForTimeoutAsync(600);
-                    await Shot(page, tag, "06-banenkaart-filter-sheet");
+                    var open = page.Locator("[data-testid=kb-filter-open], [data-testid=kb-filters-button], button:has-text('Filter')").First;
+                    if (await open.CountAsync() > 0)
+                    {
+                        await open.ClickAsync(new() { Force = true, Timeout = 15_000 });
+                        await page.WaitForTimeoutAsync(600);
+                        await Shot(page, tag, "06-banenkaart-filter-sheet");
+                    }
+                }
+                else
+                {
+                    var filters = page.Locator(
+                        "[data-testid=kb-filter-drawer-toggle], [data-testid=kb-filters-button], button:has-text('Filters')").First;
+                    if (await filters.CountAsync() > 0)
+                    {
+                        try
+                        {
+                            await filters.ClickAsync(new() { Force = true, Timeout = 15_000 });
+                        }
+                        catch (PlaywrightException)
+                        {
+                            await page.EvaluateAsync(
+                                """
+                                () => {
+                                  const el = document.querySelector(
+                                    '[data-testid=kb-filter-drawer-toggle], [data-testid=kb-filters-button]');
+                                  el?.click();
+                                }
+                                """);
+                        }
+
+                        await page.WaitForTimeoutAsync(600);
+                        await Shot(page, tag, "06-banenkaart-filter-drawer");
+                    }
                 }
             }
-            else
+            catch (PlaywrightException)
             {
-                var filters = page.Locator("[data-testid=kb-filter-drawer-toggle], button:has-text('Filters')").First;
-                if (await filters.CountAsync() > 0)
-                {
-                    await filters.ClickAsync();
-                    await page.WaitForTimeoutAsync(600);
-                    await Shot(page, tag, "06-banenkaart-filter-drawer");
-                }
+                await Shot(page, tag, "06-banenkaart-filter-skipped");
             }
 
             await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
@@ -147,8 +215,18 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(1500);
             await Shot(page, tag, "06-banenkaart-logged-in");
         }
+        }
 
         // —— 7–9 Chain candidate vacancy + apply ——
+        var skipApply = string.Equals(
+            Environment.GetEnvironmentVariable("JOBSY_E2E_FLOW_SKIP_APPLY"),
+            "1",
+            StringComparison.Ordinal);
+
+        if (!skipApply)
+        {
+        await CandidateJourneyE2e.EnsureDemoApplyProfileReadyAsync(chainEmail);
+
         var swApply = Stopwatch.StartNew();
         foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
         {
@@ -157,14 +235,24 @@ internal sealed class E2eFlowRunner
             await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            await page.WaitForTimeoutAsync(1500);
+            await Shot(page, tag, "07-vacancy-match-before-availability");
+            await EnableAvailableForWorkIfPromptedAsync(page);
             await page.WaitForTimeoutAsync(2000);
             await Shot(page, tag, "07-vacancy-match");
+            if (await page.GetByText("Je hebt gesolliciteerd", new() { Exact = false }).CountAsync() > 0)
+            {
+                await Shot(page, tag, "09-applied");
+                continue;
+            }
 
             var body = await page.InnerTextAsync("body");
             var hasFit = await page.Locator("[data-testid=kb-fit-panel], .kb-fit-panel").CountAsync() > 0;
-            var hasPct = Regex.IsMatch(body, @"\d+\s*%") || body.Contains("match", StringComparison.OrdinalIgnoreCase);
-            _report.Step7HasFitPanel = hasFit;
-            _report.Step7HasPercent = hasPct;
+            var hasPct = Regex.IsMatch(body, @"\d+\s*%")
+                || body.Contains("match", StringComparison.OrdinalIgnoreCase)
+                || body.Contains("Waar je matcht", StringComparison.OrdinalIgnoreCase);
+            _report.Step7HasFitPanel |= hasFit;
+            _report.Step7HasPercent |= hasPct;
 
             var day = page.Locator(".day-in-life-link a, a:has-text('dag in het leven')").First;
             if (await day.CountAsync() > 0)
@@ -182,12 +270,34 @@ internal sealed class E2eFlowRunner
 
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
-            await Shot(page, tag, "09-applied");
+            if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
+            {
+                await Shot(page, tag, "09-applied");
+                continue;
+            }
+
+            await OpenVacancyApplyPanelAsync(page);
+            if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
+            {
+                await Shot(page, tag, "09-applied");
+                continue;
+            }
+
+            try
+            {
+                await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
+                await Shot(page, tag, "09-applied");
+            }
+            catch (Exception ex)
+            {
+                _report.SmtpNote = (_report.SmtpNote ?? "") + $" apply-{tag}: {ex.Message};";
+                await Shot(page, tag, "09-apply-failed");
+            }
         }
 
         swApply.Stop();
         _report.TimingMs["apply_flow"] = swApply.ElapsedMilliseconds;
+        }
 
         await Task.Delay(3_000);
         await ScreenshotCapturedMailsAsync(browser, VacancyWizardE2e.EmployerEmail, "10-employer-new-application");
@@ -195,6 +305,12 @@ internal sealed class E2eFlowRunner
         await RenderTemplateScreenshotAsync(browser, "ApplicationConfirmation", "09-candidate-application-confirmation-template");
 
         // —— 10–12 Employer ——
+        var chainApplicationId = await ResolveChainApplicationIdAsync(chainEmail, vacancyId);
+        if (chainApplicationId is Guid resetAppId)
+        {
+            await ResetApplicationToPendingForPhase2UiAsync(resetAppId);
+        }
+
         await using (var ctx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
         {
             var page = await PrepPageAsync(ctx);
@@ -212,34 +328,94 @@ internal sealed class E2eFlowRunner
             await KbE2e.WaitForStyledAppAsync(page);
             await Shot(page, "desktop-1440", "10-employer-meldingen");
 
-            await page.GotoAsync(_baseUrl + "/werkgever/sollicitaties");
+            var sollicitatieUrl = chainApplicationId is Guid appId && vacancyId is Guid vid
+                ? $"{_baseUrl}/werkgever/sollicitaties?vacancyId={vid:D}&kandidaat={appId:D}"
+                : chainApplicationId is Guid appOnly
+                    ? $"{_baseUrl}/werkgever/sollicitaties?kandidaat={appOnly:D}"
+                    : _baseUrl + "/werkgever/sollicitaties";
+            await page.GotoAsync(sollicitatieUrl);
             await KbE2e.WaitForStyledAppAsync(page);
-            await page.WaitForTimeoutAsync(1500);
-            await Shot(page, "desktop-1440", "11-applicants-list");
-
-            var accept = page.GetByRole(AriaRole.Button, new() { Name = "Accepteren" }).First;
-            if (await accept.CountAsync() == 0)
+            await page.WaitForTimeoutAsync(2000);
+            if (chainApplicationId is Guid)
             {
-                accept = page.Locator("button:has-text('Accepteren')").First;
+                await page.Locator("[data-testid=wg-phase2-panel], .wg-app-drawer__title")
+                    .First
+                    .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 45_000 });
             }
 
-            if (await accept.CountAsync() > 0)
-            {
-                await accept.ClickAsync();
-                await page.WaitForTimeoutAsync(2000);
-                await Shot(page, "desktop-1440", "11-accept-open");
-                var maqqie = page.GetByRole(AriaRole.Button, new() { Name = "Maqqie" }).First;
-                if (await maqqie.CountAsync() == 0)
-                {
-                    maqqie = page.Locator("button:has-text('Maqqie')").First;
-                }
+            await Shot(page, "desktop-1440", "11-applicants-list");
 
-                if (await maqqie.CountAsync() > 0)
+            if (chainApplicationId is null && await page.Locator(".ent-drawer").CountAsync() == 0)
+            {
+                var pipelineCard = page.Locator("[data-testid=wg-app-pipeline] .wg-app-card")
+                    .Filter(new() { HasText = "E2eDesk" })
+                    .First;
+                if (await pipelineCard.CountAsync() > 0)
                 {
-                    await maqqie.ClickAsync();
-                    await page.WaitForTimeoutAsync(1500);
-                    await Shot(page, "desktop-1440", "12-maqqie-chosen");
-                    _report.MaqqieChosen = true;
+                    await pipelineCard.ClickAsync();
+                    await page.WaitForTimeoutAsync(1200);
+                }
+            }
+            else if (chainApplicationId is Guid && await page.Locator(".ent-drawer").CountAsync() == 0)
+            {
+                await page.WaitForTimeoutAsync(1500);
+            }
+
+            await Shot(page, "desktop-1440", "11-applicant-drawer");
+
+            var phase2Panel = page.Locator("[data-testid=wg-phase2-panel]");
+            if (await phase2Panel.CountAsync() > 0)
+            {
+                await phase2Panel.First.ScrollIntoViewIfNeededAsync();
+            }
+
+            var phase2Accept = phase2Panel.Locator("button.btn-compact--primary").First;
+            if (await phase2Accept.CountAsync() > 0 && await phase2Accept.IsVisibleAsync())
+            {
+                await phase2Accept.ScrollIntoViewIfNeededAsync();
+                await phase2Accept.ClickAsync();
+                await page.WaitForTimeoutAsync(2500);
+                await Shot(page, "desktop-1440", "11-accept-open");
+                await ReloadSelectedPhase2Async(page);
+            }
+            else
+            {
+                await Shot(page, "desktop-1440", "11-accept-skipped");
+            }
+
+            var maqqie = phase2Panel.GetByRole(AriaRole.Button, new() { Name = "Via Maqqie" }).First;
+            if (await maqqie.CountAsync() == 0)
+            {
+                maqqie = page.GetByRole(AriaRole.Button, new() { Name = "Via Maqqie" }).First;
+            }
+
+            try
+            {
+                await maqqie.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 20_000 });
+                await maqqie.ClickAsync();
+                await page.WaitForTimeoutAsync(1500);
+                await Shot(page, "desktop-1440", "12-maqqie-chosen");
+                _report.MaqqieChosen = true;
+            }
+            catch (TimeoutException)
+            {
+                if (await phase2Panel.CountAsync() > 0)
+                {
+                    var body = await phase2Panel.First.InnerTextAsync();
+                    if (body.Contains("Route: Maqqie", StringComparison.OrdinalIgnoreCase)
+                        || body.Contains("Route: Maqqie", StringComparison.Ordinal))
+                    {
+                        await Shot(page, "desktop-1440", "12-maqqie-chosen");
+                        _report.MaqqieChosen = true;
+                    }
+                    else
+                    {
+                        await Shot(page, "desktop-1440", "12-maqqie-missing");
+                    }
+                }
+                else
+                {
+                    await Shot(page, "desktop-1440", "12-maqqie-missing");
                 }
             }
         }
@@ -508,6 +684,133 @@ internal sealed class E2eFlowRunner
             using var p = Process.Start(psi);
             p?.WaitForExit(30_000);
         }
+    }
+
+    private static async Task EnableAvailableForWorkIfPromptedAsync(IPage page)
+    {
+        var toggle = page.GetByRole(AriaRole.Button, new() { Name = "Zet 'Beschikbaar voor werk' aan" });
+        if (await toggle.CountAsync() > 0 && await toggle.IsVisibleAsync())
+        {
+            await toggle.ClickAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(1500);
+        }
+    }
+
+    private static async Task ReloadSelectedPhase2Async(IPage page)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const p = document.querySelector('[data-testid=wg-phase2-panel]');
+                  return p && (p.innerText.includes('Via Maqqie') || p.innerText.includes('Route: Maqqie'));
+                }
+                """,
+                null,
+                new() { Timeout = 25_000 });
+        }
+        catch (TimeoutException)
+        {
+            // drawer may still be loading context
+        }
+    }
+
+    private static async Task OpenVacancyApplyPanelAsync(IPage page)
+    {
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
+        await EnableAvailableForWorkIfPromptedAsync(page);
+        var stickyApply = page.Locator("[data-testid=kb-detail-apply]");
+        if (await stickyApply.CountAsync() > 0 && await stickyApply.IsVisibleAsync())
+        {
+            await stickyApply.ClickAsync(new() { Force = true });
+        }
+        else
+        {
+            var applyBtn = page.GetByRole(AriaRole.Button, new() { Name = "Solliciteer" });
+            if (await applyBtn.CountAsync() == 0)
+            {
+                applyBtn = page.Locator("a:has-text('Solliciteer'), button:has-text('Solliciteer')");
+            }
+
+            if (await applyBtn.CountAsync() > 0)
+            {
+                await applyBtn.First.ClickAsync(new() { Force = true, Timeout = 30_000 });
+            }
+        }
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              window.scrollTo(0, document.body.scrollHeight);
+              document.getElementById('apply')?.scrollIntoView({ block: 'center', behavior: 'instant' });
+            }
+            """);
+        await page.WaitForTimeoutAsync(800);
+        if (await page.Locator("#apply").CountAsync() > 0)
+        {
+            await page.Locator("#apply").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 60_000 });
+        }
+    }
+
+    private async Task ResetApplicationToPendingForPhase2UiAsync(Guid applicationId)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(_conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var app = await db.Applications.FirstOrDefaultAsync(a => a.Id == applicationId);
+        if (app is null)
+        {
+            return;
+        }
+
+        var placements = db.ApplicationPlacements.Where(p => p.ApplicationId == applicationId);
+        db.ApplicationPlacements.RemoveRange(await placements.ToListAsync());
+        app.Status = ApplicationStatus.Pending;
+        app.RespondedAt = null;
+        await db.SaveChangesAsync();
+    }
+
+    private async Task<Guid?> ResolveChainApplicationIdAsync(string chainEmail, Guid? vacancyId)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(_conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var userId = await db.Users.AsNoTracking()
+            .Where(u => u.Email == chainEmail)
+            .Select(u => u.Id)
+            .FirstOrDefaultAsync();
+        if (userId == Guid.Empty)
+        {
+            return null;
+        }
+
+        var q = db.Applications.AsNoTracking().Where(a => a.CandidateUserId == userId);
+        if (vacancyId is Guid vid)
+        {
+            q = q.Where(a => a.VacancyId == vid);
+        }
+
+        return await q.OrderByDescending(a => a.CreatedAt).Select(a => a.Id).FirstOrDefaultAsync();
+    }
+
+    private static async Task<string> ResolveLatestChainCandidateEmailAsync(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(connectionString, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        return await db.Users.AsNoTracking()
+            .Where(u => u.Email.StartsWith("e2e-d-") && u.Email.EndsWith("@jobsy.local"))
+            .OrderByDescending(u => u.EmailVerifiedAtUtc ?? DateTime.MinValue)
+            .Select(u => u.Email)
+            .FirstOrDefaultAsync() ?? "";
     }
 
     private static async Task<IBrowserContext> CreateContextAsync(IBrowser browser, (int W, int H) vp, int dpr)

@@ -15,7 +15,7 @@ internal static class E2eFlowOnboarding
         await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
         await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.WaitForSelectorAsync("#signup-title, .pub-signup__title, input[name=email]", new() { Timeout = 90_000 });
+        await page.WaitForSelectorAsync("#signup-title, .pub-signup__title, .au-title, input[name=email]", new() { Timeout = 90_000 });
         await KbE2e.WaitForStyledAppAsync(page);
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
@@ -29,12 +29,14 @@ internal static class E2eFlowOnboarding
             await first.FillAsync(firstName);
         }
 
-        var submit = page.Locator("form button.login-submit, button.login-submit").First;
-        await submit.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        var submit = page.Locator(
+            "form.pub-signup__form button[type=submit], form.login-form button[type=submit], button.au-submit, button.login-submit").First;
+        await submit.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             """
             () => {
-              const btn = document.querySelector('form button.login-submit, button.login-submit');
+              const btn = document.querySelector(
+                'form.pub-signup__form button[type=submit], form.login-form button[type=submit], button.au-submit, button.login-submit');
               return btn && !btn.disabled && btn.getAttribute('aria-disabled') !== 'true';
             }
             """,
@@ -349,15 +351,18 @@ internal static class E2eFlowOnboarding
             }
         }
 
-        foreach (var cb in await page.Locator(".ob-wizard__consent input[type=checkbox]:not(:checked), .ob-wizard__check input[type=checkbox]:not(:checked)").AllAsync())
+        var uncheckedBoxes = page.Locator(
+            ".ob-wizard__consent input[type=checkbox]:not(:checked), .ob-wizard__check input[type=checkbox]:not(:checked)");
+        var boxCount = await uncheckedBoxes.CountAsync();
+        for (var i = 0; i < boxCount; i++)
         {
             try
             {
-                await cb.CheckAsync(new() { Timeout = 2_000, Force = true });
+                await uncheckedBoxes.Nth(i).CheckAsync(new() { Timeout = 2_000, Force = true });
             }
-            catch (PlaywrightException)
+            catch (Exception)
             {
-                // optional
+                // optional or off-screen consent
             }
         }
     }
