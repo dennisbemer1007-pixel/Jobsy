@@ -7,6 +7,7 @@ const pagesDir = path.join(root, "pages", "kandidaat");
 fs.mkdirSync(pagesDir, { recursive: true });
 
 const logoRel = "../../shared/assets/lobsy-64.webp";
+const dashRel = "../../shared/candidate-home-bg.svg";
 const cssRel = "../../shared/kandidaat.css";
 
 function head(title) {
@@ -19,10 +20,11 @@ function head(title) {
 </head>`;
 }
 
-function candidateShell(activeNotif = true) {
+function candidateShell({ activeNotif = false, behindOverlay = false } = {}) {
+  const shellClass = behindOverlay ? " k-shell--behind-overlay" : "";
   return `
 <body>
-<div class="k-shell">
+<div class="k-shell${shellClass}">
   <header class="k-header">
     <a class="k-brand" href="#"><img src="${logoRel}" width="44" height="44" alt=""/> Lobsy</a>
     <div class="k-header__actions">
@@ -32,9 +34,11 @@ function candidateShell(activeNotif = true) {
       </button>
     </div>
   </header>
-  <div class="k-map-bg" aria-hidden="true"><div class="k-map-bg__fake"></div></div>
+  <div class="k-dashboard" aria-hidden="true">
+    <img class="k-dashboard__art" src="${dashRel}" width="390" height="700" alt=""/>
+  </div>
   <nav class="k-bottom-nav" aria-label="Hoofdmenu">
-    <a class="is-on" href="#">Zoeken</a>
+    <a class="is-on" href="#">Home</a>
     <a href="#">Sollicitaties</a>
     <a href="#">Profiel</a>
     <a href="#">Meer</a>
@@ -46,14 +50,13 @@ function shellEnd() {
 }
 
 const reminderCopy =
-  "Je hebt een uitnodiging om te solliciteren. Reageer je niet binnen 2 dagen, dan zetten we je tijdelijk op <strong>niet beschikbaar</strong> — je verschijnt dan niet meer op de kandidatenkaart voor werkgevers.";
+  "Je hebt een uitnodiging om te solliciteren. Reageer je niet binnen 2 dagen, dan zetten we je tijdelijk op <strong>niet beschikbaar</strong>. Je staat dan niet meer op de kandidatenkaart voor werkgevers.";
 
 const declineFine =
-  "Afwijzen telt als reactie: daar hoort geen waarschuwing of andere consequentie bij.";
+  "Afwijzen telt als reactie. Daar hoort geen waarschuwing of andere consequentie bij.";
 
-// 1. In-app notification
 const notifPage = `${head("Kandidaat — herinnering uitnodiging (in-app)")}
-${candidateShell(true)}
+${candidateShell({ activeNotif: true, behindOverlay: true })}
   <div class="k-notif-scrim" aria-hidden="true"></div>
   <aside class="k-notif-panel" role="dialog" aria-labelledby="notif-title">
     <div class="k-notif-panel__head">
@@ -64,12 +67,12 @@ ${candidateShell(true)}
       <li class="k-notif-item k-notif-item--highlight">
         <div class="k-notif-item__tag">
           <svg class="i" viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14.1l-3-3"/></svg>
-          Vriendelijke herinnering
+          Herinnering
         </div>
         <p>${reminderCopy}</p>
         <div class="k-notif-item__actions">
           <button type="button" class="k-btn k-btn--primary">Bekijk uitnodiging</button>
-          <button type="button" class="k-btn">Niet nu</button>
+          <button type="button" class="k-btn">Afwijzen</button>
         </div>
         <p class="k-notif-item__fine">${declineFine}</p>
       </li>
@@ -83,7 +86,6 @@ ${shellEnd()}`;
 
 fs.writeFileSync(path.join(pagesDir, "reminder-notificatie.html"), notifPage, "utf8");
 
-// 2. Email
 const emailPage = `${head("Kandidaat — herinnering uitnodiging (e-mail)")}
 <body>
 <div class="k-email-wrap">
@@ -100,14 +102,14 @@ const emailPage = `${head("Kandidaat — herinnering uitnodiging (e-mail)")}
       </div>
       <h1>Je uitnodiging wacht nog op je</h1>
       <p>Hoi,</p>
-      <p>Je hebt een uitnodiging om te solliciteren via Lobsy. We willen je even vriendelijk helpen herinneren — reageer je niet binnen <strong>2 dagen</strong>, dan zetten we je tijdelijk op niet beschikbaar. Je telt dan niet meer mee op de kandidatenkaart, totdat je weer aangeeft dat je open staat voor werk.</p>
-      <p>Dat is geen straf: het houdt de kaart eerlijk voor werkgevers én voor kandidaten die wél reageren.</p>
+      <p>Je hebt een uitnodiging om te solliciteren via Lobsy. Even vriendelijk ter herinnering: reageer je niet binnen <strong>2 dagen</strong>, dan zetten we je tijdelijk op niet beschikbaar. Je telt dan niet meer mee op de kandidatenkaart, totdat je weer aangeeft open te staan voor werk.</p>
+      <p>Dat is bedoeld om de kaart actueel te houden, niet om je te corrigeren.</p>
       <div class="k-email__cta">
         <a class="k-btn k-btn--primary" href="#" style="text-decoration:none">Uitnodiging bekijken</a>
       </div>
       <p style="font-size:var(--text-xs);color:var(--muted)">${declineFine}</p>
       <div class="k-email__footer">
-        <p>Je ontvangt deze mail omdat je vindbaar bent voor werkgevers op Lobsy. Vragen? Antwoord op deze mail of open Lobsy in de app.</p>
+        <p>Je ontvangt deze mail omdat je vindbaar bent voor werkgevers op Lobsy.</p>
       </div>
     </div>
   </article>
@@ -116,21 +118,20 @@ const emailPage = `${head("Kandidaat — herinnering uitnodiging (e-mail)")}
 
 fs.writeFileSync(path.join(pagesDir, "reminder-email.html"), emailPage, "utf8");
 
-// 3. Re-available popup on login
 const popupPage = `${head("Kandidaat — weer beschikbaar popup")}
-${candidateShell(false)}
+${candidateShell({ behindOverlay: true })}
   <div class="k-popup-scrim" role="presentation">
     <div class="k-popup" role="dialog" aria-labelledby="popup-title" aria-describedby="popup-desc">
       <div class="k-popup__icon" aria-hidden="true">
         <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       </div>
       <h2 id="popup-title">Weer beschikbaar voor werk?</h2>
-      <p id="popup-desc">Je stond op <strong>niet beschikbaar</strong> omdat er geen reactie kwam op een uitnodiging. Geen probleem — zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart (alleen als jij dat wilt).</p>
+      <p id="popup-desc">Je stond op <strong>niet beschikbaar</strong> omdat er geen reactie kwam op een uitnodiging. Geen probleem. Zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart, als jij dat wilt.</p>
       <div class="k-popup__actions">
-        <button type="button" class="k-btn">Later</button>
         <button type="button" class="k-btn k-btn--primary">Ja, ik ben weer vindbaar</button>
+        <button type="button" class="k-btn">Later</button>
       </div>
-      <p class="k-popup__note">Je kunt dit altijd aanpassen onder Instellingen → Beschikbaarheid.</p>
+      <p class="k-popup__note">Je kunt dit altijd wijzigen in Instellingen, onder Beschikbaarheid.</p>
     </div>
   </div>
 ${shellEnd()}`;

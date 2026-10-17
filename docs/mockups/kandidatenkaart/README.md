@@ -7,7 +7,8 @@ Design-only HTML/CSS for the paid employer feature **Kandidatenkaart**: aggregat
 - Areas appear only with **≥ 30** matching candidates; smaller counts are merged or hidden.
 - Per area: **count + match-score bands** only (e.g. `42 kandidaten · 12 boven 80%`).
 - **Contact**: anonymous **uitnodiging om te solliciteren** per area; candidate decides.
-- **Paid**: calm locked preview vs full access; pricing copy is placeholder only.
+- **Paid**: calm locked preview vs full access; pricing line **Prijs en pakket op aanvraag**.
+- **Alleen actieve kandidaten**: visible in preview upsell and full UI (2-day reminder flow, drop from map until re-available). Per area: qualitative **Actief deze week** / **Laatst bijgewerkt: actief deze week** (no invented stats).
 
 ## Variants
 

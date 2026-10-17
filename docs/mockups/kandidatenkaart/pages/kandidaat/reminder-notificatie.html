@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<div class="k-shell">
+<div class="k-shell k-shell--behind-overlay">
   <header class="k-header">
     <a class="k-brand" href="#"><img src="../../shared/assets/lobsy-64.webp" width="44" height="44" alt=""/> Lobsy</a>
     <div class="k-header__actions">
@@ -17,9 +17,11 @@
       </button>
     </div>
   </header>
-  <div class="k-map-bg" aria-hidden="true"><div class="k-map-bg__fake"></div></div>
+  <div class="k-dashboard" aria-hidden="true">
+    <img class="k-dashboard__art" src="../../shared/candidate-home-bg.svg" width="390" height="700" alt=""/>
+  </div>
   <nav class="k-bottom-nav" aria-label="Hoofdmenu">
-    <a class="is-on" href="#">Zoeken</a>
+    <a class="is-on" href="#">Home</a>
     <a href="#">Sollicitaties</a>
     <a href="#">Profiel</a>
     <a href="#">Meer</a>
@@ -34,14 +36,14 @@
       <li class="k-notif-item k-notif-item--highlight">
         <div class="k-notif-item__tag">
           <svg class="i" viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14.1l-3-3"/></svg>
-          Vriendelijke herinnering
+          Herinnering
         </div>
-        <p>Je hebt een uitnodiging om te solliciteren. Reageer je niet binnen 2 dagen, dan zetten we je tijdelijk op <strong>niet beschikbaar</strong> — je verschijnt dan niet meer op de kandidatenkaart voor werkgevers.</p>
+        <p>Je hebt een uitnodiging om te solliciteren. Reageer je niet binnen 2 dagen, dan zetten we je tijdelijk op <strong>niet beschikbaar</strong>. Je staat dan niet meer op de kandidatenkaart voor werkgevers.</p>
         <div class="k-notif-item__actions">
           <button type="button" class="k-btn k-btn--primary">Bekijk uitnodiging</button>
-          <button type="button" class="k-btn">Niet nu</button>
+          <button type="button" class="k-btn">Afwijzen</button>
         </div>
-        <p class="k-notif-item__fine">Afwijzen telt als reactie: daar hoort geen waarschuwing of andere consequentie bij.</p>
+        <p class="k-notif-item__fine">Afwijzen telt als reactie. Daar hoort geen waarschuwing of andere consequentie bij.</p>
       </li>
       <li class="k-notif-item">
         <div class="k-notif-item__tag">Eerder</div>

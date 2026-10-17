@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<div class="k-shell">
+<div class="k-shell k-shell--behind-overlay">
   <header class="k-header">
     <a class="k-brand" href="#"><img src="../../shared/assets/lobsy-64.webp" width="44" height="44" alt=""/> Lobsy</a>
     <div class="k-header__actions">
@@ -17,9 +17,11 @@
       </button>
     </div>
   </header>
-  <div class="k-map-bg" aria-hidden="true"><div class="k-map-bg__fake"></div></div>
+  <div class="k-dashboard" aria-hidden="true">
+    <img class="k-dashboard__art" src="../../shared/candidate-home-bg.svg" width="390" height="700" alt=""/>
+  </div>
   <nav class="k-bottom-nav" aria-label="Hoofdmenu">
-    <a class="is-on" href="#">Zoeken</a>
+    <a class="is-on" href="#">Home</a>
     <a href="#">Sollicitaties</a>
     <a href="#">Profiel</a>
     <a href="#">Meer</a>
@@ -30,12 +32,12 @@
         <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       </div>
       <h2 id="popup-title">Weer beschikbaar voor werk?</h2>
-      <p id="popup-desc">Je stond op <strong>niet beschikbaar</strong> omdat er geen reactie kwam op een uitnodiging. Geen probleem — zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart (alleen als jij dat wilt).</p>
+      <p id="popup-desc">Je stond op <strong>niet beschikbaar</strong> omdat er geen reactie kwam op een uitnodiging. Geen probleem. Zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart, als jij dat wilt.</p>
       <div class="k-popup__actions">
-        <button type="button" class="k-btn">Later</button>
         <button type="button" class="k-btn k-btn--primary">Ja, ik ben weer vindbaar</button>
+        <button type="button" class="k-btn">Later</button>
       </div>
-      <p class="k-popup__note">Je kunt dit altijd aanpassen onder Instellingen → Beschikbaarheid.</p>
+      <p class="k-popup__note">Je kunt dit altijd wijzigen in Instellingen, onder Beschikbaarheid.</p>
     </div>
   </div>
 </div></body></html>
