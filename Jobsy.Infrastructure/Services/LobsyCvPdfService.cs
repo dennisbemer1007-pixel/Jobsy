@@ -550,7 +550,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         var kept = lines.Where(line =>
             !System.Text.RegularExpressions.Regex.IsMatch(
                 line,
-                @"^\d+\s+eerdere\s+werkgevers?$",
+                @"^\d+\s+eerdere\s+werkgevers?\.?$",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase)).ToArray();
         return kept.Length == 0 ? null : string.Join("\n", kept);
     }

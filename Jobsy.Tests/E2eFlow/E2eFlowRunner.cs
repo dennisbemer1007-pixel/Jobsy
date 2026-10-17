@@ -379,6 +379,13 @@ internal sealed class E2eFlowRunner
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
             await OpenVacancyApplyPanelAsync(page);
+            if (mobile)
+            {
+                await page.EvaluateAsync(
+                    "() => { document.getElementById('apply')?.scrollIntoView({ block: 'center', behavior: 'instant' }); }");
+                await page.WaitForTimeoutAsync(600);
+            }
+
             try
             {
                 await page.Locator(
