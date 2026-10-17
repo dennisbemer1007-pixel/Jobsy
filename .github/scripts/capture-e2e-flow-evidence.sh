@@ -37,7 +37,8 @@ reset_db
 dotnet build Jobsy.sln -c Release -v q
 bash "$ROOT/.github/scripts/start-ci-stack.sh"
 
-dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
+# Do not use --no-build: MTP/xunit.v3 can report "Zero tests ran" when running the built exe without rebuild.
+dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release \
   --filter "FullyQualifiedName=Jobsy.Tests.E2eFlow.CandidateEmployerFlowE2ePlaywrightTests.Full_flow_check_with_screenshots_and_metrics" \
   --logger "console;verbosity=normal"
 
