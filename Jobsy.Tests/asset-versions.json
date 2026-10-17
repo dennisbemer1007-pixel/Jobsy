@@ -192,8 +192,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "1fdc47c9aee5e8d982a2ff0347ce9eb08e298e9e40439e120d8e487168d55435",
-    "v": "20261017-03"
+    "sha256": "b2237cb8c1719d7fbd9d222d87ac337dc47f0b81bbf4d781510ce60df9dd2204",
+    "v": "20261017-04"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -232,8 +232,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "7e357c5572ebf04021a69d5442f5fb68505d6b54e2270678d05784cdcb58e97e",
-    "v": "20261017-04"
+    "sha256": "736ba540ab2bdeea3fef50c91c6bd8843f98be3cbe0f1e79080fdb08fc8de751",
+    "v": "20261017-05"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",
@@ -276,11 +276,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "bdcef9ce06616c1a7b0d5127226804331178b089ba694c4354c6a2e69b89c2ed",
+    "sha256": "4b18dca255fda4a7df87886580a2683d1ee30fad56ed7660948e128daa777629",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "32697bf3fcc7f56d206075ff11e60293662e57ffa085393b3338e952f9875141",
+    "sha256": "f58f50a5ed8da738b9f69b0703b89f000f2551d8461635615d30fa3c51ea1c28",
     "v": "20261016-06"
   }
 }
