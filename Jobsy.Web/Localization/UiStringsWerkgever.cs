@@ -77,6 +77,8 @@ public static class UiStringsWerkgever
         Add("WgNav.Signals", "Signalen", "Signals", "Sygnały", "Semnale", "إشارات");
         Add("WgNav.Vacancies", "Vacatures", "Vacancies", "Oferty", "Posturi", "الوظائف");
         Add("WgNav.Applications", "Sollicitaties", "Applications", "Aplikacje", "Aplicații", "الطلبات");
+        Add("WgNav.Notifications", "Meldingen", "Notifications", "Powiadomienia", "Notificări", "الإشعارات");
+        Add("WgNotifications.Lead", "Updates over sollicitaties, vacatures en je account.", "Updates on applications, vacancies and your account.", "Aktualizacje o aplikacjach, ofertach i koncie.", "Actualizări despre aplicații, posturi și cont.", "تحديثات حول الطلبات والوظائف وحسابك.");
         Add("WgNav.Talentpool", "Talentpool", "Talent pool", "Pula talentów", "Baza de talente", "مجموعة المواهب");
         Add("WgNav.CandidateInsights", "Kandidaatinzichten", "Candidate insights", "Wnioski o kandydatach", "Perspective candidați", "رؤى المرشحين");
         Add("WgNav.BranchesRegions", "Vestigingen & regio's", "Branches & regions", "Placówki i regiony", "Filiale și regiuni", "الفروع والمناطق");

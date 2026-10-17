@@ -115,6 +115,9 @@ public static class WerkgeverNav
                     [EmployerRole.Regiomanager] = "WgNav.Signals"
                 },
                 CountKey: "todo"),
+            new("notifications", "WgNav.Notifications", "/werkgever/meldingen", NavIcons.Notifications,
+                [], new RoleVisibility(RoleVisibilityKind.Hidden, RoleVisibilityKind.Hidden,
+                    RoleVisibilityKind.Hidden, RoleVisibilityKind.Hidden)),
         ]),
         new("recruitment", "WgNav.Group.Recruitment",
         [
@@ -361,6 +364,36 @@ public static class WerkgeverNav
     {
         var path = relativePath.Split('?', 2)[0].Split('#', 2)[0].Trim('/');
         return string.IsNullOrEmpty(path) ? "/" : "/" + path;
+    }
+
+    /// <summary>
+    /// Whether a catalog item matches the current path (sidebar / bottom nav highlight).
+    /// </summary>
+    public static bool IsNavItemActive(WerkgeverNavItem item, string relativePath)
+    {
+        var path = Normalize(relativePath);
+        var href = Normalize(item.Href);
+        if (string.Equals(path, href, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var alias in item.Aliases)
+        {
+            if (string.Equals(path, Normalize(alias), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        // /werkgever is the dashboard home only — not every /werkgever/… route.
+        if (string.Equals(href, "/werkgever", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return href is not "/" and not "#meer"
+               && path.StartsWith(href + "/", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsItemVisible(WerkgeverNavItem item, EmployerRole role, WerkgeverNavContext ctx)

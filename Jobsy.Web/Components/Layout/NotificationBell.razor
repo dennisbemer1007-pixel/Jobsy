@@ -6,6 +6,7 @@
 @inject JobsyApiClient Api
 @inject NotificationUnreadStore UnreadStore
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <AuthorizeView>
     <Authorized>
@@ -56,6 +57,14 @@
                     {
                         <p class="muted notification-bell__empty">Berichten laden…</p>
                     }
+                    else if (_items.Count == 0 && _unread > 0)
+                    {
+                        <div class="notification-bell__empty-state">
+                            <p class="notification-bell__empty-title">Berichten laden mislukt</p>
+                            <p class="muted">Probeer opnieuw of open Alle meldingen.</p>
+                            <button type="button" class="btn-compact" disabled="@_busy" @onclick="LoadListAsync">Opnieuw</button>
+                        </div>
+                    }
                     else if (_items.Count == 0)
                     {
                         <div class="notification-bell__empty-state">
@@ -93,6 +102,12 @@
                             }
                         </ul>
                     }
+                    @if (!_loading)
+                    {
+                        <p class="notification-bell__footer-link">
+                            <a href="@_allNotificationsHref" @onclick="Close">Alle meldingen</a>
+                        </p>
+                    }
                 </div>
         </div>
     </Authorized>
@@ -105,10 +120,13 @@
     private bool _busy;
     private int _unread;
     private List<UserNotificationItem> _items = [];
+    private string _allNotificationsHref = "/notifications";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        await base.OnInitializedAsync();
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _allNotificationsHref = RoleNavCatalog.NotificationsHrefFor(state.User);
         UnreadStore.Changed += OnUnreadChanged;
         UnreadStore.EnsureStarted();
         _unread = UnreadStore.Unread;
@@ -117,8 +135,11 @@
     private void OnUnreadChanged()
         => InvokeAsync(() =>
         {
-            _unread = UnreadStore.Unread;
-            StateHasChanged();
+            if (!_open)
+            {
+                _unread = UnreadStore.Unread;
+                StateHasChanged();
+            }
         });
 
     private async Task ToggleAsync()
@@ -150,13 +171,30 @@
         _loading = true;
         try
         {
-            _items = (await Api.GetNotificationsAsync()).ToList();
-            _unread = _items.Count(n => !n.IsRead);
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                try
+                {
+                    _items = (await Api.GetNotificationsAsync()).ToList();
+                    _unread = _items.Count(n => !n.IsRead);
+                    UnreadStore.SetUnread(_unread);
+                    return;
+                }
+                catch when (attempt < 2)
+                {
+                    await Task.Delay(400 * (attempt + 1));
+                }
+            }
+
+            _items = [];
+            _unread = await Api.GetUnreadNotificationCountAsync();
             UnreadStore.SetUnread(_unread);
         }
         catch
         {
             _items = [];
+            _unread = 0;
+            UnreadStore.SetUnread(0);
         }
         finally
         {
