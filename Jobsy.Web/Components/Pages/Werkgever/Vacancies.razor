@@ -242,13 +242,15 @@
                                     </td>
                                 }
                                 <td class="wg-vac__actions data-table__col--actions" data-label="@Culture["Common.Actions"]">
-                                    @PrimaryAction(v)
-                                    @if (CanWrite)
-                                    {
-                                        <RowActionsMenu>
-                                            @MenuItems(v)
-                                        </RowActionsMenu>
-                                    }
+                                    <div class="wg-vac__actions-inner">
+                                        @PrimaryAction(v)
+                                        @if (CanWrite)
+                                        {
+                                            <RowActionsMenu>
+                                                @MenuItems(v)
+                                            </RowActionsMenu>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }

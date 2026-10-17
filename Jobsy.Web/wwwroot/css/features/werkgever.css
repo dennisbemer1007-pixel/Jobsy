@@ -815,26 +815,51 @@
     height: 14px;
 }
 
-.wg-vac__actions {
-    display: inline-flex;
+.wg-vac__actions-inner {
+    display: flex;
     align-items: center;
     gap: 0.35rem;
     justify-content: flex-end;
-    white-space: nowrap;
+    flex-wrap: nowrap;
+    max-width: 100%;
+}
+
+@media (max-width: 639px) {
+    .wg-vac__actions-inner {
+        justify-content: flex-start;
+    }
 }
 
 @media (min-width: 640px) {
-    .wg-vac--dense .ent-data-table {
+    .wg-vac--dense .ent-data-table-wrap {
+        max-width: 100%;
+        overflow-x: clip;
+    }
+
+    .wg-vac--dense .ent-data-table.data-table {
         table-layout: fixed;
         width: 100%;
+        min-width: 0;
+    }
+
+    .wg-vac--dense .ent-data-table.data-table th,
+    .wg-vac--dense .ent-data-table.data-table td {
+        padding-inline: var(--space-2);
+        white-space: normal;
+    }
+
+    .wg-vac--dense .ent-data-table.data-table td.tabular,
+    .wg-vac--dense .ent-data-table.data-table td.wg-vac__actions,
+    .wg-vac--dense .ent-data-table.data-table th {
+        white-space: nowrap;
     }
 
     .wg-vac--dense .ent-data-table .ent-data-table__check {
-        width: 2.5rem;
+        width: 2.25rem;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-status {
-        width: 10.25rem;
+        width: 9.5rem;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-status .status-pill {
@@ -842,14 +867,16 @@
         line-height: 1.25;
         max-width: 100%;
         text-align: start;
+        font-size: var(--text-xs);
     }
 
     .wg-vac--dense .ent-data-table td.tabular {
-        width: 4.85rem;
+        width: 4.35rem;
+        font-size: var(--text-xs);
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-vis {
-        width: 6.25rem;
+        width: 5.75rem;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-vis .wg-vac__chip {
@@ -858,16 +885,17 @@
 
     .wg-vac--dense .ent-data-table td.wg-vac__actions,
     .wg-vac--dense .ent-data-table thead th:last-child {
-        width: 9.5rem;
-        max-width: 9.5rem;
+        width: 8.75rem;
+        max-width: 8.75rem;
     }
 
     .wg-vac--dense .ent-data-table td.wg-vac__actions.data-table__col--actions {
-        width: 9.5rem;
-        min-width: 9.5rem;
+        width: 8.75rem;
+        min-width: 8.75rem;
         position: static;
         box-shadow: none;
-        padding-inline-end: var(--space-3);
+        padding-inline-end: var(--space-2);
+        vertical-align: middle;
     }
 
     .wg-vac--dense .ent-data-table thead th:last-child {
@@ -877,6 +905,11 @@
 
     .wg-vac--dense .ent-data-table .wg-vac__title-cell {
         overflow-wrap: anywhere;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__actions-inner .btn-compact {
+        padding-inline: 0.55rem;
+        font-size: var(--text-xs);
     }
 }
 

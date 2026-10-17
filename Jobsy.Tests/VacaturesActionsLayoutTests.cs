@@ -28,6 +28,8 @@ public class VacaturesActionsLayoutTests
 
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync()
                       ?? throw new InvalidOperationException("Stack not reachable at JOBSY_E2E_BASE_URL.");
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
+        Assert.True(await CandidateJourneyE2e.WaitForFlagsAsync(baseUrl), "Feature flags did not turn on in time.");
         var phase = Environment.GetEnvironmentVariable("LIVEGANG_PHASE") ?? "after";
         var assertLayout = !string.Equals(phase, "before", StringComparison.OrdinalIgnoreCase);
         var root = Environment.GetEnvironmentVariable("LIVEGANG_SHOTS_DIR")
@@ -58,6 +60,9 @@ public class VacaturesActionsLayoutTests
             return;
         }
 
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
+        Assert.True(await CandidateJourneyE2e.WaitForFlagsAsync(baseUrl), "Feature flags did not turn on in time.");
+
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         await using var browser = await KbE2e.LaunchChromiumAsync();
 
@@ -75,10 +80,17 @@ public class VacaturesActionsLayoutTests
             var page = await context.NewPageAsync();
             page.SetDefaultTimeout(90_000);
             Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, EmployerEmail, Password));
+            if (width < 640)
+            {
+                await page.GotoAsync($"{baseUrl}/werkgever",
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await KbE2e.WaitForStyledAppAsync(page);
+            }
+
             await page.GotoAsync($"{baseUrl}/werkgever/vacatures",
                 new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
             await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "werkgever.css");
-            await page.Locator(".wg-vac .ent-data-table, .wg-vac .ent-data-table__state").First
+            await page.Locator(".wg-vac .wg-vac__actions, .wg-vac .ent-data-table, .wg-vac .ent-data-table__state").First
                 .WaitForAsync(new() { Timeout = 60_000 });
 
             var scrollWidth = await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth");
@@ -99,7 +111,7 @@ public class VacaturesActionsLayoutTests
                   const buttons = [];
                   let ok = true;
                   for (const cell of cells) {
-                    const btns = cell.querySelectorAll('button, a.btn-compact, a[class*="btn-compact"]');
+                    const btns = cell.querySelectorAll('.wg-vac__actions-inner button, .wg-vac__actions-inner a.btn-compact');
                     for (const btn of btns) {
                       const r = btn.getBoundingClientRect();
                       const style = getComputedStyle(btn);
@@ -182,7 +194,7 @@ public class VacaturesActionsLayoutTests
               const cardRightLimit = cardR ? cardR.right - 8 : null;
               const rows = [];
               for (const cell of cells) {
-                const btns = cell.querySelectorAll('button, a.btn-compact, a[class*="btn-compact"]');
+                const btns = cell.querySelectorAll('.wg-vac__actions-inner button, .wg-vac__actions-inner a.btn-compact');
                 for (const btn of btns) {
                   const r = btn.getBoundingClientRect();
                   rows.push({

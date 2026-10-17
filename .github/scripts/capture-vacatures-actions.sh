@@ -18,6 +18,8 @@ stop_stack() {
       kill "$(cat "$f")" 2>/dev/null || true
     fi
   done
+  pkill -f "Jobsy.Api/bin" 2>/dev/null || true
+  pkill -f "Jobsy.Web/bin" 2>/dev/null || true
   sleep 2
 }
 
@@ -37,7 +39,10 @@ run_capture() {
 
 enable_employers() {
   sudo -u postgres psql -d JobsyCi -c \
-    'UPDATE "PlatformFeatureSettings" SET "EmployersEnabled" = true WHERE "EmployersEnabled" = false;' \
+    'INSERT INTO "PlatformFeatureSettings" ("Id", "EmployersEnabled", "CandidatePassportEnabled")
+     SELECT 1, true, true
+     WHERE NOT EXISTS (SELECT 1 FROM "PlatformFeatureSettings");
+     UPDATE "PlatformFeatureSettings" SET "EmployersEnabled" = true WHERE "EmployersEnabled" = false;' \
     >/dev/null 2>&1 || true
 }
 
