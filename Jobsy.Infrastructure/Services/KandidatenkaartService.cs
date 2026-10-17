@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Text.Json;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
@@ -17,19 +16,25 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
     private readonly JobsyDbContext _db;
     private readonly IPlatformFeatureService _features;
     private readonly ICompanyAuthorizationService _authz;
+    private readonly KandidatenkaartCandidateAggregator _aggregator;
     private readonly TimeProvider _clock;
     private readonly IHostEnvironment _env;
+
+    private KandidatenkaartCandidateAggregator.AggregationResult? _cachedAggregation;
+    private (Guid VacancyId, int MinMatch, int TravelKm, string? Avail, string? Hours) _cachedAggregationKey;
 
     public KandidatenkaartService(
         JobsyDbContext db,
         IPlatformFeatureService features,
         ICompanyAuthorizationService authz,
+        KandidatenkaartCandidateAggregator aggregator,
         TimeProvider clock,
         IHostEnvironment env)
     {
         _db = db;
         _features = features;
         _authz = authz;
+        _aggregator = aggregator;
         _clock = clock;
         _env = env;
     }
@@ -121,7 +126,18 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             await KandidatenkaartDemoSeed.EnsureAsync(_db, cancellationToken);
         }
 
-        var areas = await BuildAreasAsync(minMatchPercent, travelKm, availabilityFilter, hoursFilter, cancellationToken);
+        if (vacancyId is null)
+        {
+            throw new KandidatenkaartException("vacancy_required", "Kies een vacature om de kaart te laden.", 400);
+        }
+
+        var areas = await BuildAreasAsync(
+            vacancyId.Value,
+            minMatchPercent,
+            travelKm,
+            availabilityFilter,
+            hoursFilter,
+            cancellationToken);
         var visible = areas.Where(a => a.CandidateCount >= KandidatenkaartRules.MinCandidatesPerArea).ToList();
         var below = visible.Count == 0 && areas.Count > 0;
 
@@ -148,7 +164,14 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
     {
         await EnsureFeatureEnabledAsync(cancellationToken);
         await EnsurePaidAsync(companyIds, employer, cancellationToken);
-        var area = await ResolveAreaAsync(areaKey, minMatchPercent, travelKm, null, null, cancellationToken)
+        var area = await ResolveAreaAsync(
+            vacancyId,
+            areaKey,
+            minMatchPercent,
+            travelKm,
+            null,
+            null,
+            cancellationToken)
                    ?? throw new KandidatenkaartException("area_not_found", "Gebied niet gevonden.", 404);
 
         if (area.CandidateCount < KandidatenkaartRules.MinCandidatesPerArea)
@@ -156,7 +179,7 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             throw new KandidatenkaartException("area_below_threshold", "Dit gebied heeft minder dan 30 kandidaten.", 400);
         }
 
-        var eligible = await CountEligibleCandidatesAsync(areaKey, minMatchPercent, cancellationToken);
+        var eligible = await CountEligibleCandidatesAsync(vacancyId, areaKey, minMatchPercent, travelKm, null, null, cancellationToken);
         var rounds = Math.Max(1, (int)Math.Ceiling(eligible.Eligible / 25.0));
 
         return new KandidatenkaartInvitePreviewDto(
@@ -194,7 +217,14 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             throw new KandidatenkaartException("vacancy_full", "De vacature is vol.", 409);
         }
 
-        var area = await ResolveAreaAsync(areaKey, minMatchPercent, travelKm, null, null, cancellationToken)
+        var area = await ResolveAreaAsync(
+            vacancyId,
+            areaKey,
+            minMatchPercent,
+            travelKm,
+            null,
+            null,
+            cancellationToken)
                    ?? throw new KandidatenkaartException("area_not_found", "Gebied niet gevonden.", 404);
 
         if (area.CandidateCount < KandidatenkaartRules.MinCandidatesPerArea)
@@ -219,7 +249,14 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             UpdatedAtUtc = now
         };
 
-        var candidates = await LoadEligibleCandidateIdsAsync(areaKey, campaign.MinMatchPercent, cancellationToken);
+        var candidates = await LoadEligibleCandidateIdsAsync(
+            vacancyId,
+            areaKey,
+            campaign.MinMatchPercent,
+            travelKm,
+            null,
+            null,
+            cancellationToken);
         foreach (var (userId, match) in candidates)
         {
             campaign.Deliveries.Add(new KandidatenkaartInviteDelivery
@@ -385,71 +422,58 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             null);
     }
 
-    private async Task<IReadOnlyList<KandidatenkaartAreaDto>> BuildAreasAsync(
+    private async Task<KandidatenkaartCandidateAggregator.AggregationResult> LoadAggregationAsync(
+        Guid vacancyId,
         int minMatchPercent,
-        int _travelKm,
-        string? _availabilityFilter,
-        string? _hoursFilter,
+        int travelKm,
+        string? availabilityFilter,
+        string? hoursFilter,
         CancellationToken cancellationToken)
     {
-        _ = (_travelKm, _availabilityFilter, _hoursFilter);
-        var users = await _db.Users.AsNoTracking()
-            .Where(u => u.Role == UserRole.Candidate
-                        && u.OpenForWork
-                        && u.IsActive
-                        && u.HomeLocation != null
-                        && u.TalentPoolConsentAt != null)
-            .Select(u => new { u.Id, u.HomeLocation, u.PreferencesJson, u.LastLoginAtUtc })
-            .ToListAsync(cancellationToken);
-
-        var grouped = new Dictionary<string, List<(int Match, bool Active)>>(StringComparer.OrdinalIgnoreCase);
-        foreach (var u in users)
+        var key = (vacancyId, minMatchPercent, travelKm, availabilityFilter, hoursFilter);
+        if (_cachedAggregation is not null && _cachedAggregationKey == key)
         {
-            var (areaKey, match) = ParseDemoMeta(u.PreferencesJson);
-            if (areaKey is null)
-            {
-                continue;
-            }
-
-            if (match < minMatchPercent)
-            {
-                continue;
-            }
-
-            if (!grouped.TryGetValue(areaKey, out var list))
-            {
-                list = [];
-                grouped[areaKey] = list;
-            }
-
-            var active = u.LastLoginAtUtc >= _clock.GetUtcNow().UtcDateTime.AddDays(-7);
-            list.Add((match, active));
+            return _cachedAggregation;
         }
 
-        var areas = new List<KandidatenkaartAreaDto>();
-        foreach (var def in KandidatenkaartDemoSeed.DemoAreas)
-        {
-            grouped.TryGetValue(def.Key, out var list);
-            list ??= [];
-            var count = list.Count;
-            var above80 = list.Count(x => x.Match >= 80);
-            var activeWeek = list.Any(x => x.Active);
-            areas.Add(new KandidatenkaartAreaDto(
-                def.Key,
-                def.Label,
-                count,
-                above80,
-                list.Count(x => x.Match is >= 70 and < 80),
-                def.Lat,
-                def.Lng,
-                BuildRing(def.Lat, def.Lng),
-                activeWeek));
-        }
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId, cancellationToken)
+            ?? throw new KandidatenkaartException("vacancy_not_found", "Vacature niet gevonden.", 404);
 
-        return areas;
+        var result = await _aggregator.BuildAsync(
+            vacancy,
+            minMatchPercent,
+            travelKm,
+            availabilityFilter,
+            hoursFilter,
+            _clock,
+            cancellationToken);
+        _cachedAggregation = result;
+        _cachedAggregationKey = key;
+        return result;
+    }
+
+    private async Task<IReadOnlyList<KandidatenkaartAreaDto>> BuildAreasAsync(
+        Guid vacancyId,
+        int minMatchPercent,
+        int travelKm,
+        string? availabilityFilter,
+        string? hoursFilter,
+        CancellationToken cancellationToken)
+    {
+        var aggregation = await LoadAggregationAsync(
+            vacancyId,
+            minMatchPercent,
+            travelKm,
+            availabilityFilter,
+            hoursFilter,
+            cancellationToken);
+        return aggregation.AllAreas;
     }
 
     private async Task<KandidatenkaartAreaDto?> ResolveAreaAsync(
+        Guid vacancyId,
         string areaKey,
         int minMatchPercent,
         int travelKm,
@@ -457,41 +481,53 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         string? hoursFilter,
         CancellationToken cancellationToken)
     {
-        var areas = await BuildAreasAsync(minMatchPercent, travelKm, availabilityFilter, hoursFilter, cancellationToken);
+        var areas = await BuildAreasAsync(
+            vacancyId,
+            minMatchPercent,
+            travelKm,
+            availabilityFilter,
+            hoursFilter,
+            cancellationToken);
         return areas.FirstOrDefault(a => string.Equals(a.AreaKey, areaKey, StringComparison.OrdinalIgnoreCase));
     }
 
     private async Task<(int Eligible, int BelowMatch, int WeeklyCap, int PreferenceOff)> CountEligibleCandidatesAsync(
+        Guid vacancyId,
         string areaKey,
         int minMatchPercent,
+        int travelKm,
+        string? availabilityFilter,
+        string? hoursFilter,
         CancellationToken cancellationToken)
     {
-        var ids = await LoadEligibleCandidateIdsAsync(areaKey, minMatchPercent, cancellationToken);
-        return (ids.Count, 0, 0, 0);
-    }
-
-    private async Task<List<(Guid UserId, int Match)>> LoadEligibleCandidateIdsAsync(
-        string areaKey,
-        int minMatchPercent,
-        CancellationToken cancellationToken)
-    {
-        var weekStart = _clock.GetUtcNow().UtcDateTime.AddDays(-7);
-        var users = await _db.Users.AsNoTracking()
-            .Where(u => u.Role == UserRole.Candidate && u.OpenForWork && u.IsActive && u.TalentPoolConsentAt != null)
-            .Select(u => new { u.Id, u.PreferencesJson })
-            .ToListAsync(cancellationToken);
-
-        var result = new List<(Guid, int)>();
-        foreach (var u in users)
+        var aggregation = await LoadAggregationAsync(
+            vacancyId,
+            minMatchPercent,
+            travelKm,
+            availabilityFilter,
+            hoursFilter,
+            cancellationToken);
+        if (!aggregation.ByAreaKey.TryGetValue(areaKey, out var inArea))
         {
-            var (key, match) = ParseDemoMeta(u.PreferencesJson);
-            if (key != areaKey || match < Math.Max(minMatchPercent, KandidatenkaartRules.MinMatchPercentForInvite))
+            return (0, 0, 0, 0);
+        }
+
+        var inviteMin = Math.Max(minMatchPercent, KandidatenkaartRules.MinMatchPercentForInvite);
+        var weekStart = _clock.GetUtcNow().UtcDateTime.AddDays(-7);
+        var below = 0;
+        var weeklyCap = 0;
+        var eligible = 0;
+
+        foreach (var c in inArea)
+        {
+            if (c.MatchPercent < inviteMin)
             {
+                below++;
                 continue;
             }
 
             var pref = await _db.CandidateKandidatenkaartSettings.AsNoTracking()
-                .Where(s => s.UserId == u.Id)
+                .Where(s => s.UserId == c.UserId)
                 .Select(s => s.InvitePreference)
                 .FirstOrDefaultAsync(cancellationToken);
             if (pref == KandidatenkaartInvitePreference.Off)
@@ -500,7 +536,67 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             }
 
             var sentThisWeek = await _db.KandidatenkaartInviteDeliveries.AsNoTracking()
-                .CountAsync(d => d.CandidateUserId == u.Id
+                .CountAsync(d => d.CandidateUserId == c.UserId
+                                 && d.SentAtUtc >= weekStart
+                                 && d.Status != KandidatenkaartInviteDeliveryStatus.SkippedPreference, cancellationToken);
+            var cap = pref == KandidatenkaartInvitePreference.Max
+                ? KandidatenkaartRules.MaxInvitesPerCandidatePerWeek
+                : 2;
+            if (sentThisWeek >= cap)
+            {
+                weeklyCap++;
+                continue;
+            }
+
+            eligible++;
+        }
+
+        return (eligible, below, weeklyCap, 0);
+    }
+
+    private async Task<List<(Guid UserId, int Match)>> LoadEligibleCandidateIdsAsync(
+        Guid vacancyId,
+        string areaKey,
+        int minMatchPercent,
+        int travelKm,
+        string? availabilityFilter,
+        string? hoursFilter,
+        CancellationToken cancellationToken)
+    {
+        var aggregation = await LoadAggregationAsync(
+            vacancyId,
+            minMatchPercent,
+            travelKm,
+            availabilityFilter,
+            hoursFilter,
+            cancellationToken);
+        if (!aggregation.ByAreaKey.TryGetValue(areaKey, out var inArea))
+        {
+            return [];
+        }
+
+        var inviteMin = Math.Max(minMatchPercent, KandidatenkaartRules.MinMatchPercentForInvite);
+        var weekStart = _clock.GetUtcNow().UtcDateTime.AddDays(-7);
+        var result = new List<(Guid, int)>();
+
+        foreach (var c in inArea)
+        {
+            if (c.MatchPercent < inviteMin)
+            {
+                continue;
+            }
+
+            var pref = await _db.CandidateKandidatenkaartSettings.AsNoTracking()
+                .Where(s => s.UserId == c.UserId)
+                .Select(s => s.InvitePreference)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (pref == KandidatenkaartInvitePreference.Off)
+            {
+                continue;
+            }
+
+            var sentThisWeek = await _db.KandidatenkaartInviteDeliveries.AsNoTracking()
+                .CountAsync(d => d.CandidateUserId == c.UserId
                                  && d.SentAtUtc >= weekStart
                                  && d.Status != KandidatenkaartInviteDeliveryStatus.SkippedPreference, cancellationToken);
             var cap = pref == KandidatenkaartInvitePreference.Max
@@ -511,35 +607,10 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
                 continue;
             }
 
-            result.Add((u.Id, match));
+            result.Add((c.UserId, c.MatchPercent));
         }
 
         return result;
-    }
-
-    private static (string? AreaKey, int Match) ParseDemoMeta(string? preferencesJson)
-    {
-        if (string.IsNullOrWhiteSpace(preferencesJson))
-        {
-            return (null, 0);
-        }
-
-        try
-        {
-            using var doc = JsonDocument.Parse(preferencesJson);
-            var root = doc.RootElement;
-            if (!root.TryGetProperty("kkDemoArea", out var areaEl))
-            {
-                return (null, 0);
-            }
-
-            var match = root.TryGetProperty("kkDemoMatch", out var mEl) && mEl.TryGetInt32(out var m) ? m : 75;
-            return (areaEl.GetString(), match);
-        }
-        catch
-        {
-            return (null, 0);
-        }
     }
 
     private static IReadOnlyList<IReadOnlyList<double>> BuildRing(double lat, double lng)

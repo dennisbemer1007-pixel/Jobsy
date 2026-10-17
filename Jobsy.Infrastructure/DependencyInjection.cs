@@ -672,6 +672,8 @@ public static class DependencyInjection
         services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();
         services.AddScoped<IProactiveVacancyShortlistService, ProactiveVacancyShortlistService>();
         services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
+        services.AddScoped<KandidatenkaartCandidateAggregator>();
+        services.AddScoped<KandidatenkaartMailService>();
         services.AddScoped<IKandidatenkaartService, KandidatenkaartService>();
         services.AddHostedService<KandidatenkaartHostedService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();

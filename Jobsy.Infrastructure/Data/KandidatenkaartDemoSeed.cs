@@ -10,7 +10,7 @@ namespace Jobsy.Infrastructure.Data;
 /// </summary>
 public static class KandidatenkaartDemoSeed
 {
-    public const string SeedMarker = "kandidatenkaart-demo-v1";
+    public const string SeedMarker = "kandidatenkaart-demo-v2";
 
     private static readonly (string Key, string Label, double Lat, double Lng, int Count)[] Areas =
     [
@@ -25,22 +25,18 @@ public static class KandidatenkaartDemoSeed
 
     public static async Task EnsureAsync(JobsyDbContext db, CancellationToken cancellationToken = default)
     {
-        var marker = await db.PlatformFeatureSettings.AsNoTracking()
-            .Select(s => s.PublicWebBaseUrl)
-            .FirstOrDefaultAsync(cancellationToken);
-        _ = marker;
-
         var existing = await db.Users.CountAsync(
             u => u.IsTestAccount && u.Email.StartsWith("kk-demo-"),
             cancellationToken);
         if (existing >= 120)
         {
+            await EnsureCompetenciesAsync(db, cancellationToken);
             return;
         }
 
         var rng = new Random(707);
         var now = DateTime.UtcNow;
-        var created = 0;
+        var createdUsers = new List<User>();
 
         foreach (var area in Areas)
         {
@@ -54,9 +50,16 @@ public static class KandidatenkaartDemoSeed
 
                 var lat = area.Lat + (rng.NextDouble() - 0.5) * 0.08;
                 var lng = area.Lng + (rng.NextDouble() - 0.5) * 0.12;
-                var match = rng.Next(58, 96);
-
-                db.Users.Add(new User
+                var hoursBucket = rng.Next(0, 4);
+                var (minH, maxH) = hoursBucket switch
+                {
+                    0 => (8m, 15m),
+                    1 => (16m, 24m),
+                    2 => (24m, 32m),
+                    _ => (32m, 40m)
+                };
+                var availImmediate = rng.NextDouble() > 0.15;
+                var user = new User
                 {
                     Id = Guid.NewGuid(),
                     Email = email,
@@ -70,16 +73,79 @@ public static class KandidatenkaartDemoSeed
                     TalentPoolConsentAt = now.AddMonths(-2),
                     TalentPoolConsentVersion = SeedMarker,
                     HomeLocation = new GeoPoint(lat, lng),
-                    PreferencesJson = $$"""{"kkDemoArea":"{{area.Key}}","kkDemoMatch":{{match}}}""",
+                    AvailableFromDate = availImmediate
+                        ? null
+                        : DateOnly.FromDateTime(now.AddDays(rng.Next(5, 90))),
+                    PreferencesJson = $$"""
+                        {
+                          "minHoursPerWeek": {{minH}},
+                          "maxHoursPerWeek": {{maxH}},
+                          "homeAddress": "{{area.Label}}"
+                        }
+                        """,
                     ReminderEmailsEnabled = true
-                });
-                created++;
+                };
+                db.Users.Add(user);
+                createdUsers.Add(user);
             }
         }
 
-        if (created > 0)
+        if (createdUsers.Count > 0)
         {
             await db.SaveChangesAsync(cancellationToken);
         }
+
+        await EnsureCompetenciesAsync(db, cancellationToken);
+    }
+
+    private static async Task EnsureCompetenciesAsync(JobsyDbContext db, CancellationToken cancellationToken)
+    {
+        var demoIds = await db.Users.AsNoTracking()
+            .Where(u => u.IsTestAccount && u.Email.StartsWith("kk-demo-"))
+            .Select(u => u.Id)
+            .ToListAsync(cancellationToken);
+        if (demoIds.Count == 0)
+        {
+            return;
+        }
+
+        var haveCompetency = await db.CandidateCompetencies.AsNoTracking()
+            .Where(c => demoIds.Contains(c.UserId))
+            .Select(c => c.UserId)
+            .Distinct()
+            .CountAsync(cancellationToken);
+        if (haveCompetency >= demoIds.Count - 5)
+        {
+            return;
+        }
+
+        var rng = new Random(808);
+        var now = DateTime.UtcNow;
+        foreach (var userId in demoIds)
+        {
+            if (await db.CandidateCompetencies.AnyAsync(c => c.UserId == userId, cancellationToken))
+            {
+                continue;
+            }
+
+            var baseScore = rng.Next(62, 94);
+            db.CandidateCompetencies.Add(new CandidateCompetency
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Status = CandidateCompetencyStatuses.Completed,
+                SamenwerkenPercent = baseScore,
+                ResultaatgerichtheidPercent = Math.Clamp(baseScore + rng.Next(-8, 8), 55, 98),
+                StressbestendigheidPercent = Math.Clamp(baseScore + rng.Next(-10, 10), 55, 98),
+                InnovatiePercent = Math.Clamp(baseScore + rng.Next(-6, 6), 55, 98),
+                ExtraversiePercent = Math.Clamp(baseScore + rng.Next(-5, 5), 55, 98),
+                MatchTagsJson = """["Samenwerken","Praktisch"]""",
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now,
+                CompletedAtUtc = now
+            });
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
     }
 }

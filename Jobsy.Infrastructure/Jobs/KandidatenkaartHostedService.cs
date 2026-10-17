@@ -1,7 +1,10 @@
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Interfaces;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -60,15 +63,20 @@ public sealed class KandidatenkaartHostedService : BackgroundService
 
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var clock = scope.ServiceProvider.GetRequiredService<TimeProvider>();
+        var mail = scope.ServiceProvider.GetRequiredService<KandidatenkaartMailService>();
         var now = clock.GetUtcNow().UtcDateTime;
 
-        await ProcessStagedInvitesAsync(db, now, cancellationToken);
-        await ProcessInviteRemindersAsync(db, now, cancellationToken);
-        await ProcessInactivityChecksAsync(db, now, cancellationToken);
-        await ProcessVacancyFullWithdrawalsAsync(db, cancellationToken);
+        await ProcessStagedInvitesAsync(db, mail, now, cancellationToken);
+        await ProcessInviteRemindersAsync(db, mail, now, cancellationToken);
+        await ProcessInactivityChecksAsync(db, mail, now, cancellationToken);
+        await ProcessVacancyFullWithdrawalsAsync(db, mail, cancellationToken);
     }
 
-    private static async Task ProcessStagedInvitesAsync(JobsyDbContext db, DateTime now, CancellationToken ct)
+    private static async Task ProcessStagedInvitesAsync(
+        JobsyDbContext db,
+        KandidatenkaartMailService mail,
+        DateTime now,
+        CancellationToken ct)
     {
         var campaigns = await db.KandidatenkaartInviteCampaigns
             .Include(c => c.Deliveries)
@@ -77,6 +85,8 @@ public sealed class KandidatenkaartHostedService : BackgroundService
                         && c.NextRoundAtUtc <= now)
             .Take(5)
             .ToListAsync(ct);
+
+        var sentDeliveries = new List<KandidatenkaartInviteDelivery>();
 
         foreach (var campaign in campaigns)
         {
@@ -89,18 +99,19 @@ public sealed class KandidatenkaartHostedService : BackgroundService
             {
                 d.Status = KandidatenkaartInviteDeliveryStatus.Sent;
                 d.SentAtUtc = now;
+                sentDeliveries.Add(d);
             }
 
             var remaining = campaign.Deliveries.Any(d =>
                 d.Status == KandidatenkaartInviteDeliveryStatus.Queued && d.RoundNumber == campaign.CurrentRound);
             if (remaining)
             {
-                campaign.NextRoundAtUtc = now.AddHours(4);
+                campaign.NextRoundAtUtc = now.AddHours(KandidatenkaartRules.StagedRoundDelayHours);
             }
             else if (campaign.Deliveries.Any(d => d.Status == KandidatenkaartInviteDeliveryStatus.Queued))
             {
                 campaign.CurrentRound++;
-                campaign.NextRoundAtUtc = now.AddHours(4);
+                campaign.NextRoundAtUtc = now.AddHours(KandidatenkaartRules.StagedRoundDelayHours);
             }
             else
             {
@@ -114,13 +125,18 @@ public sealed class KandidatenkaartHostedService : BackgroundService
         if (campaigns.Count > 0)
         {
             await db.SaveChangesAsync(ct);
+            await mail.SendBundledInvitesAsync(sentDeliveries, ct);
         }
     }
 
-    private static async Task ProcessInviteRemindersAsync(JobsyDbContext db, DateTime now, CancellationToken ct)
+    private static async Task ProcessInviteRemindersAsync(
+        JobsyDbContext db,
+        KandidatenkaartMailService mail,
+        DateTime now,
+        CancellationToken ct)
     {
-        var reminderCutoff = now.AddDays(-2);
-        var autoCutoff = now.AddDays(-4);
+        var reminderCutoff = now.AddDays(-KandidatenkaartRules.InviteReminderDays);
+        var autoCutoff = now.AddDays(-(KandidatenkaartRules.InviteReminderDays + KandidatenkaartRules.AutoUnavailableAfterReminderDays));
 
         var deliveries = await db.KandidatenkaartInviteDeliveries
             .Where(d => d.Status == KandidatenkaartInviteDeliveryStatus.Sent
@@ -133,6 +149,7 @@ public sealed class KandidatenkaartHostedService : BackgroundService
         {
             d.Status = KandidatenkaartInviteDeliveryStatus.Reminded;
             d.ReminderSentAtUtc = now;
+            await mail.SendReminderAsync(d, ct);
         }
 
         var auto = await db.KandidatenkaartInviteDeliveries
@@ -155,6 +172,7 @@ public sealed class KandidatenkaartHostedService : BackgroundService
 
             settings.ReAvailabilityPromptAtUtc = now;
             settings.UpdatedAtUtc = now;
+            await mail.SendMissedOutAsync(d, ct);
         }
 
         if (deliveries.Count + auto.Count > 0)
@@ -163,9 +181,13 @@ public sealed class KandidatenkaartHostedService : BackgroundService
         }
     }
 
-    private static async Task ProcessInactivityChecksAsync(JobsyDbContext db, DateTime now, CancellationToken ct)
+    private static async Task ProcessInactivityChecksAsync(
+        JobsyDbContext db,
+        KandidatenkaartMailService mail,
+        DateTime now,
+        CancellationToken ct)
     {
-        var inactiveSince = now.AddDays(-30);
+        var inactiveSince = now.AddDays(-KandidatenkaartRules.InactivityLoginDays);
         var users = await db.Users
             .Where(u => u.Role == UserRole.Candidate
                         && u.OpenForWork
@@ -179,7 +201,7 @@ public sealed class KandidatenkaartHostedService : BackgroundService
             var settings = await db.CandidateKandidatenkaartSettings.FirstOrDefaultAsync(s => s.UserId == u.Id, ct);
             if (settings?.InactivityCheckSentAtUtc is not null)
             {
-                if (settings.InactivityCheckSentAtUtc <= now.AddDays(-7))
+                if (settings.InactivityCheckSentAtUtc <= now.AddDays(-KandidatenkaartRules.InactivityResponseDays))
                 {
                     u.OpenForWork = false;
                     settings.ReAvailabilityPromptAtUtc = now;
@@ -201,6 +223,7 @@ public sealed class KandidatenkaartHostedService : BackgroundService
 
             settings.InactivityCheckSentAtUtc = now;
             settings.UpdatedAtUtc = now;
+            await mail.SendInactivityCheckAsync(u, ct);
         }
 
         if (users.Count > 0)
@@ -209,7 +232,10 @@ public sealed class KandidatenkaartHostedService : BackgroundService
         }
     }
 
-    private static async Task ProcessVacancyFullWithdrawalsAsync(JobsyDbContext db, CancellationToken ct)
+    private static async Task ProcessVacancyFullWithdrawalsAsync(
+        JobsyDbContext db,
+        KandidatenkaartMailService mail,
+        CancellationToken ct)
     {
         var fullVacancies = await db.Vacancies.AsNoTracking()
             .Where(v => v.PositionsTarget > 0 && v.PositionsFilled >= v.PositionsTarget)
@@ -228,6 +254,7 @@ public sealed class KandidatenkaartHostedService : BackgroundService
                         && c.Status != KandidatenkaartCampaignStatus.Withdrawn)
             .ToListAsync(ct);
 
+        var withdrawn = new List<KandidatenkaartInviteDelivery>();
         foreach (var c in campaigns)
         {
             c.Status = KandidatenkaartCampaignStatus.VacancyFull;
@@ -236,12 +263,17 @@ public sealed class KandidatenkaartHostedService : BackgroundService
                          or KandidatenkaartInviteDeliveryStatus.Reminded))
             {
                 d.Status = KandidatenkaartInviteDeliveryStatus.Withdrawn;
+                withdrawn.Add(d);
             }
         }
 
         if (campaigns.Count > 0)
         {
             await db.SaveChangesAsync(ct);
+            foreach (var d in withdrawn)
+            {
+                await mail.SendWithdrawnAsync(d, ct);
+            }
         }
     }
 }

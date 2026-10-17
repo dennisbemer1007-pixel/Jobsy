@@ -6,6 +6,7 @@
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [RequiresFeature(PlatformFeature.Kandidatenkaart)]
 @implements IAsyncDisposable
+@implements IKandidatenkaartMapHost
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IJSRuntime Js
@@ -159,6 +160,14 @@
             @if (_invitePreview is not null)
             {
                 <p>@string.Format(Culture["Kk.Invite.Eligible"], _invitePreview.EligibleCount, _minMatch)</p>
+                @if (_invitePreview.SkippedWeeklyCap > 0)
+                {
+                    <p class="profile-address__hint">@string.Format(Culture["Kk.Invite.SkippedWeeklyCap"], _invitePreview.SkippedWeeklyCap)</p>
+                }
+                @if (_invitePreview.SkippedBelowMatch > 0)
+                {
+                    <p class="profile-address__hint">@string.Format(Culture["Kk.Invite.SkippedBelowMatch"], _invitePreview.SkippedBelowMatch)</p>
+                }
                 <p class="profile-address__hint">@_invitePreview.StagingNote</p>
                 <p>@string.Format(Culture["Kk.Invite.Staging"], _invitePreview.EstimatedRounds)</p>
             }
@@ -196,6 +205,9 @@
     private KandidatenkaartInvitePreviewDto? _invitePreview;
     private bool _inviteBusy;
     private string? _inviteMessage;
+    private DotNetObjectReference<KandidatenkaartMapAreaBridge>? _mapBridgeRef;
+
+    public Task SelectAreaFromMapAsync(string areaKey) => SelectArea(areaKey);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -210,8 +222,9 @@
             _vacancyId = _vacancies[0].Id;
         }
 
-        await ReloadAsync();
         await KandidatenkaartMapInterop.EnsureLoadedAsync(Js);
+        _mapBridgeRef = DotNetObjectReference.Create(new KandidatenkaartMapAreaBridge(this));
+        await ReloadAsync();
     }
 
     private async Task ReloadAsync()
@@ -233,7 +246,8 @@
                 areas = _map.Areas,
                 selectedAreaKey = _selectedArea,
                 center = new[] { 5.38, 52.15 },
-                zoom = 9
+                zoom = 9,
+                dotNetRef = _mapBridgeRef
             });
         }
 
@@ -299,5 +313,7 @@
         {
             // circuit gone
         }
+
+        _mapBridgeRef?.Dispose();
     }
 }

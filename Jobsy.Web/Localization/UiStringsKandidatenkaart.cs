@@ -40,6 +40,8 @@ public static class UiStringsKandidatenkaart
         Add("Kk.Invite.PreviewTitle", "Uitnodiging voor gebied", "Invite for area");
         Add("Kk.Invite.Eligible", "{0} kandidaten met {1}%+ match", "{0} candidates at {1}%+ match");
         Add("Kk.Invite.Staging", "Getrapte verzending: {0} rondes", "Staged send: {0} rounds");
+        Add("Kk.Invite.SkippedWeeklyCap", "{0} kandidaten overgeslagen vanwege weeklimiet (2–3 uitnodigingen).", "{0} candidates skipped due to weekly invite cap (2–3 invitations).");
+        Add("Kk.Invite.SkippedBelowMatch", "{0} kandidaten in gebied onder 70% match (uitnodiging).", "{0} candidates in area below 70% match (invite threshold).");
         Add("Kk.Invite.Confirm", "Verstuur uitnodigingen", "Send invitations");
         Add("Kk.Invite.Cancel", "Annuleren", "Cancel");
         Add("Kk.Invite.Success", "Uitnodigingen gepland.", "Invitations scheduled.");

@@ -28,6 +28,10 @@ window.jobMap = (function () {
     let ringStyleHandlerBound = false;
     let ringRedrawTries = 0;
     let deferMapReveal = false;
+    let kkMode = false;
+    let kkSelectCallback = null;
+    const KK_SOURCE = "jobsy-kk-areas";
+    const KK_FILL = "jobsy-kk-areas-fill";
     let detailCache = {};
     let pinsUrl = null;
     let pinsBaseUrl = null;
@@ -3849,6 +3853,13 @@ window.jobMap = (function () {
     }
 
     function restoreOverlays() {
+        if (kkMode) {
+            refreshKkAreasData();
+            if (window.jobsyMapLibre) {
+                window.jobsyMapLibre.hideChrome(map);
+            }
+            return;
+        }
         refreshClusters();
         if (lastOrigin) {
             ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
@@ -4073,7 +4084,109 @@ window.jobMap = (function () {
         }
     }
 
+    function kkAreasGeoJson(areas, selectedKey) {
+        var features = (areas || []).map(function (a) {
+            var ring = a.polygonRing || a.PolygonRing || [];
+            var coords = ring.map(function (p) { return [p[0], p[1]]; });
+            if (coords.length && (coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1])) {
+                coords.push(coords[0]);
+            }
+            return {
+                type: "Feature",
+                properties: {
+                    key: a.areaKey || a.AreaKey,
+                    label: a.label || a.Label,
+                    selected: (a.areaKey || a.AreaKey) === selectedKey
+                },
+                geometry: { type: "Polygon", coordinates: [coords] }
+            };
+        });
+        return { type: "FeatureCollection", features: features };
+    }
+
+    var kkAreasCache = [];
+    var kkSelectedKey = null;
+
+    function ensureKkLayers() {
+        if (!map || !kkMode) {
+            return;
+        }
+        if (!map.getSource(KK_SOURCE)) {
+            map.addSource(KK_SOURCE, { type: "geojson", data: kkAreasGeoJson([], null) });
+            map.addLayer({
+                id: KK_FILL,
+                type: "fill",
+                source: KK_SOURCE,
+                paint: {
+                    "fill-color": [
+                        "case",
+                        ["boolean", ["get", "selected"], false],
+                        "rgba(220, 80, 70, 0.35)",
+                        "rgba(220, 80, 70, 0.18)"
+                    ],
+                    "fill-outline-color": "rgba(180, 50, 45, 0.55)"
+                }
+            });
+            map.on("click", KK_FILL, function (e) {
+                if (!e.features || !e.features.length) {
+                    return;
+                }
+                var key = e.features[0].properties.key;
+                if (kkSelectCallback && key) {
+                    kkSelectCallback(key);
+                }
+            });
+            map.getCanvas().style.cursor = "pointer";
+        }
+    }
+
+    function refreshKkAreasData() {
+        if (!map || !kkMode) {
+            return;
+        }
+        ensureKkLayers();
+        var source = map.getSource(KK_SOURCE);
+        if (source && typeof source.setData === "function") {
+            source.setData(kkAreasGeoJson(kkAreasCache, kkSelectedKey));
+        }
+    }
+
+    function initKandidatenkaart(elementId, options) {
+        options = options || {};
+        var el = document.getElementById(elementId);
+        if (!el) {
+            throw new Error("Map element #" + elementId + " not found");
+        }
+        if (map) {
+            dispose();
+        }
+        kkMode = true;
+        if (options.dotNetRef) {
+            kkSelectCallback = function (key) {
+                try {
+                    options.dotNetRef.invokeMethodAsync("OnAreaSelected", key);
+                } catch (e) { /* circuit gone */ }
+            };
+        } else {
+            kkSelectCallback = typeof options.onAreaSelect === "function" ? options.onAreaSelect : null;
+        }
+        kkAreasCache = options.areas || [];
+        kkSelectedKey = options.selectedAreaKey || null;
+        var center = options.center || [5.38, 52.15];
+        var zoom = options.zoom || 9;
+        createMapInstance(el, [], { center: center, zoom: zoom, locked: false }, false);
+        setVacancies([]);
+        refreshKkAreasData();
+    }
+
+    function setKandidatenkaartAreas(areas, selectedKey) {
+        kkAreasCache = areas || [];
+        kkSelectedKey = selectedKey || null;
+        refreshKkAreasData();
+    }
+
     function init(elementId, vacancies, options) {
+        kkMode = false;
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
         }
@@ -4746,6 +4859,8 @@ window.jobMap = (function () {
         focus,
         focusCompany,
         dispose,
+        initKandidatenkaart,
+        setKandidatenkaartAreas,
         invalidate,
         notifyFilterDrawerToggle,
         isAlive,
