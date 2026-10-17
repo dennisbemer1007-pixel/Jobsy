@@ -1529,6 +1529,13 @@ public sealed class PrivacyDataService : IPrivacyDataService
         user.TalentPoolConsentVersion = null;
         user.TestAiConsentAt = null;
         user.TestAiConsentVersion = null;
+        user.ResearchConsentAt = null;
+        user.ResearchConsentVersion = null;
+        user.ResearchAgeBand = null;
+        user.ResearchGender = null;
+        user.ResearchEducationLevel = null;
+        user.ResearchNativeLanguage = null;
+        user.ResearchTestLanguage = null;
         user.ParentalConsentAt = null;
         user.ParentalConsentEmail = null;
         user.ParentalConsentTokenHash = null;
@@ -1616,6 +1623,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateCompetencies.RemoveRange(competencies);
         }
 
+        var researchAttempts = await _db.AssessmentResearchAttempts
+            .Where(a => a.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (researchAttempts.Count > 0)
+        {
+            _db.AssessmentResearchAttempts.RemoveRange(researchAttempts);
+        }
+
         var discs = await _db.CandidateCulturePersonalityProfiles
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1686,6 +1701,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
         if (onboardings.Count > 0)
         {
             _db.CandidateOnboardings.RemoveRange(onboardings);
+        }
+
+        var proactiveSettings = await _db.CandidateProactiveMatchingSettings
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (proactiveSettings.Count > 0)
+        {
+            _db.CandidateProactiveMatchingSettings.RemoveRange(proactiveSettings);
+        }
+
+        var proactiveSuggestions = await _db.ProactiveMatchSuggestions
+            .Where(s => s.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (proactiveSuggestions.Count > 0)
+        {
+            _db.ProactiveMatchSuggestions.RemoveRange(proactiveSuggestions);
         }
 
         var roleFits = await _db.CandidateRoleFitChecks

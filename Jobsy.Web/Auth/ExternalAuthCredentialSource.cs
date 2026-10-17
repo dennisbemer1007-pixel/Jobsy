@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Jobsy.Core;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -43,10 +44,26 @@ public sealed class ExternalAuthCredentialSource : IExternalAuthCredentialSource
     }
 
     public async Task<bool> IsEntraConfiguredAsync(CancellationToken cancellationToken = default)
-        => (await GetEntraAsync(cancellationToken)) is not null;
+    {
+        if (_authOptions.Value.Entra.IsConfigured)
+        {
+            return true;
+        }
+
+        var status = await GetPublicProviderStatusAsync(cancellationToken);
+        return status?.Entra == true;
+    }
 
     public async Task<bool> IsGoogleConfiguredAsync(CancellationToken cancellationToken = default)
-        => (await GetGoogleAsync(cancellationToken)) is not null;
+    {
+        if (_authOptions.Value.Google.IsConfigured)
+        {
+            return true;
+        }
+
+        var status = await GetPublicProviderStatusAsync(cancellationToken);
+        return status?.Google == true;
+    }
 
     public Task<ExternalOAuthCredentials?> GetEntraAsync(CancellationToken cancellationToken = default)
     {
@@ -74,6 +91,47 @@ public sealed class ExternalAuthCredentialSource : IExternalAuthCredentialSource
         }
 
         return GetFromIntegrationsAsync("google", cancellationToken);
+    }
+
+    private async Task<PublicProvidersStatus?> GetPublicProviderStatusAsync(CancellationToken cancellationToken)
+    {
+        const string cacheKey = "external-oauth:public-status";
+        if (_cache.TryGetValue(cacheKey, out PublicProvidersStatus? cached))
+        {
+            return cached;
+        }
+
+        try
+        {
+            var apiBase = JobsyPublicUrl.NormalizeBaseUrl(
+                _configuration["ApiBaseUrl"],
+                "http://localhost:5200/");
+            var client = _httpClientFactory.CreateClient("JobsyAuthProvision");
+            client.BaseAddress = new Uri(apiBase);
+            client.Timeout = TimeSpan.FromSeconds(8);
+
+            using var response = await client.GetAsync("api/auth/external-providers", cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var body = await JsonSerializer.DeserializeAsync<PublicProvidersStatus>(
+                stream,
+                PublicStatusJson,
+                cancellationToken);
+            if (body is not null)
+            {
+                _cache.Set(cacheKey, body, CacheDuration);
+            }
+
+            return body;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private async Task<ExternalOAuthCredentials?> GetFromIntegrationsAsync(
@@ -145,4 +203,15 @@ public sealed class ExternalAuthCredentialSource : IExternalAuthCredentialSource
         public string ClientSecret { get; set; } = string.Empty;
         public string? TenantId { get; set; }
     }
+
+    private sealed class PublicProvidersStatus
+    {
+        public bool Entra { get; set; }
+        public bool Google { get; set; }
+    }
+
+    private static readonly JsonSerializerOptions PublicStatusJson = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 }

@@ -30,7 +30,20 @@ window.jobMap = (function () {
     let deferMapReveal = false;
     let detailCache = {};
     let pinsUrl = null;
+    let pinsBaseUrl = null;
     let pinsFetchGen = 0;
+    let viewportPinsBound = false;
+    let viewportListDotNet = null;
+    /** Suppress moveend-driven pin/discover churn during programmatic camera moves / resize. */
+    let viewportNotifySuppressed = 0;
+    let mapResizePausedUntil = 0;
+    let viewportBootstrapDone = false;
+    let lastUserGestureAt = 0;
+    let userGesturePending = false;
+    let setVacanciesCallCount = 0;
+    let viewportNotifyCount = 0;
+    let travelRingDrawCount = 0;
+    const ORIGIN_MOVE_MIN_METERS = 500;
     /** Localized map UI strings from VacancyDiscovery (nl fallbacks). */
     let uiLabels = {
         vacanciesAtPlace: "{count} banen",
@@ -2157,8 +2170,78 @@ window.jobMap = (function () {
     /** In-memory pins by filter state (transport stripped — rings are client-side). */
     const pinsByFilterKey = Object.create(null);
     let pinsNetworkFetchCount = 0;
+    let lastPinsSignature = "";
+    let lastIsoModeNotified = "";
+    let lastRingDrawKey = "";
 
-    /** Filter cache key: everything in the pins URL except travel mode. */
+    function stripViewportParams(url) {
+        return String(url || "")
+            .replace(/([?&])(minLat|minLng|maxLat|maxLng|zoom)=[^&]*/gi, "$1")
+            .replace(/[?&]+$/g, "")
+            .replace(/\?&/g, "?");
+    }
+
+    function readViewportBounds() {
+        if (!map || typeof map.getZoom !== "function") {
+            return null;
+        }
+        var z = Math.round(map.getZoom() * 10) / 10;
+        var minLat;
+        var minLng;
+        var maxLat;
+        var maxLng;
+        try {
+            if (typeof map.unproject === "function" && typeof map.getContainer === "function") {
+                var host = map.getContainer();
+                var w = host && host.clientWidth ? host.clientWidth : 0;
+                var h = host && host.clientHeight ? host.clientHeight : 0;
+                if (w > 0 && h > 0) {
+                    var nw = map.unproject([0, 0]);
+                    var se = map.unproject([w, h]);
+                    minLat = Math.min(nw.lat, se.lat);
+                    maxLat = Math.max(nw.lat, se.lat);
+                    minLng = Math.min(nw.lng, se.lng);
+                    maxLng = Math.max(nw.lng, se.lng);
+                }
+            }
+            if (!Number.isFinite(minLat) && typeof map.getBounds === "function") {
+                var b = map.getBounds();
+                var sw = b.getSouthWest();
+                var ne = b.getNorthEast();
+                minLat = sw.lat;
+                minLng = sw.lng;
+                maxLat = ne.lat;
+                maxLng = ne.lng;
+            }
+        } catch (eBounds) {
+            return null;
+        }
+        if (!Number.isFinite(minLat) || !Number.isFinite(minLng)
+            || !Number.isFinite(maxLat) || !Number.isFinite(maxLng)) {
+            return null;
+        }
+        return {
+            minLat: minLat,
+            minLng: minLng,
+            maxLat: maxLat,
+            maxLng: maxLng,
+            zoom: z
+        };
+    }
+
+    function viewportQueryString() {
+        var box = readViewportBounds();
+        if (!box) {
+            return "";
+        }
+        return "&minLat=" + encodeURIComponent(String(box.minLat))
+            + "&minLng=" + encodeURIComponent(String(box.minLng))
+            + "&maxLat=" + encodeURIComponent(String(box.maxLat))
+            + "&maxLng=" + encodeURIComponent(String(box.maxLng))
+            + "&zoom=" + encodeURIComponent(String(box.zoom));
+    }
+
+    /** Filter cache key: filter state only (no transport, no viewport bbox). */
     function pinsFilterKey(url) {
         if (!url) {
             return "";
@@ -2166,6 +2249,11 @@ window.jobMap = (function () {
         try {
             const u = new URL(url, window.location.origin);
             u.searchParams.delete("transport");
+            u.searchParams.delete("minLat");
+            u.searchParams.delete("minLng");
+            u.searchParams.delete("maxLat");
+            u.searchParams.delete("maxLng");
+            u.searchParams.delete("zoom");
             const keys = Array.prototype.slice.call(u.searchParams.keys()).sort();
             const parts = [];
             for (let i = 0; i < keys.length; i++) {
@@ -2198,9 +2286,11 @@ window.jobMap = (function () {
         if (!url) {
             return Promise.resolve([]);
         }
-        pinsUrl = String(url);
+        pinsBaseUrl = stripViewportParams(String(url));
+        const viewportQs = viewportQueryString();
+        pinsUrl = pinsBaseUrl + viewportQs;
         const filterKey = pinsFilterKey(pinsUrl);
-        const cached = filterKey ? pinsByFilterKey[filterKey] : null;
+        const cached = !viewportQs && filterKey ? pinsByFilterKey[filterKey] : null;
         if (cached && cached.pins) {
             // Transport-only changes reuse the same pin set; travel rings update separately.
             pinsCachedPayload = cached.payload;
@@ -2455,6 +2545,7 @@ window.jobMap = (function () {
             } catch (e) { }
         }
         travelRingGeo = null;
+        lastRingDrawKey = "";
         clearTravelRingLabels();
     }
 
@@ -2729,20 +2820,22 @@ window.jobMap = (function () {
 
     function setIsoMode(mode) {
         try {
+            const normalized = mode === "real" ? "real" : "approx";
             const host = map && map.getContainer ? map.getContainer() : null;
             if (!host) {
                 return;
             }
-            host.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+            host.setAttribute("data-iso-mode", normalized);
             const pane = host.closest ? host.closest(".map-pane") : null;
             if (pane) {
-                pane.setAttribute("data-iso-mode", mode === "real" ? "real" : "approx");
+                pane.setAttribute("data-iso-mode", normalized);
             }
+            if (normalized === lastIsoModeNotified) {
+                return;
+            }
+            lastIsoModeNotified = normalized;
             if (typeof onIsoModeChange === "function") {
-                onIsoModeChange(mode === "real" ? "real" : "approx");
-            }
-            if (openCallback && typeof openCallback.invokeMethodAsync === "function") {
-                openCallback.invokeMethodAsync("OnIsoModeChanged", mode === "real" ? "real" : "approx");
+                onIsoModeChange(normalized);
             }
         } catch (e) { }
     }
@@ -2870,6 +2963,14 @@ window.jobMap = (function () {
             return;
         }
 
+        const ringKey = String(lat) + "," + String(lng) + "|"
+            + String(travelOptions.maxMinutes) + "|" + String(travelOptions.transport || "");
+        if (ringKey === lastRingDrawKey && travelRingGeo) {
+            return;
+        }
+        lastRingDrawKey = ringKey;
+        travelRingDrawCount += 1;
+
         // Circles first, swap isochrones when they arrive (no flash).
         const circleFeatures = buildTravelRingFeatures(lat, lng);
         if (!circleFeatures.length) {
@@ -2938,9 +3039,29 @@ window.jobMap = (function () {
     }
 
     function sameOrigin(lat, lng) {
-        return !!(lastOrigin
-            && Math.abs(lastOrigin.lat - lat) < 1e-7
-            && Math.abs(lastOrigin.lng - lng) < 1e-7);
+        if (!lastOrigin) {
+            return false;
+        }
+        if (Math.abs(lastOrigin.lat - lat) < 1e-7 && Math.abs(lastOrigin.lng - lng) < 1e-7) {
+            return true;
+        }
+        return haversineMeters(lastOrigin.lat, lastOrigin.lng, lat, lng) < ORIGIN_MOVE_MIN_METERS;
+    }
+
+    function markUserMapGesture() {
+        lastUserGestureAt = Date.now();
+        userGesturePending = true;
+    }
+
+    function runWithViewportNotifySuppressed(fn) {
+        viewportNotifySuppressed += 1;
+        try {
+            fn();
+        } finally {
+            setTimeout(function () {
+                viewportNotifySuppressed = Math.max(0, viewportNotifySuppressed - 1);
+            }, 650);
+        }
     }
 
     function fitToOriginRings(animate) {
@@ -2968,26 +3089,28 @@ window.jobMap = (function () {
             finishOpeningFrame();
             return;
         }
-        try {
-            map.fitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
-            originNeedsFrame = false;
-            originHasBeenFramed = true;
-            cameraLocked = true;
-            firstSizedFit = true;
-            finishOpeningFrame();
-            map.once("idle", function () {
-                if (lastOrigin) {
-                    drawTravelRings(lastOrigin.lat, lastOrigin.lng);
-                }
-            });
-        } catch (e) {
-            originNeedsFrame = true;
-            safeJumpTo({
-                center: [lastOrigin.lng, lastOrigin.lat],
-                zoom: FILLED_LOCATION_ZOOM
-            });
-            finishOpeningFrame();
-        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.fitBounds(ringBounds(lastOrigin.lat, lastOrigin.lng, radius), opts);
+                originNeedsFrame = false;
+                originHasBeenFramed = true;
+                cameraLocked = true;
+                firstSizedFit = true;
+                finishOpeningFrame();
+                map.once("idle", function () {
+                    if (lastOrigin) {
+                        drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+                    }
+                });
+            } catch (e) {
+                originNeedsFrame = true;
+                safeJumpTo({
+                    center: [lastOrigin.lng, lastOrigin.lat],
+                    zoom: FILLED_LOCATION_ZOOM
+                });
+                finishOpeningFrame();
+            }
+        });
     }
 
     function normalizeTravelOptions(options) {
@@ -3096,18 +3219,22 @@ window.jobMap = (function () {
         if (!map || !opts) {
             return;
         }
-        try {
-            map.jumpTo(opts);
-        } catch (e) { }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.jumpTo(opts);
+            } catch (e) { }
+        });
     }
 
     function safeEaseTo(opts) {
         if (!map || !opts) {
             return;
         }
-        try {
-            map.easeTo(opts);
-        } catch (e) { }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.easeTo(opts);
+            } catch (e) { }
+        });
     }
 
     function lockCamera(openingPoints, openingView, preferFilledLocation) {
@@ -3987,6 +4114,9 @@ window.jobMap = (function () {
         }
 
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
+        viewportListDotNet = options && options.syncViewportList && options.dotNetRef
+            ? options.dotNetRef
+            : null;
         if (options && options.labels && typeof options.labels === "object") {
             uiLabels = Object.assign({}, uiLabels, options.labels);
             uiLabels.canSave = options.labels.canSave === true || options.labels.canSave === "true";
@@ -3997,10 +4127,14 @@ window.jobMap = (function () {
             : 0;
         const nextPinsUrl = options && options.pinsUrl ? String(options.pinsUrl) : null;
         if (nextPinsUrl) {
-            pinsUrl = nextPinsUrl;
+            pinsBaseUrl = stripViewportParams(nextPinsUrl);
+            pinsUrl = pinsBaseUrl + viewportQueryString();
         }
 
         bindMapRuntime();
+        if (!live || !viewportPinsBound) {
+            bindViewportPinsReload();
+        }
 
         // Early boot() may already have painted pins — do not re-fetch (one pins request/load).
         const alreadyPinned = live && Object.keys(markersById).length > 0;
@@ -4026,7 +4160,7 @@ window.jobMap = (function () {
             }
             // Apply early prefetch (started from maps-loader / boot JSON) before a new fetch.
             // Match by filter key so Fiets/Auto prefetch URLs share one body.
-            if (pinsUrl && window.__jobsyPinsPrefetch
+            if (pinsUrl && !viewportQueryString() && window.__jobsyPinsPrefetch
                 && pinsFilterKey(window.__jobsyPinsPrefetchUrl) === pinsFilterKey(pinsUrl)) {
                 const gen = ++pinsFetchGen;
                 Promise.resolve(window.__jobsyPinsPrefetch).then(function (data) {
@@ -4142,8 +4276,30 @@ window.jobMap = (function () {
         }
     }
 
+    function pinsSignature(vacancies) {
+        const list = vacancies || [];
+        if (!list.length) {
+            return "0";
+        }
+        let sig = String(list.length) + ":";
+        for (let i = 0; i < list.length; i++) {
+            const v = normalizePin(list[i]);
+            if (v && v.id != null) {
+                sig += String(v.id) + ",";
+            }
+        }
+        return sig;
+    }
+
     function setVacancies(vacancies) {
         if (!clusterGroup) return;
+        setVacanciesCallCount += 1;
+
+        const nextSig = pinsSignature(vacancies);
+        if (nextSig === lastPinsSignature && Object.keys(markersById).length > 0) {
+            return;
+        }
+        lastPinsSignature = nextSig;
 
         clusterGroup.clearLayers();
         markersById = {};
@@ -4190,7 +4346,9 @@ window.jobMap = (function () {
     }
 
     function reloadPins(url) {
-        pinsUrl = url ? String(url) : pinsUrl;
+        if (url) {
+            pinsBaseUrl = stripViewportParams(String(url));
+        }
         if (pinsReloadTimer) {
             clearTimeout(pinsReloadTimer);
             pinsReloadTimer = null;
@@ -4198,9 +4356,97 @@ window.jobMap = (function () {
         return new Promise(function (resolve) {
             pinsReloadTimer = setTimeout(function () {
                 pinsReloadTimer = null;
-                resolve(fetchPins(pinsUrl));
+                resolve(fetchPins(pinsBaseUrl || pinsUrl));
             }, 200);
         });
+    }
+
+    function notifyViewportList() {
+        if (!viewportListDotNet || !map) {
+            return;
+        }
+        try {
+            var box = readViewportBounds();
+            if (!box) {
+                return;
+            }
+            viewportNotifyCount += 1;
+            viewportListDotNet.invokeMethodAsync(
+                "OnMapViewportChanged",
+                box.minLat,
+                box.minLng,
+                box.maxLat,
+                box.maxLng,
+                box.zoom);
+        } catch (e) { /* circuit */ }
+    }
+
+    function viewportUserIntent() {
+        if (userGesturePending) {
+            userGesturePending = false;
+            return true;
+        }
+        return Date.now() - lastUserGestureAt < 900;
+    }
+
+    function bindViewportPinsReload() {
+        if (!map) {
+            return;
+        }
+        if (map._jobsyViewportPinsSchedule) {
+            try {
+                map.off("moveend", map._jobsyViewportPinsSchedule);
+                map.off("zoomend", map._jobsyViewportPinsSchedule);
+            } catch (eOff) { /* ignore */ }
+        }
+        if (!map._jobsyUserGestureBound) {
+            map._jobsyUserGestureBound = true;
+            map.on("dragstart", function (ev) {
+                if (ev && ev.originalEvent) {
+                    markUserMapGesture();
+                }
+            });
+            map.on("zoomstart", function (ev) {
+                if (ev && ev.originalEvent) {
+                    markUserMapGesture();
+                }
+            });
+        }
+        viewportPinsBound = true;
+        var debounce = null;
+        function schedule() {
+            if (viewportNotifySuppressed > 0) {
+                return;
+            }
+            if (debounce) {
+                clearTimeout(debounce);
+            }
+            debounce = setTimeout(function () {
+                debounce = null;
+                if (viewportNotifySuppressed > 0) {
+                    return;
+                }
+                const user = viewportUserIntent();
+                if (!viewportBootstrapDone) {
+                    viewportBootstrapDone = true;
+                    reloadPins();
+                    notifyViewportList();
+                    return;
+                }
+                if (!user) {
+                    return;
+                }
+                reloadPins();
+                notifyViewportList();
+            }, 300);
+        }
+        map._jobsyViewportPinsSchedule = schedule;
+        map.on("moveend", schedule);
+        map.on("zoomend", schedule);
+        if (!map._jobsyViewportPinsBootstrapped) {
+            map._jobsyViewportPinsBootstrapped = true;
+            setTimeout(schedule, 80);
+        }
     }
 
     function ensureOriginMarker(la, ln) {
@@ -4307,14 +4553,27 @@ window.jobMap = (function () {
         firstSizedFit = true;
     }
 
+    function notifyFilterDrawerToggle() {
+        mapResizePausedUntil = (typeof performance !== "undefined" ? performance.now() : Date.now()) + 380;
+        setTimeout(function () {
+            mapResizePausedUntil = 0;
+            invalidate();
+        }, 400);
+    }
+
     function invalidate() {
         if (!map) {
             return;
         }
-        map.resize();
-        if (originNeedsFrame && lastOrigin) {
-            fitToOriginRings(false);
+        if (mapResizePausedUntil && typeof performance !== "undefined" && performance.now() < mapResizePausedUntil) {
+            return;
         }
+        runWithViewportNotifySuppressed(function () {
+            map.resize();
+            if (originNeedsFrame && lastOrigin) {
+                fitToOriginRings(false);
+            }
+        });
     }
 
     function isAlive() {
@@ -4444,6 +4703,7 @@ window.jobMap = (function () {
         tileLayer = null;
         selectedId = null;
         zoomHandlerBound = false;
+        viewportPinsBound = false;
         // Stale If-None-Match after dispose+rebuild used to yield 304 with no body
         // while markers were already cleared — empty map. Always drop etag + cache.
         pinsEtag = null;
@@ -4487,6 +4747,7 @@ window.jobMap = (function () {
         focusCompany,
         dispose,
         invalidate,
+        notifyFilterDrawerToggle,
         isAlive,
         /** @internal Playwright / diagnostics */
         __testGetMap: function () { return map; },
@@ -4515,6 +4776,10 @@ window.jobMap = (function () {
         },
         __testGetMapCreateCount: function () { return mapCreateCount; },
         __testGetPinsNetworkFetchCount: function () { return pinsNetworkFetchCount; },
+        __testViewportQueryString: function () { return viewportQueryString(); },
+        __testGetPinsUrl: function () {
+            return pinsBaseUrl ? pinsBaseUrl + viewportQueryString() : pinsUrl;
+        },
         __testPinsFilterKey: pinsFilterKey,
         __testClearPinsFilterCache: function () {
             Object.keys(pinsByFilterKey).forEach(function (k) { delete pinsByFilterKey[k]; });
@@ -4522,6 +4787,11 @@ window.jobMap = (function () {
             pinsCachedPayload = null;
             pinsEtag = null;
         },
+        __testGetSetVacanciesCallCount: function () { return setVacanciesCallCount; },
+        __testResetSetVacanciesCallCount: function () { setVacanciesCallCount = 0; },
+        __testGetViewportNotifyCount: function () { return viewportNotifyCount; },
+        __testResetViewportNotifyCount: function () { viewportNotifyCount = 0; },
+        __testGetTravelRingDrawCount: function () { return travelRingDrawCount; },
         /** @internal Open the densest visible cluster for v3 popup tests. */
         debugOpenLargestCluster: async function () {
             if (!map || typeof map.queryRenderedFeatures !== "function") {

@@ -106,7 +106,8 @@ public class OccupationTaxonomyTests
         var panel = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/RoleFitCheckPanel.razor"));
         Assert.Contains("Fit.PathTitle", panel, StringComparison.Ordinal);
         Assert.Contains("Fit.Dealbreaker", panel, StringComparison.Ordinal);
-        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
+        var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/VacancyCreateWizard.razor"))
+            + File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/VacancyCreateWizard.razor.cs"));
         Assert.Contains("VacancyHardCheckCatalog", create, StringComparison.Ordinal);
         var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
         Assert.Contains("Vacancy.PathTitle", detail, StringComparison.Ordinal);

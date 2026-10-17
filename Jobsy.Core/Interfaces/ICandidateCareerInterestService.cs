@@ -1,4 +1,6 @@
+using System.Text.Json.Serialization;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
@@ -37,10 +39,13 @@ public sealed record CandidateCareerInterestStateDto(
     string DeepAnalysisUpsellCopy,
     IReadOnlyList<CandidateMatchedVacancyDto> TopVacancies,
     CareerCompassSnapshot Compass,
-    string InsightsStatus = InsightsStatuses.Ready);
+    string InsightsStatus = InsightsStatuses.Ready,
+    int QuickScanVersion = AssessmentTestVersions.V1,
+    int QuickScanFullCount = 0,
+    bool IsIndicativeDepth = false);
 
 public sealed record CareerQuestionDto(
     int Id,
     string Category,
-    bool Reverse,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Always)] bool Reverse,
     string TextKey);

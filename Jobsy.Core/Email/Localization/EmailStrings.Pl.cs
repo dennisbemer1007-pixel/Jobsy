@@ -470,7 +470,7 @@ internal static class EmailStringsPl
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "There is interest, but no applications yet. Make requirements more realistic or clarify the wage.",
 
         ["Email.ProactiveMatch.Subject"] = "Lobsy tip: {0}",
-        ["Email.ProactiveMatch.Preheader"] = "Match {0}% — zobacz, dlaczego to pasuje",
+        ["Email.ProactiveMatch.Preheader"] = "Match {0}% - zobacz, dlaczego to pasuje",
         ["Email.ProactiveMatch.Heading"] = "Lobsy szuka dla Ciebie",
         ["Email.ProactiveMatch.Eyebrow"] = "Nowe dopasowanie",
         ["Email.ProactiveMatch.P1"] = "Widzimy ofertę, która do Ciebie pasuje: {0} w {1}.",

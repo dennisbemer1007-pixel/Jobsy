@@ -130,7 +130,7 @@
 
         @if (!_loading)
         {
-            <DeleteAccountSection />
+            <ProfileDangerZoneSection />
         }
             </ProfileTab>
             <Side>
@@ -148,6 +148,10 @@
         </CascadingValue>
         </CascadingValue>
 </div>
+
+<CandidateProfileResetDialog IsOpen="Editor.ProfileResetOpen"
+                             ShowResearchNote="@(Editor.ResearchConsent?.HasConsent == true)"
+                             OnClose="Editor.CloseProfileReset" />
 
 <UnsubscribeDialog IsOpen="Editor.UnsubscribeOpen"
                    OnClose="Editor.CloseUnsubscribe"
@@ -266,6 +270,15 @@
         }
         finally
         {
+            try
+            {
+                await Editor.LoadResearchConsentAsync();
+            }
+            catch (Exception ex) when (!Jobsy.Web.Hosting.CircuitInterop.IsCircuitGone(ex))
+            {
+                // Research opt-in is optional; classic profile should still render.
+            }
+
             _loading = false;
             _matchesLoading = false;
             ApiCalls.Flush("/candidate/profile");
@@ -283,6 +296,7 @@
         }
 
         Editor.ApplyFromProfile(profile);
+        await Editor.LoadResearchConsentAsync();
         _insightsStatus = kompas?.InsightsStatus ?? "Ready";
         if (_isWideViewport && kompas?.TopMatches is { Count: > 0 } matches)
         {

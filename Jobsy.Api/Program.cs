@@ -9,6 +9,7 @@ using Jobsy.Api.Swagger;
 using Jobsy.Core;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
+using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
@@ -136,7 +137,7 @@ builder.Services.AddRateLimiter(options =>
     var publicTravelLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicTravelPermitLimit")
         ?? (isProduction ? 30 : 10_000);
     var publicWriteLimit = builder.Configuration.GetValue<int?>("RateLimiting:PublicWritePermitLimit")
-        ?? 60;
+        ?? (isProduction ? 60 : 10_000);
     var pupilLimit = builder.Configuration.GetValue<int?>("RateLimiting:PupilPermitLimit")
         ?? (isProduction ? 60 : 10_000);
     var kvkSearchLimit = builder.Configuration.GetValue<int?>("RateLimiting:KvkSearchPermitLimit")
@@ -151,20 +152,59 @@ builder.Services.AddRateLimiter(options =>
         ?? 5;
     var reportDailyLimit = builder.Configuration.GetValue<int?>("RateLimiting:ReportDailyPermitLimit")
         ?? 20;
+    var otpVerifyLimit = builder.Configuration.GetValue<int?>("RateLimiting:OtpVerifyPermitLimit")
+        ?? 10;
     var internalClientIpSecret = builder.Configuration[RateLimitPartitioning.ConfigKey];
+
+    options.AddPolicy("candidate-apply", httpContext =>
+    {
+        var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (env.IsDevelopment())
+        {
+            return RateLimitPartition.GetNoLimiter("candidate-apply");
+        }
+
+        var limits = httpContext.RequestServices
+            .GetRequiredService<Jobsy.Core.Interfaces.ICandidateApplyRateLimitProvider>()
+            .GetCurrent();
+
+        var userId = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                     ?? httpContext.User.FindFirst("sub")?.Value;
+        var partition = string.IsNullOrWhiteSpace(userId)
+            ? $"candidate-apply:ip:{RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret)}"
+            : $"candidate-apply:user:{userId}";
+
+        return RateLimitPartition.Get(
+            partition,
+            _ => new TripleWindowRateLimiter(
+                limits.PerMinute,
+                TimeSpan.FromMinutes(1),
+                limits.PerHour,
+                TimeSpan.FromHours(1),
+                limits.PerDay,
+                TimeSpan.FromDays(1)));
+    });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.OnRejected = RateLimitPartitioning.OnRejectedAsync;
 
     options.AddPolicy("auth", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
+    {
+        var env = httpContext.RequestServices.GetRequiredService<IHostEnvironment>();
+        if (env.IsDevelopment())
+        {
+            return RateLimitPartition.GetNoLimiter("auth");
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
             _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 20,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
-            }));
+            });
+    });
     options.AddPolicy("public-write", httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             RateLimitPartitioning.ResolvePartitionKey(httpContext, internalClientIpSecret),
@@ -258,7 +298,7 @@ builder.Services.AddRateLimiter(options =>
             partition,
             _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = otpVerifyLimit,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
             });
@@ -445,6 +485,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+
+await JobsyDbSeeder.EnsurePassportPdfDnaBlocksColumnAsync(app.Services);
 
 app.Run();
 

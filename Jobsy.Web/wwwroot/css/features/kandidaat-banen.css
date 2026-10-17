@@ -246,16 +246,26 @@
   min-width: 0;
 }
 
-.kb-filter-search--bar input {
+.kb-filter-search--bar .kb-filter-search__icon {
+  display: none;
+}
+
+.kb-filter-search--bar input,
+#discovery-keyword-mobile {
   width: 100%;
   height: 44px;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 12px 0 36px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 8px);
-  background: var(--surface);
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6a7d' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px 18px;
   font-size: 16px;
   color: var(--text);
+  box-sizing: border-box;
 }
 
 .kb-filter-search--bar input:focus {
@@ -546,8 +556,20 @@
   background: var(--surface);
   color: var(--brand);
   cursor: pointer;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+}
+
+.kb-address__clear-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+}
+
+.kb-address__clear-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .kb-address__geo:disabled {
@@ -620,9 +642,12 @@
 .kb-travel-legend {
   position: absolute;
   z-index: 4;
-  inset-inline-end: 0.75rem;
+  inset-inline-start: 0.75rem;
+  inset-inline-end: auto;
   bottom: 0.75rem;
   max-width: 14rem;
+  max-height: calc(100% - 5.5rem);
+  overflow: visible;
   padding: 0.65rem 0.75rem;
   background: color-mix(in srgb, var(--surface) 94%, transparent);
   border: 1px solid var(--border);
@@ -1097,6 +1122,15 @@
 }
 
 @media (max-width: 899px) {
+  .jobsy-discovery.show-list .kb-filter-bar__row.kb-panel-head__search-row,
+  .jobsy-discovery.show-list .kb-filter-bar__row.kb-panel-head__address-row {
+    display: none;
+  }
+
+  .jobsy-discovery.show-list .results-meta {
+    display: none;
+  }
+
   .jobsy-discovery.show-list .kb-map-fab {
     display: inline-flex;
     position: fixed;
@@ -2452,4 +2486,339 @@
 /* Solliciteren zonder e-mailcode: drie stappen, geen lege vierde kolom. */
 ol.apply-steps.apply-steps--three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Vacancy apply: consent row must keep checkbox visible on narrow viewports. */
+.apply-check:has(> input[type="checkbox"]) {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.65rem;
+}
+
+.apply-check--terms {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.65rem;
+}
+
+.apply-check--terms .apply-check__text {
+  min-width: 0;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.apply-check--terms input[type="checkbox"] {
+  margin-top: 0.2rem;
+  min-width: 1.15rem;
+}
+
+.apply-check--terms .auth-link {
+  word-break: break-word;
+}
+
+/* Banenkaart variant B — filterlade panel (8px grid, 40px controls, 24px padding) */
+.kb-panel-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 24px 8px;
+  background: var(--pearl, #f7f4f0);
+  border-bottom: 1px solid var(--pearl-mid, var(--border));
+  flex-shrink: 0;
+}
+
+.kb-panel-head__search-row {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+}
+
+.kb-filter-search.kb-panel-head__search,
+.kb-filter-search--bar,
+.kb-chrome-search.kb-filter-search--bar {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kb-filter-search__icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kb-filter-search__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+#discovery-keyword-desktop,
+#discovery-keyword-mobile,
+.kb-panel-head__search input,
+.kb-filter-search.kb-filter-search--bar input {
+  width: 100%;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 12px 0 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 8px);
+  background-color: var(--surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235a6a7d' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 10px center;
+  background-size: 18px 18px;
+  font-size: 16px;
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.kb-panel-head__search .kb-filter-search__icon {
+  display: inline-flex;
+  opacity: 1;
+  color: var(--muted);
+}
+
+.kb-panel-head__filters {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+
+.kb-panel-head__address .kb-address__field input {
+  height: 40px;
+  min-height: 40px;
+}
+
+.kb-panel-head__match,
+.kb-filter-bar__match--inline {
+  flex: 0 0 auto;
+  align-self: stretch;
+  height: 40px;
+  min-height: 40px;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.kb-active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.kb-active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: #2f7d5b;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.kb-active-tag:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.kb-active-tag__remove {
+  font-size: 1.1rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.kb-active-filters__clear {
+  border: none;
+  background: transparent;
+  color: var(--brand);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0 4px;
+  min-height: 40px;
+}
+
+.kb-filter-bar {
+  padding: 8px 12px 8px;
+  gap: 8px;
+  background: var(--pearl, #f7f4f0);
+}
+
+.kb-filter-bar__summary {
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.kb-match-button--icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  justify-content: center;
+  border-radius: var(--radius-sm, 8px);
+}
+
+.kb-match-button--icon .kb-match-button__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.kb-match-button--icon .kb-match-button__icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.kb-filter-bar__count-block {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.kb-filter-bar__count {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.kb-filter-bar__count-sub {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+}
+
+.kb-filter-search--bar input {
+  height: 40px;
+  min-height: 40px;
+}
+
+.kb-filters-button {
+  height: 40px;
+  min-height: 40px;
+}
+
+.kb-view-toggle--mobile {
+  display: inline-flex;
+  margin-inline-start: auto;
+  border-radius: var(--radius-sm, 8px);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.kb-view-toggle--mobile .kb-view-toggle__btn {
+  min-height: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 0;
+}
+
+
+@media (min-width: 900px) {
+  .jobsy-discovery:not(.jobsy-discovery--branch) .vacancy-pane {
+    overflow: visible;
+  }
+
+  .kb-panel-head {
+    position: relative;
+    z-index: 12;
+    overflow: visible;
+  }
+
+  .kb-panel-head__address.kb-address {
+    overflow: visible;
+  }
+
+  .kb-panel-head__address .address-suggestions {
+    z-index: 40;
+  }
+
+  .kb-panel-head__address .kb-address__field {
+    position: relative;
+    display: block;
+    gap: 0;
+  }
+
+  .kb-panel-head__address .kb-address__field input {
+    width: 100%;
+    padding-right: 48px;
+  }
+
+  .kb-panel-head__address.kb-address--with-clear .kb-address__field input {
+    padding-right: calc(48px + 8px + 40px);
+  }
+
+  .kb-panel-head__address .kb-address__geo,
+  .kb-panel-head__address .kb-address__clear {
+    position: absolute;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .kb-panel-head__address .kb-address__clear {
+    inset-inline-end: 0;
+  }
+
+  .kb-panel-head__address .kb-address__geo {
+    inset-inline-end: 0;
+  }
+
+  .kb-panel-head__address.kb-address--with-clear .kb-address__geo {
+    inset-inline-end: 48px;
+  }
+
+  .kb-panel-head.discovery-toolbar--desktop {
+    display: flex;
+  }
+
+  .vacancy-pane {
+    position: relative;
+    background: var(--pearl, #f7f4f0);
+  }
+
+  .results-meta {
+    padding-inline: 24px;
+  }
+
+  .kb-view-toggle {
+    display: inline-flex;
+    border-radius: var(--radius-sm, 8px);
+    overflow: hidden;
+  }
+
+  .kb-view-toggle__btn {
+    min-height: 40px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 0;
+  }
 }

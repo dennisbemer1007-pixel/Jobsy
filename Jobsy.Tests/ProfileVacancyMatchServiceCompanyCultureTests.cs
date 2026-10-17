@@ -9,6 +9,7 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jobsy.Tests;
 
@@ -39,7 +40,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
         await db.SaveChangesAsync();
 
         var lookup = new CompanyCultureLookup(db, cache);
-        var service = new ProfileVacancyMatchService(db, new CompanyAuthorizationService(db), new UserLookupService(db), lookup);
+        var service = CreateMatchService(db, lookup);
         var context = MakeContext();
 
         var vacancyA = MakeRecord(companyA.Id, "Kassamedewerker A");
@@ -75,7 +76,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
         await db.SaveChangesAsync();
 
         var lookup = new CompanyCultureLookup(db, cache);
-        var service = new ProfileVacancyMatchService(db, new CompanyAuthorizationService(db), new UserLookupService(db), lookup);
+        var service = CreateMatchService(db, lookup);
         var vacancy = MakeRecord(vestiging.Id, "Zorgmedewerker");
         var scored = await service.ScoreAsync(MakeContext(), [(vacancy, 8)]);
 
@@ -113,7 +114,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
         await db.SaveChangesAsync();
 
         var lookup = new CompanyCultureLookup(db, cache);
-        var service = new ProfileVacancyMatchService(db, new CompanyAuthorizationService(db), new UserLookupService(db), lookup);
+        var service = CreateMatchService(db, lookup);
         var vacancy = MakeRecord(company.Id, "Magazijn");
         var scored = await service.ScoreAsync(MakeContext(), [(vacancy, 10)]);
 
@@ -137,7 +138,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
         await db.SaveChangesAsync();
 
         var lookup = new CompanyCultureLookup(db, cache);
-        var service = new ProfileVacancyMatchService(db, new CompanyAuthorizationService(db), new UserLookupService(db), lookup);
+        var service = CreateMatchService(db, lookup);
         var vacancy = MakeRecord(endClient.Id, "Uitzendkracht", intermediaryCompanyId: bureau.Id);
         var scored = await service.ScoreAsync(MakeContext(), [(vacancy, 12)]);
 
@@ -216,7 +217,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
         await db.SaveChangesAsync();
 
         var lookup = new CompanyCultureLookup(db, cache);
-        var service = new ProfileVacancyMatchService(db, new CompanyAuthorizationService(db), new UserLookupService(db), lookup);
+        var service = CreateMatchService(db, lookup);
         var vacancy = MakeRecord(
             company.Id,
             "Vulploeg",
@@ -344,7 +345,9 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
             Competencies = Competencies,
             CultureScores = CandidateCulture,
             RiasecTags = [],
-            CareerOccupations = []
+            CareerOccupations = [],
+            CompetencyMatchEvidence = AssessmentMatchEvidence.FullQuickScan,
+            CareerMatchEvidence = AssessmentMatchEvidence.FullQuickScan
         };
 
     private static VacancyDiscoveryRecord MakeRecord(
@@ -410,4 +413,33 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
             true,
             false,
             CulturePillars: culturePillars);
+
+    public static ProfileVacancyMatchService CreateMatchService(
+        JobsyDbContext db,
+        CompanyCultureLookup lookup,
+        bool matchCalibrationV1 = false)
+        => new(
+            db,
+            new CompanyAuthorizationService(db),
+            new UserLookupService(db),
+            lookup,
+            new StubPlatformFeatures(matchCalibrationV1),
+            new CandidateMatchScoreCache(new MemoryCache(new MemoryCacheOptions())),
+            NullLogger<ProfileVacancyMatchService>.Instance);
+
+    private sealed class StubPlatformFeatures(bool matchCalibrationV1) : IPlatformFeatureService
+    {
+        public Task<PlatformFeatureSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new PlatformFeatureSnapshot(
+                VacancyContentModerationEnabled: true,
+                AuthenticatorEnabled: true,
+                PublicWebBaseUrl: "http://localhost:5201",
+                UpdatedAtUtc: null,
+                MatchCalibrationV1Enabled: matchCalibrationV1));
+
+        public Task<PlatformFeatureSnapshot> UpdateAsync(
+            PlatformFeatureUpdate update,
+            CancellationToken cancellationToken = default)
+            => GetAsync(cancellationToken);
+    }
 }

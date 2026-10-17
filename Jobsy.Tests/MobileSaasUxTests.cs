@@ -191,8 +191,8 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("application-stepper", css);
         Assert.DoesNotContain("application-card__actions", css);
 
-        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
-        AssetVersions.AssertVersionedRefMatchesManifest(app, "css/features/applications.css");
+        var catalog = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
+        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/applications.css");
 
         var appCss = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.DoesNotContain(".apps-tabs.admin-sublinks", appCss);
@@ -224,7 +224,8 @@ public class MobileSaasUxTests
         var razor = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Profile.razor"));
         var sectionsDir = Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections");
         var sections = string.Concat(Directory.EnumerateFiles(sectionsDir, "*.razor").Select(File.ReadAllText));
-        var blob = razor + sections;
+        var availabilityMatrix = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/AvailabilityDayPartMatrix.razor"));
+        var blob = razor + sections + availabilityMatrix;
         Assert.Contains("profile-page--candidate", razor);
         Assert.Contains("profile-accordion", razor);
         Assert.Contains("ToggleSection(\"personal\")", razor);
@@ -481,7 +482,7 @@ public class MobileSaasUxTests
         Assert.Contains("pointer-events: none;", css);
         Assert.Contains(".feedback-widget__btn {\n    pointer-events: auto;", css);
         Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
-        Assert.Contains(".lobsy-assistant-tab.has-bottom-nav {\n        top: auto;\n        bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains("@media (max-width: 639px) {\n    .lobsy-assistant-tab.has-bottom-nav {\n        top: auto;\n        bottom: calc(var(--bottom-nav-h, 4.75rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));", css);
         Assert.Contains(".feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.DoesNotContain(".lobsy-assistant-tab--edge,\n    .feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);

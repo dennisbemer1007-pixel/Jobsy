@@ -1,3 +1,5 @@
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Core.Interfaces;
 
 public interface IPlatformFeatureService
@@ -39,6 +41,9 @@ public sealed record PlatformFeatureSnapshot(
     string? MaintenanceNote = null,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
+    bool PupilPassportV2Enabled = false,
+    bool StudentPassportEnabled = false,
+    bool PassportPdfDnaBlocksEnabled = true,
     bool PhoneVerificationEnabled = false,
     bool WhatsAppRemindersEnabled = false,
     bool CompactTestPdfEnabled = false,
@@ -52,7 +57,12 @@ public sealed record PlatformFeatureSnapshot(
     /// <summary>Phase-2 accept, Maqqie placement, agency map radius, uren. Default false.</summary>
     bool EmployerPhase2Enabled = false,
     bool CandidateExternalVacanciesEnabled = false,
-    bool ProactiveMatchingEnabled = false);
+    bool ProactiveMatchingEnabled = false,
+    bool TestsV2Enabled = false,
+    bool MatchCalibrationV1Enabled = false,
+    int CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute,
+    int CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour,
+    int CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay);
 
 /// <summary>
 /// Partial platform-feature update. Null fields keep the current value (nullable = keep).
@@ -97,6 +107,9 @@ public sealed record PlatformFeatureUpdate(
     string? MaintenanceNote = null,
     bool? PassportPartnersEnabled = null,
     bool? PassportPdfV2Enabled = null,
+    bool? PupilPassportV2Enabled = null,
+    bool? StudentPassportEnabled = null,
+    bool? PassportPdfDnaBlocksEnabled = null,
     bool? PhoneVerificationEnabled = null,
     bool? WhatsAppRemindersEnabled = null,
     bool? CompactTestPdfEnabled = null,
@@ -110,4 +123,9 @@ public sealed record PlatformFeatureUpdate(
     bool? EmployerPhase2Enabled = null,
     /// <summary>Null = keep existing. Default false.</summary>
     bool? CandidateExternalVacanciesEnabled = null,
-    bool? ProactiveMatchingEnabled = null);
+    bool? ProactiveMatchingEnabled = null,
+    bool? TestsV2Enabled = null,
+    bool? MatchCalibrationV1Enabled = null,
+    int? CandidateApplyPerMinuteLimit = null,
+    int? CandidateApplyPerHourLimit = null,
+    int? CandidateApplyPerDayLimit = null);

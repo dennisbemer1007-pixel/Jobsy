@@ -103,7 +103,7 @@ public class TokenRequestsApiTests : IClassFixture<TokenRequestsApiFactory>
     }
 }
 
-public sealed class TokenRequestsApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class TokenRequestsApiFactory : ApiWebApplicationFactory
 {
     public Guid OrgId { get; } = Guid.Parse("a6000000-0000-0000-0000-000000000001");
     public Guid BranchId { get; } = Guid.Parse("a6000000-0000-0000-0000-000000000011");

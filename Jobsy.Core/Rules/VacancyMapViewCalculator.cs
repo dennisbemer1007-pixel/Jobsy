@@ -73,7 +73,19 @@ public static class VacancyMapViewCalculator
         var fromRegion = regionLat is double rLat && regionLng is double rLng
             ? ForFilledLocation(rLat, rLng, pinCentroid.PinCount, maxMinutes, transport, radiusKm)
             : null;
-        return fromRegion ?? pinCentroid;
+        if (fromRegion is not null)
+        {
+            return fromRegion;
+        }
+
+        // Without an address, do not fit the whole country when pins span NL — open on Randstad scale.
+        if (pinCentroid.Zoom < 10)
+        {
+            return ForFilledLocation(52.011, 4.357, pinCentroid.PinCount, maxMinutes, transport, radiusKm)
+                   ?? Fallback;
+        }
+
+        return pinCentroid;
     }
 
     /// <summary>

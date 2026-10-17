@@ -88,7 +88,7 @@ public sealed class DeviceSessionRefreshMiddleware
             await http.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
                 principal,
-                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic());
+                AuthServiceCollectionExtensions.CreateSessionAuthPropertiesPublic(http));
             SessionActivityCookie.Stamp(http, DateTimeOffset.UtcNow);
             if (!string.IsNullOrWhiteSpace(profile.RefreshToken) && profile.ExpiresAtUtc is DateTime exp)
             {

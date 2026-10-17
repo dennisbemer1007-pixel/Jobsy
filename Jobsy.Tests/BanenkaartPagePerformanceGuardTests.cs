@@ -80,7 +80,7 @@ public class BanenkaartPagePerformanceGuardTests
         var banner = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "CookieConsentBanner.razor"));
         Assert.Contains("private bool _visible = true", banner);
         Assert.DoesNotContain("cookie-consent__mascot", banner);
-        Assert.Contains("Accepteer cookies", banner);
+        Assert.Contains("CookieConsent.", banner);
         Assert.DoesNotContain("Accepteer analytics", banner);
         Assert.Contains("cookie-consent__privacy", banner);
         Assert.DoesNotContain("class=\"auth-link\"", banner);
@@ -135,7 +135,8 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.DoesNotContain("warmDiscovery", bundle);
         Assert.DoesNotContain("jobsyMapsAfterFirstPaint", bundle);
         // Pins HTTP still starts immediately; MapLibre create/style waits for circuit/idle.
-        Assert.Contains("whenCircuitOrIdle", bundle);
+        Assert.Contains("whenAfterFirstPaint", bundle);
+        Assert.Contains("whenCircuitReady", bundle);
         Assert.Contains("requestIdleCallback", bundle);
         Assert.Contains("fetchpriority", bundle);
         Assert.Contains("loadScriptsParallel", bundle);

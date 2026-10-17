@@ -250,6 +250,10 @@ projects:
                 value: "true"
               - key: Seed__Enabled
                 value: "true"
+              - key: Jobsy__PupilPassportV2Enabled
+                value: "true"
+              - key: Jobsy__StudentPassportEnabled
+                value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true
               - key: JobsyAuth__LocalSessionSigningKey
@@ -264,6 +268,10 @@ projects:
                 value: jobsy-web
               - key: JobsyAuth__Jwt__Audience
                 value: jobsy-api
+              - key: JobsyAuth__Session__InactivityTimeoutOverrideMinutes
+                value: "480"
+              - key: JobsyAuth__Session__RememberDeviceLifetimeDays
+                value: "30"
               # Same value on API and Web of this environment. Dashboard only — never commit a value.
               - key: CLOUDFLARE_ORIGIN_SECRET
                 sync: false
@@ -416,6 +424,11 @@ projects:
                 sync: false
               - key: Circuit__DetailedErrors
                 value: "true"
+              # Host override: Acceptatie DB may still store 30m admin idle; use 8h sliding for demos.
+              - key: JobsyAuth__Session__InactivityTimeoutOverrideMinutes
+                value: "480"
+              - key: JobsyAuth__Session__RememberDeviceLifetimeDays
+                value: "30"
               - key: ApiBaseUrl
                 fromService:
                   name: lobsy-acc-api
@@ -429,6 +442,9 @@ projects:
                 value: Acceptatie
               - key: PublicWebBaseUrl
                 value: "https://acceptatie.lobsy.nl"
+              # Combo homepage (On) at / for acceptatie preview; production has no override.
+              - key: Landing__ForceVariant
+                value: on
               - key: TestAccounts__Enabled
                 sync: false
               # Same provider and key presence as the API, so the privacy page drops Resend when Lettermint sends.

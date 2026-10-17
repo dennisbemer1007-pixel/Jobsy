@@ -19,6 +19,9 @@ internal static class UiStringsOnboardingV2
         PatchAvailabilityEducationPl(pl);
         PatchAvailabilityEducationRo(ro);
         PatchAvailabilityEducationAr(ar);
+        PatchWorkStatusPl(pl);
+        PatchWorkStatusRo(ro);
+        PatchWorkStatusAr(ar);
 
         nl["Onboarding.Age.TooYoung"] = "Je moet minstens {0} jaar zijn om Lobsy te gebruiken.";
         en["Onboarding.Age.TooYoung"] = "You must be at least {0} to use Lobsy.";
@@ -46,9 +49,16 @@ internal static class UiStringsOnboardingV2
         var english = language != "nl";
         map["Onboarding.Step1.Title"] = english ? "Let’s get acquainted" : "Even kennismaken";
         map["Onboarding.Step1.Lead"] = english ? "Is this correct? We copied your name from your account." : "Klopt dit? We hebben je naam overgenomen van je account.";
+        map["Onboarding.UseMyLocation"] = english ? "Use my location" : "Gebruik mijn locatie";
+        map["Onboarding.LocationDenied"] = english
+            ? "Location access was denied. You can enter your postcode manually."
+            : "Locatie is geweigerd. Je kunt je postcode handmatig invullen.";
+        map["Onboarding.LocationFailed"] = english
+            ? "We couldn’t determine your postcode. Try entering it manually."
+            : "We konden je postcode niet bepalen. Vul hem handmatig in.";
         map["Onboarding.Step2.Title"] = english ? "When can you work?" : "Wanneer kun je werken?";
         map["Onboarding.Step2.Lead"] = english ? "Pick one or more options. We fill in the hours and days for you." : "Kies één of meer opties. Wij zetten uren en dagen voor je klaar.";
-        map["Onboarding.AvailabilityPresetsLegend"] = english ? "1. Pick what fits you" : "1. Kies wat op jou lijkt";
+        map["Onboarding.AvailabilityPresetsLegend"] = english ? "1. Choose what suits you" : "1. Kies wat bij je past";
         map["Onboarding.AvailabilityPresetsHint"] = english ? "You can pick more than one." : "Je mag er meer dan één kiezen.";
         map["Onboarding.AvailabilityStartLegend"] = english ? "2. When can you start?" : "2. Wanneer kun je beginnen?";
         map["Onboarding.AvailabilityStartImmediate"] = english ? "Right away" : "Per direct";
@@ -64,6 +74,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = english ? "Hide details" : "Details verbergen";
         map["Onboarding.AvailabilityFineTuneLegend"] = english ? "Set hours and days yourself" : "Stel zelf uren en dagen in";
         map["Onboarding.AvailabilityMatrixHint"] = english ? "Tap a block for each time you can work." : "Tik op elk vakje waarop je kunt werken.";
+        map["Onboarding.Preset.Custom.GridLegend"] = english ? "When are you available?" : "Wanneer ben je beschikbaar?";
+        map["Onboarding.Preset.Custom.GridHint"] = english
+            ? "Tap morning, afternoon, evening or night for each day."
+            : "Tik per dag aan: ochtend, middag, avond of nacht.";
         map["Onboarding.Step3.Title"] = english ? "How do you get to work?" : "Hoe kom je op je werk?";
         map["Onboarding.Step3.Lead"] = english ? "We only show jobs that are easy to reach." : "Dan laten we alleen banen zien die goed te bereiken zijn.";
         map["Onboarding.Step4.Title"] = english ? "Have you worked before?" : "Heb je al gewerkt?";
@@ -95,6 +109,20 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.ManualOverride"] = english ? "You adjusted this yourself." : "Je hebt het zelf aangepast";
         map["Onboarding.Refill"] = english ? "Fill in again" : "Opnieuw invullen";
         map["Onboarding.AvailabilityRequired"] = english ? "Choose at least one moment when you can work." : "Kies minstens één moment waarop je kunt";
+        map["Onboarding.Validation.FirstName"] = english ? "Enter your first name." : "Vul je voornaam in.";
+        map["Onboarding.Validation.LastName"] = english ? "Enter your last name." : "Vul je achternaam in.";
+        map["Onboarding.Validation.BirthDate"] = english ? "Choose your date of birth." : "Kies je geboortedatum.";
+        map["Onboarding.Validation.Location"] = english
+            ? "Enter your postcode or city, or use your location."
+            : "Vul je postcode of woonplaats in, of gebruik je locatie.";
+        map["Onboarding.Validation.AvailabilityGrid"] = english
+            ? "Tap at least one time block when you can work."
+            : "Tik minstens één vakje aan waarop je kunt werken.";
+        map["Onboarding.Validation.HoursRange"] = english ? "Set a valid hours range." : "Stel een geldig urenbereik in.";
+        map["Onboarding.Validation.Transport"] = english ? "Choose how you travel to work." : "Kies hoe je naar werk reist.";
+        map["Onboarding.Validation.MaxTravel"] = english ? "Choose a maximum travel time." : "Kies een maximale reistijd.";
+        map["Onboarding.Validation.Dream"] = english ? "Pick or type a dream job." : "Kies of typ een droombaan.";
+        map["Onboarding.Validation.Consent"] = english ? "Tick consent to continue with the mini tests." : "Vink toestemming aan om verder te gaan met de mini-tests.";
         map["Onboarding.Transport"] = english ? "Transport" : "Vervoer"; map["Onboarding.MaxTravel"] = english ? "Maximum travel" : "Maximaal reizen"; map["Onboarding.Minutes"] = english ? "min" : "min"; map["Onboarding.Other"] = english ? "Other" : "Anders";
         map["Profile.CurrentJob"] = language switch
         {
@@ -141,12 +169,89 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who are you" : "Wie ben jij";
         map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
         AddPresets(map, english);
+        AddWorkStatuses(map, english);
         AddDreamJobs(map, language);
+    }
+
+    private static void AddWorkStatuses(Dictionary<string, string> map, bool english)
+    {
+        map["WorkStatus.Legend"] = english ? "What is your current work status?" : "Wat is je huidige werkstatus?";
+        map["WorkStatus.Hint"] = english ? "Optional. You can pick more than one." : "Optioneel. Je mag er meer dan één kiezen.";
+        foreach (var (code, nl, en) in WorkStatusLabelRows())
+        {
+            map[$"WorkStatus.{code}"] = english ? en : nl;
+        }
+    }
+
+    private static IEnumerable<(string Code, string Nl, string En)> WorkStatusLabelRows()
+    {
+        yield return ("scholier", "Scholier", "School pupil");
+        yield return ("student", "Student (mbo/hbo/wo)", "Student (vocational / university)");
+        yield return ("stagiair", "Stagiair / afstudeerder", "Intern / graduate");
+        yield return ("loondienst-fulltime", "In loondienst – fulltime", "Employed – full-time");
+        yield return ("loondienst-parttime", "In loondienst – parttime", "Employed – part-time");
+        yield return ("flex", "Flexwerker / uitzendkracht / oproepkracht", "Flexible / temp / on-call worker");
+        yield return ("zzp", "Zzp'er / freelancer", "Self-employed / freelancer");
+        yield return ("zoekend", "Op dit moment geen baan (zoekend)", "Currently unemployed (looking)");
+        yield return ("herintreder", "Herintreder (terug na zorg, ziekte of pauze)", "Returner (after care, illness or break)");
+        yield return ("gepensioneerd-werkt", "Gepensioneerd, wil nog werken", "Retired, still wants to work");
+        yield return ("ondernemer", "Ondernemer met eigen bedrijf", "Business owner");
+    }
+
+    private static void PatchWorkStatusPl(Dictionary<string, string> map)
+    {
+        map["WorkStatus.Legend"] = "Jaki jest Twój obecny status zawodowy?";
+        map["WorkStatus.Hint"] = "Opcjonalnie. Możesz wybrać więcej niż jedną opcję.";
+        map["WorkStatus.scholier"] = "Uczeń";
+        map["WorkStatus.student"] = "Student (zawodowe/technikum/studia)";
+        map["WorkStatus.stagiair"] = "Stażysta / absolwent";
+        map["WorkStatus.loondienst-fulltime"] = "Etat – pełny";
+        map["WorkStatus.loondienst-parttime"] = "Etat – niepełny";
+        map["WorkStatus.flex"] = "Praca tymczasowa / zlecenie / na wezwanie";
+        map["WorkStatus.zzp"] = "Samozatrudniony / freelancer";
+        map["WorkStatus.zoekend"] = "Obecnie bez pracy (szukam)";
+        map["WorkStatus.herintreder"] = "Powrót po opiece, chorobie lub przerwie";
+        map["WorkStatus.gepensioneerd-werkt"] = "Emeryt, chcę jeszcze pracować";
+        map["WorkStatus.ondernemer"] = "Właściciel firmy";
+    }
+
+    private static void PatchWorkStatusRo(Dictionary<string, string> map)
+    {
+        map["WorkStatus.Legend"] = "Care este situația ta profesională actuală?";
+        map["WorkStatus.Hint"] = "Opțional. Poți alege mai multe opțiuni.";
+        map["WorkStatus.scholier"] = "Elev";
+        map["WorkStatus.student"] = "Student (profesional / universitate)";
+        map["WorkStatus.stagiair"] = "Stagiar / absolvent";
+        map["WorkStatus.loondienst-fulltime"] = "Angajat – full-time";
+        map["WorkStatus.loondienst-parttime"] = "Angajat – part-time";
+        map["WorkStatus.flex"] = "Muncitor flexibil / temp / la apel";
+        map["WorkStatus.zzp"] = "Independent / freelancer";
+        map["WorkStatus.zoekend"] = "Fără job momentan (caut)";
+        map["WorkStatus.herintreder"] = "Revenire după îngrijire, boală sau pauză";
+        map["WorkStatus.gepensioneerd-werkt"] = "Pensionar, vreau să mai lucrez";
+        map["WorkStatus.ondernemer"] = "Antreprenor cu firmă proprie";
+    }
+
+    private static void PatchWorkStatusAr(Dictionary<string, string> map)
+    {
+        map["WorkStatus.Legend"] = "‏ما وضعك المهني الحالي؟";
+        map["WorkStatus.Hint"] = "‏اختياري. يمكنك اختيار أكثر من خيار.";
+        map["WorkStatus.scholier"] = "‏طالب مدرسة";
+        map["WorkStatus.student"] = "‏طالب (مهني / جامعي)";
+        map["WorkStatus.stagiair"] = "‏متدرب / خريج";
+        map["WorkStatus.loondienst-fulltime"] = "‏موظف – دوام كامل";
+        map["WorkStatus.loondienst-parttime"] = "‏موظف – دوام جزئي";
+        map["WorkStatus.flex"] = "‏عمل مرن / مؤقت / عند الطلب";
+        map["WorkStatus.zzp"] = "‏عمل حر / مستقل";
+        map["WorkStatus.zoekend"] = "‏بدون عمل حالياً (أبحث)";
+        map["WorkStatus.herintreder"] = "‏عودة بعد رعاية أو مرض أو استراحة";
+        map["WorkStatus.gepensioneerd-werkt"] = "‏متقاعد وأرغب بالعمل";
+        map["WorkStatus.ondernemer"] = "‏صاحب عمل";
     }
 
     private static void AddPresets(Dictionary<string, string> map, bool english)
     {
-        var values = new[] { ("Direct", "Per direct", "Ik kan meteen beginnen", "Immediately", "I can start right away"), ("School", "Bijbaan naast school", "Na school en in het weekend", "Job alongside school", "After school and weekends"), ("Weekend", "Weekenden", "Za en zo", "Weekends", "Saturday and Sunday"), ("Evening", "Avonden", "Ma–vr na 18:00", "Evenings", "Weekdays after 18:00"), ("Office", "Kantoordagen", "Ma–vr, 9–17 uur", "Office days", "Weekdays, 9–17"), ("Holiday", "Vakantiewerk", "In de schoolvakanties", "Holiday work", "During school holidays"), ("Parttime", "Parttime", "12–32 uur per week", "Part-time", "12–32 hours a week"), ("Fulltime", "Fulltime", "36–40 uur per week", "Full-time", "36–40 hours a week") };
+        var values = new[] { ("Direct", "Per direct", "Ik kan meteen beginnen", "Immediately", "I can start right away"), ("School", "Bijbaan naast school", "Na school en in het weekend", "Job alongside school", "After school and weekends"), ("Weekend", "Weekenden", "Za en zo", "Weekends", "Saturday and Sunday"), ("Evening", "Avonden", "Ma–vr na 18:00", "Evenings", "Weekdays after 18:00"), ("Office", "Kantoordagen", "Ma–vr, 9–17 uur", "Office days", "Weekdays, 9–17"), ("Holiday", "Vakantiewerk", "In de schoolvakanties", "Holiday work", "During school holidays"), ("Parttime", "Parttime", "12–32 uur per week", "Part-time", "12–32 hours a week"), ("Fulltime", "Fulltime", "36–40 uur per week", "Full-time", "36–40 hours a week"), ("Custom", "Zelf aangeven", "Kies zelf je dagen en dagdelen", "Specify yourself", "Pick your own days and times") };
         foreach (var item in values) { map[$"Onboarding.Preset.{item.Item1}"] = english ? item.Item4 : item.Item2; map[$"Onboarding.Preset.{item.Item1}.Lead"] = english ? item.Item5 : item.Item3; }
     }
 
@@ -182,7 +287,7 @@ internal static class UiStringsOnboardingV2
     private static void PatchAvailabilityEducationPl(Dictionary<string, string> map)
     {
         map["Onboarding.Step2.Lead"] = "Wybierz jedną lub więcej opcji. Uzupełnimy godziny i dni za Ciebie.";
-        map["Onboarding.AvailabilityPresetsLegend"] = "1. Wybierz, co do Ciebie pasuje";
+        map["Onboarding.AvailabilityPresetsLegend"] = "1. Wybierz, co Ci pasuje";
         map["Onboarding.AvailabilityPresetsHint"] = "Możesz wybrać więcej niż jedną opcję.";
         map["Onboarding.AvailabilityStartLegend"] = "2. Kiedy możesz zacząć?";
         map["Onboarding.AvailabilityStartImmediate"] = "Od razu";
@@ -198,6 +303,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = "Ukryj szczegóły";
         map["Onboarding.AvailabilityFineTuneLegend"] = "Ustaw godziny i dni samodzielnie";
         map["Onboarding.AvailabilityMatrixHint"] = "Dotknij każdego pola, w którym możesz pracować.";
+        map["Onboarding.Preset.Custom"] = "Podaj samodzielnie";
+        map["Onboarding.Preset.Custom.Lead"] = "Wybierz dni i pory dnia";
+        map["Onboarding.Preset.Custom.GridLegend"] = "Kiedy jesteś dostępny/a?";
+        map["Onboarding.Preset.Custom.GridHint"] = "Dotknij: rano, popołudnie, wieczór lub noc dla każdego dnia.";
         map["Onboarding.Step5.Lead"] = "Wybierz najwyższy ukończony poziom. Brak dyplomu? Wybierz Brak.";
         map["Onboarding.EducationPickLevel"] = "Wybierz poziom wykształcenia";
         map["Onboarding.EducationMboLegend"] = "Który poziom MBO?";
@@ -224,6 +333,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = "Ascunde detaliile";
         map["Onboarding.AvailabilityFineTuneLegend"] = "Setează orele și zilele singur";
         map["Onboarding.AvailabilityMatrixHint"] = "Atinge fiecare pătrat când poți lucra.";
+        map["Onboarding.Preset.Custom"] = "Specifică tu";
+        map["Onboarding.Preset.Custom.Lead"] = "Alege zilele și intervalele";
+        map["Onboarding.Preset.Custom.GridLegend"] = "Când ești disponibil/ă?";
+        map["Onboarding.Preset.Custom.GridHint"] = "Atinge dimineața, după-amiaza, seara sau noaptea pentru fiecare zi.";
         map["Onboarding.Step5.Lead"] = "Alege cel mai înalt nivel terminat. Fără diplomă? Alege Niciunul.";
         map["Onboarding.EducationPickLevel"] = "Alege nivelul de școală";
         map["Onboarding.EducationMboLegend"] = "Ce nivel MBO?";
@@ -250,6 +363,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.AvailabilityFineTuneClose"] = "‏إخفاء التفاصيل";
         map["Onboarding.AvailabilityFineTuneLegend"] = "‏حدّد الساعات والأيام بنفسك";
         map["Onboarding.AvailabilityMatrixHint"] = "‏المس كل مربع يمكنك العمل فيه.";
+        map["Onboarding.Preset.Custom"] = "‏حدّد بنفسك";
+        map["Onboarding.Preset.Custom.Lead"] = "‏اختر الأيام والفترات";
+        map["Onboarding.Preset.Custom.GridLegend"] = "‏متى أنت متاح؟";
+        map["Onboarding.Preset.Custom.GridHint"] = "‏المس الصباح أو الظهر أو المساء أو الليل لكل يوم.";
         map["Onboarding.Step5.Lead"] = "‏اختر أعلى مستوى أنهيتَه. لا شهادة؟ اختر لا يوجد.";
         map["Onboarding.EducationPickLevel"] = "‏اختر مستوى التعليم";
         map["Onboarding.EducationMboLegend"] = "‏أي مستوى MBO؟";

@@ -99,7 +99,7 @@ internal static class DeepAnalysisCareerItems
         (CareerTestCatalog.Social, false, "Ik kan omgaan met gasten of cliënten die extra aandacht nodig hebben."),
         (CareerTestCatalog.Social, true, "Ik vermijd werk waarin ik anderen moet begeleiden of opvangen."),
         (CareerTestCatalog.Social, false, "Ik bouw vertrouwen op door betrouwbaar en vriendelijk te blijven."),
-        (CareerTestCatalog.Social, false, "Ik vind het belangrijk dat iedereen zich welkom voelt."),
+        (CareerTestCatalog.Social, false, "Ik let erop dat nieuwe collega's zich meteen op hun gemak voelen."),
         (CareerTestCatalog.Social, true, "Ik wil zo min mogelijk te maken hebben met de gevoelens van anderen."),
         (CareerTestCatalog.Social, false, "Ik kan een conflict tussen mensen sussen zonder partij te kiezen."),
         (CareerTestCatalog.Social, false, "Ik haal energie uit een tevreden klant, leerling of collega."),

@@ -7,6 +7,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
@@ -27,6 +28,7 @@ public class VacancyCategoriesController : ControllerBase
     /// <summary>Active categories for create dropdown, map filter and legend.</summary>
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     [RequiresFeature(PlatformFeature.Employers)]
     public async Task<ActionResult<IReadOnlyList<VacancyCategoryDto>>> GetActive(CancellationToken cancellationToken)
         => Ok((await _categories.GetActiveAsync(cancellationToken))
@@ -48,6 +50,7 @@ public class VacancyCategoriesController : ControllerBase
 
     [HttpGet("{id:guid}")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     [RequiresFeature(PlatformFeature.Employers)]
     public async Task<ActionResult<VacancyCategoryDto>> GetById(Guid id, CancellationToken cancellationToken)
     {

@@ -512,6 +512,12 @@ public class CompetencyMatchingTests
             CareerDeepCompleted = careerDeepCompleted,
             VacancyRiasecTags = vacancyRiasec,
             CareerOccupations = careerOccupations,
+            CompetencyMatchEvidence = competencies is not null
+                ? AssessmentMatchEvidence.FullQuickScan
+                : AssessmentMatchEvidence.None,
+            CareerMatchEvidence = candidateRiasecScores is not null || candidateRiasec is { Count: > 0 } || careerDeepCompleted
+                ? careerDeepCompleted ? AssessmentMatchEvidence.DeepAnalysis : AssessmentMatchEvidence.FullQuickScan
+                : AssessmentMatchEvidence.None,
             Core = new MatchScoreInput
             {
                 EstimatedTravelMinutes = travelMinutes,

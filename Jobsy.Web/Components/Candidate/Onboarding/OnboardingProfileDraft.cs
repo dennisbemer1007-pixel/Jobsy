@@ -16,6 +16,8 @@ public sealed class OnboardingProfileDraft
     public bool WhatsAppAllowed { get; set; }
     public string Postcode { get; set; } = "";
     public string City { get; set; } = "";
+    /// <summary>Visible address line in autocomplete (banenkaart-style).</summary>
+    public string AddressQuery { get; set; } = "";
     public string BirthDay { get; set; } = "";
     public string BirthMonth { get; set; } = "";
     public string BirthYear { get; set; } = "";
@@ -48,6 +50,7 @@ public sealed class OnboardingProfileDraft
     public HashSet<string> Presets { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> DrivingLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> EmployerPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> WorkStatuses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Roles { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Hobbies { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> Dislikes { get; } = new(StringComparer.OrdinalIgnoreCase);

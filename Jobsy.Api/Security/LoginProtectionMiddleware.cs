@@ -54,8 +54,8 @@ public sealed class LoginProtectionMiddleware
             return "register";
         }
 
-        if (path.StartsWith("/api/registration/", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("/api/applications", StringComparison.OrdinalIgnoreCase))
+        // Authenticated candidate apply is limited by [EnableRateLimiting("candidate-apply")], not this bucket.
+        if (path.StartsWith("/api/registration/", StringComparison.OrdinalIgnoreCase))
         {
             return "verification-code";
         }

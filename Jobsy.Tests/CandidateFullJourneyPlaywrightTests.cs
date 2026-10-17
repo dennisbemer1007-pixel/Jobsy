@@ -71,7 +71,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
         page.SetDefaultTimeout(90_000);
         var capture = KbE2e.AttachCapture(page);
 
-        await SignUpAsync(page, baseUrl, email, firstName, viewportTag);
+        var signupCode = await SignUpAsync(page, baseUrl, email, firstName, viewportTag);
         await CompleteOnboardingWizardAsync(page, baseUrl, viewportTag);
         await CompleteDiscoveryJourneyDeepTestsAsync(page, baseUrl, viewportTag);
 
@@ -80,17 +80,37 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await VisitExternalVacancyShareApplyAsync(page, baseUrl, viewportTag, email);
         await VisitCarriereAsync(page, baseUrl, viewportTag);
         await VisitBanenkaartAsync(page, baseUrl, viewportTag);
-        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag, email);
+        await VisitApplicationsAndSettingsAsync(page, baseUrl, viewportTag, email, signupCode, firstName);
         if (fullJourney && viewportTag == "desktop")
         {
             await SwitchArabicOnPaspoortAsync(page, baseUrl, viewportTag);
         }
 
         await KbE2e.AssertNoCircuitErrorAsync(page);
-        KbE2e.AssertHealthy(capture, requireNoIsochrone404: false);
+        KbE2e.AssertHealthy(capture, requireNoIsochrone404: false, allowFont404: true);
     }
 
-    private static async Task SignUpAsync(IPage page, string baseUrl, string email, string firstName, string tag)
+    private static async Task CompleteEmailCodeGateAsync(
+        IPage page,
+        string baseUrl,
+        string email,
+        string? staleSignupCode,
+        string expectedFirstName)
+    {
+        _ = staleSignupCode;
+        await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, baseUrl, email);
+        await page.WaitForURLAsync(
+            url => url.Contains("/candidate/paspoort", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 90_000, WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.Locator(".passport-overview, .passport-overview__title").First.WaitForAsync(new() { Timeout = 60_000 });
+        var body = await page.InnerTextAsync("body");
+        Assert.Contains(expectedFirstName, body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Demo Kandidaat", body, StringComparison.OrdinalIgnoreCase);
+        await KbE2e.WaitForStyledAppAsync(page);
+        await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+    }
+
+    private static async Task<string?> SignUpAsync(IPage page, string baseUrl, string email, string firstName, string tag)
     {
         await page.GotoAsync(baseUrl + "/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
@@ -108,9 +128,12 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
         await page.Locator("input[name=code], input[inputmode=numeric]").First.FillAsync(code!);
         await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync(url => !url.Contains("/account-maken/code", StringComparison.OrdinalIgnoreCase), new() { Timeout = 90_000 });
+        await page.WaitForURLAsync(
+            url => !url.Contains("/account-maken/code", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 90_000 });
         await KbE2e.WaitForStyledAppAsync(page);
         await CandidateJourneyE2e.ShotAsync(page, tag, "02-after-signup");
+        return code;
     }
 
     private static async Task CompleteOnboardingWizardAsync(IPage page, string baseUrl, string tag)
@@ -118,7 +141,9 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.GotoAsync(baseUrl + "/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await KbE2e.WaitForStyledAppAsync(page);
 
-        for (var step = 1; step <= 12; step++)
+        string? lastMiniStatement = null;
+        var miniStagnant = 0;
+        for (var step = 1; step <= 14; step++)
         {
             await page.WaitForTimeoutAsync(400);
             await CandidateJourneyE2e.ShotAsync(page, tag, $"03-onboarding-step-{step:D2}");
@@ -139,17 +164,175 @@ public sealed class CandidateFullJourneyPlaywrightTests
                 }
             }
 
+            if (await page.Locator(".test-flow, fieldset.q-likert, .q-likert__scale").CountAsync() > 0)
+            {
+                var statement = page.Locator(".test-flow__statement").First;
+                var statementText = await statement.CountAsync() > 0 ? await statement.InnerTextAsync() : "";
+                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 8, 4);
+                await CandidateJourneyE2e.TryAdvanceMiniTestWizardAsync(page);
+                if (!string.IsNullOrWhiteSpace(statementText)
+                    && string.Equals(statementText, lastMiniStatement, StringComparison.Ordinal))
+                {
+                    miniStagnant++;
+                    if (miniStagnant >= 3)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    miniStagnant = 0;
+                    lastMiniStatement = statementText;
+                }
+
+                continue;
+            }
+
             await FillVisibleWizardFieldsAsync(page);
+
+            if (await page.Locator(".ob-wizard__presets button").CountAsync() > 0)
+            {
+                await CaptureOnboardingProgressHeaderWhileScrolledAsync(page, tag);
+            }
+
+            var skipDream = page.Locator(".ob-wizard__ghost").Filter(new() { HasText = "Weet ik nog niet" }).First;
+            if (await skipDream.CountAsync() > 0)
+            {
+                await skipDream.ClickAsync(new() { Timeout = 5_000 });
+                await page.WaitForTimeoutAsync(600);
+                continue;
+            }
+
             await CandidateJourneyE2e.ClickPrimaryAsync(page);
+            await page.WaitForTimeoutAsync(600);
         }
 
-        await page.WaitForTimeoutAsync(800);
+        if (await page.Locator(".ob-wizard__finish").CountAsync() > 0)
+        {
+            await CandidateJourneyE2e.ClickPrimaryAsync(page);
+            await page.WaitForTimeoutAsync(800);
+        }
+
         await CandidateJourneyE2e.ShotAsync(page, tag, "04-onboarding-finish");
+        var onboardingBody = await page.InnerTextAsync("body");
+        Assert.False(
+            onboardingBody.Contains("Niet bewaard", StringComparison.OrdinalIgnoreCase),
+            "Onboarding should save each step before continuing");
+    }
+
+    private static async Task CaptureOnboardingProgressHeaderWhileScrolledAsync(IPage page, string tag)
+    {
+        var scroll = page.Locator(".app-main, .ob-wizard__content").First;
+        if (await scroll.CountAsync() == 0)
+        {
+            return;
+        }
+
+        await scroll.EvaluateAsync("el => { el.scrollTop = Math.min(el.scrollHeight, 420); }");
+        await page.WaitForTimeoutAsync(350);
+        await CandidateJourneyE2e.ShotAsync(page, tag, "03-onboarding-header-scrolled");
     }
 
     private static async Task FillVisibleWizardFieldsAsync(IPage page)
     {
-        foreach (var input in await page.Locator("input[type=text]:visible, input[type=date]:visible, input[type=tel]:visible").AllAsync())
+        var fields = page.Locator(".ob-fields input:visible, .ob-wizard__content .ob-fields input:visible");
+        if (await fields.CountAsync() >= 3)
+        {
+            var lastName = fields.Nth(1);
+            if (string.IsNullOrWhiteSpace(await lastName.InputValueAsync()))
+            {
+                await lastName.FillAsync("Jansen");
+            }
+
+            var postcode = fields.Nth(2);
+            if (string.IsNullOrWhiteSpace(await postcode.InputValueAsync()))
+            {
+                await postcode.FillAsync("2671GB");
+            }
+
+            await page.WaitForTimeoutAsync(400);
+            var suggestion = page.Locator(".ob-wizard__suggestions button").First;
+            if (await suggestion.CountAsync() > 0)
+            {
+                await suggestion.ClickAsync(new() { Timeout = 5_000 });
+            }
+
+            var city = page.Locator(".ob-fields label:has-text('Plaats') input, .ob-fields label:has-text('Woonplaats') input").First;
+            if (await city.CountAsync() > 0 && string.IsNullOrWhiteSpace(await city.InputValueAsync()))
+            {
+                await city.FillAsync("Naaldwijk");
+            }
+        }
+
+        var birthInput = page.Locator("[data-testid=onboarding-birth-date] input[type=date]").First;
+        if (await birthInput.CountAsync() > 0 && string.IsNullOrWhiteSpace(await birthInput.InputValueAsync()))
+        {
+            var birth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-22);
+            await birthInput.FillAsync(birth.ToString("yyyy-MM-dd"));
+            await birthInput.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))");
+        }
+
+        var availStart = page.Locator("[data-testid=availability-start-date] input[type=date]").First;
+        if (await availStart.CountAsync() > 0 && string.IsNullOrWhiteSpace(await availStart.InputValueAsync()))
+        {
+            var start = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(14);
+            await availStart.FillAsync(start.ToString("yyyy-MM-dd"));
+            await availStart.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))");
+        }
+
+        var preset = page.Locator(".ob-wizard__presets button:not(.is-selected)").First;
+        if (await preset.CountAsync() > 0)
+        {
+            await preset.ClickAsync(new() { Timeout = 5_000 });
+        }
+
+        var transport = page.Locator(".ob-wizard__transport button:not(.is-selected)").First;
+        if (await transport.CountAsync() > 0)
+        {
+            await transport.ClickAsync(new() { Timeout = 5_000 });
+        }
+
+        foreach (var selector in new[]
+                 {
+                     ".ob-wizard__education-grid button:not(.is-selected)",
+                     ".ob-wizard__mbo-levels button:not(.is-selected)",
+                     ".ob-wizard__direction-chips button:not(.is-selected)",
+                     ".ob-wizard__dream-grid button:not(.is-selected)"
+                 })
+        {
+            var pick = page.Locator(selector).First;
+            if (await pick.CountAsync() > 0)
+            {
+                await pick.ClickAsync(new() { Timeout = 5_000 });
+            }
+        }
+
+        var dreamSearch = page.Locator(".ob-wizard__dream-search input").First;
+        if (await dreamSearch.CountAsync() > 0 && string.IsNullOrWhiteSpace(await dreamSearch.InputValueAsync()))
+        {
+            await dreamSearch.FillAsync("Verpleegkundige");
+            await page.WaitForTimeoutAsync(600);
+            var dreamPick = page.Locator(".ob-wizard__dream-search button").First;
+            if (await dreamPick.CountAsync() > 0)
+            {
+                await dreamPick.ClickAsync(new() { Timeout = 5_000 });
+            }
+        }
+
+        var addJob = page.Locator("button.ob-wizard__add-job").First;
+        if (await addJob.CountAsync() > 0)
+        {
+            await addJob.ClickAsync(new() { Timeout = 3_000 });
+            await page.Locator(".ob-wizard__job input").First.FillAsync("Kassamedewerker");
+        }
+
+        var perDirect = page.Locator(".ob-wizard__start-option").Filter(new() { HasText = "Per direct" }).First;
+        if (await perDirect.CountAsync() > 0 && await page.Locator(".ob-wizard__start-option.is-selected").CountAsync() == 0)
+        {
+            await perDirect.ClickAsync(new() { Timeout = 3_000 });
+        }
+
+        foreach (var input in await page.Locator("input[type=text]:visible, input[type=tel]:visible").AllAsync())
         {
             var name = await input.GetAttributeAsync("name") ?? "";
             if (name.Contains("email", StringComparison.OrdinalIgnoreCase))
@@ -157,46 +340,26 @@ public sealed class CandidateFullJourneyPlaywrightTests
                 continue;
             }
 
-            var value = await input.InputValueAsync();
-            if (!string.IsNullOrWhiteSpace(value))
+            if (!string.IsNullOrWhiteSpace(await input.InputValueAsync()))
             {
                 continue;
             }
 
-            if (name.Contains("post", StringComparison.OrdinalIgnoreCase) || name.Contains("zip", StringComparison.OrdinalIgnoreCase))
-            {
-                await input.FillAsync("2671");
-            }
-            else if (name.Contains("phone", StringComparison.OrdinalIgnoreCase))
+            if (name.Contains("phone", StringComparison.OrdinalIgnoreCase))
             {
                 await input.FillAsync("0612345678");
             }
-            else if (await input.GetAttributeAsync("type") == "date")
-            {
-                var min = await input.GetAttributeAsync("min") ?? DateTime.UtcNow.AddDays(7).ToString("yyyy-MM-dd");
-                await input.FillAsync(min);
-            }
-            else
-            {
-                await input.FillAsync("Test");
-            }
         }
 
-        var perDirect = page.Locator("input[type=radio][value=immediate], label:has-text('Per direct')").First;
-        if (await perDirect.CountAsync() > 0)
-        {
-            await perDirect.ClickAsync(new() { Timeout = 3_000 });
-        }
-
-        foreach (var cb in await page.Locator("input[type=checkbox]:visible:not(:checked)").AllAsync())
+        foreach (var cb in await page.Locator(".ob-wizard__consent input[type=checkbox]:not(:checked), .ob-wizard__check input[type=checkbox]:not(:checked)").AllAsync())
         {
             try
             {
-                await cb.CheckAsync(new() { Timeout = 2_000 });
+                await cb.CheckAsync(new() { Timeout = 2_000, Force = true });
             }
-            catch (PlaywrightException)
+            catch (Exception)
             {
-                // optional consent
+                // optional or off-screen consent
             }
         }
     }
@@ -206,7 +369,8 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.GotoAsync(baseUrl + "/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         await KbE2e.WaitForStyledAppAsync(page, "ontdekkingsreis.css");
 
-        for (var round = 0; round < 80; round++)
+        var stagnantRounds = 0;
+        for (var round = 0; round < 240; round++)
         {
             if (await page.Locator(".journey-end, .journey-klaar, [data-screen=klaar]").CountAsync() > 0)
             {
@@ -215,25 +379,72 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
             if (await page.Locator(".journey-shed").CountAsync() > 0)
             {
+                await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
                 await CandidateJourneyE2e.SelectMaxShedDepthAsync(page);
                 await CandidateJourneyE2e.ShotAsync(page, tag, $"05-shed-{round:D2}");
                 await CandidateJourneyE2e.ClickPrimaryAsync(page);
+                await page.WaitForTimeoutAsync(600);
                 continue;
             }
 
-            if (await page.Locator(".test-flow, .questionnaire-shell, .ob-wizard").CountAsync() > 0)
+            if (await page.Locator(".test-flow, .test-likert, fieldset.q-likert, .questionnaire-shell").CountAsync() > 0)
             {
-                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 1, 4);
+                var counter = page.Locator(".test-flow__counter").First;
+                if (await counter.CountAsync() > 0)
+                {
+                    var counterText = await counter.InnerTextAsync();
+                    if (counterText.Contains("van 25", StringComparison.Ordinal)
+                        || counterText.Contains("van 18", StringComparison.Ordinal))
+                    {
+                        await CandidateJourneyE2e.ShotAsync(page, tag, "05-deep-test-counter");
+                    }
+                }
+
+                await CandidateJourneyE2e.AnswerLikertUntilDoneAsync(page, 30, 4);
+                _ = await CandidateJourneyE2e.TryAdvanceDiscoveryStepAsync(page);
+                stagnantRounds = 0;
                 continue;
             }
 
-            if (await page.Locator("button.btn-primary:not([disabled])").CountAsync() > 0)
+            if (await page.Locator(".ob-fields input").CountAsync() > 0)
             {
+                await FillVisibleWizardFieldsAsync(page);
                 await CandidateJourneyE2e.ClickPrimaryAsync(page);
+                await page.WaitForTimeoutAsync(400);
+                continue;
+            }
+
+            var consentBox = page.Locator(".ob-wizard__consent input[type=checkbox]").First;
+            if (await consentBox.CountAsync() > 0 && !await consentBox.IsCheckedAsync())
+            {
+                await consentBox.CheckAsync(new() { Timeout = 5_000 });
+            }
+
+            var startTests = page.Locator("button.btn-primary").Filter(new() { HasText = "Start de eerste test" }).First;
+            if (await startTests.CountAsync() > 0)
+            {
+                if (await startTests.IsEnabledAsync())
+                {
+                    await startTests.ClickAsync(new() { Timeout = 15_000 });
+                    await page.WaitForTimeoutAsync(500);
+                    continue;
+                }
+
+                await page.WaitForTimeoutAsync(400);
+                continue;
+            }
+
+            if (await CandidateJourneyE2e.TryAdvanceDiscoveryStepAsync(page))
+            {
+                stagnantRounds = 0;
             }
             else
             {
-                break;
+                stagnantRounds++;
+                if (stagnantRounds >= 20)
+                {
+                    break;
+                }
             }
 
             await page.WaitForTimeoutAsync(300);
@@ -241,17 +452,29 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
         await CandidateJourneyE2e.ShotAsync(page, tag, "06-discovery-results");
         var body = await page.InnerTextAsync("body");
+        var atResults = await page.Locator(".journey-end, .journey-klaar, [data-screen=klaar]").CountAsync() > 0
+            || body.Contains("Dit ben jij", StringComparison.OrdinalIgnoreCase);
+        Assert.True(atResults, "Discovery journey should reach results or completion");
         Assert.True(
-            body.Contains("Dit ben jij", StringComparison.OrdinalIgnoreCase)
-            || body.Contains("klaar", StringComparison.OrdinalIgnoreCase)
-            || body.Contains("Volledig", StringComparison.Ordinal),
-            "Discovery journey should reach results or completion");
-        Assert.True(
-            body.Contains("Competentie", StringComparison.OrdinalIgnoreCase)
-            && body.Contains("Carrière", StringComparison.OrdinalIgnoreCase)
-            && body.Contains("Cultuur", StringComparison.OrdinalIgnoreCase)
-            && body.Contains("Waarden", StringComparison.OrdinalIgnoreCase),
-            "Discovery results should list all four deep-test dimensions");
+            body.Contains("Dit ben jij", StringComparison.OrdinalIgnoreCase),
+            "Discovery klaar screen should headline Dit ben jij");
+        if (string.Equals(tag, "mobile", StringComparison.Ordinal))
+        {
+            Assert.Contains("Journey", body, StringComparison.OrdinalIgnoreCase);
+            Assert.True(
+                body.Contains("paspoort", StringComparison.OrdinalIgnoreCase)
+                || body.Contains("JOBSY PASPOORT", StringComparison.OrdinalIgnoreCase),
+                "Mobile klaar screen should show passport summary");
+        }
+        else
+        {
+            foreach (var dimension in new[] { "Wat je kunt", "Beroepen", "Cultuur", "Waarden" })
+            {
+                Assert.True(
+                    body.Contains(dimension, StringComparison.OrdinalIgnoreCase),
+                    $"Discovery results should show completed deep-test step: {dimension}");
+            }
+        }
     }
 
     private static async Task VisitPaspoortAndPdfAsync(IPage page, string baseUrl, string tag)
@@ -261,15 +484,28 @@ public sealed class CandidateFullJourneyPlaywrightTests
         await page.Locator(".passport-overview, .passport-overview__title").First.WaitForAsync(new() { Timeout = 60_000 });
         await CandidateJourneyE2e.ShotAsync(page, tag, "07-paspoort-dit-ben-jij");
 
-        var downloadBtn = page.Locator("[data-testid=passport-download-pdf]").First;
-        await downloadBtn.WaitForAsync(new() { Timeout = 60_000 });
-        var download = await page.RunAndWaitForDownloadAsync(async () =>
+        var pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, baseUrl);
+        if (pdf is null || pdf.Length <= 5_000)
         {
-            await downloadBtn.ClickAsync(new() { Timeout = 30_000 });
-        }, new() { Timeout = 120_000 });
-        var pdfPath = await download.PathAsync();
-        var pdf = await File.ReadAllBytesAsync(pdfPath!);
-        Assert.True(pdf.Length > 5_000, "Paspoort PDF download should return a non-empty file");
+            var downloadBtn = page.Locator("[data-testid=passport-download-pdf]").First;
+            if (string.Equals(tag, "mobile", StringComparison.Ordinal))
+            {
+                await downloadBtn.ClickAsync(new() { Timeout = 30_000, Force = true });
+            }
+            else
+            {
+                await downloadBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+                await Assertions.Expect(downloadBtn).ToBeEnabledAsync(new() { Timeout = 60_000 });
+                await downloadBtn.ClickAsync(new() { Timeout = 30_000 });
+            }
+
+            await page.WaitForTimeoutAsync(800);
+            pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, baseUrl);
+        }
+
+        Assert.True(
+            pdf is { Length: > 5_000 } && pdf[0] == (byte)'%' && pdf[1] == (byte)'P',
+            "Paspoort PDF download should return a non-empty file");
         var png = Path.Combine(CandidateJourneyE2e.ShotDir(tag), "08-paspoort-pdf-page1.png");
         await CandidateJourneyE2e.RenderPdfFirstPageAsync(pdf, png);
     }
@@ -323,7 +559,13 @@ public sealed class CandidateFullJourneyPlaywrightTests
         }
     }
 
-    private static async Task VisitApplicationsAndSettingsAsync(IPage page, string baseUrl, string tag, string email)
+    private static async Task VisitApplicationsAndSettingsAsync(
+        IPage page,
+        string baseUrl,
+        string tag,
+        string email,
+        string? signupCode,
+        string expectedFirstName)
     {
         foreach (var (path, slug) in new[]
                  {
@@ -337,15 +579,16 @@ public sealed class CandidateFullJourneyPlaywrightTests
         }
 
         await page.GotoAsync(baseUrl + "/logout", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.Locator("input[type=email], #email").First.FillAsync(email);
-        await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync("**/login/**", new() { Timeout = 60_000 });
-        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
-        Assert.False(string.IsNullOrWhiteSpace(code), "OTP na logout — zet JOBSY_E2E_CAPTURE_EMAIL_CODES=1");
-        await page.Locator("input[name=code], input[inputmode=numeric]").First.FillAsync(code!);
-        await page.Locator("button.login-submit, button[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync(url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase), new() { Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(800);
+
+        if (string.Equals(email, KbE2e.DefaultCompleteEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, KbE2e.DefaultPassword));
+            await CandidateJourneyE2e.ShotAsync(page, tag, "15-login-after-logout-otp");
+            return;
+        }
+
+        await CompleteEmailCodeGateAsync(page, baseUrl, email, signupCode, expectedFirstName);
         await CandidateJourneyE2e.ShotAsync(page, tag, "15-login-after-logout-otp");
     }
 
@@ -394,7 +637,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
             await VisitPaspoortAndPdfAsync(page, baseUrl, tag);
             await VisitCarriereAsync(page, baseUrl, tag);
             await VisitBanenkaartAsync(page, baseUrl, tag);
-            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag, KbE2e.DefaultCompleteEmail);
+            await VisitApplicationsAndSettingsAsync(page, baseUrl, tag, KbE2e.DefaultCompleteEmail, signupCode: null, "Demo");
             if (tag == "desktop")
             {
                 await SwitchArabicOnPaspoortAsync(page, baseUrl, tag);

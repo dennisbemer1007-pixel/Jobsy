@@ -1,39 +1,41 @@
 @namespace Jobsy.Web.Components
 
 @using Jobsy.Core.Privacy
+@using Jobsy.Web.Localization
 @using Jobsy.Web.Services
 @inject IJSRuntime Js
 @inject ICookieConsentTokenService ConsentTokens
+@inject CultureState Culture
 
 @if (_visible)
 {
     <div class="cookie-consent" role="dialog" aria-labelledby="cookie-consent-title" aria-live="polite" @ref="_bar">
         <div class="cookie-consent__inner">
             <div class="cookie-consent__copy">
-                <h2 id="cookie-consent-title" class="cookie-consent__title">Cookies &amp; privacy</h2>
+                <h2 id="cookie-consent-title" class="cookie-consent__title">@Culture["CookieConsent.Title"]</h2>
                 <p class="cookie-consent__text">
-                    <span class="cookie-consent__text-full">Noodzakelijke cookies voor inloggen. Optioneel anonieme statistieken. </span>
-                    <span class="cookie-consent__text-short">Cookies voor inloggen. Optioneel statistieken. </span>
-                    <a href="/privacy" class="cookie-consent__privacy">Privacy</a>
+                    <span class="cookie-consent__text-full">@Culture["CookieConsent.TextFull"] </span>
+                    <span class="cookie-consent__text-short">@Culture["CookieConsent.TextShort"] </span>
+                    <a href="/privacy" class="cookie-consent__privacy">@Culture["CookieConsent.PrivacyLink"]</a>
                 </p>
             </div>
             <div class="cookie-consent__actions">
                 @if (Mode == CookieConsentMode.Static)
                 {
                     <button type="button" class="btn-compact" data-consent="necessary">
-                        Alleen noodzakelijk
+                        @Culture["CookieConsent.Necessary"]
                     </button>
                     <button type="button" class="btn-compact" data-consent="analytics">
-                        Accepteer cookies
+                        @Culture["CookieConsent.Accept"]
                     </button>
                 }
                 else
                 {
                     <button type="button" class="btn-compact" data-consent="necessary" disabled="@_busy" @onclick="() => SaveAsync(false)">
-                        Alleen noodzakelijk
+                        @Culture["CookieConsent.Necessary"]
                     </button>
                     <button type="button" class="btn-compact" data-consent="analytics" disabled="@_busy" @onclick="() => SaveAsync(true)">
-                        Accepteer cookies
+                        @Culture["CookieConsent.Accept"]
                     </button>
                 }
             </div>

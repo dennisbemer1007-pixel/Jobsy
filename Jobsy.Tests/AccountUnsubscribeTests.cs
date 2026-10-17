@@ -508,6 +508,7 @@ public class AccountUnsubscribeTests
         {
             typeof(AmbassadeurProfile),
             typeof(Application),
+            typeof(AssessmentResearchAttempt),
             typeof(CandidateActionToken),
             typeof(CandidateAssessmentAdjustment),
             typeof(CandidateAssessmentAttempt),
@@ -522,6 +523,7 @@ public class AccountUnsubscribeTests
             typeof(CandidateExternalVacancy),
             typeof(CandidateMatchSnapshot),
             typeof(CandidateOnboarding),
+            typeof(CandidateProactiveMatchingSettings),
             typeof(CandidateReference),
             typeof(CandidateReminderPreference),
             typeof(ReferenceConfirmation),
@@ -545,6 +547,7 @@ public class AccountUnsubscribeTests
             typeof(PassportPartnerCandidateLink),
             typeof(PhoneVerificationChallenge),
             typeof(PlatformFeedback),
+            typeof(ProactiveMatchSuggestion),
             typeof(SalesIbanChangePending),
             typeof(SalesManagerProfile),
             typeof(SalesSelfBillingConsent),

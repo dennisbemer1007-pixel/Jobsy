@@ -1,5 +1,7 @@
+using Jobsy.Infrastructure.Data.Migrations;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -7,6 +9,25 @@ namespace Jobsy.Infrastructure.Data;
 
 public static class JobsyDbSeeder
 {
+    /// <summary>
+    /// Ensures <see cref="PlatformFeatureSettings.PassportPdfDnaBlocksEnabled"/> exists before the API
+    /// serves feature-gated public reads (banenkaart pins, partner catalog). Idempotent on Postgres.
+    /// </summary>
+    public static async Task EnsurePassportPdfDnaBlocksColumnAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(PlatformFeatureSchemaIdempotentSql.EnsurePassportPdfDnaBlocksEnabled);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Passport PDF DNA blocks column ensure failed; migrate may repair.");
+        }
+    }
+
     public static async Task SeedAsync(IServiceProvider services)
     {
         await MigrateAsync(services);
@@ -15,6 +36,8 @@ public static class JobsyDbSeeder
 
     public static async Task MigrateAsync(IServiceProvider services)
     {
+        await EnsurePassportPdfDnaBlocksColumnAsync(services);
+
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
@@ -23,6 +46,7 @@ public static class JobsyDbSeeder
         if (knownMigrations.Count > 0)
         {
             await db.Database.MigrateAsync();
+            await db.Database.ExecuteSqlRawAsync(Migrations.PupilPassportV2SchemaIdempotentSql.EnsureColumns);
         }
         else
         {
@@ -39,6 +63,15 @@ public static class JobsyDbSeeder
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Vacancy category ensure/backfill after migrate failed; continuing.");
+        }
+
+        try
+        {
+            await BeheerTodoSeeder.SeedAsync(db);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Beheer todo seed after migrate failed; continuing.");
         }
 
         try
@@ -93,6 +126,8 @@ public static class JobsyDbSeeder
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var perfCount = configuration.GetValue("Seed:BanenkaartPerfCount", 0);
 
         if (await db.Companies.AnyAsync())
         {
@@ -127,6 +162,7 @@ public static class JobsyDbSeeder
                 await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
                 await AtsScrapeSourceSeeder.SeedAsync(db, logger);
                 await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+                await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
             }
             catch (Exception ex)
             {
@@ -156,6 +192,7 @@ public static class JobsyDbSeeder
             await WmlSalaryTableService.EnsureForAllCompaniesAsync(db);
             await AtsScrapeSourceSeeder.SeedAsync(db, logger);
             await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
+            await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
             logger.LogInformation("Seed completed: employers + intermediary, vacancies, tokens, role users, sprint-0/8 demo.");
         }
         catch (Exception ex)

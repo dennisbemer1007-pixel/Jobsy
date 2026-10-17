@@ -440,7 +440,7 @@ file sealed class Auth04StubHostEnvironment : IHostEnvironment
     public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
 }
 
-file sealed class MfaPageWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class MfaPageWebFactory : WebWebApplicationFactory
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

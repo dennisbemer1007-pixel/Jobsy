@@ -47,6 +47,7 @@ public static class AdminAuditKeys
 
     public const string PrivacyRetentionRun = "privacy.retention.run";
     public const string PrivacyAccountDeleted = "privacy.account.deleted";
+    public const string PrivacyCandidateProfileReset = "privacy.candidate-profile.reset";
     public const string AuthAdminLoginFailed = "auth.admin.login-failed";
     public const string AuthSystemAdminLogin = "auth.system-admin.login";
     public const string EmailTestSend = "email.test-send";
@@ -64,6 +65,11 @@ public static class AdminAuditKeys
     public const string MasterdataCreate = "masterdata.create";
     public const string MasterdataUpdate = "masterdata.update";
     public const string MasterdataDelete = "masterdata.delete";
+
+    public const string BeheerTodoCreate = "beheer-todo.create";
+    public const string BeheerTodoUpdate = "beheer-todo.update";
+    public const string BeheerTodoMarkDone = "beheer-todo.mark-done";
+    public const string BeheerTodoDelete = "beheer-todo.delete";
 
     public static class Results
     {
@@ -94,5 +100,6 @@ public static class AdminAuditKeys
         public const string Account = "account";
         public const string EmailTemplate = "email-template";
         public const string ContentReport = "content-report";
+        public const string BeheerTodo = "beheer-todo";
     }
 }

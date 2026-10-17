@@ -77,6 +77,8 @@ public static class UiStringsWerkgever
         Add("WgNav.Signals", "Signalen", "Signals", "Sygnały", "Semnale", "إشارات");
         Add("WgNav.Vacancies", "Vacatures", "Vacancies", "Oferty", "Posturi", "الوظائف");
         Add("WgNav.Applications", "Sollicitaties", "Applications", "Aplikacje", "Aplicații", "الطلبات");
+        Add("WgNav.Notifications", "Meldingen", "Notifications", "Powiadomienia", "Notificări", "الإشعارات");
+        Add("WgNotifications.Lead", "Updates over sollicitaties, vacatures en je account.", "Updates on applications, vacancies and your account.", "Aktualizacje o aplikacjach, ofertach i koncie.", "Actualizări despre aplicații, posturi și cont.", "تحديثات حول الطلبات والوظائف وحسابك.");
         Add("WgNav.Talentpool", "Talentpool", "Talent pool", "Pula talentów", "Baza de talente", "مجموعة المواهب");
         Add("WgNav.CandidateInsights", "Kandidaatinzichten", "Candidate insights", "Wnioski o kandydatach", "Perspective candidați", "رؤى المرشحين");
         Add("WgNav.BranchesRegions", "Vestigingen & regio's", "Branches & regions", "Placówki i regiony", "Filiale și regiuni", "الفروع والمناطق");
@@ -310,6 +312,7 @@ public static class UiStringsWerkgever
         Add("WgVac.ClosedOn", "Gesloten {0}", "Closed {0}", "Zamknięta {0}", "Închis {0}", "مغلق {0}");
         Add("WgVac.Deactivated", "gedeactiveerd", "deactivated", "dezaktywowana", "dezactivat", "مُلغى");
         Add("WgVac.Create.VmPublishNote", "Plaatsen kost geen tokens. Je vestiging heeft {0} tokens voor betaalde opties (uitlichten, pushbericht).", "Posting costs no tokens. Your branch has {0} tokens for paid options (highlight, push message).", "Publikacja jest bezpłatna. Placówka ma {0} tokenów na opcje płatne (wyróżnienie, powiadomienie).", "Publicarea nu costă tokenuri. Filiala are {0} tokenuri pentru opțiuni plătite (evidențiere, notificare).", "النشر مجاني. فرعك لديه {0} رمزاً للخيارات المدفوعة (تمييز، إشعار).");
+        Add("WgVac.Wizard.DescriptionCharCount", "{0} van {1} tekens", "{0} of {1} characters", "{0} z {1} znaków", "{0} din {1} caractere", "{0} من {1} حرفاً");
         Add("WgVac.Paid.Publish", "Betaling gelukt — vacature is gepubliceerd.", "Payment succeeded — vacancy published.", "Płatność OK — oferta opublikowana.", "Plată reușită — post publicat.", "تم الدفع — نُشرت الوظيفة.");
         Add("WgVac.Paid.Highlight", "Betaling gelukt — vacature is uitgelicht.", "Payment succeeded — vacancy featured.", "Płatność OK — oferta wyróżniona.", "Plată reușită — post evidențiat.", "تم الدفع — مُيِّزت الوظيفة.");
         Add("WgVac.Paid.PushBom", "Betaling gelukt — pushbericht is verstuurd.", "Payment succeeded — push message sent.", "Płatność OK — powiadomienie wysłane.", "Plată reușită — notificare trimisă.", "تم الدفع — أُرسل الإشعار.");

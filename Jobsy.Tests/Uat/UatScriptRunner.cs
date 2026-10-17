@@ -78,8 +78,8 @@ public static class UatScriptRunner
         if (Contains(blob, "cookie", "Alleen noodzakelijk", "Accepteer cookies"))
         {
             var cookie = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/CookieConsentBanner.razor"));
-            Assert.Contains("Alleen noodzakelijk", cookie, StringComparison.Ordinal);
-            Assert.Contains("Accepteer cookies", cookie, StringComparison.Ordinal);
+            Assert.Contains("CookieConsent.Necessary", cookie, StringComparison.Ordinal);
+            Assert.Contains("CookieConsent.Accept", cookie, StringComparison.Ordinal);
             Assert.Contains("href=\"/privacy\"", cookie, StringComparison.Ordinal);
         }
 
@@ -251,6 +251,7 @@ public static class UatScriptRunner
         {
             var available = AdminNav.AvailableItems().ToList();
             Assert.True(available.Count >= 10, $"{scenario.Id}: expected available admin nav items");
+            Assert.Contains(available, i => i.Href == "/admin/research");
             foreach (var item in available)
             {
                 AssertRouteExistsOrAuthEndpoint(item.Href, $"{scenario.Id}: admin nav {item.Href}");
@@ -635,7 +636,8 @@ public static class UatScriptRunner
             Assert.Equal(5, CulturePillarCatalog.MaxSelected);
             Assert.Contains("CultureFitPercent", File.ReadAllText(Path.Combine(root, "Jobsy.Api/Models/VacancyListItemDto.cs")), StringComparison.Ordinal);
             Assert.Contains("CulturePillarsJson", File.ReadAllText(Path.Combine(root, "Jobsy.Core/Entities/Vacancy.cs")), StringComparison.Ordinal);
-            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Werkgever/CreateVacancy.razor"));
+            var create = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/VacancyCreateWizard.razor"))
+                + File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Werkgever/VacancyCreateWizard.razor.cs"));
             Assert.Contains("CulturePillarCatalog", create, StringComparison.Ordinal);
             var map = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/jobMap.js"));
             Assert.Contains("cultureFitHtml", map, StringComparison.Ordinal);

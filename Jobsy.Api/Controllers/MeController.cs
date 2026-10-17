@@ -13,6 +13,7 @@ using Jobsy.Core.Localization;
 using Jobsy.Core.Media;
 using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Rules.KandidaatBanen;
 using Jobsy.Core.Security;
@@ -47,6 +48,7 @@ public partial class MeController : ControllerBase
     private readonly ITranslationService _translation;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly PassportPdfDownload _passportPdf;
+    private readonly IStudentPassportPdfService _studentPassportPdf;
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
     private readonly ICandidateInsightsQueue _insightsQueue;
@@ -66,6 +68,7 @@ public partial class MeController : ControllerBase
         ITranslationService translation,
         ILobsyCvPdfService lobsyCvPdf,
         PassportPdfDownload passportPdf,
+        IStudentPassportPdfService studentPassportPdf,
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
         ICandidateInsightsQueue insightsQueue,
@@ -83,6 +86,7 @@ public partial class MeController : ControllerBase
         _translation = translation;
         _lobsyCvPdf = lobsyCvPdf;
         _passportPdf = passportPdf;
+        _studentPassportPdf = studentPassportPdf;
         _cvText = cvText;
         _cvExtraction = cvExtraction;
         _insightsQueue = insightsQueue;
@@ -331,7 +335,8 @@ public partial class MeController : ControllerBase
                 request.Preferences.ShareEmployerPreferences ?? existing.ShareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(request.Preferences.WorkRegion, existing.WorkRegion),
                 request.Preferences.HasOwnCar ?? existing.HasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences));
+                ShareablePreferenceNormalizer.NormalizeContracts(request.Preferences.ContractPreferences, existing.ContractPreferences),
+                request.Preferences.WorkStatuses ?? existing.WorkStatuses);
 
             user.PreferencesJson = SerializePreferences(merged);
         }
@@ -802,11 +807,30 @@ public partial class MeController : ControllerBase
         var features = await _features.GetAsync(cancellationToken);
         if (features.PassportPdfV2Enabled)
         {
-            var passport = await _passportPdf.ForCandidateAsync(
-                user,
-                features.PhoneVerificationEnabled,
-                cancellationToken);
-            return File(passport.Pdf, "application/pdf", passport.FileName);
+            try
+            {
+                var prefsForStudent = ParsePreferences(user.PreferencesJson);
+                if (features.StudentPassportEnabled && StudentPassportRules.Qualifies(prefsForStudent))
+                {
+                    var student = await _studentPassportPdf.RenderForCandidateAsync(
+                        user,
+                        features.PhoneVerificationEnabled,
+                        cancellationToken);
+                    return File(student.Pdf, "application/pdf", student.FileName);
+                }
+
+                var passport = await _passportPdf.ForCandidateAsync(
+                    user,
+                    features.PhoneVerificationEnabled,
+                    features.PassportPdfDnaBlocksEnabled,
+                    cancellationToken);
+                return File(passport.Pdf, "application/pdf", passport.FileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DNA-paspoort PDF genereren mislukt voor kandidaat {UserId}", user.Id);
+                return StatusCode(500, new { message = "DNA-paspoort kon niet worden gemaakt. Probeer het later opnieuw." });
+            }
         }
 
         var hasUploadedCv = await _db.CandidateUploadedCvs.AsNoTracking()
@@ -1914,6 +1938,13 @@ public partial class MeController : ControllerBase
                 contractPreferences = ReadStringArray(contractEl);
             }
 
+            List<string>? workStatuses = null;
+            if (root.TryGetProperty("workStatuses", out var workStatusEl)
+                && workStatusEl.ValueKind == JsonValueKind.Array)
+            {
+                workStatuses = ReadStringArray(workStatusEl);
+            }
+
             var parsed = new CandidatePreferencesDto(
                 roles,
                 maxTravel,
@@ -1945,7 +1976,8 @@ public partial class MeController : ControllerBase
                 shareEmployerPreferences,
                 ShareablePreferenceNormalizer.NormalizeRegion(workRegion, null),
                 hasOwnCar,
-                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null));
+                ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null),
+                workStatuses);
 
             return CandidatePreferencesValidator.Sanitize(parsed);
         }
@@ -2172,7 +2204,8 @@ public partial class MeController : ControllerBase
             shareEmployerPreferences = sanitized.ShareEmployerPreferences,
             workRegion = sanitized.WorkRegion,
             hasOwnCar = sanitized.HasOwnCar,
-            contractPreferences = sanitized.ContractPreferences
+            contractPreferences = sanitized.ContractPreferences,
+            workStatuses = sanitized.WorkStatuses
         }, JsonOptions);
     }
 

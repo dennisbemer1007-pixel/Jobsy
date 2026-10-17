@@ -12,10 +12,27 @@
                 <div class="pub-landing__eyebrow">@LandingText.For("Landing.Get.Eyebrow", Variant)</div>
                 <h2 class="pub-landing__h2">@LandingText.For("Landing.Get.Title", Variant)</h2>
             </div>
-            <span class="pub-pill-sample">@LandingText.For("Landing.Get.Note", Variant)</span>
+            @if (Variant == LandingVariant.On && ComboLayout)
+            {
+                <p class="pub-landing__lead pub-landing__lead--narrow">@LandingText.For("Landing.Get.Subtitle", Variant)</p>
+            }
+            else
+            {
+                <span class="pub-pill-sample">@LandingText.For("Landing.Get.Note", Variant)</span>
+            }
         </div>
 
-        @if (Variant == LandingVariant.On)
+        @if (Variant == LandingVariant.On && ComboLayout)
+        {
+            <div class="pub-landing__get-five">
+                @ComboCard("Landing.Get.MapCardTitle", "Landing.Get.MapCardBody", "Landing.Get.FreeTag", false)
+                @ComboCard("Landing.Get.PassportTitle", "Landing.Get.PassportBody", "Landing.Get.FreeTag", false)
+                @ComboCard("Landing.Get.JourneyTitle", "Landing.Get.JourneyBody", "Landing.Get.FreeTag", false)
+                @ComboCard("Landing.Get.MatchTitle", "Landing.Get.MatchBody", "Landing.Get.FreeTag", false)
+                @ComboCard("Landing.Get.ReportTitle", "Landing.Get.ReportBody", "Landing.Get.ReportTag", true)
+            </div>
+        }
+        else if (Variant == LandingVariant.On)
         {
             <div class="pub-landing__showmap">
                 <div class="pub-landing__showmap-list">
@@ -151,6 +168,25 @@
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
     [Parameter] public decimal? PriceEuro { get; set; }
+    [Parameter] public bool ComboLayout { get; set; }
+
+    private RenderFragment ComboCard(string titleKey, string bodyKey, string tagKey, bool paid) => __builder =>
+    {
+        <article class="pub-landing__get-card pub-landing__lift pub-landing__card-calm">
+            <h3>@LandingText.For(titleKey, Variant)</h3>
+            <p>@LandingText.For(bodyKey, Variant)</p>
+            @if (paid && PriceEuro is decimal price)
+            {
+                <span class="pub-landing__get-tag pub-landing__get-tag--paid">
+                    @string.Format(LandingText.For("Landing.Get.ReportPrice", Variant), price.ToString("0.00", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")))
+                </span>
+            }
+            else
+            {
+                <span class="pub-landing__get-tag">@LandingText.For(tagKey, Variant)</span>
+            }
+        </article>
+    };
 
     private RenderFragment PassportCardSmall() => __builder =>
     {

@@ -75,33 +75,15 @@
                                 </div>
                                 @if (!Editor.FlexibleTimes)
                                 {
-                                    <div class="availability-matrix" role="grid" aria-label="@Culture["Profile.Availability"]">
-                                        <div class="availability-matrix__corner" role="columnheader"></div>
-                                        @foreach (var slot in CandidateProfileEditor.AvailabilitySlots)
-                                        {
-                                            <div class="availability-matrix__slot" role="columnheader">
-                                                @UiLabels.AvailabilitySlot(Culture, slot)
-                                            </div>
-                                        }
-                                        @foreach (var day in CandidateProfileEditor.AvailabilityDays)
-                                        {
-                                            <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
-                                            @foreach (var slot in CandidateProfileEditor.AvailabilitySlots)
-                                            {
-                                                var key = $"{day}:{slot}";
-                                                var on = Editor.Availability.Contains(key);
-                                                <label class="availability-matrix__cell @(on ?"is-on" : null)">
-                                                    <input type="checkbox"
-                                                           checked="@on"
-                                                           @onchange="e => Editor.ToggleAvailability(key, (bool)(e.Value ?? false))" />
-                                                    <span class="visually-hidden">@UiLabels.Weekday(Culture, day) @UiLabels.AvailabilitySlot(Culture, slot)</span>
-                                                </label>
-                                            }
-                                        }
-                                    </div>
+                                    <AvailabilityDayPartMatrix SelectedKeys="Editor.Availability"
+                                                               AriaLabel="@Culture["Profile.Availability"]"
+                                                               OnSet="OnMatrixSet" />
                                 }
                             </fieldset>
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;
+
+    private void OnMatrixSet((string Key, bool Selected) change)
+        => Editor.ToggleAvailability(change.Key, change.Selected);
 }

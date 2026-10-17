@@ -4,16 +4,18 @@
 @using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
-                            <label>
-                                @Culture["Profile.AboutMe"]
-                                <textarea rows="4" @bind="Editor.AboutMe"></textarea>
-                            </label>
+<div class="profile-form profile-motivation">
+    <label>
+        @Culture["Profile.AboutMe"]
+        <textarea rows="4" @bind="Editor.AboutMe"></textarea>
+    </label>
 
-                            <label>
-                                @Culture["Profile.DefaultMotivation"]
-                                <textarea rows="4" maxlength="500" @bind="Editor.DefaultMotivation"></textarea>
-                                <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
-                            </label>
+    <label>
+        @Culture["Profile.DefaultMotivation"]
+        <textarea rows="4" maxlength="500" @bind="Editor.DefaultMotivation"></textarea>
+        <span class="profile-address__hint">@Culture["Profile.DefaultMotivationHint"]</span>
+    </label>
+</div>
 
 @code {
     [CascadingParameter] public CandidateProfileEditor Editor { get; set; } = default!;

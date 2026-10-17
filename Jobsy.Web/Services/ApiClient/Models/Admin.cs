@@ -248,6 +248,8 @@ public sealed class PlatformFeatureItem
     public bool CandidatePassportEnabled { get; set; } = true;
     public bool PassportPartnersEnabled { get; set; }
     public bool PassportPdfV2Enabled { get; set; }
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
+    public bool TestsV2Enabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
     public bool WhatsAppRemindersEnabled { get; set; }
     /// <summary>Compact chart layout for paid personal test PDFs. Default off.</summary>
@@ -257,6 +259,10 @@ public sealed class PlatformFeatureItem
     /// <summary>Future jobs that fit the candidate. Default off.</summary>
     public bool FutureJobsForYouEnabled { get; set; }
     public bool ProactiveMatchingEnabled { get; set; }
+    public bool MatchCalibrationV1Enabled { get; set; }
+    public int CandidateApplyPerMinuteLimit { get; set; } = 5;
+    public int CandidateApplyPerHourLimit { get; set; } = 30;
+    public int CandidateApplyPerDayLimit { get; set; } = 100;
     public bool CandidateExternalVacanciesEnabled { get; set; }
     /// <summary>Phase-2 employer accept, Maqqie, agency radius, uren. Default off.</summary>
     public bool EmployerPhase2Enabled { get; set; }
@@ -290,6 +296,8 @@ public sealed class PlatformFeaturePatch
     public bool? CandidatePassportEnabled { get; set; }
     public bool? PassportPartnersEnabled { get; set; }
     public bool? PassportPdfV2Enabled { get; set; }
+    public bool? PassportPdfDnaBlocksEnabled { get; set; }
+    public bool? TestsV2Enabled { get; set; }
     public bool? PhoneVerificationEnabled { get; set; }
     public bool? WhatsAppRemindersEnabled { get; set; }
     public bool? CompactTestPdfEnabled { get; set; }
@@ -297,8 +305,12 @@ public sealed class PlatformFeaturePatch
     public bool? HonestAdviceEnabled { get; set; }
     public bool? FutureJobsForYouEnabled { get; set; }
     public bool? ProactiveMatchingEnabled { get; set; }
+    public bool? MatchCalibrationV1Enabled { get; set; }
     public bool? CandidateExternalVacanciesEnabled { get; set; }
     public bool? EmployerPhase2Enabled { get; set; }
+    public int? CandidateApplyPerMinuteLimit { get; set; }
+    public int? CandidateApplyPerHourLimit { get; set; }
+    public int? CandidateApplyPerDayLimit { get; set; }
     public string? Reason { get; set; }
 }
 
@@ -493,3 +505,28 @@ public sealed class ReferenceMisuseItem
     public string? Message { get; set; }
     public string Status { get; set; } = "open";
 }
+
+public sealed class BeheerTodoItem
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = "";
+    public string Body { get; set; } = "";
+    public DateOnly? DueDate { get; set; }
+    public BeheerTodoPriority Priority { get; set; }
+    public BeheerTodoStatus Status { get; set; }
+    public string Category { get; set; } = "";
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+    public Guid? CreatedByUserId { get; set; }
+    public string? CreatedByDisplayName { get; set; }
+    public Guid? UpdatedByUserId { get; set; }
+    public string? UpdatedByDisplayName { get; set; }
+}
+
+public sealed record BeheerTodoUpsertPayload(
+    string Title,
+    string Body,
+    DateOnly? DueDate,
+    BeheerTodoPriority Priority,
+    BeheerTodoStatus Status,
+    string Category);

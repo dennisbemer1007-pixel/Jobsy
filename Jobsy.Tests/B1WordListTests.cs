@@ -76,7 +76,8 @@ public sealed class B1WordListTests
            || key.StartsWith("Talent.", StringComparison.OrdinalIgnoreCase)
            || key.StartsWith("Wg", StringComparison.OrdinalIgnoreCase)
            || key.StartsWith("EntUi.", StringComparison.OrdinalIgnoreCase)
-           || key.StartsWith("Mail.", StringComparison.OrdinalIgnoreCase);
+           || key.StartsWith("Mail.", StringComparison.OrdinalIgnoreCase)
+           || key.StartsWith("ProactiveMatching.Employer", StringComparison.OrdinalIgnoreCase);
 
     private static Dictionary<string, Dictionary<string, string>> LoadCatalog()
     {

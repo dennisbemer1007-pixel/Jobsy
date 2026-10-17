@@ -1,12 +1,8 @@
 # Untranslated (identical-to-nl) counts after allow-list exemptions.
 # Format: lang=count
 # LocalizationParityReportTests fails only if a language count increases.
-# Auth 07: lowered after real pl/ro/ar for UiStringsMfa (was EN-copied).
-# Before auth-07: en=234 pl=846 ro=865 ar=839
-# Public-pages 08: lowered after UiStringsHowLobsyRoles stopped copying nl into pl/ro/ar
-# (staff guides now carry the English draft). Before: en=192 pl=205 ro=225 ar=195
-# Availability start-date keys (2026-10): en +1 after nl Onboarding.AvailableImmediate → Per direct review
-en=193
-pl=108
-ro=124
-ar=95
+# 2026-10-17: acceptatie tip (#661/#707) + employer-fit (#655); rebaseline to merged catalog (no new debt vs acceptatie+3 en).
+en=342
+pl=263
+ro=281
+ar=246

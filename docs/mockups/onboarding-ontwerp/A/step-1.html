@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding A — Stap 1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <img class="logo" src="../shared/assets/lobsy-64.webp" alt="" width="36" height="36" />
+        Lobsy
+      </div>
+      <p class="topbar__meta">Stap 1 · ± 6 min</p>
+    </header>
+    <div class="shell">
+      <div class="main-col">
+        <main class="main page-pad">
+          <div class="progress" role="progressbar" aria-valuenow="1" aria-valuemin="1" aria-valuemax="10"><span class="progress__fill" style="width:10%"></span></div>
+          <p class="step-badge">Stap 1 van 10</p>
+          <h1 class="hero-title">Even kennismaken</h1>
+          <p class="hero-lead">Klopt dit? We hebben je naam overgenomen van je account.</p>
+          <div class="card">
+            <div class="field-row">
+              <label class="field"><span>Voornaam</span><input type="text" value="Sam" autocomplete="given-name" /></label>
+              <label class="field"><span>Achternaam</span><input type="text" value="de Vries" autocomplete="family-name" /></label>
+            </div>
+            <label class="field"><span>Jouw adres</span></label>
+            <div class="address-row">
+              <label class="field" style="margin:0"><span class="visually-hidden">Adres</span><input type="text" value="Molenstraat 12, Naaldwijk" placeholder="Straat, postcode of plaats…" autocomplete="street-address" /></label>
+              <button type="button" class="btn-gps" aria-label="Gebruik mijn locatie">GPS</button>
+            </div>
+            <label class="field"><span>Geboortedatum</span><input class="date-nl" type="text" inputmode="numeric" value="15-04-1998" aria-label="Geboortedatum" /></label>
+            <p class="ob-hint" style="margin:-0.5rem 0 0.85rem;font-size:0.8125rem;color:var(--muted)">Zo tonen we alleen banen die bij je leeftijd mogen</p>
+            <fieldset style="border:0;margin:0;padding:0">
+              <legend class="field" style="margin-bottom:0.35rem"><span>Wat is je huidige werkstatus?</span></legend>
+              <p style="margin:0 0 0.5rem;font-size:0.8125rem;color:var(--muted)">Optioneel. Je mag er meer dan één kiezen.</p>
+              <div class="work-status-grid" role="group">
+                <button type="button" class="chip is-selected">Scholier</button>
+                <button type="button" class="chip">Student (mbo/hbo/wo)</button>
+                <button type="button" class="chip">Stagiair / afstudeerder</button>
+                <button type="button" class="chip">In loondienst – fulltime</button>
+                <button type="button" class="chip is-selected">Flexwerker / uitzendkracht / oproepkracht</button>
+                <button type="button" class="chip">Op dit moment geen baan (zoekend)</button>
+              </div>
+            </fieldset>
+          </div>
+          <div class="mobile-mascot"><img class="mascot-corner" src="../shared/assets/mascot-64.webp" alt="" width="40" height="40" /></div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

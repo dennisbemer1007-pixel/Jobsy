@@ -47,14 +47,117 @@
 }
 .wa-header__account-hint { color: var(--muted); font-size: 0.9rem; }
 
-.wa-main { padding: 0.5rem 1.25rem 5rem; }
+.wa-main { padding: 0; }
+.wa-theme .wa-register-stage {
+  min-height: calc(100dvh - var(--pub-header-h, 4.75rem));
+  padding-block: 1.25rem 2.5rem;
+}
+.wa-register-col {
+  width: min(100%, 36rem);
+  margin-inline: auto;
+}
 .wa-wizard {
   display: grid;
   grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
   gap: 1.5rem;
   align-items: start;
-  max-width: 1120px;
+  max-width: 1122px;
   margin: 0 auto;
+}
+.wa-wizard--calm {
+  display: block;
+  max-width: none;
+  margin: 0;
+}
+.wa-wizard--calm .wa-register-title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.35rem, 4vw, 1.65rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.wa-wizard--calm .wa-register-lead {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.wa-wizard--calm .wa-search__row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+.wa-wizard--calm .wa-search__row > .wa-field:first-of-type {
+  grid-column: 1 / -1;
+}
+.wa-wizard--calm .wa-search__row .wa-field__label {
+  white-space: nowrap;
+}
+.wa-wizard--calm .wa-search__row .wa-input input {
+  width: 100%;
+  min-width: 0;
+}
+.wa-wizard--calm .wa-search__row .wa-btn {
+  min-height: 2.85rem;
+  padding-inline: 1.35rem;
+  white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .wa-wizard--calm .wa-need,
+  .wa-wizard--calm .wa-note {
+    display: none;
+  }
+  .wa-wizard--calm .wa-search__row {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  .wa-wizard--calm .wa-search__row .wa-btn {
+    width: 100%;
+    min-height: 2.85rem;
+  }
+}
+.wa-register-card.au-card {
+  position: relative;
+  padding-block-start: 2.5rem;
+  box-shadow: var(--shadow-md, 0 12px 40px color-mix(in srgb, var(--text) 8%, transparent));
+}
+.wa-theme .wa-register-card .au-card__mascot {
+  width: 4rem;
+  top: -2.75rem;
+  inset-inline-end: 1rem;
+}
+.wa-progress {
+  margin-block-end: 1.1rem;
+  padding-block-end: 1rem;
+  border-block-end: 1px solid var(--border);
+}
+.wa-progress__label {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.wa-progress__bar {
+  block-size: 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 55%, transparent);
+  overflow: hidden;
+}
+.wa-progress__fill {
+  display: block;
+  block-size: 100%;
+  width: 20%;
+  border-radius: inherit;
+  background: var(--brand);
+  transition: width 0.25s ease;
+}
+.wa-progress__bar--step1 .wa-progress__fill { width: 20%; }
+.wa-progress__bar--step2 .wa-progress__fill { width: 40%; }
+.wa-progress__bar--step3 .wa-progress__fill { width: 60%; }
+.wa-progress__bar--step4 .wa-progress__fill { width: 80%; }
+.wa-progress__bar--step5 .wa-progress__fill { width: 100%; }
+.wa-progress__hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text);
 }
 
 .wa-guide { position: sticky; top: 1rem; display: flex; flex-direction: column; gap: 1rem; }
@@ -324,7 +427,40 @@ a.wa-link { display: inline; }
 }
 .wa-actions .wa-btn--primary { margin-inline-start: auto; }
 
-.wa-need ul { margin: 0.5rem 0 0; padding-inline-start: 1.1rem; color: var(--muted); }
+.wa-need {
+  margin-block-start: 1.35rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--accent-soft, #e7eef7) 45%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+.wa-need__title {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.wa-need__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.wa-need__list li {
+  position: relative;
+  padding-inline-start: 1.35rem;
+}
+.wa-need__list li::before {
+  content: "✓";
+  position: absolute;
+  inset-inline-start: 0;
+  font-weight: 700;
+  color: var(--brand);
+}
 .wa-done { text-align: center; }
 .wa-done .wa-mascot { margin: 0 auto 1rem; }
 

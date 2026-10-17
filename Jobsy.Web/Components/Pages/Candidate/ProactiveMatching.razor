@@ -7,9 +7,11 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @attribute [RequiresFeature(PlatformFeature.ProactiveMatching)]
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["ProactiveMatching.Title"] · Lobsy</PageTitle>
 
@@ -40,8 +42,13 @@
             <section class="proactive-card proactive-consent" aria-labelledby="pm-consent-title">
                 <h2 id="pm-consent-title" class="proactive-card__title">@Culture["ProactiveMatching.Consent.Title"]</h2>
                 <p class="proactive-consent__text">@Culture["ProactiveMatching.Consent.Body"]</p>
+                <ol class="proactive-consent__steps">
+                    <li>@Culture["ProactiveMatching.Consent.Step1"]</li>
+                    <li>@Culture["ProactiveMatching.Consent.Step2"]</li>
+                    <li>@Culture["ProactiveMatching.Consent.Step3"]</li>
+                </ol>
                 <p class="proactive-consent__muted">@Culture["ProactiveMatching.Consent.LineWithdraw"]</p>
-                <button class="login-submit" type="button" disabled="@_busy" @onclick="AcceptConsentAsync">
+                <button class="login-submit proactive-consent__cta" type="button" disabled="@_busy" @onclick="AcceptConsentAsync">
                     @Culture["ProactiveMatching.Consent.Submit"]
                 </button>
             </section>
@@ -212,7 +219,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -248,7 +256,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -298,7 +307,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
             ApplySettings(_settings);
         }
         finally
@@ -330,7 +340,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

@@ -20,14 +20,8 @@ public static class ProactiveMatchingCommand
         output ??= Console.Out;
         if (args.Length == 0 || args[0] is "-h" or "--help" or "help")
         {
-            await output.WriteLineAsync("Usage: proactive-matching run-daily");
+            await output.WriteLineAsync("Usage: proactive-matching run-daily | run-instant <vacancyId>");
             return args.Length == 0 ? ExitUsage : ExitOk;
-        }
-
-        if (!string.Equals(args[0], "run-daily", StringComparison.OrdinalIgnoreCase))
-        {
-            await output.WriteLineAsync("Unknown verb. Usage: proactive-matching run-daily");
-            return ExitUsage;
         }
 
         using var host = TestAccountsCommand.BuildCliHost();
@@ -36,9 +30,28 @@ public static class ProactiveMatchingCommand
         {
             using var scope = host.Services.CreateScope();
             var matching = scope.ServiceProvider.GetRequiredService<IProactiveMatchingService>();
-            var sent = await matching.RunDailyMatchingAsync();
-            await output.WriteLineAsync($"Proactive matching delivered {sent} suggestion(s).");
-            return ExitOk;
+            if (string.Equals(args[0], "run-daily", StringComparison.OrdinalIgnoreCase))
+            {
+                var sent = await matching.RunDailyMatchingAsync();
+                await output.WriteLineAsync($"Proactive matching delivered {sent} suggestion(s).");
+                return ExitOk;
+            }
+
+            if (string.Equals(args[0], "run-instant", StringComparison.OrdinalIgnoreCase))
+            {
+                if (args.Length < 2 || !Guid.TryParse(args[1], out var vacancyId))
+                {
+                    await output.WriteLineAsync("Usage: proactive-matching run-instant <vacancyId>");
+                    return ExitUsage;
+                }
+
+                var sent = await matching.RunInstantMatchingForVacancyAsync(vacancyId);
+                await output.WriteLineAsync($"Instant proactive matching delivered {sent} suggestion(s).");
+                return ExitOk;
+            }
+
+            await output.WriteLineAsync("Unknown verb. Usage: proactive-matching run-daily | run-instant <vacancyId>");
+            return ExitUsage;
         }
         catch (Exception ex)
         {

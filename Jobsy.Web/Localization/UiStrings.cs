@@ -198,6 +198,8 @@ public static class UiStrings
             ["Language.Choose"] = "Kies taal",
             ["Common.Loading"] = "Laden…",
             ["Common.Save"] = "Opslaan",
+            ["Common.Saved"] = "Opgeslagen.",
+            ["Common.LoadFailed"] = "Laden mislukt. Probeer het opnieuw.",
             ["Common.Later"] = "Later",
             ["Common.Clear"] = "Wissen",
             ["Common.Busy"] = "Bezig…",
@@ -397,6 +399,9 @@ public static class UiStrings
             ["Apply.PickDob"] = "Kies een geboortedatum.",
             ["Apply.DobSaved"] = "Geboortedatum opgeslagen — je ziet nu het loon.",
             ["Apply.MustAcceptTerms"] = "Je moet akkoord gaan met de gebruiksvoorwaarden en de privacyverklaring om te solliciteren.",
+            ["Apply.RateLimited"] = "Je hebt veel gesolliciteerd in korte tijd. Probeer het over een uurtje opnieuw.",
+            ["Apply.RateLimitedBurst"] = "Je solliciteert erg snel achter elkaar. Wacht even en probeer het opnieuw.",
+            ["Apply.RateLimitedDaily"] = "Je hebt vandaag al op veel vacatures gesolliciteerd. Probeer het morgen opnieuw.",
             ["Apply.MustConfirmWorkPermit"] = "Bevestig eerst dat je in Nederland mag werken.",
             ["Apply.CompleteProfileFirst"] = "Vul eerst je profiel aan via Mijn profiel.",
             ["Apply.CodeSent"] = "Er is een 6-cijferige code naar je e-mail gestuurd. Vul deze in om te bevestigen.",
@@ -892,6 +897,8 @@ public static class UiStrings
             ["Language.Choose"] = "Choose language",
             ["Common.Loading"] = "Loading…",
             ["Common.Save"] = "Save",
+            ["Common.Saved"] = "Saved.",
+            ["Common.LoadFailed"] = "Could not load. Please try again.",
             ["Common.Later"] = "Later",
             ["Common.Clear"] = "Clear",
             ["Common.Busy"] = "Working…",
@@ -1091,6 +1098,9 @@ public static class UiStrings
             ["Apply.PickDob"] = "Choose a date of birth.",
             ["Apply.DobSaved"] = "Date of birth saved — you can now see the wage.",
             ["Apply.MustAcceptTerms"] = "You must agree to the terms of use and privacy policy to apply.",
+            ["Apply.RateLimited"] = "You have applied to many vacancies in a short time. Try again in about an hour.",
+            ["Apply.RateLimitedBurst"] = "You are applying very quickly. Wait a moment and try again.",
+            ["Apply.RateLimitedDaily"] = "You have applied to many vacancies today. Try again tomorrow.",
             ["Apply.MustConfirmWorkPermit"] = "Please confirm first that you are allowed to work in the Netherlands.",
             ["Apply.CompleteProfileFirst"] = "Complete your profile first via My profile.",
             ["Apply.CodeSent"] = "A 6-digit code has been sent to your e-mail. Enter it to confirm.",
@@ -1586,6 +1596,8 @@ public static class UiStrings
             ["Language.Choose"] = "Wybierz język",
             ["Common.Loading"] = "Ładowanie…",
             ["Common.Save"] = "Zapisz",
+            ["Common.Saved"] = "Zapisano.",
+            ["Common.LoadFailed"] = "Nie udało się wczytać. Spróbuj ponownie.",
             ["Common.Later"] = "Później",
             ["Common.Clear"] = "Wyczyść",
             ["Common.Busy"] = "Trwa…",
@@ -1785,6 +1797,9 @@ public static class UiStrings
             ["Apply.PickDob"] = "Wybierz datę urodzenia.",
             ["Apply.DobSaved"] = "Data urodzenia zapisana — teraz widzisz wynagrodzenie.",
             ["Apply.MustAcceptTerms"] = "Musisz zaakceptować warunki korzystania i politykę prywatności, aby aplikować.",
+            ["Apply.RateLimited"] = "Aplikowałeś/aś na wiele ofert w krótkim czasie. Spróbuj ponownie za około godzinę.",
+            ["Apply.RateLimitedBurst"] = "Aplikujesz bardzo szybko. Odczekaj chwilę i spróbuj ponownie.",
+            ["Apply.RateLimitedDaily"] = "Aplikowałeś/aś dziś na wiele ofert. Spróbuj jutro ponownie.",
             ["Apply.MustConfirmWorkPermit"] = "Najpierw potwierdź, że możesz legalnie pracować w Holandii.",
             ["Apply.CompleteProfileFirst"] = "Najpierw uzupełnij profil w Mój profil.",
             ["Apply.CodeSent"] = "6-cyfrowy kod został wysłany na Twój e-mail. Wpisz go, aby potwierdzić.",
@@ -2280,6 +2295,8 @@ public static class UiStrings
             ["Language.Choose"] = "Alege limba",
             ["Common.Loading"] = "Se încarcă…",
             ["Common.Save"] = "Salvează",
+            ["Common.Saved"] = "Salvat.",
+            ["Common.LoadFailed"] = "Nu s-a putut încărca. Încearcă din nou.",
             ["Common.Later"] = "Mai târziu",
             ["Common.Clear"] = "Șterge",
             ["Common.Busy"] = "În curs…",
@@ -2479,6 +2496,9 @@ public static class UiStrings
             ["Apply.PickDob"] = "Alege o dată de naștere.",
             ["Apply.DobSaved"] = "Data nașterii salvată — acum vezi salariul.",
             ["Apply.MustAcceptTerms"] = "Trebuie să fii de acord cu condițiile de utilizare și politica de confidențialitate pentru a aplica.",
+            ["Apply.RateLimited"] = "Ai aplicat la multe joburi într-un timp scurt. Încearcă din nou peste aproximativ o oră.",
+            ["Apply.RateLimitedBurst"] = "Aplici foarte repede. Așteaptă un moment și încearcă din nou.",
+            ["Apply.RateLimitedDaily"] = "Ai aplicat la multe joburi astăzi. Încearcă din nou mâine.",
             ["Apply.MustConfirmWorkPermit"] = "Confirmă mai întâi că ai dreptul să lucrezi în Olanda.",
             ["Apply.CompleteProfileFirst"] = "Completează mai întâi profilul în Profilul meu.",
             ["Apply.CodeSent"] = "Un cod de 6 cifre a fost trimis pe e-mail. Introdu-l pentru a confirma.",
@@ -2974,6 +2994,8 @@ public static class UiStrings
             ["Language.Choose"] = "اختر اللغة",
             ["Common.Loading"] = "جارٍ التحميل…",
             ["Common.Save"] = "حفظ",
+            ["Common.Saved"] = "تم الحفظ.",
+            ["Common.LoadFailed"] = "تعذّر التحميل. حاول مرة أخرى.",
             ["Common.Later"] = "لاحقاً",
             ["Common.Clear"] = "مسح",
             ["Common.Busy"] = "جارٍ…",
@@ -3173,6 +3195,9 @@ public static class UiStrings
             ["Apply.PickDob"] = "اختر تاريخ الميلاد.",
             ["Apply.DobSaved"] = "تم حفظ تاريخ الميلاد — يمكنك الآن رؤية الأجر.",
             ["Apply.MustAcceptTerms"] = "يجب أن توافق على شروط الاستخدام وسياسة الخصوصية للتقديم.",
+            ["Apply.RateLimited"] = "تقدمت إلى عدد كبير من الوظائف في وقت قصير. حاول مرة أخرى بعد حوالي ساعة.",
+            ["Apply.RateLimitedBurst"] = "تتقدم بسرعة كبيرة. انتظر لحظة ثم حاول مرة أخرى.",
+            ["Apply.RateLimitedDaily"] = "تقدمت إلى عدد كبير من الوظائف اليوم. حاول مرة أخرى غدًا.",
             ["Apply.MustConfirmWorkPermit"] = "أكد أولاً أنك مخوّل للعمل في هولندا.",
             ["Apply.CompleteProfileFirst"] = "أكمل ملفك الشخصي أولاً عبر ملفي.",
             ["Apply.CodeSent"] = "تم إرسال رمز من 6 أرقام إلى بريدك الإلكتروني. أدخله للتأكيد.",
@@ -3503,8 +3528,10 @@ public static class UiStrings
         UiStringsTestResults.MergeAll(nl, en, pl, ro, ar);
         UiStringsCulture.MergeAll(nl, en, pl, ro, ar);
         UiStringsValues.MergeAll(nl, en, pl, ro, ar);
+        UiStringsAssessmentV2.MergeAll(nl, en, pl, ro, ar);
         UiStringsWhoAmI.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyRoles.MergeAll(nl, en, pl, ro, ar);
+        UiStringsResearch.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyCandidate.MergeAll(nl, en, pl, ro, ar);
         UiStringsOnboardingV2.MergeAll(nl, en, pl, ro, ar);
         UiStringsGratisDna.MergeAll(nl, en, pl, ro, ar);
@@ -3520,6 +3547,7 @@ public static class UiStrings
         UiStringsLeerlingVragen.MergeNl(nl);
         UiStringsLeerlingVragenVo.MergeNl(nl);
         UiStringsLeerlingVerhaal.MergeNl(nl);
+        UiStringsLeerlingPaspoort.MergeAll(nl, en, pl, ro, ar);
         UiStringsSales.MergeNl(nl);
         UiStringsLanding.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateSignup.MergeAll(nl, en, pl, ro, ar);
@@ -3551,6 +3579,8 @@ public static class UiStrings
         UiStringsGolf1.MergeAll(nl, en, pl, ro, ar);
         UiStringsRun8.MergeAll(nl, en, pl, ro, ar);
         UiStringsProactive.MergeAll(nl, en, pl, ro, ar);
+        UiStringsCandidateHub.MergeAll(nl, en, pl, ro, ar);
+        UiStringsProfileReset.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

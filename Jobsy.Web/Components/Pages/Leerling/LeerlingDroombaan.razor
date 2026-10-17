@@ -136,6 +136,10 @@ else
 
         <div class="ll-result__actions">
             <a class="btn-secondary" href="/leerling/dit-ben-jij">@Culture["LeerlingDroom.OtherJob"]</a>
+            @if (_result.QuestionSet == PupilQuestionSet.Vo)
+            {
+                <a class="btn-secondary" href="/leerling/vo-paspoort">@Culture["LeerlingPassport.Vo.Form.Title"]</a>
+            }
             <a class="btn-primary" href="/leerling/pdf">@Culture["LeerlingDroom.SavePdf"]</a>
         </div>
     </div>

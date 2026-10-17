@@ -24,6 +24,12 @@ public interface IProactiveMatchingService
 
     /// <summary>Daily batch: score and notify eligible candidates.</summary>
     Task<int> RunDailyMatchingAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Score one newly active vacancy against eligible proactive candidates and notify on strong matches.
+    /// Respects weekly caps and delivery history (same rules as the daily batch).
+    /// </summary>
+    Task<int> RunInstantMatchingForVacancyAsync(Guid vacancyId, CancellationToken cancellationToken = default);
 }
 
 public interface IProactiveVacancyShortlistService

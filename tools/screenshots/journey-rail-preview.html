@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Journey rail preview</title>
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/critical.css" />
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/app.min.css" />
+  <link rel="stylesheet" href="../../Jobsy.Web/wwwroot/css/features/ontdekkingsreis.css?v=20261015-01" />
+  <style>
+    body { margin: 0; padding: 24px; background: var(--bg, #f5f2ee); }
+    .wrap { max-width: 320px; }
+    .wrap--wide { max-width: 360px; margin: 24px auto 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap wrap--desktop">
+    <aside class="journey-rail card" aria-labelledby="journey-rail-title">
+      <h2 id="journey-rail-title">Jouw reis</h2>
+      <p class="journey-rail__count">Stap 2 van 10</p>
+      <ol class="journey-rail__route" aria-label="Jouw reis, van het strand naar de diepte">
+        <li class="journey-rail__step is-done" aria-label="Het strand, afgerond">
+          <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
+          <div><b>Het strand</b><small>Start</small></div>
+        </li>
+        <li class="journey-rail__zone" aria-hidden="true">Aan de kust</li>
+        <li class="journey-rail__step is-done is-clickable">
+          <button type="button" class="journey-rail__jump" aria-label="Stap 1: Over jou, afgerond">
+            <span class="journey-rail__dot journey-rail__dot--check" aria-hidden="true">✓</span>
+            <div><b>Over jou</b><small>Laag 1 eraf</small></div>
+          </button>
+        </li>
+        <li class="journey-rail__step is-current" aria-current="step" aria-label="Stap 2: Wanneer en hoe, huidige stap">
+          <span class="journey-rail__marker" aria-hidden="true" style="width:30px;height:30px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;font-size:18px">🦞</span>
+          <div><b>Wanneer en hoe</b><small>Beschikbaarheid en reizen</small></div>
+        </li>
+        <li class="journey-rail__step is-todo" aria-label="Stap 3: Werk, nog te doen">
+          <span class="journey-rail__dot journey-rail__dot--open" aria-hidden="true">3</span>
+          <div><b>Werk</b><small>Waar ik werkte en wat ik zoek</small></div>
+        </li>
+      </ol>
+    </aside>
+  </div>
+</body>
+</html>

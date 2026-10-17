@@ -14,6 +14,8 @@ public sealed record FeatureFlagSnapshot(
     bool CandidatePassportEnabled,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
+    bool PupilPassportV2Enabled = false,
+    bool StudentPassportEnabled = false,
     bool PhoneVerificationEnabled = false,
     bool SchoolsEnabled = false,
     bool AmbassadorsEnabled = false,
@@ -23,7 +25,8 @@ public sealed record FeatureFlagSnapshot(
     bool FutureJobsForYouEnabled = false,
     bool EmployerPhase2Enabled = false,
     bool CandidateExternalVacanciesEnabled = false,
-    bool ProactiveMatchingEnabled = false)
+    bool ProactiveMatchingEnabled = false,
+    bool TestsV2Enabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -33,6 +36,8 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.CandidatePassport => CandidatePassportEnabled,
         PlatformFeature.PassportPartners => PassportPartnersEnabled,
         PlatformFeature.PassportPdfV2 => PassportPdfV2Enabled,
+        PlatformFeature.PupilPassportV2 => PupilPassportV2Enabled,
+        PlatformFeature.StudentPassport => StudentPassportEnabled,
         PlatformFeature.Schools => SchoolsEnabled,
         PlatformFeature.Ambassadors => AmbassadorsEnabled,
         PlatformFeature.WhatsAppReminders => WhatsAppRemindersEnabled,
@@ -42,6 +47,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.EmployerPhase2 => EmployersEnabled && EmployerPhase2Enabled,
         PlatformFeature.CandidateExternalVacancies => CandidateExternalVacanciesEnabled,
         PlatformFeature.ProactiveMatching => ProactiveMatchingEnabled,
+        PlatformFeature.TestsV2 => TestsV2Enabled,
         _ => false
     };
 }

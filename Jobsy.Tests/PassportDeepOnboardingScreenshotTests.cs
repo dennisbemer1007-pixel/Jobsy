@@ -232,7 +232,7 @@ public sealed class PassportDeepOnboardingScreenshotTests : IAsyncLifetime
             CompletedAtUtc = status == "Completed" ? DateTime.UtcNow : null
         };
 
-    internal sealed class PaspoortScreenshotWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    internal sealed class PaspoortScreenshotWebFactory : WebWebApplicationFactory
     {
         public PaspoortProbe Probe { get; } = new();
         public string ServerAddress { get; private set; } = "";

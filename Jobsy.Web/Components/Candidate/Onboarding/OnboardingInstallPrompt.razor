@@ -49,6 +49,7 @@
         try
         {
             if (await Js.InvokeAsync<bool>("lobsyPwaInstall.isStandalone")) return;
+            if (await Js.InvokeAsync<bool>("lobsyPwaInstall.wasDismissed")) return;
             var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");
             _canPrompt = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt");
             _visible = ios || _canPrompt;
@@ -101,9 +102,17 @@
         }
     }
 
-    private Task DismissAsync()
+    private async Task DismissAsync()
     {
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPwaInstall.dismiss");
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
         _visible = false;
-        return Task.CompletedTask;
     }
 }

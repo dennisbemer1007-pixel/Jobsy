@@ -1309,7 +1309,14 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
+        var saved = await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
+        if (saved is null)
+        {
+            throw new InvalidOperationException(
+                "Lege reactie van de API bij opslaan van platforminstellingen.");
+        }
+
+        return saved;
     }
 
     /// <summary>Maintenance switch state for the admin panel (errors 05).</summary>
@@ -1761,6 +1768,65 @@ public sealed partial class JobsyApiClient
             "api/admin/reports/decide",
             new { targetType, targetId, decision, reason },
             ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+    }
+
+    public async Task<IReadOnlyList<BeheerTodoItem>> GetBeheerTodosAsync(
+        BeheerTodoStatus? status = null,
+        CancellationToken ct = default)
+    {
+        var url = status is null
+            ? "api/admin/beheer-todos"
+            : $"api/admin/beheer-todos?status={status.Value}";
+        return await _http.GetFromJsonAsync<List<BeheerTodoItem>>(url, ApiJson, ct) ?? [];
+    }
+
+    public async Task<BeheerTodoItem?> CreateBeheerTodoAsync(BeheerTodoUpsertPayload payload, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsJsonAsync("api/admin/beheer-todos", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
+    }
+
+    public async Task<BeheerTodoItem?> UpdateBeheerTodoAsync(
+        Guid id,
+        BeheerTodoUpsertPayload payload,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync($"api/admin/beheer-todos/{id}", payload, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
+    }
+
+    public async Task<BeheerTodoItem?> MarkBeheerTodoDoneAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync($"api/admin/beheer-todos/{id}/mark-done", null, ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(TryExtractMessage(body) ?? body);
+        }
+
+        return await response.Content.ReadFromJsonAsync<BeheerTodoItem>(ApiJson, ct);
+    }
+
+    public async Task DeleteBeheerTodoAsync(Guid id, CancellationToken ct = default)
+    {
+        var response = await _http.DeleteAsync($"api/admin/beheer-todos/{id}", ct);
         if (!response.IsSuccessStatusCode)
         {
             var body = await response.Content.ReadAsStringAsync(ct);

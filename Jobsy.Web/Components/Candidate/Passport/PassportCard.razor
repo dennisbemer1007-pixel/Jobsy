@@ -48,11 +48,6 @@
                         <span class="kompas-chip">@kw</span>
                     }
                 </div>
-                <div class="passport-card__actions passport-card__actions--compact">
-                    <button type="button" class="btn btn-secondary btn-compact" disabled="@CvBusy" data-testid="passport-download-pdf" @onclick="OnDownloadCv">
-                        @(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])
-                    </button>
-                </div>
             }
         </div>
     </div>
@@ -77,6 +72,22 @@
             }
         </p>
     </div>
+
+    @if (Compact)
+    {
+        <div class="passport-card__actions passport-card__actions--compact">
+            <button type="button"
+                    class="btn btn-secondary passport-card__pdf-btn"
+                    disabled="@CvBusy"
+                    data-testid="@PdfDownloadTestId"
+                    @onclick="OnDownloadCv">
+                @(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])
+            </button>
+            <button type="button" class="btn btn-primary" @onclick="OnEdit">
+                @Culture["Passport.Edit"]
+            </button>
+        </div>
+    }
 
     @if (!Compact)
     {
@@ -135,7 +146,7 @@
         </div>
 
         <div class="passport-card__actions">
-            <button type="button" class="btn btn-secondary" disabled="@CvBusy" data-testid="passport-download-pdf" @onclick="OnDownloadCv">
+            <button type="button" class="btn btn-secondary" disabled="@CvBusy" data-testid="@PdfDownloadTestId" @onclick="OnDownloadCv">
                 @(CvBusy ? Culture["Common.Loading"] : Culture[DnaPassport ? "Passport.DownloadDna" : "Passport.LobsyCv"])
             </button>
             <button type="button" class="btn btn-primary" @onclick="OnEdit">
@@ -172,6 +183,7 @@
     [Parameter] public bool DnaPassport { get; set; }
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback OnDownloadCv { get; set; }
+    [Parameter] public string PdfDownloadTestId { get; set; } = "passport-download-pdf";
 
     private int LayerTotal => KompasProfileCompleteness.StepCount;
     private int FilledLayers => KompasProfileCompleteness.FilledSteps(CompletenessPercent);

@@ -31,6 +31,37 @@ public static class UiStringsAdmin
         // Items (= h1 = crumb)
         Add("AdminNav.Dashboard", "Dashboard", "Dashboard", "Panel", "Tablou", "لوحة التحكم");
         Add("AdminNav.Todo", "Te doen", "To do", "Do zrobienia", "De făcut", "للقيام");
+        Add("AdminNav.BeheerTaken", "To-do lijst", "To-do list", "Lista zadań", "Listă to-do", "قائمة المهام");
+        Add("AdminBeheerTaken.Lead", "Beheer je eigen taken: teksten, deadlines en voortgang. Alleen zichtbaar voor beheerders.", "Manage your own tasks: copy, deadlines and progress. Admins only.", "Zarządzaj własnymi zadaniami. Tylko admin.", "Gestionează taskurile tale. Doar admin.", "إدارة مهامك. للمسؤولين فقط.");
+        Add("AdminBeheerTaken.New", "Nieuwe to-do", "New to-do", "Nowe zadanie", "To-do nou", "مهمة جديدة");
+        Add("AdminBeheerTaken.Empty", "Geen to-do's. Voeg er een toe of pas het filter aan.", "No to-dos. Add one or change the filter.", "Brak zadań.", "Fără to-do-uri.", "لا مهام.");
+        Add("AdminBeheerTaken.FilterStatus", "Status", "Status", "Status", "Status", "الحالة");
+        Add("AdminBeheerTaken.Col.Title", "Titel", "Title", "Tytuł", "Titlu", "العنوان");
+        Add("AdminBeheerTaken.Col.Category", "Categorie", "Category", "Kategoria", "Categorie", "الفئة");
+        Add("AdminBeheerTaken.Col.Priority", "Prioriteit", "Priority", "Priorytet", "Prioritate", "الأولوية");
+        Add("AdminBeheerTaken.Col.Status", "Status", "Status", "Status", "Status", "الحالة");
+        Add("AdminBeheerTaken.Col.Due", "Deadline", "Due date", "Termin", "Termen", "الموعد");
+        Add("AdminBeheerTaken.Col.Meta", "Bijgewerkt", "Updated", "Zaktualizowano", "Actualizat", "محدّث");
+        Add("AdminBeheerTaken.Label.Title", "Titel", "Title", "Tytuł", "Titlu", "العنوان");
+        Add("AdminBeheerTaken.Label.Body", "Tekst / inhoud", "Body text", "Treść", "Conținut", "النص");
+        Add("AdminBeheerTaken.Label.Due", "Deadline (optioneel)", "Due date (optional)", "Termin (opcjonalnie)", "Termen (opțional)", "الموعد (اختياري)");
+        Add("AdminBeheerTaken.Label.Priority", "Prioriteit", "Priority", "Priorytet", "Prioritate", "الأولوية");
+        Add("AdminBeheerTaken.Label.Status", "Status", "Status", "Status", "Status", "الحالة");
+        Add("AdminBeheerTaken.Label.Category", "Categorie", "Category", "Kategoria", "Categorie", "الفئة");
+        Add("AdminBeheerTaken.CopyBody", "Kopieer tekst", "Copy text", "Kopiuj tekst", "Copiază textul", "نسخ النص");
+        Add("AdminBeheerTaken.Copied", "Gekopieerd", "Copied", "Skopiowano", "Copiat", "تم النسخ");
+        Add("AdminBeheerTaken.MarkDone", "Markeer klaar", "Mark done", "Oznacz jako gotowe", "Marchează gata", "تمييز كمنجز");
+        Add("AdminBeheerTaken.DeleteTitle", "To-do verwijderen?", "Delete to-do?", "Usunąć to-do?", "Ștergi to-do?", "حذف المهمة؟");
+        Add("AdminBeheerTaken.DeleteLead", "Dit kan niet ongedaan. De actie komt in het auditlog.", "This cannot be undone. The action is audited.", "Nie można cofnąć.", "Nu poate fi anulat.", "لا يمكن التراجع.");
+        Add("AdminBeheerTaken.Priority.Laag", "Laag", "Low", "Niski", "Scăzut", "منخفض");
+        Add("AdminBeheerTaken.Priority.Normaal", "Normaal", "Normal", "Normalny", "Normal", "عادي");
+        Add("AdminBeheerTaken.Priority.Hoog", "Hoog", "High", "Wysoki", "Ridicat", "مرتفع");
+        Add("AdminBeheerTaken.Status.Open", "Open", "Open", "Otwarte", "Deschis", "مفتوح");
+        Add("AdminBeheerTaken.Status.Bezig", "Bezig", "In progress", "W toku", "În lucru", "قيد التنفيذ");
+        Add("AdminBeheerTaken.Status.Klaar", "Klaar", "Done", "Gotowe", "Gata", "منجز");
+        Add("AdminBeheerTaken.StatusFilter.All", "Alle statussen", "All statuses", "Wszystkie statusy", "Toate statusurile", "كل الحالات");
+        Add("AdminBeheerTaken.CreatedBy", "Aangemaakt", "Created", "Utworzono", "Creat", "أُنشئ");
+        Add("AdminBeheerTaken.UpdatedBy", "Bijgewerkt door", "Updated by", "Zaktualizował", "Actualizat de", "حدّثه");
         Add("AdminNav.Feedback", "Feedback", "Feedback", "Opinie", "Feedback", "ملاحظات");
         Add("AdminNav.AllUsers", "Alle gebruikers", "All users", "Wszyscy użytkownicy", "Toți utilizatorii", "كل المستخدمين");
         Add("AdminNav.Roles", "Rollen & rechten", "Roles & permissions", "Role i uprawnienia", "Roluri și drepturi", "الأدوار والصلاحيات");
@@ -40,6 +71,7 @@ public static class UiStringsAdmin
         Add("AdminNav.Regions", "Regio's & domeinen", "Regions & domains", "Regiony i domeny", "Regiuni și domenii", "المناطق والنطاقات");
         Add("AdminNav.Requests", "Aanvragen", "Requests", "Wnioski", "Cereri", "الطلبات");
         Add("AdminNav.Candidates", "Kandidaten", "Candidates", "Kandydaci", "Candidați", "المرشحون");
+        Add("AdminNav.Research", "Testonderzoek", "Test research", "Badania testów", "Cercetare teste", "بحث الاختبارات");
         Add("AdminNav.Vacancies", "Vacatures", "Vacancies", "Oferty", "Joburi", "الوظائف");
         Add("AdminNav.Ats", "ATS-import", "ATS import", "Import ATS", "Import ATS", "استيراد ATS");
         Add("AdminNav.Moderation", "Moderatie", "Moderation", "Moderacja", "Moderare", "الإشراف");
@@ -521,12 +553,34 @@ public static class UiStringsAdmin
         Add("AdminSettings.PublicUrl.Desc", "Basis-URL van de publieke webapp (links in e-mails).", "Base URL of the public web app (links in e-mails).", "Bazowy URL publicznej aplikacji (linki w e-mailach).", "URL de bază al aplicației publice (linkuri în e-mail).", "عنوان أساس تطبيق الويب العام (روابط البريد).");
         Add("AdminSettings.InactiveDays.Title", "Werkgevers opnieuw benaderen", "Re-engage employers", "Ponowne podejście do pracodawców", "Reangajare angajatori", "إعادة التواصل مع أصحاب العمل");
         Add("AdminSettings.InactiveDays.Desc", "Na hoeveel dagen zonder activiteit krijgt een werkgever één herinneringsmail?", "After how many days without activity does an employer get one reminder e-mail?", "Po ilu dniach bez aktywności pracodawca dostaje jeden e-mail przypominający?", "După câte zile fără activitate primește un angajator un e-mail de reamintire?", "بعد كم يوماً دون نشاط يحصل صاحب العمل على تذكير واحد؟");
+        Add("AdminSettings.ApplyRate.PerHour.Title", "Sollicitaties per uur", "Applications per hour", "Aplikacje na godzinę", "Aplicări pe oră", "طلبات في الساعة");
+        Add("AdminSettings.ApplyRate.PerHour.Desc", "Maximum per ingelogde kandidaat (niet per IP). Boven de limiet krijgt de kandidaat een vriendelijke melding en HTTP 429; het account blijft actief.", "Maximum per signed-in candidate (not per IP). Above the limit the candidate sees a friendly message and HTTP 429; the account stays active.", "Maksimum na zalogowanego kandydata (nie na IP). Powyżej limitu kandydat widzi komunikat i HTTP 429; konto pozostaje aktywne.", "Maximum per candidat autentificat (nu per IP). Peste limită candidatul vede un mesaj prietenos și HTTP 429; contul rămâne activ.", "الحد الأقصى لكل مرشح مسجل (وليس لكل IP). فوق الحد يرى رسالة ودية و429؛ الحساب يبقى نشطاً.");
+        Add("AdminSettings.ApplyRate.PerDay.Title", "Sollicitaties per dag", "Applications per day", "Aplikacje na dzień", "Aplicări pe zi", "طلبات في اليوم");
+        Add("AdminSettings.ApplyRate.PerDay.Desc", "Daglimiet per kandidaat. Handig tegen misbruik over langere tijd. Geen accountblokkade.", "Daily cap per candidate. Helps against longer-term abuse. No account lock.", "Dzienny limit na kandydata. Chroni przed nadużyciami. Bez blokady konta.", "Limită zilnică per candidat. Protejează împotriva abuzului. Fără blocare cont.", "حد يومي لكل مرشح. يحد من إساءة الاستخدام. دون قفل الحساب.");
+        Add("AdminSettings.ApplyRate.PerMinute.Title", "Anti-bot: sollicitaties per minuut", "Anti-bot: applications per minute", "Anty-bot: aplikacje na minutę", "Anti-bot: aplicări pe minut", "مضاد للروبوت: طلبات في الدقيقة");
+        Add("AdminSettings.ApplyRate.PerMinute.Desc", "Korte burst-limiet tegen rapid-fire scripts. Normale kandidaten merken dit zelden.", "Short burst limit against rapid-fire scripts. Normal candidates rarely hit this.", "Krótki limit przeciw skryptom. Normalni kandydaci rzadko to trafiają.", "Limită scurtă împotriva scripturilor rapide. Candidații normali rareori o ating.", "حد قصير ضد السكربتات السريعة. المرشحون العاديون نادراً ما يصلون إليه.");
+        Add("AdminSettings.Unit.PerHour", "per uur", "per hour", "na godzinę", "pe oră", "في الساعة");
+        Add("AdminSettings.Unit.PerDay", "per dag", "per day", "na dzień", "pe zi", "في اليوم");
+        Add("AdminSettings.Unit.PerMinute", "per minuut", "per minute", "na minutę", "pe minut", "في الدقيقة");
         Add("AdminSettings.Unit.Min", "min", "mins", "minut", "minute", "د");
         Add("AdminSettings.Unit.Days", "dagen", "days", "dni", "zile", "أيام");
         Add("AdminSettings.DirtyMeta", "Gewijzigd, nog niet opgeslagen · was: {0}", "Changed, not saved yet · was: {0}", "Zmieniono, jeszcze nie zapisano · było: {0}", "Modificat, încă nesalvat · era: {0}", "تم التغيير ولم يُحفظ بعد · كان: {0}");
         Add("AdminSettings.SaveSummary", "{0} wijziging(en): {1}", "{0} change(s): {1}", "{0} zmian(y): {1}", "{0} modificare(ări): {1}", "{0} تغيير(ات): {1}");
         Add("AdminSettings.LastSaved", "Laatst opgeslagen {0}", "Last saved {0}", "Ostatnio zapisano {0}", "Salvat ultima dată {0}", "آخر حفظ {0}");
         Add("AdminSettings.Saved", "Instellingen opgeslagen.", "Settings saved.", "Ustawienia zapisane.", "Setări salvate.", "تم حفظ الإعدادات.");
+        Add("AdminSettings.SaveFailed",
+            "Opslaan mislukt: {0}",
+            "Save failed: {0}",
+            "Zapis nieudany: {0}",
+            "Salvare eșuată: {0}",
+            "فشل الحفظ: {0}");
+        Add("AdminSettings.SaveFailedEmpty",
+            "De API gaf geen gegevens terug na opslaan. Controleer of de API-database up-to-date is (migraties) en of web en API dezelfde versie draaien.",
+            "The API returned no data after save. Check that the API database is up to date (migrations) and that web and API run the same version.",
+            "API nie zwróciło danych po zapisie. Sprawdź migracje i wersję web/API.",
+            "API-ul nu a returnat date după salvare. Verifică migrările și versiunea web/API.",
+            "لم تُرجع واجهة API بيانات بعد الحفظ. تحقق من الهجرات ونسخة الويب/API.");
+        Add("AdminSettings.ReasonRequired", "Vul een reden in (minimaal 5 tekens) om deze wijzigingen op te slaan.", "Enter a reason (at least 5 characters) to save these changes.", "Podaj powód (co najmniej 5 znaków), aby zapisać te zmiany.", "Introdu un motiv (minim 5 caractere) pentru a salva aceste modificări.", "أدخل سببًا (5 أحرف على الأقل) لحفظ هذه التغييرات.");
         Add("AdminSettings.LobsyCompany.Title", "Bedrijfsgegevens", "Company details", "Dane firmy", "Datele firmei", "بيانات الشركة");
         Add("AdminSettings.LobsyCompany.Hint", "Deze gegevens staan op de privacypagina, de voorwaarden, de footer en de PDF’s. Een leeg veld verdwijnt helemaal. Het Knab BTW-IBAN is alleen voor de BTW-buffer.", "These details appear on the privacy page, the terms, the footer and the PDFs. An empty field disappears completely. The Knab VAT IBAN is only for the VAT buffer.", "Te dane są na stronie prywatności, w regulaminie, w stopce i na PDF-ach. Puste pole znika. IBAN Knab jest tylko do bufora VAT.", "Aceste date apar pe pagina de confidențialitate, în termeni, în subsol și pe PDF-uri. Un câmp gol dispare. IBAN-ul Knab este doar pentru tamponul de TVA.", "تظهر هذه البيانات في صفحة الخصوصية والشروط والتذييل وملفات PDF. الحقل الفارغ يختفي. حساب Knab للضريبة فقط.");
         Add("AdminSettings.LobsyCompany.LegalName", "Wettelijke naam", "Legal name", "Nazwa prawna", "Nume legal", "الاسم القانوني");
@@ -904,6 +958,10 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.MasterdataCreated", "Stamgegeven aangemaakt", "Master data created", "Utworzono dane podstawowe", "Dată de bază creată", "أُنشئ بيان أساسي");
         Add("AdminAudit.Action.MasterdataUpdated", "Stamgegeven gewijzigd", "Master data updated", "Zmieniono dane podstawowe", "Dată de bază modificată", "عُدّل بيان أساسي");
         Add("AdminAudit.Action.MasterdataDeleted", "Stamgegeven verwijderd", "Master data deleted", "Usunięto dane podstawowe", "Dată de bază ștearsă", "حُذف بيان أساسي");
+        Add("AdminAudit.Action.BeheerTodoCreated", "To-do aangemaakt", "To-do created", "Utworzono to-do", "To-do creat", "أُنشئ to-do");
+        Add("AdminAudit.Action.BeheerTodoUpdated", "To-do bijgewerkt", "To-do updated", "Zaktualizowano to-do", "To-do actualizat", "حُدّث to-do");
+        Add("AdminAudit.Action.BeheerTodoMarkDone", "To-do afgerond", "To-do marked done", "To-do ukończone", "To-do marcat gata", "to-do منجز");
+        Add("AdminAudit.Action.BeheerTodoDeleted", "To-do verwijderd", "To-do deleted", "Usunięto to-do", "To-do șters", "حُذf to-do");
         Add("AdminAudit.Action.Sessions", "Sessies", "Sessions", "Sesje", "Sesiuni", "الجلسات");
         Add("AdminAudit.Action.TestUnlockReset", "Tests van testaccount gereset", "Test account tests reset", "Zresetowano testy konta testowego", "Testele contului de test au fost resetate", "أُعيد ضبط اختبارات حساب الاختبار");
         Add("AdminAudit.Action.WhoAmIRegenerate", "Verhaal opnieuw gemaakt", "Story generated again", "Historia wygenerowana ponownie", "Povestea a fost generată din nou", "أُعيد إنشاء القصة");

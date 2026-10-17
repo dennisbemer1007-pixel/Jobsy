@@ -129,14 +129,15 @@ public class StaticAssetCacheTests
         // Prefer keeping app.min.css / banenkaart.css on the same ?v as app-core.
         // Temporary skew is OK when asset-versions.json tracks the CSS files
         // (e.g. cookie-map / filter-sheet bumps ahead of a shared app-core retag).
+        var catalog = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Hosting", "PageAssetCatalog.cs"));
         var appCssMatch = System.Text.RegularExpressions.Regex.Match(
-            app,
+            catalog,
             @"css/app\.min\.css\?v=([^""'\s]+)");
-        Assert.True(appCssMatch.Success, "App.razor must version app.min.css");
+        Assert.True(appCssMatch.Success, "PageAssetCatalog must version app.min.css");
         var banenkaartMatch = System.Text.RegularExpressions.Regex.Match(
-            app,
+            catalog,
             @"css/features/banenkaart\.css\?v=([^""'\s]+)");
-        Assert.True(banenkaartMatch.Success, "App.razor must version banenkaart.css");
+        Assert.True(banenkaartMatch.Success, "PageAssetCatalog must version banenkaart.css");
 
         if (!string.Equals(appCssMatch.Groups[1].Value, appCoreTag, StringComparison.Ordinal)
             || !string.Equals(banenkaartMatch.Groups[1].Value, appCoreTag, StringComparison.Ordinal))
@@ -152,6 +153,7 @@ public class StaticAssetCacheTests
         }
 
         AssetVersions.AssertVersionedRefMatchesManifest(app, "js/app-core.js");
+        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/app.min.css");
     }
 
     private static HttpResponse PrepareResponse(string fileName, string? query)

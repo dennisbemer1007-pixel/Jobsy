@@ -59,4 +59,25 @@ public class WerkgeverNavTests
         var item = WerkgeverNav.Catalog.SelectMany(g => g.Items).First(i => i.Key == "todo");
         Assert.Equal("WgNav.Signals", item.LabelKeyFor(EmployerRole.Regiomanager));
     }
+
+    [Fact]
+    public void Resolve_meldingen_is_notifications_not_dashboard()
+    {
+        Assert.Equal("notifications", WerkgeverNav.Resolve("/werkgever/meldingen")!.Value.Item.Key);
+    }
+
+    [Fact]
+    public void Crumbs_meldingen_shows_notifications_label()
+    {
+        var crumbs = WerkgeverNav.Crumbs("/werkgever/meldingen", EmployerRole.Bedrijfsmanager);
+        Assert.Contains(crumbs, c => c is { LabelKey: "WgNav.Notifications", IsCurrent: true });
+    }
+
+    [Fact]
+    public void Dashboard_not_active_on_meldingen()
+    {
+        var dashboard = WerkgeverNav.Catalog.SelectMany(g => g.Items).First(i => i.Key == "dashboard");
+        Assert.False(WerkgeverNav.IsNavItemActive(dashboard, "/werkgever/meldingen"));
+        Assert.True(WerkgeverNav.IsNavItemActive(dashboard, "/werkgever"));
+    }
 }

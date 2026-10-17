@@ -62,6 +62,7 @@ public static class UiStringsLanding
         Add("PublicFooter.Terms", "Algemene voorwaarden", "Terms and conditions", "Regulamin", "Termeni și condiții", "الشروط العامة");
         Add("PublicFooter.UsageTerms", "Gebruiksvoorwaarden", "Terms of use", "Warunki użytkowania", "Condiții de utilizare", "شروط الاستخدام");
         Add("PublicFooter.About", "Wie zijn wij", "About us", "O nas", "Despre noi", "من نحن");
+        Add("PublicFooter.Contact", "Contact", "Contact", "Kontakt", "Contact", "اتصل");
         Add("PublicFooter.Accessibility", "Toegankelijkheid", "Accessibility", "Dostępność", "Accesibilitate", "إمكانية الوصول");
         Add("PublicFooter.MadeWith", "gemaakt met", "made with", "stworzone z", "realizat cu", "صُنع بـ");
         Add("PublicFooter.Copyright",
@@ -119,8 +120,85 @@ public static class UiStringsLanding
         Add("Landing.Hero.JobBus", "Monteur", "Technician", "Monter", "Tehnician", "فني");
         Add("Landing.Hero.JobBusMeta", "24 min met de bus · Delft", "24 min by bus · Delft", "24 min autobusem · Delft", "24 min cu autobuzul · Delft", "٢٤ د بالحافلة · Delft");
         Add("Landing.Hero.BarTeam", "Samenwerken", "Teamwork", "Współpraca", "Colaborare", "العمل الجماعي");
-        Add("Landing.Hero.BarPersist", "Doorzetten", "Persistence", "Wytrwałość", "Persistență", "المثابرة");
-        Add("Landing.Hero.BarCalm", "Rust onder druk", "Calm under pressure", "Spokój pod presją", "Calm sub presiune", "الهدوء تحت الضغط");
+        Add("Landing.Hero.BarPersist", "Volhouden", "Persistence", "Wytrwałość", "Persistență", "المثابرة");
+        Add("Landing.Hero.BarCalm", "Rust", "Calm", "Spokój", "Calm", "هدوء");
+        Add("Landing.Hero.BarCreative", "Creativiteit", "Creativity", "Kreatywność", "Creativitate", "الإبداع");
+        Add("Landing.Hero.BarCare", "Zorgzaam", "Caring", "Troskliwy", "Grijuliu", "حنون");
+        Add("Landing.Hero.BarPrecision", "Precisie", "Precision", "Precyzja", "Precizie", "الدقة");
+        Add("Landing.Hero.EyebrowPlain", "Gratis en zonder account", "Free, no account needed", "Za darmo, bez konta", "Gratuit, fără cont", "مجاني وبدون حساب");
+        Add("Landing.Hero.MetaTimePlain", "20 vragen · 3 minuten", "20 questions · 3 minutes", "20 pytań · 3 minuty", "20 întrebări · 3 minute", "20 سؤالًا · 3 دقائق");
+        Add("Landing.Hero.MetaPrivacyPlain", "Werkgevers zien je antwoorden niet", "Employers never see your answers", "Pracodawcy nie widzą Twoich odpowiedzi", "Angajatorii nu îți văd răspunsurile", "أصحاب العمل لا يرون إجاباتك");
+        Add("Landing.Hero.MetaMapPlain", "Ruim 320 vacatures op de banenkaart", "320+ jobs on the map (example)", "320+ ofert na mapie (voorbeeld)", "320+ joburi pe hartă (exemplu)", "320+ وظيفة على الخريطة (مثال)");
+        Add("Landing.Hero.MetaMapCountPlain", "Ruim {0} vacatures op de banenkaart", "About {0} jobs on the map", "Około {0} ofert na mapie", "Aproximativ {0} joburi pe hartă", "نحو {0} وظيفة على الخريطة");
+        Add("Landing.Hero.RadarYou", "Dit ben jij", "This is you", "To Ty", "Acesta ești tu", "هذا أنت");
+        Add("Landing.Hero.RadarFits", "Past bij jou", "Fits you", "Pasuje do Ciebie", "Ți se potrivește", "يناسبك");
+        Add("Landing.Hero.SampleJob1", "Teamleider logistiek", "Logistics team lead", "Kierownik logistyki", "Team leader logistică", "قائد فريق لوجستي");
+        Add("Landing.Hero.SampleJob1Meta", "Hoeve Transport · 18 min", "Hoeve Transport · 18 min", "Hoeve Transport · 18 min", "Hoeve Transport · 18 min", "Hoeve Transport · 18 د");
+        Add("Landing.Hero.SampleJob2", "Zorgmedewerker", "Care worker", "Opiekun", "Asistent medical", "عامل رعاية");
+        Add("Landing.Hero.SampleJob2Meta", "Kasteelhof Zorg · 12 min", "Kasteelhof Care · 12 min", "Kasteelhof Opieka · 12 min", "Kasteelhof Îngrijire · 12 min", "Kasteelhof · 12 د");
+        Add("Landing.Hero.SampleJob3", "Teeltmedewerker kas", "Greenhouse worker", "Pracownik szklarni", "Lucrător seră", "عامل دفيئة");
+        Add("Landing.Hero.SampleJob3Meta", "Groene Kas · 9 min", "Green House · 9 min", "Zielona Szklarnia · 9 min", "Sera Verde · 9 min", "9 د");
+        Add("Landing.Hero.TopMatch", "Jouw top-match", "Your top match", "Twój top match", "Top match-ul tău", "أفضل تطابق");
+        Add("Landing.Hero.TopMatchMeta", "Teamleider logistiek · 18 min", "Logistics team lead · 18 min", "Kierownik logistyki · 18 min", "Team leader logistică · 18 min", "قائد فريق · 18 د");
+
+        Add("Landing.Flow.Aria", "Zo werkt Lobsy", "How Lobsy works", "Jak działa Lobsy", "Cum funcționează Lobsy", "كيف يعمل لوبسي");
+        Add("Landing.Flow.S1Title", "20 korte vragen", "20 short questions", "20 krótkich pytań", "20 întrebări scurte", "20 سؤالًا قصيرًا");
+        Add("Landing.Flow.S1Sub", "Geen goed of fout", "No right or wrong", "Bez dobrych i złych", "Fără corect sau greșit", "لا صح ولا خطأ");
+        Add("Landing.Flow.S2Title", "Jouw werk-DNA", "Your work DNA", "Twoje DNA pracy", "ADN-ul tău de muncă", "حمض عملك");
+        Add("Landing.Flow.S2Sub", "Hoe jij werkt en wat je belangrijk vindt", "How you work and what matters to you", "Jak pracujesz i co jest ważne", "Cum lucrezi și ce contează", "كيف تعمل وما يهمك");
+        Add("Landing.Flow.S3Title", "Banen die passen", "Jobs that fit", "Oferty, które pasują", "Joburi potrivite", "وظائف تناسبك");
+        Add("Landing.Flow.S3Sub", "Op de kaart, met je reistijd", "On the map, with travel time", "Na mapie, z czasem dojazdu", "Pe hartă, cu timpul de drum", "على الخريطة مع وقت الرحلة");
+
+        Add("Landing.Map.Bike", "Fiets", "Bike", "Rower", "Bicicletă", "دراجة");
+        Add("Landing.Map.Ov", "OV", "Transit", "Komunikacja", "Transport", "مواصلات");
+        Add("Landing.Map.Car", "Auto", "Car", "Samochód", "Mașină", "سيارة");
+        Add("Landing.Map.Radius", "30 min fietsen", "30 min by bike", "30 min rowerem", "30 min cu bicicleta", "30 د بالدراجة");
+        Add("Landing.Map.Within", "Binnen 30 minuten van huis", "Within 30 minutes from home", "W 30 minut od domu", "La 30 de minute de casă", "خلال 30 دقيقة من المنزل");
+        Add("Landing.Map.JobsExample", "38 banen", "38 jobs (example)", "38 ofert (voorbeeld)", "38 joburi (exemplu)", "38 وظيفة (مثال)");
+        Add("Landing.Map.ChartTitle", "Wat past bij jou", "What fits you", "Co do Ciebie pasuje", "Ce ți se potrivește", "ما يناسبك");
+        Add("Landing.Map.SectorCare", "Zorg", "Care", "Opieka", "Îngrijire", "رعاية");
+        Add("Landing.Map.SectorTech", "Techniek", "Technical", "Technika", "Tehnic", "تقني");
+        Add("Landing.Map.SectorLogistics", "Logistiek", "Logistics", "Logistyka", "Logistică", "لوجستي");
+        Add("Landing.Map.SectorGreen", "Groen", "Green", "Zielony", "Verde", "أخضر");
+        Add("Landing.Map.Cta", "Bekijk de banenkaart →", "Open the job map →", "Zobacz mapę ofert →", "Deschide harta →", "افتح خريطة الوظائف ←");
+        Add("Landing.Stats.Vacancies", "vacatures op de banenkaart", "jobs on the map", "ofert na mapie", "joburi pe hartă", "وظائف على الخريطة");
+        Add("Landing.Stats.VacanciesValue", "{0}+", "{0}+", "{0}+", "{0}+", "{0}+");
+        Add("Landing.Stats.VacanciesFallback", "320+", "320+", "320+", "320+", "320+");
+        Add("Landing.Stats.QuestionsShort", "vragen", "questions", "pytań", "întrebări", "أسئلة");
+        Add("Landing.Stats.Questions", "en 3 minuten voor de gratis test", "and 3 minutes for the free test", "i 3 minuty na darmowy test", "și 3 minute pentru testul gratuit", "و3 دقائق للاختبار المجاني");
+        Add("Landing.Stats.LangsShort", "talen", "languages", "języki", "limbi", "لغات");
+        Add("Landing.Stats.Langs", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR");
+        Add("Landing.Stats.FreeLabel", "Gratis", "Free", "Za darmo", "Gratuit", "مجاني");
+        Add("Landing.Stats.FreeBody", "test, account, paspoort en banenkaart", "test, account, passport and job map", "test, konto, paszport i mapa", "test, cont, pașaport și hartă", "اختبار وحساب وجواز وخريطة");
+
+        Add("Landing.Journey.Eyebrow", "Ontdekkingsreis", "Discovery journey", "Podróż odkrywcza", "Călătoria descoperirii", "رحلة الاكتشاف");
+        Add("Landing.Journey.Title", "Van het strand naar het licht", "From the beach to the light", "Od plaży do światła", "De la plajă spre lumină", "من الشاطئ إلى النور");
+        Add("Landing.Journey.Lead", "Vijf zones — dezelfde reis als in de app.", "Five zones — the same journey as in the app.", "Pięć stref — ta sama podróż co w aplikacji.", "Cinci zone — aceeași călătorie ca în app.", "خمس مناطق — نفس الرحلة في التطبيق.");
+        Add("Landing.Journey.Beach", "Start met wie je bent vandaag.", "Start with who you are today.", "Zacznij od tego, kim jesteś dziś.", "Începe cu cine ești azi.", "ابدأ بمن أنت اليوم.");
+        Add("Landing.Journey.Coast", "Ontdek wat je kunt en wat je leuk vindt.", "Discover what you can do and what you like.", "Odkryj, co potrafisz i co lubisz.", "Descoperă ce poți și ce-ți place.", "اكتشف ما تستطيع وما تحب.");
+        Add("Landing.Journey.Rocks", "Kies welke richting bij je past.", "Choose which direction fits you.", "Wybierz kierunek, który pasuje.", "Alege direcția care ți se potrivește.", "اختر الاتجاه الذي يناسبك.");
+        Add("Landing.Journey.Deep", "Ga dieper met je werk-DNA.", "Go deeper with your work DNA.", "Zgłębiaj swoje DNA pracy.", "Mergi mai adânc cu ADN-ul tău.", "تعمّق في حمض عملك.");
+        Add("Landing.Journey.Light", "Zie welke banen echt bij je passen.", "See which jobs truly fit you.", "Zobacz, które oferty naprawdę pasują.", "Vezi ce joburi ți se potrivesc cu adevărat.", "اعرف أي الوظائف تناسبك حقًا.");
+        Add("Landing.Journey.Cta", "Start de ontdekkingsreis →", "Start the journey →", "Rozpocznij podróż →", "Pornește călătoria →", "ابدأ الرحلة ←");
+
+        Add("Landing.Get.MapCardTitle", "De banenkaart", "The job map", "Mapa ofert", "Harta joburilor", "خريطة الوظائف");
+        Add("Landing.Get.MapCardBody", "Zie welke banen je echt kunt halen, met reistijd per fiets, OV of auto.", "See which jobs you can reach, with travel time by bike, transit or car.", "Zobacz oferty z czasem dojazdu rowerem, komunikacją lub autem.", "Vezi joburi cu timp de drum cu bicicleta, transport sau mașină.", "وظائف مع وقت الرحلة.");
+        Add("Landing.Get.FreeTag", "Gratis", "Free", "Za darmo", "Gratuit", "مجاني");
+        Add("Landing.Get.ReportTag", "Eenmalig rapport", "One-time report", "Raport jednorazowy", "Raport unic", "تقرير لمرة واحدة");
+
+        Add("Landing.Emp.Eyebrow", "Voor werkgevers", "For employers", "Dla pracodawców", "Pentru angajatori", "لأصحاب العمل");
+        Add("Landing.Emp.Title", "Vind mensen die écht bij je team passen.", "Find people who truly fit your team.", "Znajdź ludzi, którzy naprawdę pasują.", "Găsește oameni care chiar se potrivesc echipei.", "اعثر على من يناسب فريقك.");
+        Add("Landing.Emp.Lead", "Niet alleen op papier.", "Not just on paper.", "Nie tylko na papierze.", "Nu doar pe hârtie.", "ليس على الورق فقط.");
+        Add("Landing.Emp.L1", "Vacatures plaatsen", "Post vacancies", "Publikuj oferty", "Publică vacante", "انشر وظائف");
+        Add("Landing.Emp.L2", "Werken met tokens", "Work with tokens", "Pracuj z tokenami", "Lucrează cu tokeni", "اعمل بالرموز");
+        Add("Landing.Emp.L3", "Matches op DNA en reistijd", "Matches on DNA and travel time", "Dopasowanie DNA i dojazd", "Potrivire ADN și timp drum", "تطابق الحمض ووقت الرحلة");
+        Add("Landing.Emp.CandTitle", "Kandidaat", "Candidate", "Kandydat", "Candidat", "مرشح");
+        Add("Landing.Emp.CandSub", "Antwoorden blijven privé", "Answers stay private", "Odpowiedzi prywatne", "Răspunsuri private", "إجابات خاصة");
+        Add("Landing.Emp.CandDna", "Past op DNA", "DNA fit", "Pasuje DNA", "Potrivire ADN", "يتناسب مع الحمض");
+        Add("Landing.Emp.CandTravel", "14 min reistijd", "14 min travel", "14 min dojazd", "14 min drum", "14 د رحلة");
+        Add("Landing.Emp.Cta", "Voor werkgevers →", "For employers →", "Dla pracodawców →", "Pentru angajatori →", "لأصحاب العمل ←");
+        Add("Landing.Emp.Register", "Werkgever registreren", "Register as employer", "Zarejestruj pracodawcę", "Înregistrează angajator", "تسجيل صاحب عمل");
+        Add("Landing.Faq.TitleShort", "Kort en eerlijk antwoord.", "Short and honest answers.", "Krótko i uczciwie.", "Răspunsuri scurte și oneste.", "إجابات قصيرة وصادقة.");
 
         // —— Wat is Lobsy ——
         Add("Landing.WhatIs.Eyebrow", "Wat is Lobsy?", "What is Lobsy?", "Czym jest Lobsy?", "Ce este Lobsy?", "ما هو لوبسي؟");
@@ -183,7 +261,8 @@ public static class UiStringsLanding
 
     private static void MergeWhatYouGet(Action<string, string, string, string?, string?, string?> Add)
     {
-        Add("Landing.Get.Eyebrow", "Wat je krijgt als je inlogt", "What you get when you sign in", "Co dostajesz po zalogowaniu", "Ce primești când te autentifici", "ما تحصل عليه عند تسجيل الدخول");
+        Add("Landing.Get.Eyebrow", "Wat je krijgt", "What you get", "Co dostajesz", "Ce primești", "ما تحصل عليه");
+        Add("Landing.Get.Subtitle", "Alles op één plek, zodra je inlogt.", "Everything in one place once you sign in.", "Wszystko w jednym miejscu po zalogowaniu.", "Totul într-un loc, după autentificare.", "كل شيء في مكان واحد بعد تسجيل الدخول.");
         Add("Landing.Get.Title", "Van “wie ben ik?” naar “hier wil ik werken”.", "From “who am I?” to “I want to work here”.", "Od „kim jestem?” do „tu chcę pracować”.", "De la „cine sunt?” la „aici vreau să lucrez”.", "من «من أنا؟» إلى «أريد العمل هنا».");
         Add("Landing.Get.Note", "Alle voorbeelden: Voorbeelddata", "All examples: sample data", "Wszystkie przykłady: dane przykładowe", "Toate exemplele: date exemplu", "كل الأمثلة: بيانات مثال");
         Add("Landing.Get.MapTitle", "🗺️ De banenkaart", "🗺️ The job map", "🗺️ Mapa ofert", "🗺️ Harta joburilor", "🗺️ خريطة الوظائف");

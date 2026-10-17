@@ -1,37 +1,40 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
 <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
 
-<section class="ob-wizard__section" aria-labelledby="ob-avail-presets">
+<div class="ob-wizard__card">
+<section class="ob-wizard__section" id="onboarding-field-availability-presets" aria-labelledby="ob-avail-presets">
     <h2 id="ob-avail-presets" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityPresetsLegend"]</h2>
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
     <fieldset class="ob-wizard__presets-field">
         <legend class="visually-hidden">@Culture["Onboarding.AvailabilityPresetsLegend"]</legend>
-        <div class="ob-wizard__presets">
+        <ChoiceTileGrid Class="ob-wizard__presets" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.AvailabilityPresetsLegend"]">
             @foreach (var preset in Presets)
             {
                 var isSelected = Draft.Presets.Contains(preset.Code);
-                <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                        class="@(isSelected ? "is-selected" : null)"
-                        @onclick="() => TogglePreset.InvokeAsync(preset.Code)">
-                    <span>@(isSelected ? "✓" : "")</span>
-                    <b>@Culture[preset.Title]</b>
+                <ChoiceTile Tall="true"
+                            Icon="@ChoiceTileIcons.ForAvailabilityPreset(preset.Code)"
+                            Selected="isSelected"
+                            ShowCheckBadge="true"
+                            OnClick="@(() => TogglePreset.InvokeAsync(preset.Code))">
+                    <strong>@Culture[preset.Title]</strong>
                     <small>@Culture[preset.Lead]</small>
-                </button>
+                </ChoiceTile>
             }
-        </div>
-        @if (!HasSelection)
+        </ChoiceTileGrid>
+        @if (ShowValidation && !HasSelection)
         {
-            <p class="ob-wizard__hint ob-wizard__preset-required" role="status">@Culture["Onboarding.AvailabilityRequired"]</p>
+            <p class="error ob-wizard__preset-required" role="alert">@Culture["Onboarding.AvailabilityRequired"]</p>
         }
     </fieldset>
 </section>
 
-@if (HasSelection)
+@if (HasSelection && !CustomMode)
 {
     <section class="ob-wizard__availability-summary" aria-labelledby="ob-avail-summary">
         <div class="ob-wizard__summary-head">
@@ -39,7 +42,7 @@
             <button type="button"
                     class="ob-wizard__summary-action"
                     aria-expanded="@(Draft.FineTune ? "true" : "false")"
-                    @onclick="ToggleFineTune">
+                    @onclick="OnFineTuneClickAsync">
                 @(Draft.FineTune ? Culture["Onboarding.AvailabilityFineTuneClose"] : Culture["Onboarding.AvailabilityFineTuneCta"])
             </button>
         </div>
@@ -60,16 +63,18 @@
     </section>
 }
 
-<AvailabilityStartSection Immediate="Draft.Immediate"
-                            ImmediateChanged="OnImmediateChanged"
-                            AvailableFrom="Draft.AvailableFrom"
-                            AvailableFromChanged="OnAvailableFromChanged"
-                            ShowValidation="true" />
-
-@if (Draft.FineTune)
+@if (ShowMatrix)
 {
-    <section class="ob-wizard__fine-tune" aria-labelledby="ob-avail-finetune">
-        <h2 id="ob-avail-finetune" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityFineTuneLegend"]</h2>
+    <section class="ob-wizard__fine-tune @(CustomMode ? "ob-wizard__fine-tune--custom" : null)"
+             id="onboarding-field-availability-grid"
+             aria-labelledby="ob-avail-finetune">
+        <h2 id="ob-avail-finetune" class="ob-wizard__section-title">
+            @(CustomMode ? Culture["Onboarding.Preset.Custom.GridLegend"] : Culture["Onboarding.AvailabilityFineTuneLegend"])
+        </h2>
+        @if (CustomMode)
+        {
+            <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.Preset.Custom.GridHint"]</p>
+        }
         <HoursRangeSlider CssClass="hours-range--compact"
                           Min="1"
                           Max="60"
@@ -84,35 +89,21 @@
         <fieldset>
             <legend>@Culture["Profile.Availability"]</legend>
             <p class="ob-wizard__hint">@Culture["Onboarding.AvailabilityMatrixHint"]</p>
-            <div class="ob-wizard__matrix ob-wizard__matrix--labeled" role="group" aria-label="@Culture["Profile.Availability"]">
-                <span class="ob-wizard__matrix-corner" aria-hidden="true"></span>
-                @foreach (var slot in WorkingSlots)
-                {
-                    <span class="ob-wizard__matrix-head">@UiLabels.AvailabilitySlot(Culture, slot)</span>
-                }
-                @foreach (var day in Days)
-                {
-                    <span class="ob-wizard__matrix-day">@UiLabels.Weekday(Culture, day)</span>
-                    @foreach (var slot in WorkingSlots)
-                    {
-                        var key = $"{day}:{slot}";
-                        var isAvailable = Draft.Availability.Contains(key);
-                        <button type="button"
-                                aria-pressed="@(isAvailable ? "true" : "false")"
-                                aria-label="@AvailabilityLabel(day, slot)"
-                                class="@(isAvailable ? "is-on" : null)"
-                                @onclick="() => ToggleAvailability.InvokeAsync(key)">
-                            @(isAvailable ? "✓" : "–")
-                        </button>
-                    }
-                }
-            </div>
+            <AvailabilityDayPartMatrix SelectedKeys="Draft.Availability"
+                                       UseButtons="true"
+                                       CssClass="availability-matrix--touch"
+                                       AriaLabel="@Culture["Profile.Availability"]"
+                                       OnToggle="ToggleAvailability" />
         </fieldset>
+        @if (ShowValidation && Draft.Availability.Count == 0)
+        {
+            <p class="error" role="alert">@Culture["Onboarding.Validation.AvailabilityGrid"]</p>
+        }
         @if (Draft.PresetsOverridden)
         {
             <p class="ob-wizard__hint">
                 @Culture["Onboarding.ManualOverride"]
-                <button type="button" class="ob-wizard__inline-link" @onclick="ResetPresets">
+                <button type="button" class="ob-wizard__inline-link" @onclick="OnResetPresetsClickAsync">
                     @Culture["Onboarding.Refill"]
                 </button>
             </p>
@@ -120,10 +111,17 @@
     </section>
 }
 
-@if (!StartDateValid && !Draft.Immediate)
+<AvailabilityStartSection Immediate="Draft.Immediate"
+                            ImmediateChanged="OnImmediateChanged"
+                            AvailableFrom="Draft.AvailableFrom"
+                            AvailableFromChanged="OnAvailableFromChanged"
+                            ShowValidation="ShowValidation" />
+
+@if (ShowValidation && !StartDateValid && !Draft.Immediate)
 {
-    <p class="ob-wizard__hint error ob-wizard__start-date-error" role="alert">@Culture["Onboarding.AvailabilityStartDateInvalid"]</p>
+    <p class="error ob-wizard__start-date-error" id="onboarding-field-availability-start" role="alert">@Culture["Onboarding.AvailabilityStartDateInvalid"]</p>
 }
+</div>
 
 @code {
     public sealed record Preset(string Code, string Title, string Lead);
@@ -137,9 +135,10 @@
     [Parameter] public EventCallback ManualAvailability { get; set; }
     [Parameter] public EventCallback<string> ToggleAvailability { get; set; }
     [Parameter] public EventCallback ResetPresets { get; set; }
+    [Parameter] public bool ShowValidation { get; set; }
 
-    private static readonly string[] Days = DayPartMatrix.DayCodes;
-    private static readonly string[] WorkingSlots = ["Ochtend", "Middag", "Avond"];
+    private bool CustomMode => Draft.Presets.Contains(AvailabilityPresetRules.Custom);
+    private bool ShowMatrix => CustomMode || Draft.FineTune;
 
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
     private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
@@ -160,9 +159,6 @@
             ? AvailabilityStartRules.FormatDisplayDate(d, Culture.Language)
             : "–";
 
-    private string AvailabilityLabel(string day, string slot)
-        => $"{UiLabels.Weekday(Culture, day)} {UiLabels.AvailabilitySlot(Culture, slot)}";
-
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
 
     private async Task OnImmediateChanged(bool value)
@@ -181,4 +177,16 @@
         Draft.AvailableFrom = value;
         await NotifyAsync();
     }
+
+    private async Task OnFineTuneClickAsync()
+    {
+        Draft.FineTune = !Draft.FineTune;
+        await NotifyAsync();
+        if (ToggleFineTune.HasDelegate)
+        {
+            await ToggleFineTune.InvokeAsync();
+        }
+    }
+
+    private Task OnResetPresetsClickAsync() => ResetPresets.InvokeAsync();
 }

@@ -24,6 +24,48 @@
                 <PublicLangMenu ReturnPath="@ReturnPath" />
             </div>
         }
+        else if (TeaserCampaign)
+        {
+            <nav class="pub-nav pub-nav--teaser" aria-label="@Culture["PublicNav.QuickLinks"]">
+                <a class="pub-nav__link pub-nav__link--quiet" href="@PublicRoutes.Banenkaart">@Culture["PublicNav.JobMap"]</a>
+                <a class="pub-nav__link pub-nav__link--quiet" href="@PublicRoutes.About">@Culture["PublicFooter.About"]</a>
+            </nav>
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                <a class="pub-btn pub-btn--primary pub-header__cta" href="@PublicRoutes.CompanyRegister">@Culture["PublicNav.CreateAccount"]</a>
+            </div>
+            <div class="pub-header__mobile">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <details class="pub-menu" id="pub-menu">
+                    <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
+                        <span class="pub-menu__icon" aria-hidden="true"></span>
+                    </summary>
+                    <div class="pub-menu__panel">
+                        <nav class="pub-menu__nav" aria-label="@Culture["PublicNav.QuickLinks"]">
+                            <a class="pub-menu__link" href="@PublicRoutes.Banenkaart">@Culture["PublicNav.JobMap"]</a>
+                            <a class="pub-menu__link" href="@PublicRoutes.About">@Culture["PublicFooter.About"]</a>
+                            <a class="pub-menu__link" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
+                            <a class="pub-menu__link" href="@PublicRoutes.CompanyRegister">@Culture["PublicNav.CreateAccount"]</a>
+                        </nav>
+                        <PublicLangMenu ReturnPath="@ReturnPath" />
+                    </div>
+                </details>
+            </div>
+        }
+        else if (EmployerWizard)
+        {
+            <p class="pub-header__ctx">@Culture["Wa.Layout.Title"]</p>
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <span class="pub-header__hint muted">@Culture["Wa.Layout.HaveAccount"]</span>
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Login">@Culture["Wa.Layout.Login"]</a>
+            </div>
+            <div class="pub-header__mobile pub-header__mobile--auth">
+                <PublicLangMenu ReturnPath="@ReturnPath" />
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Login">@Culture["Wa.Layout.Login"]</a>
+            </div>
+        }
         else if (Compact)
         {
             <span class="pub-header__chip" aria-hidden="false">
@@ -87,6 +129,10 @@
     [Parameter] public bool Compact { get; set; }
     /// <summary>Auth pages: logo + language + desktop "Account maken" only.</summary>
     [Parameter] public bool AuthShell { get; set; }
+    /// <summary>Westland / lancering campaign: public nav + register CTA.</summary>
+    [Parameter] public bool TeaserCampaign { get; set; }
+    /// <summary>Employer registration wizard (/register).</summary>
+    [Parameter] public bool EmployerWizard { get; set; }
 
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationState { get; set; }
 

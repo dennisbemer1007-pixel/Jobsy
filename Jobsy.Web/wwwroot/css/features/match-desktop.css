@@ -1,3 +1,11 @@
+/* Match calibration V1: confidence hint (B1 NL) */
+.match-confidence-hint {
+    font-size: var(--text-sm, 0.875rem);
+    line-height: 1.45;
+    margin: 0.35rem 0 0.5rem;
+    max-width: 42ch;
+}
+
 /* Desktop banenkaart: top-match carousel tile + match dialog (variant B) */
 
 .highlight-carousel__card--top-match {

@@ -210,6 +210,32 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("PassportPdfDnaBlocksEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "PassportPdfDnaBlocksEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.PassportPdfDnaBlocks.Enabled.Title",
+                DescriptionKey: "AdminSettings.PassportPdfDnaBlocks.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.PassportPdfDnaBlocksEnabled,
+                Write: v => new PlatformFeatureUpdate(PassportPdfDnaBlocksEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
+        if (FieldExists("TestsV2Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestsV2Enabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.TestsV2.Enabled.Title",
+                DescriptionKey: "AdminSettings.TestsV2.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestsV2Enabled,
+                Write: v => new PlatformFeatureUpdate(TestsV2Enabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
         if (FieldExists("PhoneVerificationEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -368,6 +394,64 @@ public static class PlatformSettingsCatalog
                 Read: s => s.ProactiveMatchingEnabled,
                 Write: v => new PlatformFeatureUpdate(ProactiveMatchingEnabled: ToBool(v)),
                 ShowOnDashboard: false));
+        }
+
+        if (FieldExists("MatchCalibrationV1Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "MatchCalibrationV1Enabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.MatchCalibrationV1.Enabled.Title",
+                DescriptionKey: "AdminSettings.MatchCalibrationV1.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.MatchCalibrationV1Enabled,
+                Write: v => new PlatformFeatureUpdate(MatchCalibrationV1Enabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("CandidateApplyPerHourLimit"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateApplyPerHourLimit",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ApplyRate.PerHour.Title",
+                DescriptionKey: "AdminSettings.ApplyRate.PerHour.Desc",
+                Kind: PlatformSettingKind.Int,
+                Read: s => s.CandidateApplyPerHourLimit,
+                Write: v => new PlatformFeatureUpdate(CandidateApplyPerHourLimit: ToInt(v)),
+                Min: CandidateApplyRateLimitRules.MinLimit,
+                Max: CandidateApplyRateLimitRules.MaxPerHour,
+                UnitKey: "AdminSettings.Unit.PerHour"));
+        }
+
+        if (FieldExists("CandidateApplyPerDayLimit"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateApplyPerDayLimit",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ApplyRate.PerDay.Title",
+                DescriptionKey: "AdminSettings.ApplyRate.PerDay.Desc",
+                Kind: PlatformSettingKind.Int,
+                Read: s => s.CandidateApplyPerDayLimit,
+                Write: v => new PlatformFeatureUpdate(CandidateApplyPerDayLimit: ToInt(v)),
+                Min: CandidateApplyRateLimitRules.MinLimit,
+                Max: CandidateApplyRateLimitRules.MaxPerDay,
+                UnitKey: "AdminSettings.Unit.PerDay"));
+        }
+
+        if (FieldExists("CandidateApplyPerMinuteLimit"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CandidateApplyPerMinuteLimit",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.ApplyRate.PerMinute.Title",
+                DescriptionKey: "AdminSettings.ApplyRate.PerMinute.Desc",
+                Kind: PlatformSettingKind.Int,
+                Read: s => s.CandidateApplyPerMinuteLimit,
+                Write: v => new PlatformFeatureUpdate(CandidateApplyPerMinuteLimit: ToInt(v)),
+                Min: CandidateApplyRateLimitRules.MinLimit,
+                Max: CandidateApplyRateLimitRules.MaxPerMinute,
+                UnitKey: "AdminSettings.Unit.PerMinute"));
         }
 
         list.Add(new PlatformSettingDescriptor(
@@ -559,6 +643,8 @@ public static class PlatformSettingsCatalog
         bool? candidatePassportEnabled = null;
         bool? passportPartnersEnabled = null;
         bool? passportPdfV2Enabled = null;
+        bool? passportPdfDnaBlocksEnabled = null;
+        bool? testsV2Enabled = null;
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
         bool? compactTestPdfEnabled = null;
@@ -567,7 +653,11 @@ public static class PlatformSettingsCatalog
         bool? employerPhase2Enabled = null;
         bool? candidateExternalVacanciesEnabled = null;
         bool? proactiveMatchingEnabled = null;
+        bool? matchCalibrationV1Enabled = null;
         bool? freeCandidateTestsEnabled = null;
+        int? candidateApplyPerMinute = null;
+        int? candidateApplyPerHour = null;
+        int? candidateApplyPerDay = null;
 
         foreach (var p in parts)
         {
@@ -601,6 +691,8 @@ public static class PlatformSettingsCatalog
             if (p.CandidatePassportEnabled is not null) candidatePassportEnabled = p.CandidatePassportEnabled;
             if (p.PassportPartnersEnabled is not null) passportPartnersEnabled = p.PassportPartnersEnabled;
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
+            if (p.PassportPdfDnaBlocksEnabled is not null) passportPdfDnaBlocksEnabled = p.PassportPdfDnaBlocksEnabled;
+            if (p.TestsV2Enabled is not null) testsV2Enabled = p.TestsV2Enabled;
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
             if (p.CompactTestPdfEnabled is not null) compactTestPdfEnabled = p.CompactTestPdfEnabled;
@@ -616,6 +708,26 @@ public static class PlatformSettingsCatalog
             if (p.ProactiveMatchingEnabled is not null)
             {
                 proactiveMatchingEnabled = p.ProactiveMatchingEnabled;
+            }
+
+            if (p.MatchCalibrationV1Enabled is not null)
+            {
+                matchCalibrationV1Enabled = p.MatchCalibrationV1Enabled;
+            }
+
+            if (p.CandidateApplyPerMinuteLimit is not null)
+            {
+                candidateApplyPerMinute = p.CandidateApplyPerMinuteLimit;
+            }
+
+            if (p.CandidateApplyPerHourLimit is not null)
+            {
+                candidateApplyPerHour = p.CandidateApplyPerHourLimit;
+            }
+
+            if (p.CandidateApplyPerDayLimit is not null)
+            {
+                candidateApplyPerDay = p.CandidateApplyPerDayLimit;
             }
         }
 
@@ -641,6 +753,8 @@ public static class PlatformSettingsCatalog
             CandidatePassportEnabled: candidatePassportEnabled,
             PassportPartnersEnabled: passportPartnersEnabled,
             PassportPdfV2Enabled: passportPdfV2Enabled,
+            PassportPdfDnaBlocksEnabled: passportPdfDnaBlocksEnabled,
+            TestsV2Enabled: testsV2Enabled,
             PhoneVerificationEnabled: phoneVerificationEnabled,
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
             CompactTestPdfEnabled: compactTestPdfEnabled,
@@ -649,6 +763,10 @@ public static class PlatformSettingsCatalog
             FutureJobsForYouEnabled: futureJobsForYouEnabled,
             EmployerPhase2Enabled: employerPhase2Enabled,
             CandidateExternalVacanciesEnabled: candidateExternalVacanciesEnabled,
-            ProactiveMatchingEnabled: proactiveMatchingEnabled);
+            ProactiveMatchingEnabled: proactiveMatchingEnabled,
+            MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
+            CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
+            CandidateApplyPerHourLimit: candidateApplyPerHour,
+            CandidateApplyPerDayLimit: candidateApplyPerDay);
     }
 }

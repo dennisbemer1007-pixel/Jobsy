@@ -119,6 +119,8 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
             {
                 c.Status,
                 c.AnswersJson,
+                c.QuickScanVersion,
+                c.QuickScanHighestAnswered,
                 c.SamenwerkenPercent,
                 c.ResultaatgerichtheidPercent,
                 c.StressbestendigheidPercent,
@@ -132,6 +134,8 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
             {
                 c.Status,
                 c.AnswersJson,
+                c.QuickScanVersion,
+                c.QuickScanHighestAnswered,
                 c.RealisticPercent,
                 c.InvestigativePercent,
                 c.ArtisticPercent,
@@ -182,7 +186,8 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 competency.ResultaatgerichtheidPercent,
                 competency.StressbestendigheidPercent,
                 competency.InnovatiePercent,
-                competency.ExtraversiePercent).Scores;
+                competency.ExtraversiePercent,
+                competency.QuickScanVersion).Scores;
         var riasec = career is null
             ? null
             : ProvisionalAssessmentScores.ResolveCareer(
@@ -193,7 +198,8 @@ public sealed class CandidateMatchSnapshotService : ICandidateMatchSnapshotServi
                 career.ArtisticPercent,
                 career.SocialPercent,
                 career.EnterprisingPercent,
-                career.ConventionalPercent).Scores;
+                career.ConventionalPercent,
+                career.QuickScanVersion).Scores;
         CulturePersonalityScores? storedCulture = null;
         if (culture is not null && CandidateCompetencyStatuses.IsCompleted(culture.Status))
         {

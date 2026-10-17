@@ -1,20 +1,22 @@
 @namespace Jobsy.Web.Components.Candidate.ProfileSections
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
-<fieldset class="profile-roles profile-chip-grid">
+<fieldset class="profile-roles">
     <legend>@Culture["Profile.Hobbies"]</legend>
-    @foreach (var code in DiscoveryCatalogs.HobbyCodes)
-    {
-        var selected = Editor.Hobbies.Contains(code);
-        <button type="button"
-                class="kompas-chip @(selected ?"is-selected" : null)"
-                aria-pressed="@(selected ? "true" : "false")"
-                @onclick="() => Editor.ToggleHobby(code, !selected)">
-            @Culture[DiscoveryCatalogs.HobbyLabelKey(code)]
-        </button>
-    }
+    <ChoiceTileGrid Class="profile-chip-grid" AriaLabel="@Culture["Profile.Hobbies"]">
+        @foreach (var code in DiscoveryCatalogs.HobbyCodes)
+        {
+            var selected = Editor.Hobbies.Contains(code);
+            <ChoiceTile Class="kompas-chip"
+                        Label="@Culture[DiscoveryCatalogs.HobbyLabelKey(code)]"
+                        Icon="@ChoiceTileIcons.ForHobby(code)"
+                        Selected="selected"
+                        OnClick="@(() => Editor.ToggleHobby(code, !selected))" />
+        }
+    </ChoiceTileGrid>
 </fieldset>
 
 <div class="profile-learning-goals">

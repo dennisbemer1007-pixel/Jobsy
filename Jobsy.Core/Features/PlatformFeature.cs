@@ -15,6 +15,12 @@ public enum PlatformFeature
     /// <summary>DNA-paspoort PDF v2 and the shareable-preferences section. Default false.</summary>
     PassportPdfV2,
 
+    /// <summary>Leerling DNA-paspoort v2 (groep 7/8 + VO). Default false.</summary>
+    PupilPassportV2,
+
+    /// <summary>Student/stagiair DNA-paspoort with internships/vacancies. Default false.</summary>
+    StudentPassport,
+
     /// <summary>School, teacher and pupil surfaces. Default false until enabled in platform settings.</summary>
     Schools,
 
@@ -48,5 +54,8 @@ public enum PlatformFeature
     /// <summary>
     /// Proactive matching: Lobsy zoekt voor je, werkgever-shortlist en kennismakingsverzoeken. Default false.
     /// </summary>
-    ProactiveMatching
+    ProactiveMatching,
+
+    /// <summary>Quick-Scan v2 question sets for new candidate test rows. Default false.</summary>
+    TestsV2
 }

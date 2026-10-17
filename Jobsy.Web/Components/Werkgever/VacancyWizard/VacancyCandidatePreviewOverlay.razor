@@ -1,0 +1,38 @@
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (IsOpen && Vacancy is not null)
+{
+    <div class="vac-candidate-preview-backdrop @(_mobileSheet ? "is-mobile" : "is-desktop")"
+         data-testid="vacancy-candidate-preview-overlay"
+         @onclick="CloseAsync">
+        <div class="vac-candidate-preview-panel"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="vac-candidate-preview-title"
+             @onclick:stopPropagation="true">
+            <header class="vac-candidate-preview-panel__head">
+                <h2 id="vac-candidate-preview-title">Bekijk als kandidaat</h2>
+                <button type="button" class="vac-candidate-preview-panel__close" aria-label="Sluiten" @onclick="CloseAsync">×</button>
+            </header>
+            <div class="vac-candidate-preview-panel__body">
+                <KbVacancyDetailArticle Vacancy="Vacancy" />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public VacancyListItem? Vacancy { get; set; }
+    [Parameter] public bool MobileSheet { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool _mobileSheet;
+
+    protected override void OnParametersSet()
+        => _mobileSheet = MobileSheet;
+
+    private Task CloseAsync()
+        => OnClose.InvokeAsync();
+}

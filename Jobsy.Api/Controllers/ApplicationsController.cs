@@ -533,6 +533,7 @@ public class ApplicationsController : ControllerBase
                 application,
                 includeDirectContact,
                 features.PhoneVerificationEnabled,
+                features.PassportPdfDnaBlocksEnabled,
                 cancellationToken);
             return (passport.Pdf, passport.FileName);
         }
@@ -675,7 +676,7 @@ public class ApplicationsController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = JobsyPolicies.RequireCandidate)]
-    [EnableRateLimiting("otp-verify")]
+    [EnableRateLimiting("candidate-apply")]
     public async Task<ActionResult<ApplyResultDto>> Apply(
         [FromBody] ApplyRequest request,
         CancellationToken cancellationToken)

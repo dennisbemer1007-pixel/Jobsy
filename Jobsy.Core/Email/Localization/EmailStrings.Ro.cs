@@ -470,7 +470,7 @@ internal static class EmailStringsRo
         ["Email.VacancyEngagementReminder.Tip.ViewsNoApplications"] = "There is interest, but no applications yet. Make requirements more realistic or clarify the wage.",
 
         ["Email.ProactiveMatch.Subject"] = "Sfat Lobsy: {0}",
-        ["Email.ProactiveMatch.Preheader"] = "Potrivire {0}% — vezi de ce ți se potrivește",
+        ["Email.ProactiveMatch.Preheader"] = "Potrivire {0}% - vezi de ce ți se potrivește",
         ["Email.ProactiveMatch.Heading"] = "Lobsy caută pentru tine",
         ["Email.ProactiveMatch.Eyebrow"] = "Potrivire nouă",
         ["Email.ProactiveMatch.P1"] = "Am găsit un job care ți se potrivește: {0} la {1}.",

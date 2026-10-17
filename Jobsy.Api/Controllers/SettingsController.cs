@@ -38,6 +38,7 @@ public class SettingsController : ControllerBase
     private readonly AiOptions _ai;
     private readonly MistralOptions _mistral;
     private readonly OpenAiOptions _openAi;
+    private readonly SessionAuthOptions _sessionAuth;
     private readonly MailOptions _mail;
     private readonly LettermintOptions _lettermint;
     private readonly WhatsAppReminderOptions _whatsApp;
@@ -58,9 +59,11 @@ public class SettingsController : ControllerBase
         IOptions<WhatsAppReminderOptions>? whatsAppOptions = null,
         IOptions<OpenAiOptions>? openAiOptions = null,
         IOptions<MailOptions>? mailOptions = null,
-        IOptions<LettermintOptions>? lettermintOptions = null)
+        IOptions<LettermintOptions>? lettermintOptions = null,
+        IOptions<SessionAuthOptions>? sessionAuthOptions = null)
     {
         _db = db;
+        _sessionAuth = sessionAuthOptions?.Value ?? new SessionAuthOptions();
         _credentials = credentials;
         _features = features;
         _companySettings = companySettings;
@@ -486,6 +489,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     CandidatePassportEnabled: request.CandidatePassportEnabled,
                     PassportPartnersEnabled: request.PassportPartnersEnabled,
                     PassportPdfV2Enabled: request.PassportPdfV2Enabled,
+                    PassportPdfDnaBlocksEnabled: request.PassportPdfDnaBlocksEnabled,
+                    TestsV2Enabled: request.TestsV2Enabled,
                     PhoneVerificationEnabled: request.PhoneVerificationEnabled,
                     WhatsAppRemindersEnabled: request.WhatsAppRemindersEnabled,
                     CompactTestPdfEnabled: request.CompactTestPdfEnabled,
@@ -494,7 +499,11 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     FutureJobsForYouEnabled: request.FutureJobsForYouEnabled,
                     EmployerPhase2Enabled: request.EmployerPhase2Enabled,
                     CandidateExternalVacanciesEnabled: request.CandidateExternalVacanciesEnabled,
-                    ProactiveMatchingEnabled: request.ProactiveMatchingEnabled),
+                    ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
+                    CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
+                    CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
+                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit,
+                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -531,6 +540,19 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (DbUpdateException ex)
+        {
+            return StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new
+                {
+                    message =
+                        "Platforminstellingen konden niet worden opgeslagen (database-schema loopt achter). "
+                        + "Voer de nieuwste EF-migraties uit op de database en herstart de API. "
+                        + "Technisch: "
+                        + (ex.InnerException?.Message ?? ex.Message)
+                });
+        }
     }
 
     private static List<(string Field, string? From, string? To)> CollectPlatformFeatureChanges(
@@ -566,6 +588,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidatePassportEnabled", before.CandidatePassportEnabled.ToString(), after.CandidatePassportEnabled.ToString());
         Add("PassportPartnersEnabled", before.PassportPartnersEnabled.ToString(), after.PassportPartnersEnabled.ToString());
         Add("PassportPdfV2Enabled", before.PassportPdfV2Enabled.ToString(), after.PassportPdfV2Enabled.ToString());
+        Add("PassportPdfDnaBlocksEnabled", before.PassportPdfDnaBlocksEnabled.ToString(), after.PassportPdfDnaBlocksEnabled.ToString());
+        Add("TestsV2Enabled", before.TestsV2Enabled.ToString(), after.TestsV2Enabled.ToString());
         Add("PhoneVerificationEnabled", before.PhoneVerificationEnabled.ToString(), after.PhoneVerificationEnabled.ToString());
         Add("WhatsAppRemindersEnabled", before.WhatsAppRemindersEnabled.ToString(), after.WhatsAppRemindersEnabled.ToString());
         Add("CompactTestPdfEnabled", before.CompactTestPdfEnabled.ToString(), after.CompactTestPdfEnabled.ToString());
@@ -575,6 +599,10 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
+        Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
+        Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
+        Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
+        Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
         return list;
     }
 
@@ -583,6 +611,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     /// </summary>
     [HttpGet("feature-flags")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<IActionResult> GetFeatureFlags(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
@@ -601,7 +630,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             futureJobsForYouEnabled = snap.FutureJobsForYouEnabled,
             employerPhase2Enabled = snap.EmployerPhase2Enabled,
             candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
-            proactiveMatchingEnabled = snap.ProactiveMatchingEnabled
+            proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
+            testsV2Enabled = snap.TestsV2Enabled
         });
     }
 
@@ -610,6 +640,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     /// </summary>
     [HttpGet("free-publish")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<FreePublishStatusDto>> GetFreePublishStatus(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
@@ -623,10 +654,14 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
     /// </summary>
     [HttpGet("session-security")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<SessionSecurityDto>> GetSessionSecurity(CancellationToken cancellationToken)
     {
         var snap = await _features.GetAsync(cancellationToken);
-        return Ok(new SessionSecurityDto(snap.SessionInactivityTimeoutMinutes));
+        var minutes = SessionTimeoutResolver.ResolveInactivityMinutes(
+            _sessionAuth,
+            snap.SessionInactivityTimeoutMinutes);
+        return Ok(new SessionSecurityDto(minutes));
     }
 
     [HttpGet("company")]
@@ -904,6 +939,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.CandidatePassportEnabled,
             snap.PassportPartnersEnabled,
             snap.PassportPdfV2Enabled,
+            snap.PassportPdfDnaBlocksEnabled,
+            snap.TestsV2Enabled,
             snap.PhoneVerificationEnabled,
             snap.WhatsAppRemindersEnabled,
             snap.CompactTestPdfEnabled,
@@ -913,7 +950,11 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.FutureJobsForYouEnabled,
             snap.EmployerPhase2Enabled,
             snap.CandidateExternalVacanciesEnabled,
-            snap.ProactiveMatchingEnabled);
+            snap.ProactiveMatchingEnabled,
+            snap.MatchCalibrationV1Enabled,
+            snap.CandidateApplyPerMinuteLimit,
+            snap.CandidateApplyPerHourLimit,
+            snap.CandidateApplyPerDayLimit);
 
     private static PlatformCompanyDto ToCompanyDto(PlatformCompanySnapshot snap) =>
         new(

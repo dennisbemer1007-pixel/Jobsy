@@ -78,7 +78,10 @@ public sealed class CandidateProfileEditor : IDisposable
     public DateTime? ParentalConsentAt { get; set; }
     public string ParentalConsentEmail { get; set; } = "";
     public string? ConsentMessage { get; private set; }
+    public bool ResearchFeatureEnabled { get; private set; }
+    public ResearchConsentStateClient? ResearchConsent { get; private set; }
     public bool UnsubscribeOpen { get; set; }
+    public bool ProfileResetOpen { get; set; }
     public DateOnly? DobInput { get; set; }
     public string HomeAddress { get; set; } = string.Empty;
     public double? HomeLat { get; set; }
@@ -127,6 +130,7 @@ public sealed class CandidateProfileEditor : IDisposable
     public string? WorkRegionSuggestion { get; set; }
     public bool? HasOwnCar { get; set; }
     public HashSet<string> ContractPreferences { get; } = new(StringComparer.OrdinalIgnoreCase);
+    public HashSet<string> WorkStatuses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public bool EmailVerified { get; private set; }
     public bool PhoneVerified { get; private set; }
     public List<string> LearningGoals { get; } = [];
@@ -140,6 +144,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public List<AddressSuggestion> Suggestions { get; private set; } = [];
     public bool ShowSuggestions { get; set; }
     public bool Suggesting { get; private set; }
+    public bool LocatingHome { get; private set; }
+    public string? LocationError { get; private set; }
 
     public bool IsUnder16 => DobInput is DateOnly dob
         && Jobsy.Core.Privacy.CandidateConsentRules.AgeYears(dob) is int age
@@ -254,6 +260,15 @@ public sealed class CandidateProfileEditor : IDisposable
             }
         }
 
+        WorkStatuses.Clear();
+        foreach (var code in prefs.WorkStatuses ?? [])
+        {
+            if (WorkStatusCatalog.IsKnown(code))
+            {
+                WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
+            }
+        }
+
         EmailVerified = profile.EmailVerified;
         PhoneVerified = profile.PhoneVerified;
 
@@ -346,6 +361,18 @@ public sealed class CandidateProfileEditor : IDisposable
         {
             // keep built-in fallbacks
         }
+    }
+
+    public void OpenProfileReset()
+    {
+        ProfileResetOpen = true;
+        Notify();
+    }
+
+    public void CloseProfileReset()
+    {
+        ProfileResetOpen = false;
+        Notify();
     }
 
     public void OpenUnsubscribe()
@@ -772,13 +799,56 @@ public sealed class CandidateProfileEditor : IDisposable
 
     public async Task OnAddressInputAsync(ChangeEventArgs e)
     {
-        HomeAddress = e.Value?.ToString() ?? string.Empty;
+        await OnAddressQueryInputAsync(e.Value?.ToString() ?? string.Empty);
+    }
+
+    public async Task OnAddressQueryInputAsync(string value)
+    {
+        HomeAddress = value ?? string.Empty;
         HomeLat = null;
         HomeLng = null;
         HomeLocationDirty = true;
         Message = null;
+        LocationError = null;
         await SuggestAddressesAsync(HomeAddress);
         Notify();
+    }
+
+    public async Task RequestHomeLocationAsync()
+    {
+        LocatingHome = true;
+        LocationError = null;
+        ShowSuggestions = false;
+        Notify();
+        try
+        {
+            var dict = await _js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
+            var lat = dict["lat"];
+            var lng = dict["lng"];
+            HomeLat = lat;
+            HomeLng = lng;
+            HomeLocationDirty = true;
+            var label = await CandidateHomeAddressLookup.ReverseGeocodeLabelAsync(_geocoder, lat, lng);
+            if (!string.IsNullOrWhiteSpace(label))
+            {
+                HomeAddress = label;
+            }
+            else
+            {
+                LocationError = _culture["Onboarding.LocationFailed"];
+            }
+        }
+        catch (Exception ex)
+        {
+            LocationError = string.IsNullOrWhiteSpace(ex.Message)
+                ? _culture["Onboarding.LocationDenied"]
+                : ex.Message;
+        }
+        finally
+        {
+            LocatingHome = false;
+            Notify();
+        }
     }
 
     public void OnAddressFocus()
@@ -873,6 +943,7 @@ public sealed class CandidateProfileEditor : IDisposable
         Suggestions = [];
         ShowSuggestions = false;
         Message = null;
+        LocationError = null;
         Notify();
     }
 
@@ -999,7 +1070,8 @@ public sealed class CandidateProfileEditor : IDisposable
                     ShareEmployerPreferences = ShareEmployerPreferences,
                     WorkRegion = WorkRegion,
                     HasOwnCar = HasOwnCar,
-                    ContractPreferences = ContractPreferences.OrderBy(x => x).ToList()
+                    ContractPreferences = ContractPreferences.OrderBy(x => x).ToList(),
+                    WorkStatuses = WorkStatuses.OrderBy(x => x).ToList()
                 },
                 homeLatitude: clearHome || !HomeLocationDirty ? null : HomeLat,
                 homeLongitude: clearHome || !HomeLocationDirty ? null : HomeLng,
@@ -1132,6 +1204,82 @@ public sealed class CandidateProfileEditor : IDisposable
         {
             await _api.RequestParentalConsentAsync(ParentalConsentEmail);
             ConsentMessage = _culture["Profile.Consent.Toast.ParentalSent"];
+        }
+        catch (Exception ex)
+        {
+            ConsentMessage = Describe(ex);
+        }
+        finally
+        {
+            ConsentBusy = false;
+            Notify();
+        }
+    }
+
+    public async Task LoadResearchConsentAsync()
+    {
+        try
+        {
+            var researchStatus = await _api.GetResearchFeatureStatusAsync();
+            ResearchFeatureEnabled = researchStatus?.Enabled == true;
+        }
+        catch
+        {
+            ResearchFeatureEnabled = false;
+            ResearchConsent = null;
+            Notify();
+            return;
+        }
+
+        if (!ResearchFeatureEnabled)
+        {
+            ResearchConsent = null;
+            Notify();
+            return;
+        }
+
+        try
+        {
+            ResearchConsent = await _api.GetResearchConsentAsync();
+        }
+        catch
+        {
+            ResearchConsent = null;
+        }
+
+        Notify();
+    }
+
+    public async Task AcceptResearchConsentAsync(Components.Shared.ResearchConsentPanel.ResearchDemographicsSubmit demo)
+    {
+        ConsentBusy = true;
+        ConsentMessage = null;
+        Notify();
+        try
+        {
+            ResearchConsent = await _api.AcceptResearchConsentAsync(demo);
+            ConsentMessage = _culture["Research.Consent.Toast.Accepted"];
+        }
+        catch (Exception ex)
+        {
+            ConsentMessage = Describe(ex);
+        }
+        finally
+        {
+            ConsentBusy = false;
+            Notify();
+        }
+    }
+
+    public async Task WithdrawResearchConsentAsync()
+    {
+        ConsentBusy = true;
+        ConsentMessage = null;
+        Notify();
+        try
+        {
+            ResearchConsent = await _api.WithdrawResearchConsentAsync();
+            ConsentMessage = _culture["Research.Consent.Toast.Withdrawn"];
         }
         catch (Exception ex)
         {

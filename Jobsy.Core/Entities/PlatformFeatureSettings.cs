@@ -1,3 +1,6 @@
+using Jobsy.Core.Options;
+using Jobsy.Core.Rules;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -24,13 +27,16 @@ public class PlatformFeatureSettings
     /// Interactive session inactivity timeout in minutes (cookie + UI idle timer).
     /// Default 30 minutes; admin-configurable.
     /// </summary>
-    public int SessionInactivityTimeoutMinutes { get; set; } = 30;
+    public int SessionInactivityTimeoutMinutes { get; set; } = SessionAuthDefaults.InactivityTimeoutMinutes;
 
     /// <summary>
     /// Global floor for cookie <c>session_version</c>. Raise on a release to force every
     /// user to sign in again. Default 0 (no forced re-login).
     /// </summary>
     public int MinimumSessionVersion { get; set; }
+
+    /// <summary>When true, research consent UI and exports are available (COTAN validation).</summary>
+    public bool ResearchConsentEnabled { get; set; }
 
     /// <summary>
     /// Inclusive last calendar day (UTC date) on which publishing a vacancy costs 0 tokens.
@@ -101,6 +107,18 @@ public class PlatformFeatureSettings
     /// <summary>Passport PDF v2 and the shareable-preferences editor. Default false.</summary>
     public bool PassportPdfV2Enabled { get; set; }
 
+    /// <summary>Age-specific school DNA-paspoort PDFs (groep 7/8 + VO). Default false; on in non-production when unset.</summary>
+    public bool PupilPassportV2Enabled { get; set; }
+
+    /// <summary>Student/stagiair DNA-paspoort (2-page, with vacancies). Default false; on in non-production when unset.</summary>
+    public bool StudentPassportEnabled { get; set; }
+
+    /// <summary>
+    /// When true, the DNA paspoort PDF shows the four DNA layer cards plus “Hoe ik graag werk”
+    /// and “Zo haal je het beste uit …”. Default true (acceptatie/dev); can be turned off per platform.
+    /// </summary>
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
+
     /// <summary>SMS phone verification. Stays false until an SMS provider is chosen.</summary>
     public bool PhoneVerificationEnabled { get; set; }
 
@@ -136,6 +154,23 @@ public class PlatformFeatureSettings
 
     /// <summary>Proactive matching (Lobsy zoekt voor je + werkgever-shortlist). Default false.</summary>
     public bool ProactiveMatchingEnabled { get; set; }
+
+    /// <summary>Quick-Scan v2 catalogs for newly started candidate tests. Default false.</summary>
+    public bool TestsV2Enabled { get; set; }
+
+    /// <summary>
+    /// Realistic match calibration (fit + confidence, no neutral inflation). Default false.
+    /// </summary>
+    public bool MatchCalibrationV1Enabled { get; set; }
+
+    /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
+    public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
+
+    /// <summary>Max authenticated apply POSTs per candidate per hour. Default 30.</summary>
+    public int CandidateApplyPerHourLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerHour;
+
+    /// <summary>Max authenticated apply POSTs per candidate per day. Default 100.</summary>
+    public int CandidateApplyPerDayLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerDay;
 
     /// <summary>
     /// When true, every candidate unlocks the uitgebreide analyse without Mollie.

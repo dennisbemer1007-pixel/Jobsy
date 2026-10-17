@@ -11,7 +11,11 @@ public static class DevEmailCodeCapture
 {
     private static readonly Regex SixDigits = new(@"\b(\d{6})\b", RegexOptions.Compiled);
 
-    private static readonly ConcurrentDictionary<string, string> ByEmail = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, CaptureEntry> ByEmail = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<Guid, string> ByChallengeId = new();
+    private static long _sequence;
+
+    public sealed record CaptureEntry(string Code, long Sequence, Guid? ChallengeId, DateTime CapturedAtUtc);
 
     public static bool Enabled =>
         string.Equals(
@@ -32,20 +36,65 @@ public static class DevEmailCodeCapture
             return;
         }
 
-        var email = to.Trim().ToLowerInvariant();
-        ByEmail[email] = match.Groups[1].Value;
+        Record(to, match.Groups[1].Value, challengeId: null);
     }
+
+    /// <summary>Stores the plaintext code for E2E (API path; avoids relying on HTML parsing alone).</summary>
+    public static void Record(string? email, string code, Guid? challengeId)
+    {
+        if (!Enabled || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(code))
+        {
+            return;
+        }
+
+        var normalized = email.Trim().ToLowerInvariant();
+        if (challengeId is null
+            && ByEmail.TryGetValue(normalized, out var previous)
+            && previous.ChallengeId is not null)
+        {
+            // AuthController.Record runs before the stub parses HTML; do not overwrite with stray digits.
+            return;
+        }
+
+        var seq = Interlocked.Increment(ref _sequence);
+        var entry = new CaptureEntry(code.Trim(), seq, challengeId, DateTime.UtcNow);
+        ByEmail[normalized] = entry;
+        if (challengeId is Guid cid)
+        {
+            ByChallengeId[cid] = entry.Code;
+        }
+    }
+
+    public static bool TryGetForChallenge(Guid challengeId, out string code)
+        => ByChallengeId.TryGetValue(challengeId, out code!);
 
     public static bool TryGet(string email, out string code)
     {
+        if (TryGetEntry(email, out var entry))
+        {
+            code = entry.Code;
+            return true;
+        }
+
         code = "";
+        return false;
+    }
+
+    public static bool TryGetEntry(string email, out CaptureEntry entry)
+    {
+        entry = default!;
         if (string.IsNullOrWhiteSpace(email))
         {
             return false;
         }
 
-        return ByEmail.TryGetValue(email.Trim().ToLowerInvariant(), out code!);
+        return ByEmail.TryGetValue(email.Trim().ToLowerInvariant(), out entry!);
     }
 
-    public static void Clear() => ByEmail.Clear();
+    public static void Clear()
+    {
+        ByEmail.Clear();
+        ByChallengeId.Clear();
+        Interlocked.Exchange(ref _sequence, 0);
+    }
 }

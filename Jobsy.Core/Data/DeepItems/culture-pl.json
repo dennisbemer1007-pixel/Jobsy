@@ -1,902 +1,902 @@
 {
  "1": {
-  "prompt": "Pracuję preferably zelfstiig, bez that iemi steeds meekijkt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę sam wykonywać zadania, bez ciągłego sprawdzania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "2": {
-  "prompt": "Planuję gladly zelf the volglubde of my zadania.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sam chciałbym zaplanować porządek moich obowiązków.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "3": {
-  "prompt": "I voel me sterker jeśli I zelf mag kiezen hoe I a job aanpak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czuję się silniejsza, kiedy wybieram pracę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "4": {
-  "prompt": "I wacht raczej on instructie zanim I ergens to begin.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę poczekać na instrukcje, zanim cokolwiek zacznę.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "5": {
-  "prompt": "I bedenk zelf a rozwiązanie jeśli er no leidinggevende in the buurt is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sam wymyślę rozwiązanie, jeśli nie będzie w pobliżu nadzorcy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "6": {
-  "prompt": "I vind the prettig jeśli I my werkdag zelf mag indelen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię, gdy mogę sam zorganizować dzień pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "7": {
-  "prompt": "I neem gladly verantwolubdelijkheid flub a heel stuk wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię brać odpowiedzialność za dużo pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "8": {
-  "prompt": "I raak onzeker jeśli I bez strakke stappenlijst moet wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Będę niepewny, jeśli będę musiał pracować bez ścisłego kroku... Tak.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "9": {
-  "prompt": "I stel zelf vragen jeśli iets onduidelijk is, in plaats of stil te blijven.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zadaję sobie pytania, gdy coś jest niejasne, zamiast siedzieć cicho.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "10": {
-  "prompt": "I verbeter a way of wlubking raczej zelf dan that I alles laat zoals the is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę ulepszyć metodę niż zostawić wszystko tak jak jest.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "11": {
-  "prompt": "I geef zadania preferably terug jeśli niemi precies heeft gezegd hoe.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zwracać zadania, kiedy nikt nie powiedział dokładnie jak.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "12": {
-  "prompt": "I kan good verder jeśli the doelen helder his, ook bez constant toezicht.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę pójść dalej, jeśli cele są jasne, nawet bez stałego monitorowania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "13": {
-  "prompt": "I kies zelf welke hulpmiddelen I gebruik om sneller klaar te his.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wybieram narzędzia do szybszego przygotowania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "14": {
-  "prompt": "I wil at elke kleine beslissing eerst toestemming vragen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Chciałbym prosić o pozwolenie Todda na każdą małą decyzję.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "15": {
-  "prompt": "I voel me trots jeśli I a problem alleen heb opgelost.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czuję się dumny, że sam rozwiązałem problem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Autonomy"
+  "domain": ""
  },
  "16": {
-  "prompt": "I voel me thuis in a zespół waar we elkaar at the volubnaam noemen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czuję Razem się jak w domu w zespole, w którym Ostrożne imię.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "17": {
-  "prompt": "I vind a luchtige grap on the shop flolub zwykle prettig.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zwykle lubię lekki żart o pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "18": {
-  "prompt": "I praat makkelijk about gewone dingen z współpracownicy, nie alleen about wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Rozmawiam o zwykłych sprawach z kolegami, nie tylko o pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "19": {
-  "prompt": "I houd of a flubmele toon, ook at kleine vragen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Lubię formalny ton, nawet w małych pytaniach.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "20": {
-  "prompt": "I stuur raczej a klubt berichtje dan a lange officiële mail.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę wysłać krótką wiadomość, niż długi e-mail.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "21": {
-  "prompt": "I vind the fijn jeśli the leidinggevende gewoon meeloopt on the vloer.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Podoba mi się, kiedy kierownik po prostu spaceruje po podłodze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "22": {
-  "prompt": "Pracuję gladly in a atmosphere waar je mistakes hardop mag benoemen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować w atmosferze, w której można nazwać błędy na głos.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "23": {
-  "prompt": "I raak gespannen of te a lot influbmeel geklets tijdens the dienst.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Staję się spięty z powodu zbyt wielu nieformalnych rozmów podczas służby.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "24": {
-  "prompt": "I vind hierarchy less belangrijk dan that we elkaar snel helpen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Myślę, że hierarchia jest mniej ważna niż pomoc sobie nawzajem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "25": {
-  "prompt": "I spreek a współpracownik makkelijk to, ook jeśli that hoger in rang staat.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Łatwo rozmawiam z kolegą, nawet jeśli jest wyższy rangą.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "26": {
-  "prompt": "I wacht until iemi djeśliferent a gesprek begint; zelf doe I that zelden.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Czekam, aż ktoś inny zacznie rozmawiać jednoczesnie.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "27": {
-  "prompt": "I vind a open deur i klubte lijnen prettiger dan vaste procedures flub alles.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię otwarte drzwi i krótkie linie bardziej niż stałe procedury dla wszystkiego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "28": {
-  "prompt": "I deel gladly a tip z a współpracownik bez flubmeel meeting.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chciałbym podzielić się wskazówką z kolegą bez formalnych konsultacji.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "29": {
-  "prompt": "I wil eerst a officiële agreement zanim I iets z a współpracownik regel.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Chciałbym mieć oficjalne spotkanie, zanim umówię się z kolegą.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "30": {
-  "prompt": "I voel me on my gemak jeśli the zespół influbmeel i direct communiceert.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czuję się komfortowo, kiedy zespół komunikuje się nieformalnie i bezpośrednio.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Informal"
+  "domain": ""
  },
  "31": {
-  "prompt": "I krijg energie of samen a job afronden.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostaję energię z zakończenia pracy razem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "32": {
-  "prompt": "I vraag snel lub iemi mee kan denken jeśli I vastzit.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zobaczę, czy ktoś może coś wymyślić, kiedy utknę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "33": {
-  "prompt": "I deel influbmatie gladly zodat the zespół verder kan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię dzielić się informacjami, żeby zespół mógł ruszyć dalej.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "34": {
-  "prompt": "Pracuję raczej alleen i lever pas in jeśli alles klaar is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę pracować sam i oddać się, kiedy wszystko będzie gotowe.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "35": {
-  "prompt": "I stem gladly even af z współpracownicy zanim we a piek ingaan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chciałbym się zgodzić z moimi kolegami posłami, zanim dojdziemy do szczytu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "36": {
-  "prompt": "Pomagam a nowy współpracownik gladly on weg.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Cieszę się, że mogę pomóc nowemu koledze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "37": {
-  "prompt": "I vind meeting about the taakverdeling the moeite waard.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Myślę, że warto omówić podział pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "38": {
-  "prompt": "I vermijd zespółoverleg; the kost me te a lot tijd.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam spotkań zespołowych. To zajmuje zbyt dużo czasu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "39": {
-  "prompt": "I vier gladly a klein succes samen z the zespół.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chciałbym uczcić mały sukces w zespole.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "40": {
-  "prompt": "I luister to wat ieren nodig hebben zanim I dolubpak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Słucham tego, czego inni potrzebują, zanim ruszę naprzód.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "41": {
-  "prompt": "I vind the lastig om wlubk z ieren te delen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Ciężko mi dzielić się pracą z innymi.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "42": {
-  "prompt": "I pas my tempo to zodat we samen on schema blijven.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostosowuję tempo, żeby trzymać nas razem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "43": {
-  "prompt": "I bied to a stuk about te nemen jeśli a współpracownik the zwaar heeft.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Oferuję, że przejmę część, kiedy kolega ma problemy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "44": {
-  "prompt": "I houd my aanpak raczej flub mezelf until the eindwynikaat er is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zachować swoje podejście do siebie, dopóki nie nadejdzie koniec.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "45": {
-  "prompt": "I zie samenwerken jeśli a sterkte, nie jeśli oponthoud.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Uważam współpracę za siłę, a nie opóźnienie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Collaboration"
+  "domain": ""
  },
  "46": {
-  "prompt": "I schakel makkelijk jeśli the schedule plotseling veriert.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Łatwo się zmieniam planując zmiany.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "47": {
-  "prompt": "I vind wisselende zadania zwykle juist leuk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zwykle lubię zmieniać zadania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "48": {
-  "prompt": "I kan snel of the ene job to the other overstappen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę szybko przejść z jednej pracy do drugiej.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "49": {
-  "prompt": "I raak of slag jeśli my vaste ronde wlubdt dolubbroken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Denerwuję się, gdy moja zwykła runda się rozbija.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "50": {
-  "prompt": "Pomagam gladly at a spoedklus that nie on my lijst stond.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Cieszę się, że mogę tylko pomóc w nagłej pracy, której nie było na mojej liście.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "51": {
-  "prompt": "I pas my wlubk to jeśli the klient lub the seizoen iets djeśliferent vraagt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostosowuję swoją pracę, jeśli klient lub sezon zapyta o coś innego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "52": {
-  "prompt": "I blijf rustig jeśli er om half elf a nowy prilubiteit at komt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zachowam spokój, gdy o 10: 30 pojawi się nowy priorytet.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "53": {
-  "prompt": "I wil gladly elke dag dezelfde zadania in dezelfde volglubde.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Chcę tych samych zadań codziennie w tej samej kolejności.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "54": {
-  "prompt": "I improvisier raczej a beetje dan that alles vastligt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę błagać trochę więcej, niż mieć wszystko związane.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "55": {
-  "prompt": "I vind the oké om viaag iets djeśliferent te doen dan gisteren.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Myślę, że to w porządku zrobić coś innego dzisiaj niż wczoraj.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "56": {
-  "prompt": "I verzet me tegen last-minute wijzigingen, ook jeśli ze nodig his.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Sprzeciwiam się ostatnimi zmianami, nawet jeśli są one potrzebne.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "57": {
-  "prompt": "I kan me snel inwerken on a tijdelijke extra zadanie.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę szybko pracować nad tymczasowym dodatkowym zadaniem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "58": {
-  "prompt": "I zie zmiana on the vloer jeśli iets waar I mee om kan gaan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Widzę zmianę na podłodze jako coś, z czym sobie poradzę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "59": {
-  "prompt": "I wlubd onrustig jeśli er no vaste schedule flub the hele week is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Robię się niespokojny, kiedy nie ma ustalonego harmonogramu na cały tydzień.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "60": {
-  "prompt": "I blijf bruikbaar jeśli the zespół moet meebuigen z busyness.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Będę użyteczny, jeśli drużyna będzie musiała się zginać tłumem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Flexibility"
+  "domain": ""
  },
  "61": {
-  "prompt": "I bedenk gladly a slimmere manier om hetzelfde wlubk te doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię myśleć o mądrzejszym sposobie wykonywania tej samej pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "62": {
-  "prompt": "I probeer a nowy hulpmiddel out jeśli the tijd kan besparen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wypróbowuję nowe narzędzie, jeśli oszczędzi czas.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "63": {
-  "prompt": "I stel verbeterideeën flub, ook jeśli ze nog klein his.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Proponuję lepsze pomysły, nawet jeśli są jeszcze małe.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "64": {
-  "prompt": "I blijf at the old method, ook jeśli that traag is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Trzymam się starej metody, nawet jeśli jest powolna.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "65": {
-  "prompt": "I wlubd nieuwsgierig jeśli er a nowy way of wlubking wlubdt geïntroduceerd.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ciekawi mnie, kiedy wprowadza się nową metodę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "66": {
-  "prompt": "I kijk at other zespółs hoe zij a problem oplossen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sprawdzę w innych zespołach, jak rozwiążą problem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "67": {
-  "prompt": "I durf a proposal te doen that nog nie in the hibook staat.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ośmielam się przedstawić nierozstrzygniętą propozycję.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "68": {
-  "prompt": "Chcęrouw nowy ideas totdat iedereen ze al lang gebruikt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Podejrzewam nowe pomysły, dopóki nikt ich nie używa od dawna.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "69": {
-  "prompt": "I experimenteer raczej klein dan that I wacht on a perfect plan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę eksperymentować, niż czekać na idealny plan.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "70": {
-  "prompt": "I merk snel jeśli a proces onnodig omslachtig is gewlubden.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Szybko zauważam, kiedy proces stał się niepotrzebnie uciążliwy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "71": {
-  "prompt": "I houd nie of brainstlubmen; zeg me gewoon wat I moet doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Nie lubię burzy mózgów.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "72": {
-  "prompt": "I leer gladly of a mistake dolub te kijken wat we djeśliferent kunnen doen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię uczyć się na błędach patrząc na to, co jeszcze możemy zrobić.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "73": {
-  "prompt": "I zie kansen in nowy producten lub diensten of the vestiging.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Widzę możliwości w nowych produktach lub usługach zakładu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "74": {
-  "prompt": "I voel me ongemakkelijk at zadania bez duidelijk volubbeeld.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Czuję się niezręcznie z zadaniami bez jasnego przykładu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "75": {
-  "prompt": "I blijf nadenken about hoe kwaliteit i tempo beter kunnen samengaan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ciągle myślę o tym, jak lepiej połączyć jakość i tempo.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Innovation"
+  "domain": ""
  },
  "76": {
-  "prompt": "I kies eerder flub the person dan flub alleen the cijfer jeśli the schuurt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę wybrać człowieka, niż tylko postać, kiedy się pociera.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "77": {
-  "prompt": "I merk the jeśli a współpracownik a zware dag heeft.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zauważyłem, że kolega ma ciężki dzień.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "78": {
-  "prompt": "I neem the tijd om a klient lub współpracownik écht te helpen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Poświęcam czas, by pomóc klientowi lub koledze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "79": {
-  "prompt": "I zet wynik zawsze vóór hoe iemi zich voelt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zawsze przedkładam wyniki przed to, jak ktoś się czuje.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "80": {
-  "prompt": "I vraag hoe the gaat, nie alleen lub the zadanie af is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Pytam jak idzie, nie tylko czy robota jest skończona.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "81": {
-  "prompt": "I vind a goede atmosphere minstens zo belangrijk jeśli snelle output.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Uważam, że dobra atmosfera jest równie ważna jak szybkie wyjście.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "82": {
-  "prompt": "I bescherm a współpracownik tegen onnodige busy jeśli that kan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chronię kolegę przed niepotrzebną presją.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "83": {
-  "prompt": "I vind persoonlijke problemen of współpracownicy no werkzaak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Nie sądzę, by osobiste problemy moich kolegów posłów były kwestią pracy.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "84": {
-  "prompt": "I geef iemi the ruimte om even on adem te komen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dam komuś trochę przestrzeni na złapanie oddechu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "85": {
-  "prompt": "I leg iets geduldig out jeśli iemi the nog nie snapt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wyjaśnię coś cierpliwie, jeśli ktoś tego jeszcze nie rozumie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "86": {
-  "prompt": "I push dolub, ook jeśli iemi duidelijk overvraagd is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Poprzyj, nawet, jeśli ktoś jest za bardzo proszny.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "87": {
-  "prompt": "I denk na about hoe a beslissing współpracownicy raakt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Myślę o tym, jak decyzja wpływa na kolegów.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "88": {
-  "prompt": "I vier raczej that iemi groeit dan alleen that the target gehaald is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wolę świętować, że ktoś rośnie niż dostać cel.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "89": {
-  "prompt": "I meet succes volubal in cijfers, nie in hoe the zespół erbij zit.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Mierzę sukces głównie w liczbach, nie w sposobie, w jakim jest drużyna.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "90": {
-  "prompt": "I zlubg that niemi er alleen flub staat at a lastige job.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zadbam o to, by nikt nie był sam w ciężkiej pracy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.PeopleFirst"
+  "domain": ""
  },
  "91": {
-  "prompt": "I leer gladly iets nieuws about hoe ons field werkt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię uczyć się czegoś nowego o tym, jak działa nasz zawód.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "92": {
-  "prompt": "I probeer a onbekende way of wlubking eerst klein out.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Najpierw spróbuję nieznanego sposobu działania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "93": {
-  "prompt": "I zie snel connections tussen losse details on the vloer.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Szybko widzę powiązania między niejasnymi szczegółami na podłodze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "94": {
-  "prompt": "I blijf preferably at wat I al ken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę zostać z tym, co już wiem.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "95": {
-  "prompt": "I stel vragen jeśli I the background of a zadanie nog nie snap.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zadaję pytania, jeśli nie rozumiem jeszcze tła zadania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "96": {
-  "prompt": "I haal inspiratie out hoe other zespółs hetzelfde aanpakken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Rozumiem, jak inne drużyny robią to samo.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "97": {
-  "prompt": "New ideas of współpracownicy wijs I zwykle meteen af.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zwykle odrzucam nowe pomysły kolegów.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "98": {
-  "prompt": "I vind afwisseling in zadania prettig zodat I alert blijf.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię różnorodność w zadaniach, więc zachowuję czujność.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "99": {
-  "prompt": "I raak nieuwsgierig jeśli iets djeśliferent werkt dan verwacht.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Ciekawi mnie, kiedy coś innego działa, niż się spodziewałem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "100": {
-  "prompt": "I vermijd zadania waarbij I iets moet leren that I nog nigdy deed.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Unikam zadań, w których muszę nauczyć się czegoś, czego nigdy wcześniej nie robiłem.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "101": {
-  "prompt": "I combineer kennis out verschillende jobs until a betere aanpak.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Łączę wiedzę z różnych miejsc pracy z lepszym podejściem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "102": {
-  "prompt": "I pas my aanpak to jeśli the seizoensdruk djeśliferent is dan vlubig jaar.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostosowuję swoje podejście, jeśli ciśnienie sezonowe będzie inne niż w zeszłym roku.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Openness"
+  "domain": ""
  },
  "103": {
-  "prompt": "I maak af wat I beloof, ook jeśli the dag tegenzit.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Kończę pracę zgodnie z umową, nawet w pracowite dni.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "104": {
-  "prompt": "I controleer details zanim I iets jeśli klaar dolubgeef.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Sprawdzę szczegóły, zanim przekażę coś gotowego.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "105": {
-  "prompt": "Planuję my wlubk zodat deadlines haalbaar blijven.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Planuję swoją pracę, aby terminy pozostały wykonalne.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "106": {
-  "prompt": "I laat half afgemaakt wlubk makkelijk liggen.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Połowę pracy zostawiam łatwą.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "107": {
-  "prompt": "I kom on tijd i geef the dolub jeśli I te laat dreig te his.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Będę na czas i przekażę, jeśli się spóźnię.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "108": {
-  "prompt": "I houd at wat er nog openstaat, bez that iemi erom vraagt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Śledzę to, co jest jeszcze otwarte bez pytania.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "109": {
-  "prompt": "I stel lastige jobs out until the nie djeśliferent mlube kan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Odłożę trudne prace, dopóki nie będzie innego wyjścia.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "110": {
-  "prompt": "Pracuję netjes volgens afgesproken veiligheid lub kwaliteit.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Prawidłowo pracuję zgodnie z ustalonym bezpieczeństwem lub jakością.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "111": {
-  "prompt": "I ruim my werkplek on zodat the volgende ploeg verder kan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Posprzątam swoje miejsce pracy, żeby następny zespół mógł ruszyć dalej.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "112": {
-  "prompt": "If niemi kijkt, sla I controles lub stappen about.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Jeśli nikt nie patrzy, pomijam czeki lub kroki.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "113": {
-  "prompt": "I geef the eerlijk to jeśli I a mistake heb gemaakt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Będę z tobą szczery, jeśli popełnię błąd.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "114": {
-  "prompt": "I verdeel grote zadania in stukken that I écht afkrijg.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dzielę wielkie zadania na części, które mogę wykonać.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Conscientiousness"
+  "domain": ""
  },
  "115": {
-  "prompt": "I praat makkelijk z nowy współpracownicy lub klienci.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Łatwo jest rozmawiać z nowymi kolegami lub klientami.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "116": {
-  "prompt": "I neem gladly the wolubd in a klubt zespółoverleg.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chciałbym zabrać głos na krótkim spotkaniu zespołu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "117": {
-  "prompt": "I krijg energie of a drukke balie lub vloer.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Dostaję energię z zajętego biurka lub podłogi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "118": {
-  "prompt": "I vermijd contact i wlubk preferably stil dolub.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wolę unikać kontaktu i po cichu pracować.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "119": {
-  "prompt": "I stel mezelf flub jeśli er iemi nieuws at the zespół komt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Przedstawię się, jeśli ktoś dołączy do drużyny.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "120": {
-  "prompt": "I vind the leuk om a groep mee te nemen in a plan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię wprowadzać grupę do planu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "121": {
-  "prompt": "Na a lot mensencontact heb I volubal behoefte om alleen te his.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Po wielu kontaktach, muszę być sama.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "122": {
-  "prompt": "I begin makkelijk a praatje tijdens the pauze.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Łatwo mi rozpocząć rozmowę podczas przerwy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "123": {
-  "prompt": "I voel me on my gemak jeśli er a lot beweging i geluid is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Czuję się komfortowo, kiedy jest dużo ruchu i dźwięku.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "124": {
-  "prompt": "I laat ieren the wolubd doen, ook jeśli I iets te zeggen heb.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Pozwalam innym mówić, nawet jeśli mam coś do powiedzenia.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "125": {
-  "prompt": "I geniet of wlubk waarbij I a lot people zie.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Lubię pracować tam, gdzie widzę wielu ludzi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "126": {
-  "prompt": "I straal calm i warmte out jeśli iemi mij aanspreekt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Napromieniuję spokój, gdy ktoś do mnie mówi.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Extraversion"
+  "domain": ""
  },
  "127": {
-  "prompt": "I bied to a zadanie about te nemen jeśli a współpracownik the zwaar heeft.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Oferuję, że przejmę zadanie, gdy kolega ma problemy.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "128": {
-  "prompt": "I zoek a rozwiązanie waar iedereen mee verder kan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Szukam rozwiązania, z którym każdy może żyć.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "129": {
-  "prompt": "I blijf beleefd, ook jeśli a klient ontevreden is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Pozostaję uprzejmy, Obok niezadowolenia klienta.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "130": {
-  "prompt": "I zet my zin dolub, ook jeśli that the atmosphere schaadt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zrobię to, nawet jeśli to zaszkodzi atmosferze.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "131": {
-  "prompt": "I geef eerlijk complimenten jeśli iemi iets good doet.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Składam szczere komplementy, kiedy ktoś robi coś dobrze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "132": {
-  "prompt": "I luister eerst good zanim I antwolubd.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Posłucham uważnie, zanim odpowiem.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "133": {
-  "prompt": "I vind meedenken z ieren zwykle tijdverspilling.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Zwykle myślenie razem z innymi to strata czasu.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "134": {
-  "prompt": "I houd rekening z the feelings of współpracownicy at feedback.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Uwzględniam uczucia koleżanek i kolegów posłów w uwagach zwrotnych.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "135": {
-  "prompt": "Pomagam gladly, ook jeśli the nie letterlijk my zadanie is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Chętnie pomogę, nawet jeśli to nie jest dosłownie moja praca.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "136": {
-  "prompt": "I zeg bot wat I denk, bez on the toon te letten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Mówię jasno, co myślę, nie zwracając uwagi na ton.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "137": {
-  "prompt": "I maak vrede jeśli er spanning in the zespół zit.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Pogodziłem się, gdy jest napięcie w drużynie.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "138": {
-  "prompt": "I doe my best om prettig samen te wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Robię, co mogę, żeby dobrze razem pracować.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.Agreeableness"
+  "domain": ""
  },
  "139": {
-  "prompt": "I blijf kalm jeśli the schedule ineens omvalt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Zachowam spokój, gdy plany nagle się skończą.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "140": {
-  "prompt": "I adem even i kijk wat wél kan jeśli the hectisch wlubdt.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wezmę oddech i zobaczę, co da się zrobić, gdy zrobi się gorąco.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "141": {
-  "prompt": "I reageer later rustig jeśli iemi klubtaf is.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Odpowiem po cichu, gdy ktoś będzie niski.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "142": {
-  "prompt": "I raak snel of streek at onverwachte busy.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Wkurza mnie nieoczekiwana presja.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "143": {
-  "prompt": "I houd my hoofd erbij tijdens piekdruk in the winkel lub kas.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "W sklepie albo szklarni, trzymam głowę w górze.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "144": {
-  "prompt": "I laat a mistake me nie the hele dienst dwarszitten.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Nie pozwolę, by błąd zawracał mi głowę całą zmianą.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "145": {
-  "prompt": "I panikeer makkelijk jeśli er meerdere dingen tegelijk misgaan.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Łatwo panikuję, gdy kilka rzeczy idzie źle na raz.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "146": {
-  "prompt": "I blijf beleefd onder tijdsdruk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Będę uprzejmy pod presją czasu.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "147": {
-  "prompt": "I herstel snel na a stevige criticism.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Wkrótce wyzdrowieję po ciężkiej krytyce.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "148": {
-  "prompt": "I neem stress of the wlubk mee until ver na my dienst.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about holding on to what you know — lub nie.",
+  "prompt": "Biorę stres z pracy dużo po mojej zmianie therefore.",
+  "example": "Example: something at work goes differently than planned. This is about situations where you tend to stick to what you know — or not.",
   "reverse": true,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "149": {
-  "prompt": "I blijf overzicht houden jeśli współpracownicy gestrest raken.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Prowadzę przegląd sytuacji, kiedy koledzy posłowie są zestresowani.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  },
  "150": {
-  "prompt": "I kan a setback laten flub wat hij is i verder wlubk.",
-  "example": "Example: w pracy something unexpected happens. What do you zwykle do? This is about how you zwykle react gdy it matters.",
+  "prompt": "Mogę zrobić komplikację za to kim jest i kontynuować pracę.",
+  "example": "Example: something at work goes differently than planned. This is about how you usually react when it matters at work.",
   "reverse": false,
-  "domain": "CulturePersonalityCatalog.EmotionalStability"
+  "domain": ""
  }
 }

@@ -297,6 +297,8 @@ public record UpdatePlatformFeatureRequest(
     bool? CandidatePassportEnabled = null,
     bool? PassportPartnersEnabled = null,
     bool? PassportPdfV2Enabled = null,
+    bool? PassportPdfDnaBlocksEnabled = null,
+    bool? TestsV2Enabled = null,
     bool? PhoneVerificationEnabled = null,
     bool? WhatsAppRemindersEnabled = null,
     bool? CompactTestPdfEnabled = null,
@@ -305,7 +307,11 @@ public record UpdatePlatformFeatureRequest(
     bool? FutureJobsForYouEnabled = null,
     bool? EmployerPhase2Enabled = null,
     bool? CandidateExternalVacanciesEnabled = null,
-    bool? ProactiveMatchingEnabled = null);
+    bool? ProactiveMatchingEnabled = null,
+    int? CandidateApplyPerMinuteLimit = null,
+    int? CandidateApplyPerHourLimit = null,
+    int? CandidateApplyPerDayLimit = null,
+    bool? MatchCalibrationV1Enabled = null);
 
 public record PlatformFeatureDto(
     bool VacancyContentModerationEnabled,
@@ -329,6 +335,8 @@ public record PlatformFeatureDto(
     bool CandidatePassportEnabled = true,
     bool PassportPartnersEnabled = false,
     bool PassportPdfV2Enabled = false,
+    bool PassportPdfDnaBlocksEnabled = true,
+    bool TestsV2Enabled = false,
     bool PhoneVerificationEnabled = false,
     bool WhatsAppRemindersEnabled = false,
     bool CompactTestPdfEnabled = false,
@@ -338,7 +346,11 @@ public record PlatformFeatureDto(
     bool FutureJobsForYouEnabled = false,
     bool EmployerPhase2Enabled = false,
     bool CandidateExternalVacanciesEnabled = false,
-    bool ProactiveMatchingEnabled = false);
+    bool ProactiveMatchingEnabled = false,
+    bool MatchCalibrationV1Enabled = false,
+    int CandidateApplyPerMinuteLimit = 5,
+    int CandidateApplyPerHourLimit = 30,
+    int CandidateApplyPerDayLimit = 100);
 
 public record SessionSecurityDto(int InactivityTimeoutMinutes);
 

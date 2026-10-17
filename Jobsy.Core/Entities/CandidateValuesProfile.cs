@@ -1,3 +1,5 @@
+using Jobsy.Core.Enums;
+
 namespace Jobsy.Core.Entities;
 
 /// <summary>
@@ -21,6 +23,10 @@ public class CandidateValuesProfile
     public int? ImpactPercent { get; set; }
 
     public string MatchTagsJson { get; set; } = "[]";
+
+    public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
+
+    public int QuickScanHighestAnswered { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }

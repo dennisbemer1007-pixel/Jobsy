@@ -154,6 +154,21 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.PassportPdfV2Enabled = pdfV2Enabled;
         }
 
+        if (update.PupilPassportV2Enabled is bool pupilPassportV2)
+        {
+            row.PupilPassportV2Enabled = pupilPassportV2;
+        }
+
+        if (update.StudentPassportEnabled is bool studentPassport)
+        {
+            row.StudentPassportEnabled = studentPassport;
+        }
+
+        if (update.PassportPdfDnaBlocksEnabled is bool dnaBlocksEnabled)
+        {
+            row.PassportPdfDnaBlocksEnabled = dnaBlocksEnabled;
+        }
+
         if (update.PhoneVerificationEnabled is bool phoneVerificationEnabled)
         {
             row.PhoneVerificationEnabled = phoneVerificationEnabled;
@@ -192,6 +207,31 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         if (update.ProactiveMatchingEnabled is bool proactiveMatchingEnabled)
         {
             row.ProactiveMatchingEnabled = proactiveMatchingEnabled;
+        }
+
+        if (update.TestsV2Enabled is bool testsV2Enabled)
+        {
+            row.TestsV2Enabled = testsV2Enabled;
+        }
+
+        if (update.MatchCalibrationV1Enabled is bool matchCalibrationV1)
+        {
+            row.MatchCalibrationV1Enabled = matchCalibrationV1;
+        }
+
+        if (update.CandidateApplyPerMinuteLimit is int perMinute)
+        {
+            row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
+        }
+
+        if (update.CandidateApplyPerHourLimit is int perHour)
+        {
+            row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.ClampPerHour(perHour);
+        }
+
+        if (update.CandidateApplyPerDayLimit is int perDay)
+        {
+            row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.ClampPerDay(perDay);
         }
 
         if (update.FreeCandidateTestsEnabled is bool freeCandidateTestsEnabled)
@@ -250,6 +290,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         await _db.SaveChangesAsync(cancellationToken);
         _cache?.Remove(FeatureFlags.CacheKey);
         _cache?.Remove(MaintenanceRules.CacheKey);
+        _cache?.Remove(CandidateApplyRateLimitProvider.CacheKey);
         return ToSnapshot(row);
     }
 
@@ -277,6 +318,26 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         return false;
     }
 
+    private bool ResolvePupilPassportV2Enabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:PupilPassportV2Enabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.PupilPassportV2Enabled ?? false;
+    }
+
+    private bool ResolveStudentPassportEnabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:StudentPassportEnabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.StudentPassportEnabled ?? false;
+    }
+
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
     {
         row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
@@ -286,6 +347,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.SupportAccessNotifyAdmins = false;
         row.SupportAccessNotifySubject = false;
         row.FreeCandidateTestsEnabled = true;
+        row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute;
+        row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour;
+        row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay;
     }
 
     private bool IsAllowedPublicOrigin(string origin)
@@ -380,6 +444,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MaintenanceNote,
             row?.PassportPartnersEnabled ?? false,
             row?.PassportPdfV2Enabled ?? false,
+            ResolvePupilPassportV2Enabled(row),
+            ResolveStudentPassportEnabled(row),
+            row?.PassportPdfDnaBlocksEnabled ?? true,
             row?.PhoneVerificationEnabled ?? false,
             row?.WhatsAppRemindersEnabled ?? false,
             row?.CompactTestPdfEnabled ?? false,
@@ -388,6 +455,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.FutureJobsForYouEnabled ?? false,
             row?.EmployerPhase2Enabled ?? false,
             row?.CandidateExternalVacanciesEnabled ?? false,
-            row?.ProactiveMatchingEnabled ?? false);
+            row?.ProactiveMatchingEnabled ?? false,
+            row?.TestsV2Enabled ?? _options.TestsV2Enabled,
+            row?.MatchCalibrationV1Enabled ?? false,
+            CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
+            CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
+            CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));
     }
 }

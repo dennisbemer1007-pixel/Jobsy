@@ -84,6 +84,8 @@ public class VacancyListItem
     public string? EngagementReminderTip { get; set; }
     public DateTime? EngagementReminderSentAtUtc { get; set; }
     public int? MatchPercent { get; set; }
+    public int? MatchFitRawPercent { get; set; }
+    public int? MatchConfidencePercent { get; set; }
     public string? MatchColorBand { get; set; }
     public string? MatchWhySummary { get; set; }
     public List<string> MatchWhy { get; set; } = [];
@@ -97,6 +99,8 @@ public class VacancyListItem
     public string? CultureFitLabel { get; set; }
     public string? CultureFitWhy { get; set; }
     public string CultureFitStatus { get; set; } = "Ready";
+    public string? MatchTransparencyNote { get; set; }
+    public int? MatchUncertaintyPoints { get; set; }
     public string? BarrierKind { get; set; }
     public List<string> BarrierDiplomas { get; set; } = [];
     public List<string> BarrierCertifications { get; set; } = [];
@@ -240,6 +244,7 @@ public sealed class CandidatePreferences
     public string? WorkRegion { get; set; }
     public bool? HasOwnCar { get; set; }
     public List<string> ContractPreferences { get; set; } = [];
+    public List<string> WorkStatuses { get; set; } = [];
 }
 
 public sealed class SharedWorkPreferenceChoices

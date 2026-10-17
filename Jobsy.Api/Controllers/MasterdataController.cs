@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Jobsy.Api.Models;
+using Jobsy.Api.Security;
 using Jobsy.Core.Admin;
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Entities;
@@ -8,6 +9,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace Jobsy.Api.Controllers;
@@ -28,6 +30,7 @@ public class MasterdataController : ControllerBase
     /// <summary>Active options for forms (candidate/vacancy/discovery).</summary>
     [HttpGet]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     public async Task<ActionResult<IReadOnlyList<MasterdataOptionDto>>> GetActive(
         [FromQuery] string? category = null,
         [FromQuery] string? audience = null,
@@ -53,6 +56,7 @@ public class MasterdataController : ControllerBase
             .OrderBy(o => o.Category)
             .ThenBy(o => o.SortOrder)
             .ThenBy(o => o.Label)
+            .Take(PublicApiLimits.MaxMasterdataOptions)
             .Select(o => ToDto(o))
             .ToListAsync(cancellationToken);
 

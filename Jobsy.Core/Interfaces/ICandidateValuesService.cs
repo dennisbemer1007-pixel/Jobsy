@@ -1,3 +1,4 @@
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Interfaces;
@@ -24,4 +25,7 @@ public sealed record CandidateValuesStateDto(
     IReadOnlyList<string> MatchTags,
     DateTime? CompletedAtUtc,
     decimal DeepAnalysisPriceEuro,
-    SchwartzValuesScores? PreviewScores = null);
+    SchwartzValuesScores? PreviewScores = null,
+    int QuickScanVersion = AssessmentTestVersions.V1,
+    int QuickScanFullCount = 0,
+    bool IsIndicativeDepth = false);

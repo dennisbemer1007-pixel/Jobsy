@@ -3,6 +3,7 @@ using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Jobsy.Core.Features;
 
 namespace Jobsy.Api.Controllers;
@@ -21,6 +22,7 @@ public sealed class RegionHostsController : ControllerBase
     /// <summary>Resolve active regional branding for the current (or queried) hostname.</summary>
     [HttpGet("resolve")]
     [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
     [RequiresFeature(PlatformFeature.Employers)]
     public async Task<ActionResult<RegionHostDto>> Resolve(
         [FromQuery] string? host,

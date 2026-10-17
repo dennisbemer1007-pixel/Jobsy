@@ -164,7 +164,7 @@ public class CompetenceDeepReportApiTests : IClassFixture<CompetenceDeepReportAp
     }
 }
 
-public sealed class CompetenceDeepReportApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class CompetenceDeepReportApiFactory : ApiWebApplicationFactory
 {
     public Guid UnlockedCandidateId { get; } = Guid.Parse("e4000000-0000-0000-0000-000000000010");
     public Guid FreeCandidateId { get; } = Guid.Parse("e4000000-0000-0000-0000-000000000011");

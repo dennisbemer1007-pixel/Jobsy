@@ -43,11 +43,11 @@ public class BlazorReconnectAndHealthzTests
         var boot = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/blazor-boot.js"));
         Assert.Contains("Blazor.start(", boot, StringComparison.Ordinal);
         Assert.Contains("reconnectionOptions", boot, StringComparison.Ordinal);
-        Assert.Contains("components-reconnect-rejected", boot, StringComparison.Ordinal);
-        Assert.Contains("location.reload()", boot, StringComparison.Ordinal);
         Assert.Contains("Blazor.reconnect", boot, StringComparison.Ordinal);
         Assert.Contains("visibilitychange", boot, StringComparison.Ordinal);
         Assert.Contains("Blazor is not defined", boot, StringComparison.Ordinal);
+        Assert.DoesNotContain("onRejectedAutoReload", boot, StringComparison.Ordinal);
+        Assert.DoesNotContain("location.reload()", boot, StringComparison.Ordinal);
 
         // Manual reconnect only after the built-in loop ended (failed) — never while "show".
         var modalFnStart = boot.IndexOf("function modalShowsReconnect", StringComparison.Ordinal);
@@ -58,20 +58,26 @@ public class BlazorReconnectAndHealthzTests
         Assert.DoesNotContain("components-reconnect-show", modalFn, StringComparison.Ordinal);
 
         var tryFnStart = modalFnEnd;
-        var tryFnEnd = boot.IndexOf("function onRejectedAutoReload", StringComparison.Ordinal);
+        var tryFnEnd = boot.IndexOf("Blazor.start(", StringComparison.Ordinal);
         Assert.True(tryFnEnd > tryFnStart, "tryReconnect body missing");
         var tryFn = boot.Substring(tryFnStart, tryFnEnd - tryFnStart);
         Assert.Contains("await Blazor.reconnect()", tryFn, StringComparison.Ordinal);
-        Assert.Contains("location.reload()", tryFn, StringComparison.Ordinal);
+        Assert.DoesNotContain("location.reload()", tryFn, StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/reconnect.css"));
         Assert.Contains("1.5s", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast.components-reconnect-show", css, StringComparison.Ordinal);
         Assert.Contains("components-reconnect-retrying", css, StringComparison.Ordinal);
-        Assert.Contains("safePublicPage", boot, StringComparison.Ordinal);
-        Assert.Contains("hasDraftInput", boot, StringComparison.Ordinal);
-        Assert.Contains("components-reconnect-state-changed", boot, StringComparison.Ordinal);
-        Assert.Contains("8000", boot, StringComparison.Ordinal);
+        Assert.Contains(".lobsy-app-update", css, StringComparison.Ordinal);
+
+        var core = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js"));
+        Assert.Contains("Nieuwe versie beschikbaar", core, StringComparison.Ordinal);
+        Assert.Contains("userRequestedReload", core, StringComparison.Ordinal);
+        Assert.Contains("controllerchange", core, StringComparison.Ordinal);
+
+        var swPub = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/service-worker.published.js"));
+        Assert.DoesNotContain("return self.skipWaiting();", swPub, StringComparison.Ordinal);
+        Assert.Contains("SKIP_WAITING", swPub, StringComparison.Ordinal);
 
         var program = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Program.cs"));
         Assert.Contains("FromMinutes(15)", program, StringComparison.Ordinal);
@@ -272,7 +278,7 @@ public class BlazorReconnectAndHealthzTests
 }
 
 /// <summary>Minimal web host for /healthz — counting API client construction.</summary>
-file sealed class HealthzWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class HealthzWebFactory : WebWebApplicationFactory
 {
     public static int ApiClientCreations;
 

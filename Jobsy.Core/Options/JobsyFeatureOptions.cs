@@ -27,4 +27,13 @@ public sealed class JobsyFeatureOptions
     /// When true, "Bekijk voorbeeld-PDF" is shown. Enabled in PR B when sample PDFs exist.
     /// </summary>
     public bool SamplePdf { get; set; }
+
+    /// <summary>
+    /// When true, candidates may opt in to anonymized research exports (COTAN validation). Default off.
+    /// Overridden by <see cref="Entities.PlatformFeatureSettings.ResearchConsentEnabled"/> when set in admin.
+    /// </summary>
+    public bool ResearchConsentEnabled { get; set; }
+
+    /// <summary>When true, new Quick-Scan rows use v2 catalogs. Overridden by platform settings when present.</summary>
+    public bool TestsV2Enabled { get; set; }
 }

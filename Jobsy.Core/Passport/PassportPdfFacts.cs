@@ -49,7 +49,20 @@ public sealed record PassportPdfFacts(
     DateTime GeneratedAtUtc,
     string? DreamTitle = null,
     IReadOnlyList<PassportReferenceQuote>? ReferenceQuotes = null,
-    IReadOnlyList<string>? LearningGoals = null);
+    IReadOnlyList<string>? LearningGoals = null,
+    bool ShowDnaBlocks = true,
+    string? QrVerifyUrl = null,
+    string? QrValidUntilLabel = null,
+    string? FirstName = null,
+    bool StudentPassportLayout = false,
+    string? StudentTagline = null,
+    string? StudentStudyChip = null,
+    string? StudentInternshipChip = null,
+    IReadOnlyList<PassportJobFit>? StageVacancyMatches = null,
+    IReadOnlyList<PassportDirectionStep>? StudyDirectionSteps = null,
+    IReadOnlyList<string>? StudentBestOutTips = null,
+    IReadOnlyList<PassportStrengthCard>? StudentStrengthCards = null,
+    IReadOnlyList<PassportHowWorkLine>? StudentHowWorkLines = null);
 
 public static class PassportPdfFactsFactory
 {
