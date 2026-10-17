@@ -1,3 +1,4 @@
+using Jobsy.Tests.E2e;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -43,7 +44,7 @@ public class LivegangFixesPlaywrightTests
     }
 
     [Fact]
-    public async Task Werkgever_vacatures_list_avoids_horizontal_overflow_at_1440_desktop()
+    public async Task Notifications_unread_dot_aligns_to_card_right_edge_on_mobile()
     {
         var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
         if (string.IsNullOrWhiteSpace(baseUrl))
@@ -51,116 +52,53 @@ public class LivegangFixesPlaywrightTests
             return;
         }
 
-        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
-
-        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_BM_EMAIL")
-                     ?? Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_EMAIL")
-                     ?? "").Trim();
-        var password = (Environment.GetEnvironmentVariable("JOBSY_E2E_BM_PASSWORD")
-                        ?? Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_PASSWORD")
-                        ?? DefaultPassword).Trim();
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return;
-        }
+        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_EMAIL") ?? "kandidaat@jobsy.local").Trim();
+        var password = (Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword).Trim();
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
         await using var context = await browser.NewContextAsync(new()
         {
-            ViewportSize = new() { Width = 1440, Height = 900 },
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
             IgnoreHTTPSErrors = true
         });
+        await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
-        if (!await TryLoginAsync(page, baseUrl, email, password))
+        if (!await KbE2e.TryLoginAsync(page, baseUrl, email, password))
         {
             return;
         }
 
-        await page.GotoAsync($"{baseUrl}/werkgever/vacatures",
-            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.WaitForTimeoutAsync(800);
-        await AssertNoVacaturesTableClipAsync(page, 1440);
-    }
+        await page.GotoAsync($"{baseUrl}/notifications",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+        await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "notifications.css");
 
-    [Fact]
-    public async Task Werkgever_vacatures_list_avoids_horizontal_overflow_at_1280_desktop()
-    {
-        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl))
+        var dot = page.Locator(".notifications-page__unread-dot").First;
+        if (await dot.CountAsync() == 0)
         {
             return;
         }
 
-        await EmployersPlaywrightGuard.SkipIfEmployersOffAsync(baseUrl);
-
-        var email = (Environment.GetEnvironmentVariable("JOBSY_E2E_BM_EMAIL")
-                     ?? Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_EMAIL")
-                     ?? "").Trim();
-        var password = (Environment.GetEnvironmentVariable("JOBSY_E2E_BM_PASSWORD")
-                        ?? Environment.GetEnvironmentVariable("JOBSY_E2E_EMPLOYER_PASSWORD")
-                        ?? DefaultPassword).Trim();
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return;
-        }
-
-        Microsoft.Playwright.Program.Main(["install", "chromium"]);
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var context = await browser.NewContextAsync(new()
-        {
-            ViewportSize = new() { Width = 1280, Height = 900 },
-            IgnoreHTTPSErrors = true
-        });
-        var page = await context.NewPageAsync();
-        if (!await TryLoginAsync(page, baseUrl, email, password))
-        {
-            return;
-        }
-
-        await page.GotoAsync($"{baseUrl}/werkgever/vacatures",
-            new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.WaitForTimeoutAsync(800);
-        await AssertNoVacaturesTableClipAsync(page, 1280);
-    }
-
-    private static async Task AssertNoVacaturesTableClipAsync(IPage page, int viewportWidth)
-    {
-        var overflow = await page.EvaluateAsync<bool>(
-            "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");
-        Assert.False(overflow, $"Page should not horizontally overflow at {viewportWidth}px desktop.");
-
-        var json = await page.EvaluateAsync<string>(
+        await dot.WaitForAsync(new() { Timeout = 15_000 });
+        var gapPx = await page.EvaluateAsync<double>(
             """
             () => {
-              const wrap = document.querySelector('.wg-vac--dense .ent-data-table-wrap');
-              const table = wrap?.querySelector('table');
-              if (!wrap || !table) return JSON.stringify({ ok: false, issues: ['missing table'] });
-              const wrapRect = wrap.getBoundingClientRect();
-              const issues = [];
-              for (const cell of table.querySelectorAll('th, td')) {
-                const style = getComputedStyle(cell);
-                if (style.display === 'none' || cell.offsetParent === null) continue;
-                if (cell.scrollWidth > cell.clientWidth + 1) {
-                  issues.push(`cell scroll ${cell.scrollWidth}>${cell.clientWidth}`);
-                }
-                const r = cell.getBoundingClientRect();
-                if (r.right > wrapRect.right + 1) {
-                  issues.push(`cell past wrap by ${(r.right - wrapRect.right).toFixed(1)}px`);
-                }
-              }
-              return JSON.stringify({ ok: issues.length === 0, issues });
+              const dot = document.querySelector('.notifications-page__unread-dot');
+              const btn = dot?.closest('.notifications-page__item-btn');
+              if (!dot || !btn) return 999;
+              const dotR = dot.getBoundingClientRect();
+              const btnR = btn.getBoundingClientRect();
+              return btnR.right - dotR.right;
             }
             """);
-        using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var ok = doc.RootElement.GetProperty("ok").GetBoolean();
-        if (!ok)
-        {
-            var issues = string.Join(", ", doc.RootElement.GetProperty("issues").EnumerateArray().Select(e => e.GetString()));
-            Assert.Fail($"Vacatures table cells clipped at {viewportWidth}px: {issues}");
-        }
+        Assert.True(gapPx <= 20, $"Unread dot should sit within 20px of card inner right edge; gap={gapPx}px.");
+
+        var position = await page.EvaluateAsync<string>(
+            "() => getComputedStyle(document.querySelector('.notifications-page__unread-dot')).position");
+        Assert.Equal("absolute", position);
     }
 
     private const string DefaultPassword = "Jobsy123!";

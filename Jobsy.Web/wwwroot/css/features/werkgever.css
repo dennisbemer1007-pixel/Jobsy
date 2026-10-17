@@ -741,115 +741,12 @@
     }
 
     .wg-vac--dense .ent-data-table tbody tr {
-        height: auto;
-        min-height: 44px;
+        height: 44px;
     }
 
     .wg-vac--dense .wg-vac__meta,
     .wg-vac--dense .wg-vac__info {
         font-size: var(--text-xs);
-    }
-
-    /* Vacatures desktop table: auto layout, vacature column flexes; no clip on wrap (audit). */
-    .wg-vac--dense .wg-card {
-        min-width: 0;
-        max-width: 100%;
-        overflow-x: visible;
-    }
-
-    .wg-vac--dense .ent-data-table-wrap {
-        overflow-x: visible;
-        max-width: 100%;
-    }
-
-    .wg-vac--dense .ent-data-table {
-        table-layout: auto;
-        width: 100%;
-    }
-
-    .wg-vac--dense .ent-data-table .ent-data-table__check {
-        width: 2.5rem;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__col-vacancy {
-        width: 100%;
-        min-width: 8rem;
-        overflow: visible;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__col-status {
-        width: 1%;
-        white-space: nowrap;
-        overflow: visible;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__col-status .status-pill {
-        white-space: nowrap;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__col-metric {
-        width: 1%;
-        white-space: nowrap;
-        text-align: end;
-        vertical-align: top;
-        overflow: visible;
-    }
-
-    .wg-vac--dense .ent-data-table th.wg-vac__col-metric {
-        text-align: end;
-        font-size: var(--text-xs);
-        letter-spacing: 0.02em;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__col-vis {
-        width: 1%;
-        white-space: nowrap;
-        overflow: visible;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__col-vis .wg-vac__chip {
-        white-space: nowrap;
-    }
-
-    .wg-vac--dense .ent-data-table th:last-child,
-    .wg-vac--dense .ent-data-table td.wg-vac__actions {
-        width: 1%;
-        white-space: nowrap;
-        overflow: visible;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__title-cell {
-        overflow: visible;
-        min-width: 0;
-        max-width: 36rem;
-    }
-
-    .wg-vac--dense .ent-data-table .wg-vac__title {
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        overflow: hidden;
-        white-space: normal;
-        word-break: break-word;
-        line-height: 1.25;
-    }
-
-    /* Narrow desktop: drop optional columns instead of clipping cells. */
-    @media (max-width: 1359px) {
-        .wg-vac--dense .ent-data-table .wg-vac__col-views,
-        .wg-vac--dense .ent-data-table .wg-vac__col-vis {
-            display: none;
-        }
-    }
-
-    @media (max-width: 1279px) {
-        .wg-vac--dense .ent-data-table .wg-vac__col-online {
-            display: none;
-        }
-
-        .wg-vac--dense .ent-data-table .wg-vac__title-cell {
-            max-width: 14rem;
-        }
     }
 }
 

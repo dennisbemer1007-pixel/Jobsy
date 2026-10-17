@@ -161,6 +161,7 @@ public class LivegangScreenshotCaptureTests
                     await page.Locator(".notifications-page__list .notifications-page__item")
                         .Nth(2)
                         .WaitForAsync(new() { Timeout = 30_000 });
+                    await AssertAndLogNotificationDotAsync(page, root, $"notifications-page-{suffix}-{role}-{tag}");
                 }
 
                 var pageFile = Path.Combine(root, $"notifications-page-{suffix}-{role}-{tag}.png");
@@ -175,7 +176,6 @@ public class LivegangScreenshotCaptureTests
         foreach (var (tag, width, height, mobile, fullPage) in new[]
                  {
                      ("desktop-1440-full", 1440, 900, false, true),
-                     ("desktop-1280-full", 1280, 900, false, true),
                      ("mobile-390", 390, 844, true, false),
                  })
         {
@@ -198,18 +198,9 @@ public class LivegangScreenshotCaptureTests
 
             var scrollWidth = await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth");
             var clientWidth = await page.EvaluateAsync<int>("() => document.documentElement.clientWidth");
-            var tableAudit = await AssertVacaturesTableCellsVisibleAsync(page);
             var metricsFile = Path.Combine(root, $"werkgever-vacatures-{tag}-metrics.txt");
             await File.WriteAllTextAsync(metricsFile,
-                $"""
-                 scrollWidth={scrollWidth}
-                 clientWidth={clientWidth}
-                 overflowPx={scrollWidth - clientWidth}
-                 tableCellsOk={tableAudit.Ok}
-                 {string.Join(Environment.NewLine, tableAudit.Issues.Select(i => $"tableIssue={i}"))}
-                 """);
-
-            Assert.True(tableAudit.Ok, string.Join("; ", tableAudit.Issues));
+                $"scrollWidth={scrollWidth}{Environment.NewLine}clientWidth={clientWidth}{Environment.NewLine}overflowPx={scrollWidth - clientWidth}{Environment.NewLine}");
 
             var file = Path.Combine(root, $"werkgever-vacatures-{tag}.png");
             await page.ScreenshotAsync(new() { Path = file, FullPage = fullPage });
@@ -331,41 +322,54 @@ public class LivegangScreenshotCaptureTests
         }
     }
 
-    private static async Task<(bool Ok, List<string> Issues)> AssertVacaturesTableCellsVisibleAsync(IPage page)
+    private static async Task AssertAndLogNotificationDotAsync(IPage page, string root, string shotTag)
     {
         var json = await page.EvaluateAsync<string>(
             """
             () => {
-              const wrap = document.querySelector('.wg-vac--dense .ent-data-table-wrap');
-              const table = wrap?.querySelector('table');
-              if (!wrap || !table) {
-                return JSON.stringify({ ok: false, issues: ['missing .wg-vac--dense table'] });
+              const dot = document.querySelector('.notifications-page__unread-dot');
+              const btn = dot?.closest('.notifications-page__item-btn');
+              const item = dot?.closest('.notifications-page__item');
+              const top = dot?.closest('.notifications-page__item-top');
+              const sheets = Array.from(document.styleSheets)
+                .map(s => s.href || '')
+                .filter(h => h.includes('notifications.css'));
+              if (!dot || !btn) {
+                return JSON.stringify({ ok: false, reason: 'no dot', sheets });
               }
-              const wrapRect = wrap.getBoundingClientRect();
-              const issues = [];
-              for (const cell of table.querySelectorAll('th, td')) {
-                const style = getComputedStyle(cell);
-                if (style.display === 'none' || cell.offsetParent === null) continue;
-                if (cell.scrollWidth > cell.clientWidth + 1) {
-                  issues.push(`${cell.tagName}.${cell.className || 'cell'} scroll ${cell.scrollWidth}>${cell.clientWidth}`);
-                }
-                const r = cell.getBoundingClientRect();
-                if (r.right > wrapRect.right + 1) {
-                  issues.push(`${cell.tagName}.${cell.className || 'cell'} right ${r.right.toFixed(1)}>wrap ${wrapRect.right.toFixed(1)}`);
-                }
-              }
-              const tableRect = table.getBoundingClientRect();
-              if (tableRect.right > wrapRect.right + 1) {
-                issues.push(`table right ${tableRect.right.toFixed(1)}>wrap ${wrapRect.right.toFixed(1)}`);
-              }
-              return JSON.stringify({ ok: issues.length === 0, issues });
+              const dotStyle = getComputedStyle(dot);
+              const topStyle = top ? getComputedStyle(top) : null;
+              const dotR = dot.getBoundingClientRect();
+              const btnR = btn.getBoundingClientRect();
+              const itemR = item?.getBoundingClientRect();
+              const gapBtnRight = btnR.right - dotR.right;
+              const gapItemRight = itemR ? itemR.right - dotR.right : null;
+              return JSON.stringify({
+                ok: gapBtnRight <= 20,
+                gapBtnRight,
+                gapItemRight,
+                dotX: dotR.left,
+                dotRight: dotR.right,
+                btnRight: btnR.right,
+                itemRight: itemR?.right ?? null,
+                dotPosition: dotStyle.position,
+                dotTop: dotStyle.top,
+                dotRightCss: dotStyle.right,
+                topDisplay: topStyle?.display ?? null,
+                topWidth: topStyle?.width ?? null,
+                notificationsCssHrefs: sheets
+              });
             }
             """);
+        var logPath = Path.Combine(root, "notifications-dot-computed-styles.txt");
+        await File.AppendAllTextAsync(logPath, $"[{shotTag}]{Environment.NewLine}{json}{Environment.NewLine}{Environment.NewLine}");
+
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var root = doc.RootElement;
-        var ok = root.GetProperty("ok").GetBoolean();
-        var issues = root.GetProperty("issues").EnumerateArray().Select(e => e.GetString() ?? "").ToList();
-        return (ok, issues);
+        var gap = doc.RootElement.GetProperty("gapBtnRight").GetDouble();
+        Assert.True(gap <= 20, $"{shotTag}: unread dot gap to card inner right is {gap}px (max 20). Raw: {json}");
+        Assert.Equal("absolute", doc.RootElement.GetProperty("dotPosition").GetString());
+        var sheets = doc.RootElement.GetProperty("notificationsCssHrefs");
+        Assert.True(sheets.GetArrayLength() > 0, $"{shotTag}: notifications.css not loaded.");
     }
 
     private static void TrackNetwork404s(IPage page)

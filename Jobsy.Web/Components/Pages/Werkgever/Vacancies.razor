@@ -158,20 +158,20 @@
                               AllSelectedChanged="OnToggleAll"
                               ShowRowActions="true">
                     <Header>
-                        <th scope="col" class="wg-vac__col-vacancy">@Culture["WgVac.Col.Vacancy"]</th>
-                        <th scope="col" class="wg-vac__col-status">@Culture["WgVac.Col.Status"]</th>
-                        <th scope="col" class="wg-vac__col-metric" title="@Culture["WgVac.Col.Applications"]">@Culture["WgVac.Col.Applications.Abbr"]</th>
+                        <th scope="col">@Culture["WgVac.Col.Vacancy"]</th>
+                        <th scope="col">@Culture["WgVac.Col.Status"]</th>
+                        <th scope="col">@Culture["WgVac.Col.Applications"]</th>
                         @if (_colViews)
                         {
-                            <th scope="col" class="wg-vac__col-metric wg-vac__col-views" title="@Culture["WgVac.Col.Views"]">@Culture["WgVac.Col.Views.Abbr"]</th>
+                            <th scope="col">@Culture["WgVac.Col.Views"]</th>
                         }
                         @if (_colOnline)
                         {
-                            <th scope="col" class="wg-vac__col-metric wg-vac__col-online">@Culture["WgVac.Col.OnlineUntil"]</th>
+                            <th scope="col">@Culture["WgVac.Col.OnlineUntil"]</th>
                         }
                         @if (_colVisibility)
                         {
-                            <th scope="col" class="wg-vac__col-vis" title="@Culture["WgVac.Col.Visibility"]">@Culture["WgVac.Col.Visibility.Abbr"]</th>
+                            <th scope="col">@Culture["WgVac.Col.Visibility"]</th>
                         }
                     </Header>
                     <Rows>
@@ -187,7 +187,7 @@
                                                aria-label="@v.Title" />
                                     </td>
                                 }
-                                <td class="wg-vac__col-vacancy" data-label="@Culture["WgVac.Col.Vacancy"]">
+                                <td data-label="@Culture["WgVac.Col.Vacancy"]">
                                     <div class="wg-vac__title-cell">
                                         @if (Role == EmployerRole.Regiomanager)
                                         {
@@ -204,25 +204,25 @@
                                         }
                                     </div>
                                 </td>
-                                <td class="wg-vac__col-status" data-label="@Culture["WgVac.Col.Status"]">
+                                <td data-label="@Culture["WgVac.Col.Status"]">
                                     <span class="status-pill wg-vac-status wg-vac-status--@VacancyManageRules.StatusCss(v)">
                                         @StatusLabel(v)
                                     </span>
                                 </td>
-                                <td class="tabular wg-vac__col-metric" data-label="@Culture["WgVac.Col.Applications"]">
+                                <td class="tabular" data-label="@Culture["WgVac.Col.Applications"]">
                                     <VacancyApplicationCount Total="v.ApplicationCount" NewCount="v.NewApplicationCount" />
                                 </td>
                                 @if (_colViews)
                                 {
-                                    <td class="tabular wg-vac__col-metric wg-vac__col-views" data-label="@Culture["WgVac.Col.Views"]">@v.ImpressionCount.ToString("N0", CultureInfo.GetCultureInfo("nl-NL"))</td>
+                                    <td class="tabular" data-label="@Culture["WgVac.Col.Views"]">@v.ImpressionCount.ToString("N0", CultureInfo.GetCultureInfo("nl-NL"))</td>
                                 }
                                 @if (_colOnline)
                                 {
-                                    <td class="tabular wg-vac__col-metric wg-vac__col-online" data-label="@Culture["WgVac.Col.OnlineUntil"]">@OnlineUntilLabel(v)</td>
+                                    <td class="tabular" data-label="@Culture["WgVac.Col.OnlineUntil"]">@OnlineUntilLabel(v)</td>
                                 }
                                 @if (_colVisibility)
                                 {
-                                    <td class="wg-vac__col-vis" data-label="@Culture["WgVac.Col.Visibility"]">
+                                    <td data-label="@Culture["WgVac.Col.Visibility"]">
                                         <div class="wg-vac__vis">
                                             @if (v.IsHighlighted)
                                             {

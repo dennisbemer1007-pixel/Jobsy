@@ -67,15 +67,6 @@ public class LivegangAuditFixesTests
         Assert.Contains(notifSheets, s => s.Contains("notifications.css", StringComparison.Ordinal));
     }
 
-    [Fact]
-    public void Werkgever_vacatures_desktop_css_clips_table_overflow()
-    {
-        var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "werkgever.css"));
-        Assert.Contains(".wg-vac--dense .ent-data-table-wrap", css, StringComparison.Ordinal);
-        Assert.Contains("table-layout: auto", css, StringComparison.Ordinal);
-        Assert.Contains("wg-vac__col-views", css, StringComparison.Ordinal);
-    }
-
     private static string FindRepoRoot()
     {
         var dir = AppContext.BaseDirectory;

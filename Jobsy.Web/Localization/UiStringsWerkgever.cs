@@ -253,9 +253,6 @@ public static class UiStringsWerkgever
         Add("WgVac.Col.Vacancy", "Vacature", "Vacancy", "Oferta", "Post", "الوظيفة");
         Add("WgVac.Col.Status", "Status", "Status", "Status", "Status", "الحالة");
         Add("WgVac.Col.Applications", "Sollicitaties", "Applications", "Aplikacje", "Aplicații", "الطلبات");
-        Add("WgVac.Col.Applications.Abbr", "Sollic.", "Apps", "Aplik.", "Aplic.", "طلبات");
-        Add("WgVac.Col.Views.Abbr", "Weerg.", "Views", "Wyśw.", "Viz.", "مشاه.");
-        Add("WgVac.Col.Visibility.Abbr", "Zichtb.", "Vis.", "Widocz.", "Vizib.", "ظهور");
         Add("WgVac.Apps.NewBadge", "{0} nieuw", "{0} new", "{0} nowe", "{0} noi", "{0} جديد");
         Add("WgVac.Apps.NewAria.One", "{0} nieuwe sollicitatie", "{0} new application", "{0} nowe zgłoszenie", "{0} solicitare nouă", "طلب جديد واحد");
         Add("WgVac.Apps.NewAria.Two", "{0} nieuwe sollicitaties", "{0} new applications", "{0} nowe zgłoszenia", "{0} solicitări noi", "طلبان جديدان");
