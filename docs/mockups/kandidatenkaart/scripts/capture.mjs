@@ -8,7 +8,7 @@ const pagesDir = path.join(root, "pages");
 const outDir = root;
 const artifactsDir = "/opt/cursor/artifacts/kandidatenkaart";
 
-const states = ["preview", "full", "area", "invite"];
+const states = ["preview", "full", "area", "invite", "filters-open", "area-sparse"];
 const variants = ["a", "b"];
 
 const candidatePages = [
@@ -77,7 +77,7 @@ function overviewHtml() {
 </head>
 <body>
   <h1>Kandidatenkaart — mockup overzicht</h1>
-  <p class="lead">Werkgever: preview (locked), volledige kaart, gebiedsdetail en uitnodigingsflow. Kandidaat: vriendelijke herinnering (app + mail) en &quot;weer beschikbaar&quot;-popup na automatisch niet beschikbaar. Desktop 1440×900 en mobiel 390×844 @2x.</p>
+  <p class="lead">Werkgever: preview, volledige kaart, gebied, uitnodiging, filters open (mobiel sheet / desktop popover), gebied onder 30 na filters. Kandidaat: uitnodiging, activiteitscheck, weer beschikbaar. Desktop 1440×900 · mobiel 390×844 @2x.</p>
   ${groups}
 </body>
 </html>`;
