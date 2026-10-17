@@ -741,16 +741,26 @@ internal sealed class E2eFlowRunner
         }
 
         await add.ClickAsync();
-        await page.Locator("[data-testid=passport-proof-sheet]").WaitForAsync(new() { Timeout = 10_000 });
-        var employerInput = page.Locator(".passport-proof__sheet input").First;
-        await employerInput.FillAsync(employerName);
-        var roleInput = page.Locator(".passport-proof__sheet input").Nth(1);
-        if (await roleInput.CountAsync() > 0)
+        await page.Locator("[data-testid=passport-proof-sheet]").WaitForAsync(new() { Timeout = 15_000 });
+        var employerInput = page.Locator(".passport-proof__sheet .profile-employer-card input").First;
+        try
         {
-            await roleInput.FillAsync("Orderpicker");
+            await employerInput.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        }
+        catch (TimeoutException)
+        {
+            await RecordPaspoortFieldAsync("ervaring (proof sheet)", "timeout", "invoervelden niet zichtbaar");
+            return;
         }
 
-        await page.Locator("[data-testid=passport-proof-save]").ClickAsync();
+        await employerInput.FillAsync(employerName, new() { Timeout = 15_000 });
+        var roleInput = page.Locator(".passport-proof__sheet .profile-employer-card input").Nth(1);
+        if (await roleInput.CountAsync() > 0)
+        {
+            await roleInput.FillAsync("Orderpicker", new() { Timeout = 15_000 });
+        }
+
+        await page.Locator("[data-testid=passport-proof-save]").ClickAsync(new() { Timeout = 15_000 });
         await page.WaitForTimeoutAsync(1500);
         await page.ReloadAsync();
         await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
