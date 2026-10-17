@@ -90,12 +90,12 @@ function activeCandidatesBlock(compact = false) {
   if (compact) {
     return `<div class="kk-active-sell kk-active-sell--compact">
       <strong>Alleen actieve kandidaten</strong>
-      <span>Herinnering na 2 dagen, daarna van de kaart tot iemand zich weer meldt.</span>
+      <span>Herinnering na 2 dagen, maandelijkse activiteitscheck, daarna van de kaart tot iemand zich weer meldt.</span>
     </div>`;
   }
   return `<div class="kk-active-sell">
     <h3>Alleen actieve kandidaten</h3>
-    <p>Wie een uitnodiging niet binnen 2 dagen beantwoordt, krijgt een herinnering en verdwijnt daarna van de kaart tot die zich weer beschikbaar meldt. Zo zie je alleen mensen die echt zoeken.</p>
+    <p>Wie een uitnodiging niet binnen 2 dagen beantwoordt, krijgt een herinnering en verdwijnt daarna van de kaart tot die zich weer beschikbaar meldt. Wie een maand niet actief is, bevestigt eerst dat die nog zoekt. Zo zie je alleen mensen die echt zoeken.</p>
   </div>`;
 }
 

@@ -126,7 +126,7 @@ ${candidateShell({ behindOverlay: true })}
         <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
       </div>
       <h2 id="popup-title">Weer beschikbaar voor werk?</h2>
-      <p id="popup-desc">Je stond op <strong>niet beschikbaar</strong> omdat er geen reactie kwam op een uitnodiging. Geen probleem. Zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart, als jij dat wilt.</p>
+      <p id="popup-desc">Je stond op <strong>niet beschikbaar</strong>. Geen probleem. Zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart, als jij dat wilt.</p>
       <div class="k-popup__actions">
         <button type="button" class="k-btn k-btn--primary">Ja, ik ben weer vindbaar</button>
         <button type="button" class="k-btn">Later</button>
@@ -137,5 +137,68 @@ ${candidateShell({ behindOverlay: true })}
 ${shellEnd()}`;
 
 fs.writeFileSync(path.join(pagesDir, "weer-beschikbaar-popup.html"), popupPage, "utf8");
+
+const inactivityEmailPage = `${head("Kandidaat — activiteitscheck (e-mail)")}
+<body>
+<div class="k-email-wrap">
+  <article class="k-email">
+    <div class="k-email__meta">
+      <div><strong>Van:</strong> Lobsy &lt;hallo@lobsy.nl&gt;</div>
+      <div><strong>Aan:</strong> jij@example.com</div>
+      <div><strong>Onderwerp:</strong> Ben je nog op zoek?</div>
+    </div>
+    <div class="k-email__body">
+      <div class="k-email__logo">
+        <img src="${logoRel}" width="40" height="40" alt=""/>
+        <span>Lobsy</span>
+      </div>
+      <h1>Ben je nog op zoek?</h1>
+      <p>Hoi,</p>
+      <p>Je staat nog als beschikbaar op Lobsy, maar we hebben je een tijd niet gezien. Ben je nog op zoek naar werk? Klik hier om beschikbaar te blijven voor werkgevers op de kandidatenkaart.</p>
+      <p>Reageer je niet binnen <strong>1 week</strong>, dan zetten we je tijdelijk op niet beschikbaar. Je verdwijnt dan van de kaart totdat je weer aangeeft open te staan voor werk.</p>
+      <div class="k-email__cta k-email__cta--stack">
+        <a class="k-btn k-btn--primary" href="#" style="text-decoration:none">Ja, ik blijf beschikbaar</a>
+        <a class="k-btn" href="#" style="text-decoration:none">Ik zoek even niet</a>
+      </div>
+      <p style="font-size:var(--text-xs);color:var(--muted)">Geen druk: je kunt altijd later weer aangeven dat je zoekt.</p>
+      <div class="k-email__footer">
+        <p>Je ontvangt deze mail omdat je vindbaar bent voor werkgevers en een maand niet hebt ingelogd.</p>
+      </div>
+    </div>
+  </article>
+</div>
+</body></html>`;
+
+fs.writeFileSync(path.join(pagesDir, "inactivity-email.html"), inactivityEmailPage, "utf8");
+
+const inactivityNotifCopy =
+  "Je staat nog als beschikbaar, maar we missen je even. <strong>Ben je nog op zoek?</strong> Bevestig binnen 1 week dat je beschikbaar wilt blijven, anders zetten we je tijdelijk op niet beschikbaar.";
+
+const inactivityNotifPage = `${head("Kandidaat — activiteitscheck (in-app)")}
+${candidateShell({ activeNotif: true, behindOverlay: true })}
+  <div class="k-notif-scrim" aria-hidden="true"></div>
+  <aside class="k-notif-panel" role="dialog" aria-labelledby="inact-title">
+    <div class="k-notif-panel__head">
+      <h2 id="inact-title">Meldingen</h2>
+      <button type="button" class="k-btn k-btn--ghost" aria-label="Sluiten">Sluiten</button>
+    </div>
+    <ul class="k-notif-list">
+      <li class="k-notif-item k-notif-item--highlight">
+        <div class="k-notif-item__tag">
+          <svg class="i" viewBox="0 0 24 24"><path d="M12 8v4l2 2"/><circle cx="12" cy="12" r="9"/></svg>
+          Activiteitscheck
+        </div>
+        <p>${inactivityNotifCopy}</p>
+        <div class="k-notif-item__actions">
+          <button type="button" class="k-btn k-btn--primary">Ja, ik blijf beschikbaar</button>
+          <button type="button" class="k-btn">Ik zoek even niet</button>
+        </div>
+        <p class="k-notif-item__fine">Zelfde vraag stuurden we per e-mail. Geen reactie binnen 1 week betekent niet beschikbaar tot je opnieuw inlogt.</p>
+      </li>
+    </ul>
+  </aside>
+${shellEnd()}`;
+
+fs.writeFileSync(path.join(pagesDir, "inactivity-notificatie.html"), inactivityNotifPage, "utf8");
 
 console.log("Wrote kandidaat pages in", path.relative(root, pagesDir));

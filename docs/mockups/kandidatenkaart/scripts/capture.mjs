@@ -14,6 +14,8 @@ const variants = ["a", "b"];
 const candidatePages = [
   { id: "reminder-notificatie", file: "kandidaat/reminder-notificatie.html", label: "Herinnering in-app" },
   { id: "reminder-email", file: "kandidaat/reminder-email.html", label: "Herinnering e-mail" },
+  { id: "inactivity-email", file: "kandidaat/inactivity-email.html", label: "Activiteitscheck e-mail" },
+  { id: "inactivity-notificatie", file: "kandidaat/inactivity-notificatie.html", label: "Activiteitscheck in-app" },
   { id: "weer-beschikbaar-popup", file: "kandidaat/weer-beschikbaar-popup.html", label: "Weer beschikbaar popup" },
 ];
 

@@ -32,8 +32,10 @@ Design-only HTML/CSS for the paid employer feature **Kandidatenkaart**: aggregat
 | Herinnering in-app | `pages/kandidaat/reminder-notificatie.html` | Na 2 dagen zonder reactie op uitnodiging; warm, niet strafend |
 | Herinnering e-mail | `pages/kandidaat/reminder-email.html` | Zelfde boodschap + link naar uitnodiging |
 | Weer beschikbaar | `pages/kandidaat/weer-beschikbaar-popup.html` | Direct na login na automatisch **niet beschikbaar**; primair “Ja, ik ben weer vindbaar”, secundair “Later” |
+| Activiteitscheck e-mail | `pages/kandidaat/inactivity-email.html` | Na **1 maand** geen login: “Ben je nog op zoek?”; primair “Ja, ik blijf beschikbaar”, secundair “Ik zoek even niet”; **1 week** om te reageren |
+| Activiteitscheck in-app | `pages/kandidaat/inactivity-notificatie.html` | Zelfde check bij volgende login (naast e-mail) |
 
-**Product:** geen reactie na herinnering → niet beschikbaar, telt niet meer op kandidatenkaart. **Afwijzen** van een uitnodiging telt wél als reactie (geen consequenties) — vermeld in in-app copy.
+**Product:** geen reactie na uitnodigingsherinnering → niet beschikbaar. **Afwijzen** van een uitnodiging telt wél als reactie (geen consequenties). Geen reactie op activiteitscheck binnen 1 week → niet beschikbaar; volgende login = weer-beschikbaar-popup. Werkgever-copy in **Alleen actieve kandidaten** noemt beide regels.
 
 PNG-prefix: `k-reminder-notificatie-*`, `k-reminder-email-*`, `k-weer-beschikbaar-popup-*`.
 
