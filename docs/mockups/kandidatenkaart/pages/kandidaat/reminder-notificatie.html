@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="nl" class="vp-desktop">
+<head>
+  <meta charset="utf-8"/>
+  <title>Kandidaat — herinnering uitnodiging (in-app)</title>
+  <link rel="stylesheet" href="../../shared/kandidaat.css"/>
+</head>
+
+<body>
+<div class="k-shell">
+  <header class="k-header">
+    <a class="k-brand" href="#"><img src="../../shared/assets/lobsy-64.webp" width="44" height="44" alt=""/> Lobsy</a>
+    <div class="k-header__actions">
+      <button type="button" class="k-icon-btn k-icon-btn--active" aria-label="Meldingen">
+        <svg class="i" viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        <span class="k-badge-dot" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+  <div class="k-map-bg" aria-hidden="true"><div class="k-map-bg__fake"></div></div>
+  <nav class="k-bottom-nav" aria-label="Hoofdmenu">
+    <a class="is-on" href="#">Zoeken</a>
+    <a href="#">Sollicitaties</a>
+    <a href="#">Profiel</a>
+    <a href="#">Meer</a>
+  </nav>
+  <div class="k-notif-scrim" aria-hidden="true"></div>
+  <aside class="k-notif-panel" role="dialog" aria-labelledby="notif-title">
+    <div class="k-notif-panel__head">
+      <h2 id="notif-title">Meldingen</h2>
+      <button type="button" class="k-btn k-btn--ghost" aria-label="Sluiten">Sluiten</button>
+    </div>
+    <ul class="k-notif-list">
+      <li class="k-notif-item k-notif-item--highlight">
+        <div class="k-notif-item__tag">
+          <svg class="i" viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14.1l-3-3"/></svg>
+          Vriendelijke herinnering
+        </div>
+        <p>Je hebt een uitnodiging om te solliciteren. Reageer je niet binnen 2 dagen, dan zetten we je tijdelijk op <strong>niet beschikbaar</strong> — je verschijnt dan niet meer op de kandidatenkaart voor werkgevers.</p>
+        <div class="k-notif-item__actions">
+          <button type="button" class="k-btn k-btn--primary">Bekijk uitnodiging</button>
+          <button type="button" class="k-btn">Niet nu</button>
+        </div>
+        <p class="k-notif-item__fine">Afwijzen telt als reactie: daar hoort geen waarschuwing of andere consequentie bij.</p>
+      </li>
+      <li class="k-notif-item">
+        <div class="k-notif-item__tag">Eerder</div>
+        <p style="font-size:var(--text-sm);margin:0;color:var(--muted)">Nieuwe uitnodiging: Productiemedewerker bij Demo Bakkerij Noord.</p>
+      </li>
+    </ul>
+  </aside>
+</div></body></html>

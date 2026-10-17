@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="nl" class="vp-desktop">
+<head>
+  <meta charset="utf-8"/>
+  <title>Kandidaat — weer beschikbaar popup</title>
+  <link rel="stylesheet" href="../../shared/kandidaat.css"/>
+</head>
+
+<body>
+<div class="k-shell">
+  <header class="k-header">
+    <a class="k-brand" href="#"><img src="../../shared/assets/lobsy-64.webp" width="44" height="44" alt=""/> Lobsy</a>
+    <div class="k-header__actions">
+      <button type="button" class="k-icon-btn" aria-label="Meldingen">
+        <svg class="i" viewBox="0 0 24 24"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+        
+      </button>
+    </div>
+  </header>
+  <div class="k-map-bg" aria-hidden="true"><div class="k-map-bg__fake"></div></div>
+  <nav class="k-bottom-nav" aria-label="Hoofdmenu">
+    <a class="is-on" href="#">Zoeken</a>
+    <a href="#">Sollicitaties</a>
+    <a href="#">Profiel</a>
+    <a href="#">Meer</a>
+  </nav>
+  <div class="k-popup-scrim" role="presentation">
+    <div class="k-popup" role="dialog" aria-labelledby="popup-title" aria-describedby="popup-desc">
+      <div class="k-popup__icon" aria-hidden="true">
+        <svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      </div>
+      <h2 id="popup-title">Weer beschikbaar voor werk?</h2>
+      <p id="popup-desc">Je stond op <strong>niet beschikbaar</strong> omdat er geen reactie kwam op een uitnodiging. Geen probleem — zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart (alleen als jij dat wilt).</p>
+      <div class="k-popup__actions">
+        <button type="button" class="k-btn">Later</button>
+        <button type="button" class="k-btn k-btn--primary">Ja, ik ben weer vindbaar</button>
+      </div>
+      <p class="k-popup__note">Je kunt dit altijd aanpassen onder Instellingen → Beschikbaarheid.</p>
+    </div>
+  </div>
+</div></body></html>
