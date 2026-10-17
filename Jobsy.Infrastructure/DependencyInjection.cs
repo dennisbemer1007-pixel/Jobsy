@@ -7,10 +7,12 @@ using Jobsy.Core.Geo;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Reminders;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Sales;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Jobs;
@@ -76,6 +78,7 @@ public static class DependencyInjection
                 "Default local postgres connection is not allowed outside Development.");
         }
 
+        services.Configure<SessionAuthOptions>(configuration.GetSection(SessionAuthOptions.SectionName));
         services.AddJobsyDataProtection(connectionString, isDev, configuration);
         services.AddMemoryCache();
         services.AddSingleton<ISecretProtector, SecretProtector>();
@@ -511,6 +514,8 @@ public static class DependencyInjection
         services.AddSingleton<IPupilLoginProtection>(_ => new PupilLoginProtection());
         services.AddScoped<IPupilPortalService, PupilPortalService>();
         services.AddSingleton<IPupilReportPdfService, PupilReportPdfService>();
+        services.AddSingleton<IPupilPassportPdfService, Scholen.Passport.PupilPassportPdfService>();
+        services.AddSingleton<PupilPassportPdfModelBuilder>();
         services.AddSingleton<IAuthorizationHandler, PupilSessionAuthorizationHandler>();
         services.AddHostedService<TestWindowAutoCloser>();
         services.AddHostedService<SchoolRetentionHostedService>();
@@ -525,6 +530,7 @@ public static class DependencyInjection
         services.AddScoped<IAmbassadeurFlyerPdfService, AmbassadeurFlyerPdfService>();
         services.AddScoped<ILobsyCvPdfService, LobsyCvPdfService>();
         services.AddScoped<IPassportPdfService, Jobsy.Infrastructure.Services.Passport.PassportPdfService>();
+        services.AddScoped<IStudentPassportPdfService, Jobsy.Infrastructure.Services.Passport.StudentPassportPdfService>();
         services.AddScoped<IPassportDnaReader, Jobsy.Infrastructure.Services.Passport.PassportDnaReader>();
         services.AddHttpClient(WhoAmIGenerationService.HttpClientName, client =>
         {
@@ -572,6 +578,7 @@ public static class DependencyInjection
             AllowAutoRedirect = false
         });
         services.AddSingleton<IUploadMalwareScanner, UploadMalwareScanner>();
+        services.AddSingleton<CandidateMatchScoreCache>();
         services.AddScoped<IProfileVacancyMatchService, ProfileVacancyMatchService>();
         services.AddScoped<ICompanyCultureLookup, CompanyCultureLookup>();
         // KB-FALLBACK(D): paspoort 06 absent — no down-rank / "Staat lager".
@@ -626,6 +633,7 @@ public static class DependencyInjection
         services.AddScoped<ICandidateCareerPlanService, CandidateCareerPlanService>();
         services.AddScoped<CareerGenerationGuard>();
         services.AddScoped<ICandidateOnboardingService, CandidateOnboardingService>();
+        services.AddScoped<ICandidateDiscoveryOverviewService, CandidateDiscoveryOverviewService>();
         services.AddHttpClient(CareerPathPlanGenerationService.HttpClientName, client =>
         {
             client.Timeout = TimeSpan.FromSeconds(60);
@@ -717,6 +725,7 @@ public static class DependencyInjection
         services.AddScoped<IAssistantChatService, AssistantChatService>();
         services.AddScoped<ITranslationService, OpenAiTranslationService>();
         services.AddScoped<IPrivacyDataService, PrivacyDataService>();
+        services.AddScoped<ICandidateProfileResetService, CandidateProfileResetService>();
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<ReferenceConfirmationService>();

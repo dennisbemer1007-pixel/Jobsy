@@ -3547,6 +3547,7 @@ public static class UiStrings
         UiStringsLeerlingVragen.MergeNl(nl);
         UiStringsLeerlingVragenVo.MergeNl(nl);
         UiStringsLeerlingVerhaal.MergeNl(nl);
+        UiStringsLeerlingPaspoort.MergeAll(nl, en, pl, ro, ar);
         UiStringsSales.MergeNl(nl);
         UiStringsLanding.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateSignup.MergeAll(nl, en, pl, ro, ar);
@@ -3580,6 +3581,7 @@ public static class UiStrings
         UiStringsRun8.MergeAll(nl, en, pl, ro, ar);
         UiStringsProactive.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateHub.MergeAll(nl, en, pl, ro, ar);
+        UiStringsProfileReset.MergeAll(nl, en, pl, ro, ar);
 
         return new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {

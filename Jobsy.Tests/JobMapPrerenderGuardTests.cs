@@ -284,7 +284,8 @@ public class JobMapPrerenderGuardTests
         Assert.Contains("maplibre-gl-csp.js", bundle);
         Assert.Contains("fetchpriority", bundle);
         // MapLibre boot waits for Blazor circuit or idle (Safari: 1500 ms fallback).
-        Assert.Contains("whenCircuitOrIdle", bundle);
+        Assert.Contains("whenAfterFirstPaint", bundle);
+        Assert.Contains("whenCircuitReady", bundle);
         Assert.Contains("requestIdleCallback", bundle);
         Assert.DoesNotContain("ensureAfterPaint", bundle);
     }

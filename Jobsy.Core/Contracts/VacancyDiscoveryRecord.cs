@@ -79,7 +79,11 @@ public sealed record VacancyDiscoveryRecord(
     string? VacancyWorkContextJson = null,
     string? VacancyCompetencyTargetsJson = null,
     string? VacancyCultureDeltaJson = null,
-    bool VacancyUseInferredCompetencies = true);
+    bool VacancyUseInferredCompetencies = true,
+    /// <summary>Precomputed at index refresh — avoids re-inferring on every match score request.</summary>
+    CompetencyScores? InferredCompetencies = null,
+    /// <summary>Precomputed at index refresh — avoids re-inferring on every match score request.</summary>
+    IReadOnlyList<string>? InferredRiasecTags = null);
 
 /// <summary>Discovery snapshot of one engagement claim (no proof text / URLs).</summary>
 public sealed record VacancyEngagementItem(string ItemId, bool Checked);

@@ -1,0 +1,144 @@
+@page "/leerling/vo-paspoort"
+@layout LeerlingLayout
+@attribute [Authorize(Policy = JobsyPolicies.PupilSession)]
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Components.Leerling
+@using Jobsy.Web.Services
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@Culture["LeerlingPassport.Vo.Form.Title"] · Lobsy</PageTitle>
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (!_enabled)
+{
+    <section class="ll-card">
+        <p class="muted">@Culture["LeerlingPassport.Vo.Form.Skip"]</p>
+        <a class="btn-primary" href="/leerling/droombaan">@Culture["LeerlingPassport.Vo.Form.Skip"]</a>
+    </section>
+}
+else
+{
+    <div class="ll-reis" data-testid="leerling-vo-paspoort">
+        <section class="ll-card">
+            <h1>@Culture["LeerlingPassport.Vo.Form.Title"]</h1>
+            <p class="muted">@Culture["LeerlingPassport.Vo.Form.Lead"]</p>
+
+            <label class="ll-field">
+                <span>@Culture["LeerlingPassport.Vo.Form.Subjects"]</span>
+                <input type="text" @bind="_subjects" placeholder="biologie, tekenen" />
+            </label>
+            <label class="ll-field">
+                <span>@Culture["LeerlingPassport.Vo.Form.Profile"]</span>
+                <select @bind="_profileKey">
+                    <option value="">—</option>
+                    <option value="natuur-gezondheid">Natuur &amp; Gezondheid</option>
+                    <option value="nt">Natuur &amp; Techniek</option>
+                    <option value="economie">Economie</option>
+                    <option value="cultuur-maatschappij">Cultuur &amp; Maatschappij</option>
+                </select>
+            </label>
+            <label class="ll-field">
+                <span>@Culture["LeerlingPassport.Vo.Form.SideJob"]</span>
+                <input type="text" @bind="_sideJob" placeholder="za, max-8" />
+            </label>
+            <label class="ll-field">
+                <span>@Culture["LeerlingPassport.Vo.Form.Travel"]</span>
+                <select @bind="_travelKey">
+                    <option value="">—</option>
+                    <option value="fiets">@Culture["LeerlingPassport.Vo.Travel.Fiets"]</option>
+                    <option value="ov">@Culture["LeerlingPassport.Vo.Travel.Ov"]</option>
+                    <option value="fiets-ov">@Culture["LeerlingPassport.Vo.Travel.FietsOv"]</option>
+                </select>
+            </label>
+            <label class="ll-field">
+                <span>@Culture["LeerlingPassport.Vo.Form.Learn"]</span>
+                <textarea rows="2" @bind="_learningGoals"></textarea>
+            </label>
+            <label class="ll-field">
+                <span>@Culture["LeerlingPassport.Vo.Form.OwnWords"]</span>
+                <textarea rows="3" @bind="_ownWords"></textarea>
+            </label>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="ll-error" role="alert">@_error</p>
+            }
+
+            <div class="ll-result__actions">
+                <a class="btn-secondary" href="/leerling/droombaan">@Culture["LeerlingPassport.Vo.Form.Skip"]</a>
+                <button type="button" class="btn-primary" disabled="@_busy" @onclick="SaveAsync">@Culture["LeerlingPassport.Vo.Form.Save"]</button>
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private bool _loading = true;
+    private bool _enabled;
+    private bool _busy;
+    private string? _error;
+    private string _subjects = "";
+    private string _profileKey = "";
+    private string _sideJob = "";
+    private string _travelKey = "";
+    private string _learningGoals = "";
+    private string _ownWords = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var dto = await Api.GetPupilVoPassportAsync();
+        _enabled = dto?.Enabled == true;
+        if (dto is not null && _enabled)
+        {
+            _subjects = string.Join(", ", dto.FavoriteSubjects);
+            _profileKey = dto.ProfileKey ?? "";
+            _sideJob = string.Join(", ", dto.SideJobAvailability);
+            _travelKey = dto.TravelModeKey ?? "";
+            _learningGoals = string.Join("\n", dto.LearningGoals);
+            _ownWords = dto.OwnWords ?? "";
+        }
+
+        _loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        _busy = true;
+        _error = null;
+        try
+        {
+            var req = new PupilVoPassportSaveRequest(
+                SplitCsv(_subjects),
+                string.IsNullOrWhiteSpace(_profileKey) ? null : _profileKey,
+                SplitCsv(_sideJob),
+                string.IsNullOrWhiteSpace(_travelKey) ? null : _travelKey,
+                string.IsNullOrWhiteSpace(_ownWords) ? null : _ownWords,
+                SplitLines(_learningGoals));
+            var ok = await Api.SavePupilVoPassportAsync(req);
+            if (ok is null)
+            {
+                _error = Culture["Leerling.Reis.ResultPending"];
+                return;
+            }
+
+            Nav.NavigateTo("/leerling/droombaan");
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static IReadOnlyList<string> SplitCsv(string raw)
+        => raw.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+
+    private static IReadOnlyList<string> SplitLines(string raw)
+        => raw.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+}

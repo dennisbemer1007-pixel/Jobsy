@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
@@ -17,6 +18,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
     private readonly IUserLookupService _users;
     private readonly ICompanyCultureLookup _companyCulture;
     private readonly IPlatformFeatureService _features;
+    private readonly CandidateMatchScoreCache _matchCache;
     private readonly ILogger<ProfileVacancyMatchService> _logger;
 
     public ProfileVacancyMatchService(
@@ -25,6 +27,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         IUserLookupService users,
         ICompanyCultureLookup companyCulture,
         IPlatformFeatureService features,
+        CandidateMatchScoreCache matchCache,
         ILogger<ProfileVacancyMatchService> logger)
     {
         _db = db;
@@ -32,6 +35,7 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
         _users = users;
         _companyCulture = companyCulture;
         _features = features;
+        _matchCache = matchCache;
         _logger = logger;
     }
 
@@ -60,87 +64,147 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
     {
         var batch = vacancies as IList<(VacancyDiscoveryRecord Record, int? TravelMinutes)>
                     ?? vacancies.ToList();
-        // End-client CompanyId only (never IntermediaryCompanyId). G absent: clients are companies.
-        var companyIds = batch.Select(v => v.Record.CompanyId).Distinct().ToList();
-        var companyProfiles = await _companyCulture.GetForCompaniesAsync(companyIds, cancellationToken);
+        if (batch.Count == 0)
+        {
+            return new Dictionary<Guid, ProfileVacancyMatch>();
+        }
+
         var platform = await _features.GetAsync(cancellationToken);
         var useCalibrationV1 = platform.MatchCalibrationV1Enabled;
         var employerFit = platform.EmployerFitQuestionnairesEnabled;
-
-        var result = new Dictionary<Guid, ProfileVacancyMatch>();
-        foreach (var (record, travelMinutes) in batch)
+        var result = new Dictionary<Guid, ProfileVacancyMatch>(batch.Count);
+        var toScore = new List<(VacancyDiscoveryRecord Record, int? TravelMinutes)>();
+        foreach (var item in batch)
         {
-            companyProfiles.TryGetValue(record.CompanyId, out var companyProfile);
-            // Per-team override: pillars set → ignore company culture; kernwaarden always from company.
-            var overridesCulture = CulturePillarCatalog.HasProfile(record.CulturePillars);
-            var core = MatchingProfileMapper.BuildInput(record, context.Prefs, travelMinutes, context.AgeYears);
-            var extras = employerFit
-                ? VacancyMatchProfileResolver.ParseExtras(
-                    record.VacancyWorkContextJson,
-                    record.VacancyCompetencyTargetsJson,
-                    record.VacancyCultureDeltaJson,
-                    record.VacancyUseInferredCompetencies)
-                : VacancyMatchExtrasSnapshot.Empty;
-            var resolved = employerFit
-                ? VacancyMatchProfileResolver.Resolve(
-                    record.WorkTypeLabelList,
-                    record.Title,
-                    record.Description,
-                    extras,
-                    overridesCulture ? null : companyProfile?.Culture,
-                    record.CulturePillars)
-                : null;
-            var match = ProfileVacancyMatchCalculator.Calculate(new ProfileVacancyMatchInput
+            if (_matchCache.TryGet(
+                    context.UserId,
+                    context.ProfileRevision,
+                    useCalibrationV1,
+                    employerFit,
+                    item.Record.Id,
+                    out var cached)
+                && cached is not null)
             {
-                VacancyId = record.Id,
-                Core = core,
-                VacancyTitle = record.Title,
-                VacancyDescription = record.Description,
-                WorkTypes = record.WorkTypeLabelList,
-                CandidateRoles = context.Prefs.Roles,
-                CandidateLicenses = context.Prefs.DrivingLicenses,
-                CandidateEducations = context.Prefs.Educations,
-                CandidateEmployerCount = context.Prefs.Employers?.Count ?? 0,
-                RequiredDrivingLicense = record.RequiredDrivingLicense,
-                RequiredEducation = record.RequiredEducation,
-                MinimumEmployers = record.MinimumEmployers,
-                CandidateCompetencies = context.Competencies,
-                VacancyCompetencies = resolved?.VacancyCompetencies ?? VacancyCompetencyProfile.Infer(record),
-                CandidateRiasecTags = context.RiasecTags,
-                CandidateRiasecScores = context.RiasecScores,
-                CareerDeepCompleted = context.CareerDeepCompleted,
-                VacancyRiasecTags = VacancyRiasecProfile.InferTags(record),
-                CareerOccupations = context.CareerOccupations,
-                CulturePillars = record.CulturePillars,
-                CandidateCultureScores = context.CultureScores,
-                CompanyCultureScores = resolved?.EffectiveCulture ?? (overridesCulture ? null : companyProfile?.Culture),
-                CandidateValuesScores = context.ValuesScores,
-                CompanyValuesScores = companyProfile?.Values,
-                CompanyEngagement = companyProfile?.Engagement,
-                CompanyName = record.CompanyName,
-                CompetencyMatchEvidence = context.CompetencyMatchEvidence,
-                CareerMatchEvidence = context.CareerMatchEvidence,
-                CandidateWorkContext = context.CandidateWorkContext,
-                VacancyWorkContext = employerFit ? resolved?.WorkContext : null,
-                VacancyCompetenciesFromEmployer = resolved?.VacancyCompetenciesExplicit ?? false,
-                VacancyCultureFromEmployer = resolved?.CultureExplicit ?? false,
-                VacancyWorkContextFromEmployer = employerFit && resolved?.WorkContext is not null,
-                EmployerFitQuestionnairesEnabled = employerFit
-            }, useCalibrationV1);
-            result[record.Id] = match;
-            if (useCalibrationV1 && match.LegacyTotalPercent is int legacy)
+                result[item.Record.Id] = cached;
+            }
+            else
             {
-                _logger.LogInformation(
-                    "MatchCalibrationV1 compare vacancy={VacancyId} legacy={Legacy} fit={Fit} confidence={Confidence} display={Display}",
-                    record.Id,
-                    legacy,
-                    match.FitRawPercent,
-                    match.ConfidencePercent,
-                    match.TotalPercent);
+                toScore.Add(item);
             }
         }
 
+        if (toScore.Count == 0)
+        {
+            return result;
+        }
+
+        var companyIds = toScore.Select(v => v.Record.CompanyId).Distinct().ToList();
+        var companyProfiles = await _companyCulture.GetForCompaniesAsync(companyIds, cancellationToken);
+        var scored = new ConcurrentDictionary<Guid, ProfileVacancyMatch>();
+        Parallel.ForEach(
+            toScore,
+            new ParallelOptions
+            {
+                CancellationToken = cancellationToken,
+                MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount, 8)
+            },
+            item =>
+            {
+                var match = CalculateMatch(
+                    context,
+                    item.Record,
+                    item.TravelMinutes,
+                    companyProfiles,
+                    useCalibrationV1,
+                    employerFit);
+                scored[item.Record.Id] = match;
+                if (useCalibrationV1 && match.LegacyTotalPercent is int legacy)
+                {
+                    _logger.LogDebug(
+                        "MatchCalibrationV1 compare vacancy={VacancyId} legacy={Legacy} fit={Fit} confidence={Confidence} display={Display}",
+                        item.Record.Id,
+                        legacy,
+                        match.FitRawPercent,
+                        match.ConfidencePercent,
+                        match.TotalPercent);
+                }
+            });
+
+        _matchCache.PutMany(context.UserId, context.ProfileRevision, useCalibrationV1, employerFit, scored);
+        foreach (var kv in scored)
+        {
+            result[kv.Key] = kv.Value;
+        }
+
         return result;
+    }
+
+    private static ProfileVacancyMatch CalculateMatch(
+        ProfileVacancyMatchContext context,
+        VacancyDiscoveryRecord record,
+        int? travelMinutes,
+        IReadOnlyDictionary<Guid, CompanyCultureLookupResult> companyProfiles,
+        bool useCalibrationV1,
+        bool employerFit)
+    {
+        companyProfiles.TryGetValue(record.CompanyId, out var companyProfile);
+        var overridesCulture = CulturePillarCatalog.HasProfile(record.CulturePillars);
+        var core = MatchingProfileMapper.BuildInput(record, context.Prefs, travelMinutes, context.AgeYears);
+        var extras = employerFit
+            ? VacancyMatchProfileResolver.ParseExtras(
+                record.VacancyWorkContextJson,
+                record.VacancyCompetencyTargetsJson,
+                record.VacancyCultureDeltaJson,
+                record.VacancyUseInferredCompetencies)
+            : VacancyMatchExtrasSnapshot.Empty;
+        var resolved = employerFit
+            ? VacancyMatchProfileResolver.Resolve(
+                record.WorkTypeLabelList,
+                record.Title,
+                record.Description,
+                extras,
+                overridesCulture ? null : companyProfile?.Culture,
+                record.CulturePillars)
+            : null;
+        return ProfileVacancyMatchCalculator.Calculate(new ProfileVacancyMatchInput
+        {
+            VacancyId = record.Id,
+            Core = core,
+            VacancyTitle = record.Title,
+            VacancyDescription = record.Description,
+            WorkTypes = record.WorkTypeLabelList,
+            CandidateRoles = context.Prefs.Roles,
+            CandidateLicenses = context.Prefs.DrivingLicenses,
+            CandidateEducations = context.Prefs.Educations,
+            CandidateEmployerCount = context.Prefs.Employers?.Count ?? 0,
+            RequiredDrivingLicense = record.RequiredDrivingLicense,
+            RequiredEducation = record.RequiredEducation,
+            MinimumEmployers = record.MinimumEmployers,
+            CandidateCompetencies = context.Competencies,
+            VacancyCompetencies = resolved?.VacancyCompetencies
+                                  ?? record.InferredCompetencies
+                                  ?? VacancyCompetencyProfile.Infer(record),
+            CandidateRiasecTags = context.RiasecTags,
+            CandidateRiasecScores = context.RiasecScores,
+            CareerDeepCompleted = context.CareerDeepCompleted,
+            VacancyRiasecTags = record.InferredRiasecTags ?? VacancyRiasecProfile.InferTags(record),
+            CareerOccupations = context.CareerOccupations,
+            CulturePillars = record.CulturePillars,
+            CandidateCultureScores = context.CultureScores,
+            CompanyCultureScores = resolved?.EffectiveCulture ?? (overridesCulture ? null : companyProfile?.Culture),
+            CandidateValuesScores = context.ValuesScores,
+            CompanyValuesScores = companyProfile?.Values,
+            CompanyEngagement = companyProfile?.Engagement,
+            CompanyName = record.CompanyName,
+            CompetencyMatchEvidence = context.CompetencyMatchEvidence,
+            CareerMatchEvidence = context.CareerMatchEvidence,
+            CandidateWorkContext = context.CandidateWorkContext,
+            VacancyWorkContext = employerFit ? resolved?.WorkContext : null,
+            VacancyCompetenciesFromEmployer = resolved?.VacancyCompetenciesExplicit ?? false,
+            VacancyCultureFromEmployer = resolved?.CultureExplicit ?? false,
+            VacancyWorkContextFromEmployer = employerFit && resolved?.WorkContext is not null,
+            EmployerFitQuestionnairesEnabled = employerFit
+        }, useCalibrationV1);
     }
 
     private async Task<ProfileVacancyMatchContext?> LoadForUserAsync(
@@ -264,6 +328,13 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             careerDeep);
 
         var candidateWorkContext = CandidateWorkContextProfile.FromPreferences(prefs.WorkPreferences);
+        var profileRevision = CandidateMatchProfileRevision.Compute(
+            user,
+            prefs,
+            competency,
+            career,
+            cultureRow,
+            valuesRow);
 
         return new ProfileVacancyMatchContext
         {
@@ -286,7 +357,8 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                             || valuesResolved.IsProvisional,
             CompetencyMatchEvidence = competencyEvidence,
             CareerMatchEvidence = careerEvidence,
-            OpenForWork = user.OpenForWork
+            OpenForWork = user.OpenForWork,
+            ProfileRevision = profileRevision
         };
     }
 

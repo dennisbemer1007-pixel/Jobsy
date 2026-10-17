@@ -1309,7 +1309,14 @@ public sealed partial class JobsyApiClient
             throw new InvalidOperationException(TryExtractMessage(body) ?? body);
         }
 
-        return await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
+        var saved = await response.Content.ReadFromJsonAsync<PlatformFeatureItem>(cancellationToken: ct);
+        if (saved is null)
+        {
+            throw new InvalidOperationException(
+                "Lege reactie van de API bij opslaan van platforminstellingen.");
+        }
+
+        return saved;
     }
 
     /// <summary>Maintenance switch state for the admin panel (errors 05).</summary>

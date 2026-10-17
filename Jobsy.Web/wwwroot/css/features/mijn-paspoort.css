@@ -459,7 +459,7 @@
 /* —— Tabs —— */
 .passport-tabs {
     position: sticky;
-    inset-block-start: var(--app-header-height, 4.25rem);
+    inset-block-start: 0;
     z-index: var(--z-sticky);
     display: flex;
     flex-wrap: nowrap;
@@ -510,11 +510,24 @@
     mask-image: linear-gradient(to left, transparent, #000 12px, #000 calc(100% - 12px), transparent);
 }
 
-/* Phone: keep the overview above the bottom-right coach. */
+/* Paspoort on phone/tablet: no floating coach (accordion rows stay fully tappable). */
+@media (max-width: 1023px) {
+    .app-shell:has(.passport-page) .lobsy-coach-dock {
+        display: none !important;
+    }
+}
+
+/* Phone: keep scrollable content clear of fixed tab row. */
 @media (max-width: 639px) {
+    .app-shell:has(.passport-page) .app-main {
+        padding-bottom: calc(
+            var(--bottom-nav-h, 4.75rem) + 3.5rem + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
     .passport-page .passport-layout__main {
         padding-bottom: calc(
-            3.25rem + var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px)
+            3.5rem + var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px)
         );
     }
 
@@ -562,6 +575,7 @@
 @media (min-width: 1024px) {
     .passport-tabs,
     [dir="rtl"] .passport-tabs {
+        inset-block-start: var(--app-header-height, 4.25rem);
         flex-wrap: wrap;
         overflow: visible;
         mask-image: none;
@@ -2089,6 +2103,49 @@
     border-block-start: 1px solid var(--border);
 }
 
+.passport-data__body .profile-motivation.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--form-field-gap, 1.125rem);
+    width: 100%;
+    min-width: 0;
+}
+
+.passport-data__body .profile-motivation.profile-form label {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    margin: 0;
+    font-weight: var(--form-label-weight, 600);
+    color: var(--form-label-color, var(--text));
+    line-height: 1.35;
+}
+
+.passport-data__body .profile-motivation.profile-form textarea {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-block-size: 6.5rem;
+    padding: var(--form-input-pad-y, 0.75rem) var(--form-input-pad-x, 0.875rem);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm, 8px);
+    background: var(--surface);
+    color: var(--form-value-color, var(--text));
+    font: inherit;
+    font-weight: var(--form-value-weight, 500);
+    line-height: 1.4;
+    resize: vertical;
+}
+
+.passport-data__body .profile-motivation .profile-address__hint {
+    margin: 0;
+    font-weight: 400;
+    color: var(--muted);
+    font-size: var(--text-sm, 0.875rem);
+    line-height: 1.4;
+}
+
 .profile-radio-row {
     display: flex;
     align-items: flex-start;
@@ -2105,7 +2162,8 @@
     margin-block-end: var(--space-2, 0.5rem);
 }
 
-.shared-with-employers {
+.shared-with-employers,
+.profile-chip-grid:not(.lobsy-choice-grid) {
     display: flex;
     flex-direction: column;
     gap: var(--space-3, 0.75rem);

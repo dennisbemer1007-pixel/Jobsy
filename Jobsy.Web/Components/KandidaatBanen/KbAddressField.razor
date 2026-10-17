@@ -1,7 +1,7 @@
 @inject CultureState Culture
 @using Jobsy.Web.Services
 
-<div class="kb-address @CssClass @(_originSet ? "kb-address--with-clear" : null)">
+<div class="kb-address @CssClass @(_showClear ? "kb-address--with-clear" : null)">
     @if (!string.IsNullOrWhiteSpace(Label))
     {
         <label class="kb-address__label" for="@InputId">@Label</label>
@@ -44,14 +44,17 @@
                 </span>
             </button>
         }
-        @if (_originSet)
+        @if (_showClear)
         {
             <button type="button"
                     class="kb-address__clear"
                     title="@Culture["Common.Clear"]"
                     @onclick="ClearAsync"
                     aria-label="@Culture["Common.Clear"]">
-                @Culture["Common.Clear"]
+                <svg class="kb-address__clear-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                </svg>
             </button>
         }
     </div>
@@ -75,6 +78,8 @@
                     <li id="@OptionId(index)" role="option" aria-selected="@(index == _activeIndex ? "true" : "false")">
                         <button type="button"
                                 class="address-suggestions__item @(index == _activeIndex ? "is-active" : null)"
+                                @onmousedown="@(() => _suppressBlurClose = true)"
+                                @onmousedown:preventDefault
                                 @onclick="() => SelectAsync(suggestion)">
                             @suggestion.Label
                         </button>
@@ -109,9 +114,12 @@
     private bool _originSet;
     private int _activeIndex = -1;
     private bool _focused;
+    private bool _suppressBlurClose;
     private string ListboxId => InputId + "-listbox";
 
     private string OptionId(int index) => InputId + "-opt-" + index;
+
+    private bool _showClear => !string.IsNullOrWhiteSpace(_query);
 
     protected override void OnParametersSet()
     {
@@ -139,16 +147,31 @@
     private async Task OnFocus()
     {
         _focused = true;
-        if (Suggestions.Count > 0 || (_query.Trim().Length >= 3 && Suggesting))
+        if (Suggestions.Count > 0)
         {
             _showSuggestions = true;
             await ShowSuggestionsChanged.InvokeAsync(true);
         }
     }
 
-    private void OnBlur()
+    private async Task OnBlur()
     {
         _focused = false;
+        if (_suppressBlurClose)
+        {
+            _suppressBlurClose = false;
+            return;
+        }
+
+        await Task.Delay(120);
+        if (_focused)
+        {
+            return;
+        }
+
+        _showSuggestions = false;
+        _activeIndex = -1;
+        await ShowSuggestionsChanged.InvokeAsync(false);
     }
 
     private Task LocateAsync() => OnLocate.InvokeAsync();

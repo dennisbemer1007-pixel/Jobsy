@@ -42,7 +42,7 @@
         position: relative;
     }
 
-    .map-pane.is-cluster-open .highlight-carousel--map {
+    .map-pane.is-cluster-open .map-pane__top-chrome {
         visibility: hidden;
         pointer-events: none;
         height: 0 !important;
@@ -641,6 +641,32 @@
 /* The shared coach dock sits bottom-inline-end. On a phone it covers zoom and 3D.
    --lobsy-coach-clear-inline is set by jobsyCoachDock.syncClearance; 80px matches
    the 56px lobster plus its 12px inset and a 12px gap before JS runs. */
+/* Mobile banenkaart: keep +/− adjacent — park compact attribution on the bottom-left. */
+@media (max-width: 899px) {
+    .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib {
+        position: absolute;
+        left: calc(8px - 100vw + 100%);
+        right: auto;
+        top: auto;
+        bottom: 0;
+        margin: 0;
+        float: none;
+        z-index: 4;
+        width: 24px;
+        height: 24px;
+        min-height: 24px;
+        max-width: 24px;
+        padding: 0;
+    }
+
+    .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right > .maplibregl-ctrl-attrib.maplibregl-compact-show {
+        width: auto;
+        height: auto;
+        max-width: min(70vw, 16rem);
+        padding: 2px 28px 2px 8px;
+    }
+}
+
 @media (max-width: 639px) {
     .app-shell:has([data-lobsy-coach]) .job-map .maplibregl-ctrl-bottom-right,
     .app-shell:has([data-lobsy-coach]) .job-map .maplibregl-ctrl-top-right,

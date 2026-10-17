@@ -222,7 +222,7 @@ public sealed class CandidateFullJourneyPlaywrightTests
 
     private static async Task CaptureOnboardingProgressHeaderWhileScrolledAsync(IPage page, string tag)
     {
-        var scroll = page.Locator(".ob-wizard__content").First;
+        var scroll = page.Locator(".app-main, .ob-wizard__content").First;
         if (await scroll.CountAsync() == 0)
         {
             return;

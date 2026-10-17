@@ -130,7 +130,7 @@
 
         @if (!_loading)
         {
-            <DeleteAccountSection />
+            <ProfileDangerZoneSection />
         }
             </ProfileTab>
             <Side>
@@ -148,6 +148,10 @@
         </CascadingValue>
         </CascadingValue>
 </div>
+
+<CandidateProfileResetDialog IsOpen="Editor.ProfileResetOpen"
+                             ShowResearchNote="@(Editor.ResearchConsent?.HasConsent == true)"
+                             OnClose="Editor.CloseProfileReset" />
 
 <UnsubscribeDialog IsOpen="Editor.UnsubscribeOpen"
                    OnClose="Editor.CloseUnsubscribe"

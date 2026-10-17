@@ -9,6 +9,7 @@ using Jobsy.Api.Swagger;
 using Jobsy.Core;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
+using Jobsy.Infrastructure.Data;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Scalar.AspNetCore;
@@ -484,6 +485,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+
+await JobsyDbSeeder.EnsurePassportPdfDnaBlocksColumnAsync(app.Services);
 
 app.Run();
 

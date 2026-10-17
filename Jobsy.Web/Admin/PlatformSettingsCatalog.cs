@@ -210,6 +210,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("PassportPdfDnaBlocksEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "PassportPdfDnaBlocksEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.PassportPdfDnaBlocks.Enabled.Title",
+                DescriptionKey: "AdminSettings.PassportPdfDnaBlocks.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.PassportPdfDnaBlocksEnabled,
+                Write: v => new PlatformFeatureUpdate(PassportPdfDnaBlocksEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
         if (FieldExists("TestsV2Enabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -643,6 +656,7 @@ public static class PlatformSettingsCatalog
         bool? candidatePassportEnabled = null;
         bool? passportPartnersEnabled = null;
         bool? passportPdfV2Enabled = null;
+        bool? passportPdfDnaBlocksEnabled = null;
         bool? testsV2Enabled = null;
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
@@ -691,6 +705,7 @@ public static class PlatformSettingsCatalog
             if (p.CandidatePassportEnabled is not null) candidatePassportEnabled = p.CandidatePassportEnabled;
             if (p.PassportPartnersEnabled is not null) passportPartnersEnabled = p.PassportPartnersEnabled;
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
+            if (p.PassportPdfDnaBlocksEnabled is not null) passportPdfDnaBlocksEnabled = p.PassportPdfDnaBlocksEnabled;
             if (p.TestsV2Enabled is not null) testsV2Enabled = p.TestsV2Enabled;
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
@@ -757,6 +772,7 @@ public static class PlatformSettingsCatalog
             CandidatePassportEnabled: candidatePassportEnabled,
             PassportPartnersEnabled: passportPartnersEnabled,
             PassportPdfV2Enabled: passportPdfV2Enabled,
+            PassportPdfDnaBlocksEnabled: passportPdfDnaBlocksEnabled,
             TestsV2Enabled: testsV2Enabled,
             PhoneVerificationEnabled: phoneVerificationEnabled,
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,

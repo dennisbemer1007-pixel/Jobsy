@@ -166,15 +166,19 @@ public static class UiStringsDiscovery
         Add("Discovery.Rail.LayerOff",
             "Laag {0} eraf", "Layer {0} off", "Warstwa {0} zdjęta", "Stratul {0} jos", "الطبقة {0} انتهت");
         Add("Discovery.Rail.LayersAria",
-            "Oude schaal: {0} van 10 lagen eraf", "Old shell: {0} of 10 layers off", "Stara skorupa: {0} z 10 warstw", "Carapacea veche: {0} din 10 straturi", "الصدفة القديمة: {0} من 10 طبقات");
+            "Voortgang: {0} van 10 stappen afgerond", "Progress: {0} of 10 steps done", "Postęp: {0} z 10 kroków", "Progres: {0} din 10 pași", "التقدم: {0} من 10 خطوات");
         Add("Discovery.Rail.LayersCount",
-            "{0} van 10 lagen eraf", "{0} of 10 layers off", "{0} z 10 warstw", "{0} din 10 straturi", "{0} من 10 طبقات");
+            "{0} van 10 afgerond", "{0} of 10 done", "{0} z 10 gotowych", "{0} din 10 gata", "{0} من 10 منجزة");
         Add("Discovery.Rail.StartCount",
             "10 stappen · ± 12 minuten", "10 steps · ± 12 minutes", "10 kroków · ± 12 minut", "10 pași · ± 12 minute", "10 خطوات · ± 12 دقيقة");
         Add("Discovery.Rail.StartCountShort",
             "10 stappen · ± 12 min", "10 steps · ± 12 min", "10 kroków · ± 12 min", "10 pași · ± 12 min", "10 خطوات · ± 12 د");
         Add("Discovery.Rail.StepCount",
             "Stap {0} van 10", "Step {0} of 10", "Krok {0} z 10", "Pasul {0} din 10", "الخطوة {0} من 10");
+        Add("Discovery.Rail.StepLayersCount",
+            "Stap {0} van 10 · {1} van 10 afgerond", "Step {0} of 10 · {1} of 10 done", "Krok {0} z 10 · {1} z 10 gotowych", "Pasul {0} din 10 · {1} din 10 gata", "الخطوة {0} من 10 · {1} من 10 منجزة");
+        Add("Discovery.Rail.ProgressCount",
+            "{0} van 10 afgerond", "{0} of 10 done", "{0} z 10 gotowych", "{0} din 10 gata", "{0} من 10 منجزة");
         Add("Discovery.Rail.DoneCount",
             "Klaar · 10 van 10 · nieuwe schaal", "Done · 10 of 10 · new shell", "Gotowe · 10 z 10 · nowa skorupa", "Gata · 10 din 10 · carapace nouă", "تم · 10 من 10 · صدفة جديدة");
         Add("Discovery.StepOf",
@@ -229,7 +233,41 @@ public static class UiStringsDiscovery
             "Altă limbă? Alege-o sus în dreapta.",
             "لغة أخرى؟ اخترها أعلى اليمين.");
         Add("Discovery.Start.Cta",
-            "Begin de reis", "Start the journey", "Zacznij podróż", "Începe călătoria", "ابدأ الرحلة");
+            "Start de reis", "Start the journey", "Zacznij podróż", "Începe călătoria", "ابدأ الرحلة");
+        Add("Discovery.Intro.Why",
+            "In een paar korte stappen vul je je paspoort in. Zo zien we beter welk werk bij jou past — en jij snapt wat Lobsy voor je doet.",
+            "In a few short steps you fill in your passport. That helps us see what work fits you — and you know what Lobsy does for you.",
+            "W kilku krótkich krokach uzupełnisz paszport. Dzięki temu lepiej widzimy, jaka praca do Ciebie pasuje — a Ty wiesz, co robi Lobsy.",
+            "În câțiva pași scurți completezi pașaportul. Așa vedem mai bine ce muncă ți se potrivește — și tu înțelegi ce face Lobsy pentru tine.",
+            "في خطوات قصيرة تملأ جوازك. هكذا نرى أفضل أي عمل يناسبك — وأنت تفهم ما يفعله Lobsy من أجلك.");
+        Add("Discovery.Intro.After",
+            "Je kunt stoppen wanneer je wilt; alles wordt bewaard. Klaar? Dan staat je paspoort klaar en kun je matches en je carrière verkennen.",
+            "You can stop anytime; everything is saved. Done? Your passport is ready and you can explore matches and your career.",
+            "Możesz przerwać kiedy chcesz; wszystko jest zapisywane. Gotowe? Paszport czeka i możesz odkrywać dopasowania i karierę.",
+            "Poți opri oricând; totul se salvează. Gata? Pașaportul e pregătit și poți explora potriviri și cariera.",
+            "يمكنك التوقف متى شئت؛ يُحفظ كل شيء. انتهيت؟ جوازك جاهز ويمكنك استكشاف المطابقات ومسارك.");
+        Add("Discovery.Intro.Lobsy",
+            "Lobsy matcht op wie je bent: waarden, cultuur en competenties — niet alleen op cv-trefwoorden. Geen beloftes die we niet kunnen waarmaken.",
+            "Lobsy matches who you are: values, culture and competencies — not just CV keywords. No promises we can’t keep.",
+            "Lobsy dopasowuje to, kim jesteś: wartości, kultura i kompetencje — nie tylko słowa kluczowe z CV. Bez obietnic, których nie dotrzymamy.",
+            "Lobsy potrivește cine ești: valori, cultură și competențe — nu doar cuvinte din CV. Fără promisiuni pe care nu le putem ține.",
+            "Lobsy يطابق من أنت: القيم والثقافة والكفاءات — لا كلمات السيرة فقط. بلا وعود لا نستطيع الوفاء بها.");
+        Add("Discovery.Intro.LightLead",
+            "Je paspoort is klaar — tijd voor nieuwe matches.",
+            "Your passport is ready — time for new matches.",
+            "Paszport gotowy — czas na nowe dopasowania.",
+            "Pașaportul e gata — timp pentru potriviri noi.",
+            "جوازك جاهز — وقت لمطابقات جديدة.");
+        Add("Discovery.Start.LightTime",
+            "klaar", "done", "gotowe", "gata", "تم");
+        Add("Discovery.Rail.StatusDone",
+            "afgerond", "completed", "ukończone", "finalizat", "مكتمل");
+        Add("Discovery.Rail.StatusTodo",
+            "nog te doen", "still to do", "do zrobienia", "de făcut", "متبقٍ");
+        Add("Discovery.Rail.StatusCurrent",
+            "huidige stap", "current step", "bieżący krok", "pasul curent", "الخطوة الحالية");
+        Add("Discovery.Rail.StepName",
+            "Stap {0}: {1}", "Step {0}: {1}", "Krok {0}: {1}", "Pasul {0}: {1}", "الخطوة {0}: {1}");
         Add("Discovery.Step1.Title", "Over jou", "About you", "O Tobie", "Despre tine", "عنك");
         Add("Discovery.Step1.Sub", "Persoonlijke gegevens", "Personal details", "Dane osobowe", "Date personale", "بيانات شخصية");
         Add("Discovery.Step1.PostcodeResolved",
@@ -472,6 +510,8 @@ public static class UiStringsDiscovery
             "Vraag {0} van {1}", "Question {0} of {1}", "Pytanie {0} z {1}", "Întrebarea {0} din {1}", "سؤال {0} من {1}");
         Add("Discovery.TestOf",
             "test {0} van 4", "test {0} of 4", "test {0} z 4", "testul {0} din 4", "اختبار {0} من 4");
+        Add("Discovery.Test.PartOf",
+            "Deel {0} van {1}", "Part {0} of {1}", "Część {0} z {1}", "Partea {0} din {1}", "الجزء {0} من {1}");
 
         Add("Discovery.Shed.EyebrowDone",
             "stap {0} van 10 klaar", "step {0} of 10 done", "krok {0} z 10 gotowy", "pasul {0} din 10 gata", "الخطوة {0} من 10 جاهزة");
@@ -659,6 +699,12 @@ public static class UiStringsDiscovery
             "Zakończ bez testów",
             "Finalizează fără teste",
             "إنهاء بدون اختبارات");
+        Add("Discovery.Rail.PhaseSteps",
+            "{0} stappen", "{0} steps", "{0} kroków", "{0} pași", "{0} خطوات");
+        Add("Discovery.Rail.PhaseOneStep",
+            "1 stap", "1 step", "1 krok", "1 pas", "خطوة واحدة");
+        Add("Discovery.Rail.PhaseDone",
+            "✓ klaar", "✓ done", "✓ gotowe", "✓ gata", "✓ تم");
         Add("Discovery.Rail.DoneCountShort",
             "Klaar · 10 van 10", "Done · 10 of 10", "Gotowe · 10 z 10", "Gata · 10 din 10", "جاهز · 10 من 10");
 

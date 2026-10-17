@@ -81,5 +81,19 @@ internal static class UiStringsReadAloud
             "Czytanie na głos tu nie działa. To urządzenie nie ma głosu dla tego języka.",
             "Citirea cu voce tare nu merge aici. Acest dispozitiv nu are o voce pentru această limbă.",
             "القراءة بصوت عالٍ لا تعمل هنا. لا توجد على هذا الجهاز صوت لهذه اللغة.");
+        Add(
+            "ReadAloud.Loading",
+            "Bezig…",
+            "Loading…",
+            "Ładowanie…",
+            "Se încarcă…",
+            "جارٍ التحميل…");
+        Add(
+            "ReadAloud.Error",
+            "Voorlezen lukt nu even niet. Probeer het opnieuw of lees de tekst zelf.",
+            "Read aloud isn’t working right now. Try again or read the text yourself.",
+            "Czytanie na głos na razie nie działa. Spróbuj ponownie lub przeczytaj sam.",
+            "Citirea cu voce tare nu merge acum. Încearcă din nou sau citește tu.",
+            "القراءة بصوت عالٍ لا تعمل الآن. أعد المحاولة أو اقرأ بنفسك.");
     }
 }

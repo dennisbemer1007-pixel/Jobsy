@@ -295,7 +295,7 @@
                         </p>
                     }
 
-            <p class="detail-card__body">@_vacancy.Description</p>
+            <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
             <p class="travel-hint">
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)

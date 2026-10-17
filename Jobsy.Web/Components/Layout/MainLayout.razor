@@ -17,11 +17,11 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    @if (!_isMatchPage && !_isQuestionnairePage)
+    @if (!_isMatchPage && !_isQuestionnairePage && !_isBanenkaartPage)
     {
         <header class="app-header">
             <div class="app-header__brand">
@@ -58,28 +58,28 @@
             }
             @Body
         </CircuitErrorBoundary>
-        @if (!_isMatchPage && !_isQuestionnairePage)
+        @if (!_isMatchPage && !_isQuestionnairePage && !_isBanenkaartPage)
         {
             <AppFooter />
         }
     </main>
 
-    @if (!_isQuestionnairePage)
+    @if (!_isQuestionnairePage && !_isBanenkaartPage)
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && _isCandidate)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && _isCandidate && !_hideCoachDock)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
-    else if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage)
     {
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage)
     {
         <GratisDnaMerge />
         <PushPermissionBanner />
@@ -97,12 +97,14 @@
     private bool _siteVisitRecorded;
     private bool _hasBottomNav;
     private bool _isMatchPage;
+    private bool _isBanenkaartPage;
     private bool _isQuestionnairePage;
+    private bool _hideCoachDock;
     private bool _isCandidate;
     private bool _suppressInstallBanner;
 
     private bool ShowInstallBanner =>
-        RendererInfo.IsInteractive && !_isMatchPage && !_isQuestionnairePage && !_suppressInstallBanner;
+        RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage && !_suppressInstallBanner;
     private string _homeHref = "/";
 
     protected override void OnInitialized()
@@ -268,12 +270,20 @@
         var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
+        var banenkaart = path.Equals("banenkaart", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("banen", StringComparison.OrdinalIgnoreCase);
         var questionnaire = IsQuestionnairePath(path, relative);
         var suppressInstall = SuppressesInstallBanner(path);
         var changed = false;
         if (_isMatchPage != match)
         {
             _isMatchPage = match;
+            changed = true;
+        }
+
+        if (_isBanenkaartPage != banenkaart)
+        {
+            _isBanenkaartPage = banenkaart;
             changed = true;
         }
 
@@ -294,7 +304,83 @@
             changed = true;
         }
 
+        var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
+                        || path.TrimStart('/').Equals("candidate/start", StringComparison.OrdinalIgnoreCase);
+        if (_hideCoachDock != hideCoach)
+        {
+            _hideCoachDock = hideCoach;
+            changed = true;
+        }
+
         return changed;
+    }
+
+    /// <summary>Hide sticky LobsyCoach when the journey page already shows its own mascot (desktop grid or mobile dock / inline).</summary>
+    public static bool IsDiscoveryQuestionCoachHidden(string path, string relativeUri)
+    {
+        path = path.TrimStart('/');
+        if (!path.Equals("candidate/ontdekkingsreis", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!TryGetJourneyStap(relativeUri, out var stap) || string.IsNullOrWhiteSpace(stap))
+        {
+            return false;
+        }
+
+        if (stap.Equals("start", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n)
+            && n is >= 7 and <= 10)
+        {
+            return true;
+        }
+
+        if (int.TryParse(stap, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var step)
+            && step is >= 1 and <= 6)
+        {
+            return true;
+        }
+
+        return stap.Equals("shed", StringComparison.OrdinalIgnoreCase)
+               || stap.Equals("klaar", StringComparison.OrdinalIgnoreCase)
+               || stap.Equals("toestemming", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryGetJourneyStap(string relativeUri, out string stap)
+    {
+        stap = "";
+        var qIdx = relativeUri.IndexOf('?', StringComparison.Ordinal);
+        if (qIdx < 0)
+        {
+            return false;
+        }
+
+        var query = relativeUri[(qIdx + 1)..];
+        var hash = query.IndexOf('#', StringComparison.Ordinal);
+        if (hash >= 0)
+        {
+            query = query[..hash];
+        }
+
+        foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=', StringComparison.Ordinal);
+            var key = eq < 0 ? part : part[..eq];
+            if (!key.Equals("stap", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            stap = eq < 0 ? "" : Uri.UnescapeDataString(part[(eq + 1)..]).Trim();
+            return !string.IsNullOrWhiteSpace(stap);
+        }
+
+        return false;
     }
 
     public static bool SuppressesInstallBanner(string path)

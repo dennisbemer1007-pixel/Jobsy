@@ -161,6 +161,19 @@ a {
     min-width: 0;
 }
 
+@media (min-width: 1024px) {
+    .app-header {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background-color: var(--pearl-shine);
+        background-image: var(--pearl-gradient);
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.7) inset,
+            0 2px 10px rgba(15, 45, 92, 0.06);
+    }
+}
+
 .app-header .brand-tagline {
     color: color-mix(in srgb, var(--brand) 55%, var(--muted));
 }
@@ -1527,6 +1540,67 @@ html[dir="rtl"] .account-menu__panel {
     font-size: 1.15rem;
 }
 
+.profile-danger-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem 1.35rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.profile-danger-zone__subtitle {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.profile-danger-zone__lead {
+    margin: 0 0 0.85rem;
+    max-width: 42rem;
+}
+
+.profile-danger-zone__block--delete {
+    padding-top: 0.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--danger) 18%, var(--border));
+}
+
+.profile-danger-zone__divider {
+    margin: 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.profile-reset-modal__note {
+    margin: 0.75rem 0 0;
+    font-size: 0.92rem;
+}
+
+.profile-reset-modal__note--research {
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--warn-soft);
+    color: var(--text);
+}
+
+.profile-reset-modal__confirm {
+    display: block;
+    margin-top: 1rem;
+}
+
+.profile-reset-modal__confirm .apply-code-field__input {
+    width: 100%;
+    margin-top: 0.35rem;
+}
+
+.profile-reset-modal__actions {
+    margin-top: 1rem;
+}
+
 .unsubscribe-modal label {
     display: block;
     margin-top: 0.35rem;
@@ -1576,6 +1650,47 @@ html[dir="rtl"] .account-menu__panel {
     overflow-y: auto;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
+}
+
+/* Onboarding wizard: scroll inside step content; action bar stays below (not position:fixed in .app-main). */
+@media (max-width: 1023px) {
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .app-main {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard,
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard__layout {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard__main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .app-main > * {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard__content {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
+    }
 }
 
 /* Side-gutter logos removed for a quieter desktop chrome. */
@@ -1920,13 +2035,7 @@ html[dir="rtl"] .account-menu__panel {
     background: var(--accent-hover);
 }
 
-/* Desktop: inline filter bar only — hide mobile bottom sheet */
-@media (min-width: 769px) {
-    .filter-sheet-backdrop,
-    .filter-sheet {
-        display: none !important;
-    }
-}
+/* Filter drawer: mobile bottom sheet + desktop overlay (variant B filterlade). */
 
 .visually-hidden {
     position: absolute;
@@ -1945,7 +2054,14 @@ html[dir="rtl"] .account-menu__panel {
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    padding: 0.75rem 1rem 0.25rem;
+    padding: 0.75rem 1.5rem 0.25rem;
+}
+
+.results-meta__actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .results-meta__count {
@@ -2144,6 +2260,20 @@ html[dir="rtl"] .account-menu__panel {
     inset: 0;
     z-index: 80;
     background: rgba(15, 23, 42, 0.45);
+}
+
+.jobsy-discovery:not(.filters-open) .filter-sheet-backdrop.kb-filter-drawer-backdrop {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 200ms ease;
+}
+
+.jobsy-discovery.filters-open .filter-sheet-backdrop.kb-filter-drawer-backdrop {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 200ms ease;
 }
 
 .filter-sheet {
@@ -2553,6 +2683,85 @@ html[dir="rtl"] .account-menu__panel {
     .app-shell:has(.jobsy-discovery.filters-open) .cookie-consent {
         display: none !important;
     }
+}
+
+.app-shell:has(.jobsy-discovery.filters-open) .lobsy-watermarks {
+    display: none !important;
+}
+
+@media (min-width: 900px) {
+    /* Sheet stays in DOM for perf; match pre-variant-B behaviour when closed (not in DOM). */
+    .jobsy-discovery:not(.filters-open) .filter-sheet.kb-filter-drawer {
+        display: none;
+    }
+
+    .app-shell:has(.jobsy-discovery.filters-open) .app-main {
+        z-index: 45;
+    }
+
+    .jobsy-discovery.filters-open .filter-sheet-backdrop.kb-filter-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 85;
+        background: rgba(15, 23, 42, 0.35);
+    }
+
+    .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+        position: fixed;
+        z-index: 90;
+        left: 0;
+        top: var(--app-header-height, 4.25rem);
+        bottom: 0;
+        width: min(42vw, 520px);
+        max-width: 100%;
+        height: calc(100dvh - var(--app-header-height, 4.25rem));
+        max-height: calc(100dvh - var(--app-header-height, 4.25rem));
+        border-radius: 0;
+        box-shadow: 8px 0 32px rgba(15, 45, 92, 0.12);
+    }
+}
+
+@media (max-width: 899px) {
+    .jobsy-discovery .filter-sheet.kb-filter-drawer {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: min(88dvh, 720px);
+        max-height: min(88dvh, 720px);
+        border-radius: 16px 16px 0 0;
+        transform: translate3d(0, 100%, 0);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        will-change: transform, opacity;
+        transition: transform 220ms ease, opacity 220ms ease;
+    }
+
+    .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+        transform: translate3d(0, 0, 0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .filter-sheet.kb-filter-drawer::before {
+        content: "";
+        display: block;
+        width: 40px;
+        height: 4px;
+        margin: 8px auto 4px;
+        border-radius: 999px;
+        background: var(--border);
+        flex-shrink: 0;
+    }
+}
+
+.filter-sheet__active-count {
+    margin-inline-start: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--muted);
 }
 
 .filter-sheet .filter-branches__options {
@@ -3514,13 +3723,40 @@ html[dir="rtl"] .account-menu__panel {
     height: 100%;
 }
 
-.map-pane > .highlight-carousel--map {
+.map-pane__top-chrome {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     z-index: 3;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.map-pane__top-chrome > .highlight-carousel--map,
+.map-pane__top-chrome > .map-legend {
     pointer-events: auto;
+}
+
+.map-pane__top-chrome .highlight-carousel--map {
+    position: static;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+    padding-inline-end: 0;
+    overflow: hidden;
+}
+
+.map-pane__top-chrome .map-legend {
+    position: static;
+    flex: 0 0 auto;
+    align-self: center;
+    margin: 0.55rem 0.55rem 0 0;
+    z-index: 1;
+    max-width: min(12rem, 40vw);
 }
 
 .job-map-placeholder {
@@ -3564,8 +3800,12 @@ html[dir="rtl"] .account-menu__panel {
     .jobsy-discovery:not(.jobsy-discovery--branch) .map-stage,
     .jobsy-discovery:not(.jobsy-discovery--branch) #job-map,
     .jobsy-discovery:not(.jobsy-discovery--branch) .job-map {
-        min-height: 70vh;
+        min-height: 0;
         width: 100%;
+    }
+
+    .app-shell:has(.jobsy-discovery) .app-footer {
+        display: none;
     }
 }
 
@@ -3631,7 +3871,101 @@ html[dir="rtl"] .account-menu__panel {
 /* Keep zoom + 3D above the locate button and out from under the featured carousel. */
 .job-map .maplibregl-ctrl-bottom-right {
     bottom: 58px;
-    right: 0;
+    right: 10px;
+}
+
+.jobsy-discovery .map-stage .map-legend {
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 6;
+}
+
+.jobsy-discovery .map-pane__top-chrome .map-legend {
+    top: auto;
+    right: auto;
+}
+
+.app-shell:has(.jobsy-discovery) .feedback-widget__tab--edge {
+    display: none !important;
+}
+
+@media (min-width: 900px) {
+    html:not(.cookie-consent-known) .jobsy-discovery.filters-open .filter-sheet.kb-filter-drawer {
+        height: calc(100dvh - var(--app-header-height, 4.25rem) - var(--cookie-bar-h, 3.75rem));
+        max-height: calc(100dvh - var(--app-header-height, 4.25rem) - var(--cookie-bar-h, 3.75rem));
+    }
+
+    .app-shell--candidate:has(.jobsy-discovery) .bottom-nav {
+        display: none !important;
+    }
+
+    .app-shell--candidate:has(.jobsy-discovery) .app-main,
+    .app-shell--candidate.has-bottom-nav:has(.jobsy-discovery) .app-main {
+        padding-bottom: 0 !important;
+    }
+
+    .app-shell:has(.jobsy-discovery) .lobsy-coach-dock {
+        display: none !important;
+    }
+
+    .jobsy-discovery .map-stage {
+        overflow: visible;
+    }
+
+    .jobsy-discovery .map-stage .kb-travel-legend {
+        inset-inline-start: 0.75rem;
+        max-width: min(14rem, calc(100% - 5rem));
+        max-height: calc(100% - 3.5rem);
+        overflow: hidden;
+        bottom: 2.75rem;
+    }
+
+    html:not(.cookie-consent-known) .jobsy-discovery .map-stage .kb-travel-legend {
+        bottom: calc(var(--cookie-bar-h, 3.75rem) + 0.5rem);
+        max-height: calc(100% - var(--cookie-bar-h, 3.75rem) - 1.25rem);
+    }
+
+    .job-map .maplibregl-ctrl-bottom-right {
+        bottom: 58px;
+        right: 10px;
+    }
+
+    html:not(.cookie-consent-known) .job-map .maplibregl-ctrl-bottom-right {
+        bottom: calc(var(--cookie-bar-h, 3.75rem) + 58px);
+    }
+}
+
+@media (min-width: 1024px) {
+    .app-shell--candidate:has(.jobsy-discovery) .bottom-nav {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
+
+@media (max-width: 899px) {
+    .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right {
+        bottom: calc(110px + var(--jobsy-map-mobile-clearance, 0px));
+        right: 8px;
+    }
+
+    .jobsy-discovery.show-map .job-map-locate {
+        bottom: calc(58px + var(--jobsy-map-mobile-clearance, 0px));
+        right: 8px;
+    }
+
+    .jobsy-discovery.show-map .map-stage .map-legend {
+        top: 0.55rem;
+        right: 0.55rem;
+    }
+
+    .jobsy-discovery.show-map .map-stage .map-legend {
+        top: calc(0.55rem + var(--jobsy-map-mobile-clearance-top, 0px));
+    }
+
+    .jobsy-discovery.show-map .map-pane__top-chrome .map-legend {
+        margin-top: calc(0.55rem + var(--jobsy-map-mobile-clearance-top, 0px));
+    }
 }
 
 .job-map-style-switch {
@@ -7478,17 +7812,35 @@ button.bottom-nav__item {
         display: none;
     }
 
+    /* Candidates have no werkgever-style sidebar; keep primary nav on desktop too. */
+    .app-shell--candidate .bottom-nav {
+        display: flex;
+    }
+
     .app-shell.has-bottom-nav .app-main,
     .app-shell:has(.bottom-nav) .app-main {
         padding-bottom: 0;
+    }
+
+    .app-shell--candidate.has-bottom-nav .app-main,
+    .app-shell--candidate:has(.bottom-nav) .app-main {
+        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant.has-bottom-nav {
         bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
     }
 
+    .app-shell--candidate .lobsy-assistant.has-bottom-nav {
+        bottom: calc(var(--bottom-nav-h, 4.75rem) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+
     .feedback-widget.has-bottom-nav {
         bottom: 1rem;
+    }
+
+    .app-shell--candidate .feedback-widget.has-bottom-nav {
+        bottom: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
     }
 }
 
@@ -13550,6 +13902,15 @@ html.cookie-consent-known .cookie-consent {
     }
 }
 
+.map-pane__top-chrome .map-legend {
+    position: static;
+    inset: auto;
+    top: auto;
+    right: auto;
+    bottom: auto;
+    left: auto;
+}
+
 /* Geschikt voor 65+ label */
 :root {
     --senior65-color: #5B21B6;
@@ -13732,7 +14093,8 @@ html.cookie-consent-known .cookie-consent {
     z-index: 1;
     max-width: 44rem;
     padding: clamp(2.5rem, 8vw, 5.5rem) clamp(1.25rem, 4vw, 3rem) clamp(2.75rem, 7vw, 4.5rem);
-    animation: wl-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    /* forwards only: `both` hid copy at opacity 0 before first paint (Playwright / slow CSS). */
+    animation: wl-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .wl-hero__brand {
@@ -14252,11 +14614,9 @@ html.cookie-consent-known .cookie-consent {
 
 @keyframes wl-rise {
     from {
-        opacity: 0;
         transform: translate3d(0, 1.25rem, 0);
     }
     to {
-        opacity: 1;
         transform: translate3d(0, 0, 0);
     }
 }
@@ -15685,6 +16045,7 @@ html.cookie-consent-known .cookie-consent {
     font-size: 0.75rem;
 }
 
+.availability-matrix__cell,
 .profile-page--candidate .availability-matrix__cell {
     display: flex;
     flex-direction: row;
@@ -15701,6 +16062,37 @@ html.cookie-consent-known .cookie-consent {
     font-weight: 500;
 }
 
+.availability-matrix__cell--btn {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    touch-action: manipulation;
+    color: var(--text);
+}
+
+.availability-matrix--touch .availability-matrix__cell--btn {
+    min-height: 3rem;
+}
+
+.availability-matrix__mark {
+    color: inherit;
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.availability-matrix__cell--btn.is-on {
+    background: var(--brand);
+    border-color: var(--brand-deep, var(--brand));
+    color: #fff;
+}
+
+.availability-matrix__cell--btn:not(.is-on) {
+    background: var(--surface);
+    border-color: color-mix(in srgb, var(--border) 88%, transparent);
+    color: transparent;
+}
+
 .availability-matrix__cell input {
     width: 1.15rem;
     height: 1.15rem;
@@ -15708,7 +16100,7 @@ html.cookie-consent-known .cookie-consent {
     accent-color: var(--brand);
 }
 
-.availability-matrix__cell.is-on {
+.availability-matrix__cell.is-on:not(.availability-matrix__cell--btn) {
     background: color-mix(in srgb, var(--brand) 14%, var(--surface));
     border-color: var(--brand);
 }
@@ -19948,13 +20340,41 @@ html:not(.cookie-consent-known) .app-shell:has(.bottom-nav) .app-main {
     );
 }
 
-/* Banenkaart: map stays flush with bottom-nav; cookie clearance is on scrollable inner panes. */
+/* Banenkaart: no page scroll — reserve cookie space on map controls, not app-main padding. */
+html:not(.cookie-consent-known) body:has(.jobsy-discovery),
+html:not(.cookie-consent-known) .app-shell:has(.jobsy-discovery) .app-main {
+    padding-bottom: 0;
+}
+
+html:not(.cookie-consent-known) .app-shell:has(.jobsy-discovery) {
+    height: calc(100dvh - var(--cookie-bar-h, 3.75rem));
+    max-height: calc(100dvh - var(--cookie-bar-h, 3.75rem));
+}
+
 @media (max-width: 1024px) {
-    html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {
-        padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery),
+    html:not(.cookie-consent-known) .app-shell:has(.bottom-nav):has(.jobsy-discovery) {
+        height: calc(
+            100dvh - var(--cookie-bar-h, 4.5rem) - var(--bottom-nav-h, 4.75rem)
+        );
+        max-height: calc(
+            100dvh - var(--cookie-bar-h, 4.5rem) - var(--bottom-nav-h, 4.75rem)
+        );
     }
-    html:not(.cookie-consent-known) .app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main {
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    html:not(.cookie-consent-known) .jobsy-discovery {
+        --jobsy-map-mobile-clearance: var(--cookie-bar-h, 4.5rem);
+    }
+
+    html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main,
+    html:not(.cookie-consent-known) .app-shell:has(.bottom-nav):has(.jobsy-discovery) .app-main {
+        padding-bottom: 0;
+    }
+}
+
+@media (min-width: 1025px) {
+    html:not(.cookie-consent-known) .jobsy-discovery {
+        --jobsy-map-mobile-clearance: 0px;
     }
 }
 
@@ -20225,6 +20645,32 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     color: var(--brand-deep);
 }
 
+.read-aloud__error {
+    margin: 0.35rem 0 0;
+    max-width: 22rem;
+    font-size: var(--text-sm, 0.875rem);
+    color: var(--warn, var(--danger));
+    line-height: 1.35;
+}
+
+.ob-wizard__postcode-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.ob-wizard__postcode-row input {
+    flex: 1 1 8rem;
+    min-width: 0;
+}
+
+.ob-wizard__geo {
+    flex: none;
+    white-space: nowrap;
+}
+
 .read-aloud__icon {
     font-size: 0.85rem;
 }
@@ -20324,6 +20770,31 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 .app-shell.has-bottom-nav .lobsy-coach-dock,
 .app-shell:has(.bottom-nav) .lobsy-coach-dock {
     bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 639px) {
+    /* Sticky test footers keep Volgende on the inline end; coach moves to inline start. */
+    .app-shell:has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock {
+        inset-inline-end: auto;
+        inset-inline-start: max(12px, env(safe-area-inset-left, 0px));
+        align-items: flex-start;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock,
+    .app-shell:not(.has-bottom-nav):has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock {
+        bottom: calc(var(--sticky-footer-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell:has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock {
+        inset-inline-end: auto;
+        inset-inline-start: max(12px, env(safe-area-inset-left, 0px));
+        align-items: flex-start;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock,
+    .app-shell:not(.has-bottom-nav):has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock {
+        bottom: calc(var(--sticky-footer-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 .lobsy-coach-dock--tip-above {
@@ -20757,7 +21228,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 @media (max-width: 480px) {
     .app-shell:has([data-lobsy-coach]) main :is(
         a,
-        button,
+        button:not(.lobsy-choice-tile):not(.notifications-page__item-btn),
         input,
         textarea,
         select,

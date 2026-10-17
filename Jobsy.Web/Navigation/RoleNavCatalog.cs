@@ -322,6 +322,16 @@ public static class RoleNavCatalog
         return "/home";
     }
 
+    public static string NotificationsHrefFor(ClaimsPrincipal user)
+    {
+        if (RoleClaimMatching.HasAnyRole(user, JobsyRoles.EmployerRoles))
+        {
+            return EmployerLinks.Notifications;
+        }
+
+        return "/notifications";
+    }
+
     public static string NormalizePath(string relativePath)
     {
         var path = relativePath.Split('?', 2)[0].Split('#', 2)[0].Trim('/');

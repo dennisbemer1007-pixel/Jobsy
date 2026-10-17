@@ -146,7 +146,7 @@
                                 }
                                 else if (section.Id == "delete")
                                 {
-                                    <DeleteAccountSection />
+                                    <ProfileDangerZoneSection />
                                 }
                             </div>
                         }
@@ -181,6 +181,10 @@
         </CascadingValue>
     }
 </div>
+
+<CandidateProfileResetDialog IsOpen="Editor.ProfileResetOpen"
+                             ShowResearchNote="@(Editor.ResearchConsent?.HasConsent == true)"
+                             OnClose="Editor.CloseProfileReset" />
 
 <UnsubscribeDialog IsOpen="Editor.UnsubscribeOpen"
                    OnClose="Editor.CloseUnsubscribe"

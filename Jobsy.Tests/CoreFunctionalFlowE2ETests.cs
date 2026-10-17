@@ -296,13 +296,13 @@ public class CoreFunctionalFlowE2ETests
         Assert.Contains("error=session-expired", expiredLocation, StringComparison.Ordinal);
         Assert.Contains("returnUrl=", expiredLocation, StringComparison.Ordinal);
 
-        // Restore default 30 minutes and confirm activity within window stays signed in.
+        // Restore default idle window and confirm activity within window stays signed in.
         await platform.UpdateAsync(new PlatformFeatureUpdate(
             VacancyContentModerationEnabled: true,
             AuthenticatorEnabled: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
-            SessionInactivityTimeoutMinutes: 30));
+            SessionInactivityTimeoutMinutes: SessionSecurityRules.DefaultInactivityTimeoutMinutes));
 
         var activeHttp = CreateAuthedContext("/admin/settings", "admin@jobsy.local");
         SessionActivityCookie.Stamp(activeHttp, DateTimeOffset.UtcNow.AddMinutes(-10));

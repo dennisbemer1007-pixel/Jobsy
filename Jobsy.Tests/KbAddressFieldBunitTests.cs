@@ -49,6 +49,32 @@ public class KbAddressFieldBunitTests : BunitContext
     }
 
     [Fact]
+    public void Clear_button_hidden_when_query_empty_even_if_origin_set()
+    {
+        var cut = Render<KbAddressField>(ps => ps
+            .Add(p => p.InputId, "test-address-clear")
+            .Add(p => p.Query, "")
+            .Add(p => p.Suggestions, Array.Empty<AddressSuggestion>())
+            .Add(p => p.OriginSet, true)
+            .Add(p => p.ShowLocate, true));
+
+        Assert.Empty(cut.FindAll("button.kb-address__clear"));
+    }
+
+    [Fact]
+    public void Clear_button_visible_when_query_has_text()
+    {
+        var cut = Render<KbAddressField>(ps => ps
+            .Add(p => p.InputId, "test-address-clear2")
+            .Add(p => p.Query, "2671 GB Naaldwijk")
+            .Add(p => p.Suggestions, Array.Empty<AddressSuggestion>())
+            .Add(p => p.OriginSet, true)
+            .Add(p => p.ShowLocate, true));
+
+        Assert.NotEmpty(cut.FindAll("button.kb-address__clear"));
+    }
+
+    [Fact]
     public void Renders_geo_button_and_fld_field_structure()
     {
         var cut = Render<KbAddressField>(ps => ps
@@ -62,7 +88,7 @@ public class KbAddressFieldBunitTests : BunitContext
 
         Assert.NotNull(cut.Find(".kb-address__field input"));
         Assert.NotNull(cut.Find("button.kb-address__geo"));
-        Assert.NotNull(cut.Find("button.kb-address__clear"));
+        Assert.Empty(cut.FindAll("button.kb-address__clear"));
         Assert.Equal("combobox", cut.Find("input").GetAttribute("role"));
     }
 

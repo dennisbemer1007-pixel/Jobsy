@@ -18,17 +18,13 @@ public class AccessibilityGuardTests
         Assert.DoesNotContain("aria-pressed=\"@_myVacanciesOnly\"", discovery);
         Assert.DoesNotContain("aria-busy=\"@_locating\"", discovery);
 
-        Assert.Contains("aria-controls=\"discovery-filters-desktop\"", discovery);
         Assert.Contains("aria-controls=\"@(_filtersOpen ? \"discovery-filters\" : null)\"", discovery);
 
-        var panelAt = discovery.IndexOf("id=\"discovery-filters-desktop\"", StringComparison.Ordinal);
-        Assert.True(panelAt > 0);
-        var panelHead = discovery[Math.Max(0, panelAt - 180)..Math.Min(discovery.Length, panelAt + 220)];
-        // Desktop filter bar stays in the DOM and is always visible (Zoeken CTA + inline filters).
-        // Mobile uses the filter sheet; do not wrap the desktop panel in @if (_filtersOpen).
-        Assert.DoesNotContain("@if (_filtersOpen)", panelHead);
-        Assert.DoesNotContain("hidden=\"@(!_filtersOpen)\"", panelHead);
-        Assert.Contains("aria-hidden=\"false\"", panelHead);
+        var sheetAt = discovery.IndexOf("id=\"discovery-filters\"", StringComparison.Ordinal);
+        Assert.True(sheetAt > 0);
+        Assert.DoesNotContain("@if (_filtersOpen)", discovery);
+        Assert.Contains("data-testid=\"kb-filter-sheet\"", discovery);
+        Assert.Contains("aria-hidden=\"@(_filtersOpen ? \"false\" : \"true\")\"", discovery);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
         Assert.Contains(".filter-bar--desktop[hidden]", css);

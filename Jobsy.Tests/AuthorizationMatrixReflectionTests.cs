@@ -59,6 +59,7 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("PrivacyController", "RequestUnsubscribe", "Own unsubscribe request"),
         ("PrivacyController", "ConfirmUnsubscribe", "Own unsubscribe confirm"),
         ("PrivacyController", "DeleteAccount", "Own account delete"),
+        ("PrivacyController", "ResetCandidateProfile", "Own candidate profile reset"),
         ("DashboardController", "Refresh", "Refresh own role dashboard cache"),
         ("AssistantController", "Chat", "In-app assistant (no tenant mutate)"),
         ("CandidateActionsController", "SetUnavailable", "Own availability (token)"),

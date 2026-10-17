@@ -1,3 +1,5 @@
+using Jobsy.Core.Options;
+
 namespace Jobsy.Core.Rules;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace Jobsy.Core.Rules;
 /// </summary>
 public static class SessionSecurityRules
 {
-    public const int DefaultInactivityTimeoutMinutes = 30;
+    public const int DefaultInactivityTimeoutMinutes = SessionAuthDefaults.InactivityTimeoutMinutes;
 
     public const int MinInactivityTimeoutMinutes = 5;
 

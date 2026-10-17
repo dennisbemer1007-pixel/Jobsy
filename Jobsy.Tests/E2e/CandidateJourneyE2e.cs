@@ -9,6 +9,7 @@ using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Core.ValueObjects;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Security;
@@ -431,6 +432,157 @@ public static class CandidateJourneyE2e
         }
 
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>Ensures seeded demo users can open discovery mini-tests (Playwright / local screenshots).</summary>
+    public static async Task EnsureTestAiConsentForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        user.TestAiConsentAt ??= DateTime.UtcNow;
+        user.TestAiConsentVersion = PrivacyConstants.CurrentConsentVersion;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Clears career (step 8) Quick-Scan answers so the journey question UI shows open likert items.</summary>
+    public static async Task ResetDemoCareerInterestsForE2eAsync(string candidateEmail)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var rows = await db.CandidateCareerInterests.Where(c => c.UserId == user.Id).ToListAsync();
+        if (rows.Count > 0)
+        {
+            db.CandidateCareerInterests.RemoveRange(rows);
+        }
+
+        var adjustments = await db.CandidateAssessmentAdjustments
+            .Where(a => a.UserId == user.Id && a.Kind == AssessmentKind.Career)
+            .ToListAsync();
+        if (adjustments.Count > 0)
+        {
+            db.CandidateAssessmentAdjustments.RemoveRange(adjustments);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Sets onboarding step events so the rail shows honest completion up to <paramref name="completedThrough"/>.</summary>
+    public static async Task SetDiscoveryJourneyStepsForE2eAsync(
+        string candidateEmail,
+        int completedThrough,
+        int currentStep)
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn) || string.IsNullOrWhiteSpace(candidateEmail))
+        {
+            return;
+        }
+
+        completedThrough = Math.Clamp(completedThrough, 0, OnboardingWizardCatalog.V3StepCount);
+        currentStep = Math.Clamp(currentStep, 1, OnboardingWizardCatalog.V3StepCount);
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = candidateEmail.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var onboarding = await db.CandidateOnboardings.FirstOrDefaultAsync(o => o.UserId == user.Id);
+        if (onboarding is null)
+        {
+            onboarding = new CandidateOnboarding
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                WizardVersion = OnboardingWizardCatalog.WizardVersionV3,
+                StartedAtUtc = DateTime.UtcNow.AddDays(-1),
+                Source = "e2e-rail-fixture"
+            };
+            db.CandidateOnboardings.Add(onboarding);
+        }
+
+        var version = OnboardingWizardCatalog.WizardVersionV3;
+        var json = "[]";
+        var baseTime = DateTime.UtcNow.AddHours(-2);
+        for (var step = 1; step <= completedThrough; step++)
+        {
+            json = OnboardingStepAnalytics.MarkStarted(json, step, baseTime.AddMinutes(step), version);
+            json = OnboardingStepAnalytics.MarkCompleted(json, step, baseTime.AddMinutes(step + 1), version);
+        }
+
+        onboarding.StepsJson = json;
+        onboarding.CurrentStep = currentStep;
+        onboarding.WizardVersion = version;
+        onboarding.FinishReached = false;
+        onboarding.CompletedAtUtc = null;
+        onboarding.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Step 2 (Aan de kust): step 1 afgerond, rail toont ingeklapte fases.</summary>
+    public static async Task PrepareDiscoveryCoastStepForE2eAsync(string candidateEmail)
+    {
+        await SetDiscoveryJourneyStepsForE2eAsync(candidateEmail, completedThrough: 1, currentStep: 2);
+    }
+
+    /// <summary>Arbitrary onboarding step with honest prior-step completion for E2E screenshots.</summary>
+    public static Task PrepareDiscoveryStepForE2eAsync(string candidateEmail, int step)
+        => SetDiscoveryJourneyStepsForE2eAsync(
+            candidateEmail,
+            completedThrough: Math.Max(0, step - 1),
+            currentStep: Math.Clamp(step, 1, OnboardingWizardCatalog.V3StepCount));
+
+    /// <summary>Consent + cleared answers for discovery journey step 7–10 question screenshots.</summary>
+    public static async Task PrepareDiscoveryQuestionScreenForE2eAsync(string candidateEmail, int step = 8)
+    {
+        await EnsureTestAiConsentForE2eAsync(candidateEmail);
+        await SetDiscoveryJourneyStepsForE2eAsync(candidateEmail, completedThrough: step - 1, currentStep: step);
+        switch (step)
+        {
+            case 7:
+                await ResetDemoCompetencyForE2eAsync(candidateEmail);
+                break;
+            case 8:
+                await ResetDemoCareerInterestsForE2eAsync(candidateEmail);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(step), step, "Only steps 7–8 are supported for E2E question fixtures.");
+        }
     }
 
     /// <summary>

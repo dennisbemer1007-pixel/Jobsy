@@ -1895,6 +1895,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.CandidatePassportEnabled).HasDefaultValue(true);
             entity.Property(e => e.PassportPartnersEnabled).HasDefaultValue(false);
             entity.Property(e => e.PassportPdfV2Enabled).HasDefaultValue(false);
+            entity.Property(e => e.PupilPassportV2Enabled).HasDefaultValue(false);
+            entity.Property(e => e.StudentPassportEnabled).HasDefaultValue(false);
+            entity.Property(e => e.PassportPdfDnaBlocksEnabled).HasDefaultValue(true);
             entity.Property(e => e.TestsV2Enabled).HasDefaultValue(false);
             entity.Property(e => e.PhoneVerificationEnabled).HasDefaultValue(false);
             entity.Property(e => e.WhatsAppRemindersEnabled).HasDefaultValue(false);
@@ -2915,6 +2918,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.LikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DislikeOtherWord).HasMaxLength(24);
             entity.Property(e => e.DreamJobKey).HasMaxLength(64);
+            entity.Property(e => e.VoProfileKey).HasMaxLength(64);
+            entity.Property(e => e.VoTravelModeKey).HasMaxLength(32);
+            entity.Property(e => e.VoOwnWords).HasMaxLength(2000);
             entity.HasOne(e => e.PupilCode)
                 .WithOne(c => c.Progress)
                 .HasForeignKey<PupilProgress>(e => e.PupilCodeId)

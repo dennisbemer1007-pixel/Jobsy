@@ -23,12 +23,12 @@ public class BanenkaartCookiePaddingTests
         Assert.True(overrideIdx > generalIdx, "discovery override must appear AFTER the general cookie padding rule");
 
         var overrideSlice = css.Substring(overrideIdx, Math.Min(280, css.Length - overrideIdx));
-        Assert.Contains("padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));", overrideSlice, StringComparison.Ordinal);
+        Assert.Contains("padding-bottom: 0", overrideSlice, StringComparison.Ordinal);
         Assert.Contains("@media (max-width: 1024px)", css, StringComparison.Ordinal);
         var mediaIdx = css.LastIndexOf("@media (max-width: 1024px)", overrideIdx, StringComparison.Ordinal);
         Assert.True(mediaIdx >= 0 && mediaIdx < overrideIdx, "discovery override must sit inside the 1024px media query");
         Assert.Contains(
-            "html:not(.cookie-consent-known) .app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main",
+            ".app-shell:not(.has-bottom-nav):has(.jobsy-discovery) .app-main",
             css,
             StringComparison.Ordinal);
 
@@ -42,7 +42,7 @@ public class BanenkaartCookiePaddingTests
             "html:not(.cookie-consent-known) .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main",
             min,
             StringComparison.Ordinal);
-        Assert.Contains("4.75rem", min, StringComparison.Ordinal);
+        Assert.Contains("padding-bottom:0", min.Replace(" ", ""), StringComparison.Ordinal);
     }
 
     [Fact]

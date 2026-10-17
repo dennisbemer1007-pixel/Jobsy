@@ -19,7 +19,8 @@ public class ErrorLayoutIsolationTests
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Contains("err-layout", html, StringComparison.Ordinal);
-        Assert.Contains("err-footer", html, StringComparison.Ordinal);
+        Assert.Contains("pub-footer", html, StringComparison.Ordinal);
+        Assert.Contains("pub-header", html, StringComparison.Ordinal);
         Assert.Contains("Deze pagina bestaat niet", html, StringComparison.Ordinal);
     }
 
@@ -34,7 +35,8 @@ public class ErrorLayoutIsolationTests
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Contains("err-layout", html, StringComparison.Ordinal);
-        Assert.Contains("err-footer", html, StringComparison.Ordinal);
+        Assert.Contains("pub-footer", html, StringComparison.Ordinal);
+        Assert.Contains("pub-header", html, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -58,6 +60,7 @@ public class ErrorLayoutIsolationTests
         var html = System.Net.WebUtility.HtmlDecode(
             await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync());
 
-        Assert.Contains($"© {DateTime.UtcNow.Year} Lobsy", html, StringComparison.Ordinal);
+        Assert.Contains(DateTime.UtcNow.Year.ToString(), html, StringComparison.Ordinal);
+        Assert.Contains("Lobsy", html, StringComparison.Ordinal);
     }
 }

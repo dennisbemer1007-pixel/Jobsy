@@ -106,6 +106,18 @@ public static class UiStringsFeatureFlags
             "Wył. = kandydaci nie widzą dodatkowych preferencji. PDF v2 przyjdzie później.",
             "Oprit = candidații nu văd preferințele partajabile. PDF v2 vine mai târziu.",
             "إيقاف = لا يرى المرشحون التفضيلات القابلة للمشاركة. ملف PDF v2 يأتي لاحقاً.");
+        Add("AdminSettings.PassportPdfDnaBlocks.Enabled.Title",
+            "Paspoort-PDF: DNA-blokken",
+            "Passport PDF: DNA blocks",
+            "PDF paszportu: bloki DNA",
+            "PDF pașaport: blocuri ADN",
+            "PDF جواز السفر: كتل DNA");
+        Add("AdminSettings.PassportPdfDnaBlocks.Enabled.Desc",
+            "Uit = geen “Mijn DNA in 4 lagen”, “Hoe ik graag werk” en “Zo haal je het beste uit …” op de PDF.",
+            "Off = omit “My DNA in 4 layers”, “How I like to work” and “How to get the best out of …” on the PDF.",
+            "Wył. = bez bloków DNA, “Jak lubię pracować” i “Jak wydobyć z … to, co najlepsze” w PDF.",
+            "Oprit = fără “ADN-ul meu în 4 straturi”, “Cum îmi place să lucrez” și “Cum scoți ce e mai bun din …” în PDF.",
+            "إيقاف = بدون “DNA في 4 طبقات” و“كيف أحب العمل” و“كيف تستخرج الأفضل من …” في PDF.");
         Add("AdminSettings.TestsV2.Enabled.Title",
             "Quick-Scan v2 (TestsV2)",
             "Quick-Scan v2 (TestsV2)",

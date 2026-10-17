@@ -244,6 +244,7 @@ public sealed class CandidatePreferences
     public string? WorkRegion { get; set; }
     public bool? HasOwnCar { get; set; }
     public List<string> ContractPreferences { get; set; } = [];
+    public List<string> WorkStatuses { get; set; } = [];
 }
 
 public sealed class SharedWorkPreferenceChoices
