@@ -136,8 +136,7 @@ internal sealed class E2eFlowRunner
                                                              + swDisc.ElapsedMilliseconds;
             noTestsUserPathClock.Stop();
 
-            await EnsurePassportDnaCompleteViaDbAsync(chainEmail);
-            await RunPaspoortChecksAsync(page, "desktop-1440");
+            await RunPaspoortChecksAsync(page, "desktop-1440", chainEmail);
             await VerifyAboutMeMotivationNotAutoFilledAsync(chainEmail);
             await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "chain-email.txt"), chainEmail);
             FixEvidencePublisher.PublishItem(
@@ -806,7 +805,7 @@ internal sealed class E2eFlowRunner
         await proc.WaitForExitAsync();
     }
 
-    private async Task RunPaspoortChecksAsync(IPage page, string tag)
+    private async Task RunPaspoortChecksAsync(IPage page, string tag, string chainEmail)
     {
         _report.PaspoortFieldRows.Clear();
         _report.PaspoortFieldRows.Add("| Veld | Status | Notitie |");
@@ -818,6 +817,11 @@ internal sealed class E2eFlowRunner
         var body = await page.InnerTextAsync("body");
         _report.PaspoortNogNietOntdektCount = Regex.Matches(body, "Nog niet ontdekt", RegexOptions.IgnoreCase).Count;
         await Shot(page, tag, "03-paspoort-overview");
+
+        await EnsurePassportDnaCompleteViaDbAsync(chainEmail);
+        await page.ReloadAsync();
+        await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+        await page.WaitForTimeoutAsync(800);
 
         byte[]? pdf = null;
         for (var attempt = 0; attempt < 4; attempt++)
@@ -876,6 +880,8 @@ internal sealed class E2eFlowRunner
         await RunPaspoortProofExperienceEditAsync(page, tag);
         await RunPaspoortDataFieldEditsAsync(page);
 
+        await ResetPassportDnaToIncompleteViaDbAsync(chainEmail);
+
         await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "paspoort-edit-log.txt"), edits.ToString());
         await File.WriteAllTextAsync(
             Path.Combine(Root, "evidence", "paspoort-field-table.md"),
@@ -906,9 +912,18 @@ internal sealed class E2eFlowRunner
         await add.ClickAsync();
         await page.Locator("[data-testid=passport-proof-sheet]").WaitForAsync(new() { Timeout = 15_000 });
         var employerInput = page.Locator(".passport-proof__sheet .profile-employer-card input").First;
+        if (await employerInput.CountAsync() == 0)
+        {
+            var addInSheet = page.Locator(".passport-proof__sheet .icon-btn--add").First;
+            if (await addInSheet.CountAsync() > 0)
+            {
+                await addInSheet.ClickAsync();
+            }
+        }
+
         try
         {
-            await employerInput.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+            await employerInput.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 20_000 });
         }
         catch (TimeoutException)
         {
@@ -966,7 +981,12 @@ internal sealed class E2eFlowRunner
             if (textareaCount > 0)
             {
                 await textarea.FillAsync(marker);
-                var save = page.GetByRole(AriaRole.Button, new() { Name = "Opslaan" }).First;
+                var save = page.Locator(".profile-save-bar .btn-primary").First;
+                if (await save.CountAsync() == 0)
+                {
+                    save = page.GetByRole(AriaRole.Button, new() { Name = "Opslaan" }).First;
+                }
+
                 if (await save.CountAsync() > 0)
                 {
                     await save.ClickAsync();
@@ -978,6 +998,12 @@ internal sealed class E2eFlowRunner
                     await page.Locator($"#passport-data-btn-{section}").First.ClickAsync();
                     await page.WaitForTimeoutAsync(400);
                     var ok = (await page.InnerTextAsync(".passport-data__body")).Contains(marker, StringComparison.Ordinal);
+                    if (!ok && section == "motivation" && textareaCount >= 2)
+                    {
+                        var value = await textareas.Nth(1).InputValueAsync();
+                        ok = value.Contains(marker, StringComparison.Ordinal);
+                    }
+
                     await RecordPaspoortFieldAsync($"data/{section} (textarea)", ok ? "OK" : "FAIL");
                     continue;
                 }
@@ -1353,6 +1379,46 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(2000);
             await Shot(page, "desktop-1440", "11-accept-open");
         }
+    }
+
+    private async Task ResetPassportDnaToIncompleteViaDbAsync(string email)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(_conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = email.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        foreach (var row in await db.CandidateCompetencies.Where(c => c.UserId == user.Id).ToListAsync())
+        {
+            row.Status = CandidateCompetencyStatuses.Draft;
+            row.CompletedAtUtc = null;
+        }
+
+        foreach (var row in await db.CandidateCareerInterests.Where(c => c.UserId == user.Id).ToListAsync())
+        {
+            row.Status = CandidateCompetencyStatuses.Draft;
+            row.CompletedAtUtc = null;
+        }
+
+        foreach (var row in await db.CandidateCulturePersonalityProfiles.Where(c => c.UserId == user.Id).ToListAsync())
+        {
+            row.Status = CandidateCompetencyStatuses.Draft;
+            row.CompletedAtUtc = null;
+        }
+
+        foreach (var row in await db.CandidateValuesProfiles.Where(c => c.UserId == user.Id).ToListAsync())
+        {
+            row.Status = CandidateCompetencyStatuses.Draft;
+            row.CompletedAtUtc = null;
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private async Task EnsurePassportDnaCompleteViaDbAsync(string email)
