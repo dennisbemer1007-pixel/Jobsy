@@ -219,12 +219,112 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 1rem 1rem 0.35rem;
+    padding: 1.25rem 1.25rem 0.35rem;
     box-shadow: var(--shadow-lg);
     margin-bottom: 0.35rem;
     box-sizing: border-box;
     width: 100%;
     min-width: 0;
+  }
+
+  /*
+   * Mockup A form rhythm — override global --form-field-gap / stacked label margins.
+   * Label→input ~8px; field group→next label ~16px; no reserved space for hidden errors.
+   */
+  .ob-wizard--richting-a.ob-wizard .ob-fields label,
+  .ob-wizard--richting-a.ob-wizard .ob-wizard__content label:not(.ob-wizard__check) {
+    gap: 0.5rem !important;
+    margin-block: 0 !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .ob-wizard--richting-a.ob-wizard .ob-wizard__content label.ob-wizard__check {
+    gap: 0.65rem !important;
+    margin-block: 0 !important;
+    margin-bottom: 0.65rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__field-row {
+    gap: 0.75rem;
+    margin-block: 0 1rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__field-row > label {
+    margin-bottom: 0 !important;
+  }
+
+  .ob-wizard--richting-a .ob-fields__address {
+    margin-block: 0 1rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-fields__address .kb-address__label {
+    display: block;
+    margin-block: 0 0.5rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-fields fieldset,
+  .ob-wizard--richting-a .ob-wizard__content fieldset {
+    margin-block: 0 1rem !important;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+  }
+
+  .ob-wizard--richting-a .ob-fields fieldset > legend,
+  .ob-wizard--richting-a .ob-wizard__content fieldset > legend {
+    margin-block: 0 0.5rem !important;
+    padding: 0;
+  }
+
+  .ob-wizard--richting-a .work-status-field {
+    margin-block: 0 !important;
+  }
+
+  .ob-wizard--richting-a .work-status-field legend.ob-wizard__section-title {
+    margin-block: 0 0.35rem !important;
+  }
+
+  .ob-wizard--richting-a .work-status-field .ob-wizard__section-hint {
+    margin: 0 0 0.5rem !important;
+  }
+
+  .ob-wizard--richting-a .work-status-chips.lobsy-choice-grid {
+    margin-top: 0 !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__section {
+    margin-block: 0 1rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__section-title,
+  .ob-wizard--richting-a fieldset > legend.ob-wizard__section-title {
+    margin-block: 0 0.35rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__section-hint {
+    margin-block: 0 0.5rem !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__card > :last-child,
+  .ob-wizard--richting-a .ob-wizard__card fieldset:last-child,
+  .ob-wizard--richting-a .ob-wizard__card > label:last-of-type {
+    margin-bottom: 0 !important;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__content label .error,
+  .ob-wizard--richting-a .ob-fields label .error {
+    margin-block: 0.15rem 0 0 !important;
+    min-height: 0;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__birth-date,
+  .ob-wizard--richting-a .jobsy-date-field--localized {
+    margin-block: 0 !important;
+  }
+
+  .ob-wizard--richting-a fieldset small:not(.ob-wizard__hint) {
+    display: block;
+    margin-block: 0.35rem 0 0 !important;
   }
 
   .ob-wizard--richting-a .passport-privacy-promise {
