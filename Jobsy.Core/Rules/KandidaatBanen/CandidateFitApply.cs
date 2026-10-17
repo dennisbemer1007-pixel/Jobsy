@@ -33,12 +33,14 @@ public static class CandidateFitApply
         var fit = CandidateFitDisplay.Build(match, gate);
         if (fit is null)
         {
+            var practicalKinds = CandidateFitDisplay.MapPracticalWhyKinds(match);
+            var practicalLine = CandidateFitDisplay.FormatWhyLine(practicalKinds, NlWhyFallback);
             return new CandidateFitApplyResult(
                 FitGate: FitGateClosed,
                 FitPercent: null,
                 FitBand: null,
-                FitWhyKinds: [],
-                FitWhyLineNl: null,
+                FitWhyKinds: practicalKinds,
+                FitWhyLineNl: practicalLine,
                 FitDimensions: null,
                 MatchPercent: null,
                 MatchColorBand: null);

@@ -10,7 +10,7 @@ public sealed class JobsyFeatureOptions
     /// <summary>
     /// When true, users can enrol a TOTP authenticator.
     /// </summary>
-    public bool AuthenticatorEnabled { get; set; } = true;
+    public bool AuthenticatorEnabled { get; set; }
 
     /// <summary>
     /// When false, vacancy create skips content moderation (AI and heuristics).

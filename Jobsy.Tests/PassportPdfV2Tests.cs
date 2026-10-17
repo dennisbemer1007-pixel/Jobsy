@@ -165,6 +165,52 @@ public class PassportPdfV2Tests
     }
 
     [Fact]
+    public async Task Recruiter_vacancy_cards_omit_scores_and_use_adult_section_title()
+    {
+        var vacancyId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff");
+        var rawMatches = new List<CandidateMatchedVacancyDto>
+        {
+            new(
+                vacancyId,
+                "Activiteitenbegeleider in Seghwaert (Zoetermeer)",
+                "Zorggroep Voorbeeld",
+                null,
+                null,
+                0,
+                "green",
+                ["Op Innovatie / probleemoplossen scoor jij 75%. Dat past goed…"],
+                [],
+                false,
+                null),
+            new(
+                vacancyId,
+                "Activiteitenbegeleider (43)",
+                "Zorggroep Voorbeeld",
+                null,
+                null,
+                0,
+                "green",
+                ["Nog een matchscore 80%"],
+                [],
+                false,
+                null)
+        };
+        var fits = PassportPdfMatchCardCopy.ToJobFits(rawMatches, "nl");
+        var facts = FullFacts() with { StudentPassportLayout = false, StageVacancyMatches = fits };
+        var pdf = await Render(facts);
+        var text = TextOf(pdf);
+        Assert.Contains("Banen die bij mij passen", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Stages en bijbanen", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("DNA-paspoort · student", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("%", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("scoor", text, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal("Activiteitenbegeleider in Seghwaert (Zoetermeer)", fits[0].Title);
+        Assert.Contains("Zorggroep Voorbeeld", fits[0].Why, StringComparison.Ordinal);
+        Assert.DoesNotContain("Innovatie", fits[0].Why, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("…", fits[0].Why, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Rich_layout_uses_mock_sections_without_scores()
     {
         var pdf = await Render(FullFacts());

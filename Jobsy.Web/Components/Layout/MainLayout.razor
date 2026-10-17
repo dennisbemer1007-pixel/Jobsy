@@ -340,7 +340,7 @@
         }
 
         var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
-                        || path.TrimStart('/').Equals("candidate/start", StringComparison.OrdinalIgnoreCase);
+                        || IsVacancyOrNotificationsCoachHidden(path);
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -348,6 +348,19 @@
         }
 
         return changed;
+    }
+
+    /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>
+    public static bool IsVacancyOrNotificationsCoachHidden(string path)
+    {
+        path = path.TrimStart('/');
+        if (path.Equals("notifications", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("candidate/start", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return path.StartsWith("vacancies/", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Hide sticky LobsyCoach when the journey page already shows its own mascot (desktop grid or mobile dock / inline).</summary>

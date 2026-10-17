@@ -6806,6 +6806,62 @@ a.engagement-btn {
     }
 }
 
+/* Inline mascot encouragement (vacancy apply, paspoort) — never floating over content */
+.profile-encourage {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin: 1rem 0 1.25rem;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+    max-width: 36rem;
+}
+
+.profile-encourage__mascot {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+.profile-encourage__copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-encourage__text {
+    margin: 0 0 0.35rem;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--text);
+}
+
+.profile-encourage__link {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--brand);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.profile-encourage__close {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 0.15rem 0.35rem;
+    cursor: pointer;
+    color: var(--muted);
+    border-radius: 6px;
+}
+
+.profile-encourage__close:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+}
+
 /* Lobster coach CTA on vacancy detail (candidates only) */
 .lobsy-coach-cta {
     margin: 1.25rem 0 0.5rem;
@@ -7809,22 +7865,14 @@ button.bottom-nav__item {
 
 @media (min-width: 1024px) {
     .app-shell .bottom-nav {
-        display: none;
-    }
-
-    /* Candidates have no werkgever-style sidebar; keep primary nav on desktop too. */
-    .app-shell--candidate .bottom-nav {
-        display: flex;
+        display: none !important;
     }
 
     .app-shell.has-bottom-nav .app-main,
-    .app-shell:has(.bottom-nav) .app-main {
+    .app-shell:has(.bottom-nav) .app-main,
+    .app-shell.has-bottom-nav .app-footer,
+    .app-shell:has(.bottom-nav) .app-footer {
         padding-bottom: 0;
-    }
-
-    .app-shell--candidate.has-bottom-nav .app-main,
-    .app-shell--candidate:has(.bottom-nav) .app-main {
-        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant.has-bottom-nav {
@@ -21016,7 +21064,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 /* Desktop keeps the header nav. The fixed bottom bar is for narrow viewports. */
 @media (min-width: 1024px) {
     .bottom-nav {
-        display: none;
+        display: none !important;
     }
 
     .app-shell.has-bottom-nav .app-main,
@@ -21025,11 +21073,21 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     .app-shell:has(.bottom-nav) .app-footer {
         padding-bottom: 0;
     }
+
+    .app-shell.has-bottom-nav .lobsy-coach-dock,
+    .app-shell:has(.bottom-nav) .lobsy-coach-dock {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 /* Candidate coach: one lobster, bottom inline-end, above nav / cookie / sticky footer. */
 .app-shell:has([data-lobsy-coach]) .app-main {
     padding-bottom: calc(64px + 24px + 16px);
+}
+
+.app-shell:has(.kb-detail) .app-main,
+.app-shell:has(.notifications-page) .app-main {
+    padding-bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + 16px + env(safe-area-inset-bottom, 0px));
 }
 
 .lobsy-coach-dock {
@@ -21166,9 +21224,24 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     padding: 0 0.75rem 0.75rem;
 }
 
+/* Vacancy detail + notifications: inline tips only — no floating coach tab overlapping sticky UI. */
+.app-shell:has(.kb-detail) .lobsy-coach-dock,
+.app-shell:has(.notifications-page) .lobsy-coach-dock,
+.app-shell:has(.kb-detail) .lobsy-coach-cta,
+.app-shell:has(.notifications-page) .lobsy-coach-cta,
+.app-shell:has(.kb-detail) .lobsy-assistant-tab--edge,
+.app-shell:has(.notifications-page) .lobsy-assistant-tab--edge {
+    display: none !important;
+}
+
 @media (max-width: 639px) {
     .app-shell:has([data-lobsy-coach]) .app-main {
         padding-bottom: calc(56px + 88px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell:has(.kb-detail) .app-main,
+    .app-shell:has(.notifications-page) .app-main {
+        padding-bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 16px + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-coach-dock {

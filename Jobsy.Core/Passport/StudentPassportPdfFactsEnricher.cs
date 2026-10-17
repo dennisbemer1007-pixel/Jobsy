@@ -1,5 +1,6 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
 
 namespace Jobsy.Core.Passport;
 
@@ -11,12 +12,8 @@ public static class StudentPassportPdfFactsEnricher
         CandidatePreferencesDto preferences,
         IReadOnlyList<CandidateMatchedVacancyDto> matches)
     {
-        var stageMatches = matches
-            .Take(3)
-            .Select(m => new PassportJobFit(
-                m.Title,
-                m.Why.Count > 0 ? string.Join(" · ", m.Why.Take(3)) : m.CompanyName))
-            .ToList();
+        var lang = JobsyLanguages.Normalize(facts.Language);
+        var stageMatches = PassportPdfMatchCardCopy.ToJobFits(matches, lang, take: 3).ToList();
 
         return facts with
         {

@@ -835,6 +835,7 @@
             if (_step >= 7 && _autosave is not null) await _autosave.FlushAsync();
             if (_step == 10)
             {
+                await FinalizeApplyReadinessAsync();
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;
@@ -1187,6 +1188,16 @@
     private Task SaveDreamAsync()
         => Api.SaveOnboardingDreamJobAsync(string.IsNullOrWhiteSpace(Draft.Dream) ? null : Draft.Dream.Trim());
 
+    private async Task FinalizeApplyReadinessAsync()
+    {
+        if (!AvailabilityValid)
+        {
+            return;
+        }
+
+        await Api.UpdateMyProfileAsync(openForWork: true);
+    }
+
     private async Task PrepareMiniAsync()
     {
         if (_autosave is not null)
@@ -1314,6 +1325,7 @@
         {
             if (_step == 10)
             {
+                await FinalizeApplyReadinessAsync();
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;

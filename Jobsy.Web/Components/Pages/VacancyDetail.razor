@@ -14,15 +14,19 @@
 @inject CultureState Culture
 @inject PersistentComponentState Persist
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IConfiguration Configuration
 @inject UserFacingError UserFacing
 @using Jobsy.Core.Media
+@using Jobsy.Core.Contracts
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Pwa
+@using Jobsy.Web.Navigation
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
@@ -198,6 +202,8 @@
                         </div>
                     }
 
+                    <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
+
                     <div class="kb-facts-grid" aria-label="@Culture["Kb.Detail.FactsAria"]" data-testid="kb-facts-grid">
                         @if (HasHoursInfo)
                         {
@@ -258,7 +264,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <p class="kb-detail__passport-hint">@Culture["Kb.Detail.PassportHint"]</p>
+                        <p class="kb-detail__passport-hint">@(PassportHintText)</p>
                     </div>
                 </aside>
 
@@ -483,6 +489,12 @@
                         {
                         @if (!_applied)
                         {
+                        @if (_encourageContext is not null)
+                        {
+                            <ProfileEncouragementNudge ScreenKey="vacancy-pre-apply"
+                                                       Context="_encourageContext"
+                                                       PreviewTipId="_encouragePreviewTipId" />
+                        }
                         <header class="apply-flow__header">
                             <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
                             <p class="apply-flow__lead">@ApplyFlowLead</p>
@@ -516,6 +528,12 @@
                             <div class="apply-panel apply-panel--success" role="status">
                                 <p class="apply-panel__title">@Culture["Apply.SentTitle"]</p>
                                 <p class="apply-panel__text">@Culture["Apply.SentBody"]</p>
+                                @if (_encourageContext is not null)
+                                {
+                                    <ProfileEncouragementNudge ScreenKey="apply-sent"
+                                                               Context="_encourageContext"
+                                                               PreviewTipId="_encouragePreviewTipId" />
+                                }
                                 @if (_directContact is { Available: true })
                                 {
                                     <button type="button"
@@ -530,33 +548,53 @@
                         }
                         else if (!_profileReadyForApply)
                         {
-                            <div class="apply-panel apply-panel--warn">
+                            <div class="apply-panel apply-panel--warn" data-testid="apply-profile-blocked">
                                 <p class="apply-panel__title">@Culture["Apply.CompleteProfileTitle"]</p>
-                                <p class="apply-panel__text">@Culture["Apply.CompleteProfileBody"]</p>
+                                <p class="apply-panel__text">
+                                    @(_applyBasicsIncomplete ? Culture["Apply.BasicsBlockedLead"] : Culture["Apply.CompleteProfileBody"])
+                                </p>
                                 <ul class="apply-checklist">
-                                    <li class="@(_profileHasAvailability ? "is-done" : null)">@Culture["Apply.Availability"]</li>
-                                    @if (_requiresDrivingLicense)
+                                    @if (_applyBasicsIncomplete)
                                     {
-                                        <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", LocalizeLicenseList(_vacancy.RequiredDrivingLicense!))</li>
-                                    }
-                                    <li class="@(_profileHasEmployers ? "is-done" : null)">
-                                        @if (_vacancy.MinimumEmployers is > 0)
+                                        @foreach (var gap in _applyBasicsChecklist)
                                         {
-                                            @Culture.Format("Apply.ExperienceMin", _vacancy.MinimumEmployers)
+                                            <li class="@(gap.Done ? "is-done" : null)">
+                                                @if (!gap.Done && gap.Href is not null)
+                                                {
+                                                    <a href="@gap.Href">@Culture[gap.MessageKey]</a>
+                                                }
+                                                else
+                                                {
+                                                    @Culture[gap.MessageKey]
+                                                }
+                                            </li>
                                         }
-                                        else
-                                        {
-                                            @Culture["Apply.Experience"]
-                                        }
-                                    </li>
-                                    @if (_requiresEducation)
-                                    {
-                                        <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
                                     }
-                                    <li class="@(_profileHasAboutMe ? "is-done" : null)">@Culture["Apply.AboutYou"]</li>
-                                    @if (_vacancy.MinimumReferences is > 0)
+                                    else
                                     {
-                                        <li class="@(_profileHasReferences ? "is-done" : null)">@Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)</li>
+                                        <li class="@(_profileHasAvailability ? "is-done" : null)">@Culture["Apply.Availability"]</li>
+                                        @if (_requiresDrivingLicense)
+                                        {
+                                            <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", LocalizeLicenseList(_vacancy.RequiredDrivingLicense!))</li>
+                                        }
+                                        <li class="@(_profileHasEmployers ? "is-done" : null)">
+                                            @if (_vacancy.MinimumEmployers is > 0)
+                                            {
+                                                @Culture.Format("Apply.ExperienceMin", _vacancy.MinimumEmployers)
+                                            }
+                                            else
+                                            {
+                                                @Culture["Apply.Experience"]
+                                            }
+                                        </li>
+                                        @if (_requiresEducation)
+                                        {
+                                            <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
+                                        }
+                                        @if (_vacancy.MinimumReferences is > 0)
+                                        {
+                                            <li class="@(_profileHasReferences ? "is-done" : null)">@Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)</li>
+                                        }
                                     }
                                 </ul>
                                 <a class="login-submit apply-flow__primary"
@@ -651,7 +689,7 @@
                                             </label>
                                         </div>
                                     }
-                                    @if (_authenticatorEnabled)
+                                    @if (Configuration.GetValue("Jobsy:ApplyAuthenticatorStubEnabled", false))
                                     {
                                         <label class="apply-check">
                                             <input type="checkbox" @bind="_useAuthenticator" />
@@ -960,6 +998,12 @@
             {
                 <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
             }
+            else if (_signedInCandidate && (!_candidateApplyGateLoaded || !_profileReadyForApply))
+            {
+                <a class="btn--primary"
+                   href="@($"/vacancies/{Id}#apply")"
+                   data-testid="kb-detail-apply">@Culture["Apply.StickyCompleteProfileCta"]</a>
+            }
             else
             {
                 <a class="btn--primary" href="@($"/vacancies/{Id}#apply")" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
@@ -1037,7 +1081,14 @@
     private bool _useAuthenticator;
     private bool _acceptedTerms;
     private bool _workPermitConfirmed;
-    private bool _profileReadyForApply = true;
+    private bool _profileReadyForApply;
+    private bool _candidateApplyGateLoaded;
+    private bool _signedInCandidate;
+    private bool _applyBasicsReady = true;
+    private bool _applyBasicsIncomplete;
+    private readonly List<ApplyBasicsChecklistRow> _applyBasicsChecklist = [];
+    private ProfileEncouragementContext? _encourageContext;
+    private string? _encouragePreviewTipId;
     private bool _profileHasAvailability;
     private bool _profileHasLicense = true;
     private bool _profileHasEmployers;
@@ -1115,7 +1166,24 @@
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
 
-    private string ProfileReturnHref => ApplyProfileLink.Href(Id, ProfileGaps());
+    private string ProfileReturnHref
+    {
+        get
+        {
+            if (_applyBasicsIncomplete)
+            {
+                foreach (var row in _applyBasicsChecklist)
+                {
+                    if (!row.Done && row.Href is not null)
+                    {
+                        return row.Href;
+                    }
+                }
+            }
+
+            return ApplyProfileLink.Href(Id, ProfileGaps());
+        }
+    }
 
     private IReadOnlyList<ApplyProfileLink.Gap> ProfileGaps()
     {
@@ -1134,7 +1202,6 @@
             gaps.Add(new(ApplyProfileLink.Education, !_profileHasEducation));
         }
 
-        gaps.Add(new("about", !_profileHasAboutMe));
         if (_vacancy?.MinimumReferences is > 0)
         {
             gaps.Add(new(ApplyProfileLink.References, !_profileHasReferences));
@@ -1164,6 +1231,11 @@
                 : RequiresEmailCode
                     ? Culture["Apply.LeadReady"]
                     : Culture["Apply.LeadReadyThree"];
+
+    private string PassportHintText
+        => _encourageContext?.PassportAllLayersComplete == true
+            ? Culture["Kb.Detail.PassportHint"]
+            : Culture["Kb.Detail.LobsyCvHint"];
 
     private string ProfileStepClass =>
         _applied || _profileReadyForApply ? "is-done" : "is-current";
@@ -1426,7 +1498,12 @@
         _useAuthenticator = false;
         _verificationCode = string.Empty;
         _message = null;
-        _profileReadyForApply = true;
+        _profileReadyForApply = false;
+        _candidateApplyGateLoaded = false;
+        _signedInCandidate = false;
+        _applyBasicsReady = true;
+        _applyBasicsIncomplete = false;
+        _applyBasicsChecklist.Clear();
         _profileHasAvailability = false;
         _profileHasLicense = true;
         _profileHasEmployers = false;
@@ -1732,6 +1809,9 @@
             {
                 case VacancyLookup.FoundResult found:
                     _vacancy = found.Vacancy;
+                    _vacancy.EscoId = VacancyOccupationEsco.Resolve(
+                        _vacancy.Title,
+                        _vacancy.CategoryFields);
                     _closed = null;
                     _similar = [];
                     if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
@@ -1828,6 +1908,7 @@
         }
 
         var isCandidate = RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate);
+        _signedInCandidate = isCandidate;
         Task<MeProfile?>? profileTask = null;
         Task<IReadOnlyList<ApplicationItem>?>? appsTask = null;
         MeProfile? candidateProfile = null;
@@ -1843,10 +1924,13 @@
         {
             var profile = await profileTask;
             candidateProfile = profile;
+            _encourageContext = await ProfileEncouragementContextFactory.CreateAsync(Api, profile);
+            ApplyEncouragePreviewFromUri();
+
             if (profile is not null)
             {
                 _dobInput = profile.DateOfBirth;
-                _authenticatorEnabled = profile.AuthenticatorEnabled == true;
+                _authenticatorEnabled = Configuration.GetValue("Jobsy:ApplyAuthenticatorStubEnabled", false);
                 var prefs = profile.Preferences ?? new CandidatePreferences();
                 _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
                 _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);
@@ -1857,13 +1941,16 @@
                         prefs.DrivingLicenses,
                         _vacancy!.RequiredDrivingLicense);
                 var employerCount = prefs.Employers?.Count ?? 0;
-                var minEmployers = _vacancy?.MinimumEmployers is > 0 ? _vacancy.MinimumEmployers.Value : 1;
-                _profileHasEmployers = employerCount >= minEmployers;
+                var minEmployers = _vacancy?.MinimumEmployers is > 0 ? _vacancy.MinimumEmployers.Value : 0;
+                _profileHasEmployers = minEmployers == 0
+                    ? prefs.NoWorkExperience == true || employerCount > 0
+                    : employerCount >= minEmployers;
                 _profileHasEducation = !_requiresEducation
                     || EducationLevelLabels.CandidateMeetsRequirement(
                         prefs.Educations,
                         _vacancy!.RequiredEducation);
-                _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
+                _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe)
+                                     || !string.IsNullOrWhiteSpace(prefs.DefaultMotivation);
                 var neededRefs = _vacancy?.MinimumReferences is > 0 ? _vacancy.MinimumReferences.Value : 0;
                 _profileHasReferences = neededRefs == 0
                     || CandidateReferenceRules.CountComplete(
@@ -1884,13 +1971,45 @@
                         await RefreshTravelAsync();
                     }
                 }
-                _profileReadyForApply =
+                var prefsDto = ToApplyPrefsDto(prefs);
+                var basicsUser = new Jobsy.Core.Entities.User
+                {
+                    Id = profile.Id,
+                    FirstName = profile.FirstName,
+                    LastName = profile.LastName,
+                    FullName = profile.FullName ?? "",
+                    DateOfBirth = profile.DateOfBirth,
+                    OpenForWork = profile.OpenForWork,
+                    AvailableFromDate = profile.AvailableFromDate,
+                    HomeLocation = profile.HomeLatitude is double lat && profile.HomeLongitude is double lng
+                        ? new Jobsy.Core.ValueObjects.GeoPoint(lat, lng)
+                        : null,
+                    Role = Jobsy.Core.Enums.UserRole.Candidate
+                };
+                var basicsGaps = CandidateApplyBasicsRules.Evaluate(basicsUser, prefsDto);
+                _applyBasicsReady = basicsGaps.Count == 0;
+                _applyBasicsIncomplete = !_applyBasicsReady;
+                _applyBasicsChecklist.Clear();
+                foreach (var field in Enum.GetValues<ApplyBasicsField>())
+                {
+                    var gap = basicsGaps.FirstOrDefault(g => g.Field == field);
+                    var missing = gap is not null;
+                    var messageKey = gap?.MessageKey ?? $"Apply.Gap.{field}";
+                    var kind = ApplyProfileLink.KindFor(field);
+                    _applyBasicsChecklist.Add(new ApplyBasicsChecklistRow(
+                        messageKey,
+                        !missing,
+                        missing ? ApplyProfileLink.HrefForKind(Id, kind) : null));
+                }
+
+                var vacancyRequirementsReady =
                     _profileHasAvailability
                     && _profileHasLicense
                     && _profileHasEmployers
                     && _profileHasEducation
-                    && _profileHasAboutMe
                     && _profileHasReferences;
+                _profileReadyForApply = _applyBasicsReady && vacancyRequirementsReady;
+                _candidateApplyGateLoaded = true;
             }
         }
 
@@ -2409,6 +2528,15 @@
     private string LocalizeEducationList(string stored) =>
         string.Join(", ", EducationLevelLabels.Split(stored).Select(x => UiLabels.Education(Culture, x)));
 
+    private void ApplyEncouragePreviewFromUri()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var v)
+            ? v.FirstOrDefault()
+            : null;
+    }
+
     private void OpenMockInterview() => _mockInterviewOpen = true;
 
     private Task CloseMockInterview()
@@ -2441,4 +2569,20 @@
         _directContactOpen = false;
         return Task.CompletedTask;
     }
+
+    private sealed record ApplyBasicsChecklistRow(string MessageKey, bool Done, string? Href);
+
+    private static CandidatePreferencesDto ToApplyPrefsDto(CandidatePreferences prefs)
+        => new(
+            prefs.Roles ?? [],
+            prefs.MaxTravelMinutes,
+            prefs.PreferredTransport,
+            Availability: prefs.Availability?.ToDictionary(
+                k => k.Key,
+                v => v.Value?.ToArray() ?? [],
+                StringComparer.OrdinalIgnoreCase),
+            HomeAddress: prefs.HomeAddress,
+            MinHoursPerWeek: prefs.MinHoursPerWeek,
+            MaxHoursPerWeek: prefs.MaxHoursPerWeek,
+            WorkStatuses: prefs.WorkStatuses);
 }

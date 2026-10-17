@@ -158,12 +158,8 @@ public static class LobsyCvModelFactory
         var availability = ParseAvailabilityPayload(availabilityJson);
         var certificates = ParseCertificatesJson(certificatesJson);
 
+        _ = employerCount;
         var about = aboutMe;
-        if (employerCount > 0)
-        {
-            var note = $"{employerCount} eerdere werkgever{(employerCount == 1 ? "" : "s")}";
-            about = string.IsNullOrWhiteSpace(about) ? note : $"{about}\n\n{note}";
-        }
 
         var resolvedAge = ageYears ?? AgeRules.AgeYearsFromDateOfBirth(dateOfBirth);
         var reachMinutes = estimatedTravelMinutes > 0

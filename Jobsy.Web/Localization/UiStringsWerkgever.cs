@@ -367,6 +367,16 @@ public static class UiStringsWerkgever
         Add("WgApp.Action.Invite", "Uitnodigen", "Invite", "Zaproś", "Invită", "دعوة");
         Add("WgApp.Action.Hire", "Aannemen", "Hire", "Zatrudnij", "Angajează", "تعيين");
         Add("WgApp.Action.Cv", "Lobsy-cv", "Lobsy CV", "CV Lobsy", "CV Lobsy", "سيرة Lobsy");
+        Add("WgApp.Action.PassportPdf", "Lobsy-paspoort", "Lobsy passport", "Paszport Lobsy", "Pașaport Lobsy", "جواز Lobsy");
+        Add("WgApp.Attached.LobsyCv", "Bijlage: Lobsy-CV", "Attachment: Lobsy CV", "Załącznik: CV Lobsy", "Anex: CV Lobsy", "مرفق: سيرة Lobsy");
+        Add("WgApp.Attached.Passport", "Bijlage: Lobsy-paspoort", "Attachment: Lobsy passport", "Załącznik: paszport Lobsy", "Anex: pașaport Lobsy", "مرفق: جواز Lobsy");
+        Add(
+            "WgApp.Attached.PassportFollows",
+            "Paspoort volgt zodra de kandidaat de tests heeft afgerond.",
+            "The passport will follow once the candidate completes the tests.",
+            "Paszport pojawi się, gdy kandydat ukończy testy.",
+            "Pașaportul urmează după ce candidatul finalizează testele.",
+            "يُرفق الجواز بعد أن يُكمل المرشح الاختبارات.");
         Add("WgApp.Action.BulkReject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
         Add("WgApp.HireConfirmTitle", "Vacature als vervuld markeren?", "Mark vacancy as filled?", "Oznaczyć ofertę jako obsadzoną?", "Marchezi postul ca ocupat?", "تعليم الوظيفة كمشغولة؟");
         Add("WgApp.HireConfirmBody", "Je neemt {0} aan voor “{1}”. De vacature wordt als vervuld gemarkeerd.", "You hire {0} for “{1}”. The vacancy will be marked filled.", "Zatrudniasz {0} na “{1}”. Oferta zostanie oznaczona jako obsadzona.", "Angajezi {0} pentru “{1}”. Postul va fi marcat ca ocupat.", "تعيّن {0} لـ “{1}”. ستُعلَّم الوظيفة كمشغولة.");
@@ -417,6 +427,8 @@ public static class UiStringsWerkgever
         Add("WgPhase2.AcceptFree", "Accepteren is gratis.", "Accepting is free.", "Akceptacja jest bezpłatna.", "Acceptarea este gratuită.", "القبول مجاني.");
         Add("WgPhase2.AcceptCta", "Accepteren", "Accept", "Akceptuj", "Acceptă", "قبول");
         Add("WgPhase2.AcceptFailed", "Accepteren is niet gelukt.", "Accepting failed.", "Akceptacja nie powiodła się.", "Acceptarea a eșuat.", "فشل القبول.");
+        Add("WgPhase2.LoadFailed", "De volgende stap kon niet worden geladen. Vernieuw de pagina of probeer het later opnieuw.", "Could not load the next step. Refresh the page or try again later.", "Nie udało się załadować kolejnego kroku. Odśwież stronę lub spróbuj później.", "Pasul următor nu s-a putut încărca. Reîmprospătează pagina sau încearcă mai târziu.", "تعذّر تحميل الخطوة التالية. حدّث الصفحة أو حاول لاحقًا.");
+        Add("WgPhase2.UsePanelHint", "Gebruik Accepteren in het paneel hierboven. Daarna kies je Maqqie of zelf in dienst.", "Use Accept in the panel above. Then choose Maqqie or direct hire.", "Użyj Akceptuj w panelu powyżej. Potem wybierz Maqqie lub bezpośrednio.", "Folosește Acceptă în panoul de mai sus. Apoi alege Maqqie sau angajare directă.", "استخدم قبول في اللوحة أعلاه. ثم اختر Maqqie أو التوظيف المباشر.");
         Add("WgPhase2.ChoiceTitle", "Hoe wil je laten werken?", "How will they work?", "Jak chcesz, żeby pracował?", "Cum va lucra?", "كيف سيعمل؟");
         Add("WgPhase2.ChoiceLead", "Kies zelf in dienst of via Maqqie. Via Maqqie krijg je na week 1 je token terug.", "Choose direct hire or via Maqqie. With Maqqie you get your token back after week 1.", "Wybierz bezpośrednio lub przez Maqqie.", "Alege direct sau prin Maqqie.", "اختر مباشرة أو عبر Maqqie.");
         Add("WgPhase2.Mode.Self", "Zelf in dienst", "Direct hire", "Bezpośrednio", "Angajare directă", "توظيف مباشر");

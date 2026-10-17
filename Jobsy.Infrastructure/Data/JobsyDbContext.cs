@@ -586,6 +586,7 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ExclusivityValidationStatus).HasMaxLength(32);
             entity.Property(e => e.MatchBreakdownJson).HasMaxLength(4000);
             entity.Property(e => e.SnapshotWhoAmIJson).HasColumnType("text");
+            entity.Property(e => e.SnapshotAttachedDocument).HasMaxLength(16);
             entity.HasIndex(e => e.MatchPercent);
             entity.HasIndex(e => e.ViaSafetyNet)
                 .HasFilter("\"ViaSafetyNet\" = TRUE");

@@ -17,12 +17,18 @@ public sealed class PassportPdfDownload
     private readonly JobsyDbContext _db;
     private readonly IPassportDnaReader _dna;
     private readonly IPassportPdfService _pdf;
+    private readonly ICandidateCompetencyService _competencies;
 
-    public PassportPdfDownload(JobsyDbContext db, IPassportDnaReader dna, IPassportPdfService pdf)
+    public PassportPdfDownload(
+        JobsyDbContext db,
+        IPassportDnaReader dna,
+        IPassportPdfService pdf,
+        ICandidateCompetencyService competencies)
     {
         _db = db;
         _dna = dna;
         _pdf = pdf;
+        _competencies = competencies;
     }
 
     public async Task<PassportPdfFile> ForCandidateAsync(
@@ -34,6 +40,12 @@ public sealed class PassportPdfDownload
         var preferences = MeController.ParsePreferences(user.PreferencesJson);
         var language = JobsyLanguages.Normalize(preferences.Language);
         var layers = await _dna.ReadAsync(user.Id, language, cancellationToken);
+        if (!PassportDnaCompletion.AllLayersCompleted(layers))
+        {
+            throw new InvalidOperationException(
+                "DNA-paspoort requires all four DNA layers to be completed.");
+        }
+
         var facts = PassportPdfFactsFactory.FromUser(
             user,
             preferences,
@@ -47,6 +59,8 @@ public sealed class PassportPdfDownload
             ShowDnaBlocks = showDnaBlocks,
             FirstName = string.IsNullOrWhiteSpace(user.FirstName) ? null : user.FirstName.Trim()
         };
+        var matches = await _competencies.GetTopMatchesAsync(user.Id, cancellationToken);
+        facts = PassportPdfMatchCardCopy.AttachEmployerVacancyCards(facts, matches);
         return await RenderAsync(facts, cancellationToken);
     }
 
@@ -83,6 +97,12 @@ public sealed class PassportPdfDownload
         }
 
         facts = facts with { ShowDnaBlocks = showDnaBlocks };
+        if (user is not null)
+        {
+            var matches = await _competencies.GetTopMatchesAsync(user.Id, cancellationToken);
+            facts = PassportPdfMatchCardCopy.AttachEmployerVacancyCards(facts, matches);
+        }
+
         return await RenderAsync(facts, cancellationToken);
     }
 

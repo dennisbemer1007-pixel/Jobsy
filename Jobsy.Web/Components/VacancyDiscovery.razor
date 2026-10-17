@@ -219,8 +219,9 @@
                 </div>
                 <button type="button"
                         class="kb-filters-button kb-panel-head__filters @(_filtersOpen ? "is-active" : null)"
-                        data-testid="kb-filters-button"
+                        data-testid="kb-filter-drawer-toggle"
                         @onclick="ToggleFilters"
+                        @onclick:stopPropagation="true"
                         aria-expanded="@(_filtersOpen ? "true" : "false")"
                         aria-controls="@(_filtersOpen ? "discovery-filters" : null)"
                         aria-label="@Culture["Kb.Filter.FiltersAria"]">

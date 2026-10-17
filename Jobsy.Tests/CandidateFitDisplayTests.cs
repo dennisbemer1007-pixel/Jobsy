@@ -74,6 +74,8 @@ public class CandidateFitDisplayTests
         Assert.Equal(CandidateFitApply.FitGateClosed, applied.FitGate);
         Assert.Null(applied.MatchPercent);
         Assert.Null(applied.FitPercent);
+        Assert.Contains("travel", applied.FitWhyKinds);
+        Assert.False(string.IsNullOrWhiteSpace(applied.FitWhyLineNl));
     }
 
     [Fact]

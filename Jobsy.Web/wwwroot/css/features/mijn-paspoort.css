@@ -580,6 +580,19 @@
         overflow: visible;
         mask-image: none;
     }
+
+    /* Coach sits fixed; keep it above the in-flow footer (© line). */
+    .app-shell:has(.passport-page) .lobsy-coach-dock {
+        bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell:has(.passport-page) .app-footer {
+        padding-inline-end: 5.5rem;
+    }
+
+    .app-shell:has(.passport-page) .app-main {
+        padding-bottom: 5rem;
+    }
 }
 
 /* —— Bubble —— */

@@ -484,6 +484,12 @@
 
     private void OpenEditor(string kind)
     {
+        if (string.Equals(kind, "experience", StringComparison.Ordinal)
+            && Editor.Employers.Count == 0)
+        {
+            Editor.AddEmployer();
+        }
+
         _openerKind = kind;
         _sheetKind = kind;
         _sheetTitle = kind switch

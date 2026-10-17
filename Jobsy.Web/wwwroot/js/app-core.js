@@ -2024,6 +2024,15 @@ window.lobsyPwaInstall = (function () {
   }, true);
 })();
 
+window.jobsyProfileEncourage = window.jobsyProfileEncourage || {
+  isDismissed: function (key) {
+    try { return localStorage.getItem("lobsy-encourage:" + key) === "1"; } catch (e) { return false; }
+  },
+  dismiss: function (key) {
+    try { localStorage.setItem("lobsy-encourage:" + key, "1"); } catch (e) { }
+  }
+};
+
 window.jobsyCoachDock = window.jobsyCoachDock || {
   bind: function (el, cssVar) {
     if (!el || !cssVar) return;

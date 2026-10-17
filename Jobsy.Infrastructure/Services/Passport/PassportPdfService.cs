@@ -165,7 +165,7 @@ public sealed class PassportPdfService : IPassportPdfService
                         }
                         else
                         {
-                            var headerKey = model.StudentLayout ? "StudentHeader" : "RecruiterHeader";
+                            var headerKey = model.StudentLayout ? "StudentHeader" : "Title";
                             text.Span(PassportPdfStrings.T(lang, headerKey)).FontSize(9.5f).FontColor(Color.FromHex("#e8d9f7"));
                         }
                     });
@@ -270,11 +270,11 @@ public sealed class PassportPdfService : IPassportPdfService
         FourCardsRow(col, model, lang);
         LanguagesAndPrefs(col, model, lang);
         StrengthSection(col, model, lang);
-        if (model.StudentLayout)
+        if (model.StageVacancyMatches.Count > 0)
         {
             StageVacanciesSection(col, model, lang);
         }
-        else
+        else if (!model.StudentLayout)
         {
             SectorsCompact(col, model, lang);
         }
@@ -590,7 +590,7 @@ public sealed class PassportPdfService : IPassportPdfService
                 {
                     if (!string.IsNullOrWhiteSpace(model.Email))
                     {
-                        inner.Item().Text(model.Email).FontSize(8.5f);
+                        inner.Item().Text(FormatContactLine(model.Email)).FontSize(8.5f).LineHeight(1.15f);
                     }
 
                     if (!string.IsNullOrWhiteSpace(model.Phone))
@@ -771,7 +771,8 @@ public sealed class PassportPdfService : IPassportPdfService
         var compact = model.StudentLayout;
         col.Item().Column(block =>
         {
-            SectionTitle(block, PassportPdfStrings.T(lang, "StageVacanciesTitle"));
+            var titleKey = model.StudentLayout ? "StageVacanciesTitle" : "AdultVacanciesTitle";
+            SectionTitle(block, PassportPdfStrings.T(lang, titleKey));
             if (model.StageVacancyMatches.Count == 0)
             {
                 block.Item().PaddingTop(4).Background(SoftP).Border(1).BorderColor(Line).Padding(10)
@@ -794,7 +795,7 @@ public sealed class PassportPdfService : IPassportPdfService
                     {
                         card.Item().Text(fit.Title).FontSize(9.5f).Bold().FontColor(Purple).LineHeight(1.15f).ClampLines(2);
                         card.Item().PaddingTop(compact ? 2 : 4).Text(fit.Why).FontSize(8f).FontColor(Ink).LineHeight(1.25f)
-                            .ClampLines(compact ? 3 : 4);
+                            .ClampLines(compact ? 4 : 5);
                     });
                 }
             });
@@ -1419,4 +1420,16 @@ public sealed class PassportPdfService : IPassportPdfService
         => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 12 12\">"
            + "<path d=\"M2 6.2 L5 9.2 L10 3.2\" fill=\"none\" stroke=\"" + strokeHex + "\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
            + "</svg>";
+
+    private static string FormatContactLine(string value)
+    {
+        var trimmed = value.Trim();
+        if (trimmed.Length <= 36 || !trimmed.Contains('@'))
+        {
+            return trimmed;
+        }
+
+        var at = trimmed.IndexOf('@');
+        return trimmed[..at] + "\n" + trimmed[at..];
+    }
 }

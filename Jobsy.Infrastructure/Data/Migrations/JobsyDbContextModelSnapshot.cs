@@ -483,6 +483,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("SnapshotWhoAmIJson")
                         .HasColumnType("text");
 
+                    b.Property<string>("SnapshotAttachedDocument")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 

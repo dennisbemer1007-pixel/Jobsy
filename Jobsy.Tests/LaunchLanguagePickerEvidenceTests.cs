@@ -446,7 +446,6 @@ public sealed class LaunchLanguagePickerEvidenceTests : IAsyncLifetime
 
     private static async Task SetCultureCookieAsync(IBrowserContext context, string baseUrl, string lang)
     {
-        var uri = new Uri(baseUrl);
         await context.AddCookiesAsync(
         [
             new Microsoft.Playwright.Cookie

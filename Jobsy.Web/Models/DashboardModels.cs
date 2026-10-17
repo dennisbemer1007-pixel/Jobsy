@@ -226,6 +226,7 @@ public class EmployerApplicationItem
     public string? AvailabilitySummary { get; set; }
     public bool UploadedCvAvailable { get; set; }
     public int CandidateReferenceCount { get; set; }
+    public string? AttachedDocumentKind { get; set; }
 }
 
 public class TokenPackItem

@@ -13,7 +13,7 @@ public class PlatformFeatureSettings
     /// <summary>When false, vacancy save skips AI/heuristic content moderation.</summary>
     public bool VacancyContentModerationEnabled { get; set; } = true;
 
-    public bool AuthenticatorEnabled { get; set; } = true;
+    public bool AuthenticatorEnabled { get; set; }
 
     public string? PublicWebBaseUrl { get; set; }
 

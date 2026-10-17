@@ -79,7 +79,7 @@ public static class PassportPdfModelBuilder
         var direction = studentLayout && facts.StudyDirectionSteps is { Count: > 0 }
             ? facts.StudyDirectionSteps
             : Direction(lang, facts);
-        var stageVacancyMatches = studentLayout ? facts.StageVacancyMatches ?? [] : [];
+        var stageVacancyMatches = facts.StageVacancyMatches ?? [];
         var stageVacanciesEmpty = studentLayout && stageVacancyMatches.Count == 0
             ? PassportPdfStrings.T(lang, "StageVacanciesEmpty")
             : null;
@@ -281,12 +281,22 @@ public static class PassportPdfModelBuilder
         bool showDnaBlocks)
     {
         var testsDone = facts.Dna.Count(layer => layer.Done);
+        var hasAvailabilitySignal = facts.OpenForWork
+                                    || facts.MinHours is not null
+                                    || facts.MaxHours is not null
+                                    || facts.AvailableFrom is not null
+                                    || (facts.Availability?.Count ?? 0) > 0;
         if (showDnaBlocks && (dnaLayers.Count > 0 || howWorkLines.Count > 0 || bestOutTips.Count > 0 || !string.IsNullOrWhiteSpace(ownWords)))
         {
             return false;
         }
 
         if (sectors.Count > 0 && testsDone >= 2)
+        {
+            return false;
+        }
+
+        if (testsDone >= 2 || hasAvailabilitySignal)
         {
             return false;
         }

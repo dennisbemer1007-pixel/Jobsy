@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Werkgever.Applications
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Rules
+@using ApplicationAttachedDocumentRules = Jobsy.Core.Rules.ApplicationAttachedDocumentRules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
@@ -50,6 +51,13 @@
         }
     </ol>
 
+    @if (Item is not null)
+    {
+        <WgAppPhase2AcceptPanel ApplicationId="Item.Id"
+                                CanWrite="CanWritePhase2"
+                                OnChanged="OnPhase2Changed" />
+    }
+
     <div class="wg-app-tabs" role="tablist">
         <button type="button" class="@(Tab == "profiel" ? "is-active" : null)" role="tab"
                 @onclick='() => SetTab("profiel")'>@Culture["WgApp.Tab.Profile"]</button>
@@ -61,12 +69,15 @@
 
     @if (Tab == "profiel")
     {
-        @if (Item is not null)
-        {
-            <WgAppPhase2AcceptPanel ApplicationId="Item.Id"
-                                    CanWrite="CanWritePhase2"
-                                    OnChanged="OnPhase2Changed" />
-        }
+        var docLabelKey = ApplicationAttachedDocumentRules.EmployerDocumentLabelKey(a.AttachedDocumentKind);
+        var docNoteKey = ApplicationAttachedDocumentRules.EmployerFollowUpNoteKey(a.AttachedDocumentKind);
+        <p class="wg-app-attached-doc" data-testid="wg-app-attached-document">
+            @Culture[docLabelKey]
+            @if (docNoteKey is not null)
+            {
+                <span class="muted wg-app-attached-doc__note">@Culture[docNoteKey]</span>
+            }
+        </p>
         <dl class="wg-app-facts">
             <div>
                 <dt>@Culture["WgApp.Fact.Travel"]</dt>

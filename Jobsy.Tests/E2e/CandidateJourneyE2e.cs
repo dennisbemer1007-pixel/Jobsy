@@ -77,8 +77,10 @@ public static class CandidateJourneyE2e
 
         await platform.UpdateAsync(new PlatformFeatureUpdate(
             EmployersEnabled: true,
+            CandidatePassportEnabled: true,
             PassportPdfV2Enabled: true,
             CandidateExternalVacanciesEnabled: true,
+            EmployerPhase2Enabled: true,
             AmbassadorsEnabled: true,
             SchoolsEnabled: true));
         await Task.Delay(35_000);
@@ -96,7 +98,8 @@ public static class CandidateJourneyE2e
                 var root = doc.RootElement;
                 if (root.GetProperty("employersEnabled").GetBoolean()
                     && root.GetProperty("passportPdfV2Enabled").GetBoolean()
-                    && root.GetProperty("candidateExternalVacanciesEnabled").GetBoolean())
+                    && root.GetProperty("candidateExternalVacanciesEnabled").GetBoolean()
+                    && root.GetProperty("employerPhase2Enabled").GetBoolean())
                 {
                     return true;
                 }
@@ -369,13 +372,19 @@ public static class CandidateJourneyE2e
             Roles: ["horeca", "retail"],
             MaxTravelMinutes: 30,
             PreferredTransport: "Fiets",
-            AboutMe: "Demo kandidaat (usability3 apply).",
-            DefaultMotivation: "Ik solliciteer graag via Lobsy.",
             Availability: new Dictionary<string, string[]> { ["ma"] = ["ochtend"] },
+            HomeAddress: "Demo straat 1, 1234 AB Den Haag",
+            MinHoursPerWeek: 8,
+            MaxHoursPerWeek: 24,
+            WorkStatuses: ["zoekend"],
             Employers:
             [
                 new CandidateEmployerHistoryDto("Demo Winkel Westland", "Medewerker", 2)
             ]);
+        user.FirstName ??= "E2e";
+        user.LastName ??= "Apply";
+        user.DateOfBirth ??= new DateOnly(2000, 6, 15);
+        user.HomeLocation ??= new Jobsy.Core.ValueObjects.GeoPoint(52.07, 4.3);
         user.PreferencesJson = JsonSerializer.Serialize(
             prefs,
             new JsonSerializerOptions
@@ -595,6 +604,9 @@ public static class CandidateJourneyE2e
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 90_000 });
+        await page.Locator("#apply").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await page.EvaluateAsync(
+            "() => document.getElementById('apply')?.scrollIntoView({ block: 'center', behavior: 'instant' })");
         await page.Locator("#apply").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await page.Locator("#apply[data-apply-interactive='true']").WaitForAsync(new() { Timeout = 120_000 });
 

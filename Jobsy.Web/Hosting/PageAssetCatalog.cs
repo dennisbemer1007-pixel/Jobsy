@@ -26,7 +26,7 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
-        "css/app.min.css?v=20261017-02",
+        "css/app.min.css?v=20261017-03",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
@@ -34,7 +34,7 @@ public static class PageAssetCatalog
     public static readonly string[] CandidatePublicCss =
     [
         "css/features/banenkaart.css?v=20261016-02",
-        "css/features/kandidaat-banen.css?v=20261016-01",
+        "css/features/kandidaat-banen.css?v=20261017-04",
         "css/features/match-desktop.css?v=20261013-01",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
@@ -42,7 +42,7 @@ public static class PageAssetCatalog
 
     public static readonly string[] CandidateAppCss =
     [
-        "css/features/notifications.css?v=20261017-13",
+        "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
         "css/features/onboarding-wizard.css?v=20261016-16",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
@@ -52,7 +52,7 @@ public static class PageAssetCatalog
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261015-09",
+        "css/features/mijn-paspoort.css?v=20261017-03",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261016-05",
         "css/features/carriere.css?v=20261011-01",
@@ -65,7 +65,7 @@ public static class PageAssetCatalog
 
     public static readonly string[] WerkgeverCss =
     [
-        "css/features/notifications.css?v=20261017-13",
+        "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
         "css/features/werkgever.css?v=20261017-19",
         "css/features/vacancy-wizard.css?v=20261017-02",

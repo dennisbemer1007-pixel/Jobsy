@@ -211,7 +211,7 @@ public static class KbE2e
             var passwordInput = page.Locator("input[name='password'], input[type=password], #password").First;
             await emailInput.FillAsync(email);
             await passwordInput.FillAsync(password);
-            var submit = page.Locator("button.login-submit, button[type=submit]").First;
+            var submit = page.Locator("button.au-submit, button.login-submit, button[type=submit]").First;
             await submit.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
             try
             {

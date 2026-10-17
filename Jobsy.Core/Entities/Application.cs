@@ -99,6 +99,12 @@ public class Application
     /// <summary>JSON snapshot of the optional "Wie ben ik?" CV bijlage at apply.</summary>
     public string? SnapshotWhoAmIJson { get; set; }
 
+    /// <summary>
+    /// PDF attached at apply: <see cref="Rules.ApplicationAttachedDocumentRules.LobsyCv"/> or
+    /// <see cref="Rules.ApplicationAttachedDocumentRules.Passport"/>. Null = legacy (paspoort when V2 on).
+    /// </summary>
+    public string? SnapshotAttachedDocument { get; set; }
+
     public DateTime CreatedAt { get; set; }
     public DateTime? RespondedAt { get; set; }
 

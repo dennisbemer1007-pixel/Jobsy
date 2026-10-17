@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
@@ -214,14 +215,17 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 {
                                     col.Item().Text("E-mail").FontSize(8).FontColor(Muted);
                                     col.Item().Text(string.IsNullOrWhiteSpace(model.Email) ? "—" : model.Email!)
-                                        .FontSize(10).Bold();
+                                        .FontSize(10)
+                                        .Bold();
                                 });
-                                row.RelativeItem().Column(col =>
+                                if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
                                 {
-                                    col.Item().Text("Telefoon").FontSize(8).FontColor(Muted);
-                                    col.Item().Text(string.IsNullOrWhiteSpace(model.PhoneNumber) ? "—" : model.PhoneNumber!)
-                                        .FontSize(10).Bold();
-                                });
+                                    row.RelativeItem().Column(col =>
+                                    {
+                                        col.Item().Text("Telefoon").FontSize(8).FontColor(Muted);
+                                        col.Item().Text(model.PhoneNumber!).FontSize(10).Bold();
+                                    });
+                                }
                             });
                             if (model.WhatsAppContactAllowed && !string.IsNullOrWhiteSpace(model.PhoneNumber))
                             {
@@ -232,71 +236,79 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                         });
                     }
 
-                    Section(body, "Over mij", model.AboutMe);
+                    Section(body, "Over mij", SanitizeAboutMe(model.AboutMe));
                     Section(body, "Motivatie", model.Motivation);
 
                     body.Item().ShowEntire().Row(split =>
                     {
-                        split.RelativeItem().Background(SoftSky).Padding(8).Column(avail =>
+                        var hours = FormatHours(model.MinHoursPerWeek, model.MaxHoursPerWeek);
+                        var slotMap = model.AvailabilitySlots ?? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+                        var hasSlots = slotMap.Values.Any(v => v is { Length: > 0 });
+                        var showAvailability = !string.IsNullOrWhiteSpace(hours) || model.FlexibleTimes || hasSlots;
+
+                        if (showAvailability)
                         {
-                            avail.Spacing(4);
-                            avail.Item().Text("Beschikbaarheid").FontSize(9).Bold().FontColor(BrandNavy);
-
-                            var hours = FormatHours(model.MinHoursPerWeek, model.MaxHoursPerWeek);
-                            if (!string.IsNullOrWhiteSpace(hours))
+                            split.RelativeItem().Background(SoftSky).Padding(8).Column(avail =>
                             {
-                                avail.Item().Text($"{hours} u/week").FontSize(8).FontColor(Muted);
-                            }
+                                avail.Spacing(4);
+                                avail.Item().Text("Beschikbaarheid").FontSize(9).Bold().FontColor(BrandNavy);
 
-                            if (model.FlexibleTimes)
-                            {
-                                avail.Item().Background(WarmSand).Padding(6)
-                                    .Text("Tijden in overleg")
-                                    .FontSize(8).FontColor(BrandDeep);
-                            }
-                            else
-                            {
-                                DrawAvailabilityMatrix(avail, model.AvailabilitySlots);
-                            }
-                        });
+                                if (!string.IsNullOrWhiteSpace(hours))
+                                {
+                                    avail.Item().Text($"{hours} u/week").FontSize(8).FontColor(Muted);
+                                }
 
-                        split.ConstantItem(8);
-
-                        split.RelativeItem().Background(SoftCoral).Padding(8).Column(loc =>
+                                if (model.FlexibleTimes)
+                                {
+                                    avail.Item().Background(WarmSand).Padding(6)
+                                        .Text("Tijden in overleg")
+                                        .FontSize(8).FontColor(BrandDeep);
+                                }
+                                else if (hasSlots)
+                                {
+                                    DrawAvailabilityMatrix(avail, model.AvailabilitySlots);
+                                }
+                            });
+                        }
+                        else
                         {
-                            loc.Spacing(4);
-                            loc.Item().Text("Werkplek").FontSize(9).Bold().FontColor(BrandNavy);
+                            split.RelativeItem();
+                        }
 
-                            // Workplace pin + privacy reach circle (never candidate home).
-                            if (mapPng is { Length: > 0 })
+                        var showWorkplace = mapPng is { Length: > 0 }
+                                            || !string.IsNullOrWhiteSpace(model.City)
+                                            || !string.IsNullOrWhiteSpace(model.WorkplaceAddress);
+                        if (showWorkplace)
+                        {
+                            split.ConstantItem(8);
+                            split.RelativeItem().Background(SoftCoral).Padding(8).Column(loc =>
                             {
-                                loc.Item().Height(92).Image(mapPng).FitArea();
-                            }
-                            else if (!string.IsNullOrWhiteSpace(model.City))
-                            {
-                                loc.Item().Text("Woonplaats").FontSize(8).FontColor(Muted);
-                                loc.Item().Text(model.City!).FontSize(12).Bold().FontColor(BrandNavy);
-                            }
-                            else
-                            {
-                                loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
-                                    .Text(string.IsNullOrWhiteSpace(model.WorkplaceAddress)
-                                        ? "Werkgeverslocatie"
-                                        : "Kaart niet beschikbaar")
-                                    .FontSize(8).FontColor(Muted);
-                            }
+                                loc.Spacing(4);
+                                loc.Item().Text("Werkplek").FontSize(9).Bold().FontColor(BrandNavy);
 
-                            if (!string.IsNullOrWhiteSpace(model.WorkplaceAddress))
-                            {
-                                loc.Item().Text(model.WorkplaceAddress!).FontSize(8).Bold().FontColor(BrandNavy);
-                            }
+                                // Workplace pin + privacy reach circle (never candidate home).
+                                if (mapPng is { Length: > 0 })
+                                {
+                                    loc.Item().Height(92).Image(mapPng).FitArea();
+                                }
+                                else if (!string.IsNullOrWhiteSpace(model.City))
+                                {
+                                    loc.Item().Text("Woonplaats").FontSize(8).FontColor(Muted);
+                                    loc.Item().Text(model.City!).FontSize(12).Bold().FontColor(BrandNavy);
+                                }
 
-                            var reachLabel = FormatReachLabel(model);
-                            if (!string.IsNullOrWhiteSpace(reachLabel))
-                            {
-                                loc.Item().Text(reachLabel).FontSize(8).FontColor(AccentTeal);
-                            }
-                        });
+                                if (!string.IsNullOrWhiteSpace(model.WorkplaceAddress))
+                                {
+                                    loc.Item().Text(model.WorkplaceAddress!).FontSize(8).Bold().FontColor(BrandNavy);
+                                }
+
+                                var reachLabel = FormatReachLabel(model);
+                                if (!string.IsNullOrWhiteSpace(reachLabel))
+                                {
+                                    loc.Item().Text(reachLabel).FontSize(8).FontColor(AccentTeal);
+                                }
+                            });
+                        }
                     });
 
                     body.Item().Row(travel =>
@@ -471,7 +483,6 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         var hasAny = map.Values.Any(v => v is { Length: > 0 });
         if (!hasAny)
         {
-            avail.Item().Text("Nog niet ingevuld").FontSize(8).FontColor(Muted);
             return;
         }
 
@@ -527,6 +538,22 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
     private static IContainer CellSlot(IContainer container, bool on)
         => container.Background(on ? CellOn : Colors.White).Border(0.4f).BorderColor(Line).PaddingVertical(2);
+
+    private static string? SanitizeAboutMe(string? aboutMe)
+    {
+        if (string.IsNullOrWhiteSpace(aboutMe))
+        {
+            return null;
+        }
+
+        var lines = aboutMe.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var kept = lines.Where(line =>
+            !System.Text.RegularExpressions.Regex.IsMatch(
+                line,
+                @"^\d+\s+eerdere\s+werkgevers?\.?$",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase)).ToArray();
+        return kept.Length == 0 ? null : string.Join("\n", kept);
+    }
 
     private static void Section(ColumnDescriptor body, string title, string? content)
     {

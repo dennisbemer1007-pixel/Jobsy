@@ -144,6 +144,30 @@ public static class CandidateFitDisplay
     }
 
     /// <summary>
+    /// Travel, hours and day-parts only — shown when DNA fit gate is closed (honest practical match).
+    /// </summary>
+    public static IReadOnlyList<string> MapPracticalWhyKinds(ProfileVacancyMatch match)
+    {
+        ArgumentNullException.ThrowIfNull(match);
+        var kinds = new List<string>(3);
+        foreach (var point in match.Why)
+        {
+            var mapped = MapWhyKind(point.Kind);
+            if (mapped is not ("travel" or "hours"))
+            {
+                continue;
+            }
+
+            if (!kinds.Contains(mapped, StringComparer.Ordinal))
+            {
+                kinds.Add(mapped);
+            }
+        }
+
+        return kinds;
+    }
+
+    /// <summary>
     /// Maps the first MatchWhy points to short candidate why-kind codes (<c>Kb.Why.*</c>).
     /// At most two distinct fragments. Empty when no usable why data.
     /// </summary>

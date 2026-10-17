@@ -9,9 +9,15 @@
 @inject UserFacingError UserFacing
 @inject CultureState Culture
 
-@if (_visible)
+@if (_phase2Flag && ApplicationId != Guid.Empty)
 {
-    <section class="wg-phase2" data-testid="wg-phase2-panel">
+    <section class="wg-phase2 @(_context is null && _loadFailed ? "wg-phase2--error" : null)" data-testid="wg-phase2-panel">
+        @if (_context is null && !_busy && _loadFailed)
+        {
+            <p class="state-message error" role="alert">@Culture["WgPhase2.LoadFailed"]</p>
+        }
+        else if (_context is not null)
+        {
         @if (_context?.Facts is { Count: > 0 } facts)
         {
             <h3 class="wg-phase2__title">@Culture["WgPhase2.FactsTitle"]</h3>
@@ -75,6 +81,7 @@
                     : Culture["WgPhase2.ModeChosen.Self"])
             </p>
         }
+        }
     </section>
 }
 
@@ -84,14 +91,16 @@
     [Parameter] public EventCallback OnChanged { get; set; }
 
     private EmployerPhase2ApplicationContextItem? _context;
-    private bool _visible;
+    private bool _phase2Flag;
+    private bool _loadFailed;
     private bool _busy;
     private string? _error;
     private PlacementEmploymentMode? _mode;
 
     protected override async Task OnParametersSetAsync()
     {
-        _visible = false;
+        _phase2Flag = false;
+        _loadFailed = false;
         _context = null;
         _error = null;
 
@@ -106,10 +115,12 @@
             return;
         }
 
+        _phase2Flag = true;
+
         try
         {
             _context = await Api.GetEmployerPhase2ContextAsync(ApplicationId);
-            _visible = _context is not null;
+            _loadFailed = _context is null;
             if (_context?.EmploymentMode is PlacementEmploymentMode m)
             {
                 _mode = m;
@@ -117,7 +128,7 @@
         }
         catch
         {
-            _visible = false;
+            _loadFailed = true;
         }
     }
 
@@ -179,7 +190,7 @@
     private async Task ReloadContextAsync()
     {
         _context = await Api.GetEmployerPhase2ContextAsync(ApplicationId);
-        _visible = _context is not null;
+        _loadFailed = _context is null;
     }
 
     private static string FormatCost(decimal? tokens)
