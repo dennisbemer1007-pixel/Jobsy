@@ -42,7 +42,7 @@ public static class PageAssetCatalog
 
     public static readonly string[] CandidateAppCss =
     [
-        "css/features/notifications.css?v=20261017-01",
+        "css/features/notifications.css?v=20261017-02",
         "css/features/choice-tiles.css?v=20261015-06",
         "css/features/onboarding-wizard.css?v=20261016-16",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
@@ -66,7 +66,7 @@ public static class PageAssetCatalog
     public static readonly string[] WerkgeverCss =
     [
         "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/werkgever.css?v=20261012-01",
+        "css/features/werkgever.css?v=20261017-03",
         "css/features/vacancy-wizard.css?v=20261017-02",
         "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",

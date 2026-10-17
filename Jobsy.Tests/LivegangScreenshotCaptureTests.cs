@@ -175,6 +175,7 @@ public class LivegangScreenshotCaptureTests
         foreach (var (tag, width, height, mobile, fullPage) in new[]
                  {
                      ("desktop-1440-full", 1440, 900, false, true),
+                     ("desktop-1280-full", 1280, 900, false, true),
                      ("mobile-390", 390, 844, true, false),
                  })
         {

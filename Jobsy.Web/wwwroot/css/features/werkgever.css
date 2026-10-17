@@ -741,7 +741,8 @@
     }
 
     .wg-vac--dense .ent-data-table tbody tr {
-        height: 44px;
+        height: auto;
+        min-height: 44px;
     }
 
     .wg-vac--dense .wg-vac__meta,
@@ -749,7 +750,7 @@
         font-size: var(--text-xs);
     }
 
-    /* Vacatures list at 1440px: table + nowrap actions must stay inside main (audit: +9px overflow). */
+    /* Vacatures list at 1280–1440px: no horizontal overflow; vacature column flexes, metrics stay narrow. */
     .wg-vac--dense .wg-card {
         min-width: 0;
         max-width: 100%;
@@ -766,14 +767,63 @@
         width: 100%;
     }
 
-    .wg-vac--dense .ent-data-table th,
-    .wg-vac--dense .ent-data-table td {
+    .wg-vac--dense .ent-data-table .ent-data-table__check {
+        width: 2.5rem;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-vacancy {
+        width: auto;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-status {
+        width: 11.5rem;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-status .status-pill {
+        white-space: nowrap;
+        max-width: none;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-metric {
+        width: 5.625rem;
+        max-width: 5.625rem;
+        padding-inline: 0.35rem;
+        text-align: end;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-vis {
+        width: 7.5rem;
         overflow: hidden;
-        text-overflow: ellipsis;
+    }
+
+    .wg-vac--dense .ent-data-table th:last-child,
+    .wg-vac--dense .ent-data-table td.wg-vac__actions {
+        width: 1%;
+        white-space: normal;
+        overflow: visible;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__title-cell {
+        overflow: visible;
+        min-width: 0;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__title {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
         overflow: hidden;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.25;
+        text-overflow: unset;
     }
 
     .wg-vac--dense .ent-data-table td.wg-vac__actions {
