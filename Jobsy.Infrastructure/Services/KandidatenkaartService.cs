@@ -147,6 +147,8 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             return BuildPreviewMap(vacancyId, minMatchPercent, travelKm, availabilityFilter, hoursFilter, access);
         }
 
+        var (originLat, originLng) = await ResolveVacancyOriginAsync(vacancyId, cancellationToken);
+
         return new KandidatenkaartMapDto(
             access,
             vacancyId,
@@ -156,7 +158,9 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             hoursFilter,
             visible,
             below,
-            below ? "Met deze filters zijn er geen gebieden met minimaal 30 kandidaten. Probeer een lagere matchscore of grotere reisafstand." : null);
+            below ? "Met deze filters zijn er geen gebieden met minimaal 30 kandidaten. Probeer een lagere matchscore of grotere reisafstand." : null,
+            originLat,
+            originLng);
     }
 
     public async Task<KandidatenkaartInvitePreviewDto> PreviewInviteAsync(
@@ -188,11 +192,7 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         var eligible = await CountEligibleCandidatesAsync(vacancyId, areaKey, minMatchPercent, travelKm, null, null, cancellationToken);
         if (_env.IsDevelopment() && eligible.Eligible == 0 && area.CandidateCount >= KandidatenkaartRules.MinCandidatesPerArea)
         {
-            eligible = (
-                Math.Min(40, area.CandidateCount),
-                2,
-                Math.Min(4, KandidatenkaartDemoSeed.DemoAreas.Count),
-                0);
+            eligible = BuildDemoInviteBreakdown(area, minMatchPercent);
         }
 
         var rounds = Math.Max(1, (int)Math.Ceiling(eligible.Eligible / 25.0));
@@ -446,6 +446,9 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         var visible = blurred.Where(a => a.CandidateCount >= KandidatenkaartRules.MinCandidatesPerArea).ToList();
         var below = visible.Count == 0 && blurred.Count > 0;
 
+        const double demoOriginLat = 52.1561;
+        const double demoOriginLng = 5.3878;
+
         return new KandidatenkaartMapDto(
             access,
             vacancyId,
@@ -455,7 +458,62 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             hoursFilter,
             visible,
             below,
-            below ? "Met deze filters zijn er geen gebieden met minimaal 30 kandidaten. Probeer een lagere matchscore of grotere reisafstand." : null);
+            below ? "Met deze filters zijn er geen gebieden met minimaal 30 kandidaten. Probeer een lagere matchscore of grotere reisafstand." : null,
+            demoOriginLat,
+            demoOriginLng);
+    }
+
+    private async Task<(double Lat, double Lng)> ResolveVacancyOriginAsync(
+        Guid? vacancyId,
+        CancellationToken cancellationToken)
+    {
+        const double fallbackLat = 52.1561;
+        const double fallbackLng = 5.3878;
+        if (vacancyId is null)
+        {
+            return (fallbackLat, fallbackLng);
+        }
+
+        var vacancy = await _db.Vacancies.AsNoTracking()
+            .Include(v => v.Company)
+            .FirstOrDefaultAsync(v => v.Id == vacancyId.Value, cancellationToken);
+        var point = vacancy?.Location ?? vacancy?.Company?.Location;
+        if (point is null)
+        {
+            return (fallbackLat, fallbackLng);
+        }
+
+        return (point.Latitude, point.Longitude);
+    }
+
+    private static (int Eligible, int BelowMatch, int WeeklyCap, int PreferenceOff) BuildDemoInviteBreakdown(
+        KandidatenkaartAreaDto area,
+        int minMatchPercent)
+    {
+        var total = area.CandidateCount;
+        var inviteMin = Math.Max(minMatchPercent, KandidatenkaartRules.MinMatchPercentForInvite);
+        var atOrAboveInvite = inviteMin >= 80
+            ? area.CountAbove80
+            : area.CountAbove80 + area.Count70To79;
+        atOrAboveInvite = Math.Clamp(atOrAboveInvite, 0, total);
+
+        var weeklyCap = Math.Min(4, Math.Max(0, atOrAboveInvite / 6));
+        var eligible = Math.Max(0, atOrAboveInvite - weeklyCap);
+        var below = Math.Max(0, total - atOrAboveInvite);
+        var preferenceOff = Math.Max(0, total - eligible - below - weeklyCap);
+
+        var sum = eligible + below + weeklyCap + preferenceOff;
+        if (sum > total)
+        {
+            var over = sum - total;
+            eligible = Math.Max(0, eligible - over);
+        }
+        else if (sum < total)
+        {
+            below += total - sum;
+        }
+
+        return (eligible, below, weeklyCap, preferenceOff);
     }
 
     private async Task<KandidatenkaartCandidateAggregator.AggregationResult> LoadAggregationAsync(
@@ -587,6 +645,7 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         var weekStart = _clock.GetUtcNow().UtcDateTime.AddDays(-7);
         var below = 0;
         var weeklyCap = 0;
+        var preferenceOff = 0;
         var eligible = 0;
 
         foreach (var c in inArea)
@@ -603,6 +662,7 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
                 .FirstOrDefaultAsync(cancellationToken);
             if (pref == KandidatenkaartInvitePreference.Off)
             {
+                preferenceOff++;
                 continue;
             }
 
@@ -622,7 +682,7 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             eligible++;
         }
 
-        return (eligible, below, weeklyCap, 0);
+        return (eligible, below, weeklyCap, preferenceOff);
     }
 
     private async Task<List<(Guid UserId, int Match)>> LoadEligibleCandidateIdsAsync(

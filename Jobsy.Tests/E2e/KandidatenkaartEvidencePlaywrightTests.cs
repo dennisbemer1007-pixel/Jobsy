@@ -88,7 +88,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await KbE2e.AssertNoCircuitErrorAsync(page);
             await ShotPageAsync(page, $"kk-map-areas-{suffix}.png");
 
-            var more = page.Locator(".kk-btn--more");
+            var more = page.Locator(".kk-filter-more, .kk-btn--more");
             Assert.True(await more.CountAsync() > 0, "Expected Meer filters control on kandidatenkaart.");
             await more.First.ClickAsync();
             await page.WaitForSelectorAsync(".kk-filter-popover.is-open", new() { Timeout = 10_000 });
@@ -110,7 +110,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
             await page.WaitForTimeoutAsync(400);
             await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png");
-            await page.Locator(".kk-modal .kk-btn").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
+            await page.Locator(".kk-modal .btn-compact").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
             await page.WaitForTimeoutAsync(400);
 
             await ClickFilterAsync(page, "80%");
@@ -267,8 +267,20 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             }
         }
 
-        await page.EvaluateAsync("window.jobMap?.invalidate?.()");
-        await page.WaitForTimeoutAsync(mobile ? 1500 : 1200);
+        await page.EvaluateAsync("""
+            window.jobMap?.invalidate?.();
+            window.dispatchEvent(new Event('resize'));
+            """);
+        await page.WaitForFunctionAsync(
+            @"() => {
+                const canvas = document.querySelector('.kk-map-pane .maplibregl-canvas');
+                if (!canvas) return false;
+                const r = canvas.getBoundingClientRect();
+                return r.width > 40 && r.height > 40;
+            }",
+            null,
+            new() { Timeout = mobile ? 45_000 : 30_000 });
+        await page.WaitForTimeoutAsync(mobile ? 800 : 600);
     }
 
     private static async Task ShotPageAsync(IPage page, string fileName)
@@ -447,7 +459,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             try
             {
                 await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 45_000, State = WaitForSelectorState.Visible });
-                await page.Locator(".kk-header h1").WaitForAsync(new() { Timeout = 15_000 });
+                await page.Locator(".kk-header h1, .kk-mobile-title").First.WaitForAsync(new() { Timeout = 15_000 });
                 return;
             }
             catch (Exception ex) when (attempt < 9)

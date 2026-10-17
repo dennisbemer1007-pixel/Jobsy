@@ -18,7 +18,7 @@
 <PageTitle>@Culture["Kk.Title"] · Lobsy</PageTitle>
 
 <WgPageShell>
-    <div class="kk-page panel-page @PageStateClass">
+    <div class="kk-page panel-page insights-page @PageStateClass">
         <EmployerTalentTabs Active="kandidatenkaart" />
 
         <div class="kk-page__chrome kk-page__chrome--desktop">
@@ -46,10 +46,10 @@
                 <p class="profile-address__hint">@Culture["Kk.Preview.Locked"]</p>
             }
 
-            <div class="kk-filters kk-filters--desktop">
+            <div class="kk-filters kk-filters--desktop profile-form">
                 <div class="kk-field">
                     <label>@Culture["Kk.Filter.Vacancy"]</label>
-                    <select class="kk-control kk-control--wide" @bind="_vacancyId" @bind:after="ReloadAsync">
+                    <select class="jobsy-form-value kk-control--wide" @bind="_vacancyId" @bind:after="ReloadAsync">
                         <option value="">—</option>
                         @foreach (var v in _vacancies)
                         {
@@ -77,7 +77,7 @@
                 </div>
                 <div class="kk-field kk-more-filters">
                     <label>@Culture["Kk.Filter.More"]</label>
-                    <button type="button" class="kk-btn kk-btn--more @(_moreOpen ? "is-active" : null)" @onclick="ToggleMoreFilters">
+                    <button type="button" class="btn-compact kk-filter-more kk-btn--more @(_moreOpen ? "is-active" : null)" @onclick="ToggleMoreFilters">
                         @Culture["Kk.Filter.More"]
                     </button>
                     @if (_moreOpen)
@@ -123,7 +123,7 @@
                 @Culture["Kk.Filter.MobileChip"]
             </button>
             <div class="kk-mobile-bar">
-                <button type="button" class="kk-btn kk-btn--more @(_moreOpen ? "is-active" : null)" @onclick="ToggleMoreFilters">
+                <button type="button" class="btn-compact kk-filter-more kk-btn--more @(_moreOpen ? "is-active" : null)" @onclick="ToggleMoreFilters">
                     @Culture["Kk.Filter.More"]
                 </button>
                 <span class="kk-mobile-summary">@MobileFilterSummary</span>
@@ -136,7 +136,7 @@
                 @if (ShowInviteCta)
                 {
                     <div class="kk-list-invite-bar">
-                        <button type="button" class="kk-btn kk-btn--primary kk-btn--block" @onclick="OpenInviteAsync">
+                        <button type="button" class="login-submit kk-btn--block" @onclick="OpenInviteAsync">
                             @Culture["Kk.Invite.Open"]
                         </button>
                     </div>
@@ -210,8 +210,8 @@
                 <p class="state-message">@_inviteMessage</p>
             }
             <div class="kk-modal__actions">
-                <button type="button" class="kk-btn" @onclick="CloseInvite">@Culture["Kk.Invite.Cancel"]</button>
-                <button type="button" class="kk-btn kk-btn--primary" disabled="@_inviteBusy" @onclick="ConfirmInviteAsync">
+                <button type="button" class="btn-compact" @onclick="CloseInvite">@Culture["Kk.Invite.Cancel"]</button>
+                <button type="button" class="btn-compact btn-compact--primary" disabled="@_inviteBusy" @onclick="ConfirmInviteAsync">
                     @Culture["Kk.Invite.Confirm"]
                 </button>
             </div>
@@ -312,21 +312,23 @@
         }
 
         var areas = _map?.Areas ?? [];
+        var viewOptions = BuildMapViewOptions();
         if (!_mapMounted)
         {
             await KandidatenkaartMapInterop.MountAsync(Js, _mapId, new
             {
                 areas,
                 selectedAreaKey = _selectedArea,
-                center = new[] { 5.38, 52.15 },
-                zoom = 9,
+                originLat = _map?.VacancyOriginLat ?? 52.1561,
+                originLng = _map?.VacancyOriginLng ?? 5.3878,
+                travelKm = _travelKm,
                 dotNetRef = _mapBridgeRef
             });
             _mapMounted = true;
         }
         else
         {
-            await KandidatenkaartMapInterop.UpdateAreasAsync(Js, _mapId, areas, _selectedArea);
+            await KandidatenkaartMapInterop.UpdateAreasAsync(Js, _mapId, areas, _selectedArea, viewOptions);
         }
 
         try
@@ -346,9 +348,16 @@
         _selectedArea = key;
         if (_map is not null)
         {
-            await KandidatenkaartMapInterop.UpdateAreasAsync(Js, _mapId, _map.Areas, key);
+            await KandidatenkaartMapInterop.UpdateAreasAsync(Js, _mapId, _map.Areas, key, null);
         }
     }
+
+    private object BuildMapViewOptions() => new
+    {
+        originLat = _map?.VacancyOriginLat ?? 52.1561,
+        originLng = _map?.VacancyOriginLng ?? 5.3878,
+        travelKm = _travelKm
+    };
 
     private void ToggleMoreFilters()
     {

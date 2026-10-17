@@ -32,6 +32,11 @@ window.jobMap = (function () {
     let kkSelectCallback = null;
     const KK_SOURCE = "jobsy-kk-areas";
     const KK_FILL = "jobsy-kk-areas-fill";
+    const KK_LINE = "jobsy-kk-areas-line";
+    const KK_LABELS_SOURCE = "jobsy-kk-areas-labels";
+    const KK_LABELS = "jobsy-kk-areas-labels-layer";
+    let kkViewOptions = null;
+    let kkInitialFitDone = false;
     let detailCache = {};
     let pinsUrl = null;
     let pinsBaseUrl = null;
@@ -3855,6 +3860,10 @@ window.jobMap = (function () {
     function restoreOverlays() {
         if (kkMode) {
             refreshKkAreasData();
+            if (lastOrigin) {
+                ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
+                drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+            }
             if (window.jobsyMapLibre) {
                 window.jobsyMapLibre.hideChrome(map);
             }
@@ -4084,6 +4093,16 @@ window.jobMap = (function () {
         }
     }
 
+    function kkProp(a, camel, pascal) {
+        if (!a) {
+            return undefined;
+        }
+        if (a[camel] != null) {
+            return a[camel];
+        }
+        return a[pascal];
+    }
+
     function kkAreasGeoJson(areas, selectedKey) {
         var features = (areas || []).map(function (a) {
             var ring = a.polygonRing || a.PolygonRing || [];
@@ -4096,12 +4115,115 @@ window.jobMap = (function () {
                 properties: {
                     key: a.areaKey || a.AreaKey,
                     label: a.label || a.Label,
+                    count: kkProp(a, "candidateCount", "CandidateCount"),
                     selected: (a.areaKey || a.AreaKey) === selectedKey
                 },
                 geometry: { type: "Polygon", coordinates: [coords] }
             };
         });
         return { type: "FeatureCollection", features: features };
+    }
+
+    function kkLabelsGeoJson(areas) {
+        var features = (areas || []).map(function (a) {
+            var lat = kkProp(a, "centerLat", "CenterLat");
+            var lng = kkProp(a, "centerLng", "CenterLng");
+            var count = kkProp(a, "candidateCount", "CandidateCount");
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                return null;
+            }
+            return {
+                type: "Feature",
+                properties: {
+                    key: a.areaKey || a.AreaKey,
+                    count: count != null ? String(count) : ""
+                },
+                geometry: { type: "Point", coordinates: [lng, lat] }
+            };
+        }).filter(Boolean);
+        return { type: "FeatureCollection", features: features };
+    }
+
+    function applyKkViewOptions(viewOpts) {
+        if (!viewOpts) {
+            return;
+        }
+        kkViewOptions = viewOpts;
+        var travelKm = Number(kkProp(viewOpts, "travelKm", "TravelKm"));
+        if (Number.isFinite(travelKm) && travelKm > 0) {
+            travelOptions.radiusKm = travelKm;
+        }
+        var originLat = kkProp(viewOpts, "originLat", "OriginLat");
+        var originLng = kkProp(viewOpts, "originLng", "OriginLng");
+        if (Number.isFinite(originLat) && Number.isFinite(originLng)) {
+            lastOrigin = { lat: originLat, lng: originLng };
+        }
+    }
+
+    function fitKkView(animate) {
+        if (!map || !kkMode) {
+            return;
+        }
+        if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
+            map.once("load", function () { fitKkView(animate); });
+            return;
+        }
+        applyKkViewOptions(kkViewOptions);
+        if (lastOrigin) {
+            ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
+            drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+        }
+        var bounds = new maplibregl.LngLatBounds();
+        var travelKm = Number(travelOptions.radiusKm) || 25;
+        if (lastOrigin) {
+            var radiusM = travelKm * 1000 * 1.08;
+            [0, 90, 180, 270].forEach(function (bearing) {
+                bounds.extend(destinationLngLat(lastOrigin.lat, lastOrigin.lng, radiusM, bearing));
+            });
+        }
+        (kkAreasCache || []).forEach(function (a) {
+            var ring = a.polygonRing || a.PolygonRing || [];
+            ring.forEach(function (p) {
+                if (p && p.length >= 2) {
+                    bounds.extend([p[0], p[1]]);
+                }
+            });
+        });
+        if (bounds.isEmpty()) {
+            return;
+        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.fitBounds(bounds, {
+                    padding: overlayFitPadding(),
+                    maxZoom: 12,
+                    animate: animate === true && !prefersReducedMotion(),
+                    duration: animate === true && !prefersReducedMotion() ? 450 : 0
+                });
+            } catch (e) { /* ignore */ }
+        });
+    }
+
+    function panKkToSelectedArea(selectedKey) {
+        if (!map || !selectedKey) {
+            return;
+        }
+        var area = (kkAreasCache || []).find(function (a) {
+            return (a.areaKey || a.AreaKey) === selectedKey;
+        });
+        if (!area) {
+            return;
+        }
+        var lat = kkProp(area, "centerLat", "CenterLat");
+        var lng = kkProp(area, "centerLng", "CenterLng");
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return;
+        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.easeTo({ center: [lng, lat], duration: prefersReducedMotion() ? 0 : 450, zoom: Math.max(map.getZoom(), 10.5) });
+            } catch (e) { /* ignore */ }
+        });
     }
 
     var kkAreasCache = [];
@@ -4121,10 +4243,47 @@ window.jobMap = (function () {
                     "fill-color": [
                         "case",
                         ["boolean", ["get", "selected"], false],
-                        "rgba(220, 80, 70, 0.35)",
-                        "rgba(220, 80, 70, 0.18)"
+                        "rgba(220, 80, 70, 0.38)",
+                        "rgba(220, 80, 70, 0.22)"
                     ],
                     "fill-outline-color": "rgba(180, 50, 45, 0.55)"
+                }
+            });
+            map.addLayer({
+                id: KK_LINE,
+                type: "line",
+                source: KK_SOURCE,
+                paint: {
+                    "line-color": [
+                        "case",
+                        ["boolean", ["get", "selected"], false],
+                        "rgba(180, 45, 40, 0.95)",
+                        "rgba(200, 70, 65, 0.65)"
+                    ],
+                    "line-width": [
+                        "case",
+                        ["boolean", ["get", "selected"], false],
+                        2.5,
+                        1.25
+                    ]
+                }
+            });
+            map.addSource(KK_LABELS_SOURCE, { type: "geojson", data: kkLabelsGeoJson([]) });
+            map.addLayer({
+                id: KK_LABELS,
+                type: "symbol",
+                source: KK_LABELS_SOURCE,
+                layout: {
+                    "text-field": ["get", "count"],
+                    "text-size": 14,
+                    "text-font": ["Noto Sans Bold"],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true
+                },
+                paint: {
+                    "text-color": "#7f1d1d",
+                    "text-halo-color": "#fff",
+                    "text-halo-width": 1.5
                 }
             });
             map.on("click", KK_FILL, function (e) {
@@ -4137,6 +4296,16 @@ window.jobMap = (function () {
                 }
             });
             map.getCanvas().style.cursor = "pointer";
+        }
+    }
+
+    function refreshKkLabelsData() {
+        if (!map || !kkMode) {
+            return;
+        }
+        var source = map.getSource(KK_LABELS_SOURCE);
+        if (source && typeof source.setData === "function") {
+            source.setData(kkLabelsGeoJson(kkAreasCache));
         }
     }
 
@@ -4153,6 +4322,7 @@ window.jobMap = (function () {
         if (source && typeof source.setData === "function") {
             source.setData(kkAreasGeoJson(kkAreasCache, kkSelectedKey));
         }
+        refreshKkLabelsData();
     }
 
     function initKandidatenkaart(elementId, options) {
@@ -4165,6 +4335,7 @@ window.jobMap = (function () {
             dispose();
         }
         kkMode = true;
+        kkInitialFitDone = false;
         if (options.dotNetRef) {
             kkSelectCallback = function (key) {
                 try {
@@ -4176,16 +4347,38 @@ window.jobMap = (function () {
         }
         kkAreasCache = options.areas || [];
         kkSelectedKey = options.selectedAreaKey || null;
-        var center = options.center || [5.38, 52.15];
-        var zoom = options.zoom || 9;
-        createMapInstance(el, [], { center: center, zoom: zoom, locked: false }, false);
+        applyKkViewOptions({
+            originLat: options.originLat,
+            originLng: options.originLng,
+            travelKm: options.travelKm
+        });
+        var centerLng = lastOrigin ? lastOrigin.lng : 5.3878;
+        var centerLat = lastOrigin ? lastOrigin.lat : 52.1561;
+        createMapInstance(el, [], { center: [centerLng, centerLat], zoom: 10.5, locked: false }, false);
         setVacancies([]);
+        map.once("load", function () {
+            refreshKkAreasData();
+            fitKkView(false);
+            kkInitialFitDone = true;
+            if (kkSelectedKey) {
+                panKkToSelectedArea(kkSelectedKey);
+            }
+        });
     }
 
-    function setKandidatenkaartAreas(areas, selectedKey) {
+    function setKandidatenkaartAreas(areas, selectedKey, viewOptions) {
         kkAreasCache = areas || [];
+        var prevKey = kkSelectedKey;
         kkSelectedKey = selectedKey || null;
+        if (viewOptions) {
+            applyKkViewOptions(viewOptions);
+        }
         refreshKkAreasData();
+        if (viewOptions) {
+            fitKkView(kkInitialFitDone);
+        } else if (selectedKey && selectedKey !== prevKey) {
+            panKkToSelectedArea(selectedKey);
+        }
     }
 
     function init(elementId, vacancies, options) {

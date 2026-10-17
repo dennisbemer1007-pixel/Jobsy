@@ -6,6 +6,16 @@
     overflow: hidden;
 }
 
+.kk-page > .insights-tabs {
+    flex-shrink: 0;
+    scroll-margin-top: 4.5rem;
+}
+
+.wg-main:has(.kk-page) {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 .wg-bottom-nav {
     position: fixed;
     inset-inline: 0;
@@ -1309,9 +1319,19 @@ html.vp-mobile .kk-page {
     position: relative;
     flex: 1;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     min-height: 0;
     overflow: hidden;
+}
+
+html.vp-mobile .kk-page > .insights-tabs {
+    grid-row: 1;
+    padding: 0.35rem 0.75rem 0;
+    margin-block-end: 0;
+}
+
+html.vp-mobile .kk-mobile-top {
+    grid-row: 2;
 }
 
 html.vp-mobile .kk-page--preview {
@@ -1352,17 +1372,13 @@ html.vp-mobile .kk-page--preview .kk-map-lock__fine {
     margin-bottom: 0;
 }
 
-html.vp-mobile .kk-mobile-top {
-    grid-row: 1;
-}
-
 html.vp-mobile .kk-layout-a,
 html.vp-mobile .kk-layout-b {
-    grid-row: 2;
+    grid-row: 3;
 }
 
 html.vp-mobile .kk-mobile-sheet {
-    grid-row: 3;
+    grid-row: 4;
 }
 
 html.vp-mobile .kk-page--filters-open .kk-mobile-sheet {

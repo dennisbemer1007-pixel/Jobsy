@@ -34,7 +34,9 @@ public sealed record KandidatenkaartMapDto(
     string? HoursFilter,
     IReadOnlyList<KandidatenkaartAreaDto> Areas,
     bool BelowThreshold,
-    string? ThresholdMessage);
+    string? ThresholdMessage,
+    double VacancyOriginLat,
+    double VacancyOriginLng);
 
 public sealed record KandidatenkaartInvitePreviewDto(
     string AreaLabel,

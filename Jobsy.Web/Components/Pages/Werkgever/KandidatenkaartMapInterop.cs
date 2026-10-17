@@ -12,10 +12,15 @@ internal static class KandidatenkaartMapInterop
     public static Task MountAsync(IJSRuntime js, string elementId, object options)
         => js.InvokeVoidAsync("jobMap.initKandidatenkaart", elementId, options).AsTask();
 
-    public static Task UpdateAreasAsync(IJSRuntime js, string elementId, object areas, string? selectedKey)
+    public static Task UpdateAreasAsync(
+        IJSRuntime js,
+        string elementId,
+        object areas,
+        string? selectedKey,
+        object? viewOptions = null)
     {
         _ = elementId;
-        return js.InvokeVoidAsync("jobMap.setKandidatenkaartAreas", areas, selectedKey).AsTask();
+        return js.InvokeVoidAsync("jobMap.setKandidatenkaartAreas", areas, selectedKey, viewOptions).AsTask();
     }
 
     public static Task DestroyAsync(IJSRuntime js, string elementId)
