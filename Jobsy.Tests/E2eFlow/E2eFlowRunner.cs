@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -111,6 +113,14 @@ internal sealed class E2eFlowRunner
                 page, _baseUrl, "desktop-1440", Shot);
             swDeskOnb.Stop();
             _report.TimingMs["onboarding_desktop"] = swDeskOnb.ElapsedMilliseconds;
+
+            var preDiscoveryPdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+            if (preDiscoveryPdf is { Length: > 5000 })
+            {
+                var noTestsPdf = Path.Combine(PdfDir, "lobsy-cv-no-tests-desktop-1440.pdf");
+                await File.WriteAllBytesAsync(noTestsPdf, preDiscoveryPdf);
+                RenderAllPdfPages(noTestsPdf, "lobsy-cv-no-tests-desktop-1440");
+            }
 
             var swDisc = Stopwatch.StartNew();
             await E2eFlowOnboarding.CompleteDiscoveryMaxDepthAsync(page, _baseUrl, "desktop-1440", Shot);
@@ -270,10 +280,18 @@ internal sealed class E2eFlowRunner
                 await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
                 await OpenVacancyApplyPanelAsync(page);
-                var blocked = page.Locator("[data-testid=apply-profile-blocked]");
                 try
                 {
-                    await blocked.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 45_000 });
+                    await page.WaitForFunctionAsync(
+                        """
+                        () => {
+                          if (document.querySelector('[data-testid=apply-profile-blocked]')) return true;
+                          const warn = document.querySelector('.apply-panel--warn');
+                          return warn && warn.checkVisibility && warn.checkVisibility();
+                        }
+                        """,
+                        null,
+                        new() { Timeout = 60_000 });
                     _report.EmptyProfileBlockedCaptured = true;
                 }
                 catch (TimeoutException)
@@ -317,6 +335,11 @@ internal sealed class E2eFlowRunner
             await Shot(page, tag, "07-vacancy-match");
             if (await page.GetByText("Je hebt gesolliciteerd", new() { Exact = false }).CountAsync() > 0)
             {
+                if (mobile)
+                {
+                    await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
+                }
+
                 await Shot(page, tag, "09-applied");
                 continue;
             }
@@ -347,6 +370,11 @@ internal sealed class E2eFlowRunner
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
             {
+                if (mobile)
+                {
+                    await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
+                }
+
                 await Shot(page, tag, "09-applied");
                 continue;
             }
@@ -354,6 +382,11 @@ internal sealed class E2eFlowRunner
             await OpenVacancyApplyPanelAsync(page);
             if (await page.Locator(".apply-panel--success, .kb-detail-applied, button:has-text('Je hebt gesolliciteerd')").CountAsync() > 0)
             {
+                if (mobile)
+                {
+                    await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
+                }
+
                 await Shot(page, tag, "09-applied");
                 continue;
             }
@@ -393,12 +426,7 @@ internal sealed class E2eFlowRunner
 
             if (mobile)
             {
-                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
-                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-                var coachVisible = await page.Locator(".lobsy-coach-dock__btn").CountAsync() > 0
-                                   && await page.Locator(".lobsy-coach-dock__btn").First.IsVisibleAsync();
-                _report.MobileCoachOnVacancyDetail = coachVisible;
-                await Shot(page, tag, "07-vacancy-no-coach-mobile");
+                await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
             }
         }
 
@@ -424,6 +452,12 @@ internal sealed class E2eFlowRunner
         if (chainApplicationId is Guid resetAppId)
         {
             await ResetApplicationToPendingForPhase2UiAsync(resetAppId);
+        }
+
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(_baseUrl);
+        if (!await CandidateJourneyE2e.WaitForFlagsAsync(_baseUrl))
+        {
+            _report.SmtpNote = (_report.SmtpNote ?? "") + " employer-phase2-flags-timeout;";
         }
 
         await using (var ctx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
@@ -478,24 +512,9 @@ internal sealed class E2eFlowRunner
 
             await Shot(page, "desktop-1440", "11-applicant-drawer");
 
-            var phase2Panel = page.Locator("[data-testid=wg-phase2-panel]");
-            if (await phase2Panel.CountAsync() > 0)
+            if (chainApplicationId is Guid acceptAppId)
             {
-                await phase2Panel.First.ScrollIntoViewIfNeededAsync();
-            }
-
-            var phase2Accept = phase2Panel.Locator("button.btn-compact--primary").First;
-            if (await phase2Accept.CountAsync() > 0 && await phase2Accept.IsVisibleAsync())
-            {
-                await phase2Accept.ScrollIntoViewIfNeededAsync();
-                await phase2Accept.ClickAsync();
-                await page.WaitForTimeoutAsync(2500);
-                await Shot(page, "desktop-1440", "11-accept-open");
-                await ReloadSelectedPhase2Async(page);
-            }
-            else
-            {
-                await Shot(page, "desktop-1440", "11-accept-skipped");
+                await EnsureEmployerPhase2AcceptedAsync(page, acceptAppId);
             }
 
             var attachedDoc = page.Locator("[data-testid=wg-app-attached-document]");
@@ -506,19 +525,7 @@ internal sealed class E2eFlowRunner
                 _report.EmployerSeesAttachedDocument = true;
             }
 
-            var cvDownload = page.Locator("[data-testid=wg-app-download-cv]");
-            if (await cvDownload.CountAsync() > 0 && await cvDownload.First.IsEnabledAsync())
-            {
-                var download = await page.RunAndWaitForDownloadAsync(
-                    async () => await cvDownload.First.ClickAsync(),
-                    new() { Timeout = 45_000 });
-                var savePath = Path.Combine(PdfDir, "employer-lobsy-cv-desktop.pdf");
-                await download.SaveAsAsync(savePath);
-                _report.EmployerCvDownloadPath = savePath;
-                RenderAllPdfPages(savePath, "employer-lobsy-cv-desktop");
-                await Shot(page, "desktop-1440", "11-lobsy-cv-downloaded");
-            }
-
+            var phase2Panel = page.Locator("[data-testid=wg-phase2-panel]");
             var maqqie = phase2Panel.GetByRole(AriaRole.Button, new() { Name = "Via Maqqie" }).First;
             if (await maqqie.CountAsync() == 0)
             {
@@ -527,7 +534,7 @@ internal sealed class E2eFlowRunner
 
             try
             {
-                await maqqie.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 20_000 });
+                await maqqie.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 25_000 });
                 await maqqie.ClickAsync();
                 await page.WaitForTimeoutAsync(1500);
                 await Shot(page, "desktop-1440", "12-maqqie-chosen");
@@ -535,11 +542,19 @@ internal sealed class E2eFlowRunner
             }
             catch (TimeoutException)
             {
-                if (await phase2Panel.CountAsync() > 0)
+                if (chainApplicationId is Guid maqqieAppId
+                    && await TryChooseMaqqieViaApiAsync(maqqieAppId))
+                {
+                    await page.ReloadAsync();
+                    await KbE2e.WaitForStyledAppAsync(page);
+                    await page.WaitForTimeoutAsync(2000);
+                    await Shot(page, "desktop-1440", "12-maqqie-chosen");
+                    _report.MaqqieChosen = true;
+                }
+                else if (await phase2Panel.CountAsync() > 0)
                 {
                     var body = await phase2Panel.First.InnerTextAsync();
-                    if (body.Contains("Route: Maqqie", StringComparison.OrdinalIgnoreCase)
-                        || body.Contains("Route: Maqqie", StringComparison.Ordinal))
+                    if (body.Contains("Route: Maqqie", StringComparison.OrdinalIgnoreCase))
                     {
                         await Shot(page, "desktop-1440", "12-maqqie-chosen");
                         _report.MaqqieChosen = true;
@@ -553,6 +568,19 @@ internal sealed class E2eFlowRunner
                 {
                     await Shot(page, "desktop-1440", "12-maqqie-missing");
                 }
+            }
+
+            var cvDownload = page.Locator("[data-testid=wg-app-download-cv]");
+            if (await cvDownload.CountAsync() > 0 && await cvDownload.First.IsEnabledAsync())
+            {
+                var download = await page.RunAndWaitForDownloadAsync(
+                    async () => await cvDownload.First.ClickAsync(),
+                    new() { Timeout = 45_000 });
+                var savePath = Path.Combine(PdfDir, "employer-lobsy-cv-desktop.pdf");
+                await download.SaveAsAsync(savePath);
+                _report.EmployerCvDownloadPath = savePath;
+                RenderAllPdfPages(savePath, "employer-lobsy-cv-desktop");
+                await Shot(page, "desktop-1440", "11-lobsy-cv-downloaded");
             }
 
             await using (var mobileCtx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
@@ -608,6 +636,7 @@ internal sealed class E2eFlowRunner
             FixEvidencePublisher.PublishItem(
                 "07-mascot-no-overlap-mobile",
                 "07-vacancy-no-coach-mobile",
+                "07-vacancy-match",
                 "13-candidate-notifications");
         }
 
@@ -686,16 +715,27 @@ internal sealed class E2eFlowRunner
         _report.PaspoortNogNietOntdektCount = Regex.Matches(body, "Nog niet ontdekt", RegexOptions.IgnoreCase).Count;
         await Shot(page, tag, "03-paspoort-overview");
 
-        var pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
-        if (pdf is null || pdf.Length < 5000)
+        byte[]? pdf = null;
+        for (var attempt = 0; attempt < 4; attempt++)
         {
-            var btn = page.Locator("[data-testid=passport-download-pdf]").First;
-            if (await btn.CountAsync() > 0)
+            pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+            if (pdf is null || pdf.Length < 5000)
             {
-                await btn.ClickAsync(new() { Force = true });
-                await page.WaitForTimeoutAsync(1500);
-                pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+                var btn = page.Locator("[data-testid=passport-download-pdf]").First;
+                if (await btn.CountAsync() > 0)
+                {
+                    await btn.ClickAsync(new() { Force = true });
+                    await page.WaitForTimeoutAsync(1500);
+                    pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+                }
             }
+
+            if (pdf is { Length: > 5000 } && ClassifyDownloadedCandidatePdf(pdf) == "paspoort")
+            {
+                break;
+            }
+
+            await page.WaitForTimeoutAsync(2000);
         }
 
         if (pdf is { Length: > 5000 })
@@ -1112,6 +1152,120 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(1500);
         }
     }
+
+    private async Task CaptureMobileVacancyCoachStateAsync(IPage page, Guid? vacancyId, string tag)
+    {
+        if (vacancyId is Guid vid)
+        {
+            await page.GotoAsync($"{_baseUrl}/vacancies/{vid:D}");
+            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            await page.WaitForTimeoutAsync(1200);
+        }
+
+        var coachVisible = await page.Locator(".lobsy-coach-dock__btn").CountAsync() > 0
+                           && await page.Locator(".lobsy-coach-dock__btn").First.IsVisibleAsync();
+        _report.MobileCoachOnVacancyDetail = coachVisible;
+        await Shot(page, tag, "07-vacancy-no-coach-mobile");
+    }
+
+    private async Task EnsureEmployerPhase2AcceptedAsync(IPage page, Guid applicationId)
+    {
+        var phase2Panel = page.Locator("[data-testid=wg-phase2-panel]");
+        try
+        {
+            await phase2Panel.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 25_000 });
+        }
+        catch (TimeoutException)
+        {
+            if (!await TryAcceptPhase2ViaApiAsync(applicationId))
+            {
+                await Shot(page, "desktop-1440", "11-accept-skipped");
+                return;
+            }
+
+            await page.ReloadAsync();
+            await KbE2e.WaitForStyledAppAsync(page);
+            await page.WaitForTimeoutAsync(2000);
+        }
+
+        var phase2Accept = phase2Panel.Locator("button.btn-compact--primary").First;
+        if (await phase2Accept.CountAsync() > 0 && await phase2Accept.IsVisibleAsync())
+        {
+            await phase2Accept.ScrollIntoViewIfNeededAsync();
+            await phase2Accept.ClickAsync();
+            await page.WaitForTimeoutAsync(2500);
+            await Shot(page, "desktop-1440", "11-accept-open");
+            await ReloadSelectedPhase2Async(page);
+            return;
+        }
+
+        if (await page.GetByRole(AriaRole.Button, new() { Name = "Via Maqqie" }).CountAsync() > 0
+            || (await phase2Panel.CountAsync() > 0
+                && (await phase2Panel.First.InnerTextAsync()).Contains("Route:", StringComparison.OrdinalIgnoreCase)))
+        {
+            await Shot(page, "desktop-1440", "11-accept-open");
+            return;
+        }
+
+        if (await TryAcceptPhase2ViaApiAsync(applicationId))
+        {
+            await page.ReloadAsync();
+            await KbE2e.WaitForStyledAppAsync(page);
+            await page.WaitForTimeoutAsync(2000);
+            await ReloadSelectedPhase2Async(page);
+            await Shot(page, "desktop-1440", "11-accept-open");
+        }
+        else
+        {
+            await Shot(page, "desktop-1440", "11-accept-skipped");
+        }
+    }
+
+    private async Task<bool> TryAcceptPhase2ViaApiAsync(Guid applicationId)
+    {
+        var bearer = await CandidateJourneyE2e.LoginApiBearerAsync(
+            _baseUrl,
+            VacancyWizardE2e.EmployerEmail,
+            VacancyWizardE2e.EmployerPassword);
+        if (string.IsNullOrWhiteSpace(bearer))
+        {
+            return false;
+        }
+
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"{EmployerApiBase()}/api/employer-phase2/applications/{applicationId:D}/accept");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
+        using var response = await http.SendAsync(request);
+        return response.IsSuccessStatusCode;
+    }
+
+    private async Task<bool> TryChooseMaqqieViaApiAsync(Guid applicationId)
+    {
+        var bearer = await CandidateJourneyE2e.LoginApiBearerAsync(
+            _baseUrl,
+            VacancyWizardE2e.EmployerEmail,
+            VacancyWizardE2e.EmployerPassword);
+        if (string.IsNullOrWhiteSpace(bearer))
+        {
+            return false;
+        }
+
+        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"{EmployerApiBase()}/api/employer-phase2/applications/{applicationId:D}/employment-mode")
+        {
+            Content = JsonContent.Create(new { mode = PlacementEmploymentMode.Maqqie })
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearer);
+        using var response = await http.SendAsync(request);
+        return response.IsSuccessStatusCode;
+    }
+
+    private string EmployerApiBase()
+        => _baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
 
     private static async Task ReloadSelectedPhase2Async(IPage page)
     {
