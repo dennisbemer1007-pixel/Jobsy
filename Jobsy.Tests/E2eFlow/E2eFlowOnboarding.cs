@@ -17,10 +17,15 @@ internal static class E2eFlowOnboarding
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.WaitForSelectorAsync("#signup-title, .pub-signup__title, .au-title, input[name=email]", new() { Timeout = 90_000 });
         await KbE2e.WaitForStyledAppAsync(page);
-        await page.WaitForFunctionAsync(
-            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
-            null,
-            new() { Timeout = 90_000 });
+        var hasBlazorRuntime = await page.EvaluateAsync<bool>(
+            "() => !!document.querySelector('script[src*=\"blazor.web.js\"]')");
+        if (hasBlazorRuntime)
+        {
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+                null,
+                new() { Timeout = 90_000 });
+        }
 
         await page.Locator("input[name=email], input[type=email]").First.FillAsync(email);
         var first = page.Locator("input[name=firstName]").First;
@@ -30,7 +35,7 @@ internal static class E2eFlowOnboarding
         }
 
         var submit = page.Locator(
-            "form.pub-signup__form button[type=submit], form.login-form button[type=submit], button.au-submit, button.login-submit").First;
+            "form.pub-signup__form button[type=submit], form.au-form button[type=submit], form.login-form button[type=submit], button.au-submit, button.login-submit").First;
         await submit.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
         await page.WaitForFunctionAsync(
             """
