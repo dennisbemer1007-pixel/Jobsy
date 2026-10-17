@@ -3183,9 +3183,16 @@ window.jobMap = (function () {
         if (!raw || typeof raw !== "object") {
             return null;
         }
-        const lat = Number(raw.lat);
-        const lng = Number(raw.lng);
-        const zoom = Number(raw.zoom);
+        var lat = Number(raw.lat);
+        var lng = Number(raw.lng);
+        var zoom = Number(raw.zoom);
+        if ((!Number.isFinite(lat) || !Number.isFinite(lng)) && Array.isArray(raw.center) && raw.center.length >= 2) {
+            lng = Number(raw.center[0]);
+            lat = Number(raw.center[1]);
+        }
+        if (!Number.isFinite(zoom)) {
+            zoom = Number(raw.zoom);
+        }
         if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) {
             return null;
         }
@@ -4328,7 +4335,7 @@ window.jobMap = (function () {
                 });
                 map.once("idle", function () {
                     var z = map.getZoom();
-                    if (z < 10 && lastOrigin) {
+                    if (lastOrigin && (z < 9.75 || z > 11.5)) {
                         map.jumpTo({
                             center: [lastOrigin.lng, lastOrigin.lat],
                             zoom: 10.35
@@ -4500,7 +4507,7 @@ window.jobMap = (function () {
         });
         var centerLng = lastOrigin ? lastOrigin.lng : 5.3878;
         var centerLat = lastOrigin ? lastOrigin.lat : 52.1561;
-        createMapInstance(el, [], { center: [centerLng, centerLat], zoom: 10.5, locked: false }, false);
+        createMapInstance(el, [], { lat: centerLat, lng: centerLng, zoom: 10.5 }, false);
         setVacancies([]);
         map.once("load", function () {
             refreshKkAreasData();
@@ -5025,6 +5032,10 @@ window.jobMap = (function () {
         }
         runWithViewportNotifySuppressed(function () {
             map.resize();
+            if (kkMode) {
+                fitKkView(false);
+                return;
+            }
             if (originNeedsFrame && lastOrigin) {
                 fitToOriginRings(false);
             }
