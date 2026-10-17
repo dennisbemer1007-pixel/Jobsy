@@ -61,31 +61,38 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             var page = await context.NewPageAsync();
             Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, employerEmail, password));
             await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/kandidatenkaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await page.EvaluateAsync("""
-                document.documentElement.classList.remove('vp-mobile');
-                document.documentElement.classList.add('vp-desktop');
-                """);
+            if (width < 1280)
+            {
+                await page.EvaluateAsync("""
+                    document.documentElement.classList.remove('vp-mobile');
+                    document.documentElement.classList.add('vp-desktop');
+                    """);
+            }
+
             await WaitForMapReadyAsync(page);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-map-areas-{suffix}.png"), FullPage = true });
+            await ShotPageAsync(page, $"kk-map-areas-{suffix}.png");
 
             var more = page.Locator(".kk-btn--more");
-            if (await more.CountAsync() > 0)
-            {
-                await more.First.ClickAsync();
-                await page.WaitForTimeoutAsync(500);
-                await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-filters-open-{suffix}.png"), FullPage = true });
-            }
+            Assert.True(await more.CountAsync() > 0, "Expected Meer filters control on kandidatenkaart.");
+            await more.First.ClickAsync();
+            await page.WaitForSelectorAsync(".kk-filter-popover.is-open", new() { Timeout = 10_000 });
+            await page.WaitForTimeoutAsync(400);
+            await ShotPageAsync(page, $"kk-filters-open-{suffix}.png");
 
             await ClickFilterAsync(page, "80%");
             await ClickFilterAsync(page, "15 km");
-            await page.WaitForTimeoutAsync(2500);
-            if (await page.Locator(".kk-below-min").CountAsync() > 0)
-            {
-                await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-below-30-{suffix}.png"), FullPage = true });
-            }
+            await ClickFilterAsync(page, "Later");
+            await ClickFilterAsync(page, "32+");
+            await page.WaitForTimeoutAsync(3000);
+            Assert.True(
+                await page.Locator(".kk-below-min").CountAsync() > 0,
+                "Expected below-30 notice after strict filters.");
+            await ShotPageAsync(page, $"kk-below-30-{suffix}.png");
 
             await ClickFilterAsync(page, "60%");
             await ClickFilterAsync(page, "60 km");
+            await ClickFilterAsync(page, "Per direct");
+            await ClickFilterAsync(page, "24–32");
             await page.WaitForTimeoutAsync(2500);
 
             if (await page.Locator(".kk-map-cta").CountAsync() == 0
@@ -95,13 +102,11 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                 await page.WaitForTimeoutAsync(400);
             }
 
-            if (await page.Locator(".kk-map-cta").CountAsync() > 0)
-            {
-                await page.Locator(".kk-map-cta").ClickAsync();
-                await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
-                await page.WaitForTimeoutAsync(400);
-                await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-invite-preview-{suffix}.png"), FullPage = true });
-            }
+            Assert.True(await page.Locator(".kk-map-cta").CountAsync() > 0, "Expected invite CTA on map.");
+            await page.Locator(".kk-map-cta").ClickAsync();
+            await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
+            await page.WaitForTimeoutAsync(400);
+            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png");
         }
 
         await using (var ctx = await browser.NewContextAsync(new()
@@ -157,24 +162,55 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await page.WaitForTimeoutAsync(1200);
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-route-flag-off-404-1440.png"), FullPage = true });
         }
+
+        var required = new[]
+        {
+            "kk-map-areas-1440.png", "kk-map-areas-390.png",
+            "kk-filters-open-1440.png", "kk-filters-open-390.png",
+            "kk-below-30-1440.png", "kk-below-30-390.png",
+            "kk-invite-preview-1440.png", "kk-invite-preview-390.png",
+            "kk-candidate-settings-1440.png", "kk-candidate-settings-390.png",
+            "kk-reavail-banner-1440.png", "kk-reavail-banner-390.png",
+            "kk-nav-flag-off-1440.png", "kk-route-flag-off-404-1440.png"
+        };
+        foreach (var name in required)
+        {
+            Assert.True(File.Exists(Path.Combine(OutDir, name)), $"Missing evidence screenshot: {name}");
+        }
     }
 
     private static async Task WaitForMapReadyAsync(IPage page)
     {
-        await page.WaitForTimeoutAsync(1500);
-        var deadline = DateTime.UtcNow.AddSeconds(30);
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Kandidatenkaart" })
+            .WaitForAsync(new() { Timeout = 90_000 });
+        await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 10_000 });
+        await page.WaitForSelectorAsync(".kk-map-pane", new() { Timeout = 60_000 });
+        var deadline = DateTime.UtcNow.AddSeconds(45);
         while (DateTime.UtcNow < deadline)
         {
             if (await page.Locator(".kk-area-list__item").CountAsync() > 0
                 || await page.Locator(".kk-below-min").CountAsync() > 0
                 || await page.Locator(".kk-map-pane .maplibregl-canvas").CountAsync() > 0)
             {
-                await page.WaitForTimeoutAsync(800);
+                await page.WaitForTimeoutAsync(1200);
                 return;
             }
 
             await page.WaitForTimeoutAsync(500);
         }
+
+        throw new InvalidOperationException("Kandidatenkaart map did not finish loading.");
+    }
+
+    private static async Task ShotPageAsync(IPage page, string fileName)
+    {
+        var root = page.Locator(".wg-main .kk-page");
+        if (await root.CountAsync() == 0)
+        {
+            root = page.Locator(".kk-page");
+        }
+
+        await root.First.ScreenshotAsync(new() { Path = Path.Combine(OutDir, fileName) });
     }
 
     private static async Task ClickFilterAsync(IPage page, string label)
@@ -210,6 +246,29 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             EmployersEnabled: true,
             CandidatePassportEnabled: true,
             KandidatenkaartEnabled: enabled));
-        await Task.Delay(enabled ? 5000 : 3000);
+
+        var apiBase = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal);
+        for (var attempt = 0; attempt < 60; attempt++)
+        {
+            try
+            {
+                using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
+                var json = await http.GetStringAsync($"{apiBase.TrimEnd('/')}/api/settings/feature-flags");
+                var expected = enabled ? "true" : "false";
+                if (json.Contains($"\"kandidatenkaartEnabled\":{expected}", StringComparison.OrdinalIgnoreCase))
+                {
+                    break;
+                }
+            }
+            catch
+            {
+                // API may still be starting.
+            }
+
+            await Task.Delay(500);
+        }
+
+        // WebFeatureFlags caches the public snapshot for ~30s.
+        await Task.Delay(35_000);
     }
 }

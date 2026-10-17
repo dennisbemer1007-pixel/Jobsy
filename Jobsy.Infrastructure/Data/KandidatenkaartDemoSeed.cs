@@ -36,16 +36,21 @@ public static class KandidatenkaartDemoSeed
             company.Location = anchor;
         }
 
-        var vacancy = await db.Vacancies
-            .Where(v => v.CompanyId == DemoEmployerCompanyId && v.Status == VacancyStatus.Active)
-            .OrderBy(v => v.CreatedAtUtc)
-            .FirstOrDefaultAsync(cancellationToken);
-        if (vacancy is null)
+        var vacancies = await db.Vacancies
+            .Where(v => v.CompanyId == DemoEmployerCompanyId
+                        && v.Status == VacancyStatus.Active
+                        && v.PublishedAtUtc != null)
+            .ToListAsync(cancellationToken);
+        if (vacancies.Count == 0)
         {
             return;
         }
 
-        vacancy.Location = anchor;
+        foreach (var vacancy in vacancies)
+        {
+            vacancy.Location = anchor;
+        }
+
         await db.SaveChangesAsync(cancellationToken);
     }
 
