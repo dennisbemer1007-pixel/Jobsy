@@ -583,11 +583,15 @@
 
     /* Coach sits fixed; keep it above the in-flow footer (© line). */
     .app-shell:has(.passport-page) .lobsy-coach-dock {
-        bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+        bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell:has(.passport-page) .app-footer {
+        padding-inline-end: 5.5rem;
     }
 
     .app-shell:has(.passport-page) .app-main {
-        padding-bottom: 4.5rem;
+        padding-bottom: 5rem;
     }
 }
 
