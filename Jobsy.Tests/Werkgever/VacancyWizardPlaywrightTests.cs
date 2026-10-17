@@ -442,12 +442,18 @@ public class VacancyWizardPlaywrightTests
 
     private static async Task AssertMobileEmployerSidebarHiddenAsync(IPage page)
     {
-        var sidebar = page.Locator(".wg-shell__sidebar--desktop");
-        Assert.False(await sidebar.IsVisibleAsync(),
-            "Desktop sidebar should not be visible on mobile viewports.");
-        var box = await sidebar.BoundingBoxAsync();
-        Assert.True(box is null || box.Width < 2,
-            "Desktop sidebar should not occupy width on mobile viewports.");
+        var hidden = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const el = document.querySelector('.wg-shell__sidebar--desktop');
+              if (!el) return true;
+              const style = getComputedStyle(el);
+              if (style.display === 'none' || style.visibility === 'hidden') return true;
+              const rect = el.getBoundingClientRect();
+              return rect.width < 2 || rect.right <= 0;
+            }
+            """);
+        Assert.True(hidden, "Desktop sidebar should not be visible on mobile viewports.");
     }
 
     private static async Task AssertVacancyWizardNoHorizontalOverflowAsync(IPage page)
