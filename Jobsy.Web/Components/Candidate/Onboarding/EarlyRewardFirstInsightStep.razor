@@ -1,0 +1,46 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<section class="ob-vroeg ob-vroeg--insight" data-testid="early-reward-insight">
+    <div class="ob-vroeg__test-pills" aria-label="@Culture["Onboarding.Early.Insight.PillsAria"]">
+        @foreach (var tab in TestTabs)
+        {
+            var isDone = tab.Step <= CompletedTestStep;
+            var isCurrent = tab.Step == CompletedTestStep + 1;
+            <span class="@(isDone ? "is-done" : isCurrent ? "is-current" : null)">@Culture[tab.Title]</span>
+        }
+    </div>
+
+    <h1 class="ob-vroeg__title">@Culture["Onboarding.Early.Insight.Title"]</h1>
+    <p class="ob-wizard__lead">@Culture["Onboarding.Early.Insight.Lead"]</p>
+
+    <div class="ob-vroeg__insight-card">
+        <p class="ob-vroeg__insight-label">@Culture["Onboarding.Test.Competency"]</p>
+        @if (Strength is not null)
+        {
+            <p class="ob-vroeg__insight-value">@Strength.Label</p>
+            <p class="ob-vroeg__insight-hint">@Strength.Sentence</p>
+        }
+        <OnboardingKompasQuarter />
+        <div class="ob-vroeg__kompas-segments">
+            @foreach (var tab in TestTabs)
+            {
+                var lit = tab.Step <= CompletedTestStep;
+                <span class="ob-vroeg__kompas-seg @(lit ? "is-lit" : null)">@Culture[tab.Title]</span>
+            }
+        </div>
+    </div>
+
+    <div class="ob-vroeg__banner ob-vroeg__banner--time">
+        <p>@((MarkupString)Culture.Format("Onboarding.Early.Insight.TimeBanner", RemainingTests))</p>
+    </div>
+</section>
+
+@code {
+    [Parameter] public IReadOnlyList<OnboardingMiniTest.TestTab> TestTabs { get; set; } = [];
+    [Parameter] public int CompletedTestStep { get; set; } = 7;
+    [Parameter] public OnboardingImpressionItem? Strength { get; set; }
+
+    private int RemainingTests => Math.Max(0, 10 - CompletedTestStep);
+}

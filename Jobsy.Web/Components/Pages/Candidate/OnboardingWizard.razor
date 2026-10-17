@@ -23,6 +23,7 @@
 <HeadContent>
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
 </HeadContent>
 
 <div class="ob-wizard ob-wizard--richting-a">
@@ -215,6 +216,18 @@
 
                     <p class="ob-wizard__step-pill">@MobileStepBadge</p>
 
+                    @if (_earlyMoment == EarlyRewardMoment.Nearby)
+                    {
+                        <EarlyRewardNearbyStep Signal="_nearbySignal" TransportLabel="@Draft.Transport" />
+                    }
+                    else if (_earlyMoment == EarlyRewardMoment.FirstInsight)
+                    {
+                        <EarlyRewardFirstInsightStep TestTabs="MiniTestTabs"
+                                                     CompletedTestStep="7"
+                                                     Strength="_earlyStrength" />
+                    }
+                    else
+                    {
                     @switch (_step)
                     {
                         case 1:
@@ -289,12 +302,14 @@
                             break;
                     }
 
+                    }
+
                     <div class="ob-wizard__mascot-anchor" aria-hidden="true">
                         <img src="/images/brand/mascot-64.webp" width="36" height="36" alt="" />
                     </div>
                 </section>
 
-                @if (!ShowMiniTestFooter)
+                @if (_earlyMoment != EarlyRewardMoment.None || !ShowMiniTestFooter)
                 {
                     <footer class="ob-wizard__footer" data-sticky-footer="true">
                         @if (_step is 4 or 5)
@@ -313,12 +328,12 @@
                             <button type="button"
                                     class="ob-wizard__back-footer"
                                     data-testid="onboarding-back"
-                                    disabled="@(_step == 1 || _busy)"
+                                    disabled="@(_busy || (_step == 1 && _earlyMoment == EarlyRewardMoment.None))"
                                     @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                             <button type="button"
                                     class="btn btn-primary ob-wizard__cta"
                                     data-testid="onboarding-next"
-                                    disabled="@_busy"
+                                    disabled="@(_busy || _loadingNearby)"
                                     @onclick="@(() => NextAsync())">@NextLabel</button>
                         </div>
                     </footer>
@@ -330,6 +345,7 @@
 
 @code {
     private enum WizardPhase { Wizard, Install }
+    private enum EarlyRewardMoment { None, Nearby, FirstInsight }
     private sealed record SidebarItem(int Number, int First, int Last, string Title, string Lead);
     private sealed record WelcomePhase(int Number, string Title, string Lead, string Time);
     
@@ -347,6 +363,10 @@
     private bool _saveError;
     private bool _showValidation;
     private bool _pendingStepScroll;
+    private bool _loadingNearby;
+    private EarlyRewardMoment _earlyMoment;
+    private OnboardingNearbySignal? _nearbySignal;
+    private OnboardingImpressionItem? _earlyStrength;
     private int _step = 1;
     private int _currentQuestion;
     private string _installMessage = "";
@@ -425,6 +445,16 @@
     {
         get
         {
+            if (_earlyMoment == EarlyRewardMoment.Nearby)
+            {
+                return Culture["Onboarding.Early.Nearby.Badge"];
+            }
+
+            if (_earlyMoment == EarlyRewardMoment.FirstInsight)
+            {
+                return Culture["Onboarding.Early.Insight.Badge"];
+            }
+
             if (Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
             {
                 return $"Stap {_step} van 10";
@@ -435,14 +465,22 @@
         }
     }
 
-    private string MobileTopMeta =>
-        Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
+    private string MobileTopMeta => _earlyMoment switch
+    {
+        EarlyRewardMoment.Nearby => Culture["Onboarding.Early.Nearby.Meta"],
+        EarlyRewardMoment.FirstInsight => Culture["Onboarding.Early.Insight.Meta"],
+        _ => Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
             .Replace(" van 10 ·", " ·", StringComparison.Ordinal)
             .Replace(" of 10 ·", " ·", StringComparison.Ordinal)
             .Replace(" minuten", " min", StringComparison.Ordinal)
-            .Replace(" min left", " min", StringComparison.Ordinal);
+            .Replace(" min left", " min", StringComparison.Ordinal)
+    };
 
-    private string NextLabel => _step == 7 && !Draft.HasConsent
+    private string NextLabel => _earlyMoment == EarlyRewardMoment.Nearby
+        ? Culture["Onboarding.Early.Nearby.Cta"]
+        : _earlyMoment == EarlyRewardMoment.FirstInsight
+            ? Culture["Onboarding.NextTest"]
+            : _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
         : _step == 10 ? Culture["Onboarding.ViewKompas"]
         : _step is >= 7 ? Culture["Onboarding.NextTest"]
@@ -451,7 +489,10 @@
 
     /// <summary>Mini-test uses a single primary in <see cref="TestQuestionFlow"/> (no duplicate wizard CTA).</summary>
     private bool ShowMiniTestFooter =>
-        _step is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0;
+        _earlyMoment == EarlyRewardMoment.None
+        && _step is >= 7 and <= 10
+        && Draft.HasConsent
+        && _miniQuestions.Count > 0;
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
@@ -670,6 +711,22 @@
 
     private async Task BackAsync()
     {
+        if (_earlyMoment == EarlyRewardMoment.FirstInsight)
+        {
+            _earlyMoment = EarlyRewardMoment.None;
+            _earlyStrength = null;
+            RequestStepScrollReset();
+            return;
+        }
+
+        if (_earlyMoment == EarlyRewardMoment.Nearby)
+        {
+            _earlyMoment = EarlyRewardMoment.None;
+            _nearbySignal = null;
+            RequestStepScrollReset();
+            return;
+        }
+
         if (_step <= 1) return;
         await FlushAsync();
         _miniArrivedViaBack = true;
@@ -719,6 +776,32 @@
         _miniArrivedViaBack = false;
         try
         {
+            if (_earlyMoment == EarlyRewardMoment.Nearby)
+            {
+                _earlyMoment = EarlyRewardMoment.None;
+                _nearbySignal = null;
+                _step++;
+                _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
+                FlashSaved();
+                await PrepareMiniAsync();
+                await TryAutoAdvanceEmptyMiniStepAsync();
+                RequestStepScrollReset();
+                return;
+            }
+
+            if (_earlyMoment == EarlyRewardMoment.FirstInsight)
+            {
+                _earlyMoment = EarlyRewardMoment.None;
+                _earlyStrength = null;
+                _step++;
+                _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
+                FlashSaved();
+                await PrepareMiniAsync();
+                await TryAutoAdvanceEmptyMiniStepAsync();
+                RequestStepScrollReset();
+                return;
+            }
+
             if (_step == 7 && !Draft.HasConsent)
             {
                 await AcceptConsentAsync();
@@ -732,6 +815,15 @@
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;
+                return;
+            }
+
+            if (_step == 3)
+            {
+                await FlushAsync();
+                await LoadNearbySignalAsync();
+                _earlyMoment = EarlyRewardMoment.Nearby;
+                RequestStepScrollReset();
                 return;
             }
 
@@ -1144,6 +1236,14 @@
             return;
         }
 
+        if (_step == 7 && Draft.HasConsent && await CompetencyMiniCompleteAsync())
+        {
+            await LoadEarlyStrengthAsync();
+            _earlyMoment = EarlyRewardMoment.FirstInsight;
+            RequestStepScrollReset();
+            return;
+        }
+
         _busy = true;
         try
         {
@@ -1208,7 +1308,36 @@
         return Task.CompletedTask;
     }
 
-    private Task FinishMiniAsync() => NextAsync(fromMiniTestFinish: true);
+    private async Task FinishMiniAsync()
+    {
+        if (_step == 7)
+        {
+            _busy = true;
+            try
+            {
+                if (_autosave is not null)
+                {
+                    await _autosave.FlushAsync();
+                }
+
+                await LoadEarlyStrengthAsync();
+                _earlyMoment = EarlyRewardMoment.FirstInsight;
+                RequestStepScrollReset();
+            }
+            catch (Exception ex)
+            {
+                _error = UserFacing.Describe(ex);
+            }
+            finally
+            {
+                _busy = false;
+            }
+
+            return;
+        }
+
+        await NextAsync(fromMiniTestFinish: true);
+    }
 
     private async Task SaveMiniQuietAsync(int id, int value)
     {
@@ -1361,6 +1490,67 @@
         await Task.Delay(2500);
         _savedVisible = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadNearbySignalAsync()
+    {
+        _loadingNearby = true;
+        try
+        {
+            _nearbySignal = await Api.GetOnboardingNearbySignalAsync();
+        }
+        finally
+        {
+            _loadingNearby = false;
+        }
+    }
+
+    private async Task LoadEarlyStrengthAsync()
+    {
+        var competency = await Api.GetMyCompetenciesAsync();
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        var version = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2);
+        var answerMap = ParseMiniAnswers(competency?.Answers);
+        var preview = AssessmentQuickScanCatalog.ScoreCompetence(answerMap, version);
+        var top = OnboardingImpressionComposer.TopCompetencyItems(preview, 1).FirstOrDefault();
+        _earlyStrength = top is null
+            ? null
+            : new OnboardingImpressionItem
+            {
+                Code = top.Code,
+                Label = top.Label,
+                Sentence = top.Sentence,
+                Percent = top.Percent
+            };
+    }
+
+    private async Task<bool> CompetencyMiniCompleteAsync()
+    {
+        var competency = await Api.GetMyCompetenciesAsync();
+        if (competency?.Answers is not { Count: > 0 })
+        {
+            return false;
+        }
+
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        var version = ResolveQuickScanVersion(competency.QuickScanVersion, testsV2);
+        var miniIds = TestDepthRules.MiniIds(AssessmentKind.Competence, version);
+        return miniIds.All(id =>
+            competency.Answers.TryGetValue(id.ToString(), out var value) && value is >= 1 and <= 5);
+    }
+
+    private static Dictionary<int, int> ParseMiniAnswers(Dictionary<string, int>? answers)
+    {
+        var result = new Dictionary<int, int>();
+        foreach (var pair in answers ?? [])
+        {
+            if (int.TryParse(pair.Key, out var id) && pair.Value is >= 1 and <= 5)
+            {
+                result[id] = pair.Value;
+            }
+        }
+
+        return result;
     }
 
     private async Task CompleteAsync()

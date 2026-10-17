@@ -1,0 +1,114 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<section class="ob-vroeg ob-vroeg--nearby" data-testid="early-reward-nearby">
+    <h1 class="ob-vroeg__title">
+        @if (Signal?.Count > 0)
+        {
+            @Culture["Onboarding.Early.Nearby.TitlePrefix"]
+            <span class="ob-vroeg__count">@Signal.Count @Culture["Onboarding.Early.Nearby.TitleSuffix"]</span>
+        }
+        else
+        {
+            @Culture["Onboarding.Early.Nearby.TitleZero"]
+        }
+    </h1>
+    <p class="ob-wizard__lead">@LeadText</p>
+
+    @if (Signal?.Count > 0)
+    {
+        <div class="ob-vroeg__banner ob-vroeg__banner--time">
+            <p>@((MarkupString)Culture["Onboarding.Early.Nearby.TimeBanner"])</p>
+        </div>
+
+        @if (Signal.Examples.Count > 0)
+        {
+            <div class="ob-vroeg__card ob-vroeg__card--jobs">
+                <p class="ob-vroeg__stat">@Culture.Format("Onboarding.Early.Nearby.Examples", Signal.Examples.Count)</p>
+                <ul class="ob-vroeg__job-list">
+                    @foreach (var job in Signal.Examples)
+                    {
+                        <li class="ob-vroeg__job-card">
+                            <div class="ob-vroeg__job-icon" aria-hidden="true">@Initial(job.Title)</div>
+                            <div>
+                                <p class="ob-vroeg__job-title">@job.Title</p>
+                                <p class="ob-vroeg__job-meta">
+                                    <b>@FormatKm(job.DistanceKm)</b>
+                                    · <b>@job.TravelMinutes</b> @TransportShort
+                                    · @job.HoursLabel @Culture["Onboarding.Hours"]
+                                    · @job.ScheduleHint
+                                </p>
+                            </div>
+                            <p class="ob-vroeg__job-match">@job.WhyLine</p>
+                        </li>
+                    }
+                </ul>
+                <p class="ob-vroeg__fineprint">@Culture["Onboarding.Early.Nearby.Fineprint"]</p>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="ob-vroeg__banner ob-vroeg__banner--warm">
+            <p>@FallbackLead</p>
+        </div>
+        @if (Signal?.WiderRadiusCount is > 0)
+        {
+            <p class="ob-vroeg__hint">@Culture.Format("Onboarding.Early.Nearby.WiderHint", Signal.WiderRadiusCount.Value)</p>
+        }
+        <a class="ob-vroeg__link" href="/kandidaat/banen">@Culture["Onboarding.Early.Nearby.Banenkaart"]</a>
+    }
+</section>
+
+@code {
+    [Parameter] public OnboardingNearbySignal? Signal { get; set; }
+    [Parameter] public string TransportLabel { get; set; } = "";
+
+    private string TransportShort => TransportLabels.SplitMany(TransportLabel).FirstOrDefault() ?? "reizen";
+
+    private string LeadText
+    {
+        get
+        {
+            if (Signal is null || Signal.MissingHomeLocation)
+            {
+                return Culture["Onboarding.Early.Nearby.LeadNoLocation"];
+            }
+
+            if (Signal.EmployersFeatureOff)
+            {
+                return Culture["Onboarding.Early.Nearby.LeadEmployersOff"];
+            }
+
+            return Culture.Format(
+                "Onboarding.Early.Nearby.Lead",
+                Signal.MaxTravelMinutes,
+                TransportShort);
+        }
+    }
+
+    private string FallbackLead
+    {
+        get
+        {
+            if (Signal?.EmployersFeatureOff == true)
+            {
+                return Culture["Onboarding.Early.Nearby.FallbackEmployersOff"];
+            }
+
+            if (Signal?.MissingHomeLocation == true)
+            {
+                return Culture["Onboarding.Early.Nearby.FallbackNoLocation"];
+            }
+
+            return Culture["Onboarding.Early.Nearby.FallbackZero"];
+        }
+    }
+
+    private static string Initial(string title)
+        => string.IsNullOrWhiteSpace(title) ? "?" : char.ToUpperInvariant(title.Trim()[0]).ToString();
+
+    private static string FormatKm(double km) => km.ToString("0.0", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")).Replace('.', ',') + " km";
+}

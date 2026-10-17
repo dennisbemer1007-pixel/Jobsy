@@ -170,7 +170,7 @@ public static class UiStringsDiscovery
         Add("Discovery.Rail.LayersCount",
             "{0} van 10 afgerond", "{0} of 10 done", "{0} z 10 gotowych", "{0} din 10 gata", "{0} من 10 منجزة");
         Add("Discovery.Rail.StartCount",
-            "10 stappen · ± 12 minuten", "10 steps · ± 12 minutes", "10 kroków · ± 12 minut", "10 pași · ± 12 minute", "10 خطوات · ± 12 دقيقة");
+            "10 stappen · ongeveer 12 minuten", "10 steps · about 12 minutes", "10 kroków · ok. 12 minut", "10 pași · circa 12 minute", "10 خطوات · نحو 12 دقيقة");
         Add("Discovery.Rail.StartCountShort",
             "10 stappen · ± 12 min", "10 steps · ± 12 min", "10 kroków · ± 12 min", "10 pași · ± 12 min", "10 خطوات · ± 12 د");
         Add("Discovery.Rail.StepCount",
