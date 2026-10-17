@@ -1,0 +1,275 @@
+using Jobsy.Core.Entities;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Tests.E2e;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Playwright;
+
+namespace Jobsy.Tests;
+
+/// <summary>Run with LIVEGANG_SHOTS=1, LIVEGANG_PHASE=before|after, JOBSY_E2E_BASE_URL, ConnectionStrings__JobsyDb.</summary>
+[Collection("PlaywrightSmoke")]
+public class LivegangScreenshotCaptureTests
+{
+    private const string CandidateEmail = "kandidaat@jobsy.local";
+    private const string EmployerEmail = "ondernemer@jobsy.local";
+    private const string Password = "Jobsy123!";
+
+    [Fact]
+    public async Task Capture_livegang_evidence_when_requested()
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("LIVEGANG_SHOTS"), "1", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync()
+                      ?? throw new InvalidOperationException("Stack not reachable at JOBSY_E2E_BASE_URL.");
+        var phase = Environment.GetEnvironmentVariable("LIVEGANG_PHASE") ?? "after";
+        var root = Environment.GetEnvironmentVariable("LIVEGANG_SHOTS_DIR")
+                   ?? $"/cursor/stores/self/livegang-fixes/{phase}";
+        Directory.CreateDirectory(root);
+
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
+        Assert.True(await CandidateJourneyE2e.WaitForFlagsAsync(baseUrl), "Feature flags did not turn on in time.");
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        await using var browser = await KbE2e.LaunchChromiumAsync();
+
+        var skipNotificationsPage = string.Equals(phase, "before", StringComparison.OrdinalIgnoreCase);
+
+        await CaptureVacancyWizardAsync(browser, baseUrl, root);
+        await ClearDemoNotificationsAsync();
+        await CaptureNotificationsAsync(browser, baseUrl, root, withItems: false, skipPage: skipNotificationsPage);
+        await SeedDemoNotificationsAsync();
+        await CaptureNotificationsAsync(browser, baseUrl, root, withItems: true, skipPage: skipNotificationsPage);
+        await CaptureVacaturesListAsync(browser, baseUrl, root);
+    }
+
+    private static async Task CaptureVacancyWizardAsync(IBrowser browser, string baseUrl, string root)
+    {
+        foreach (var (tag, width, height, mobile, scale) in new[]
+                 {
+                     ("desktop-1440", 1440, 900, false, 1),
+                     ("mobile-390", 390, 844, true, 1),
+                     ("mobile-390-2x", 390, 844, true, 2),
+                 })
+        {
+            await using var context = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                DeviceScaleFactor = scale,
+                IsMobile = mobile,
+                HasTouch = mobile,
+                Locale = "nl-NL",
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            await AssertLoginAsync(page, baseUrl, EmployerEmail);
+            if (mobile)
+            {
+                await page.GotoAsync($"{baseUrl}/werkgever",
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await KbE2e.WaitForStyledAppAsync(page);
+            }
+
+            await page.GotoAsync($"{baseUrl}/werkgever/vacatures/nieuw",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await KbE2e.WaitForStyledAppAsync(page);
+            await page.Locator("[data-testid='vacancy-wizard']").WaitForAsync(new() { Timeout = 90_000 });
+            await page.Locator("[data-testid='vac-wizard-step-1']").WaitForAsync();
+            var picker = page.Locator("[data-testid='vacancy-category-picker'] .lobsy-choice-tile");
+            if (await picker.CountAsync() > 0)
+            {
+                await picker.First.ClickAsync();
+                await page.WaitForTimeoutAsync(500);
+            }
+
+            var file = Path.Combine(root, $"vac-wizard-step1-selected-{tag}.png");
+            await page.ScreenshotAsync(new() { Path = file, FullPage = false });
+            AssertPngWidth(file, width * scale);
+        }
+    }
+
+    private static async Task CaptureNotificationsAsync(
+        IBrowser browser, string baseUrl, string root, bool withItems, bool skipPage = false)
+    {
+        var suffix = withItems ? "with-items" : "empty";
+        foreach (var (role, email) in new[] { ("candidate", CandidateEmail), ("employer", EmployerEmail) })
+        {
+            foreach (var (tag, width, height, mobile) in new[]
+                     {
+                         ("mobile-390", 390, 844, true),
+                         ("desktop-1440", 1440, 900, false),
+                     })
+            {
+                await using var context = await browser.NewContextAsync(new()
+                {
+                    ViewportSize = new() { Width = width, Height = height },
+                    IsMobile = mobile,
+                    HasTouch = mobile,
+                    Locale = "nl-NL",
+                    IgnoreHTTPSErrors = true
+                });
+                await PlaywrightCookieConsent.AcceptAsync(context);
+                var page = await context.NewPageAsync();
+                await AssertLoginAsync(page, baseUrl, email);
+                var home = role == "employer" ? $"{baseUrl}/werkgever/vacatures" : $"{baseUrl}/candidate/applications";
+                await page.GotoAsync(home,
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+                await page.WaitForTimeoutAsync(600);
+
+                var bell = page.Locator(".notification-bell__toggle").First;
+                await bell.WaitForAsync(new() { Timeout = 30_000 });
+                await bell.ClickAsync();
+                await page.Locator(".notification-bell__panel").WaitForAsync(new() { State = WaitForSelectorState.Visible });
+                var bellFile = Path.Combine(root, $"notifications-bell-{suffix}-{role}-{tag}.png");
+                await page.ScreenshotAsync(new() { Path = bellFile, FullPage = false });
+                AssertPngWidth(bellFile, width);
+
+                if (skipPage)
+                {
+                    continue;
+                }
+
+                await page.GotoAsync($"{baseUrl}/notifications",
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+                await page.WaitForTimeoutAsync(500);
+                var pageFile = Path.Combine(root, $"notifications-page-{suffix}-{role}-{tag}.png");
+                await page.ScreenshotAsync(new() { Path = pageFile, FullPage = false });
+                AssertPngWidth(pageFile, width);
+            }
+        }
+    }
+
+    private static async Task CaptureVacaturesListAsync(IBrowser browser, string baseUrl, string root)
+    {
+        foreach (var (tag, width, height, mobile, fullPage) in new[]
+                 {
+                     ("desktop-1440-full", 1440, 900, false, true),
+                     ("mobile-390", 390, 844, true, false),
+                 })
+        {
+            await using var context = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IsMobile = mobile,
+                HasTouch = mobile,
+                Locale = "nl-NL",
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            await AssertLoginAsync(page, baseUrl, EmployerEmail);
+            await page.GotoAsync($"{baseUrl}/werkgever/vacatures",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await page.Locator(".wg-vac, .ent-filter-bar, .wg-page-header").First.WaitForAsync(new() { Timeout = 60_000 });
+            await page.WaitForTimeoutAsync(800);
+
+            var scrollWidth = await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth");
+            var clientWidth = await page.EvaluateAsync<int>("() => document.documentElement.clientWidth");
+            var metricsFile = Path.Combine(root, $"werkgever-vacatures-{tag}-metrics.txt");
+            await File.WriteAllTextAsync(metricsFile,
+                $"scrollWidth={scrollWidth}{Environment.NewLine}clientWidth={clientWidth}{Environment.NewLine}overflowPx={scrollWidth - clientWidth}{Environment.NewLine}");
+
+            var file = Path.Combine(root, $"werkgever-vacatures-{tag}.png");
+            await page.ScreenshotAsync(new() { Path = file, FullPage = fullPage });
+            AssertPngWidth(file, width);
+        }
+    }
+
+    private static async Task ClearDemoNotificationsAsync()
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        foreach (var email in new[] { CandidateEmail, EmployerEmail })
+        {
+            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
+            if (user is null)
+            {
+                continue;
+            }
+
+            var rows = await db.UserNotifications.Where(n => n.UserId == user.Id).ToListAsync();
+            db.UserNotifications.RemoveRange(rows);
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedDemoNotificationsAsync()
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var demo = await db.UserNotifications
+            .Where(n => n.Title.StartsWith("Livegang demo "))
+            .ToListAsync();
+        db.UserNotifications.RemoveRange(demo);
+        await db.SaveChangesAsync();
+
+        foreach (var email in new[] { CandidateEmail, EmployerEmail })
+        {
+            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
+            if (user is null)
+            {
+                continue;
+            }
+
+            for (var i = 1; i <= 3; i++)
+            {
+                db.UserNotifications.Add(new UserNotification
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Title = $"Livegang demo {i}",
+                    Body = "Voorbeeld melding voor screenshot.",
+                    Category = "Livegang",
+                    IsRead = false,
+                    CreatedAtUtc = DateTime.UtcNow.AddMinutes(-i)
+                });
+            }
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static void AssertPngWidth(string path, int expectedWidth)
+    {
+        var bytes = File.ReadAllBytes(path);
+        Assert.True(bytes.Length > 24, $"PNG too small: {path}");
+        var width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+        Assert.Equal(expectedWidth, width);
+    }
+
+    private static async Task AssertLoginAsync(IPage page, string baseUrl, string email)
+    {
+        for (var attempt = 1; attempt <= 4; attempt++)
+        {
+            if (await KbE2e.TryLoginAsync(page, baseUrl, email, Password))
+            {
+                return;
+            }
+
+            await page.WaitForTimeoutAsync(1500 * attempt);
+        }
+
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, Password));
+    }
+}
