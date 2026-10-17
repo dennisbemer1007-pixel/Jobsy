@@ -84,9 +84,11 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                 await page.WaitForTimeoutAsync(2000);
             }
 
+            var mobileViewportShot = width < 640;
+
             await WaitForMapReadyAsync(page);
             await KbE2e.AssertNoCircuitErrorAsync(page);
-            await ShotPageAsync(page, $"kk-map-areas-{suffix}.png");
+            await ShotPageAsync(page, $"kk-map-areas-{suffix}.png", mobileViewportShot);
 
             var more = width < 640
                 ? page.Locator(".kk-mobile-bar .kk-filter-more")
@@ -103,7 +105,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             }
 
             await page.WaitForTimeoutAsync(400);
-            await ShotPageAsync(page, $"kk-filters-open-{suffix}.png");
+            await ShotPageAsync(page, $"kk-filters-open-{suffix}.png", mobileViewportShot);
 
             if (width < 640)
             {
@@ -141,7 +143,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await inviteCta.First.ClickAsync();
             await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
             await page.WaitForTimeoutAsync(400);
-            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png");
+            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png", mobileViewportShot);
             await page.Locator(".kk-modal .btn-compact").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
             await page.WaitForTimeoutAsync(400);
 
@@ -165,7 +167,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             Assert.True(
                 await page.Locator(".kk-below-min").CountAsync() > 0,
                 "Expected below-30 notice after strict filters.");
-            await ShotPageAsync(page, $"kk-below-30-{suffix}.png");
+            await ShotPageAsync(page, $"kk-below-30-{suffix}.png", mobileViewportShot);
         }
 
         await using (var ctx = await browser.NewContextAsync(new()
@@ -334,13 +336,23 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
         await page.WaitForTimeoutAsync(mobile ? 800 : 600);
     }
 
-    private static async Task ShotPageAsync(IPage page, string fileName)
+    private static async Task ShotPageAsync(IPage page, string fileName, bool fullViewport = false)
     {
         await page.EvaluateAsync("""
             window.scrollTo(0, 0);
             document.querySelector('.wg-main')?.scrollTo(0, 0);
             document.querySelector('.kk-page')?.scrollTo?.(0, 0);
             """);
+
+        if (fullViewport)
+        {
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(OutDir, fileName),
+                FullPage = false
+            });
+            return;
+        }
 
         var root = page.Locator(".wg-main .kk-page");
         if (await root.CountAsync() == 0)

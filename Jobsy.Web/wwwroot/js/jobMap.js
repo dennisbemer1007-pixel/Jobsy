@@ -4110,10 +4110,30 @@ window.jobMap = (function () {
         return a[pascal];
     }
 
+    function kkLooksLikeLatLngPair(x, y) {
+        return Math.abs(x) > 20 && Math.abs(y) < 20;
+    }
+
+    function kkNormalizeLngLatPair(x, y) {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return null;
+        }
+        if (kkLooksLikeLatLngPair(x, y)) {
+            return [y, x];
+        }
+        return [x, y];
+    }
+
     function kkAreasGeoJson(areas, selectedKey) {
         var features = (areas || []).map(function (a) {
             var ring = a.polygonRing || a.PolygonRing || [];
-            var coords = ring.map(function (p) { return [p[0], p[1]]; });
+            var coords = ring.map(function (p) {
+                if (!p || p.length < 2) {
+                    return null;
+                }
+                var pair = kkNormalizeLngLatPair(Number(p[0]), Number(p[1]));
+                return pair;
+            }).filter(Boolean);
             if (coords.length && (coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1])) {
                 coords.push(coords[0]);
             }
@@ -4131,21 +4151,45 @@ window.jobMap = (function () {
         return { type: "FeatureCollection", features: features };
     }
 
+    var KK_LABEL_OFFSETS = [
+        [0, 0],
+        [0.85, -0.65],
+        [-0.85, -0.65],
+        [0.65, 0.75],
+        [-0.65, 0.75]
+    ];
+
+    function kkLabelOffsetIndex(key, idx) {
+        if (!key) {
+            return idx % KK_LABEL_OFFSETS.length;
+        }
+        var h = 0;
+        for (var i = 0; i < key.length; i++) {
+            h = ((h << 5) - h) + key.charCodeAt(i);
+            h |= 0;
+        }
+        return Math.abs(h) % KK_LABEL_OFFSETS.length;
+    }
+
     function kkLabelsGeoJson(areas) {
-        var features = (areas || []).map(function (a) {
+        var features = (areas || []).map(function (a, idx) {
             var lat = kkProp(a, "centerLat", "CenterLat");
             var lng = kkProp(a, "centerLng", "CenterLng");
             var count = kkProp(a, "candidateCount", "CandidateCount");
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
                 return null;
             }
+            var key = a.areaKey || a.AreaKey;
+            var off = KK_LABEL_OFFSETS[kkLabelOffsetIndex(key, idx)];
+            var labelLng = lng + off[0] * 0.012;
+            var labelLat = lat + off[1] * 0.012;
             return {
                 type: "Feature",
                 properties: {
-                    key: a.areaKey || a.AreaKey,
+                    key: key,
                     count: count != null ? String(count) : ""
                 },
-                geometry: { type: "Point", coordinates: [lng, lat] }
+                geometry: { type: "Point", coordinates: [labelLng, labelLat] }
             };
         }).filter(Boolean);
         return { type: "FeatureCollection", features: features };
@@ -4259,23 +4303,37 @@ window.jobMap = (function () {
             if (Number.isFinite(lat) && Number.isFinite(lng)) {
                 bounds.extend([lng, lat]);
             }
-            var ring = a.polygonRing || a.PolygonRing || [];
-            ring.forEach(function (p) {
-                if (p && p.length >= 2) {
-                    bounds.extend([p[0], p[1]]);
-                }
-            });
         });
         if (bounds.isEmpty()) {
             return;
         }
+        var sw = bounds.getSouthWest();
+        var ne = bounds.getNorthEast();
+        try {
+            console.info("[jobMap.kk] fitBounds", {
+                sw: [sw.lng, sw.lat],
+                ne: [ne.lng, ne.lat],
+                areas: (kkAreasCache || []).length,
+                travelKm: travelKm,
+                origin: lastOrigin
+            });
+        } catch (logErr) { /* ignore */ }
         runWithViewportNotifySuppressed(function () {
             try {
                 map.fitBounds(bounds, {
                     padding: kkFitPadding(),
-                    maxZoom: 9.75,
+                    maxZoom: 11.25,
                     animate: animate === true && !prefersReducedMotion(),
                     duration: animate === true && !prefersReducedMotion() ? 450 : 0
+                });
+                map.once("idle", function () {
+                    var z = map.getZoom();
+                    if (z < 10 && lastOrigin) {
+                        map.jumpTo({
+                            center: [lastOrigin.lng, lastOrigin.lat],
+                            zoom: 10.35
+                        });
+                    }
                 });
             } catch (e) { /* ignore */ }
         });
