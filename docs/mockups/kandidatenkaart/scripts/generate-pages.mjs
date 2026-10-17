@@ -191,16 +191,23 @@ function activeCandidatesBlock(compact = false) {
   </div>`;
 }
 
+function activeCandidatesChip() {
+  return `<p class="kk-active-chip">
+      <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4v5c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>
+      <span>Alleen actieve kandidaten op de kaart</span>
+    </p>`;
+}
+
 function activityPill() {
   return `<span class="kk-activity-pill">Actief deze week</span>`;
 }
 
-function chromeBlock(badge, badgeClass, filtersDisabled, filtersOpen = false, preview = false) {
+function chromeBlock(badge, badgeClass, filtersDisabled, filtersOpen = false, preview = false, inviteStatus = false) {
   const filterFab = preview
     ? `<button type="button" class="kk-filter-fab kk-filter-fab--disabled" disabled aria-disabled="true">Filters</button>`
     : `<button type="button" class="kk-filter-fab">Filters</button>`;
   return `
-      <div class="kk-page${filtersOpen ? " kk-page--filters-open" : ""}${preview ? " kk-page--preview" : ""}">
+      <div class="kk-page${filtersOpen ? " kk-page--filters-open" : ""}${preview ? " kk-page--preview" : ""}${inviteStatus ? " kk-page--invite-status" : ""}">
       <div class="kk-page__chrome kk-page__chrome--desktop">
       <nav class="kk-crumbs" aria-label="Kruimelpad">
         <span>Markt &amp; talent</span><span>/</span><span>Kandidatenkaart</span>
@@ -387,15 +394,16 @@ function layoutB(state) {
   } else if (belowMin) {
     listPanel = areaPanelBelowMin();
   } else if (inviteStatus) {
-    listPanel = `${activeCandidatesBlock()}${inviteStatusPanel(state === "invite-status-vol")}`;
+    listPanel = `${activeCandidatesChip()}${inviteStatusPanel(state === "invite-status-vol")}`;
   } else {
     listPanel = `${activeCandidatesBlock()}<ul class="kk-area-list">${areaList("amersfoort")}</ul>
        <button type="button" class="kk-btn kk-btn--primary" style="width:100%">Uitnodiging voor geselecteerd gebied</button>`;
   }
   const filterOverlay = filtersOpen ? mobileFiltersOverlay(locked) : "";
+  const listClass = inviteStatus ? " kk-layout-b__list--invite-status" : "";
   return `
       <div class="kk-layout-b">
-        <div class="kk-layout-b__list">${listPanel}</div>
+        <div class="kk-layout-b__list${listClass}">${listPanel}</div>
         <div class="kk-layout-b__map">${mapBlock({ locked, selected, belowMin, sparseSoest })}</div>
       </div>
       ${mobileSheetMarkup(state, "b", locked)}
@@ -490,7 +498,7 @@ function inviteStatusPanel(vacancyFull) {
 
 function writePage(variant, state) {
   const isA = variant === "a";
-  const { locked, filtersOpen } = resolveState(state);
+  const { locked, filtersOpen, inviteStatus } = resolveState(state);
   const titles = {
     preview: `Kandidatenkaart ${variant.toUpperCase()} — preview`,
     full: `Kandidatenkaart ${variant.toUpperCase()} — volledig`,
@@ -504,7 +512,7 @@ function writePage(variant, state) {
   };
   const badge = state === "preview" ? "Preview · add-on" : "Marktinzicht actief";
   const badgeClass = state === "preview" ? "kk-badge--free" : "kk-badge--gold";
-  let body = chromeBlock(badge, badgeClass, locked, filtersOpen, locked);
+  let body = chromeBlock(badge, badgeClass, locked, filtersOpen, locked, inviteStatus);
   body += isA ? layoutA(state) : layoutB(state);
   body += `</div>`;
   if (state === "invite-extended") body += inviteOverlayExtended();
