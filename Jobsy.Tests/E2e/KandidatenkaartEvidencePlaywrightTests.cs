@@ -50,7 +50,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
         const string employerEmail = "ondernemer@jobsy.local";
         const string password = KbE2e.DefaultPassword;
 
-        foreach (var (suffix, width, height) in new[] { ("1440", 1440, 900), ("390", 390, 844) })
+        foreach (var (suffix, width, height) in new[] { ("1440", 1440, 900) })
         {
             await using var context = await browser.NewContextAsync(new()
             {
@@ -62,35 +62,55 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await page.WaitForTimeoutAsync(2500);
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-map-areas-{suffix}.png"), FullPage = true });
 
-            await page.Locator(".kk-btn--more").ClickAsync();
-            await page.WaitForTimeoutAsync(400);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-filters-open-{suffix}.png"), FullPage = true });
-
-            var strictMatch = page.GetByRole(AriaRole.Button, new() { Name = "80%" });
-            if (await strictMatch.CountAsync() > 0)
+            if (width >= 1280)
             {
-                await strictMatch.First.ClickAsync();
-                await page.WaitForTimeoutAsync(2000);
-            }
+                var more = page.Locator(".kk-more-filters .kk-btn--more");
+                if (await more.CountAsync() > 0)
+                {
+                    await more.ClickAsync();
+                    await page.WaitForTimeoutAsync(400);
+                    await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-filters-open-{suffix}.png"), FullPage = true });
+                }
 
-            var travel15 = page.GetByRole(AriaRole.Button, new() { Name = "15 km" });
-            if (await travel15.CountAsync() > 0)
-            {
-                await travel15.First.ClickAsync();
-                await page.WaitForTimeoutAsync(2000);
-            }
+                var strictMatch = page.GetByRole(AriaRole.Button, new() { Name = "80%" });
+                if (await strictMatch.CountAsync() > 0)
+                {
+                    await strictMatch.First.ClickAsync();
+                    await page.WaitForTimeoutAsync(2000);
+                }
 
-            if (await page.Locator(".kk-below-min").CountAsync() > 0)
-            {
-                await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-below-30-{suffix}.png"), FullPage = true });
-            }
+                var travel15 = page.GetByRole(AriaRole.Button, new() { Name = "15 km" });
+                if (await travel15.CountAsync() > 0)
+                {
+                    await travel15.First.ClickAsync();
+                    await page.WaitForTimeoutAsync(2000);
+                }
 
-            if (await page.Locator(".kk-map-cta").CountAsync() > 0)
-            {
-                await page.Locator(".kk-map-cta").ClickAsync();
-                await page.WaitForTimeoutAsync(800);
-                await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-invite-preview-{suffix}.png"), FullPage = true });
+                if (await page.Locator(".kk-below-min").CountAsync() > 0)
+                {
+                    await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-below-30-{suffix}.png"), FullPage = true });
+                }
+
+                if (await page.Locator(".kk-map-cta").CountAsync() > 0)
+                {
+                    await page.Locator(".kk-map-cta").ClickAsync();
+                    await page.WaitForTimeoutAsync(800);
+                    await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-invite-preview-{suffix}.png"), FullPage = true });
+                }
             }
+        }
+
+        // Mobile-only map capture (filters UI is desktop-only in current layout).
+        await using (var mobileCtx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 }
+        }))
+        {
+            var page = await mobileCtx.NewPageAsync();
+            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, employerEmail, password));
+            await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/kandidatenkaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.WaitForTimeoutAsync(2500);
+            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-map-areas-390.png"), FullPage = true });
         }
 
         await using (var ctx = await browser.NewContextAsync(new()
@@ -99,10 +119,10 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
         }))
         {
             var page = await ctx.NewPageAsync();
-            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, "candidate@jobsy.local", password));
+            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, KbE2e.DefaultCompleteEmail, password));
             await using (var db = await OpenDbAsync(conn))
             {
-                var user = await db.Users.FirstAsync(u => u.Email == "candidate@jobsy.local");
+                var user = await db.Users.FirstAsync(u => u.Email == KbE2e.DefaultCompleteEmail);
                 user.OpenForWork = false;
                 var settings = await db.CandidateKandidatenkaartSettings.FirstOrDefaultAsync(s => s.UserId == user.Id);
                 if (settings is null)

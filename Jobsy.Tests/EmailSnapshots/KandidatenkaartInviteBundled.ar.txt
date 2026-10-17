@@ -1,0 +1,37 @@
+KEY: KandidatenkaartInviteBundled
+SUBJECT: Uitnodiging om te solliciteren: Weekendhulp verkoop
+PREHEADER: Match 82% — bekijk de vacature
+KIND: Optional
+--- TEXT ---
+Hoi Alex,
+
+Werkgever nodigt je uit
+=======================
+
+Bakkerij De Gouden Korrel nodigt je uit om te solliciteren op Weekendhulp
+verkoop (match 82%).
+
+Je ontvangt maximaal enkele uitnodigingen per week, gebundeld in één
+bericht.
+
+Bekijk vacature: https://lobsy.nl/vacatures/voorbeeld
+
+Team Lobsy
+
+Je krijgt deze mail omdat je vacatures in de buurt wilt ontvangen.
+Geen herinneringen meer ontvangen? Afmelden: https://lobsy.nl/mail/afmelden
+Hulp: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail-instellingen: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Werkgever nodigt je uit
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Bekijk vacature -> https://lobsy.nl/vacatures/voorbeeld
+a: Geen herinneringen meer ontvangen? Afmelden -> https://lobsy.nl/mail/afmelden
+a: Hulp -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
