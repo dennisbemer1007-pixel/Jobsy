@@ -56,7 +56,11 @@ public record SharedWorkPreferences(
     string? Indoor = null,
     string? Outdoor = null,
     string? PhysicalWork = null,
-    string? Pace = null);
+    string? Pace = null,
+    string? TeamMode = null,
+    string? Structure = null,
+    string? CustomerContact = null,
+    string? ShiftsPreference = null);
 
 public record CandidateLanguageDto(string Code, string? Level = null);
 

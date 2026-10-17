@@ -191,6 +191,18 @@ public class Vacancy
     /// <summary>JSON array of 3–5 culture pillar ids (see <c>CulturePillarCatalog</c>).</summary>
     public string? CulturePillarsJson { get; set; }
 
+    /// <summary>Optional werkcontext for matching (module E, V1–V4). Null = infer only.</summary>
+    public string? VacancyWorkContextJson { get; set; }
+
+    /// <summary>Optional explicit competency targets (V5–V8). Null when <see cref="VacancyUseInferredCompetencies"/>.</summary>
+    public string? VacancyCompetencyTargetsJson { get; set; }
+
+    /// <summary>Team-culture delta vs company profile (V9).</summary>
+    public string? VacancyCultureDeltaJson { get; set; }
+
+    /// <summary>When true (default), competency targets come from infer, not sliders.</summary>
+    public bool VacancyUseInferredCompetencies { get; set; } = true;
+
     /// <summary>
     /// Optional formal randvoorwaarden JSON (high/low barrier, diplomas, certifications, experience).
     /// Empty / null = low barrier (batch-hiring).

@@ -19,6 +19,7 @@ public sealed class CandidateMatchScoreCache
         Guid userId,
         string profileRevision,
         bool matchCalibrationV1,
+        bool employerFitQuestionnaires,
         Guid vacancyId,
         out ProfileVacancyMatch? match)
     {
@@ -28,7 +29,9 @@ public sealed class CandidateMatchScoreCache
             return false;
         }
 
-        if (!_cache.TryGetValue<ScoreStore>(StoreKey(userId, profileRevision, matchCalibrationV1), out var store)
+        if (!_cache.TryGetValue<ScoreStore>(
+                StoreKey(userId, profileRevision, matchCalibrationV1, employerFitQuestionnaires),
+                out var store)
             || store is null)
         {
             return false;
@@ -41,6 +44,7 @@ public sealed class CandidateMatchScoreCache
         Guid userId,
         string profileRevision,
         bool matchCalibrationV1,
+        bool employerFitQuestionnaires,
         IEnumerable<KeyValuePair<Guid, ProfileVacancyMatch>> scores)
     {
         if (string.IsNullOrWhiteSpace(profileRevision))
@@ -48,7 +52,7 @@ public sealed class CandidateMatchScoreCache
             return;
         }
 
-        var key = StoreKey(userId, profileRevision, matchCalibrationV1);
+        var key = StoreKey(userId, profileRevision, matchCalibrationV1, employerFitQuestionnaires);
         var store = _cache.GetOrCreate(key, entry =>
         {
             entry.AbsoluteExpirationRelativeToNow = EntryTtl;
@@ -62,8 +66,12 @@ public sealed class CandidateMatchScoreCache
         }
     }
 
-    private static string StoreKey(Guid userId, string profileRevision, bool matchCalibrationV1)
-        => $"cand-match:{userId:N}:{profileRevision}:{(matchCalibrationV1 ? "v1" : "leg")}";
+    private static string StoreKey(
+        Guid userId,
+        string profileRevision,
+        bool matchCalibrationV1,
+        bool employerFitQuestionnaires)
+        => $"cand-match:{userId:N}:{profileRevision}:{(matchCalibrationV1 ? "v1" : "leg")}:{(employerFitQuestionnaires ? "ef" : "noef")}";
 
     private sealed class ScoreStore
     {

@@ -1,0 +1,176 @@
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Core.Authorization
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject AuthenticationStateProvider AuthState
+
+<article class="detail-card employer-fit-culture" data-testid="employer-fit-team-culture">
+    <h2 class="h3">@Culture["EmployerFit.Team.Title"]</h2>
+    <p class="login-lead">@Culture["EmployerFit.Team.Lead"]</p>
+    @if (!_canMutate)
+    {
+        <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
+    }
+
+    @if (_loading)
+    {
+        <p class="state-message">@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        @foreach (var q in EmployerFitQuestionnaireCatalog.CoreCultureQuestions)
+        {
+            <div class="competency-question">
+                <p class="competency-question__text">@Culture[q.TextKey]</p>
+                <div class="competency-likert" role="radiogroup">
+                    @for (var value = 1; value <= 5; value++)
+                    {
+                        var current = value;
+                        <label class="competency-likert__opt @(_cultureAnswers.GetValueOrDefault(q.Code) == current ? "is-on" : null)">
+                            <input type="radio" name="@($"fit-{q.Code}")" disabled="@(!_canMutate)"
+                                   checked="@(_cultureAnswers.GetValueOrDefault(q.Code) == current)"
+                                   @onchange="() => SetCulture(q.Code, current)" />
+                            <span>@Culture[$"Competency.Likert.{current}"]</span>
+                        </label>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!_showExtension)
+        {
+            <div class="employer-fit-culture__actions">
+                <button type="button" class="btn btn-secondary" disabled="@(!_canMutate)" @onclick="() => _showExtension = true">
+                    @Culture["EmployerFit.Team.Extend"]
+                </button>
+            </div>
+        }
+        else
+        {
+            @foreach (var q in EmployerFitQuestionnaireCatalog.ExtensionValuesQuestions)
+            {
+                <div class="competency-question">
+                    <p class="competency-question__text">@Culture[q.TextKey]</p>
+                    <div class="competency-likert" role="radiogroup">
+                        @for (var value = 1; value <= 5; value++)
+                        {
+                            var current = value;
+                            <label class="competency-likert__opt @(_valuesAnswers.GetValueOrDefault(q.Code) == current ? "is-on" : null)">
+                                <input type="radio" name="@($"fitv-{q.Code}")" disabled="@(!_canMutate)"
+                                       checked="@(_valuesAnswers.GetValueOrDefault(q.Code) == current)"
+                                       @onchange="() => SetValue(q.Code, current)" />
+                                <span>@Culture[$"Competency.Likert.{current}"]</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+        }
+
+        @if (!string.IsNullOrEmpty(_message))
+        {
+            <p class="state-message">@_message</p>
+        }
+
+        @if (_canMutate)
+        {
+            <div class="employer-fit-culture__actions">
+                <button type="button" class="login-submit" disabled="@_saving" @onclick="SaveAsync">
+                    @Culture["Common.Save"]
+                </button>
+            </div>
+        }
+    }
+</article>
+
+@code {
+    [Parameter] public Guid? CompanyId { get; set; }
+
+    private bool _loading = true;
+    private bool _saving;
+    private bool _canMutate;
+    private bool _showExtension;
+    private string? _message;
+    private readonly Dictionary<string, int> _cultureAnswers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, int> _valuesAnswers = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthState.GetAuthenticationStateAsync();
+        _canMutate = ResolveCanMutate(auth.User);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        if (CompanyId is not Guid companyId)
+        {
+            _loading = false;
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            var dto = await Api.GetCompanyProfileExtrasAsync(companyId);
+            if (dto?.CultureSliders is not null)
+            {
+                foreach (var (k, v) in dto.CultureSliders)
+                {
+                    _cultureAnswers[k] = v;
+                }
+            }
+        }
+        catch
+        {
+            _message = Culture["Common.LoadFailed"];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SetCulture(string code, int value) => _cultureAnswers[code] = value;
+    private void SetValue(string code, int value) => _valuesAnswers[code] = value;
+
+    private async Task SaveAsync()
+    {
+        if (CompanyId is not Guid companyId)
+        {
+            return;
+        }
+
+        _saving = true;
+        _message = null;
+        try
+        {
+            var sliders = EmployerFitQuestionnaireCatalog.ToCultureSliders(_cultureAnswers);
+            await Api.SaveCompanyProfileExtrasAsync(companyId, cultureSliders: sliders);
+            _message = Culture["Common.Saved"];
+        }
+        catch
+        {
+            _message = Culture["Common.ErrorGeneric"];
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static bool ResolveCanMutate(System.Security.Claims.ClaimsPrincipal user)
+    {
+        foreach (UserRole role in Enum.GetValues<UserRole>())
+        {
+            if (RoleClaimMatching.HasRole(user, role.ToString()) && JobsyRoles.CanMutateEmployerData(role))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}

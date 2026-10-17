@@ -32,6 +32,8 @@ public sealed class ProfileVacancyMatchContext
     /// </summary>
     public bool OpenForWork { get; init; } = true;
 
+    public CandidateWorkContextSnapshot? CandidateWorkContext { get; init; }
+
     /// <summary>Changes when preferences or assessments change — invalidates match caches.</summary>
     public string ProfileRevision { get; init; } = "";
 }

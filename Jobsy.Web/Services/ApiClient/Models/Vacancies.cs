@@ -1,4 +1,5 @@
 using Jobsy.Core.Enums;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 
 namespace Jobsy.Web.Services;
@@ -67,7 +68,11 @@ public record CreateVacancyForm(
     int? BarrierMinExperienceYears = null,
     int? BarrierMinExperienceHours = null,
     string[]? BarrierHardChecks = null,
-    int? PublicMapRadiusKm = null);
+    int? PublicMapRadiusKm = null,
+    VacancyWorkContextSnapshot? WorkContext = null,
+    VacancyCompetencyTargetsSnapshot? CompetencyTargets = null,
+    VacancyCultureDeltaSnapshot? CultureDelta = null,
+    bool? UseInferredCompetencies = null);
 
 public sealed class CsvImportRowForm
 {
