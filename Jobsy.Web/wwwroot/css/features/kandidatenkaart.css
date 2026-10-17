@@ -1312,12 +1312,12 @@ html.vp-mobile .kk-mobile-sheet {
     position: relative;
     flex-shrink: 0;
     z-index: 8;
-    max-height: min(46vh, 420px);
+    max-height: min(52vh, 460px);
     background: var(--surface);
     border-top: 1px solid var(--border);
     box-shadow: 0 -4px 16px rgba(15, 45, 92, 0.08);
     overflow: hidden;
-    margin-bottom: var(--bottom-nav-clearance);
+    margin-bottom: 0;
 }
 
 html.vp-mobile .kk-mobile-sheet__peek {
@@ -1360,7 +1360,7 @@ html.vp-mobile .kk-mobile-sheet__body--sparse .kk-below-min .kk-note {
 html.vp-mobile .kk-mobile-sheet__body--list {
     flex: 1 1 auto;
     min-height: 0;
-    max-height: none;
+    max-height: calc(min(52vh, 460px) - 7.25rem);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 0.5rem;

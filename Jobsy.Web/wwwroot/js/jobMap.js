@@ -4188,8 +4188,8 @@ window.jobMap = (function () {
             }
             var key = a.areaKey || a.AreaKey;
             var off = KK_LABEL_OFFSETS[kkLabelOffsetIndex(key, idx)];
-            var labelLng = lng + off[0] * 0.012;
-            var labelLat = lat + off[1] * 0.012;
+            var labelLng = lng + off[0] * 0.018;
+            var labelLat = lat + off[1] * 0.018;
             return {
                 type: "Feature",
                 properties: {
