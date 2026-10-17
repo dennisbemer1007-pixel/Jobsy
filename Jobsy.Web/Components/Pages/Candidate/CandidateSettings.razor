@@ -30,6 +30,15 @@
                 </a>
             </li>
         }
+        @if (_kandidatenkaartOn)
+        {
+            <li>
+                <a class="candidate-hub__link" href="/candidate/kandidatenkaart-instellingen">
+                    <span class="candidate-hub__link-title">@Culture["CandidateSettings.Kk.Title"]</span>
+                    <span class="candidate-hub__link-desc">@Culture["CandidateSettings.Kk.Desc"]</span>
+                </a>
+            </li>
+        }
         <li>
             <a class="candidate-hub__link" href="/candidate/paspoort?tab=data">
                 <span class="candidate-hub__link-title">@Culture["CandidateSettings.Profile.Title"]</span>
@@ -47,10 +56,12 @@
 
 @code {
     private bool _proactiveOn;
+    private bool _kandidatenkaartOn;
 
     protected override async Task OnInitializedAsync()
     {
         var flags = await FeatureFlags.GetAsync();
         _proactiveOn = flags.IsEnabled(PlatformFeature.ProactiveMatching);
+        _kandidatenkaartOn = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
     }
 }

@@ -634,7 +634,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
             proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
-            employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled
+            employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
+            kandidatenkaartEnabled = snap.KandidatenkaartEnabled
         });
     }
 

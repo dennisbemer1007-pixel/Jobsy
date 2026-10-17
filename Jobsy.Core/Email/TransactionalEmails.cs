@@ -270,6 +270,21 @@ public static partial class TransactionalEmails
                 87,
                 c,
                 ctx.PublicWebBaseUrl),
+            "kandidatenkaartinvitebundled" => KandidatenkaartInviteBundled(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, ctx.VacancyTitle, 82,
+                Links(ctx.PublicWebBaseUrl).Absolute("/vacatures/voorbeeld"), c),
+            "kandidatenkaartinvitereminder" => KandidatenkaartInviteReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
+                Links(ctx.PublicWebBaseUrl).Absolute("/vacatures/voorbeeld"), c),
+            "kandidatenkaartinactivitycheck" => KandidatenkaartInactivityCheck(
+                ctx.PublicWebBaseUrl, ctx.RecipientName,
+                Links(ctx.PublicWebBaseUrl).Absolute("/candidate/settings/kandidatenkaart"), c),
+            "kandidatenkaartmissedout" => KandidatenkaartMissedOut(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
+                [(ctx.VacancyTitle, ctx.CompanyName)], Links(ctx.PublicWebBaseUrl).Absolute("/"), c),
+            "kandidatenkaartinvitewithdrawn" => KandidatenkaartInviteWithdrawn(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.VacancyTitle, ctx.CompanyName,
+                Links(ctx.PublicWebBaseUrl).Absolute("/"), c),
             _ => throw new ArgumentException($"Onbekend mailtype: {key}")
         };
     }

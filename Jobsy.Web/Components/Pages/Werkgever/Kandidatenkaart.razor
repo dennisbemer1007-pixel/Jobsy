@@ -1,0 +1,319 @@
+@page "/werkgever/kandidatenkaart"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.Kandidatenkaart)]
+@implements IAsyncDisposable
+@implements IKandidatenkaartMapHost
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@using Jobsy.Web.Werkgever
+@inject EmployerScopeState Scope
+
+<PageTitle>@Culture["Kk.Title"] · Lobsy</PageTitle>
+<link rel="stylesheet" href="/css/features/kandidatenkaart.css" />
+
+<WgPageShell>
+    <div class="kk-page panel-page">
+        <EmployerTalentTabs Active="kandidatenkaart" />
+
+        <header class="kk-header">
+            <div>
+                <h1>@Culture["Kk.Title"]</h1>
+                <p class="kk-header__lead">@Culture["Kk.Lead"]</p>
+            </div>
+            @if (_map?.Access.HasPaidAccess == true)
+            {
+                <span class="kk-badge kk-badge--gold">@Culture["Kk.Badge.Active"]</span>
+            }
+            else
+            {
+                <span class="kk-badge">@Culture["Kk.Badge.Preview"]</span>
+            }
+        </header>
+
+        <div class="kk-privacy">
+            <p><strong>Privacy.</strong> @Culture["Kk.Privacy"]</p>
+        </div>
+
+        @if (_map?.Access.ShowPreviewOnly == true)
+        {
+            <p class="profile-address__hint">@Culture["Kk.Preview.Locked"]</p>
+        }
+
+        <div class="kk-filters kk-filters--desktop">
+            <div class="kk-field">
+                <label>@Culture["Kk.Filter.Vacancy"]</label>
+                <select class="kk-control kk-control--wide" @bind="_vacancyId" @bind:after="ReloadAsync">
+                    <option value="">—</option>
+                    @foreach (var v in _vacancies)
+                    {
+                        <option value="@v.Id">@v.Title · @v.LocationLabel</option>
+                    }
+                </select>
+            </div>
+            <div class="kk-field">
+                <label>@Culture["Kk.Filter.MinMatch"]</label>
+                <div class="kk-seg" role="group">
+                    @foreach (var p in _matchOptions)
+                    {
+                        <button type="button" class="@(p == _minMatch ? "is-on" : null)" @onclick="() => SetMatch(p)">@p%</button>
+                    }
+                </div>
+            </div>
+            <div class="kk-field">
+                <label>@Culture["Kk.Filter.Travel"]</label>
+                <div class="kk-seg" role="group">
+                    @foreach (var km in _kmOptions)
+                    {
+                        <button type="button" class="@(km == _travelKm ? "is-on" : null)" @onclick="() => SetKm(km)">@km km</button>
+                    }
+                </div>
+            </div>
+            <div class="kk-field kk-more-filters">
+                <label>@Culture["Kk.Filter.More"]</label>
+                <button type="button" class="kk-btn kk-btn--more @(_moreOpen ? "is-active" : null)" @onclick="() => _moreOpen = !_moreOpen">
+                    @Culture["Kk.Filter.More"]
+                </button>
+                @if (_moreOpen)
+                {
+                    <div class="kk-filter-popover is-open">
+                        <div class="kk-field">
+                            <label>@Culture["Kk.Filter.Start"]</label>
+                            <div class="kk-seg kk-seg--wrap">
+                                @foreach (var a in _availOptions)
+                                {
+                                    <button type="button" class="@(a == _availability ? "is-on" : null)" @onclick="() => SetAvail(a)">@a</button>
+                                }
+                            </div>
+                        </div>
+                        <div class="kk-field">
+                            <label>@Culture["Kk.Filter.Hours"]</label>
+                            <div class="kk-seg kk-seg--wrap">
+                                @foreach (var h in _hoursOptions)
+                                {
+                                    <button type="button" class="@(h == _hours ? "is-on" : null)" @onclick="() => SetHours(h)">@h</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="kk-layout-b">
+            <div class="kk-layout-b__list">
+                <div class="kk-active-sell">
+                    <h3>@Culture["Kk.ActiveSell.Title"]</h3>
+                    <p>@Culture["Kk.ActiveSell.Body"]</p>
+                </div>
+
+                @if (_map?.BelowThreshold == true)
+                {
+                    <div class="kk-below-min">
+                        <p>@(_map.ThresholdMessage ?? Culture["Kk.BelowThreshold"])</p>
+                    </div>
+                }
+                else
+                {
+                    <ul class="kk-area-list">
+                        @foreach (var area in _map?.Areas ?? [])
+                        {
+                            <li class="kk-area-list__item @(_selectedArea == area.AreaKey ? "is-selected" : null)"
+                                @onclick="() => SelectArea(area.AreaKey)">
+                                <div class="kk-area-list__row">
+                                    <div class="kk-area-list__title">@area.Label</div>
+                                    @if (area.ActiveThisWeek)
+                                    {
+                                        <span class="kk-activity-pill">@Culture["Kk.Area.ActiveWeek"]</span>
+                                    }
+                                </div>
+                                <div class="kk-area-list__meta">
+                                    @string.Format(Culture["Kk.Area.Meta"], area.CandidateCount, area.CountAbove80)
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+            <div class="kk-layout-b__map">
+                <div id="@_mapId" class="kk-map-pane" aria-label="@Culture["Kk.Title"]"></div>
+                @if (_selectedArea is not null && _map?.Access.HasPaidAccess == true)
+                {
+                    <button type="button" class="kk-btn kk-btn--primary kk-map-cta" @onclick="OpenInviteAsync">
+                        @Culture["Kk.Invite.Open"]
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</WgPageShell>
+
+@if (_inviteOpen)
+{
+    <div class="kk-modal-scrim" @onclick="CloseInvite">
+        <div class="kk-modal" role="dialog" @onclick:stopPropagation="true">
+            <h2>@Culture["Kk.Invite.PreviewTitle"]</h2>
+            @if (_invitePreview is not null)
+            {
+                <p>@string.Format(Culture["Kk.Invite.Eligible"], _invitePreview.EligibleCount, _minMatch)</p>
+                @if (_invitePreview.SkippedWeeklyCap > 0)
+                {
+                    <p class="profile-address__hint">@string.Format(Culture["Kk.Invite.SkippedWeeklyCap"], _invitePreview.SkippedWeeklyCap)</p>
+                }
+                @if (_invitePreview.SkippedBelowMatch > 0)
+                {
+                    <p class="profile-address__hint">@string.Format(Culture["Kk.Invite.SkippedBelowMatch"], _invitePreview.SkippedBelowMatch)</p>
+                }
+                <p class="profile-address__hint">@_invitePreview.StagingNote</p>
+                <p>@string.Format(Culture["Kk.Invite.Staging"], _invitePreview.EstimatedRounds)</p>
+            }
+            @if (!string.IsNullOrEmpty(_inviteMessage))
+            {
+                <p class="state-message">@_inviteMessage</p>
+            }
+            <div class="kk-modal__actions">
+                <button type="button" class="kk-btn" @onclick="CloseInvite">@Culture["Kk.Invite.Cancel"]</button>
+                <button type="button" class="kk-btn kk-btn--primary" disabled="@_inviteBusy" @onclick="ConfirmInviteAsync">
+                    @Culture["Kk.Invite.Confirm"]
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private readonly string _mapId = $"kk-map-{Guid.NewGuid():N}";
+    private readonly int[] _matchOptions = [60, 70, 80];
+    private readonly int[] _kmOptions = [15, 25, 40, 60];
+    private readonly string[] _availOptions = ["Per direct", "Binnen 1 maand", "Later"];
+    private readonly string[] _hoursOptions = ["<16", "16–24", "24–32", "32+"];
+
+    private List<KandidatenkaartVacancyOptionDto> _vacancies = [];
+    private KandidatenkaartMapDto? _map;
+    private Guid? _vacancyId;
+    private int _minMatch = 70;
+    private int _travelKm = 25;
+    private string _availability = "Per direct";
+    private string _hours = "24–32";
+    private bool _moreOpen;
+    private string? _selectedArea;
+    private bool _inviteOpen;
+    private KandidatenkaartInvitePreviewDto? _invitePreview;
+    private bool _inviteBusy;
+    private string? _inviteMessage;
+    private DotNetObjectReference<KandidatenkaartMapAreaBridge>? _mapBridgeRef;
+
+    public Task SelectAreaFromMapAsync(string areaKey) => SelectArea(areaKey);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _vacancies = (await Api.GetKandidatenkaartVacanciesAsync(Scope.CompanyIds.FirstOrDefault())).ToList();
+        if (_vacancies.Count > 0)
+        {
+            _vacancyId = _vacancies[0].Id;
+        }
+
+        await KandidatenkaartMapInterop.EnsureLoadedAsync(Js);
+        _mapBridgeRef = DotNetObjectReference.Create(new KandidatenkaartMapAreaBridge(this));
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _map = await Api.GetKandidatenkaartMapAsync(
+            Scope.CompanyIds.FirstOrDefault(),
+            _vacancyId,
+            _minMatch,
+            _travelKm,
+            _availability,
+            _hours);
+
+        _selectedArea ??= _map?.Areas.FirstOrDefault()?.AreaKey;
+
+        if (_map?.Areas.Count > 0)
+        {
+            await KandidatenkaartMapInterop.MountAsync(Js, _mapId, new
+            {
+                areas = _map.Areas,
+                selectedAreaKey = _selectedArea,
+                center = new[] { 5.38, 52.15 },
+                zoom = 9,
+                dotNetRef = _mapBridgeRef
+            });
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task SelectArea(string key)
+    {
+        _selectedArea = key;
+        if (_map is not null)
+        {
+            await KandidatenkaartMapInterop.UpdateAreasAsync(Js, _mapId, _map.Areas, key);
+        }
+    }
+
+    private async Task SetMatch(int p) { _minMatch = p; await ReloadAsync(); }
+    private async Task SetKm(int km) { _travelKm = km; await ReloadAsync(); }
+    private async Task SetAvail(string a) { _availability = a; await ReloadAsync(); }
+    private async Task SetHours(string h) { _hours = h; await ReloadAsync(); }
+
+    private async Task OpenInviteAsync()
+    {
+        if (_vacancyId is null || _selectedArea is null)
+        {
+            return;
+        }
+
+        _invitePreview = await Api.PreviewKandidatenkaartInviteAsync(
+            _vacancyId.Value, _selectedArea, Scope.CompanyIds.FirstOrDefault(), _minMatch, _travelKm);
+        _inviteMessage = null;
+        _inviteOpen = true;
+    }
+
+    private void CloseInvite() => _inviteOpen = false;
+
+    private async Task ConfirmInviteAsync()
+    {
+        if (_vacancyId is null || _selectedArea is null)
+        {
+            return;
+        }
+
+        _inviteBusy = true;
+        try
+        {
+            var result = await Api.StartKandidatenkaartInviteAsync(new KandidatenkaartInviteClientRequest(
+                _vacancyId.Value, _selectedArea, Scope.CompanyIds.FirstOrDefault(), _minMatch, _travelKm));
+            _inviteMessage = result?.Message ?? Culture["Kk.Invite.Success"];
+        }
+        finally
+        {
+            _inviteBusy = false;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await KandidatenkaartMapInterop.DestroyAsync(Js, _mapId);
+        }
+        catch
+        {
+            // circuit gone
+        }
+
+        _mapBridgeRef?.Dispose();
+    }
+}

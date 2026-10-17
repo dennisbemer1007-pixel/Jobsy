@@ -60,6 +60,9 @@ public class JobsyDbContext : DbContext
     public DbSet<OccupationDayInLife> OccupationDayInLives => Set<OccupationDayInLife>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
     public DbSet<CandidateProactiveMatchingSettings> CandidateProactiveMatchingSettings => Set<CandidateProactiveMatchingSettings>();
+    public DbSet<CandidateKandidatenkaartSettings> CandidateKandidatenkaartSettings => Set<CandidateKandidatenkaartSettings>();
+    public DbSet<KandidatenkaartInviteCampaign> KandidatenkaartInviteCampaigns => Set<KandidatenkaartInviteCampaign>();
+    public DbSet<KandidatenkaartInviteDelivery> KandidatenkaartInviteDeliveries => Set<KandidatenkaartInviteDelivery>();
     public DbSet<ProactiveMatchSuggestion> ProactiveMatchSuggestions => Set<ProactiveMatchSuggestion>();
     public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
     public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
@@ -1078,6 +1081,49 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateKandidatenkaartSettings>(entity =>
+        {
+            entity.ToTable("CandidateKandidatenkaartSettings");
+            entity.HasKey(e => e.UserId);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<KandidatenkaartInviteCampaign>(entity =>
+        {
+            entity.ToTable("KandidatenkaartInviteCampaigns");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.AreaKey).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.AreaLabel).HasMaxLength(200).IsRequired();
+            entity.HasIndex(e => new { e.VacancyId, e.CreatedAtUtc });
+            entity.HasOne(e => e.Vacancy)
+                .WithMany()
+                .HasForeignKey(e => e.VacancyId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.Company)
+                .WithMany()
+                .HasForeignKey(e => e.CompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<KandidatenkaartInviteDelivery>(entity =>
+        {
+            entity.ToTable("KandidatenkaartInviteDeliveries");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.CandidateUserId, e.SentAtUtc });
+            entity.HasIndex(e => e.CampaignId);
+            entity.HasOne(e => e.Campaign)
+                .WithMany(c => c.Deliveries)
+                .HasForeignKey(e => e.CampaignId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.CandidateUser)
+                .WithMany()
+                .HasForeignKey(e => e.CandidateUserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

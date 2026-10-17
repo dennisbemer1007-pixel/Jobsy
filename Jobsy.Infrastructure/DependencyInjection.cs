@@ -672,6 +672,10 @@ public static class DependencyInjection
         services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();
         services.AddScoped<IProactiveVacancyShortlistService, ProactiveVacancyShortlistService>();
         services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
+        services.AddScoped<KandidatenkaartCandidateAggregator>();
+        services.AddScoped<KandidatenkaartMailService>();
+        services.AddScoped<IKandidatenkaartService, KandidatenkaartService>();
+        services.AddHostedService<KandidatenkaartHostedService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<IEmployerPhase2Service, Jobsy.Infrastructure.Services.EmployerPhase2.EmployerPhase2Service>();
         services.AddScoped<IMaqqieHoursService, Jobsy.Infrastructure.Services.EmployerPhase2.MaqqieHoursService>();
