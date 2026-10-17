@@ -1,0 +1,103 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Components
+@inject CultureState Culture
+@inject IJSRuntime Js
+
+@if (_visible && _tip is not null)
+{
+    <aside class="profile-encourage"
+           data-testid="@($"profile-encourage-{ScreenKey}")"
+           data-encourage-tip="@_tip.Id"
+           role="note">
+        <LobsyCoachAvatar Class="profile-encourage__mascot" Language="@Culture.Language" Alt="" />
+        <div class="profile-encourage__copy">
+            <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
+            @if (!string.IsNullOrWhiteSpace(_tip.Href))
+            {
+                <a class="profile-encourage__link" href="@_tip.Href">@Culture[_tip.LinkKey]</a>
+            }
+        </div>
+        <button type="button"
+                class="profile-encourage__close"
+                aria-label="@Culture["Encourage.Dismiss"]"
+                @onclick="DismissAsync">×</button>
+    </aside>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public string ScreenKey { get; set; } = "";
+
+    [Parameter]
+    public ProfileEncouragementContext? Context { get; set; }
+
+    /// <summary>Development / E2E: force a catalog tip id (e.g. wist-tests-match).</summary>
+    [Parameter]
+    public string? PreviewTipId { get; set; }
+
+    private ProfileEncouragementTipCatalog.Tip? _tip;
+    private bool _visible = true;
+    private bool _checked;
+    private string? _lastScreen;
+    private ProfileEncouragementContext? _lastContext;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        ResolveTip();
+        if (_tip is null)
+        {
+            _visible = false;
+            return;
+        }
+
+        if (_checked && _lastScreen == ScreenKey && ContextEquals(_lastContext, Context))
+        {
+            return;
+        }
+
+        _checked = true;
+        _lastScreen = ScreenKey;
+        _lastContext = Context;
+        var storageKey = BuildStorageKey();
+        try
+        {
+            var dismissed = await Js.InvokeAsync<bool>("jobsyProfileEncourage.isDismissed", storageKey);
+            _visible = !dismissed;
+        }
+        catch
+        {
+            _visible = true;
+        }
+    }
+
+    private void ResolveTip()
+        => _tip = Context is null
+            ? null
+            : ProfileEncouragementTipCatalog.PickForScreen(Context, ScreenKey, PreviewTipId);
+
+    private static bool ContextEquals(ProfileEncouragementContext? a, ProfileEncouragementContext? b)
+        => a?.UserId == b?.UserId
+           && a?.CultureOrValuesComplete == b?.CultureOrValuesComplete
+           && a?.ApplyBasicsReady == b?.ApplyBasicsReady;
+
+    private string BuildStorageKey()
+    {
+        var user = string.IsNullOrWhiteSpace(Context?.UserId) ? "anon" : Context!.UserId!.Trim();
+        return $"{user}:{ScreenKey}";
+    }
+
+    private async Task DismissAsync()
+    {
+        _visible = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyProfileEncourage.dismiss", BuildStorageKey());
+        }
+        catch
+        {
+            // UI already hidden.
+        }
+    }
+}

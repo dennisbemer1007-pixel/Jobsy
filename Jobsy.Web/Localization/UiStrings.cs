@@ -324,6 +324,11 @@ public static class UiStrings
             ["MockInterview.InputLabel"] = "Jouw antwoord",
             ["MockInterview.Placeholder"] = "Antwoord met een concreet voorbeeld (situatie → wat jij deed → resultaat)…",
             ["MockInterview.CtaBubble"] = "Oefen met mij je sollicitatiegesprek",
+            ["Encourage.Dismiss"] = "Sluiten",
+            ["Encourage.Tests.Message"] = "Doe de korte tests en zie hoe goed je past.",
+            ["Encourage.Tests.Link"] = "Naar de tests",
+            ["Encourage.Profile.Message"] = "Vergroot je kans op een gesprek: maak je profiel compleet.",
+            ["Encourage.Profile.Link"] = "Paspoort aanvullen",
             ["MockInterview.CtaAria"] = "Oefen met Lobsy je sollicitatiegesprek",
             ["MockInterview.Progress0"] = "Stap 1 · Beantwoord de openingsvraag",
             ["MockInterview.Progress1"] = "Stap 2 · Bouw verder op feedback",
@@ -1021,6 +1026,11 @@ public static class UiStrings
             ["MockInterview.InputLabel"] = "Your answer",
             ["MockInterview.Placeholder"] = "Answer with a concrete example (situation → what you did → result)…",
             ["MockInterview.CtaBubble"] = "Practice your interview with me",
+            ["Encourage.Dismiss"] = "Close",
+            ["Encourage.Tests.Message"] = "Take the short tests and see how well you fit.",
+            ["Encourage.Tests.Link"] = "Go to tests",
+            ["Encourage.Profile.Message"] = "Improve your chance of an interview: complete your profile.",
+            ["Encourage.Profile.Link"] = "Complete passport",
             ["MockInterview.CtaAria"] = "Practice your interview with Lobsy",
             ["MockInterview.Progress0"] = "Step 1 · Answer the opening question",
             ["MockInterview.Progress1"] = "Step 2 · Build on the feedback",
@@ -1718,6 +1728,11 @@ public static class UiStrings
             ["MockInterview.InputLabel"] = "Twoja odpowiedź",
             ["MockInterview.Placeholder"] = "Odpowiedz konkretnym przykładem (sytuacja → co zrobiłeś/aś → wynik)…",
             ["MockInterview.CtaBubble"] = "Poćwicz ze mną rozmowę kwalifikacyjną",
+            ["Encourage.Dismiss"] = "Zamknij",
+            ["Encourage.Tests.Message"] = "Zrób krótkie testy i zobacz, jak dobrze pasujesz.",
+            ["Encourage.Tests.Link"] = "Do testów",
+            ["Encourage.Profile.Message"] = "Zwiększ szansę na rozmowę: uzupełnij profil.",
+            ["Encourage.Profile.Link"] = "Uzupełnij paszport",
             ["MockInterview.CtaAria"] = "Poćwicz rozmowę kwalifikacyjną z Lobsy",
             ["MockInterview.Progress0"] = "Krok 1 · Odpowiedz na pytanie otwierające",
             ["MockInterview.Progress1"] = "Krok 2 · Rozwijaj na podstawie feedbacku",
@@ -2415,6 +2430,11 @@ public static class UiStrings
             ["MockInterview.InputLabel"] = "Răspunsul tău",
             ["MockInterview.Placeholder"] = "Răspunde cu un exemplu concret (situație → ce ai făcut → rezultat)…",
             ["MockInterview.CtaBubble"] = "Exersează interviul cu mine",
+            ["Encourage.Dismiss"] = "Închide",
+            ["Encourage.Tests.Message"] = "Fă testele scurte și vezi cât de bine te potrivești.",
+            ["Encourage.Tests.Link"] = "La teste",
+            ["Encourage.Profile.Message"] = "Mărește șansa la interviu: completează profilul.",
+            ["Encourage.Profile.Link"] = "Completează pașaportul",
             ["MockInterview.CtaAria"] = "Exersează interviul cu Lobsy",
             ["MockInterview.Progress0"] = "Pasul 1 · Răspunde la întrebarea de deschidere",
             ["MockInterview.Progress1"] = "Pasul 2 · Construiește pe feedback",
@@ -3112,6 +3132,11 @@ public static class UiStrings
             ["MockInterview.InputLabel"] = "إجابتك",
             ["MockInterview.Placeholder"] = "أجب بمثال ملموس (الموقف ← ما فعلته ← النتيجة)…",
             ["MockInterview.CtaBubble"] = "تدرّب معي على مقابلتك",
+            ["Encourage.Dismiss"] = "إغلاق",
+            ["Encourage.Tests.Message"] = "أجرِ الاختبارات القصيرة واكتشف مدى ملاءمتك.",
+            ["Encourage.Tests.Link"] = "إلى الاختبارات",
+            ["Encourage.Profile.Message"] = "زِد فرصتك في المقابلة: أكمل ملفك.",
+            ["Encourage.Profile.Link"] = "أكمل الجواز",
             ["MockInterview.CtaAria"] = "تدرّب على مقابلتك مع Lobsy",
             ["MockInterview.Progress0"] = "الخطوة 1 · أجب على السؤال الافتتاحي",
             ["MockInterview.Progress1"] = "الخطوة 2 · ابنِ على الملاحظات",
@@ -3520,6 +3545,7 @@ public static class UiStrings
         UiStringsValues.MergeAll(nl, en, pl, ro, ar);
         UiStringsAssessmentV2.MergeAll(nl, en, pl, ro, ar);
         UiStringsWhoAmI.MergeAll(nl, en, pl, ro, ar);
+        UiStringsEncourage.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyRoles.MergeAll(nl, en, pl, ro, ar);
         UiStringsResearch.MergeAll(nl, en, pl, ro, ar);
         UiStringsHowLobsyCandidate.MergeAll(nl, en, pl, ro, ar);

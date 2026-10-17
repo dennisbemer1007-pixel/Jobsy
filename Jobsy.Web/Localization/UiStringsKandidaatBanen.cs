@@ -46,11 +46,14 @@ public static class UiStringsKandidaatBanen
             "Maak je paspoort af", "Finish your passport",
             "Uzupełnij paszport", "Finalizează pașaportul", "أكمل جوازك");
         Add("Kb.Fit.GateHint",
-            "Doe de cultuur- of waardentest, dan zie je hoe goed banen bij je passen.",
-            "Take the culture or values test to see how well jobs fit you.",
-            "Zrób test kultury lub wartości, a zobaczysz dopasowanie ofert.",
-            "Fă testul de cultură sau valori ca să vezi cât de bine ți se potrivesc joburile.",
-            "أجرِ اختبار الثقافة أو القيم لترى مدى ملاءمة الوظائف لك.");
+            "We laten zien wat we wél kunnen afwegen: reistijd, uren en beschikbaarheid. De korte tests maken het plaatje completer.",
+            "We show what we can weigh today: travel time, hours and availability. Short tests complete the picture.",
+            "Pokazujemy to, co dziś możemy ocenić: dojazd, godziny i dostępność. Krótkie testy dokańczają obraz.",
+            "Arătăm ce putem evalua acum: timp de drum, ore și disponibilitate. Testele scurte completează imaginea.",
+            "نعرض ما يمكن قياسه اليوم: وقت السفر والساعات والتوفر. الاختبارات القصيرة تكمل الصورة.");
+        Add("Kb.Fit.PracticalTitle",
+            "Wat nu al past", "What already fits",
+            "Co już pasuje", "Ce se potrivește deja", "ما يناسبك الآن");
         Add("Kb.Fit.SparkleAria",
             "Fit-indicatie", "Fit indicator",
             "Wskaźnik dopasowania", "Indicator de potrivire", "مؤشر الملاءمة");

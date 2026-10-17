@@ -23,6 +23,7 @@
 @using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Navigation
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
@@ -485,6 +486,12 @@
                         {
                         @if (!_applied)
                         {
+                        @if (_encourageContext is not null)
+                        {
+                            <ProfileEncouragementNudge ScreenKey="vacancy-pre-apply"
+                                                       Context="_encourageContext"
+                                                       PreviewTipId="_encouragePreviewTipId" />
+                        }
                         <header class="apply-flow__header">
                             <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
                             <p class="apply-flow__lead">@ApplyFlowLead</p>
@@ -518,6 +525,12 @@
                             <div class="apply-panel apply-panel--success" role="status">
                                 <p class="apply-panel__title">@Culture["Apply.SentTitle"]</p>
                                 <p class="apply-panel__text">@Culture["Apply.SentBody"]</p>
+                                @if (_encourageContext is not null)
+                                {
+                                    <ProfileEncouragementNudge ScreenKey="apply-sent"
+                                                               Context="_encourageContext"
+                                                               PreviewTipId="_encouragePreviewTipId" />
+                                }
                                 @if (_directContact is { Available: true })
                                 {
                                     <button type="button"
@@ -1038,6 +1051,8 @@
     private bool _acceptedTerms;
     private bool _workPermitConfirmed;
     private bool _profileReadyForApply = true;
+    private ProfileEncouragementContext? _encourageContext;
+    private string? _encouragePreviewTipId;
     private bool _profileHasAvailability;
     private bool _profileHasLicense = true;
     private bool _profileHasEmployers;
@@ -1845,6 +1860,9 @@
         {
             var profile = await profileTask;
             candidateProfile = profile;
+            _encourageContext = await ProfileEncouragementContextFactory.CreateAsync(Api, profile);
+            ApplyEncouragePreviewFromUri();
+
             if (profile is not null)
             {
                 _dobInput = profile.DateOfBirth;
@@ -2404,6 +2422,15 @@
 
     private string LocalizeEducationList(string stored) =>
         string.Join(", ", EducationLevelLabels.Split(stored).Select(x => UiLabels.Education(Culture, x)));
+
+    private void ApplyEncouragePreviewFromUri()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var v)
+            ? v.FirstOrDefault()
+            : null;
+    }
 
     private void OpenMockInterview() => _mockInterviewOpen = true;
 

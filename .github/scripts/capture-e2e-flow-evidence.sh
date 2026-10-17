@@ -28,6 +28,7 @@ stop_stack() {
 reset_db() {
   sudo -u postgres psql -c "DROP DATABASE IF EXISTS \"JobsyCi\";" postgres
   sudo -u postgres psql -c "CREATE DATABASE \"JobsyCi\";" postgres
+  sudo -u postgres psql -c "CREATE EXTENSION IF NOT EXISTS postgis;" JobsyCi
 }
 
 stop_stack

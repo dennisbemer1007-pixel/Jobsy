@@ -93,6 +93,13 @@
                                   ImportantStatus="@_importantStatus"
                                   OnGoTests="() => SetTab(PassportTabs.Tests)" />
 
+                @if (_encourageContext is not null)
+                {
+                    <ProfileEncouragementNudge ScreenKey="paspoort-home"
+                                               Context="_encourageContext"
+                                               PreviewTipId="_encouragePreviewTipId" />
+                }
+
                 <div class="passport-tabs"
                      role="tablist"
                      aria-label="@Culture["Passport.Title"]"
@@ -244,6 +251,8 @@
     private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
 
     private MeProfile? _profile;
+    private ProfileEncouragementContext? _encourageContext;
+    private string? _encouragePreviewTipId;
     private CandidateKompasState? _kompas;
     private CandidateDnaSummary? _dna;
     private CandidateDnaViewBuilder.DnaViewModel? _view;
@@ -327,6 +336,8 @@
             }
 
             ApplyModel();
+            _encourageContext = await ProfileEncouragementContextFactory.CreateAsync(Api, _profile);
+            ApplyEncouragePreviewFromUri();
             try
             {
                 var apps = await Api.GetMyApplicationsAsync();
@@ -394,8 +405,20 @@
             && string.Equals(laag.FirstOrDefault(), "1", StringComparison.Ordinal);
         _proofItem = query.TryGetValue("item", out var item) ? item.FirstOrDefault() : null;
         _fitCheck = query.TryGetValue("check", out var check) ? check.FirstOrDefault() : null;
+        _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var preview)
+            ? preview.FirstOrDefault()
+            : null;
         _tab = tab;
         _visited.Add(_tab);
+    }
+
+    private void ApplyEncouragePreviewFromUri()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = QueryHelpers.ParseQuery(uri.Query);
+        _encouragePreviewTipId = query.TryGetValue("encouragePreview", out var v)
+            ? v.FirstOrDefault()
+            : null;
     }
 
     private Task SetTab(string tab)
