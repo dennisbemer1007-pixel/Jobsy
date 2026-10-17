@@ -343,6 +343,15 @@ internal sealed class E2eFlowRunner
                         null,
                         new() { Timeout = 90_000 });
                     _report.EmptyProfileBlockedCaptured = true;
+                    await page.WaitForFunctionAsync(
+                        """
+                        () => {
+                          const btn = document.querySelector('[data-testid=kb-detail-apply]');
+                          return !!btn?.textContent?.includes('Profiel afronden');
+                        }
+                        """,
+                        null,
+                        new() { Timeout = 30_000 });
                 }
                 catch (TimeoutException)
                 {
@@ -391,8 +400,7 @@ internal sealed class E2eFlowRunner
 
             try
             {
-                await page.Locator(
-                        "[data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests']")
+                await page.Locator(".profile-encourage[data-encourage-tip]")
                     .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
                 await Shot(page, tag, "07-vacancy-encourage-tip");
             }
@@ -537,8 +545,7 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(mobile ? 800 : 500);
             try
             {
-                await page.Locator(
-                        "[data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests'], [data-encourage-tip='wist-tests-pause']")
+                await page.Locator(".profile-encourage[data-encourage-tip]")
                     .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
             }
             catch (TimeoutException)

@@ -996,7 +996,7 @@
             {
                 <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
             }
-            else if (!_profileReadyForApply)
+            else if (_candidateApplyGateLoaded && !_profileReadyForApply)
             {
                 <a class="btn--primary"
                    href="@($"/vacancies/{Id}#apply")"
@@ -1079,7 +1079,8 @@
     private bool _useAuthenticator;
     private bool _acceptedTerms;
     private bool _workPermitConfirmed;
-    private bool _profileReadyForApply = true;
+    private bool _profileReadyForApply;
+    private bool _candidateApplyGateLoaded;
     private bool _applyBasicsReady = true;
     private bool _applyBasicsIncomplete;
     private readonly List<ApplyBasicsChecklistRow> _applyBasicsChecklist = [];
@@ -1494,7 +1495,8 @@
         _useAuthenticator = false;
         _verificationCode = string.Empty;
         _message = null;
-        _profileReadyForApply = true;
+        _profileReadyForApply = false;
+        _candidateApplyGateLoaded = false;
         _applyBasicsReady = true;
         _applyBasicsIncomplete = false;
         _applyBasicsChecklist.Clear();
@@ -1923,8 +1925,7 @@
             if (profile is not null)
             {
                 _dobInput = profile.DateOfBirth;
-                _authenticatorEnabled = profile.AuthenticatorEnabled == true
-                    && Configuration.GetValue("Jobsy:ApplyAuthenticatorStubEnabled", false);
+                _authenticatorEnabled = Configuration.GetValue("Jobsy:ApplyAuthenticatorStubEnabled", false);
                 var prefs = profile.Preferences ?? new CandidatePreferences();
                 _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
                 _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);
@@ -2003,6 +2004,7 @@
                     && _profileHasEducation
                     && _profileHasReferences;
                 _profileReadyForApply = _applyBasicsReady && vacancyRequirementsReady;
+                _candidateApplyGateLoaded = true;
             }
         }
 
