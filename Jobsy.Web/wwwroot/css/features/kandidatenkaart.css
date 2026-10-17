@@ -8,12 +8,48 @@
 
 .kk-page > .insights-tabs {
     flex-shrink: 0;
-    scroll-margin-top: 4.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    margin-block: 0 0.75rem;
+    padding-block: 0.35rem 0.15rem;
+    background: var(--bg);
 }
 
 .wg-main:has(.kk-page) {
     overflow-y: auto;
     overflow-x: hidden;
+    padding-block-start: var(--space-4);
+}
+
+.kk-filters--desktop {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: var(--space-3) var(--space-4);
+    width: 100%;
+    max-width: none;
+}
+
+.kk-filters--desktop > .kk-field {
+    flex: 0 0 auto;
+}
+
+.kk-filters--desktop > .kk-field:first-child {
+    flex: 1 1 16rem;
+    max-width: 22rem;
+    min-width: min(100%, 14rem);
+}
+
+.kk-filters--desktop > .kk-field > label {
+    display: block;
+}
+
+.kk-filters--desktop .jobsy-form-value,
+.kk-filters--desktop select.jobsy-form-value {
+    width: 100%;
+    max-width: 100%;
 }
 
 .wg-bottom-nav {
@@ -1263,11 +1299,12 @@ html.vp-mobile .kk-mobile-sheet {
     position: relative;
     flex-shrink: 0;
     z-index: 8;
-    max-height: 38vh;
+    max-height: min(46vh, 420px);
     background: var(--surface);
     border-top: 1px solid var(--border);
     box-shadow: 0 -4px 16px rgba(15, 45, 92, 0.08);
     overflow: hidden;
+    margin-bottom: var(--bottom-nav-clearance);
 }
 
 html.vp-mobile .kk-mobile-sheet__peek {
@@ -1308,7 +1345,38 @@ html.vp-mobile .kk-mobile-sheet__body--sparse .kk-below-min .kk-note {
 }
 
 html.vp-mobile .kk-mobile-sheet__body--list {
-    max-height: 100%;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+html.vp-mobile .kk-active-sell-collapse {
+    flex-shrink: 0;
+    margin: 0.5rem 1rem 0.65rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    font-size: var(--text-xs);
+    color: var(--text);
+}
+
+html.vp-mobile .kk-active-sell-collapse summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--brand);
+    list-style: none;
+}
+
+html.vp-mobile .kk-active-sell-collapse summary::-webkit-details-marker {
+    display: none;
+}
+
+html.vp-mobile .kk-active-sell-collapse p {
+    margin: 0.5rem 0 0;
+    line-height: 1.4;
 }
 
 html.vp-mobile .kk-area-list--compact .kk-area-list__item {
@@ -1563,10 +1631,20 @@ html.vp-mobile .kk-list-invite-bar {
 }
 
 html.vp-mobile .kk-mobile-sheet__invite {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--bottom-nav-clearance);
+    z-index: 46;
     flex-shrink: 0;
-    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0));
+    padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom, 0));
     border-top: 1px solid var(--border);
     background: var(--surface);
+    box-shadow: 0 -4px 12px rgba(15, 45, 92, 0.1);
+}
+
+html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-mobile-sheet {
+    padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0));
 }
 
 .wg-shell:has(.kk-page) .lobsy-assistant-tab,

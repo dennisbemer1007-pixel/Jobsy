@@ -17,8 +17,7 @@
 
 <PageTitle>@Culture["Kk.Title"] · Lobsy</PageTitle>
 
-<WgPageShell>
-    <div class="kk-page panel-page insights-page @PageStateClass">
+<div class="kk-page panel-page insights-page @PageStateClass">
         <EmployerTalentTabs Active="kandidatenkaart" />
 
         <div class="kk-page__chrome kk-page__chrome--desktop">
@@ -46,7 +45,7 @@
                 <p class="profile-address__hint">@Culture["Kk.Preview.Locked"]</p>
             }
 
-            <div class="kk-filters kk-filters--desktop profile-form">
+            <div class="kk-filters kk-filters--desktop">
                 <div class="kk-field">
                     <label>@Culture["Kk.Filter.Vacancy"]</label>
                     <select class="jobsy-form-value kk-control--wide" @bind="_vacancyId" @bind:after="ReloadAsync">
@@ -231,8 +230,7 @@
                 </div>
             </div>
         }
-    </div>
-</WgPageShell>
+</div>
 
 @if (_inviteOpen)
 {

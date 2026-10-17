@@ -35,6 +35,10 @@ window.jobMap = (function () {
     const KK_LINE = "jobsy-kk-areas-line";
     const KK_LABELS_SOURCE = "jobsy-kk-areas-labels";
     const KK_LABELS = "jobsy-kk-areas-labels-layer";
+    const KK_LABELS_HALO = "jobsy-kk-areas-labels-halo";
+    const KK_RADIUS_SOURCE = "jobsy-kk-radius";
+    const KK_RADIUS_FILL = "jobsy-kk-radius-fill";
+    const KK_RADIUS_LINE = "jobsy-kk-radius-line";
     let kkViewOptions = null;
     let kkInitialFitDone = false;
     let detailCache = {};
@@ -2967,6 +2971,10 @@ window.jobMap = (function () {
         if (!map || typeof map.addSource !== "function") {
             return;
         }
+        if (kkMode) {
+            drawKkRadiusRing(lat, lng);
+            return;
+        }
         if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
             scheduleTravelRingRedraw();
             return;
@@ -3861,8 +3869,7 @@ window.jobMap = (function () {
         if (kkMode) {
             refreshKkAreasData();
             if (lastOrigin) {
-                ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
-                drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+                drawKkRadiusRing(lastOrigin.lat, lastOrigin.lng);
             }
             if (window.jobsyMapLibre) {
                 window.jobsyMapLibre.hideChrome(map);
@@ -4160,6 +4167,72 @@ window.jobMap = (function () {
         }
     }
 
+    function kkFitPadding() {
+        var edge = 48;
+        var mobile = false;
+        try {
+            mobile = document.documentElement.classList.contains("vp-mobile");
+        } catch (e) { /* ignore */ }
+        if (mobile) {
+            return {
+                top: 36,
+                right: 40,
+                bottom: 120,
+                left: 52
+            };
+        }
+        return {
+            top: edge,
+            right: edge,
+            bottom: edge,
+            left: edge
+        };
+    }
+
+    function drawKkRadiusRing(lat, lng) {
+        if (!map || !kkMode || typeof map.addSource !== "function") {
+            return;
+        }
+        if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
+            map.once("load", function () { drawKkRadiusRing(lat, lng); });
+            return;
+        }
+        clearTravelRings();
+        var travelKm = Number(travelOptions.radiusKm) || 25;
+        var radiusM = travelKm * 1000;
+        var feature = {
+            type: "Feature",
+            properties: {},
+            geometry: { type: "Polygon", coordinates: circlePolygon(lat, lng, radiusM) }
+        };
+        var data = { type: "FeatureCollection", features: [feature] };
+        try {
+            if (!map.getSource(KK_RADIUS_SOURCE)) {
+                map.addSource(KK_RADIUS_SOURCE, { type: "geojson", data: data });
+                map.addLayer({
+                    id: KK_RADIUS_FILL,
+                    type: "fill",
+                    source: KK_RADIUS_SOURCE,
+                    paint: {
+                        "fill-color": "rgba(15, 45, 92, 0.05)"
+                    }
+                }, KK_FILL);
+                map.addLayer({
+                    id: KK_RADIUS_LINE,
+                    type: "line",
+                    source: KK_RADIUS_SOURCE,
+                    paint: {
+                        "line-color": "rgba(15, 45, 92, 0.32)",
+                        "line-width": 1.25,
+                        "line-dasharray": [2, 2.5]
+                    }
+                }, KK_FILL);
+            } else {
+                map.getSource(KK_RADIUS_SOURCE).setData(data);
+            }
+        } catch (e) { /* ignore */ }
+    }
+
     function fitKkView(animate) {
         if (!map || !kkMode) {
             return;
@@ -4170,18 +4243,22 @@ window.jobMap = (function () {
         }
         applyKkViewOptions(kkViewOptions);
         if (lastOrigin) {
-            ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
-            drawTravelRings(lastOrigin.lat, lastOrigin.lng);
+            drawKkRadiusRing(lastOrigin.lat, lastOrigin.lng);
         }
         var bounds = new maplibregl.LngLatBounds();
         var travelKm = Number(travelOptions.radiusKm) || 25;
         if (lastOrigin) {
-            var radiusM = travelKm * 1000 * 1.08;
+            var radiusM = travelKm * 1000 * 1.05;
             [0, 90, 180, 270].forEach(function (bearing) {
                 bounds.extend(destinationLngLat(lastOrigin.lat, lastOrigin.lng, radiusM, bearing));
             });
         }
         (kkAreasCache || []).forEach(function (a) {
+            var lat = kkProp(a, "centerLat", "CenterLat");
+            var lng = kkProp(a, "centerLng", "CenterLng");
+            if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                bounds.extend([lng, lat]);
+            }
             var ring = a.polygonRing || a.PolygonRing || [];
             ring.forEach(function (p) {
                 if (p && p.length >= 2) {
@@ -4195,8 +4272,8 @@ window.jobMap = (function () {
         runWithViewportNotifySuppressed(function () {
             try {
                 map.fitBounds(bounds, {
-                    padding: overlayFitPadding(),
-                    maxZoom: 12,
+                    padding: kkFitPadding(),
+                    maxZoom: 10.25,
                     animate: animate === true && !prefersReducedMotion(),
                     duration: animate === true && !prefersReducedMotion() ? 450 : 0
                 });
@@ -4221,7 +4298,7 @@ window.jobMap = (function () {
         }
         runWithViewportNotifySuppressed(function () {
             try {
-                map.easeTo({ center: [lng, lat], duration: prefersReducedMotion() ? 0 : 450, zoom: Math.max(map.getZoom(), 10.5) });
+                map.easeTo({ center: [lng, lat], duration: prefersReducedMotion() ? 0 : 450 });
             } catch (e) { /* ignore */ }
         });
     }
@@ -4270,12 +4347,23 @@ window.jobMap = (function () {
             });
             map.addSource(KK_LABELS_SOURCE, { type: "geojson", data: kkLabelsGeoJson([]) });
             map.addLayer({
+                id: KK_LABELS_HALO,
+                type: "circle",
+                source: KK_LABELS_SOURCE,
+                paint: {
+                    "circle-radius": 15,
+                    "circle-color": "#fffcfa",
+                    "circle-stroke-color": "rgba(190, 60, 55, 0.85)",
+                    "circle-stroke-width": 2
+                }
+            });
+            map.addLayer({
                 id: KK_LABELS,
                 type: "symbol",
                 source: KK_LABELS_SOURCE,
                 layout: {
                     "text-field": ["get", "count"],
-                    "text-size": 14,
+                    "text-size": 13,
                     "text-font": ["Noto Sans Bold"],
                     "text-allow-overlap": true,
                     "text-ignore-placement": true
@@ -4283,7 +4371,7 @@ window.jobMap = (function () {
                 paint: {
                     "text-color": "#7f1d1d",
                     "text-halo-color": "#fff",
-                    "text-halo-width": 1.5
+                    "text-halo-width": 1.25
                 }
             });
             map.on("click", KK_FILL, function (e) {

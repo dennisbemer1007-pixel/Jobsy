@@ -1,10 +1,13 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Web
 
-<div class="@(Compact ? "kk-active-sell kk-active-sell--compact" : "kk-active-sell")">
-    <h3>@Culture["Kk.ActiveSell.Title"]</h3>
-    <p>@Culture["Kk.ActiveSell.Body"]</p>
-</div>
+@if (!Compact)
+{
+    <div class="kk-active-sell">
+        <h3>@Culture["Kk.ActiveSell.Title"]</h3>
+        <p>@Culture["Kk.ActiveSell.Body"]</p>
+    </div>
+}
 
 @if (Map?.BelowThreshold == true)
 {
@@ -32,6 +35,14 @@ else
             </li>
         }
     </ul>
+}
+
+@if (Compact)
+{
+    <details class="kk-active-sell-collapse">
+        <summary>@Culture["Kk.ActiveSell.Title"]</summary>
+        <p>@Culture["Kk.ActiveSell.Body"]</p>
+    </details>
 }
 
 @code {
