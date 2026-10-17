@@ -255,6 +255,10 @@ public sealed class SharedWorkPreferenceChoices
     public string? Outdoor { get; set; }
     public string? PhysicalWork { get; set; }
     public string? Pace { get; set; }
+    public string? TeamMode { get; set; }
+    public string? Structure { get; set; }
+    public string? CustomerContact { get; set; }
+    public string? ShiftsPreference { get; set; }
 }
 
 public sealed class CandidateLanguage

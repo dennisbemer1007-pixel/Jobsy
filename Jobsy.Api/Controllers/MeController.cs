@@ -1933,7 +1933,11 @@ public partial class MeController : ControllerBase
                     ReadOptionalString(workEl, "indoor"),
                     ReadOptionalString(workEl, "outdoor"),
                     ReadOptionalString(workEl, "physicalWork"),
-                    ReadOptionalString(workEl, "pace"));
+                    ReadOptionalString(workEl, "pace"),
+                    ReadOptionalString(workEl, "teamMode"),
+                    ReadOptionalString(workEl, "structure"),
+                    ReadOptionalString(workEl, "customerContact"),
+                    ReadOptionalString(workEl, "shiftsPreference"));
             }
 
             var shareEmployerPreferences = ReadOptionalBool(root, "shareEmployerPreferences");

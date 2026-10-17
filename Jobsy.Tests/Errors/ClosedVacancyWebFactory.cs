@@ -20,7 +20,7 @@ namespace Jobsy.Tests.Errors;
 /// forwards the Web client's API calls to a real in-process <see cref="ClosedVacancyApiFactory"/>
 /// TestServer instead of faking the response.
 /// </summary>
-public sealed class ClosedVacancyWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+public sealed class ClosedVacancyWebFactory : WebWebApplicationFactory
 {
     public ClosedVacancyApiFactory Api { get; } = new();
 

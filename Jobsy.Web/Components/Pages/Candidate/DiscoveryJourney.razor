@@ -13,6 +13,7 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
+@using Jobsy.Web.KandidaatBanen
 @using Microsoft.Extensions.Logging
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -181,12 +182,19 @@
                 else if (_screen == "toestemming")
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
-                    <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
+                    <TestConsentStep Draft="Draft"
+                                     TestTabs="ConsentTabs"
+                                     ConsentChanged="OnConsentChanged" />
                     @MobileCoachInlineOnCard
                     <div class="journey-step__foot">
                         <button type="button" class="btn btn-secondary" @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
                         <span class="journey-step__sp"></span>
-                        <button type="button" class="journey-later" @onclick="DeclineConsentAndFinishAsync">@Culture["Discovery.Consent.Decline"]</button>
+                        <button type="button"
+                                class="journey-later"
+                                data-testid="onboarding-tests-later"
+                                @onclick="SkipTestsAndOpenBanenkaartAsync">
+                            @Culture["Onboarding.Tests.LaterDoen"]
+                        </button>
                         <button type="button" class="btn btn-primary" data-testid="onboarding-next" disabled="@_busy" @onclick="NextAsync">
                             @Culture["Onboarding.Consent.Cta"]
                         </button>
@@ -578,7 +586,7 @@
                                        PrimaryLabel="@ShedPrimaryLabel"
                                        SelectLevel="OnShedSelectLevel"
                                        Continue="OnShedContinueAsync"
-                                       Later="LaterAsync" />
+                                       Later="SkipTestsAndOpenBanenkaartAsync" />
                 }
                 else if (_countedStep is >= 7 and <= 10)
                 {
@@ -605,8 +613,10 @@
                                         Answer="OnMiniAnswer"
                                         ExpandQuestion="ExpandQuestion"
                                         ResolveQuestionText="QuestionText"
+                                        LaterLabel="@Culture["Onboarding.Tests.LaterDoen"]"
                                         OnFinished="FinishMiniAsync"
-                                        OnLeave="BackAsync" />
+                                        OnLeave="BackAsync"
+                                        OnLater="SkipTestsAndOpenBanenkaartAsync" />
                 }
             </section>
 
@@ -1750,13 +1760,43 @@
         _endValue = facts.Value;
     }
 
-    private async Task DeclineConsentAndFinishAsync()
+    private async Task SkipTestsAndOpenBanenkaartAsync()
     {
-        if (_busy) return;
+        if (_busy)
+        {
+            return;
+        }
+
         _busy = true;
         try
         {
-            await ShowEndAsync(partial: true);
+            await FlushAsync();
+            if (_countedStep == 6 || _screen == "toestemming")
+            {
+                await FlushPrivateAsync();
+            }
+
+            if (_countedStep == 4)
+            {
+                await SaveDreamAsync();
+            }
+
+            if (_screen == "shed")
+            {
+                if (OnboardingWizardCatalog.TestKindForStep(_shedStep) is { } shedKind)
+                {
+                    await FlushShedTestSaveAsync(shedKind);
+                }
+            }
+
+            if (_autosave is not null)
+            {
+                await _autosave.FlushAsync();
+            }
+
+            _state = await Api.SaveMyOnboardingProgressAsync(6, stepCompleted: true, finishReached: true);
+            await Api.CompleteMyOnboardingAsync();
+            Navigation.NavigateTo(KbRoutes.Map);
         }
         catch (Exception ex)
         {

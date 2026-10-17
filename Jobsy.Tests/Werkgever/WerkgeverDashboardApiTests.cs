@@ -104,7 +104,7 @@ public class WerkgeverDashboardApiTests : IClassFixture<WerkgeverDashboardApiFac
     }
 }
 
-public sealed class WerkgeverDashboardApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class WerkgeverDashboardApiFactory : ApiWebApplicationFactory
 {
     public Guid OrgAId { get; } = Guid.Parse("f2000000-0000-0000-0000-000000000001");
     public Guid BranchA1Id { get; } = Guid.Parse("f2000000-0000-0000-0000-000000000011");

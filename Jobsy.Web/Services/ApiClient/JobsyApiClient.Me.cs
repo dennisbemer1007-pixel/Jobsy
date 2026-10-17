@@ -277,6 +277,20 @@ public sealed partial class JobsyApiClient
         return await response.Content.ReadFromJsonAsync<CandidatePrivatePreferences>(cancellationToken: ct);
     }
 
+    public async Task<OnboardingNearbySignal?> GetOnboardingNearbySignalAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<OnboardingNearbySignal>("api/me/onboarding/nearby-signal", ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized
+                                               or HttpStatusCode.NotFound
+                                               or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
     public async Task<CandidateDiscoveryOverviewPanelDto?> GetDiscoveryOverviewPanelAsync(CancellationToken ct = default)
     {
         try

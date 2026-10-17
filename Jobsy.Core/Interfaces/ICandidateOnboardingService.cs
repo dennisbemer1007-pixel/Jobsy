@@ -20,7 +20,29 @@ public interface ICandidateOnboardingService
     /// (how-to not completed and profile not already complete).
     /// </summary>
     Task<bool> ShouldShowWizardAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    Task<OnboardingNearbySignalDto> GetNearbySignalAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
+
+public sealed record OnboardingNearbySignalDto(
+    int Count,
+    int? WiderRadiusCount,
+    int MaxTravelMinutes,
+    string? PreferredTransport,
+    bool EmployersFeatureOff,
+    bool MissingHomeLocation,
+    IReadOnlyList<OnboardingNearbyVacancyCardDto> Examples);
+
+public sealed record OnboardingNearbyVacancyCardDto(
+    Guid VacancyId,
+    string Title,
+    double DistanceKm,
+    int TravelMinutes,
+    string HoursLabel,
+    string ScheduleHint,
+    string WhyLine);
 
 public sealed record CandidateOnboardingStateDto(
     int CurrentStep,

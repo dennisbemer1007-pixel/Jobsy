@@ -1,4 +1,5 @@
 using Bunit;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
@@ -175,7 +176,26 @@ public class OntdekkingsreisServiceMigrationTests
             new FakeMatches(),
             new FakeInsightsQueue(),
             new FakeCareerPlans(),
-            new FixedFlags(passportOn));
+            new FixedFlags(passportOn),
+            new FakeDiscovery());
+
+    private sealed class FakeDiscovery : IVacancyDiscoveryIndex
+    {
+        public DateTime? LastRefreshedAtUtc => DateTime.UtcNow;
+
+        public Task<IReadOnlyList<VacancyDiscoveryRecord>> GetActiveAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<VacancyDiscoveryRecord>>([]);
+
+        public Task<VacancyMapView> GetMapViewAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(new VacancyMapView(52.1, 5.1, 8, 0));
+
+        public void Invalidate() { }
+
+        public Task InvalidateCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task RefreshAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+    }
 
     private static async Task<Guid> SeedUserAsync(JobsyDbContext db)
     {
@@ -310,8 +330,8 @@ public class OntdekkingsreisRouteTests
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
         Assert.Contains("CandidatePassport", wizard, StringComparison.Ordinal);
-        Assert.Contains("/candidate/ontdekkingsreis", wizard, StringComparison.Ordinal);
-        Assert.Contains("replace: true", wizard, StringComparison.Ordinal);
+        Assert.Contains("FeatureRoutes.CandidateDiscoveryPath", wizard, StringComparison.Ordinal);
+        Assert.Contains("NavigateTo(FeatureRoutes.CandidateDiscoveryPath, true)", wizard, StringComparison.Ordinal);
     }
 
     [Fact]

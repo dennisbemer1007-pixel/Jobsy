@@ -15,19 +15,22 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
     private readonly ICandidateInsightsQueue _insightsQueue;
     private readonly ICandidateCareerPlanService _careerPlans;
     private readonly IFeatureFlags _featureFlags;
+    private readonly IVacancyDiscoveryIndex _discovery;
 
     public CandidateOnboardingService(
         JobsyDbContext db,
         ICandidateMatchSnapshotService matches,
         ICandidateInsightsQueue insightsQueue,
         ICandidateCareerPlanService careerPlans,
-        IFeatureFlags featureFlags)
+        IFeatureFlags featureFlags,
+        IVacancyDiscoveryIndex discovery)
     {
         _db = db;
         _matches = matches;
         _insightsQueue = insightsQueue;
         _careerPlans = careerPlans;
         _featureFlags = featureFlags;
+        _discovery = discovery;
     }
 
     public async Task<CandidateOnboardingStateDto> GetAsync(
@@ -162,6 +165,74 @@ public sealed class CandidateOnboardingService : ICandidateOnboardingService
         }
 
         return true;
+    }
+
+    public async Task<OnboardingNearbySignalDto> GetNearbySignalAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var employersOn = await _featureFlags.IsEnabledAsync(PlatformFeature.Employers, cancellationToken);
+        if (!employersOn)
+        {
+            return new OnboardingNearbySignalDto(
+                0,
+                null,
+                30,
+                null,
+                EmployersFeatureOff: true,
+                MissingHomeLocation: false,
+                Array.Empty<OnboardingNearbyVacancyCardDto>());
+        }
+
+        var user = await _db.Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId && u.IsActive, cancellationToken);
+        if (user is null)
+        {
+            return new OnboardingNearbySignalDto(
+                0,
+                null,
+                30,
+                null,
+                false,
+                true,
+                []);
+        }
+
+        var prefs = MatchingProfileMapper.DeserializePrefs(user.PreferencesJson);
+        var age = user.DateOfBirth is { } dob
+            ? (int?)((DateOnly.FromDateTime(DateTime.UtcNow).DayNumber - dob.DayNumber) / 365.25)
+            : null;
+
+        var vacancies = await _discovery.GetActiveAsync(cancellationToken);
+        if (await _featureFlags.IsEnabledAsync(PlatformFeature.EmployerPhase2, cancellationToken))
+        {
+            vacancies = vacancies.Where(v => v.IntermediaryCompanyId is null).ToList();
+        }
+
+        var signal = OnboardingEarlyNearbySignal.Compute(
+            user.HomeLocation?.Latitude,
+            user.HomeLocation?.Longitude,
+            prefs,
+            vacancies,
+            age);
+
+        var examples = signal.Examples.Select(c => new OnboardingNearbyVacancyCardDto(
+            c.VacancyId,
+            c.Title,
+            c.DistanceKm,
+            c.TravelMinutes,
+            c.HoursLabel,
+            c.ScheduleHint,
+            c.WhyLine)).ToList();
+
+        return new OnboardingNearbySignalDto(
+            signal.Count,
+            signal.WiderCount,
+            signal.MaxTravelMinutesUsed,
+            prefs.PreferredTransport,
+            false,
+            signal.MissingHomeLocation,
+            examples);
     }
 
     private async Task<CandidateOnboarding> EnsureRowAsync(Guid userId, CancellationToken cancellationToken)

@@ -47,7 +47,9 @@ else
                       AfterLikert="@JourneyAfterLikert"
                       OnAnswer="OnFlowAnswer"
                       OnFinished="OnFlowFinished"
-                      OnLeave="OnLeave" />
+                      OnLeave="OnLeave"
+                      OnLater="OnLater"
+                      LaterLabel="@LaterLabel" />
     </div>
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint && !JourneyShell)
@@ -76,6 +78,8 @@ else
     [Parameter] public EventCallback<(int Id, int Value)> Answer { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
     [Parameter] public EventCallback OnLeave { get; set; }
+    [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public string? LaterLabel { get; set; }
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
     [Parameter] public RenderFragment? JourneyAfterLikert { get; set; }

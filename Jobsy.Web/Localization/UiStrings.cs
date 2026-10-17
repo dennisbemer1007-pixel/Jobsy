@@ -198,6 +198,8 @@ public static class UiStrings
             ["Language.Choose"] = "Kies taal",
             ["Common.Loading"] = "Laden…",
             ["Common.Save"] = "Opslaan",
+            ["Common.Saved"] = "Opgeslagen.",
+            ["Common.LoadFailed"] = "Laden mislukt. Probeer het opnieuw.",
             ["Common.Later"] = "Later",
             ["Common.Clear"] = "Wissen",
             ["Common.Busy"] = "Bezig…",
@@ -900,6 +902,8 @@ public static class UiStrings
             ["Language.Choose"] = "Choose language",
             ["Common.Loading"] = "Loading…",
             ["Common.Save"] = "Save",
+            ["Common.Saved"] = "Saved.",
+            ["Common.LoadFailed"] = "Could not load. Please try again.",
             ["Common.Later"] = "Later",
             ["Common.Clear"] = "Clear",
             ["Common.Busy"] = "Working…",
@@ -1602,6 +1606,8 @@ public static class UiStrings
             ["Language.Choose"] = "Wybierz język",
             ["Common.Loading"] = "Ładowanie…",
             ["Common.Save"] = "Zapisz",
+            ["Common.Saved"] = "Zapisano.",
+            ["Common.LoadFailed"] = "Nie udało się wczytać. Spróbuj ponownie.",
             ["Common.Later"] = "Później",
             ["Common.Clear"] = "Wyczyść",
             ["Common.Busy"] = "Trwa…",
@@ -2304,6 +2310,8 @@ public static class UiStrings
             ["Language.Choose"] = "Alege limba",
             ["Common.Loading"] = "Se încarcă…",
             ["Common.Save"] = "Salvează",
+            ["Common.Saved"] = "Salvat.",
+            ["Common.LoadFailed"] = "Nu s-a putut încărca. Încearcă din nou.",
             ["Common.Later"] = "Mai târziu",
             ["Common.Clear"] = "Șterge",
             ["Common.Busy"] = "În curs…",
@@ -3006,6 +3014,8 @@ public static class UiStrings
             ["Language.Choose"] = "اختر اللغة",
             ["Common.Loading"] = "جارٍ التحميل…",
             ["Common.Save"] = "حفظ",
+            ["Common.Saved"] = "تم الحفظ.",
+            ["Common.LoadFailed"] = "تعذّر التحميل. أعد المحاولة.",
             ["Common.Later"] = "لاحقاً",
             ["Common.Clear"] = "مسح",
             ["Common.Busy"] = "جارٍ…",
@@ -3572,6 +3582,7 @@ public static class UiStrings
         UiStringsKandidaatBanen.MergeAll(nl, en, pl, ro, ar);
         UiStringsExternalVacancy.MergeAll(nl, en, pl, ro, ar);
         UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
+        UiStringsEmployerFit.MergeAll(nl, en, pl, ro, ar);
         UiStringsPassport.MergeAll(nl, en, pl, ro, ar);
         UiStringsDiplomaEvaluation.MergeAll(nl, en, pl, ro, ar);
         UiStringsPassportPartners.MergeAll(nl, en, pl, ro, ar);

@@ -500,10 +500,11 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     EmployerPhase2Enabled: request.EmployerPhase2Enabled,
                     CandidateExternalVacanciesEnabled: request.CandidateExternalVacanciesEnabled,
                     ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
+                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled,
+                    EmployerFitQuestionnairesEnabled: request.EmployerFitQuestionnairesEnabled,
                     CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
                     CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
-                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit,
-                    MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled),
+                    CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit),
                 cancellationToken);
 
             var actor = await _users.FindByPrincipalAsync(User, cancellationToken);
@@ -600,6 +601,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
+        Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
         Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
         Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
@@ -631,7 +633,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             employerPhase2Enabled = snap.EmployerPhase2Enabled,
             candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
             proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
-            testsV2Enabled = snap.TestsV2Enabled
+            testsV2Enabled = snap.TestsV2Enabled,
+            employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled
         });
     }
 
@@ -952,6 +955,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.CandidateExternalVacanciesEnabled,
             snap.ProactiveMatchingEnabled,
             snap.MatchCalibrationV1Enabled,
+            snap.EmployerFitQuestionnairesEnabled,
             snap.CandidateApplyPerMinuteLimit,
             snap.CandidateApplyPerHourLimit,
             snap.CandidateApplyPerDayLimit);

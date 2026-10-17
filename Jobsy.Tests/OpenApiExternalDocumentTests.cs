@@ -65,7 +65,7 @@ public class OpenApiExternalDocumentTests
         throw new InvalidOperationException("Jobsy.sln not found.");
     }
 
-    private sealed class OpenApiApiFactory(string environment) : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+    private sealed class OpenApiApiFactory(string environment) : ApiWebApplicationFactory
     {
         private readonly string _dbName = "OpenApi-" + Guid.NewGuid();
 

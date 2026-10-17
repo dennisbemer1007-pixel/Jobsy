@@ -93,7 +93,7 @@ public class KvkSearchEndpointTests : IClassFixture<KvkSearchEndpointFactory>
     }
 }
 
-public sealed class KvkSearchEndpointFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class KvkSearchEndpointFactory : ApiWebApplicationFactory
 {
     private readonly string _dbName = "KvkSearchEndpoint-" + Guid.NewGuid();
 

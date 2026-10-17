@@ -1,6 +1,6 @@
 @page "/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary")]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [RequiresFeature(PlatformFeature.ProactiveMatching)]

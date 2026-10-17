@@ -321,7 +321,7 @@ public class CloudflareOriginProtectionTests
     }
 }
 
-file sealed class OriginEnforcedWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class OriginEnforcedWebFactory : WebWebApplicationFactory
 {
     public const string Secret = "web-host-origin-secret";
 

@@ -135,6 +135,7 @@ public static class MatchCalibrationV1Calculator
 
         fitRaw = Math.Clamp(fitRaw, 0, 1);
         confidence = Math.Clamp(confidence, 0, 1);
+        confidence = ApplyEmployerAnswerConfidenceBoost(input, confidence);
 
         var fitRawPercent = ToPercent(fitRaw);
         var confidencePercent = ToPercent(confidence);
@@ -379,6 +380,36 @@ public static class MatchCalibrationV1Calculator
         }
 
         return null;
+    }
+
+    private static double ApplyEmployerAnswerConfidenceBoost(ProfileVacancyMatchInput input, double confidence01)
+    {
+        if (!input.EmployerFitQuestionnairesEnabled)
+        {
+            return confidence01;
+        }
+
+        var boost = 0.0;
+        if (input.VacancyCompetenciesFromEmployer
+            && input.CandidateCompetencies is { IsComplete: true })
+        {
+            boost += 0.04;
+        }
+
+        if (input.VacancyCultureFromEmployer
+            && input.CandidateCultureScores is { IsComplete: true })
+        {
+            boost += 0.04;
+        }
+
+        if (input.VacancyWorkContextFromEmployer
+            && input.CandidateWorkContext is { } ctx
+            && CandidateWorkContextProfile.HasAny(ctx))
+        {
+            boost += 0.04;
+        }
+
+        return Math.Clamp(confidence01 + boost, 0, 1);
     }
 
     private static bool IsIndicativeCompetency(ProfileVacancyMatchInput input)

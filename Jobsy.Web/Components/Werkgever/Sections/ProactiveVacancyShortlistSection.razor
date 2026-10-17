@@ -4,9 +4,11 @@
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Rules
 @using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@inject UserFacingError UserFacing
 
 <section class="proactive-shortlist @(Layout == "full" ? "proactive-shortlist--page" : "proactive-shortlist--inline")"
          aria-labelledby="proactive-shortlist-title"
@@ -145,7 +147,8 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
             _entries = [];
         }
         finally
@@ -180,7 +183,8 @@
         }
         catch (Exception ex)
         {
-            _message = ex.Message;
+            var uf = UserFacing.From(ex);
+            _message = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

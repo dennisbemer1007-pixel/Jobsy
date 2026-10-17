@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "bdf8e783608b58001cfbff5e4bc7c3a83eda60167c79c09aa0f7e6fc23ccd277",
-    "v": "20261016-08"
+    "sha256": "677d48f6eb404051fe40365d90a04dc906a5c5395a101428f9d6ddfef548bb77",
+    "v": "20261017-02"
   },
   "css/critical.css": {
     "sha256": "3a99a9a216cdf8bc2e4410503115fd778c06884a9727d734b3d3dad1cff9a075",
@@ -88,19 +88,27 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "5aa8b568c67bcfb60471e4c806b0289257f2e6362244216d67477d1451d6c4ea",
+    "sha256": "8ef8fa1b682d26e4085c7f98999ffc9fd239ff2434bc46febf98dc5f2ffead47",
     "v": "20261015-09"
   },
   "css/features/nav-feedback.css": {
-    "sha256": "3393e9467943225aa8bac5a492993df10a917467478e65dab6bac9775d8ecbb9",
+    "sha256": "877531683e1868d6dfc5d9f77a4989b0949b24ecdb6efe7261c3b1155b82d1a2",
     "v": "20261004-10"
   },
   "css/features/occupation-day.css": {
     "sha256": "b63a6b010adbdba176ada22dfa5d19b2699c2096d05c6225428e9a72d5a7f44c",
     "v": "20261005-23"
   },
+  "css/features/onboarding-wizard-mobile-bar.css": {
+    "sha256": "2aa2e9fb9c528693ad4002eb4c76175dfb817b6f75045d1a585d06944fce11c7",
+    "v": "20261016-02"
+  },
+  "css/features/onboarding-wizard-richting-a.css": {
+    "sha256": "c833351e69fa5ae234ed2046fa4696599b365b91eb7cde4b5b631c2b2d95caf4",
+    "v": "20261017-01"
+  },
   "css/features/onboarding-wizard.css": {
-    "sha256": "96d7271f115ea507c21ae77e9b6ae25bfd7b62acf2fe6a7a9885428c71fe7848",
+    "sha256": "f1f1ad351beddbc57d95e0c1215296e476ec8ae2467b9eb9123999fcddcabc79",
     "v": "20261015-06"
   },
   "css/features/ontdekkingsreis.css": {
@@ -140,11 +148,11 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "eaa4c8708184635f30a7c97b4a919808d2422f85e9e1462f87405fbb0e64daed",
+    "sha256": "4c8c0385e165e6fa6eceed14112ba5a612ffee52cc8bb07a436439cbc0a9dee7",
     "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {
-    "sha256": "4717d3ca912e13ba252c4eddf01d5fa5674c65594c499fe1b033332d86157d69",
+    "sha256": "d1dfe82df457da2a5ba7fbf14ece342bbed87da0bd1b1f94707987edb9534482",
     "v": "20261015-20"
   },
   "css/features/werkgever-aanmelding.css": {
@@ -172,8 +180,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "87ca7ca7baf059b3e6977529e8003250f8307db1995f5e46c4c96b9dbad1e9c4",
-    "v": "20261016-05"
+    "sha256": "027364434072e12f00512293f4d87092d2b8f7d58135024bd0e78be76adebefa",
+    "v": "20261016-07"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -256,11 +264,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "756392a6d62d5ad71041c16ed6d2aada132677a78c48226d1f051c40e1716ef3",
+    "sha256": "b7090f7a7326497ebab3eb9f26c1982103a7a9476575b7ffad531a37fc7dd551",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "e7891f7f96e42037b5320e671ed8fc1bf7207e65aea259f9da2ee5858f6435f8",
+    "sha256": "736b62f376325cabfe3e66d8ec9e65a1d6f417928569c619ff8e79f13f532574",
     "v": "20261016-06"
   }
 }

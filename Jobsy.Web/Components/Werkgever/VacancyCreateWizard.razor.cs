@@ -3,6 +3,7 @@ using Jobsy.Web.Components.Werkgever.VacancyWizard;
 using Jobsy.Web.Components.Shared;
 using Jobsy.Web.Components.KandidaatBanen;
 using Jobsy.Web.KandidaatBanen;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Media;
 using Jobsy.Core.Careers;
@@ -157,6 +158,12 @@ public partial class VacancyCreateWizard : IDisposable
     private string? _moderationSuggestion;
     private Guid? _editVacancyId;
     private bool _proactiveMatchingOn;
+    private bool _employerFitEnabled;
+    private bool _useInferredCompetencies = true;
+    private string? _vacancyPace;
+    private string? _vacancyPhysical;
+    private string? _vacancyPlace;
+    private string? _vacancyCustomer;
     private DateOnly? _draftStartDate;
     private DateOnly? _draftEndDate;
     private Guid _companyId;
@@ -282,10 +289,12 @@ public partial class VacancyCreateWizard : IDisposable
         {
             var flags = await FeatureFlags.GetAsync();
             _proactiveMatchingOn = flags.ProactiveMatchingEnabled;
+            _employerFitEnabled = flags.IsEnabled(PlatformFeature.EmployerFitQuestionnaires);
         }
         catch (Exception)
         {
             _proactiveMatchingOn = false;
+            _employerFitEnabled = false;
         }
 
         var profile = await Api.GetMyProfileAsync();
@@ -1552,7 +1561,9 @@ public partial class VacancyCreateWizard : IDisposable
                 BarrierMinExperienceYears: _barrierHigh ? _barrierYears : null,
                 BarrierMinExperienceHours: _barrierHigh ? _barrierHours : null,
                 BarrierHardChecks: _barrierHigh ? _barrierHardChecks.ToArray() : null,
-                PublicMapRadiusKm: _isIntermediary ? _publicMapRadiusKm : null);
+                PublicMapRadiusKm: _isIntermediary ? _publicMapRadiusKm : null,
+                WorkContext: BuildVacancyWorkContext(),
+                UseInferredCompetencies: _useInferredCompetencies);
 
             var saved = _editVacancyId is Guid editId
                 ? await Api.UpdateVacancyAsync(editId, form)
@@ -1748,6 +1759,28 @@ public partial class VacancyCreateWizard : IDisposable
             var count = _scheduleSlots.Count;
             return count == 1 ? "1 dagdeel" : $"{count} dagdelen";
         }
+    }
+
+    private VacancyWorkContextSnapshot? BuildVacancyWorkContext()
+    {
+        if (!_employerFitEnabled)
+        {
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(_vacancyPace)
+            && string.IsNullOrWhiteSpace(_vacancyPhysical)
+            && string.IsNullOrWhiteSpace(_vacancyPlace)
+            && string.IsNullOrWhiteSpace(_vacancyCustomer))
+        {
+            return null;
+        }
+
+        return new VacancyWorkContextSnapshot(
+            string.IsNullOrWhiteSpace(_vacancyPace) ? null : _vacancyPace,
+            string.IsNullOrWhiteSpace(_vacancyPhysical) ? null : _vacancyPhysical,
+            string.IsNullOrWhiteSpace(_vacancyPlace) ? null : _vacancyPlace,
+            string.IsNullOrWhiteSpace(_vacancyCustomer) ? null : _vacancyCustomer);
     }
 
 }

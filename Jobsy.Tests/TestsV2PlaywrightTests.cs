@@ -160,7 +160,7 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
         return Directory.GetCurrentDirectory();
     }
 
-    private sealed class TestsV2WebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class TestsV2WebFactory : WebWebApplicationFactory
     {
         private IHost? _kestrel;
         private readonly bool _testsV2On;

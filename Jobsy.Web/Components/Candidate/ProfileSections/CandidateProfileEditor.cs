@@ -125,6 +125,10 @@ public sealed class CandidateProfileEditor : IDisposable
     public string? WorkOutdoor { get; set; }
     public string? WorkPhysical { get; set; }
     public string? WorkPace { get; set; }
+    public string? WorkTeamMode { get; set; }
+    public string? WorkStructure { get; set; }
+    public string? WorkCustomerContact { get; set; }
+    public string? WorkShiftsPreference { get; set; }
     public bool ShareEmployerPreferences { get; set; }
     public string? WorkRegion { get; set; }
     public string? WorkRegionSuggestion { get; set; }
@@ -247,6 +251,10 @@ public sealed class CandidateProfileEditor : IDisposable
         WorkOutdoor = prefs.WorkPreferences?.Outdoor;
         WorkPhysical = prefs.WorkPreferences?.PhysicalWork;
         WorkPace = prefs.WorkPreferences?.Pace;
+        WorkTeamMode = prefs.WorkPreferences?.TeamMode;
+        WorkStructure = prefs.WorkPreferences?.Structure;
+        WorkCustomerContact = prefs.WorkPreferences?.CustomerContact;
+        WorkShiftsPreference = prefs.WorkPreferences?.ShiftsPreference;
         ShareEmployerPreferences = prefs.ShareEmployerPreferences == true;
         WorkRegion = prefs.WorkRegion;
         WorkRegionSuggestion = WorkRegionRules.SuggestFromHomeAddress(prefs.HomeAddress);
@@ -1065,7 +1073,11 @@ public sealed class CandidateProfileEditor : IDisposable
                         Indoor = WorkIndoor,
                         Outdoor = WorkOutdoor,
                         PhysicalWork = WorkPhysical,
-                        Pace = WorkPace
+                        Pace = WorkPace,
+                        TeamMode = WorkTeamMode,
+                        Structure = WorkStructure,
+                        CustomerContact = WorkCustomerContact,
+                        ShiftsPreference = WorkShiftsPreference
                     },
                     ShareEmployerPreferences = ShareEmployerPreferences,
                     WorkRegion = WorkRegion,

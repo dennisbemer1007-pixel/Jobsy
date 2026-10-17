@@ -1111,6 +1111,8 @@
             || (v.MatchPercent is not null && !string.Equals(v.FitGate, "closed", StringComparison.OrdinalIgnoreCase)));
 
     private VacancyListItem? _matchExplain;
+    /// <summary>E2E: auto-open match explain after discover load (?employerFitScreenshot=1).</summary>
+    private bool _employerFitScreenshotExplainPending;
     private int? _ageYears;
     /// <summary>Age from candidate profile (DOB), used as default / restore target.</summary>
     private int? _profileAgeYears;
@@ -1654,6 +1656,7 @@
         ApplyHoursFromQuery();
         ApplyCompanyFocusFromQuery();
         ApplyWeergaveFromQuery();
+        ApplyEmployerFitScreenshotFromQuery();
         // Kaartfocus/branding must not block catalog load or first paint.
         var regionHostTask = RegionHost.EnsureInitializedAsync();
 
@@ -2846,6 +2849,11 @@
                 await InvokeAsync(StateHasChanged);
             }
         }
+
+        if (generation == _loadGeneration)
+        {
+            await TryOpenEmployerFitScreenshotExplainAsync();
+        }
     }
 
     private async Task RecordImpressionsSafeAsync()
@@ -3761,6 +3769,37 @@
 
     private void CloseMatchExplain()
         => _matchExplain = null;
+
+    private void ApplyEmployerFitScreenshotFromQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = QueryHelpers.ParseQuery(uri.Query);
+        if (q.ContainsKey("employerFitScreenshot"))
+        {
+            _employerFitScreenshotExplainPending = true;
+        }
+    }
+
+    private async Task TryOpenEmployerFitScreenshotExplainAsync()
+    {
+        if (!_employerFitScreenshotExplainPending || _matchExplain is not null)
+        {
+            return;
+        }
+
+        _employerFitScreenshotExplainPending = false;
+        var pick = _vacancies
+            .Where(v => v.MatchPercent is > 0 || v.MatchConfidencePercent is not null)
+            .OrderByDescending(v => v.MatchConfidencePercent ?? v.MatchPercent ?? 0)
+            .FirstOrDefault();
+        if (pick is null)
+        {
+            return;
+        }
+
+        await OpenMatchExplain(pick);
+        await InvokeAsync(StateHasChanged);
+    }
 
     private async Task OnTransportChanged(ChangeEventArgs e)
     {

@@ -12,13 +12,25 @@ public static class WorkPreferenceCatalogs
     public static readonly string[] IndoorCodes = ["prefer", "ok", "rather-not"];
     public static readonly string[] OutdoorCodes = ["prefer", "ok", "ok-not-frost", "rather-not"];
     public static readonly string[] PhysicalWorkCodes = ["light", "standing", "lifting-15", "lifting-25"];
-    public static readonly string[] PaceCodes = ["norm-ok", "calm"];
+    public static readonly string[] PaceCodes = ["norm-ok", "calm", "piek"];
+    public static readonly string[] VacancyPaceCodes = ["calm", "norm-ok", "piek"];
+    public static readonly string[] IndoorOutdoorCodes = ["prefer-indoor", "mix", "prefer-outdoor"];
+    public static readonly string[] CustomerContactCodes = ["much", "some", "none"];
+    public static readonly string[] TeamModeCodes = ["team", "mixed", "solo"];
+    public static readonly string[] StructureCodes = ["fixed", "mixed", "free"];
+    public static readonly string[] ShiftsPreferenceCodes = ["day", "evening", "night", "flex"];
     public static readonly string[] ContractCodes = ["uitzend", "vast", "tijdelijk", "seizoen", "oproep", NoContractPreference];
 
     public static string? CanonicalIndoor(string? code) => Find(IndoorCodes, code);
     public static string? CanonicalOutdoor(string? code) => Find(OutdoorCodes, code);
     public static string? CanonicalPhysicalWork(string? code) => Find(PhysicalWorkCodes, code);
     public static string? CanonicalPace(string? code) => Find(PaceCodes, code);
+    public static string? CanonicalVacancyPace(string? code) => Find(VacancyPaceCodes, code);
+    public static string? CanonicalIndoorOutdoor(string? code) => Find(IndoorOutdoorCodes, code);
+    public static string? CanonicalCustomerContact(string? code) => Find(CustomerContactCodes, code);
+    public static string? CanonicalTeamMode(string? code) => Find(TeamModeCodes, code);
+    public static string? CanonicalStructure(string? code) => Find(StructureCodes, code);
+    public static string? CanonicalShiftsPreference(string? code) => Find(ShiftsPreferenceCodes, code);
     public static string? CanonicalContract(string? code) => Find(ContractCodes, code);
 
     public static bool IsKnownIndoor(string? code) => CanonicalIndoor(code) is not null;
@@ -31,6 +43,12 @@ public static class WorkPreferenceCatalogs
     public static string OutdoorLabelKey(string code) => $"WorkPref.Outdoor.{CanonicalOutdoor(code) ?? code}";
     public static string PhysicalLabelKey(string code) => $"WorkPref.Physical.{CanonicalPhysicalWork(code) ?? code}";
     public static string PaceLabelKey(string code) => $"WorkPref.Pace.{CanonicalPace(code) ?? code}";
+    public static string TeamModeLabelKey(string code) => $"WorkPref.TeamMode.{CanonicalTeamMode(code) ?? code}";
+    public static string StructureLabelKey(string code) => $"WorkPref.Structure.{CanonicalStructure(code) ?? code}";
+    public static string CustomerContactLabelKey(string code) => $"WorkPref.Customer.{CanonicalCustomerContact(code) ?? code}";
+    public static string ShiftsLabelKey(string code) => $"WorkPref.Shifts.{CanonicalShiftsPreference(code) ?? code}";
+    public static string VacancyPaceLabelKey(string code) => $"WorkPref.VacancyPace.{CanonicalVacancyPace(code) ?? code}";
+    public static string IndoorOutdoorLabelKey(string code) => $"WorkPref.Place.{CanonicalIndoorOutdoor(code) ?? code}";
     public static string ContractLabelKey(string code) => $"Contract.{CanonicalContract(code) ?? code}";
 
     /// <summary>

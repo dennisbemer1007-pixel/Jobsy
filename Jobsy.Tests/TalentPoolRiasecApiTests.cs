@@ -234,7 +234,7 @@ public class TalentPoolRiasecApiTests
         string? HollandCode);
 }
 
-public sealed class TalentPoolRiasecApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class TalentPoolRiasecApiFactory : ApiWebApplicationFactory
 {
     private readonly string _dbName = "TalentRiasec-" + Guid.NewGuid().ToString("N");
     private readonly bool _showRiasec;

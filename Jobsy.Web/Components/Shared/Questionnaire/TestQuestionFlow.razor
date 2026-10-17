@@ -152,8 +152,8 @@
             </button>
             @if (!Compact && OnLater.HasDelegate)
             {
-                <button type="button" class="test-flow__later" @onclick="LaterAsync">
-                    @Culture["TestFlow.Later"]
+                <button type="button" class="test-flow__later" data-testid="onboarding-tests-later" @onclick="LaterAsync">
+                    @(LaterLabel ?? Culture["TestFlow.Later"])
                 </button>
             }
             <button type="button"
@@ -184,6 +184,7 @@
     [Parameter] public EventCallback<TestDepthLevel> OnLevelReached { get; set; }
     [Parameter] public EventCallback OnFinished { get; set; }
     [Parameter] public EventCallback OnLater { get; set; }
+    [Parameter] public string? LaterLabel { get; set; }
     [Parameter] public EventCallback OnLeave { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }

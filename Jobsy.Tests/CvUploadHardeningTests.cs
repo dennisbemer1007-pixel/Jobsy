@@ -495,7 +495,7 @@ public class CvUploadApiTests : IClassFixture<CvUploadApiFactory>
         => Encoding.ASCII.GetBytes("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
 }
 
-public sealed class CvUploadApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class CvUploadApiFactory : ApiWebApplicationFactory
 {
     public Guid CandidateId { get; } = Guid.Parse("c0ffee00-0000-0000-0000-0000000000c1");
 
