@@ -780,6 +780,18 @@
     background: var(--accent-soft);
 }
 
+.wg-vac--dense .ent-data-table.data-table tbody tr.wg-vac__row--hl > td,
+.wg-vac--dense .ent-data-table.data-table tbody tr.wg-vac__row--hl:hover > td,
+.wg-vac--dense .ent-data-table.data-table tbody tr.wg-vac__row--hl:focus-within > td {
+    background: var(--warn-soft);
+}
+
+.wg-vac--dense .ent-data-table.data-table tbody tr.wg-vac__row--sel > td,
+.wg-vac--dense .ent-data-table.data-table tbody tr.wg-vac__row--sel:hover > td,
+.wg-vac--dense .ent-data-table.data-table tbody tr.wg-vac__row--sel:focus-within > td {
+    background: var(--accent-soft);
+}
+
 .wg-vac__new {
     display: inline-flex;
     align-items: center;
@@ -848,9 +860,11 @@
         white-space: normal;
     }
 
-    .wg-vac--dense .ent-data-table.data-table td.tabular,
+    .wg-vac--dense .ent-data-table.data-table td.wg-vac__col-metric,
+    .wg-vac--dense .ent-data-table.data-table td.wg-vac__col-online,
     .wg-vac--dense .ent-data-table.data-table td.wg-vac__actions,
-    .wg-vac--dense .ent-data-table.data-table th {
+    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-metric,
+    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-online {
         white-space: nowrap;
     }
 
@@ -858,8 +872,13 @@
         width: 2.25rem;
     }
 
+    .wg-vac--dense .ent-data-table .wg-vac__col-vacancy {
+        width: auto;
+        min-width: 0;
+    }
+
     .wg-vac--dense .ent-data-table .wg-vac__col-status {
-        width: 9.5rem;
+        width: 8.75rem;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-status .status-pill {
@@ -870,13 +889,22 @@
         font-size: var(--text-xs);
     }
 
-    .wg-vac--dense .ent-data-table td.tabular {
-        width: 4.35rem;
+    .wg-vac--dense .ent-data-table .wg-vac__col-metric {
+        width: 4.25rem;
+        max-width: 4.25rem;
         font-size: var(--text-xs);
+        text-align: end;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-online {
+        width: 7rem;
+        max-width: 7rem;
+        font-size: var(--text-xs);
+        text-align: end;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-vis {
-        width: 5.75rem;
+        width: 5.25rem;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-vis .wg-vac__chip {
@@ -904,12 +932,38 @@
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__title-cell {
+        min-width: 0;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__meta,
+    .wg-vac--dense .ent-data-table .wg-vac__info {
         overflow-wrap: anywhere;
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__actions-inner .btn-compact {
         padding-inline: 0.55rem;
         font-size: var(--text-xs);
+    }
+
+    .wg-vac--dense .ent-data-table-wrap:has(.row-actions-menu.is-open) {
+        overflow: visible;
+    }
+}
+
+@media (min-width: 1400px) {
+    .wg-vac--dense .ent-data-table .wg-vac__title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 1399px) {
+    .wg-vac--dense .ent-data-table .wg-vac__title {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
     }
 }
 
