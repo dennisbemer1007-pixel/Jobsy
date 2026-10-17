@@ -20941,6 +20941,8 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 /* Vacancy detail + notifications: inline tips only — no floating coach tab overlapping sticky UI. */
 .app-shell:has(.kb-detail) .lobsy-coach-dock,
 .app-shell:has(.notifications-page) .lobsy-coach-dock,
+.app-shell:has(.kb-detail) .lobsy-coach-cta,
+.app-shell:has(.notifications-page) .lobsy-coach-cta,
 .app-shell:has(.kb-detail) .lobsy-assistant-tab--edge,
 .app-shell:has(.notifications-page) .lobsy-assistant-tab--edge {
     display: none !important;
