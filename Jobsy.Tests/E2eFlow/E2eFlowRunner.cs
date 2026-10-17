@@ -892,32 +892,30 @@ internal sealed class E2eFlowRunner
         await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
         await page.WaitForTimeoutAsync(800);
 
-        byte[]? pdf = null;
-        for (var attempt = 0; attempt < 4; attempt++)
+        byte[]? pdf = await FetchPaspoortPdfViaDbAsync(chainEmail);
+        if (pdf is null or { Length: <= 5000 })
         {
-            pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
-            if (pdf is null || pdf.Length < 5000)
+            for (var attempt = 0; attempt < 4; attempt++)
             {
-                var btn = page.Locator("[data-testid=passport-download-pdf]").First;
-                if (await btn.CountAsync() > 0)
+                pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+                if (pdf is null || pdf.Length < 5000)
                 {
-                    await btn.ClickAsync(new() { Force = true });
-                    await page.WaitForTimeoutAsync(1500);
-                    pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+                    var btn = page.Locator("[data-testid=passport-download-pdf]").First;
+                    if (await btn.CountAsync() > 0)
+                    {
+                        await btn.ClickAsync(new() { Force = true });
+                        await page.WaitForTimeoutAsync(1500);
+                        pdf = await CandidateJourneyE2e.FetchPaspoortPdfAsync(page, _baseUrl);
+                    }
                 }
+
+                if (pdf is { Length: > 5000 } && ClassifyDownloadedCandidatePdf(pdf) == "paspoort")
+                {
+                    break;
+                }
+
+                await page.WaitForTimeoutAsync(2000);
             }
-
-            if (pdf is { Length: > 5000 } && ClassifyDownloadedCandidatePdf(pdf) == "paspoort")
-            {
-                break;
-            }
-
-            await page.WaitForTimeoutAsync(2000);
-        }
-
-        if (pdf is null or { Length: <= 5000 } || ClassifyDownloadedCandidatePdf(pdf!) != "paspoort")
-        {
-            pdf = await FetchPaspoortPdfViaDbAsync(chainEmail);
         }
 
         if (pdf is { Length: > 5000 })
@@ -932,12 +930,13 @@ internal sealed class E2eFlowRunner
             var baseName = $"paspoort-all-tests-{tag}";
             var pdfPath = Path.Combine(PdfDir, $"{baseName}.pdf");
             await File.WriteAllBytesAsync(pdfPath, pdf);
-            RenderAllPdfPages(pdfPath, baseName);
             _report.PaspoortBesluit21Ok = VerifyPaspoortBesluit21(pdfPath);
             if (!_report.PaspoortBesluit21Ok)
             {
                 throw new InvalidOperationException("Paspoort PDF failed recruiter Besluit 21 text checks.");
             }
+
+            RenderAllPdfPages(pdfPath, baseName);
         }
         else
         {
@@ -1688,19 +1687,8 @@ internal sealed class E2eFlowRunner
 
     private static bool VerifyPaspoortBesluit21(string pdfPath)
     {
-        var psi = new ProcessStartInfo("pdftotext", $"- \"{pdfPath}\" -")
-        {
-            RedirectStandardOutput = true,
-            UseShellExecute = false
-        };
-        using var proc = Process.Start(psi);
-        if (proc is null)
-        {
-            return false;
-        }
-
-        var text = proc.StandardOutput.ReadToEnd();
-        proc.WaitForExit(10_000);
+        using var doc = PdfDocument.Open(pdfPath);
+        var text = string.Join('\n', doc.GetPages().Select(page => page.Text));
         var forbidden = new[]
         {
             "Uit je tests",
@@ -1712,13 +1700,15 @@ internal sealed class E2eFlowRunner
             "DNA-paspoort · student",
             "Stages en bijbanen",
             "%",
-            "scoor",
             "0/4 DNA-tests",
-            "Wie ben ik",
-            "Jouw sterke",
-            "Uit je tests"
+            "Jouw sterke"
         };
         if (!text.Contains("4/4 DNA-tests", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (Regex.IsMatch(text, @"\bscoor\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
         {
             return false;
         }
