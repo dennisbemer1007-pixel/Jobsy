@@ -1,0 +1,125 @@
+@namespace Jobsy.Web.Components.Candidate.Pwa
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Pwa
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject PwaInstallSheetState SheetState
+@implements IAsyncDisposable
+
+@if (_visible)
+{
+    <aside class="pwa-entry-card" data-testid="pwa-install-post-apply-card" aria-labelledby="pwa-entry-card-title">
+        <h3 id="pwa-entry-card-title" class="pwa-entry-card__title">@Culture["Pwa.Card.AfterApply.Title"]</h3>
+        <p class="pwa-entry-card__lead">@Culture["Pwa.Card.AfterApply.Lead"]</p>
+        <div class="pwa-entry-card__actions">
+            @if (_platform == PwaEntryPlatform.ChromePrompt)
+            {
+                <button type="button" class="login-submit" @onclick="InstallAsync">@Culture["Pwa.Entry.Install"]</button>
+            }
+            else if (_platform is PwaEntryPlatform.Samsung or PwaEntryPlatform.Ios)
+            {
+                <button type="button" class="login-submit" @onclick="OpenSheetAsync">@Culture["Pwa.Entry.Install"]</button>
+            }
+            <button type="button" class="pwa-entry-card__dismiss" @onclick="DismissAsync">@Culture["Pwa.Dismiss"]</button>
+        </div>
+    </aside>
+}
+
+@code {
+    private bool _visible;
+    private bool _hydrated;
+    private PwaEntryPlatform _platform = PwaEntryPlatform.None;
+    private DotNetObjectReference<CandidatePwaInstallPostApplyCard>? _self;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_hydrated)
+        {
+            return;
+        }
+
+        _hydrated = true;
+        try
+        {
+            await RefreshAsync();
+            _self = DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync("lobsyPwaInstall.watchEntry", _self);
+        }
+        catch
+        {
+            _hydrated = false;
+        }
+    }
+
+    [JSInvokable]
+    public Task OnPwaInstallSignalsChanged()
+        => RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        var signals = await PwaInstallInterop.GetSignalsAsync(Js);
+        if (signals is null)
+        {
+            _visible = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        _platform = signals.Platform;
+        _visible = signals.ShouldShowPostApplyCard(now);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task InstallAsync()
+    {
+        try
+        {
+            await Js.InvokeAsync<object>("lobsyPwaInstall.prompt");
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        await RefreshAsync();
+    }
+
+    private Task OpenSheetAsync()
+    {
+        SheetState.Open(_platform);
+        return Task.CompletedTask;
+    }
+
+    private async Task DismissAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPwaInstall.dismissPostApplyCard");
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        _visible = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_self is not null)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("lobsyPwaInstall.unwatchEntry", _self);
+            }
+            catch
+            {
+                // Circuit may be gone.
+            }
+
+            _self.Dispose();
+        }
+    }
+}

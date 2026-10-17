@@ -22,6 +22,7 @@
 @using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.Components.Candidate.Pwa
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
@@ -524,6 +525,7 @@
                                     </button>
                                 }
                                 <a class="engagement-btn apply-flow__secondary" href="@KbRoutes.Applications">@Culture["Apply.MyApplications"]</a>
+                                <CandidatePwaInstallPostApplyCard />
                             </div>
                         }
                         else if (!_profileReadyForApply)
@@ -2347,6 +2349,14 @@
                 _enteredVerifyThisSession = false;
                 _message = null;
                 OpenDirectContactIfAvailable(result?.DirectContact);
+                try
+                {
+                    await Js.InvokeVoidAsync("lobsyPwaInstall.notifyApplicationSubmitted");
+                }
+                catch
+                {
+                    // Best-effort PWA card trigger.
+                }
             }
             else
             {
