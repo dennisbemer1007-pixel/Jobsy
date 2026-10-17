@@ -1295,7 +1295,8 @@ html.vp-mobile .kk-layout-b__map {
 
 html.vp-mobile .map-pane {
     flex: 1 1 auto;
-    min-height: min(42vh, 360px);
+    min-height: min(34vh, 300px);
+    max-height: min(38vh, 320px);
     height: auto;
     border-radius: 0;
     border-inline: none;
