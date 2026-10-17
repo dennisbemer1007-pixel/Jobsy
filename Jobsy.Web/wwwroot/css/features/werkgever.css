@@ -748,6 +748,37 @@
     .wg-vac--dense .wg-vac__info {
         font-size: var(--text-xs);
     }
+
+    /* Vacatures list at 1440px: table + nowrap actions must stay inside main (audit: +9px overflow). */
+    .wg-vac--dense .wg-card {
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: clip;
+    }
+
+    .wg-vac--dense .ent-data-table-wrap {
+        overflow-x: clip;
+        max-width: 100%;
+    }
+
+    .wg-vac--dense .ent-data-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .wg-vac--dense .ent-data-table th,
+    .wg-vac--dense .ent-data-table td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__title-cell {
+        overflow: hidden;
+    }
+
+    .wg-vac--dense .ent-data-table td.wg-vac__actions {
+        white-space: normal;
+    }
 }
 
 .wg-vac__title-cell {

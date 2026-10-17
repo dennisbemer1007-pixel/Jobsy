@@ -1,0 +1,144 @@
+@page "/notifications"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Jobsy.Core.Time
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject NavigationManager Navigation
+
+<PageTitle>Meldingen · Lobsy</PageTitle>
+
+<div class="panel-page notifications-page">
+    <header class="panel-header">
+        <h1>Meldingen</h1>
+        <p class="muted">Updates over sollicitaties, vacatures en je account.</p>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="muted">@Culture["Common.Loading"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <div class="notifications-page__empty">
+            <p class="notifications-page__empty-title">Nog geen meldingen</p>
+            <p class="muted">Wanneer er iets voor je is, verschijnt het hier en in het bel-icoon.</p>
+        </div>
+    }
+    else
+    {
+        @if (_unread > 0)
+        {
+            <div class="notifications-page__toolbar">
+                <button type="button" class="btn-compact" disabled="@_busy" @onclick="MarkAllReadAsync">
+                    Alles gelezen
+                </button>
+            </div>
+        }
+        <ul class="notifications-page__list">
+            @foreach (var n in _items)
+            {
+                <li class="notifications-page__item @(n.IsRead ? null : "is-unread")">
+                    <button type="button" class="notifications-page__item-btn" @onclick="() => OpenAsync(n)">
+                        <span class="notifications-page__item-top">
+                            <strong>@Title(n)</strong>
+                            @if (!n.IsRead)
+                            {
+                                <span class="notification-bell__dot" aria-label="Ongelezen"></span>
+                            }
+                        </span>
+                        <span class="muted">@Body(n)</span>
+                        <span class="notifications-page__meta">@FormatWhen(n.CreatedAtUtc)</span>
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    private bool _loading = true;
+    private bool _busy;
+    private int _unread;
+    private List<UserNotificationItem> _items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _items = (await Api.GetNotificationsAsync(take: 100)).ToList();
+            _unread = _items.Count(n => !n.IsRead);
+        }
+        catch
+        {
+            _items = [];
+            _unread = 0;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenAsync(UserNotificationItem n)
+    {
+        if (!n.IsRead)
+        {
+            try
+            {
+                await Api.MarkNotificationReadAsync(n.Id);
+                n.IsRead = true;
+                _unread = Math.Max(0, _unread - 1);
+            }
+            catch
+            {
+                // ignore
+            }
+        }
+
+        var target = !string.IsNullOrWhiteSpace(n.DeepLink)
+            ? n.DeepLink
+            : n.ActionUrl;
+        if (!string.IsNullOrWhiteSpace(target))
+        {
+            Navigation.NavigateTo(target);
+        }
+    }
+
+    private async Task MarkAllReadAsync()
+    {
+        _busy = true;
+        try
+        {
+            await Api.MarkAllNotificationsReadAsync();
+            foreach (var n in _items)
+            {
+                n.IsRead = true;
+            }
+
+            _unread = 0;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private static string Title(UserNotificationItem n)
+        => string.IsNullOrWhiteSpace(n.Title) ? "Nieuw bericht" : n.Title;
+
+    private static string Body(UserNotificationItem n)
+        => string.IsNullOrWhiteSpace(n.Body) ? "Tik om te openen." : n.Body;
+
+    private static string FormatWhen(DateTime utc)
+        => AmsterdamTime.FormatShortDateTime(utc);
+}

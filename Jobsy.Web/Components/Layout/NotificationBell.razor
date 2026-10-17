@@ -93,6 +93,12 @@
                             }
                         </ul>
                     }
+                    @if (!_loading)
+                    {
+                        <p class="notification-bell__footer-link">
+                            <a href="/notifications" @onclick="Close">Alle meldingen</a>
+                        </p>
+                    }
                 </div>
         </div>
     </Authorized>

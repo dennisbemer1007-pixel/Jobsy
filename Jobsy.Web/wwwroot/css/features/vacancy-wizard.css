@@ -401,6 +401,29 @@ html.has-vacancy-wizard .wg-shell__body {
   align-items: flex-start;
 }
 
+.vac-wizard-category-grid .lobsy-choice-tile.is-selected {
+  background: var(--lobsy-choice-selected-bg);
+  border-color: var(--lobsy-choice-border-selected);
+  color: var(--lobsy-choice-navy);
+}
+
+.vac-wizard-category-grid .lobsy-choice-tile.is-selected::before,
+.vac-wizard-category-grid .lobsy-choice-tile.is-selected::after {
+  content: none;
+}
+
+.vac-wizard-category-grid .lobsy-choice-tile__check {
+  top: 6px;
+  right: 6px;
+  width: 16px;
+  height: 16px;
+}
+
+.vac-wizard-category-grid .lobsy-choice-tile__check svg {
+  width: 10px;
+  height: 10px;
+}
+
 .vac-wizard-schedule__day-row {
   display: grid;
   grid-template-columns: 2.25rem minmax(0, 1fr);
