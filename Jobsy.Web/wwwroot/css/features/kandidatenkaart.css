@@ -1646,10 +1646,20 @@ html.vp-mobile .kk-list-invite-bar {
 }
 
 html.vp-mobile .kk-mobile-sheet__invite {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: var(--bottom-nav-clearance);
+    z-index: 44;
     flex-shrink: 0;
     padding: 0.65rem 1rem 0.75rem;
     border-top: 1px solid var(--border);
     background: var(--surface);
+    box-shadow: 0 -4px 12px rgba(15, 45, 92, 0.08);
+}
+
+html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-mobile-sheet__body--list {
+    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0));
 }
 
 .wg-shell:has(.kk-page) .lobsy-assistant-tab,
