@@ -224,6 +224,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.EmployerFitQuestionnairesEnabled = employerFitQuestionnaires;
         }
 
+        if (update.KandidatenkaartEnabled is bool kandidatenkaartEnabled)
+        {
+            row.KandidatenkaartEnabled = kandidatenkaartEnabled;
+        }
+
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
         {
             row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
@@ -464,6 +469,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.TestsV2Enabled ?? _options.TestsV2Enabled,
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
+            row?.KandidatenkaartEnabled ?? false,
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
             CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));

@@ -65,6 +65,11 @@
             @if (RendererInfo.IsInteractive)
             {
                 <Jobsy.Web.Components.Employer.CompanyVerificationBanner />
+                <AuthorizeView Roles="@JobsyRoles.Candidate">
+                    <Authorized>
+                        <Jobsy.Web.Components.Candidate.KandidatenkaartReAvailabilityBanner />
+                    </Authorized>
+                </AuthorizeView>
             }
             @Body
         </CircuitErrorBoundary>

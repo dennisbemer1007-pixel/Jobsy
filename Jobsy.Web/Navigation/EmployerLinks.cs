@@ -25,6 +25,7 @@ public static class EmployerLinks
     public const string Notifications = "/werkgever/meldingen";
     public const string Talent = "/werkgever/talentpool";
     public const string CandidateInsights = "/werkgever/kandidaatinzichten";
+    public const string Kandidatenkaart = "/werkgever/kandidatenkaart";
 
     public static string VacanciesForRole(bool isBranchManagerOnly)
     {

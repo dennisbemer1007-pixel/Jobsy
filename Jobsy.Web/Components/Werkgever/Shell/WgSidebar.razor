@@ -1,6 +1,8 @@
+@using Jobsy.Core.Features
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 @inject NavigationManager Navigation
 @inject EmployerScopeState Scope
 @inject EmployerScopeBootstrap ScopeBootstrap
@@ -68,11 +70,13 @@
 @code {
     private bool _meerOpen;
     private bool _bootstrapped;
+    private bool _kandidatenkaartEnabled;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private WerkgeverNavContext Ctx => new(
         HasTakeovers: true,
         CandidateInsightsEnabled: true,
+        KandidatenkaartEnabled: _kandidatenkaartEnabled,
         InsightsLocked: Scope.InsightsLocked,
         HasMaqqieHours: Counts.MaqqieHoursNavVisible,
         Counts: Counts.Counts);
@@ -95,6 +99,8 @@
         _bootstrapped = true;
         await ScopeBootstrap.EnsureLoadedAsync();
         await Counts.RefreshIfStaleAsync();
+        var flags = await FeatureFlags.GetAsync();
+        _kandidatenkaartEnabled = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
         StateHasChanged();
     }
 

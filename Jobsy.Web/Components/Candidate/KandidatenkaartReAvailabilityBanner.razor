@@ -1,0 +1,40 @@
+@using Jobsy.Core.Features
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+@if (_visible)
+{
+    <div class="kk-modal-scrim" role="dialog" aria-modal="true" aria-labelledby="kk-reavail-title">
+        <div class="kk-modal">
+            <h2 id="kk-reavail-title">@Culture["Kk.ReAvail.Title"]</h2>
+            <p>@Culture["Kk.ReAvail.Body"]</p>
+            <div class="kk-modal__actions">
+                <button type="button" class="kk-btn" @onclick="() => Ack(false)">@Culture["Kk.ReAvail.Later"]</button>
+                <button type="button" class="kk-btn kk-btn--primary" @onclick="() => Ack(true)">@Culture["Kk.ReAvail.Yes"]</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _visible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        if (!flags.IsEnabled(PlatformFeature.Kandidatenkaart))
+        {
+            return;
+        }
+
+        var settings = await Api.GetCandidateKandidatenkaartSettingsAsync();
+        _visible = settings?.ShowReAvailabilityPrompt == true;
+    }
+
+    private async Task Ack(bool becomeAvailable)
+    {
+        await Api.AckKandidatenkaartReAvailabilityAsync(becomeAvailable);
+        _visible = false;
+    }
+}

@@ -60,5 +60,11 @@ public enum PlatformFeature
     TestsV2,
 
     /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
-    EmployerFitQuestionnaires
+    EmployerFitQuestionnaires,
+
+    /// <summary>
+    /// Paid employer kandidatenkaart (reverse job map). Default false.
+    /// Requires <see cref="Employers"/> when enabled.
+    /// </summary>
+    Kandidatenkaart
 }

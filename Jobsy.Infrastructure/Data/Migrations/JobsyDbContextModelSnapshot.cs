@@ -441,6 +441,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("character varying(1024)");
 
+                    b.Property<string>("SnapshotAttachedDocument")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
                     b.Property<string>("SnapshotAvailabilityJson")
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
@@ -482,10 +486,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<string>("SnapshotWhoAmIJson")
                         .HasColumnType("text");
-
-                    b.Property<string>("SnapshotAttachedDocument")
-                        .HasMaxLength(16)
-                        .HasColumnType("character varying(16)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -1899,6 +1899,28 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateInsightsUnlockRequests", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateKandidatenkaartSettings", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("InactivityCheckSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("InvitePreference")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReAvailabilityPromptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("CandidateKandidatenkaartSettings", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateMatchSnapshot", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2551,6 +2573,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<bool>("IsTestData")
                         .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("KandidatenkaartActiveUntilUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("KvkEstablishmentId")
                         .HasMaxLength(40)
@@ -4268,6 +4293,100 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("IntegrationCredentials");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.KandidatenkaartInviteCampaign", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AreaKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("AreaLabel")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CurrentRound")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MaxTravelKm")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MinMatchPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("NextRoundAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("VacancyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("VacancyId", "CreatedAtUtc");
+
+                    b.ToTable("KandidatenkaartInviteCampaigns", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.KandidatenkaartInviteDelivery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CampaignId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CandidateUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MatchPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ReminderSentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("RespondedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RoundNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SentAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampaignId");
+
+                    b.HasIndex("CandidateUserId", "SentAtUtc");
+
+                    b.ToTable("KandidatenkaartInviteDeliveries", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.KvkUsageDaily", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5400,6 +5519,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("InactiveCompanyDays")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("KandidatenkaartEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("MaintenanceEnabled")
                         .HasColumnType("boolean");
@@ -8737,6 +8859,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("OverrideContactPreference")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("PositionsFilled")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PositionsTarget")
+                        .HasColumnType("integer");
+
                     b.Property<int>("PublicMapRadiusKm")
                         .HasColumnType("integer");
 
@@ -9713,6 +9841,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("WalletCompany");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateKandidatenkaartSettings", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateMatchSnapshot", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
@@ -10257,6 +10396,44 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("ExclusivitySetting");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.KandidatenkaartInviteCampaign", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Vacancy", "Vacancy")
+                        .WithMany()
+                        .HasForeignKey("VacancyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Vacancy");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.KandidatenkaartInviteDelivery", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.KandidatenkaartInviteCampaign", "Campaign")
+                        .WithMany("Deliveries")
+                        .HasForeignKey("CampaignId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", "CandidateUser")
+                        .WithMany()
+                        .HasForeignKey("CandidateUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Campaign");
+
+                    b.Navigation("CandidateUser");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.LenderRegistration", b =>
@@ -11385,6 +11562,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("Educations");
 
                     b.Navigation("Vacancies");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.KandidatenkaartInviteCampaign", b =>
+                {
+                    b.Navigation("Deliveries");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.Region", b =>
