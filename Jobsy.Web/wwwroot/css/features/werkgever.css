@@ -823,6 +823,63 @@
     white-space: nowrap;
 }
 
+@media (min-width: 640px) {
+    .wg-vac--dense .ent-data-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    .wg-vac--dense .ent-data-table .ent-data-table__check {
+        width: 2.5rem;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-status {
+        width: 10.25rem;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-status .status-pill {
+        white-space: normal;
+        line-height: 1.25;
+        max-width: 100%;
+        text-align: start;
+    }
+
+    .wg-vac--dense .ent-data-table td.tabular {
+        width: 4.85rem;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-vis {
+        width: 6.25rem;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-vis .wg-vac__chip {
+        font-size: 0.6875rem;
+    }
+
+    .wg-vac--dense .ent-data-table td.wg-vac__actions,
+    .wg-vac--dense .ent-data-table thead th:last-child {
+        width: 9.5rem;
+        max-width: 9.5rem;
+    }
+
+    .wg-vac--dense .ent-data-table td.wg-vac__actions.data-table__col--actions {
+        width: 9.5rem;
+        min-width: 9.5rem;
+        position: static;
+        box-shadow: none;
+        padding-inline-end: var(--space-3);
+    }
+
+    .wg-vac--dense .ent-data-table thead th:last-child {
+        position: static;
+        box-shadow: none;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__title-cell {
+        overflow-wrap: anywhere;
+    }
+}
+
 .wg-vac__inbox {
     padding-inline: 0.5rem;
 }

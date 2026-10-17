@@ -159,7 +159,7 @@
                               ShowRowActions="true">
                     <Header>
                         <th scope="col">@Culture["WgVac.Col.Vacancy"]</th>
-                        <th scope="col">@Culture["WgVac.Col.Status"]</th>
+                        <th scope="col" class="wg-vac__col-status">@Culture["WgVac.Col.Status"]</th>
                         <th scope="col">@Culture["WgVac.Col.Applications"]</th>
                         @if (_colViews)
                         {
@@ -171,7 +171,7 @@
                         }
                         @if (_colVisibility)
                         {
-                            <th scope="col">@Culture["WgVac.Col.Visibility"]</th>
+                            <th scope="col" class="wg-vac__col-vis">@Culture["WgVac.Col.Visibility"]</th>
                         }
                     </Header>
                     <Rows>
@@ -204,7 +204,7 @@
                                         }
                                     </div>
                                 </td>
-                                <td data-label="@Culture["WgVac.Col.Status"]">
+                                <td class="wg-vac__col-status" data-label="@Culture["WgVac.Col.Status"]">
                                     <span class="status-pill wg-vac-status wg-vac-status--@VacancyManageRules.StatusCss(v)">
                                         @StatusLabel(v)
                                     </span>
@@ -222,7 +222,7 @@
                                 }
                                 @if (_colVisibility)
                                 {
-                                    <td data-label="@Culture["WgVac.Col.Visibility"]">
+                                    <td class="wg-vac__col-vis" data-label="@Culture["WgVac.Col.Visibility"]">
                                         <div class="wg-vac__vis">
                                             @if (v.IsHighlighted)
                                             {
@@ -241,7 +241,7 @@
                                         </div>
                                     </td>
                                 }
-                                <td class="wg-vac__actions" data-label="@Culture["Common.Actions"]">
+                                <td class="wg-vac__actions data-table__col--actions" data-label="@Culture["Common.Actions"]">
                                     @PrimaryAction(v)
                                     @if (CanWrite)
                                     {
