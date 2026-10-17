@@ -9,11 +9,10 @@ fs.mkdirSync(pagesDir, { recursive: true });
 const logoRel = "../shared/assets/lobsy-64.webp";
 const mapSvg = fs.readFileSync(path.join(root, "shared", "map-amersfoort.svg"), "utf8");
 
-function mapBlock({ locked, selected, belowMin = false }) {
-  const stageClass = selected ? " map-has-selection" : "";
-  const toast = belowMin
-    ? `<div class="kk-map-toast" role="status">Minder dan 30 kandidaten in dit gebied met deze filters.</div>`
-    : "";
+function mapBlock({ locked, selected, belowMin = false, sparseSoest = false }) {
+  let stageClass = "";
+  if (sparseSoest) stageClass = " map-has-sparse-soest";
+  else if (selected) stageClass = " map-has-selection";
   const lock = locked
     ? `<div class="kk-map-lock">
         <div class="kk-map-lock__card">
@@ -34,7 +33,6 @@ function mapBlock({ locked, selected, belowMin = false }) {
             </div>
           </div>
           <div class="map-stage${stageClass}">${mapSvg}</div>
-          ${toast}
           ${lock}
         </div>`;
 }
@@ -197,9 +195,12 @@ function activityPill() {
   return `<span class="kk-activity-pill">Actief deze week</span>`;
 }
 
-function chromeBlock(badge, badgeClass, filtersDisabled, filtersOpen = false) {
+function chromeBlock(badge, badgeClass, filtersDisabled, filtersOpen = false, preview = false) {
+  const filterFab = preview
+    ? `<button type="button" class="kk-filter-fab kk-filter-fab--disabled" disabled aria-disabled="true">Filters</button>`
+    : `<button type="button" class="kk-filter-fab">Filters</button>`;
   return `
-      <div class="kk-page${filtersOpen ? " kk-page--filters-open" : ""}">
+      <div class="kk-page${filtersOpen ? " kk-page--filters-open" : ""}${preview ? " kk-page--preview" : ""}">
       <div class="kk-page__chrome kk-page__chrome--desktop">
       <nav class="kk-crumbs" aria-label="Kruimelpad">
         <span>Markt &amp; talent</span><span>/</span><span>Kandidatenkaart</span>
@@ -227,7 +228,7 @@ function chromeBlock(badge, badgeClass, filtersDisabled, filtersOpen = false) {
           Geaggregeerd · min. 30 · alleen actieve kandidaten
         </button>
         <div class="kk-mobile-bar">
-          <button type="button" class="kk-filter-fab">Filters</button>
+          ${filterFab}
           <span class="kk-mobile-summary">70% · 25 km · Per direct · 24–32 u</span>
         </div>
       </div>`;
@@ -321,14 +322,20 @@ function areaList(selectedId = "amersfoort") {
 function resolveState(state) {
   return {
     locked: state === "preview",
-    selected: state === "area" || state === "invite" || state === "area-sparse",
+    selected: state === "area" || state === "invite",
+    sparseSoest: state === "area-sparse",
     belowMin: state === "area-sparse",
     filtersOpen: state === "filters-open",
   };
 }
 
+function mobileSheetMarkup(state, variant, locked) {
+  if (locked) return "";
+  return `<div class="kk-mobile-sheet kk-mobile-sheet--${variant}">${mobileSheetContent(state, variant, locked)}</div>`;
+}
+
 function layoutA(state) {
-  const { locked, selected, belowMin, filtersOpen } = resolveState(state);
+  const { locked, selected, belowMin, sparseSoest, filtersOpen } = resolveState(state);
   let aside;
   if (locked) {
     aside = `${activeCandidatesBlock()}<div class="kk-panel kk-upsell"><b>Preview</b> Filters en gebieden worden vrijgegeven zodra marktinzicht op jullie vestiging actief is.</div>`;
@@ -343,31 +350,31 @@ function layoutA(state) {
   const filterOverlay = filtersOpen ? mobileFiltersOverlay(locked) : "";
   return `
       <div class="kk-layout-a">
-        <div class="kk-layout-a__map">${mapBlock({ locked, selected, belowMin })}</div>
+        <div class="kk-layout-a__map">${mapBlock({ locked, selected, belowMin, sparseSoest })}</div>
         <aside class="kk-layout-a__aside">${aside}</aside>
       </div>
-      <div class="kk-mobile-sheet kk-mobile-sheet--a">${mobileSheetContent(state, "a", locked)}</div>
+      ${mobileSheetMarkup(state, "a", locked)}
       ${filterOverlay}`;
 }
 
 function layoutB(state) {
-  const { locked, selected, belowMin, filtersOpen } = resolveState(state);
+  const { locked, selected, belowMin, sparseSoest, filtersOpen } = resolveState(state);
   let listPanel;
   if (locked) {
     listPanel = `${activeCandidatesBlock()}${previewSampleRows()}`;
   } else if (belowMin) {
     listPanel = areaPanelBelowMin();
   } else {
-    listPanel = `${activeCandidatesBlock()}<ul class="kk-area-list">${areaList(belowMin ? "soest" : "amersfoort")}</ul>
+    listPanel = `${activeCandidatesBlock()}<ul class="kk-area-list">${areaList("amersfoort")}</ul>
        <button type="button" class="kk-btn kk-btn--primary" style="width:100%">Uitnodiging voor geselecteerd gebied</button>`;
   }
   const filterOverlay = filtersOpen ? mobileFiltersOverlay(locked) : "";
   return `
       <div class="kk-layout-b">
         <div class="kk-layout-b__list">${listPanel}</div>
-        <div class="kk-layout-b__map">${mapBlock({ locked, selected, belowMin })}</div>
+        <div class="kk-layout-b__map">${mapBlock({ locked, selected, belowMin, sparseSoest })}</div>
       </div>
-      <div class="kk-mobile-sheet kk-mobile-sheet--b">${mobileSheetContent(state, "b", locked)}</div>
+      ${mobileSheetMarkup(state, "b", locked)}
       ${filterOverlay}`;
 }
 
@@ -405,7 +412,7 @@ function writePage(variant, state) {
   };
   const badge = state === "preview" ? "Preview · add-on" : "Marktinzicht actief";
   const badgeClass = state === "preview" ? "kk-badge--free" : "kk-badge--gold";
-  let body = chromeBlock(badge, badgeClass, locked, filtersOpen);
+  let body = chromeBlock(badge, badgeClass, locked, filtersOpen, locked);
   body += isA ? layoutA(state) : layoutB(state);
   body += `</div>`;
   if (state === "invite") body += inviteOverlay();

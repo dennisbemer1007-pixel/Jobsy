@@ -29,7 +29,7 @@
       <a class="wg-sidebar__link" href="#">Talentpool</a>
     </aside>
     <main class="wg-main">
-      <div class="kk-page">
+      <div class="kk-page kk-page--preview">
       <div class="kk-page__chrome kk-page__chrome--desktop">
       <nav class="kk-crumbs" aria-label="Kruimelpad">
         <span>Markt &amp; talent</span><span>/</span><span>Kandidatenkaart</span>
@@ -95,7 +95,7 @@
           Geaggregeerd · min. 30 · alleen actieve kandidaten
         </button>
         <div class="kk-mobile-bar">
-          <button type="button" class="kk-filter-fab">Filters</button>
+          <button type="button" class="kk-filter-fab kk-filter-fab--disabled" disabled aria-disabled="true">Filters</button>
           <span class="kk-mobile-summary">70% · 25 km · Per direct · 24–32 u</span>
         </div>
       </div>
@@ -116,6 +116,10 @@
     <filter id="lbl" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#fff" flood-opacity="0.9"/>
     </filter>
+    <pattern id="sparse-hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <rect width="10" height="10" fill="#ece8e2"/>
+      <path d="M0 10 L10 0" stroke="#c8c2b8" stroke-width="1.2"/>
+    </pattern>
   </defs>
   <!-- base land (OSM-like) -->
   <rect width="1200" height="900" fill="#f2efe8"/>
@@ -154,6 +158,8 @@
   </g>
   <!-- selected overlay (hidden via CSS when not .map-has-selection) -->
   <path class="heat heat--sel" id="reg-selected" d="M460 300 Q540 270 600 310 T640 390 Q590 440 520 430 T440 380 T420 340 Z"/>
+  <!-- sparse / below-threshold selection (Soest en Baarn) -->
+  <path class="heat heat--sparse-sel" id="reg-sparse-soest" d="M280 220 Q340 200 380 240 T400 320 Q350 360 290 340 T250 280 Z"/>
   <!-- radius 25km subtle -->
   <circle class="radius" cx="530" cy="360" r="210"/>
   <circle class="employer-pin" cx="530" cy="360" r="9"/>
@@ -162,7 +168,8 @@
   <g class="heat-labels" filter="url(#lbl)">
     <g class="heat-label" transform="translate(872,238)"><rect x="-30" y="-20" width="60" height="40" rx="20" fill="rgba(255,252,250,0.94)" stroke="#ddd5cc" stroke-width="1.5"/><text x="0" y="7" text-anchor="middle" font-size="22" font-weight="700" fill="#122033" font-family="Segoe UI,Arial,sans-serif">31</text></g>
     <g class="heat-label" transform="translate(548,408)"><rect x="-32" y="-20" width="64" height="40" rx="20" fill="rgba(255,252,250,0.96)" stroke="#f54a1b" stroke-width="2" stroke-opacity="0.45"/><text x="0" y="7" text-anchor="middle" font-size="24" font-weight="800" fill="#0f2d5c" font-family="Segoe UI,Arial,sans-serif">42</text></g>
-    <g class="heat-label" transform="translate(288,318)"><rect x="-30" y="-20" width="60" height="40" rx="20" fill="rgba(255,252,250,0.94)" stroke="#ddd5cc" stroke-width="1.5"/><text x="0" y="7" text-anchor="middle" font-size="22" font-weight="700" fill="#122033" font-family="Segoe UI,Arial,sans-serif">38</text></g>
+    <g class="heat-label heat-label--soest-count" transform="translate(288,318)"><rect x="-30" y="-20" width="60" height="40" rx="20" fill="rgba(255,252,250,0.94)" stroke="#ddd5cc" stroke-width="1.5"/><text x="0" y="7" text-anchor="middle" font-size="22" font-weight="700" fill="#122033" font-family="Segoe UI,Arial,sans-serif">38</text></g>
+    <g class="heat-label heat-label--sparse-soest" transform="translate(318,278)"><rect x="-72" y="-16" width="144" height="32" rx="16" fill="rgba(255,252,250,0.96)" stroke="#9aa3ad" stroke-width="1.5" stroke-dasharray="4 3"/><text x="0" y="5" text-anchor="middle" font-size="15" font-weight="700" fill="#5a6a7d" font-family="Segoe UI,Arial,sans-serif">Minder dan 30</text></g>
     <g class="heat-label" transform="translate(198,568)"><rect x="-30" y="-20" width="60" height="40" rx="20" fill="rgba(255,252,250,0.94)" stroke="#ddd5cc" stroke-width="1.5"/><text x="0" y="7" text-anchor="middle" font-size="22" font-weight="700" fill="#122033" font-family="Segoe UI,Arial,sans-serif">56</text></g>
     <g class="heat-label" transform="translate(638,492)"><rect x="-28" y="-18" width="56" height="36" rx="18" fill="rgba(255,252,250,0.94)" stroke="#ddd5cc" stroke-width="1.5"/><text x="0" y="6" text-anchor="middle" font-size="20" font-weight="700" fill="#5a6a7d" font-family="Segoe UI,Arial,sans-serif">35</text></g>
   </g>
@@ -179,7 +186,6 @@
   <text x="1180" y="890" text-anchor="end" font-size="10" fill="#8a7d70" font-family="Segoe UI,Arial,sans-serif">� mock kaart</text>
 </svg>
 </div>
-          
           <div class="kk-map-lock">
         <div class="kk-map-lock__card">
           <div class="kk-map-lock__icon" aria-hidden="true"><svg class="i" viewBox="0 0 24 24" style="stroke:#fff"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
@@ -199,10 +205,7 @@
     <p>Wie een uitnodiging niet binnen 2 dagen beantwoordt, krijgt een herinnering en verdwijnt daarna van de kaart tot die zich weer beschikbaar meldt. Wie een maand niet actief is, bevestigt eerst dat die nog zoekt. Zo zie je alleen mensen die echt zoeken.</p>
   </div><div class="kk-panel kk-upsell"><b>Preview</b> Filters en gebieden worden vrijgegeven zodra marktinzicht op jullie vestiging actief is.</div></aside>
       </div>
-      <div class="kk-mobile-sheet kk-mobile-sheet--a"><div class="kk-mobile-sheet__body"><div class="kk-active-sell">
-    <h3>Alleen actieve kandidaten</h3>
-    <p>Wie een uitnodiging niet binnen 2 dagen beantwoordt, krijgt een herinnering en verdwijnt daarna van de kaart tot die zich weer beschikbaar meldt. Wie een maand niet actief is, bevestigt eerst dat die nog zoekt. Zo zie je alleen mensen die echt zoeken.</p>
-  </div><div class="kk-upsell"><b>Preview</b> Volledige filters en gebieden zodra marktinzicht actief is.</div></div></div>
+      
       </div>
     </main>
   </div>

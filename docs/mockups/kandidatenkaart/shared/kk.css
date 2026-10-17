@@ -717,6 +717,35 @@ html.vp-mobile body {
     display: block;
 }
 
+.kk-map-svg .heat--sparse-sel {
+    display: none;
+    fill: url(#sparse-hatch);
+    stroke: #9aa3ad;
+    stroke-width: 2.5;
+    stroke-dasharray: 7 5;
+}
+
+.kk-map-svg .heat-label--sparse-soest {
+    display: none;
+}
+
+.map-has-sparse-soest .kk-map-svg .heat--sparse-sel {
+    display: block;
+}
+
+.map-has-sparse-soest .kk-map-svg #reg-soest {
+    fill: rgba(154, 163, 173, 0.12);
+    stroke: none;
+}
+
+.map-has-sparse-soest .kk-map-svg .heat-label--soest-count {
+    display: none;
+}
+
+.map-has-sparse-soest .kk-map-svg .heat-label--sparse-soest {
+    display: block;
+}
+
 .kk-map-svg .heat-label text {
     font-family: var(--font);
 }
@@ -1048,6 +1077,12 @@ html.vp-mobile body {
     margin-bottom: var(--space-4);
 }
 
+.kk-filter-fab--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
 .kk-filter-fab {
     pointer-events: auto;
     min-height: 40px;
@@ -1244,6 +1279,44 @@ html.vp-mobile .kk-page {
     grid-template-rows: auto minmax(0, 1fr) auto;
     min-height: 0;
     overflow: hidden;
+}
+
+html.vp-mobile .kk-page--preview {
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+html.vp-mobile .kk-page--preview .kk-mobile-sheet {
+    display: none !important;
+}
+
+html.vp-mobile .kk-page--preview .kk-map-lock {
+    padding: 0.75rem;
+    align-items: center;
+}
+
+html.vp-mobile .kk-page--preview .kk-map-lock__card {
+    max-width: min(22rem, calc(100% - 1rem));
+    padding: var(--space-4) var(--space-5);
+    max-height: calc(100% - 0.5rem);
+    overflow: auto;
+}
+
+html.vp-mobile .kk-page--preview .kk-map-lock__card h2 {
+    font-size: var(--text-md);
+}
+
+html.vp-mobile .kk-page--preview .kk-map-lock__card > p {
+    margin-bottom: var(--space-3);
+}
+
+html.vp-mobile .kk-page--preview .kk-active-sell--compact {
+    margin-bottom: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+}
+
+html.vp-mobile .kk-page--preview .kk-map-lock__fine {
+    margin-top: var(--space-2);
+    margin-bottom: 0;
 }
 
 html.vp-mobile .kk-mobile-top {
