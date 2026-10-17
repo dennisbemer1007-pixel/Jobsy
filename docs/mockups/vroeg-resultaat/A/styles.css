@@ -1,0 +1,10 @@
+@import url("../../onboarding-ontwerp/A/styles.css");
+@import url("../shared/vroeg-resultaat.css");
+
+.card--jobs {
+    padding: 0.85rem 0.85rem 0.65rem;
+}
+
+.card--jobs .hero-lead {
+    margin-bottom: 0.65rem;
+}

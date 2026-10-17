@@ -1,0 +1,14 @@
+@import url("../../onboarding-ontwerp/A/styles.css");
+@import url("../shared/vroeg-resultaat.css");
+
+.topbar--kompas .topbar__meta {
+    order: 2;
+}
+
+.topbar--kompas .topbar__brand {
+    order: 1;
+}
+
+.card--micro {
+    padding: 0.85rem 1rem;
+}

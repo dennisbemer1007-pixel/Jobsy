@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vroeg resultaat C — Kompas header + micro-moment</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar topbar--kompas">
+      <div class="topbar__brand">
+        <img class="logo" src="../../onboarding-ontwerp/shared/assets/lobsy-64.webp" alt="" width="36" height="36" />
+        Lobsy
+      </div>
+      <p class="topbar__meta">Test 1 · 5/5</p>
+      <div class="topbar__kompas" aria-label="Kompas voortgang: 1 van 4">
+        <div class="topbar__kompas-track">
+          <i class="is-lit"></i><i></i><i></i><i></i>
+        </div>
+        <p class="topbar__kompas-label">Kompas 1/4</p>
+      </div>
+    </header>
+    <div class="shell">
+      <div class="main-col">
+        <main class="main page-pad">
+          <div class="micro-toast" role="status">
+            <div class="micro-toast__icon" aria-hidden="true">✓</div>
+            <div>
+              <p><strong>Test afgerond — goed gedaan</strong>
+                Je bent sterk in: <strong style="color:var(--brand);font-size:inherit">praktisch meedenken</strong></p>
+            </div>
+          </div>
+          <div class="phase-chips" role="tablist" aria-label="Testfases">
+            <span class="phase-chip is-done" role="tab">✓ Hoe je werkt</span>
+            <span class="phase-chip is-active" role="tab" aria-selected="true">Leuk</span>
+            <span class="phase-chip" role="tab">Sfeer</span>
+            <span class="phase-chip" role="tab">Waarden</span>
+          </div>
+          <h1 class="hero-title">Klaar voor de volgende test?</h1>
+          <p class="hero-lead">Je Kompas vult zich per test. Zo zie je meteen effect op passende banen.</p>
+          <div class="card card--micro">
+            <p style="margin:0 0 0.35rem;font-size:0.8125rem;font-weight:600;color:var(--muted)">Banen in de buurt</p>
+            <p class="count-chip"><b>12</b> vacatures passen nu beter bij je</p>
+            <p style="margin:0.5rem 0 0;font-size:0.75rem;line-height:1.4;color:var(--muted)">Was 47 op locatie alleen — nu ook op hoe je werkt.</p>
+          </div>
+          <p class="disclaimer">Korte teaser; volledige uitleg staat in je Kompas na alle tests. PDF-paspoort zonder testtekst.</p>
+          <div class="mobile-mascot"><img class="mascot-corner" src="../../onboarding-ontwerp/shared/assets/mascot-64.webp" alt="" width="36" height="36" /></div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Start test 2</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

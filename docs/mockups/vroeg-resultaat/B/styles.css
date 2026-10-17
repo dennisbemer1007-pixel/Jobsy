@@ -1,0 +1,37 @@
+@import url("../../onboarding-ontwerp/A/styles.css");
+@import url("../shared/vroeg-resultaat.css");
+
+.layout--desktop .shell {
+    display: grid;
+    grid-template-columns: 260px 1fr 320px;
+}
+
+.layout--desktop .main-col {
+    grid-column: 2;
+}
+
+.layout--desktop .coach-col {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 1.5rem 1rem 0;
+    border-left: 1px solid var(--border);
+    background: color-mix(in srgb, var(--pearl-shine) 50%, var(--bg));
+}
+
+.layout--desktop .coach-col p {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.layout--desktop .coach-col img {
+    width: 48px;
+    height: 48px;
+    margin-top: auto;
+    align-self: flex-end;
+}
+
+.coach-col {
+    display: none;
+}

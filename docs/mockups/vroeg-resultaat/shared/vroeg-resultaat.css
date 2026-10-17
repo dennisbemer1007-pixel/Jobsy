@@ -1,0 +1,356 @@
+/* Shared patterns for vroeg-resultaat mockups (extends onboarding richting A) */
+
+.reward-banner {
+    margin: 0 0 0.85rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--success-soft) 55%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--success) 22%, var(--border));
+}
+
+.reward-banner p {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--text);
+}
+
+.reward-banner strong {
+    color: var(--success);
+    font-weight: 700;
+}
+
+.reward-banner--time {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--brand) 18%, var(--border));
+}
+
+.reward-banner--time strong {
+    color: var(--brand);
+}
+
+.early-stat {
+    margin: 0 0 0.5rem;
+    font-size: 1.65rem;
+    line-height: 1.2;
+    font-weight: 700;
+    color: var(--brand);
+    letter-spacing: -0.02em;
+}
+
+.early-stat span {
+    color: var(--success);
+}
+
+.job-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.job-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.65rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.job-card__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft);
+    color: var(--brand);
+    font-size: 1.1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.job-card__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+}
+
+.job-card__meta {
+    margin: 0.2rem 0 0;
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.35;
+}
+
+.job-card__meta b {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.job-card__match {
+    grid-column: 1 / -1;
+    margin: 0.15rem 0 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.insight-card {
+    padding: 1rem 1rem 0.85rem;
+    border-radius: var(--radius);
+    border: 1px solid color-mix(in srgb, var(--brand) 15%, var(--border));
+    background: linear-gradient(
+        165deg,
+        var(--surface) 0%,
+        color-mix(in srgb, var(--accent-soft) 35%, var(--surface)) 100%
+    );
+    box-shadow: var(--shadow-lg);
+}
+
+.insight-card__label {
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.insight-card__value {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--brand);
+}
+
+.insight-card__hint {
+    margin: 0.5rem 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.kompas-ring {
+    display: flex;
+    justify-content: center;
+    margin: 0.85rem 0 0.65rem;
+}
+
+.kompas-ring__svg {
+    width: 132px;
+    height: 132px;
+}
+
+.kompas-segments {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.45rem;
+    margin-top: 0.65rem;
+}
+
+.kompas-seg {
+    padding: 0.45rem 0.55rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.25;
+}
+
+.kompas-seg.is-lit {
+    background: var(--accent-soft);
+    border-color: color-mix(in srgb, var(--brand) 25%, var(--border));
+    color: var(--brand);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 12%, transparent);
+}
+
+.kompas-seg.is-lit::before {
+    content: "✓ ";
+    font-size: 0.65rem;
+}
+
+.test-progress-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0 0 0.75rem;
+}
+
+.test-progress-pills span {
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+}
+
+.test-progress-pills span.is-done {
+    background: color-mix(in srgb, var(--success-soft) 70%, var(--surface));
+    border-color: color-mix(in srgb, var(--success) 25%, var(--border));
+    color: var(--success);
+}
+
+.test-progress-pills span.is-current {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+}
+
+/* Variant C — header kompas */
+.topbar--kompas {
+    flex-wrap: wrap;
+    padding-bottom: 0.45rem;
+}
+
+.topbar__kompas {
+    flex: 1 1 100%;
+    order: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+}
+
+.topbar__kompas-track {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    height: 6px;
+}
+
+.topbar__kompas-track i {
+    display: block;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--brand) 12%, var(--border));
+}
+
+.topbar__kompas-track i.is-lit {
+    background: var(--brand);
+}
+
+.topbar__kompas-label {
+    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.micro-toast {
+    margin: 0 0 0.85rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--gold-soft);
+    border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--border));
+    display: flex;
+    gap: 0.55rem;
+    align-items: flex-start;
+}
+
+.micro-toast__icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: var(--brand);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.micro-toast p {
+    margin: 0;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--text);
+}
+
+.micro-toast p strong {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--brand);
+    margin-bottom: 0.15rem;
+}
+
+.count-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin: 0.65rem 0 0;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--radius-sm);
+    background: var(--success-soft);
+    font-size: 0.8125rem;
+    color: var(--text);
+}
+
+.count-chip b {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.disclaimer {
+    margin: 0.75rem 0 0;
+    font-size: 0.7rem;
+    line-height: 1.35;
+    color: var(--muted);
+}
+
+/* Desktop B */
+@media (min-width: 900px) {
+    .layout--desktop .shell {
+        max-width: 1440px;
+    }
+
+    .layout--desktop .sidebar {
+        display: flex;
+    }
+
+    .layout--desktop .main {
+        padding: 1.25rem 2rem 0;
+        max-width: 640px;
+    }
+
+    .layout--desktop .hero-title {
+        font-size: 1.65rem;
+    }
+
+    .layout--desktop .kompas-ring__svg {
+        width: 148px;
+        height: 148px;
+    }
+
+    .layout--desktop .desktop-aside-note {
+        display: block;
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        border-radius: var(--radius-sm);
+        background: var(--accent-soft);
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        color: var(--muted);
+        max-width: 280px;
+    }
+}
+
+.desktop-aside-note {
+    display: none;
+}
