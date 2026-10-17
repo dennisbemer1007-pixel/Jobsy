@@ -92,9 +92,20 @@ after = store / "after"
 out = store / "compare"
 out.mkdir(parents=True, exist_ok=True)
 
-for bf in sorted(before.glob("*.png")):
-    af = after / bf.name
+compare_names = [
+    "werkgever-vacatures-desktop-1440.png",
+    "werkgever-vacatures-desktop-1280.png",
+    "werkgever-vacatures-desktop-1280-concept.png",
+    "werkgever-vacatures-mobile-390.png",
+]
+for name in compare_names:
+    bf = before / name
+    af = after / name
     if not af.exists():
+        print("skip missing after", name)
+        continue
+    if not bf.exists():
+        print("skip missing before", name)
         continue
     im_b = Image.open(bf).convert("RGB")
     im_a = Image.open(af).convert("RGB")
@@ -107,8 +118,8 @@ for bf in sorted(before.glob("*.png")):
     combined = Image.new("RGB", (im_b.width + im_a.width + 8, h), (255, 255, 255))
     combined.paste(im_b, (0, 0))
     combined.paste(im_a, (im_b.width + 8, 0))
-    combined.save(out / bf.name)
-    print("compare", bf.name)
+    combined.save(out / name)
+    print("compare", name)
 PY
 
 echo "Done. Artifacts in $STORE"

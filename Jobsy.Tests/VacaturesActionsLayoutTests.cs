@@ -100,6 +100,11 @@ public class VacaturesActionsLayoutTests
 
             await AssertActionButtonsInsideCardAsync(page, $"{width}x{height}");
 
+            if (width is 1440 or 1280)
+            {
+                await AssertTableHeadersAsync(page, $"{width}x{height}");
+            }
+
             if (width == 1440)
             {
                 await AssertTitleSingleLineAsync(page, SampleTitle);
@@ -162,15 +167,20 @@ public class VacaturesActionsLayoutTests
         if (assertLayout)
         {
             await AssertMetricsAsync(tag, metricsJson);
-            if (!mobile && width is 1440 or 1280)
+            await AssertTableHeadersAsync(page, tag);
+        }
+
+        if (!mobile && width is 1440 or 1280)
+        {
+            await CaptureConceptTabAsync(page, root, tag, vacaturesUrl, assertLayout);
+            if (assertLayout)
             {
-                await CaptureConceptTabAsync(page, root, tag, vacaturesUrl);
                 await CaptureRowMenuOpenAsync(page, root, tag, vacaturesUrl);
             }
         }
     }
 
-    private static async Task CaptureConceptTabAsync(IPage page, string root, string tag, string vacaturesUrl)
+    private static async Task CaptureConceptTabAsync(IPage page, string root, string tag, string vacaturesUrl, bool assertLayout)
     {
         await page.GotoAsync($"{vacaturesUrl.TrimEnd('/')}/werkgever/vacatures?tab=concept",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
@@ -179,12 +189,31 @@ public class VacaturesActionsLayoutTests
         var afmaken = page.Locator(".wg-vac__actions-inner a.btn-compact, .wg-vac__actions-inner button.btn-compact")
             .Filter(new() { HasText = "Afmaken" })
             .First;
-        await afmaken.WaitForAsync(new() { Timeout = 30_000 });
+        if (assertLayout)
+        {
+            await afmaken.WaitForAsync(new() { Timeout = 30_000 });
+        }
+        else
+        {
+            try
+            {
+                await afmaken.WaitForAsync(new() { Timeout = 5_000 });
+            }
+            catch (TimeoutException)
+            {
+                // Baseline (acceptatie) may lack concept drafts; still capture the tab.
+            }
+        }
+
         var metrics = await CollectActionMetricsJsonAsync(page);
         await File.WriteAllTextAsync(Path.Combine(root, $"werkgever-vacatures-{tag}-concept-metrics.json"), metrics);
-        await AssertMetricsAsync($"{tag}-concept", metrics);
-        var afmakenTextOk = await afmaken.EvaluateAsync<bool>("el => el.scrollWidth <= el.clientWidth + 1");
-        Assert.True(afmakenTextOk, $"{tag}-concept: Afmaken label clipped.");
+        if (assertLayout)
+        {
+            await AssertMetricsAsync($"{tag}-concept", metrics);
+            await AssertTableHeadersAsync(page, $"{tag}-concept");
+            var afmakenTextOk = await afmaken.EvaluateAsync<bool>("el => el.scrollWidth <= el.clientWidth + 1");
+            Assert.True(afmakenTextOk, $"{tag}-concept: Afmaken label clipped.");
+        }
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(root, $"werkgever-vacatures-{tag}-concept.png"),
@@ -232,6 +261,51 @@ public class VacaturesActionsLayoutTests
             Assert.False(btn.GetProperty("pastCard").GetBoolean(),
                 $"{tag}: '{btn.GetProperty("label").GetString()}' past card edge.");
         }
+    }
+
+    private static async Task AssertTableHeadersAsync(IPage page, string label)
+    {
+        var json = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const ths = [...document.querySelectorAll('.wg-vac .ent-data-table thead th')];
+              if (ths.length === 0) return JSON.stringify({ ok: false, reason: 'no table headers' });
+              const boxes = ths.map(th => {
+                const r = th.getBoundingClientRect();
+                return {
+                  text: (th.textContent || '').trim().slice(0, 40),
+                  overflow: th.scrollWidth > th.clientWidth + 1,
+                  left: r.left,
+                  right: r.right,
+                  top: r.top,
+                  bottom: r.bottom
+                };
+              });
+              let intersect = false;
+              for (let i = 0; i < boxes.length; i++) {
+                for (let j = i + 1; j < boxes.length; j++) {
+                  const a = boxes[i];
+                  const b = boxes[j];
+                  const hOverlap = a.right > b.left + 0.5 && b.right > a.left + 0.5;
+                  const vOverlap = a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+                  if (hOverlap && vOverlap) intersect = true;
+                }
+              }
+              return JSON.stringify({
+                ok: boxes.every(b => !b.overflow) && !intersect,
+                intersect,
+                boxes
+              });
+            }
+            """);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        if (doc.RootElement.TryGetProperty("reason", out var reason))
+        {
+            Assert.Fail($"{label}: {reason.GetString()}");
+        }
+
+        Assert.True(doc.RootElement.GetProperty("ok").GetBoolean(),
+            $"{label}: table header overlap or overflow. Raw: {json}");
     }
 
     private static async Task AssertTitleSingleLineAsync(IPage page, string title)

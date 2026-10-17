@@ -160,10 +160,10 @@
                     <Header>
                         <th scope="col" class="wg-vac__col-vacancy">@Culture["WgVac.Col.Vacancy"]</th>
                         <th scope="col" class="wg-vac__col-status">@Culture["WgVac.Col.Status"]</th>
-                        <th scope="col" class="wg-vac__col-metric">@Culture["WgVac.Col.Applications"]</th>
+                        <th scope="col" class="wg-vac__col-apps">@Culture["WgVac.Col.Applications"]</th>
                         @if (_colViews)
                         {
-                            <th scope="col" class="wg-vac__col-metric">@Culture["WgVac.Col.Views"]</th>
+                            <th scope="col" class="wg-vac__col-views">@Culture["WgVac.Col.Views"]</th>
                         }
                         @if (_colOnline)
                         {
@@ -209,12 +209,12 @@
                                         @StatusLabel(v)
                                     </span>
                                 </td>
-                                <td class="tabular wg-vac__col-metric" data-label="@Culture["WgVac.Col.Applications"]">
+                                <td class="tabular wg-vac__col-apps" data-label="@Culture["WgVac.Col.Applications"]">
                                     <VacancyApplicationCount Total="v.ApplicationCount" NewCount="v.NewApplicationCount" />
                                 </td>
                                 @if (_colViews)
                                 {
-                                    <td class="tabular wg-vac__col-metric" data-label="@Culture["WgVac.Col.Views"]">@v.ImpressionCount.ToString("N0", CultureInfo.GetCultureInfo("nl-NL"))</td>
+                                    <td class="tabular wg-vac__col-views" data-label="@Culture["WgVac.Col.Views"]">@v.ImpressionCount.ToString("N0", CultureInfo.GetCultureInfo("nl-NL"))</td>
                                 }
                                 @if (_colOnline)
                                 {

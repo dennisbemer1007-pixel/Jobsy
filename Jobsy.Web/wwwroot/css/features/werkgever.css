@@ -860,11 +860,14 @@
         white-space: normal;
     }
 
-    .wg-vac--dense .ent-data-table.data-table td.wg-vac__col-metric,
+    .wg-vac--dense .ent-data-table.data-table td.wg-vac__col-apps,
+    .wg-vac--dense .ent-data-table.data-table td.wg-vac__col-views,
     .wg-vac--dense .ent-data-table.data-table td.wg-vac__col-online,
     .wg-vac--dense .ent-data-table.data-table td.wg-vac__actions,
-    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-metric,
-    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-online {
+    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-apps,
+    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-views,
+    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-online,
+    .wg-vac--dense .ent-data-table.data-table th.wg-vac__col-vis {
         white-space: nowrap;
     }
 
@@ -889,9 +892,18 @@
         font-size: var(--text-xs);
     }
 
-    .wg-vac--dense .ent-data-table .wg-vac__col-metric {
-        width: 4.25rem;
-        max-width: 4.25rem;
+    .wg-vac--dense .ent-data-table .wg-vac__col-apps {
+        width: 8rem;
+        min-width: 8rem;
+        max-width: 8rem;
+        font-size: var(--text-xs);
+        text-align: end;
+    }
+
+    .wg-vac--dense .ent-data-table .wg-vac__col-views {
+        width: 7.5rem;
+        min-width: 7.5rem;
+        max-width: 7.5rem;
         font-size: var(--text-xs);
         text-align: end;
     }
@@ -904,7 +916,10 @@
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-vis {
-        width: 5.25rem;
+        width: 7.5rem;
+        min-width: 7.5rem;
+        max-width: 7.5rem;
+        font-size: var(--text-xs);
     }
 
     .wg-vac--dense .ent-data-table .wg-vac__col-vis .wg-vac__chip {
