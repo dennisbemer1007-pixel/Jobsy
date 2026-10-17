@@ -36,10 +36,6 @@
         <link rel="preload" href="js/app-core.js?v=20261017-03" as="script" crossorigin />
         <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
     }
-    @if (!LoadBlazorRuntime)
-    {
-        <link rel="stylesheet" href="css/features/cookie-consent.css?v=20261017-01" />
-    }
     @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
     {
         <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-10" />
@@ -55,6 +51,11 @@
     <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
     @* Outside LoadBlazorRuntime: NoBlazor pages (landing, legal) still ship the modal markup. *@
     <link rel="stylesheet" href="css/features/reconnect.css?v=20261015-02" data-reconnect-css />
+    @if (!LoadBlazorRuntime)
+    {
+        @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
+        <link rel="stylesheet" href="css/features/cookie-consent.css?v=20261017-03" />
+    }
     @if (LoadBlazorRuntime)
     {
         @foreach (var href in PageStylesheets)

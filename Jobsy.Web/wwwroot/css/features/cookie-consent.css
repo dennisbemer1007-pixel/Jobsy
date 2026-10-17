@@ -1,5 +1,5 @@
 /* Compact cookie banner (matches app.min.css). Loaded on NoBlazorRuntime shells
-   so /login and /account-maken keep the same look without the full app bundle. */
+   after public-theme.css so auth/login pages match acceptatie layout. */
 
 html.cookie-consent-known .cookie-consent {
   display: none;
@@ -81,12 +81,19 @@ html.cookie-consent-known .cookie-consent {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
+  flex: 0 0 auto;
 }
 
 .cookie-consent__actions .btn-compact,
 .cookie-consent__actions .btn-compact--primary,
 .pub-theme .cookie-consent .btn-compact,
 .pub-theme .cookie-consent .btn-compact--primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: none;
+  min-width: 0;
   background: transparent;
   color: #f7f4f0;
   border: 1px solid rgba(247, 244, 240, 0.55);
@@ -94,10 +101,14 @@ html.cookie-consent-known .cookie-consent {
   min-height: 2.5rem;
   font-weight: 600;
   padding: 0.35rem 0.7rem;
+  white-space: nowrap;
+  font-size: 0.82rem;
 }
 
 .cookie-consent__actions .btn-compact:hover:not(:disabled),
-.cookie-consent__actions .btn-compact--primary:hover:not(:disabled) {
+.cookie-consent__actions .btn-compact--primary:hover:not(:disabled),
+.pub-theme .cookie-consent .btn-compact:hover:not(:disabled),
+.pub-theme .cookie-consent .btn-compact--primary:hover:not(:disabled) {
   background: rgba(247, 244, 240, 0.12);
   color: #fff;
 }
@@ -127,9 +138,11 @@ html.cookie-consent-known .cookie-consent {
     gap: 0.35rem;
   }
 
-  .cookie-consent__actions {
+  .cookie-consent__actions,
+  .pub-theme .cookie-consent__actions {
     width: 100%;
     flex: 1 1 100%;
+    flex-wrap: nowrap;
     gap: 0.35rem;
   }
 
@@ -137,7 +150,7 @@ html.cookie-consent-known .cookie-consent {
   .cookie-consent__actions .btn-compact--primary,
   .pub-theme .cookie-consent .btn-compact,
   .pub-theme .cookie-consent .btn-compact--primary {
-    flex: 1 1 calc(50% - 0.2rem);
+    flex: 1 1 0;
     min-height: 2.15rem;
     padding: 0.3rem 0.45rem;
     font-size: 0.72rem;
