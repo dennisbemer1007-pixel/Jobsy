@@ -375,6 +375,9 @@ internal sealed class E2eFlowRunner
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             await ClearEncourageDismissStorageAsync(page, chainEmail, "vacancy-pre-apply");
+            await page.ReloadAsync();
+            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
             await OpenVacancyApplyPanelAsync(page);
             try
             {
@@ -1415,6 +1418,12 @@ internal sealed class E2eFlowRunner
         foreach (var row in await db.CandidateValuesProfiles.Where(c => c.UserId == user.Id).ToListAsync())
         {
             row.Status = CandidateCompetencyStatuses.Draft;
+            row.CompletedAtUtc = null;
+        }
+
+        foreach (var row in await db.CandidateDeepAnalyses.Where(c => c.UserId == user.Id).ToListAsync())
+        {
+            row.Status = CandidateDeepAnalysisStatuses.Draft;
             row.CompletedAtUtc = null;
         }
 

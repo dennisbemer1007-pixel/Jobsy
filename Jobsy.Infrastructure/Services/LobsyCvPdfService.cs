@@ -235,7 +235,7 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                         });
                     }
 
-                    Section(body, "Over mij", model.AboutMe);
+                    Section(body, "Over mij", SanitizeAboutMe(model.AboutMe));
                     Section(body, "Motivatie", model.Motivation);
 
                     body.Item().ShowEntire().Row(split =>
@@ -538,6 +538,25 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
     private static IContainer CellSlot(IContainer container, bool on)
         => container.Background(on ? CellOn : Colors.White).Border(0.4f).BorderColor(Line).PaddingVertical(2);
+
+    private static string? SanitizeAboutMe(string? aboutMe)
+    {
+        if (string.IsNullOrWhiteSpace(aboutMe))
+        {
+            return null;
+        }
+
+        var trimmed = aboutMe.Trim();
+        if (System.Text.RegularExpressions.Regex.IsMatch(
+                trimmed,
+                @"^\d+\s+eerdere\s+werkgevers?$",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            return null;
+        }
+
+        return trimmed;
+    }
 
     private static void Section(ColumnDescriptor body, string title, string? content)
     {
