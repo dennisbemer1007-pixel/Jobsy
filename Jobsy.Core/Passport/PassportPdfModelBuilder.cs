@@ -79,7 +79,7 @@ public static class PassportPdfModelBuilder
         var direction = studentLayout && facts.StudyDirectionSteps is { Count: > 0 }
             ? facts.StudyDirectionSteps
             : Direction(lang, facts);
-        var stageVacancyMatches = studentLayout ? facts.StageVacancyMatches ?? [] : [];
+        var stageVacancyMatches = facts.StageVacancyMatches ?? [];
         var stageVacanciesEmpty = studentLayout && stageVacancyMatches.Count == 0
             ? PassportPdfStrings.T(lang, "StageVacanciesEmpty")
             : null;

@@ -165,7 +165,7 @@ public sealed class PassportPdfService : IPassportPdfService
                         }
                         else
                         {
-                            var headerKey = model.StudentLayout ? "StudentHeader" : "RecruiterHeader";
+                            var headerKey = model.StudentLayout ? "StudentHeader" : "Title";
                             text.Span(PassportPdfStrings.T(lang, headerKey)).FontSize(9.5f).FontColor(Color.FromHex("#e8d9f7"));
                         }
                     });
@@ -270,11 +270,11 @@ public sealed class PassportPdfService : IPassportPdfService
         FourCardsRow(col, model, lang);
         LanguagesAndPrefs(col, model, lang);
         StrengthSection(col, model, lang);
-        if (model.StudentLayout)
+        if (model.StageVacancyMatches.Count > 0)
         {
             StageVacanciesSection(col, model, lang);
         }
-        else
+        else if (!model.StudentLayout)
         {
             SectorsCompact(col, model, lang);
         }
@@ -771,7 +771,8 @@ public sealed class PassportPdfService : IPassportPdfService
         var compact = model.StudentLayout;
         col.Item().Column(block =>
         {
-            SectionTitle(block, PassportPdfStrings.T(lang, "StageVacanciesTitle"));
+            var titleKey = model.StudentLayout ? "StageVacanciesTitle" : "AdultVacanciesTitle";
+            SectionTitle(block, PassportPdfStrings.T(lang, titleKey));
             if (model.StageVacancyMatches.Count == 0)
             {
                 block.Item().PaddingTop(4).Background(SoftP).Border(1).BorderColor(Line).Padding(10)
@@ -794,7 +795,7 @@ public sealed class PassportPdfService : IPassportPdfService
                     {
                         card.Item().Text(fit.Title).FontSize(9.5f).Bold().FontColor(Purple).LineHeight(1.15f).ClampLines(2);
                         card.Item().PaddingTop(compact ? 2 : 4).Text(fit.Why).FontSize(8f).FontColor(Ink).LineHeight(1.25f)
-                            .ClampLines(compact ? 3 : 4);
+                            .ClampLines(compact ? 4 : 5);
                     });
                 }
             });

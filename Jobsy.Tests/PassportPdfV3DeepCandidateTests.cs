@@ -82,7 +82,8 @@ public class PassportPdfV3DeepCandidateTests
         var download = new PassportPdfDownload(
             db,
             new PassportDnaReader(db),
-            new PassportPdfService(new FakeCompanySettings()));
+            new PassportPdfService(new FakeCompanySettings()),
+            new EmptyMatchesCompetencyService());
 
         var file = await download.ForCandidateAsync(user, phoneVerificationRequired: false, showDnaBlocks: true, CancellationToken.None);
 
@@ -126,5 +127,26 @@ public class PassportPdfV3DeepCandidateTests
         public string? BandLabel(double score, string traitOrFacetKey) => null;
         public double? Mean(string traitOrFacetKey) => null;
         public string SourceDisclaimer => "Test norms.";
+    }
+
+    private sealed class EmptyMatchesCompetencyService : ICandidateCompetencyService
+    {
+        public Task<CandidateCompetencyStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<CandidateCompetencyStateDto> SaveAsync(
+            Guid userId,
+            IReadOnlyDictionary<int, int> answers,
+            bool complete,
+            CancellationToken cancellationToken = default)
+            => throw new NotSupportedException();
+
+        public Task<CompetencyScores?> GetCompletedScoresAsync(Guid userId, CancellationToken cancellationToken = default)
+            => Task.FromResult<CompetencyScores?>(null);
+
+        public Task<IReadOnlyList<CandidateMatchedVacancyDto>> GetTopMatchesAsync(
+            Guid userId,
+            CancellationToken cancellationToken = default)
+            => Task.FromResult<IReadOnlyList<CandidateMatchedVacancyDto>>([]);
     }
 }

@@ -17,12 +17,18 @@ public sealed class PassportPdfDownload
     private readonly JobsyDbContext _db;
     private readonly IPassportDnaReader _dna;
     private readonly IPassportPdfService _pdf;
+    private readonly ICandidateCompetencyService _competencies;
 
-    public PassportPdfDownload(JobsyDbContext db, IPassportDnaReader dna, IPassportPdfService pdf)
+    public PassportPdfDownload(
+        JobsyDbContext db,
+        IPassportDnaReader dna,
+        IPassportPdfService pdf,
+        ICandidateCompetencyService competencies)
     {
         _db = db;
         _dna = dna;
         _pdf = pdf;
+        _competencies = competencies;
     }
 
     public async Task<PassportPdfFile> ForCandidateAsync(
@@ -47,6 +53,8 @@ public sealed class PassportPdfDownload
             ShowDnaBlocks = showDnaBlocks,
             FirstName = string.IsNullOrWhiteSpace(user.FirstName) ? null : user.FirstName.Trim()
         };
+        var matches = await _competencies.GetTopMatchesAsync(user.Id, cancellationToken);
+        facts = PassportPdfMatchCardCopy.AttachEmployerVacancyCards(facts, matches);
         return await RenderAsync(facts, cancellationToken);
     }
 
@@ -83,6 +91,12 @@ public sealed class PassportPdfDownload
         }
 
         facts = facts with { ShowDnaBlocks = showDnaBlocks };
+        if (user is not null)
+        {
+            var matches = await _competencies.GetTopMatchesAsync(user.Id, cancellationToken);
+            facts = PassportPdfMatchCardCopy.AttachEmployerVacancyCards(facts, matches);
+        }
+
         return await RenderAsync(facts, cancellationToken);
     }
 

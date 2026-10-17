@@ -241,6 +241,8 @@ public static class PassportPdfStrings
         ["RecruiterHeader"] = ["DNA-paspoort · recruiterpagina", "DNA passport · recruiter page", "Paszport DNA · strona dla rekrutera", "Pașaport ADN · pagină recrutor", "جواز ADN · صفحة التوظيف"],
         ["StudentHeader"] = ["DNA-paspoort · student", "DNA passport · student", "Paszport DNA · student", "Pașaport ADN · student", "جواز ADN · طالب"],
         ["StageVacanciesTitle"] = ["Stages en bijbanen die bij mij passen", "Internships and side jobs that fit me", "Staże i prace dorywcze dla mnie", "Stagii și joburi potrivite", "تدريبات وأعمال مناسبة لي"],
+        ["AdultVacanciesTitle"] = ["Banen die bij mij passen", "Jobs that fit me", "Oferty dla mnie", "Joburi potrivite", "وظائف تناسبني"],
+        ["VacancyMatchNeutral"] = ["Past bij jouw voorkeuren en regio.", "Fits your preferences and region.", "Pasuje do Twoich preferencji i regionu.", "Se potrivește preferințelor și regiunii tale.", "يناسب تفضيلاتك ومنطقتك."],
         ["StageVacanciesEmpty"] = ["Nog geen passende stage of bijbaan binnen jouw leeftijd en regels. Vul je profiel aan of kom later terug.", "No matching internship or side job yet within your age and legal rules. Complete your profile or check back later.", "Brak pasującego stażu lub pracy w Twoim wieku i zgodnie z przepisami.", "Niciun stagiu sau job potrivit vârstei și regulilor.", "لا تدريب أو عمل مناسب بعد ضمن عمرك والقواعد."],
         ["StudyDirectionTitle"] = ["Mijn richting", "My direction", "Mój kierunek", "Direcția mea", "مساري"],
         ["DeepeningHeader"] = ["DNA-paspoort · verdieping · {0}", "DNA passport · detail · {0}", "Paszport DNA · szczegóły · {0}", "Pașaport ADN · detaliu · {0}", "جواز ADN · تفصيل · {0}"],
