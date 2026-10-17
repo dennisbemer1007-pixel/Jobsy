@@ -83,18 +83,28 @@ public class LivegangFixesPlaywrightTests
         }
 
         await dot.WaitForAsync(new() { Timeout = 15_000 });
-        var gapPx = await page.EvaluateAsync<double>(
+        var metrics = await page.EvaluateAsync<string>(
             """
             () => {
               const dot = document.querySelector('.notifications-page__unread-dot');
+              const btn = dot?.closest('.notifications-page__item-btn');
               const item = dot?.closest('.notifications-page__item');
-              if (!dot || !item) return 999;
+              if (!dot || !btn || !item) return null;
               const dotR = dot.getBoundingClientRect();
+              const btnR = btn.getBoundingClientRect();
               const itemR = item.getBoundingClientRect();
-              return itemR.right - dotR.right;
+              return JSON.stringify({
+                gapItemRight: itemR.right - dotR.right,
+                btnItemGap: Math.abs(itemR.right - btnR.right)
+              });
             }
             """);
+        Assert.False(string.IsNullOrEmpty(metrics), "Expected an unread notification row on /notifications.");
+        using var doc = System.Text.Json.JsonDocument.Parse(metrics!);
+        var gapPx = doc.RootElement.GetProperty("gapItemRight").GetDouble();
+        var btnItemGap = doc.RootElement.GetProperty("btnItemGap").GetDouble();
         Assert.True(gapPx <= 20, $"Unread dot should sit within 20px of card right edge; gapItemRight={gapPx}px.");
+        Assert.True(btnItemGap <= 2, $"Card button should fill card width; |itemRight-btnRight|={btnItemGap}px.");
 
         var position = await page.EvaluateAsync<string>(
             "() => getComputedStyle(document.querySelector('.notifications-page__unread-dot')).position");

@@ -128,3 +128,11 @@
     max-width: 52rem;
   }
 }
+
+/* Coach dock reserves ~68px on narrow viewports (app.css); card rows must stay full width. */
+@media (max-width: 480px) {
+  .app-shell:has([data-lobsy-coach]) main .notifications-page__item-btn {
+    max-inline-size: none;
+    width: 100%;
+  }
+}

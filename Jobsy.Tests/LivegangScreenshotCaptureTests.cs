@@ -46,6 +46,12 @@ public class LivegangScreenshotCaptureTests
             await CaptureVacancyWizardAsync(browser, baseUrl, root);
         }
 
+        var dotLog = Path.Combine(root, "notifications-dot-computed-styles.txt");
+        if (File.Exists(dotLog))
+        {
+            File.Delete(dotLog);
+        }
+
         await ClearDemoNotificationsAsync();
         await CaptureNotificationsAsync(browser, baseUrl, root, withItems: false, skipPage: skipNotificationsPage);
         await SeedDemoNotificationsAsync();
@@ -391,7 +397,14 @@ public class LivegangScreenshotCaptureTests
         {
             gap = doc.RootElement.GetProperty("gapBtnRight").GetDouble();
         }
+
         Assert.True(gap <= 20, $"{shotTag}: unread dot gap to card right edge is {gap}px (max 20). Raw: {json}");
+
+        var btnRight = doc.RootElement.GetProperty("btnRight").GetDouble();
+        var itemRight = doc.RootElement.GetProperty("itemRight").GetDouble();
+        var btnItemGap = Math.Abs(itemRight - btnRight);
+        Assert.True(btnItemGap <= 2,
+            $"{shotTag}: notification card button should fill card width (|itemRight-btnRight|={btnItemGap}px, max 2). Raw: {json}");
         Assert.Equal("absolute", doc.RootElement.GetProperty("dotPosition").GetString());
         var sheets = doc.RootElement.GetProperty("notificationsCssHrefs");
         Assert.True(sheets.GetArrayLength() > 0, $"{shotTag}: notifications.css not loaded.");
