@@ -497,6 +497,11 @@ internal sealed class E2eFlowRunner
                 }
 
                 await Shot(page, tag, "09-applied");
+                if (tag == "desktop-1440"
+                    && await page.Locator(".apply-panel--success .profile-encourage").CountAsync() > 0)
+                {
+                    await Shot(page, tag, "09-applied-encourage-tip");
+                }
             }
             catch (Exception ex)
             {

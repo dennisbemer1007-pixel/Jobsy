@@ -996,7 +996,7 @@
             {
                 <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
             }
-            else if (_candidateApplyGateLoaded && !_profileReadyForApply)
+            else if (_signedInCandidate && (!_candidateApplyGateLoaded || !_profileReadyForApply))
             {
                 <a class="btn--primary"
                    href="@($"/vacancies/{Id}#apply")"
@@ -1081,6 +1081,7 @@
     private bool _workPermitConfirmed;
     private bool _profileReadyForApply;
     private bool _candidateApplyGateLoaded;
+    private bool _signedInCandidate;
     private bool _applyBasicsReady = true;
     private bool _applyBasicsIncomplete;
     private readonly List<ApplyBasicsChecklistRow> _applyBasicsChecklist = [];
@@ -1497,6 +1498,7 @@
         _message = null;
         _profileReadyForApply = false;
         _candidateApplyGateLoaded = false;
+        _signedInCandidate = false;
         _applyBasicsReady = true;
         _applyBasicsIncomplete = false;
         _applyBasicsChecklist.Clear();
@@ -1904,6 +1906,7 @@
         }
 
         var isCandidate = RoleClaimMatching.HasRole(auth.User, JobsyRoles.Candidate);
+        _signedInCandidate = isCandidate;
         Task<MeProfile?>? profileTask = null;
         Task<IReadOnlyList<ApplicationItem>?>? appsTask = null;
         MeProfile? candidateProfile = null;
