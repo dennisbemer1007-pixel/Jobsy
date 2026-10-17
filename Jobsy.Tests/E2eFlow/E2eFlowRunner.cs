@@ -279,6 +279,18 @@ internal sealed class E2eFlowRunner
                 await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, emptyEmail, "E2eEmpty");
                 await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                var dobInput = page.Locator("[data-testid=vacancy-dob-date] input[type=date]").First;
+                if (await dobInput.CountAsync() > 0 && string.IsNullOrWhiteSpace(await dobInput.InputValueAsync()))
+                {
+                    await dobInput.FillAsync("2000-06-15");
+                    var saveDob = page.Locator("#dob button.login-submit, #dob button[type=button]").First;
+                    if (await saveDob.CountAsync() > 0)
+                    {
+                        await saveDob.ClickAsync();
+                        await page.WaitForTimeoutAsync(2500);
+                    }
+                }
+
                 await OpenVacancyApplyPanelAsync(page);
                 try
                 {
@@ -1237,6 +1249,13 @@ internal sealed class E2eFlowRunner
             $"{EmployerApiBase()}/api/employer-phase2/applications/{applicationId:D}/accept");
         await ApplyBrowserCookiesAsync(page, request);
         using var response = await http.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            var detail = await response.Content.ReadAsStringAsync();
+            _report.SmtpNote = (_report.SmtpNote ?? "")
+                               + $" phase2-accept:{(int)response.StatusCode} {detail[..Math.Min(detail.Length, 120)]};";
+        }
+
         return response.IsSuccessStatusCode;
     }
 
@@ -1266,7 +1285,7 @@ internal sealed class E2eFlowRunner
     }
 
     private string EmployerApiBase()
-        => _baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
+        => _baseUrl.TrimEnd('/');
 
     private static async Task ReloadSelectedPhase2Async(IPage page)
     {

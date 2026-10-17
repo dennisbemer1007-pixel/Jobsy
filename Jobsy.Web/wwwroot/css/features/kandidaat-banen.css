@@ -2835,3 +2835,21 @@ ol.apply-steps.apply-steps--three {
     border-radius: 0;
   }
 }
+
+/* Vacancy detail: no floating coach / mock-interview CTA overlapping sticky apply (E2E review). */
+.app-shell:has(.kb-detail) .lobsy-coach-dock,
+.app-shell:has(.kb-detail) .lobsy-coach-cta,
+.app-shell:has(.kb-detail) .lobsy-assistant-tab--edge {
+  display: none !important;
+}
+
+@media (min-width: 1024px) {
+  .app-shell:has(.kb-detail) .bottom-nav {
+    display: none !important;
+  }
+
+  .app-shell:has(.kb-detail) .app-main,
+  .app-shell:has(.kb-detail) .app-footer {
+    padding-bottom: 0 !important;
+  }
+}
