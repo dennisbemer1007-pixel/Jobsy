@@ -78,3 +78,11 @@ Login/account-maken starten **geen** circuit meer (`[NoBlazorRuntime]`).
 ## Screenshots
 
 Zie `/cursor/stores/self/perf2/screenshots/` (`before-acc-*` vs `after-local-*`, 1440×900 en 390×844).
+
+## PR #710 review (2026-10-17)
+
+- **Microsoft-knop:** `Login.razor` toont providers alleen als `ExternalAuth.IsEntraConfiguredAsync()` / Google geconfigureerd is. Lokaal zonder secrets → geen knop; met dummy Entra env op Web → wel knop + `au-divider`, nog steeds zonder `blazor.web.js`. Capture: `tools/perf/perf2-capture-review.mjs`.
+- **Cookiebanner NoBlazorRuntime:** extra `css/features/cookie-consent.css` in `App.razor` wanneer `!LoadBlazorRuntime` (compacte banner i.p.v. alleen `public-theme.css`). Captures: `tools/perf/perf2-static-auth-screenshots.mjs`.
+- **E2E zonder circuit:** `Jobsy.Tests/NoBlazorStaticAuthPlaywrightTests.cs` (antiforgery POST, wachtwoord-toggle, taalmenu, cookie-knoppen, signup/code/resend). Vereist CI-stack + `JOBSY_E2E_CAPTURE_EMAIL_CODES=1`; optioneel `ConnectionStrings__JobsyDb` om seed-lockout te resetten.
+- **Banenkaart:** lokaal `Jobsy__TestEmployersEnabled=true` (zelfde als acceptatie employers-flag). Metrics in `banenkaart-load-metrics.json`.
+- **Asset guard:** `app-core.js?v=20261017-03` (+ `asset-versions.json` sync).

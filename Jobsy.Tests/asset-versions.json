@@ -39,6 +39,10 @@
     "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
     "v": "20261015-06"
   },
+  "css/features/cookie-consent.css": {
+    "sha256": "7f56535c6a27934e668466f80fa0791d32ea3056494f720afd7eec44ca18db76",
+    "v": "20261017-01"
+  },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
     "v": "20261004-10"
@@ -185,7 +189,7 @@
   },
   "js/app-core.js": {
     "sha256": "856da023b5fea68dfbefffbe6c1fcf7d94ae8a233709be054b147f86b802e9d5",
-    "v": "20261017-pwa"
+    "v": "20261017-03"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -268,11 +272,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "3d6eca6b7882d8bc14912cedea322fbd933f3c4d50113dc27055311808a2c108",
+    "sha256": "fedafb6e8defdce4fb6a9ed487ea2cf085fb5665bbe672bc26d2aacdedd6dbcd",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "ef8420ea1049e408da3879f7f913b26c543a700ae44d14586138ed43a0a50f64",
+    "sha256": "17d47153b421e72fe901848e2e3a4064e82763abc80dadd80cc4e96dea721efd",
     "v": "20261016-06"
   }
 }

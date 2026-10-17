@@ -1,0 +1,145 @@
+/* Compact cookie banner (matches app.min.css). Loaded on NoBlazorRuntime shells
+   so /login and /account-maken keep the same look without the full app bundle. */
+
+html.cookie-consent-known .cookie-consent {
+  display: none;
+}
+
+.cookie-consent,
+.pub-theme .cookie-consent {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  padding: 0.45rem 0.75rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(15, 45, 92, 0.96), rgba(10, 32, 68, 0.98));
+  color: #f7f4f0;
+  box-shadow: 0 -4px 16px rgba(15, 45, 92, 0.22);
+  border-top: none;
+  contain: layout paint style;
+  pointer-events: auto;
+}
+
+.cookie-consent__inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cookie-consent__copy {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.cookie-consent__title,
+.pub-theme .cookie-consent__title {
+  margin: 0 0 0.2rem;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: #f7f4f0;
+}
+
+.cookie-consent__text,
+.pub-theme .cookie-consent__text {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: rgba(247, 244, 240, 0.92);
+  max-width: 36rem;
+}
+
+.cookie-consent__text-short {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .cookie-consent__text-full,
+  .pub-theme .cookie-consent__text-full {
+    display: none;
+  }
+
+  .cookie-consent__text-short,
+  .pub-theme .cookie-consent__text-short {
+    display: inline;
+  }
+}
+
+.cookie-consent__text a,
+.cookie-consent a.cookie-consent__privacy,
+.pub-theme .cookie-consent a {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.cookie-consent__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.cookie-consent__actions .btn-compact,
+.cookie-consent__actions .btn-compact--primary,
+.pub-theme .cookie-consent .btn-compact,
+.pub-theme .cookie-consent .btn-compact--primary {
+  background: transparent;
+  color: #f7f4f0;
+  border: 1px solid rgba(247, 244, 240, 0.55);
+  border-radius: 8px;
+  min-height: 2.5rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+}
+
+.cookie-consent__actions .btn-compact:hover:not(:disabled),
+.cookie-consent__actions .btn-compact--primary:hover:not(:disabled) {
+  background: rgba(247, 244, 240, 0.12);
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .cookie-consent__title,
+  .pub-theme .cookie-consent__title {
+    display: inline;
+    margin: 0 0.35rem 0 0;
+    font-size: 0.72rem;
+    font-weight: 650;
+  }
+
+  .cookie-consent__copy {
+    flex: 1 1 100%;
+    line-height: 1.25;
+  }
+
+  .cookie-consent__text,
+  .pub-theme .cookie-consent__text {
+    display: inline;
+    font-size: 0.68rem;
+    max-width: none;
+  }
+
+  .cookie-consent__inner {
+    gap: 0.35rem;
+  }
+
+  .cookie-consent__actions {
+    width: 100%;
+    flex: 1 1 100%;
+    gap: 0.35rem;
+  }
+
+  .cookie-consent__actions .btn-compact,
+  .cookie-consent__actions .btn-compact--primary,
+  .pub-theme .cookie-consent .btn-compact,
+  .pub-theme .cookie-consent .btn-compact--primary {
+    flex: 1 1 calc(50% - 0.2rem);
+    min-height: 2.15rem;
+    padding: 0.3rem 0.45rem;
+    font-size: 0.72rem;
+  }
+}
