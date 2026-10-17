@@ -31,6 +31,7 @@ public static class UiStringsKandidatenkaart
         Add("Kk.Filter.Start", "Startdatum", "Start date");
         Add("Kk.Filter.Hours", "Uren per week", "Hours per week");
         Add("Kk.Filter.MobileChip", "Geaggregeerd · min. 30 · alleen actieve kandidaten", "Aggregated · min. 30 · active candidates only");
+        Add("Kk.Filter.Apply", "Toepassen", "Apply");
         Add("Kk.ActiveSell.Title", "Alleen actieve kandidaten", "Active candidates only");
         Add("Kk.ActiveSell.Body", "Wie een uitnodiging niet binnen 2 dagen beantwoordt, krijgt een herinnering en verdwijnt daarna van de kaart tot die zich weer beschikbaar meldt. Wie een maand niet actief is, bevestigt eerst dat die nog zoekt. Zo zie je alleen mensen die echt zoeken.", "Candidates who don't respond to an invite within 2 days get a reminder and then leave the map until they opt back in. After a month without activity they confirm they're still looking. You only see people actively searching.");
         Add("Kk.Area.Meta", "{0} kandidaten · {1} boven 80%", "{0} candidates · {1} above 80%");

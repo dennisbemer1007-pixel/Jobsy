@@ -164,12 +164,73 @@
             @if (ShowInviteCta)
             {
                 <div class="kk-mobile-sheet__invite">
-                    <button type="button" class="kk-btn kk-btn--primary kk-btn--block" @onclick="OpenInviteAsync">
+                    <button type="button" class="login-submit kk-btn--block" @onclick="OpenInviteAsync">
                         @Culture["Kk.Invite.Open"]
                     </button>
                 </div>
             }
         </div>
+
+        @if (_moreOpen)
+        {
+            <div class="kk-filter-scrim" aria-hidden="true" @onclick="ToggleMoreFilters"></div>
+            <div class="kk-filter-sheet profile-form" role="dialog" aria-labelledby="kk-filter-sheet-title">
+                <div class="kk-filter-sheet__head">
+                    <h2 id="kk-filter-sheet-title">@Culture["Kk.Filter.More"]</h2>
+                    <button type="button" class="btn-compact" @onclick="ToggleMoreFilters">@Culture["Common.Close"]</button>
+                </div>
+                <div class="kk-filter-sheet__body">
+                    <div class="kk-field">
+                        <label>@Culture["Kk.Filter.Vacancy"]</label>
+                        <select class="jobsy-form-value" @bind="_vacancyId" @bind:after="ReloadAsync">
+                            <option value="">—</option>
+                            @foreach (var v in _vacancies)
+                            {
+                                <option value="@v.Id">@v.Title · @v.LocationLabel</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="kk-field">
+                        <label>@Culture["Kk.Filter.MinMatch"]</label>
+                        <div class="kk-seg" role="group">
+                            @foreach (var p in _matchOptions)
+                            {
+                                <button type="button" class="@(p == _minMatch ? "is-on" : null)" @onclick="() => SetMatch(p)">@p%</button>
+                            }
+                        </div>
+                    </div>
+                    <div class="kk-field">
+                        <label>@Culture["Kk.Filter.Travel"]</label>
+                        <div class="kk-seg" role="group">
+                            @foreach (var km in _kmOptions)
+                            {
+                                <button type="button" class="@(km == _travelKm ? "is-on" : null)" @onclick="() => SetKm(km)">@km km</button>
+                            }
+                        </div>
+                    </div>
+                    <div class="kk-field">
+                        <label>@Culture["Kk.Filter.Start"]</label>
+                        <div class="kk-seg kk-seg--wrap">
+                            @foreach (var a in _availOptions)
+                            {
+                                <button type="button" class="@(a == _availability ? "is-on" : null)" @onclick="() => SetAvail(a)">@a</button>
+                            }
+                        </div>
+                    </div>
+                    <div class="kk-field">
+                        <label>@Culture["Kk.Filter.Hours"]</label>
+                        <div class="kk-seg kk-seg--wrap">
+                            @foreach (var h in _hoursOptions)
+                            {
+                                <button type="button" class="@(h == _hours ? "is-on" : null)" @onclick="() => SetHours(h)">@h</button>
+                            }
+                        </div>
+                    </div>
+                    <p class="kk-filter-sheet__hint">@Culture["Kk.Filter.MobileChip"]</p>
+                    <button type="button" class="login-submit kk-filter-sheet__apply" @onclick="ToggleMoreFilters">@Culture["Kk.Filter.Apply"]</button>
+                </div>
+            </div>
+        }
     </div>
 </WgPageShell>
 

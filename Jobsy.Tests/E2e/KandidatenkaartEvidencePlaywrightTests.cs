@@ -88,23 +88,55 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await KbE2e.AssertNoCircuitErrorAsync(page);
             await ShotPageAsync(page, $"kk-map-areas-{suffix}.png");
 
-            var more = page.Locator(".kk-filter-more, .kk-btn--more");
+            var more = width < 640
+                ? page.Locator(".kk-mobile-bar .kk-filter-more")
+                : page.Locator(".kk-filters--desktop .kk-filter-more");
             Assert.True(await more.CountAsync() > 0, "Expected Meer filters control on kandidatenkaart.");
             await more.First.ClickAsync();
-            await page.WaitForSelectorAsync(".kk-filter-popover.is-open", new() { Timeout = 10_000 });
+            if (width < 640)
+            {
+                await page.WaitForSelectorAsync(".kk-page--filters-open .kk-filter-sheet", new() { Timeout = 10_000, State = WaitForSelectorState.Visible });
+            }
+            else
+            {
+                await page.WaitForSelectorAsync(".kk-filter-popover.is-open", new() { Timeout = 10_000, State = WaitForSelectorState.Visible });
+            }
+
             await page.WaitForTimeoutAsync(400);
             await ShotPageAsync(page, $"kk-filters-open-{suffix}.png");
 
-            if (await page.Locator(".kk-filter-popover.is-open").CountAsync() > 0)
+            if (width < 640)
+            {
+                await page.Locator(".kk-filter-sheet .btn-compact").Filter(new() { HasText = "Sluiten" }).First.ClickAsync();
+            }
+            else if (await page.Locator(".kk-filter-popover.is-open").CountAsync() > 0)
             {
                 await more.First.ClickAsync();
-                await page.WaitForTimeoutAsync(300);
+            }
+
+            await page.WaitForTimeoutAsync(300);
+
+            if (width < 640)
+            {
+                await page.Locator(".kk-mobile-bar .kk-filter-more").ClickAsync();
+                await page.WaitForSelectorAsync(".kk-filter-sheet", new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
             }
 
             await ClickFilterAsync(page, "70%");
-            await page.WaitForSelectorAsync(".kk-area-list__item", new() { Timeout = 30_000 });
 
-            var inviteCta = page.Locator(".kk-list-invite-bar button, .kk-mobile-sheet__invite button");
+            if (width < 640)
+            {
+                await page.Locator(".kk-filter-sheet__apply").ClickAsync();
+                await page.WaitForTimeoutAsync(800);
+            }
+            var areaListSelector = width < 640
+                ? ".kk-mobile-sheet .kk-area-list__item"
+                : ".kk-layout-b__list .kk-area-list__item";
+            await page.WaitForSelectorAsync(areaListSelector, new() { Timeout = 30_000, State = WaitForSelectorState.Visible });
+
+            var inviteCta = width < 640
+                ? page.Locator(".kk-mobile-sheet__invite button")
+                : page.Locator(".kk-list-invite-bar button");
             Assert.True(await inviteCta.CountAsync() > 0, "Expected invite CTA below area list.");
             await inviteCta.First.ClickAsync();
             await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
@@ -113,10 +145,22 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await page.Locator(".kk-modal .btn-compact").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
             await page.WaitForTimeoutAsync(400);
 
+            if (width < 640)
+            {
+                await page.Locator(".kk-mobile-bar .kk-filter-more").ClickAsync();
+                await page.WaitForSelectorAsync(".kk-filter-sheet", new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+            }
+
             await ClickFilterAsync(page, "80%");
             await ClickFilterAsync(page, "15 km");
             await ClickFilterAsync(page, "Later");
             await ClickFilterAsync(page, "32+");
+
+            if (width < 640)
+            {
+                await page.Locator(".kk-filter-sheet__apply").ClickAsync();
+            }
+
             await page.WaitForTimeoutAsync(3000);
             Assert.True(
                 await page.Locator(".kk-below-min").CountAsync() > 0,
@@ -218,15 +262,22 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
 
     private static async Task WaitForMapReadyAsync(IPage page)
     {
-        await page.Locator(".kk-header h1, .kk-mobile-title").First.WaitForAsync(new() { Timeout = 90_000 });
-        await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 10_000 });
+        await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 90_000, State = WaitForSelectorState.Visible });
+        var mobile = await page.EvaluateAsync<bool>(
+            "() => document.documentElement.classList.contains('vp-mobile')");
+        if (mobile)
+        {
+            await page.Locator(".kk-mobile-title").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        }
+        else
+        {
+            await page.Locator(".kk-header h1").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        }
         await page.WaitForSelectorAsync(".kk-map-pane", new()
         {
             Timeout = 60_000,
             State = WaitForSelectorState.Attached
         });
-        var mobile = await page.EvaluateAsync<bool>(
-            "() => document.documentElement.classList.contains('vp-mobile')");
         try
         {
             await page.WaitForSelectorAsync(".kk-map-pane .maplibregl-canvas", new()
@@ -303,10 +354,16 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
     private static async Task ClickFilterAsync(IPage page, string label)
     {
         var btn = page.Locator(".kk-seg button").Filter(new() { HasText = label });
-        if (await btn.CountAsync() > 0)
+        var count = await btn.CountAsync();
+        for (var i = 0; i < count; i++)
         {
-            await btn.First.EvaluateAsync("el => el.click()");
-            await page.WaitForTimeoutAsync(1200);
+            var candidate = btn.Nth(i);
+            if (await candidate.IsVisibleAsync())
+            {
+                await candidate.ClickAsync();
+                await page.WaitForTimeoutAsync(1200);
+                return;
+            }
         }
     }
 
