@@ -34,6 +34,14 @@
                 </a>
             </div>
             <div class="app-header__actions">
+                @if (_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)
+                {
+                    <AuthorizeView Roles="@JobsyRoles.Candidate">
+                        <Authorized>
+                            <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallEntry />
+                        </Authorized>
+                    </AuthorizeView>
+                }
                 <PageHelp />
                 <NotificationBell />
                 <FeatureVisible Feature="PlatformFeature.Employers">
@@ -83,6 +91,10 @@
     {
         <GratisDnaMerge />
         <PushPermissionBanner />
+        @if (_isCandidate && !_suppressPwaInstallEntry)
+        {
+            <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstalledShareHint />
+        }
         <ConsentReacceptDialog />
     }
     else if (RendererInfo.IsInteractive)
@@ -102,9 +114,15 @@
     private bool _hideCoachDock;
     private bool _isCandidate;
     private bool _suppressInstallBanner;
+    private bool _suppressPwaInstallEntry;
 
     private bool ShowInstallBanner =>
-        RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage && !_suppressInstallBanner;
+        RendererInfo.IsInteractive
+        && !_isCandidate
+        && !_isMatchPage
+        && !_isBanenkaartPage
+        && !_isQuestionnairePage
+        && !_suppressInstallBanner;
     private string _homeHref = "/";
 
     protected override void OnInitialized()
@@ -274,6 +292,7 @@
             || path.Equals("banen", StringComparison.OrdinalIgnoreCase);
         var questionnaire = IsQuestionnairePath(path, relative);
         var suppressInstall = SuppressesInstallBanner(path);
+        var suppressPwaEntry = SuppressesPwaInstallEntry(path);
         var changed = false;
         if (_isMatchPage != match)
         {
@@ -290,6 +309,12 @@
         if (_suppressInstallBanner != suppressInstall)
         {
             _suppressInstallBanner = suppressInstall;
+            changed = true;
+        }
+
+        if (_suppressPwaInstallEntry != suppressPwaEntry)
+        {
+            _suppressPwaInstallEntry = suppressPwaEntry;
             changed = true;
         }
 
@@ -381,6 +406,13 @@
         }
 
         return false;
+    }
+
+    public static bool SuppressesPwaInstallEntry(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/share-in", StringComparison.OrdinalIgnoreCase)
+               || SuppressesInstallBanner(path);
     }
 
     public static bool SuppressesInstallBanner(string path)

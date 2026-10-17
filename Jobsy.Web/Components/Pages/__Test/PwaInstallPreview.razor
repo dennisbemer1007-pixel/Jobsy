@@ -1,0 +1,16 @@
+@page "/__test/pwa-install-preview"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Web.Components.Candidate.Pwa
+@inject IWebHostEnvironment Environment
+
+@if (!Environment.IsDevelopment())
+{
+    <p>Not found.</p>
+}
+else
+{
+    <div class="panel-page apps-page" style="padding: 1rem;">
+        <h1 class="visually-hidden">PWA install preview</h1>
+        <CandidatePwaInstallPostApplyCard />
+    </div>
+}

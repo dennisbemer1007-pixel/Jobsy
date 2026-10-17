@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "677d48f6eb404051fe40365d90a04dc906a5c5395a101428f9d6ddfef548bb77",
+    "sha256": "fdabafad40f023a4dceb1af3c8735f52d45325f9b500512382d6decebe5094fd",
     "v": "20261017-02"
   },
   "css/critical.css": {
@@ -107,6 +107,10 @@
     "sha256": "c833351e69fa5ae234ed2046fa4696599b365b91eb7cde4b5b631c2b2d95caf4",
     "v": "20261017-01"
   },
+  "css/features/onboarding-wizard-vroeg-resultaat.css": {
+    "sha256": "6084d709e44d2ef876cd62248a11df4d678a1832c4720ee2193f303d6b1c822c",
+    "v": "20261017-01"
+  },
   "css/features/onboarding-wizard.css": {
     "sha256": "f1f1ad351beddbc57d95e0c1215296e476ec8ae2467b9eb9123999fcddcabc79",
     "v": "20261015-06"
@@ -180,8 +184,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "027364434072e12f00512293f4d87092d2b8f7d58135024bd0e78be76adebefa",
-    "v": "20261016-07"
+    "sha256": "856da023b5fea68dfbefffbe6c1fcf7d94ae8a233709be054b147f86b802e9d5",
+    "v": "20261017-pwa"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -264,11 +268,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "b7090f7a7326497ebab3eb9f26c1982103a7a9476575b7ffad531a37fc7dd551",
+    "sha256": "3d6eca6b7882d8bc14912cedea322fbd933f3c4d50113dc27055311808a2c108",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "736b62f376325cabfe3e66d8ec9e65a1d6f417928569c619ff8e79f13f532574",
+    "sha256": "ef8420ea1049e408da3879f7f913b26c543a700ae44d14586138ed43a0a50f64",
     "v": "20261016-06"
   }
 }

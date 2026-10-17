@@ -1640,24 +1640,84 @@ window.jobsyDialog = (function () {
 window.lobsyPwaInstall = (function () {
   var KEY_VISITS = "Jobsy.PwaVisits";
   var KEY_DISMISS = "Jobsy.PwaInstallDismissed";
+  var KEY_ENTRY_DISMISS = "Jobsy.PwaEntryDismissedUntil";
+  var KEY_POST_APPLY = "Jobsy.PwaPostApplyCardVisible";
+  var KEY_SHARE_HINT = "Jobsy.PwaShareHintSeen";
+  var DISMISS_MS = 30 * 24 * 60 * 60 * 1000;
   var deferred = null;
   var relatedInstalled = false;
   var bannerRef = null;
-  var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent || "")
+  var entryRefs = [];
+  var ua = navigator.userAgent || "";
+  var isIos = /iphone|ipad|ipod/i.test(ua)
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var isSamsungBrowser = /SamsungBrowser/i.test(ua);
+  var isAndroid = /Android/i.test(ua);
 
-  function readStandalone() {
+  function readStandaloneMedia() {
     return window.matchMedia("(display-mode: standalone)").matches
       || window.matchMedia("(display-mode: fullscreen)").matches
       || window.matchMedia("(display-mode: minimal-ui)").matches
       || window.navigator.standalone === true;
   }
 
+  function readAndroidAppReferrer() {
+    try {
+      return (document.referrer || "").indexOf("android-app://") === 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function readPwaStartUrl() {
+    try {
+      var params = new URLSearchParams(window.location.search);
+      return params.get("utm_source") === "pwa";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isInstalledApp() {
+    return readStandaloneMedia() || readAndroidAppReferrer() || readPwaStartUrl() || relatedInstalled;
+  }
+
+  function readStandalone() {
+    return isInstalledApp();
+  }
+
+  function entryDismissedUntil() {
+    try {
+      var raw = localStorage.getItem(KEY_ENTRY_DISMISS);
+      if (!raw) return null;
+      var n = parseInt(raw, 10);
+      return isNaN(n) ? null : n;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function wasEntryDismissed() {
+    var until = entryDismissedUntil();
+    return until !== null && Date.now() < until;
+  }
+
+  function dismissEntryFor30Days() {
+    try {
+      localStorage.setItem(KEY_ENTRY_DISMISS, String(Date.now() + DISMISS_MS));
+    } catch (e) { }
+    notifyEntry();
+  }
+
   function markInstalled() {
     relatedInstalled = true;
-    try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+    try {
+      localStorage.setItem(KEY_DISMISS, "1");
+      localStorage.removeItem(KEY_POST_APPLY);
+    } catch (e) { }
     deferred = null;
     notifyBanner();
+    notifyEntry();
     stabilizeStandaloneTitle();
   }
 
@@ -1668,7 +1728,7 @@ window.lobsyPwaInstall = (function () {
         document.title = "Lobsy";
         return;
       }
-      if (readStandalone() && !(document.title || "").trim()) {
+      if (readStandaloneMedia() && !(document.title || "").trim()) {
         document.title = "Lobsy";
       }
     } catch (e) { }
@@ -1680,8 +1740,15 @@ window.lobsyPwaInstall = (function () {
     bannerRef.invokeMethodAsync("SetPwaBannerVisible", show).catch(function () { });
   }
 
+  function notifyEntry() {
+    entryRefs.forEach(function (ref) {
+      if (!ref || typeof ref.invokeMethodAsync !== "function") return;
+      ref.invokeMethodAsync("OnPwaInstallSignalsChanged").catch(function () { });
+    });
+  }
+
   function shouldShowBanner() {
-    if (readStandalone() || relatedInstalled || wasDismissed()) return false;
+    if (isInstalledApp() || wasDismissed()) return false;
     if (isIos) return visits() >= 2;
     return visits() >= 2 && !!deferred;
   }
@@ -1692,6 +1759,7 @@ window.lobsyPwaInstall = (function () {
       deferred = e;
       window.dispatchEvent(new CustomEvent("lobsy-pwa-prompt-ready"));
       notifyBanner();
+      notifyEntry();
     });
     window.addEventListener("appinstalled", function () {
       markInstalled();
@@ -1708,7 +1776,7 @@ window.lobsyPwaInstall = (function () {
   }
 
   stabilizeStandaloneTitle();
-  if (readStandalone()) {
+  if (readStandaloneMedia()) {
     try {
       var titleObs = new MutationObserver(function () { stabilizeStandaloneTitle(); });
       titleObs.observe(document.querySelector("title") || document.head, { subtree: true, childList: true, characterData: true });
@@ -1725,7 +1793,7 @@ window.lobsyPwaInstall = (function () {
   }
 
   function bumpVisit() {
-    if (readStandalone()) return visits();
+    if (isInstalledApp()) return visits();
     try {
       var n = visits() + 1;
       localStorage.setItem(KEY_VISITS, String(n));
@@ -1736,20 +1804,56 @@ window.lobsyPwaInstall = (function () {
   }
 
   function wasDismissed() {
-    try { return localStorage.getItem(KEY_DISMISS) === "1"; } catch (e) { return false; }
+    try {
+      var legacy = localStorage.getItem(KEY_DISMISS) === "1";
+      if (legacy) return true;
+      return wasEntryDismissed();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function buildChromeIntentUrl() {
+    var path = window.location.pathname + window.location.search + window.location.hash;
+    return "intent://" + window.location.host + path + "#Intent;scheme=https;package=com.android.chrome;end";
+  }
+
+  function getSignals() {
+    return {
+      displayStandalone: window.matchMedia("(display-mode: standalone)").matches,
+      displayMinimalUi: window.matchMedia("(display-mode: minimal-ui)").matches,
+      displayFullscreen: window.matchMedia("(display-mode: fullscreen)").matches,
+      navigatorStandalone: window.navigator.standalone === true,
+      androidAppReferrer: readAndroidAppReferrer(),
+      pwaStartUrl: readPwaStartUrl(),
+      relatedInstalled: relatedInstalled,
+      isIos: isIos,
+      isSamsungBrowser: isSamsungBrowser,
+      isAndroid: isAndroid,
+      canDeferredPrompt: !!deferred && !isInstalledApp(),
+      entryDismissedUntilUnixMs: entryDismissedUntil(),
+      postApplyCardPending: (function () {
+        try { return localStorage.getItem(KEY_POST_APPLY) === "1"; } catch (e) { return false; }
+      })(),
+      shareHintSeen: (function () {
+        try { return localStorage.getItem(KEY_SHARE_HINT) === "1"; } catch (e) { return false; }
+      })()
+    };
   }
 
   return {
     bumpVisit: bumpVisit,
     isIos: function () { return isIos; },
-    isStandalone: function () { return readStandalone() || relatedInstalled; },
-    canPrompt: function () { return !!deferred && !readStandalone() && !relatedInstalled; },
+    isStandalone: function () { return isInstalledApp(); },
+    canPrompt: function () { return !!deferred && !isInstalledApp(); },
     wasDismissed: wasDismissed,
     dismiss: function () {
+      dismissEntryFor30Days();
       try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
       deferred = null;
       notifyBanner();
     },
+    dismissEntry: dismissEntryFor30Days,
     shouldShowBanner: shouldShowBanner,
     watchBanner: function (dotNetRef) {
       bannerRef = dotNetRef;
@@ -1761,15 +1865,61 @@ window.lobsyPwaInstall = (function () {
     unwatchBanner: function () {
       bannerRef = null;
     },
+    watchEntry: function (dotNetRef) {
+      if (dotNetRef && entryRefs.indexOf(dotNetRef) < 0) {
+        entryRefs.push(dotNetRef);
+      }
+      function tick() { notifyEntry(); }
+      window.addEventListener("lobsy-pwa-prompt-ready", tick);
+      window.addEventListener("lobsy-pwa-installed", tick);
+      tick();
+    },
+    unwatchEntry: function (dotNetRef) {
+      entryRefs = entryRefs.filter(function (r) { return r !== dotNetRef; });
+    },
+    getSignals: getSignals,
+    buildChromeIntentUrl: buildChromeIntentUrl,
+    notifyApplicationSubmitted: function () {
+      if (isInstalledApp()) return;
+      try {
+        localStorage.setItem(KEY_POST_APPLY, "1");
+      } catch (e) { }
+      notifyEntry();
+    },
+    dismissPostApplyCard: function () {
+      try { localStorage.removeItem(KEY_POST_APPLY); } catch (e) { }
+      dismissEntryFor30Days();
+      notifyEntry();
+    },
+    markShareHintSeen: function () {
+      try { localStorage.setItem(KEY_SHARE_HINT, "1"); } catch (e) { }
+      notifyEntry();
+    },
+    copyPageLink: async function () {
+      var url = window.location.href;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(url);
+          return { ok: true };
+        }
+      } catch (e) { }
+      return { ok: false, url: url };
+    },
     prompt: async function () {
       if (!deferred) return { ok: false, reason: "unavailable" };
       try {
         deferred.prompt();
         var choice = await deferred.userChoice;
+        var outcome = choice && choice.outcome;
         deferred = null;
-        try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+        if (outcome === "accepted") {
+          markInstalled();
+        } else {
+          dismissEntryFor30Days();
+        }
         notifyBanner();
-        return { ok: true, outcome: choice && choice.outcome };
+        notifyEntry();
+        return { ok: true, outcome: outcome };
       } catch (e) {
         return { ok: false, reason: "error" };
       }
