@@ -142,7 +142,7 @@ public partial class MeController : ControllerBase
         {
             return BadRequest(new
             {
-                message = "Ongeldige taal. Ondersteund: nl, en, pl, ro, ar."
+                message = "Ongeldige taal. Ondersteund: " + JobsyLanguages.EnabledCodesList() + "."
             });
         }
 
@@ -158,7 +158,7 @@ public partial class MeController : ControllerBase
             return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
         }
 
-        var language = JobsyLanguages.Normalize(request.Language);
+        var language = JobsyLanguages.ResolveActive(request.Language);
         var existing = ParsePreferences(user.PreferencesJson);
         user.PreferencesJson = SerializePreferences(existing with { Language = language });
 
@@ -281,7 +281,7 @@ public partial class MeController : ControllerBase
             {
                 return BadRequest(new
                 {
-                    message = "Ongeldige taal. Ondersteund: nl, en, pl, ro, ar."
+                    message = "Ongeldige taal. Ondersteund: " + JobsyLanguages.EnabledCodesList() + "."
                 });
             }
 
@@ -300,7 +300,7 @@ public partial class MeController : ControllerBase
             var existing = ParsePreferences(user.PreferencesJson);
             var language = request.Preferences.Language is null
                 ? existing.Language
-                : JobsyLanguages.Normalize(request.Preferences.Language);
+                : JobsyLanguages.ResolveActive(request.Preferences.Language);
 
             var merged = new CandidatePreferencesDto(
                 roles,
@@ -776,7 +776,8 @@ public partial class MeController : ControllerBase
         var preferred = ParsePreferences(user.PreferencesJson).Language;
         if (!string.IsNullOrWhiteSpace(preferred))
         {
-            return Task.FromResult(JobsyLanguages.Normalize(preferred));
+            var accept = Request.Headers.AcceptLanguage.ToString();
+            return Task.FromResult(JobsyLanguages.ResolveActive(preferred, accept));
         }
 
         return Task.FromResult(JobsyLanguages.Default);
@@ -2114,7 +2115,7 @@ public partial class MeController : ControllerBase
             preferredTransport = sanitized.PreferredTransport,
             language = string.IsNullOrWhiteSpace(sanitized.Language)
                 ? null
-                : JobsyLanguages.Normalize(sanitized.Language),
+                : JobsyLanguages.ResolveActive(sanitized.Language),
             ageYears = sanitized.AgeYears,
             aboutMe = string.IsNullOrWhiteSpace(sanitized.AboutMe) ? null : sanitized.AboutMe.Trim(),
             defaultMotivation = trimmedMotivation,

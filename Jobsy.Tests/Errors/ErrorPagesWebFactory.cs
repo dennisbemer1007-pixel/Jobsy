@@ -38,6 +38,9 @@ public sealed class ErrorPagesWebFactory : WebWebApplicationFactory
     /// <summary>Mirrors <c>Seo:NoIndex</c> / <c>Seo__NoIndex</c> on Acceptatie.</summary>
     public bool NoIndex { get; init; }
 
+    /// <summary>When set, overrides <c>Localization:EnabledCultures</c> for this host.</summary>
+    public string? EnabledCultures { get; init; }
+
     public RecordingLoggerProvider Logs { get; } = new();
 
     public HttpClient CreateHtmlClient()
@@ -60,7 +63,8 @@ public sealed class ErrorPagesWebFactory : WebWebApplicationFactory
                 // Development keeps the developer exception page; opt in to the production handler.
                 [ErrorPagesExtensions.ForceHandlerConfigKey] = "true",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
-                ["Seo:NoIndex"] = NoIndex ? "true" : "false"
+                ["Seo:NoIndex"] = NoIndex ? "true" : "false",
+                ["Localization:EnabledCultures"] = EnabledCultures ?? "nl,en"
             });
         });
 
