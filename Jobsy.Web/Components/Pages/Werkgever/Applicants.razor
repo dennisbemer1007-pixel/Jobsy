@@ -725,7 +725,22 @@
         _drawerTab = "profiel";
         _drawerOpen = true;
         SyncQuery();
+        _ = RefreshPhase2FlagAsync();
         _ = MarkViewedBestEffortAsync(id);
+    }
+
+    private async Task RefreshPhase2FlagAsync()
+    {
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // Keep cached flag when refresh fails.
+        }
     }
 
     private async Task MarkViewedBestEffortAsync(Guid id)
@@ -864,6 +879,13 @@
         switch (ApplicationPipelineRules.StatusOf(a))
         {
             case ApplicationStatus.Pending:
+                if (_phase2Enabled && CanWrite)
+                {
+                    _message = Culture["WgPhase2.UsePanelHint"];
+                    _messageIsError = false;
+                    return;
+                }
+
                 await ReactAsync(a.Id, "Accepted");
                 break;
             case ApplicationStatus.Accepted:

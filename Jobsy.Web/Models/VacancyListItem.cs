@@ -56,6 +56,8 @@ public class VacancyListItem
     public decimal? CategoryPushBomCostTokens { get; set; }
     public bool CategoryUseTierPushBomPricing { get; set; } = true;
     public Dictionary<string, string> CategoryFields { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>ESCO occupation linked to this vacancy (category field or title resolve).</summary>
+    public string? EscoId { get; set; }
     public bool SuitableFor65Plus { get; set; }
     /// <summary>Public page path segment (8-digit KvK) when known.</summary>
     public string? KvkNumber { get; set; }

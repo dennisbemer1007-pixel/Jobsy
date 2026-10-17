@@ -402,7 +402,7 @@ public class VacanciesController : ControllerBase
             return Forbid();
         }
 
-        if (!matchContext.OpenForWork)
+        if (CandidateOpenForWorkGate.HidesMatchScores(matchContext))
         {
             var blocked = MapRecordToDto(record, showWage: false, ageYears: null, includeDescription: false)
                 with { OpenForWorkRequired = true };
@@ -694,7 +694,7 @@ public class VacanciesController : ControllerBase
                 continue;
             }
 
-            if (matchContext is { OpenForWork: false })
+            if (matchContext is not null && CandidateOpenForWorkGate.HidesMatchScores(matchContext))
             {
                 dto = dto with { OpenForWorkRequired = true };
             }
@@ -3305,7 +3305,7 @@ public class VacanciesController : ControllerBase
             return dto;
         }
 
-        if (!matchContext.OpenForWork)
+        if (CandidateOpenForWorkGate.HidesMatchScores(matchContext))
         {
             return dto with { OpenForWorkRequired = true };
         }

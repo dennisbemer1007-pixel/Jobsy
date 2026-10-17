@@ -180,8 +180,24 @@
             }
             <label>
                 Functietitel
-                <input @bind="_title" @bind:event="oninput" required />
+                <input @bind="_title" @bind:event="oninput" @bind:after="OnTitleInput" required />
             </label>
+            @if (!string.IsNullOrWhiteSpace(_occupationEscoLabel))
+            {
+                <div class="vac-wizard-field vac-wizard-occupation" data-testid="vacancy-occupation-esco">
+                    <p class="muted">Beroep voor “Een dag in het leven” (ESCO)</p>
+                    @if (_occupationEscoConfirmed)
+                    {
+                        <p class="vac-wizard-occupation__confirmed"><strong>@_occupationEscoLabel</strong></p>
+                        <button type="button" class="btn btn-ghost" @onclick="ClearOccupationEsco">Ander beroep kiezen</button>
+                    }
+                    else
+                    {
+                        <p>Bedoel je <strong>@_occupationEscoLabel</strong>?</p>
+                        <button type="button" class="btn btn-secondary" @onclick="ConfirmOccupationEsco">Ja, klopt</button>
+                    }
+                </div>
+            }
             @if (_isIntermediary)
             {
                 <div class="vacancy-category-summary" aria-live="polite">

@@ -22,6 +22,7 @@
 @using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
@@ -196,6 +197,8 @@
                             }
                         </div>
                     }
+
+                    <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
 
                     <div class="kb-facts-grid" aria-label="@Culture["Kb.Detail.FactsAria"]" data-testid="kb-facts-grid">
                         @if (HasHoursInfo)
@@ -1730,6 +1733,9 @@
             {
                 case VacancyLookup.FoundResult found:
                     _vacancy = found.Vacancy;
+                    _vacancy.EscoId = VacancyOccupationEsco.Resolve(
+                        _vacancy.Title,
+                        _vacancy.CategoryFields);
                     _closed = null;
                     _similar = [];
                     if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
@@ -1855,13 +1861,16 @@
                         prefs.DrivingLicenses,
                         _vacancy!.RequiredDrivingLicense);
                 var employerCount = prefs.Employers?.Count ?? 0;
-                var minEmployers = _vacancy?.MinimumEmployers is > 0 ? _vacancy.MinimumEmployers.Value : 1;
-                _profileHasEmployers = employerCount >= minEmployers;
+                var minEmployers = _vacancy?.MinimumEmployers is > 0 ? _vacancy.MinimumEmployers.Value : 0;
+                _profileHasEmployers = minEmployers == 0
+                    ? prefs.NoWorkExperience == true || employerCount > 0
+                    : employerCount >= minEmployers;
                 _profileHasEducation = !_requiresEducation
                     || EducationLevelLabels.CandidateMeetsRequirement(
                         prefs.Educations,
                         _vacancy!.RequiredEducation);
-                _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe);
+                _profileHasAboutMe = !string.IsNullOrWhiteSpace(prefs.AboutMe)
+                                     || !string.IsNullOrWhiteSpace(prefs.DefaultMotivation);
                 var neededRefs = _vacancy?.MinimumReferences is > 0 ? _vacancy.MinimumReferences.Value : 0;
                 _profileHasReferences = neededRefs == 0
                     || CandidateReferenceRules.CountComplete(

@@ -1162,6 +1162,17 @@
 }
 
 @media (min-width: 900px) {
+  .jobsy-discovery .kb-filter-bar {
+    display: none !important;
+  }
+
+  .kb-panel-head__filters,
+  .kb-filters-button {
+    position: relative;
+    z-index: 20;
+    pointer-events: auto;
+  }
+
   .jobsy-discovery.jobsy-discovery--list {
     grid-template-columns: 1fr;
   }

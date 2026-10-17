@@ -23,6 +23,31 @@ public sealed class UserNotificationService : IUserNotificationService
         NotificationCreateRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (request.RelatedEntityId is Guid relatedId
+            && !string.IsNullOrWhiteSpace(request.Category)
+            && !string.IsNullOrWhiteSpace(request.Title))
+        {
+            var cutoff = DateTime.UtcNow.AddHours(-24);
+            var duplicate = await _db.UserNotifications.AsNoTracking()
+                .AnyAsync(
+                    n => n.UserId == request.UserId
+                         && n.Category == request.Category
+                         && n.RelatedEntityId == relatedId
+                         && n.Title == request.Title
+                         && n.CreatedAtUtc >= cutoff,
+                    cancellationToken);
+            if (duplicate)
+            {
+                return await _db.UserNotifications.AsNoTracking()
+                    .Where(n => n.UserId == request.UserId
+                                && n.Category == request.Category
+                                && n.RelatedEntityId == relatedId
+                                && n.Title == request.Title)
+                    .OrderByDescending(n => n.CreatedAtUtc)
+                    .FirstAsync(cancellationToken);
+            }
+        }
+
         var row = new UserNotification
         {
             Id = Guid.NewGuid(),

@@ -50,6 +50,13 @@
         }
     </ol>
 
+    @if (Item is not null)
+    {
+        <WgAppPhase2AcceptPanel ApplicationId="Item.Id"
+                                CanWrite="CanWritePhase2"
+                                OnChanged="OnPhase2Changed" />
+    }
+
     <div class="wg-app-tabs" role="tablist">
         <button type="button" class="@(Tab == "profiel" ? "is-active" : null)" role="tab"
                 @onclick='() => SetTab("profiel")'>@Culture["WgApp.Tab.Profile"]</button>
@@ -61,12 +68,6 @@
 
     @if (Tab == "profiel")
     {
-        @if (Item is not null)
-        {
-            <WgAppPhase2AcceptPanel ApplicationId="Item.Id"
-                                    CanWrite="CanWritePhase2"
-                                    OnChanged="OnPhase2Changed" />
-        }
         <dl class="wg-app-facts">
             <div>
                 <dt>@Culture["WgApp.Fact.Travel"]</dt>

@@ -92,27 +92,44 @@ public sealed class PassportDnaReader : IPassportDnaReader
         var cultureItems = PassportDnaWords.CultureItems(cultureForItems, language, take: 4);
         var valueItems = PassportDnaWords.ValueItems(valuesForItems, language, take: 4);
 
+        var competenceDone = PassportDnaCompletion.LayerCompleted(
+            competency?.Status,
+            competenceDeep,
+            AssessmentKind.Competence);
+        var careerDone = PassportDnaCompletion.LayerCompleted(
+            career?.Status,
+            careerDeep,
+            AssessmentKind.Career);
+        var cultureDone = PassportDnaCompletion.LayerCompleted(
+            culture?.Status,
+            cultureDeep,
+            AssessmentKind.Culture);
+        var valuesDone = PassportDnaCompletion.LayerCompleted(
+            values?.Status,
+            valuesDeep,
+            AssessmentKind.Values);
+
         return
         [
             Layer(
                 PassportDnaLayer.Competence,
                 deepCompetency is not null ? competenceDeep!.CompletedAtUtc : competency?.CompletedAtUtc,
-                competenceScores is null,
+                !competenceDone,
                 competenceItems),
             Layer(
                 PassportDnaLayer.Career,
                 careerScores is not null ? careerDeep!.CompletedAtUtc : career?.CompletedAtUtc,
-                careerForItems is null,
+                !careerDone,
                 careerItems),
             Layer(
                 PassportDnaLayer.Culture,
                 cultureScores is not null ? cultureDeep!.CompletedAtUtc : culture?.CompletedAtUtc,
-                cultureForItems is null,
+                !cultureDone,
                 cultureItems),
             Layer(
                 PassportDnaLayer.Values,
                 valuesScores is not null ? valuesDeep!.CompletedAtUtc : values?.CompletedAtUtc,
-                valuesForItems is null,
+                !valuesDone,
                 valueItems)
         ];
     }

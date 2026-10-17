@@ -20892,6 +20892,16 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         padding-bottom: calc(56px + 88px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
     }
 
+    .app-shell:has(.kb-detail) .lobsy-coach-dock,
+    .app-shell:has(.notifications-page) .lobsy-coach-dock {
+        display: none !important;
+    }
+
+    .app-shell:has(.kb-detail) .app-main,
+    .app-shell:has(.notifications-page) .app-main {
+        padding-bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 16px + env(safe-area-inset-bottom, 0px));
+    }
+
     .lobsy-coach-dock {
         flex-direction: column;
         align-items: flex-end;

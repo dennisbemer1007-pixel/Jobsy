@@ -729,6 +729,7 @@
             if (_step >= 7 && _autosave is not null) await _autosave.FlushAsync();
             if (_step == 10)
             {
+                await FinalizeApplyReadinessAsync();
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;
@@ -1030,6 +1031,41 @@
     private Task SaveDreamAsync()
         => Api.SaveOnboardingDreamJobAsync(string.IsNullOrWhiteSpace(Draft.Dream) ? null : Draft.Dream.Trim());
 
+    private async Task FinalizeApplyReadinessAsync()
+    {
+        var about = BuildAboutMeSnippet();
+        await Api.UpdateMyProfileAsync(
+            openForWork: true,
+            preferences: new CandidatePreferences
+            {
+                AboutMe = about,
+                DefaultMotivation = string.IsNullOrWhiteSpace(about)
+                    ? "Ik solliciteer graag via Lobsy."
+                    : about
+            });
+    }
+
+    private string BuildAboutMeSnippet()
+    {
+        if (!string.IsNullOrWhiteSpace(Draft.Dream))
+        {
+            return $"Ik zoek werk dat past bij {Draft.Dream.Trim()}.";
+        }
+
+        var job = Draft.Jobs.FirstOrDefault(j =>
+            !string.IsNullOrWhiteSpace(j.EmployerName) || !string.IsNullOrWhiteSpace(j.Role));
+        if (job is not null)
+        {
+            var role = string.IsNullOrWhiteSpace(job.Role) ? "medewerker" : job.Role.Trim();
+            var employer = string.IsNullOrWhiteSpace(job.EmployerName) ? null : job.EmployerName.Trim();
+            return employer is null
+                ? $"Ik heb ervaring als {role}."
+                : $"Ik heb ervaring als {role} bij {employer}.";
+        }
+
+        return "Ik ben klaar om te solliciteren via Lobsy.";
+    }
+
     private async Task PrepareMiniAsync()
     {
         if (_autosave is not null)
@@ -1149,6 +1185,7 @@
         {
             if (_step == 10)
             {
+                await FinalizeApplyReadinessAsync();
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;

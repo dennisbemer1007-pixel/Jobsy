@@ -281,12 +281,22 @@ public static class PassportPdfModelBuilder
         bool showDnaBlocks)
     {
         var testsDone = facts.Dna.Count(layer => layer.Done);
+        var hasAvailabilitySignal = facts.OpenForWork
+                                    || facts.MinHours is not null
+                                    || facts.MaxHours is not null
+                                    || facts.AvailableFrom is not null
+                                    || (facts.Availability?.Count ?? 0) > 0;
         if (showDnaBlocks && (dnaLayers.Count > 0 || howWorkLines.Count > 0 || bestOutTips.Count > 0 || !string.IsNullOrWhiteSpace(ownWords)))
         {
             return false;
         }
 
         if (sectors.Count > 0 && testsDone >= 2)
+        {
+            return false;
+        }
+
+        if (testsDone >= 2 || hasAvailabilitySignal)
         {
             return false;
         }

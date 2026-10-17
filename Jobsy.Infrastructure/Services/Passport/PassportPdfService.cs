@@ -590,7 +590,7 @@ public sealed class PassportPdfService : IPassportPdfService
                 {
                     if (!string.IsNullOrWhiteSpace(model.Email))
                     {
-                        inner.Item().Text(model.Email).FontSize(8.5f);
+                        inner.Item().Text(FormatContactLine(model.Email)).FontSize(8.5f).LineHeight(1.15f);
                     }
 
                     if (!string.IsNullOrWhiteSpace(model.Phone))
@@ -1419,4 +1419,16 @@ public sealed class PassportPdfService : IPassportPdfService
         => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 12 12\">"
            + "<path d=\"M2 6.2 L5 9.2 L10 3.2\" fill=\"none\" stroke=\"" + strokeHex + "\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
            + "</svg>";
+
+    private static string FormatContactLine(string value)
+    {
+        var trimmed = value.Trim();
+        if (trimmed.Length <= 36 || !trimmed.Contains('@'))
+        {
+            return trimmed;
+        }
+
+        var at = trimmed.IndexOf('@');
+        return trimmed[..at] + "\n" + trimmed[at..];
+    }
 }

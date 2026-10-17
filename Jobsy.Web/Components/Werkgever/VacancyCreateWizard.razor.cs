@@ -5,6 +5,7 @@ using Jobsy.Web.Components.KandidaatBanen;
 using Jobsy.Web.KandidaatBanen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Media;
+using Jobsy.Core.Careers;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Features;
 using Jobsy.Web.Models;
@@ -103,6 +104,9 @@ public partial class VacancyCreateWizard : IDisposable
     public Guid? Edit { get; set; }
 
     private string _title = "";
+    private string? _occupationEscoId;
+    private string? _occupationEscoLabel;
+    private bool _occupationEscoConfirmed;
     private string _categoryId = "";
     private string _exclusivitySettingId = "";
     private List<ExclusivitySettingItem> _exclusivityOptions = [];
@@ -726,6 +730,14 @@ public partial class VacancyCreateWizard : IDisposable
                 _categoryFields = source.CategoryFields is { Count: > 0 }
                     ? new Dictionary<string, string>(source.CategoryFields, StringComparer.OrdinalIgnoreCase)
                     : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                if (_categoryFields.TryGetValue(VacancyCategoryExtraFields.OccupationEscoId, out var esco)
+                    && !string.IsNullOrWhiteSpace(esco)
+                    && OccupationCatalog.Shared.Get(esco.Trim()) is { } occ)
+                {
+                    _occupationEscoId = occ.Id;
+                    _occupationEscoLabel = occ.Nl;
+                    _occupationEscoConfirmed = true;
+                }
                 _suitableFor65Plus = source.SuitableFor65Plus;
             }
             OnCategoryChanged();
@@ -1592,6 +1604,46 @@ public partial class VacancyCreateWizard : IDisposable
         }
 
         _categoryFields[VacancyCategoryExtraFields.HoursPerWeek] = $"{min:0.#}–{max:0.#}";
+    }
+
+    private void OnTitleInput()
+    {
+        if (_occupationEscoConfirmed)
+        {
+            return;
+        }
+
+        var resolved = OccupationCatalog.Shared.Resolve(_title);
+        if (resolved is null)
+        {
+            _occupationEscoId = null;
+            _occupationEscoLabel = null;
+            _categoryFields.Remove(VacancyCategoryExtraFields.OccupationEscoId);
+            return;
+        }
+
+        _occupationEscoId = resolved.Id;
+        _occupationEscoLabel = resolved.Nl;
+    }
+
+    private void ConfirmOccupationEsco()
+    {
+        if (string.IsNullOrWhiteSpace(_occupationEscoId))
+        {
+            return;
+        }
+
+        _occupationEscoConfirmed = true;
+        _categoryFields[VacancyCategoryExtraFields.OccupationEscoId] = _occupationEscoId;
+    }
+
+    private void ClearOccupationEsco()
+    {
+        _occupationEscoConfirmed = false;
+        _occupationEscoId = null;
+        _occupationEscoLabel = null;
+        _categoryFields.Remove(VacancyCategoryExtraFields.OccupationEscoId);
+        OnTitleInput();
     }
 
     private void SyncHoursFromCategoryFields()
