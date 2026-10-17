@@ -234,16 +234,20 @@ function chromeBlock(badge, badgeClass, filtersDisabled, filtersOpen = false, pr
       </div>`;
 }
 
-function areaPanelBelowMin() {
-  return `
-          ${activeCandidatesBlock()}
-          <div class="kk-panel">
+function areaSparseRegionPanel() {
+  return `<div class="kk-panel">
             <h2>Regio Soest en Baarn</h2>
             <div class="kk-below-min">
               <p>Minder dan 30 kandidaten in dit gebied met deze filters.</p>
               <p class="kk-note">We tonen alleen gebieden met minimaal 30 matches na filtering. Verlaag de matchdrempel, kies ruimere uren of vergroot de reisafstand om dit gebied terug te zien.</p>
             </div>
           </div>`;
+}
+
+function areaPanelBelowMin() {
+  return `
+          ${activeCandidatesBlock()}
+          ${areaSparseRegionPanel()}`;
 }
 
 function areaPanel(selected = false) {
@@ -280,7 +284,7 @@ function mobileSheetContent(state, variant, locked) {
     return `<div class="kk-mobile-sheet__body">${activeCandidatesBlock()}<div class="kk-upsell"><b>Preview</b> Volledige filters en gebieden zodra marktinzicht actief is.</div></div>`;
   }
   if (state === "area-sparse") {
-    return `<div class="kk-mobile-sheet__body">${areaPanelBelowMin()}</div>`;
+    return `<div class="kk-mobile-sheet__body kk-mobile-sheet__body--sparse">${areaSparseRegionPanel()}</div>`;
   }
   if (state === "area" || state === "invite") {
     return `<div class="kk-mobile-sheet__body">${areaPanel(true)}</div>`;
@@ -331,7 +335,8 @@ function resolveState(state) {
 
 function mobileSheetMarkup(state, variant, locked) {
   if (locked) return "";
-  return `<div class="kk-mobile-sheet kk-mobile-sheet--${variant}">${mobileSheetContent(state, variant, locked)}</div>`;
+  const sparseClass = state === "area-sparse" ? " kk-mobile-sheet--sparse" : "";
+  return `<div class="kk-mobile-sheet kk-mobile-sheet--${variant}${sparseClass}">${mobileSheetContent(state, variant, locked)}</div>`;
 }
 
 function layoutA(state) {

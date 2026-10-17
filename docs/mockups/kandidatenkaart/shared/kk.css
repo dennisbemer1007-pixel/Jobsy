@@ -1264,6 +1264,31 @@ html.vp-mobile .kk-mobile-sheet__body {
     overflow: auto;
 }
 
+html.vp-mobile .kk-mobile-sheet--sparse {
+    flex: 0 1 auto;
+    max-height: 40vh;
+    height: auto;
+}
+
+html.vp-mobile .kk-mobile-sheet__body--sparse {
+    padding: 0.65rem 1rem 0.85rem;
+    overflow: visible;
+}
+
+html.vp-mobile .kk-mobile-sheet__body--sparse .kk-panel {
+    padding: var(--space-3) var(--space-4);
+}
+
+html.vp-mobile .kk-mobile-sheet__body--sparse .kk-panel h2 {
+    font-size: var(--text-md);
+    margin-bottom: var(--space-2);
+}
+
+html.vp-mobile .kk-mobile-sheet__body--sparse .kk-below-min .kk-note {
+    font-size: var(--text-xs);
+    line-height: 1.4;
+}
+
 html.vp-mobile .kk-mobile-sheet__body--list {
     max-height: 100%;
 }
