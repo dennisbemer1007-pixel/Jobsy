@@ -124,6 +124,7 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         if (_env.IsDevelopment())
         {
             await KandidatenkaartDemoSeed.EnsureAsync(_db, cancellationToken);
+            await KandidatenkaartDemoSeed.EnsureEmployerVacancyForMapAsync(_db, cancellationToken);
         }
 
         if (vacancyId is null)

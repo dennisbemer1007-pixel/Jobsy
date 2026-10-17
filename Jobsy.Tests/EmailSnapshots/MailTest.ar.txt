@@ -6,7 +6,7 @@ KIND: Essential
 This is a test email
 
 If you can read this, sending mail from ⁨acceptatie⁩ works (⁨Resend⁩: Resend
-or SMTP). Sent at ⁨2 أكتوبر 2026, 16:18⁩.
+or SMTP). Sent at ⁨17 أكتوبر 2026, 21:02⁩.
 
 Go to emails: https://lobsy.nl/admin/content/emails
 

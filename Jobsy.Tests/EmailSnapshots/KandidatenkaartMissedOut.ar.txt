@@ -1,36 +1,35 @@
 KEY: KandidatenkaartMissedOut
-SUBJECT: Vacature vervuld: Weekendhulp verkoop
-PREHEADER: Drie vergelijkbare vacatures
+SUBJECT: Vacancy filled: ⁨Weekendhulp verkoop⁩
+PREHEADER: Three similar vacancies
 KIND: Optional
 --- TEXT ---
-Hoi Alex,
+مرحبًا ⁨Alex⁩،
 
-Helaas, vacature vervuld
-========================
+Vacancy filled
 
-Weekendhulp verkoop bij Bakkerij De Gouden Korrel is inmiddels vervuld. Hier
-zijn drie vergelijkbare vacatures:
+⁨Weekendhulp verkoop⁩ at ⁨Bakkerij De Gouden Korrel⁩ has been filled. Here
+are three similar vacancies:
 
-• Weekendhulp verkoop (Bakkerij De Gouden Korrel)
+- ⁨Weekendhulp verkoop⁩ (⁨Bakkerij De Gouden Korrel⁩)
 
-Naar banenkaart: https://lobsy.nl/
+Open job map: https://lobsy.nl/
 
-Team Lobsy
+فريق Lobsy
 
-Je krijgt deze mail omdat je vacatures in de buurt wilt ontvangen.
-Geen herinneringen meer ontvangen? Afmelden: https://lobsy.nl/mail/afmelden
-Hulp: mailto:support@lobsy.nl
-Privacy: https://lobsy.nl/privacy
-Mail-instellingen: https://lobsy.nl/account/mail-instellingen
+تصلك هذه الرسالة لأنك تريد وظائف قريبة.
+لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك: https://lobsy.nl/mail/afmelden
+المساعدة: mailto:support@lobsy.nl
+الخصوصية: https://lobsy.nl/privacy
+إعدادات البريد: https://lobsy.nl/account/mail-instellingen
 Lobsy
 --- STRUCTURE ---
-h1: Helaas, vacature vervuld
+h1: Vacancy filled
 marker: table data-lobsy-layout=2
 marker: a data-lobsy-cta=
 a: Lobsy -> https://lobsy.nl
-a: Naar banenkaart -> https://lobsy.nl/
-a: Geen herinneringen meer ontvangen? Afmelden -> https://lobsy.nl/mail/afmelden
-a: Hulp -> mailto:support@lobsy.nl
-a: Privacy -> https://lobsy.nl/privacy
-a: Mail-instellingen -> https://lobsy.nl/account/mail-instellingen
+a: Open job map -> https://lobsy.nl/
+a: لا تريد تذكيرات بالبريد بعد الآن؟ إلغاء الاشتراك -> https://lobsy.nl/mail/afmelden
+a: المساعدة -> mailto:support@lobsy.nl
+a: الخصوصية -> https://lobsy.nl/privacy
+a: إعدادات البريد -> https://lobsy.nl/account/mail-instellingen
 img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

@@ -74,7 +74,7 @@ public static class EmailStringsKandidatenkaart
         ["Email.KkMissedOut.Heading"] = "Vacancy filled",
         ["Email.KkMissedOut.Eyebrow"] = "Missed out",
         ["Email.KkMissedOut.P1"] = "{0} at {1} has been filled. Here are three similar vacancies:",
-        ["Email.KkMissedOut.Item"] = "• {0} ({1})",
+        ["Email.KkMissedOut.Item"] = "- {0} ({1})",
         ["Email.KkMissedOut.Cta"] = "Open job map",
 
         ["Email.KkWithdrawn.Subject"] = "Invitation withdrawn: {0}",

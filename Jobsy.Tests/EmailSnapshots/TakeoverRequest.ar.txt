@@ -12,7 +12,7 @@ Alex de Tester :الاسم
 alex@voorbeeld.invalid :Email
 Bakkerij De Gouden Korrel :Branch
 000012345678 :Chamber of Commerce branch number
-2 أكتوبر 2026, 16:18 :Requested on
+17 أكتوبر 2026, 21:02 :Requested on
 
 Do you not know this person? Then reject the request.
 

@@ -23,9 +23,15 @@ public static partial class EmailStrings
             ["en"] = EmailStringsReferee.Merge(
                 Merge(Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")), EmailStringsKandidatenkaart.For("en")),
                 "en"),
-            ["pl"] = EmailStringsReferee.Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), "pl"),
-            ["ro"] = EmailStringsReferee.Merge(Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")), "ro"),
-            ["ar"] = EmailStringsReferee.Merge(Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar")), "ar")
+            ["pl"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), EmailStringsKandidatenkaart.For("en")),
+                "pl"),
+            ["ro"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")), EmailStringsKandidatenkaart.For("en")),
+                "ro"),
+            ["ar"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar")), EmailStringsKandidatenkaart.For("en")),
+                "ar")
         };
 
     private static IReadOnlyDictionary<string, string> Merge(

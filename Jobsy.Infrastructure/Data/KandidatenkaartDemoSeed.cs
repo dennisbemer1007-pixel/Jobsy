@@ -2,7 +2,6 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.ValueObjects;
 using Microsoft.EntityFrameworkCore;
-
 namespace Jobsy.Infrastructure.Data;
 
 /// <summary>
@@ -22,6 +21,109 @@ public static class KandidatenkaartDemoSeed
     ];
 
     public static IReadOnlyList<(string Key, string Label, double Lat, double Lng, int Count)> DemoAreas => Areas;
+
+    private static readonly Guid DemoEmployerCompanyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+    /// <summary>Aligns demo employer open vacancy with seeded candidate clusters (Amersfoort).</summary>
+    public static async Task EnsureEmployerVacancyForMapAsync(
+        JobsyDbContext db,
+        CancellationToken cancellationToken = default)
+    {
+        var anchor = new GeoPoint(52.1561, 5.3878);
+        var company = await db.Companies.FirstOrDefaultAsync(c => c.Id == DemoEmployerCompanyId, cancellationToken);
+        if (company is not null && company.Location is null)
+        {
+            company.Location = anchor;
+        }
+
+        var vacancy = await db.Vacancies
+            .Where(v => v.CompanyId == DemoEmployerCompanyId && v.Status == VacancyStatus.Active)
+            .OrderBy(v => v.CreatedAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (vacancy is null)
+        {
+            return;
+        }
+
+        vacancy.Location = anchor;
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>Seeds weekly-cap skips so invite preview shows cap messaging in evidence runs.</summary>
+    public static async Task EnsureWeeklyCapEvidenceAsync(
+        JobsyDbContext db,
+        CancellationToken cancellationToken = default)
+    {
+        var vacancy = await db.Vacancies.AsNoTracking()
+            .Where(v => v.CompanyId == DemoEmployerCompanyId && v.Status == VacancyStatus.Active)
+            .OrderBy(v => v.CreatedAtUtc)
+            .Select(v => new { v.Id, v.CompanyId })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (vacancy is null)
+        {
+            return;
+        }
+
+        var campaignId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01");
+        if (!await db.KandidatenkaartInviteCampaigns.AnyAsync(c => c.Id == campaignId, cancellationToken))
+        {
+            var now = DateTime.UtcNow;
+            db.KandidatenkaartInviteCampaigns.Add(new KandidatenkaartInviteCampaign
+            {
+                Id = campaignId,
+                VacancyId = vacancy.Id,
+                CompanyId = vacancy.CompanyId,
+                AreaKey = "kk-evidence",
+                AreaLabel = "Evidence",
+                MinMatchPercent = 70,
+                MaxTravelKm = 60,
+                Status = KandidatenkaartCampaignStatus.Completed,
+                CurrentRound = 1,
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
+            });
+            await db.SaveChangesAsync(cancellationToken);
+        }
+
+        var weekStart = DateTime.UtcNow.AddDays(-3);
+        var cappedIds = await db.Users.AsNoTracking()
+            .Where(u => u.IsTestAccount && u.Email.StartsWith("kk-demo-amersfoort"))
+            .OrderBy(u => u.Email)
+            .Select(u => u.Id)
+            .Take(4)
+            .ToListAsync(cancellationToken);
+        if (cappedIds.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var userId in cappedIds)
+        {
+            var count = await db.KandidatenkaartInviteDeliveries.CountAsync(
+                d => d.CandidateUserId == userId && d.SentAtUtc >= weekStart.AddDays(-4),
+                cancellationToken);
+            if (count >= 2)
+            {
+                continue;
+            }
+
+            for (var i = count; i < 2; i++)
+            {
+                db.KandidatenkaartInviteDeliveries.Add(new KandidatenkaartInviteDelivery
+                {
+                    Id = Guid.NewGuid(),
+                    CampaignId = campaignId,
+                    CandidateUserId = userId,
+                    SentAtUtc = weekStart.AddHours(i),
+                    Status = KandidatenkaartInviteDeliveryStatus.Sent,
+                    MatchPercent = 80,
+                    RoundNumber = 1
+                });
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
 
     public static async Task EnsureAsync(JobsyDbContext db, CancellationToken cancellationToken = default)
     {

@@ -1711,6 +1711,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateProactiveMatchingSettings.RemoveRange(proactiveSettings);
         }
 
+        var kkSettings = await _db.CandidateKandidatenkaartSettings
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (kkSettings.Count > 0)
+        {
+            _db.CandidateKandidatenkaartSettings.RemoveRange(kkSettings);
+        }
+
+        var kkDeliveries = await _db.KandidatenkaartInviteDeliveries
+            .Where(d => d.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (kkDeliveries.Count > 0)
+        {
+            _db.KandidatenkaartInviteDeliveries.RemoveRange(kkDeliveries);
+        }
+
         var proactiveSuggestions = await _db.ProactiveMatchSuggestions
             .Where(s => s.CandidateUserId == user.Id)
             .ToListAsync(cancellationToken);

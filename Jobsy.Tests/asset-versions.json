@@ -192,7 +192,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "52e5edf29756508656f2011cddf83942fcac2e08af38bea54b6868492f080a79",
+    "sha256": "1fdc47c9aee5e8d982a2ff0347ce9eb08e298e9e40439e120d8e487168d55435",
     "v": "20261017-03"
   },
   "js/app-extras.js": {
@@ -233,7 +233,7 @@
   },
   "js/jobMap.min.js": {
     "sha256": "7e357c5572ebf04021a69d5442f5fb68505d6b54e2270678d05784cdcb58e97e",
-    "v": "20261017-kk01"
+    "v": "20261017-04"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",
