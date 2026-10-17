@@ -128,6 +128,38 @@ public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Chrome_sheet_v3_screenshots_with_copy_confirmation()
+    {
+        using var web = new PwaInstallWebFactory();
+        var signIn = web.EnsureServerAddress() + "/__test/sign-in?return=/candidate/applications";
+        const string v3 = "/cursor/stores/self/pwa-install/v3";
+        Directory.CreateDirectory(v3);
+
+        await using var samsungCtx = await NewContextAsync(
+            390, 844, mobile: true, samsung: true, ios: false, standalone: false, deviceScaleFactor: 2);
+        await samsungCtx.GrantPermissionsAsync(["clipboard-read", "clipboard-write"]);
+        var samsung = await samsungCtx.NewPageAsync();
+        await samsung.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(samsung);
+        await samsung.Locator("[data-testid=pwa-install-entry-btn]").ClickAsync();
+        await samsung.Locator("[data-testid=pwa-install-sheet]").WaitForAsync();
+        await samsung.GetByRole(AriaRole.Button, new() { Name = "Link kopiëren" }).ClickAsync();
+        await samsung.Locator("[data-testid=pwa-copy-confirm]").WaitForAsync();
+        await SaveJpegToDirAsync(samsung, v3, "sheet-samsung-390.jpg");
+
+        await using var desktopCtx = await NewContextAsync(1440, 900, mobile: false, samsung: true, ios: false, standalone: false);
+        await desktopCtx.GrantPermissionsAsync(["clipboard-read", "clipboard-write"]);
+        var desktop = await desktopCtx.NewPageAsync();
+        await desktop.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(desktop);
+        await desktop.Locator("[data-testid=pwa-install-entry-btn]").ClickAsync();
+        await desktop.Locator("[data-testid=pwa-install-sheet]").WaitForAsync();
+        await desktop.GetByRole(AriaRole.Button, new() { Name = "Link kopiëren" }).ClickAsync();
+        await desktop.Locator("[data-testid=pwa-copy-confirm]").WaitForAsync();
+        await SaveJpegToDirAsync(desktop, v3, "sheet-desktop-1440.jpg");
+    }
+
+    [Fact]
     public async Task Desktop_sheet_centered_modal_at_1440()
     {
         using var web = new PwaInstallWebFactory();
@@ -218,10 +250,14 @@ public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
         return ctx;
     }
 
-    private static async Task SaveJpegAsync(IPage page, string fileName, bool clipHeader = false, string? clipSelector = null)
+    private static Task SaveJpegToDirAsync(IPage page, string dir, string fileName, bool clipHeader = false, string? clipSelector = null)
+        => SaveJpegAsync(page, fileName, clipHeader, clipSelector, dir);
+
+    private static async Task SaveJpegAsync(IPage page, string fileName, bool clipHeader = false, string? clipSelector = null, string? dir = null)
     {
-        var pngPath = Path.Combine(ScreenshotDir, Path.ChangeExtension(fileName, ".png"));
-        var jpgPath = Path.Combine(ScreenshotDir, fileName);
+        dir ??= ScreenshotDir;
+        var pngPath = Path.Combine(dir, Path.ChangeExtension(fileName, ".png"));
+        var jpgPath = Path.Combine(dir, fileName);
         if (clipHeader)
         {
             var header = page.Locator(".app-header");

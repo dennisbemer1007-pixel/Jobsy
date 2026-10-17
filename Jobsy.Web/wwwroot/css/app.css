@@ -20622,8 +20622,9 @@ html:not(.cookie-consent-known) .login-modal__dialog {
 }
 
 .pwa-entry-sheet__secondary {
-    display: block;
+    display: flex;
     width: 100%;
+    margin-top: 0.15rem;
 }
 
 .pwa-entry-sheet__msg {

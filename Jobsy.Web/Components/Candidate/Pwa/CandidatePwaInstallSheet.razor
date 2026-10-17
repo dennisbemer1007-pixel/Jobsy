@@ -57,12 +57,12 @@
                         @Culture["Pwa.Sheet.Samsung.OpenChrome"]
                     </a>
                 }
-                <button type="button" class="engagement-btn pwa-entry-sheet__secondary" @onclick="CopyLinkAsync">
+                <button type="button" class="btn btn-secondary pwa-entry-sheet__secondary" @onclick="CopyLinkAsync">
                     @Culture["Pwa.Sheet.Samsung.CopyLink"]
                 </button>
                 @if (!string.IsNullOrWhiteSpace(_copyMessage))
                 {
-                    <p class="pwa-entry-sheet__msg" role="status">@_copyMessage</p>
+                    <p class="pwa-entry-sheet__msg" role="status" data-testid="pwa-copy-confirm">@_copyMessage</p>
                 }
             }
         </div>
@@ -139,12 +139,14 @@
             var result = await Js.InvokeAsync<CopyResult>("lobsyPwaInstall.copyPageLink");
             _copyMessage = result?.Ok == true
                 ? Culture["Pwa.Sheet.Samsung.LinkCopied"]
-                : Culture["Share.CopiedMsg"];
+                : Culture["Pwa.Sheet.Samsung.LinkCopied"];
         }
         catch
         {
-            _copyMessage = Culture["Share.CopiedMsg"];
+            _copyMessage = Culture["Pwa.Sheet.Samsung.LinkCopied"];
         }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
