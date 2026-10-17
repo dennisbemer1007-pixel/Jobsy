@@ -40,6 +40,12 @@ public sealed class PassportPdfDownload
         var preferences = MeController.ParsePreferences(user.PreferencesJson);
         var language = JobsyLanguages.Normalize(preferences.Language);
         var layers = await _dna.ReadAsync(user.Id, language, cancellationToken);
+        if (!PassportDnaCompletion.AllLayersCompleted(layers))
+        {
+            throw new InvalidOperationException(
+                "DNA-paspoort requires all four DNA layers to be completed.");
+        }
+
         var facts = PassportPdfFactsFactory.FromUser(
             user,
             preferences,

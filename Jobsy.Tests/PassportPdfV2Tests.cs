@@ -205,6 +205,8 @@ public class PassportPdfV2Tests
         Assert.DoesNotContain("%", text, StringComparison.Ordinal);
         Assert.DoesNotContain("scoor", text, StringComparison.OrdinalIgnoreCase);
         Assert.Equal("Activiteitenbegeleider in Seghwaert (Zoetermeer)", fits[0].Title);
+        Assert.Contains("Zorggroep Voorbeeld", fits[0].Why, StringComparison.Ordinal);
+        Assert.DoesNotContain("Innovatie", fits[0].Why, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("…", fits[0].Why, StringComparison.Ordinal);
     }
 

@@ -50,6 +50,44 @@ public class PassportPdfV3DeepCandidateTests
             InnovatiePercent = 41,
             ExtraversiePercent = 60
         });
+        db.CandidateCareerInterests.Add(new CandidateCareerInterest
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            CompletedAtUtc = completedAt,
+            RealisticPercent = 70,
+            InvestigativePercent = 10,
+            ArtisticPercent = 11,
+            SocialPercent = 12,
+            EnterprisingPercent = 13,
+            ConventionalPercent = 14
+        });
+        db.CandidateCulturePersonalityProfiles.Add(new CandidateCulturePersonalityProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            CompletedAtUtc = completedAt,
+            AutonomyPercent = 10,
+            InformalPercent = 20,
+            CollaborationPercent = 90,
+            FlexibilityPercent = 30,
+            InnovationPercent = 40,
+            PeopleFirstPercent = 50
+        });
+        db.CandidateValuesProfiles.Add(new CandidateValuesProfile
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Status = CandidateCompetencyStatuses.Completed,
+            CompletedAtUtc = completedAt,
+            AutonomyPercent = 10,
+            ConnectionPercent = 20,
+            AchievementPercent = 30,
+            StabilityPercent = 90,
+            ImpactPercent = 40
+        });
 
         var deepAnswers = DeepAnalysisCatalog.Questions.ToDictionary(q => q.Id, _ => 4);
         var deepReport = CompetenceDeepReportBuilder.Build(

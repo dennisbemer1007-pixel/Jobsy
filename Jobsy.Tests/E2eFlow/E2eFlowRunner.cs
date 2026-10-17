@@ -923,14 +923,25 @@ internal sealed class E2eFlowRunner
         if (pdf is { Length: > 5000 })
         {
             var kind = ClassifyDownloadedCandidatePdf(pdf);
-            var baseName = kind == "paspoort" ? $"paspoort-all-tests-{tag}" : $"lobsy-cv-self-{tag}";
+            if (kind != "paspoort")
+            {
+                throw new InvalidOperationException(
+                    "Expected DNA-paspoort PDF after seeding 4/4 DNA; got Lobsy-CV or unknown document.");
+            }
+
+            var baseName = $"paspoort-all-tests-{tag}";
             var pdfPath = Path.Combine(PdfDir, $"{baseName}.pdf");
             await File.WriteAllBytesAsync(pdfPath, pdf);
             RenderAllPdfPages(pdfPath, baseName);
-            if (kind == "paspoort")
+            _report.PaspoortBesluit21Ok = VerifyPaspoortBesluit21(pdfPath);
+            if (!_report.PaspoortBesluit21Ok)
             {
-                _report.PaspoortBesluit21Ok = VerifyPaspoortBesluit21(pdfPath);
+                throw new InvalidOperationException("Paspoort PDF failed recruiter Besluit 21 text checks.");
             }
+        }
+        else
+        {
+            throw new InvalidOperationException("Could not download DNA-paspoort PDF after seeding 4/4 DNA.");
         }
 
         var edits = new StringBuilder();
@@ -1633,6 +1644,7 @@ internal sealed class E2eFlowRunner
             {"roles":["Orderpicker","Magazijnmedewerker"],"maxTravelMinutes":35,"preferredTransport":"Fiets","language":"nl","aboutMe":"Ik werk graag gestructureerd in een team. Betrouwbaar, fysiek fit en punctueel.","drivingLicenses":["B"],"availability":{"Ma":["Ochtend","Middag"],"Di":["Ochtend"],"Wo":["Middag"],"Do":["Ochtend","Middag"],"Vr":["Ochtend"]},"employers":[{"employerName":"GreenPack Logistiek","role":"Orderpicker","startMonth":"2022-03","endMonth":"2024-08"},{"employerName":"Westland Fresh DC","role":"Magazijnmedewerker","startMonth":"2024-09"}],"educations":["MBO Logistiek niveau 2"],"homeAddress":"Voorbeeldstraat 12, 2671 AB Naaldwijk","minHoursPerWeek":32,"maxHoursPerWeek":40,"certificates":[{"name":"Heftruckcertificaat","year":2023},{"name":"VCA Basis","year":2022}],"spokenLanguages":[{"code":"nl","level":"vloeiend"},{"code":"en","level":"basis"}],"dutchLevel":"vloeiend","workPreferences":{"indoor":"prefer","outdoor":"ok-not-frost","physicalWork":"lifting-15","pace":"norm-ok"},"shareEmployerPreferences":true,"employerPreferences":["small-team","vaste-uren"],"workRegion":"Westland","hasOwnCar":false,"contractPreferences":["vast"],"defaultMotivation":"Graag meewerken in jullie team — ervaring in orderpicken en heftruck."}
             """;
         user.OpenForWork = true;
+        user.EmailVerifiedAtUtc ??= done;
         if (string.IsNullOrWhiteSpace(user.FullName))
         {
             user.FullName = "E2E Kandidaat Paspoort";
@@ -1654,9 +1666,16 @@ internal sealed class E2eFlowRunner
             return null;
         }
 
+        var dnaReader = new PassportDnaReader(db);
+        var layers = await dnaReader.ReadAsync(user.Id, "nl", CancellationToken.None);
+        if (!PassportDnaCompletion.AllLayersCompleted(layers))
+        {
+            return null;
+        }
+
         var download = new PassportPdfDownload(
             db,
-            new PassportDnaReader(db),
+            dnaReader,
             new PassportPdfService(new E2ePassportCompanySettings()),
             new SnapshotOnlyCompetencyService(db));
         var file = await download.ForCandidateAsync(
@@ -1693,8 +1712,17 @@ internal sealed class E2eFlowRunner
             "DNA-paspoort · student",
             "Stages en bijbanen",
             "%",
-            "scoor"
+            "scoor",
+            "0/4 DNA-tests",
+            "Wie ben ik",
+            "Jouw sterke",
+            "Uit je tests"
         };
+        if (!text.Contains("4/4 DNA-tests", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
         return forbidden.All(marker => !text.Contains(marker, StringComparison.OrdinalIgnoreCase));
     }
 
