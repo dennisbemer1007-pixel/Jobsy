@@ -124,8 +124,15 @@
   padding: 0.75rem 1rem;
   font: inherit;
   font-size: 0.95rem;
+  font-weight: 400;
   color: var(--text);
   background: color-mix(in srgb, var(--pearl) 62%, var(--surface));
+}
+
+.pub-theme .pub-signup .login-form input::placeholder,
+.pub-theme .pub-signup__form input::placeholder {
+  font-weight: 400;
+  color: var(--muted);
 }
 
 .pub-theme .pub-signup .login-form input:focus,

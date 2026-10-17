@@ -20,8 +20,8 @@
     "v": "20261004-10"
   },
   "css/features/auth.css": {
-    "sha256": "3388f3f86c22de763eab34d89641cef75fa0ea83e621d5a4d4373acc182a6f4c",
-    "v": "20261004-10"
+    "sha256": "19d393a63d6604f3a210cd0e67d18c3b6896c868d6a4f6a77be6ee9ff69ad05d",
+    "v": "20261017-01"
   },
   "css/features/banenkaart.css": {
     "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
@@ -40,8 +40,8 @@
     "v": "20261015-06"
   },
   "css/features/cookie-consent.css": {
-    "sha256": "8d75d5b9dc0693d5b7168675b888e782962caf16e0e9feb89045d9252b2ea3e7",
-    "v": "20261017-03"
+    "sha256": "11ac022ea3ed9673587aed89826aa8d9fd982b9c9a5809c3f13c00abdd923b9d",
+    "v": "20261017-05"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
@@ -152,8 +152,8 @@
     "v": "20261004-14"
   },
   "css/features/signup-static.css": {
-    "sha256": "69fb31ce94f4b6cf16f62b44516b7196b4e069c3f4ff3bff4717fbc7d3a2a19c",
-    "v": "20261017-01"
+    "sha256": "cdd2f33c74d431384e54de029ec7984ec3f30660aad88c34eba95f89cdd963f6",
+    "v": "20261017-02"
   },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",

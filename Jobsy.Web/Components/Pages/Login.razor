@@ -223,6 +223,14 @@
                     }
                 </form>
 
+                <p class="pub-signup__consent">
+                    @((MarkupString)string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        Culture["Signup.Consent"],
+                        $"<a class=\"auth-link\" href=\"{PublicRoutes.UsageTerms}\">{Culture["Signup.ConsentTerms"]}</a>",
+                        $"<a class=\"auth-link\" href=\"{PublicRoutes.Privacy}\">{Culture["Signup.ConsentPrivacy"]}</a>"))
+                </p>
+
                 <div class="au-foot">
                     <p>
                         @Culture["Login.CreateAccountLead"]
