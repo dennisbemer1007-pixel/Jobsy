@@ -287,10 +287,22 @@ internal sealed class E2eFlowRunner
                     if (await saveDob.CountAsync() > 0)
                     {
                         await saveDob.ClickAsync();
-                        await page.WaitForTimeoutAsync(2500);
+                        await page.WaitForFunctionAsync(
+                            """
+                            () => {
+                              const dob = document.getElementById('dob');
+                              if (!dob) return true;
+                              const style = window.getComputedStyle(dob);
+                              return style.display === 'none' || style.visibility === 'hidden' || style.height === '0px';
+                            }
+                            """,
+                            null,
+                            new() { Timeout = 45_000 });
                     }
                 }
 
+                await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
                 await OpenVacancyApplyPanelAsync(page);
                 try
                 {
@@ -1208,12 +1220,26 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(2000);
         }
 
-        var phase2Accept = phase2Panel.Locator("button.btn-compact--primary").First;
+        var phase2Accept = page.Locator("[data-testid=wg-phase2-panel] button.btn-compact--primary").First;
         if (await phase2Accept.CountAsync() > 0 && await phase2Accept.IsVisibleAsync())
         {
             await phase2Accept.ScrollIntoViewIfNeededAsync();
             await phase2Accept.ClickAsync();
             await page.WaitForTimeoutAsync(2500);
+            await Shot(page, "desktop-1440", "11-accept-open");
+            await ReloadSelectedPhase2Async(page);
+            return;
+        }
+
+        var footerAccept = page.Locator("[data-testid=wg-app-footer] button.btn-compact--primary").First;
+        if (await footerAccept.CountAsync() > 0 && await footerAccept.IsVisibleAsync())
+        {
+            await footerAccept.ClickAsync();
+            await page.WaitForTimeoutAsync(2500);
+            await TryAcceptPhase2ViaApiAsync(page, applicationId);
+            await page.GotoAsync(sollicitatieUrl);
+            await KbE2e.WaitForStyledAppAsync(page);
+            await page.WaitForTimeoutAsync(2000);
             await Shot(page, "desktop-1440", "11-accept-open");
             await ReloadSelectedPhase2Async(page);
             return;
@@ -1243,49 +1269,29 @@ internal sealed class E2eFlowRunner
 
     private async Task<bool> TryAcceptPhase2ViaApiAsync(IPage page, Guid applicationId)
     {
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"{EmployerApiBase()}/api/employer-phase2/applications/{applicationId:D}/accept");
-        await ApplyBrowserCookiesAsync(page, request);
-        using var response = await http.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
+        var url = $"{EmployerPhase2ApiBase()}/api/employer-phase2/applications/{applicationId:D}/accept";
+        var response = await page.Context.APIRequest.PostAsync(url);
+        if (!response.Ok)
         {
-            var detail = await response.Content.ReadAsStringAsync();
+            var detail = await response.TextAsync();
             _report.SmtpNote = (_report.SmtpNote ?? "")
-                               + $" phase2-accept:{(int)response.StatusCode} {detail[..Math.Min(detail.Length, 120)]};";
+                               + $" phase2-accept:{response.Status} {detail[..Math.Min(detail.Length, 120)]};";
         }
 
-        return response.IsSuccessStatusCode;
+        return response.Ok;
     }
 
     private async Task<bool> TryChooseMaqqieViaApiAsync(IPage page, Guid applicationId)
     {
-        using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        using var request = new HttpRequestMessage(
-            HttpMethod.Post,
-            $"{EmployerApiBase()}/api/employer-phase2/applications/{applicationId:D}/employment-mode")
-        {
-            Content = JsonContent.Create(new { mode = PlacementEmploymentMode.Maqqie })
-        };
-        await ApplyBrowserCookiesAsync(page, request);
-        using var response = await http.SendAsync(request);
-        return response.IsSuccessStatusCode;
+        var url = $"{EmployerPhase2ApiBase()}/api/employer-phase2/applications/{applicationId:D}/employment-mode";
+        var response = await page.Context.APIRequest.PostAsync(
+            url,
+            new() { DataObject = new { mode = PlacementEmploymentMode.Maqqie } });
+        return response.Ok;
     }
 
-    private async Task ApplyBrowserCookiesAsync(IPage page, HttpRequestMessage request)
-    {
-        var webCookies = await page.Context.CookiesAsync(_baseUrl);
-        var apiCookies = await page.Context.CookiesAsync(EmployerApiBase());
-        var merged = webCookies.Concat(apiCookies)
-            .GroupBy(c => c.Name, StringComparer.Ordinal)
-            .Select(g => g.First())
-            .Select(c => $"{c.Name}={c.Value}");
-        request.Headers.Add("Cookie", string.Join("; ", merged));
-    }
-
-    private string EmployerApiBase()
-        => _baseUrl.TrimEnd('/');
+    private string EmployerPhase2ApiBase()
+        => _baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal).TrimEnd('/');
 
     private static async Task ReloadSelectedPhase2Async(IPage page)
     {
