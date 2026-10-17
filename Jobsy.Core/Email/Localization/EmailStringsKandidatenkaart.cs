@@ -8,7 +8,7 @@ public static class EmailStringsKandidatenkaart
     private static readonly IReadOnlyDictionary<string, string> Nl = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Email.KkInviteBundled.Subject"] = "Uitnodiging om te solliciteren: {0}",
-        ["Email.KkInviteBundled.Preheader"] = "Match {0}% — bekijk de vacature",
+        ["Email.KkInviteBundled.Preheader"] = "Match {0}% - bekijk de vacature",
         ["Email.KkInviteBundled.Heading"] = "Werkgever nodigt je uit",
         ["Email.KkInviteBundled.Eyebrow"] = "Kandidatenkaart",
         ["Email.KkInviteBundled.P1"] = "{0} nodigt je uit om te solliciteren op {1} (match {2}%).",
@@ -48,7 +48,7 @@ public static class EmailStringsKandidatenkaart
     private static readonly IReadOnlyDictionary<string, string> En = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Email.KkInviteBundled.Subject"] = "Invitation to apply: {0}",
-        ["Email.KkInviteBundled.Preheader"] = "Match {0}% — view the vacancy",
+        ["Email.KkInviteBundled.Preheader"] = "Match {0}% - view the vacancy",
         ["Email.KkInviteBundled.Heading"] = "An employer invited you",
         ["Email.KkInviteBundled.Eyebrow"] = "Candidate map",
         ["Email.KkInviteBundled.P1"] = "{0} invited you to apply for {1} ({2}% match).",

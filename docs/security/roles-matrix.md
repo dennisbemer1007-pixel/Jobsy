@@ -85,6 +85,7 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `/werkgever/uren` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/talentpool` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary` |
 | `/werkgever/kandidaatinzichten` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager` |
+| `/werkgever/kandidatenkaart` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager` |
 | `/werkgever/organisatie/vestigingen` | ● | ◐ | — | `RegionalManager,EnterpriseManager,Admin` |
 | `/werkgever/organisatie/team` | ● | — | — | `EnterpriseManager,Admin` |
 | `/werkgever/organisatie/profiel` | ● | — | ◯ | `BranchManager,EnterpriseManager,Admin,Intermediary` |

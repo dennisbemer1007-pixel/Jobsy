@@ -4273,7 +4273,7 @@ window.jobMap = (function () {
             try {
                 map.fitBounds(bounds, {
                     padding: kkFitPadding(),
-                    maxZoom: 10.25,
+                    maxZoom: 9.75,
                     animate: animate === true && !prefersReducedMotion(),
                     duration: animate === true && !prefersReducedMotion() ? 450 : 0
                 });

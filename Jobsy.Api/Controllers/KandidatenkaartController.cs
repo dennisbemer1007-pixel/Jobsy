@@ -99,6 +99,7 @@ public sealed class KandidatenkaartController : ControllerBase
     }
 
     [HttpPost("invite")]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [EnableRateLimiting("authenticated-write")]
     [RequiresVerifiedCompany]
     public async Task<ActionResult<KandidatenkaartInviteResultDto>> StartInvite(

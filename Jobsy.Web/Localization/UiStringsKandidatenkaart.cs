@@ -41,7 +41,7 @@ public static class UiStringsKandidatenkaart
         Add("Kk.Mobile.AreasPeek", "Gebieden in de buurt van je vacature", "Areas near your vacancy");
         Add("Kk.Invite.Open", "Uitnodigen om te solliciteren", "Invite to apply");
         Add("Kk.Invite.PreviewTitle", "Uitnodiging voor gebied", "Invite for area");
-        Add("Kk.Invite.ModalLead", "Uitnodigingen voor {0} — alleen kandidaten die aan de drempels voldoen.", "Invites for {0} — only candidates who meet the thresholds.");
+        Add("Kk.Invite.ModalLead", "Uitnodigingen voor {0} - alleen kandidaten die aan de drempels voldoen.", "Invites for {0} - only candidates who meet the thresholds.");
         Add("Kk.Invite.StatInvited", "Uitnodigingen ({0}%+ match)", "Invitations ({0}%+ match)");
         Add("Kk.Invite.StatWeeklyCap", "Overgeslagen (weeklimiet)", "Skipped (weekly cap)");
         Add("Kk.Invite.StatBelowInvite", "In gebied onder {0}% (geen uitnodiging)", "In area below {0}% (no invite)");
@@ -62,7 +62,7 @@ public static class UiStringsKandidatenkaart
         Add("Kk.Settings.Normal", "Normaal (max. 2 per week)", "Normal (max. 2 per week)");
         Add("Kk.Settings.Max", "Maximaal (max. 3 per week)", "Maximum (max. 3 per week)");
         Add("Kk.ReAvail.Title", "Weer vindbaar op de kaart?", "Visible on the map again?");
-        Add("Kk.ReAvail.Body", "Je stond op niet beschikbaar. Geen probleem — zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart, als jij dat wilt.", "You were marked unavailable. No worries — when you're discoverable again, you can rejoin the candidate map if you want.");
+        Add("Kk.ReAvail.Body", "Je stond op niet beschikbaar. Geen probleem - zodra je weer vindbaar bent, kun je opnieuw meedoen op de kandidatenkaart, als jij dat wilt.", "You were marked unavailable. No worries - when you're discoverable again, you can rejoin the candidate map if you want.");
         Add("Kk.ReAvail.Yes", "Ja, ik ben weer vindbaar", "Yes, I'm discoverable again");
         Add("Kk.ReAvail.Later", "Later", "Later");
         Add("AdminSettings.Kandidatenkaart.Enabled.Title", "Kandidatenkaart (werkgever)", "Candidate map (employer)");
