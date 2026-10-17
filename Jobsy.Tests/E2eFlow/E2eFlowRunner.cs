@@ -4,11 +4,17 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using Jobsy.Api.Passport;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
+using Jobsy.Core.Interfaces;
+using Jobsy.Core.Passport;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services.Passport;
 using Jobsy.Tests.E2e;
 using Microsoft.EntityFrameworkCore;
 using Jobsy.Tests.Werkgever;
@@ -801,6 +807,13 @@ internal sealed class E2eFlowRunner
 
         FixEvidencePublisher.PublishItem("09-notification-lists-dedupe", "10-employer-meldingen", "13-candidate-notifications");
 
+        var paspoortEvidence = Path.Combine(PdfDir, "paspoort-all-tests-desktop-1440.pdf");
+        if (!File.Exists(paspoortEvidence) || !_report.PaspoortBesluit21Ok)
+        {
+            throw new InvalidOperationException(
+                $"Paspoort PDF evidence missing or failed recruiter copy checks: {paspoortEvidence}");
+        }
+
         await File.WriteAllTextAsync(
             Path.Combine(Root, "metrics.json"),
             JsonSerializer.Serialize(_report, new JsonSerializerOptions { WriteIndented = true }));
@@ -900,6 +913,11 @@ internal sealed class E2eFlowRunner
             }
 
             await page.WaitForTimeoutAsync(2000);
+        }
+
+        if (pdf is null or { Length: <= 5000 } || ClassifyDownloadedCandidatePdf(pdf!) != "paspoort")
+        {
+            pdf = await FetchPaspoortPdfViaDbAsync(chainEmail);
         }
 
         if (pdf is { Length: > 5000 })
@@ -1604,6 +1622,13 @@ internal sealed class E2eFlowRunner
         await EnsureCultureAsync();
         await EnsureValuesAsync();
 
+        var features = await db.PlatformFeatureSettings.FirstOrDefaultAsync();
+        if (features is not null)
+        {
+            features.PassportPdfV2Enabled = true;
+            features.PassportPdfDnaBlocksEnabled = true;
+        }
+
         user.PreferencesJson = """
             {"roles":["Orderpicker","Magazijnmedewerker"],"maxTravelMinutes":35,"preferredTransport":"Fiets","language":"nl","aboutMe":"Ik werk graag gestructureerd in een team. Betrouwbaar, fysiek fit en punctueel.","drivingLicenses":["B"],"availability":{"Ma":["Ochtend","Middag"],"Di":["Ochtend"],"Wo":["Middag"],"Do":["Ochtend","Middag"],"Vr":["Ochtend"]},"employers":[{"employerName":"GreenPack Logistiek","role":"Orderpicker","startMonth":"2022-03","endMonth":"2024-08"},{"employerName":"Westland Fresh DC","role":"Magazijnmedewerker","startMonth":"2024-09"}],"educations":["MBO Logistiek niveau 2"],"homeAddress":"Voorbeeldstraat 12, 2671 AB Naaldwijk","minHoursPerWeek":32,"maxHoursPerWeek":40,"certificates":[{"name":"Heftruckcertificaat","year":2023},{"name":"VCA Basis","year":2022}],"spokenLanguages":[{"code":"nl","level":"vloeiend"},{"code":"en","level":"basis"}],"dutchLevel":"vloeiend","workPreferences":{"indoor":"prefer","outdoor":"ok-not-frost","physicalWork":"lifting-15","pace":"norm-ok"},"shareEmployerPreferences":true,"employerPreferences":["small-team","vaste-uren"],"workRegion":"Westland","hasOwnCar":false,"contractPreferences":["vast"],"defaultMotivation":"Graag meewerken in jullie team — ervaring in orderpicken en heftruck."}
             """;
@@ -1614,6 +1639,32 @@ internal sealed class E2eFlowRunner
         }
 
         await db.SaveChangesAsync();
+    }
+
+    private async Task<byte[]?> FetchPaspoortPdfViaDbAsync(string email)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(_conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = email.Trim().ToLowerInvariant();
+        var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return null;
+        }
+
+        var download = new PassportPdfDownload(
+            db,
+            new PassportDnaReader(db),
+            new PassportPdfService(new E2ePassportCompanySettings()),
+            new SnapshotOnlyCompetencyService(db));
+        var file = await download.ForCandidateAsync(
+            user,
+            phoneVerificationRequired: false,
+            showDnaBlocks: true,
+            CancellationToken.None);
+        return file.Pdf.Length > 5000 ? file.Pdf : null;
     }
 
     private static bool VerifyPaspoortBesluit21(string pdfPath)
@@ -1638,7 +1689,11 @@ internal sealed class E2eFlowRunner
             "Wie ben ik",
             "Past goed",
             "RoleFit",
-            "matchscore"
+            "matchscore",
+            "DNA-paspoort · student",
+            "Stages en bijbanen",
+            "%",
+            "scoor"
         };
         return forbidden.All(marker => !text.Contains(marker, StringComparison.OrdinalIgnoreCase));
     }
@@ -1935,6 +1990,54 @@ internal sealed class E2eFlowRunner
         await page.ScreenshotAsync(new() { Path = Path.Combine(MailDir, $"{slug}.png"), FullPage = true });
         var htmlPath = Path.Combine(MailDir, $"{slug}.html");
         await File.WriteAllTextAsync(htmlPath, mail.Html);
+    }
+}
+
+internal sealed class E2ePassportCompanySettings : IPlatformCompanySettingsService
+{
+    public Task<PlatformCompanySnapshot> GetAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(new PlatformCompanySnapshot(
+            "Lobsy", "Test", null, null, null, null, null, null, null, null, null, null));
+
+    public Task<PlatformCompanySnapshot> UpdateAsync(PlatformCompanyUpdate update, CancellationToken cancellationToken = default)
+        => GetAsync(cancellationToken);
+
+    public byte[] GetBrandLogoPng() => [];
+
+    public byte[] GetBrandWatermarkPng() => [];
+}
+
+internal sealed class SnapshotOnlyCompetencyService : ICandidateCompetencyService
+{
+    private readonly JobsyDbContext _db;
+
+    public SnapshotOnlyCompetencyService(JobsyDbContext db) => _db = db;
+
+    public Task<CandidateCompetencyStateDto> GetAsync(Guid userId, CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public Task<CandidateCompetencyStateDto> SaveAsync(
+        Guid userId,
+        IReadOnlyDictionary<int, int> answers,
+        bool complete,
+        CancellationToken cancellationToken = default)
+        => throw new NotSupportedException();
+
+    public Task<CompetencyScores?> GetCompletedScoresAsync(Guid userId, CancellationToken cancellationToken = default)
+        => Task.FromResult<CompetencyScores?>(null);
+
+    public async Task<IReadOnlyList<CandidateMatchedVacancyDto>> GetTopMatchesAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var row = await _db.CandidateMatchSnapshots.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.UserId == userId, cancellationToken);
+        if (row is null || string.IsNullOrWhiteSpace(row.MatchesJson))
+        {
+            return [];
+        }
+
+        return CandidateMatchSnapshotJson.Deserialize(row.MatchesJson) ?? [];
     }
 }
 
