@@ -454,7 +454,7 @@ public class PublicPagesSourceGuardTests
 }
 
 /// <summary>Web host for the 10.3 guards: no API behind it unless a crawl-index stub is given.</summary>
-internal sealed class PublicPagesWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+internal sealed class PublicPagesWebFactory : WebWebApplicationFactory
 {
     private readonly string? _crawlIndexJson;
 

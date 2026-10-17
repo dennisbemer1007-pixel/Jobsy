@@ -5,11 +5,15 @@ on:
   push:
     branches: [main, acceptatie, "cursor/**"]
 
+concurrency:
+  group: pr-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    # Unit+integration alone can exceed 85m on ubuntu-latest; add Playwright smoke on top.
-    timeout-minutes: 150
+    # Unit (~15m) + Playwright smoke (~45m); cap job so teardown hangs fail fast.
+    timeout-minutes: 75
     services:
       postgres:
         # PostGIS required — API migrate runs CREATE EXTENSION postgis.
@@ -27,8 +31,6 @@ jobs:
           --health-retries 10
     env:
       ConnectionStrings__JobsyDb: Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres
-      JOBSY_CI_WEB_URL: http://127.0.0.1:5201
-      JOBSY_E2E_BASE_URL: http://127.0.0.1:5201
       VerificationCodes__Pepper: ci-verification-otp-pepper-32chars!!
     steps:
       - uses: actions/checkout@v4
@@ -45,18 +47,11 @@ jobs:
         run: dotnet build Jobsy.sln --no-restore -c Release
 
       - name: Unit + integration tests
-        run: |
-          # Exclude browser E2E classes here — Chromium is installed only for the smoke step.
-          # JOBSY_E2E_BASE_URL is set for the smoke stack, so soft-skip Playwright tests would
-          # otherwise launch browsers during this phase and fail.
-          # xunit.v3 + MTP (.NET 10): pass filters as first-class options (no `--` separator).
-          # After `--`, --results-directory was misread as a project directory and zero tests ran.
-          # One wildcard covers every *Playwright* class (allowlist was incomplete and leaked failures).
-          mkdir -p test-results
-          dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
-            --results-directory test-results \
-            --report-trx \
-            --filter-not-class '*Playwright*'
+        env:
+          # Stack is not up yet — unset E2E URLs so soft-skip browser tests do not hit :5201.
+          JOBSY_E2E_BASE_URL: ""
+          JOBSY_CI_WEB_URL: ""
+        run: .github/scripts/run-pr-unit-tests.sh
 
       - name: Install Playwright Chromium
         run: |
@@ -68,12 +63,18 @@ jobs:
           .github/scripts/start-ci-stack.sh
 
       - name: Playwright mobile smoke
+        env:
+          JOBSY_CI_WEB_URL: http://127.0.0.1:5201
+          JOBSY_E2E_BASE_URL: http://127.0.0.1:5201
         run: |
           mkdir -p artifacts/playwright-smoke test-results
           # Multiple --filter-class flags are OR'd by xunit.v3 MTP (no `--` separator).
           dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
             --results-directory test-results \
             --report-trx \
+            --timeout 45m \
+            --hangdump \
+            --hangdump-timeout 15m \
             --filter-class '*MobileSmokePlaywrightTests' \
             --filter-class '*Mobile_candidate_tab_switching*' \
             --filter-class '*Blazor_circuit_starts*' \
@@ -115,6 +116,18 @@ jobs:
         with:
           name: test-results
           path: "**/test-results/*.trx"
+          if-no-files-found: ignore
+
+      - name: Upload unit hang dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-hang-dumps
+          path: |
+            test-results/*hang.dmp
+            test-results/*hang.log
+            TestResults/*hang.dmp
+            TestResults/*hang.log
           if-no-files-found: ignore
 
       - name: Upload Playwright screenshots

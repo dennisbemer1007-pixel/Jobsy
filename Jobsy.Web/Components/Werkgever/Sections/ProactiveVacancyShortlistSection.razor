@@ -4,11 +4,11 @@
 @using Jobsy.Core.Interfaces
 @using Jobsy.Core.Rules
 @using Microsoft.AspNetCore.Components.Authorization
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
 @inject UserFacingError UserFacing
-@using Jobsy.Web.Services
 
 <section class="proactive-shortlist @(Layout == "full" ? "proactive-shortlist--page" : "proactive-shortlist--inline")"
          aria-labelledby="proactive-shortlist-title"

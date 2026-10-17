@@ -153,7 +153,7 @@ public sealed class DeepAnalysisPlaywrightTests : IAsyncLifetime
         return Directory.GetCurrentDirectory();
     }
 
-    private sealed class DeepWebFactory(bool unlocked) : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class DeepWebFactory(bool unlocked) : WebWebApplicationFactory
     {
         private IHost? _kestrel;
         public string ServerAddress { get; private set; } = "";

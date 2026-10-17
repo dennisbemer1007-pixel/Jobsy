@@ -132,7 +132,7 @@ public class ExternalApiKeyIntegrationTests : IClassFixture<ExternalApiKeyWebApp
             SalaryTableId: ExternalApiKeyWebAppFactory.SalaryTableId);
 }
 
-public sealed class ExternalApiKeyWebAppFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class ExternalApiKeyWebAppFactory : ApiWebApplicationFactory
 {
     public static readonly Guid SalaryTableId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
 

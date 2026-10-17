@@ -96,7 +96,7 @@ public sealed class ReminderEmailOptOutPlaywrightTests : IAsyncLifetime
         Assert.Equal(false, _web.State.LastReminderEmailsEnabled);
     }
 
-    private sealed class OptOutWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class OptOutWebFactory : WebWebApplicationFactory
     {
         private IHost? _kestrel;
 

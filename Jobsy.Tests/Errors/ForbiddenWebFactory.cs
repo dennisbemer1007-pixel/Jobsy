@@ -26,7 +26,7 @@ namespace Jobsy.Tests.Errors;
 /// cookie / antiforgery / demo-login round trip. Every outbound API call still throws
 /// (errors pages never call the API or the database to render).
 /// </summary>
-public sealed class ForbiddenWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+public sealed class ForbiddenWebFactory : WebWebApplicationFactory
 {
     public bool EmployersEnabled { get; init; }
 

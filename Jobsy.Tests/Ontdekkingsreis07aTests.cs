@@ -310,8 +310,8 @@ public class OntdekkingsreisRouteTests
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
         var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
         Assert.Contains("CandidatePassport", wizard, StringComparison.Ordinal);
-        Assert.Contains("/candidate/ontdekkingsreis", wizard, StringComparison.Ordinal);
-        Assert.Contains("replace: true", wizard, StringComparison.Ordinal);
+        Assert.Contains("FeatureRoutes.CandidateDiscoveryPath", wizard, StringComparison.Ordinal);
+        Assert.Contains("NavigateTo(FeatureRoutes.CandidateDiscoveryPath, true)", wizard, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -121,7 +121,7 @@ public sealed class ProactiveMatchingPlaywrightTests : IAsyncLifetime
         });
     }
 
-    private sealed class ProactiveWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class ProactiveWebFactory : WebWebApplicationFactory
     {
         private IHost? _kestrel;
         private readonly bool _proactiveOn;

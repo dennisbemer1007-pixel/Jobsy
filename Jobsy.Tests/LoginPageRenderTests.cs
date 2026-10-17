@@ -201,7 +201,7 @@ public class LoginHintCookieTests
     }
 }
 
-file sealed class LoginPageWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+file sealed class LoginPageWebFactory : WebWebApplicationFactory
 {
     private readonly bool _entra;
     private readonly bool _google;

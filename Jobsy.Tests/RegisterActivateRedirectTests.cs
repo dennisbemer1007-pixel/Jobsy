@@ -65,4 +65,4 @@ public class RegisterActivateRemovedTests
     }
 }
 
-public sealed class RegisterActivateWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>;
+public sealed class RegisterActivateWebFactory : WebWebApplicationFactory;

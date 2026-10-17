@@ -667,7 +667,7 @@ public sealed class PupilCircuitPlaywrightTests : IClassFixture<RoleFunctionalWe
 
     private sealed record TeacherSeed(Guid SchoolId, Guid ClassId, Guid TeacherId);
 
-    private sealed class PupilKestrelFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class PupilKestrelFactory : WebWebApplicationFactory
     {
         private readonly HttpMessageHandler _api;
         private IHost? _kestrel;
