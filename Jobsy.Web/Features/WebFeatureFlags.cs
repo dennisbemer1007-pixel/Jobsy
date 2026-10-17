@@ -57,6 +57,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.CandidatePassportEnabled ?? true,
                 dto?.PassportPartnersEnabled ?? false,
                 dto?.PassportPdfV2Enabled ?? false,
+                PupilPassportV2Enabled: false,
+                StudentPassportEnabled: false,
                 dto?.PhoneVerificationEnabled ?? false,
                 dto?.SchoolsEnabled ?? false,
                 dto?.AmbassadorsEnabled ?? false,

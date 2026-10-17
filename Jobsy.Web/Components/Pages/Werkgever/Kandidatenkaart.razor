@@ -12,6 +12,7 @@
 @inject IJSRuntime Js
 @using Jobsy.Web.Werkgever
 @inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
 
 <PageTitle>@Culture["Kk.Title"] · Lobsy</PageTitle>
 <link rel="stylesheet" href="/css/features/kandidatenkaart.css" />
@@ -206,17 +207,33 @@
     private bool _inviteBusy;
     private string? _inviteMessage;
     private DotNetObjectReference<KandidatenkaartMapAreaBridge>? _mapBridgeRef;
+    private bool _initialized;
 
     public Task SelectAreaFromMapAsync(string areaKey) => SelectArea(areaKey);
 
+    private Guid? CurrentCompanyId =>
+        Scope.CompanyIds.Count > 0 ? Scope.CompanyIds[0] : null;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender)
+        if (!firstRender || _initialized)
         {
             return;
         }
 
-        _vacancies = (await Api.GetKandidatenkaartVacanciesAsync(Scope.CompanyIds.FirstOrDefault())).ToList();
+        await InitializeMapAsync();
+    }
+
+    private async Task InitializeMapAsync()
+    {
+        if (_initialized)
+        {
+            return;
+        }
+
+        _initialized = true;
+        await ScopeBootstrap.EnsureLoadedAsync();
+        _vacancies = (await Api.GetKandidatenkaartVacanciesAsync(CurrentCompanyId)).ToList();
         if (_vacancies.Count > 0)
         {
             _vacancyId = _vacancies[0].Id;
@@ -230,7 +247,7 @@
     private async Task ReloadAsync()
     {
         _map = await Api.GetKandidatenkaartMapAsync(
-            Scope.CompanyIds.FirstOrDefault(),
+            CurrentCompanyId,
             _vacancyId,
             _minMatch,
             _travelKm,
@@ -276,7 +293,7 @@
         }
 
         _invitePreview = await Api.PreviewKandidatenkaartInviteAsync(
-            _vacancyId.Value, _selectedArea, Scope.CompanyIds.FirstOrDefault(), _minMatch, _travelKm);
+            _vacancyId.Value, _selectedArea, CurrentCompanyId, _minMatch, _travelKm);
         _inviteMessage = null;
         _inviteOpen = true;
     }
@@ -294,7 +311,7 @@
         try
         {
             var result = await Api.StartKandidatenkaartInviteAsync(new KandidatenkaartInviteClientRequest(
-                _vacancyId.Value, _selectedArea, Scope.CompanyIds.FirstOrDefault(), _minMatch, _travelKm));
+                _vacancyId.Value, _selectedArea, CurrentCompanyId, _minMatch, _travelKm));
             _inviteMessage = result?.Message ?? Culture["Kk.Invite.Success"];
         }
         finally

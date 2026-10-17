@@ -161,7 +161,7 @@ public static class EmailTemplateRegistry
             "Kom terug — 4 korte tests", "Herinnering als de 4 korte tests nog openstaan."),
         Def("ProactiveMatchSuggestion", "ProactiveMatchSuggestion", "Kandidaat", EmailKind.Optional, "ProactiveMatchSuggestion", false,
             "Lobsy zoekt voor je", "Nieuwe vacaturetip met waarom dit bij je past.", requiresEmployers: false),
-        Def("KandidatenkaartInviteBundled", "KandidatenkaartInviteBundled", "Kandidaat", EmailKind.Optional, "ProactiveMatchSuggestion", true,
+        Def("KandidatenkaartInviteBundled", "KandidatenkaartInviteBundled", "Kandidaat", EmailKind.Optional, "ProactiveMatchSuggestion", false,
             "Gebundelde uitnodiging", "Werkgever nodigt uit via kandidatenkaart (bundel per week).", requiresEmployers: true),
         Def("KandidatenkaartInviteReminder", "KandidatenkaartInviteReminder", "Kandidaat", EmailKind.Optional, "ProactiveMatchSuggestion", false,
             "Herinnering uitnodiging", "2 dagen na uitnodiging zonder reactie.", requiresEmployers: true),

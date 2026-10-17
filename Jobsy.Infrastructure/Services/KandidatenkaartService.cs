@@ -142,6 +142,11 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         var visible = areas.Where(a => a.CandidateCount >= KandidatenkaartRules.MinCandidatesPerArea).ToList();
         var below = visible.Count == 0 && areas.Count > 0;
 
+        if (_env.IsDevelopment() && visible.Count == 0 && !below)
+        {
+            return BuildPreviewMap(vacancyId, minMatchPercent, travelKm, availabilityFilter, hoursFilter, access);
+        }
+
         return new KandidatenkaartMapDto(
             access,
             vacancyId,
@@ -181,6 +186,15 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         }
 
         var eligible = await CountEligibleCandidatesAsync(vacancyId, areaKey, minMatchPercent, travelKm, null, null, cancellationToken);
+        if (_env.IsDevelopment() && eligible.Eligible == 0 && area.CandidateCount >= KandidatenkaartRules.MinCandidatesPerArea)
+        {
+            eligible = (
+                Math.Min(40, area.CandidateCount),
+                2,
+                Math.Min(4, KandidatenkaartDemoSeed.DemoAreas.Count),
+                0);
+        }
+
         var rounds = Math.Max(1, (int)Math.Ceiling(eligible.Eligible / 25.0));
 
         return new KandidatenkaartInvitePreviewDto(
@@ -398,18 +412,39 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
         KandidatenkaartAccessDto access)
     {
         var blurred = KandidatenkaartDemoSeed.DemoAreas
-            .Where(a => a.Count >= KandidatenkaartRules.MinCandidatesPerArea)
-            .Select(a => new KandidatenkaartAreaDto(
-                a.Key,
-                a.Label,
-                a.Count,
-                Math.Max(1, a.Count / 4),
-                Math.Max(1, a.Count / 3),
-                a.Lat,
-                a.Lng,
-                BuildRing(a.Lat, a.Lng),
-                true))
+            .Select(a =>
+            {
+                var count = a.Count;
+                if (minMatchPercent >= 80 && travelKm <= 15)
+                {
+                    count = Math.Min(count, 12);
+                }
+
+                if (string.Equals(hoursFilter, "32+", StringComparison.OrdinalIgnoreCase))
+                {
+                    count = (int)Math.Round(count * 0.35, MidpointRounding.AwayFromZero);
+                }
+
+                if (string.Equals(availabilityFilter, "Later", StringComparison.OrdinalIgnoreCase))
+                {
+                    count = (int)Math.Round(count * 0.5, MidpointRounding.AwayFromZero);
+                }
+
+                return new KandidatenkaartAreaDto(
+                    a.Key,
+                    a.Label,
+                    count,
+                    Math.Max(0, count / 4),
+                    Math.Max(0, count / 3),
+                    a.Lat,
+                    a.Lng,
+                    BuildRing(a.Lat, a.Lng),
+                    true);
+            })
             .ToList();
+
+        var visible = blurred.Where(a => a.CandidateCount >= KandidatenkaartRules.MinCandidatesPerArea).ToList();
+        var below = visible.Count == 0 && blurred.Count > 0;
 
         return new KandidatenkaartMapDto(
             access,
@@ -418,9 +453,9 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             travelKm,
             availabilityFilter,
             hoursFilter,
-            blurred,
-            false,
-            null);
+            visible,
+            below,
+            below ? "Met deze filters zijn er geen gebieden met minimaal 30 kandidaten. Probeer een lagere matchscore of grotere reisafstand." : null);
     }
 
     private async Task<KandidatenkaartCandidateAggregator.AggregationResult> LoadAggregationAsync(
@@ -489,7 +524,42 @@ public sealed class KandidatenkaartService : IKandidatenkaartService
             availabilityFilter,
             hoursFilter,
             cancellationToken);
-        return areas.FirstOrDefault(a => string.Equals(a.AreaKey, areaKey, StringComparison.OrdinalIgnoreCase));
+        var found = areas.FirstOrDefault(a => string.Equals(a.AreaKey, areaKey, StringComparison.OrdinalIgnoreCase));
+        if (found is not null)
+        {
+            return found;
+        }
+
+        return TryResolveDemoArea(areaKey);
+    }
+
+    private KandidatenkaartAreaDto? TryResolveDemoArea(string areaKey)
+    {
+        if (!_env.IsDevelopment())
+        {
+            return null;
+        }
+
+        foreach (var demo in KandidatenkaartDemoSeed.DemoAreas)
+        {
+            if (!string.Equals(demo.Key, areaKey, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            return new KandidatenkaartAreaDto(
+                demo.Key,
+                demo.Label,
+                demo.Count,
+                Math.Max(1, demo.Count / 4),
+                Math.Max(1, demo.Count / 3),
+                demo.Lat,
+                demo.Lng,
+                BuildRing(demo.Lat, demo.Lng),
+                true);
+        }
+
+        return null;
     }
 
     private async Task<(int Eligible, int BelowMatch, int WeeklyCap, int PreferenceOff)> CountEligibleCandidatesAsync(

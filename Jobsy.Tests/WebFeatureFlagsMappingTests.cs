@@ -1,0 +1,36 @@
+using Jobsy.Core.Features;
+using Xunit;
+
+namespace Jobsy.Tests;
+
+public sealed class WebFeatureFlagsMappingTests
+{
+    [Fact]
+    public void FeatureFlagSnapshot_kandidatenkaart_maps_after_passport_v2_slots()
+    {
+        var snap = new FeatureFlagSnapshot(
+            EmployersEnabled: true,
+            CandidatePassportEnabled: true,
+            PassportPartnersEnabled: false,
+            PassportPdfV2Enabled: true,
+            PupilPassportV2Enabled: false,
+            StudentPassportEnabled: false,
+            PhoneVerificationEnabled: false,
+            SchoolsEnabled: false,
+            AmbassadorsEnabled: false,
+            WhatsAppRemindersEnabled: false,
+            CompactTestPdfEnabled: false,
+            HonestAdviceEnabled: false,
+            FutureJobsForYouEnabled: false,
+            EmployerPhase2Enabled: false,
+            CandidateExternalVacanciesEnabled: false,
+            ProactiveMatchingEnabled: false,
+            TestsV2Enabled: false,
+            EmployerFitQuestionnairesEnabled: false,
+            KandidatenkaartEnabled: true);
+
+        Assert.True(snap.KandidatenkaartEnabled);
+        Assert.True(snap.IsEnabled(PlatformFeature.Kandidatenkaart));
+        Assert.False(snap.EmployerFitQuestionnairesEnabled);
+    }
+}

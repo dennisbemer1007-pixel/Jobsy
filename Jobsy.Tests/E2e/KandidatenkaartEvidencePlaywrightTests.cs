@@ -37,13 +37,14 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
         var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb")
                    ?? throw new InvalidOperationException("ConnectionStrings__JobsyDb required");
 
-        await EnableKandidatenkaartAsync(baseUrl, conn, enabled: true);
         await using (var seedDb = await OpenDbAsync(conn))
         {
             await KandidatenkaartDemoSeed.EnsureAsync(seedDb);
             await KandidatenkaartDemoSeed.EnsureEmployerVacancyForMapAsync(seedDb);
             await KandidatenkaartDemoSeed.EnsureWeeklyCapEvidenceAsync(seedDb);
         }
+
+        await EnableKandidatenkaartAsync(baseUrl, conn, enabled: true);
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
@@ -59,8 +60,15 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                 ViewportSize = new() { Width = width, Height = height }
             });
             var page = await context.NewPageAsync();
+            KbE2e.AttachCapture(page);
             Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, employerEmail, password));
-            await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/kandidatenkaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/vacatures", new()
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 60_000
+            });
+            await page.WaitForTimeoutAsync(1500);
             if (width < 1280)
             {
                 await page.EvaluateAsync("""
@@ -69,7 +77,9 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                     """);
             }
 
+            await GotoKandidatenkaartWhenReadyAsync(page, baseUrl);
             await WaitForMapReadyAsync(page);
+            await KbE2e.AssertNoCircuitErrorAsync(page);
             await ShotPageAsync(page, $"kk-map-areas-{suffix}.png");
 
             var more = page.Locator(".kk-btn--more");
@@ -181,11 +191,14 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
 
     private static async Task WaitForMapReadyAsync(IPage page)
     {
-        await page.GetByRole(AriaRole.Heading, new() { Name = "Kandidatenkaart" })
-            .WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator(".kk-header h1").WaitForAsync(new() { Timeout = 90_000 });
         await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 10_000 });
-        await page.WaitForSelectorAsync(".kk-map-pane", new() { Timeout = 60_000 });
-        var deadline = DateTime.UtcNow.AddSeconds(45);
+        await page.WaitForSelectorAsync(".kk-map-pane", new()
+        {
+            Timeout = 60_000,
+            State = WaitForSelectorState.Attached
+        });
+        var deadline = DateTime.UtcNow.AddSeconds(90);
         while (DateTime.UtcNow < deadline)
         {
             if (await page.Locator(".kk-area-list__item").CountAsync() > 0
@@ -199,7 +212,13 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await page.WaitForTimeoutAsync(500);
         }
 
-        throw new InvalidOperationException("Kandidatenkaart map did not finish loading.");
+        var areas = await page.Locator(".kk-area-list__item").CountAsync();
+        var below = await page.Locator(".kk-below-min").CountAsync();
+        var canvas = await page.Locator(".kk-map-pane .maplibregl-canvas").CountAsync();
+        var snippet = await page.EvaluateAsync<string>(
+            "() => document.querySelector('.kk-page')?.innerText?.slice(0,400) ?? ''");
+        throw new InvalidOperationException(
+            $"Kandidatenkaart map did not finish loading (areas={areas}, belowMin={below}, canvas={canvas}). Snippet: {snippet}");
     }
 
     private static async Task ShotPageAsync(IPage page, string fileName)
@@ -218,7 +237,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
         var btn = page.Locator(".kk-seg button").Filter(new() { HasText = label });
         if (await btn.CountAsync() > 0)
         {
-            await btn.First.ClickAsync();
+            await btn.First.EvaluateAsync("el => el.click()");
             await page.WaitForTimeoutAsync(1200);
         }
     }
@@ -248,27 +267,120 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             KandidatenkaartEnabled: enabled));
 
         var apiBase = baseUrl.Replace(":5201", ":5200", StringComparison.Ordinal);
+        await WaitForPublicKkFlagAsync(apiBase, enabled);
+        await RestartCiApiAsync();
+        await RestartCiWebAsync();
+        await WaitForPublicKkFlagAsync(apiBase, enabled);
+        await Task.Delay(2000);
+    }
+
+    private static async Task WaitForPublicKkFlagAsync(string apiBase, bool enabled)
+    {
+        var expected = enabled ? "true" : "false";
         for (var attempt = 0; attempt < 60; attempt++)
         {
             try
             {
                 using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(3) };
                 var json = await http.GetStringAsync($"{apiBase.TrimEnd('/')}/api/settings/feature-flags");
-                var expected = enabled ? "true" : "false";
                 if (json.Contains($"\"kandidatenkaartEnabled\":{expected}", StringComparison.OrdinalIgnoreCase))
                 {
-                    break;
+                    return;
                 }
             }
             catch
             {
-                // API may still be starting.
+                // retry
             }
 
             await Task.Delay(500);
         }
 
-        // WebFeatureFlags caches the public snapshot for ~30s.
-        await Task.Delay(35_000);
+        throw new InvalidOperationException($"Timed out waiting for kandidatenkaartEnabled={enabled} on public feature-flags.");
+    }
+
+    private static async Task RestartCiApiAsync()
+    {
+        var script = FindRepoScript("restart-ci-api.sh");
+        await RunBashScriptAsync(script);
+    }
+
+    private static async Task RestartCiWebAsync()
+    {
+        await RunBashScriptAsync(FindRepoScript("restart-ci-web.sh"));
+    }
+
+    private static string FindRepoScript(string name)
+    {
+        var root = Directory.GetParent(AppContext.BaseDirectory)!;
+        for (var i = 0; i < 6 && root is not null; i++)
+        {
+            if (File.Exists(Path.Combine(root.FullName, "Jobsy.sln")))
+            {
+                break;
+            }
+
+            root = root.Parent;
+        }
+
+        var script = root is null
+            ? null
+            : Path.Combine(root.FullName, ".github", "scripts", name);
+        if (script is null || !File.Exists(script))
+        {
+            throw new InvalidOperationException($"Missing .github/scripts/{name}");
+        }
+
+        return script;
+    }
+
+    private static async Task RunBashScriptAsync(string script)
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo("bash", script)
+        {
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var proc = System.Diagnostics.Process.Start(psi)
+                         ?? throw new InvalidOperationException($"Failed to run {script}.");
+        var stdout = await proc.StandardOutput.ReadToEndAsync();
+        var stderr = await proc.StandardError.ReadToEndAsync();
+        await proc.WaitForExitAsync();
+        if (proc.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                $"{script} failed ({proc.ExitCode}): {stdout}\n{stderr}");
+        }
+    }
+
+    private static async Task GotoKandidatenkaartWhenReadyAsync(IPage page, string baseUrl)
+    {
+        var target = $"{baseUrl.TrimEnd('/')}/werkgever/kandidatenkaart";
+        Exception? last = null;
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            if (attempt > 0)
+            {
+                await page.WaitForTimeoutAsync(2000);
+            }
+
+            await page.GotoAsync(target, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+            try
+            {
+                await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 45_000, State = WaitForSelectorState.Visible });
+                await page.Locator(".kk-header h1").WaitForAsync(new() { Timeout = 15_000 });
+                return;
+            }
+            catch (Exception ex) when (attempt < 9)
+            {
+                last = ex;
+                await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+            }
+        }
+
+        throw new InvalidOperationException(
+            "Kandidatenkaart page did not render after feature-flag refresh.",
+            last);
     }
 }

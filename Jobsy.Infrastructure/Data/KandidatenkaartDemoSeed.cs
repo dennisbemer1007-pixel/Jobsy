@@ -31,9 +31,18 @@ public static class KandidatenkaartDemoSeed
     {
         var anchor = new GeoPoint(52.1561, 5.3878);
         var company = await db.Companies.FirstOrDefaultAsync(c => c.Id == DemoEmployerCompanyId, cancellationToken);
-        if (company is not null && company.Location is null)
+        if (company is not null)
         {
-            company.Location = anchor;
+            if (company.Location is null)
+            {
+                company.Location = anchor;
+            }
+
+            if (company.VerificationStatus != CompanyVerificationStatus.Verified)
+            {
+                company.VerificationStatus = CompanyVerificationStatus.Verified;
+                company.KvkVerifiedAtUtc ??= DateTime.UtcNow;
+            }
         }
 
         var vacancies = await db.Vacancies

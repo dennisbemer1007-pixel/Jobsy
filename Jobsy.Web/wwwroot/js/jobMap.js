@@ -4144,6 +4144,10 @@ window.jobMap = (function () {
         if (!map || !kkMode) {
             return;
         }
+        if (!map.isStyleLoaded || !map.isStyleLoaded()) {
+            map.once("load", refreshKkAreasData);
+            return;
+        }
         ensureKkLayers();
         var source = map.getSource(KK_SOURCE);
         if (source && typeof source.setData === "function") {
@@ -4176,7 +4180,6 @@ window.jobMap = (function () {
         var zoom = options.zoom || 9;
         createMapInstance(el, [], { center: center, zoom: zoom, locked: false }, false);
         setVacancies([]);
-        refreshKkAreasData();
     }
 
     function setKandidatenkaartAreas(areas, selectedKey) {
