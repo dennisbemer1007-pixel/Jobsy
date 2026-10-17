@@ -272,11 +272,18 @@ internal sealed class E2eFlowRunner
         if (!chainOnly && vacancyId is Guid blockedVacancyId)
         {
             var emptyEmail = $"e2e-empty-{Guid.NewGuid():N}@jobsy.local";
+            await using (var seedCtx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
+            {
+                var seedPage = await PrepPageAsync(seedCtx);
+                await E2eFlowOnboarding.SignUpFreshAsync(seedPage, _baseUrl, emptyEmail, "E2eEmpty");
+            }
+
+            await EnsureCandidateBirthDateAsync(emptyEmail, new DateOnly(2000, 6, 15));
             foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
             {
                 await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
                 var page = await PrepPageAsync(ctx);
-                await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, emptyEmail, "E2eEmpty");
+                await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, emptyEmail);
                 await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
                 var dobInput = page.Locator("[data-testid=vacancy-dob-date] input[type=date]").First;
@@ -1309,6 +1316,26 @@ internal sealed class E2eFlowRunner
             await KbE2e.WaitForStyledAppAsync(page);
             await page.WaitForTimeoutAsync(2000);
             await Shot(page, "desktop-1440", "11-accept-open");
+        }
+    }
+
+    private async Task EnsureCandidateBirthDateAsync(string email, DateOnly birthDate)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(_conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = email.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        if (user.DateOfBirth != birthDate)
+        {
+            user.DateOfBirth = birthDate;
+            await db.SaveChangesAsync();
         }
     }
 
