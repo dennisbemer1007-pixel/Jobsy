@@ -16,8 +16,7 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-img,
-svg {
+img {
     display: block;
     max-width: 100%;
 }
@@ -619,7 +618,7 @@ html.vp-mobile body {
     width: 100%;
     height: 100%;
     min-height: 420px;
-    background: var(--map-land);
+    background: #f2efe8;
     border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow: hidden;
@@ -671,11 +670,16 @@ html.vp-mobile body {
 .map-stage {
     position: absolute;
     inset: 0;
+    overflow: hidden;
 }
 
 .kk-map-svg {
     width: 100%;
     height: 100%;
+    min-width: 100%;
+    min-height: 100%;
+    display: block;
+    max-width: none;
 }
 
 .kk-map-svg .land {
@@ -734,7 +738,6 @@ html.vp-mobile body {
 /* Locked map: blurred sample map remains visible */
 .map-pane--locked .map-stage {
     filter: blur(3px) saturate(0.92);
-    transform: scale(1.02);
 }
 
 .kk-map-lock {
@@ -1277,11 +1280,6 @@ html.vp-mobile .kk-page--filters-open .kk-filter-sheet {
     z-index: 56;
     max-height: min(88vh, 640px);
     padding-bottom: env(safe-area-inset-bottom, 0);
-}
-
-html.vp-mobile .map-stage .kk-map-svg {
-    transform: scale(1.06);
-    transform-origin: 50% 42%;
 }
 
 html.vp-mobile .kk-scrim {

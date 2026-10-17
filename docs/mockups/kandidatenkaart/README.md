@@ -20,7 +20,8 @@ Design-only HTML/CSS for the paid employer feature **Kandidatenkaart**: aggregat
 ## Files
 
 - `shared/tokens.css`, `shared/kk.css` — Lobsy tokens + werkgever shell + banenkaart-style map chrome.
-- `pages/a-*.html`, `pages/b-*.html` — states: `preview`, `full`, `area`, `invite`.
+- `pages/a-*.html`, `pages/b-*.html` — states: `preview`, `full`, `area`, `invite`, `filters-open`, `area-sparse`.
+- **Filters:** matchscore, reisafstand, startdatum, uren/week; desktop **Meer filters** popover; mobile **Filters** bottom sheet.
 - `scripts/generate-pages.mjs` — regenerates HTML from shared fragments (optional).
 - `scripts/capture.mjs` — Playwright PNGs at 1440×900 desktop and 390×844 mobile @2x.
 - `overview.html` — contact sheet of all captures.

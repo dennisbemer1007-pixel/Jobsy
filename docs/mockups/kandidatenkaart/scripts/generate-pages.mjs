@@ -287,7 +287,7 @@ function mobileSheetContent(state, variant, locked) {
   if (variant === "b") {
     return `<div class="kk-mobile-sheet__body kk-mobile-sheet__body--list"><ul class="kk-area-list kk-area-list--compact">${areaList()}</ul></div>`;
   }
-  return `<div class="kk-mobile-sheet__peek">Veeg omhoog voor gebieden · tik op de kaart voor detail</div>`;
+  return `<div class="kk-mobile-sheet__peek">Veeg omhoog voor gebieden</div>`;
 }
 
 function previewSampleRows() {
