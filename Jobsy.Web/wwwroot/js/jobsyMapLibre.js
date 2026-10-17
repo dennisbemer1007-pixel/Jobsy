@@ -112,6 +112,9 @@ window.jobsyMapLibre = (function () {
                 } else {
                     list[i] = "Noto Sans Regular";
                 }
+            } else if (/noto\s*sans/i.test(name) && /italic|oblique/i.test(name)) {
+                changed = true;
+                list[i] = /bold|black|semi|heavy/i.test(name) ? "Noto Sans Bold" : "Noto Sans Regular";
             }
         }
         return changed ? list : null;

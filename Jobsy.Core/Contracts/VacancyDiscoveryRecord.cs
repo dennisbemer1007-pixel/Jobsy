@@ -75,7 +75,11 @@ public sealed record VacancyDiscoveryRecord(
     /// <summary>Acceptatie CLI test vacancy; filtered out for real/anonymous viewers.</summary>
     bool IsTestData = false,
     /// <summary>Agency public map circle radius (km) when posted via uitzendbureau.</summary>
-    int? PublicMapRadiusKm = null);
+    int? PublicMapRadiusKm = null,
+    /// <summary>Precomputed at index refresh — avoids re-inferring on every match score request.</summary>
+    CompetencyScores? InferredCompetencies = null,
+    /// <summary>Precomputed at index refresh — avoids re-inferring on every match score request.</summary>
+    IReadOnlyList<string>? InferredRiasecTags = null);
 
 /// <summary>Discovery snapshot of one engagement claim (no proof text / URLs).</summary>
 public sealed record VacancyEngagementItem(string ItemId, bool Checked);

@@ -174,6 +174,34 @@ window.jobsyGeo = (function () {
         sessionStorage.removeItem(AGE_KEY);
     }
 
+    /**
+     * Sync URL query params without Blazor navigation (no LocationChanged / rerender flash).
+     * @param {Record<string, string|null|undefined>} updates
+     */
+    function replaceQuery(updates) {
+        if (!updates || typeof updates !== "object") {
+            return;
+        }
+        try {
+            const url = new URL(window.location.href);
+            Object.keys(updates).forEach(function (key) {
+                const v = updates[key];
+                if (v === null || v === undefined || v === "") {
+                    url.searchParams.delete(key);
+                } else {
+                    url.searchParams.set(key, String(v));
+                }
+            });
+            const next = url.pathname + url.search + url.hash;
+            const cur = window.location.pathname + window.location.search + window.location.hash;
+            if (next !== cur) {
+                history.replaceState(history.state, "", next);
+            }
+        } catch {
+            // ignore
+        }
+    }
+
     function analyticsAllowed() {
         try {
             if (window.jobsyCookieConsent && typeof window.jobsyCookieConsent.allowsAnalytics === "function") {
@@ -408,6 +436,7 @@ window.jobsyGeo = (function () {
         wasLocationPrompted,
         markLocationPrompted,
         ensureLocationOnLaunch,
+        replaceQuery,
         getOrCreateAnonymousKey,
         tryClaimClick,
         tryClaimSiteVisit,
@@ -640,7 +669,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261012-bbox07"
+        "/js/jobMap.min.js?v=20261016-04"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -883,13 +912,51 @@ window.jobsyMaps = (function () {
     function isDiscoveryPath() {
         try {
             var path = (window.location && window.location.pathname) || "";
-            return path === "/" || path === "" || path === "/banenkaart";
+            return path === "/banenkaart" || path === "/banen";
         } catch (e) {
             return false;
         }
     }
 
-    function whenCircuitOrIdle(cb) {
+    function whenAfterFirstPaint(cb) {
+        var done = false;
+        function run() {
+            if (done) {
+                return;
+            }
+            done = true;
+            try { cb(); } catch (e) { }
+        }
+        function scheduleIdle() {
+            if (typeof requestIdleCallback === "function") {
+                requestIdleCallback(run, { timeout: 1200 });
+            } else if (typeof requestAnimationFrame === "function") {
+                requestAnimationFrame(function () { requestAnimationFrame(run); });
+            } else {
+                setTimeout(run, 0);
+            }
+        }
+        if (typeof PerformanceObserver !== "undefined") {
+            try {
+                var po = new PerformanceObserver(function (list) {
+                    var fcp = list.getEntriesByName("first-contentful-paint");
+                    if (fcp && fcp.length) {
+                        po.disconnect();
+                        scheduleIdle();
+                    }
+                });
+                po.observe({ type: "paint", buffered: true });
+                setTimeout(function () {
+                    try { po.disconnect(); } catch (ePo) { }
+                    scheduleIdle();
+                }, 2800);
+                return;
+            } catch (eObs) { }
+        }
+        scheduleIdle();
+    }
+
+    function whenCircuitReady(cb) {
         var done = false;
         function run() {
             if (done) {
@@ -915,20 +982,26 @@ window.jobsyMaps = (function () {
                 run();
             }
         }, 50);
-        if (typeof requestIdleCallback === "function") {
-            requestIdleCallback(function () {
-                clearInterval(iv);
-                run();
-            }, { timeout: 1500 });
-        } else {
-            setTimeout(function () {
-                clearInterval(iv);
-                run();
-            }, 1500);
-        }
+        setTimeout(function () {
+            clearInterval(iv);
+            run();
+        }, 8000);
     }
 
-    // Kick off pins fetch immediately; defer MapLibre + boot to idle/circuit.
+    function bootDiscoveryMap() {
+        if (window.jobMap && typeof window.jobMap.boot === "function") {
+            window.jobMap.boot("job-map");
+            return;
+        }
+        ensure("discovery").then(function () {
+            if (window.jobMap && typeof window.jobMap.boot === "function") {
+                window.jobMap.boot("job-map");
+            }
+        }).catch(function () { });
+    }
+
+    // VacancyDiscovery transport toggles call jobsyGeo.replaceQuery on the query string.
+    // Kick off pins fetch immediately; MapLibre after FCP/idle; boot when circuit is ready.
     function warmBootPins() {
         try {
             var node = document.getElementById("jobsy-map-boot");
@@ -940,11 +1013,9 @@ window.jobsyMaps = (function () {
                 prefetchPins(String(parsed.pinsUrl));
             }
             if (isDiscoveryPath()) {
-                whenCircuitOrIdle(function () {
+                whenAfterFirstPaint(function () {
                     ensure("discovery").then(function () {
-                        if (window.jobMap && typeof window.jobMap.boot === "function") {
-                            window.jobMap.boot("job-map");
-                        }
+                        bootDiscoveryMap();
                     }).catch(function () { });
                 });
             }
@@ -967,7 +1038,7 @@ window.jobsyMaps = (function () {
 window.jobsyExtras = (function () {
     "use strict";
 
-    var extrasSrc = "/js/app-extras.js?v=20260902-bw1";
+    var extrasSrc = "/js/app-extras.js?v=20261015-pdfdl";
     var feedbackSrc = "/js/feedback.js?v=20261002-ch10";
     var pending = {};
 
@@ -1028,6 +1099,64 @@ window.jobsyPageVisible = function () {
 };
 
 window.jobsyDom = {
+    scrollRoot: function () {
+        var richtingA = document.querySelector(".ob-wizard--richting-a");
+        var main = document.querySelector(".app-shell--questionnaire .app-main")
+            || document.querySelector(".app-main");
+        if (richtingA && main) {
+            return main;
+        }
+        var wizardContent = document.querySelector(".app-shell--questionnaire .ob-wizard__content");
+        if (wizardContent && wizardContent.scrollHeight > wizardContent.clientHeight + 1) {
+            return wizardContent;
+        }
+        if (main && main.scrollHeight > main.clientHeight + 1) {
+            return main;
+        }
+        return document.scrollingElement || document.documentElement;
+    },
+    scrollToTop: function () {
+        var root = window.jobsyDom.scrollRoot();
+        root.scrollTop = 0;
+        try {
+            window.scrollTo(0, 0);
+        } catch (e) { }
+    },
+    scrollToId: function (id) {
+        var el = document.getElementById(id);
+        if (!el) {
+            return;
+        }
+        try {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+        } catch (e) {
+            try {
+                el.scrollIntoView(true);
+            } catch (e2) { }
+        }
+    },
+    focusWizardStepHeading: function () {
+        var scope = document.querySelector(".ob-wizard__content")
+            || document.querySelector(".ob-wizard");
+        if (!scope) {
+            return;
+        }
+        var h = scope.querySelector("h1[tabindex], h1");
+        if (!h || typeof h.focus !== "function") {
+            return;
+        }
+        try {
+            h.focus({ preventScroll: true });
+        } catch (e) {
+            try {
+                h.focus();
+            } catch (e2) { }
+        }
+    },
+    resetWizardStepScroll: function () {
+        window.jobsyDom.scrollToTop();
+        window.jobsyDom.focusWizardStepHeading();
+    },
     matchesMedia: function (query) {
         try {
             return !!(window.matchMedia && window.matchMedia(query).matches);
@@ -1379,10 +1508,12 @@ window.jobsyDialog = (function () {
     }
     var isPublished = location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
     var swUrl = isPublished
-        ? "/service-worker.published.js?v=20261012-01"
-        : "/service-worker.js?v=20261010-02";
+        ? "/service-worker.published.js?v=20261016-06"
+        : "/service-worker.js?v=20261016-06";
     var isWebKit = /AppleWebKit/i.test(navigator.userAgent || "")
         && !/Chrome|Chromium|CriOS|EdgiOS|FxiOS/i.test(navigator.userAgent || "");
+    var userRequestedReload = false;
+    var updateBannerVisible = false;
 
     function circuitReady() {
         try {
@@ -1392,8 +1523,89 @@ window.jobsyDialog = (function () {
         }
     }
 
+    function ensureUpdateBanner() {
+        var el = document.getElementById("lobsy-app-update");
+        if (el) {
+            return el;
+        }
+        el = document.createElement("div");
+        el.id = "lobsy-app-update";
+        el.className = "lobsy-app-update";
+        el.setAttribute("role", "status");
+        el.setAttribute("aria-live", "polite");
+        el.innerHTML = '<div class="lobsy-app-update__panel">Nieuwe versie beschikbaar.<button type="button" class="lobsy-app-update__action" data-lobsy-app-update>Vernieuwen</button></div>';
+        el.addEventListener("click", function (ev) {
+            var btn = ev.target && ev.target.closest ? ev.target.closest("[data-lobsy-app-update]") : null;
+            if (!btn) {
+                return;
+            }
+            ev.preventDefault();
+            userRequestedReload = true;
+            try {
+                console.info("[lobsy] manual reload (app update)");
+            } catch (e) { }
+            navigator.serviceWorker.getRegistration().then(function (reg) {
+                if (reg && reg.waiting) {
+                    reg.waiting.postMessage({ type: "SKIP_WAITING" });
+                } else {
+                    window.location.reload();
+                }
+            }).catch(function () {
+                window.location.reload();
+            });
+        });
+        document.body.appendChild(el);
+        return el;
+    }
+
+    function showUpdateBanner() {
+        if (updateBannerVisible) {
+            return;
+        }
+        updateBannerVisible = true;
+        var el = ensureUpdateBanner();
+        el.classList.add("is-visible");
+    }
+
+    function wireWaitingWorker(reg, worker) {
+        if (!worker) {
+            return;
+        }
+        worker.addEventListener("statechange", function () {
+            if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                showUpdateBanner();
+            }
+        });
+        if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            showUpdateBanner();
+        }
+    }
+
+    function wireRegistration(reg) {
+        if (!reg) {
+            return;
+        }
+        if (reg.waiting && navigator.serviceWorker.controller) {
+            showUpdateBanner();
+        }
+        reg.addEventListener("updatefound", function () {
+            wireWaitingWorker(reg, reg.installing);
+        });
+    }
+
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+        if (userRequestedReload) {
+            window.location.reload();
+        }
+    });
+
     function register() {
-        navigator.serviceWorker.register(swUrl, { scope: "/", updateViaCache: "none" }).catch(function () { });
+        navigator.serviceWorker.register(swUrl, { scope: "/", updateViaCache: "none" })
+            .then(function (reg) {
+                wireRegistration(reg);
+                return reg.update().catch(function () { });
+            })
+            .catch(function () { });
     }
 
     function scheduleRegister() {
@@ -1408,6 +1620,17 @@ window.jobsyDialog = (function () {
         tick();
     }
 
+    document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState !== "visible") {
+            return;
+        }
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+            if (reg) {
+                return reg.update().catch(function () { });
+            }
+        }).catch(function () { });
+    });
+
     window.addEventListener("load", function () {
         window.setTimeout(scheduleRegister, isWebKit ? 1200 : 0);
     });
@@ -1418,18 +1641,79 @@ window.lobsyPwaInstall = (function () {
   var KEY_VISITS = "Jobsy.PwaVisits";
   var KEY_DISMISS = "Jobsy.PwaInstallDismissed";
   var deferred = null;
+  var relatedInstalled = false;
+  var bannerRef = null;
   var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent || "")
     || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  var isStandalone = window.matchMedia("(display-mode: standalone)").matches
-    || window.navigator.standalone === true;
+
+  function readStandalone() {
+    return window.matchMedia("(display-mode: standalone)").matches
+      || window.matchMedia("(display-mode: fullscreen)").matches
+      || window.matchMedia("(display-mode: minimal-ui)").matches
+      || window.navigator.standalone === true;
+  }
+
+  function markInstalled() {
+    relatedInstalled = true;
+    try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+    deferred = null;
+    notifyBanner();
+    stabilizeStandaloneTitle();
+  }
+
+  function stabilizeStandaloneTitle() {
+    try {
+      var bad = /installatie|uninstall|ongedaan/i.test(document.title || "");
+      if (bad) {
+        document.title = "Lobsy";
+        return;
+      }
+      if (readStandalone() && !(document.title || "").trim()) {
+        document.title = "Lobsy";
+      }
+    } catch (e) { }
+  }
+
+  function notifyBanner() {
+    if (!bannerRef || typeof bannerRef.invokeMethodAsync !== "function") return;
+    var show = shouldShowBanner();
+    bannerRef.invokeMethodAsync("SetPwaBannerVisible", show).catch(function () { });
+  }
+
+  function shouldShowBanner() {
+    if (readStandalone() || relatedInstalled || wasDismissed()) return false;
+    if (isIos) return visits() >= 2;
+    return visits() >= 2 && !!deferred;
+  }
 
   try {
     window.addEventListener("beforeinstallprompt", function (e) {
       e.preventDefault();
       deferred = e;
       window.dispatchEvent(new CustomEvent("lobsy-pwa-prompt-ready"));
+      notifyBanner();
+    });
+    window.addEventListener("appinstalled", function () {
+      markInstalled();
+      window.dispatchEvent(new CustomEvent("lobsy-pwa-installed"));
     });
   } catch (err) { }
+
+  if (navigator.getInstalledRelatedApps) {
+    navigator.getInstalledRelatedApps().then(function (apps) {
+      if (apps && apps.length) {
+        markInstalled();
+      }
+    }).catch(function () { });
+  }
+
+  stabilizeStandaloneTitle();
+  if (readStandalone()) {
+    try {
+      var titleObs = new MutationObserver(function () { stabilizeStandaloneTitle(); });
+      titleObs.observe(document.querySelector("title") || document.head, { subtree: true, childList: true, characterData: true });
+    } catch (e) { }
+  }
 
   function visits() {
     try {
@@ -1441,7 +1725,7 @@ window.lobsyPwaInstall = (function () {
   }
 
   function bumpVisit() {
-    if (isStandalone) return visits();
+    if (readStandalone()) return visits();
     try {
       var n = visits() + 1;
       localStorage.setItem(KEY_VISITS, String(n));
@@ -1451,22 +1735,31 @@ window.lobsyPwaInstall = (function () {
     }
   }
 
+  function wasDismissed() {
+    try { return localStorage.getItem(KEY_DISMISS) === "1"; } catch (e) { return false; }
+  }
+
   return {
     bumpVisit: bumpVisit,
     isIos: function () { return isIos; },
-    isStandalone: function () { return isStandalone; },
-    canPrompt: function () { return !!deferred && !isStandalone; },
-    wasDismissed: function () {
-      try { return localStorage.getItem(KEY_DISMISS) === "1"; } catch (e) { return false; }
-    },
+    isStandalone: function () { return readStandalone() || relatedInstalled; },
+    canPrompt: function () { return !!deferred && !readStandalone() && !relatedInstalled; },
+    wasDismissed: wasDismissed,
     dismiss: function () {
       try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
       deferred = null;
+      notifyBanner();
     },
-    shouldShowBanner: function () {
-      if (isStandalone || this.wasDismissed()) return false;
-      if (isIos) return visits() >= 2;
-      return visits() >= 2 && !!deferred;
+    shouldShowBanner: shouldShowBanner,
+    watchBanner: function (dotNetRef) {
+      bannerRef = dotNetRef;
+      function tick() { notifyBanner(); }
+      window.addEventListener("lobsy-pwa-prompt-ready", tick);
+      window.addEventListener("lobsy-pwa-installed", tick);
+      tick();
+    },
+    unwatchBanner: function () {
+      bannerRef = null;
     },
     prompt: async function () {
       if (!deferred) return { ok: false, reason: "unavailable" };
@@ -1475,6 +1768,7 @@ window.lobsyPwaInstall = (function () {
         var choice = await deferred.userChoice;
         deferred = null;
         try { localStorage.setItem(KEY_DISMISS, "1"); } catch (e) { }
+        notifyBanner();
         return { ok: true, outcome: choice && choice.outcome };
       } catch (e) {
         return { ok: false, reason: "error" };
@@ -1701,6 +1995,9 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
 
     document.querySelectorAll("[data-sticky-footer]").forEach(observeEl);
     measure();
+    document.querySelectorAll("[data-lobsy-coach], .lobsy-coach-dock").forEach(function (dock) {
+      window.jobsyCoachDock.syncClearance(dock);
+    });
 
     if (!window.jobsyCoachDock._stickyMo) {
       window.jobsyCoachDock._stickyMo = new MutationObserver(function () {

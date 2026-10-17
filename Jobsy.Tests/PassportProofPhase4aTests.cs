@@ -65,11 +65,12 @@ public class ProfileSectionsExtractionTests
         Assert.Contains("<CertificatesSection", profile);
         Assert.Contains("<ReferencesSection", profile);
         Assert.Contains("<ConsentSection", profile);
-        Assert.Contains("<DeleteAccountSection", profile);
+        Assert.Contains("<ProfileDangerZoneSection", profile);
         Assert.Contains("<ProfileSaveBar", profile);
         Assert.Contains("CandidateProfileEditor", profile);
         Assert.Contains("profile-accordion", profile);
         Assert.Contains("UnsubscribeDialog", profile);
+        Assert.Contains("CandidateProfileResetDialog", profile);
     }
 
     [Fact]
@@ -87,7 +88,7 @@ public class ProfileSectionsExtractionTests
         Assert.Contains("profile-employer-card", blob);
         Assert.Contains("profile-cert-row", blob);
         Assert.Contains("profile-save-bar", blob);
-        Assert.Contains("profile-unsubscribe", blob);
+        Assert.Contains("profile-danger-zone", blob);
         Assert.Contains("CandidateProfileEditor.MaxReferences", blob);
     }
 
@@ -144,12 +145,14 @@ public class ProfileSectionsExtractionTests
         Assert.Contains("<AvailabilitySection", tab);
         Assert.Contains("<MotivationSection", tab);
         Assert.Contains("<ConsentSection", tab);
-        Assert.Contains("<DeleteAccountSection", tab);
+        Assert.Contains("<ProfileDangerZoneSection", tab);
         Assert.Contains("UnsubscribeDialog", tab);
+        Assert.Contains("CandidateProfileResetDialog", tab);
         Assert.Contains("aria-expanded", tab);
         Assert.Contains("aria-controls", tab);
         Assert.Contains("IsUnder16", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/ConsentSection.razor")));
-        Assert.Contains("OpenUnsubscribe", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/DeleteAccountSection.razor")));
+        Assert.Contains("OpenUnsubscribe", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/ProfileDangerZoneSection.razor")));
+        Assert.Contains("OpenProfileReset", File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections/ProfileDangerZoneSection.razor")));
 
         var passport = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/Passport.razor"));
         Assert.Contains("<PassportDataTab", passport);

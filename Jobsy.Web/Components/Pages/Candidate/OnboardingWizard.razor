@@ -7,6 +7,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
 @inject CultureState Culture
@@ -19,8 +20,12 @@
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
+</HeadContent>
 
-<div class="ob-wizard">
+<div class="ob-wizard ob-wizard--richting-a">
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -151,6 +156,26 @@
             </aside>
 
             <main class="ob-wizard__main">
+                <div class="ob-wizard__mobile-top">
+                    <div class="ob-wizard__topbar">
+                        <div class="ob-wizard__topbar-brand">
+                            <img src="/images/brand/lobsy-128.png" width="36" height="36" alt="" />
+                            <span>Lobsy</span>
+                        </div>
+                        <div class="ob-wizard__topbar-actions">
+                            <p class="ob-wizard__topbar-meta">@MobileTopMeta</p>
+                            <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                        </div>
+                    </div>
+                    <div class="ob-wizard__progress-thin"
+                         role="progressbar"
+                         aria-valuemin="1"
+                         aria-valuemax="10"
+                         aria-valuenow="@_step"
+                         aria-label="@Culture.Format("Onboarding.ProgressAria", _step, 10)">
+                        <span style="width:@(_step * 10)%"></span>
+                    </div>
+                </div>
                 <header class="ob-wizard__header">
                     <div class="ob-wizard__header-row">
                         <button type="button"
@@ -188,10 +213,13 @@
                         <p class="state-message error">@_error</p>
                     }
 
+                    <p class="ob-wizard__step-pill">@MobileStepBadge</p>
+
                     @switch (_step)
                     {
                         case 1:
                             <PersonalStep Draft="Draft"
+                                          ShowValidation="_showValidation"
                                           AddressChanged="AddressChanged"
                                           BirthDateChanged="BirthDateChanged"
                                           ShowCity="ShowCity"
@@ -200,6 +228,7 @@
 
                         case 2:
                             <AvailabilityStep Draft="Draft"
+                                              ShowValidation="_showValidation"
                                               Presets="PresetItems"
                                               TogglePreset="TogglePreset"
                                               ToggleFineTune="ToggleFineTune"
@@ -212,6 +241,7 @@
 
                         case 3:
                             <TransportStep Draft="Draft"
+                                           ShowValidation="_showValidation"
                                            SelectTransport="SelectTransport"
                                            SelectTravelTime="SelectTravelTime"
                                            ShowCustomTravel="ShowCustomTravel" />
@@ -244,6 +274,7 @@
 
                         case >= 7 and <= 10:
                             <OnboardingMiniTest Step="_step"
+                                                FlowEpoch="_step"
                                                 CurrentQuestion="_currentQuestion"
                                                 TestTabs="MiniTestTabs"
                                                 Questions="_miniQuestions"
@@ -252,31 +283,44 @@
                                                 InputPrefix="@MiniPrefix"
                                                 Answer="OnMiniAnswer"
                                                 OnFinished="FinishMiniAsync"
+                                                OnLeave="BackAsync"
                                                 ExpandQuestion="ExpandQuestion"
                                                 ResolveQuestionText="QuestionText" />
                             break;
                     }
+
+                    <div class="ob-wizard__mascot-anchor" aria-hidden="true">
+                        <img src="/images/brand/mascot-64.webp" width="36" height="36" alt="" />
+                    </div>
                 </section>
 
                 @if (!ShowMiniTestFooter)
                 {
-                    <footer class="ob-wizard__footer">
-                        <button type="button"
-                                class="btn btn-primary ob-wizard__cta"
-                                disabled="@(!CanNext || _busy)"
-                                @onclick="@(() => NextAsync())">@NextLabel</button>
+                    <footer class="ob-wizard__footer" data-sticky-footer="true">
                         @if (_step is 4 or 5)
                         {
-                            <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
+                            <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="SkipOptionalAsync">
                                 @Culture["Onboarding.Skip"]
                             </button>
                         }
                         else if (_step == 6)
                         {
-                            <button type="button" class="ob-wizard__ghost" @onclick="DreamUnknownAsync">
+                            <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="DreamUnknownAsync">
                                 @Culture["Onboarding.DreamUnknown"]
                             </button>
                         }
+                        <div class="ob-wizard__actionbar">
+                            <button type="button"
+                                    class="ob-wizard__back-footer"
+                                    data-testid="onboarding-back"
+                                    disabled="@(_step == 1 || _busy)"
+                                    @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                            <button type="button"
+                                    class="btn btn-primary ob-wizard__cta"
+                                    data-testid="onboarding-next"
+                                    disabled="@_busy"
+                                    @onclick="@(() => NextAsync())">@NextLabel</button>
+                        </div>
                     </footer>
                 }
             </main>
@@ -301,6 +345,8 @@
     private bool _saving;
     private bool _savedVisible;
     private bool _saveError;
+    private bool _showValidation;
+    private bool _pendingStepScroll;
     private int _step = 1;
     private int _currentQuestion;
     private string _installMessage = "";
@@ -323,7 +369,8 @@
         new("office", "Onboarding.Preset.Office", "Onboarding.Preset.Office.Lead"),
         new("holiday", "Onboarding.Preset.Holiday", "Onboarding.Preset.Holiday.Lead"),
         new("parttime", "Onboarding.Preset.Parttime", "Onboarding.Preset.Parttime.Lead"),
-        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead")
+        new("fulltime", "Onboarding.Preset.Fulltime", "Onboarding.Preset.Fulltime.Lead"),
+        new("custom", "Onboarding.Preset.Custom", "Onboarding.Preset.Custom.Lead")
     ];
     private static readonly TestConsentStep.TestTab[] ConsentTabs =
     [
@@ -374,6 +421,27 @@
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
     private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
     private bool AvailabilityValid => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0;
+    private string MobileStepBadge
+    {
+        get
+        {
+            if (Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"Stap {_step} van 10";
+            }
+
+            var raw = Culture.Format("Discovery.StepOf", _step);
+            return raw.Length > 0 ? char.ToUpperInvariant(raw[0]) + raw[1..] : raw;
+        }
+    }
+
+    private string MobileTopMeta =>
+        Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
+            .Replace(" van 10 ·", " ·", StringComparison.Ordinal)
+            .Replace(" of 10 ·", " ·", StringComparison.Ordinal)
+            .Replace(" minuten", " min", StringComparison.Ordinal)
+            .Replace(" min left", " min", StringComparison.Ordinal);
+
     private string NextLabel => _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
         : _step == 10 ? Culture["Onboarding.ViewKompas"]
@@ -390,20 +458,79 @@
         StateHasChanged();
     }
 
-    private bool CanNext => _step switch
+    private bool CanNext => GetValidationIssues().Count == 0
+                            && (_step is not (>= 7 and <= 10)
+                                || _miniQuestions.All(question => MiniVisibleAnswers.ContainsKey(question.Id)));
+
+    private IReadOnlyList<OnboardingValidationIssue> GetValidationIssues()
     {
-        1 => !string.IsNullOrWhiteSpace(Draft.FirstName)
-             && !string.IsNullOrWhiteSpace(Draft.LastName)
-             && Draft.BirthDate is DateOnly born
-             && !Jobsy.Core.Privacy.CandidateConsentRules.IsBelowMinimumAge(born, DateOnly.FromDateTime(DateTime.Today))
-             && ((Draft.HomeLat is not null && Draft.HomeLng is not null) || !string.IsNullOrWhiteSpace(Draft.City)),
-        2 => AvailabilityValid && AvailabilityStartRules.StepIsValid(Draft.Immediate, Draft.AvailableFrom),
-        3 => !string.IsNullOrWhiteSpace(Draft.Transport) && Draft.MaxTravel > 0,
-        6 => !string.IsNullOrWhiteSpace(Draft.Dream),
-        7 when !Draft.HasConsent => Draft.ConsentRequested,
-        >= 7 => _miniQuestions.All(question => MiniVisibleAnswers.ContainsKey(question.Id)),
-        _ => true
-    };
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        return _step switch
+        {
+            1 => OnboardingWizardValidation.ValidatePersonal(
+                Draft.FirstName,
+                Draft.LastName,
+                Draft.BirthDate,
+                Draft.City,
+                Draft.HomeLat,
+                Draft.HomeLng,
+                Draft.Postcode,
+                Draft.PostcodeResolved,
+                today),
+            2 => OnboardingWizardValidation.ValidateAvailability(
+                Draft.MinHours,
+                Draft.MaxHours,
+                Draft.Availability.Count,
+                Draft.Immediate,
+                Draft.AvailableFrom,
+                requirePresetSelection: Draft.Presets.Count == 0 && Draft.Availability.Count == 0),
+            3 => OnboardingWizardValidation.ValidateTransport(Draft.Transport, Draft.MaxTravel),
+            6 => OnboardingWizardValidation.ValidateDream(Draft.Dream),
+            7 when !Draft.HasConsent => OnboardingWizardValidation.ValidateConsent(Draft.ConsentRequested),
+            _ => []
+        };
+    }
+
+    private async Task ScrollToFirstIssueAsync(IReadOnlyList<OnboardingValidationIssue> issues)
+    {
+        if (issues.Count == 0)
+        {
+            return;
+        }
+
+        var anchor = OnboardingWizardValidation.FieldAnchorId(issues[0].Field);
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyDom.scrollToId", anchor);
+        }
+        catch
+        {
+            // optional
+        }
+    }
+
+    private void RequestStepScrollReset()
+    {
+        _pendingStepScroll = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pendingStepScroll)
+        {
+            return;
+        }
+
+        _pendingStepScroll = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyDom.resetWizardStepScroll");
+        }
+        catch
+        {
+            // optional
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -457,6 +584,7 @@
                 await MarkStartedAsync();
                 await PrepareMiniAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
+                RequestStepScrollReset();
             }
         }
         catch (Exception ex)
@@ -487,7 +615,7 @@
         Draft.HomeLat = profile.HomeLatitude;
         Draft.HomeLng = profile.HomeLongitude;
         var preferences = profile.Preferences ?? new();
-        SplitAddress(preferences.HomeAddress);
+        CandidateHomeAddressLookup.HydrateDraftFromStored(Draft, preferences.HomeAddress);
         Draft.MinHours = preferences.MinHoursPerWeek ?? 8;
         Draft.MaxHours = preferences.MaxHoursPerWeek ?? 24;
         Draft.MaxTravel = preferences.MaxTravelMinutes ?? 30;
@@ -503,6 +631,9 @@
         {
             foreach (var part in parts) Draft.Availability.Add($"{day}:{part}");
         }
+
+        Draft.FineTune = Draft.Presets.Contains(AvailabilityPresetRules.Custom);
+
         Draft.NoWork = preferences.NoWorkExperience == true;
         Draft.Jobs.Clear();
         Draft.Jobs.AddRange(preferences.Employers.Take(3));
@@ -513,12 +644,22 @@
             Draft.Education = parts[0];
             Draft.EducationDirection = parts.Length > 1 ? parts[1] : preferences.EducationDirection ?? "";
         }
+
+        Draft.WorkStatuses.Clear();
+        foreach (var code in preferences.WorkStatuses ?? [])
+        {
+            if (WorkStatusCatalog.IsKnown(code))
+            {
+                Draft.WorkStatuses.Add(WorkStatusCatalog.Canonical(code)!);
+            }
+        }
     }
 
     private async Task BeginAsync()
     {
         _welcome = false;
         await MarkStartedAsync();
+        RequestStepScrollReset();
     }
 
     private async Task MarkStartedAsync()
@@ -535,11 +676,44 @@
         _step--;
         await MarkStartedAsync();
         await PrepareMiniAsync();
+        RequestStepScrollReset();
     }
 
     private async Task NextAsync(bool fromMiniTestFinish = false)
     {
-        if (_busy || (!fromMiniTestFinish && !CanNext)) return;
+        if (_busy)
+        {
+            return;
+        }
+
+        if (!fromMiniTestFinish)
+        {
+            if (_step == 1)
+            {
+                await EnsureAddressResolvedAsync();
+            }
+
+            var issues = GetValidationIssues();
+            if (_step is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0)
+            {
+                var open = _miniQuestions.FindIndex(q => !MiniVisibleAnswers.ContainsKey(q.Id));
+                if (open >= 0)
+                {
+                    _currentQuestion = open;
+                    StateHasChanged();
+                    return;
+                }
+            }
+            else if (issues.Count > 0)
+            {
+                _showValidation = true;
+                _error = Culture[issues[0].MessageKey];
+                await ScrollToFirstIssueAsync(issues);
+                return;
+            }
+        }
+
+        _showValidation = false;
         _busy = true;
         _error = null;
         _miniArrivedViaBack = false;
@@ -566,6 +740,7 @@
             FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
+            RequestStepScrollReset();
         }
         catch (Exception ex)
         {
@@ -586,6 +761,7 @@
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
         await TryAutoAdvanceEmptyMiniStepAsync();
+        RequestStepScrollReset();
     }
 
     private async Task LaterAsync()
@@ -604,89 +780,38 @@
 
     private void ShowCity() => Draft.ShowCity = true;
 
-    private void SplitAddress(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return;
-        var index = value.Trim().IndexOf(' ');
-        Draft.Postcode = index > 0 ? value[..index].Trim() : value.Trim();
-        Draft.City = index > 0 ? value[(index + 1)..].Trim() : "";
-    }
+    private string HomeAddress() => CandidateHomeAddressLookup.BuildHomeAddressForSave(Draft);
 
-    private string HomeAddress() => $"{NormalizePostcode(Draft.Postcode)} {Draft.City.Trim()}".Trim();
+    private void AddressChanged() => ScheduleProfileSave();
 
-    private static string NormalizePostcode(string value)
+    private async Task EnsureAddressResolvedAsync()
     {
-        var raw = value.Replace(" ", "").ToUpperInvariant();
-        return raw.Length == 6 ? raw[..4] + " " + raw[4..] : value.Trim().ToUpperInvariant();
-    }
+        if (OnboardingWizardValidation.HasResolvableLocation(
+                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved))
+        {
+            return;
+        }
 
-    private void AddressChanged()
-    {
-        Draft.HomeLat = Draft.HomeLng = null;
-        Draft.PostcodeResolved = false;
-        ScheduleProfileSave();
         _geocodeCts?.Cancel();
-        _geocodeCts = new();
-        _ = GeocodeAsync(_geocodeCts.Token);
+        _geocodeCts = new CancellationTokenSource();
+        await GeocodeAsync(_geocodeCts.Token, debounce: false);
     }
 
-    private async Task GeocodeAsync(CancellationToken cancellationToken)
+    private async Task GeocodeAsync(CancellationToken cancellationToken, bool debounce = true)
     {
-        try
+        var resolved = await CandidateHomeAddressLookup.TryResolvePostcodeAsync(
+            Draft, Geocoder, cancellationToken, debounce);
+        if (resolved)
         {
-            await Task.Delay(350, cancellationToken);
-            var postcode = NormalizePostcode(Draft.Postcode);
-            if (!System.Text.RegularExpressions.Regex.IsMatch(postcode, "^[1-9][0-9]{3} [A-Z]{2}$")) return;
-            var result = PostcodeMatch.Pick(await Geocoder.SuggestAsync(postcode, cancellationToken), postcode);
-            if (result is null)
-            {
-                MarkPostcodeMiss();
-                await InvokeAsync(StateHasChanged);
-                return;
-            }
-            SelectAddress(result);
+            ScheduleProfileSave();
         }
-        catch (OperationCanceledException)
-        {
-        }
-        catch
-        {
-            MarkPostcodeMiss();
-            await InvokeAsync(StateHasChanged);
-        }
-    }
 
-    private void MarkPostcodeMiss()
-    {
-        Draft.PostcodeMissing = true;
-        Draft.ShowCity = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     private void SelectAddress(AddressSuggestion item)
     {
-        Draft.HomeLat = item.Latitude;
-        Draft.HomeLng = item.Longitude;
-        var postcode = NormalizePostcode(Draft.Postcode);
-        if (PostcodeMatch.IsNlPostcode(postcode))
-        {
-            Draft.Postcode = postcode;
-            var city = PostcodeMatch.CityFromLabel(item.Label, postcode);
-            if (!string.IsNullOrWhiteSpace(city))
-            {
-                Draft.City = city;
-            }
-            else
-            {
-                Draft.ShowCity = true;
-            }
-        }
-        else
-        {
-            SplitAddress(item.Label);
-            Draft.Postcode = NormalizePostcode(Draft.Postcode);
-        }
-        Draft.PostcodeResolved = true;
-        Draft.PostcodeMissing = false;
+        CandidateHomeAddressLookup.ApplySuggestionToDraft(Draft, item);
         ScheduleProfileSave();
     }
 
@@ -700,28 +825,46 @@
         ScheduleProfileSave();
     }
 
-    private void ToggleFineTune() => Draft.FineTune = !Draft.FineTune;
+    private void ToggleFineTune() => ScheduleProfileSave();
 
     private void TogglePreset(string code)
     {
-        if (!Draft.Presets.Add(code)) Draft.Presets.Remove(code);
-        if (!Draft.PresetsOverridden) ApplyPresets();
+        var min = Draft.MinHours;
+        var max = Draft.MaxHours;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.Toggle(
+            code,
+            Draft.Presets,
+            Draft.Availability,
+            ref overridden,
+            ref fineTune,
+            ref min,
+            ref max);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
+        Draft.MinHours = min;
+        Draft.MaxHours = max;
         ScheduleProfileSave();
-    }
-
-    private void ApplyPresets()
-    {
-        var result = AvailabilityPresetRules.Compute(Draft.Presets, Draft.MinHours, Draft.MaxHours);
-        Draft.MinHours = result.MinHours;
-        Draft.MaxHours = result.MaxHours;
-        Draft.Availability.Clear();
-        foreach (var dayPart in result.DayParts) Draft.Availability.Add(dayPart);
     }
 
     private void ResetPresets()
     {
-        Draft.PresetsOverridden = false;
-        ApplyPresets();
+        var min = Draft.MinHours;
+        var max = Draft.MaxHours;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.ResetToPresets(
+            Draft.Presets,
+            Draft.Availability,
+            ref overridden,
+            ref fineTune,
+            ref min,
+            ref max);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
+        Draft.MinHours = min;
+        Draft.MaxHours = max;
         ScheduleProfileSave();
     }
 
@@ -745,7 +888,11 @@
 
     private void ManualAvailability()
     {
-        Draft.PresetsOverridden = true;
+        var overridden = Draft.PresetsOverridden;
+        var fineTune = Draft.FineTune;
+        AvailabilityOnboardingPresets.MarkManualEdit(Draft.Presets, ref overridden, ref fineTune);
+        Draft.PresetsOverridden = overridden;
+        Draft.FineTune = fineTune;
         ScheduleProfileSave();
     }
 
@@ -857,6 +1004,7 @@
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
         await TryAutoAdvanceEmptyMiniStepAsync();
+        RequestStepScrollReset();
     }
 
     private void ScheduleDreamSave()
@@ -1012,6 +1160,7 @@
             FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
+            RequestStepScrollReset();
         }
         catch (Exception ex)
         {
@@ -1173,7 +1322,8 @@
                 ? []
                 : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],
             EducationDirection = Draft.EducationDirection,
-            HomeAddress = HomeAddress()
+            HomeAddress = HomeAddress(),
+            WorkStatuses = Draft.WorkStatuses.OrderBy(x => x).ToList()
         },
         homeLatitude: Draft.HomeLat,
         homeLongitude: Draft.HomeLng,

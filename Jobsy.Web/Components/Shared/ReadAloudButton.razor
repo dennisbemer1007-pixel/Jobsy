@@ -8,7 +8,7 @@
 @if (_show)
 {
     <button type="button"
-            class="read-aloud @(_speaking ? "is-speaking" : null)"
+            class="read-aloud @(IconOnly ? "read-aloud--icon" : null) @(_speaking ? "is-speaking" : null)"
             data-read-aloud
             data-read-aloud-state="@(_speaking ? "stop" : "play")"
             aria-pressed="@(_speaking ? "true" : "false")"
@@ -16,8 +16,15 @@
             @onclick="ToggleAsync"
             @onclick:stopPropagation="true">
         <span class="read-aloud__icon" aria-hidden="true">@(_speaking ? "■" : "▶")</span>
-        <span class="read-aloud__label">@(_speaking ? Culture["ReadAloud.Stop"] : Culture["ReadAloud.Play"])</span>
+        @if (!IconOnly)
+        {
+            <span class="read-aloud__label">@LabelText</span>
+        }
     </button>
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="read-aloud__error" role="status">@_error</p>
+    }
 }
 
 @code {
@@ -28,17 +35,30 @@
     /// <summary>Overrides the play aria-label. Pupil pages use the short "Lees voor".</summary>
     [Parameter] public string? PlayAria { get; set; }
 
+    /// <summary>Icon-only control (no visible label text).</summary>
+    [Parameter] public bool IconOnly { get; set; }
+
     private bool _show;
     private bool _speaking;
+    private bool _pending;
+    private string? _error;
     private string _spoken = "";
     private DotNetObjectReference<ReadAloudButton>? _self;
     private ReadAloudCoordinator? _coordinator;
 
     private string EffectiveKey => string.IsNullOrWhiteSpace(SpeechKey) ? "text-" + StableHash(Text) : SpeechKey;
 
-    private string AriaLabel => _speaking
-        ? Culture["ReadAloud.StopAria"]
-        : string.IsNullOrWhiteSpace(PlayAria) ? Culture["ReadAloud.PlayAria"] : PlayAria;
+    private string LabelText => _pending
+        ? Culture["ReadAloud.Loading"]
+        : _speaking
+            ? Culture["ReadAloud.Stop"]
+            : Culture["ReadAloud.Play"];
+
+    private string AriaLabel => _pending
+        ? Culture["ReadAloud.Loading"]
+        : _speaking
+            ? Culture["ReadAloud.StopAria"]
+            : string.IsNullOrWhiteSpace(PlayAria) ? Culture["ReadAloud.PlayAria"] : PlayAria;
 
     protected override void OnInitialized()
     {
@@ -115,30 +135,52 @@
             return;
         }
 
+        _error = null;
+        _pending = true;
+        StateHasChanged();
         try
         {
             _self ??= DotNetObjectReference.Create(this);
             var started = await Js.InvokeAsync<bool>("lobsyReadAloud.speak", Text, Culture.Language, _self);
             if (!started)
             {
-                _show = false;
+                _pending = false;
+                _error = Culture["ReadAloud.Error"];
                 return;
             }
 
             _spoken = Text;
             _speaking = true;
+            _pending = false;
             _coordinator?.SetActive(EffectiveKey);
         }
         catch (Exception)
         {
+            _pending = false;
             _speaking = false;
+            _error = Culture["ReadAloud.Error"];
         }
     }
 
     [JSInvokable]
     public void OnSpeechEnded()
     {
+        _pending = false;
         _speaking = false;
+        if (_coordinator?.ActiveKey == EffectiveKey)
+        {
+            _coordinator.SetActive(null);
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void OnSpeechError(string? reason)
+    {
+        _pending = false;
+        _speaking = false;
+        _error = Culture["ReadAloud.Error"];
         if (_coordinator?.ActiveKey == EffectiveKey)
         {
             _coordinator.SetActive(null);
@@ -149,6 +191,7 @@
 
     private async Task StopQuietlyAsync()
     {
+        _pending = false;
         _speaking = false;
         if (_coordinator?.ActiveKey == EffectiveKey)
         {

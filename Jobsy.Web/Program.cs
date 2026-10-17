@@ -46,6 +46,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+builder.Services.Configure<Jobsy.Core.Options.SessionAuthOptions>(
+    builder.Configuration.GetSection(Jobsy.Core.Options.SessionAuthOptions.SectionName));
 builder.Services.AddJobsyDataProtection(builder.Configuration, builder.Environment);
 
 builder.Services.AddSingleton<ITestAccountsRuntime>(_ =>
@@ -183,6 +185,7 @@ builder.Services.AddScoped<Jobsy.Web.RegionHosting.RegionHostState>();
 builder.Services.AddScoped<Jobsy.Web.Branding.PlatformBrandingState>();
 builder.Services.AddScoped<TokenBalanceCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.MeGetCache>();
+builder.Services.AddScoped<Jobsy.Web.Services.DiscoveryOverviewCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
 builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
@@ -241,6 +244,23 @@ builder.Services.AddHttpClient(Jobsy.Web.Hosting.PrivacyDataExportEndpoints.Http
     client.Timeout = TimeSpan.FromSeconds(20);
     client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
 });
+builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidateProfileResetEndpoints.HttpClientName, client =>
+{
+    var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5200/");
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+    client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "LobsyWeb/1.0");
+});
+builder.Services.AddHttpClient("JobsyWebSelf", client =>
+{
+    var publicBase = JobsyPublicUrl.NormalizeBaseUrl(
+        builder.Configuration["PublicBaseUrl"] ?? builder.Configuration["ApiBaseUrl"],
+        "http://localhost:5100/");
+    client.BaseAddress = new Uri(publicBase);
+    client.Timeout = TimeSpan.FromSeconds(30);
+}).AddHttpMessageHandler<Jobsy.Web.Security.ForwardCircuitCookiesHandler>();
 builder.Services.AddHttpClient(Jobsy.Web.Hosting.CandidatePassportPdfEndpoints.HttpClientName, client =>
 {
     var apiBaseUrl = JobsyPublicUrl.NormalizeBaseUrl(
@@ -551,6 +571,7 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseExternalAuthCallbackCredentials();
 
 app.UseAuthentication();
+app.UseCandidateGuestRedirect();
 app.UseRateLimiter();
 app.UseLegacyAuthRouteRedirects();
 app.UseLoginProtection();
@@ -588,6 +609,7 @@ app.MapMailUnsubscribeEndpoints();
 app.MapReferenceConfirmationEndpoints();
 app.MapContentReportEndpoints();
 app.MapPrivacyDataExportEndpoints();
+app.MapCandidateProfileResetEndpoints();
 app.MapCandidatePassportPdfEndpoints();
 app.MapPartnerFlyerEndpoints();
 app.MapMailSettingsEndpoints();

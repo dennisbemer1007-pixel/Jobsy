@@ -100,7 +100,7 @@ public class AcceptatieLayoutSweepTests
     public void Journey_mobile_grid_override_follows_the_base_rule()
     {
         var css = Read("Jobsy.Web", "wwwroot", "css", "features", "ontdekkingsreis.css");
-        var baseIdx = css.IndexOf("grid-template-columns: 300px minmax(0, 640px) 1fr", StringComparison.Ordinal);
+        var baseIdx = css.IndexOf("grid-template-columns: minmax(0, 15.5rem) minmax(0, 34rem)", StringComparison.Ordinal);
         Assert.True(baseIdx > 0);
         var after = css[(baseIdx + 1)..];
         Assert.Contains("grid-template-columns: minmax(0, 1fr)", after, StringComparison.Ordinal);
@@ -108,16 +108,34 @@ public class AcceptatieLayoutSweepTests
     }
 
     [Fact]
+    public void Candidate_scroll_hotfix_673_layout_traps_stay_removed()
+    {
+        var app = Read("Jobsy.Web", "wwwroot", "css", "app.css");
+        var wizard = Read("Jobsy.Web", "wwwroot", "css", "features", "onboarding-wizard.css");
+        Assert.DoesNotContain(".app-main:has(.journey)", app, StringComparison.Ordinal);
+        Assert.DoesNotContain("ob-wizard__layout{max-height:100dvh;overflow:hidden", wizard, StringComparison.Ordinal);
+        Assert.DoesNotContain("Progress header: solid bar, content scrolls underneath", wizard, StringComparison.Ordinal);
+        Assert.Contains("journey-coach--mobile", Read("Jobsy.Web", "wwwroot", "css", "features", "ontdekkingsreis.css"), StringComparison.Ordinal);
+        Assert.Contains("CandidateScrollRegressionPlaywrightTests", File.ReadAllText(Path.Combine(RepoRoot(), "Jobsy.Tests/CandidateScrollRegressionPlaywrightTests.cs")), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Service_worker_precache_matches_app_razor()
     {
         var app = Read("Jobsy.Web", "Components", "App.razor");
+        var catalog = Read("Jobsy.Web", "Hosting", "PageAssetCatalog.cs");
+        var core = Read("Jobsy.Web", "wwwroot", "js", "app-core.js");
         foreach (var name in new[] { "service-worker.js", "service-worker.published.js" })
         {
             var text = Read("Jobsy.Web", "wwwroot", name);
             foreach (Match match in Regex.Matches(text, """/(?:css|js)/[^"' ]+\?v=[^"' ]+"""))
             {
                 var url = match.Value.TrimStart('/');
-                Assert.Contains(url, app, StringComparison.Ordinal);
+                Assert.True(
+                    app.Contains(url, StringComparison.Ordinal)
+                    || catalog.Contains(url, StringComparison.Ordinal)
+                    || core.Contains(url, StringComparison.Ordinal),
+                    $"Precache {url} must be referenced from App.razor, PageAssetCatalog, or app-core.js.");
             }
         }
     }
@@ -130,6 +148,23 @@ public class AcceptatieLayoutSweepTests
         Assert.Contains("CanStart => _age16Plus == true", razor, StringComparison.Ordinal);
         var header = Read("Jobsy.Web", "Components", "Layout", "Public", "PublicHeader.razor");
         Assert.Contains("PublicHeaderAccount", header, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Desktop_candidate_header_is_sticky_with_dropdowns_below_modals()
+    {
+        var css = Read("Jobsy.Web", "wwwroot", "css", "app.css");
+        Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
+        Assert.Contains("position: sticky;\n        top: 0;\n        z-index: 40;", css, StringComparison.Ordinal);
+
+        var journey = Read("Jobsy.Web", "wwwroot", "css", "features", "ontdekkingsreis.css");
+        Assert.Contains(".app-shell:has(.app-header) .journey-stage .journey-rail", journey, StringComparison.Ordinal);
+        Assert.Contains("top: calc(var(--app-header-height, 4.25rem) + 24px);", journey, StringComparison.Ordinal);
+        Assert.Contains("max-height: calc(100dvh - var(--app-header-height, 4.25rem) - 48px);", journey, StringComparison.Ordinal);
+
+        var passport = Read("Jobsy.Web", "wwwroot", "css", "features", "mijn-paspoort.css");
+        Assert.Contains("inset-block-start: 0;", passport, StringComparison.Ordinal);
+        Assert.Contains("inset-block-start: var(--app-header-height, 4.25rem);", passport, StringComparison.Ordinal);
     }
 
     [Fact]

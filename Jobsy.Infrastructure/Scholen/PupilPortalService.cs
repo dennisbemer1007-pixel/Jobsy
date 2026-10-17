@@ -6,7 +6,9 @@ using Jobsy.Core.Entities.Scholen;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Features;
 using Jobsy.Core.Scholen;
+using Jobsy.Core.Scholen.PupilPassport;
 using Jobsy.Core.Scholen.QuestionSets;
 using Jobsy.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -53,8 +55,18 @@ public interface IPupilPortalService
         string? key,
         CancellationToken cancellationToken = default);
 
+    Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> GetVoPassportAsync(
+        ClaimsPrincipal pupil,
+        CancellationToken cancellationToken = default);
+
+    Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> SaveVoPassportAsync(
+        ClaimsPrincipal pupil,
+        PupilVoPassportSaveRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
         CancellationToken cancellationToken = default);
 
     Task<(bool Ok, PupilErrorDto? Error, int StatusCode)> ClearLoginPauseAsync(
@@ -83,6 +95,9 @@ public sealed class PupilPortalService : IPupilPortalService
     private readonly IMemoryCache _cache;
     private readonly IPupilStoryRenderer _story;
     private readonly IPupilReportPdfService _pdf;
+    private readonly IPupilPassportPdfService _passportV2;
+    private readonly PupilPassportPdfModelBuilder _passportModelBuilder;
+    private readonly IPlatformFeatureService _features;
     private readonly TimeProvider _clock;
     private readonly ILogger<PupilPortalService> _logger;
 
@@ -96,6 +111,9 @@ public sealed class PupilPortalService : IPupilPortalService
         IMemoryCache cache,
         IPupilStoryRenderer story,
         IPupilReportPdfService pdf,
+        IPupilPassportPdfService passportV2,
+        PupilPassportPdfModelBuilder passportModelBuilder,
+        IPlatformFeatureService features,
         ILogger<PupilPortalService> logger,
         TimeProvider? clock = null)
     {
@@ -108,6 +126,9 @@ public sealed class PupilPortalService : IPupilPortalService
         _cache = cache;
         _story = story;
         _pdf = pdf;
+        _passportV2 = passportV2;
+        _passportModelBuilder = passportModelBuilder;
+        _features = features;
         _logger = logger;
         _clock = clock ?? TimeProvider.System;
     }
@@ -731,8 +752,91 @@ public sealed class PupilPortalService : IPupilPortalService
         return (new PupilDreamJobResponse(storeKey, dream), null, 200);
     }
 
+    public async Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> GetVoPassportAsync(
+        ClaimsPrincipal pupil,
+        CancellationToken cancellationToken = default)
+    {
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var enabled = await VoPassportExtrasEnabledAsync(ctx.Class!, cancellationToken);
+        if (!enabled)
+        {
+            return (new PupilVoPassportDto(false, [], null, [], null, null, []), null, 200);
+        }
+
+        return (MapVoPassportDto(ctx.Code!.Progress, enabled: true), null, 200);
+    }
+
+    public async Task<(PupilVoPassportDto? Ok, PupilErrorDto? Error, int StatusCode)> SaveVoPassportAsync(
+        ClaimsPrincipal pupil,
+        PupilVoPassportSaveRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var ctx = await ResolveSessionAsync(pupil, cancellationToken);
+        if (ctx.Error is not null)
+        {
+            return (null, ctx.Error, ctx.StatusCode);
+        }
+
+        var enabled = await VoPassportExtrasEnabledAsync(ctx.Class!, cancellationToken);
+        if (!enabled)
+        {
+            return (null, new PupilErrorDto("disabled", "Deze stap is niet beschikbaar."), 404);
+        }
+
+        var code = ctx.Code!;
+        if (code.Status != PupilCodeStatus.Completed || code.Progress is null)
+        {
+            return (null, new PupilErrorDto("not_completed", "Je reis is nog niet klaar."), 409);
+        }
+
+        var progress = code.Progress;
+        var fav = (request.FavoriteSubjects ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Take(6).ToList();
+        var side = (request.SideJobAvailability ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Take(6).ToList();
+        var learn = (request.LearningGoals ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Take(5).ToList();
+        var own = string.IsNullOrWhiteSpace(request.OwnWords) ? null : request.OwnWords.Trim()[..Math.Min(500, request.OwnWords.Trim().Length)];
+
+        progress.VoFavoriteSubjectsJson = fav.Count > 0 ? JsonSerializer.Serialize(fav) : null;
+        progress.VoProfileKey = string.IsNullOrWhiteSpace(request.ProfileKey) ? null : request.ProfileKey.Trim();
+        progress.VoSideJobAvailabilityJson = side.Count > 0 ? JsonSerializer.Serialize(side) : null;
+        progress.VoTravelModeKey = string.IsNullOrWhiteSpace(request.TravelModeKey) ? null : request.TravelModeKey.Trim();
+        progress.VoOwnWords = own;
+        progress.VoLearningGoalsJson = learn.Count > 0 ? JsonSerializer.Serialize(learn) : null;
+        progress.UpdatedAtUtc = _clock.GetUtcNow().UtcDateTime;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return (MapVoPassportDto(progress, enabled: true), null, 200);
+    }
+
+    private async Task<bool> VoPassportExtrasEnabledAsync(SchoolClass schoolClass, CancellationToken cancellationToken)
+    {
+        if (schoolClass.QuestionSet != PupilQuestionSet.Vo)
+        {
+            return false;
+        }
+
+        var features = await _features.GetAsync(cancellationToken);
+        return features.PupilPassportV2Enabled;
+    }
+
+    private static PupilVoPassportDto MapVoPassportDto(PupilProgress? progress, bool enabled)
+        => new(
+            enabled,
+            ParseTagList(progress?.VoFavoriteSubjectsJson),
+            progress?.VoProfileKey,
+            ParseTagList(progress?.VoSideJobAvailabilityJson),
+            progress?.VoTravelModeKey,
+            progress?.VoOwnWords,
+            ParseTagList(progress?.VoLearningGoalsJson));
+
     public async Task<(byte[]? Bytes, string? FileName, PupilErrorDto? Error, int StatusCode)> BuildPdfAsync(
         ClaimsPrincipal pupil,
+        string? displayNameOnPdf = null,
         CancellationToken cancellationToken = default)
     {
         var ctx = await ResolveSessionAsync(pupil, cancellationToken);
@@ -753,10 +857,41 @@ public sealed class PupilPortalService : IPupilPortalService
             .Select(s => s.Name)
             .FirstOrDefaultAsync(cancellationToken) ?? "";
         var display = pupil.FindFirst(PupilClaimTypes.CodeDisplay)?.Value ?? "";
-        var model = BuildPdfModel(code, schoolClass, schoolName, display);
-        var bytes = _pdf.Render(model);
-        var fileName = $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
+        displayNameOnPdf = SanitizeDisplayName(displayNameOnPdf);
+        var features = await _features.GetAsync(cancellationToken);
+        byte[] bytes;
+        if (features.PupilPassportV2Enabled)
+        {
+            var passportModel = _passportModelBuilder.Build(
+                code, schoolClass, schoolName, display, displayNameOnPdf);
+            bytes = _passportV2.Render(passportModel);
+        }
+        else
+        {
+            var model = BuildPdfModel(code, schoolClass, schoolName, display);
+            bytes = _pdf.Render(model);
+        }
+
+        var fileName = features.PupilPassportV2Enabled
+            ? $"lobsy-dna-paspoort-{SanitizeFilePart(schoolClass.Name)}.pdf"
+            : $"lobsy-ontdekkingsreis-{SanitizeFilePart(schoolClass.Name)}.pdf";
         return (bytes, fileName, null, 200);
+    }
+
+    private static string? SanitizeDisplayName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return null;
+        }
+
+        var trimmed = name.Trim();
+        if (trimmed.Length > 48)
+        {
+            trimmed = trimmed[..48];
+        }
+
+        return trimmed;
     }
 
     private PupilReportPdfModel BuildPdfModel(

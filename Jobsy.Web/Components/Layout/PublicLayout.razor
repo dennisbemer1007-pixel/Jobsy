@@ -94,6 +94,8 @@
 
     private static bool IsAuthPath(string? path)
         => string.Equals(path, PublicRoutes.Login, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, PublicRoutes.CreateAccount, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(path, PublicRoutes.CreateAccountCode, StringComparison.OrdinalIgnoreCase)
            || string.Equals(path, "/wachtwoord-vergeten", StringComparison.OrdinalIgnoreCase)
            || (path?.StartsWith("/account/mfa", StringComparison.OrdinalIgnoreCase) ?? false)
            || string.Equals(path, "/account/wachtwoord-instellen", StringComparison.OrdinalIgnoreCase);

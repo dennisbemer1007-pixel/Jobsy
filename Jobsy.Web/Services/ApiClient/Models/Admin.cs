@@ -248,6 +248,7 @@ public sealed class PlatformFeatureItem
     public bool CandidatePassportEnabled { get; set; } = true;
     public bool PassportPartnersEnabled { get; set; }
     public bool PassportPdfV2Enabled { get; set; }
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
     public bool TestsV2Enabled { get; set; }
     public bool PhoneVerificationEnabled { get; set; }
     public bool WhatsAppRemindersEnabled { get; set; }
@@ -258,6 +259,7 @@ public sealed class PlatformFeatureItem
     /// <summary>Future jobs that fit the candidate. Default off.</summary>
     public bool FutureJobsForYouEnabled { get; set; }
     public bool ProactiveMatchingEnabled { get; set; }
+    public bool MatchCalibrationV1Enabled { get; set; }
     public int CandidateApplyPerMinuteLimit { get; set; } = 5;
     public int CandidateApplyPerHourLimit { get; set; } = 30;
     public int CandidateApplyPerDayLimit { get; set; } = 100;
@@ -294,6 +296,7 @@ public sealed class PlatformFeaturePatch
     public bool? CandidatePassportEnabled { get; set; }
     public bool? PassportPartnersEnabled { get; set; }
     public bool? PassportPdfV2Enabled { get; set; }
+    public bool? PassportPdfDnaBlocksEnabled { get; set; }
     public bool? TestsV2Enabled { get; set; }
     public bool? PhoneVerificationEnabled { get; set; }
     public bool? WhatsAppRemindersEnabled { get; set; }
@@ -302,6 +305,7 @@ public sealed class PlatformFeaturePatch
     public bool? HonestAdviceEnabled { get; set; }
     public bool? FutureJobsForYouEnabled { get; set; }
     public bool? ProactiveMatchingEnabled { get; set; }
+    public bool? MatchCalibrationV1Enabled { get; set; }
     public bool? CandidateExternalVacanciesEnabled { get; set; }
     public bool? EmployerPhase2Enabled { get; set; }
     public int? CandidateApplyPerMinuteLimit { get; set; }

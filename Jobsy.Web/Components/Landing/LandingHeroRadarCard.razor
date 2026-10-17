@@ -1,0 +1,70 @@
+@namespace Jobsy.Web.Components.Landing
+@using Jobsy.Web.Features
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="pub-landing__passport-stage" aria-hidden="false" data-testid="landing-hero-passport">
+    <div class="pub-landing__passport-card pub-landing__lift pub-landing__card-calm">
+        <div class="pub-landing__passport-top">
+            <b>@LandingText.For("Landing.Hero.PassportTitle", Variant)</b>
+            <span class="pub-pill-sample">@Culture["Public.Sample"]</span>
+        </div>
+        <div class="pub-landing__passport-body">
+            <div class="pub-landing__passport-rad">
+                <div class="pub-landing__passport-lbl">@LandingText.For("Landing.Hero.RadarYou", Variant)</div>
+                <div class="pub-landing__radar-wrap" data-testid="landing-radar-wrap">
+                    <div class="pub-landing__radar-plot">
+                        <svg class="pub-landing__radar-svg" viewBox="0 0 132 152" aria-hidden="true" data-testid="landing-radar-svg">
+                            <polygon class="pub-landing__radar-outer" points="65.8,0 131.6,38 131.6,114 65.8,152 0,114 0,38" fill="#FBF7F0" stroke="#E6DDCF" stroke-width="1"/>
+                            <polygon points="65.8,19 115.2,47.5 115.2,104.5 65.8,133 16.4,104.5 16.4,47.5" fill="none" stroke="#E6DDCF" stroke-width="1"/>
+                            <polygon points="65.8,38 98.7,57 98.7,95 65.8,114 32.9,95 32.9,57" fill="none" stroke="#E6DDCF" stroke-width="1"/>
+                            <polygon points="65.8,57 82.3,66.5 82.3,85.5 65.8,95 49.3,85.5 49.3,66.5" fill="none" stroke="#E6DDCF" stroke-width="1"/>
+                            <line x1="65.8" y1="76" x2="65.8" y2="0" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="131.6" y2="38" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="131.6" y2="114" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="65.8" y2="152" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="0" y2="114" stroke="#E6DDCF"/>
+                            <line x1="65.8" y1="76" x2="0" y2="38" stroke="#E6DDCF"/>
+                            <polygon class="pub-landing__radar-fill" points="65.8,10.6 114.5,47.9 106.6,99.6 65.8,115.5 5.2,111 20.8,50.2" fill="#2F7D5B" fill-opacity="0.12" stroke="#1F2F55" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="pub-landing__radar-html-lbl" data-axis="t">@LandingText.For("Landing.Hero.BarTeam", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="tr">@LandingText.For("Landing.Hero.BarPersist", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="br">@LandingText.For("Landing.Hero.BarCalm", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="b">@LandingText.For("Landing.Hero.BarCreative", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="bl">@LandingText.For("Landing.Hero.BarCare", Variant)</span>
+                        <span class="pub-landing__radar-html-lbl" data-axis="tl">@LandingText.For("Landing.Hero.BarPrecision", Variant)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="pub-landing__passport-matches">
+                <div class="pub-landing__passport-lbl">@LandingText.For("Landing.Hero.RadarFits", Variant)</div>
+                @MatchRow("Landing.Hero.SampleJob1", "Landing.Hero.SampleJob1Meta", 91)
+                @MatchRow("Landing.Hero.SampleJob2", "Landing.Hero.SampleJob2Meta", 86)
+                @MatchRow("Landing.Hero.SampleJob3", "Landing.Hero.SampleJob3Meta", 72)
+            </div>
+        </div>
+        <div class="pub-landing__passport-footer">
+            <span class="pub-landing__passport-footer-pct" aria-hidden="true">91%</span>
+            <div class="pub-landing__passport-footer-copy">
+                <strong>@LandingText.For("Landing.Hero.TopMatch", Variant)</strong>
+                <small>@LandingText.For("Landing.Hero.TopMatchMeta", Variant)</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+
+    private RenderFragment MatchRow(string titleKey, string metaKey, int pct) => __builder =>
+    {
+        <div class="pub-landing__match-row">
+            <b class="pub-landing__match-job">@LandingText.For(titleKey, Variant)</b>
+            <small class="pub-landing__match-meta">@LandingText.For(metaKey, Variant)</small>
+            <div class="pub-landing__match-bar">
+                <span class="pub-landing__match-pct">@pct%</span>
+                <span class="pub-landing__match-track"><i style="@($"width:{pct}%")"></i></span>
+            </div>
+        </div>
+    };
+}

@@ -1,4 +1,5 @@
 using Jobsy.Core.Authorization;
+using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,17 +13,34 @@ namespace Jobsy.Api.Controllers;
 public sealed class CandidateOnboardingController : ControllerBase
 {
     private readonly ICandidateOnboardingService _onboarding;
+    private readonly ICandidateDiscoveryOverviewService _discoveryOverview;
     private readonly ICandidateCareerPlanService _careerPlans;
     private readonly IUserLookupService _users;
 
     public CandidateOnboardingController(
         ICandidateOnboardingService onboarding,
+        ICandidateDiscoveryOverviewService discoveryOverview,
         ICandidateCareerPlanService careerPlans,
         IUserLookupService users)
     {
         _onboarding = onboarding;
+        _discoveryOverview = discoveryOverview;
         _careerPlans = careerPlans;
         _users = users;
+    }
+
+    [HttpGet("discovery-overview")]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<CandidateDiscoveryOverviewPanelDto>> GetDiscoveryOverview(
+        CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        return Ok(await _discoveryOverview.GetPanelAsync(user.Id, cancellationToken));
     }
 
     [HttpGet]

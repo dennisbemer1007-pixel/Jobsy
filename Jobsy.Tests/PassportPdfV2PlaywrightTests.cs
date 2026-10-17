@@ -99,7 +99,7 @@ public class PassportPdfV2PlaywrightTests : BunitContext, IClassFixture<Passport
             Assert.DoesNotContain("1994", onText, StringComparison.Ordinal);
             Assert.DoesNotContain("ZZ-AI-MARKER-WHOAMI", onText, StringComparison.Ordinal);
             Assert.DoesNotContain("Voorbeeldstraat", onText, StringComparison.Ordinal);
-            Assert.DoesNotContain("geverifieerd", onText, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("Lobsy-geverifieerd", onText, StringComparison.OrdinalIgnoreCase);
 
             var alias = await request.GetAsync("api/me/paspoort.pdf");
             Assert.True(alias.Ok);

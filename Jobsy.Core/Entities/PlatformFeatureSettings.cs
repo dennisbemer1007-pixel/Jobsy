@@ -1,3 +1,4 @@
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Core.Entities;
@@ -26,7 +27,7 @@ public class PlatformFeatureSettings
     /// Interactive session inactivity timeout in minutes (cookie + UI idle timer).
     /// Default 30 minutes; admin-configurable.
     /// </summary>
-    public int SessionInactivityTimeoutMinutes { get; set; } = 30;
+    public int SessionInactivityTimeoutMinutes { get; set; } = SessionAuthDefaults.InactivityTimeoutMinutes;
 
     /// <summary>
     /// Global floor for cookie <c>session_version</c>. Raise on a release to force every
@@ -105,6 +106,18 @@ public class PlatformFeatureSettings
 
     /// <summary>Passport PDF v2 and the shareable-preferences editor. Default false.</summary>
     public bool PassportPdfV2Enabled { get; set; }
+
+    /// <summary>Age-specific school DNA-paspoort PDFs (groep 7/8 + VO). Default false; on in non-production when unset.</summary>
+    public bool PupilPassportV2Enabled { get; set; }
+
+    /// <summary>Student/stagiair DNA-paspoort (2-page, with vacancies). Default false; on in non-production when unset.</summary>
+    public bool StudentPassportEnabled { get; set; }
+
+    /// <summary>
+    /// When true, the DNA paspoort PDF shows the four DNA layer cards plus “Hoe ik graag werk”
+    /// and “Zo haal je het beste uit …”. Default true (acceptatie/dev); can be turned off per platform.
+    /// </summary>
+    public bool PassportPdfDnaBlocksEnabled { get; set; } = true;
 
     /// <summary>SMS phone verification. Stays false until an SMS provider is chosen.</summary>
     public bool PhoneVerificationEnabled { get; set; }

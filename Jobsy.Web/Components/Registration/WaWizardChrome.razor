@@ -2,45 +2,64 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<aside class="wa-guide" aria-label="@Culture["Wa.Guide.Label"]">
-    <div class="wa-guide__art">
-        <WaMascot Pose="Pose" />
+@if (Compact)
+{
+    <div class="wa-progress" aria-label="@Culture["Wa.Steps.Label"]">
+        <p class="wa-progress__label">
+            @Culture.Format("Wa.Progress.Step", CurrentStep, 5)
+        </p>
+        <div class="wa-progress__bar wa-progress__bar--step@(CurrentStep)"
+             role="progressbar"
+             aria-valuemin="1"
+             aria-valuemax="5"
+             aria-valuenow="@CurrentStep">
+            <span class="wa-progress__fill"></span>
+        </div>
     </div>
-    <div class="wa-guide__bubble">
-        <p>@Speech</p>
-    </div>
-    <ol class="wa-steps" aria-label="@Culture["Wa.Steps.Label"]">
-        @for (var i = 1; i <= 5; i++)
-        {
-            var done = CurrentStep > i || (CurrentStep == i && DoneOnCurrent);
-            var on = CurrentStep == i && !DoneOnCurrent;
-            <li class="@(done ? "is-done" : null) @(on ? "is-on" : null)">
-                <span class="wa-steps__n" aria-hidden="true">
-                    @if (done)
+}
+else
+{
+    <aside class="wa-guide" aria-label="@Culture["Wa.Guide.Label"]">
+        <div class="wa-guide__art">
+            <WaMascot Pose="Pose" Size="sm" />
+        </div>
+        <div class="wa-guide__bubble">
+            <p>@Speech</p>
+        </div>
+        <ol class="wa-steps" aria-label="@Culture["Wa.Steps.Label"]">
+            @for (var i = 1; i <= 5; i++)
+            {
+                var done = CurrentStep > i || (CurrentStep == i && DoneOnCurrent);
+                var on = CurrentStep == i && !DoneOnCurrent;
+                <li class="@(done ? "is-done" : null) @(on ? "is-on" : null)">
+                    <span class="wa-steps__n" aria-hidden="true">
+                        @if (done)
+                        {
+                            <text>✓</text>
+                        }
+                        else
+                        {
+                            @i
+                        }
+                    </span>
+                    <span class="wa-steps__body">
+                        <strong>@Culture[$"Wa.Steps.{i}.Title"]</strong>
+                        <small>@Culture[$"Wa.Steps.{i}.Sub"]</small>
+                    </span>
+                    @if (i == 4)
                     {
-                        <text>✓</text>
+                        <span class="wa-steps__opt">@Culture["Wa.Steps.Optional"]</span>
                     }
-                    else
-                    {
-                        @i
-                    }
-                </span>
-                <span class="wa-steps__body">
-                    <strong>@Culture[$"Wa.Steps.{i}.Title"]</strong>
-                    <small>@Culture[$"Wa.Steps.{i}.Sub"]</small>
-                </span>
-                @if (i == 4)
-                {
-                    <span class="wa-steps__opt">@Culture["Wa.Steps.Optional"]</span>
-                }
-            </li>
-        }
-    </ol>
-</aside>
+                </li>
+            }
+        </ol>
+    </aside>
+}
 
 @code {
     [Parameter] public int CurrentStep { get; set; } = 1;
     [Parameter] public string Speech { get; set; } = "";
     [Parameter] public WaMascot.MascotPose Pose { get; set; } = WaMascot.MascotPose.Waving;
     [Parameter] public bool DoneOnCurrent { get; set; }
+    [Parameter] public bool Compact { get; set; }
 }

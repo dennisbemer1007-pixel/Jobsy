@@ -54,16 +54,10 @@
             return;
         }
 
-        // Candidates with a remembered device skip the client idle logout.
+        // Remembered device (Entra/password "ingelogd blijven") uses refresh tokens, not idle logout.
         var hasDevice = state.User.HasClaim(c =>
             c.Type == Jobsy.Core.Authorization.JobsyClaimTypes.HasDeviceSession && c.Value == "1");
-        var isEmployerOrAdmin = state.User.IsInRole("Admin")
-            || state.User.IsInRole("BranchManager")
-            || state.User.IsInRole("RegionalManager")
-            || state.User.IsInRole("EnterpriseManager")
-            || state.User.IsInRole("Intermediary")
-            || state.User.IsInRole("SalesManager");
-        if (hasDevice && !isEmployerOrAdmin)
+        if (hasDevice)
         {
             return;
         }

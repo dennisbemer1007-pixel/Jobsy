@@ -533,6 +533,7 @@ public class ApplicationsController : ControllerBase
                 application,
                 includeDirectContact,
                 features.PhoneVerificationEnabled,
+                features.PassportPdfDnaBlocksEnabled,
                 cancellationToken);
             return (passport.Pdf, passport.FileName);
         }

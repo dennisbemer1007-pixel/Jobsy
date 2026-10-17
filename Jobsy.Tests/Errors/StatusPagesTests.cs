@@ -104,7 +104,7 @@ public class StatusPagesTests
         Assert.Contains("no-store", response.Headers.CacheControl?.ToString() ?? "", StringComparison.OrdinalIgnoreCase);
         Assert.Contains("href=\"/\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
-        Assert.Contains("href=\"/melden\"", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/contact\"", html, StringComparison.Ordinal);
         Assert.Single(Regex.Matches(html, "<h1", RegexOptions.IgnoreCase));
     }
 

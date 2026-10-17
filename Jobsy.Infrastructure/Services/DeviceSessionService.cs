@@ -2,6 +2,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
@@ -9,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Jobsy.Infrastructure.Services;
 
@@ -18,18 +20,23 @@ public sealed class DeviceSessionService : IDeviceSessionService
     private readonly IConfiguration _configuration;
     private readonly IMemoryCache _cache;
     private readonly ILogger<DeviceSessionService> _logger;
+    private readonly SessionAuthOptions _sessionAuth;
 
     public DeviceSessionService(
         JobsyDbContext db,
         IConfiguration configuration,
         IMemoryCache cache,
-        ILogger<DeviceSessionService> logger)
+        ILogger<DeviceSessionService> logger,
+        IOptions<SessionAuthOptions>? sessionAuth = null)
     {
         _db = db;
         _configuration = configuration;
         _cache = cache;
         _logger = logger;
+        _sessionAuth = sessionAuth?.Value ?? new SessionAuthOptions();
     }
+
+    private TimeSpan DeviceLifetime => SessionTimeoutResolver.ResolveRememberDeviceLifetime(_sessionAuth);
 
     public async Task<DeviceSessionCreateResult> CreateAsync(
         Guid userId,
@@ -49,7 +56,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
             FamilyId = Guid.NewGuid(),
             CreatedAtUtc = now,
             LastUsedAtUtc = now,
-            ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime),
+            ExpiresAtUtc = now.Add(DeviceLifetime),
             MfaVerifiedUntilUtc = mfaVerified ? now.AddDays(30) : null,
             UserAgent = Truncate(userAgent, 512),
             DeviceName = DeviceNameFormatter.FromUserAgent(userAgent),
@@ -179,7 +186,7 @@ public sealed class DeviceSessionService : IDeviceSessionService
                 CacheCurrentToken(session.Id, newRaw);
             }
 
-            session.ExpiresAtUtc = now.Add(DeviceSessionRules.Lifetime);
+            session.ExpiresAtUtc = now.Add(DeviceLifetime);
             if (now - session.LastUsedAtUtc >= DeviceSessionRules.LastUsedWriteThrottle)
             {
                 session.LastUsedAtUtc = now;
@@ -547,7 +554,11 @@ public sealed class DeviceSessionService : IDeviceSessionService
             return null;
         }
 
-        return JobsyLocalSessionToken.Create(email, userId, secret);
+        return JobsyLocalSessionToken.Create(
+            email,
+            userId,
+            secret,
+            SessionTimeoutResolver.ResolveLocalSessionLifetime(_sessionAuth));
     }
 
     private void CacheCurrentToken(Guid sessionId, string rawToken)

@@ -38,6 +38,10 @@ public static class AmsterdamTime
     public static string FormatDateTime(DateTime utc, CultureInfo? culture = null)
         => ToLocal(utc).ToString("d MMMM yyyy, HH:mm", culture ?? DutchCulture);
 
+    /// <summary>Admin tables and logs: <c>dd-MM-yyyy HH:mm</c> in Europe/Amsterdam (month = <c>MM</c>, not minutes).</summary>
+    public static string FormatShortDateTime(DateTime utc, CultureInfo? culture = null)
+        => ToLocal(utc).ToString("dd-MM-yyyy HH:mm", culture ?? DutchCulture);
+
     private static TimeZoneInfo ResolveDutchTimeZone()
     {
         foreach (var id in new[] { "Europe/Amsterdam", "W. Europe Standard Time" })

@@ -1,0 +1,99 @@
+@namespace Jobsy.Web.Components.Shared
+
+<button type="button"
+        class="@ButtonClass"
+        role="@Role"
+        aria-pressed="@AriaPressedValue"
+        aria-checked="@AriaCheckedValue"
+        disabled="@Disabled"
+        @onclick="HandleClick"
+        @attributes="AdditionalAttributes">
+    @if (IsAdd)
+    {
+        <span class="lobsy-choice-tile__icon" aria-hidden="true">@((MarkupString)ChoiceTileIcons.Plus)</span>
+    }
+    else if (!string.IsNullOrEmpty(Icon))
+    {
+        <span class="lobsy-choice-tile__icon" aria-hidden="true">@((MarkupString)Icon)</span>
+    }
+    else if (AlignIcons)
+    {
+        <span class="lobsy-choice-tile__icon lobsy-choice-tile__icon--spacer" aria-hidden="true"></span>
+    }
+
+    @if (ChildContent is not null)
+    {
+        <span class="lobsy-choice-tile__stack">@ChildContent</span>
+    }
+    else
+    {
+        <span class="lobsy-choice-tile__label">@Label</span>
+    }
+
+    @if (Selected && ShowCheckBadge)
+    {
+        <span class="lobsy-choice-tile__check" aria-hidden="true">@((MarkupString)ChoiceTileIcons.Check)</span>
+    }
+</button>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public bool AlignIcons { get; set; } = true;
+    [Parameter] public bool Selected { get; set; }
+    [Parameter] public bool IsAdd { get; set; }
+    [Parameter] public bool Tall { get; set; }
+    [Parameter] public bool Inline { get; set; }
+    [Parameter] public bool ShowCheckBadge { get; set; } = true;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string Role { get; set; } = "button";
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string ButtonClass
+    {
+        get
+        {
+            var parts = new List<string> { "lobsy-choice-tile" };
+            if (Selected)
+            {
+                parts.Add("is-selected");
+            }
+
+            if (IsAdd)
+            {
+                parts.Add("lobsy-choice-tile--add");
+            }
+
+            if (Tall)
+            {
+                parts.Add("lobsy-choice-tile--tall");
+            }
+
+            if (Inline)
+            {
+                parts.Add("lobsy-choice-tile--inline");
+            }
+
+            if (!string.IsNullOrWhiteSpace(Class))
+            {
+                parts.Add(Class);
+            }
+
+            return string.Join(' ', parts);
+        }
+    }
+
+    private string? AriaPressedValue =>
+        string.Equals(Role, "radio", StringComparison.OrdinalIgnoreCase) ? null : Selected ? "true" : "false";
+
+    private string? AriaCheckedValue =>
+        string.Equals(Role, "radio", StringComparison.OrdinalIgnoreCase) ? Selected ? "true" : "false" : null;
+
+    private Task HandleClick()
+        => Disabled ? Task.CompletedTask : OnClick.InvokeAsync();
+}

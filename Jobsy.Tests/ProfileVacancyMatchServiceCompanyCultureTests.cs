@@ -424,6 +424,7 @@ public class ProfileVacancyMatchServiceCompanyCultureTests
             new UserLookupService(db),
             lookup,
             new StubPlatformFeatures(matchCalibrationV1),
+            new CandidateMatchScoreCache(new MemoryCache(new MemoryCacheOptions())),
             NullLogger<ProfileVacancyMatchService>.Instance);
 
     private sealed class StubPlatformFeatures(bool matchCalibrationV1) : IPlatformFeatureService

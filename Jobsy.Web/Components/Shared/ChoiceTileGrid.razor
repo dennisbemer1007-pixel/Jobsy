@@ -1,0 +1,44 @@
+@namespace Jobsy.Web.Components.Shared
+
+<div class="@CssClass"
+     role="@Role"
+     aria-label="@AriaLabel"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string Role { get; set; } = "group";
+    [Parameter] public bool DesktopThreeColumns { get; set; } = true;
+    [Parameter] public bool Wrap { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var parts = new List<string> { "lobsy-choice-grid" };
+            if (DesktopThreeColumns)
+            {
+                parts.Add("lobsy-choice-grid--desktop-3");
+            }
+
+            if (Wrap)
+            {
+                parts.Add("lobsy-choice-grid--wrap");
+            }
+
+            if (!string.IsNullOrWhiteSpace(Class))
+            {
+                parts.Add(Class);
+            }
+
+            return string.Join(' ', parts);
+        }
+    }
+}

@@ -191,7 +191,11 @@ public sealed class VacancyDiscoveryIndex : IVacancyDiscoveryIndex, IDisposable
                 record = record with { EngagementItems = items };
             }
 
-            records.Add(record);
+            records.Add(record with
+            {
+                InferredCompetencies = VacancyCompetencyProfile.Infer(record),
+                InferredRiasecTags = VacancyRiasecProfile.InferTags(record)
+            });
         }
 
         return records;

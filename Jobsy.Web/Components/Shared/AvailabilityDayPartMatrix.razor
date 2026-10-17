@@ -1,0 +1,64 @@
+@namespace Jobsy.Web.Components.Shared
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="availability-matrix @CssClass" role="grid" aria-label="@EffectiveAriaLabel">
+    <div class="availability-matrix__corner" role="columnheader"></div>
+    @foreach (var slot in Slots)
+    {
+        <div class="availability-matrix__slot" role="columnheader">@UiLabels.AvailabilitySlot(Culture, slot)</div>
+    }
+    @foreach (var day in Days)
+    {
+        <div class="availability-matrix__day" role="rowheader">@UiLabels.Weekday(Culture, day)</div>
+        @foreach (var slot in Slots)
+        {
+            var key = $"{day}:{slot}";
+            var on = SelectedKeys.Contains(key);
+            if (UseButtons)
+            {
+                <button type="button"
+                        class="availability-matrix__cell availability-matrix__cell--btn @(on ? "is-on" : null)"
+                        role="gridcell"
+                        aria-pressed="@(on ? "true" : "false")"
+                        aria-label="@CellLabel(day, slot)"
+                        @onclick="() => OnToggle.InvokeAsync(key)">
+                    @if (on)
+                    {
+                        <span class="availability-matrix__mark" aria-hidden="true">✓</span>
+                    }
+                </button>
+            }
+            else
+            {
+                <label class="availability-matrix__cell @(on ? "is-on" : null)" role="gridcell">
+                    <input type="checkbox"
+                           checked="@on"
+                           @onchange="e => SetChecked(key, (bool)(e.Value ?? false))" />
+                    <span class="visually-hidden">@CellLabel(day, slot)</span>
+                </label>
+            }
+        }
+    }
+</div>
+
+@code {
+    public static readonly string[] Days = DayPartMatrix.DayCodes;
+    public static readonly string[] Slots = DayPartMatrix.DayPartCodes;
+
+    [Parameter] public IReadOnlySet<string> SelectedKeys { get; set; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    [Parameter] public bool UseButtons { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public EventCallback<string> OnToggle { get; set; }
+    [Parameter] public EventCallback<(string Key, bool Selected)> OnSet { get; set; }
+
+    private string EffectiveAriaLabel => AriaLabel ?? Culture["Profile.Availability"];
+
+    private string CellLabel(string day, string slot)
+        => $"{UiLabels.Weekday(Culture, day)} {UiLabels.AvailabilitySlot(Culture, slot)}";
+
+    private Task SetChecked(string key, bool selected)
+        => OnSet.HasDelegate ? OnSet.InvokeAsync((key, selected)) : Task.CompletedTask;
+}

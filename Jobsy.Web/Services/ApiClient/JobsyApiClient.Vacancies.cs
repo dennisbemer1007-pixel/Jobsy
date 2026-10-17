@@ -191,6 +191,32 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<VacancyListItem?> GetVacancyMatchExplainAsync(
+        Guid vacancyId,
+        double? originLat = null,
+        double? originLng = null,
+        string transport = "Fiets",
+        CancellationToken ct = default)
+    {
+        var qs = $"transport={Uri.EscapeDataString(transport)}";
+        if (originLat is not null && originLng is not null)
+        {
+            qs += $"&originLat={originLat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+            qs += $"&originLng={originLng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<VacancyListItem>(
+                $"api/vacancies/{vacancyId:D}/match-explain?{qs}",
+                ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<IReadOnlyList<VacancyPinBootItem>> GetVacancyPinsAsync(
         string transport,
         int maxMinutes,

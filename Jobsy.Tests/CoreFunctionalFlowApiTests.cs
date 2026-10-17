@@ -173,7 +173,7 @@ public class CoreFunctionalFlowApiTests : IClassFixture<CoreFunctionalFlowApiFac
             AuthenticatorEnabled: false,
             PublicWebBaseUrl: "http://localhost:5201",
             InactiveCompanyDays: 120,
-            SessionInactivityTimeoutMinutes: 30));
+            SessionInactivityTimeoutMinutes: SessionSecurityRules.DefaultInactivityTimeoutMinutes));
         Assert.Equal(HttpStatusCode.OK, restore.StatusCode);
     }
 

@@ -16,15 +16,27 @@
 @inject PageSeoContext Seo
 @inject IHttpContextAccessor HttpContextAccessor
 
-<div class="pub-landing" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
+<div class="pub-landing @(_variant == LandingVariant.On ? "pub-landing--combo pub-landing--calm" : "")" data-variant="@(_variant == LandingVariant.Zw ? "zw" : "on")">
     <LandingHero Variant="_variant" VacancyCount="_vacancyDisplay" />
-    <LandingWhatIs Variant="_variant" />
-    <LandingKreeft Variant="_variant" />
-    <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" />
-    <LandingForWhom Variant="_variant" />
-    <LandingPrivacy Variant="_variant" />
-    <LandingFaq Variant="_variant" PriceEuro="_priceEuro" />
-    <LandingClosing Variant="_variant" />
+    @if (_variant == LandingVariant.On)
+    {
+        <LandingFlowStrip Variant="_variant" />
+        <LandingBanenkaartSection Variant="_variant" VacancyCount="_vacancyDisplay" />
+        <LandingJourneyFive Variant="_variant" />
+        <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" ComboLayout="true" />
+        <LandingPrivacy Variant="_variant" />
+        <LandingEmployersFaq Variant="_variant" PriceEuro="_priceEuro" />
+    }
+    else
+    {
+        <LandingWhatIs Variant="_variant" />
+        <LandingKreeft Variant="_variant" />
+        <LandingWhatYouGet Variant="_variant" PriceEuro="_priceEuro" />
+        <LandingForWhom Variant="_variant" />
+        <LandingPrivacy Variant="_variant" />
+        <LandingFaq Variant="_variant" PriceEuro="_priceEuro" />
+        <LandingClosing Variant="_variant" />
+    }
 </div>
 
 @code {

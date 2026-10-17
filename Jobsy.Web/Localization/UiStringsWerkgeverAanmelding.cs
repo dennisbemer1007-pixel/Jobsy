@@ -206,6 +206,7 @@ internal static class UiStringsWerkgeverAanmelding
         Add("Wa.Guide.Speech2", "Mooi bedrijf! Meld je het hele bedrijf aan of alleen een vestiging?", "Nice company! Register the whole company or just one location?", "Świetna firma! Cała firma czy jedna lokalizacja?", "Firmă frumoasă! Toată firma sau o singură locație?", "شركة رائعة! كل الشركة أم موقع واحد؟");
         Add("Wa.Guide.Speech3", "Bijna een account! Gebruik je werkmail.", "Almost there! Use your work e-mail.", "Prawie gotowe! Użyj służbowego e-maila.", "Aproape gata! Folosește e-mailul de serviciu.", "ほぼ جاهز! استخدم بريد العمل.");
         Add("Wa.Guide.SpeechCode", "We hebben een code gestuurd. Vul die hier in.", "We sent a code. Enter it here.", "Wysłaliśmy kod. Wpisz go tutaj.", "Am trimis un cod. Introdu-l aici.", "أرسلنا رمزاً. أدخله هنا.");
+        Add("Wa.Progress.Step", "Stap {0} van {1}", "Step {0} of {1}", "Krok {0} z {1}", "Pasul {0} din {1}", "الخطوة {0} من {1}");
         Add("Wa.Steps.Label", "Stappen", "Steps", "Kroki", "Pași", "الخطوات");
         Add("Wa.Steps.Optional", "optioneel", "optional", "opcjonalne", "opțional", "اختياري");
         Add("Wa.Steps.1.Title", "Bedrijf zoeken", "Find company", "Szukaj firmy", "Caută firma", "البحث عن الشركة");

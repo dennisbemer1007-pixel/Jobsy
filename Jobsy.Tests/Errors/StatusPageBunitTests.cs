@@ -63,7 +63,7 @@ public class StatusPageBunitTests : BunitContext
         Assert.Equal(3, actions.Count);
         Assert.Equal("/", actions[0].GetAttribute("href"));
         Assert.Equal("/ontdek", actions[1].GetAttribute("href"));
-        Assert.Equal("/melden", actions[2].GetAttribute("href"));
+        Assert.Equal("/contact", actions[2].GetAttribute("href"));
         Assert.Contains("Naar home", actions[0].TextContent, StringComparison.Ordinal);
     }
 
@@ -78,7 +78,7 @@ public class StatusPageBunitTests : BunitContext
         Assert.Equal(3, actions.Count);
         Assert.Equal("/", actions[0].GetAttribute("href"));
         Assert.Equal("/ontdek", actions[1].GetAttribute("href"));
-        Assert.Equal("/melden", actions[2].GetAttribute("href"));
+        Assert.Equal("/contact", actions[2].GetAttribute("href"));
         Assert.Contains("Naar home", actions[0].TextContent, StringComparison.Ordinal);
     }
 

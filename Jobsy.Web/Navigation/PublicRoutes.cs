@@ -23,7 +23,8 @@ public static class PublicRoutes
     public const string About = "/wie-zijn-wij";
     public const string Accessibility = "/toegankelijkheid";
     public const string Sources = "/bronnen";
-    public const string Contact = "/melden";
+    public const string Contact = "/contact";
+    public const string ReportContent = "/melden";
     public const string PassportAnchor = "/#wat-je-krijgt";
     public const string DiscoveryAnchor = "/#ontdekkingsreis";
 }

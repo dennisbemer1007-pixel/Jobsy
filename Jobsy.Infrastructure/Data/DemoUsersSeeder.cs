@@ -41,6 +41,15 @@ internal static class DemoUsersSeeder
     {
         var added = 0;
 
+        try
+        {
+            await PassportPdfMartaDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Passport PDF Marta demo seed failed; continuing.");
+        }
+
         added += await EnsureUserAsync(db, new User
         {
             Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),

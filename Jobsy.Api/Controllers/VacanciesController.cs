@@ -203,6 +203,8 @@ public class VacanciesController : ControllerBase
                 .ToList();
         }
 
+        candidates = VacancyMatchScoreCap.LimitCandidates(candidates, bbox, zoom, c => c.Record);
+
         IReadOnlyDictionary<Guid, ProfileVacancyMatch>? matches = null;
         CandidateFitGate fitGate = CandidateFitGate.Closed;
         ProfileVacancyMatchContext? matchContext = null;
@@ -216,11 +218,16 @@ public class VacanciesController : ControllerBase
             if (matchContext is { OpenForWork: true })
             {
                 fitGate = CandidateFitGate.FromContext(matchContext);
-                matches = await _profileMatch.ScoreAsync(matchContext, candidates, cancellationToken);
+                // Pins show % only when the fit gate is open — skip scoring otherwise.
+                if (fitGate.IsOpen)
+                {
+                    matches = await _profileMatch.ScoreAsync(matchContext, candidates, cancellationToken);
+                }
+
                 candidates = candidates
                     .Where(c =>
                     {
-                        if (!matches.TryGetValue(c.Record.Id, out var match))
+                        if (matches is null || !matches.TryGetValue(c.Record.Id, out var match))
                         {
                             return true;
                         }
@@ -246,20 +253,6 @@ public class VacanciesController : ControllerBase
                     })
                     .ToList();
             }
-        }
-
-        var pinCap = bbox is { IsValid: true }
-            ? PublicApiLimits.MaxPinsPerBbox
-            : PublicApiLimits.MaxPinsWithoutBbox;
-        if (candidates.Count > pinCap)
-        {
-            var capped = VacancyDiscoveryBbox.CapPins(
-                candidates.Select(c => c.Record).ToList(),
-                bbox,
-                pinCap,
-                zoom);
-            var allowed = capped.Select(r => r.Id).ToHashSet();
-            candidates = candidates.Where(c => allowed.Contains(c.Record.Id)).ToList();
         }
 
         // Content hash (not a 60s clock) so Cloudflare can cache stable pin sets.
@@ -356,19 +349,87 @@ public class VacanciesController : ControllerBase
             else if (matchContext is not null)
             {
                 var gate = CandidateFitGate.FromContext(matchContext);
-                var scored = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
-                if (scored.TryGetValue(id, out var match))
+                if (gate.IsOpen)
                 {
-                    var applied = CandidateFitApply.Apply(match, gate);
-                    matchPercent = applied.MatchPercent;
-                    matchBand = applied.MatchColorBand;
-                    fitGateValue = applied.FitGate;
-                    fitWhyLine = applied.FitWhyLineNl;
+                    var scored = await _profileMatch.ScoreAsync(matchContext, [(record, travelMinutes)], cancellationToken);
+                    if (scored.TryGetValue(id, out var match))
+                    {
+                        var applied = CandidateFitApply.Apply(match, gate);
+                        matchPercent = applied.MatchPercent;
+                        matchBand = applied.MatchColorBand;
+                        fitGateValue = applied.FitGate;
+                        fitWhyLine = applied.FitWhyLineNl;
+                    }
+                }
+                else
+                {
+                    fitGateValue = CandidateFitApply.FitGateClosed;
                 }
             }
         }
 
         return Ok(MapCard(record, showWage, travelMinutes, matchPercent, matchBand, fitGateValue, fitWhyLine, openForWorkRequired: openForWorkRequired));
+    }
+
+    /// <summary>
+    /// Full match rationale for one vacancy (lazy — not loaded on discover/pins batches).
+    /// </summary>
+    [HttpGet("{id:guid}/match-explain")]
+    [Authorize(Roles = JobsyRoles.Candidate)]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<VacancyListItemDto>> GetMatchExplain(
+        Guid id,
+        [FromQuery] double? originLat,
+        [FromQuery] double? originLng,
+        [FromQuery] string transport = TransportLabels.Bike,
+        CancellationToken cancellationToken = default)
+    {
+        if (!_companyAuth.IsCandidate(User))
+        {
+            return Forbid();
+        }
+
+        var records = await _discoveryIndex.GetActiveAsync(cancellationToken);
+        var record = records.FirstOrDefault(r => r.Id == id);
+        if (record is null)
+        {
+            return NotFound();
+        }
+
+        var matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
+        if (matchContext is null)
+        {
+            return Forbid();
+        }
+
+        if (!matchContext.OpenForWork)
+        {
+            var blocked = MapRecordToDto(record, showWage: false, ageYears: null, includeDescription: false)
+                with { OpenForWorkRequired = true };
+            return Ok(blocked);
+        }
+
+        int? travelMinutes = null;
+        if (originLat is double lat && originLng is double lng && IsFiniteCoordinate(lat, lng))
+        {
+            var mode = TransportLabels.Parse(transport);
+            var (minutes, _) = TravelReach.Estimate(lat, lng, record.Latitude, record.Longitude, mode);
+            travelMinutes = (int?)minutes;
+        }
+
+        var gate = CandidateFitGate.FromContext(matchContext);
+        var scored = await _profileMatch.ScoreAsync(
+            matchContext,
+            [(record, travelMinutes)],
+            cancellationToken);
+        if (!scored.TryGetValue(id, out var match))
+        {
+            return NotFound();
+        }
+
+        var dto = MapRecordToDto(record, showWage: false, ageYears: null, travelMinutes, includeDescription: false);
+        dto = WithCandidateMatch(dto, match, gate, rankLowerReason: null);
+        return Ok(dto);
     }
 
     /// <summary>
@@ -409,23 +470,26 @@ public class VacanciesController : ControllerBase
             else if (matchContext is not null)
             {
                 fitGate = CandidateFitGate.FromContext(matchContext);
-                var scoreInput = parsed
-                    .Where(byId.ContainsKey)
-                    .Select(id =>
-                    {
-                        var r = byId[id];
-                        int? travel = null;
-                        if (hasOrigin)
+                if (fitGate.IsOpen)
+                {
+                    var scoreInput = parsed
+                        .Where(byId.ContainsKey)
+                        .Select(id =>
                         {
-                            var (minutes, _) = TravelReach.Estimate(
-                                originLat!.Value, originLng!.Value, r.Latitude, r.Longitude, mode);
-                            travel = (int?)minutes;
-                        }
+                            var r = byId[id];
+                            int? travel = null;
+                            if (hasOrigin)
+                            {
+                                var (minutes, _) = TravelReach.Estimate(
+                                    originLat!.Value, originLng!.Value, r.Latitude, r.Longitude, mode);
+                                travel = (int?)minutes;
+                            }
 
-                        return (Record: r, TravelMinutes: travel);
-                    })
-                    .ToList();
-                matches = await _profileMatch.ScoreAsync(matchContext, scoreInput, cancellationToken);
+                            return (Record: r, TravelMinutes: travel);
+                        })
+                        .ToList();
+                    matches = await _profileMatch.ScoreAsync(matchContext, scoreInput, cancellationToken);
+                }
             }
         }
 
@@ -574,20 +638,26 @@ public class VacanciesController : ControllerBase
         var matchFloor = minMatchPercent is int requestedFloor
             ? Math.Clamp(requestedFloor, 0, 100)
             : (int?)null;
+        candidates = VacancyMatchScoreCap.LimitCandidates(candidates, bbox, zoom: null, c => c.Record);
+
         if (_companyAuth.IsCandidate(User))
         {
             matchContext = await _profileMatch.TryLoadForPrincipalAsync(User, cancellationToken);
             if (matchContext is { OpenForWork: true })
             {
                 fitGate = CandidateFitGate.FromContext(matchContext);
-                matches = await _profileMatch.ScoreAsync(
-                    matchContext,
-                    candidates.Select(c => (c.Record, c.TravelMinutes)),
-                    cancellationToken);
+                if (fitGate.IsOpen)
+                {
+                    matches = await _profileMatch.ScoreAsync(
+                        matchContext,
+                        candidates.Select(c => (c.Record, c.TravelMinutes)),
+                        cancellationToken);
+                }
+
                 candidates = candidates
                     .Where(c =>
                     {
-                        if (!matches.TryGetValue(c.Record.Id, out var match))
+                        if (matches is null || !matches.TryGetValue(c.Record.Id, out var match))
                         {
                             return true;
                         }
@@ -632,13 +702,13 @@ public class VacanciesController : ControllerBase
             {
                 string? rankLower = null;
                 dislikeReasons?.TryGetValue(c.Record.Id, out rankLower);
-                dto = WithCandidateMatch(dto, match, fitGate, rankLower);
+                dto = WithCandidateMatchSummary(dto, match, fitGate, rankLower);
             }
 
             results.Add(dto);
         }
 
-        if (matches is not null)
+        if (matches is not null && fitGate.IsOpen)
         {
             results = KbRanking.OrderByFitThenTitle(
                     results,
@@ -3316,6 +3386,29 @@ public class VacanciesController : ControllerBase
         };
     }
 
+    /// <summary>Discover/list: percent, band, sort key — no heavy Why/Gaps payloads.</summary>
+    private static VacancyListItemDto WithCandidateMatchSummary(
+        VacancyListItemDto dto,
+        ProfileVacancyMatch match,
+        CandidateFitGate gate,
+        string? rankLowerReason = null)
+    {
+        var applied = CandidateFitApply.Apply(match, gate);
+        return dto with
+        {
+            MatchPercent = applied.MatchPercent,
+            MatchFitRawPercent = match.CalibrationV1 ? match.FitRawPercent : null,
+            MatchConfidencePercent = match.CalibrationV1 ? match.ConfidencePercent : null,
+            MatchColorBand = applied.MatchColorBand,
+            MatchWhySummary = applied.FitWhyLineNl ?? ProfileVacancyMatchCalculator.SummaryLine(match),
+            FitGate = applied.FitGate,
+            FitPercent = applied.FitPercent,
+            FitBand = applied.FitBand,
+            FitWhyLine = applied.FitWhyLineNl,
+            RankLowerReason = rankLowerReason
+        };
+    }
+
     private static VacancyListItemDto WithCandidateMatch(
         VacancyListItemDto dto,
         ProfileVacancyMatch match,
@@ -3367,6 +3460,11 @@ public class VacanciesController : ControllerBase
         CancellationToken cancellationToken)
     {
         var result = new Dictionary<Guid, string>();
+        if (_dislikeSource is KbNoDislikeSource)
+        {
+            return result;
+        }
+
         foreach (var vacancyId in vacancyIds)
         {
             var codes = await _dislikeSource.GetMatchingDislikeCodesAsync(

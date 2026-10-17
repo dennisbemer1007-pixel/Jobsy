@@ -1,14 +1,18 @@
 @inherits LayoutComponentBase
 @using Jobsy.Core.Localization
+@using Jobsy.Core.Features
+@using Jobsy.Web.Features
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
 @inject CultureState Culture
 @inject IErrorChromeProvider ChromeProvider
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IEmployersSwitch EmployersSwitch
 @*
   Static SSR shell for 404 / 500 and the later status pages.
   Hard rule: no API or DB call, no interactive render mode, no component that needs either.
-  Everything it needs comes from the request (cookie, Accept-Language, auth cookie claims).
+  Chrome matches the public shell (pub-header / pub-footer) using request-only data.
 *@
 
 <HeadContent>
@@ -20,47 +24,97 @@
 
 <div class="err-layout pub-theme" dir="@(_chrome.IsRightToLeft ? "rtl" : null)" lang="@_chrome.Language">
     <a class="pub-skip err-skip" href="#main">@Culture["Status.Nav.SkipToContent"]</a>
-    <header class="err-header">
-        <a class="err-header__brand" href="@_chrome.HomeHref" aria-label="@Culture["Status.Nav.Home"]">
-            <LobsyLogo Class="err-header__logo" Alt="" Animate="false" />
-            <span class="err-header__name">Lobsy</span>
-        </a>
-        <nav class="err-header__nav" aria-label="@Culture["Status.Nav.ChooseLanguage"]">
-            <ul class="err-lang">
-                @foreach (var lang in JobsyLanguages.All)
+    <header class="pub-header">
+        <div class="pub-header__inner">
+            <a class="pub-header__brand" href="@_chrome.HomeHref" aria-label="@Culture["Status.Nav.Home"]">
+                <LobsyLogo Class="pub-header__logo" Alt="" Animate="false" />
+                <span class="pub-header__name">Lobsy</span>
+            </a>
+
+            <nav class="pub-nav" aria-label="@Culture["PublicNav.MainNav"]">
+                @foreach (var item in PublicNavCatalog.Header(_variant).Where(i => i.IsAvailable))
                 {
-                    <li>
-                        <a class="err-lang__option @(lang.Code == _chrome.Language ? "is-current" : null)"
-                           href="@_chrome.LanguageHref(lang.Code)"
-                           hreflang="@lang.Code"
-                           lang="@lang.Code"
-                           rel="nofollow"
-                           aria-current="@(lang.Code == _chrome.Language ? "true" : null)">@lang.Code.ToUpperInvariant()</a>
-                    </li>
+                    <a class="pub-nav__link" href="@item.Href">@Culture[item.LabelKey]</a>
                 }
-            </ul>
-            @if (_chrome.IsSignedIn && _showHeaderStart)
-            {
-                <a class="pub-btn pub-btn--ghost err-header__action" href="@_chrome.MyStartHref">@Culture["Status.Nav.MyStart"]</a>
-            }
-            else if (!_chrome.IsSignedIn)
-            {
-                <a class="pub-btn pub-btn--ghost err-header__action" href="@_chrome.LoginHref">@Culture["Status.Nav.Login"]</a>
-            }
-        </nav>
+            </nav>
+
+            <div class="pub-header__actions">
+                <PublicLangMenu ReturnPath="@_chrome.ReturnPath" />
+                @if (_chrome.IsSignedIn && _showHeaderStart)
+                {
+                    <a class="pub-btn pub-btn--ghost" href="@_chrome.MyStartHref">@Culture["Status.Nav.MyStart"]</a>
+                }
+                else if (!_chrome.IsSignedIn)
+                {
+                    <a class="pub-btn pub-btn--ghost" href="@_chrome.LoginHref">@Culture["Status.Nav.Login"]</a>
+                    <a class="pub-btn pub-btn--primary pub-header__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>
+                }
+            </div>
+
+            <div class="pub-header__mobile">
+                @if (_chrome.IsSignedIn && _showHeaderStart)
+                {
+                    <a class="pub-btn pub-btn--ghost" href="@_chrome.MyStartHref">@Culture["Status.Nav.MyStart"]</a>
+                }
+                else if (!_chrome.IsSignedIn)
+                {
+                    <a class="pub-btn pub-btn--ghost" href="@_chrome.LoginHref">@Culture["Status.Nav.Login"]</a>
+                }
+                <details class="pub-menu" id="pub-menu">
+                    <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
+                        <span class="pub-menu__icon" aria-hidden="true"></span>
+                    </summary>
+                    <div class="pub-menu__panel">
+                        <nav class="pub-menu__nav" aria-label="@Culture["PublicNav.MainNav"]">
+                            @foreach (var item in PublicNavCatalog.Header(_variant).Where(i => i.IsAvailable))
+                            {
+                                <a class="pub-menu__link" href="@item.Href">@Culture[item.LabelKey]</a>
+                            }
+                        </nav>
+                        <PublicLangMenu ReturnPath="@_chrome.ReturnPath" />
+                        @if (!_chrome.IsSignedIn)
+                        {
+                            <a class="pub-btn pub-btn--primary pub-menu__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>
+                        }
+                    </div>
+                </details>
+            </div>
+        </div>
     </header>
 
-    <main id="main" class="err-main">
+    <main id="main" class="pub-main err-main">
         @Body
     </main>
 
-    <footer class="err-footer">
-        <p class="err-footer__copy">@_chrome.Copyright</p>
-        <ul class="err-footer__links">
-            <li><a href="@_chrome.PrivacyHref">@Culture["Status.Nav.Privacy"]</a></li>
-            <li><a href="@_chrome.TermsHref">@Culture["Status.Nav.Terms"]</a></li>
-            <li><a href="@_chrome.HelpHref">@Culture["Status.Nav.Help"]</a></li>
-        </ul>
+    <footer class="pub-footer">
+        <div class="pub-footer__inner">
+            <div class="pub-footer__brand">
+                <a class="pub-footer__logo-link" href="@_chrome.HomeHref" aria-label="Lobsy">
+                    <LobsyLogo Class="pub-footer__logo" Alt="" Animate="false" />
+                    <span class="pub-footer__name">Lobsy</span>
+                </a>
+                <p class="pub-footer__tagline">@Culture["PublicFooter.BrandLine"]</p>
+            </div>
+
+            @foreach (var column in PublicNavCatalog.Footer(_variant))
+            {
+                <div class="pub-footer__col">
+                    <h2 class="pub-footer__heading">@Culture[column.TitleKey]</h2>
+                    <ul class="pub-footer__list">
+                        @foreach (var item in column.Items.Where(i => i.IsAvailable))
+                        {
+                            <li>
+                                <a class="pub-footer__link" href="@item.Href">@Culture[item.LabelKey]</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+        <div class="pub-footer__bottom">
+            <p class="pub-footer__copy">@Culture.Format("PublicFooter.Copyright", _chrome.Year, Culture["PublicFooter.MadeWith"])</p>
+            <p class="pub-footer__lang-name">@Culture.Current.NativeName</p>
+        </div>
     </footer>
 </div>
 
@@ -70,17 +124,18 @@
 
     private ErrorChrome _chrome = default!;
     private bool _showHeaderStart = true;
+    private LandingVariant _variant = LandingVariant.On;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         var http = HttpContextAccessor.HttpContext;
         var path = http?.Request.Path.Value ?? "";
-        // The 403 body already has "Naar mijn start". A second header link pointed at /home
-        // while the button pointed at /ontdek.
         _showHeaderStart = !path.StartsWith("/access-denied", StringComparison.OrdinalIgnoreCase)
                            && !path.StartsWith("/status/403", StringComparison.OrdinalIgnoreCase);
         _chrome = ChromeProvider.Build(http);
+        _variant = await EmployersSwitch.VariantAsync();
         Culture.InitializeFromLanguage(_chrome.Language);
         ErrorResponse.ApplyHeaders(http);
     }
+
 }
