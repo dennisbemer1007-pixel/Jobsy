@@ -7,6 +7,7 @@ using Jobsy.Api.Ops;
 using Jobsy.Api.Security;
 using Jobsy.Api.Swagger;
 using Jobsy.Core;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure;
 using Jobsy.Infrastructure.Data;
@@ -371,6 +372,7 @@ builder.Services.AddHsts(options =>
 });
 
 var app = builder.Build();
+JobsyLanguages.ConfigureEnabledCultures(app.Configuration["Localization:EnabledCultures"]);
 Jobsy.Core.Careers.OccupationCatalog.Configure(
     app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
     app.Environment.IsProduction());

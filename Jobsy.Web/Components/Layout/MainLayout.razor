@@ -4,8 +4,10 @@
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Pwa
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
+@inject PwaInstallSheetState PwaSheet
 @inject JobsyApiClient Api
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject Jobsy.Web.Branding.PlatformBrandingState Branding
@@ -17,7 +19,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
@@ -34,6 +36,14 @@
                 </a>
             </div>
             <div class="app-header__actions">
+                @if (_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)
+                {
+                    <AuthorizeView Roles="@JobsyRoles.Candidate">
+                        <Authorized>
+                            <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallEntry />
+                        </Authorized>
+                    </AuthorizeView>
+                }
                 <PageHelp />
                 <NotificationBell />
                 <FeatureVisible Feature="PlatformFeature.Employers">
@@ -83,6 +93,10 @@
     {
         <GratisDnaMerge />
         <PushPermissionBanner />
+        @if (_isCandidate && !_suppressPwaInstallEntry)
+        {
+            <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstalledShareHint />
+        }
         <ConsentReacceptDialog />
     }
     else if (RendererInfo.IsInteractive)
@@ -90,6 +104,10 @@
         <ConsentReacceptDialog />
     }
     <CookieConsentBanner OnConsentChanged="OnCookieConsentChanged" />
+    @if (RendererInfo.IsInteractive && _isCandidate && !_suppressPwaInstallEntry)
+    {
+        <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallSheet />
+    }
     <SessionIdleGuard />
 </div>
 
@@ -102,9 +120,16 @@
     private bool _hideCoachDock;
     private bool _isCandidate;
     private bool _suppressInstallBanner;
+    private bool _suppressPwaInstallEntry;
+    private bool _pwaSheetOpen;
 
     private bool ShowInstallBanner =>
-        RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage && !_suppressInstallBanner;
+        RendererInfo.IsInteractive
+        && !_isCandidate
+        && !_isMatchPage
+        && !_isBanenkaartPage
+        && !_isQuestionnairePage
+        && !_suppressInstallBanner;
     private string _homeHref = "/";
 
     protected override void OnInitialized()
@@ -113,6 +138,9 @@
         {
             Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         }
+
+        PwaSheet.Changed += OnPwaSheetChanged;
+        _pwaSheetOpen = PwaSheet.IsOpen;
     }
 
     protected override async Task OnInitializedAsync()
@@ -274,6 +302,7 @@
             || path.Equals("banen", StringComparison.OrdinalIgnoreCase);
         var questionnaire = IsQuestionnairePath(path, relative);
         var suppressInstall = SuppressesInstallBanner(path);
+        var suppressPwaEntry = SuppressesPwaInstallEntry(path);
         var changed = false;
         if (_isMatchPage != match)
         {
@@ -290,6 +319,12 @@
         if (_suppressInstallBanner != suppressInstall)
         {
             _suppressInstallBanner = suppressInstall;
+            changed = true;
+        }
+
+        if (_suppressPwaInstallEntry != suppressPwaEntry)
+        {
+            _suppressPwaInstallEntry = suppressPwaEntry;
             changed = true;
         }
 
@@ -394,6 +429,13 @@
         }
 
         return false;
+    }
+
+    public static bool SuppressesPwaInstallEntry(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/share-in", StringComparison.OrdinalIgnoreCase)
+               || SuppressesInstallBanner(path);
     }
 
     public static bool SuppressesInstallBanner(string path)
@@ -503,8 +545,21 @@
     private void OnBrandingChanged()
         => InvokeAsync(StateHasChanged);
 
+    private void OnPwaSheetChanged()
+    {
+        var open = PwaSheet.IsOpen;
+        if (_pwaSheetOpen == open)
+        {
+            return;
+        }
+
+        _pwaSheetOpen = open;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
+        PwaSheet.Changed -= OnPwaSheetChanged;
         Culture.Changed -= OnCultureChanged;
         RegionHost.Changed -= OnBrandingChanged;
         Branding.Changed -= OnBrandingChanged;

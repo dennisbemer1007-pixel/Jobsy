@@ -10,9 +10,9 @@
 @inject BottomNavRefreshService NavRefresh
 @inject IFeatureFlags FeatureFlags
 @inject IJSRuntime Js
-@implements IDisposable
+@implements IAsyncDisposable
 
-@if (_items.Count > 0)
+@if (_items.Count > 0 && !_hideForDesktopViewport)
 {
     <nav class="bottom-nav" aria-label="@Culture["Nav.Main"]" @ref="_nav">
         @foreach (var item in _items)
@@ -41,12 +41,21 @@
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
     private ElementReference _nav;
+    /// <summary>≥1024px: header nav only; bottom bar is mobile/PWA.</summary>
+    private bool _hideForDesktopViewport;
+    private DotNetObjectReference<BottomNav>? _dotNetRef;
+    private IJSObjectReference? _viewportWatch;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            await RefreshDesktopViewportAsync();
+        }
+
         try
         {
-            if (_items.Count > 0)
+            if (_items.Count > 0 && !_hideForDesktopViewport)
             {
                 await Js.InvokeVoidAsync("jobsyCoachDock.bind", _nav, "--bottom-nav-h");
             }
@@ -60,6 +69,38 @@
             // bUnit / prerender
         }
     }
+
+    private async Task RefreshDesktopViewportAsync()
+    {
+        try
+        {
+            _hideForDesktopViewport = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            _viewportWatch ??= await Js.InvokeAsync<IJSObjectReference>(
+                "jobsyViewport.watchKompasWide", _dotNetRef, nameof(SetDesktopViewportHidden));
+            await NotifyHasBottomNavAsync();
+        }
+        catch
+        {
+            _hideForDesktopViewport = false;
+        }
+    }
+
+    [JSInvokable]
+    public async Task SetDesktopViewportHidden(bool isWide)
+    {
+        if (_hideForDesktopViewport == isWide)
+        {
+            return;
+        }
+
+        _hideForDesktopViewport = isWide;
+        await NotifyHasBottomNavAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task NotifyHasBottomNavAsync()
+        => HasItemsChanged.InvokeAsync(_items.Count > 0 && !_hideForDesktopViewport);
     private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
     private bool _hasTakeoverActions;
     private bool _salesOnboardingComplete;
@@ -223,7 +264,7 @@
         _items = catalog;
         if (previousCount != _items.Count || HasItemsChanged.HasDelegate)
         {
-            await HasItemsChanged.InvokeAsync(_items.Count > 0);
+            await NotifyHasBottomNavAsync();
         }
     }
 
@@ -289,6 +330,27 @@
         {
             _maqqieHoursNav = false;
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (_viewportWatch is not null)
+            {
+                await _viewportWatch.InvokeVoidAsync("dispose");
+                await _viewportWatch.DisposeAsync();
+            }
+        }
+        catch
+        {
+            // Best-effort unsubscribe.
+        }
+
+        _viewportWatch = null;
+        _dotNetRef?.Dispose();
+        _dotNetRef = null;
+        Dispose();
     }
 
     public void Dispose()

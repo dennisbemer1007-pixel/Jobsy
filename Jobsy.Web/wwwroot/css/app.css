@@ -7865,11 +7865,13 @@ button.bottom-nav__item {
 
 @media (min-width: 1024px) {
     .app-shell .bottom-nav {
-        display: none;
+        display: none !important;
     }
 
     .app-shell.has-bottom-nav .app-main,
-    .app-shell:has(.bottom-nav) .app-main {
+    .app-shell:has(.bottom-nav) .app-main,
+    .app-shell.has-bottom-nav .app-footer,
+    .app-shell:has(.bottom-nav) .app-footer {
         padding-bottom: 0;
     }
 
@@ -20482,6 +20484,285 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     vertical-align: -0.15em;
 }
 
+/* Candidate PWA install entry (top bar, sheets, post-apply card) */
+.pwa-entry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--border));
+    background: var(--surface);
+    color: var(--brand);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    flex-shrink: 0;
+    max-width: 11rem;
+}
+
+.pwa-entry-btn:hover {
+    background: var(--accent-soft);
+}
+
+.pwa-entry-btn__icon {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex-shrink: 0;
+}
+
+.pwa-entry-btn__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+    .pwa-entry-btn {
+        padding: 0.4rem;
+        max-width: 2.5rem;
+    }
+
+    .pwa-entry-btn__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+}
+
+.app-shell.pwa-sheet-open [data-lobsy-coach],
+.app-shell.pwa-sheet-open .lobsy-coach-dock,
+.app-shell.pwa-sheet-open .lobsy-assistant,
+.app-shell.pwa-sheet-open .lobsy-assistant-tab,
+.app-shell.pwa-sheet-open .feedback-widget,
+.app-shell.pwa-sheet-open .lobsy-assistant-chat {
+    display: none !important;
+}
+
+.pwa-entry-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgb(15 45 92 / 0.35);
+}
+
+.pwa-entry-sheet {
+    position: fixed;
+    z-index: 1101;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
+    max-height: min(62vh, calc(100dvh - var(--bottom-nav-h, 4.75rem) - env(safe-area-inset-bottom, 0px) - 1rem));
+    display: flex;
+    flex-direction: column;
+    border-radius: 16px 16px 0 0;
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    padding: 0 1rem 1.25rem;
+    overflow: hidden;
+}
+
+@media (min-width: 640px) {
+    .pwa-entry-sheet {
+        left: 50%;
+        right: auto;
+        bottom: auto;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: min(26rem, calc(100vw - 2rem));
+        max-height: min(80vh, 28rem);
+        border-radius: var(--radius);
+        padding: 0 1.25rem 1.35rem;
+    }
+
+    .app-shell.pwa-sheet-open .bottom-nav {
+        visibility: visible;
+    }
+}
+
+.pwa-entry-sheet__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 0 0.5rem;
+    flex-shrink: 0;
+}
+
+.pwa-entry-sheet__close {
+    flex-shrink: 0;
+    border: none;
+    background: var(--accent-soft);
+    color: var(--brand);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.pwa-entry-sheet__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 650;
+    color: var(--text);
+}
+
+.pwa-entry-sheet__body {
+    overflow-y: auto;
+    padding-bottom: 0.35rem;
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.pwa-entry-sheet__lead {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.pwa-entry-sheet__steps {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: pwa-ios-step;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--text);
+}
+
+.pwa-entry-sheet__steps li {
+    counter-increment: pwa-ios-step;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+}
+
+.pwa-entry-sheet__steps li::before {
+    content: counter(pwa-ios-step) ".";
+    font-weight: 650;
+    color: var(--brand);
+    min-width: 1.25rem;
+}
+
+.pwa-entry-sheet__share-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-inline-start: 0.15rem;
+    color: var(--brand);
+}
+
+.pwa-entry-sheet__primary {
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.pwa-entry-sheet__secondary {
+    display: flex;
+    width: 100%;
+    margin-top: 0.15rem;
+}
+
+.pwa-entry-sheet__msg {
+    margin: 0.65rem 0 0;
+    font-size: 0.82rem;
+    color: var(--success);
+}
+
+.pwa-entry-card {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius);
+    border: 1px solid color-mix(in srgb, var(--brand) 16%, var(--border));
+    background: color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
+}
+
+.pwa-entry-card__title {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    font-weight: 650;
+}
+
+.pwa-entry-card__lead {
+    margin: 0 0 0.85rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.pwa-entry-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.pwa-entry-card__dismiss {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    padding: 0.35rem 0.15rem;
+}
+
+.pwa-entry-card__dismiss:hover {
+    color: var(--text);
+}
+
+.pwa-share-hint {
+    position: fixed;
+    z-index: 90;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(var(--bottom-nav-clearance, 4.5rem) + 0.5rem);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--border));
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+    max-width: 28rem;
+    margin-inline: auto;
+}
+
+.pwa-share-hint__text {
+    margin: 0;
+    flex: 1;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text);
+}
+
+.pwa-share-hint__close {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.15rem;
+}
+
 .circuit-error { max-width: 28rem; }
 .circuit-error .login-submit { margin-top: 0.75rem; }
 
@@ -20783,7 +21064,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 /* Desktop keeps the header nav. The fixed bottom bar is for narrow viewports. */
 @media (min-width: 1024px) {
     .bottom-nav {
-        display: none;
+        display: none !important;
     }
 
     .app-shell.has-bottom-nav .app-main,
@@ -20791,6 +21072,11 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     .app-shell.has-bottom-nav .app-footer,
     .app-shell:has(.bottom-nav) .app-footer {
         padding-bottom: 0;
+    }
+
+    .app-shell.has-bottom-nav .lobsy-coach-dock,
+    .app-shell:has(.bottom-nav) .lobsy-coach-dock {
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     }
 }
 

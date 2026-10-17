@@ -1,6 +1,8 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Ops;
+using Jobsy.Core.Options;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
@@ -138,6 +140,7 @@ builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Featu
 builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
 builder.Services.AddScoped<CultureState>();
+builder.Services.AddScoped<Jobsy.Web.Pwa.PwaInstallSheetState>();
 builder.Services.AddScoped<Jobsy.Web.Services.ReadAloudCoordinator>();
 // E7: the only place that turns an exception into text a visitor may read.
 builder.Services.AddScoped<Jobsy.Web.Services.UserFacingError>();
@@ -483,6 +486,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+JobsyLanguages.ConfigureEnabledCultures(app.Configuration["Localization:EnabledCultures"]);
 Jobsy.Core.Careers.OccupationCatalog.Configure(
     app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
     app.Environment.IsProduction());

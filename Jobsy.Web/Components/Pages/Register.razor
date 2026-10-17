@@ -33,7 +33,7 @@ else
         if (string.Equals(Van, "ontdek", StringComparison.OrdinalIgnoreCase))
         {
             _redirecting = true;
-            Navigation.NavigateTo("/ontdek", forceLoad: true);
+            Navigation.NavigateTo("/ontdek", forceLoad: false, replace: true);
         }
     }
 }

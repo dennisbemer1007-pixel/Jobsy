@@ -56,7 +56,7 @@
                                 @onclick="OpenFeedbackAsync">
                             @Culture["Feedback.Button"]
                         </button>
-                        @if (_showInstall)
+                        @if (_showInstall && !_isCandidate)
                         {
                             <button type="button"
                                     class="account-menu__link"
@@ -97,6 +97,7 @@
     private bool _forceClosed;
     private bool _showInstall;
     private bool _installChecked;
+    private bool _isCandidate;
     private string? _profileName;
 
     protected override void OnInitialized()
@@ -186,6 +187,9 @@
         _installChecked = true;
         try
         {
+            var state = await AuthState.GetAuthenticationStateAsync();
+            _isCandidate = state.User.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate);
             var standalone = await Js.InvokeAsync<bool>("lobsyPwaInstall.isStandalone");
             var canPrompt = await Js.InvokeAsync<bool>("lobsyPwaInstall.canPrompt");
             var ios = await Js.InvokeAsync<bool>("lobsyPwaInstall.isIos");

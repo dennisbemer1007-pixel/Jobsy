@@ -131,10 +131,11 @@ public sealed class CultureState
             // Profile may be unavailable during early circuit start; fall back to cookie.
         }
 
+        var accept = _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString();
         // An explicit language cookie wins over a stale profile, so the picker matches the page.
         var chosen = !string.IsNullOrWhiteSpace(cookie)
-            ? JobsyLanguages.Normalize(cookie)
-            : JobsyLanguages.Normalize(profileLanguage);
+            ? JobsyLanguages.ResolveActive(cookie, accept)
+            : JobsyLanguages.ResolveActive(profileLanguage, accept);
         var previous = Language;
         Apply(chosen);
         if (!JobsyLanguages.AreSame(previous, Language))
@@ -170,7 +171,11 @@ public sealed class CultureState
 
     public async Task SetLanguageAsync(string language)
     {
-        var normalized = JobsyLanguages.Normalize(language);
+        if (!JobsyLanguages.TryEnabledCode(language, out var normalized))
+        {
+            normalized = JobsyLanguages.ResolveActive(language, _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString());
+        }
+
         if (JobsyLanguages.AreSame(Language, normalized))
         {
             return;
@@ -218,7 +223,7 @@ public sealed class CultureState
 
     private void Apply(string language)
     {
-        Language = JobsyLanguages.Normalize(language);
+        Language = JobsyLanguages.ResolveActive(language, _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString());
         JobsyCultures.ApplyToCurrentThread(Language);
     }
 

@@ -412,6 +412,7 @@ public class MobileSaasUxTests
     {
         var login = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Login.razor"));
         Assert.Contains("ExcludeFromInteractiveRouting", login);
+        Assert.Contains("NoBlazorRuntime", login);
         Assert.Contains("au-card", login);
         Assert.Contains("AuthRedirects.ResolveRequestedReturnUrl", login);
         Assert.Contains("QueryValue(query, \"returnTo\")", login);

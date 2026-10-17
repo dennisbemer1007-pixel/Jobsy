@@ -1,0 +1,83 @@
+@namespace Jobsy.Web.Components.Candidate.Pwa
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Pwa
+@inject CultureState Culture
+@inject IJSRuntime Js
+@implements IAsyncDisposable
+
+@if (_visible)
+{
+    <div class="pwa-share-hint" role="status" data-testid="pwa-installed-share-hint">
+        <p class="pwa-share-hint__text">@Culture["Pwa.Hint.ShareVacancies"]</p>
+        <button type="button" class="pwa-share-hint__close" @onclick="DismissAsync" aria-label="@Culture["Pwa.Sheet.Close"]">×</button>
+    </div>
+}
+
+@code {
+    private bool _visible;
+    private bool _hydrated;
+    private DotNetObjectReference<CandidatePwaInstalledShareHint>? _self;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_hydrated)
+        {
+            return;
+        }
+
+        _hydrated = true;
+        try
+        {
+            await RefreshAsync();
+            _self = DotNetObjectReference.Create(this);
+            await Js.InvokeVoidAsync("lobsyPwaInstall.watchEntry", _self);
+        }
+        catch
+        {
+            _hydrated = false;
+        }
+    }
+
+    [JSInvokable]
+    public Task OnPwaInstallSignalsChanged()
+        => RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        var signals = await PwaInstallInterop.GetSignalsAsync(Js);
+        _visible = signals?.ShouldShowShareHint() == true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task DismissAsync()
+    {
+        try
+        {
+            await Js.InvokeVoidAsync("lobsyPwaInstall.markShareHintSeen");
+        }
+        catch
+        {
+            // Best-effort.
+        }
+
+        _visible = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_self is not null)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("lobsyPwaInstall.unwatchEntry", _self);
+            }
+            catch
+            {
+                // Circuit may be gone.
+            }
+
+            _self.Dispose();
+        }
+    }
+}

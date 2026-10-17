@@ -69,7 +69,7 @@ public sealed class EmailLanguageResolver : IEmailLanguageResolver
                 && langEl.ValueKind == JsonValueKind.String)
             {
                 var raw = langEl.GetString();
-                return string.IsNullOrWhiteSpace(raw) ? null : JobsyLanguages.Normalize(raw);
+                return string.IsNullOrWhiteSpace(raw) ? null : JobsyLanguages.ResolveActive(raw);
             }
         }
         catch (JsonException)

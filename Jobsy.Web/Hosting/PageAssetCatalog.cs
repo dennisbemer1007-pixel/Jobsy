@@ -26,7 +26,7 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
-        "css/app.min.css?v=20261017-02",
+        "css/app.min.css?v=20261017-03",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
@@ -52,7 +52,7 @@ public static class PageAssetCatalog
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261015-09",
+        "css/features/mijn-paspoort.css?v=20261017-02",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261016-05",
         "css/features/carriere.css?v=20261011-01",
@@ -126,7 +126,7 @@ public static class PageAssetCatalog
 
         if (path is "/account-maken" or "/account-maken/code")
         {
-            return Area.CandidateApp;
+            return Area.None;
         }
 
         if (path is "/gratis-dna")
@@ -223,6 +223,14 @@ public static class PageAssetCatalog
         return path is "/gratis-dna"
             || path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal)
             || path.StartsWith("/account-maken", StringComparison.Ordinal);
+    }
+
+    /// <summary>Static signup shells skip app.min.css — ship login-form + provider-btn rules locally.</summary>
+    public static bool IncludeSignupStaticCss(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path is "/account-maken" or "/account-maken/code"
+            || path.StartsWith("/account-maken/", StringComparison.Ordinal);
     }
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

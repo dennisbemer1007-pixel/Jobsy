@@ -85,7 +85,7 @@ else
         }
     </ul>;
 
-    /// <summary>Always all five, each in its own language (05 §2).</summary>
+    /// <summary>Enabled UI languages, each in its own language (05 §2).</summary>
     private static IEnumerable<(LanguageOption Language, bool Last)> Languages
-        => JobsyLanguages.All.Select((l, i) => (l, i == JobsyLanguages.All.Count - 1));
+        => JobsyLanguages.Enabled.Select((l, i) => (l, i == JobsyLanguages.Enabled.Count - 1));
 }

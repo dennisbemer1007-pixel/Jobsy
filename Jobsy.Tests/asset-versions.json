@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "677d48f6eb404051fe40365d90a04dc906a5c5395a101428f9d6ddfef548bb77",
-    "v": "20261017-02"
+    "sha256": "3e6bc5057ed7e9b749c49bd41abd37765c6fcf6dd2ded6408730cab1861ec49e",
+    "v": "20261017-03"
   },
   "css/critical.css": {
     "sha256": "3a99a9a216cdf8bc2e4410503115fd778c06884a9727d734b3d3dad1cff9a075",
@@ -20,8 +20,8 @@
     "v": "20261004-10"
   },
   "css/features/auth.css": {
-    "sha256": "3388f3f86c22de763eab34d89641cef75fa0ea83e621d5a4d4373acc182a6f4c",
-    "v": "20261004-10"
+    "sha256": "19d393a63d6604f3a210cd0e67d18c3b6896c868d6a4f6a77be6ee9ff69ad05d",
+    "v": "20261017-01"
   },
   "css/features/banenkaart.css": {
     "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
@@ -38,6 +38,10 @@
   "css/features/choice-tiles.css": {
     "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
     "v": "20261015-06"
+  },
+  "css/features/cookie-consent.css": {
+    "sha256": "11ac022ea3ed9673587aed89826aa8d9fd982b9c9a5809c3f13c00abdd923b9d",
+    "v": "20261017-05"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
@@ -64,7 +68,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "e84d06aab64e50d70a62d84355460b1e80bf986fdd7fed11fff8bb3c6ff122fa",
+    "sha256": "f23c672c697fe5a49c1c5818b95c1b83626ddb5094afa4170803aea9f5afbb70",
     "v": "20261015-27"
   },
   "css/features/kandidaatinzichten.css": {
@@ -88,7 +92,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "8ef8fa1b682d26e4085c7f98999ffc9fd239ff2434bc46febf98dc5f2ffead47",
+    "sha256": "7a99b6ccf1215583cf7c667a1a3fc08f747cad1db22558eda1f55c7dc8ce0e34",
     "v": "20261015-09"
   },
   "css/features/nav-feedback.css": {
@@ -105,6 +109,10 @@
   },
   "css/features/onboarding-wizard-richting-a.css": {
     "sha256": "c833351e69fa5ae234ed2046fa4696599b365b91eb7cde4b5b631c2b2d95caf4",
+    "v": "20261017-01"
+  },
+  "css/features/onboarding-wizard-vroeg-resultaat.css": {
+    "sha256": "6084d709e44d2ef876cd62248a11df4d678a1832c4720ee2193f303d6b1c822c",
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
@@ -143,6 +151,10 @@
     "sha256": "27596bde44da542dc90eb601bc731b8e91a5cdac5e24febdc958eb320dab5a6e",
     "v": "20261004-14"
   },
+  "css/features/signup-static.css": {
+    "sha256": "cdd2f33c74d431384e54de029ec7984ec3f30660aad88c34eba95f89cdd963f6",
+    "v": "20261017-02"
+  },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20261004-10"
@@ -180,8 +192,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "027364434072e12f00512293f4d87092d2b8f7d58135024bd0e78be76adebefa",
-    "v": "20261016-07"
+    "sha256": "52e5edf29756508656f2011cddf83942fcac2e08af38bea54b6868492f080a79",
+    "v": "20261017-03"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -192,8 +204,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "da99bbfd6b96fc6ff22bae5b41634c6460046a5a6cb300c5f6bdf719a06c018a",
-    "v": "20261015-01"
+    "sha256": "c55af54b6bdd40dd5e677a90aa334e4338a567e355fad730b0a716f7a327b8d2",
+    "v": "20261017-01"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
@@ -264,11 +276,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "b7090f7a7326497ebab3eb9f26c1982103a7a9476575b7ffad531a37fc7dd551",
+    "sha256": "bdcef9ce06616c1a7b0d5127226804331178b089ba694c4354c6a2e69b89c2ed",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "736b62f376325cabfe3e66d8ec9e65a1d6f417928569c619ff8e79f13f532574",
+    "sha256": "32697bf3fcc7f56d206075ff11e60293662e57ffa085393b3338e952f9875141",
     "v": "20261016-06"
   }
 }
