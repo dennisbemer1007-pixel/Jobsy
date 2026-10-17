@@ -554,7 +554,6 @@
                                     {
                                         <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
                                     }
-                                    <li class="@(_profileHasAboutMe ? "is-done" : null)">@Culture["Apply.AboutYou"]</li>
                                     @if (_vacancy.MinimumReferences is > 0)
                                     {
                                         <li class="@(_profileHasReferences ? "is-done" : null)">@Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)</li>
@@ -1135,7 +1134,6 @@
             gaps.Add(new(ApplyProfileLink.Education, !_profileHasEducation));
         }
 
-        gaps.Add(new("about", !_profileHasAboutMe));
         if (_vacancy?.MinimumReferences is > 0)
         {
             gaps.Add(new(ApplyProfileLink.References, !_profileHasReferences));
@@ -1896,7 +1894,6 @@
                     && _profileHasLicense
                     && _profileHasEmployers
                     && _profileHasEducation
-                    && _profileHasAboutMe
                     && _profileHasReferences;
             }
         }

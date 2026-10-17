@@ -449,6 +449,10 @@ internal sealed class E2eFlowRunner
 
     private async Task RunPaspoortChecksAsync(IPage page, string tag)
     {
+        _report.PaspoortFieldRows.Clear();
+        _report.PaspoortFieldRows.Add("| Veld | Status | Notitie |");
+        _report.PaspoortFieldRows.Add("| --- | --- | --- |");
+
         await page.GotoAsync(_baseUrl + "/candidate/paspoort?tab=dna");
         await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
         await page.WaitForTimeoutAsync(1500);
@@ -493,12 +497,132 @@ internal sealed class E2eFlowRunner
             edits.AppendLine(await TryEditPaspoortTabAsync(page, tab));
         }
 
+        await RunPaspoortProofExperienceEditAsync(page, tag);
+        await RunPaspoortDataFieldEditsAsync(page);
+
         await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "paspoort-edit-log.txt"), edits.ToString());
+        await File.WriteAllTextAsync(
+            Path.Combine(Root, "evidence", "paspoort-field-table.md"),
+            string.Join("\n", _report.PaspoortFieldRows));
+    }
+
+    private async Task RecordPaspoortFieldAsync(string field, string status, string? note = null)
+    {
+        var line = note is null ? $"| {field} | {status} |" : $"| {field} | {status} | {note} |";
+        _report.PaspoortFieldRows.Add(line);
+        await Task.CompletedTask;
+    }
+
+    private async Task RunPaspoortProofExperienceEditAsync(IPage page, string tag)
+    {
+        await page.GotoAsync($"{_baseUrl}/candidate/paspoort?tab=proof");
+        await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+        await page.WaitForTimeoutAsync(800);
+
+        var employerName = $"E2E-Werk-{DateTime.UtcNow:HHmmss}";
+        var add = page.Locator("[data-testid=passport-proof-add-employer]").First;
+        if (await add.CountAsync() == 0)
+        {
+            await RecordPaspoortFieldAsync("ervaring (proof sheet)", "missing", "geen add-knop");
+            return;
+        }
+
+        await add.ClickAsync();
+        await page.Locator("[data-testid=passport-proof-sheet]").WaitForAsync(new() { Timeout = 10_000 });
+        var employerInput = page.Locator(".passport-proof__sheet input").First;
+        await employerInput.FillAsync(employerName);
+        var roleInput = page.Locator(".passport-proof__sheet input").Nth(1);
+        if (await roleInput.CountAsync() > 0)
+        {
+            await roleInput.FillAsync("Orderpicker");
+        }
+
+        await page.Locator("[data-testid=passport-proof-save]").ClickAsync();
+        await page.WaitForTimeoutAsync(1500);
+        await page.ReloadAsync();
+        await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+        await page.WaitForTimeoutAsync(1000);
+        var persisted = (await page.InnerTextAsync("body")).Contains(employerName, StringComparison.Ordinal);
+        await RecordPaspoortFieldAsync(
+            "ervaring toevoegen (proof)",
+            persisted ? "OK" : "FAIL",
+            persisted ? "reload" : "na opslaan niet zichtbaar");
+        if (persisted)
+        {
+            await Shot(page, tag, "04-paspoort-proof-experience-saved");
+        }
+    }
+
+    private async Task RunPaspoortDataFieldEditsAsync(IPage page)
+    {
+        await page.GotoAsync($"{_baseUrl}/candidate/paspoort?tab=data");
+        await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+        await page.WaitForTimeoutAsync(600);
+
+        foreach (var section in new[] { "personal", "preferences", "availability", "motivation" })
+        {
+            var btn = page.Locator($"#passport-data-btn-{section}").First;
+            if (await btn.CountAsync() == 0)
+            {
+                await RecordPaspoortFieldAsync($"data/{section}", "missing");
+                continue;
+            }
+
+            await btn.ClickAsync();
+            await page.WaitForTimeoutAsync(500);
+            var marker = $"E2E-{section}-{DateTime.UtcNow:HHmmss}";
+            var textarea = page.Locator(".passport-data__body textarea:visible").First;
+            if (await textarea.CountAsync() > 0)
+            {
+                await textarea.FillAsync(marker);
+                var save = page.GetByRole(AriaRole.Button, new() { Name = "Opslaan" }).First;
+                if (await save.CountAsync() > 0)
+                {
+                    await save.ClickAsync();
+                    await page.WaitForTimeoutAsync(1200);
+                    await page.ReloadAsync();
+                    await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                    await page.GotoAsync($"{_baseUrl}/candidate/paspoort?tab=data");
+                    await page.WaitForTimeoutAsync(800);
+                    await page.Locator($"#passport-data-btn-{section}").First.ClickAsync();
+                    await page.WaitForTimeoutAsync(400);
+                    var ok = (await page.InnerTextAsync(".passport-data__body")).Contains(marker, StringComparison.Ordinal);
+                    await RecordPaspoortFieldAsync($"data/{section} (textarea)", ok ? "OK" : "FAIL");
+                    continue;
+                }
+            }
+
+            var transport = page.Locator(".passport-data__body select:visible").First;
+            if (section == "preferences" && await transport.CountAsync() > 0)
+            {
+                await transport.SelectOptionAsync(new[] { "Fiets" });
+                var save = page.GetByRole(AriaRole.Button, new() { Name = "Opslaan" }).First;
+                if (await save.CountAsync() > 0)
+                {
+                    await save.ClickAsync();
+                    await page.WaitForTimeoutAsync(1200);
+                    await RecordPaspoortFieldAsync("data/preferences (transport)", "OK", "Fiets");
+                    continue;
+                }
+            }
+
+            var inputs = await page.Locator(".passport-data__body input:visible").CountAsync();
+            await RecordPaspoortFieldAsync(
+                $"data/{section}",
+                inputs > 0 ? "open" : "empty",
+                $"{inputs} inputs");
+        }
     }
 
     private static async Task<string> TryEditPaspoortTabAsync(IPage page, string tab)
     {
         var lines = new List<string> { $"## tab={tab}" };
+        if (tab == "proof" || tab == "data")
+        {
+            lines.Add("(field edits in paspoort-field-table.md)");
+            return string.Join("\n", lines);
+        }
+
         var textarea = page.Locator("textarea:visible").First;
         if (await textarea.CountAsync() > 0)
         {
@@ -520,22 +644,6 @@ internal sealed class E2eFlowRunner
             }
         }
 
-        foreach (var acc in await page.Locator(".passport-data__accordions button").AllAsync())
-        {
-            try
-            {
-                await acc.ClickAsync(new() { Timeout = 3_000 });
-                await page.WaitForTimeoutAsync(400);
-            }
-            catch
-            {
-                // skip
-            }
-        }
-
-        var inputs = page.Locator(".passport-data input:visible, .passport-data select:visible");
-        var count = await inputs.CountAsync();
-        lines.Add($"visible inputs in tab: {count}");
         return string.Join("\n", lines);
     }
 
@@ -860,4 +968,5 @@ internal sealed class FlowRunReport
     public bool MaqqieChosen { get; set; }
     public bool SmtpConfigured { get; set; }
     public string? SmtpNote { get; set; }
+    public List<string> PaspoortFieldRows { get; } = [];
 }

@@ -372,8 +372,6 @@ public static class CandidateJourneyE2e
             Roles: ["horeca", "retail"],
             MaxTravelMinutes: 30,
             PreferredTransport: "Fiets",
-            AboutMe: "Demo kandidaat (usability3 apply).",
-            DefaultMotivation: "Ik solliciteer graag via Lobsy.",
             Availability: new Dictionary<string, string[]> { ["ma"] = ["ochtend"] },
             Employers:
             [
