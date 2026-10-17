@@ -72,8 +72,8 @@ public class LivegangAuditFixesTests
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "werkgever.css"));
         Assert.Contains(".wg-vac--dense .ent-data-table-wrap", css, StringComparison.Ordinal);
-        Assert.Contains("overflow-x: clip", css, StringComparison.Ordinal);
-        Assert.Contains("table-layout: fixed", css, StringComparison.Ordinal);
+        Assert.Contains("table-layout: auto", css, StringComparison.Ordinal);
+        Assert.Contains("wg-vac__col-views", css, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

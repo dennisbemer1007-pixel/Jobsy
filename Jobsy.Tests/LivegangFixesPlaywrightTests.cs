@@ -81,9 +81,7 @@ public class LivegangFixesPlaywrightTests
         await page.GotoAsync($"{baseUrl}/werkgever/vacatures",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForTimeoutAsync(800);
-        var overflow = await page.EvaluateAsync<bool>(
-            "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");
-        Assert.False(overflow, "Werkgever vacatures list should not horizontally overflow at 1440px desktop.");
+        await AssertNoVacaturesTableClipAsync(page, 1440);
     }
 
     [Fact]
@@ -125,9 +123,44 @@ public class LivegangFixesPlaywrightTests
         await page.GotoAsync($"{baseUrl}/werkgever/vacatures",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await page.WaitForTimeoutAsync(800);
+        await AssertNoVacaturesTableClipAsync(page, 1280);
+    }
+
+    private static async Task AssertNoVacaturesTableClipAsync(IPage page, int viewportWidth)
+    {
         var overflow = await page.EvaluateAsync<bool>(
             "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");
-        Assert.False(overflow, "Werkgever vacatures list should not horizontally overflow at 1280px desktop.");
+        Assert.False(overflow, $"Page should not horizontally overflow at {viewportWidth}px desktop.");
+
+        var json = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const wrap = document.querySelector('.wg-vac--dense .ent-data-table-wrap');
+              const table = wrap?.querySelector('table');
+              if (!wrap || !table) return JSON.stringify({ ok: false, issues: ['missing table'] });
+              const wrapRect = wrap.getBoundingClientRect();
+              const issues = [];
+              for (const cell of table.querySelectorAll('th, td')) {
+                const style = getComputedStyle(cell);
+                if (style.display === 'none' || cell.offsetParent === null) continue;
+                if (cell.scrollWidth > cell.clientWidth + 1) {
+                  issues.push(`cell scroll ${cell.scrollWidth}>${cell.clientWidth}`);
+                }
+                const r = cell.getBoundingClientRect();
+                if (r.right > wrapRect.right + 1) {
+                  issues.push(`cell past wrap by ${(r.right - wrapRect.right).toFixed(1)}px`);
+                }
+              }
+              return JSON.stringify({ ok: issues.length === 0, issues });
+            }
+            """);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var ok = doc.RootElement.GetProperty("ok").GetBoolean();
+        if (!ok)
+        {
+            var issues = string.Join(", ", doc.RootElement.GetProperty("issues").EnumerateArray().Select(e => e.GetString()));
+            Assert.Fail($"Vacatures table cells clipped at {viewportWidth}px: {issues}");
+        }
     }
 
     private const string DefaultPassword = "Jobsy123!";

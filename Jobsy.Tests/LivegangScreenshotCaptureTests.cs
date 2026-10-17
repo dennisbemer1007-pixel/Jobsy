@@ -198,9 +198,18 @@ public class LivegangScreenshotCaptureTests
 
             var scrollWidth = await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth");
             var clientWidth = await page.EvaluateAsync<int>("() => document.documentElement.clientWidth");
+            var tableAudit = await AssertVacaturesTableCellsVisibleAsync(page);
             var metricsFile = Path.Combine(root, $"werkgever-vacatures-{tag}-metrics.txt");
             await File.WriteAllTextAsync(metricsFile,
-                $"scrollWidth={scrollWidth}{Environment.NewLine}clientWidth={clientWidth}{Environment.NewLine}overflowPx={scrollWidth - clientWidth}{Environment.NewLine}");
+                $"""
+                 scrollWidth={scrollWidth}
+                 clientWidth={clientWidth}
+                 overflowPx={scrollWidth - clientWidth}
+                 tableCellsOk={tableAudit.Ok}
+                 {string.Join(Environment.NewLine, tableAudit.Issues.Select(i => $"tableIssue={i}"))}
+                 """);
+
+            Assert.True(tableAudit.Ok, string.Join("; ", tableAudit.Issues));
 
             var file = Path.Combine(root, $"werkgever-vacatures-{tag}.png");
             await page.ScreenshotAsync(new() { Path = file, FullPage = fullPage });
@@ -320,6 +329,43 @@ public class LivegangScreenshotCaptureTests
 
             await Task.Delay(250);
         }
+    }
+
+    private static async Task<(bool Ok, List<string> Issues)> AssertVacaturesTableCellsVisibleAsync(IPage page)
+    {
+        var json = await page.EvaluateAsync<string>(
+            """
+            () => {
+              const wrap = document.querySelector('.wg-vac--dense .ent-data-table-wrap');
+              const table = wrap?.querySelector('table');
+              if (!wrap || !table) {
+                return JSON.stringify({ ok: false, issues: ['missing .wg-vac--dense table'] });
+              }
+              const wrapRect = wrap.getBoundingClientRect();
+              const issues = [];
+              for (const cell of table.querySelectorAll('th, td')) {
+                const style = getComputedStyle(cell);
+                if (style.display === 'none' || cell.offsetParent === null) continue;
+                if (cell.scrollWidth > cell.clientWidth + 1) {
+                  issues.push(`${cell.tagName}.${cell.className || 'cell'} scroll ${cell.scrollWidth}>${cell.clientWidth}`);
+                }
+                const r = cell.getBoundingClientRect();
+                if (r.right > wrapRect.right + 1) {
+                  issues.push(`${cell.tagName}.${cell.className || 'cell'} right ${r.right.toFixed(1)}>wrap ${wrapRect.right.toFixed(1)}`);
+                }
+              }
+              const tableRect = table.getBoundingClientRect();
+              if (tableRect.right > wrapRect.right + 1) {
+                issues.push(`table right ${tableRect.right.toFixed(1)}>wrap ${wrapRect.right.toFixed(1)}`);
+              }
+              return JSON.stringify({ ok: issues.length === 0, issues });
+            }
+            """);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var ok = root.GetProperty("ok").GetBoolean();
+        var issues = root.GetProperty("issues").EnumerateArray().Select(e => e.GetString() ?? "").ToList();
+        return (ok, issues);
     }
 
     private static void TrackNetwork404s(IPage page)
