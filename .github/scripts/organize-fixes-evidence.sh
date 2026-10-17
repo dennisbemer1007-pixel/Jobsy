@@ -53,11 +53,12 @@ copy_pair "$STORE/04-empty-profile-blocked" "09-apply-blocked-empty-profile"
 copy_one "$STORE/05-employer-lobsy-cv-and-paspoort-pdf" "$SRC/screens/11-attached-document-desktop-1440.png" "attached-document-desktop-1440.png"
 copy_one "$STORE/05-employer-lobsy-cv-and-paspoort-pdf" "$SRC/screens/11-lobsy-cv-downloaded-desktop-1440.png" "lobsy-cv-downloaded-desktop-1440.png"
 copy_one "$STORE/05-employer-lobsy-cv-and-paspoort-pdf" "$SRC/pdf/employer-lobsy-cv-desktop.pdf" "employer-lobsy-cv-desktop.pdf"
-for f in "$SRC/pdf"/paspoort-desktop-1440-page*.png "$SRC/pdf"/paspoort-*-page*.png; do
+copy_one "$STORE/05-employer-lobsy-cv-and-paspoort-pdf" "$SRC/pdf/lobsy-cv-self-desktop-1440.pdf" "lobsy-cv-no-tests-desktop-1440.pdf"
+copy_one "$STORE/05-employer-lobsy-cv-and-paspoort-pdf" "$SRC/pdf/paspoort-all-tests-desktop-1440.pdf" "paspoort-all-tests-desktop-1440.pdf"
+for f in "$SRC/pdf"/employer-lobsy-cv-desktop*.png "$SRC/pdf"/lobsy-cv-self-desktop-1440*.png "$SRC/pdf"/paspoort-all-tests-desktop-1440*.png; do
   [[ -f "$f" ]] || continue
   cp -f "$f" "$STORE/05-employer-lobsy-cv-and-paspoort-pdf/" 2>/dev/null || true
 done
-copy_one "$STORE/05-employer-lobsy-cv-and-paspoort-pdf" "$SRC/pdf/paspoort-desktop-1440.pdf" "paspoort-all-tests-desktop-1440.pdf"
 
 # 6 Paspoort inline edits
 copy_pair "$STORE/06-paspoort-inline-editing" "04-paspoort-proof-experience-saved"

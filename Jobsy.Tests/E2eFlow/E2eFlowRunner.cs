@@ -10,6 +10,7 @@ using Jobsy.Tests.E2e;
 using Microsoft.EntityFrameworkCore;
 using Jobsy.Tests.Werkgever;
 using Microsoft.Playwright;
+using UglyToad.PdfPig;
 
 namespace Jobsy.Tests.E2eFlow;
 
@@ -134,11 +135,6 @@ internal sealed class E2eFlowRunner
                 "09-notification-lists-dedupe",
                 Path.Combine(Root, "evidence", "about-me-revert.txt"),
                 "about-me-revert.txt");
-            FixEvidencePublisher.CopyPdfPagesToItem("05-employer-lobsy-cv-and-paspoort-pdf", "paspoort-desktop-1440-page");
-            FixEvidencePublisher.CopyFileToItem(
-                "05-employer-lobsy-cv-and-paspoort-pdf",
-                Path.Combine(PdfDir, "paspoort-desktop-1440.pdf"),
-                "paspoort-all-tests-desktop-1440.pdf");
         }
         }
 
@@ -374,7 +370,17 @@ internal sealed class E2eFlowRunner
 
                 await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}?encouragePreview=wist-cv-vs-passport#apply");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-                if (await page.Locator(".apply-panel--success").CountAsync() > 0)
+                await OpenVacancyApplyPanelAsync(page);
+                try
+                {
+                    await page.Locator("[data-encourage-tip='wist-cv-vs-passport']").WaitForAsync(new() { Timeout = 20_000 });
+                }
+                catch (TimeoutException)
+                {
+                    // capture panel anyway for review
+                }
+
+                if (await page.Locator(".apply-panel--success, [data-encourage-tip='wist-cv-vs-passport']").CountAsync() > 0)
                 {
                     await Shot(page, tag, "09-applied-encourage-tip");
                 }
@@ -389,8 +395,8 @@ internal sealed class E2eFlowRunner
             {
                 await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-                var coachVisible = await page.Locator(".coach-fab, [data-testid=coach-fab]").CountAsync() > 0
-                                   && await page.Locator(".coach-fab, [data-testid=coach-fab]").First.IsVisibleAsync();
+                var coachVisible = await page.Locator(".lobsy-coach-dock__btn").CountAsync() > 0
+                                   && await page.Locator(".lobsy-coach-dock__btn").First.IsVisibleAsync();
                 _report.MobileCoachOnVacancyDetail = coachVisible;
                 await Shot(page, tag, "07-vacancy-no-coach-mobile");
             }
@@ -509,6 +515,7 @@ internal sealed class E2eFlowRunner
                 var savePath = Path.Combine(PdfDir, "employer-lobsy-cv-desktop.pdf");
                 await download.SaveAsAsync(savePath);
                 _report.EmployerCvDownloadPath = savePath;
+                RenderAllPdfPages(savePath, "employer-lobsy-cv-desktop");
                 await Shot(page, "desktop-1440", "11-lobsy-cv-downloaded");
             }
 
@@ -573,11 +580,7 @@ internal sealed class E2eFlowRunner
                 "12-maqqie-chosen",
                 "11-attached-document",
                 "11-lobsy-cv-downloaded");
-            FixEvidencePublisher.CopyFileToItem(
-                "05-employer-lobsy-cv-and-paspoort-pdf",
-                Path.Combine(PdfDir, "employer-lobsy-cv-desktop.pdf"),
-                "employer-lobsy-cv-desktop.pdf");
-            FixEvidencePublisher.CopyPdfPagesToItem("05-employer-lobsy-cv-and-paspoort-pdf", "paspoort-desktop-1440-page");
+            PublishCandidatePdfEvidence();
         }
 
         await Task.Delay(2_000);
@@ -598,8 +601,8 @@ internal sealed class E2eFlowRunner
 
             await page.GotoAsync(_baseUrl + "/notifications");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            var coachOnNotif = await page.Locator(".coach-fab, [data-testid=coach-fab]").CountAsync() > 0
-                               && await page.Locator(".coach-fab, [data-testid=coach-fab]").First.IsVisibleAsync();
+            var coachOnNotif = await page.Locator(".lobsy-coach-dock__btn").CountAsync() > 0
+                               && await page.Locator(".lobsy-coach-dock__btn").First.IsVisibleAsync();
             _report.MobileCoachOnNotifications = coachOnNotif;
             await Shot(page, "mobile-390", "13-candidate-notifications");
             FixEvidencePublisher.PublishItem(
@@ -697,9 +700,11 @@ internal sealed class E2eFlowRunner
 
         if (pdf is { Length: > 5000 })
         {
-            var pdfPath = Path.Combine(PdfDir, $"paspoort-{tag}.pdf");
+            var kind = ClassifyDownloadedCandidatePdf(pdf);
+            var baseName = kind == "paspoort" ? $"paspoort-all-tests-{tag}" : $"lobsy-cv-self-{tag}";
+            var pdfPath = Path.Combine(PdfDir, $"{baseName}.pdf");
             await File.WriteAllBytesAsync(pdfPath, pdf);
-            RenderAllPdfPages(pdfPath, tag);
+            RenderAllPdfPages(pdfPath, baseName);
         }
 
         var edits = new StringBuilder();
@@ -881,7 +886,70 @@ internal sealed class E2eFlowRunner
         return string.Join("\n", lines);
     }
 
-    private static void RenderAllPdfPages(string pdfPath, string tag)
+    private static void PublishCandidatePdfEvidence()
+    {
+        var paspoort = Directory.GetFiles(PdfDir, "paspoort-all-tests-*.pdf").FirstOrDefault();
+        if (paspoort is not null)
+        {
+            FixEvidencePublisher.CopyFileToItem(
+                "05-employer-lobsy-cv-and-paspoort-pdf",
+                paspoort,
+                "paspoort-all-tests-desktop-1440.pdf");
+            FixEvidencePublisher.CopyPdfPagesToItem("05-employer-lobsy-cv-and-paspoort-pdf", "paspoort-all-tests-desktop-1440-page");
+        }
+
+        var selfCv = Directory.GetFiles(PdfDir, "lobsy-cv-self-*.pdf").FirstOrDefault();
+        if (selfCv is not null)
+        {
+            FixEvidencePublisher.CopyFileToItem(
+                "05-employer-lobsy-cv-and-paspoort-pdf",
+                selfCv,
+                "lobsy-cv-no-tests-desktop-1440.pdf");
+            FixEvidencePublisher.CopyPdfPagesToItem("05-employer-lobsy-cv-and-paspoort-pdf", "lobsy-cv-no-tests-desktop-1440-page");
+        }
+
+        var employerCv = Path.Combine(PdfDir, "employer-lobsy-cv-desktop.pdf");
+        if (File.Exists(employerCv))
+        {
+            FixEvidencePublisher.CopyFileToItem(
+                "05-employer-lobsy-cv-and-paspoort-pdf",
+                employerCv,
+                "employer-lobsy-cv-desktop.pdf");
+            FixEvidencePublisher.CopyPdfPagesToItem("05-employer-lobsy-cv-and-paspoort-pdf", "employer-lobsy-cv-desktop-page");
+        }
+    }
+
+    private static string ClassifyDownloadedCandidatePdf(byte[] pdf)
+    {
+        try
+        {
+            using var doc = PdfDocument.Open(pdf);
+            var text = string.Join(
+                ' ',
+                doc.GetPages().Take(2).SelectMany(p => p.GetWords()).Select(w => w.Text));
+            if (text.Contains("Uit je tests", StringComparison.Ordinal)
+                || (text.Contains("Beschikbaarheid", StringComparison.Ordinal)
+                    && text.Contains("Contactgegevens", StringComparison.Ordinal)
+                    && !text.Contains("PASPOORT", StringComparison.OrdinalIgnoreCase)))
+            {
+                return "lobsy-cv";
+            }
+
+            if (text.Contains("PASPOORT", StringComparison.OrdinalIgnoreCase)
+                || text.Contains("Verified", StringComparison.OrdinalIgnoreCase))
+            {
+                return "paspoort";
+            }
+        }
+        catch
+        {
+            // fall through
+        }
+
+        return "unknown";
+    }
+
+    private static void RenderAllPdfPages(string pdfPath, string pngBaseName)
     {
         var psi = new ProcessStartInfo
         {
@@ -904,11 +972,11 @@ internal sealed class E2eFlowRunner
 
         for (var i = 1; i <= pages; i++)
         {
-            var png = Path.Combine(PdfDir, $"paspoort-{tag}-page{i}.png");
+            var pngPrefix = Path.Combine(PdfDir, pngBaseName);
             var render = new ProcessStartInfo
             {
                 FileName = "pdftoppm",
-                Arguments = $"-png -f {i} -l {i} -r 150 \"{pdfPath}\" \"{png[..^4]}\"",
+                Arguments = $"-png -f {i} -l {i} -r 150 \"{pdfPath}\" \"{pngPrefix}\"",
                 UseShellExecute = false
             };
             using var proc = Process.Start(render);

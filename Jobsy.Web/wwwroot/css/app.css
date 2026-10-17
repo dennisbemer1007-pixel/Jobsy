@@ -7868,19 +7868,9 @@ button.bottom-nav__item {
         display: none;
     }
 
-    /* Candidates have no werkgever-style sidebar; keep primary nav on desktop too. */
-    .app-shell--candidate .bottom-nav {
-        display: flex;
-    }
-
     .app-shell.has-bottom-nav .app-main,
     .app-shell:has(.bottom-nav) .app-main {
         padding-bottom: 0;
-    }
-
-    .app-shell--candidate.has-bottom-nav .app-main,
-    .app-shell--candidate:has(.bottom-nav) .app-main {
-        padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
     .lobsy-assistant.has-bottom-nav {
@@ -20809,6 +20799,11 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     padding-bottom: calc(64px + 24px + 16px);
 }
 
+.app-shell:has(.kb-detail) .app-main,
+.app-shell:has(.notifications-page) .app-main {
+    padding-bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + 16px + env(safe-area-inset-bottom, 0px));
+}
+
 .lobsy-coach-dock {
     position: fixed;
     z-index: 45;
@@ -20943,14 +20938,17 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     padding: 0 0.75rem 0.75rem;
 }
 
+/* Vacancy detail + notifications: inline tips only — no floating coach tab overlapping sticky UI. */
+.app-shell:has(.kb-detail) .lobsy-coach-dock,
+.app-shell:has(.notifications-page) .lobsy-coach-dock,
+.app-shell:has(.kb-detail) .lobsy-assistant-tab--edge,
+.app-shell:has(.notifications-page) .lobsy-assistant-tab--edge {
+    display: none !important;
+}
+
 @media (max-width: 639px) {
     .app-shell:has([data-lobsy-coach]) .app-main {
         padding-bottom: calc(56px + 88px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
-    }
-
-    .app-shell:has(.kb-detail) .lobsy-coach-dock,
-    .app-shell:has(.notifications-page) .lobsy-coach-dock {
-        display: none !important;
     }
 
     .app-shell:has(.kb-detail) .app-main,

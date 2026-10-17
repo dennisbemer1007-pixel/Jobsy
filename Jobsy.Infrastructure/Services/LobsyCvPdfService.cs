@@ -214,14 +214,17 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                                 {
                                     col.Item().Text("E-mail").FontSize(8).FontColor(Muted);
                                     col.Item().Text(string.IsNullOrWhiteSpace(model.Email) ? "—" : model.Email!)
-                                        .FontSize(10).Bold();
+                                        .FontSize(10)
+                                        .Bold();
                                 });
-                                row.RelativeItem().Column(col =>
+                                if (!string.IsNullOrWhiteSpace(model.PhoneNumber))
                                 {
-                                    col.Item().Text("Telefoon").FontSize(8).FontColor(Muted);
-                                    col.Item().Text(string.IsNullOrWhiteSpace(model.PhoneNumber) ? "—" : model.PhoneNumber!)
-                                        .FontSize(10).Bold();
-                                });
+                                    row.RelativeItem().Column(col =>
+                                    {
+                                        col.Item().Text("Telefoon").FontSize(8).FontColor(Muted);
+                                        col.Item().Text(model.PhoneNumber!).FontSize(10).Bold();
+                                    });
+                                }
                             });
                             if (model.WhatsAppContactAllowed && !string.IsNullOrWhiteSpace(model.PhoneNumber))
                             {
@@ -260,43 +263,40 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
                             }
                         });
 
-                        split.ConstantItem(8);
-
-                        split.RelativeItem().Background(SoftCoral).Padding(8).Column(loc =>
+                        var showWorkplace = mapPng is { Length: > 0 }
+                                            || !string.IsNullOrWhiteSpace(model.City)
+                                            || !string.IsNullOrWhiteSpace(model.WorkplaceAddress);
+                        if (showWorkplace)
                         {
-                            loc.Spacing(4);
-                            loc.Item().Text("Werkplek").FontSize(9).Bold().FontColor(BrandNavy);
+                            split.ConstantItem(8);
+                            split.RelativeItem().Background(SoftCoral).Padding(8).Column(loc =>
+                            {
+                                loc.Spacing(4);
+                                loc.Item().Text("Werkplek").FontSize(9).Bold().FontColor(BrandNavy);
 
-                            // Workplace pin + privacy reach circle (never candidate home).
-                            if (mapPng is { Length: > 0 })
-                            {
-                                loc.Item().Height(92).Image(mapPng).FitArea();
-                            }
-                            else if (!string.IsNullOrWhiteSpace(model.City))
-                            {
-                                loc.Item().Text("Woonplaats").FontSize(8).FontColor(Muted);
-                                loc.Item().Text(model.City!).FontSize(12).Bold().FontColor(BrandNavy);
-                            }
-                            else
-                            {
-                                loc.Item().Height(48).Background(Colors.White).AlignMiddle().AlignCenter()
-                                    .Text(string.IsNullOrWhiteSpace(model.WorkplaceAddress)
-                                        ? "Werkgeverslocatie"
-                                        : "Kaart niet beschikbaar")
-                                    .FontSize(8).FontColor(Muted);
-                            }
+                                // Workplace pin + privacy reach circle (never candidate home).
+                                if (mapPng is { Length: > 0 })
+                                {
+                                    loc.Item().Height(92).Image(mapPng).FitArea();
+                                }
+                                else if (!string.IsNullOrWhiteSpace(model.City))
+                                {
+                                    loc.Item().Text("Woonplaats").FontSize(8).FontColor(Muted);
+                                    loc.Item().Text(model.City!).FontSize(12).Bold().FontColor(BrandNavy);
+                                }
 
-                            if (!string.IsNullOrWhiteSpace(model.WorkplaceAddress))
-                            {
-                                loc.Item().Text(model.WorkplaceAddress!).FontSize(8).Bold().FontColor(BrandNavy);
-                            }
+                                if (!string.IsNullOrWhiteSpace(model.WorkplaceAddress))
+                                {
+                                    loc.Item().Text(model.WorkplaceAddress!).FontSize(8).Bold().FontColor(BrandNavy);
+                                }
 
-                            var reachLabel = FormatReachLabel(model);
-                            if (!string.IsNullOrWhiteSpace(reachLabel))
-                            {
-                                loc.Item().Text(reachLabel).FontSize(8).FontColor(AccentTeal);
-                            }
-                        });
+                                var reachLabel = FormatReachLabel(model);
+                                if (!string.IsNullOrWhiteSpace(reachLabel))
+                                {
+                                    loc.Item().Text(reachLabel).FontSize(8).FontColor(AccentTeal);
+                                }
+                            });
+                        }
                     });
 
                     body.Item().Row(travel =>
