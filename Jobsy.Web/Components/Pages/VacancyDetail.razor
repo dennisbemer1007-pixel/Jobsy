@@ -14,6 +14,7 @@
 @inject CultureState Culture
 @inject PersistentComponentState Persist
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IHostEnvironment HostEnvironment
 @inject UserFacingError UserFacing
 @using Jobsy.Core.Media
 @using Jobsy.Core.Contracts
@@ -995,6 +996,12 @@
             {
                 <OpenForWorkPrompt OnEnabled="ReloadAfterOpenForWork" />
             }
+            else if (!_profileReadyForApply)
+            {
+                <a class="btn--primary"
+                   href="@($"/vacancies/{Id}#apply")"
+                   data-testid="kb-detail-apply">@Culture["Apply.StickyCompleteProfileCta"]</a>
+            }
             else
             {
                 <a class="btn--primary" href="@($"/vacancies/{Id}#apply")" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
@@ -1916,7 +1923,8 @@
             if (profile is not null)
             {
                 _dobInput = profile.DateOfBirth;
-                _authenticatorEnabled = profile.AuthenticatorEnabled == true;
+                _authenticatorEnabled = HostEnvironment.IsDevelopment()
+                    && profile.AuthenticatorEnabled == true;
                 var prefs = profile.Preferences ?? new CandidatePreferences();
                 _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
                 _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);

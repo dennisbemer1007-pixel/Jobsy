@@ -508,6 +508,15 @@ internal sealed class E2eFlowRunner
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             await OpenVacancyApplyPanelAsync(page);
+            await page.Locator(".apply-panel--success").WaitForAsync(new() { Timeout = 20_000 });
+            await page.EvaluateAsync(
+                """
+                () => {
+                  const panel = document.querySelector('.apply-panel--success') || document.getElementById('apply');
+                  panel?.scrollIntoView({ block: 'center', behavior: 'instant' });
+                }
+                """);
+            await page.WaitForTimeoutAsync(mobile ? 800 : 500);
             try
             {
                 await page.Locator(
@@ -519,9 +528,7 @@ internal sealed class E2eFlowRunner
                 // capture panel anyway for review
             }
 
-            if (await page.Locator(
-                    ".apply-panel--success, [data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests']")
-                .CountAsync() > 0)
+            if (await page.Locator(".apply-panel--success").CountAsync() > 0)
             {
                 await Shot(page, tag, "09-applied-encourage-tip");
             }
@@ -1566,6 +1573,16 @@ internal sealed class E2eFlowRunner
         await EnsureCareerAsync();
         await EnsureCultureAsync();
         await EnsureValuesAsync();
+
+        user.PreferencesJson = """
+            {"roles":["Orderpicker","Magazijnmedewerker"],"maxTravelMinutes":35,"preferredTransport":"Fiets","language":"nl","aboutMe":"Ik werk graag gestructureerd in een team. Betrouwbaar, fysiek fit en punctueel.","drivingLicenses":["B"],"availability":{"Ma":["Ochtend","Middag"],"Di":["Ochtend"],"Wo":["Middag"],"Do":["Ochtend","Middag"],"Vr":["Ochtend"]},"employers":[{"employerName":"GreenPack Logistiek","role":"Orderpicker","startMonth":"2022-03","endMonth":"2024-08"},{"employerName":"Westland Fresh DC","role":"Magazijnmedewerker","startMonth":"2024-09"}],"educations":["MBO Logistiek niveau 2"],"homeAddress":"Voorbeeldstraat 12, 2671 AB Naaldwijk","minHoursPerWeek":32,"maxHoursPerWeek":40,"certificates":[{"name":"Heftruckcertificaat","year":2023},{"name":"VCA Basis","year":2022}],"spokenLanguages":[{"code":"nl","level":"vloeiend"},{"code":"en","level":"basis"}],"dutchLevel":"vloeiend","workPreferences":{"indoor":"prefer","outdoor":"ok-not-frost","physicalWork":"lifting-15","pace":"norm-ok"},"shareEmployerPreferences":true,"employerPreferences":["small-team","vaste-uren"],"workRegion":"Westland","hasOwnCar":false,"contractPreferences":["vast"],"defaultMotivation":"Graag meewerken in jullie team — ervaring in orderpicken en heftruck."}
+            """;
+        user.OpenForWork = true;
+        if (string.IsNullOrWhiteSpace(user.FullName))
+        {
+            user.FullName = "E2E Kandidaat Paspoort";
+        }
+
         await db.SaveChangesAsync();
     }
 
