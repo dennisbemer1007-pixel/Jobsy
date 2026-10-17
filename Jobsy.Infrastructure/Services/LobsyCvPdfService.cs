@@ -240,28 +240,39 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
 
                     body.Item().ShowEntire().Row(split =>
                     {
-                        split.RelativeItem().Background(SoftSky).Padding(8).Column(avail =>
+                        var hours = FormatHours(model.MinHoursPerWeek, model.MaxHoursPerWeek);
+                        var slotMap = model.AvailabilitySlots ?? new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+                        var hasSlots = slotMap.Values.Any(v => v is { Length: > 0 });
+                        var showAvailability = !string.IsNullOrWhiteSpace(hours) || model.FlexibleTimes || hasSlots;
+
+                        if (showAvailability)
                         {
-                            avail.Spacing(4);
-                            avail.Item().Text("Beschikbaarheid").FontSize(9).Bold().FontColor(BrandNavy);
+                            split.RelativeItem().Background(SoftSky).Padding(8).Column(avail =>
+                            {
+                                avail.Spacing(4);
+                                avail.Item().Text("Beschikbaarheid").FontSize(9).Bold().FontColor(BrandNavy);
 
-                            var hours = FormatHours(model.MinHoursPerWeek, model.MaxHoursPerWeek);
-                            if (!string.IsNullOrWhiteSpace(hours))
-                            {
-                                avail.Item().Text($"{hours} u/week").FontSize(8).FontColor(Muted);
-                            }
+                                if (!string.IsNullOrWhiteSpace(hours))
+                                {
+                                    avail.Item().Text($"{hours} u/week").FontSize(8).FontColor(Muted);
+                                }
 
-                            if (model.FlexibleTimes)
-                            {
-                                avail.Item().Background(WarmSand).Padding(6)
-                                    .Text("Tijden in overleg")
-                                    .FontSize(8).FontColor(BrandDeep);
-                            }
-                            else
-                            {
-                                DrawAvailabilityMatrix(avail, model.AvailabilitySlots);
-                            }
-                        });
+                                if (model.FlexibleTimes)
+                                {
+                                    avail.Item().Background(WarmSand).Padding(6)
+                                        .Text("Tijden in overleg")
+                                        .FontSize(8).FontColor(BrandDeep);
+                                }
+                                else if (hasSlots)
+                                {
+                                    DrawAvailabilityMatrix(avail, model.AvailabilitySlots);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            split.RelativeItem();
+                        }
 
                         var showWorkplace = mapPng is { Length: > 0 }
                                             || !string.IsNullOrWhiteSpace(model.City)

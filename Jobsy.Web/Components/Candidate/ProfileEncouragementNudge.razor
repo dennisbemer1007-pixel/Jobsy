@@ -80,6 +80,7 @@
     private static bool ContextEquals(ProfileEncouragementContext? a, ProfileEncouragementContext? b)
         => a?.UserId == b?.UserId
            && a?.CultureOrValuesComplete == b?.CultureOrValuesComplete
+           && a?.PassportAllLayersComplete == b?.PassportAllLayersComplete
            && a?.ApplyBasicsReady == b?.ApplyBasicsReady;
 
     private string BuildStorageKey()

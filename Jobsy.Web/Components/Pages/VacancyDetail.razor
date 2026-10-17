@@ -262,7 +262,7 @@
                                 </svg>
                             </button>
                         </div>
-                        <p class="kb-detail__passport-hint">@Culture["Kb.Detail.PassportHint"]</p>
+                        <p class="kb-detail__passport-hint">@(PassportHintText)</p>
                     </div>
                 </aside>
 
@@ -1220,6 +1220,11 @@
                 : RequiresEmailCode
                     ? Culture["Apply.LeadReady"]
                     : Culture["Apply.LeadReadyThree"];
+
+    private string PassportHintText
+        => _encourageContext?.PassportAllLayersComplete == true
+            ? Culture["Kb.Detail.PassportHint"]
+            : Culture["Kb.Detail.LobsyCvHint"];
 
     private string ProfileStepClass =>
         _applied || _profileReadyForApply ? "is-done" : "is-current";

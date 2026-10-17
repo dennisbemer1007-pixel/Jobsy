@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Email;
 using Jobsy.Core.Email.Model;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Tests.E2e;
@@ -72,7 +73,7 @@ internal sealed class E2eFlowRunner
         var chainEmail = chainOnly
             ? await ResolveLatestChainCandidateEmailAsync(_conn)
             : $"e2e-d-{Guid.NewGuid():N}@jobsy.local";
-        Stopwatch? noTestsPathClock = null;
+        Stopwatch? noTestsUserPathClock = null;
         if (string.IsNullOrWhiteSpace(chainEmail))
         {
             throw new InvalidOperationException("JOBSY_E2E_FLOW_CHAIN_ONLY=1 but no e2e-d-* candidate in DB.");
@@ -102,12 +103,15 @@ internal sealed class E2eFlowRunner
         }
 
         // —— 1–2 Desktop fresh + chain candidate ——
+        noTestsUserPathClock = Stopwatch.StartNew();
+        var swSignup = Stopwatch.StartNew();
         var swDeskOnb = Stopwatch.StartNew();
         await using (var ctx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
         {
             var page = await PrepPageAsync(ctx);
-            noTestsPathClock = Stopwatch.StartNew();
             await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, chainEmail, "E2eDesk");
+            swSignup.Stop();
+            _report.TimingMs["no_tests_signup"] = swSignup.ElapsedMilliseconds;
             await Shot(page, "desktop-1440", "01-signup-done");
             await E2eFlowOnboarding.CompleteOnboardingWizardWithScreenshotsAsync(
                 page, _baseUrl, "desktop-1440", Shot);
@@ -127,7 +131,12 @@ internal sealed class E2eFlowRunner
             swDisc.Stop();
             _report.TimingMs["discovery_desktop"] = swDisc.ElapsedMilliseconds;
             _report.TimingMs["onboarding_plus_discovery_desktop"] = swDeskOnb.ElapsedMilliseconds + swDisc.ElapsedMilliseconds;
+            _report.TimingMs["no_tests_through_discovery"] = swSignup.ElapsedMilliseconds
+                                                             + swDeskOnb.ElapsedMilliseconds
+                                                             + swDisc.ElapsedMilliseconds;
+            noTestsUserPathClock.Stop();
 
+            await EnsurePassportDnaCompleteViaDbAsync(chainEmail);
             await RunPaspoortChecksAsync(page, "desktop-1440");
             await VerifyAboutMeMotivationNotAutoFilledAsync(chainEmail);
             await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "chain-email.txt"), chainEmail);
@@ -350,10 +359,10 @@ internal sealed class E2eFlowRunner
                         StringComparison.OrdinalIgnoreCase);
                 }
 
-                await Shot(page, tag, "09-apply-blocked-empty-profile");
+                await Shot(page, tag, "04-apply-profile-blocked");
             }
 
-            FixEvidencePublisher.PublishItem("04-empty-profile-blocked", "09-apply-blocked-empty-profile");
+            FixEvidencePublisher.PublishItem("04-empty-profile-blocked", "04-apply-profile-blocked");
         }
 
         await CandidateJourneyE2e.EnsureDemoApplyProfileReadyAsync(chainEmail);
@@ -364,12 +373,15 @@ internal sealed class E2eFlowRunner
             await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
             var page = await PrepPageAsync(ctx);
             await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
-            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}?encouragePreview=wist-cv-vs-passport#apply");
+            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            await ClearEncourageDismissStorageAsync(page, chainEmail, "vacancy-pre-apply");
             await OpenVacancyApplyPanelAsync(page);
             try
             {
-                await page.Locator("[data-encourage-tip='wist-cv-vs-passport']").WaitForAsync(new() { Timeout = 20_000 });
+                await page.Locator(
+                        "[data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests']")
+                    .WaitForAsync(new() { Timeout = 25_000 });
                 await Shot(page, tag, "07-vacancy-encourage-tip");
             }
             catch (TimeoutException)
@@ -444,27 +456,43 @@ internal sealed class E2eFlowRunner
 
             try
             {
+                var swSubmit = Stopwatch.StartNew();
                 await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
-                await Shot(page, tag, "09-applied");
-                if (noTestsPathClock is not null && tag == "desktop-1440")
+                swSubmit.Stop();
+                if (tag == "desktop-1440")
                 {
-                    _report.NoTestsSignupToAppliedMs = noTestsPathClock.ElapsedMilliseconds;
-                    noTestsPathClock.Stop();
+                    _report.TimingMs["no_tests_apply_submit"] = swSubmit.ElapsedMilliseconds;
                 }
 
-                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}?encouragePreview=wist-cv-vs-passport#apply");
+                await Shot(page, tag, "09-applied");
+                if (tag == "desktop-1440")
+                {
+                    _report.TimingMs["no_tests_vacancy_apply_ui"] = swApply.ElapsedMilliseconds;
+                    _report.TimingMs["no_tests_user_facing_total_ms"] =
+                        _report.TimingMs.GetValueOrDefault("no_tests_through_discovery")
+                        + _report.TimingMs.GetValueOrDefault("no_tests_apply_submit");
+                    _report.NoTestsSignupToAppliedMs = _report.TimingMs["no_tests_user_facing_total_ms"];
+                    await WriteNoTestsTimingReportAsync();
+                }
+
+                await ClearEncourageDismissStorageAsync(page, chainEmail, "apply-sent");
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
                 await OpenVacancyApplyPanelAsync(page);
                 try
                 {
-                    await page.Locator("[data-encourage-tip='wist-cv-vs-passport']").WaitForAsync(new() { Timeout = 20_000 });
+                    await page.Locator(
+                            "[data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests'], [data-encourage-tip='wist-tests-pause']")
+                        .WaitForAsync(new() { Timeout = 25_000 });
                 }
                 catch (TimeoutException)
                 {
                     // capture panel anyway for review
                 }
 
-                if (await page.Locator(".apply-panel--success, [data-encourage-tip='wist-cv-vs-passport']").CountAsync() > 0)
+                if (await page.Locator(
+                        ".apply-panel--success, [data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests']")
+                    .CountAsync() > 0)
                 {
                     await Shot(page, tag, "09-applied-encourage-tip");
                 }
@@ -821,6 +849,10 @@ internal sealed class E2eFlowRunner
             var pdfPath = Path.Combine(PdfDir, $"{baseName}.pdf");
             await File.WriteAllBytesAsync(pdfPath, pdf);
             RenderAllPdfPages(pdfPath, baseName);
+            if (kind == "paspoort")
+            {
+                _report.PaspoortBesluit21Ok = VerifyPaspoortBesluit21(pdfPath);
+            }
         }
 
         var edits = new StringBuilder();
@@ -926,8 +958,12 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(500);
             await Shot(page, "desktop-1440", $"04-paspoort-data-edit-{section}");
             var marker = $"E2E-{section}-{DateTime.UtcNow:HHmmss}";
-            var textarea = page.Locator(".passport-data__body textarea:visible").First;
-            if (await textarea.CountAsync() > 0)
+            var textareas = page.Locator(".passport-data__body textarea:visible");
+            var textareaCount = await textareas.CountAsync();
+            var textarea = section == "motivation" && textareaCount >= 2
+                ? textareas.Nth(1)
+                : textareas.First;
+            if (textareaCount > 0)
             {
                 await textarea.FillAsync(marker);
                 var save = page.GetByRole(AriaRole.Button, new() { Name = "Opslaan" }).First;
@@ -1319,6 +1355,209 @@ internal sealed class E2eFlowRunner
         }
     }
 
+    private async Task EnsurePassportDnaCompleteViaDbAsync(string email)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(_conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var normalized = email.Trim().ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalized);
+        if (user is null)
+        {
+            return;
+        }
+
+        var done = DateTime.UtcNow;
+        async Task EnsureCompetencyAsync()
+        {
+            var row = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == user.Id);
+            if (row is null)
+            {
+                db.CandidateCompetencies.Add(new CandidateCompetency
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    CompletedAtUtc = done,
+                    SamenwerkenPercent = 80,
+                    ResultaatgerichtheidPercent = 70,
+                    StressbestendigheidPercent = 65,
+                    InnovatiePercent = 60,
+                    ExtraversiePercent = 55
+                });
+            }
+            else
+            {
+                row.Status = CandidateCompetencyStatuses.Completed;
+                row.CompletedAtUtc ??= done;
+            }
+        }
+
+        async Task EnsureCareerAsync()
+        {
+            var row = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == user.Id);
+            if (row is null)
+            {
+                db.CandidateCareerInterests.Add(new CandidateCareerInterest
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    CompletedAtUtc = done,
+                    RealisticPercent = 80,
+                    InvestigativePercent = 10,
+                    ArtisticPercent = 11,
+                    SocialPercent = 12,
+                    EnterprisingPercent = 13,
+                    ConventionalPercent = 14
+                });
+            }
+            else
+            {
+                row.Status = CandidateCompetencyStatuses.Completed;
+                row.CompletedAtUtc ??= done;
+            }
+        }
+
+        async Task EnsureCultureAsync()
+        {
+            var row = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+            if (row is null)
+            {
+                db.CandidateCulturePersonalityProfiles.Add(new CandidateCulturePersonalityProfile
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    CompletedAtUtc = done,
+                    AutonomyPercent = 10,
+                    InformalPercent = 20,
+                    CollaborationPercent = 90,
+                    FlexibilityPercent = 30,
+                    InnovationPercent = 40,
+                    PeopleFirstPercent = 50
+                });
+            }
+            else
+            {
+                row.Status = CandidateCompetencyStatuses.Completed;
+                row.CompletedAtUtc ??= done;
+            }
+        }
+
+        async Task EnsureValuesAsync()
+        {
+            var row = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+            if (row is null)
+            {
+                db.CandidateValuesProfiles.Add(new CandidateValuesProfile
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = user.Id,
+                    Status = CandidateCompetencyStatuses.Completed,
+                    CompletedAtUtc = done,
+                    AutonomyPercent = 10,
+                    ConnectionPercent = 20,
+                    AchievementPercent = 30,
+                    StabilityPercent = 90,
+                    ImpactPercent = 40
+                });
+            }
+            else
+            {
+                row.Status = CandidateCompetencyStatuses.Completed;
+                row.CompletedAtUtc ??= done;
+            }
+        }
+
+        await EnsureCompetencyAsync();
+        await EnsureCareerAsync();
+        await EnsureCultureAsync();
+        await EnsureValuesAsync();
+        await db.SaveChangesAsync();
+    }
+
+    private static bool VerifyPaspoortBesluit21(string pdfPath)
+    {
+        var psi = new ProcessStartInfo("pdftotext", $"- \"{pdfPath}\" -")
+        {
+            RedirectStandardOutput = true,
+            UseShellExecute = false
+        };
+        using var proc = Process.Start(psi);
+        if (proc is null)
+        {
+            return false;
+        }
+
+        var text = proc.StandardOutput.ReadToEnd();
+        proc.WaitForExit(10_000);
+        var forbidden = new[]
+        {
+            "Uit je tests",
+            "ZZ-AI",
+            "Wie ben ik",
+            "Past goed",
+            "RoleFit",
+            "matchscore"
+        };
+        return forbidden.All(marker => !text.Contains(marker, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static async Task ClearEncourageDismissStorageAsync(IPage page, string email, string screenKey)
+    {
+        _ = email;
+        _ = screenKey;
+        await page.EvaluateAsync(
+            """
+            () => {
+              try {
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                  const k = localStorage.key(i);
+                  if (k && k.startsWith('lobsy-encourage:')) {
+                    localStorage.removeItem(k);
+                  }
+                }
+              } catch { /* ignore */ }
+            }
+            """);
+    }
+
+    private async Task WriteNoTestsTimingReportAsync()
+    {
+        var lines = new List<string>
+        {
+            "# No-tests candidate timing (excludes E2E harness: paspoort field edits, empty-profile branch, DB EnsureDemoApplyProfileReady)",
+            "",
+            "| Step | ms | s |",
+            "| --- | ---: | ---: |"
+        };
+
+        foreach (var key in new[]
+                 {
+                     "no_tests_signup",
+                     "onboarding_desktop",
+                     "discovery_desktop",
+                     "no_tests_through_discovery",
+                     "no_tests_apply_submit",
+                     "no_tests_vacancy_apply_ui",
+                     "no_tests_user_facing_total_ms"
+                 })
+        {
+            if (_report.TimingMs.TryGetValue(key, out var ms))
+            {
+                lines.Add($"| {key} | {ms} | {ms / 1000.0:F1} |");
+            }
+        }
+
+        lines.Add("");
+        lines.Add("Slowest user-facing steps are typically **discovery_desktop** and **onboarding_desktop**; apply submit alone is the Indeed-comparable slice (`no_tests_apply_submit`).");
+        var path = Path.Combine(Root, "evidence", "no-tests-timing.md");
+        await File.WriteAllTextAsync(path, string.Join('\n', lines));
+        FixEvidencePublisher.CopyFileToItem("03-no-tests-apply-and-tip", path, "no-tests-timing.md");
+    }
+
     private async Task EnsureCandidateBirthDateAsync(string email, DateOnly birthDate)
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
@@ -1574,6 +1813,7 @@ internal sealed class FlowRunReport
     public string? EmployerCvDownloadPath { get; set; }
     public bool EmptyProfileBlockedCaptured { get; set; }
     public long? NoTestsSignupToAppliedMs { get; set; }
+    public bool PaspoortBesluit21Ok { get; set; }
     public bool AboutMeMotivationReverted { get; set; }
     public bool MobileCoachOnVacancyDetail { get; set; }
     public bool MobileCoachOnNotifications { get; set; }

@@ -5,12 +5,13 @@ namespace Jobsy.Tests;
 public class ProfileEncouragementTipCatalogTests
 {
     [Fact]
-    public void No_test_tips_when_culture_or_values_complete()
+    public void No_test_tips_when_passport_layers_complete()
     {
         var ctx = new ProfileEncouragementContext
         {
             UserId = "u1",
             CultureOrValuesComplete = true,
+            PassportAllLayersComplete = true,
             ApplyBasicsReady = false,
             RotationBucket = 1
         };
@@ -29,6 +30,7 @@ public class ProfileEncouragementTipCatalogTests
         {
             UserId = "u1",
             CultureOrValuesComplete = false,
+            PassportAllLayersComplete = false,
             ApplyBasicsReady = false,
             RotationBucket = 1
         };

@@ -891,6 +891,12 @@ public static class UiStringsKandidaatBanen
             "Twój paszport idzie z tobą. List nie jest potrzebny.",
             "Pașaportul tău te însoțește. Nu e nevoie de scrisoare.",
             "جوازك يرافقك. لا حاجة لرسالة.");
+        Add("Kb.Detail.LobsyCvHint",
+            "Je Lobsy-CV gaat mee. Een brief is niet nodig.",
+            "Your Lobsy CV goes with you. No cover letter needed.",
+            "Twoje CV Lobsy idzie z tobą. List nie jest potrzebny.",
+            "CV-ul tău Lobsy te însoțește. Nu e nevoie de scrisoare.",
+            "سيرتك Lobsy تُرسل معك. لا حاجة لرسالة.");
         Add("Kb.Detail.HoursFact",
             "Uren per week", "Hours per week",
             "Godziny tygodniowo", "Ore pe săptămână", "ساعات في الأسبوع");

@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Entities;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
@@ -28,6 +29,7 @@ public static class ProfileEncouragementContextFactory
         }
 
         var valuesComplete = false;
+        CandidateDnaSummary? dna = null;
         try
         {
             var values = await api.GetMyValuesAsync(ct);
@@ -38,13 +40,24 @@ public static class ProfileEncouragementContextFactory
             // Values optional for encouragement eligibility.
         }
 
-        return From(profile, whoAmI, valuesComplete);
+        try
+        {
+            var dnaResult = await api.GetMyKompasDnaResultAsync(ct);
+            dna = dnaResult.Value;
+        }
+        catch
+        {
+            // DNA summary optional for encouragement eligibility.
+        }
+
+        return From(profile, whoAmI, valuesComplete, dna);
     }
 
     public static ProfileEncouragementContext? From(
         MeProfile? profile,
         WhoAmIState? whoAmI,
-        bool valuesCompleted)
+        bool valuesCompleted,
+        CandidateDnaSummary? dna = null)
     {
         if (profile is null || !string.Equals(profile.Role, "Candidate", StringComparison.OrdinalIgnoreCase))
         {
@@ -69,9 +82,29 @@ public static class ProfileEncouragementContextFactory
         {
             UserId = profile.Id.ToString("D"),
             CultureOrValuesComplete = cultureOrValues,
+            PassportAllLayersComplete = AllPassportLayersComplete(dna),
             ApplyBasicsReady = basicsReady
         };
     }
+
+    internal static bool AllPassportLayersComplete(CandidateDnaSummary? dna)
+    {
+        if (dna?.Competencies is null
+            || dna.CareerInterests is null
+            || dna.Culture is null
+            || dna.Values is null)
+        {
+            return false;
+        }
+
+        return LayerComplete(dna.Competencies.Status, dna.Competencies.DeepCompleted)
+               && LayerComplete(dna.CareerInterests.Status, dna.CareerInterests.DeepCompleted)
+               && LayerComplete(dna.Culture.Status, dna.Culture.DeepCompleted)
+               && LayerComplete(dna.Values.Status, dna.Values.DeepCompleted);
+    }
+
+    private static bool LayerComplete(string? quickStatus, bool deepCompleted)
+        => deepCompleted || CandidateCompetencyStatuses.IsCompleted(quickStatus);
 
     private static CandidatePreferencesDto ToDto(CandidatePreferences prefs)
         => new(

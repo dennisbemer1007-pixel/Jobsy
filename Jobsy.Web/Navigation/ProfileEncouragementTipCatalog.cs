@@ -92,6 +92,16 @@ public static class ProfileEncouragementTipCatalog
             return null;
         }
 
+        if (screenKey is "vacancy-pre-apply" or "apply-sent")
+        {
+            var gentle = pool.FirstOrDefault(t => t.Id == "wist-cv-vs-passport")
+                         ?? pool.FirstOrDefault(t => t.Id == "action-tests");
+            if (gentle is not null)
+            {
+                return gentle;
+            }
+        }
+
         var seed = HashCode.Combine(ctx.UserId ?? "", screenKey, ctx.RotationBucket);
         var index = Math.Abs(seed) % pool.Count;
         return pool[index];
@@ -100,8 +110,8 @@ public static class ProfileEncouragementTipCatalog
     public static bool IsEligible(Tip tip, ProfileEncouragementContext ctx)
         => tip.Audience switch
         {
-            Audience.TestsIncomplete => !ctx.CultureOrValuesComplete,
-            Audience.ProfileIncomplete => ctx.CultureOrValuesComplete && !ctx.ApplyBasicsReady,
+            Audience.TestsIncomplete => !ctx.PassportAllLayersComplete,
+            Audience.ProfileIncomplete => ctx.PassportAllLayersComplete && !ctx.ApplyBasicsReady,
             Audience.Any => true,
             _ => false
         };
@@ -111,6 +121,8 @@ public sealed class ProfileEncouragementContext
 {
     public string? UserId { get; init; }
     public bool CultureOrValuesComplete { get; init; }
+    /// <summary>All four passport DNA layers complete (quick scan or deep).</summary>
+    public bool PassportAllLayersComplete { get; init; }
     public bool ApplyBasicsReady { get; init; }
     /// <summary>Changes daily so eligible tips rotate without showing more than one per screen.</summary>
     public int RotationBucket { get; init; } = DateOnly.FromDateTime(DateTime.UtcNow).DayOfYear;
