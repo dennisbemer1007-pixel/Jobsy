@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding A — Stap 8</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <img class="logo" src="../shared/assets/lobsy-64.webp" alt="" width="36" height="36" />
+        Lobsy
+      </div>
+      <p class="topbar__meta">Stap 8 · ± 2 min</p>
+    </header>
+    <div class="shell">
+      <div class="main-col">
+        <main class="main page-pad">
+          <div class="progress" role="progressbar" aria-valuenow="8" aria-valuemin="1" aria-valuemax="10"><span class="progress__fill" style="width:80%"></span></div>
+          <div class="phase-chips" role="tablist" aria-label="Testfases">
+            <span class="phase-chip is-done" role="tab">✓ Hoe je werkt</span>
+            <span class="phase-chip is-active" role="tab" aria-selected="true">Leuk</span>
+            <span class="phase-chip" role="tab">Sfeer</span>
+            <span class="phase-chip" role="tab">Waarden</span>
+          </div>
+          <h1 class="hero-title">Wat vind je leuk?</h1>
+          <p class="hero-lead">Hoe goed past deze zin bij jou? Er zijn geen foute antwoorden.</p>
+          <div class="card">
+            <p class="question-counter">Vraag 1 van 5</p>
+            <p class="likert-q">Ik werk graag met machines, gereedschap of buiten in de praktijk.</p>
+            <div class="likert-scale" role="radiogroup" aria-label="Antwoord 1 tot 5">
+              <button type="button" class="likert-opt"><span class="num">1</span></button>
+              <button type="button" class="likert-opt"><span class="num">2</span></button>
+              <button type="button" class="likert-opt"><span class="num">3</span></button>
+              <button type="button" class="likert-opt is-selected"><span class="num">4</span></button>
+              <button type="button" class="likert-opt"><span class="num">5</span></button>
+            </div>
+            <div class="likert-labels"><span>Past niet</span><span>Past heel goed</span></div>
+          </div>
+          <div class="mobile-mascot"><img class="mascot-corner" src="../shared/assets/mascot-64.webp" alt="" width="40" height="40" /></div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

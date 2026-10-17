@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding C — Stap 1</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <img class="logo" src="../shared/assets/lobsy-64.webp" alt="Lobsy" width="40" height="40" />
+      <span class="topbar__step">1/10</span>
+    </header>
+    <div class="shell">
+      <div class="main-col">
+        <main class="main page-pad">
+          <p class="eyebrow">Even kennismaken</p>
+          <h1 class="hero-title">Voornaam &amp; adres</h1>
+          <p class="hero-lead">Klopt dit? We hebben je naam overgenomen van je account.</p>
+          <label class="field"><span>Voornaam</span><input type="text" value="Sam" /></label>
+          <label class="field"><span>Achternaam</span><input type="text" value="de Vries" /></label>
+          <label class="field"><span>Jouw adres</span></label>
+          <div class="address-row">
+            <label class="field"><span class="visually-hidden">Adres</span><input type="text" value="Molenstraat 12, Naaldwijk" placeholder="Straat, postcode of plaats…" /></label>
+            <button type="button" class="btn-gps" aria-label="GPS">GPS</button>
+          </div>
+          <label class="field"><span>Geboortedatum</span><input class="date-nl" type="text" value="15-04-1998" /></label>
+          <p style="margin:-0.35rem 0 1rem;font-size:0.8125rem;color:var(--muted)">Zo tonen we alleen banen die bij je leeftijd mogen</p>
+          <p style="margin:0 0 0.35rem;font-size:0.875rem;font-weight:600">Wat is je huidige werkstatus?</p>
+          <p style="margin:0 0 0.5rem;font-size:0.8125rem;color:var(--muted)">Optioneel. Je mag er meer dan één kiezen.</p>
+          <div class="transport-list">
+            <button type="button" class="transport-option is-selected">Scholier</button>
+            <button type="button" class="transport-option">Student (mbo/hbo/wo)</button>
+            <button type="button" class="transport-option is-selected">Flexwerker / uitzendkracht / oproepkracht</button>
+          </div>
+          <div class="mascot-float"><img class="mascot-corner" src="../shared/assets/mascot-64.webp" alt="" width="36" height="36" /></div>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

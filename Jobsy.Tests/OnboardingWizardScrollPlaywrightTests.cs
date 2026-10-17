@@ -1,0 +1,845 @@
+using System.Text.RegularExpressions;
+using Jobsy.Tests.E2e;
+using Microsoft.Playwright;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+
+namespace Jobsy.Tests;
+
+/// <summary>
+/// Profile wizard steps 1–6 must start at scroll top on mobile (scroll container is <c>.ob-wizard__content</c> when present).
+/// Mini-test steps 7–10 use <c>test-flow</c> chrome; see <see cref="OnboardingMiniCoachDockPlaywrightTests"/>.
+/// Run with <c>JOBSY_E2E_BASE_URL=http://127.0.0.1:5201</c>.
+/// </summary>
+[Collection("PlaywrightSmoke")]
+public sealed class OnboardingWizardScrollPlaywrightTests
+{
+    /// <summary>JOBSY_CAPTURE_ONBOARDING_SCROLL=before|after → saves steps 1–10 (390×844 viewport top) to store and repo <c>onboarding-scroll/</c>.</summary>
+    [Fact]
+    public async Task Capture_onboarding_scroll_screenshots_when_requested()
+    {
+        var mode = (Environment.GetEnvironmentVariable("JOBSY_CAPTURE_ONBOARDING_SCROLL") ?? "").Trim().ToLowerInvariant();
+        if (mode is not ("before" or "after"))
+        {
+            return;
+        }
+
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        var repoScrollDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "onboarding-scroll", mode));
+        var outDirs = new[]
+        {
+            $"/cursor/stores/self/onboarding-scroll/{mode}",
+            repoScrollDir,
+        };
+        foreach (var dir in outDirs)
+        {
+            Directory.CreateDirectory(dir);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IgnoreHTTPSErrors = true,
+            IsMobile = true,
+            HasTouch = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await RegisterAndBeginWizardAsync(page, baseUrl);
+
+        const int lastCaptureStep = 10;
+        for (var step = 1; step <= lastCaptureStep; step++)
+        {
+            await WaitWizardStepAsync(page, step);
+            await ScrollWizardToTopAsync(page);
+            await page.WaitForTimeoutAsync(300);
+
+            foreach (var outDir in outDirs)
+            {
+                await page.ScreenshotAsync(new()
+                {
+                    Path = Path.Combine(outDir, $"step-{step:00}.png"),
+                    FullPage = false,
+                });
+            }
+
+            if (step == 1)
+            {
+                await page.Locator("#onboarding-home-address, .ob-fields input[inputmode=text]").First.FillAsync("2671");
+                await page.WaitForTimeoutAsync(600);
+                foreach (var outDir in outDirs)
+                {
+                    await page.ScreenshotAsync(new()
+                    {
+                        Path = Path.Combine(outDir, "step-01-suggestions.png"),
+                        FullPage = false,
+                    });
+                }
+
+                await ScrollWizardToTopAsync(page);
+            }
+
+            if (mode == "after" && step is 1 or 3)
+            {
+                await ScrollWizardToBottomAsync(page);
+                await page.WaitForTimeoutAsync(300);
+                foreach (var outDir in outDirs)
+                {
+                    await page.ScreenshotAsync(new()
+                    {
+                        Path = Path.Combine(outDir, $"step-{step:00}-scrolled-bottom.png"),
+                        FullPage = false,
+                    });
+                }
+
+                await ScrollWizardToTopAsync(page);
+            }
+
+            if (step >= lastCaptureStep)
+            {
+                break;
+            }
+
+            await ScrollMainDownAsync(page);
+            await AdvanceWizardStepAsync(page, step);
+        }
+
+        if (mode == "after")
+        {
+            BuildMockupCompareSheet(repoScrollDir);
+        }
+    }
+
+    private static void BuildMockupCompareSheet(string afterDir)
+    {
+        var repoRoot = Path.GetFullPath(Path.Combine(afterDir, "..", ".."));
+        var compareDir = Path.Combine(repoRoot, "onboarding-scroll", "compare");
+        Directory.CreateDirectory(compareDir);
+        var mockupDir = Path.Combine(repoRoot, "docs", "mockups", "onboarding-ontwerp", "A");
+        foreach (var step in new[] { 1, 3, 5, 7, 8 })
+        {
+            var mockup = Path.Combine(mockupDir, $"step-{step}-mobile-390x844.png");
+            var impl = Path.Combine(afterDir, $"step-{step:00}.png");
+            var dest = Path.Combine(compareDir, $"step-{step:00}-mockup-vs-impl.png");
+            if (!File.Exists(mockup) || !File.Exists(impl))
+            {
+                continue;
+            }
+
+            using var left = Image.Load<Rgba32>(mockup);
+            using var right = Image.Load<Rgba32>(impl);
+            right.Mutate(ctx => ctx.Resize(new ResizeOptions
+            {
+                Size = new Size(left.Width, left.Height),
+                Mode = ResizeMode.Pad,
+                PadColor = SixLabors.ImageSharp.Color.FromRgb(245, 242, 238),
+            }));
+            var height = left.Height;
+            var width = left.Width + right.Width + 8;
+            using var canvas = new Image<Rgba32>(width, height);
+            canvas.Mutate(ctx =>
+            {
+                ctx.BackgroundColor(SixLabors.ImageSharp.Color.FromRgb(245, 242, 238));
+                ctx.DrawImage(left, new Point(0, 0), 1f);
+                ctx.DrawImage(right, new Point(left.Width + 8, 0), 1f);
+            });
+            canvas.SaveAsPng(dest);
+            var storeCompare = "/cursor/stores/self/onboarding-scroll/compare";
+            Directory.CreateDirectory(storeCompare);
+            canvas.SaveAsPng(Path.Combine(storeCompare, $"step-{step:00}-mockup-vs-impl.png"));
+        }
+    }
+
+    private static async Task WaitWizardStepAsync(IPage page, int step)
+    {
+        await page.WaitForFunctionAsync(
+            """
+            expected => parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10) === expected
+            """,
+            step,
+            new() { Timeout = 30_000 });
+    }
+
+    [Theory]
+    [InlineData(390, 844)]
+    [InlineData(360, 740)]
+    public async Task Each_step_has_primary_action_pinned_to_viewport_bottom(int width, int height)
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            IgnoreHTTPSErrors = true,
+            IsMobile = true,
+            HasTouch = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await RegisterAndBeginWizardAsync(page, baseUrl);
+
+        const int lastStep = 10;
+        for (var step = 1; step <= lastStep; step++)
+        {
+            await WaitWizardStepAsync(page, step);
+            await ScrollWizardToTopAsync(page);
+            await AssertMobileActionBarAsync(page, step, width, height);
+            await AssertContentUsesMainScrollAsync(page, step);
+            await AssertSingleVisibleMascotAsync(page, step);
+            await AssertMascotDoesNotOverlapCardAsync(page, step, "scroll-top", checkFooter: false);
+            await ScrollWizardToBottomAsync(page);
+            await AssertMascotDoesNotOverlapCardAsync(page, step, "scroll-bottom", checkFooter: true);
+            await ScrollWizardToTopAsync(page);
+
+            if (step == 3)
+            {
+                await AssertTravelTimesSingleRowAsync(page, width);
+            }
+
+            if (step == 4)
+            {
+                await AssertStepPillCasingAsync(page);
+            }
+
+            if (step == 6)
+            {
+                await AssertDreamInputFullWidthAsync(page);
+            }
+
+            if (step >= lastStep)
+            {
+                break;
+            }
+
+            await ScrollMainDownAsync(page);
+            await AdvanceWizardStepAsync(page, step);
+        }
+    }
+
+    [Theory]
+    [InlineData(390, 844)]
+    [InlineData(360, 740)]
+    public async Task Each_step_starts_with_heading_visible_at_scroll_top(int width, int height)
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "").Trim().TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            IgnoreHTTPSErrors = true,
+            IsMobile = true,
+            HasTouch = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await RegisterAndBeginWizardAsync(page, baseUrl);
+
+        const int lastStep = 6;
+        for (var step = 1; step <= lastStep; step++)
+        {
+            await WaitWizardStepAsync(page, step);
+            await AssertStepScrollTopAsync(page, step);
+
+            if (step >= lastStep)
+            {
+                break;
+            }
+
+            await ScrollMainDownAsync(page);
+            await AdvanceWizardStepAsync(page, step);
+        }
+    }
+
+    private static async Task AssertStepScrollTopAsync(IPage page, int step)
+    {
+        var audit = await page.EvaluateAsync<ScrollAudit>(
+            """
+            () => {
+              const main = document.querySelector('.app-main');
+              const content = document.querySelector('.ob-wizard__content');
+              const root = (main && main.scrollHeight > main.clientHeight + 2) ? main : (content || main);
+              const mainScroll = root ? root.scrollTop : 0;
+              const winScroll = window.scrollY || 0;
+              const h1 = document.querySelector('.ob-wizard__content h1, .ob-fields h1');
+              if (!h1) {
+                return { ok: false, reason: 'no-h1', mainScroll, winScroll, headingTop: null };
+              }
+              const rect = h1.getBoundingClientRect();
+              const inView = rect.top >= 0 && rect.top < window.innerHeight * 0.55 && rect.height > 0;
+              const ok = mainScroll <= 1 && winScroll <= 1 && inView;
+              let reason = 'ok';
+              if (mainScroll > 1) reason = 'scroll-' + mainScroll;
+              else if (winScroll > 1) reason = 'window-scroll-' + winScroll;
+              else if (!inView) reason = 'heading-offscreen top=' + rect.top;
+              return { ok, reason, mainScroll, winScroll, headingTop: rect.top };
+            }
+            """);
+
+        Assert.True(audit.Ok, $"Step {step}: {audit.Reason} scroll={audit.MainScroll} win={audit.WinScroll} h1Top={audit.HeadingTop}");
+    }
+
+    private static async Task AssertMobileActionBarAsync(IPage page, int step, int width, int height)
+    {
+        var audit = await page.EvaluateAsync<ActionBarAudit>(
+            """
+            () => {
+              const next = document.querySelector('[data-testid=onboarding-next]')
+                || document.querySelector('button.test-flow__next');
+              if (!next) {
+                return { ok: false, reason: 'no-next', bottomGap: null, width: null, overlap: null };
+              }
+              const rect = next.getBoundingClientRect();
+              const vh = window.innerHeight;
+              const bottomGap = vh - rect.bottom;
+              const footer = next.closest('.ob-wizard__footer, .test-flow__footer');
+              const footerRect = footer ? footer.getBoundingClientRect() : null;
+              const footerFull = footerRect && footerRect.width >= window.innerWidth - 40;
+              const minWidth = footerFull
+                ? Math.max(190, footerRect.width - 120)
+                : window.innerWidth - 40;
+              const wideEnough = rect.width >= minWidth - 1;
+              const bottomOk = bottomGap >= -2 && bottomGap <= 24;
+              const cx = Math.min(rect.right - 4, window.innerWidth - 2);
+              const cy = rect.top + rect.height / 2;
+              const centerHit = document.elementFromPoint(cx, cy);
+              const centerOnNext = centerHit === next || (centerHit && next.contains(centerHit));
+              const blockers = document.querySelectorAll(
+                '.ob-wizard__content input:not([type=hidden]), .ob-wizard__content select, .ob-wizard__content textarea, .ob-wizard__content .lobsy-choice-tile, .ob-wizard__content .test-likert__opt');
+              const overlaps = [];
+              const footerTop = footer ? footer.getBoundingClientRect().top : vh;
+              for (const el of blockers) {
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden') continue;
+                const r = el.getBoundingClientRect();
+                if (r.width < 4 || r.height < 4) continue;
+                const elCy = r.top + r.height / 2;
+                if (elCy >= footerTop - 8) continue;
+                const overlapH = Math.min(r.bottom, rect.bottom) - Math.max(r.top, rect.top);
+                const overlapW = Math.min(r.right, rect.right) - Math.max(r.left, rect.left);
+                if (overlapH < 16 || overlapW < 16) continue;
+                overlaps.push(el.tagName + (el.className ? '.' + String(el.className).split(' ')[0] : ''));
+              }
+              const footerBg = footer ? getComputedStyle(footer).backgroundColor : '';
+              const footerPosition = footer ? getComputedStyle(footer).position : '';
+              const shellClass = document.querySelector('.app-shell')?.className || '';
+              const backVisible = !!document.querySelector('[data-testid=onboarding-back], button.test-flow__back');
+              let reason = 'ok';
+              if (!bottomOk) reason = 'bottom-gap-' + bottomGap.toFixed(1);
+              else if (!wideEnough) reason = 'narrow-' + rect.width.toFixed(0) + '<' + minWidth;
+              else if (!centerOnNext) reason = 'center-not-next-' + (centerHit ? centerHit.tagName : 'null');
+              else if (overlaps.length && vh >= 760) reason = 'overlap-' + overlaps.slice(0, 3).join(',');
+              else if (!backVisible && !(parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10) === 1)) {
+                reason = 'no-back';
+              }
+              const backBtn = document.querySelector('[data-testid=onboarding-back], button.test-flow__back');
+              if (backBtn && footerRect && reason === 'ok') {
+                const backRect = backBtn.getBoundingClientRect();
+                if (backRect.left < 14) reason = 'back-flush-left-' + backRect.left.toFixed(0);
+                else if (rect.right > window.innerWidth - 14) reason = 'next-flush-right-' + rect.right.toFixed(0);
+              }
+              const ok = reason === 'ok';
+              const styles = [...document.querySelectorAll('link[rel=stylesheet]')]
+                .map(l => l.href)
+                .filter(h => h.includes('onboarding'))
+                .join('|');
+              return {
+                ok,
+                reason,
+                bottomGap,
+                width: rect.width,
+                overlap: overlaps.join(','),
+                footerBg,
+                footerPosition,
+                shellClass,
+                styles,
+                footerTag: footer ? footer.tagName + (footer.getAttribute('data-sticky-footer') ?? '') : 'none'
+              };
+            }
+            """);
+
+        Assert.True(audit.Ok, $"Step {step} @ {width}x{height}: {audit.Reason} gap={audit.BottomGap} w={audit.Width} overlap={audit.Overlap} footerBg={audit.FooterBg} pos={audit.FooterPosition} tag={audit.FooterTag} styles={audit.Styles}");
+    }
+
+    private static async Task AssertContentUsesMainScrollAsync(IPage page, int step)
+    {
+        var audit = await page.EvaluateAsync<ContentFlowAudit>(
+            """
+            () => {
+              const wizard = document.querySelector('.ob-wizard--richting-a');
+              if (!wizard) return { ok: true, reason: 'no-richting-a' };
+              const content = document.querySelector('.ob-wizard__content');
+              const card = document.querySelector('.ob-wizard__card');
+              if (!content) return { ok: false, reason: 'no-content' };
+              const cs = getComputedStyle(content);
+              const oy = cs.overflowY;
+              const ch = content.clientHeight;
+              const sh = content.scrollHeight;
+              const vh = window.innerHeight;
+              if (oy === 'auto' || oy === 'scroll' || oy === 'hidden') {
+                return { ok: false, reason: 'content-overflow-' + oy, contentH: ch, vh };
+              }
+              if (sh > ch + 24) {
+                return { ok: false, reason: 'content-inner-scroll-' + sh + '>' + ch, contentH: ch, vh };
+              }
+              if (card && ch > 0 && ch < vh * 0.42) {
+                return { ok: false, reason: 'content-pane-too-short', contentH: ch, vh };
+              }
+              const main = document.querySelector('.app-main');
+              if (main) {
+                const mainOy = getComputedStyle(main).overflowY;
+                if (mainOy === 'hidden') {
+                  return { ok: false, reason: 'main-overflow-hidden', contentH: ch, vh };
+                }
+              }
+              return { ok: true, reason: 'ok', contentH: ch, vh };
+            }
+            """);
+
+        Assert.True(audit.Ok, $"Step {step} content flow: {audit.Reason} contentH={audit.ContentH} vh={audit.Vh}");
+    }
+
+    private static async Task AssertSingleVisibleMascotAsync(IPage page, int step)
+    {
+        var count = await page.EvaluateAsync<int>(
+            """
+            () => {
+              function isVisible(el) {
+                const r = el.getBoundingClientRect();
+                if (r.width < 6 || r.height < 6) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden' || Number(st.opacity) === 0) return false;
+                let p = el;
+                while (p) {
+                  const ps = getComputedStyle(p);
+                  if (ps.display === 'none' || ps.visibility === 'hidden') return false;
+                  p = p.parentElement;
+                }
+                return true;
+              }
+              return [...document.querySelectorAll('img')].filter(img => {
+                const src = (img.currentSrc || img.src || '').toLowerCase();
+                if (!src.includes('mascot')) return false;
+                return isVisible(img);
+              }).length;
+            }
+            """);
+
+        Assert.True(count == 1, $"Step {step}: expected 1 visible mascot, got {count}");
+    }
+
+    private static async Task AssertMascotDoesNotOverlapCardAsync(IPage page, int step, string scrollPosition, bool checkFooter)
+    {
+        var audit = await page.EvaluateAsync<MascotCardOverlapAudit>(
+            """
+            (checkFooter) => {
+              function isVisible(el) {
+                const r = el.getBoundingClientRect();
+                if (r.width < 4 || r.height < 4) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden') return false;
+                return true;
+              }
+              function hits(a, b) {
+                return a.left < b.right - 0.5 && a.right > b.left + 0.5
+                  && a.top < b.bottom - 0.5 && a.bottom > b.top + 0.5;
+              }
+              const mascot = [...document.querySelectorAll('img')].find(img => {
+                const src = (img.currentSrc || img.src || '').toLowerCase();
+                return src.includes('mascot') && isVisible(img);
+              });
+              if (!mascot) return { ok: false, reason: 'no-mascot', cardTop: null, cardBottom: null, mascotTop: null, mascotBottom: null };
+              const m = mascot.getBoundingClientRect();
+              const card = document.querySelector('.ob-wizard__content .ob-wizard__card');
+              if (!card || !isVisible(card)) {
+                return { ok: false, reason: 'no-card', cardTop: null, cardBottom: null, mascotTop: m.top, mascotBottom: m.bottom };
+              }
+              const c = card.getBoundingClientRect();
+              if (hits(m, c)) {
+                return { ok: false, reason: 'intersects-card', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+              }
+              const pos = getComputedStyle(mascot.closest('.ob-wizard__mascot-anchor') || mascot).position;
+              if (pos === 'fixed') {
+                return { ok: false, reason: 'mascot-still-fixed', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+              }
+              if (m.top < c.bottom - 2) {
+                return { ok: false, reason: 'mascot-above-card-bottom', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+              }
+              if (checkFooter) {
+                const footer = document.querySelector('.ob-wizard__footer[data-sticky-footer], .test-flow__footer[data-sticky-footer]');
+                if (footer && isVisible(footer)) {
+                  const f = footer.getBoundingClientRect();
+                  if (hits(m, f)) {
+                    return { ok: false, reason: 'intersects-footer', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+                  }
+                }
+              }
+              return { ok: true, reason: 'ok', cardTop: c.top, cardBottom: c.bottom, mascotTop: m.top, mascotBottom: m.bottom };
+            }
+            """,
+            checkFooter);
+
+        Assert.True(
+            audit.Ok,
+            $"Step {step} @ {scrollPosition}: mascot/card {audit.Reason} card=[{audit.CardTop?.ToString("F0")},{audit.CardBottom?.ToString("F0")}] mascot=[{audit.MascotTop?.ToString("F0")},{audit.MascotBottom?.ToString("F0")}]");
+    }
+
+    private static async Task AssertTravelTimesSingleRowAsync(IPage page, int viewportWidth)
+    {
+        var audit = await page.EvaluateAsync<TravelRowAudit>(
+            """
+            () => {
+              const grid = document.querySelector('.ob-wizard__travel-times');
+              if (!grid) return { ok: false, reason: 'no-travel-grid', count: 0, tops: '' };
+              const tiles = [...grid.querySelectorAll('.lobsy-choice-tile, button')].filter(el => {
+                const r = el.getBoundingClientRect();
+                return r.width > 4 && r.height > 4;
+              });
+              if (tiles.length !== 4) {
+                return { ok: false, reason: 'count-' + tiles.length, count: tiles.length, tops: '' };
+              }
+              const tops = tiles.map(t => t.getBoundingClientRect().top);
+              const maxDelta = Math.max(...tops) - Math.min(...tops);
+              const cs = getComputedStyle(grid);
+              const cols = cs.gridTemplateColumns || '';
+              const ok = maxDelta <= 1.5 && cs.display.includes('grid');
+              return {
+                ok,
+                reason: ok ? 'ok' : 'top-delta-' + maxDelta.toFixed(1) + '-display-' + cs.display + '-cols-' + cols,
+                count: tiles.length,
+                tops: tops.map(t => t.toFixed(1)).join(',')
+              };
+            }
+            """);
+
+        Assert.True(audit.Ok, $"Step 3 travel row @ {viewportWidth}px: {audit.Reason} count={audit.Count} tops={audit.Tops}");
+    }
+
+    private static async Task AssertStepPillCasingAsync(IPage page)
+    {
+        var text = (await page.Locator(".ob-wizard__step-pill").InnerTextAsync()).Trim();
+        Assert.Matches(new Regex(@"^Stap \d+ van 10$"), text);
+    }
+
+    private static async Task AssertDreamInputFullWidthAsync(IPage page)
+    {
+        var audit = await page.EvaluateAsync<DreamInputAudit>(
+            """
+            () => {
+              const card = document.querySelector('.ob-wizard__card');
+              const input = document.querySelector('.ob-wizard__dream-search > input');
+              if (!card || !input) return { ok: false, reason: 'missing', inputW: null, innerW: null, inputH: null };
+              const cardStyle = getComputedStyle(card);
+              const padL = parseFloat(cardStyle.paddingLeft) || 0;
+              const padR = parseFloat(cardStyle.paddingRight) || 0;
+              const innerW = card.clientWidth - padL - padR;
+              const r = input.getBoundingClientRect();
+              const minW = innerW - 4;
+              const hOk = r.height >= 46 && r.height <= 52;
+              const wOk = r.width >= minW - 1;
+              let reason = 'ok';
+              if (!wOk) reason = 'narrow-' + r.width.toFixed(0) + '<' + minW.toFixed(0);
+              else if (!hOk) reason = 'height-' + r.height.toFixed(0);
+              return { ok: wOk && hOk, reason, inputW: r.width, innerW, inputH: r.height };
+            }
+            """);
+
+        Assert.True(audit.Ok, $"Step 6 dream input: {audit.Reason} inputW={audit.InputW} innerW={audit.InnerW} h={audit.InputH}");
+    }
+
+    private static Task ScrollWizardToTopAsync(IPage page)
+        => page.EvaluateAsync(
+            """
+            () => {
+              const content = document.querySelector('.ob-wizard__content');
+              if (content) content.scrollTop = 0;
+              const main = document.querySelector('.app-main');
+              if (main) main.scrollTop = 0;
+              window.scrollTo(0, 0);
+              const scrollEl = document.scrollingElement;
+              if (scrollEl) scrollEl.scrollTop = 0;
+            }
+            """);
+
+    private static Task ScrollWizardToBottomAsync(IPage page)
+        => page.EvaluateAsync(
+            """
+            () => {
+              const main = document.querySelector('.app-main');
+              const scrollRoot = (main && main.scrollHeight > main.clientHeight + 2)
+                ? main
+                : (document.scrollingElement || document.documentElement);
+              scrollRoot.scrollTop = scrollRoot.scrollHeight;
+              const content = document.querySelector('.ob-wizard__content');
+              if (content) content.scrollTop = content.scrollHeight;
+            }
+            """);
+
+    private static async Task ScrollMainDownAsync(IPage page)
+    {
+        await page.EvaluateAsync(
+            """
+            () => {
+              const main = document.querySelector('.app-main');
+              const root = (main && main.scrollHeight > main.clientHeight + 2)
+                ? main
+                : (document.querySelector('.ob-wizard__content') || main);
+              const amount = Math.min(480, Math.max(0, (root?.scrollHeight || 800) - (root?.clientHeight || 400)));
+              if (root) root.scrollTop = amount;
+              window.scrollTo(0, amount);
+            }
+            """);
+        await page.WaitForTimeoutAsync(200);
+    }
+
+    private static async Task AdvanceWizardStepAsync(IPage page, int step)
+    {
+        if (step == 1)
+        {
+            var first = page.Locator(".ob-fields label:has-text('Voornaam') input, .ob-fields label:has-text('First') input").First;
+            if (await first.CountAsync() == 0)
+            {
+                first = page.Locator(".ob-fields input").First;
+            }
+
+            await first.FillAsync("Scroll");
+            await page.Locator(".ob-fields input").Nth(1).FillAsync("Test");
+            await page.Locator("#onboarding-home-address, .ob-fields input[inputmode=text], .ob-fields input[autocomplete=postal-code]").First.FillAsync("2671GB");
+            await page.WaitForTimeoutAsync(500);
+            var suggestion = page.Locator(".ob-wizard__suggestions button").First;
+            if (await suggestion.CountAsync() > 0)
+            {
+                await suggestion.ClickAsync(new() { Timeout = 5_000 });
+            }
+
+            var birth = page.Locator("[data-testid=onboarding-birth-date] input[type=date]").First;
+            if (await birth.CountAsync() > 0)
+            {
+                await birth.FillAsync("2000-06-15");
+                await birth.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))");
+            }
+
+            await page.WaitForTimeoutAsync(300);
+        }
+        else if (step == 2)
+        {
+            await page.Locator(".ob-wizard__presets button").First.ClickAsync();
+        }
+        else if (step == 3)
+        {
+            await page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First.ClickAsync();
+            await page.Locator(".ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button").Filter(new() { HasText = "30" }).First.ClickAsync();
+        }
+        else if (step == 4)
+        {
+            var skipWork = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Overslaan", RegexOptions.IgnoreCase) }).First;
+            if (await skipWork.CountAsync() > 0)
+            {
+                await skipWork.ClickAsync(new() { Timeout = 8_000 });
+                return;
+            }
+        }
+        else if (step == 5)
+        {
+            await page.Locator("button").Filter(new() { HasTextRegex = new Regex("^MBO$", RegexOptions.IgnoreCase) }).First.ClickAsync(new() { Timeout = 8_000 });
+            await ClickOnboardingNextAsync(page);
+            return;
+        }
+        else if (step == 6)
+        {
+            var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Weet ik nog niet", RegexOptions.IgnoreCase) }).First;
+            if (await unknown.CountAsync() > 0)
+            {
+                await unknown.ClickAsync(new() { Timeout = 8_000 });
+                return;
+            }
+        }
+        else if (step == 7)
+        {
+            await FinishCurrentMiniTestAsync(page);
+            return;
+        }
+        else if (step is >= 8 and <= 9)
+        {
+            await FinishCurrentMiniTestAsync(page);
+            return;
+        }
+        else if (step == 10)
+        {
+            await FinishCurrentMiniTestAsync(page);
+            return;
+        }
+
+        await ClickOnboardingNextAsync(page);
+    }
+
+    private static async Task FinishCurrentMiniTestAsync(IPage page)
+    {
+        var startStep = await page.EvaluateAsync<int>(
+            "() => parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10)");
+
+        if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
+        {
+            await page.Locator(".ob-wizard__consent input[type=checkbox]").CheckAsync(new() { Force = true });
+            await ClickOnboardingNextAsync(page);
+            await page.WaitForSelectorAsync(".test-likert", new() { Timeout = 60_000 });
+        }
+
+        for (var q = 0; q < 8; q++)
+        {
+            var stepNow = await page.EvaluateAsync<int>(
+                "() => parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10)");
+            if (stepNow > startStep || await page.Locator(".ob-wizard__finish").CountAsync() > 0)
+            {
+                return;
+            }
+
+            if (await page.Locator(".test-likert").CountAsync() == 0)
+            {
+                await page.WaitForTimeoutAsync(700);
+                continue;
+            }
+
+            await page.Locator(".test-likert__opt").Nth(3).ClickAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(500);
+            var miniNext = page.Locator("button.test-flow__next:not([disabled])").First;
+            if (await miniNext.CountAsync() > 0)
+            {
+                await miniNext.ClickAsync(new() { Force = true });
+                await page.WaitForTimeoutAsync(700);
+            }
+            else
+            {
+                await page.WaitForTimeoutAsync(1400);
+            }
+        }
+
+        await page.WaitForFunctionAsync(
+            """
+            start => {
+              const n = parseInt(document.querySelector('.ob-wizard__segments')?.getAttribute('aria-valuenow') || '0', 10);
+              return n > start || !!document.querySelector('.ob-wizard__finish');
+            }
+            """,
+            startStep,
+            new() { Timeout = 120_000 });
+    }
+
+    private static async Task RegisterAndBeginWizardAsync(IPage page, string baseUrl)
+    {
+        var email = $"scroll.ob.{Guid.NewGuid():N}@jobsy.local";
+        await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
+        await page.Locator("input[type=email]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.Locator("input[type=email]").FillAsync(email);
+        await page.Locator("input[name=firstName]").FillAsync("Scroll");
+        var submit = page.Locator("button.login-submit, button.au-submit[type=submit]");
+        await submit.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await submit.First.ClickAsync();
+        await page.WaitForURLAsync("**/code**", new() { Timeout = 60_000 });
+        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
+        Assert.False(string.IsNullOrWhiteSpace(code));
+        await page.Locator("input[name=code]").FillAsync(code!);
+        await page.Locator("button.login-submit").ClickAsync();
+        await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
+
+        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(600);
+        if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
+        {
+            await page.GetByRole(AriaRole.Button, new() { Name = "Beginnen" }).ClickAsync();
+            await page.WaitForTimeoutAsync(400);
+        }
+    }
+
+    private static async Task ClickOnboardingNextAsync(IPage page)
+    {
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+        var next = page.Locator("[data-testid=onboarding-next]");
+        await next.ClickAsync(new() { Force = true, Timeout = 15_000 });
+        await page.WaitForTimeoutAsync(450);
+    }
+
+    private sealed class ScrollAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public double MainScroll { get; set; }
+        public double WinScroll { get; set; }
+        public double? HeadingTop { get; set; }
+    }
+
+    private sealed class ActionBarAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public double? BottomGap { get; set; }
+        public double? Width { get; set; }
+        public string? Overlap { get; set; }
+        public string? FooterBg { get; set; }
+        public string? FooterPosition { get; set; }
+        public string? ShellClass { get; set; }
+        public string? Styles { get; set; }
+        public string? FooterTag { get; set; }
+    }
+
+    private sealed class ContentFlowAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public double? ContentH { get; set; }
+        public double? Vh { get; set; }
+    }
+
+    private sealed class MascotCardOverlapAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public double? CardTop { get; set; }
+        public double? CardBottom { get; set; }
+        public double? MascotTop { get; set; }
+        public double? MascotBottom { get; set; }
+    }
+
+    private sealed class TravelRowAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public int Count { get; set; }
+        public string? Tops { get; set; }
+    }
+
+    private sealed class DreamInputAudit
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public double? InputW { get; set; }
+        public double? InnerW { get; set; }
+        public double? InputH { get; set; }
+    }
+}

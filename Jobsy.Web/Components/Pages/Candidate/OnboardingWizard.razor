@@ -20,8 +20,12 @@
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
+</HeadContent>
 
-<div class="ob-wizard">
+<div class="ob-wizard ob-wizard--richting-a">
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -152,6 +156,26 @@
             </aside>
 
             <main class="ob-wizard__main">
+                <div class="ob-wizard__mobile-top">
+                    <div class="ob-wizard__topbar">
+                        <div class="ob-wizard__topbar-brand">
+                            <img src="/images/brand/lobsy-128.png" width="36" height="36" alt="" />
+                            <span>Lobsy</span>
+                        </div>
+                        <div class="ob-wizard__topbar-actions">
+                            <p class="ob-wizard__topbar-meta">@MobileTopMeta</p>
+                            <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                        </div>
+                    </div>
+                    <div class="ob-wizard__progress-thin"
+                         role="progressbar"
+                         aria-valuemin="1"
+                         aria-valuemax="10"
+                         aria-valuenow="@_step"
+                         aria-label="@Culture.Format("Onboarding.ProgressAria", _step, 10)">
+                        <span style="width:@(_step * 10)%"></span>
+                    </div>
+                </div>
                 <header class="ob-wizard__header">
                     <div class="ob-wizard__header-row">
                         <button type="button"
@@ -188,6 +212,8 @@
                     {
                         <p class="state-message error">@_error</p>
                     }
+
+                    <p class="ob-wizard__step-pill">@MobileStepBadge</p>
 
                     @switch (_step)
                     {
@@ -257,32 +283,44 @@
                                                 InputPrefix="@MiniPrefix"
                                                 Answer="OnMiniAnswer"
                                                 OnFinished="FinishMiniAsync"
+                                                OnLeave="BackAsync"
                                                 ExpandQuestion="ExpandQuestion"
                                                 ResolveQuestionText="QuestionText" />
                             break;
                     }
+
+                    <div class="ob-wizard__mascot-anchor" aria-hidden="true">
+                        <img src="/images/brand/mascot-64.webp" width="36" height="36" alt="" />
+                    </div>
                 </section>
 
                 @if (!ShowMiniTestFooter)
                 {
-                    <footer class="ob-wizard__footer">
-                        <button type="button"
-                                class="btn btn-primary ob-wizard__cta"
-                                data-testid="onboarding-next"
-                                disabled="@_busy"
-                                @onclick="@(() => NextAsync())">@NextLabel</button>
+                    <footer class="ob-wizard__footer" data-sticky-footer="true">
                         @if (_step is 4 or 5)
                         {
-                            <button type="button" class="ob-wizard__ghost" @onclick="SkipOptionalAsync">
+                            <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="SkipOptionalAsync">
                                 @Culture["Onboarding.Skip"]
                             </button>
                         }
                         else if (_step == 6)
                         {
-                            <button type="button" class="ob-wizard__ghost" @onclick="DreamUnknownAsync">
+                            <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="DreamUnknownAsync">
                                 @Culture["Onboarding.DreamUnknown"]
                             </button>
                         }
+                        <div class="ob-wizard__actionbar">
+                            <button type="button"
+                                    class="ob-wizard__back-footer"
+                                    data-testid="onboarding-back"
+                                    disabled="@(_step == 1 || _busy)"
+                                    @onclick="BackAsync">@Culture["Onboarding.Back"]</button>
+                            <button type="button"
+                                    class="btn btn-primary ob-wizard__cta"
+                                    data-testid="onboarding-next"
+                                    disabled="@_busy"
+                                    @onclick="@(() => NextAsync())">@NextLabel</button>
+                        </div>
                     </footer>
                 }
             </main>
@@ -308,6 +346,7 @@
     private bool _savedVisible;
     private bool _saveError;
     private bool _showValidation;
+    private bool _pendingStepScroll;
     private int _step = 1;
     private int _currentQuestion;
     private string _installMessage = "";
@@ -382,6 +421,27 @@
     private int MinHoursSlider => decimal.ToInt32(Draft.MinHours ?? 1);
     private int MaxHoursSlider => decimal.ToInt32(Draft.MaxHours ?? 60);
     private bool AvailabilityValid => Draft.MinHours is > 0 && Draft.MaxHours >= Draft.MinHours && Draft.Availability.Count > 0;
+    private string MobileStepBadge
+    {
+        get
+        {
+            if (Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
+            {
+                return $"Stap {_step} van 10";
+            }
+
+            var raw = Culture.Format("Discovery.StepOf", _step);
+            return raw.Length > 0 ? char.ToUpperInvariant(raw[0]) + raw[1..] : raw;
+        }
+    }
+
+    private string MobileTopMeta =>
+        Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
+            .Replace(" van 10 ·", " ·", StringComparison.Ordinal)
+            .Replace(" of 10 ·", " ·", StringComparison.Ordinal)
+            .Replace(" minuten", " min", StringComparison.Ordinal)
+            .Replace(" min left", " min", StringComparison.Ordinal);
+
     private string NextLabel => _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
         : _step == 10 ? Culture["Onboarding.ViewKompas"]
@@ -449,6 +509,29 @@
         }
     }
 
+    private void RequestStepScrollReset()
+    {
+        _pendingStepScroll = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_pendingStepScroll)
+        {
+            return;
+        }
+
+        _pendingStepScroll = false;
+        try
+        {
+            await Js.InvokeVoidAsync("jobsyDom.resetWizardStepScroll");
+        }
+        catch
+        {
+            // optional
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         Culture.Changed += CultureChanged;
@@ -501,6 +584,7 @@
                 await MarkStartedAsync();
                 await PrepareMiniAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
+                RequestStepScrollReset();
             }
         }
         catch (Exception ex)
@@ -575,6 +659,7 @@
     {
         _welcome = false;
         await MarkStartedAsync();
+        RequestStepScrollReset();
     }
 
     private async Task MarkStartedAsync()
@@ -591,6 +676,7 @@
         _step--;
         await MarkStartedAsync();
         await PrepareMiniAsync();
+        RequestStepScrollReset();
     }
 
     private async Task NextAsync(bool fromMiniTestFinish = false)
@@ -654,6 +740,7 @@
             FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
+            RequestStepScrollReset();
         }
         catch (Exception ex)
         {
@@ -674,6 +761,7 @@
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
         await TryAutoAdvanceEmptyMiniStepAsync();
+        RequestStepScrollReset();
     }
 
     private async Task LaterAsync()
@@ -916,6 +1004,7 @@
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
         await TryAutoAdvanceEmptyMiniStepAsync();
+        RequestStepScrollReset();
     }
 
     private void ScheduleDreamSave()
@@ -1071,6 +1160,7 @@
             FlashSaved();
             await PrepareMiniAsync();
             await TryAutoAdvanceEmptyMiniStepAsync();
+            RequestStepScrollReset();
         }
         catch (Exception ex)
         {

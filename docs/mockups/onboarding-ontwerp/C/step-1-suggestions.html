@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Onboarding C — Stap 1 suggesties</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <header class="topbar">
+      <img class="logo" src="../shared/assets/lobsy-64.webp" alt="Lobsy" width="40" height="40" />
+      <span class="topbar__step">1/10</span>
+    </header>
+    <div class="shell">
+      <div class="main-col">
+        <main class="main page-pad">
+          <p class="eyebrow">Even kennismaken</p>
+          <h1 class="hero-title">Jouw adres</h1>
+          <label class="field"><span>Jouw adres</span></label>
+          <div class="address-row">
+            <label class="field"><span class="visually-hidden">Adres</span><input type="text" value="Molen" placeholder="Straat, postcode of plaats…" /></label>
+            <button type="button" class="btn-gps">GPS</button>
+          </div>
+          <ul class="suggest-list" role="listbox">
+            <li><button type="button" class="is-highlight">Molenstraat 12, 2671 Naaldwijk</button></li>
+            <li><button type="button">Molenweg 4, 2675 KB Honselersdijk</button></li>
+            <li><button type="button">Molenvliet 88, 3144 AB Maassluis</button></li>
+          </ul>
+        </main>
+        <footer class="sticky-bar">
+          <button type="button" class="btn-ghost">Terug</button>
+          <button type="button" class="btn-primary">Volgende</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

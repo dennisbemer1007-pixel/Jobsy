@@ -1652,6 +1652,47 @@ html[dir="rtl"] .account-menu__panel {
     -webkit-overflow-scrolling: touch;
 }
 
+/* Onboarding wizard: scroll inside step content; action bar stays below (not position:fixed in .app-main). */
+@media (max-width: 1023px) {
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .app-main {
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard,
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard__layout {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard__main {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .app-main > * {
+        flex: 1 1 auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard) .ob-wizard__content {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior-y: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
 /* Side-gutter logos removed for a quieter desktop chrome. */
 .lobsy-watermarks,
 .lobsy-watermark {
@@ -20741,6 +20782,17 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
     .app-shell.app-shell--questionnaire:has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock,
     .app-shell:not(.has-bottom-nav):has(.test-flow__footer[data-sticky-footer]) .lobsy-coach-dock {
+        bottom: calc(var(--sticky-footer-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell:has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock {
+        inset-inline-end: auto;
+        inset-inline-start: max(12px, env(safe-area-inset-left, 0px));
+        align-items: flex-start;
+    }
+
+    .app-shell.app-shell--questionnaire:has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock,
+    .app-shell:not(.has-bottom-nav):has(.ob-wizard__footer[data-sticky-footer]) .lobsy-coach-dock {
         bottom: calc(var(--sticky-footer-h, 4.25rem) + 12px + env(safe-area-inset-bottom, 0px));
     }
 }

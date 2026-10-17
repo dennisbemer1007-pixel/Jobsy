@@ -13,6 +13,7 @@ else
 {
     <h2 class="ob-wizard__subhead">@Culture["Onboarding.Step3.Title"]</h2>
 }
+<div class="ob-wizard__card">
 <fieldset id="onboarding-field-transport">
     <legend>@Culture["Onboarding.Transport"]</legend>
     <p class="ob-wizard__hint">@Culture["Onboarding.TransportMulti"]</p>
@@ -33,7 +34,7 @@ else
 </fieldset>
 <fieldset>
     <legend>@Culture["Onboarding.MaxTravel"] <strong>@Draft.MaxTravel @Culture["Onboarding.Minutes"]</strong></legend>
-    <ChoiceTileGrid Class="ob-wizard__transport" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.MaxTravel"]">
+    <ChoiceTileGrid Class="ob-wizard__transport ob-wizard__travel-times" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.MaxTravel"]">
         @foreach (var minutes in TravelChoices)
         {
             var selected = Draft.MaxTravel == minutes;
@@ -74,6 +75,7 @@ else
         </ChoiceTileGrid>
     </fieldset>
 }
+</div>
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;

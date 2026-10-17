@@ -7,6 +7,7 @@
 <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
 
+<div class="ob-wizard__card">
 <section class="ob-wizard__section" id="onboarding-field-availability-presets" aria-labelledby="ob-avail-presets">
     <h2 id="ob-avail-presets" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityPresetsLegend"]</h2>
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
@@ -120,6 +121,7 @@
 {
     <p class="error ob-wizard__start-date-error" id="onboarding-field-availability-start" role="alert">@Culture["Onboarding.AvailabilityStartDateInvalid"]</p>
 }
+</div>
 
 @code {
     public sealed record Preset(string Code, string Title, string Lead);

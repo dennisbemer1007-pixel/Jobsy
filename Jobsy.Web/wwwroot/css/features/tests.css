@@ -229,7 +229,7 @@
     padding-bottom: calc(var(--sticky-footer-h, 4.25rem) + env(safe-area-inset-bottom, 0px) + 0.75rem);
   }
 
-  .test-flow__footer {
+  .app-shell:not(.app-shell--questionnaire) .test-flow__footer {
     position: fixed;
     inset-inline: 0;
     bottom: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
@@ -249,6 +249,51 @@
   .app-shell.app-shell--questionnaire .test-flow__footer[data-sticky-footer],
   .app-shell:not(.has-bottom-nav) .test-flow__footer[data-sticky-footer] {
     bottom: 0;
+  }
+
+  .app-shell.app-shell--questionnaire .test-flow--compact .test-flow__footer[data-sticky-footer] {
+    position: fixed;
+    inset-inline: 0;
+    bottom: 0;
+    z-index: 45;
+    inline-size: 100%;
+    margin-block-start: 0;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+    background-color: var(--surface);
+    background-image: none;
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -8px 16px color-mix(in srgb, var(--brand) 8%, transparent);
+  }
+
+  .test-flow--compact .test-flow__footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: stretch;
+    justify-items: stretch;
+  }
+
+  .test-flow--compact .test-flow__back {
+    order: 1;
+    justify-self: center;
+    color: var(--brand);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .test-flow--compact .test-flow__next {
+    order: 2;
+    display: flex;
+    inline-size: 100%;
+    min-block-size: 48px;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .test-flow--compact .test-flow__later {
+    display: none;
   }
 }
 
