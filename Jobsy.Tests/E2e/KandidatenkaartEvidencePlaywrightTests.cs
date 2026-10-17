@@ -143,7 +143,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await inviteCta.First.ClickAsync();
             await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
             await page.WaitForTimeoutAsync(400);
-            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png", mobileViewportShot);
+            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png", fullViewport: true);
             await page.Locator(".kk-modal .btn-compact").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
             await page.WaitForTimeoutAsync(400);
 
@@ -326,10 +326,13 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             """);
         await page.WaitForFunctionAsync(
             @"() => {
-                const canvas = document.querySelector('.kk-map-pane .maplibregl-canvas');
-                if (!canvas) return false;
-                const r = canvas.getBoundingClientRect();
-                return r.width > 40 && r.height > 40;
+                const pane = document.querySelector('.kk-map-pane');
+                const canvas = pane?.querySelector('.maplibregl-canvas');
+                if (!pane || !canvas) return false;
+                const pr = pane.getBoundingClientRect();
+                const cr = canvas.getBoundingClientRect();
+                if (pr.width < 40 || pr.height < 40) return false;
+                return cr.width >= pr.width * 0.85 && cr.height >= pr.height * 0.85;
             }",
             null,
             new() { Timeout = mobile ? 45_000 : 30_000 });

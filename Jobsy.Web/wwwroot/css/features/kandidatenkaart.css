@@ -6,6 +6,10 @@
     overflow: hidden;
 }
 
+.kk-page.panel-page.insights-page {
+    animation: none;
+}
+
 .kk-page > .insights-tabs {
     flex-shrink: 0;
     margin-block-end: 1rem;
@@ -1594,15 +1598,24 @@ html.vp-desktop .kk-header__lead {
     font-size: var(--text-sm);
 }
 
+.wg-shell:has(.kk-modal-scrim) {
+    overflow: hidden;
+}
+
 .kk-modal-scrim {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 45, 92, 0.45);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    background: rgba(15, 45, 92, 0.45);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 .kk-modal {
@@ -1724,8 +1737,23 @@ html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-mobile-sheet__body--li
   position: relative;
 }
 
+html.vp-desktop .wg-main:has(.kk-page) {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    height: calc(100dvh - 56px);
+    max-height: calc(100dvh - 56px);
+}
+
+html.vp-desktop .wg-main:has(.kk-page) .kk-page {
+    flex: 1;
+    min-height: 0;
+    max-height: 100%;
+}
+
 html.vp-desktop .kk-page.panel-page {
-    min-height: min(72vh, calc(100dvh - 11rem));
+    min-height: 0;
 }
 
 .kk-seg button {

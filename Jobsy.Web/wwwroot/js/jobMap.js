@@ -3935,7 +3935,11 @@ window.jobMap = (function () {
                     try { map._resizeObserver.disconnect(); } catch (e0) { /* ignore */ }
                 }
                 map._resizeObserver = new ResizeObserver(function () {
-                    invalidate();
+                    if (kkMode) {
+                        kkResizeMapAndFit(false);
+                    } else {
+                        invalidate();
+                    }
                 });
                 map._resizeObserver.observe(el);
             } catch (eRo) { /* ignore */ }
@@ -4226,10 +4230,10 @@ window.jobMap = (function () {
         } catch (e) { /* ignore */ }
         if (mobile) {
             return {
-                top: 36,
-                right: 40,
-                bottom: 120,
-                left: 52
+                top: 32,
+                right: 36,
+                bottom: 32,
+                left: 36
             };
         }
         return {
@@ -4238,6 +4242,29 @@ window.jobMap = (function () {
             bottom: edge,
             left: edge
         };
+    }
+
+    function kkResizeMapAndFit(animate) {
+        if (!map || !kkMode) {
+            return;
+        }
+        var runFit = function () {
+            try {
+                if (typeof map.resize === "function") {
+                    map.resize();
+                }
+            } catch (e0) { /* ignore */ }
+            if (mapHasUsableSize()) {
+                fitKkView(animate);
+            }
+        };
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(runFit);
+            });
+        } else {
+            setTimeout(runFit, 0);
+        }
     }
 
     function drawKkRadiusRing(lat, lng) {
@@ -4292,6 +4319,14 @@ window.jobMap = (function () {
             map.once("load", function () { fitKkView(animate); });
             return;
         }
+        try {
+            if (typeof map.resize === "function") {
+                map.resize();
+            }
+        } catch (eResize) { /* ignore */ }
+        if (!mapHasUsableSize()) {
+            return;
+        }
         applyKkViewOptions(kkViewOptions);
         if (lastOrigin) {
             drawKkRadiusRing(lastOrigin.lat, lastOrigin.lng);
@@ -4335,11 +4370,15 @@ window.jobMap = (function () {
                 });
                 map.once("idle", function () {
                     var z = map.getZoom();
-                    if (lastOrigin && (z < 9.75 || z > 11.5)) {
-                        map.jumpTo({
-                            center: [lastOrigin.lng, lastOrigin.lat],
-                            zoom: 10.35
-                        });
+                    if (z < 9.75) {
+                        try {
+                            map.fitBounds(bounds, {
+                                padding: kkFitPadding(),
+                                maxZoom: 11.25,
+                                animate: false,
+                                duration: 0
+                            });
+                        } catch (eRetry) { /* ignore */ }
                     }
                 });
             } catch (e) { /* ignore */ }
@@ -4511,11 +4550,8 @@ window.jobMap = (function () {
         setVacancies([]);
         map.once("load", function () {
             refreshKkAreasData();
-            fitKkView(false);
+            kkResizeMapAndFit(false);
             kkInitialFitDone = true;
-            if (kkSelectedKey) {
-                panKkToSelectedArea(kkSelectedKey);
-            }
         });
     }
 
@@ -4528,7 +4564,7 @@ window.jobMap = (function () {
         }
         refreshKkAreasData();
         if (viewOptions) {
-            fitKkView(kkInitialFitDone);
+            kkResizeMapAndFit(kkInitialFitDone);
         } else if (selectedKey && selectedKey !== prevKey) {
             panKkToSelectedArea(selectedKey);
         }
@@ -5033,7 +5069,7 @@ window.jobMap = (function () {
         runWithViewportNotifySuppressed(function () {
             map.resize();
             if (kkMode) {
-                fitKkView(false);
+                kkResizeMapAndFit(false);
                 return;
             }
             if (originNeedsFrame && lastOrigin) {
