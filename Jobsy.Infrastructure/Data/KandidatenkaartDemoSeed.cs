@@ -43,6 +43,8 @@ public static class KandidatenkaartDemoSeed
                 company.VerificationStatus = CompanyVerificationStatus.Verified;
                 company.KvkVerifiedAtUtc ??= DateTime.UtcNow;
             }
+
+            company.KandidatenkaartActiveUntilUtc = DateTime.UtcNow.AddYears(5);
         }
 
         var vacancies = await db.Vacancies

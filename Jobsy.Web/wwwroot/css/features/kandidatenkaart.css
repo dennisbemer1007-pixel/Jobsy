@@ -1522,15 +1522,101 @@ html.vp-desktop .kk-header__lead {
   margin-top: 1rem;
 }
 
-.kk-map-cta {
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
-  z-index: 3;
+.kk-map-pane {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+}
+
+.kk-list-invite-bar {
+    flex-shrink: 0;
+    padding-top: var(--space-3);
+    margin-top: var(--space-2);
+    border-top: 1px solid var(--border);
+}
+
+.kk-btn--block {
+    width: 100%;
+}
+
+html.vp-mobile .kk-list-invite-bar {
+    display: none;
+}
+
+html.vp-mobile .kk-mobile-sheet__invite {
+    flex-shrink: 0;
+    padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0));
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+}
+
+.wg-shell:has(.kk-page) .lobsy-assistant-tab,
+.wg-shell:has(.kk-page) .lobsy-coach-dock {
+    display: none !important;
+}
+
+.kk-page--modal-open .kk-filter-popover,
+.kk-page--modal-open .kk-more-filters .kk-filter-popover {
+    display: none !important;
+}
+
+.kk-modal__lead {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text);
+}
+
+.kk-invite-stats {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.35rem 1rem;
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+}
+
+.kk-invite-stats dt {
+    margin: 0;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+.kk-invite-stats dd {
+    margin: 0;
+    font-weight: 700;
+    color: var(--brand);
+    text-align: end;
+}
+
+.kk-invite-explainer {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.kk-modal {
+    padding: var(--space-5);
+    max-width: 28rem;
+}
+
+.kk-modal__actions {
+    margin-top: var(--space-4);
+}
+
+.kk-modal__actions .kk-btn {
+    min-width: 7.5rem;
+    padding-inline: 1.25rem;
 }
 
 .kk-layout-b__map {
   position: relative;
+}
+
+html.vp-desktop .kk-page.panel-page {
+    min-height: min(72vh, calc(100dvh - 11rem));
 }
 
 .kk-seg button {

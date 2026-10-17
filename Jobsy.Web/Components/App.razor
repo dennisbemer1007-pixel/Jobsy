@@ -352,7 +352,7 @@
         PageAssetCatalog.ResolveAreas(RequestPath);
 
     private IReadOnlyList<string> PageStylesheets =>
-        PageAssetCatalog.StylesheetsFor(PageAreas);
+        PageAssetCatalog.StylesheetsFor(PageAreas, RequestPath);
 
     private bool IncludeLandingScript =>
         PageAssetCatalog.IncludeLandingScript(RequestPath);

@@ -69,13 +69,6 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                 Timeout = 60_000
             });
             await page.WaitForTimeoutAsync(1500);
-            if (width < 1280)
-            {
-                await page.EvaluateAsync("""
-                    document.documentElement.classList.remove('vp-mobile');
-                    document.documentElement.classList.add('vp-desktop');
-                    """);
-            }
 
             await GotoKandidatenkaartWhenReadyAsync(page, baseUrl);
             await WaitForMapReadyAsync(page);
@@ -89,6 +82,24 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await page.WaitForTimeoutAsync(400);
             await ShotPageAsync(page, $"kk-filters-open-{suffix}.png");
 
+            if (await page.Locator(".kk-filter-popover.is-open").CountAsync() > 0)
+            {
+                await more.First.ClickAsync();
+                await page.WaitForTimeoutAsync(300);
+            }
+
+            await ClickFilterAsync(page, "70%");
+            await page.WaitForSelectorAsync(".kk-area-list__item", new() { Timeout = 30_000 });
+
+            var inviteCta = page.Locator(".kk-list-invite-bar button, .kk-mobile-sheet__invite button");
+            Assert.True(await inviteCta.CountAsync() > 0, "Expected invite CTA below area list.");
+            await inviteCta.First.ClickAsync();
+            await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
+            await page.WaitForTimeoutAsync(400);
+            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png");
+            await page.Locator(".kk-modal .kk-btn").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
+            await page.WaitForTimeoutAsync(400);
+
             await ClickFilterAsync(page, "80%");
             await ClickFilterAsync(page, "15 km");
             await ClickFilterAsync(page, "Later");
@@ -98,25 +109,6 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                 await page.Locator(".kk-below-min").CountAsync() > 0,
                 "Expected below-30 notice after strict filters.");
             await ShotPageAsync(page, $"kk-below-30-{suffix}.png");
-
-            await ClickFilterAsync(page, "60%");
-            await ClickFilterAsync(page, "60 km");
-            await ClickFilterAsync(page, "Per direct");
-            await ClickFilterAsync(page, "24–32");
-            await page.WaitForTimeoutAsync(2500);
-
-            if (await page.Locator(".kk-map-cta").CountAsync() == 0
-                && await page.Locator(".kk-area-list__item").CountAsync() > 0)
-            {
-                await page.Locator(".kk-area-list__item").First.ClickAsync();
-                await page.WaitForTimeoutAsync(400);
-            }
-
-            Assert.True(await page.Locator(".kk-map-cta").CountAsync() > 0, "Expected invite CTA on map.");
-            await page.Locator(".kk-map-cta").ClickAsync();
-            await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
-            await page.WaitForTimeoutAsync(400);
-            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png");
         }
 
         await using (var ctx = await browser.NewContextAsync(new()
@@ -191,38 +183,29 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
 
     private static async Task WaitForMapReadyAsync(IPage page)
     {
-        await page.Locator(".kk-header h1").WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator(".kk-header h1, .kk-mobile-title").First.WaitForAsync(new() { Timeout = 90_000 });
         await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 10_000 });
         await page.WaitForSelectorAsync(".kk-map-pane", new()
         {
             Timeout = 60_000,
             State = WaitForSelectorState.Attached
         });
-        var deadline = DateTime.UtcNow.AddSeconds(90);
-        while (DateTime.UtcNow < deadline)
+        await page.WaitForSelectorAsync(".kk-map-pane .maplibregl-canvas", new()
         {
-            if (await page.Locator(".kk-area-list__item").CountAsync() > 0
-                || await page.Locator(".kk-below-min").CountAsync() > 0
-                || await page.Locator(".kk-map-pane .maplibregl-canvas").CountAsync() > 0)
-            {
-                await page.WaitForTimeoutAsync(1200);
-                return;
-            }
-
-            await page.WaitForTimeoutAsync(500);
-        }
-
-        var areas = await page.Locator(".kk-area-list__item").CountAsync();
-        var below = await page.Locator(".kk-below-min").CountAsync();
-        var canvas = await page.Locator(".kk-map-pane .maplibregl-canvas").CountAsync();
-        var snippet = await page.EvaluateAsync<string>(
-            "() => document.querySelector('.kk-page')?.innerText?.slice(0,400) ?? ''");
-        throw new InvalidOperationException(
-            $"Kandidatenkaart map did not finish loading (areas={areas}, belowMin={below}, canvas={canvas}). Snippet: {snippet}");
+            Timeout = 90_000,
+            State = WaitForSelectorState.Visible
+        });
+        await page.WaitForTimeoutAsync(1200);
     }
 
     private static async Task ShotPageAsync(IPage page, string fileName)
     {
+        await page.EvaluateAsync("""
+            window.scrollTo(0, 0);
+            document.querySelector('.wg-main')?.scrollTo(0, 0);
+            document.querySelector('.kk-page')?.scrollTo?.(0, 0);
+            """);
+
         var root = page.Locator(".wg-main .kk-page");
         if (await root.CountAsync() == 0)
         {
@@ -307,7 +290,29 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
 
     private static async Task RestartCiWebAsync()
     {
+        await EnsureCiWebReleaseBuildAsync();
         await RunBashScriptAsync(FindRepoScript("restart-ci-web.sh"));
+    }
+
+    private static async Task EnsureCiWebReleaseBuildAsync()
+    {
+        var root = FindRepoScript("restart-ci-web.sh");
+        root = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(root)!))!;
+        var psi = new System.Diagnostics.ProcessStartInfo("dotnet", "build Jobsy.Web/Jobsy.Web.csproj -c Release -v q")
+        {
+            WorkingDirectory = root,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+        using var proc = System.Diagnostics.Process.Start(psi)
+                         ?? throw new InvalidOperationException("Failed to start Release web build.");
+        await proc.WaitForExitAsync();
+        if (proc.ExitCode != 0)
+        {
+            var err = await proc.StandardError.ReadToEndAsync();
+            throw new InvalidOperationException($"Release web build failed: {err}");
+        }
     }
 
     private static string FindRepoScript(string name)

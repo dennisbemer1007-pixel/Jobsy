@@ -36,8 +36,17 @@ public static class UiStringsKandidatenkaart
         Add("Kk.Area.Meta", "{0} kandidaten · {1} boven 80%", "{0} candidates · {1} above 80%");
         Add("Kk.Area.ActiveWeek", "Actief deze week", "Active this week");
         Add("Kk.BelowThreshold", "Met deze filters zijn er geen gebieden met minimaal 30 kandidaten.", "No areas have at least 30 candidates with these filters.");
+        Add("Kk.Map.Legend", "≥ 30 kandidaten", "≥ 30 candidates");
+        Add("Kk.Mobile.AreasPeek", "Gebieden in de buurt van je vacature", "Areas near your vacancy");
         Add("Kk.Invite.Open", "Uitnodigen om te solliciteren", "Invite to apply");
         Add("Kk.Invite.PreviewTitle", "Uitnodiging voor gebied", "Invite for area");
+        Add("Kk.Invite.ModalLead", "Uitnodigingen voor {0} — alleen kandidaten die aan de drempels voldoen.", "Invites for {0} — only candidates who meet the thresholds.");
+        Add("Kk.Invite.StatInvited", "Uitnodigingen ({0}%+ match)", "Invitations ({0}%+ match)");
+        Add("Kk.Invite.StatWeeklyCap", "Overgeslagen (weeklimiet)", "Skipped (weekly cap)");
+        Add("Kk.Invite.StatBelowInvite", "In gebied onder {0}% (geen uitnodiging)", "In area below {0}% (no invite)");
+        Add("Kk.Invite.StatPrefOff", "Uitgeschakeld door kandidaat", "Opted out by candidate");
+        Add("Kk.Invite.StatRounds", "Verzendrondes", "Send rounds");
+        Add("Kk.Invite.FilterNote", "Kaartfilter: {0}%+ · uitnodigingen vanaf {1}%+.", "Map filter: {0}%+ · invites from {1}%+.");
         Add("Kk.Invite.Eligible", "{0} kandidaten met {1}%+ match", "{0} candidates at {1}%+ match");
         Add("Kk.Invite.Staging", "Getrapte verzending: {0} rondes", "Staged send: {0} rounds");
         Add("Kk.Invite.SkippedWeeklyCap", "{0} kandidaten overgeslagen vanwege weeklimiet (2–3 uitnodigingen).", "{0} candidates skipped due to weekly invite cap (2–3 invitations).");
