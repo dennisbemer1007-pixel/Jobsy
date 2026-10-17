@@ -286,7 +286,10 @@ function mobileSheetContent(state, variant, locked) {
   if (state === "area-sparse") {
     return `<div class="kk-mobile-sheet__body kk-mobile-sheet__body--sparse">${areaSparseRegionPanel()}</div>`;
   }
-  if (state === "area" || state === "invite") {
+  if (state === "invite-status" || state === "invite-status-vol") {
+    return `<div class="kk-mobile-sheet__body kk-mobile-sheet__body--invite-status">${inviteStatusPanel(state === "invite-status-vol")}</div>`;
+  }
+  if (state === "area" || state === "invite" || state === "invite-extended") {
     return `<div class="kk-mobile-sheet__body">${areaPanel(true)}</div>`;
   }
   if (variant === "b") {
@@ -323,20 +326,32 @@ function areaList(selectedId = "amersfoort") {
     .join("\n");
 }
 
+const areaSelectedStates = new Set([
+  "area",
+  "invite",
+  "invite-extended",
+  "invite-status",
+  "invite-status-vol",
+]);
+
 function resolveState(state) {
   return {
     locked: state === "preview",
-    selected: state === "area" || state === "invite",
+    selected: areaSelectedStates.has(state),
     sparseSoest: state === "area-sparse",
     belowMin: state === "area-sparse",
     filtersOpen: state === "filters-open",
+    inviteStatus: state === "invite-status" || state === "invite-status-vol",
+    inviteVol: state === "invite-status-vol",
   };
 }
 
 function mobileSheetMarkup(state, variant, locked) {
   if (locked) return "";
-  const sparseClass = state === "area-sparse" ? " kk-mobile-sheet--sparse" : "";
-  return `<div class="kk-mobile-sheet kk-mobile-sheet--${variant}${sparseClass}">${mobileSheetContent(state, variant, locked)}</div>`;
+  let extraClass = "";
+  if (state === "area-sparse") extraClass = " kk-mobile-sheet--sparse";
+  if (state === "invite-status" || state === "invite-status-vol") extraClass = " kk-mobile-sheet--invite-status";
+  return `<div class="kk-mobile-sheet kk-mobile-sheet--${variant}${extraClass}">${mobileSheetContent(state, variant, locked)}</div>`;
 }
 
 function layoutA(state) {
@@ -346,8 +361,10 @@ function layoutA(state) {
     aside = `${activeCandidatesBlock()}<div class="kk-panel kk-upsell"><b>Preview</b> Filters en gebieden worden vrijgegeven zodra marktinzicht op jullie vestiging actief is.</div>`;
   } else if (belowMin) {
     aside = areaPanelBelowMin();
-  } else if (state === "area" || state === "invite") {
+  } else if (areaSelectedStates.has(state) && state !== "invite-status" && state !== "invite-status-vol") {
     aside = areaPanel(true);
+  } else if (state === "invite-status" || state === "invite-status-vol") {
+    aside = `${activeCandidatesBlock()}${inviteStatusPanel(state === "invite-status-vol")}`;
   } else {
     aside = areaPanel(false);
   }
@@ -363,12 +380,14 @@ function layoutA(state) {
 }
 
 function layoutB(state) {
-  const { locked, selected, belowMin, sparseSoest, filtersOpen } = resolveState(state);
+  const { locked, selected, belowMin, sparseSoest, filtersOpen, inviteStatus } = resolveState(state);
   let listPanel;
   if (locked) {
     listPanel = `${activeCandidatesBlock()}${previewSampleRows()}`;
   } else if (belowMin) {
     listPanel = areaPanelBelowMin();
+  } else if (inviteStatus) {
+    listPanel = `${activeCandidatesBlock()}${inviteStatusPanel(state === "invite-status-vol")}`;
   } else {
     listPanel = `${activeCandidatesBlock()}<ul class="kk-area-list">${areaList("amersfoort")}</ul>
        <button type="button" class="kk-btn kk-btn--primary" style="width:100%">Uitnodiging voor geselecteerd gebied</button>`;
@@ -404,6 +423,71 @@ function inviteOverlay() {
       </div>`;
 }
 
+function inviteOverlayExtended() {
+  return `
+      <div class="kk-scrim" role="dialog" aria-modal="true" aria-labelledby="invite-ext-title">
+        <div class="kk-modal kk-modal--invite-extended">
+          <h2 id="invite-ext-title">Uitnodiging om te solliciteren</h2>
+          <div class="kk-modal__anon">
+            <svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4v5c0 5-3.5 9-8 10-4.5-1-8-5-8-10V7l8-4z"/></svg>
+            <p>Anoniem naar kandidaten in <strong>Regio Amersfoort en Leusden</strong>. Zij zien jouw vacature en kiezen zelf of ze reageren.</p>
+          </div>
+          <p class="kk-modal__vac">Vacature: <strong>Productiemedewerker · Amersfoort</strong></p>
+          <div class="kk-invite-slots">
+            <span class="kk-invite-slots__label">Aantal plekken</span>
+            <strong class="kk-invite-slots__value">2</strong>
+          </div>
+          <div class="kk-invite-graduated">
+            <p>We nodigen in kleine rondes uit, eerst de beste matches. Komen er te weinig reacties, dan volgt automatisch de volgende groep.</p>
+            <p class="kk-invite-round"><strong>Ronde 1:</strong> 12 kandidaten met 80%+ match</p>
+          </div>
+          <ul class="kk-invite-rules">
+            <li>Eén uitnodigingsronde per gebied per vacature.</li>
+            <li>Uitnodigingen alleen voor kandidaten met minimaal 70% match.</li>
+          </ul>
+          <label class="kk-field"><span>Korte toelichting (optioneel)</span>
+            <textarea placeholder="Bijv. ochtendteam, 24–32 uur per week."></textarea>
+          </label>
+          <div class="kk-modal__actions">
+            <button type="button" class="kk-btn">Annuleren</button>
+            <button type="button" class="kk-btn kk-btn--primary">Uitnodiging versturen</button>
+          </div>
+        </div>
+      </div>`;
+}
+
+function inviteStatusPanel(vacancyFull) {
+  const volBadge = vacancyFull
+    ? `<span class="kk-invite-status__badge">Vacature vol</span>`
+    : "";
+  const round2 = vacancyFull
+    ? `<li class="kk-round kk-round--muted"><span class="kk-round__title">Ronde 2</span><span class="kk-round__meta">Geannuleerd — alle plekken ingevuld</span></li>`
+    : `<li class="kk-round kk-round--pending"><span class="kk-round__title">Ronde 2</span><span class="kk-round__meta">Start automatisch bij te weinig reacties (70–79% match)</span></li>`;
+  const footnote = vacancyFull
+    ? `<p class="kk-note kk-note--status">Open uitnodigingen zijn automatisch ingetrokken. Er gaan geen nieuwe rondes meer uit voor deze vacature in dit gebied.</p>`
+    : `<p class="kk-note kk-note--status">Je ziet reacties zodra kandidaten reageren. Ronde 2 volgt alleen als ronde 1 onvoldoende oplevert.</p>`;
+  const plekkenLine = vacancyFull
+    ? `<span class="kk-round__meta">5 reacties · <strong>2 van 2 plekken</strong> ingevuld</span>`
+    : `<span class="kk-round__meta">5 reacties · 1 van 2 plekken ingevuld</span>`;
+
+  return `<div class="kk-panel kk-invite-status">
+            <div class="kk-invite-status__head">
+              <h2>Uitnodigingen · Amersfoort en Leusden</h2>
+              ${volBadge}
+            </div>
+            <p class="kk-invite-status__vac">Productiemedewerker · Amersfoort · <strong>2 plekken</strong></p>
+            <ol class="kk-rounds" aria-label="Uitnodigingsrondes">
+              <li class="kk-round kk-round--done">
+                <span class="kk-round__title">Ronde 1</span>
+                <span class="kk-round__meta">Verstuurd · 12 uitnodigingen</span>
+                ${plekkenLine}
+              </li>
+              ${round2}
+            </ol>
+            ${footnote}
+          </div>`;
+}
+
 function writePage(variant, state) {
   const isA = variant === "a";
   const { locked, filtersOpen } = resolveState(state);
@@ -412,6 +496,9 @@ function writePage(variant, state) {
     full: `Kandidatenkaart ${variant.toUpperCase()} — volledig`,
     area: `Kandidatenkaart ${variant.toUpperCase()} — gebied`,
     invite: `Kandidatenkaart ${variant.toUpperCase()} — uitnodiging`,
+    "invite-extended": `Kandidatenkaart B — uitnodiging (getrapt)`,
+    "invite-status": `Kandidatenkaart B — status uitnodigingen`,
+    "invite-status-vol": `Kandidatenkaart B — vacature vol`,
     "filters-open": `Kandidatenkaart ${variant.toUpperCase()} — filters open`,
     "area-sparse": `Kandidatenkaart ${variant.toUpperCase()} — onder drempel`,
   };
@@ -420,7 +507,8 @@ function writePage(variant, state) {
   let body = chromeBlock(badge, badgeClass, locked, filtersOpen, locked);
   body += isA ? layoutA(state) : layoutB(state);
   body += `</div>`;
-  if (state === "invite") body += inviteOverlay();
+  if (state === "invite-extended") body += inviteOverlayExtended();
+  else if (state === "invite") body += inviteOverlay();
 
   const html = shellStart(titles[state] || titles.full) + body + shellEnd;
   fs.writeFileSync(path.join(pagesDir, `${variant}-${state}.html`), html, "utf8");
@@ -435,9 +523,14 @@ if (fs.existsSync(srcLogo) && !fs.existsSync(dstLogo)) {
 }
 
 const employerStates = ["preview", "full", "area", "invite", "filters-open", "area-sparse"];
+const bOnlyStates = ["invite-extended", "invite-status", "invite-status-vol"];
 
-for (const v of ["a", "b"]) {
-  for (const s of employerStates) {
-    writePage(v, s);
-  }
+for (const s of employerStates) {
+  writePage("a", s);
+}
+for (const s of employerStates) {
+  writePage("b", s);
+}
+for (const s of bOnlyStates) {
+  writePage("b", s);
 }

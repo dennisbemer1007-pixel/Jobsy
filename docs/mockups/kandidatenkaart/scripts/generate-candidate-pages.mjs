@@ -201,4 +201,152 @@ ${shellEnd()}`;
 
 fs.writeFileSync(path.join(pagesDir, "inactivity-notificatie.html"), inactivityNotifPage, "utf8");
 
+const inviteCardPage = `${head("Kandidaat — uitnodiging (in-app)")}
+${candidateShell({ activeNotif: true, behindOverlay: true })}
+  <div class="k-notif-scrim" aria-hidden="true"></div>
+  <aside class="k-notif-panel" role="dialog" aria-labelledby="invite-card-title">
+    <div class="k-notif-panel__head">
+      <h2 id="invite-card-title">Meldingen</h2>
+      <button type="button" class="k-btn k-btn--ghost" aria-label="Sluiten">Sluiten</button>
+    </div>
+    <ul class="k-notif-list">
+      <li class="k-notif-item k-notif-item--highlight k-invite-card">
+        <div class="k-notif-item__tag">
+          <svg class="i" viewBox="0 0 24 24"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14.1l-3-3"/></svg>
+          Uitnodiging
+        </div>
+        <div class="k-invite-card__head">
+          <h3 class="k-invite-card__title">Productiemedewerker</h3>
+          <span class="k-match-pill">84% match</span>
+        </div>
+        <p class="k-invite-card__employer">Demo Bakkerij Noord · Amersfoort</p>
+        <p class="k-invite-card__slots"><strong>Nog 2 plekken open</strong> · 24–32 uur · per direct</p>
+        <p class="k-invite-card__lead">Je bent anoniem zichtbaar voor deze werkgever. Jij kiest of je reageert.</p>
+        <div class="k-notif-item__actions">
+          <button type="button" class="k-btn k-btn--primary">Bekijk vacature</button>
+          <button type="button" class="k-btn">Niet interessant</button>
+        </div>
+        <p class="k-notif-item__fine">${declineFine}</p>
+      </li>
+    </ul>
+  </aside>
+${shellEnd()}`;
+
+fs.writeFileSync(path.join(pagesDir, "uitnodiging-kaart.html"), inviteCardPage, "utf8");
+
+const plekVergevenPage = `${head("Kandidaat — plek vergeven")}
+${candidateShell({ behindOverlay: true })}
+  <div class="k-popup-scrim" role="presentation">
+    <div class="k-popup k-popup--wide" role="dialog" aria-labelledby="filled-title">
+      <h2 id="filled-title">Deze plek is net vergeven</h2>
+      <p>Geen zorgen — dat gebeurt soms. Hier zijn <strong>3 vergelijkbare vacatures</strong> bij jou in de buurt.</p>
+      <ul class="k-vac-list">
+        <li class="k-vac-card">
+          <div class="k-vac-card__row">
+            <strong>Productiemedewerker ochtend</strong>
+            <span class="k-match-pill k-match-pill--soft">81% match</span>
+          </div>
+          <span class="k-vac-card__meta">Bakkerij De Korenbloem · Amersfoort · 24–32 u</span>
+        </li>
+        <li class="k-vac-card">
+          <div class="k-vac-card__row">
+            <strong>Operator broodlijn</strong>
+            <span class="k-match-pill k-match-pill--soft">79% match</span>
+          </div>
+          <span class="k-vac-card__meta">Artisan Foods · Leusden · 32+ u</span>
+        </li>
+        <li class="k-vac-card">
+          <div class="k-vac-card__row">
+            <strong>Allround productiemedewerker</strong>
+            <span class="k-match-pill k-match-pill--soft">77% match</span>
+          </div>
+          <span class="k-vac-card__meta">Noord Food Co · Soest · 24–32 u</span>
+        </li>
+      </ul>
+      <div class="k-popup__actions">
+        <button type="button" class="k-btn k-btn--primary">Naar vacatures</button>
+        <button type="button" class="k-btn">Sluiten</button>
+      </div>
+    </div>
+  </div>
+${shellEnd()}`;
+
+fs.writeFileSync(path.join(pagesDir, "plek-vergeven.html"), plekVergevenPage, "utf8");
+
+const digestEmailPage = `${head("Kandidaat — uitnodigingen digest (e-mail)")}
+<body>
+<div class="k-email-wrap">
+  <article class="k-email k-email--digest">
+    <div class="k-email__meta">
+      <div><strong>Van:</strong> Lobsy &lt;hallo@lobsy.nl&gt;</div>
+      <div><strong>Aan:</strong> jij@example.com</div>
+      <div><strong>Onderwerp:</strong> 3 uitnodigingen voor jou deze week</div>
+    </div>
+    <div class="k-email__body">
+      <div class="k-email__logo">
+        <img src="${logoRel}" width="40" height="40" alt=""/>
+        <span>Lobsy</span>
+      </div>
+      <h1>Je uitnodigingen op een rij</h1>
+      <p>Hoi,</p>
+      <p>Deze week staan er <strong>3 uitnodigingen</strong> voor je klaar. We bundelen ze bewust in één mail, zodat je rustig kunt kiezen (maximaal 2–3 uitnodigingsmails per week).</p>
+      <ul class="k-digest-list">
+        <li class="k-digest-item">
+          <div class="k-digest-item__row"><strong>Productiemedewerker</strong><span class="k-match-pill k-match-pill--email">84%</span></div>
+          <span>Demo Bakkerij Noord · Amersfoort · Nog 2 plekken open</span>
+        </li>
+        <li class="k-digest-item">
+          <div class="k-digest-item__row"><strong>Operator broodlijn</strong><span class="k-match-pill k-match-pill--email">79%</span></div>
+          <span>Artisan Foods · Leusden · Nog 1 plek open</span>
+        </li>
+        <li class="k-digest-item">
+          <div class="k-digest-item__row"><strong>Allround productiemedewerker</strong><span class="k-match-pill k-match-pill--email">77%</span></div>
+          <span>Noord Food Co · Soest · Nog 3 plekken open</span>
+        </li>
+      </ul>
+      <div class="k-email__cta">
+        <a class="k-btn k-btn--primary" href="#" style="text-decoration:none">Alle uitnodigingen bekijken</a>
+      </div>
+      <p style="font-size:var(--text-xs);color:var(--muted)">Wil je minder mail? Pas je voorkeur aan onder Instellingen → Uitnodigingen van werkgevers.</p>
+      <div class="k-email__footer">
+        <p>Je ontvangt deze mail omdat je vindbaar bent voor werkgevers op Lobsy.</p>
+      </div>
+    </div>
+  </article>
+</div>
+</body></html>`;
+
+fs.writeFileSync(path.join(pagesDir, "uitnodigingen-digest-email.html"), digestEmailPage, "utf8");
+
+const settingsPage = `${head("Kandidaat — instellingen uitnodigingen")}
+<body class="k-settings-body">
+<div class="k-settings">
+  <header class="k-settings__top">
+    <a class="k-settings__back" href="#">← Instellingen</a>
+    <h1>Uitnodigingen van werkgevers</h1>
+    <p class="k-settings__lead">Bepaal of en hoe vaak je anonieme uitnodigingen ontvangt via Lobsy.</p>
+  </header>
+  <section class="k-settings__section" aria-labelledby="pref-mode">
+    <h2 id="pref-mode">Voorkeur</h2>
+    <div class="k-setting-seg" role="radiogroup" aria-label="Uitnodigingen van werkgevers">
+      <label class="k-setting-seg__opt"><input type="radio" name="inv" checked/> Aan</label>
+      <label class="k-setting-seg__opt k-setting-seg__opt--on"><input type="radio" name="inv"/> Max per week</label>
+      <label class="k-setting-seg__opt"><input type="radio" name="inv"/> Uit</label>
+    </div>
+  </section>
+  <section class="k-settings__section" aria-labelledby="pref-max">
+    <h2 id="pref-max">Maximum per week</h2>
+    <p class="k-settings__hint">Geldt voor uitnodigingsmail en samenvattende digest (max. 2–3 contactmomenten).</p>
+    <div class="k-setting-seg k-setting-seg--compact" role="radiogroup" aria-label="Maximum uitnodigingen per week">
+      <label class="k-setting-seg__opt"><input type="radio" name="max"/> 1</label>
+      <label class="k-setting-seg__opt k-setting-seg__opt--on"><input type="radio" name="max" checked/> 2</label>
+      <label class="k-setting-seg__opt"><input type="radio" name="max"/> 3</label>
+    </div>
+  </section>
+  <p class="k-settings__fine">Uit staat los van sollicitaties waar je zelf op reageert. Je blijft vindbaar op de kaart tenzij je beschikbaarheid aanpast.</p>
+</div>
+</body></html>`;
+
+fs.writeFileSync(path.join(pagesDir, "instellingen-uitnodigingen.html"), settingsPage, "utf8");
+
 console.log("Wrote kandidaat pages in", path.relative(root, pagesDir));

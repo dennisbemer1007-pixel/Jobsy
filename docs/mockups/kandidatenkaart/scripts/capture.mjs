@@ -9,7 +9,7 @@ const outDir = root;
 const artifactsDir = "/opt/cursor/artifacts/kandidatenkaart";
 
 const states = ["preview", "full", "area", "invite", "filters-open", "area-sparse"];
-const variants = ["a", "b"];
+const bOnlyStates = ["invite-extended", "invite-status", "invite-status-vol"];
 
 const candidatePages = [
   { id: "reminder-notificatie", file: "kandidaat/reminder-notificatie.html", label: "Herinnering in-app" },
@@ -17,6 +17,10 @@ const candidatePages = [
   { id: "inactivity-email", file: "kandidaat/inactivity-email.html", label: "Activiteitscheck e-mail" },
   { id: "inactivity-notificatie", file: "kandidaat/inactivity-notificatie.html", label: "Activiteitscheck in-app" },
   { id: "weer-beschikbaar-popup", file: "kandidaat/weer-beschikbaar-popup.html", label: "Weer beschikbaar popup" },
+  { id: "uitnodiging-kaart", file: "kandidaat/uitnodiging-kaart.html", label: "Uitnodiging kaart" },
+  { id: "plek-vergeven", file: "kandidaat/plek-vergeven.html", label: "Plek vergeven" },
+  { id: "uitnodigingen-digest-email", file: "kandidaat/uitnodigingen-digest-email.html", label: "Uitnodigingen digest" },
+  { id: "instellingen-uitnodigingen", file: "kandidaat/instellingen-uitnodigingen.html", label: "Instellingen uitnodigingen" },
 ];
 
 const viewports = [
@@ -30,20 +34,21 @@ function pngName(prefix, vp) {
     : `${prefix}-mobile-390x844@2x.png`;
 }
 
-function overviewHtml() {
-  const employerGroups = variants
-    .map((v) => {
-      const cards = states
-        .flatMap((s) =>
-          viewports.map((vp) => {
-            const file = pngName(`${v}-${s}`, vp);
-            return `<figure class="shot"><figcaption>Werkgever ${v.toUpperCase()} · ${s} · ${vp.key}</figcaption><img src="${file}" alt="" loading="lazy"/></figure>`;
-          })
-        )
-        .join("\n");
-      return `<section><h2>Werkgever — variant ${v.toUpperCase()}</h2><div class="grid">${cards}</div></section>`;
-    })
+function shotCards(prefix, labelPrefix, stateList) {
+  return stateList
+    .flatMap((s) =>
+      viewports.map((vp) => {
+        const file = pngName(`${prefix}-${s}`, vp);
+        return `<figure class="shot"><figcaption>${labelPrefix} · ${s} · ${vp.key}</figcaption><img src="${file}" alt="" loading="lazy"/></figure>`;
+      })
+    )
     .join("\n");
+}
+
+function overviewHtml() {
+  const employerA = `<section><h2>Werkgever — variant A (legacy)</h2><div class="grid">${shotCards("a", "Werkgever A", states)}</div></section>`;
+  const employerBBase = `<section><h2>Werkgever — variant B (basis)</h2><div class="grid">${shotCards("b", "Werkgever B", states)}</div></section>`;
+  const employerBInvite = `<section><h2>Werkgever — variant B (uitnodigingsregels)</h2><div class="grid">${shotCards("b", "Werkgever B", bOnlyStates)}</div></section>`;
 
   const candidateCards = candidatePages
     .flatMap((p) =>
@@ -54,7 +59,9 @@ function overviewHtml() {
     )
     .join("\n");
 
-  const groups = `${employerGroups}
+  const groups = `${employerA}
+  ${employerBBase}
+  ${employerBInvite}
   <section><h2>Kandidaat — uitnodiging &amp; beschikbaarheid</h2><div class="grid">${candidateCards}</div></section>`;
 
   return `<!DOCTYPE html>
@@ -77,7 +84,7 @@ function overviewHtml() {
 </head>
 <body>
   <h1>Kandidatenkaart — mockup overzicht</h1>
-  <p class="lead">Werkgever: preview, volledige kaart, gebied, uitnodiging, filters open (mobiel sheet / desktop popover), gebied onder 30 na filters. Kandidaat: uitnodiging, activiteitscheck, weer beschikbaar. Desktop 1440×900 · mobiel 390×844 @2x.</p>
+  <p class="lead">Werkgever B (focus): getrapt uitnodigen, status rondes, vacature vol. Kandidaat: uitnodigingskaart, plek vergeven, weekly digest, instellingen. Desktop 1440×900 · mobiel 390×844 @2x.</p>
   ${groups}
 </body>
 </html>`;
@@ -109,11 +116,14 @@ async function capturePage(browser, htmlFile, prefix) {
 
 const browser = await chromium.launch();
 
-for (const variant of variants) {
-  for (const state of states) {
-    const file = path.join(pagesDir, `${variant}-${state}.html`);
-    await capturePage(browser, file, `${variant}-${state}`);
-  }
+for (const state of states) {
+  await capturePage(browser, path.join(pagesDir, `a-${state}.html`), `a-${state}`);
+}
+for (const state of states) {
+  await capturePage(browser, path.join(pagesDir, `b-${state}.html`), `b-${state}`);
+}
+for (const state of bOnlyStates) {
+  await capturePage(browser, path.join(pagesDir, `b-${state}.html`), `b-${state}`);
 }
 
 for (const cp of candidatePages) {
