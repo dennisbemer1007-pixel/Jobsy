@@ -8,6 +8,9 @@
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthState
+@inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
+@using Jobsy.Web.Werkgever
+@inject EmployerScopeState Scope
 
 <PageTitle>@Culture["CultureScan.EmployerTitle"] · Lobsy</PageTitle>
 
@@ -20,6 +23,11 @@
             <p class="profile-address__hint">@Culture["Employer.RegionalReadOnlyNotice"]</p>
         }
     </header>
+
+    @if (_employerFitEnabled && _fitCompanyId is Guid fitCid)
+    {
+        <EmployerFitTeamCultureSection CompanyId="fitCid" />
+    }
 
     <article class="detail-card">
         <p class="login-lead">@Culture["CultureScan.EmployerNote"]</p>
@@ -113,6 +121,8 @@
     private bool _loadFailed;
     private bool _canMutate = true;
     private bool _fromQuick;
+    private bool _employerFitEnabled;
+    private Guid? _fitCompanyId;
     private string? _message;
     private readonly Dictionary<int, int> _answers = [];
     private CulturePersonalityScoreSet? _scores;
@@ -123,6 +133,11 @@
     {
         var auth = await AuthState.GetAuthenticationStateAsync();
         _canMutate = ResolveCanMutate(auth.User);
+        var flags = await FeatureFlags.GetAsync();
+        _employerFitEnabled = flags.IsEnabled(Jobsy.Core.Features.PlatformFeature.EmployerFitQuestionnaires);
+        _fitCompanyId = Scope.Current?.Kind == EmployerScopeKind.Vestiging
+            ? Scope.Current.Id
+            : Scope.CompanyIds.FirstOrDefault();
         try
         {
             var state = await Api.GetCompanyCultureAsync();

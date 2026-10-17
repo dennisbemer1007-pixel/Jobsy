@@ -16,12 +16,17 @@ public static class ShareablePreferenceNormalizer
         var outdoor = WorkPreferenceCatalogs.CanonicalOutdoor(incoming.Outdoor);
         var physical = WorkPreferenceCatalogs.CanonicalPhysicalWork(incoming.PhysicalWork);
         var pace = WorkPreferenceCatalogs.CanonicalPace(incoming.Pace);
-        if (indoor is null && outdoor is null && physical is null && pace is null)
+        var teamMode = WorkPreferenceCatalogs.CanonicalTeamMode(incoming.TeamMode);
+        var structure = WorkPreferenceCatalogs.CanonicalStructure(incoming.Structure);
+        var customer = WorkPreferenceCatalogs.CanonicalCustomerContact(incoming.CustomerContact);
+        var shifts = WorkPreferenceCatalogs.CanonicalShiftsPreference(incoming.ShiftsPreference);
+        if (indoor is null && outdoor is null && physical is null && pace is null
+            && teamMode is null && structure is null && customer is null && shifts is null)
         {
             return null;
         }
 
-        return new SharedWorkPreferences(indoor, outdoor, physical, pace);
+        return new SharedWorkPreferences(indoor, outdoor, physical, pace, teamMode, structure, customer, shifts);
     }
 
     public static string? NormalizeRegion(string? incoming, string? existing)

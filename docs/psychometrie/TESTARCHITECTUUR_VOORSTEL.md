@@ -39,6 +39,21 @@ Legenda kolommen: **Primair** = hoofdmeting; **Secundair** = afgeleid/heuristisc
 
 **v2 (PR #647, flag uit):** 40 + 48 + 24 + 40 = **152** Quick-Scan-items (+ diepte ongewijzigd versioning).
 
+#### Eigenaar-tier (per test / module)
+
+| Laag | Doel | Itembudget (richtlijn) | Betrouwbaarheid |
+|------|------|------------------------|-----------------|
+| **Onboarding** | Snel beeld + eerste match-hint | Mini per module (wizard; doel ~14–21 items totaal) | Expliciet **indicatief** |
+| **FREE verdieping** | Volledige Quick-Scan per construct | **Max. 25 vragen per test** (niet cumulatief over modules) | Volledige free-laag waar ≥8 items/schaal haalbaar; anders indicatief |
+| **PAID diepte** | Rapport + hogere match-evidence | **150–200 vragen** per dieptest (bundel Persoon+Werkstijl i.p.v. dubbele upsells) | Hogere confidence in UI; nog steeds geen normclaim zonder data |
+
+**Spanning v2 vs tier:** huidige v2 Quick-Scans (**40 / 48 / 24 / 40**) overschrijden de **25 free**-grens per test. **Voorstel zonder v2-itembank te wijzigen in deze PR:**
+
+1. **Productcopy + `AssessmentMatchEvidence`:** alles boven 25 beantwoorde items in de free-laag blijft **indicatief** voor match-confidence (cap zoals `MatchCalibrationV1` / `IndicativeFitCap`).
+2. **v3 module-architectuur (§2.2):** free-Likert **30+24+12+20** herverdeeld zodat **geen module** de 25-grens overschrijdt (Persoon 30 → split onboarding 14 + free 25 via versioning).
+3. **v2 als tussenstap (#647):** flag `TestsV2Enabled` uit default; pilot meet completion vs v1; marketing noemt v2 “uitgebreide scan”, match toont **indicatief** tot tier-fit is afgerond.
+4. **COTAN-conservatief:** free-tier reliability **niet** gelijkstellen aan 40–48 item-schalen; diepte-rapporten blijven leidend voor interpretatie.
+
 ### 1.2 Waar matching nu op leunt (`ProfileVacancyMatchCalculator`)
 
 | Signaal | Bron kandidaat | Bron vacature | Rol in score |

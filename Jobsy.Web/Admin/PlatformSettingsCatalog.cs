@@ -409,6 +409,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("EmployerFitQuestionnairesEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "EmployerFitQuestionnairesEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.EmployerFitQuestionnaires.Enabled.Title",
+                DescriptionKey: "AdminSettings.EmployerFitQuestionnaires.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.EmployerFitQuestionnairesEnabled,
+                Write: v => new PlatformFeatureUpdate(EmployerFitQuestionnairesEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("CandidateApplyPerHourLimit"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -654,6 +667,7 @@ public static class PlatformSettingsCatalog
         bool? candidateExternalVacanciesEnabled = null;
         bool? proactiveMatchingEnabled = null;
         bool? matchCalibrationV1Enabled = null;
+        bool? employerFitQuestionnairesEnabled = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
         int? candidateApplyPerHour = null;
@@ -715,6 +729,11 @@ public static class PlatformSettingsCatalog
                 matchCalibrationV1Enabled = p.MatchCalibrationV1Enabled;
             }
 
+            if (p.EmployerFitQuestionnairesEnabled is not null)
+            {
+                employerFitQuestionnairesEnabled = p.EmployerFitQuestionnairesEnabled;
+            }
+
             if (p.CandidateApplyPerMinuteLimit is not null)
             {
                 candidateApplyPerMinute = p.CandidateApplyPerMinuteLimit;
@@ -765,6 +784,7 @@ public static class PlatformSettingsCatalog
             CandidateExternalVacanciesEnabled: candidateExternalVacanciesEnabled,
             ProactiveMatchingEnabled: proactiveMatchingEnabled,
             MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
+            EmployerFitQuestionnairesEnabled: employerFitQuestionnairesEnabled,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,
             CandidateApplyPerDayLimit: candidateApplyPerDay);

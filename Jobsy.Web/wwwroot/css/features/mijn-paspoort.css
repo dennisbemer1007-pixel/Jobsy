@@ -2162,16 +2162,48 @@
     margin-block-end: var(--space-2, 0.5rem);
 }
 
+.shared-with-employers,
 .profile-chip-grid:not(.lobsy-choice-grid) {
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2, 0.5rem);
+    flex-direction: column;
+    gap: var(--space-3, 0.75rem);
 }
 
+.shared-with-employers__help {
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-sm, 0.875rem);
+    line-height: 1.45;
+}
+
+.kompas-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.25;
+    cursor: pointer;
+    text-align: center;
+}
+
+.kompas-chip.is-selected,
 .profile-chip-grid .kompas-chip.is-selected {
     background: var(--accent-soft);
     border-color: var(--accent);
     color: var(--brand);
+}
+
+.profile-chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2, 0.5rem);
 }
 
 .passport-data__private-note {

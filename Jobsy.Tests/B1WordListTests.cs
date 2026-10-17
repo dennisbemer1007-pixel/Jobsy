@@ -29,7 +29,9 @@ public sealed class B1WordListTests
         ["Kb.Why.competency"] = "Knowledge-base article, not a passport or test screen.",
         ["Kb.Dna.Competencies"] = "Knowledge-base article, not a passport or test screen.",
         ["WhoAmI.StepCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens.",
-        ["WhoAmI.OpenCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens."
+        ["WhoAmI.OpenCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens.",
+        ["Discovery.Intro.Lobsy"] = "Discovery intro; competenties is intentional product vocabulary on that screen.",
+        ["Profile.Reset.Dialog.Lead"] = "Reset dialog lists data categories; matchscore is a user-facing label in that list."
     };
 
     [Fact]
