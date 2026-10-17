@@ -7,9 +7,11 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @attribute [RequiresFeature(PlatformFeature.ProactiveMatching)]
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["ProactiveMatching.Title"] · Lobsy</PageTitle>
 
@@ -217,7 +219,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -253,7 +256,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -303,7 +307,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
             ApplySettings(_settings);
         }
         finally
@@ -335,7 +340,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

@@ -5,9 +5,11 @@
 @using Jobsy.Web.Components.Admin
 @using Jobsy.Web.Components.Admin.Ui
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject UserFacingError UserFacing
 
 <PageTitle>@Culture["AdminNav.BeheerTaken"] · Lobsy</PageTitle>
 
@@ -207,7 +209,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
             _items = [];
         }
         finally
@@ -277,7 +280,8 @@
         }
         catch (Exception ex)
         {
-            _formError = ex.Message;
+            var uf = UserFacing.From(ex);
+            _formError = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -296,7 +300,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {
@@ -328,7 +333,8 @@
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
         }
         finally
         {

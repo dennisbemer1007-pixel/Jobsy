@@ -173,7 +173,7 @@ public class EmployerRun3FollowupTests
     private sealed record AppId(Guid Id, Guid VacancyId);
 }
 
-public sealed class EmployerRun3ApiFactory : WebApplicationFactory<Jobsy.Api.ApiAssemblyMarker>
+public sealed class EmployerRun3ApiFactory : ApiWebApplicationFactory
 {
     private readonly string _dbName = "Run3-" + Guid.NewGuid().ToString("N");
     private bool _seeded;

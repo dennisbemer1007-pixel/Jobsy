@@ -110,7 +110,7 @@ public sealed class ExternalAuthEnhancedNavPlaywrightTests : IAsyncLifetime
         Assert.Contains("external-oauth-landed", page.Url, StringComparison.OrdinalIgnoreCase);
     }
 
-    private sealed class ExternalAuthNavWebFactory : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class ExternalAuthNavWebFactory : WebWebApplicationFactory
     {
         private IHost? _kestrel;
 

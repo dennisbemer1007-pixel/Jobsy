@@ -96,7 +96,7 @@ internal static class UiStringsAssessmentV2
         ["AssessmentV2.Culture.Q24"] = "Nieuwe software of werkwijzen leer ik liever niet.",
         ["AssessmentV2.Transparency.HumanOversight"] = "Resultaten worden niet automatisch gebruikt voor afwijzing; een recruiter kijkt altijd mee.",
         ["AssessmentV2.Transparency.Lead"] = "Meer vragen per schaal geven een stabieler beeld. Jij blijft eigenaar van je antwoorden.",
-        ["AssessmentV2.Transparency.MatchIndicative"] = "Matchscores zijn een hulpmiddel; jij beslist welke vacatures je volgt.",
+        ["AssessmentV2.Transparency.MatchIndicative"] = "Hoe goed je past is een hulpmiddel; jij beslist welke vacatures je volgt.",
         ["AssessmentV2.Transparency.NotDiagnosis"] = "Dit is geen medische of psychologische diagnose — wel een indicatie voor passend werk.",
         ["AssessmentV2.Transparency.Title"] = "Over deze Quick-Scan (v2)",
     };
