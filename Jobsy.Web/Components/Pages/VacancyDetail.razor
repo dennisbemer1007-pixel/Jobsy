@@ -687,7 +687,7 @@
                                             </label>
                                         </div>
                                     }
-                                    @if (_authenticatorEnabled)
+                                    @if (Configuration.GetValue("Jobsy:ApplyAuthenticatorStubEnabled", false))
                                     {
                                         <label class="apply-check">
                                             <input type="checkbox" @bind="_useAuthenticator" />
