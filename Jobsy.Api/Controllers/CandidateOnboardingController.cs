@@ -29,6 +29,19 @@ public sealed class CandidateOnboardingController : ControllerBase
         _users = users;
     }
 
+    [HttpGet("nearby-signal")]
+    [EnableRateLimiting("public-read")]
+    public async Task<ActionResult<OnboardingNearbySignalDto>> GetNearbySignal(CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound(new { message = "Gebruiker niet gevonden in Jobsy." });
+        }
+
+        return Ok(await _onboarding.GetNearbySignalAsync(user.Id, cancellationToken));
+    }
+
     [HttpGet("discovery-overview")]
     [EnableRateLimiting("public-read")]
     public async Task<ActionResult<CandidateDiscoveryOverviewPanelDto>> GetDiscoveryOverview(
