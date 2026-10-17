@@ -8,6 +8,82 @@ namespace Jobsy.Tests;
 public sealed class VroegResultaatPlaywrightTests
 {
     [Fact]
+    public async Task Skip_tests_later_opens_banenkaart_and_capture_when_requested()
+    {
+        var capture = (Environment.GetEnvironmentVariable("JOBSY_CAPTURE_VROEG") ?? "").Trim() == "1";
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        if (!await SmokeReachability.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        var afterDir = "/cursor/stores/self/vroeg-resultaat-impl/after";
+        if (capture)
+        {
+            Directory.CreateDirectory(afterDir);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        await CaptureSkipBanenkaartAsync(browser, baseUrl, afterDir, capture, mobile2x: true, width: 390, height: 844, scale: 2, fileName: "skip-banenkaart-mobile-390@2x.png");
+        await CaptureSkipBanenkaartAsync(browser, baseUrl, afterDir, capture, mobile2x: false, width: 1440, height: 900, scale: 1, fileName: "skip-banenkaart-desktop-1440.png");
+    }
+
+    private static async Task CaptureSkipBanenkaartAsync(
+        IBrowser browser,
+        string baseUrl,
+        string afterDir,
+        bool capture,
+        bool mobile2x,
+        int width,
+        int height,
+        int scale,
+        string fileName)
+    {
+        await using var ctx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            DeviceScaleFactor = scale,
+            IsMobile = mobile2x || width < 500,
+            HasTouch = width < 500,
+            Locale = "nl-NL",
+            IgnoreHTTPSErrors = true,
+        });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await RegisterFreshCandidateAsync(page, baseUrl);
+        await EnsureWizardStartedAsync(page);
+        await FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
+        await ClickNextAsync(page);
+        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
+        await ClickNextAsync(page);
+        await NavigateToTestConsentWithoutStartingAsync(page);
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForTimeoutAsync(1500);
+
+        if (capture)
+        {
+            await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "skip-consent-before-click.png") });
+        }
+
+        await page.GetByTestId("onboarding-tests-later").First.ClickAsync(new() { Force = true });
+        await page.WaitForURLAsync(u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase), new() { Timeout = 90_000 });
+        await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await page.Locator("#jobsy-map-boot").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(2500);
+        Assert.Contains("/banenkaart", page.Url, StringComparison.OrdinalIgnoreCase);
+
+        if (capture)
+        {
+            await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, fileName), FullPage = false });
+        }
+    }
+
+    [Fact]
     public async Task Early_reward_screens_layout_and_capture_when_requested()
     {
         var capture = (Environment.GetEnvironmentVariable("JOBSY_CAPTURE_VROEG") ?? "").Trim() == "1";
@@ -442,6 +518,46 @@ combo.save(out)
         }
 
         await travel.First.ClickAsync();
+    }
+
+    private static async Task NavigateToTestConsentWithoutStartingAsync(IPage page)
+    {
+        for (var step = 0; step < 6; step++)
+        {
+            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
+            {
+                return;
+            }
+
+            if (await page.Locator(".test-likert").CountAsync() > 0)
+            {
+                return;
+            }
+
+            var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Overslaan", RegexOptions.IgnoreCase) });
+            if (await skip.CountAsync() > 0)
+            {
+                await skip.First.ClickAsync(new() { Timeout = 8_000 });
+                await page.WaitForTimeoutAsync(450);
+                continue;
+            }
+
+            var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Weet ik nog niet", RegexOptions.IgnoreCase) });
+            if (await unknown.CountAsync() > 0)
+            {
+                await unknown.First.ClickAsync(new() { Timeout = 8_000 });
+                await page.WaitForTimeoutAsync(450);
+                continue;
+            }
+
+            if (await page.Locator("[data-testid=onboarding-next]").CountAsync() > 0)
+            {
+                await ClickNextAsync(page);
+                continue;
+            }
+
+            break;
+        }
     }
 
     private static async Task SkipOptionalStepsToConsentAsync(IPage page)

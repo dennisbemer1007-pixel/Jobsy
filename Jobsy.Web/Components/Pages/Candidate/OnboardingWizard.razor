@@ -17,6 +17,7 @@
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.KandidaatBanen
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
@@ -282,7 +283,10 @@
                             break;
 
                         case 7 when !Draft.HasConsent:
-                            <TestConsentStep Draft="Draft" TestTabs="ConsentTabs" ConsentChanged="OnConsentChanged" />
+                            <TestConsentStep Draft="Draft"
+                                             TestTabs="ConsentTabs"
+                                             ConsentChanged="OnConsentChanged"
+                                             SkipTestsLater="SkipTestsLaterAsync" />
                             break;
 
                         case >= 7 and <= 10:
@@ -294,9 +298,11 @@
                                                 Answers="MiniVisibleAnswers"
                                                 Depth="TestDepthLevel.First"
                                                 InputPrefix="@MiniPrefix"
+                                                LaterLabel="@Culture["Onboarding.Tests.LaterDoen"]"
                                                 Answer="OnMiniAnswer"
                                                 OnFinished="FinishMiniAsync"
                                                 OnLeave="BackAsync"
+                                                OnLater="SkipTestsLaterAsync"
                                                 ExpandQuestion="ExpandQuestion"
                                                 ResolveQuestionText="QuestionText" />
                             break;
@@ -322,6 +328,16 @@
                         {
                             <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="DreamUnknownAsync">
                                 @Culture["Onboarding.DreamUnknown"]
+                            </button>
+                        }
+                        else if (ShowTestsLaterOffer)
+                        {
+                            <button type="button"
+                                    class="ob-wizard__ghost ob-wizard__footer-extra"
+                                    data-testid="onboarding-tests-later"
+                                    disabled="@_busy"
+                                    @onclick="SkipTestsLaterAsync">
+                                @Culture["Onboarding.Tests.LaterDoen"]
                             </button>
                         }
                         <div class="ob-wizard__actionbar">
@@ -493,6 +509,13 @@
         && _step is >= 7 and <= 10
         && Draft.HasConsent
         && _miniQuestions.Count > 0;
+
+    private bool ShowTestsLaterOffer =>
+        _earlyMoment == EarlyRewardMoment.FirstInsight
+        || (_step == 7 && !Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None)
+        || (_step is >= 7 and <= 10 && Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None);
+
+    private const string BanenkaartPath = KbRoutes.Map;
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
@@ -868,6 +891,48 @@
             // Persisting before leaving is best effort.
         }
         Navigation.NavigateTo("/home");
+    }
+
+    /// <summary>Skip mini-tests; basics stay saved. Tests remain on paspoort / ontdekkingsreis.</summary>
+    private async Task SkipTestsLaterAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            await FlushAsync();
+            if (_step == 6)
+            {
+                await SaveDreamAsync();
+            }
+
+            if (_autosave is not null)
+            {
+                await _autosave.FlushAsync();
+            }
+
+            _earlyMoment = EarlyRewardMoment.None;
+            _earlyStrength = null;
+            _nearbySignal = null;
+
+            _state = await Api.SaveMyOnboardingProgressAsync(6, stepCompleted: true, finishReached: true);
+            await Api.CompleteMyOnboardingAsync();
+            Navigation.NavigateTo(BanenkaartPath);
+        }
+        catch (Exception ex)
+        {
+            _error = UserFacing.Describe(ex);
+            _saveError = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private void ShowCity() => Draft.ShowCity = true;

@@ -25,6 +25,13 @@
     <p>@Culture["Onboarding.Consent.MoreText"]</p>
 </details>
 <p class="ob-wizard__hint"><span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span> @Culture["Onboarding.Consent.Private"]</p>
+<button type="button"
+        class="ob-wizard__ghost ob-wizard__skip-tests"
+        data-testid="onboarding-tests-later"
+        @onclick="OnSkipTestsLater">
+    @Culture["Onboarding.Tests.LaterDoen"]
+</button>
+<p class="ob-wizard__hint">@Culture["Onboarding.Tests.LaterDoenHint"]</p>
 </div>
 
 @code {
@@ -34,6 +41,7 @@
     [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
     /// <summary>Notifies the parent so buttons bound to <see cref="OnboardingProfileDraft.ConsentRequested"/> re-render.</summary>
     [Parameter] public EventCallback<bool> ConsentChanged { get; set; }
+    [Parameter] public EventCallback SkipTestsLater { get; set; }
 
     private async Task OnConsentChanged(ChangeEventArgs args)
     {
@@ -41,4 +49,6 @@
         Draft.ConsentRequested = value;
         await ConsentChanged.InvokeAsync(value);
     }
+
+    private Task OnSkipTestsLater() => SkipTestsLater.InvokeAsync();
 }

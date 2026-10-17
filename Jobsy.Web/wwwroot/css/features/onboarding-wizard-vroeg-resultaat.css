@@ -248,6 +248,13 @@
   font-size: 0.65rem;
 }
 
+.ob-wizard__skip-tests {
+  margin-top: 14px;
+  width: 100%;
+  min-height: 44px;
+  font-weight: 600;
+}
+
 @media (min-width: 1024px) {
   .ob-vroeg__title {
     font-size: 1.65rem;
