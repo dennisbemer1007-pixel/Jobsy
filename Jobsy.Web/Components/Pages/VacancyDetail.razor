@@ -14,7 +14,7 @@
 @inject CultureState Culture
 @inject PersistentComponentState Persist
 @inject IHttpContextAccessor HttpContextAccessor
-@inject IHostEnvironment HostEnvironment
+@inject IConfiguration Configuration
 @inject UserFacingError UserFacing
 @using Jobsy.Core.Media
 @using Jobsy.Core.Contracts
@@ -1923,8 +1923,8 @@
             if (profile is not null)
             {
                 _dobInput = profile.DateOfBirth;
-                _authenticatorEnabled = HostEnvironment.IsDevelopment()
-                    && profile.AuthenticatorEnabled == true;
+                _authenticatorEnabled = profile.AuthenticatorEnabled == true
+                    && Configuration.GetValue("Jobsy:ApplyAuthenticatorStubEnabled", false);
                 var prefs = profile.Preferences ?? new CandidatePreferences();
                 _requiresDrivingLicense = !string.IsNullOrWhiteSpace(_vacancy?.RequiredDrivingLicense);
                 _requiresEducation = !string.IsNullOrWhiteSpace(_vacancy?.RequiredEducation);

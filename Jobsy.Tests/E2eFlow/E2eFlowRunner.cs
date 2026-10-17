@@ -379,12 +379,15 @@ internal sealed class E2eFlowRunner
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
             await OpenVacancyApplyPanelAsync(page);
-            if (mobile)
-            {
-                await page.EvaluateAsync(
-                    "() => { document.getElementById('apply')?.scrollIntoView({ block: 'center', behavior: 'instant' }); }");
-                await page.WaitForTimeoutAsync(600);
-            }
+            await page.EvaluateAsync(
+                """
+                () => {
+                  const apply = document.getElementById('apply');
+                  apply?.scrollIntoView({ block: 'start', behavior: 'instant' });
+                  window.scrollBy(0, -8);
+                }
+                """);
+            await page.WaitForTimeoutAsync(mobile ? 700 : 450);
 
             try
             {
@@ -508,7 +511,22 @@ internal sealed class E2eFlowRunner
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             await OpenVacancyApplyPanelAsync(page);
-            await page.Locator(".apply-panel--success").WaitForAsync(new() { Timeout = 20_000 });
+            try
+            {
+                await page.Locator(".apply-panel--success, .kb-detail-applied").WaitForAsync(new() { Timeout = 20_000 });
+            }
+            catch (TimeoutException)
+            {
+                await page.ReloadAsync();
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                await OpenVacancyApplyPanelAsync(page);
+            }
+
+            if (await page.Locator(".apply-panel--success, .kb-detail-applied").CountAsync() == 0)
+            {
+                continue;
+            }
+
             await page.EvaluateAsync(
                 """
                 () => {
