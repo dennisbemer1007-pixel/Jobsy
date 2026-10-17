@@ -3,6 +3,7 @@
 @using Jobsy.Web.Pwa
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject PwaInstallSheetState SheetState
 @implements IAsyncDisposable
 
 @if (_visible)
@@ -19,17 +20,15 @@
             {
                 <button type="button" class="login-submit" @onclick="OpenSheetAsync">@Culture["Pwa.Entry.Install"]</button>
             }
-            <button type="button" class="engagement-btn" @onclick="DismissAsync">@Culture["Pwa.Dismiss"]</button>
+            <button type="button" class="pwa-entry-card__dismiss" @onclick="DismissAsync">@Culture["Pwa.Dismiss"]</button>
         </div>
     </aside>
-    <CandidatePwaInstallSheet @ref="_sheet" Platform="_platform" />
 }
 
 @code {
     private bool _visible;
     private bool _hydrated;
     private PwaEntryPlatform _platform = PwaEntryPlatform.None;
-    private CandidatePwaInstallSheet? _sheet;
     private DotNetObjectReference<CandidatePwaInstallPostApplyCard>? _self;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -86,12 +85,10 @@
         await RefreshAsync();
     }
 
-    private async Task OpenSheetAsync()
+    private Task OpenSheetAsync()
     {
-        if (_sheet is not null)
-        {
-            await _sheet.OpenAsync(_platform);
-        }
+        SheetState.Open(_platform);
+        return Task.CompletedTask;
     }
 
     private async Task DismissAsync()

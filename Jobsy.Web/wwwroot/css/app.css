@@ -20489,34 +20489,36 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     }
 }
 
-.app-shell:has(.pwa-entry-sheet-backdrop) .lobsy-coach-dock,
-.app-shell:has(.pwa-entry-sheet-backdrop) .lobsy-assistant,
-.app-shell:has(.pwa-entry-sheet-backdrop) .feedback-widget {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
+.app-shell.pwa-sheet-open [data-lobsy-coach],
+.app-shell.pwa-sheet-open .lobsy-coach-dock,
+.app-shell.pwa-sheet-open .lobsy-assistant,
+.app-shell.pwa-sheet-open .lobsy-assistant-tab,
+.app-shell.pwa-sheet-open .feedback-widget,
+.app-shell.pwa-sheet-open .lobsy-assistant-chat {
+    display: none !important;
 }
 
 .pwa-entry-sheet-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 200;
+    z-index: 1100;
     background: rgb(15 45 92 / 0.35);
 }
 
 .pwa-entry-sheet {
     position: fixed;
-    z-index: 201;
+    z-index: 1101;
     left: 0;
     right: 0;
-    bottom: 0;
-    max-height: min(85vh, 28rem);
+    bottom: calc(var(--bottom-nav-h, 4.75rem) + env(safe-area-inset-bottom, 0px));
+    max-height: min(62vh, calc(100dvh - var(--bottom-nav-h, 4.75rem) - env(safe-area-inset-bottom, 0px) - 1rem));
     display: flex;
     flex-direction: column;
     border-radius: 16px 16px 0 0;
     background: var(--surface);
     box-shadow: var(--shadow-lg);
-    padding: 0 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    padding: 0 1rem 1.25rem;
+    overflow: hidden;
 }
 
 @media (min-width: 640px) {
@@ -20526,9 +20528,14 @@ html:not(.cookie-consent-known) .login-modal__dialog {
         bottom: auto;
         top: 50%;
         transform: translate(-50%, -50%);
-        width: min(24rem, calc(100vw - 2rem));
-        max-height: min(80vh, 26rem);
+        width: min(26rem, calc(100vw - 2rem));
+        max-height: min(80vh, 28rem);
         border-radius: var(--radius);
+        padding: 0 1.25rem 1.35rem;
+    }
+
+    .app-shell.pwa-sheet-open .bottom-nav {
+        visibility: visible;
     }
 }
 
@@ -20538,6 +20545,20 @@ html:not(.cookie-consent-known) .login-modal__dialog {
     justify-content: space-between;
     gap: 0.75rem;
     padding: 1rem 0 0.5rem;
+    flex-shrink: 0;
+}
+
+.pwa-entry-sheet__close {
+    flex-shrink: 0;
+    border: none;
+    background: var(--accent-soft);
+    color: var(--brand);
+    width: 2rem;
+    height: 2rem;
+    border-radius: 999px;
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .pwa-entry-sheet__title {
@@ -20548,8 +20569,10 @@ html:not(.cookie-consent-known) .login-modal__dialog {
 }
 
 .pwa-entry-sheet__body {
-    overflow: auto;
-    padding-bottom: 0.25rem;
+    overflow-y: auto;
+    padding-bottom: 0.35rem;
+    min-height: 0;
+    flex: 1 1 auto;
 }
 
 .pwa-entry-sheet__lead {
@@ -20561,10 +20584,34 @@ html:not(.cookie-consent-known) .login-modal__dialog {
 
 .pwa-entry-sheet__steps {
     margin: 0;
-    padding-left: 1.15rem;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: pwa-ios-step;
     font-size: 0.9rem;
-    line-height: 1.5;
+    line-height: 1.45;
     color: var(--text);
+}
+
+.pwa-entry-sheet__steps li {
+    counter-increment: pwa-ios-step;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+}
+
+.pwa-entry-sheet__steps li::before {
+    content: counter(pwa-ios-step) ".";
+    font-weight: 650;
+    color: var(--brand);
+    min-width: 1.25rem;
+}
+
+.pwa-entry-sheet__share-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-inline-start: 0.15rem;
+    color: var(--brand);
 }
 
 .pwa-entry-sheet__primary {
@@ -20609,7 +20656,25 @@ html:not(.cookie-consent-known) .login-modal__dialog {
 .pwa-entry-card__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.pwa-entry-card__dismiss {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+    padding: 0.35rem 0.15rem;
+}
+
+.pwa-entry-card__dismiss:hover {
+    color: var(--text);
 }
 
 .pwa-share-hint {

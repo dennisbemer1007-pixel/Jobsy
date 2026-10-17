@@ -3,6 +3,8 @@
 @using Jobsy.Web.Pwa
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject PwaInstallSheetState SheetState
+@implements IDisposable
 
 @if (_open)
 {
@@ -23,15 +25,25 @@
                     @Culture["Pwa.Sheet.Samsung.Title"]
                 }
             </h2>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["Pwa.Sheet.Close"]">×</button>
+            <button type="button" class="pwa-entry-sheet__close" @onclick="Close" aria-label="@Culture["Pwa.Sheet.Close"]">×</button>
         </div>
         <div class="pwa-entry-sheet__body">
             @if (_platform == PwaEntryPlatform.Ios)
             {
                 <p class="pwa-entry-sheet__lead">@Culture["Pwa.Sheet.Ios.Lead"]</p>
                 <ol class="pwa-entry-sheet__steps">
-                    <li>@Culture["Pwa.Sheet.Ios.Step1"]</li>
+                    <li>
+                        <span>@Culture["Pwa.Sheet.Ios.Step1"]</span>
+                        <span class="pwa-entry-sheet__share-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 3v12" stroke-linecap="round" />
+                                <path d="M8 7l4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+                            </svg>
+                        </span>
+                    </li>
                     <li>@Culture["Pwa.Sheet.Ios.Step2"]</li>
+                    <li>@Culture["Pwa.Sheet.Ios.Step3"]</li>
                 </ol>
             }
             else
@@ -58,15 +70,42 @@
 }
 
 @code {
-    [Parameter] public PwaEntryPlatform Platform { get; set; }
-    [Parameter] public EventCallback OnClosed { get; set; }
-
     private bool _open;
     private PwaEntryPlatform _platform;
     private string? _chromeIntentUrl;
     private string? _copyMessage;
 
+    protected override void OnInitialized()
+    {
+        SheetState.Changed += OnSheetStateChanged;
+    }
+
+    private void OnSheetStateChanged()
+    {
+        if (SheetState.IsOpen)
+        {
+            _ = OpenInternalAsync(SheetState.Platform);
+        }
+        else
+        {
+            _open = false;
+            _ = InvokeAsync(StateHasChanged);
+        }
+    }
+
     public async Task OpenAsync(PwaEntryPlatform platform)
+    {
+        SheetState.Open(platform);
+        await OpenInternalAsync(platform);
+    }
+
+    public Task CloseAsync()
+    {
+        Close();
+        return Task.CompletedTask;
+    }
+
+    private async Task OpenInternalAsync(PwaEntryPlatform platform)
     {
         _platform = platform;
         _copyMessage = null;
@@ -86,10 +125,11 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task Close()
+    private void Close()
     {
         _open = false;
-        await OnClosed.InvokeAsync();
+        SheetState.Close();
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private async Task CopyLinkAsync()
@@ -105,6 +145,11 @@
         {
             _copyMessage = Culture["Share.CopiedMsg"];
         }
+    }
+
+    public void Dispose()
+    {
+        SheetState.Changed -= OnSheetStateChanged;
     }
 
     private sealed class CopyResult

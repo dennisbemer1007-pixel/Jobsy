@@ -4,8 +4,10 @@
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Pwa
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
+@inject PwaInstallSheetState PwaSheet
 @inject JobsyApiClient Api
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject Jobsy.Web.Branding.PlatformBrandingState Branding
@@ -17,7 +19,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null)"
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
@@ -102,6 +104,10 @@
         <ConsentReacceptDialog />
     }
     <CookieConsentBanner OnConsentChanged="OnCookieConsentChanged" />
+    @if (RendererInfo.IsInteractive && _isCandidate && !_suppressPwaInstallEntry)
+    {
+        <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallSheet />
+    }
     <SessionIdleGuard />
 </div>
 
@@ -115,6 +121,7 @@
     private bool _isCandidate;
     private bool _suppressInstallBanner;
     private bool _suppressPwaInstallEntry;
+    private bool _pwaSheetOpen;
 
     private bool ShowInstallBanner =>
         RendererInfo.IsInteractive
@@ -131,6 +138,9 @@
         {
             Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         }
+
+        PwaSheet.Changed += OnPwaSheetChanged;
+        _pwaSheetOpen = PwaSheet.IsOpen;
     }
 
     protected override async Task OnInitializedAsync()
@@ -522,8 +532,21 @@
     private void OnBrandingChanged()
         => InvokeAsync(StateHasChanged);
 
+    private void OnPwaSheetChanged()
+    {
+        var open = PwaSheet.IsOpen;
+        if (_pwaSheetOpen == open)
+        {
+            return;
+        }
+
+        _pwaSheetOpen = open;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
+        PwaSheet.Changed -= OnPwaSheetChanged;
         Culture.Changed -= OnCultureChanged;
         RegionHost.Changed -= OnBrandingChanged;
         Branding.Changed -= OnBrandingChanged;

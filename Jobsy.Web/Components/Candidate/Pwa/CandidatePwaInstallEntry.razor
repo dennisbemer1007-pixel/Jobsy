@@ -3,6 +3,7 @@
 @using Jobsy.Web.Pwa
 @inject CultureState Culture
 @inject IJSRuntime Js
+@inject PwaInstallSheetState SheetState
 @implements IAsyncDisposable
 
 @if (_showButton)
@@ -14,21 +15,19 @@
             aria-label="@Culture["Pwa.Entry.Install"]"
             @onclick="OnEntryClickAsync">
         <svg class="pwa-entry-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-            <path d="M12 3v12" stroke-linecap="round" />
-            <path d="M8 7l4-4 4 4" stroke-linecap="round" stroke-linejoin="round" />
-            <rect x="5" y="14" width="14" height="7" rx="2" />
+            <rect x="7" y="2.5" width="10" height="19" rx="2" />
+            <path d="M12 6v7" stroke-linecap="round" />
+            <path d="M9.5 10.5L12 13l2.5-2.5" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M10 17h4" stroke-linecap="round" />
         </svg>
         <span class="pwa-entry-btn__label">@Culture["Pwa.Entry.Install"]</span>
     </button>
 }
 
-<CandidatePwaInstallSheet @ref="_sheet" Platform="_platform" />
-
 @code {
     private bool _showButton;
     private bool _hydrated;
     private PwaEntryPlatform _platform = PwaEntryPlatform.None;
-    private CandidatePwaInstallSheet? _sheet;
     private DotNetObjectReference<CandidatePwaInstallEntry>? _self;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -88,9 +87,9 @@
             return;
         }
 
-        if (_sheet is not null && (_platform == PwaEntryPlatform.Samsung || _platform == PwaEntryPlatform.Ios))
+        if (_platform is PwaEntryPlatform.Samsung or PwaEntryPlatform.Ios)
         {
-            await _sheet.OpenAsync(_platform);
+            SheetState.Open(_platform);
         }
     }
 

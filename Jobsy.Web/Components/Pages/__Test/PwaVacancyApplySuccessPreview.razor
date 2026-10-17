@@ -1,0 +1,25 @@
+@page "/__test/pwa-vacancy-apply-success"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@using Jobsy.Web.Components.Candidate.Pwa
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Localization
+@inject IWebHostEnvironment Environment
+@inject CultureState Culture
+
+@if (!Environment.IsDevelopment())
+{
+    <p>Not found.</p>
+}
+else
+{
+    <div class="kb-detail panel-page">
+        <div id="apply" class="apply-flow" data-testid="pwa-vacancy-apply-preview">
+            <div class="apply-panel apply-panel--success" role="status">
+                <p class="apply-panel__title">@Culture["Apply.SentTitle"]</p>
+                <p class="apply-panel__text">@Culture["Apply.SentBody"]</p>
+                <a class="engagement-btn apply-flow__secondary" href="@KbRoutes.Applications">@Culture["Apply.MyApplications"]</a>
+                <CandidatePwaInstallPostApplyCard />
+            </div>
+        </div>
+    </div>
+}

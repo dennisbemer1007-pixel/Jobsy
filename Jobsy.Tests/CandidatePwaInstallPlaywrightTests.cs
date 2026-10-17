@@ -20,7 +20,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
 {
-    private const string ScreenshotDir = "/cursor/stores/self/pwa-install";
+    private const string ScreenshotDir = "/cursor/stores/self/pwa-install/v2";
 
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -102,8 +102,12 @@ public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
         await PlaywrightCookieConsent.AcceptOnPageAsync(samsung);
         await samsung.Locator("[data-testid=pwa-install-entry-btn]").WaitForAsync(new() { Timeout = 15_000 });
         await samsung.Locator("[data-testid=pwa-install-entry-btn]").ClickAsync();
-        await samsung.Locator("[data-testid=pwa-install-sheet]").WaitForAsync();
-        await SaveJpegAsync(samsung, "sheet-samsung-390.jpg", clipHeader: false);
+        var samsungSheet = samsung.Locator("[data-testid=pwa-install-sheet]");
+        await samsungSheet.WaitForAsync();
+        await samsung.Locator("[data-testid=pwa-open-chrome]").WaitForAsync();
+        await samsung.GetByRole(AriaRole.Button, new() { Name = "Link kopiëren" }).WaitForAsync();
+        Assert.Equal(0, await samsung.Locator(".lobsy-assistant-tab:visible").CountAsync());
+        await SaveJpegAsync(samsung, "sheet-samsung-390.jpg");
 
         await using var iosCtx = await NewContextAsync(
             390,
@@ -119,30 +123,55 @@ public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
         await ios.Locator("[data-testid=pwa-install-entry-btn]").WaitForAsync(new() { Timeout = 15_000 });
         await ios.Locator("[data-testid=pwa-install-entry-btn]").ClickAsync();
         await ios.Locator("[data-testid=pwa-install-sheet]").WaitForAsync();
-        await SaveJpegAsync(ios, "sheet-ios-390.jpg", clipHeader: false);
+        await ios.Locator(".pwa-entry-sheet__steps li").Nth(2).WaitForAsync();
+        await SaveJpegAsync(ios, "sheet-ios-390.jpg");
     }
 
     [Fact]
-    public async Task Post_application_card_visible_at_390()
+    public async Task Desktop_sheet_centered_modal_at_1440()
     {
         using var web = new PwaInstallWebFactory();
-        var signIn = web.EnsureServerAddress() + "/__test/sign-in?return=/__test/pwa-install-preview";
+        var signIn = web.EnsureServerAddress() + "/__test/sign-in?return=/candidate/applications";
 
-        await using var ctx = await NewContextAsync(390, 844, mobile: true, samsung: false, ios: false, standalone: false, deviceScaleFactor: 2);
-        await ctx.AddInitScriptAsync(BeforeInstallPromptInitScript);
-        await ctx.AddInitScriptAsync(
-            """
-            (() => {
-              try {
-                localStorage.setItem('Jobsy.PwaPostApplyCardVisible', '1');
-              } catch (_) {}
-            })();
-            """);
+        await using var ctx = await NewContextAsync(1440, 900, mobile: false, samsung: true, ios: false, standalone: false);
         var page = await ctx.NewPageAsync();
         await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.Locator("[data-testid=pwa-install-post-apply-card]").WaitForAsync(new() { Timeout = 20_000 });
-        await SaveJpegAsync(page, "post-apply-card-390.jpg", clipHeader: false);
+        await page.Locator("[data-testid=pwa-install-entry-btn]").WaitForAsync(new() { Timeout = 15_000 });
+        await page.Locator("[data-testid=pwa-install-entry-btn]").ClickAsync();
+        await page.Locator("[data-testid=pwa-install-sheet]").WaitForAsync();
+        await SaveJpegAsync(page, "sheet-desktop-1440.jpg", clipSelector: null);
+    }
+
+    [Fact]
+    public async Task Post_application_card_in_vacancy_success_context()
+    {
+        using var web = new PwaInstallWebFactory();
+        var signIn = web.EnsureServerAddress() + "/__test/sign-in?return=/__test/pwa-vacancy-apply-success";
+
+        foreach (var (name, width, height, mobile, scale) in new (string, int, int, bool, int)[]
+                 {
+                     ("390", 390, 844, true, 2),
+                     ("1440", 1440, 900, false, 1)
+                 })
+        {
+            await using var ctx = await NewContextAsync(width, height, mobile, samsung: false, ios: false, standalone: false, deviceScaleFactor: scale);
+            await ctx.AddInitScriptAsync(BeforeInstallPromptInitScript);
+            await ctx.AddInitScriptAsync(
+                """
+                (() => {
+                  try {
+                    localStorage.setItem('Jobsy.PwaPostApplyCardVisible', '1');
+                  } catch (_) {}
+                })();
+                """);
+            var page = await ctx.NewPageAsync();
+            await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await page.Locator("[data-testid=pwa-vacancy-apply-preview]").WaitForAsync(new() { Timeout = 20_000 });
+            await page.Locator("[data-testid=pwa-install-post-apply-card]").WaitForAsync(new() { Timeout = 20_000 });
+            await SaveJpegAsync(page, $"post-apply-card-{name}.jpg", clipSelector: "[data-testid=pwa-vacancy-apply-preview]");
+        }
     }
 
     private async Task<IBrowserContext> NewContextAsync(
@@ -189,7 +218,7 @@ public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
         return ctx;
     }
 
-    private static async Task SaveJpegAsync(IPage page, string fileName, bool clipHeader)
+    private static async Task SaveJpegAsync(IPage page, string fileName, bool clipHeader = false, string? clipSelector = null)
     {
         var pngPath = Path.Combine(ScreenshotDir, Path.ChangeExtension(fileName, ".png"));
         var jpgPath = Path.Combine(ScreenshotDir, fileName);
@@ -198,6 +227,12 @@ public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
             var header = page.Locator(".app-header");
             await header.WaitForAsync();
             await header.ScreenshotAsync(new() { Path = pngPath });
+        }
+        else if (!string.IsNullOrWhiteSpace(clipSelector))
+        {
+            var target = page.Locator(clipSelector);
+            await target.WaitForAsync();
+            await target.ScreenshotAsync(new() { Path = pngPath });
         }
         else
         {
@@ -223,7 +258,6 @@ public sealed class CandidatePwaInstallPlaywrightTests : IAsyncLifetime
             return;
         }
 
-        // Fallback: copy PNG bytes if ffmpeg unavailable (store prefers jpeg but png works locally).
         File.Copy(pngPath, jpgPath, overwrite: true);
     }
 
