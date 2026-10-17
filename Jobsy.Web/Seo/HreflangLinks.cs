@@ -12,8 +12,8 @@ public static class HreflangLinks
         var pathPart = normalizedPath == "/" ? "/" : normalizedPath;
         var baseUrl = origin.TrimEnd('/') + (pathPart == "/" ? "/" : pathPart);
 
-        var list = new List<(string, string)>(JobsyLanguages.All.Count + 1);
-        foreach (var lang in JobsyLanguages.All)
+        var list = new List<(string, string)>(JobsyLanguages.Enabled.Count + 1);
+        foreach (var lang in JobsyLanguages.Enabled)
         {
             var href = pathPart == "/"
                 ? origin.TrimEnd('/') + "/?lang=" + lang.Code

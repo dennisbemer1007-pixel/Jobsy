@@ -33,7 +33,7 @@ public sealed record EmailCulture(string Language, bool IsRightToLeft)
 
     public static EmailCulture ForLanguage(string? language)
     {
-        var lang = JobsyLanguages.Normalize(language);
+        var lang = JobsyLanguages.ResolveActive(language);
         var opt = JobsyLanguages.Get(lang);
         return new EmailCulture(opt.Code, opt.IsRightToLeft);
     }

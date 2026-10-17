@@ -1,6 +1,8 @@
 using System.Threading.RateLimiting;
 using Jobsy.Core;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Ops;
+using Jobsy.Core.Options;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Components;
@@ -484,6 +486,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
+JobsyLanguages.ConfigureEnabledCultures(app.Configuration["Localization:EnabledCultures"]);
 Jobsy.Core.Careers.OccupationCatalog.Configure(
     app.Configuration.GetValue(Jobsy.Core.Careers.OccupationCatalog.PreviewConfigKey, false),
     app.Environment.IsProduction());

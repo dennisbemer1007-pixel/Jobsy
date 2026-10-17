@@ -17,7 +17,7 @@
         <span class="language-selector__caret" aria-hidden="true">▾</span>
     </button>
         <ul class="language-selector__menu" role="listbox" aria-label="@Culture["Language.Label"]">
-            @foreach (var lang in JobsyLanguages.All)
+            @foreach (var lang in JobsyLanguages.Enabled)
             {
                 <li role="option" aria-selected="@(lang.Code == Culture.Language ? "true" : "false")">
                     <a class="language-selector__option @(lang.Code == Culture.Language ? "is-active" : null)"

@@ -20,6 +20,23 @@ public class LocalizationTests
         => Assert.Equal(expected, JobsyLanguages.Normalize(input));
 
     [Fact]
+    public void Launch_default_enables_nl_and_en_only()
+    {
+        JobsyLanguages.ResetEnabledForTests();
+        Assert.Equal(["nl", "en"], JobsyLanguages.Enabled.Select(l => l.Code).ToArray());
+        Assert.False(JobsyLanguages.IsSupported("pl"));
+        Assert.True(JobsyLanguages.IsCatalogLanguage("pl"));
+    }
+
+    [Theory]
+    [InlineData("pl", null, "nl")]
+    [InlineData("pl", "en-US,en;q=0.9", "en")]
+    [InlineData("ar", "en;q=0.5,nl;q=0.4", "en")]
+    [InlineData("en", null, "en")]
+    public void ResolveActive_maps_disabled_catalog_to_enabled_fallback(string input, string? accept, string expected)
+        => Assert.Equal(expected, JobsyLanguages.ResolveActive(input, accept));
+
+    [Fact]
     public void UiStrings_default_dutch_and_english_differ()
     {
         Assert.Equal("Zoeken", UiStrings.Get("Nav.Search", "nl"));
@@ -210,11 +227,15 @@ public class LocalizationTests
     }
 
     [Fact]
-    public void SerializePreferences_preserves_language()
+    public void SerializePreferences_stores_enabled_language_only()
     {
         var json = MeController.SerializePreferences(["retail"], 45, "Fiets", "pl", 18);
         var prefs = MeController.ParsePreferences(json);
-        Assert.Equal("pl", prefs.Language);
+        Assert.Equal("nl", prefs.Language);
+
+        json = MeController.SerializePreferences(["retail"], 45, "Fiets", "en", 18);
+        prefs = MeController.ParsePreferences(json);
+        Assert.Equal("en", prefs.Language);
         Assert.Equal(45, prefs.MaxTravelMinutes);
         Assert.Equal("Fiets", prefs.PreferredTransport);
         Assert.Equal(18, prefs.AgeYears);

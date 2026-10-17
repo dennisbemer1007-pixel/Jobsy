@@ -47,11 +47,22 @@ public class LanguageEndpointTests
     }
 
     [Fact]
-    public void Lang_query_resolves_ar_without_cookie()
+    public async Task Disabled_lang_redirects_home_without_cookie()
+    {
+        await using var app = await CreateAppAsync();
+        var client = app.GetTestClient();
+        var response = await client.GetAsync("/taal/pl?returnUrl=/ontdek");
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.ToString());
+    }
+
+    [Fact]
+    public void Lang_query_disabled_catalog_falls_back_without_cookie()
     {
         var http = new DefaultHttpContext();
         http.Request.QueryString = new QueryString("?lang=ar");
-        Assert.Equal("ar", CultureRequest.ResolveLanguage(http));
+        http.Request.Headers.AcceptLanguage = "en";
+        Assert.Equal("en", CultureRequest.ResolveLanguage(http));
         Assert.True(JobsyLanguages.Get("ar").IsRightToLeft);
         Assert.True(AuthRedirects.IsLocalReturnUrl("/ontdek"));
         Assert.False(AuthRedirects.IsLocalReturnUrl("https://evil"));
