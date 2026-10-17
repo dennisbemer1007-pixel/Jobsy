@@ -3,7 +3,7 @@
 set -euo pipefail
 
 STORE="${JOBSY_E2E_EVIDENCE_ROOT:-/cursor/stores/self/fixes}"
-SRC="${JOBSY_E2E_FLOW_SRC:-/cursor/stores/self/e2e-flow}"
+SRC="${JOBSY_E2E_FLOW_SRC:-/workspace/artifacts/e2e-flow}"
 ART="${JOBSY_E2E_ARTIFACTS:-/opt/cursor/artifacts}"
 
 copy_pair() {

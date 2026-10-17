@@ -39,12 +39,11 @@ bash "$ROOT/.github/scripts/start-ci-stack.sh"
 
 # Do not use --no-build: MTP/xunit.v3 can report "Zero tests ran" when running the built exe without rebuild.
 dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release \
-  --filter "FullyQualifiedName=Jobsy.Tests.E2eFlow.CandidateEmployerFlowE2ePlaywrightTests.Full_flow_check_with_screenshots_and_metrics" \
-  --logger "console;verbosity=normal"
+  --filter "FullyQualifiedName=Jobsy.Tests.E2eFlow.CandidateEmployerFlowE2ePlaywrightTests.Full_flow_check_with_screenshots_and_metrics"
 
 stop_stack
 
-SRC="/cursor/stores/self/e2e-flow"
+SRC="${JOBSY_E2E_FLOW_ROOT:-/workspace/artifacts/e2e-flow}"
 rm -rf "$DEST"
 mkdir -p "$STORE"
 cp -a "$SRC" "$DEST"

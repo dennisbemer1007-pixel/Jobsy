@@ -1,3 +1,7 @@
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Jpeg;
+using SixLabors.ImageSharp.Processing;
+
 namespace Jobsy.Tests.E2eFlow;
 
 /// <summary>Copies screenshots/PDFs into /cursor/stores/self/fixes/{item}/ as captures land.</summary>
@@ -29,7 +33,7 @@ internal static class FixEvidencePublisher
 
         var dest = Path.Combine(FixesRoot, itemFolder);
         Directory.CreateDirectory(dest);
-        File.Copy(sourcePath, Path.Combine(dest, destName), overwrite: true);
+        SafeCopyToStore(sourcePath, Path.Combine(dest, destName));
         TouchStatus(itemFolder);
     }
 
@@ -44,7 +48,7 @@ internal static class FixEvidencePublisher
 
         foreach (var png in Directory.GetFiles(PdfRoot, $"{pdfBaseName}*.png"))
         {
-            File.Copy(png, Path.Combine(dest, Path.GetFileName(png)), overwrite: true);
+            SafeCopyToStore(png, Path.Combine(dest, Path.GetFileName(png)));
         }
 
         TouchStatus(itemFolder);
@@ -60,8 +64,40 @@ internal static class FixEvidencePublisher
                 continue;
             }
 
-            File.Copy(src, Path.Combine(dest, $"{slug}-{tag}.png"), overwrite: true);
-            File.Copy(src, Path.Combine(dest, tag == "mobile-390" ? "mobile-390@2x.png" : "desktop-1440.png"), overwrite: true);
+            SafeCopyToStore(src, Path.Combine(dest, $"{slug}-{tag}.png"));
+            SafeCopyToStore(
+                src,
+                Path.Combine(dest, tag == "mobile-390" ? "mobile-390@2x.png" : "desktop-1440.png"));
+        }
+    }
+
+    /// <summary>Agent store FUSE has small per-file limits; fall back to JPEG when raw copy fails.</summary>
+    private static void SafeCopyToStore(string sourcePath, string destPath)
+    {
+        try
+        {
+            File.Copy(sourcePath, destPath, overwrite: true);
+            return;
+        }
+        catch (Exception ex) when (ex is IOException or ArgumentOutOfRangeException)
+        {
+            // fall through to compress
+        }
+
+        try
+        {
+            using var image = Image.Load(sourcePath);
+            image.Mutate(x => x.Resize(new ResizeOptions
+            {
+                Mode = ResizeMode.Max,
+                Size = new Size(1440, 9000)
+            }));
+            var jpegDest = Path.ChangeExtension(destPath, ".jpg");
+            image.Save(jpegDest, new JpegEncoder { Quality = 82 });
+        }
+        catch
+        {
+            // best-effort evidence
         }
     }
 

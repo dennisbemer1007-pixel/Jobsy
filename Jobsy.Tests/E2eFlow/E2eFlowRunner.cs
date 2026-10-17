@@ -15,7 +15,16 @@ namespace Jobsy.Tests.E2eFlow;
 
 internal sealed class E2eFlowRunner
 {
-    public const string Root = "/cursor/stores/self/e2e-flow";
+    /// <summary>Full-size captures on workspace disk (agent store FUSE rejects large PNG writes).</summary>
+    public static string Root =>
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_E2E_FLOW_ROOT"))
+            ? Environment.GetEnvironmentVariable("JOBSY_E2E_FLOW_ROOT")!.Trim().TrimEnd('/')
+            : Path.Combine(
+                string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT"))
+                    ? "/workspace/artifacts"
+                    : Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT")!.Trim().TrimEnd('/'),
+                "e2e-flow");
+
     public static string Screens => Path.Combine(Root, "screens");
     public static string MailDir => Path.Combine(Root, "mail");
     public static string PdfDir => Path.Combine(Root, "pdf");
