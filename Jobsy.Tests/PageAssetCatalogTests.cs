@@ -5,7 +5,7 @@ public class PageAssetCatalogTests
     [Theory]
     [InlineData("/", 3)]
     [InlineData("/login", 3)]
-    [InlineData("/account-maken", 3 + 15)]
+    [InlineData("/account-maken", 3)]
     [InlineData("/banenkaart", 3 + 5)]
     [InlineData("/candidate/paspoort", 3 + 5 + 15)]
     [InlineData("/register", 3 + 4)]
@@ -73,6 +73,15 @@ public class PageAssetCatalogTests
         Assert.Equal(gratisDna, Jobsy.Web.Hosting.PageAssetCatalog.IncludeGratisDnaScript(path));
         Assert.Equal(leerling, Jobsy.Web.Hosting.PageAssetCatalog.IncludeLeerlingLoginScript(path));
         Assert.Equal(vacancyWizard, Jobsy.Web.Hosting.PageAssetCatalog.IncludeVacancyWizardScript(path));
+    }
+
+    [Theory]
+    [InlineData("/login", false)]
+    [InlineData("/account-maken", true)]
+    [InlineData("/account-maken/code", true)]
+    public void Signup_static_css_gated(string path, bool expected)
+    {
+        Assert.Equal(expected, Jobsy.Web.Hosting.PageAssetCatalog.IncludeSignupStaticCss(path));
     }
 
     private static string FindRepoRoot()

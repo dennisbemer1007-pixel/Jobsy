@@ -20,8 +20,8 @@
     "v": "20261004-10"
   },
   "css/features/auth.css": {
-    "sha256": "3388f3f86c22de763eab34d89641cef75fa0ea83e621d5a4d4373acc182a6f4c",
-    "v": "20261004-10"
+    "sha256": "19d393a63d6604f3a210cd0e67d18c3b6896c868d6a4f6a77be6ee9ff69ad05d",
+    "v": "20261017-01"
   },
   "css/features/banenkaart.css": {
     "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
@@ -38,6 +38,10 @@
   "css/features/choice-tiles.css": {
     "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
     "v": "20261015-06"
+  },
+  "css/features/cookie-consent.css": {
+    "sha256": "11ac022ea3ed9673587aed89826aa8d9fd982b9c9a5809c3f13c00abdd923b9d",
+    "v": "20261017-05"
   },
   "css/features/enterprise-ui.css": {
     "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
@@ -147,6 +151,10 @@
     "sha256": "27596bde44da542dc90eb601bc731b8e91a5cdac5e24febdc958eb320dab5a6e",
     "v": "20261004-14"
   },
+  "css/features/signup-static.css": {
+    "sha256": "cdd2f33c74d431384e54de029ec7984ec3f30660aad88c34eba95f89cdd963f6",
+    "v": "20261017-02"
+  },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20261004-10"
@@ -185,7 +193,7 @@
   },
   "js/app-core.js": {
     "sha256": "856da023b5fea68dfbefffbe6c1fcf7d94ae8a233709be054b147f86b802e9d5",
-    "v": "20261017-pwa"
+    "v": "20261017-03"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -196,8 +204,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "da99bbfd6b96fc6ff22bae5b41634c6460046a5a6cb300c5f6bdf719a06c018a",
-    "v": "20261015-01"
+    "sha256": "c55af54b6bdd40dd5e677a90aa334e4338a567e355fad730b0a716f7a327b8d2",
+    "v": "20261017-01"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
@@ -268,11 +276,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "3d6eca6b7882d8bc14912cedea322fbd933f3c4d50113dc27055311808a2c108",
+    "sha256": "fedafb6e8defdce4fb6a9ed487ea2cf085fb5665bbe672bc26d2aacdedd6dbcd",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "ef8420ea1049e408da3879f7f913b26c543a700ae44d14586138ed43a0a50f64",
+    "sha256": "17d47153b421e72fe901848e2e3a4064e82763abc80dadd80cc4e96dea721efd",
     "v": "20261016-06"
   }
 }

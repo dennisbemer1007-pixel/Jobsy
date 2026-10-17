@@ -31,16 +31,35 @@
         <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
         <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin />
     }
+    @if (LoadBlazorRuntime)
+    {
+        <link rel="preload" href="js/app-core.js?v=20261017-03" as="script" crossorigin />
+        <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
+    }
+    @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
+    {
+        <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-10" />
+        <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
+    }
     <link rel="stylesheet" href="css/critical.css?v=20261004-13" />
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
-    <link rel="stylesheet" href="css/features/auth.css?v=20261004-10" />
+    <link rel="stylesheet" href="css/features/auth.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/landing.css?v=20261015-14" />
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
     <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
     @* Outside LoadBlazorRuntime: NoBlazor pages (landing, legal) still ship the modal markup. *@
     <link rel="stylesheet" href="css/features/reconnect.css?v=20261015-02" data-reconnect-css />
+    @if (!LoadBlazorRuntime)
+    {
+        @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
+        <link rel="stylesheet" href="css/features/cookie-consent.css?v=20261017-05" />
+    }
+    @if (!LoadBlazorRuntime && IncludeSignupStaticCss)
+    {
+        <link rel="stylesheet" href="css/features/signup-static.css?v=20261017-02" />
+    }
     @if (LoadBlazorRuntime)
     {
         @foreach (var href in PageStylesheets)
@@ -64,7 +83,7 @@
                 @:<link rel="stylesheet" href="@href" />
             }
             <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
-            <link rel="stylesheet" href="css/features/auth.css?v=20261004-10" />
+            <link rel="stylesheet" href="css/features/auth.css?v=20261017-01" />
             <link rel="stylesheet" href="css/features/landing.css?v=20261015-14" />
             <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
             <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
@@ -240,7 +259,7 @@
     </script>
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261017-pwa" nonce="@Nonce" defer></script>
+            <script src="js/app-core.js?v=20261017-03" nonce="@Nonce" defer></script>
             <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
             <script src="js/lobsyPush.js?v=20261016-02" nonce="@Nonce" defer></script>
             <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>
@@ -270,7 +289,7 @@
     {
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261015-01" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261017-01" nonce="@Nonce" defer></script>
     }
 </body>
 
@@ -340,6 +359,9 @@
 
     private bool IncludeGratisDnaScript =>
         PageAssetCatalog.IncludeGratisDnaScript(RequestPath);
+
+    private bool IncludeSignupStaticCss =>
+        PageAssetCatalog.IncludeSignupStaticCss(RequestPath);
 
     private bool IncludeLeerlingLoginScript =>
         PageAssetCatalog.IncludeLeerlingLoginScript(RequestPath);

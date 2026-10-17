@@ -126,7 +126,7 @@ public static class PageAssetCatalog
 
         if (path is "/account-maken" or "/account-maken/code")
         {
-            return Area.CandidateApp;
+            return Area.None;
         }
 
         if (path is "/gratis-dna")
@@ -223,6 +223,14 @@ public static class PageAssetCatalog
         return path is "/gratis-dna"
             || path.StartsWith(OnboardingRoutes.ClassicStartPath, StringComparison.Ordinal)
             || path.StartsWith("/account-maken", StringComparison.Ordinal);
+    }
+
+    /// <summary>Static signup shells skip app.min.css — ship login-form + provider-btn rules locally.</summary>
+    public static bool IncludeSignupStaticCss(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        return path is "/account-maken" or "/account-maken/code"
+            || path.StartsWith("/account-maken/", StringComparison.Ordinal);
     }
 
     public static bool IncludeVacancyWizardScript(string? rawPath)

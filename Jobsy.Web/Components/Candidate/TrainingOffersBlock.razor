@@ -92,7 +92,9 @@
                 return;
             }
 
-            Navigation.NavigateTo(tracked.Url, forceLoad: true);
+            var sameOrigin = tracked.Url.StartsWith("/", StringComparison.Ordinal)
+                || tracked.Url.StartsWith(Navigation.BaseUri, StringComparison.OrdinalIgnoreCase);
+            Navigation.NavigateTo(tracked.Url, forceLoad: !sameOrigin);
         }
         catch (Exception ex)
         {

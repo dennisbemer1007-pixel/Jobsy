@@ -41,6 +41,6 @@
         }
 
         // Successful external bind → home (ensure-external already signed in via complete-login).
-        Navigation.NavigateTo("/home", forceLoad: true);
+        Navigation.NavigateTo("/home", forceLoad: false, replace: true);
     }
 }
