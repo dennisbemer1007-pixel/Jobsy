@@ -77,12 +77,13 @@ stop_stack
 echo "=== Compare PNGs ==="
 python3 <<'PY'
 import os
+import sys
 from pathlib import Path
 try:
     from PIL import Image
 except ImportError:
     import subprocess
-    subprocess.check_call(["pip", "install", "-q", "pillow"])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "pillow"])
     from PIL import Image
 
 store = Path(os.environ.get("VACATURES_ACTIONS_STORE", "/cursor/stores/self/vacatures-actions"))
