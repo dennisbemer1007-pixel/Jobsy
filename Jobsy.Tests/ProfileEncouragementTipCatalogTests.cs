@@ -19,7 +19,7 @@ public class ProfileEncouragementTipCatalogTests
             .Where(t => ProfileEncouragementTipCatalog.IsEligible(t, ctx))
             .ToList();
         Assert.DoesNotContain(pool, t => t.Audience == ProfileEncouragementTipCatalog.Audience.TestsIncomplete);
-        Assert.Contains(pool, t => t.Id == "wist-passport-apply");
+        Assert.Contains(pool, t => t.Id == "action-profile");
     }
 
     [Fact]

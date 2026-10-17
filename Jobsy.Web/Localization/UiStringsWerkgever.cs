@@ -367,6 +367,16 @@ public static class UiStringsWerkgever
         Add("WgApp.Action.Invite", "Uitnodigen", "Invite", "Zaproś", "Invită", "دعوة");
         Add("WgApp.Action.Hire", "Aannemen", "Hire", "Zatrudnij", "Angajează", "تعيين");
         Add("WgApp.Action.Cv", "Lobsy-cv", "Lobsy CV", "CV Lobsy", "CV Lobsy", "سيرة Lobsy");
+        Add("WgApp.Action.PassportPdf", "Lobsy-paspoort", "Lobsy passport", "Paszport Lobsy", "Pașaport Lobsy", "جواز Lobsy");
+        Add("WgApp.Attached.LobsyCv", "Bijlage: Lobsy-CV", "Attachment: Lobsy CV", "Załącznik: CV Lobsy", "Anex: CV Lobsy", "مرفق: سيرة Lobsy");
+        Add("WgApp.Attached.Passport", "Bijlage: Lobsy-paspoort", "Attachment: Lobsy passport", "Załącznik: paszport Lobsy", "Anex: pașaport Lobsy", "مرفق: جواز Lobsy");
+        Add(
+            "WgApp.Attached.PassportFollows",
+            "Paspoort volgt zodra de kandidaat de tests heeft afgerond.",
+            "The passport will follow once the candidate completes the tests.",
+            "Paszport pojawi się, gdy kandydat ukończy testy.",
+            "Pașaportul urmează după ce candidatul finalizează testele.",
+            "يُرفق الجواز بعد أن يُكمل المرشح الاختبارات.");
         Add("WgApp.Action.BulkReject", "Afwijzen", "Reject", "Odrzuć", "Respinge", "رفض");
         Add("WgApp.HireConfirmTitle", "Vacature als vervuld markeren?", "Mark vacancy as filled?", "Oznaczyć ofertę jako obsadzoną?", "Marchezi postul ca ocupat?", "تعليم الوظيفة كمشغولة؟");
         Add("WgApp.HireConfirmBody", "Je neemt {0} aan voor “{1}”. De vacature wordt als vervuld gemarkeerd.", "You hire {0} for “{1}”. The vacancy will be marked filled.", "Zatrudniasz {0} na “{1}”. Oferta zostanie oznaczona jako obsadzona.", "Angajezi {0} pentru “{1}”. Postul va fi marcat ca ocupat.", "تعيّن {0} لـ “{1}”. ستُعلَّم الوظيفة كمشغولة.");

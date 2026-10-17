@@ -33,8 +33,6 @@ public static class ApplyProfileLink
                 PassportRedirects.BuildPassportUrl(PassportTabs.Data, returnPath) + "&section=personal",
             "hours" or "availability" or "availability-start" or "open-for-work" =>
                 PassportRedirects.BuildPassportUrl(PassportTabs.Data, returnPath) + "&section=availability",
-            "passport-consent" =>
-                PassportRedirects.BuildPassportUrl(PassportTabs.Data, returnPath) + "&section=privacy",
             _ => "/candidate/start?returnUrl=" + Uri.EscapeDataString(returnPath)
         };
     }
@@ -46,7 +44,6 @@ public static class ApplyProfileLink
             ApplyBasicsField.Location or ApplyBasicsField.WorkStatus => "location",
             ApplyBasicsField.Hours or ApplyBasicsField.Availability
                 or ApplyBasicsField.AvailabilityStart or ApplyBasicsField.OpenForWork => "availability",
-            ApplyBasicsField.PassportConsent => "passport-consent",
             _ => "personal"
         };
 }

@@ -48,6 +48,7 @@ public partial class MeController : ControllerBase
     private readonly ITranslationService _translation;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly PassportPdfDownload _passportPdf;
+    private readonly IPassportDnaReader _dna;
     private readonly IStudentPassportPdfService _studentPassportPdf;
     private readonly ICvTextExtractor _cvText;
     private readonly ICvExtractionService _cvExtraction;
@@ -68,6 +69,7 @@ public partial class MeController : ControllerBase
         ITranslationService translation,
         ILobsyCvPdfService lobsyCvPdf,
         PassportPdfDownload passportPdf,
+        IPassportDnaReader dna,
         IStudentPassportPdfService studentPassportPdf,
         ICvTextExtractor cvText,
         ICvExtractionService cvExtraction,
@@ -86,6 +88,7 @@ public partial class MeController : ControllerBase
         _translation = translation;
         _lobsyCvPdf = lobsyCvPdf;
         _passportPdf = passportPdf;
+        _dna = dna;
         _studentPassportPdf = studentPassportPdf;
         _cvText = cvText;
         _cvExtraction = cvExtraction;
@@ -819,12 +822,17 @@ public partial class MeController : ControllerBase
                     return File(student.Pdf, "application/pdf", student.FileName);
                 }
 
-                var passport = await _passportPdf.ForCandidateAsync(
-                    user,
-                    features.PhoneVerificationEnabled,
-                    features.PassportPdfDnaBlocksEnabled,
-                    cancellationToken);
-                return File(passport.Pdf, "application/pdf", passport.FileName);
+                var language = JobsyLanguages.Normalize(prefsForStudent.Language);
+                var dnaLayers = await _dna.ReadAsync(user.Id, language, cancellationToken);
+                if (PassportDnaCompletion.AllLayersCompleted(dnaLayers))
+                {
+                    var passport = await _passportPdf.ForCandidateAsync(
+                        user,
+                        features.PhoneVerificationEnabled,
+                        features.PassportPdfDnaBlocksEnabled,
+                        cancellationToken);
+                    return File(passport.Pdf, "application/pdf", passport.FileName);
+                }
             }
             catch (Exception ex)
             {

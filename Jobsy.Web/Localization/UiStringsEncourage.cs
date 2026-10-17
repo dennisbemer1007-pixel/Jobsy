@@ -68,11 +68,11 @@ public static class UiStringsEncourage
 
         Add(
             "Encourage.Tip.PassportApply",
-            "Wist je dat… werkgevers je paspoort meekrijgen bij je sollicitatie? Een compleet profiel valt meer op.",
-            "Did you know… employers receive your passport with your application? A complete profile stands out.",
-            "Czy wiesz, że… pracodawca dostaje Twój paszport z aplikacją? Pełny profil wyróżnia się.",
-            "Știai că… angajatorii primesc pașaportul tău la candidatură? Un profil complet iese în evidență.",
-            "هل تعلم… أن أصحاب العمل يستلمون جوازك مع طلبك؟ الملف المكتمل يلفت الانتباه.");
+            "Wist je dat… je na de gratis tests een compleet paspoort meestuurt in plaats van alleen je cv?",
+            "Did you know… after the free tests you send a full passport instead of only your CV?",
+            "Czy wiesz, że… po darmowych testach wysyłasz pełny paszport zamiast samego CV?",
+            "Știai că… după testele gratuite trimiți un pașaport complet, nu doar CV-ul?",
+            "هل تعلم… أنك بعد الاختبارات المجانية ترسل جوازاً كاملاً بدلاً من السيرة فقط؟");
         Add(
             "Encourage.Tip.PassportApply.Link",
             "Profiel aanvullen",

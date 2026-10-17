@@ -14,7 +14,6 @@ public static class CandidateApplyBasicsMessages
             "Apply.Gap.AvailabilityStart" => "Kies vanaf wanneer je kunt starten.",
             "Apply.Gap.WorkStatus" => "Kies je huidige werkstatus.",
             "Apply.Gap.OpenForWork" => "Zet 'Beschikbaar voor werk' aan in je paspoort.",
-            "Apply.Gap.PassportConsent" => "Accepteer de voorwaarden om je paspoort te gebruiken.",
             _ => "Vul eerst je basisprofiel aan in je paspoort."
         };
 

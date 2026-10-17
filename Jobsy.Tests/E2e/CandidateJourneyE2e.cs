@@ -373,10 +373,18 @@ public static class CandidateJourneyE2e
             MaxTravelMinutes: 30,
             PreferredTransport: "Fiets",
             Availability: new Dictionary<string, string[]> { ["ma"] = ["ochtend"] },
+            HomeAddress: "Demo straat 1, 1234 AB Den Haag",
+            MinHoursPerWeek: 8,
+            MaxHoursPerWeek: 24,
+            WorkStatuses: ["zoekend"],
             Employers:
             [
                 new CandidateEmployerHistoryDto("Demo Winkel Westland", "Medewerker", 2)
             ]);
+        user.FirstName ??= "E2e";
+        user.LastName ??= "Apply";
+        user.DateOfBirth ??= new DateOnly(2000, 6, 15);
+        user.HomeLocation ??= new Jobsy.Core.ValueObjects.GeoPoint(52.07, 4.3);
         user.PreferencesJson = JsonSerializer.Serialize(
             prefs,
             new JsonSerializerOptions

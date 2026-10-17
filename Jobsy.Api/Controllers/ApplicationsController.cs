@@ -11,6 +11,8 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
+using Jobsy.Core.Localization;
+using Jobsy.Core.Passport;
 using Jobsy.Core.Ops;
 using Jobsy.Core.Privacy;
 using Jobsy.Core.Rules;
@@ -38,6 +40,7 @@ public class ApplicationsController : ControllerBase
     private readonly IPlatformFeatureService _features;
     private readonly ILobsyCvPdfService _lobsyCvPdf;
     private readonly PassportPdfDownload _passportPdf;
+    private readonly IPassportDnaReader _dna;
     private readonly IUserNotificationService _notifications;
     private readonly ICandidateActionTokenService _actionTokens;
     private readonly IVacancyDiscoveryIndex _discoveryIndex;
@@ -54,6 +57,7 @@ public class ApplicationsController : ControllerBase
         IPlatformFeatureService features,
         ILobsyCvPdfService lobsyCvPdf,
         PassportPdfDownload passportPdf,
+        IPassportDnaReader dna,
         IUserNotificationService notifications,
         ICandidateActionTokenService actionTokens,
         IVacancyDiscoveryIndex discoveryIndex,
@@ -69,6 +73,7 @@ public class ApplicationsController : ControllerBase
         _features = features;
         _lobsyCvPdf = lobsyCvPdf;
         _passportPdf = passportPdf;
+        _dna = dna;
         _notifications = notifications;
         _actionTokens = actionTokens;
         _discoveryIndex = discoveryIndex;
@@ -244,6 +249,7 @@ public class ApplicationsController : ControllerBase
                 a.CandidateAgeYears,
                 a.HasUploadedCv,
                 a.CandidateReferenceCount,
+                a.SnapshotAttachedDocument,
                 a.CandidateUserId,
                 a.Vacancy.CompanyId
             })
@@ -312,7 +318,8 @@ public class ApplicationsController : ControllerBase
                         availability.Slots,
                         availability.FlexibleTimes),
                     UploadedCvAvailable: revealed && a.HasUploadedCv,
-                    CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+                    CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0,
+                    AttachedDocumentKind: a.SnapshotAttachedDocument);
             }));
         }
 
@@ -396,7 +403,8 @@ public class ApplicationsController : ControllerBase
                         LobsyCvModelFactory.ParseAvailabilityPayload(a.SnapshotAvailabilityJson).FlexibleTimes)
                     : null,
                 UploadedCvAvailable: unmask && a.HasUploadedCv,
-                CandidateReferenceCount: unmask ? a.CandidateReferenceCount : 0));
+                CandidateReferenceCount: unmask ? a.CandidateReferenceCount : 0,
+                AttachedDocumentKind: a.SnapshotAttachedDocument));
         }
 
         return Ok(mapped);
@@ -527,7 +535,9 @@ public class ApplicationsController : ControllerBase
         CancellationToken cancellationToken)
     {
         var features = await _features.GetAsync(cancellationToken);
-        if (features.PassportPdfV2Enabled)
+        if (ApplicationAttachedDocumentRules.UsePassportPdf(
+                application.SnapshotAttachedDocument,
+                features.PassportPdfV2Enabled))
         {
             var passport = await _passportPdf.ForApplicationAsync(
                 application,
@@ -777,6 +787,19 @@ public class ApplicationsController : ControllerBase
             });
         }
 
+        var preferences = MeController.ParsePreferences(candidate.PreferencesJson);
+        var basicsGaps = CandidateApplyBasicsRules.Evaluate(candidate, preferences);
+        if (basicsGaps.Count > 0)
+        {
+            return BadRequest(new
+            {
+                code = "apply_basics_incomplete",
+                message = CandidateApplyBasicsMessages.NlSummary(basicsGaps),
+                gaps = basicsGaps.Select(g => g.MessageKey).ToArray(),
+                userMessage = true
+            });
+        }
+
         var existing = await _db.Applications.FirstOrDefaultAsync(
             a => a.VacancyId == vacancy.Id
                  && (a.CandidateUserId == candidate.Id
@@ -789,7 +812,6 @@ public class ApplicationsController : ControllerBase
             return BadRequest(new { message = "Je hebt al gereageerd op deze vacature." });
         }
 
-        var preferences = MeController.ParsePreferences(candidate.PreferencesJson);
         var referenceRows = await _db.CandidateReferences.AsNoTracking()
             .Where(r => r.UserId == candidate.Id)
             .Select(r => new { r.EmployerName, r.ContactName, r.Email, r.Phone })
@@ -967,6 +989,12 @@ public class ApplicationsController : ControllerBase
                                    && request.ConfirmLowMatchSafetyNet;
         // New applications do not snapshot the AI "Wie ben ik" story (decision 22). Existing rows stay.
         application.SnapshotWhoAmIJson = null;
+        var applyFeatures = await _features.GetAsync(cancellationToken);
+        var applyLanguage = JobsyLanguages.Normalize(preferences.Language);
+        var applyDnaLayers = await _dna.ReadAsync(candidate.Id, applyLanguage, cancellationToken);
+        application.SnapshotAttachedDocument = ApplicationAttachedDocumentRules.KindForNewApplication(
+            PassportDnaCompletion.AllLayersCompleted(applyDnaLayers),
+            applyFeatures.PassportPdfV2Enabled);
 
         if (vacancy.Kind == VacancyKind.Internship
             && vacancy.ExclusivitySetting is { } excl
@@ -1740,7 +1768,8 @@ public class ApplicationsController : ControllerBase
                 availability.Slots,
                 availability.FlexibleTimes),
             UploadedCvAvailable: revealed && a.HasUploadedCv,
-            CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0);
+            CandidateReferenceCount: revealed ? a.CandidateReferenceCount : 0,
+            AttachedDocumentKind: a.SnapshotAttachedDocument);
     }
 
     private async Task SnapshotUploadedCvAsync(

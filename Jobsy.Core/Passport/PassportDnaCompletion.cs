@@ -29,4 +29,7 @@ public static class PassportDnaCompletion
         CandidateDeepAnalysis? deepRow,
         AssessmentKind kind)
         => QuickScanCompleted(quickStatus) || DeepCompleted(deepRow, kind);
+
+    public static bool AllLayersCompleted(IReadOnlyList<PassportDnaLayerFact> layers)
+        => layers is { Count: >= 4 } && layers.All(layer => layer.Done);
 }

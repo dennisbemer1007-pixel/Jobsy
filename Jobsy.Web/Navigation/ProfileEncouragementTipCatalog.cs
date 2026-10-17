@@ -47,11 +47,11 @@ public static class ProfileEncouragementTipCatalog
             "/candidate/paspoort?tab=tests",
             ["vacancy-pre-apply", "paspoort-home"]),
         new(
-            "wist-passport-apply",
+            "wist-cv-vs-passport",
             "Encourage.Tip.PassportApply",
             "Encourage.Tip.PassportApply.Link",
-            Audience.ProfileIncomplete,
-            "/candidate/paspoort?tab=data",
+            Audience.TestsIncomplete,
+            "/candidate/paspoort?tab=tests",
             ["vacancy-pre-apply", "apply-sent", "paspoort-home"]),
         new(
             "wist-day-in-life",

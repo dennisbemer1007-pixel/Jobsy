@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Werkgever.Applications
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Rules
+@using ApplicationAttachedDocumentRules = Jobsy.Core.Rules.ApplicationAttachedDocumentRules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
@@ -68,6 +69,15 @@
 
     @if (Tab == "profiel")
     {
+        var docLabelKey = ApplicationAttachedDocumentRules.EmployerDocumentLabelKey(a.AttachedDocumentKind);
+        var docNoteKey = ApplicationAttachedDocumentRules.EmployerFollowUpNoteKey(a.AttachedDocumentKind);
+        <p class="wg-app-attached-doc" data-testid="wg-app-attached-document">
+            @Culture[docLabelKey]
+            @if (docNoteKey is not null)
+            {
+                <span class="muted wg-app-attached-doc__note">@Culture[docNoteKey]</span>
+            }
+        </p>
         <dl class="wg-app-facts">
             <div>
                 <dt>@Culture["WgApp.Fact.Travel"]</dt>

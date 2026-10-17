@@ -1,12 +1,10 @@
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Entities;
-using Jobsy.Core.Privacy;
-
 namespace Jobsy.Core.Rules;
 
 /// <summary>
-/// Minimum candidate profile required to apply: Even kennismaken basics + paspoort consent.
-/// Tests, about-me and motivation are never part of this gate.
+/// Minimum candidate profile required to apply: Even kennismaken basics + enough data for Lobsy-CV.
+/// Tests, paspoort PDF, about-me and motivation are never part of this gate.
 /// </summary>
 public enum ApplyBasicsField
 {
@@ -17,8 +15,7 @@ public enum ApplyBasicsField
     Availability,
     AvailabilityStart,
     WorkStatus,
-    OpenForWork,
-    PassportConsent
+    OpenForWork
 }
 
 public sealed record ApplyBasicsGap(ApplyBasicsField Field, string MessageKey);
@@ -76,11 +73,6 @@ public static class CandidateApplyBasicsRules
             gaps.Add(new(ApplyBasicsField.OpenForWork, "Apply.Gap.OpenForWork"));
         }
 
-        if (!HasPassportConsent(user))
-        {
-            gaps.Add(new(ApplyBasicsField.PassportConsent, "Apply.Gap.PassportConsent"));
-        }
-
         return gaps;
     }
 
@@ -98,7 +90,6 @@ public static class CandidateApplyBasicsRules
         DateOnly? availableFromDate,
         double? homeLatitude,
         double? homeLongitude,
-        bool passportConsentOk,
         CandidatePreferencesDto prefs)
     {
         var user = new User
@@ -113,8 +104,6 @@ public static class CandidateApplyBasicsRules
             HomeLocation = homeLatitude is double lat && homeLongitude is double lng
                 ? new ValueObjects.GeoPoint(lat, lng)
                 : null,
-            TermsAcceptedAt = passportConsentOk ? DateTime.UtcNow : null,
-            ConsentVersion = passportConsentOk ? Privacy.PrivacyConstants.CurrentConsentVersion : null,
             Role = Enums.UserRole.Candidate
         };
         return IsReady(user, prefs);
@@ -136,10 +125,6 @@ public static class CandidateApplyBasicsRules
             postcode ?? "",
             resolved);
     }
-
-    public static bool HasPassportConsent(User user)
-        => user.TermsAcceptedAt is not null
-           && !PrivacyConstants.RequiresAccountConsentReaccept(user.Role, user.ConsentVersion);
 
     public static int CountAvailabilitySlots(CandidatePreferencesDto prefs)
     {

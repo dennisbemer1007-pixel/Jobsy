@@ -225,6 +225,23 @@ internal sealed class E2eFlowRunner
 
         if (!skipApply)
         {
+        if (!chainOnly && vacancyId is Guid blockedVacancyId)
+        {
+            var emptyEmail = $"e2e-empty-{Guid.NewGuid():N}@jobsy.local";
+            foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
+            {
+                await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+                var page = await PrepPageAsync(ctx);
+                await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, emptyEmail, "E2eEmpty");
+                await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                await page.Locator("[data-testid=apply-profile-blocked]").WaitForAsync(new() { Timeout = 90_000 });
+                await Shot(page, tag, "09-apply-blocked-empty-profile");
+            }
+
+            _report.EmptyProfileBlockedCaptured = true;
+        }
+
         await CandidateJourneyE2e.EnsureDemoApplyProfileReadyAsync(chainEmail);
 
         var swApply = Stopwatch.StartNew();
@@ -381,6 +398,26 @@ internal sealed class E2eFlowRunner
             else
             {
                 await Shot(page, "desktop-1440", "11-accept-skipped");
+            }
+
+            var attachedDoc = page.Locator("[data-testid=wg-app-attached-document]");
+            if (await attachedDoc.CountAsync() > 0)
+            {
+                await attachedDoc.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+                await Shot(page, "desktop-1440", "11-attached-document");
+                _report.EmployerSeesAttachedDocument = true;
+            }
+
+            var cvDownload = page.Locator("[data-testid=wg-app-download-cv]");
+            if (await cvDownload.CountAsync() > 0 && await cvDownload.First.IsEnabledAsync())
+            {
+                var download = await page.RunAndWaitForDownloadAsync(
+                    async () => await cvDownload.First.ClickAsync(),
+                    new() { Timeout = 45_000 });
+                var savePath = Path.Combine(PdfDir, "employer-lobsy-cv-desktop.pdf");
+                await download.SaveAsAsync(savePath);
+                _report.EmployerCvDownloadPath = savePath;
+                await Shot(page, "desktop-1440", "11-lobsy-cv-downloaded");
             }
 
             var maqqie = phase2Panel.GetByRole(AriaRole.Button, new() { Name = "Via Maqqie" }).First;
@@ -966,6 +1003,9 @@ internal sealed class FlowRunReport
     public bool Step7HasPercent { get; set; }
     public bool Step8DayInLife { get; set; }
     public bool MaqqieChosen { get; set; }
+    public bool EmployerSeesAttachedDocument { get; set; }
+    public string? EmployerCvDownloadPath { get; set; }
+    public bool EmptyProfileBlockedCaptured { get; set; }
     public bool SmtpConfigured { get; set; }
     public string? SmtpNote { get; set; }
     public List<string> PaspoortFieldRows { get; } = [];

@@ -16,6 +16,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject UserFacingError UserFacing
 @using Jobsy.Core.Media
+@using Jobsy.Core.Contracts
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.KandidaatBanen
@@ -544,32 +545,53 @@
                         }
                         else if (!_profileReadyForApply)
                         {
-                            <div class="apply-panel apply-panel--warn">
+                            <div class="apply-panel apply-panel--warn" data-testid="apply-profile-blocked">
                                 <p class="apply-panel__title">@Culture["Apply.CompleteProfileTitle"]</p>
-                                <p class="apply-panel__text">@Culture["Apply.CompleteProfileBody"]</p>
+                                <p class="apply-panel__text">
+                                    @(_applyBasicsIncomplete ? Culture["Apply.BasicsBlockedLead"] : Culture["Apply.CompleteProfileBody"])
+                                </p>
                                 <ul class="apply-checklist">
-                                    <li class="@(_profileHasAvailability ? "is-done" : null)">@Culture["Apply.Availability"]</li>
-                                    @if (_requiresDrivingLicense)
+                                    @if (_applyBasicsIncomplete)
                                     {
-                                        <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", LocalizeLicenseList(_vacancy.RequiredDrivingLicense!))</li>
-                                    }
-                                    <li class="@(_profileHasEmployers ? "is-done" : null)">
-                                        @if (_vacancy.MinimumEmployers is > 0)
+                                        @foreach (var gap in _applyBasicsChecklist)
                                         {
-                                            @Culture.Format("Apply.ExperienceMin", _vacancy.MinimumEmployers)
+                                            <li class="@(gap.Done ? "is-done" : null)">
+                                                @if (!gap.Done && gap.Href is not null)
+                                                {
+                                                    <a href="@gap.Href">@Culture[gap.MessageKey]</a>
+                                                }
+                                                else
+                                                {
+                                                    @Culture[gap.MessageKey]
+                                                }
+                                            </li>
                                         }
-                                        else
-                                        {
-                                            @Culture["Apply.Experience"]
-                                        }
-                                    </li>
-                                    @if (_requiresEducation)
-                                    {
-                                        <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
                                     }
-                                    @if (_vacancy.MinimumReferences is > 0)
+                                    else
                                     {
-                                        <li class="@(_profileHasReferences ? "is-done" : null)">@Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)</li>
+                                        <li class="@(_profileHasAvailability ? "is-done" : null)">@Culture["Apply.Availability"]</li>
+                                        @if (_requiresDrivingLicense)
+                                        {
+                                            <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", LocalizeLicenseList(_vacancy.RequiredDrivingLicense!))</li>
+                                        }
+                                        <li class="@(_profileHasEmployers ? "is-done" : null)">
+                                            @if (_vacancy.MinimumEmployers is > 0)
+                                            {
+                                                @Culture.Format("Apply.ExperienceMin", _vacancy.MinimumEmployers)
+                                            }
+                                            else
+                                            {
+                                                @Culture["Apply.Experience"]
+                                            }
+                                        </li>
+                                        @if (_requiresEducation)
+                                        {
+                                            <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
+                                        }
+                                        @if (_vacancy.MinimumReferences is > 0)
+                                        {
+                                            <li class="@(_profileHasReferences ? "is-done" : null)">@Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)</li>
+                                        }
                                     }
                                 </ul>
                                 <a class="login-submit apply-flow__primary"
@@ -1051,6 +1073,9 @@
     private bool _acceptedTerms;
     private bool _workPermitConfirmed;
     private bool _profileReadyForApply = true;
+    private bool _applyBasicsReady = true;
+    private bool _applyBasicsIncomplete;
+    private readonly List<ApplyBasicsChecklistRow> _applyBasicsChecklist = [];
     private ProfileEncouragementContext? _encourageContext;
     private string? _encouragePreviewTipId;
     private bool _profileHasAvailability;
@@ -1130,7 +1155,24 @@
     private string LoginUrl =>
         $"/login?returnUrl={Uri.EscapeDataString($"/vacancies/{Id}")}";
 
-    private string ProfileReturnHref => ApplyProfileLink.Href(Id, ProfileGaps());
+    private string ProfileReturnHref
+    {
+        get
+        {
+            if (_applyBasicsIncomplete)
+            {
+                foreach (var row in _applyBasicsChecklist)
+                {
+                    if (!row.Done && row.Href is not null)
+                    {
+                        return row.Href;
+                    }
+                }
+            }
+
+            return ApplyProfileLink.Href(Id, ProfileGaps());
+        }
+    }
 
     private IReadOnlyList<ApplyProfileLink.Gap> ProfileGaps()
     {
@@ -1441,6 +1483,9 @@
         _verificationCode = string.Empty;
         _message = null;
         _profileReadyForApply = true;
+        _applyBasicsReady = true;
+        _applyBasicsIncomplete = false;
+        _applyBasicsChecklist.Clear();
         _profileHasAvailability = false;
         _profileHasLicense = true;
         _profileHasEmployers = false;
@@ -1907,12 +1952,44 @@
                         await RefreshTravelAsync();
                     }
                 }
-                _profileReadyForApply =
+                var prefsDto = ToApplyPrefsDto(prefs);
+                var basicsUser = new Jobsy.Core.Entities.User
+                {
+                    Id = profile.Id,
+                    FirstName = profile.FirstName,
+                    LastName = profile.LastName,
+                    FullName = profile.FullName ?? "",
+                    DateOfBirth = profile.DateOfBirth,
+                    OpenForWork = profile.OpenForWork,
+                    AvailableFromDate = profile.AvailableFromDate,
+                    HomeLocation = profile.HomeLatitude is double lat && profile.HomeLongitude is double lng
+                        ? new Jobsy.Core.ValueObjects.GeoPoint(lat, lng)
+                        : null,
+                    Role = Jobsy.Core.Enums.UserRole.Candidate
+                };
+                var basicsGaps = CandidateApplyBasicsRules.Evaluate(basicsUser, prefsDto);
+                _applyBasicsReady = basicsGaps.Count == 0;
+                _applyBasicsIncomplete = !_applyBasicsReady;
+                _applyBasicsChecklist.Clear();
+                foreach (var field in Enum.GetValues<ApplyBasicsField>())
+                {
+                    var gap = basicsGaps.FirstOrDefault(g => g.Field == field);
+                    var missing = gap is not null;
+                    var messageKey = gap?.MessageKey ?? $"Apply.Gap.{field}";
+                    var kind = ApplyProfileLink.KindFor(field);
+                    _applyBasicsChecklist.Add(new ApplyBasicsChecklistRow(
+                        messageKey,
+                        !missing,
+                        missing ? ApplyProfileLink.HrefForKind(Id, kind) : null));
+                }
+
+                var vacancyRequirementsReady =
                     _profileHasAvailability
                     && _profileHasLicense
                     && _profileHasEmployers
                     && _profileHasEducation
                     && _profileHasReferences;
+                _profileReadyForApply = _applyBasicsReady && vacancyRequirementsReady;
             }
         }
 
@@ -2464,4 +2541,20 @@
         _directContactOpen = false;
         return Task.CompletedTask;
     }
+
+    private sealed record ApplyBasicsChecklistRow(string MessageKey, bool Done, string? Href);
+
+    private static CandidatePreferencesDto ToApplyPrefsDto(CandidatePreferences prefs)
+        => new(
+            prefs.Roles ?? [],
+            prefs.MaxTravelMinutes,
+            prefs.PreferredTransport,
+            Availability: prefs.Availability?.ToDictionary(
+                k => k.Key,
+                v => v.Value?.ToArray() ?? [],
+                StringComparer.OrdinalIgnoreCase),
+            HomeAddress: prefs.HomeAddress,
+            MinHoursPerWeek: prefs.MinHoursPerWeek,
+            MaxHoursPerWeek: prefs.MaxHoursPerWeek,
+            WorkStatuses: prefs.WorkStatuses);
 }

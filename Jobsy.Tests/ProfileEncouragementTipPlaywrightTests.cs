@@ -11,7 +11,7 @@ public sealed class ProfileEncouragementTipPlaywrightTests
 
     [Theory]
     [InlineData("wist-tests-match", "desktop-1440", false)]
-    [InlineData("wist-passport-apply", "desktop-1440", false)]
+    [InlineData("wist-cv-vs-passport", "desktop-1440", false)]
     [InlineData("wist-day-in-life", "mobile-390", true)]
     public async Task Capture_encourage_tip_screenshot(string tipId, string tag, bool mobile)
     {
@@ -51,9 +51,7 @@ public sealed class ProfileEncouragementTipPlaywrightTests
 
         var path = tipId == "wist-day-in-life"
             ? $"{baseUrl}/vacancies/{await ResolveAnyVacancyIdAsync(page, baseUrl)}?encouragePreview={tipId}#apply"
-            : tipId == "wist-passport-apply"
-                ? $"{baseUrl}/candidate/paspoort?encouragePreview={tipId}"
-                : $"{baseUrl}/vacancies/{await ResolveAnyVacancyIdAsync(page, baseUrl)}?encouragePreview={tipId}#apply";
+            : $"{baseUrl}/vacancies/{await ResolveAnyVacancyIdAsync(page, baseUrl)}?encouragePreview={tipId}#apply";
 
         await page.GotoAsync(path);
         await KbE2e.WaitForStyledAppAsync(page);

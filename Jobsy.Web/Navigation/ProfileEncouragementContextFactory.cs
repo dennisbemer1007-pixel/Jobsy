@@ -63,7 +63,6 @@ public static class ProfileEncouragementContextFactory
             profile.AvailableFromDate,
             profile.HomeLatitude,
             profile.HomeLongitude,
-            !profile.NeedsConsentReaccept,
             prefs);
 
         return new ProfileEncouragementContext
