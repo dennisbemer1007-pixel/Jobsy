@@ -151,6 +151,10 @@
     "sha256": "27596bde44da542dc90eb601bc731b8e91a5cdac5e24febdc958eb320dab5a6e",
     "v": "20261004-14"
   },
+  "css/features/signup-static.css": {
+    "sha256": "69fb31ce94f4b6cf16f62b44516b7196b4e069c3f4ff3bff4717fbc7d3a2a19c",
+    "v": "20261017-01"
+  },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20261004-10"

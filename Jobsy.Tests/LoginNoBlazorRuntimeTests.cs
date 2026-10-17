@@ -36,6 +36,17 @@ public class LoginNoBlazorRuntimeTests
         Assert.Contains("css/features/cookie-consent.css", app, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Signup_static_css_gated_for_account_maken_paths()
+    {
+        var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/App.razor"));
+        Assert.Contains("IncludeSignupStaticCss", app, StringComparison.Ordinal);
+        Assert.Contains("css/features/signup-static.css", app, StringComparison.Ordinal);
+        Assert.True(Jobsy.Web.Hosting.PageAssetCatalog.IncludeSignupStaticCss("/account-maken"));
+        Assert.True(Jobsy.Web.Hosting.PageAssetCatalog.IncludeSignupStaticCss("/account-maken/code"));
+        Assert.False(Jobsy.Web.Hosting.PageAssetCatalog.IncludeSignupStaticCss("/login"));
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

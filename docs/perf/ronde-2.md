@@ -83,6 +83,7 @@ Zie `/cursor/stores/self/perf2/screenshots/` (`before-acc-*` vs `after-local-*`,
 
 - **Microsoft-knop:** `Login.razor` toont providers alleen als `ExternalAuth.IsEntraConfiguredAsync()` / Google geconfigureerd is. Lokaal zonder secrets → geen knop; met dummy Entra env op Web → wel knop + `au-divider`, nog steeds zonder `blazor.web.js`. Capture: `tools/perf/perf2-capture-review.mjs`.
 - **Cookiebanner NoBlazorRuntime:** extra `css/features/cookie-consent.css` in `App.razor` wanneer `!LoadBlazorRuntime` (compacte banner i.p.v. alleen `public-theme.css`). Captures: `tools/perf/perf2-static-auth-screenshots.mjs`.
-- **E2E zonder circuit:** `Jobsy.Tests/NoBlazorStaticAuthPlaywrightTests.cs` (antiforgery POST, wachtwoord-toggle, taalmenu, cookie-knoppen, signup/code/resend). Vereist CI-stack + `JOBSY_E2E_CAPTURE_EMAIL_CODES=1`; optioneel `ConnectionStrings__JobsyDb` om seed-lockout te resetten.
+- **E2E zonder circuit:** `Jobsy.Tests/NoBlazorStaticAuthPlaywrightTests.cs` + `StaticAuthVisualPlaywrightTests.cs` (styled inputs/providers, cookie banner, code step). Vereist CI-stack + `JOBSY_E2E_CAPTURE_EMAIL_CODES=1`; optioneel `ConnectionStrings__JobsyDb` om seed-lockout te resetten.
+- **Signup CSS zonder app.min:** `css/features/signup-static.css` via `PageAssetCatalog.IncludeSignupStaticCss` op `/account-maken` (+ code). Captures: `tools/perf/perf2-auth-visual-compare.mjs`, `perf2-static-auth-screenshots.mjs` (consent reset per page).
 - **Banenkaart:** lokaal `Jobsy__TestEmployersEnabled=true` (zelfde als acceptatie employers-flag). Metrics in `banenkaart-load-metrics.json`.
 - **Asset guard:** `app-core.js?v=20261017-03` (+ `asset-versions.json` sync).

@@ -56,6 +56,10 @@
         @* After public-theme so compact cookie bar matches app.min (acceptatie) on auth shells. *@
         <link rel="stylesheet" href="css/features/cookie-consent.css?v=20261017-03" />
     }
+    @if (!LoadBlazorRuntime && IncludeSignupStaticCss)
+    {
+        <link rel="stylesheet" href="css/features/signup-static.css?v=20261017-01" />
+    }
     @if (LoadBlazorRuntime)
     {
         @foreach (var href in PageStylesheets)
@@ -355,6 +359,9 @@
 
     private bool IncludeGratisDnaScript =>
         PageAssetCatalog.IncludeGratisDnaScript(RequestPath);
+
+    private bool IncludeSignupStaticCss =>
+        PageAssetCatalog.IncludeSignupStaticCss(RequestPath);
 
     private bool IncludeLeerlingLoginScript =>
         PageAssetCatalog.IncludeLeerlingLoginScript(RequestPath);

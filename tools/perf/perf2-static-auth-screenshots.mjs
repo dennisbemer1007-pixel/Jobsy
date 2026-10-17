@@ -1,7 +1,6 @@
 /**
  * Cookie banner + static auth pages at 390 and 1440 (PR #710 review).
- *   BASE=http://127.0.0.1:5201 OUT=/cursor/stores/self/perf2/screenshots \
- *   node tools/perf/perf2-static-auth-screenshots.mjs
+ * Clears consent before each page; code step via real email POST when JOBSY_CAPTURE_EMAIL=1.
  */
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
@@ -9,12 +8,7 @@ import path from 'node:path';
 
 const base = (process.env.BASE || 'http://127.0.0.1:5201').replace(/\/$/, '');
 const out = process.env.OUT || '/cursor/stores/self/perf2/screenshots';
-
-const paths = [
-  { slug: 'login', path: '/login' },
-  { slug: 'account-maken', path: '/account-maken' },
-  { slug: 'account-maken-code', path: '/account-maken/code?email=review%40example.test' },
-];
+const captureEmail = process.env.JOBSY_CAPTURE_EMAIL === '1';
 
 async function shot(page, file) {
   await mkdir(path.dirname(file), { recursive: true });
@@ -22,16 +16,45 @@ async function shot(page, file) {
   console.log('wrote', file);
 }
 
+async function gotoSlug(page, slug) {
+  if (slug === 'login') {
+    await page.goto(`${base}/login`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    return;
+  }
+  if (slug === 'account-maken') {
+    await page.goto(`${base}/account-maken`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    return;
+  }
+  if (slug === 'account-maken-code') {
+    if (!captureEmail) {
+      throw new Error('Set JOBSY_CAPTURE_EMAIL=1 for account-maken-code captures.');
+    }
+    const email = `perf2.banner.${Date.now()}@example.test`;
+    await page.goto(`${base}/account-maken`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    await page.locator('input[name=email]').fill(email);
+    await page.locator('button.au-submit').first().click();
+    await page.waitForURL('**/account-maken/code**', { timeout: 90_000 });
+  }
+}
+
 async function main() {
   const browser = await chromium.launch({ headless: true });
+  const slugs = ['login', 'account-maken', 'account-maken-code'];
+
   for (const [w, h, tag] of [
     [390, 844, 'mobile'],
     [1440, 900, 'desktop'],
   ]) {
-    const ctx = await browser.newContext({ viewport: { width: w, height: h } });
-    for (const { slug, path: p } of paths) {
+    for (const slug of slugs) {
+      const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+      await ctx.addInitScript(() => {
+        try {
+          localStorage.removeItem('Jobsy.CookieConsent');
+        } catch (e) {}
+        document.documentElement.classList.remove('cookie-consent-known');
+      });
       const page = await ctx.newPage();
-      await page.goto(`${base}${p}`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      await gotoSlug(page, slug);
       const blazor = await page.evaluate(
         () => !!document.querySelector('script[src*="blazor.web.js"]'),
       );
@@ -40,18 +63,14 @@ async function main() {
         if (!t) return null;
         return parseFloat(getComputedStyle(t).fontSize);
       });
-      const cookieCss = await page.evaluate(
-        () => [...document.querySelectorAll('link[rel=stylesheet]')].some((l) =>
-          String(l.href).includes('cookie-consent.css')),
-      );
-      console.log(JSON.stringify({ slug, tag, blazor, cookieCss, titleSize }));
+      const hasBanner = await page.locator('.cookie-consent').count();
+      console.log(JSON.stringify({ slug, tag, blazor, hasBanner, titleSize }));
       await shot(page, path.join(out, `cookie-banner-${slug}-${tag}-visible.jpg`));
       await page.locator('.cookie-consent [data-consent=necessary]').first().click({ timeout: 8000 }).catch(() => {});
       await page.waitForSelector('.cookie-consent', { state: 'detached', timeout: 8000 }).catch(() => {});
       await shot(page, path.join(out, `cookie-banner-${slug}-${tag}-dismissed.jpg`));
-      await page.close();
+      await ctx.close();
     }
-    await ctx.close();
   }
   await browser.close();
 }

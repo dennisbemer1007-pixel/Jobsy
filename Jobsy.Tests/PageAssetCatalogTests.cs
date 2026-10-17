@@ -75,6 +75,15 @@ public class PageAssetCatalogTests
         Assert.Equal(vacancyWizard, Jobsy.Web.Hosting.PageAssetCatalog.IncludeVacancyWizardScript(path));
     }
 
+    [Theory]
+    [InlineData("/login", false)]
+    [InlineData("/account-maken", true)]
+    [InlineData("/account-maken/code", true)]
+    public void Signup_static_css_gated(string path, bool expected)
+    {
+        Assert.Equal(expected, Jobsy.Web.Hosting.PageAssetCatalog.IncludeSignupStaticCss(path));
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);
