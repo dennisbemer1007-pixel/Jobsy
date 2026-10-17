@@ -336,7 +336,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             }",
             null,
             new() { Timeout = mobile ? 45_000 : 30_000 });
-        await page.WaitForTimeoutAsync(mobile ? 800 : 600);
+        await page.WaitForTimeoutAsync(mobile ? 800 : 1200);
     }
 
     private static async Task ShotPageAsync(IPage page, string fileName, bool fullViewport = false)

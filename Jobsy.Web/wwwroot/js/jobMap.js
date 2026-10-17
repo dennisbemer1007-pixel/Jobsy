@@ -3881,6 +3881,7 @@ window.jobMap = (function () {
             if (window.jobsyMapLibre) {
                 window.jobsyMapLibre.hideChrome(map);
             }
+            kkResizeMapAndFit(false);
             return;
         }
         refreshClusters();
@@ -4250,6 +4251,11 @@ window.jobMap = (function () {
         }
         var runFit = function () {
             try {
+                var container = typeof map.getContainer === "function" ? map.getContainer() : null;
+                if (container) {
+                    container.style.width = "100%";
+                    container.style.height = "100%";
+                }
                 if (typeof map.resize === "function") {
                     map.resize();
                 }
@@ -4265,6 +4271,17 @@ window.jobMap = (function () {
         } else {
             setTimeout(runFit, 0);
         }
+    }
+
+    function kkScheduleLayoutPasses() {
+        if (!map || !kkMode) {
+            return;
+        }
+        [0, 80, 200, 450, 900].forEach(function (delay) {
+            setTimeout(function () {
+                kkResizeMapAndFit(false);
+            }, delay);
+        });
     }
 
     function drawKkRadiusRing(lat, lng) {
@@ -4551,6 +4568,7 @@ window.jobMap = (function () {
         map.once("load", function () {
             refreshKkAreasData();
             kkResizeMapAndFit(false);
+            kkScheduleLayoutPasses();
             kkInitialFitDone = true;
         });
     }
