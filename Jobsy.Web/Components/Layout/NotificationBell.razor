@@ -6,6 +6,7 @@
 @inject JobsyApiClient Api
 @inject NotificationUnreadStore UnreadStore
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthState
 
 <AuthorizeView>
     <Authorized>
@@ -104,7 +105,7 @@
                     @if (!_loading)
                     {
                         <p class="notification-bell__footer-link">
-                            <a href="/notifications" @onclick="Close">Alle meldingen</a>
+                            <a href="@_allNotificationsHref" @onclick="Close">Alle meldingen</a>
                         </p>
                     }
                 </div>
@@ -119,10 +120,13 @@
     private bool _busy;
     private int _unread;
     private List<UserNotificationItem> _items = [];
+    private string _allNotificationsHref = "/notifications";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        await base.OnInitializedAsync();
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _allNotificationsHref = RoleNavCatalog.NotificationsHrefFor(state.User);
         UnreadStore.Changed += OnUnreadChanged;
         UnreadStore.EnsureStarted();
         _unread = UnreadStore.Unread;

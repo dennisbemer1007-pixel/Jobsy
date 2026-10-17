@@ -38,13 +38,23 @@ public class LivegangScreenshotCaptureTests
         await using var browser = await KbE2e.LaunchChromiumAsync();
 
         var skipNotificationsPage = string.Equals(phase, "before", StringComparison.OrdinalIgnoreCase);
+        var scope = Environment.GetEnvironmentVariable("LIVEGANG_SHOTS_SCOPE");
+        var notificationsOnly = string.Equals(scope, "notifications", StringComparison.OrdinalIgnoreCase);
 
-        await CaptureVacancyWizardAsync(browser, baseUrl, root);
+        if (!notificationsOnly)
+        {
+            await CaptureVacancyWizardAsync(browser, baseUrl, root);
+        }
+
         await ClearDemoNotificationsAsync();
         await CaptureNotificationsAsync(browser, baseUrl, root, withItems: false, skipPage: skipNotificationsPage);
         await SeedDemoNotificationsAsync();
         await CaptureNotificationsAsync(browser, baseUrl, root, withItems: true, skipPage: skipNotificationsPage);
-        await CaptureVacaturesListAsync(browser, baseUrl, root);
+
+        if (!notificationsOnly)
+        {
+            await CaptureVacaturesListAsync(browser, baseUrl, root);
+        }
 
         var networkLog = Path.Combine(root, "network-404s.txt");
         await File.WriteAllLinesAsync(
@@ -153,9 +163,14 @@ public class LivegangScreenshotCaptureTests
                     continue;
                 }
 
-                await page.GotoAsync($"{baseUrl}/notifications",
+                var notificationsPath = role == "employer" ? "/werkgever/meldingen" : "/notifications";
+                await page.GotoAsync($"{baseUrl}{notificationsPath}",
                     new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
                 await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "notifications.css");
+                if (role == "employer")
+                {
+                    await page.Locator(".wg-shell .wg-page-header").WaitForAsync(new() { Timeout = 60_000 });
+                }
                 if (withItems)
                 {
                     await page.Locator(".notifications-page__list .notifications-page__item")
@@ -344,8 +359,9 @@ public class LivegangScreenshotCaptureTests
               const itemR = item?.getBoundingClientRect();
               const gapBtnRight = btnR.right - dotR.right;
               const gapItemRight = itemR ? itemR.right - dotR.right : null;
+              const gapOk = gapItemRight != null ? gapItemRight <= 20 : gapBtnRight <= 20;
               return JSON.stringify({
-                ok: gapBtnRight <= 20,
+                ok: gapOk,
                 gapBtnRight,
                 gapItemRight,
                 dotX: dotR.left,
@@ -365,8 +381,17 @@ public class LivegangScreenshotCaptureTests
         await File.AppendAllTextAsync(logPath, $"[{shotTag}]{Environment.NewLine}{json}{Environment.NewLine}{Environment.NewLine}");
 
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var gap = doc.RootElement.GetProperty("gapBtnRight").GetDouble();
-        Assert.True(gap <= 20, $"{shotTag}: unread dot gap to card inner right is {gap}px (max 20). Raw: {json}");
+        double gap;
+        if (doc.RootElement.TryGetProperty("gapItemRight", out var gapItemEl)
+            && gapItemEl.TryGetDouble(out var gapItem))
+        {
+            gap = gapItem;
+        }
+        else
+        {
+            gap = doc.RootElement.GetProperty("gapBtnRight").GetDouble();
+        }
+        Assert.True(gap <= 20, $"{shotTag}: unread dot gap to card right edge is {gap}px (max 20). Raw: {json}");
         Assert.Equal("absolute", doc.RootElement.GetProperty("dotPosition").GetString());
         var sheets = doc.RootElement.GetProperty("notificationsCssHrefs");
         Assert.True(sheets.GetArrayLength() > 0, $"{shotTag}: notifications.css not loaded.");

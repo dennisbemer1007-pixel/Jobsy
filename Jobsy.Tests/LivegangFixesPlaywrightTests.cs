@@ -87,14 +87,14 @@ public class LivegangFixesPlaywrightTests
             """
             () => {
               const dot = document.querySelector('.notifications-page__unread-dot');
-              const btn = dot?.closest('.notifications-page__item-btn');
-              if (!dot || !btn) return 999;
+              const item = dot?.closest('.notifications-page__item');
+              if (!dot || !item) return 999;
               const dotR = dot.getBoundingClientRect();
-              const btnR = btn.getBoundingClientRect();
-              return btnR.right - dotR.right;
+              const itemR = item.getBoundingClientRect();
+              return itemR.right - dotR.right;
             }
             """);
-        Assert.True(gapPx <= 20, $"Unread dot should sit within 20px of card inner right edge; gap={gapPx}px.");
+        Assert.True(gapPx <= 20, $"Unread dot should sit within 20px of card right edge; gapItemRight={gapPx}px.");
 
         var position = await page.EvaluateAsync<string>(
             "() => getComputedStyle(document.querySelector('.notifications-page__unread-dot')).position");
