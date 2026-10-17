@@ -126,7 +126,7 @@ public static class PageAssetCatalog
 
         if (path is "/account-maken" or "/account-maken/code")
         {
-            return Area.CandidateApp;
+            return Area.None;
         }
 
         if (path is "/gratis-dna")

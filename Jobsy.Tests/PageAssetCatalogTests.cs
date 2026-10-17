@@ -5,7 +5,7 @@ public class PageAssetCatalogTests
     [Theory]
     [InlineData("/", 3)]
     [InlineData("/login", 3)]
-    [InlineData("/account-maken", 3 + 15)]
+    [InlineData("/account-maken", 3)]
     [InlineData("/banenkaart", 3 + 5)]
     [InlineData("/candidate/paspoort", 3 + 5 + 15)]
     [InlineData("/register", 3 + 4)]

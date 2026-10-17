@@ -1,6 +1,9 @@
 // Manual Blazor.start after blazor.web.js (autostart=false).
 // Must load with defer directly AFTER blazor.web.js so execution order is guaranteed.
 (function () {
+    try {
+        performance.mark("jobsy-blazor-boot-start");
+    } catch (e) { }
     if (!window.Blazor || typeof Blazor.start !== "function") {
         try {
             console.error("[lobsy] Blazor is not defined — blazor-boot.js ran before blazor.web.js?");
@@ -48,6 +51,10 @@
             }
         }
     }).then(function () {
+        try {
+            performance.mark("jobsy-circuit-ready");
+            performance.measure("jobsy-circuit", "jobsy-blazor-boot-start", "jobsy-circuit-ready");
+        } catch (e) { }
         document.documentElement.setAttribute("data-lobsy-circuit", "ready");
         document.addEventListener("visibilitychange", function () {
             if (document.visibilityState !== "visible") return;
