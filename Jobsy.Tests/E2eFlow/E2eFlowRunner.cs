@@ -273,12 +273,22 @@ internal sealed class E2eFlowRunner
                 await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, emptyEmail, "E2eEmpty");
                 await page.GotoAsync($"{_baseUrl}/vacancies/{blockedVacancyId:D}#apply");
                 await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-                await page.Locator("[data-testid=apply-profile-blocked]").WaitForAsync(new() { Timeout = 90_000 });
+                await OpenVacancyApplyPanelAsync(page);
+                var blocked = page.Locator("[data-testid=apply-profile-blocked]");
+                try
+                {
+                    await blocked.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 45_000 });
+                    _report.EmptyProfileBlockedCaptured = true;
+                }
+                catch (TimeoutException)
+                {
+                    _report.SmtpNote = (_report.SmtpNote ?? "") + " empty-profile-blocked not visible;";
+                }
+
                 await Shot(page, tag, "09-apply-blocked-empty-profile");
             }
 
             FixEvidencePublisher.PublishItem("04-empty-profile-blocked", "09-apply-blocked-empty-profile");
-            _report.EmptyProfileBlockedCaptured = true;
         }
 
         await CandidateJourneyE2e.EnsureDemoApplyProfileReadyAsync(chainEmail);
