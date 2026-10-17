@@ -37,8 +37,8 @@ reset_db
 dotnet build Jobsy.sln -c Release -v q
 bash "$ROOT/.github/scripts/start-ci-stack.sh"
 
-dotnet test Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
-  --filter "FullyQualifiedName~CandidateEmployerFlowE2ePlaywrightTests" \
+dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
+  --filter "FullyQualifiedName=Jobsy.Tests.E2eFlow.CandidateEmployerFlowE2ePlaywrightTests.Full_flow_check_with_screenshots_and_metrics" \
   --logger "console;verbosity=normal"
 
 stop_stack

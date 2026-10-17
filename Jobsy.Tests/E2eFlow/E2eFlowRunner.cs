@@ -60,6 +60,7 @@ internal sealed class E2eFlowRunner
         var chainEmail = chainOnly
             ? await ResolveLatestChainCandidateEmailAsync(_conn)
             : $"e2e-d-{Guid.NewGuid():N}@jobsy.local";
+        Stopwatch? noTestsPathClock = null;
         if (string.IsNullOrWhiteSpace(chainEmail))
         {
             throw new InvalidOperationException("JOBSY_E2E_FLOW_CHAIN_ONLY=1 but no e2e-d-* candidate in DB.");
@@ -93,6 +94,7 @@ internal sealed class E2eFlowRunner
         await using (var ctx = await CreateContextAsync(browser, KbE2e.Desktop, 1))
         {
             var page = await PrepPageAsync(ctx);
+            noTestsPathClock = Stopwatch.StartNew();
             await E2eFlowOnboarding.SignUpFreshAsync(page, _baseUrl, chainEmail, "E2eDesk");
             await Shot(page, "desktop-1440", "01-signup-done");
             await E2eFlowOnboarding.CompleteOnboardingWizardWithScreenshotsAsync(
@@ -107,7 +109,27 @@ internal sealed class E2eFlowRunner
             _report.TimingMs["onboarding_plus_discovery_desktop"] = swDeskOnb.ElapsedMilliseconds + swDisc.ElapsedMilliseconds;
 
             await RunPaspoortChecksAsync(page, "desktop-1440");
+            await VerifyAboutMeMotivationNotAutoFilledAsync(chainEmail);
             await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "chain-email.txt"), chainEmail);
+            FixEvidencePublisher.PublishItem(
+                "06-paspoort-inline-editing",
+                "04-paspoort-proof-experience-saved",
+                "04-paspoort-data-edit-personal",
+                "04-paspoort-data-edit-preferences",
+                "04-paspoort-data-edit-availability");
+            FixEvidencePublisher.CopyFileToItem(
+                "06-paspoort-inline-editing",
+                Path.Combine(Root, "evidence", "paspoort-field-table.md"),
+                "paspoort-field-table.md");
+            FixEvidencePublisher.CopyFileToItem(
+                "09-notification-lists-dedupe",
+                Path.Combine(Root, "evidence", "about-me-revert.txt"),
+                "about-me-revert.txt");
+            FixEvidencePublisher.CopyPdfPagesToItem("05-employer-lobsy-cv-and-paspoort-pdf", "paspoort-desktop-1440-page");
+            FixEvidencePublisher.CopyFileToItem(
+                "05-employer-lobsy-cv-and-paspoort-pdf",
+                Path.Combine(PdfDir, "paspoort-desktop-1440.pdf"),
+                "paspoort-all-tests-desktop-1440.pdf");
         }
         }
 
@@ -130,6 +152,11 @@ internal sealed class E2eFlowRunner
                     "Employer login failed before vacancy publish.");
                 vacancyId = await PublishVacancyAsync(page, "desktop-1440", vacancyTitle);
                 _report.VacancyId = vacancyId;
+                FixEvidencePublisher.PublishItem(
+                    "02-esco-wizard-and-day-in-life",
+                    "05-vacancy-esco-picker",
+                    "05-vacancy-step-01",
+                    "05-vacancy-published");
             }
         }
 
@@ -215,6 +242,8 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(1500);
             await Shot(page, tag, "06-banenkaart-logged-in");
         }
+
+        FixEvidencePublisher.PublishItem("08-banenkaart-filter-drawer-desktop", "06-banenkaart-filter-drawer");
         }
 
         // —— 7–9 Chain candidate vacancy + apply ——
@@ -239,6 +268,7 @@ internal sealed class E2eFlowRunner
                 await Shot(page, tag, "09-apply-blocked-empty-profile");
             }
 
+            FixEvidencePublisher.PublishItem("04-empty-profile-blocked", "09-apply-blocked-empty-profile");
             _report.EmptyProfileBlockedCaptured = true;
         }
 
@@ -250,6 +280,19 @@ internal sealed class E2eFlowRunner
             await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
             var page = await PrepPageAsync(ctx);
             await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
+            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}?encouragePreview=wist-cv-vs-passport#apply");
+            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            await OpenVacancyApplyPanelAsync(page);
+            try
+            {
+                await page.Locator("[data-encourage-tip='wist-cv-vs-passport']").WaitForAsync(new() { Timeout = 20_000 });
+                await Shot(page, tag, "07-vacancy-encourage-tip");
+            }
+            catch (TimeoutException)
+            {
+                await Shot(page, tag, "07-vacancy-encourage-tip-missing");
+            }
+
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             await page.WaitForTimeoutAsync(1500);
@@ -304,16 +347,46 @@ internal sealed class E2eFlowRunner
             {
                 await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
                 await Shot(page, tag, "09-applied");
+                if (noTestsPathClock is not null && tag == "desktop-1440")
+                {
+                    _report.NoTestsSignupToAppliedMs = noTestsPathClock.ElapsedMilliseconds;
+                    noTestsPathClock.Stop();
+                }
+
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}?encouragePreview=wist-cv-vs-passport#apply");
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                if (await page.Locator(".apply-panel--success").CountAsync() > 0)
+                {
+                    await Shot(page, tag, "09-applied-encourage-tip");
+                }
             }
             catch (Exception ex)
             {
                 _report.SmtpNote = (_report.SmtpNote ?? "") + $" apply-{tag}: {ex.Message};";
                 await Shot(page, tag, "09-apply-failed");
             }
+
+            if (mobile)
+            {
+                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
+                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+                var coachVisible = await page.Locator(".coach-fab, [data-testid=coach-fab]").CountAsync() > 0
+                                   && await page.Locator(".coach-fab, [data-testid=coach-fab]").First.IsVisibleAsync();
+                _report.MobileCoachOnVacancyDetail = coachVisible;
+                await Shot(page, tag, "07-vacancy-no-coach-mobile");
+            }
         }
 
         swApply.Stop();
         _report.TimingMs["apply_flow"] = swApply.ElapsedMilliseconds;
+        FixEvidencePublisher.PublishItem(
+            "03-no-tests-apply-and-tip",
+            "07-vacancy-match",
+            "07-vacancy-encourage-tip",
+            "09-applied",
+            "09-applied-encourage-tip",
+            "08-day-in-life");
+        FixEvidencePublisher.CopyFileToItem("03-no-tests-apply-and-tip", Path.Combine(Root, "metrics.json"), "metrics.json");
         }
 
         await Task.Delay(3_000);
@@ -455,6 +528,37 @@ internal sealed class E2eFlowRunner
                     await Shot(page, "desktop-1440", "12-maqqie-missing");
                 }
             }
+
+            await using (var mobileCtx = await CreateContextAsync(browser, KbE2e.Mobile, 2))
+            {
+                var mPage = await PrepPageAsync(mobileCtx);
+                Assert.True(await KbE2e.TryLoginAsync(mPage, _baseUrl, VacancyWizardE2e.EmployerEmail, VacancyWizardE2e.EmployerPassword));
+                if (chainApplicationId is Guid mobileAppId && vacancyId is Guid vacId)
+                {
+                    await mPage.GotoAsync($"{_baseUrl}/werkgever/sollicitaties?vacancyId={vacId:D}&kandidaat={mobileAppId:D}");
+                }
+                else
+                {
+                    await mPage.GotoAsync(_baseUrl + "/werkgever/sollicitaties");
+                }
+
+                await KbE2e.WaitForStyledAppAsync(mPage);
+                await mPage.WaitForTimeoutAsync(2000);
+                await Shot(mPage, "mobile-390", "12-maqqie-chosen");
+            }
+
+            FixEvidencePublisher.PublishItem(
+                "01-maqqie-phase2-after-accept",
+                "11-applicant-drawer",
+                "11-accept-open",
+                "12-maqqie-chosen",
+                "11-attached-document",
+                "11-lobsy-cv-downloaded");
+            FixEvidencePublisher.CopyFileToItem(
+                "05-employer-lobsy-cv-and-paspoort-pdf",
+                Path.Combine(PdfDir, "employer-lobsy-cv-desktop.pdf"),
+                "employer-lobsy-cv-desktop.pdf");
+            FixEvidencePublisher.CopyPdfPagesToItem("05-employer-lobsy-cv-and-paspoort-pdf", "paspoort-desktop-1440-page");
         }
 
         await Task.Delay(2_000);
@@ -475,13 +579,76 @@ internal sealed class E2eFlowRunner
 
             await page.GotoAsync(_baseUrl + "/notifications");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            var coachOnNotif = await page.Locator(".coach-fab, [data-testid=coach-fab]").CountAsync() > 0
+                               && await page.Locator(".coach-fab, [data-testid=coach-fab]").First.IsVisibleAsync();
+            _report.MobileCoachOnNotifications = coachOnNotif;
             await Shot(page, "mobile-390", "13-candidate-notifications");
+            FixEvidencePublisher.PublishItem(
+                "07-mascot-no-overlap-mobile",
+                "07-vacancy-no-coach-mobile",
+                "13-candidate-notifications");
         }
+
+        FixEvidencePublisher.PublishItem("09-notification-lists-dedupe", "10-employer-meldingen", "13-candidate-notifications");
 
         await File.WriteAllTextAsync(
             Path.Combine(Root, "metrics.json"),
             JsonSerializer.Serialize(_report, new JsonSerializerOptions { WriteIndented = true }));
         await BuildContactSheetsAsync();
+        await OrganizeFixesEvidenceAsync();
+    }
+
+    private async Task VerifyAboutMeMotivationNotAutoFilledAsync(string chainEmail)
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(_conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        await using var db = new JobsyDbContext(options);
+        var prefsJson = await db.Users.AsNoTracking()
+            .Where(u => u.Email == chainEmail)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync();
+        var aboutEmpty = string.IsNullOrWhiteSpace(prefsJson)
+                           || !prefsJson.Contains("aboutMe", StringComparison.OrdinalIgnoreCase)
+                           || prefsJson.Contains("\"aboutMe\":null", StringComparison.OrdinalIgnoreCase)
+                           || prefsJson.Contains("\"aboutMe\":\"\"", StringComparison.OrdinalIgnoreCase);
+        var motivEmpty = string.IsNullOrWhiteSpace(prefsJson)
+                           || !prefsJson.Contains("defaultMotivation", StringComparison.OrdinalIgnoreCase)
+                           || prefsJson.Contains("\"defaultMotivation\":null", StringComparison.OrdinalIgnoreCase)
+                           || prefsJson.Contains("\"defaultMotivation\":\"\"", StringComparison.OrdinalIgnoreCase);
+        _report.AboutMeMotivationReverted = aboutEmpty && motivEmpty;
+        var note = $"aboutEmpty={aboutEmpty} motivEmpty={motivEmpty}\nprefs={prefsJson?[..Math.Min(prefsJson?.Length ?? 0, 500)]}";
+        await File.WriteAllTextAsync(Path.Combine(Root, "evidence", "about-me-revert.txt"), note);
+    }
+
+    private static async Task OrganizeFixesEvidenceAsync()
+    {
+        var script = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", ".github", "scripts", "organize-fixes-evidence.sh"));
+        if (!File.Exists(script))
+        {
+            script = "/workspace/.github/scripts/organize-fixes-evidence.sh";
+        }
+
+        if (!File.Exists(script))
+        {
+            return;
+        }
+
+        var psi = new ProcessStartInfo("bash", script)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+        using var proc = Process.Start(psi);
+        if (proc is null)
+        {
+            return;
+        }
+
+        await proc.StandardOutput.ReadToEndAsync();
+        await proc.StandardError.ReadToEndAsync();
+        await proc.WaitForExitAsync();
     }
 
     private async Task RunPaspoortChecksAsync(IPage page, string tag)
@@ -607,6 +774,7 @@ internal sealed class E2eFlowRunner
 
             await btn.ClickAsync();
             await page.WaitForTimeoutAsync(500);
+            await Shot(page, "desktop-1440", $"04-paspoort-data-edit-{section}");
             var marker = $"E2E-{section}-{DateTime.UtcNow:HHmmss}";
             var textarea = page.Locator(".passport-data__body textarea:visible").First;
             if (await textarea.CountAsync() > 0)
@@ -723,6 +891,13 @@ internal sealed class E2eFlowRunner
     {
         await page.GotoAsync(_baseUrl + "/werkgever/vacatures/nieuw");
         await page.Locator("[data-testid='vacancy-wizard']").WaitForAsync();
+        await page.Locator("[data-testid='vac-wizard-step-1'] input[required]").FillAsync(title);
+        var escoPicker = page.Locator("[data-testid='vacancy-category-picker'], [data-testid='vac-esco-picker']");
+        if (await escoPicker.CountAsync() > 0)
+        {
+            await Shot(page, tag, "05-vacancy-esco-picker");
+        }
+
         await VacancyWizardPlaywrightTests_FillHelpers.FillStep1Async(page, title);
         await Shot(page, tag, "05-vacancy-step-01");
         await page.GetByRole(AriaRole.Button, new() { Name = "Volgende: Omschrijving" }).ClickAsync();
@@ -1006,6 +1181,10 @@ internal sealed class FlowRunReport
     public bool EmployerSeesAttachedDocument { get; set; }
     public string? EmployerCvDownloadPath { get; set; }
     public bool EmptyProfileBlockedCaptured { get; set; }
+    public long? NoTestsSignupToAppliedMs { get; set; }
+    public bool AboutMeMotivationReverted { get; set; }
+    public bool MobileCoachOnVacancyDetail { get; set; }
+    public bool MobileCoachOnNotifications { get; set; }
     public bool SmtpConfigured { get; set; }
     public string? SmtpNote { get; set; }
     public List<string> PaspoortFieldRows { get; } = [];
