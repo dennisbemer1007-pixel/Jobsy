@@ -59,15 +59,19 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             var page = await context.NewPageAsync();
             Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, employerEmail, password));
             await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/kandidatenkaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.EvaluateAsync("""
+                document.documentElement.classList.remove('vp-mobile');
+                document.documentElement.classList.add('vp-desktop');
+                """);
             await page.WaitForTimeoutAsync(2500);
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-map-areas-{suffix}.png"), FullPage = true });
 
             if (width >= 1280)
             {
-                var more = page.Locator(".kk-more-filters .kk-btn--more");
+                var more = page.GetByRole(AriaRole.Button, new() { Name = "Meer filters" });
                 if (await more.CountAsync() > 0)
                 {
-                    await more.ClickAsync();
+                    await more.First.ClickAsync();
                     await page.WaitForTimeoutAsync(400);
                     await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, $"kk-filters-open-{suffix}.png"), FullPage = true });
                 }
