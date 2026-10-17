@@ -135,11 +135,28 @@
   margin: 0 0 0.65rem;
 }
 
-.ob-vroeg__link {
-  display: inline-block;
-  margin-top: 0.35rem;
-  font-weight: 600;
-  color: var(--brand);
+.ob-vroeg__fallback-cta {
+  margin-top: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.ob-vroeg__fallback-cta-lead {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.ob-vroeg__fallback-cta-btn {
+  min-height: 44px;
+  white-space: nowrap;
 }
 
 .ob-vroeg__test-pills {
@@ -165,10 +182,16 @@
   color: var(--success);
 }
 
-.ob-vroeg__test-pills span.is-current {
+.ob-vroeg__test-pills span.is-result {
   background: var(--brand);
   border-color: var(--brand);
   color: #fff;
+}
+
+.ob-vroeg__pill-check {
+  margin-inline-end: 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 800;
 }
 
 .ob-vroeg__insight-card {
@@ -248,11 +271,46 @@
   font-size: 0.65rem;
 }
 
-.ob-wizard__skip-tests {
-  margin-top: 14px;
-  width: 100%;
-  min-height: 44px;
-  font-weight: 600;
+.ob-wizard__footer-later {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1024px) {
+  .ob-wizard__footer[data-sticky-footer] {
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  .ob-wizard__footer[data-sticky-footer] .ob-wizard__actionbar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    inline-size: auto;
+    flex-wrap: nowrap;
+  }
+
+  .ob-wizard__footer[data-sticky-footer] .ob-wizard__footer-later {
+    order: 1;
+    min-height: 48px;
+    padding-inline: 18px;
+  }
+
+  .ob-wizard__footer[data-sticky-footer] .ob-wizard__back-footer {
+    order: 2;
+    display: inline-flex;
+    inline-size: auto;
+    min-block-size: 48px;
+    padding-inline: 12px;
+  }
+
+  .ob-wizard__footer[data-sticky-footer] .ob-wizard__cta {
+    order: 3;
+    min-height: 48px;
+  }
 }
 
 @media (min-width: 1024px) {

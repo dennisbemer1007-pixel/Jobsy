@@ -285,8 +285,7 @@
                         case 7 when !Draft.HasConsent:
                             <TestConsentStep Draft="Draft"
                                              TestTabs="ConsentTabs"
-                                             ConsentChanged="OnConsentChanged"
-                                             SkipTestsLater="SkipTestsLaterAsync" />
+                                             ConsentChanged="OnConsentChanged" />
                             break;
 
                         case >= 7 and <= 10:
@@ -330,17 +329,17 @@
                                 @Culture["Onboarding.DreamUnknown"]
                             </button>
                         }
-                        else if (ShowTestsLaterOffer)
-                        {
-                            <button type="button"
-                                    class="ob-wizard__ghost ob-wizard__footer-extra"
-                                    data-testid="onboarding-tests-later"
-                                    disabled="@_busy"
-                                    @onclick="SkipTestsLaterAsync">
-                                @Culture["Onboarding.Tests.LaterDoen"]
-                            </button>
-                        }
                         <div class="ob-wizard__actionbar">
+                            @if (ShowTestsLaterOffer)
+                            {
+                                <button type="button"
+                                        class="btn btn-secondary ob-wizard__footer-later"
+                                        data-testid="onboarding-tests-later"
+                                        disabled="@_busy"
+                                        @onclick="SkipTestsLaterAsync">
+                                    @Culture["Onboarding.Tests.LaterDoen"]
+                                </button>
+                            }
                             <button type="button"
                                     class="ob-wizard__back-footer"
                                     data-testid="onboarding-back"

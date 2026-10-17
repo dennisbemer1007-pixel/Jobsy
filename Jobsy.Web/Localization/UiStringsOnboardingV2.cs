@@ -165,8 +165,18 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Finish.Matches"] = english ? "jobs already fit you" : "vacatures passen al bij je"; map["Onboarding.Finish.Cta"] = english ? "Go to my Compass" : "Naar mijn Kompas"; map["Onboarding.Finish.FullTests"] = english ? "Take full tests for more precision" : "Volledige tests doen voor meer precisie";
         map["Onboarding.Early.Nearby.Badge"] = english ? "First signal" : "Eerste signaal";
         map["Onboarding.Early.Nearby.TitleZero"] = english ? "We are looking for jobs near you" : "We zoeken banen bij jou in de buurt";
-        map["Onboarding.Early.Nearby.TitlePrefix"] = english ? "There are already" : "Er zijn al";
-        map["Onboarding.Early.Nearby.TitleSuffix"] = english ? "jobs near you" : "banen bij jou in de buurt";
+        map["Onboarding.Early.Nearby.TitleWithCount"] = english
+            ? "There are already <span class=\"ob-vroeg__count\">{0}</span> jobs near you"
+            : "Er zijn al <span class=\"ob-vroeg__count\">{0}</span> banen bij jou in de buurt";
+        map["Onboarding.Early.Nearby.JobTravelBike"] = english ? "{0} min by bike" : "{0} min fietsen";
+        map["Onboarding.Early.Nearby.JobTravelWalk"] = english ? "{0} min walking" : "{0} min lopen";
+        map["Onboarding.Early.Nearby.JobTravelCar"] = english ? "{0} min driving" : "{0} min rijden";
+        map["Onboarding.Early.Nearby.JobTravelTransit"] = english ? "{0} min transit" : "{0} min OV";
+        map["Onboarding.Early.Nearby.JobTravelGeneric"] = english ? "{0} min travel" : "{0} min reizen";
+        map["Onboarding.Early.Nearby.JobHours"] = english ? "{0} h/week" : "{0} uur";
+        map["Onboarding.Early.Nearby.FallbackCtaLead"] = english
+            ? "Explore the map — your basics are already saved."
+            : "Verken de banenkaart — je basisgegevens zijn al bewaard.";
         map["Onboarding.Early.Nearby.Lead"] = english ? "Based on your address, hours and {1} (max. {0} min). More detail follows in your Compass." : "Op basis van je adres, uren en {1} (max. {0} min). Meer detail volgt in je Kompas.";
         map["Onboarding.Early.Nearby.LeadNoLocation"] = english ? "Share your location so we can count reachable jobs." : "Deel je locatie zodat we bereikbare banen kunnen tellen.";
         map["Onboarding.Early.Nearby.LeadEmployersOff"] = english ? "Job matching is not available in this environment yet." : "Banenmatching is in deze omgeving nog niet beschikbaar.";

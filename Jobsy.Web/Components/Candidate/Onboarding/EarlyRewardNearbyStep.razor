@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Models
 @inject CultureState Culture
@@ -7,8 +8,7 @@
     <h1 class="ob-vroeg__title">
         @if (Signal?.Count > 0)
         {
-            @Culture["Onboarding.Early.Nearby.TitlePrefix"]
-            <span class="ob-vroeg__count">@Signal.Count @Culture["Onboarding.Early.Nearby.TitleSuffix"]</span>
+            @((MarkupString)Culture.Format("Onboarding.Early.Nearby.TitleWithCount", Signal.Count))
         }
         else
         {
@@ -34,12 +34,7 @@
                             <div class="ob-vroeg__job-icon" aria-hidden="true">@Initial(job.Title)</div>
                             <div>
                                 <p class="ob-vroeg__job-title">@job.Title</p>
-                                <p class="ob-vroeg__job-meta">
-                                    <b>@FormatKm(job.DistanceKm)</b>
-                                    · <b>@job.TravelMinutes</b> @TransportShort
-                                    · @job.HoursLabel @Culture["Onboarding.Hours"]
-                                    · @job.ScheduleHint
-                                </p>
+                                <p class="ob-vroeg__job-meta">@FormatJobMeta(job)</p>
                             </div>
                             <p class="ob-vroeg__job-match">@job.WhyLine</p>
                         </li>
@@ -58,7 +53,11 @@
         {
             <p class="ob-vroeg__hint">@Culture.Format("Onboarding.Early.Nearby.WiderHint", Signal.WiderRadiusCount.Value)</p>
         }
-        <a class="ob-vroeg__link" href="@Jobsy.Web.KandidaatBanen.KbRoutes.Map">@Culture["Onboarding.Early.Nearby.Banenkaart"]</a>
+        <div class="ob-vroeg__fallback-cta">
+            <p class="ob-vroeg__fallback-cta-lead">@Culture["Onboarding.Early.Nearby.FallbackCtaLead"]</p>
+            <a class="btn btn-secondary ob-vroeg__fallback-cta-btn"
+               href="@Jobsy.Web.KandidaatBanen.KbRoutes.Map">@Culture["Onboarding.Early.Nearby.Banenkaart"]</a>
+        </div>
     }
 </section>
 
@@ -111,4 +110,52 @@
         => string.IsNullOrWhiteSpace(title) ? "?" : char.ToUpperInvariant(title.Trim()[0]).ToString();
 
     private static string FormatKm(double km) => km.ToString("0.0", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")).Replace('.', ',') + " km";
+
+    private string FormatJobMeta(OnboardingNearbyVacancyCard job)
+    {
+        var parts = new List<string> { FormatKm(job.DistanceKm) };
+
+        if (job.TravelMinutes is > 0)
+        {
+            parts.Add(FormatTravel(job.TravelMinutes));
+        }
+
+        if (TryFormatHours(job.HoursLabel, out var hoursPart))
+        {
+            parts.Add(hoursPart);
+        }
+
+        if (!string.IsNullOrWhiteSpace(job.ScheduleHint))
+        {
+            parts.Add(job.ScheduleHint);
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    private string FormatTravel(int minutes)
+    {
+        var mode = TravelReach.Fastest(TransportLabels.ParseMany(TransportLabel));
+        var key = mode switch
+        {
+            TransportMode.Walking => "Onboarding.Early.Nearby.JobTravelWalk",
+            TransportMode.Car => "Onboarding.Early.Nearby.JobTravelCar",
+            TransportMode.PublicTransport => "Onboarding.Early.Nearby.JobTravelTransit",
+            TransportMode.Bike => "Onboarding.Early.Nearby.JobTravelBike",
+            _ => "Onboarding.Early.Nearby.JobTravelGeneric",
+        };
+        return Culture.Format(key, minutes);
+    }
+
+    private bool TryFormatHours(string hoursLabel, out string formatted)
+    {
+        formatted = "";
+        if (string.IsNullOrWhiteSpace(hoursLabel) || hoursLabel is "—" or "-")
+        {
+            return false;
+        }
+
+        formatted = Culture.Format("Onboarding.Early.Nearby.JobHours", hoursLabel);
+        return true;
+    }
 }

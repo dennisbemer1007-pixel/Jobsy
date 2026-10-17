@@ -173,7 +173,7 @@ public sealed class VroegResultaatPlaywrightTests
         await using var ctx = await browser.NewContextAsync(new()
         {
             ViewportSize = new() { Width = 390, Height = 844 },
-            DeviceScaleFactor = 1,
+            DeviceScaleFactor = 2,
             IsMobile = true,
             HasTouch = true,
             Locale = "nl-NL",
@@ -187,7 +187,7 @@ public sealed class VroegResultaatPlaywrightTests
         await FillStepsThroughTransportAsync(page, maxTravelMinutes: 5, postcode: "8899EH");
         await ClickNextAsync(page);
         await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
-        await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-zero-mobile-390.png") });
+        await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-zero-mobile-390@2x.png") });
     }
 
     private static async Task CaptureExtraViewportShotsAsync(
@@ -214,6 +214,11 @@ public sealed class VroegResultaatPlaywrightTests
         await ClickNextAsync(page2x);
         await page2x.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
         await page2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-mobile-390@2x.png") });
+        await ClickNextAsync(page2x);
+        await NavigateToTestConsentWithoutStartingAsync(page2x);
+        await page2x.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
+        await page2x.WaitForTimeoutAsync(800);
+        await page2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "skip-consent-mobile-390@2x.png") });
 
         await using var desktop = await browser.NewContextAsync(new()
         {
@@ -229,6 +234,10 @@ public sealed class VroegResultaatPlaywrightTests
         await FillStepsThroughTransportAsync(dPage, maxTravelMinutes: 30);
         await ClickNextAsync(dPage);
         await ClickNextAsync(dPage);
+        await NavigateToTestConsentWithoutStartingAsync(dPage);
+        await dPage.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
+        await dPage.WaitForTimeoutAsync(800);
+        await dPage.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "skip-consent-desktop-1440.png") });
         await SkipOptionalStepsToConsentAsync(dPage);
         await FinishCompetencyMiniAsync(dPage);
         await dPage.Locator("[data-testid=early-reward-insight]").WaitForAsync(new() { Timeout = 90_000 });
