@@ -152,6 +152,31 @@ public sealed class VroegResultaatPlaywrightTests
             await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-insight-mobile-390.png") });
         }
 
+        if (capture)
+        {
+            await using var mobileB2x = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = 390, Height = 844 },
+                DeviceScaleFactor = 2,
+                IsMobile = true,
+                HasTouch = true,
+                Locale = "nl-NL",
+                IgnoreHTTPSErrors = true,
+            });
+            await PlaywrightCookieConsent.AcceptAsync(mobileB2x);
+            var bPage2x = await mobileB2x.NewPageAsync();
+            bPage2x.SetDefaultTimeout(120_000);
+            await RegisterFreshCandidateAsync(bPage2x, baseUrl);
+            await EnsureWizardStartedAsync(bPage2x);
+            await FillStepsThroughTransportAsync(bPage2x, maxTravelMinutes: 30);
+            await ClickNextAsync(bPage2x);
+            await ClickNextAsync(bPage2x);
+            await SkipOptionalStepsToConsentAsync(bPage2x);
+            await FinishCompetencyMiniAsync(bPage2x);
+            await bPage2x.Locator("[data-testid=early-reward-insight]").WaitForAsync(new() { Timeout = 90_000 });
+            await bPage2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "B-insight-mobile-390@2x.png") });
+        }
+
         await mobile.CloseAsync();
 
         if (captureZero)
