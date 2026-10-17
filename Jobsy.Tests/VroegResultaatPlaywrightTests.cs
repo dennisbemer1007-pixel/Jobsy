@@ -213,6 +213,7 @@ public sealed class VroegResultaatPlaywrightTests
         await FillStepsThroughTransportAsync(page2x, maxTravelMinutes: 30);
         await ClickNextAsync(page2x);
         await page2x.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
+        await page2x.Locator(".ob-vroeg__count").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await page2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-mobile-390@2x.png") });
         await ClickNextAsync(page2x);
         await NavigateToTestConsentWithoutStartingAsync(page2x);
