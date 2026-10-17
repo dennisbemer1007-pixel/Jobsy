@@ -77,8 +77,10 @@ public static class CandidateJourneyE2e
 
         await platform.UpdateAsync(new PlatformFeatureUpdate(
             EmployersEnabled: true,
+            CandidatePassportEnabled: true,
             PassportPdfV2Enabled: true,
             CandidateExternalVacanciesEnabled: true,
+            EmployerPhase2Enabled: true,
             AmbassadorsEnabled: true,
             SchoolsEnabled: true));
         await Task.Delay(35_000);
