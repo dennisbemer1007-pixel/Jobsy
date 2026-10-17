@@ -383,14 +383,20 @@ internal sealed class E2eFlowRunner
             {
                 await page.Locator(
                         "[data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests']")
-                    .WaitForAsync(new() { Timeout = 25_000 });
+                    .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
                 await Shot(page, tag, "07-vacancy-encourage-tip");
             }
             catch (TimeoutException)
             {
                 await Shot(page, tag, "07-vacancy-encourage-tip-missing");
             }
+        }
 
+        foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
+        {
+            await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+            var page = await PrepPageAsync(ctx);
+            await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
             await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
             await page.WaitForTimeoutAsync(1500);
@@ -458,17 +464,12 @@ internal sealed class E2eFlowRunner
 
             try
             {
-                var swSubmit = Stopwatch.StartNew();
-                await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
-                swSubmit.Stop();
                 if (tag == "desktop-1440")
                 {
+                    var swSubmit = Stopwatch.StartNew();
+                    await CandidateJourneyE2e.SubmitVacancyApplyViaUiAsync(page, _baseUrl, chainEmail);
+                    swSubmit.Stop();
                     _report.TimingMs["no_tests_apply_submit"] = swSubmit.ElapsedMilliseconds;
-                }
-
-                await Shot(page, tag, "09-applied");
-                if (tag == "desktop-1440")
-                {
                     _report.TimingMs["no_tests_vacancy_apply_ui"] = swApply.ElapsedMilliseconds;
                     _report.TimingMs["no_tests_user_facing_total_ms"] =
                         _report.TimingMs.GetValueOrDefault("no_tests_through_discovery")
@@ -477,27 +478,7 @@ internal sealed class E2eFlowRunner
                     await WriteNoTestsTimingReportAsync();
                 }
 
-                await ClearEncourageDismissStorageAsync(page, chainEmail, "apply-sent");
-                await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
-                await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-                await OpenVacancyApplyPanelAsync(page);
-                try
-                {
-                    await page.Locator(
-                            "[data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests'], [data-encourage-tip='wist-tests-pause']")
-                        .WaitForAsync(new() { Timeout = 25_000 });
-                }
-                catch (TimeoutException)
-                {
-                    // capture panel anyway for review
-                }
-
-                if (await page.Locator(
-                        ".apply-panel--success, [data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests']")
-                    .CountAsync() > 0)
-                {
-                    await Shot(page, tag, "09-applied-encourage-tip");
-                }
+                await Shot(page, tag, "09-applied");
             }
             catch (Exception ex)
             {
@@ -508,6 +489,34 @@ internal sealed class E2eFlowRunner
             if (mobile)
             {
                 await CaptureMobileVacancyCoachStateAsync(page, vacancyId, tag);
+            }
+        }
+
+        foreach (var (tag, mobile) in new[] { ("desktop-1440", false), ("mobile-390", true) })
+        {
+            await using var ctx = await CreateContextAsync(browser, mobile ? KbE2e.Mobile : KbE2e.Desktop, mobile ? 2 : 1);
+            var page = await PrepPageAsync(ctx);
+            await CandidateJourneyE2e.SignInExistingCandidateViaEmailCodeAsync(page, _baseUrl, chainEmail);
+            await ClearEncourageDismissStorageAsync(page, chainEmail, "apply-sent");
+            await page.GotoAsync($"{_baseUrl}/vacancies/{vacancyId:D}#apply");
+            await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
+            await OpenVacancyApplyPanelAsync(page);
+            try
+            {
+                await page.Locator(
+                        "[data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests'], [data-encourage-tip='wist-tests-pause']")
+                    .WaitForAsync(new() { Timeout = mobile ? 35_000 : 25_000 });
+            }
+            catch (TimeoutException)
+            {
+                // capture panel anyway for review
+            }
+
+            if (await page.Locator(
+                    ".apply-panel--success, [data-encourage-tip='wist-cv-vs-passport'], [data-encourage-tip='action-tests']")
+                .CountAsync() > 0)
+            {
+                await Shot(page, tag, "09-applied-encourage-tip");
             }
         }
 

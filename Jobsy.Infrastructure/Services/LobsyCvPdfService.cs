@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Interfaces;
@@ -482,7 +483,6 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
         var hasAny = map.Values.Any(v => v is { Length: > 0 });
         if (!hasAny)
         {
-            avail.Item().Text("Nog niet ingevuld").FontSize(8).FontColor(Muted);
             return;
         }
 
@@ -546,16 +546,13 @@ public sealed class LobsyCvPdfService : ILobsyCvPdfService
             return null;
         }
 
-        var trimmed = aboutMe.Trim();
-        if (System.Text.RegularExpressions.Regex.IsMatch(
-                trimmed,
+        var lines = aboutMe.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var kept = lines.Where(line =>
+            !System.Text.RegularExpressions.Regex.IsMatch(
+                line,
                 @"^\d+\s+eerdere\s+werkgevers?$",
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase))
-        {
-            return null;
-        }
-
-        return trimmed;
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase)).ToArray();
+        return kept.Length == 0 ? null : string.Join("\n", kept);
     }
 
     private static void Section(ColumnDescriptor body, string title, string? content)
