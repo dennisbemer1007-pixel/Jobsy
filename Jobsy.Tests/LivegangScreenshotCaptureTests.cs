@@ -13,6 +13,7 @@ public class LivegangScreenshotCaptureTests
     private const string CandidateEmail = "kandidaat@jobsy.local";
     private const string EmployerEmail = "ondernemer@jobsy.local";
     private const string Password = "Jobsy123!";
+    private static readonly List<string> Network404s = [];
 
     [Fact]
     public async Task Capture_livegang_evidence_when_requested()
@@ -28,6 +29,7 @@ public class LivegangScreenshotCaptureTests
         var root = Environment.GetEnvironmentVariable("LIVEGANG_SHOTS_DIR")
                    ?? $"/cursor/stores/self/livegang-fixes/{phase}";
         Directory.CreateDirectory(root);
+        Network404s.Clear();
 
         await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
         Assert.True(await CandidateJourneyE2e.WaitForFlagsAsync(baseUrl), "Feature flags did not turn on in time.");
@@ -43,6 +45,14 @@ public class LivegangScreenshotCaptureTests
         await SeedDemoNotificationsAsync();
         await CaptureNotificationsAsync(browser, baseUrl, root, withItems: true, skipPage: skipNotificationsPage);
         await CaptureVacaturesListAsync(browser, baseUrl, root);
+
+        var networkLog = Path.Combine(root, "network-404s.txt");
+        await File.WriteAllLinesAsync(
+            networkLog,
+            Network404s.Count == 0
+                ? ["(none)"]
+                : Network404s.Distinct(StringComparer.Ordinal).OrderBy(u => u, StringComparer.Ordinal));
+        Assert.Empty(Network404s);
     }
 
     private static async Task CaptureVacancyWizardAsync(IBrowser browser, string baseUrl, string root)
@@ -65,6 +75,7 @@ public class LivegangScreenshotCaptureTests
             });
             await PlaywrightCookieConsent.AcceptAsync(context);
             var page = await context.NewPageAsync();
+            TrackNetwork404s(page);
             page.SetDefaultTimeout(90_000);
             await AssertLoginAsync(page, baseUrl, EmployerEmail);
             if (mobile)
@@ -76,14 +87,15 @@ public class LivegangScreenshotCaptureTests
 
             await page.GotoAsync($"{baseUrl}/werkgever/vacatures/nieuw",
                 new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            await KbE2e.WaitForStyledAppAsync(page);
+            await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "choice-tiles.css", "vacancy-wizard.css");
             await page.Locator("[data-testid='vacancy-wizard']").WaitForAsync(new() { Timeout = 90_000 });
             await page.Locator("[data-testid='vac-wizard-step-1']").WaitForAsync();
             var picker = page.Locator("[data-testid='vacancy-category-picker'] .lobsy-choice-tile");
             if (await picker.CountAsync() > 0)
             {
                 await picker.First.ClickAsync();
-                await page.WaitForTimeoutAsync(500);
+                await page.Locator("[data-testid='vacancy-category-picker'] .lobsy-choice-tile.is-selected")
+                    .WaitForAsync(new() { Timeout = 15_000 });
             }
 
             var file = Path.Combine(root, $"vac-wizard-step1-selected-{tag}.png");
@@ -114,6 +126,7 @@ public class LivegangScreenshotCaptureTests
                 });
                 await PlaywrightCookieConsent.AcceptAsync(context);
                 var page = await context.NewPageAsync();
+                TrackNetwork404s(page);
                 await AssertLoginAsync(page, baseUrl, email);
                 var home = role == "employer" ? $"{baseUrl}/werkgever/vacatures" : $"{baseUrl}/candidate/applications";
                 await page.GotoAsync(home,
@@ -124,6 +137,13 @@ public class LivegangScreenshotCaptureTests
                 await bell.WaitForAsync(new() { Timeout = 30_000 });
                 await bell.ClickAsync();
                 await page.Locator(".notification-bell__panel").WaitForAsync(new() { State = WaitForSelectorState.Visible });
+                if (withItems)
+                {
+                    await page.Locator(".notification-bell__list .notification-bell__item")
+                        .Nth(2)
+                        .WaitForAsync(new() { Timeout = 30_000 });
+                }
+
                 var bellFile = Path.Combine(root, $"notifications-bell-{suffix}-{role}-{tag}.png");
                 await page.ScreenshotAsync(new() { Path = bellFile, FullPage = false });
                 AssertPngWidth(bellFile, width);
@@ -135,7 +155,14 @@ public class LivegangScreenshotCaptureTests
 
                 await page.GotoAsync($"{baseUrl}/notifications",
                     new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-                await page.WaitForTimeoutAsync(500);
+                await KbE2e.WaitForStyledAppAsync(page, "app.min.css", "notifications.css");
+                if (withItems)
+                {
+                    await page.Locator(".notifications-page__list .notifications-page__item")
+                        .Nth(2)
+                        .WaitForAsync(new() { Timeout = 30_000 });
+                }
+
                 var pageFile = Path.Combine(root, $"notifications-page-{suffix}-{role}-{tag}.png");
                 await page.ScreenshotAsync(new() { Path = pageFile, FullPage = false });
                 AssertPngWidth(pageFile, width);
@@ -161,6 +188,7 @@ public class LivegangScreenshotCaptureTests
             });
             await PlaywrightCookieConsent.AcceptAsync(context);
             var page = await context.NewPageAsync();
+            TrackNetwork404s(page);
             await AssertLoginAsync(page, baseUrl, EmployerEmail);
             await page.GotoAsync($"{baseUrl}/werkgever/vacatures",
                 new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
@@ -248,6 +276,67 @@ public class LivegangScreenshotCaptureTests
         }
 
         await db.SaveChangesAsync();
+        await WaitForSeededDemoNotificationsAsync();
+    }
+
+    private static async Task WaitForSeededDemoNotificationsAsync()
+    {
+        var conn = Environment.GetEnvironmentVariable("ConnectionStrings__JobsyDb");
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseNpgsql(conn, npgsql => npgsql.UseNetTopologySuite())
+            .Options;
+        for (var i = 0; i < 20; i++)
+        {
+            await using var db = new JobsyDbContext(options);
+            var ok = true;
+            foreach (var email in new[] { CandidateEmail, EmployerEmail })
+            {
+                var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == email);
+                if (user is null)
+                {
+                    ok = false;
+                    break;
+                }
+
+                var count = await db.UserNotifications.AsNoTracking()
+                    .CountAsync(n => n.UserId == user.Id && n.Title.StartsWith("Livegang demo "));
+                if (count < 3)
+                {
+                    ok = false;
+                    break;
+                }
+            }
+
+            if (ok)
+            {
+                return;
+            }
+
+            await Task.Delay(250);
+        }
+    }
+
+    private static void TrackNetwork404s(IPage page)
+    {
+        page.Response += (_, response) =>
+        {
+            if (response.Status != 404)
+            {
+                return;
+            }
+
+            var url = response.Url;
+            if (url.Contains("/css/", StringComparison.OrdinalIgnoreCase)
+                || url.Contains("/js/", StringComparison.OrdinalIgnoreCase))
+            {
+                Network404s.Add(url);
+            }
+        };
     }
 
     private static void AssertPngWidth(string path, int expectedWidth)

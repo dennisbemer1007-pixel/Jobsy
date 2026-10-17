@@ -52,10 +52,12 @@ if ! git -C "$ROOT" worktree list --porcelain | grep -q "worktree $WORKTREE"; th
   git -C "$ROOT" worktree add "$WORKTREE" acceptatie
 fi
 
-echo "=== BEFORE (acceptatie) ==="
-build_and_start "$WORKTREE"
-run_capture before "$STORE/before"
-stop_stack
+if [[ "${SKIP_BEFORE:-0}" != "1" ]]; then
+  echo "=== BEFORE (acceptatie) ==="
+  build_and_start "$WORKTREE"
+  run_capture before "$STORE/before"
+  stop_stack
+fi
 
 echo "=== AFTER (feature branch) ==="
 build_and_start "$ROOT"
