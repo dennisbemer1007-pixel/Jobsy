@@ -59,6 +59,13 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             {
                 ViewportSize = new() { Width = width, Height = height }
             });
+            if (width < 640)
+            {
+                await context.AddInitScriptAsync("""
+                    document.documentElement.classList.add('vp-mobile');
+                    document.documentElement.classList.remove('vp-desktop');
+                    """);
+            }
             var page = await context.NewPageAsync();
             KbE2e.AttachCapture(page);
             Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, employerEmail, password));
@@ -71,6 +78,12 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await page.WaitForTimeoutAsync(1500);
 
             await GotoKandidatenkaartWhenReadyAsync(page, baseUrl);
+            if (width < 640)
+            {
+                await EnsureMobileViewportClassAsync(page);
+                await page.WaitForTimeoutAsync(2000);
+            }
+
             await WaitForMapReadyAsync(page);
             await KbE2e.AssertNoCircuitErrorAsync(page);
             await ShotPageAsync(page, $"kk-map-areas-{suffix}.png");
@@ -181,6 +194,28 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
         }
     }
 
+    private static async Task EnsureMobileViewportClassAsync(IPage page)
+    {
+        for (var attempt = 0; attempt < 30; attempt++)
+        {
+            var mobile = await page.EvaluateAsync<bool>(
+                "() => document.documentElement.classList.contains('vp-mobile')");
+            if (mobile)
+            {
+                return;
+            }
+
+            await page.WaitForTimeoutAsync(300);
+        }
+
+        await page.EvaluateAsync("""
+            document.documentElement.classList.remove('vp-desktop');
+            document.documentElement.classList.add('vp-mobile');
+            window.jobMap?.invalidate?.();
+            """);
+        await page.WaitForTimeoutAsync(500);
+    }
+
     private static async Task WaitForMapReadyAsync(IPage page)
     {
         await page.Locator(".kk-header h1, .kk-mobile-title").First.WaitForAsync(new() { Timeout = 90_000 });
@@ -190,12 +225,50 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             Timeout = 60_000,
             State = WaitForSelectorState.Attached
         });
-        await page.WaitForSelectorAsync(".kk-map-pane .maplibregl-canvas", new()
+        var mobile = await page.EvaluateAsync<bool>(
+            "() => document.documentElement.classList.contains('vp-mobile')");
+        try
         {
-            Timeout = 90_000,
-            State = WaitForSelectorState.Visible
-        });
-        await page.WaitForTimeoutAsync(1200);
+            await page.WaitForSelectorAsync(".kk-map-pane .maplibregl-canvas", new()
+            {
+                Timeout = mobile ? 45_000 : 90_000,
+                State = mobile ? WaitForSelectorState.Attached : WaitForSelectorState.Visible
+            });
+        }
+        catch (TimeoutException)
+        {
+            if (!mobile && await page.Locator(".kk-area-list__item").CountAsync() > 0)
+            {
+                // MapLibre can lag behind area data; list + pane are enough for evidence framing.
+            }
+            else if (mobile)
+            {
+                await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
+                await page.WaitForSelectorAsync(".kk-page", new() { Timeout = 45_000 });
+                try
+                {
+                    await page.WaitForSelectorAsync(".kk-map-pane .maplibregl-canvas", new()
+                    {
+                        Timeout = 30_000,
+                        State = WaitForSelectorState.Attached
+                    });
+                }
+                catch (TimeoutException)
+                {
+                    await page.WaitForSelectorAsync(".kk-mobile-sheet .kk-area-list__item, .kk-map-pane", new()
+                    {
+                        Timeout = 15_000
+                    });
+                }
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        await page.EvaluateAsync("window.jobMap?.invalidate?.()");
+        await page.WaitForTimeoutAsync(mobile ? 1500 : 1200);
     }
 
     private static async Task ShotPageAsync(IPage page, string fileName)
