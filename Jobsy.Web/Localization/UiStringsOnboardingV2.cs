@@ -230,6 +230,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Panel.Nearby.MobileInitial"] = english ? "{0} jobs nearby" : "{0} banen in de buurt";
         map["Onboarding.Panel.Nearby.MobileRefined"] = english ? "Now {0} fitting jobs nearby" : "Nu {0} passende banen in de buurt";
         map["Onboarding.Panel.Nearby.MobileZero"] = english ? "Jobs nearby" : "Banen in de buurt";
+        map["Onboarding.Panel.Nearby.Footnote"] = english
+            ? "Based on your home location, travel time and hours — examples only."
+            : "Op basis van je adres, reistijd en uren — voorbeelden ter inspiratie.";
         map["Onboarding.Panel.Nearby.RailAria"] = english ? "Jobs near you (informational)" : "Banen in de buurt (ter info)";
         map["Onboarding.Early.Insight.Badge"] = english ? "First insight" : "Eerste inzicht";
         map["Onboarding.Early.Insight.Title"] = english ? "Your strongest point so far" : "Je sterkste punt tot nu toe";
@@ -245,6 +248,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.OverJou"] = english ? "Where you live and when you can work" : "Waar je woont en wanneer je kunt"; map["Onboarding.Welcome.Background"] = english ? "Your background" : "Je achtergrond"; map["Onboarding.Welcome.BackgroundLead"] = english ? "Work and education, you can skip it" : "Werk en opleiding, mag je overslaan"; map["Onboarding.Welcome.Dream"] = english ? "Your dream job" : "Je droombaan"; map["Onboarding.Welcome.DreamLead"] = english ? "Where do you want to go?" : "Waar wil je naartoe?"; map["Onboarding.Welcome.TestsLead"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Welcome.Time2"] = "2 min"; map["Onboarding.Welcome.Time1"] = "1 min"; map["Onboarding.Welcome.TimeHalf"] = "½ min";
         map["Onboarding.IllustratedSidebarTitle"] = english ? "Tip for this step" : "Tip bij deze stap";
+        map["Onboarding.IllustratedSidebar.SubstepsAria"] = english ? "Steps in this onboarding flow" : "Stappen in deze onboarding";
         map["Onboarding.IllustratedSidebar.Step1"] = english ? "We only use your address for travel time. Employers never see your home address." : "Je adres gebruiken we alleen voor reistijd. Werkgevers zien je woonadres niet.";
         map["Onboarding.IllustratedSidebar.Step2"] = english ? "Pick what fits now — you can fine-tune days and hours later." : "Kies wat nu bij je past — dagen en uren kun je later nog finetunen.";
         map["Onboarding.IllustratedSidebar.Step3"] = english ? "We match jobs you can actually reach with how you travel." : "We tonen banen die passen bij hoe jij reist en hoe ver je wilt.";

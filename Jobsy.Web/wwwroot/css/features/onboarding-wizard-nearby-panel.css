@@ -92,24 +92,44 @@
   }
 
   .ob-wizard__nearby-rail {
-    display: block;
-    padding: 28px 20px 28px 12px;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px 24px 12px;
     border-inline-start: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-    align-self: start;
+    align-self: stretch;
+    min-block-size: calc(100dvh - 3rem);
     position: sticky;
-    top: 24px;
-    max-height: calc(100dvh - 48px);
+    top: 12px;
+    max-height: calc(100dvh - 24px);
     overflow-y: auto;
   }
 
   .ob-nearby-panel--desktop {
-    display: block;
-    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-block-size: 0;
+    padding: 14px 14px 16px;
     border-radius: var(--radius);
     background: color-mix(in srgb, var(--surface) 90%, var(--bg));
     border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
     box-shadow: none;
     pointer-events: none;
+  }
+
+  .ob-nearby-panel--desktop .ob-nearby-panel__list {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow-y: auto;
+  }
+
+  .ob-nearby-panel__footnote {
+    margin: 10px 0 0;
+    padding-block-start: 10px;
+    border-block-start: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    font-size: 0.6875rem;
+    line-height: 1.4;
+    color: var(--muted);
   }
 
   .ob-nearby-panel--mobile {

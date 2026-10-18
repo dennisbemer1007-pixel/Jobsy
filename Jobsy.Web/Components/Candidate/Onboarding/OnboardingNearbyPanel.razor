@@ -13,6 +13,10 @@
              aria-live="polite">
             <p class="ob-nearby-panel__headline">@HeadlineMarkup()</p>
             @ExamplesBlock(compact: false)
+            @if (Signal!.Count > 0)
+            {
+                <p class="ob-nearby-panel__footnote">@Culture["Onboarding.Panel.Nearby.Footnote"]</p>
+            }
         </div>
     }
     else

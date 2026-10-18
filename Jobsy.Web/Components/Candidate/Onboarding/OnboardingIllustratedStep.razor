@@ -1,7 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 
 <section class="ob-illustrated-step" data-testid="@TestId">
-    <div class="ob-illustrated-step__stage">
+    <div class="ob-illustrated-step__hero-band">
         <div class="ob-illustrated-step__art" aria-hidden="true" data-testid="onboarding-illustration-art">
             <picture>
                 <source type="image/webp" srcset="@WebpSrc" />
@@ -21,9 +21,9 @@
                 @HeadContent
             </div>
         }
-        <div class="ob-illustrated-step__overlay">
-            @ChildContent
-        </div>
+    </div>
+    <div class="ob-illustrated-step__body">
+        @ChildContent
     </div>
 </section>
 

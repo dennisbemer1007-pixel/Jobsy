@@ -27,10 +27,10 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-08" />
-    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-r2" />
+    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-r3" />
     <link rel="stylesheet" href="css/features/onboarding-test-blocks.css?v=20261018-r2" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-r3" />
     @if (TestJourneyIllustration.Enabled)
     {
         <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
@@ -169,6 +169,14 @@
                         <strong>@Culture["Onboarding.IllustratedSidebarTitle"]</strong>
                         @IllustratedSidebarNote
                     </div>
+                    <ul class="ob-wizard__sidebar-substeps" aria-label="@Culture["Onboarding.IllustratedSidebar.SubstepsAria"]">
+                        @for (var sub = 1; sub <= 6; sub++)
+                        {
+                            <li class="ob-wizard__sidebar-substep @(sub == _step ? "is-current" : null)">
+                                @Culture[$"Onboarding.Step{sub}.Title"]
+                            </li>
+                        }
+                    </ul>
                 }
                 <p class="ob-wizard__saved">✓ @Culture["Onboarding.AllSaved"]</p>
                 <button type="button" class="ob-wizard__ghost" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
