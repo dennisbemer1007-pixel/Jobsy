@@ -41,9 +41,15 @@
             }
         </ul>
     }
-    <a class="login-submit kb-detail-apply-btn kb-detail-readiness__cta" href="@ProfileHref">
-        @Culture[CtaKey]
-    </a>
+    <div class="kb-detail-readiness__cta-row">
+        <a class="login-submit kb-detail-apply-btn kb-detail-readiness__cta" href="@ProfileHref">
+            @Culture[CtaKey]
+        </a>
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+    </div>
 </section>
 
 @code {
@@ -54,6 +60,7 @@
     [Parameter] public string ProfileHref { get; set; } = "";
     [Parameter] public bool Compact { get; set; }
     [Parameter] public string CtaKey { get; set; } = "Apply.CompleteProfileCta";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private int TotalCount => Math.Max(Items.Count, 1);
     private int DoneCount => Items.Count(i => i.Done);

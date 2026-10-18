@@ -296,6 +296,42 @@ public static class UiStringsCareer
             "Warsztaty i kursy na tym kroku",
             "Ateliere și cursuri pentru acest pas",
             "ورش عمل ودورات لهذه الخطوة");
+        Add("Career.Illustrated.LearningBadgeFree",
+            "Gratis",
+            "Free",
+            "Bezpłatnie",
+            "Gratuit",
+            "مجاني");
+        Add("Career.Illustrated.LearningBadgePaid",
+            "Betaald",
+            "Paid",
+            "Płatne",
+            "Cu plată",
+            "مدفوع");
+        Add("Career.Illustrated.LearningReason",
+            "Past bij jouw stap richting {0} — leer je praktisch in de praktijk.",
+            "Fits your step toward {0} — learn hands-on in practice.",
+            "Pasuje do kroku w kierunku {0} — praktyka w terenie.",
+            "Se potrivește pasului spre {0} — înveți practic.",
+            "يناسب خطوتك نحو {0} — تعلّم عملياً.");
+        Add("Career.Illustrated.LearningView",
+            "Bekijk",
+            "View",
+            "Zobacz",
+            "Vezi",
+            "عرض");
+        Add("Career.Illustrated.LearningClose",
+            "Sluit",
+            "Close",
+            "Zamknij",
+            "Închide",
+            "إغلاق");
+        Add("Career.Illustrated.LearningDetail",
+            "{0} · {1}",
+            "{0} · {1}",
+            "{0} · {1}",
+            "{0} · {1}",
+            "{0} · {1}");
         Add("Career.Illustrated.CourseMetaFallback",
             "Online · flexibel tempo",
             "Online · flexible pace",

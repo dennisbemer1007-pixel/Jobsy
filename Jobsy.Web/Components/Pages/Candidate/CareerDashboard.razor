@@ -196,21 +196,7 @@
                             </p>
                         </div>
                     </div>
-                    @if (_panelCourses.Count > 0)
-                    {
-                        <section class="career-ill-training" aria-labelledby="career-ill-training-title">
-                            <h2 id="career-ill-training-title" class="career-ill-training__title">@Culture["Career.Illustrated.StepTrainingTitle"]</h2>
-                            <ul class="career-ill-training__list">
-                                @foreach (var course in _panelCourses.Take(4))
-                                {
-                                    <li class="career-ill-training__item">
-                                        <b>@course.Title</b>
-                                        <span>@TrainingMeta(course)</span>
-                                    </li>
-                                }
-                            </ul>
-                        </section>
-                    }
+                    <CareerIllustratedStepLearning Courses="@_panelCourses" />
                     @if ((_showCarriedOver && _plan.CarriedOverCount > 0) || _plan.LanguageDiffers || !string.IsNullOrWhiteSpace(_error))
                     {
                         <CareerOverviewCard Illustrated="true"
