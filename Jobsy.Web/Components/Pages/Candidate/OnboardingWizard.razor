@@ -886,6 +886,7 @@
             {
                 _earlyMoment = EarlyRewardMoment.None;
                 _earlyStrength = null;
+                ClearMiniAnswersBeforeStepChange();
                 _step++;
                 _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
                 FlashSaved();
@@ -912,6 +913,7 @@
                 return;
             }
 
+            ClearMiniAnswersBeforeStepChange();
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
             FlashSaved();
@@ -935,6 +937,7 @@
         await FlushAsync();
         ClearStepValidation();
         _miniArrivedViaBack = false;
+        ClearMiniAnswersBeforeStepChange();
         _step++;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
@@ -1272,6 +1275,14 @@
         await Api.UpdateMyProfileAsync(openForWork: true);
     }
 
+    private void ClearMiniAnswersBeforeStepChange()
+    {
+        _miniAnswers.Clear();
+        _serverAnswers.Clear();
+        _lockedIds.Clear();
+        _currentQuestion = 0;
+    }
+
     private async Task PrepareMiniAsync()
     {
         if (_autosave is not null)
@@ -1328,7 +1339,9 @@
 
         foreach (var answer in answers ?? [])
         {
-            if (int.TryParse(answer.Key, out var id) && answer.Value is >= 1 and <= 5)
+            if (int.TryParse(answer.Key, out var id)
+                && questionIds.Contains(id)
+                && answer.Value is >= 1 and <= 5)
             {
                 _serverAnswers[id] = answer.Value;
             }
@@ -1342,10 +1355,18 @@
             .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
             .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
             .ToList();
+        var allowedIds = questionIds.ToHashSet();
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
             var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in draft) merged[answer.Key] = answer.Value;
+            foreach (var answer in draft)
+            {
+                if (allowedIds.Contains(answer.Key))
+                {
+                    merged[answer.Key] = answer.Value;
+                }
+            }
+
             switch (_step)
             {
                 case 7:
@@ -1430,19 +1451,44 @@
     {
         get
         {
+            var allowed = _miniQuestions.Select(q => q.Id).ToHashSet();
             if (_serverAnswers.Count == 0)
             {
-                return _miniAnswers;
+                return FilterMiniAnswers(_miniAnswers, allowed);
             }
 
             var merged = new Dictionary<int, int>(_serverAnswers);
             foreach (var answer in _miniAnswers)
             {
-                merged[answer.Key] = answer.Value;
+                if (allowed.Contains(answer.Key))
+                {
+                    merged[answer.Key] = answer.Value;
+                }
             }
 
-            return merged;
+            return FilterMiniAnswers(merged, allowed);
         }
+    }
+
+    private static IReadOnlyDictionary<int, int> FilterMiniAnswers(
+        IReadOnlyDictionary<int, int> source,
+        IReadOnlySet<int> allowed)
+    {
+        if (allowed.Count == 0)
+        {
+            return source;
+        }
+
+        var filtered = new Dictionary<int, int>();
+        foreach (var (id, value) in source)
+        {
+            if (allowed.Contains(id))
+            {
+                filtered[id] = value;
+            }
+        }
+
+        return filtered;
     }
 
     private Task AnswerAsync(int id, int value)
