@@ -308,12 +308,30 @@ public static class UiStringsCareer
             "Płatne",
             "Cu plată",
             "مدفوع");
-        Add("Career.Illustrated.LearningReason",
-            "Past bij jouw stap richting {0} — leer je praktisch in de praktijk.",
-            "Fits your step toward {0} — learn hands-on in practice.",
-            "Pasuje do kroku w kierunku {0} — praktyka w terenie.",
-            "Se potrivește pasului spre {0} — înveți practic.",
-            "يناسب خطوتك نحو {0} — تعلّم عملياً.");
+        Add("Career.Illustrated.LearningReason.Paraveterinair",
+            "Handige basis voor assisteren in een dierenkliniek of pension.",
+            "Solid base for assisting in a clinic or boarding facility.",
+            "Dobra podstawa do pracy w klinice lub hotelu dla zwierząt.",
+            "Bază utilă pentru asistență într-o clinică sau pensiune.",
+            "أساس مفيد للمساعدة في عيادة أو pension.");
+        Add("Career.Illustrated.LearningReason.Dierenwelzijn",
+            "Je leert signalen van stress en welzijn herkennen bij huisdieren.",
+            "Learn to spot stress and wellbeing signals in pets.",
+            "Nauczysz się rozpoznawać stres i dobrostan u zwierząt.",
+            "Înveți să recunoști stresul și starea de bine la animale.",
+            "تتعلّم التعرّف على علامات التوتر والرفاهية.");
+        Add("Career.Illustrated.LearningReason.EhboHuisdieren",
+            "Snelle handelingen bij kleine ongelukjes maken je zelfverzekerder op de werkvloer.",
+            "Quick responses to minor incidents build confidence on the job.",
+            "Szybkie reakcje na drobne urazy dają pewność w pracy.",
+            "Reacții rapide la incidente minore îți cresc încrederea.",
+            "استجابات سريعة للحوادث البسيطة تعزّز ثقتك.");
+        Add("Career.Illustrated.LearningReasonFallback",
+            "Past bij je volgende stap richting {0}.",
+            "Fits your next step toward {0}.",
+            "Pasuje do kolejnego kroku w kierunku {0}.",
+            "Se potrivește următorului pas spre {0}.",
+            "يناسب خطوتك التالية نحو {0}.");
         Add("Career.Illustrated.LearningView",
             "Bekijk",
             "View",

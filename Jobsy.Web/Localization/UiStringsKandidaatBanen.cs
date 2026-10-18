@@ -83,6 +83,55 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Why.interest",
             "Dit past bij je interesses", "This matches your interests",
             "To pasuje do Twoich zainteresowań", "Se potrivește intereselor tale", "هذا يلائم اهتماماتك");
+
+        Add("Kb.WhyDetail.AnimalCare.Culture",
+            "Kleine, rustige organisatie — past bij je voorkeur voor overzicht.",
+            "Small, calm organisation — fits your preference for clarity.",
+            "Mała, spokojna organizacja — pasuje do Twojej potrzeby przejrzystości.",
+            "Organizație mică, liniștită — se potrivește preferinței tale pentru claritate.",
+            "مؤسسة صغيرة هادئة — تناسب تفضيلك للوضوح.");
+        Add("Kb.WhyDetail.AnimalCare.Values",
+            "Zorg en respect voor dieren sluit aan bij wat jij belangrijk vindt.",
+            "Care and respect for animals aligns with what matters to you.",
+            "Troska o zwierzęta i szacunek pasują do tego, co jest dla Ciebie ważne.",
+            "Grijă și respect pentru animale se aliniază cu ce contează pentru tine.",
+            "الرعاية واحترام الحيوانات يتوافقان مع ما يهمك.");
+        Add("Kb.WhyDetail.AnimalCare.Competency",
+            "Zorgvuldig werken met dieren vraagt om precies jouw manier van aanpakken.",
+            "Working carefully with animals suits how you like to work.",
+            "Uważna praca ze zwierzętami pasuje do Twojego stylu.",
+            "Munca atentă cu animale se potrivește modului tău de lucru.",
+            "العمل بعناية مع الحيوانات يناسب أسلوبك.");
+        Add("Kb.WhyDetail.AnimalCare.Interest",
+            "Werken met dieren en in een hecht team geeft je energie.",
+            "Working with animals in a close team gives you energy.",
+            "Praca ze zwierzętami w zgranym zespole dodaje Ci energii.",
+            "Munca cu animale într-o echipă strânsă îți dă energie.",
+            "العمل مع الحيوانات في فريق متكاتف يمنحك طاقة.");
+        Add("Kb.WhyDetail.Generic.Culture",
+            "De werksfeer sluit aan bij hoe jij het liefst samenwerkt.",
+            "The work atmosphere matches how you prefer to collaborate.",
+            "Atmosfera pracy pasuje do Twojego stylu współpracy.",
+            "Atmosfera de lucru se potrivește modului tău de colaborare.",
+            "جو العمل يناسب أسلوب تعاونك.");
+        Add("Kb.WhyDetail.Generic.Values",
+            "Wat het bedrijf belangrijk vindt, komt overeen met jouw waarden.",
+            "What the company values aligns with yours.",
+            "To, co ważne dla firmy, zgadza się z Twoimi wartościami.",
+            "Ce contează pentru companie se aliniază valorilor tale.",
+            "ما تقدّره الشركة يتوافق مع قيمك.");
+        Add("Kb.WhyDetail.Generic.Competency",
+            "Je werkt graag zorgvuldig — dat past bij wat deze rol vraagt.",
+            "You work carefully — that fits what this role needs.",
+            "Pracujesz uważnie — to pasuje do tej roli.",
+            "Lucrezi cu atenție — se potrivește rolului.",
+            "تعمل بعناية — وهذا يناسب الدور.");
+        Add("Kb.WhyDetail.Generic.Interest",
+            "De inhoud van het werk sluit aan bij waar jij energie van krijgt.",
+            "The work content matches what energises you.",
+            "Treść pracy pasuje do tego, co Cię nakręca.",
+            "Conținutul muncii se potrivește cu ce te motivează.",
+            "محتوى العمل يتوافق مع ما يمنحك حماساً.");
         Add("Kb.Why.travel",
             "Goede reistijd", "Good travel time",
             "Dobry czas dojazdu", "Timp bun de deplasare", "وقت وصول جيد");

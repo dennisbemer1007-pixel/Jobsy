@@ -16,10 +16,6 @@
         }
         @ChildContent
     </div>
-    @if (!string.IsNullOrWhiteSpace(ArtUrl))
-    {
-        <div class="cand-hero__media" style="--cand-hero-art:url('@ArtUrl');--cand-hero-pos:@ArtPosition" aria-hidden="true"></div>
-    }
 </header>
 
 @code {
@@ -28,7 +24,7 @@
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
-    [Parameter] public string ArtPosition { get; set; } = "42% 38%";
+    [Parameter] public string ArtPosition { get; set; } = "58% center";
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private string? StyleValue => string.IsNullOrWhiteSpace(ArtUrl)

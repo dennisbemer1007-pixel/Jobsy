@@ -117,7 +117,7 @@
                             }
                             @if (!KbIntermediaryDisplay.IsHiddenMode(_vacancy) && !string.IsNullOrWhiteSpace(_vacancy.CompanyAddress))
                             {
-                                <span>· @_vacancy.CompanyAddress</span>
+                                <span class="kb-detail__address">@_vacancy.CompanyAddress</span>
                             }
                         </p>
                         @* Dep B: engagement badges when present *@
@@ -769,16 +769,20 @@
             {
                 <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
             }
-            <KbWhyLine Text="@detailWhy" />
+            @if (!detailFit.GateOpen && !string.IsNullOrWhiteSpace(detailWhy))
+            {
+                <KbWhyLine Text="@detailWhy" />
+            }
             @if (detailFit.GateOpen)
             {
                 <ul class="kb-dna kb-dna--detail" role="list">
                     @foreach (var row in dnaRows)
                     {
                         <li class="kb-dna__row" data-dna="@row.Kind">
-                            <span class="kb-dna__label">@Culture[row.LabelKey]</span>
                             @if (row.Percent is int barPct)
                             {
+                                <span class="visually-hidden">@Culture[row.LabelKey]</span>
+                                <p class="kb-dna__reason kb-dna__reason--lead">@KbFitDetailReason.For(_vacancy, row.Kind, Culture)</p>
                                 <progress class="kb-dna__progress"
                                           value="@barPct"
                                           max="100"
@@ -786,10 +790,10 @@
                                           aria-valuemin="0"
                                           aria-valuemax="100"
                                           aria-label="@Culture[row.LabelKey]"></progress>
-                                <span class="kb-dna__reason">@Culture[row.WhyKey]</span>
                             }
                             else
                             {
+                                <span class="kb-dna__label">@Culture[row.LabelKey]</span>
                                 <a class="kb-dna__todo" href="@row.TestHref">@Culture["Kb.Dna.NotDone"]</a>
                             }
                         </li>

@@ -16,7 +16,7 @@ public static class CandidateIllustratedArt
 
         if (ContainsAny(t, "dieren", "paraveter", "dierenarts", "veter"))
         {
-            return new HeroArt(CandidateIllustratedImages.FinaleHero, "right center");
+            return new HeroArt(CandidateIllustratedImages.FinaleHero, "58% center");
         }
 
         if (ContainsAny(t, "zorg", "verpleeg", "helpende", "begeleid", "dagbested"))
@@ -73,7 +73,7 @@ public static class CandidateIllustratedArt
         var seed = string.Join(' ', new[] { categoryName, title }.Where(s => !string.IsNullOrWhiteSpace(s)));
         if (ContainsAny(seed, "dieren", "pension", "veter", "paraveter", "dierenverzorg"))
         {
-            return new HeroArt(CandidateIllustratedImages.Spot("job-dieren.jpg"), "50% 35%");
+            return new HeroArt(CandidateIllustratedImages.DroombaanBand, "24% bottom");
         }
 
         return HeroLandscapeForDream(string.IsNullOrWhiteSpace(seed) ? null : seed);

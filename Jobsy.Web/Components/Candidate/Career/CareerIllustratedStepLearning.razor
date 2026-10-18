@@ -61,5 +61,15 @@
             : null;
 
     private string ReasonLine(PassportCourseCard course)
-        => Culture.Format("Career.Illustrated.LearningReason", course.Title);
+    {
+        var key = course.Title.Trim() switch
+        {
+            "Paraveterinair" => "Career.Illustrated.LearningReason.Paraveterinair",
+            "Dierenwelzijn in de praktijk" => "Career.Illustrated.LearningReason.Dierenwelzijn",
+            "EHBO voor huisdieren" => "Career.Illustrated.LearningReason.EhboHuisdieren",
+            _ => null
+        };
+
+        return key is not null ? Culture[key] : Culture.Format("Career.Illustrated.LearningReasonFallback", course.Title);
+    }
 }
