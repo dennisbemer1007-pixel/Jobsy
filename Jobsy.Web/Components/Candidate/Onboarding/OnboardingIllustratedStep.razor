@@ -14,6 +14,12 @@
                      tabindex="-1" />
             </picture>
         </div>
+        @if (HeadContent is not null)
+        {
+            <div class="ob-illustrated-step__head">
+                @HeadContent
+            </div>
+        }
         <div class="ob-illustrated-step__overlay">
             @ChildContent
         </div>
@@ -26,5 +32,6 @@
     [Parameter] public int ImageWidth { get; set; } = 1280;
     [Parameter] public int ImageHeight { get; set; } = 720;
     [Parameter] public string? TestId { get; set; }
+    [Parameter] public RenderFragment? HeadContent { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }
