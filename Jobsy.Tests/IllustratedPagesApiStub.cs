@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
-using Jobsy.Web.Services.ApiClient.Models;
 
 namespace Jobsy.Tests;
 

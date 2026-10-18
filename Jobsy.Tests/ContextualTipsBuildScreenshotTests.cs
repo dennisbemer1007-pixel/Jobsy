@@ -46,11 +46,11 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         await CaptureAsync("05-alle-tips", "/candidate/tips", "[data-testid='contextual-tips-index']");
         await CaptureAsync("06-tip-detail", "/candidate/tips/je-eerste-gesprek", "[data-testid='contextual-tip-detail']");
 
-        await CaptureAdminFunctiesAsync(_web!, contextualTipsEnabled: true, "admin-functies-flag-aan");
+        await CaptureAdminFunctiesAsync(_web!, "admin-functies-flag-aan");
         await using (var offWeb = new IllustratedPagesWebFactory(contextualTipsEnabled: false))
         {
             _ = offWeb.ServerAddress;
-            await CaptureAdminFunctiesAsync(offWeb, contextualTipsEnabled: false, "admin-functies-flag-uit");
+            await CaptureAdminFunctiesAsync(offWeb, "admin-functies-flag-uit");
         }
 
         await using var offWebCandidate = new IllustratedPagesWebFactory(contextualTipsEnabled: false);
@@ -75,7 +75,7 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         await onPage.ScreenshotAsync(new() { Path = onFile, FullPage = true });
     }
 
-    private async Task CaptureAdminFunctiesAsync(IllustratedPagesWebFactory web, bool contextualTipsEnabled, string namePrefix)
+    private async Task CaptureAdminFunctiesAsync(IllustratedPagesWebFactory web, string namePrefix)
     {
         await using var context = await _browser!.NewContextAsync(new()
         {

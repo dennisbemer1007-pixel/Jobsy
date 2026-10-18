@@ -55,7 +55,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes, _contextualTipsEnabled));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
             services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
-                new HttpClient(new StubApiHandler(_emptyAppsAndLikes), disposeHandler: false)
+                new HttpClient(new StubApiHandler(_emptyAppsAndLikes, _contextualTipsEnabled), disposeHandler: false)
                 {
                     BaseAddress = new Uri("http://api.test/")
                 }));
