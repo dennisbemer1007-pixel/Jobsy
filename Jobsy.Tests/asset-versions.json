@@ -1,18 +1,34 @@
 {
+  "brand/png/lobsy-apple-touch-icon-180.png": {
+    "sha256": "fbfbe90467ca5887879d642a0dc5fa6b48d4080b716b7b09c1ad198077dfa758",
+    "v": "@BrandImages.Version"
+  },
+  "brand/png/lobsy-favicon-16.png": {
+    "sha256": "0e24c4f8a8c96309f04ddd715f5c78d077155daf3d7b0d5fc525128b10104089",
+    "v": "@BrandImages.Version"
+  },
+  "brand/png/lobsy-favicon-32.png": {
+    "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
+    "v": "@BrandImages.Version"
+  },
+  "brand/png/lobsy-favicon-48.png": {
+    "sha256": "b4d98dfff0413e1c28dcda8dd3f5502658e9071eb78e9da4f484bf3daf6ad32b",
+    "v": "@BrandImages.Version"
+  },
   "css/app.min.css": {
-    "sha256": "a83a058190afcc117c6ed5f502257f1e8c6a8dfd2a6efbce6d7b02dc35417b05",
-    "v": "20261017-03"
+    "sha256": "9d92d303cfdecdd894d50005fad5fed9912d6bb7c56c236944c40e4191bc0138",
+    "v": "20261018-e"
   },
   "css/critical.css": {
-    "sha256": "94b9e9f0833faebdcbf4281da401379c93851562b64d48d838d27004f6862cab",
-    "v": "20261004-13"
+    "sha256": "64cbe72b150901710db5fa228468cbf99dc7d0364469b010b5c38bdc9ba75c5a",
+    "v": "20261018-e"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
     "v": "20261004-10"
   },
   "css/features/admin.css": {
-    "sha256": "b945c8d681867a24d0b9b8bbe8b0b17cbb78d9324350dc26b30899446a1082bf",
+    "sha256": "2c1a9935f40f1ab51fa9cef922b3da3d01999fc6ad1db882f8ef157731c062ad",
     "v": "20261013-02"
   },
   "css/features/applications.css": {
@@ -148,7 +164,7 @@
     "v": "20261016-01"
   },
   "css/features/public-theme.css": {
-    "sha256": "372f92ab0d0f192921ffa66aecd1c36df017d4ed08cd0e5d02fa4e58a98b1b55",
+    "sha256": "9ecd13f3c26ebc0aef9494067911d48c6ba4c0b8be04844079ca352384114321",
     "v": "20261016-01"
   },
   "css/features/questionnaire.css": {
@@ -188,19 +204,19 @@
     "v": "20261016-06"
   },
   "css/features/werkgever.css": {
-    "sha256": "51897e01c27aab8b3231b92a87ba1fe068be7e5b9a5ee9836f01892e2a444baf",
+    "sha256": "086df7eb5afc5e0ddab3bb3786bd07c5ad3b9b8d3f9570f7a164af0c73ee6472",
     "v": "20261017-19"
   },
   "favicon.ico": {
-    "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
-    "v": "20261004-13"
+    "sha256": "b8f4025ded7aa6a6eb5ff0f8e82e1c5fcac343705e2d62883d00472b03029239",
+    "v": "@BrandImages.Version"
   },
   "favicon.png": {
-    "sha256": "71d7450b21a8326241ce974f03b8e1aea59cceb2c493b163d731c5e8f875d278",
+    "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
     "v": "20261004-13"
   },
   "icons/apple-touch-icon.png": {
-    "sha256": "226498db3c36a03789a4d3d80af373c11fcdd52635bab0327a9e8004930aff4c",
+    "sha256": "fbfbe90467ca5887879d642a0dc5fa6b48d4080b716b7b09c1ad198077dfa758",
     "v": "20261004-13"
   },
   "images/brand/mascot-128.png": {
@@ -244,7 +260,7 @@
     "v": "20261002-ch10"
   },
   "js/gratis-dna.js": {
-    "sha256": "84b403bf4604d5e5c6aca3c309bc298ff8a5075fb6052bb2a20e1ab090b018a2",
+    "sha256": "c9d59f624a98c43da53f0b1a83f2ef66172f1ae2bcb453840073f54b65945c3a",
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
@@ -284,19 +300,23 @@
     "v": "20261015-03"
   },
   "js/vacancyDetailMap.min.js": {
-    "sha256": "a4cf52ee4b1ecf0658692206cb15d175c77075253cef7bc6afab2a174edf24ef",
+    "sha256": "fd7f5d0ad03db3269949db91730ccd8b7f0a383acf0770219720bc57f3ad7ee8",
     "v": "20261004-13"
   },
   "manifest.webmanifest": {
-    "sha256": "fe76719e490f6c2dc046d7049216f82dd5422e5ba529ff1aec1f1bfa517d682b",
+    "sha256": "12ce1e543f688b319021597c259f8cb3ef643aab582d1dbcec2856628d5a9649",
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "4b18dca255fda4a7df87886580a2683d1ee30fad56ed7660948e128daa777629",
+    "sha256": "e679880b8e8219aebcecd45573bc8e83bbe36bc3f5cb957563ca4a7088c7171d",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "f58f50a5ed8da738b9f69b0703b89f000f2551d8461635615d30fa3c51ea1c28",
+    "sha256": "7ebf6b90a4c3dfe4618d87956e74c1039edec29e63ab28501fa97a1d20ffa201",
     "v": "20261016-06"
+  },
+  "site.webmanifest": {
+    "sha256": "12ce1e543f688b319021597c259f8cb3ef643aab582d1dbcec2856628d5a9649",
+    "v": "@BrandImages.Version"
   }
 }
