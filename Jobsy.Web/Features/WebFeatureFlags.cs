@@ -73,6 +73,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
                 dto?.CompanyMapInitiativeEnabled ?? true);
+            flags = ApplyLocalOverrides(flags);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -80,10 +81,20 @@ public sealed class WebFeatureFlags : IFeatureFlags
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to load feature flags from API; using last known or defaults.");
-            var fallback = _lastKnown ?? FeatureFlagSnapshot.Defaults;
+            var fallback = ApplyLocalOverrides(_lastKnown ?? FeatureFlagSnapshot.Defaults);
             _cache.Set(CacheKey, fallback, TimeSpan.FromSeconds(10));
             return fallback;
         }
+    }
+
+    private FeatureFlagSnapshot ApplyLocalOverrides(FeatureFlagSnapshot flags)
+    {
+        if (bool.TryParse(_configuration["Jobsy:TestEmployersEnabled"], out var testEmployers) && testEmployers)
+        {
+            return flags with { EmployersEnabled = true };
+        }
+
+        return flags;
     }
 
     public async ValueTask<bool> IsEnabledAsync(

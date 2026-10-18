@@ -39,6 +39,8 @@ public sealed class JourneyShedFinalizeTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        Services.AddSingleton<MeGetCache>();
+        Services.AddSingleton<DiscoveryOverviewCache>();
     }
 
     [Fact]

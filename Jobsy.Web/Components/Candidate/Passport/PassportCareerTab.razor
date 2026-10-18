@@ -8,6 +8,7 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@using Jobsy.Web.Media
 @inject CareerPathService CareerPaths
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -19,7 +20,8 @@
     }
     else if (_view is null || !_view.HasPlan)
     {
-        <section class="detail-card passport-career__empty" aria-labelledby="passport-career-empty-title">
+        <section class="detail-card passport-career__empty kompas-card--illustrated" aria-labelledby="passport-career-empty-title">
+            <CandidateIllustratedCardSpot ImageUrl="@CandidateIllustratedImages.SpotDroombaan" Position="85% 20%" />
             <h3 id="passport-career-empty-title" class="passport-fit__h">@Culture["Passport.Career.EmptyTitle"]</h3>
             <p class="login-lead">@Culture["Passport.Career.EmptyLead"]</p>
             <a class="btn btn-primary" href="/carriere">@Culture["Passport.Career.EmptyCta"]</a>

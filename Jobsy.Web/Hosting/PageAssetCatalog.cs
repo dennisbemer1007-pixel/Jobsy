@@ -33,10 +33,12 @@ public static class PageAssetCatalog
 
     public static readonly string[] CandidatePublicCss =
     [
-        "css/features/banenkaart.css?v=20261016-02",
+        "css/features/banenkaart.css?v=20261018-02",
+        "css/features/banenkaart-illustrated.css?v=20261018-14",
         "css/features/bedrijvenkaart.css?v=20261018-01",
+        "css/features/candidate-illustrated-app.css?v=20261018-89",
         "css/features/kandidaat-banen.css?v=20261017-04",
-        "css/features/match-desktop.css?v=20261013-01",
+        "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
     ];
@@ -45,19 +47,20 @@ public static class PageAssetCatalog
     [
         "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/onboarding-wizard.css?v=20261018-01",
+        "css/features/onboarding-wizard.css?v=20261018-02",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
-        "css/features/onboarding-wizard-richting-a.css?v=20261017-01",
-        "css/features/onboarding-work-history.css?v=20261018-01",
+        "css/features/onboarding-wizard-richting-a.css?v=20261018-02",
+        "css/features/onboarding-work-history.css?v=20261018-07",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261017-03",
+        "css/features/mijn-paspoort.css?v=20261018-01",
+        "css/features/kompas-illustrated.css?v=20261018-05",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261018-04",
-        "css/features/carriere.css?v=20261011-01",
+        "css/features/carriere.css?v=20261018-03",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",
         "css/features/future-jobs.css?v=20261006-02",
@@ -229,6 +232,16 @@ public static class PageAssetCatalog
         }
 
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
+        {
+            return ["css/features/bedrijvenkaart.css?v=20261018-02"];
+        }
+
+        if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
+        {
+            return ["css/features/bedrijvenkaart.css?v=20261018-02"];
+        }
+
+        if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
         {
             return ["css/features/bedrijvenkaart.css?v=20261018-02"];
         }
