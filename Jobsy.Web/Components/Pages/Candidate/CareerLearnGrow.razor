@@ -25,8 +25,10 @@
                               Title="@Culture["Training.LearnGrow.Title"]"
                               Lead="@Culture["Training.LearnGrow.Lead"]"
                               ArtUrl="@CandidateIllustratedImages.LearnGrowHero"
-                              ArtPosition="62% center"
-                              CssClass="cand-hero--profession-band cand-hero--learn-grow" />
+                              ArtUrlDesktop="@CandidateIllustratedImages.LearnGrowHeroWide"
+                              ArtPosition="68% center"
+                              ArtPositionDesktop="right center"
+                              CssClass="cand-hero--learn-grow" />
 
     <main class="opl-wrap">
         <form class="opl-search opl-search--below" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
@@ -67,7 +69,20 @@
                 <div class="opl-main">
                     <section class="opl-filters">
                         <div class="opl-filters__bar">
-                            <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterSubject"]</span>
+                            <div class="opl-filters__head opl-only-mobile">
+                                <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterSubject"]</span>
+                                <button type="button"
+                                        class="opl-filters__toggle btn btn-ghost btn-sm @(_filtersOpen ? "is-on" : null)"
+                                        aria-expanded="@(_filtersOpen ? "true" : "false")"
+                                        @onclick="() => _filtersOpen = !_filtersOpen">
+                                    @Culture["Training.LearnGrow.FilterPanel"]
+                                    @if (AdvancedFilterCount > 0)
+                                    {
+                                        <span class="opl-filters__badge">@AdvancedFilterCount</span>
+                                    }
+                                </button>
+                            </div>
+                            <span class="opl-filters__label opl-filters__label--desktop">@Culture["Training.LearnGrow.FilterSubject"]</span>
                             <div class="opl-filters__chip-rail">
                                 <div class="opl-filters__subject-scroll">
                                     @foreach (var chip in SubjectChips())
@@ -81,7 +96,7 @@
                                 </div>
                             </div>
                             <button type="button"
-                                    class="opl-filters__toggle btn btn-ghost btn-sm @(_filtersOpen ? "is-on" : null)"
+                                    class="opl-filters__toggle opl-filters__toggle--desktop btn btn-ghost btn-sm @(_filtersOpen ? "is-on" : null)"
                                     aria-expanded="@(_filtersOpen ? "true" : "false")"
                                     @onclick="() => _filtersOpen = !_filtersOpen">
                                 @Culture["Training.LearnGrow.FilterPanel"]

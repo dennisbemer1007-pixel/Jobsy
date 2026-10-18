@@ -14,14 +14,31 @@
   max-width: 40rem;
 }
 
-.opl-page .cand-hero--profession-band {
-  background-size: auto 100%;
-  background-position: right center;
-}
+@media (min-width: 640px) {
+  .opl-page .cand-hero--learn-grow {
+    background-image: none !important;
+    background-color: var(--pearl);
+  }
 
-.opl-page .cand-hero--learn-grow.cand-hero--profession-band {
-  background-size: auto 105%;
-  background-position: 72% center;
+  .opl-page .cand-hero--learn-grow::after {
+    content: "";
+    position: absolute;
+    inset-block: 0;
+    inset-inline: 39% 0;
+    z-index: 0;
+    background-image: var(--cand-hero-art-desktop, var(--cand-hero-art));
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: var(--cand-hero-pos-desktop, right center);
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 100%);
+  }
+
+  .opl-page .cand-hero--learn-grow::before {
+    inset-inline: 0 61%;
+    width: auto;
+    background: var(--pearl) !important;
+  }
 }
 
 .opl-hero {
@@ -179,6 +196,21 @@
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
+}
+
+.opl-filters__head {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.opl-filters__label--desktop {
+  grid-area: label;
+}
+
+.opl-filters__toggle--desktop {
+  grid-area: toggle;
 }
 
 .opl-filters__bar {
@@ -1023,14 +1055,31 @@
     margin-top: 0;
   }
 
-  .opl-filters__bar {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "label label"
-      "chips toggle";
+  .opl-filters__head {
+    display: flex;
   }
 
-  .opl-page .cand-hero--learn-grow.cand-hero--profession-band .cand-hero__media {
+  .opl-filters__label--desktop,
+  .opl-filters__toggle--desktop {
+    display: none !important;
+  }
+
+  .opl-filters__bar {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "head"
+      "chips";
+  }
+
+  .opl-filters__head {
+    grid-area: head;
+  }
+
+  .opl-filters__chip-rail {
+    grid-area: chips;
+  }
+
+  .opl-page .cand-hero--learn-grow .cand-hero__media {
     display: block;
     width: 100vw;
     max-width: 100vw;
@@ -1045,7 +1094,7 @@
     mask-image: none;
   }
 
-  .opl-page .cand-hero--learn-grow.cand-hero--profession-band .cand-hero__media {
+  .opl-page .cand-hero--learn-grow .cand-hero__media {
     background-size: cover !important;
   }
 
