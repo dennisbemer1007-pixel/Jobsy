@@ -6,16 +6,22 @@
   --obf-text: #122033;
   --obf-muted: #5a6a7d;
   --obf-border: #ddd5cc;
-  --obf-art-position: 34% 68%;
+  --obf-art-position: 50% 92%;
+  --obf-art-ratio: 1440 / 520;
   color: var(--obf-text);
   background: var(--obf-pearl);
   min-height: 100vh;
   padding-bottom: 3rem;
 }
 
+.ob-finale__hero {
+  position: relative;
+  background: var(--obf-pearl);
+}
+
 .ob-finale__intro {
-  padding: 2.5rem 1.5rem 0.75rem;
-  text-align: center;
+  padding: 1.125rem 1rem 0.75rem;
+  text-align: left;
   background: linear-gradient(180deg, #fdf8f2 0%, var(--obf-pearl) 100%);
 }
 
@@ -27,7 +33,7 @@
 .ob-finale__art {
   margin: 0;
   width: 100%;
-  aspect-ratio: 1280 / 720;
+  aspect-ratio: var(--obf-art-ratio);
   height: auto;
   overflow: hidden;
   background: #fdf3e4;
@@ -107,7 +113,11 @@
 .ob-finale__wrap {
   max-width: 67.5rem;
   margin: 0 auto;
-  padding: 1.25rem 1.5rem 3.5rem;
+  padding: 1.125rem 1.5rem 3.5rem;
+}
+
+.ob-finale__hero + .ob-finale__wrap {
+  padding-top: 1.125rem;
 }
 
 .ob-finale__hl {
@@ -118,6 +128,24 @@
   color: #fff;
   border-radius: 16px;
   padding: 1.125rem 1.5rem;
+  text-decoration: none;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ob-finale__hl:hover,
+.ob-finale__hl:focus-visible {
+  background: color-mix(in srgb, var(--obf-brand) 92%, #000 8%);
+  box-shadow: 0 8px 24px rgba(15, 45, 92, 0.18);
+}
+
+.ob-finale__hl:focus-visible {
+  outline: 3px solid var(--obf-coral);
+  outline-offset: 2px;
+}
+
+.ob-finale__hl-copy {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .ob-finale__hl-n {
@@ -148,6 +176,7 @@
   color: #fff;
   font-weight: 650;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .ob-finale h2 {
@@ -403,32 +432,93 @@
   height: 1.25rem;
 }
 
+@media (min-width: 601px) {
+  .ob-finale__hero {
+    display: grid;
+    margin-bottom: 0;
+  }
+
+  .ob-finale__art,
+  .ob-finale__intro {
+    grid-area: 1 / 1;
+  }
+
+  .ob-finale__intro {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    width: min(34rem, 46%);
+    max-width: 100%;
+    padding: clamp(1.25rem, 2.8vw, 2.25rem) clamp(1.25rem, 3vw, 2.75rem);
+    text-align: left;
+    background: linear-gradient(
+      102deg,
+      rgba(253, 248, 242, 0.96) 0%,
+      rgba(253, 248, 242, 0.88) 42%,
+      rgba(253, 248, 242, 0.35) 68%,
+      rgba(253, 248, 242, 0) 82%
+    );
+    pointer-events: none;
+  }
+
+  .ob-finale__intro .ob-finale__hero-inner {
+    pointer-events: auto;
+    max-width: 30rem;
+    margin: 0;
+  }
+
+  .ob-finale__ctas {
+    justify-content: flex-start;
+  }
+
+  .ob-finale__lead {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
 @media (max-width: 1280px) {
   .ob-finale {
-    --obf-art-position: 32% 66%;
+    --obf-art-ratio: 1440 / 500;
+    --obf-art-position: 48% 94%;
   }
 }
 
 @media (max-width: 1024px) {
   .ob-finale {
-    --obf-art-position: 30% 64%;
+    --obf-art-ratio: 1440 / 480;
+    --obf-art-position: 46% 95%;
+  }
+
+  .ob-finale__intro {
+    width: min(32rem, 52%);
   }
 }
 
 @media (max-width: 600px) {
+  .ob-finale {
+    --obf-art-ratio: 16 / 10;
+    --obf-art-position: 62% 88%;
+  }
+
+  .ob-finale__hero {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+  }
+
   .ob-finale__intro {
-    padding: 1.125rem 1rem 0.5rem;
-    text-align: left;
+    position: static;
+    width: auto;
+    padding: 1.125rem 1rem 0;
+    background: linear-gradient(180deg, #fdf8f2 0%, var(--obf-pearl) 100%);
+    pointer-events: auto;
   }
 
   .ob-finale__art {
     margin: 0 1rem;
     border-radius: 16px;
-    height: 14.375rem;
-  }
-
-  .ob-finale__art img {
-    object-position: 72% 70%;
   }
 
   .ob-finale__ctas {
@@ -446,16 +536,16 @@
   }
 
   .ob-finale__hl {
-    display: grid;
-    grid-template-columns: 3.5rem 1fr;
-    gap: 0.75rem 0.875rem;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.625rem 0.75rem;
+    padding: 1rem 1rem;
   }
 
   .ob-finale__hl-go {
-    grid-column: 1 / -1;
-    margin: 0;
-    padding-top: 0.625rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    margin: 0 0 0 auto;
+    font-size: 0.875rem;
   }
 
   .ob-finale__insg,
