@@ -2,7 +2,9 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<section class="career-card career-card--overview" aria-labelledby="career-title">
+<section class="career-card career-card--overview @(Illustrated ? "career-card--overview-illustrated" : null)" aria-labelledby="career-title">
+    @if (!Illustrated)
+    {
     <div class="career-card__top">
         <p class="career-card__eyebrow">@EyebrowText</p>
         @if (!Plan.GoalReached)
@@ -41,6 +43,11 @@
     </div>
     <p class="career-card__lead career-only-desktop">@Culture["Career.Overview.Lead"]</p>
     <p class="career-card__lead career-card__lead--short career-only-mobile">@Culture["Career.Overview.LeadShort"]</p>
+    }
+    else
+    {
+        <h1 id="career-title" class="visually-hidden" tabindex="-1">@TitleText</h1>
+    }
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))
     {
@@ -62,12 +69,15 @@
         </p>
     }
 
-    <div class="career-only-desktop">
-        <GrowingShellsStepper Stones="@Plan.Stones" Mobile="false" />
-    </div>
-    <div class="career-only-mobile">
-        <GrowingShellsStepper Stones="@Plan.Stones" Mobile="true" />
-    </div>
+    @if (!Illustrated)
+    {
+        <div class="career-only-desktop">
+            <GrowingShellsStepper Stones="@Plan.Stones" Mobile="false" />
+        </div>
+        <div class="career-only-mobile">
+            <GrowingShellsStepper Stones="@Plan.Stones" Mobile="true" />
+        </div>
+    }
 
     @if (Plan.GoalReached)
     {
@@ -89,7 +99,7 @@
             </button>
         </div>
     }
-    else if (Plan.CurrentStep is { } step)
+    else if (!Illustrated && Plan.CurrentStep is { } step)
     {
         <section class="career-now career-only-desktop" aria-labelledby="career-now-title">
             <p class="career-now__eyebrow">@Culture["Career.Overview.NowEyebrow"]</p>
@@ -145,7 +155,7 @@
         </section>
     }
 
-    @if (Plan.AlreadyHave.Count > 0)
+    @if (!Illustrated && Plan.AlreadyHave.Count > 0)
     {
         <section class="career-have career-only-desktop" aria-labelledby="career-have-title">
             <h2 id="career-have-title" class="career-card__block-title">@Culture["Career.Have.Title"]</h2>
@@ -161,7 +171,7 @@
         </section>
     }
 
-    @if (!string.IsNullOrWhiteSpace(Plan.DreamTitle))
+    @if (!Illustrated && !string.IsNullOrWhiteSpace(Plan.DreamTitle))
     {
         <p class="career-card__actions">
             <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnClearDream">
@@ -170,13 +180,16 @@
         </p>
     }
 
-    <p class="career-card__source">
-        <svg class="career-card__source-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <path d="m15.5 8.5-2 5-5 2 2-5z" />
-        </svg>
-        <span>@(Plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])</span>
-    </p>
+    @if (!Illustrated)
+    {
+        <p class="career-card__source">
+            <svg class="career-card__source-icon" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <path d="m15.5 8.5-2 5-5 2 2-5z" />
+            </svg>
+            <span>@(Plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])</span>
+        </p>
+    }
 
     @if (Plan.LanguageDiffers)
     {
@@ -190,6 +203,7 @@
 </section>
 
 @code {
+    [Parameter] public bool Illustrated { get; set; }
     [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
     [Parameter] public bool Busy { get; set; }
     [Parameter] public bool EmployersOn { get; set; } = true;

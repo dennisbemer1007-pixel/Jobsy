@@ -69,5 +69,8 @@ public enum PlatformFeature
     Kandidatenkaart,
 
     /// <summary>Geverifieerde referenties on the candidate passport. Default false.</summary>
-    ReferenceVerification
+    ReferenceVerification,
+
+    /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
+    TrainingPartners
 }

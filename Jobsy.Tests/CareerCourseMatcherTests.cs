@@ -1,4 +1,5 @@
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Enums;
 using Jobsy.Core.Rules;
 
 namespace Jobsy.Tests;
@@ -58,4 +59,14 @@ public class CareerCourseMatcherTests
     [Fact]
     public void StepMatchPercent_zero_without_courses()
         => Assert.Equal(0, CareerCourseMatcher.StepMatchPercent([], []));
+
+    [Fact]
+    public void Relevance_reason_key_for_next_step_uses_step_copy()
+    {
+        var key = CareerCourseMatcher.RelevanceReasonKey(
+            TrainingOfferSection.NextStep,
+            CompetencyTestCatalog.Stressbestendigheid,
+            "Mbo paraveterinair");
+        Assert.Equal("Training.Reason.NextStep", key);
+    }
 }
