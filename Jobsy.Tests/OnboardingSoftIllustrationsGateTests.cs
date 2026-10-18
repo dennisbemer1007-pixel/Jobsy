@@ -77,7 +77,7 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
-    public void Hero_band_css_uses_seamless_art_with_fade_and_mobile_scene_band()
+    public void Hero_band_css_uses_seamless_art_with_fade_and_mobile_text_in_hero()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
         Assert.Contains("object-fit: contain", css, StringComparison.Ordinal);
@@ -88,7 +88,13 @@ public sealed class OnboardingSoftIllustrationsGateTests
                 @"\.ob-illustrated-step__art-img-wrap img\s*\{[^}]*object-fit:\s*contain",
                 System.Text.RegularExpressions.RegexOptions.Singleline));
         Assert.DoesNotContain("mask-image: linear-gradient", css, StringComparison.Ordinal);
-        Assert.Contains("block-size: 120px", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("object-fit: cover", css, StringComparison.Ordinal);
+        Assert.Matches(
+            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__hero-band\s*\{[^}]*max-block-size:\s*240px",
+            css);
+        Assert.Matches(
+            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__head\s*\{[^}]*position:\s*absolute",
+            css);
     }
 
     [Fact]

@@ -142,7 +142,14 @@ async function advanceToStep(page, target) {
   await fillStep5(page);
 }
 
-const slugs = { 1: 'kennismaken', 3: 'vervoer', 4: 'werkervaring', 6: 'droombaan' };
+const slugs = {
+  1: 'kennismaken',
+  2: 'beschikbaarheid',
+  3: 'vervoer',
+  4: 'werkervaring',
+  5: 'opleiding',
+  6: 'droombaan',
+};
 
 for (const step of [1, 3, 4, 6]) {
   const { browser, page } = await newSession({ viewport: { width: 1440, height: 900 } });
@@ -160,22 +167,32 @@ for (const step of [1, 3, 4, 6]) {
   await browser.close();
 }
 
-for (const [step, slug, fileSuffix] of [
-  [1, 'kennismaken', 'onboarding-step-1-kennismaken-390.png'],
-  [3, 'vervoer', 'onboarding-vervoer-390.png'],
-  [6, 'droombaan', 'onboarding-droombaan-390.png'],
-]) {
+for (const step of [1, 2, 3, 4, 5, 6]) {
+  const slug = slugs[step];
   const { browser, page } = await newSession({ ...devices['Pixel 5'], viewport: { width: 390, height: 844 } });
   await registerToWizard(page);
   await advanceToStep(page, step);
+  await page.waitForSelector(`[data-testid=onboarding-step-${step}-illustrated]`);
   await waitForHeroIllustration(page);
   if (step === 3) {
     await page.getByTestId('onboarding-transport-heading').waitFor({ state: 'visible', timeout: 30000 });
   }
+  if (step === 5) {
+    await page.locator('.ob-wizard__education-grid .lobsy-choice-tile').filter({ hasText: 'HBO' }).first().waitFor({ timeout: 30000 });
+  }
   if (step === 6) {
     await page.locator('[data-testid=onboarding-dream-suggest-fit]').waitFor({ timeout: 60000 });
+    await page.waitForTimeout(400);
   }
-  await page.screenshot({ path: path.join(outDir, fileSuffix) });
-  console.log('saved', slug, '390');
+  const heroBox = await page.locator('.ob-illustrated-step__hero-band').boundingBox();
+  const firstField = page.locator('.ob-illustrated-step__form input, .ob-illustrated-step__form .lobsy-choice-tile').first();
+  if (await firstField.count()) {
+    const fieldBox = await firstField.boundingBox();
+    if (heroBox && fieldBox && fieldBox.y > 240) {
+      console.warn(`step ${step}: first field y=${fieldBox.y.toFixed(0)} (hero h≈${heroBox.height.toFixed(0)})`);
+    }
+  }
+  await page.screenshot({ path: path.join(outDir, `onboarding-step-${step}-${slug}-390.png`) });
+  console.log('saved step', step, slug, '390');
   await browser.close();
 }
