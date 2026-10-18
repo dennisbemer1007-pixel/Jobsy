@@ -4,7 +4,7 @@ namespace Jobsy.Web.Onboarding;
 public static class OnboardingIllustrationAssets
 {
     public const string Version = "20261018-r10";
-    public const string MobileVersion = "20261018-r16";
+    public const string MobileVersion = "20261018-r17";
 
     public const string KennismakenWebp = $"/images/onboarding/kennismaken.webp?v={Version}";
     public const string KennismakenJpg = $"/images/onboarding/kennismaken.jpg?v={Version}";

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R15/R16: full-bleed mobile hero plates (one continuous scene, cover crop, no cut-out figures)."""
+"""R15–R17: full-bleed mobile hero plates (continuous scene; figures in right band ≥55%)."""
 from __future__ import annotations
 
 import math
@@ -32,12 +32,11 @@ CROP: dict[str, tuple[float, float, float, float]] = {
 
 ANCHOR_X: dict[str, float] = {
     "kennismaken": 0.84,
-    "beschikbaarheid": 0.94,
     "vervoer": 0.82,
-    "werkervaring": 0.78,
-    "opleiding": 0.94,
     "droombaan": 0.84,
 }
+
+CONTAIN_RIGHT_SLUGS = frozenset({"beschikbaarheid", "opleiding", "werkervaring"})
 
 # Flip so figures that live on the left in desktop art read on the right on mobile.
 FLIP_H = frozenset({"beschikbaarheid", "opleiding", "droombaan", "kennismaken"})
@@ -51,6 +50,29 @@ def crop_frac(img: Image.Image, box: tuple[float, float, float, float]) -> Image
     w, h = img.size
     l, t, r, b = box
     return img.crop((int(w * l), int(h * t), int(w * r), int(h * b)))
+
+
+def contain_in_right_zone(
+    img: Image.Image,
+    tw: int,
+    th: int,
+    *,
+    zone_start_frac: float = 0.55,
+    scale_margin: float = 0.92,
+) -> Image.Image:
+    """Scale scene to fit in the right band (x ≥ zone_start); pearl fill; no edge crop."""
+    canvas = Image.new("RGB", (tw, th), PAGE_BG)
+    zone_x0 = int(tw * zone_start_frac)
+    zone_w = tw - zone_x0
+    zone_h = th
+    w, h = img.size
+    scale = min(zone_w / w, zone_h / h) * scale_margin
+    nw, nh = max(1, int(w * scale)), max(1, int(h * scale))
+    scaled = img.resize((nw, nh), Image.Resampling.LANCZOS)
+    x = zone_x0 + max(0, (zone_w - nw) // 2)
+    y = max(0, th - nh - int(th * 0.02))
+    canvas.paste(scaled, (x, y))
+    return canvas
 
 
 def cover_to(img: Image.Image, tw: int, th: int, *, anchor_x: float = 0.72, anchor_y: float = 0.55) -> Image.Image:
@@ -103,15 +125,17 @@ def wash_left_pearl(img: Image.Image, frac: float = 0.5) -> None:
 
 
 def build_werkervaring_scene() -> Image.Image:
+    """R15 market group + logistics/care; pearl-wash only the left desk ghost."""
     base = Image.open(OUT_DIR / "werkervaring.jpg").convert("RGB")
     w, h = base.size
-    scene = Image.new("RGB", (w, h), PAGE_BG)
-    # Pearl left zone for copy; art strip on the right only (no desk ghost).
-    art_strip = crop_frac(base, (0.56, 0.06, 0.98, 0.98))
-    art_w = int(w * 0.64)
-    art_placed = cover_to(art_strip, art_w, h, anchor_x=0.35, anchor_y=0.48)
-    scene.paste(art_placed, (int(w * 0.36), 0))
-    wash_left_pearl(scene, 0.48)
+    mid_scene = crop_frac(base, (0.34, 0.0, 0.98, 1.0))
+    scene = cover_to(mid_scene, w, h, anchor_x=0.18, anchor_y=0.48)
+    wash_left_pearl(scene, 0.42)
+    px = scene.load()
+    ghost_cut = int(w * 0.26)
+    for y in range(h):
+        for x in range(ghost_cut):
+            px[x, y] = PAGE_BG
 
     log = figure_alpha_from_jpg(DIV_DIR / "figuur-logistiek.jpg")
     zorg = figure_alpha_from_jpg(DIV_DIR / "figuur-schoonmaak.jpg")
@@ -124,20 +148,25 @@ def build_werkervaring_scene() -> Image.Image:
         y = h - th - int(h * 0.06)
         scene.paste(fig_r, (x, y), fig_r)
 
-    paste_figure(log, 0.70, 0.56)
-    paste_figure(zorg, 0.88, 0.52)
+    paste_figure(log, 0.66, 0.56)
+    paste_figure(zorg, 0.84, 0.52)
     return scene
 
 
 def build_mobile_hero(slug: str) -> Image.Image:
     if slug == "werkervaring":
         src = build_werkervaring_scene()
-    else:
-        src = Image.open(OUT_DIR / f"{slug}.jpg").convert("RGB")
+        return contain_in_right_zone(src, MOBILE_W, MOBILE_H, zone_start_frac=0.55, scale_margin=0.88)
+
+    src = Image.open(OUT_DIR / f"{slug}.jpg").convert("RGB")
     patch = crop_frac(src, CROP[slug])
     if slug in FLIP_H:
         patch = patch.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-    ax = ANCHOR_X.get(slug, 0.82 if slug in FLIP_H else 0.72)
+
+    if slug in CONTAIN_RIGHT_SLUGS:
+        return contain_in_right_zone(patch, MOBILE_W, MOBILE_H, zone_start_frac=0.55, scale_margin=0.90)
+
+    ax = ANCHOR_X.get(slug, 0.82)
     return cover_to(patch, MOBILE_W, MOBILE_H, anchor_x=ax, anchor_y=0.52)
 
 
@@ -161,7 +190,7 @@ def main() -> int:
             write_webp(jpg)
         manifest[slug] = {"width": MOBILE_W, "height": MOBILE_H}
         print("wrote", jpg)
-    meta = OUT_DIR / "mobile-hero-r16-manifest.json"
+    meta = OUT_DIR / "mobile-hero-r17-manifest.json"
     meta.write_text(__import__("json").dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return 0
 
