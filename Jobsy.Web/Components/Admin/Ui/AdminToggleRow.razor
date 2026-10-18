@@ -1,37 +1,59 @@
 @namespace Jobsy.Web.Components.Admin.Ui
+@inject CultureState Culture
 
 <div class="admin-toggle-row @(IsDirty ? "admin-toggle-row--dirty" : null) @(IsLocked ? "admin-toggle-row--locked" : null)">
-    <div class="admin-toggle-row__text">
-        <p class="admin-toggle-row__title">
-            @Title
-            @if (!string.IsNullOrWhiteSpace(Badge))
+    <div class="admin-toggle-row__head">
+        <div class="admin-toggle-row__lead">
+            <p class="admin-toggle-row__title">
+                @Title
+                @if (!string.IsNullOrWhiteSpace(Badge))
+                {
+                    <span class="status-pill status-pill--warn admin-toggle-row__badge">@Badge</span>
+                }
+            </p>
+            @if (!string.IsNullOrWhiteSpace(SourceBadge))
             {
-                <span class="status-pill status-pill--warn admin-toggle-row__badge">@Badge</span>
+                <span class="admin-flag-source-badge admin-toggle-row__source @(SourceIsOverride ? "is-override" : null)">@SourceBadge</span>
             }
-        </p>
-        @if (!string.IsNullOrWhiteSpace(Description))
-        {
-            <p class="admin-toggle-row__desc">@Description</p>
-        }
-        @if (!string.IsNullOrWhiteSpace(Meta))
-        {
-            <p class="admin-toggle-row__meta">@Meta</p>
-        }
-        @if (Impact is not null)
-        {
-            @Impact
-        }
+        </div>
+        <div class="admin-toggle-row__control">
+            @Control
+        </div>
     </div>
-    <div class="admin-toggle-row__control">
-        @if (!string.IsNullOrWhiteSpace(SourceBadge))
-        {
-            <span class="admin-flag-source-badge @(SourceIsOverride ? "is-override" : null)">@SourceBadge</span>
-        }
-        @Control
-    </div>
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <div class="admin-toggle-row__desc-block">
+            <p class="admin-toggle-row__desc @(_descExpanded ? "is-expanded" : null)" id="@_descId">@Description</p>
+            @if (ShowDescToggle)
+            {
+                <button type="button"
+                        class="admin-toggle-row__more"
+                        aria-expanded="@_descExpanded.ToString().ToLowerInvariant()"
+                        aria-controls="@_descId"
+                        @onclick="ToggleDesc">
+                    @(_descExpanded ? Culture["AdminSettings.DescLess"] : Culture["AdminSettings.DescMore"])
+                </button>
+            }
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Meta))
+    {
+        <p class="admin-toggle-row__meta">@Meta</p>
+    }
+    @if (Impact is not null)
+    {
+        <div class="admin-toggle-row__impact">@Impact</div>
+    }
 </div>
 
 @code {
+    private bool _descExpanded;
+    private readonly string _descId = "admin-desc-" + Guid.NewGuid().ToString("N")[..8];
+
+    private bool ShowDescToggle => (Description?.Length ?? 0) > 72;
+
+    private void ToggleDesc() => _descExpanded = !_descExpanded;
+
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string? Description { get; set; }
     [Parameter] public string? Meta { get; set; }

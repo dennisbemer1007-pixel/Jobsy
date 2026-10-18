@@ -554,6 +554,8 @@ public static class UiStringsAdmin
         Add("AdminSettings.FlagBadge.Default", "Standaard", "Default", "Domyślne", "Implicit", "افتراضي");
         Add("AdminSettings.FlagBadge.Custom", "Aangepast", "Custom", "Nadpisane", "Personalizat", "مخصص");
         Add("AdminSettings.SettingsSearch", "Zoek instelling…", "Search settings…", "Szukaj ustawień…", "Caută setări…", "ابحث في الإعدادات…");
+        Add("AdminSettings.DescMore", "Meer", "More", "Więcej", "Mai mult", "المزيد");
+        Add("AdminSettings.DescLess", "Minder", "Less", "Mniej", "Mai puțin", "أقل");
         Add("AdminSettings.NavGroups", "Groepen", "Groups", "Grupy", "Grupuri", "المجموعات");
         Add("AdminSettings.EmployerFitQuestionnaires.Enabled.Title", "Werkgever-fit vragenlijsten", "Employer fit questionnaires", "Kwestionariusze dopasowania pracodawcy", "Chestionare fit angajator", "استبيانات ملاءمة صاحب العمل");
         Add("AdminSettings.EmployerFitQuestionnaires.Enabled.Desc", "Optionele team- en vacature-fit vragen en werkcontext-matching bij vacatures.", "Optional team and vacancy fit questions and work-context matching on vacancies.", "Opcjonalne pytania dopasowania zespołu/oferty i dopasowanie kontekstu pracy.", "Întrebări opționale de potrivire echipă/job și matching context de lucru.", "أسئلة اختيارية لملاءمة الفريق/الوظيفة ومطابقة سياق العمل.");

@@ -25,7 +25,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/admin-flags-r2";
+    private const string OutDir = "/opt/cursor/artifacts/admin-flags-r3";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -59,7 +59,8 @@ public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
                      + Uri.EscapeDataString("/admin/instellingen");
 
         await CaptureAsync(signIn, baseUrl + "/admin/instellingen", 1440, "admin-settings-desktop-1440.png");
-        await CaptureAsync(signIn, baseUrl + "/admin/instellingen", 390, "admin-settings-mobile-390.png");
+        var mobileHeight = await CaptureAsync(signIn, baseUrl + "/admin/instellingen", 390, "admin-settings-mobile-390.png");
+        Assert.True(mobileHeight < 6700, $"Mobile page height {mobileHeight}px should be under 6700px (r2 mobile was ~15400px).");
 
         await using var ctx = await _browser!.NewContextAsync(new()
         {
@@ -96,7 +97,7 @@ public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
         Assert.Equal(0, rawKey);
     }
 
-    private async Task CaptureAsync(string signInUrl, string pageUrl, int width, string fileName)
+    private async Task<int> CaptureAsync(string signInUrl, string pageUrl, int width, string fileName)
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
@@ -108,11 +109,13 @@ public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
         await page.GotoAsync(pageUrl, new() { WaitUntil = WaitUntilState.NetworkIdle });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.WaitForSelectorAsync("button.admin-switch", new() { Timeout = 45000, State = WaitForSelectorState.Visible });
+        var height = await page.EvaluateAsync<int>("() => document.documentElement.scrollHeight");
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(OutDir, fileName),
             FullPage = true
         });
+        return height;
     }
 
     private sealed class AdminFlagsWebFactory : WebWebApplicationFactory
