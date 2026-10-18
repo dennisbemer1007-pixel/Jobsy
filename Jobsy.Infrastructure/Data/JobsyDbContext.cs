@@ -67,6 +67,7 @@ public class JobsyDbContext : DbContext
     public DbSet<InitiativeTeam> InitiativeTeams => Set<InitiativeTeam>();
     public DbSet<WorkInitiative> WorkInitiatives => Set<WorkInitiative>();
     public DbSet<WorkInitiativeDraft> WorkInitiativeDrafts => Set<WorkInitiativeDraft>();
+    public DbSet<WorkInitiativeAcceptance> WorkInitiativeAcceptances => Set<WorkInitiativeAcceptance>();
     public DbSet<ProactiveMatchSuggestion> ProactiveMatchSuggestions => Set<ProactiveMatchSuggestion>();
     public DbSet<CandidateVacancyCultureFit> CandidateVacancyCultureFits => Set<CandidateVacancyCultureFit>();
     public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
@@ -1168,6 +1169,16 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.RootCompany)
                 .WithMany()
                 .HasForeignKey(e => e.RootCompanyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkInitiativeAcceptance>(entity =>
+        {
+            entity.ToTable("WorkInitiativeAcceptances");
+            entity.HasKey(e => e.InitiativeId);
+            entity.HasOne(e => e.Initiative)
+                .WithOne()
+                .HasForeignKey<WorkInitiativeAcceptance>(e => e.InitiativeId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

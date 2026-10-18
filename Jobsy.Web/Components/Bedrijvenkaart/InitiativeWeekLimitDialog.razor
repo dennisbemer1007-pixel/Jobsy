@@ -1,0 +1,33 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop">
+        <div class="bk-modal" role="dialog" aria-modal="true">
+            <header class="bk-modal__header">
+                <h2>@Culture["Initiative.WeekLimit.Title"]</h2>
+            </header>
+            <div class="bk-modal__body">
+                <p>@Culture["Initiative.WeekLimit.Body"]</p>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--secondary" @onclick="Close">@Culture["Common.Close"]</button>
+                @if (DraftId is Guid draft)
+                {
+                    <button type="button" class="btn--primary" @onclick="() => OnSendDraft.InvokeAsync(draft)">
+                        @Culture["Initiative.WeekLimit.SendMonday"]
+                    </button>
+                }
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public Guid? DraftId { get; set; }
+    [Parameter] public EventCallback<Guid> OnSendDraft { get; set; }
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+}

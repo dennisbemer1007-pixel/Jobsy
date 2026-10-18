@@ -1,0 +1,54 @@
+@using Jobsy.Core.Contracts
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+@if (IsOpen && Item is not null)
+{
+    <div class="bk-modal-backdrop" @onclick="Close">
+        <div class="bk-modal" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+            <header class="bk-modal__header">
+                <h2>Nu niet</h2>
+            </header>
+            <div class="bk-modal__body">
+                <p>Je geeft aan dat je deze kandidaat nu niet verder wilt. Het initiatief kan open blijven.</p>
+                <label><input type="checkbox" @bind="_keepOpen" /> Open houden voor andere kandidaten</label>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--secondary" @onclick="Close">@Culture["Common.Cancel"]</button>
+                <button type="button" class="btn--primary" disabled="@_busy" @onclick="DeclineAsync">@Culture["Initiative.Employer.Decline"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EmployerInitiativeInboxItemDto? Item { get; set; }
+    [Parameter] public EventCallback OnDeclined { get; set; }
+
+    private bool _busy;
+    private bool _keepOpen = true;
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+
+    private async Task DeclineAsync()
+    {
+        if (Item is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.DeclineWorkInitiativeAsync(Item.Id, _keepOpen);
+            await OnDeclined.InvokeAsync();
+            await Close();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

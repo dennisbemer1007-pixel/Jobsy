@@ -174,6 +174,7 @@ public static class JobsyDbSeeder
 
         await DemoCompaniesSeeder.SeedCompaniesAsync(db, logger);
         await DemoUsersSeeder.SeedUsersAsync(db, logger);
+        await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
         try
         {
             await ApplicationsAndWagesSeeder.SeedApplicationsAndWagesAsync(db, logger);

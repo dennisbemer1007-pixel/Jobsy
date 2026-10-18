@@ -1,0 +1,69 @@
+@using Jobsy.Core.Contracts
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+@if (IsOpen && Item is not null)
+{
+    <div class="bk-modal-backdrop" @onclick="Close">
+        <div class="bk-modal bk-modal--wide" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+            <header class="bk-modal__header">
+                <h2>Initiatief accepteren</h2>
+                <button type="button" class="icon-btn" @onclick="Close">×</button>
+            </header>
+            <div class="bk-modal__body">
+                <p><strong>@Item.DisplayName</strong> · @Item.RoleTitle</p>
+                <p class="muted">@Item.WorkDnaSummary</p>
+                <p class="bk-wg-token-cost">@string.Format(Culture["WgPhase2.AcceptCost"], _costLabel)</p>
+                @if (!string.IsNullOrEmpty(_error))
+                {
+                    <p class="state-message error">@_error</p>
+                }
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--secondary" @onclick="Close">@Culture["Common.Cancel"]</button>
+                <button type="button" class="btn--primary" disabled="@_busy" @onclick="AcceptAsync">@Culture["Initiative.Employer.Accept"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EmployerInitiativeInboxItemDto? Item { get; set; }
+    [Parameter] public Guid BillingCompanyId { get; set; }
+    [Parameter] public EventCallback OnAccepted { get; set; }
+
+    private bool _busy;
+    private string? _error;
+    private string _costLabel = "1 token";
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+
+    private async Task AcceptAsync()
+    {
+        if (Item is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _error = null;
+        try
+        {
+            var ok = await Api.AcceptWorkInitiativeAsync(Item.Id, BillingCompanyId);
+            if (!ok)
+            {
+                _error = "Onvoldoende tokens.";
+                return;
+            }
+
+            await OnAccepted.InvokeAsync();
+            await Close();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

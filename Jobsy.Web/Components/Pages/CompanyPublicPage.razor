@@ -14,9 +14,12 @@
 @inject ILogger<CompanyPublicPage> Logger
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Components.Bedrijvenkaart
 @using Jobsy.Web.Components.Discovery
 @using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Components.Status
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Http
@@ -45,7 +48,9 @@ else
 {
     <section class="pub-section pp-company" aria-labelledby="company-title">
         <nav class="pp-company__crumbs" aria-label="@Culture["CompanyPage.Breadcrumb.Label"]">
-            <a href="@PublicRoutes.Banenkaart">@Culture["CompanyPage.Breadcrumb.Map"]</a>
+            <a href="@KbRoutes.Map">@Culture["Kb.MapToggle.Jobs"]</a>
+            <span class="pp-company__crumb-sep" aria-hidden="true">›</span>
+            <a href="@KbRoutes.CompanyMap">@Culture["Kb.MapToggle.Companies"]</a>
             <span class="pp-company__crumb-sep" aria-hidden="true">›</span>
             <span aria-current="page">@_page.Name</span>
         </nav>
@@ -104,27 +109,86 @@ else
             </nav>
         }
 
-        <div class="pp-company__body">
-            <div class="pp-company__list" aria-label="@Culture["CompanyPage.Vacancies.Label"]">
-                @{ var cardIndex = 0; }
-                @foreach (var vacancy in _vacancies)
+        <div class="pp-company__layout">
+            <div class="pp-company__main">
+                <div class="pp-company__list" aria-label="@Culture["CompanyPage.Vacancies.Label"]">
+                    @if (_vacancies.Count == 0)
+                    {
+                        <div class="pub-card" style="padding:1rem">
+                            <p>@Culture["Initiative.NoVacancies.Notify"]</p>
+                        </div>
+                    }
+                    else
+                    {
+                        var cardIndex = 0;
+                        @foreach (var vacancy in _vacancies)
+                        {
+                            <VacancyCard @key="vacancy.Id"
+                                         Vacancy="vacancy"
+                                         IsHighlighted="vacancy.IsHighlighted"
+                                         IsPressed="_hoveredId == vacancy.Id"
+                                         Eager="cardIndex == 0"
+                                         TravelText="@CardMeta(vacancy)"
+                                         OnSelect="OnSelect"
+                                         OnOpen="OnOpenVacancy" />
+                            cardIndex++;
+                        }
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_initiative?.HubAboutText))
                 {
-                    <VacancyCard @key="vacancy.Id"
-                                 Vacancy="vacancy"
-                                 IsHighlighted="vacancy.IsHighlighted"
-                                 IsPressed="_hoveredId == vacancy.Id"
-                                 Eager="cardIndex == 0"
-                                 TravelText="@CardMeta(vacancy)"
-                                 OnSelect="OnSelect"
-                                 OnOpen="OnOpenVacancy" />
-                    cardIndex++;
+                    <section class="pub-card pp-company__about" aria-labelledby="company-about">
+                        <h2 id="company-about">@Culture["CompanyPage.About"]</h2>
+                        <p>@_initiative.HubAboutText</p>
+                    </section>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText) || (_initiative?.HubPhotoUrls.Count ?? 0) > 0)
+                {
+                    <section class="pub-card pp-company__sfeer" aria-labelledby="company-sfeer">
+                        <h2 id="company-sfeer">@Culture["CompanyPage.Sfeer"]</h2>
+                        @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText))
+                        {
+                            <p>@_initiative!.HubCultureText</p>
+                        }
+                        <div class="pp-sfeer-grid">
+                            @foreach (var photo in _initiative?.HubPhotoUrls ?? [])
+                            {
+                                <img src="@photo" alt="" loading="lazy" decoding="async" />
+                            }
+                            @if (!string.IsNullOrWhiteSpace(_initiative?.HubVideoUrl))
+                            {
+                                <div class="pp-sfeer-video">▶</div>
+                            }
+                        </div>
+                    </section>
                 }
             </div>
 
-            <aside class="pp-company__map-pane" aria-label="@Culture["CompanyPage.Map.Label"]">
-                <div @ref="_mapElement" id="branch-job-map" class="pp-company__map job-map"></div>
-            </aside>
+            <div class="pp-company__aside">
+                @if (_initiative is not null)
+                {
+                    <CompanyInitiativeSidebar Profile="_initiative"
+                                              SelectedTeamId="_selectedTeamId"
+                                              SelectedTeamIdChanged="OnTeamChanged"
+                                              OnKnock="OpenKnockPanel" />
+                }
+                <aside class="pp-company__map-pane" aria-label="@Culture["CompanyPage.MapVacancies"]">
+                    <div @ref="_mapElement" id="branch-job-map" class="pp-company__map job-map"></div>
+                </aside>
+            </div>
         </div>
+
+        <InitiativeKnockPanel IsOpen="_knockOpen"
+                              IsOpenChanged="v => _knockOpen = v"
+                              CompanyName="@_page.Name"
+                              RootCompanyId="@(_initiative?.RootCompanyId ?? Guid.Empty)"
+                              Teams="@(_initiative?.Teams ?? [])"
+                              SelectedTeamId="_selectedTeamId"
+                              OnSent="OnInitiativeSent" />
+        <InitiativeSentDialog IsOpen="_sentOpen" IsOpenChanged="v => _sentOpen = v" />
+        <InitiativeWeekLimitDialog IsOpen="_weekLimitOpen" IsOpenChanged="v => _weekLimitOpen = v" />
 
         <p class="pp-company__report">
             @Culture["Report.Company.Prompt"]
@@ -184,7 +248,12 @@ else
 
     private ElementReference _mapElement;
     private PublicCompanyPage? _page;
+    private PublicCompanyInitiativeViewDto? _initiative;
     private List<VacancyListItem> _vacancies = [];
+    private Guid? _selectedTeamId;
+    private bool _knockOpen;
+    private bool _sentOpen;
+    private bool _weekLimitOpen;
     private List<EngagementBadges.EngageBadgeItem> _engagement = [];
     private Guid _engagementCompanyId;
     private bool _loading = true;
@@ -230,13 +299,16 @@ else
                 kvk,
                 string.IsNullOrWhiteSpace(Vestigingsnummer) ? null : Vestigingsnummer)).ToList();
 
-            if (_vacancies.Count == 0)
+            _initiative = await Api.GetPublicInitiativeProfileAsync(kvk);
+
+            if (_vacancies.Count == 0 && _initiative is null)
             {
                 MarkNotFound();
                 return;
             }
 
-            _engagementCompanyId = _vacancies[0].CompanyId;
+            _selectedTeamId = _initiative?.Teams.FirstOrDefault()?.Id;
+            _engagementCompanyId = _vacancies.FirstOrDefault()?.CompanyId ?? _initiative?.RootCompanyId ?? Guid.Empty;
             var badges = await Api.GetPublicEngagementAsync(_engagementCompanyId);
             _engagement = badges
                 .Select(b => new EngagementBadges.EngageBadgeItem(
@@ -310,6 +382,29 @@ else
         }
 
         return $"{(min ?? max)!.Value:0.#} {unit}";
+    }
+
+    private void OpenKnockPanel() => _knockOpen = true;
+
+    private Task OnTeamChanged(Guid? id)
+    {
+        _selectedTeamId = id;
+        return Task.CompletedTask;
+    }
+
+    private Task OnInitiativeSent(SendWorkInitiativeResult result)
+    {
+        _knockOpen = false;
+        if (result.SavedAsDraft)
+        {
+            _weekLimitOpen = true;
+        }
+        else if (result.Sent)
+        {
+            _sentOpen = true;
+        }
+
+        return Task.CompletedTask;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

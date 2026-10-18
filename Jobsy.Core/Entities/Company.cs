@@ -239,6 +239,9 @@ public class Company
     /// <summary>Optional YouTube/Vimeo URL for the company page.</summary>
     public string? HubVideoUrl { get; set; }
 
+    /// <summary>JSON array of public photo URLs for the Sfeer block.</summary>
+    public string? HubPhotoUrlsJson { get; set; }
+
     /// <summary>Average employer response time in days for map sorting (initiative program).</summary>
     public int? InitiativeAvgResponseDays { get; set; }
 

@@ -1,0 +1,24 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop">
+        <div class="bk-modal" role="alertdialog" aria-modal="true">
+            <header class="bk-modal__header">
+                <h2>E-mailadres ontbreekt</h2>
+            </header>
+            <div class="bk-modal__body">
+                <p>Vul een geldig e-mailadres in voordat je dit team opent voor initiatief.</p>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--primary" @onclick="Close">@Culture["Common.Close"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+}

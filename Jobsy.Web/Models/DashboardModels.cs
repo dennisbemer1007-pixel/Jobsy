@@ -111,6 +111,8 @@ public class ApplicationItem
     public string? NextStepKey { get; set; }
     public bool LegacyNoHistory { get; set; }
     public bool VacancyClosed { get; set; }
+    public bool IsInitiative { get; set; }
+    public string? TimelineClosingKey { get; set; }
 }
 
 public class ApplicationTimelineStepItem

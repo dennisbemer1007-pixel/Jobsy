@@ -22,6 +22,26 @@ public sealed class CompanyMapInitiativeController : ControllerBase
         _service = service;
     }
 
+    [HttpGet("public/{kvk}/profile")]
+    [AllowAnonymous]
+    [EnableRateLimiting("public-read")]
+    [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
+    public async Task<ActionResult<PublicCompanyInitiativeViewDto>> GetPublicProfile(
+        string kvk,
+        CancellationToken cancellationToken)
+    {
+        Guid? candidateId = null;
+        if (User.Identity?.IsAuthenticated == true
+            && Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var uid)
+            && RoleClaimMatching.HasRole(User, JobsyRoles.Candidate))
+        {
+            candidateId = uid;
+        }
+
+        var profile = await _service.GetPublicProfileByKvkAsync(kvk, candidateId, cancellationToken);
+        return profile is null ? NotFound() : Ok(profile);
+    }
+
     [HttpGet("pins")]
     [AllowAnonymous]
     [EnableRateLimiting("public-read")]
@@ -192,11 +212,19 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     [HttpPost("employer/{id:guid}/accept")]
     [Authorize(Policy = JobsyPolicies.RequireEmployer)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
-    public async Task<IActionResult> Accept(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Accept(
+        Guid id,
+        [FromQuery] Guid billingCompanyId,
+        CancellationToken cancellationToken)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-        await _service.AcceptAsync(userId, id, cancellationToken);
-        return NoContent();
+        var result = await _service.AcceptAsync(userId, id, billingCompanyId, cancellationToken);
+        if (!result.Ok)
+        {
+            return BadRequest(new { code = result.ErrorCode, balance = result.Balance });
+        }
+
+        return Ok(new { balance = result.Balance });
     }
 
     [HttpPost("employer/{id:guid}/decline")]

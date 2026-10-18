@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (267 routes)
+## Table (271 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -125,6 +125,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/ambassadeur/ref/{TrackingCode}` | `Pages/Ambassadeur/Landing.razor` | anonymous |
 | `/ambassadeur/toolkit` | `Pages/Ambassadeur/Toolkit.razor` | Ambassadeur |
 | `/banenkaart` | `Pages/Banenkaart.razor` | anonymous |
+| `/bedrijvenkaart` | `Pages/Bedrijvenkaart.razor` | anonymous |
 | `/branch` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/applicants` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
 | `/branch/culture` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -162,6 +163,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/share-in` | `Pages/Candidate/ShareIn.razor` | anonymous |
 | `/candidate/shared` | `Pages/Candidate/Shared.razor` | Candidate |
 | `/candidate/start` | `Pages/Candidate/OnboardingWizard.razor` | Candidate |
+| `/candidate/start/nearby` | `Pages/Candidate/OnboardingStartNearbyRedirect.razor` | any (no Authorize attribute) |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
 | `/candidate/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
 | `/candidate/uren` | `Pages/Candidate/MaqqieHours.razor` | Candidate |
@@ -222,6 +224,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/partner` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | any (no Authorize attribute) |
+| `/preview/bedrijvenkaart/{Screen}` | `Pages/__Preview/BedrijvenkaartScreens.razor` | anonymous |
 | `/privacy` | `Pages/Legal/Privacy.razor` | anonymous |
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
@@ -278,6 +281,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/werkgever/kandidatenkaart` | `Pages/Werkgever/Kandidatenkaart.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/werkgever/koppelingen` | `Pages/Werkgever/Koppelingen.razor` | EnterpriseManager, Admin |
 | `/werkgever/meldingen` | `Pages/Werkgever/Meldingen.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
+| `/werkgever/open-voor-initiatief` | `Pages/Werkgever/OpenForInitiative.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/werkgever/organisatie/profiel` | `Pages/Werkgever/CompanyProfile.razor` | BranchManager, EnterpriseManager, Admin, Intermediary |
 | `/werkgever/organisatie/salaristabellen` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |
 | `/werkgever/organisatie/salaristabellen/{TableId:guid}` | `Pages/Werkgever/SalaryTables.razor` | BranchManager, EnterpriseManager, Admin |

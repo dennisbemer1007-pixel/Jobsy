@@ -57,7 +57,7 @@ public sealed class PublicCompanyQuery : IPublicCompanyQuery
 
         if (publicByCompany.Count == 0)
         {
-            return [];
+            return await GetInitiativeVisibleCompaniesAsync(kvk, cancellationToken);
         }
 
         var companies = await _db.Companies.AsNoTracking()
@@ -78,6 +78,10 @@ public sealed class PublicCompanyQuery : IPublicCompanyQuery
             })
             .ToListAsync(cancellationToken);
 
+        var openInitiativeRoots = await OpenInitiativeRootIdsAsync(
+            companies.Select(c => c.ParentCompanyId ?? c.Id).Distinct().ToList(),
+            cancellationToken);
+
         return companies
             .Select(c => new PublicCompanyRow(
                 c.Id,
@@ -87,8 +91,82 @@ public sealed class PublicCompanyQuery : IPublicCompanyQuery
                 c.KvkEstablishmentId,
                 c.ParentCompanyId,
                 publicByCompany.GetValueOrDefault(c.Id)))
-            .Where(r => r.PublicVacancyCount > 0)
+            .Where(r => r.PublicVacancyCount > 0 || openInitiativeRoots.Contains(r.ParentCompanyId ?? r.Id))
             .ToList();
+    }
+
+    private async Task<IReadOnlyList<PublicCompanyRow>> GetInitiativeVisibleCompaniesAsync(
+        string kvk,
+        CancellationToken cancellationToken)
+    {
+        var companies = await _db.Companies.AsNoTracking()
+            .Where(PublicVisibility.CompanyIsPublic)
+            .Where(c => c.KvkNumber == kvk
+                        && c.KvkVerificationStatus == KvkVerificationStatus.Verified
+                        && c.PublicPageBlockedAtUtc == null)
+            .Select(c => new
+            {
+                c.Id,
+                c.Name,
+                c.Address,
+                c.LogoUrl,
+                c.KvkEstablishmentId,
+                c.ParentCompanyId
+            })
+            .ToListAsync(cancellationToken);
+
+        if (companies.Count == 0)
+        {
+            return [];
+        }
+
+        var openInitiativeRoots = await OpenInitiativeRootIdsAsync(
+            companies.Select(c => c.ParentCompanyId ?? c.Id).Distinct().ToList(),
+            cancellationToken);
+
+        if (openInitiativeRoots.Count == 0)
+        {
+            return [];
+        }
+
+        return companies
+            .Where(c => openInitiativeRoots.Contains(c.ParentCompanyId ?? c.Id))
+            .Select(c => new PublicCompanyRow(
+                c.Id,
+                c.Name,
+                ResolveCity(c.Address),
+                c.LogoUrl,
+                c.KvkEstablishmentId,
+                c.ParentCompanyId,
+                0))
+            .ToList();
+    }
+
+    private async Task<HashSet<Guid>> OpenInitiativeRootIdsAsync(
+        IReadOnlyList<Guid> rootIds,
+        CancellationToken cancellationToken)
+    {
+        if (rootIds.Count == 0)
+        {
+            return [];
+        }
+
+        var enabled = await _db.CompanyInitiativeSettings.AsNoTracking()
+            .Where(s => rootIds.Contains(s.RootCompanyId)
+                        && s.IsEnabled
+                        && s.ContactEmailConfirmedAtUtc != null)
+            .Select(s => s.RootCompanyId)
+            .ToListAsync(cancellationToken);
+
+        var teamRoots = await _db.InitiativeTeams.AsNoTracking()
+            .Where(t => rootIds.Contains(t.RootCompanyId)
+                        && t.IsOpen
+                        && t.ContactEmailConfirmedAtUtc != null)
+            .Select(t => t.RootCompanyId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return enabled.Concat(teamRoots).ToHashSet();
     }
 
     public async Task<PublicCompanyRow?> GetVestigingAsync(

@@ -1,0 +1,40 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop" @onclick="Close">
+        <div class="bk-modal bk-modal--wide" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+            <header class="bk-modal__header">
+                <h2>Team toevoegen</h2>
+                <button type="button" class="icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
+            </header>
+            <div class="bk-modal__body">
+                <label>Naam<input @bind="_name" class="form-control" /></label>
+                <label>Omschrijving (max 140)<textarea maxlength="140" rows="3" @bind="_description"></textarea></label>
+                <label>E-mail contactpersoon<input type="email" @bind="_email" class="form-control" /></label>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--secondary" @onclick="Close">@Culture["Common.Cancel"]</button>
+                <button type="button" class="btn--primary" @onclick="Save">Opslaan</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback<(string Name, string Description, string Email)> OnSave { get; set; }
+
+    private string _name = "";
+    private string _description = "";
+    private string _email = "";
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+
+    private async Task Save()
+    {
+        await OnSave.InvokeAsync((_name, _description, _email));
+        await Close();
+    }
+}

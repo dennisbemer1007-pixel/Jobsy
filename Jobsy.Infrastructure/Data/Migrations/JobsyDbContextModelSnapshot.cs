@@ -2577,6 +2577,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("HubCultureText")
                         .HasColumnType("text");
 
+                    b.Property<string>("HubPhotoUrlsJson")
+                        .HasColumnType("text");
+
                     b.Property<string>("HubVideoUrl")
                         .HasColumnType("text");
 
@@ -9659,6 +9662,28 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("WorkInitiatives", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiativeAcceptance", b =>
+                {
+                    b.Property<Guid>("InitiativeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AcceptCostTokens")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("AcceptSpendTransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AcceptedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("BillingCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("InitiativeId");
+
+                    b.ToTable("WorkInitiativeAcceptances", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiativeDraft", b =>
                 {
                     b.Property<Guid>("Id")
@@ -11806,6 +11831,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("InitiativeTeam");
 
                     b.Navigation("RootCompany");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiativeAcceptance", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.WorkInitiative", "Initiative")
+                        .WithOne()
+                        .HasForeignKey("Jobsy.Core.Entities.WorkInitiativeAcceptance", "InitiativeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Initiative");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiativeDraft", b =>

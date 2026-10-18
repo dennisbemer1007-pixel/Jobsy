@@ -4,6 +4,7 @@
 @using Jobsy.Web.Components.Werkgever.Shell
 @using Jobsy.Web.Models
 @using Jobsy.Web.Werkgever
+@using Jobsy.Web.Components.Bedrijvenkaart
 @attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
@@ -57,16 +58,21 @@
                         }
                     </article>
                 }
-                <button type="button" class="btn--primary" @onclick="AddTeam">Team toevoegen</button>
+                <button type="button" class="btn--primary" @onclick="() => _teamDialogOpen = true">Team toevoegen</button>
             </section>
 
             <button type="button" class="btn--primary" style="margin-top:1.5rem" @onclick="Save">Opslaan</button>
         </div>
     }
+
+    <InitiativeTeamAddDialog IsOpen="_teamDialogOpen" IsOpenChanged="v => _teamDialogOpen = v" OnSave="OnTeamDraft" />
+    <InitiativeEmailMissingDialog IsOpen="_emailMissingOpen" IsOpenChanged="v => _emailMissingOpen = v" />
 </WgPageShell>
 
 @code {
     private bool _loading = true;
+    private bool _teamDialogOpen;
+    private bool _emailMissingOpen;
     private InitiativeSettingsEditorModel _editor = new();
 
     protected override async Task OnInitializedAsync()
@@ -97,9 +103,21 @@
         }
     }
 
-    private void AddTeam()
+    private Task OnTeamDraft((string Name, string Description, string Email) draft)
     {
-        _editor.Teams.Add(new InitiativeTeamEditorModel { Name = "Nieuw team" });
+        if (string.IsNullOrWhiteSpace(draft.Email))
+        {
+            _emailMissingOpen = true;
+            return Task.CompletedTask;
+        }
+
+        _editor.Teams.Add(new InitiativeTeamEditorModel
+        {
+            Name = draft.Name,
+            Description = draft.Description,
+            ContactEmail = draft.Email
+        });
+        return Task.CompletedTask;
     }
 
     private static InitiativeSettingsEditorModel FromDto(CompanyInitiativeSettingsDto dto)

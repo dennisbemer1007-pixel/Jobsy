@@ -4,6 +4,11 @@ namespace Jobsy.Core.Interfaces;
 
 public interface ICompanyMapInitiativeService
 {
+    Task<PublicCompanyInitiativeViewDto?> GetPublicProfileByKvkAsync(
+        string kvk,
+        Guid? candidateUserId,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<CompanyMapPinDto>> GetMapPinsAsync(
         double? originLat,
         double? originLng,
@@ -55,7 +60,11 @@ public interface ICompanyMapInitiativeService
 
     Task ConfirmGeneralEmailAsync(Guid rootCompanyId, string code, CancellationToken cancellationToken = default);
 
-    Task AcceptAsync(Guid employerUserId, Guid initiativeId, CancellationToken cancellationToken = default);
+    Task<(bool Ok, string? ErrorCode, decimal? Balance)> AcceptAsync(
+        Guid employerUserId,
+        Guid initiativeId,
+        Guid billingCompanyId,
+        CancellationToken cancellationToken = default);
 
     Task DeclineAsync(
         Guid employerUserId,

@@ -1,0 +1,90 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+<section class="bk-wg-inbox pub-card">
+    <header class="bk-wg-inbox__head">
+        <h2>Sollicitaties · OPEN initiatieven</h2>
+        <span class="bk-chip bk-chip--open">@Culture["Initiative.Employer.OpenLabel"]</span>
+    </header>
+    @if (_loading)
+    {
+        <p>@Culture["Common.Loading"]</p>
+    }
+    else if (_items.Count == 0)
+    {
+        <p class="state-message">Geen open initiatieven.</p>
+    }
+    else
+    {
+        <ul class="bk-wg-inbox__list">
+            @foreach (var item in _items)
+            {
+                <li class="bk-wg-inbox__row">
+                    <div>
+                        <strong>@item.DisplayName</strong>
+                        <p class="muted">@item.RoleTitle · @Culture[InitiativeMatchWordingRules.ResourceKey(item.MatchLabel)]</p>
+                        <p>@item.WorkDnaSummary</p>
+                    </div>
+                    <div class="bk-wg-inbox__actions">
+                        <button type="button" class="btn--primary" @onclick="() => OpenAccept(item)">@Culture["Initiative.Employer.Accept"]</button>
+                        <button type="button" class="btn--secondary" @onclick="() => OpenDecline(item)">@Culture["Initiative.Employer.Decline"]</button>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+<InitiativeEmployerAcceptDialog IsOpen="_acceptOpen"
+                                IsOpenChanged="v => _acceptOpen = v"
+                                Item="_selected"
+                                BillingCompanyId="BillingCompanyId"
+                                OnAccepted="LoadAsync" />
+<InitiativeEmployerDeclineDialog IsOpen="_declineOpen"
+                                 IsOpenChanged="v => _declineOpen = v"
+                                 Item="_selected"
+                                 OnDeclined="LoadAsync" />
+
+@code {
+    [Parameter] public Guid BillingCompanyId { get; set; }
+
+    private IReadOnlyList<EmployerInitiativeInboxItemDto> _items = [];
+    private bool _loading = true;
+    private bool _acceptOpen;
+    private bool _declineOpen;
+    private EmployerInitiativeInboxItemDto? _selected;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _items = await Api.GetEmployerInitiativeInboxAsync(BillingCompanyId);
+        }
+        catch
+        {
+            _items = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenAccept(EmployerInitiativeInboxItemDto item)
+    {
+        _selected = item;
+        _acceptOpen = true;
+    }
+
+    private void OpenDecline(EmployerInitiativeInboxItemDto item)
+    {
+        _selected = item;
+        _declineOpen = true;
+    }
+}

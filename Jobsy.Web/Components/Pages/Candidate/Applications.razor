@@ -16,6 +16,7 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Bedrijvenkaart
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
 @inject JobsyApiClient Api
@@ -24,6 +25,7 @@
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject UserFacingError UserFacing
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
@@ -53,26 +55,29 @@
 
     <div class="kb-apps__filters application-counters" role="group" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button"
-                class="application-counters__btn @(_filter =="all" || string.IsNullOrEmpty(_filter) ? "is-selected" : null)"
-                aria-pressed="@((_filter == "all" || string.IsNullOrEmpty(_filter)) ? "true" : "false")"
-                @onclick='() => SetFilter("all")'>
+                class="application-counters__btn @(_sourceFilter == "all" ? "is-selected" : null)"
+                aria-pressed="@(_sourceFilter == "all" ? "true" : "false")"
+                @onclick='() => SetSourceFilter("all")'>
             <span class="application-counters__n">@_items.Count</span>
             <span class="application-counters__label">@Culture["Kb.Apps.FilterAll"]</span>
         </button>
         <button type="button"
-                class="application-counters__btn application-counters__btn--running @(_filter =="running" ? "is-selected" : null)"
-                aria-pressed="@(_filter == "running" ? "true" : "false")"
-                @onclick='() => SetFilter("running")'>
-            <span class="application-counters__n">@_countRunning</span>
-            <span class="application-counters__label">@Culture["Kb.Apps.FilterRunning"]</span>
+                class="application-counters__btn @(_sourceFilter == "vacancy" ? "is-selected" : null)"
+                aria-pressed="@(_sourceFilter == "vacancy" ? "true" : "false")"
+                @onclick='() => SetSourceFilter("vacancy")'>
+            <span class="application-counters__n">@_countVacancy</span>
+            <span class="application-counters__label">@Culture["Bk.Apps.FilterVacancy"]</span>
         </button>
-        <button type="button"
-                class="application-counters__btn @(_filter =="done" ? "is-selected" : null)"
-                aria-pressed="@(_filter == "done" ? "true" : "false")"
-                @onclick='() => SetFilter("done")'>
-            <span class="application-counters__n">@_countDone</span>
-            <span class="application-counters__label">@Culture["Kb.Apps.FilterDone"]</span>
-        </button>
+        @if (_initiativeEnabled)
+        {
+            <button type="button"
+                    class="application-counters__btn @(_sourceFilter == "initiative" ? "is-selected" : null)"
+                    aria-pressed="@(_sourceFilter == "initiative" ? "true" : "false")"
+                    @onclick='() => SetSourceFilter("initiative")'>
+                <span class="application-counters__n">@_countInitiative</span>
+                <span class="application-counters__label">@Culture["Bk.Apps.FilterInitiatives"]</span>
+            </button>
+        }
     </div>
 
     @if (_loading)
@@ -174,7 +179,10 @@
     private bool _loading = true;
     private bool _disposed;
     private bool _readOnly;
-    private string? _filter = "all";
+    private string _sourceFilter = "all";
+    private bool _initiativeEnabled = true;
+    private int _countVacancy;
+    private int _countInitiative;
     private string? _givenName;
     private Guid? _busyId;
     private Guid? _openMenuId;
@@ -183,8 +191,6 @@
     private bool _pdfBusy;
     private string? _message;
     private ApplicationItem? _withdrawTarget;
-    private int _countRunning;
-    private int _countDone;
     private Guid? _focusMenuOnRender;
     private Guid? _focusMenuButtonId;
     private ElementReference _menuToggleRef;
@@ -212,7 +218,7 @@
         var rejected = IsRejected(a.Status);
         var hired = string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase);
         var menuOpen = _openMenuId == a.Id;
-        var vacancyHref = $"/vacancies/{a.VacancyId}";
+        var vacancyHref = a.IsInitiative ? "#" : $"/vacancies/{a.VacancyId}";
         var pictureUrl = string.IsNullOrWhiteSpace(a.PictureUrl)
             ? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex")
             : a.PictureUrl!;
@@ -255,6 +261,10 @@
             @if (a.LegacyNoHistory)
             {
                 <p class="kb-timeline__legacy">@Culture["Kb.Timeline.LegacySub"]</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(a.TimelineClosingKey))
+            {
+                <p class="kb-apps__auto-decline">@Culture[a.TimelineClosingKey!]</p>
             }
             @RenderNextStep(a)
         </article>
@@ -405,7 +415,16 @@
                      ?? state.User.FindFirst("given_name")?.Value;
         try
         {
+            var flags = await FeatureFlags.GetAsync();
+            _initiativeEnabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
             _items = (await Api.GetMyApplicationsAsync()).ToList();
+            if (_initiativeEnabled && !_readOnly)
+            {
+                var initiatives = await Api.GetCandidateInitiativesAsync();
+                _items.AddRange(initiatives.Select(InitiativeApplicationMapper.ToApplicationItem));
+                _items = _items.OrderByDescending(i => i.CreatedAt).ToList();
+            }
+
             RefreshCounts();
             ApplyFilter();
         }
@@ -454,27 +473,27 @@
         _persistSubscription.Dispose();
     }
 
-    private void SetFilter(string filter)
+    private void SetSourceFilter(string filter)
     {
         CloseMenu();
-        _filter = filter;
+        _sourceFilter = filter;
         ApplyFilter();
     }
 
     private void ApplyFilter()
     {
-        _filtered = _filter switch
+        _filtered = _sourceFilter switch
         {
-            "running" => _items.Where(a => IsRunning(a.Status)).ToList(),
-            "done" => _items.Where(a => IsFinished(a.Status)).ToList(),
+            "vacancy" => _items.Where(a => !a.IsInitiative).ToList(),
+            "initiative" => _items.Where(a => a.IsInitiative).ToList(),
             _ => _items.ToList()
         };
     }
 
     private void RefreshCounts()
     {
-        _countRunning = _items.Count(a => IsRunning(a.Status));
-        _countDone = _items.Count(a => IsFinished(a.Status));
+        _countVacancy = _items.Count(a => !a.IsInitiative);
+        _countInitiative = _items.Count(a => a.IsInitiative);
     }
 
     private static bool IsRunning(string status)

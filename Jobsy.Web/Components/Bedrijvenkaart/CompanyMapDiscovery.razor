@@ -7,6 +7,9 @@
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
+@inject IJSRuntime Js
+@using Jobsy.Web.Hosting
+@implements IAsyncDisposable
 
 <div class="bk-page">
     <header class="bk-hero">
@@ -156,6 +159,53 @@
         RefreshFiltered();
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _mapReady)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!RendererInfo.IsInteractive)
+            {
+                return;
+            }
+
+            await MapScripts.EnsureDiscoveryAsync(Js);
+            var markers = _filteredList.Select(p => new Dictionary<string, object?>
+            {
+                ["id"] = p.CompanyId.ToString("D"),
+                ["companyId"] = p.CompanyId.ToString("D"),
+                ["title"] = p.Name,
+                ["company"] = p.Name,
+                ["lat"] = p.Latitude,
+                ["lng"] = p.Longitude,
+                ["openForInitiative"] = p.OpenForInitiative,
+                ["isIntermediary"] = p.IsIntermediary,
+                ["publicMapRadiusKm"] = p.IsIntermediary ? 5 : null,
+                ["companyHref"] = p.PublicPath
+            }).ToList();
+
+            var options = new Dictionary<string, object?>
+            {
+                ["pinsUrl"] = $"api/company-map-initiative/pins?radiusKm={_radiusKm}",
+                ["mapMode"] = "companies",
+                ["preferFilledLocation"] = false
+            };
+            await Js.InvokeVoidAsync("jobMap.init", "bedrijvenkaart-map", markers, options);
+            _mapReady = true;
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+        }
+        catch
+        {
+            // Map stays as static pane in demo/offline mode.
+        }
+    }
+
+    private bool _mapReady;
+
     private void SelectPin(CompanyMapPinDto pin)
     {
         _selected = pin;
@@ -171,5 +221,20 @@
         return parts.Length >= 2
             ? $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant()
             : name.Length >= 2 ? name[..2].ToUpperInvariant() : name.ToUpperInvariant();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_mapReady)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobMap.dispose");
+            }
+            catch
+            {
+                // circuit gone
+            }
+        }
     }
 }

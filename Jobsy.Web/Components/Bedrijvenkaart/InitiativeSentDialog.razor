@@ -1,0 +1,30 @@
+@inject CultureState Culture
+
+@if (IsOpen)
+{
+    <div class="bk-modal-backdrop">
+        <div class="bk-modal" role="dialog" aria-modal="true">
+            <header class="bk-modal__header">
+                <h2>@Culture["Initiative.Sent.Title"]</h2>
+            </header>
+            <div class="bk-modal__body">
+                <ol class="bk-sent-steps">
+                    <li class="is-done">@Culture["Initiative.Sent.Step1"]</li>
+                    <li>@Culture["Initiative.Sent.Step2"]</li>
+                    <li>@Culture["Initiative.Sent.Step3"]</li>
+                </ol>
+                <p>@Culture["Initiative.Sent.Lead"]</p>
+            </div>
+            <footer class="bk-modal__footer">
+                <button type="button" class="btn--primary" @onclick="Close">@Culture["Common.Close"]</button>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private async Task Close() => await IsOpenChanged.InvokeAsync(false);
+}

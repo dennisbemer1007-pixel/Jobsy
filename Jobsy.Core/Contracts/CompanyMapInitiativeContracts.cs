@@ -43,6 +43,8 @@ public sealed record WorkInitiativeListItemDto(
     InitiativeMatchLabel MatchLabel,
     DateTime CreatedAtUtc,
     DateTime ResponseDeadlineUtc,
+    DateTime? RespondedAtUtc,
+    DateTime? EmployerViewedAtUtc,
     bool IsInitiative);
 
 public sealed record EmployerInitiativeInboxItemDto(
@@ -71,6 +73,25 @@ public sealed record InitiativeTeamDto(
     string ContactEmail,
     bool EmailConfirmed,
     int MaxPerWeek,
+    bool IsOpen);
+
+public sealed record PublicCompanyInitiativeViewDto(
+    Guid RootCompanyId,
+    bool OpenForInitiative,
+    int OpenTeamCount,
+    string? HubAboutText,
+    string? HubCultureText,
+    string? HubVideoUrl,
+    IReadOnlyList<string> HubPhotoUrls,
+    IReadOnlyList<PublicInitiativeTeamOptionDto> Teams,
+    CandidateInitiativeWeekDto? Week);
+
+public sealed record PublicInitiativeTeamOptionDto(
+    Guid Id,
+    string Name,
+    string Description,
+    string? BranchLabel,
+    InitiativeMatchLabel? MatchLabel,
     bool IsOpen);
 
 public sealed record CompanyInitiativeSettingsDto(

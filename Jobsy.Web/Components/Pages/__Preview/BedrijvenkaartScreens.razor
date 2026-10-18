@@ -2,34 +2,96 @@
 @attribute [AllowAnonymous]
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inject CultureState Culture
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
 @using Jobsy.Web.Components.Bedrijvenkaart
 
-@if (string.IsNullOrWhiteSpace(Screen) || Screen is "01-desktop")
-{
-    <CompanyMapDiscovery />
+@{
+    var s = Screen ?? "";
 }
-else if (Screen is "01-mobiel")
+
+@if (s is "00-banenkaart-link-desktop" or "00-banenkaart-link-mobiel")
 {
-    <div class="bk-preview-mobile">
+    <div class="@PreviewShellClass(s)">
+        <BanenkaartCompanyMapToggle />
+        <div class="bk-preview-banen-placeholder pub-card" style="margin:1rem;padding:2rem;min-height:420px">
+            <p class="muted">Banenkaart (preview shell)</p>
+        </div>
+    </div>
+}
+else if (s is "01-bedrijvenkaart-desktop" or "01-bedrijvenkaart-mobiel" or "01-desktop" or "01-mobiel")
+{
+    <div class="@PreviewShellClass(s)">
         <CompanyMapDiscovery />
+    </div>
+}
+else if (s.StartsWith("02-bedrijfspagina", StringComparison.Ordinal) || s.StartsWith("02b-", StringComparison.Ordinal))
+{
+    <div class="@PreviewShellClass(s)">
+        <CompanyPublicPreview NoVacancies="@s.StartsWith("02b", StringComparison.Ordinal)" />
+    </div>
+}
+else if (s.StartsWith("03-bericht", StringComparison.Ordinal))
+{
+    <div class="@PreviewShellClass(s)">
+        <CompanyPublicPreview NoVacancies="false" />
+        <InitiativeKnockPanel IsOpen="true"
+                              CompanyName="Bakkerij De Korenaar"
+                              RootCompanyId="@Guid.Parse("33333333-3333-3333-3333-333333333333")"
+                              Teams="@PreviewTeams"
+                              SelectedTeamId="@PreviewTeams[0].Id" />
+    </div>
+}
+else if (s.StartsWith("03b-", StringComparison.Ordinal))
+{
+    <InitiativeSentDialog IsOpen="true" />
+}
+else if (s.StartsWith("03c-", StringComparison.Ordinal))
+{
+    <InitiativeWeekLimitDialog IsOpen="true" />
+}
+else if (s.StartsWith("04", StringComparison.Ordinal))
+{
+    <div class="@PreviewShellClass(s)">
+        <iframe src="/candidate/applications" title="Sollicitaties" style="width:100%;min-height:900px;border:0"></iframe>
+    </div>
+}
+else if (s.StartsWith("05-w-instellingen", StringComparison.Ordinal))
+{
+    <iframe src="/werkgever/open-voor-initiatief" title="Instellingen" style="width:100%;min-height:900px;border:0"></iframe>
+}
+else if (s.StartsWith("05b-", StringComparison.Ordinal))
+{
+    <InitiativeTeamAddDialog IsOpen="true" />
+}
+else if (s.StartsWith("05c-", StringComparison.Ordinal))
+{
+    <InitiativeEmailMissingDialog IsOpen="true" />
+}
+else if (s.StartsWith("06", StringComparison.Ordinal) || s.StartsWith("07-", StringComparison.Ordinal))
+{
+    <div class="bk-wg-preview">
+        <InitiativeEmployerInboxPreview Screen="@s" />
     </div>
 }
 else
 {
-    <div class="bk-page" style="padding:2rem">
-        <h1>Preview: @Screen</h1>
-        <p>Mockup-aligned shell for @Screen (werkgever/candidate modals render in dedicated flows).</p>
-        @if (Screen.StartsWith("05"))
-        {
-            <iframe src="/werkgever/open-voor-initiatief" style="width:100%;height:800px;border:1px solid #ddd" title="Werkgever"></iframe>
-        }
-    </div>
+    <p>Unknown preview @s</p>
 }
-
-<style>
-    .bk-preview-mobile { max-width: 390px; margin: 0 auto; border: 1px solid #ccc; }
-</style>
 
 @code {
     [Parameter] public string? Screen { get; set; }
+
+    private static IReadOnlyList<PublicInitiativeTeamOptionDto> PreviewTeams =>
+    [
+        new(Guid.Parse("77777777-7777-7777-7777-777777777702"), "Bakkerij", "Brood en patisserie", null, InitiativeMatchLabel.Good, true)
+    ];
+
+    private static string PreviewShellClass(string screen)
+        => screen.Contains("mobiel", StringComparison.OrdinalIgnoreCase) ? "bk-preview-mobile" : "bk-preview-desktop";
 }
+
+<style>
+    .bk-preview-mobile { max-width: 390px; margin: 0 auto; border: 1px solid #ddd; overflow: hidden; }
+    .bk-preview-desktop { max-width: 1440px; margin: 0 auto; }
+</style>

@@ -14,6 +14,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Werkgever
+@using Jobsy.Web.Components.Bedrijvenkaart
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
@@ -31,6 +32,10 @@
 
 <WgPageShell Title="@Culture["WgNav.Applications"]" Lead="@Culture["WgApp.Lead"]" ReadOnlyHint="@(Role == EmployerRole.Regiomanager)">
     <ChildContent>
+    @if (_initiativeEnabled && Scope.CompanyIds.FirstOrDefault() is Guid initiativeCompany && initiativeCompany != Guid.Empty)
+    {
+        <InitiativeEmployerInbox BillingCompanyId="initiativeCompany" />
+    }
     <div class="wg-app @(_view == ApplicationPipelineRules.ViewList ? "wg-app--dense" : null)">
         @if (_loading)
         {
@@ -376,6 +381,7 @@
     private bool _hireCloseVacancy = true;
     private bool _bulkRejectOpen;
     private bool _phase2Enabled;
+    private bool _initiativeEnabled;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
@@ -549,6 +555,7 @@
             await ScopeBootstrap.EnsureLoadedAsync();
             var flags = await FeatureFlags.GetAsync();
             _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
+            _initiativeEnabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
             _companies = (await Api.GetMyCompaniesAsync())?.ToList() ?? [];
             _vacancies = (await Api.GetManagedVacanciesAsync(Scope.CompanyIds.Count > 0 ? Scope.CompanyIds : null)).ToList();
             ApplyQuery();

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Jobsy.Core.Contracts;
 using Jobsy.Core.Email;
 using Jobsy.Core.Entities;
@@ -17,16 +18,80 @@ public sealed class CompanyMapInitiativeService : ICompanyMapInitiativeService
 
     private readonly JobsyDbContext _db;
     private readonly ITransactionalMailer _mailer;
+    private readonly ITokenLedgerService _tokens;
+    private readonly IFlexCommercialService _commercial;
     private readonly ILogger<CompanyMapInitiativeService> _logger;
 
     public CompanyMapInitiativeService(
         JobsyDbContext db,
         ITransactionalMailer mailer,
+        ITokenLedgerService tokens,
+        IFlexCommercialService commercial,
         ILogger<CompanyMapInitiativeService> logger)
     {
         _db = db;
         _mailer = mailer;
+        _tokens = tokens;
+        _commercial = commercial;
         _logger = logger;
+    }
+
+    public async Task<PublicCompanyInitiativeViewDto?> GetPublicProfileByKvkAsync(
+        string kvk,
+        Guid? candidateUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var normalized = CompanyPublicPaths.NormalizeKvkNumber(kvk);
+        if (normalized is null)
+        {
+            return null;
+        }
+
+        var root = await _db.Companies.AsNoTracking()
+            .Where(PublicVisibility.CompanyIsPublic)
+            .Where(c => c.KvkNumber == normalized && c.ParentCompanyId == null)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (root is null)
+        {
+            return null;
+        }
+
+        var settings = await _db.CompanyInitiativeSettings.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.RootCompanyId == root.Id, cancellationToken);
+        var teams = await _db.InitiativeTeams.AsNoTracking()
+            .Where(t => t.RootCompanyId == root.Id && t.IsOpen && t.ContactEmailConfirmedAtUtc != null)
+            .OrderBy(t => t.Name)
+            .ToListAsync(cancellationToken);
+
+        var open = (settings?.IsEnabled == true && settings.ContactEmailConfirmedAtUtc != null) || teams.Count > 0;
+        if (!open)
+        {
+            return null;
+        }
+
+        CandidateInitiativeWeekDto? week = null;
+        if (candidateUserId is Guid uid)
+        {
+            week = await GetCandidateWeekAsync(uid, cancellationToken);
+        }
+
+        var photos = ParsePhotoUrls(root.HubPhotoUrlsJson);
+        return new PublicCompanyInitiativeViewDto(
+            root.Id,
+            settings?.IsEnabled == true && settings.ContactEmailConfirmedAtUtc != null,
+            teams.Count,
+            root.HubAboutText,
+            root.HubCultureText,
+            root.HubVideoUrl,
+            photos,
+            teams.Select(t => new PublicInitiativeTeamOptionDto(
+                t.Id,
+                t.Name,
+                t.Description,
+                null,
+                candidateUserId is null ? null : InitiativeMatchWordingRules.FromInternalScore(72),
+                t.IsOpen)).ToList(),
+            week);
     }
 
     public async Task<IReadOnlyList<CompanyMapPinDto>> GetMapPinsAsync(
@@ -249,6 +314,8 @@ public sealed class CompanyMapInitiativeService : ICompanyMapInitiativeService
                 i.MatchLabel,
                 i.CreatedAtUtc,
                 i.ResponseDeadlineUtc,
+                i.RespondedAtUtc,
+                i.EmployerViewedAtUtc,
                 true))
             .ToListAsync(cancellationToken);
     }
@@ -474,13 +541,58 @@ public sealed class CompanyMapInitiativeService : ICompanyMapInitiativeService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task AcceptAsync(Guid employerUserId, Guid initiativeId, CancellationToken cancellationToken = default)
+    public async Task<(bool Ok, string? ErrorCode, decimal? Balance)> AcceptAsync(
+        Guid employerUserId,
+        Guid initiativeId,
+        Guid billingCompanyId,
+        CancellationToken cancellationToken = default)
     {
         var initiative = await _db.WorkInitiatives.FirstAsync(i => i.Id == initiativeId, cancellationToken);
-        initiative.Status = WorkInitiativeStatus.Accepted;
-        initiative.RespondedAtUtc = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
+        if (initiative.Status is WorkInitiativeStatus.Accepted or WorkInitiativeStatus.Withdrawn)
+        {
+            return (false, "react_failed", null);
+        }
+
+        var commercial = await _commercial.GetAsync(cancellationToken);
+        var cost = AcceptCandidateVacancyRules.ResolveAcceptCostTokens(
+            VacancyKind.Regular,
+            commercial,
+            DateOnly.FromDateTime(DateTime.UtcNow));
+        var respondedAt = DateTime.UtcNow;
+
+        var spend = await _tokens.TrySpendAsync(
+            billingCompanyId,
+            TokenSpendReason.AcceptCandidate,
+            vacancyId: null,
+            actorUserId: employerUserId,
+            branchCompanyId: initiative.BranchCompanyId ?? initiative.RootCompanyId,
+            note: $"AcceptInitiative:{initiativeId}",
+            onSuccessBeforeCommit: async ct =>
+            {
+                initiative.Status = WorkInitiativeStatus.Accepted;
+                initiative.RespondedAtUtc = respondedAt;
+                _db.WorkInitiativeAcceptances.Add(new WorkInitiativeAcceptance
+                {
+                    InitiativeId = initiativeId,
+                    BillingCompanyId = billingCompanyId,
+                    AcceptCostTokens = cost,
+                    AcceptedAtUtc = respondedAt
+                });
+                await _db.SaveChangesAsync(ct);
+            },
+            costOverrides: new Dictionary<TokenSpendReason, decimal>
+            {
+                [TokenSpendReason.AcceptCandidate] = cost
+            },
+            cancellationToken: cancellationToken);
+
+        if (!spend.Succeeded)
+        {
+            return (false, "insufficient_tokens", spend.Balance);
+        }
+
         _logger.LogInformation("Initiative {Id} accepted by {User}", initiativeId, employerUserId);
+        return (true, null, spend.Balance);
     }
 
     public async Task DeclineAsync(
@@ -618,6 +730,23 @@ public sealed class CompanyMapInitiativeService : ICompanyMapInitiativeService
     {
         var company = await _db.Companies.AsNoTracking().FirstAsync(c => c.Id == companyId, cancellationToken);
         return company.ParentCompanyId ?? company.Id;
+    }
+
+    private static IReadOnlyList<string> ParsePhotoUrls(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return [];
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     private static string? ExtractCity(string? address)

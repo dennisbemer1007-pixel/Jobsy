@@ -5,6 +5,18 @@ namespace Jobsy.Web.Services;
 
 public partial class JobsyApiClient
 {
+    public Task<PublicCompanyInitiativeViewDto?> GetPublicInitiativeProfileAsync(string kvk, CancellationToken ct = default)
+        => _http.GetFromJsonAsync<PublicCompanyInitiativeViewDto>($"api/company-map-initiative/public/{Uri.EscapeDataString(kvk)}/profile", ct);
+
+    public async Task<bool> AcceptWorkInitiativeAsync(Guid id, Guid billingCompanyId, CancellationToken ct = default)
+    {
+        var response = await _http.PostAsync(
+            $"api/company-map-initiative/employer/{id:D}/accept?billingCompanyId={billingCompanyId:D}",
+            null,
+            ct);
+        return response.IsSuccessStatusCode;
+    }
+
     public async Task<IReadOnlyList<CompanyMapPinDto>> GetCompanyMapPinsAsync(
         double? lat,
         double? lng,
@@ -48,4 +60,12 @@ public partial class JobsyApiClient
         CancellationToken ct = default)
         => await _http.GetFromJsonAsync<List<EmployerInitiativeInboxItemDto>>(
                $"api/company-map-initiative/employer/{companyId:D}/inbox", ct) ?? [];
+
+    public async Task DeclineWorkInitiativeAsync(Guid id, bool keepOpen, CancellationToken ct = default)
+    {
+        await _http.PostAsJsonAsync(
+            $"api/company-map-initiative/employer/{id:D}/decline",
+            new { KeepOpen = keepOpen, ReducedMaxPerWeek = (int?)null, CloseTeam = false },
+            ct);
+    }
 }
