@@ -1,12 +1,17 @@
 @namespace Jobsy.Web.Components.Landing
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 
-<section class="pub-landing__section pub-landing__section--ef" id="voor-werkgevers">
+<section class="pub-landing__section pub-landing__section--ef pub-landing__band-c" id="voor-werkgevers">
     <div class="pub-landing__wrap pub-landing__ef-grid">
         <article class="pub-landing__emp-card pub-landing__lift pub-landing__card-calm">
+            @if (Variant == LandingVariant.On)
+            {
+                <div class="pub-landing__emp-art" style="@($"background-image:url('{CandidateIllustratedImages.EmpWerkgever}')")" aria-hidden="true"></div>
+            }
             <div class="pub-landing__emp-head">
                 <span class="pub-landing__eyebrow">@LandingText.For("Landing.Emp.Eyebrow", Variant)</span>
             </div>
