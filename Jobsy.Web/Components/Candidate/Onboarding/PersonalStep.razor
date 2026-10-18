@@ -70,10 +70,12 @@
 }
 @if (Draft.GeolocationPendingConfirm && Draft.GeolocationPrefillMode == GeolocationPrefillMode.Precise)
 {
-    <p class="ob-wizard__hint ob-wizard__hint--geo" role="status">@Culture["Onboarding.Geolocation.ConfirmPrecise"]</p>
-    <button type="button" class="ob-wizard__inline-link" data-testid="geolocation-confirm-address" @onclick="ConfirmGeolocationAsync">
-        @Culture["Onboarding.Geolocation.ConfirmCta"]
-    </button>
+    <div class="ob-wizard__geo-confirm">
+        <p class="ob-wizard__hint ob-wizard__hint--geo" role="status">@Culture["Onboarding.Geolocation.ConfirmPrecise"]</p>
+        <button type="button" class="btn btn-secondary btn-compact" data-testid="geolocation-confirm-address" @onclick="ConfirmGeolocationAsync">
+            @Culture["Onboarding.Geolocation.ConfirmCta"]
+        </button>
+    </div>
 }
 @if (Draft.PostcodeResolved && !Draft.GeolocationPendingConfirm && !string.IsNullOrWhiteSpace(LocationHint))
 {

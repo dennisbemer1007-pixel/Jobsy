@@ -77,8 +77,9 @@ public sealed class OnboardingGeolocationEvidencePlaywrightTests
             await welcome.ClickAsync(new() { Force = true });
         }
 
-        await page.Locator("#onboarding-home-address, .ob-fields__address input[role=combobox]").First
-            .WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator(".ob-fields input").First.WaitForAsync(new() { Timeout = 90_000 });
+        await page.Locator("#onboarding-home-address, .ob-fields__address input").First
+            .WaitForAsync(new() { Timeout = 30_000 });
         try
         {
             await page.WaitForFunctionAsync(
