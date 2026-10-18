@@ -55,6 +55,23 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_finale_v2_r6_flags_off_desktop()
+    {
+        using var web = new FinaleWebFactory(FinaleOptionalFlags.AllOff);
+        var baseUrl = web.EnsureServerAddress()
+                      + "/__test/sign-in?return="
+                      + Uri.EscapeDataString("/candidate/start");
+        foreach (var (width, height, suffix) in new (int, int, string)[]
+                 {
+                     (1440, 900, "1440"),
+                     (1600, 900, "1600")
+                 })
+        {
+            await CaptureOneAsync(FinaleOptionalFlags.AllOff, "flags-off", width, height, suffix, baseUrl);
+        }
+    }
+
+    [Fact]
     public async Task Capture_finale_v2_r5_flags_off()
     {
         using var web = new FinaleWebFactory(FinaleOptionalFlags.AllOff);
@@ -121,31 +138,55 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
                 Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
             });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+
+        var loading = page.Locator(".ob-wizard__loading");
+        if (await loading.CountAsync() > 0)
+        {
+            await loading.WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Hidden,
+                Timeout = 90_000
+            });
+        }
+
         await page.Locator("[data-testid=onboarding-finale-v2]").WaitForAsync(new()
         {
             State = WaitForSelectorState.Visible,
             Timeout = 90_000
         });
-            await page.Locator(".ob-finale__end").WaitForAsync(new()
-            {
-                State = WaitForSelectorState.Visible,
-                Timeout = 30_000
-            });
+        await page.Locator(".ob-finale h1").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
+        await page.Locator(".ob-finale__end").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
 
-            await page.WaitForFunctionAsync(
-                """
-                () => {
-                  const el = document.querySelector('[data-testid=onboarding-finale-match-bar]');
-                  if (!el) return false;
-                  const bg = getComputedStyle(el).backgroundColor;
-                  return bg === 'rgb(15, 45, 92)';
-                }
-                """,
-                null,
-                new() { Timeout = 30_000 });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const body = document.body?.innerText ?? '';
+              if (/Laden…|Laden\.\.\.|Loading/i.test(body)) return false;
+              const h1 = document.querySelector('.ob-finale h1');
+              if (!h1 || !(h1.textContent ?? '').includes('Kompas')) return false;
+              const el = document.querySelector('[data-testid=onboarding-finale-match-bar]');
+              if (!el) return false;
+              return getComputedStyle(el).backgroundColor === 'rgb(15, 45, 92)';
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
 
-            var matchBarBg = await page.Locator("[data-testid=onboarding-finale-match-bar]").EvaluateAsync<string>(
-                "el => getComputedStyle(el).backgroundColor");
+        await page.WaitForTimeoutAsync(400);
+
+        var pageText = await page.Locator("body").InnerTextAsync();
+        Assert.DoesNotContain("Laden", pageText, StringComparison.OrdinalIgnoreCase);
+
+        var matchBarBg = await page.Locator("[data-testid=onboarding-finale-match-bar]").EvaluateAsync<string>(
+            "el => getComputedStyle(el).backgroundColor");
         Assert.True(
             matchBarBg.Equals("rgb(15, 45, 92)", StringComparison.OrdinalIgnoreCase)
             || matchBarBg.Equals("#0f2d5c", StringComparison.OrdinalIgnoreCase),
