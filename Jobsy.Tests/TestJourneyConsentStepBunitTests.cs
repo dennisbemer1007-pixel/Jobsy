@@ -71,8 +71,13 @@ public class TestJourneyConsentStepBunitTests : BunitContext
             .Add(c => c.ConsentChanged, (bool value) => draft.ConsentRequested = value));
 
         Assert.False(draft.ConsentRequested);
+        Assert.Contains("Ik geef toestemming om mijn antwoorden te analyseren.", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("ob-journey__consent-more-link", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Werkgevers zien je antwoorden niet.", cut.Markup, StringComparison.Ordinal);
         cut.Find("input[type=checkbox]").Change(true);
         Assert.True(draft.ConsentRequested);
+        cut.Find("button.ob-journey__consent-more-link").Click();
+        Assert.Contains("Werkgevers zien je antwoorden niet.", cut.Markup, StringComparison.Ordinal);
     }
 
     [Theory]

@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-07" />
     @if (TestJourneyIllustration.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-05" />
+        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-06" />
     }
 </HeadContent>
 
@@ -349,7 +349,9 @@
                         }
                         @if (ShowJourneyConsent)
                         {
-                            <TestConsentFooterFields Draft="Draft" ConsentChanged="OnConsentChanged" />
+                            <TestConsentFooterFields Draft="Draft"
+                                                     ConsentChanged="OnConsentChanged"
+                                                     ShowError="@(_showValidation && !Draft.ConsentRequested)" />
                         }
                         <div class="ob-wizard__actionbar">
                             <button type="button"

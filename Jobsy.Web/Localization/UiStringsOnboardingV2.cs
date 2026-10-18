@@ -165,6 +165,15 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Journey.Duration.One"] = english ? "~1.5 min" : "~1,5 min";
         map["Onboarding.Journey.CtaStart"] = english ? "Start with test 1" : "Start met test 1";
         map["Onboarding.Journey.CtaContinue"] = english ? "Continue with test {0}" : "Ga verder met test {0}";
+        map["Onboarding.Journey.Consent.Check"] = english
+            ? "I consent to analysing my answers."
+            : "Ik geef toestemming om mijn antwoorden te analyseren.";
+        map["Onboarding.Journey.Consent.MoreText"] = english
+            ? "Your answers are only used for your personal Compass. Employers cannot see your answers."
+            : "Je antwoorden worden alleen gebruikt voor jouw persoonlijke Kompas. Werkgevers zien je antwoorden niet.";
+        map["Onboarding.Journey.Validation.Consent"] = english
+            ? "Please tick consent to continue."
+            : "Vink toestemming aan om verder te gaan.";
         map["Onboarding.Test.Lead"] = english ? "How well does each sentence fit you?" : "Hoe goed past elke zin bij jou?";
         map["Onboarding.Test.Competency"] = english ? "How you work" : "Hoe je werkt"; map["Onboarding.Test.Competency.Lead"] = english ? "Competencies such as collaborating" : "Bijvoorbeeld samenwerken";
         map["Onboarding.Test.Career"] = english ? "Fun" : "Leuk"; map["Onboarding.Test.Career.Lead"] = english ? "Careers that fit you" : "Beroepen die bij je passen";
