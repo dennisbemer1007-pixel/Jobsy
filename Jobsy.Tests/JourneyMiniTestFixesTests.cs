@@ -19,7 +19,8 @@ public class JourneyMiniTestFixesTests
         var source = File.ReadAllText(Path.Combine(
             TestRepo.FindRoot(),
             "Jobsy.Web", "Components", "Shared", "Questionnaire", "TestQuestionFlow.razor"));
-        Assert.Contains("TestFlow.Answered\", answeredEarlier.Count", source, StringComparison.Ordinal);
+        Assert.Contains("TestFlow.EarlierAnswers", source, StringComparison.Ordinal);
+        Assert.Contains("answeredEarlier.Count", source, StringComparison.Ordinal);
         Assert.DoesNotContain("narrow ? 1", source, StringComparison.Ordinal);
     }
 

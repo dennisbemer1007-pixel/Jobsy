@@ -4,6 +4,7 @@
 
 <JobsyDateField Kind="JobsyDatePickerKind.Month"
                 Constraint="JobsyDateConstraint.WorkHistoryMonth"
+                ReferenceMonth="@ReferenceMonth"
                 MonthValue="@Value"
                 MonthValueChanged="ValueChanged"
                 CssClass="month-year__input"
@@ -12,5 +13,6 @@
 @code {
     [Parameter] public string? Value { get; set; }
     [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public string? ReferenceMonth { get; set; }
     [Parameter] public string? TestId { get; set; }
 }

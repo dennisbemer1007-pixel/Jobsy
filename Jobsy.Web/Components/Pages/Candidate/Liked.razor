@@ -2,6 +2,7 @@
 @* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; 07 redesigns in place (no CandidateJobListTabs) *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Core.Features
@@ -123,10 +124,10 @@
                                     {
                                         <a class="kb-fit kb-fit--gate kb-saved-row__fit" href="@KbRoutes.PaspoortTests">@Culture["Kb.Fit.Gate"]</a>
                                     }
-                                    else if (item.FitPercent is int pct)
+                                    else if (Enum.TryParse<KbFitBand>(item.FitBand, ignoreCase: true, out var rowBand))
                                     {
-                                        <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ??"some") kb-saved-row__fit">
-                                            @string.Format(Culture["Kb.Fit.Percent"], pct)
+                                        <span class="kb-fit kb-fit--@KbLabels.FitBandCss(rowBand) kb-saved-row__fit">
+                                            @KbLabels.FitBand(Culture, rowBand)
                                         </span>
                                     }
                                     @if (!string.IsNullOrWhiteSpace(item.SavedStateKind)
@@ -189,10 +190,10 @@
                                 {
                                     <a class="kb-fit kb-fit--gate" href="@KbRoutes.PaspoortTests">@Culture["Kb.Fit.Gate"]</a>
                                 }
-                                else if (item.FitPercent is int pctCard)
+                                else if (Enum.TryParse<KbFitBand>(item.FitBand, ignoreCase: true, out var cardBand))
                                 {
-                                    <span class="kb-fit kb-fit--@(item.FitBand?.ToLowerInvariant() ??"some")">
-                                        @string.Format(Culture["Kb.Fit.Percent"], pctCard)
+                                    <span class="kb-fit kb-fit--@KbLabels.FitBandCss(cardBand)">
+                                        @KbLabels.FitBand(Culture, cardBand)
                                     </span>
                                 }
                             </div>

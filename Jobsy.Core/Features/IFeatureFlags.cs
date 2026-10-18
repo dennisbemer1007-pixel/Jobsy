@@ -54,6 +54,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.TestItemExamples => TestItemExamplesEnabled,
         PlatformFeature.EmployerFitQuestionnaires => EmployerFitQuestionnairesEnabled,
         PlatformFeature.Kandidatenkaart => KandidatenkaartEnabled,
+        PlatformFeature.ReferenceVerification => false,
         _ => false
     };
 }

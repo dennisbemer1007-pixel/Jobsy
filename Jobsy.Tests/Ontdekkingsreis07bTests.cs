@@ -63,7 +63,8 @@ public class Ontdekkingsreis07bSourceTests
         var src = JourneySource;
         Assert.Contains("QuestionIdsUpTo", src, StringComparison.Ordinal);
         Assert.Contains("_lockedIds", src, StringComparison.Ordinal);
-        Assert.Contains("!_lockedIds.Contains(item.Id)", src, StringComparison.Ordinal);
+        Assert.Contains("OnboardingMiniBlockCompletion", src, StringComparison.Ordinal);
+        Assert.Contains("if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id)", src, StringComparison.Ordinal);
     }
 
     [Fact]
