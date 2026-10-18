@@ -178,6 +178,24 @@ public class PlatformFeatureSettings
     /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
     public bool TrainingPartnersEnabled { get; set; }
 
+    /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
+    public bool TestJourneyIllustrationEnabled { get; set; }
+
+    /// <summary>Onboarding finale v2 cards layout. Default false.</summary>
+    public bool OnboardingFinaleV2Enabled { get; set; }
+
+    /// <summary>Dag-in-het-leven links on occupation detail. Default true.</summary>
+    public bool OccupationDayInLifeEnabled { get; set; } = true;
+
+    /// <summary>Antwoorden wijzigen on completed tests. Default false.</summary>
+    public bool TestEditModeEnabled { get; set; }
+
+    /// <summary>Voorbeeld-PDF on test result pages. Default false.</summary>
+    public bool SamplePdfEnabled { get; set; }
+
+    /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
+    public string AdminFlagOverridesJson { get; set; } = "[]";
+
     /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
     public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
 

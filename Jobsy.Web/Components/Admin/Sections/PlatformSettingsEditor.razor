@@ -27,11 +27,44 @@ else if (!string.IsNullOrEmpty(_error))
 }
 else if (_snapshot is not null)
 {
+    <div class="admin-settings-layout">
+        <nav class="admin-settings-layout__nav detail-card" aria-label="@Culture["AdminSettings.NavGroups"]">
+            <p class="admin-settings-layout__nav-title">@Culture["AdminSettings.NavGroups"]</p>
+            <ul class="admin-settings-layout__nav-list">
+                @foreach (var groupKey in GroupKeys)
+                {
+                    var g = PlatformSettingsCatalog.Groups.First(x => x.Key == groupKey);
+                    if (!GroupHasVisibleEntries(groupKey))
+                    {
+                        continue;
+                    }
+
+                    <li>
+                        <a class="admin-settings-layout__nav-link" href="#@($"settings-group-{groupKey}")">@Culture[g.TitleKey]</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+        <div class="admin-settings-layout__main">
+            <label class="admin-settings-search">
+                <span class="visually-hidden">@Culture["AdminSettings.SettingsSearch"]</span>
+                <input type="search"
+                       class="admin-settings-input admin-settings-input--wide admin-settings-search__input"
+                       placeholder="@Culture["AdminSettings.SettingsSearch"]"
+                       @bind="_searchQuery"
+                       @bind:event="oninput" />
+            </label>
+
     @foreach (var groupKey in GroupKeys)
     {
         var group = PlatformSettingsCatalog.Groups.First(g => g.Key == groupKey);
-        var entries = _entries.Where(e => e.Group == groupKey).ToList();
-        <section class="detail-card admin-settings-group" aria-labelledby="settings-group-@groupKey">
+        var entries = VisibleEntries(groupKey);
+        if (entries.Count == 0)
+        {
+            continue;
+        }
+
+        <section class="detail-card admin-settings-group" id="@($"settings-group-{groupKey}")" aria-labelledby="settings-group-@groupKey">
             <h2 id="settings-group-@groupKey">@Culture[group.TitleKey]</h2>
             <p class="muted admin-settings-group__desc">@Culture[group.DescriptionKey]</p>
 
@@ -49,10 +82,13 @@ else if (_snapshot is not null)
                     var meta = dirty
                         ? string.Format(Culture["AdminSettings.DirtyMeta"], FormatDisplay(entry, _baseline[entry.Key]))
                         : LastChangedMeta(entry.Key);
+                    var sourceOverride = entry.Kind == PlatformSettingKind.Bool && IsOverridden(entry.Key);
                     <AdminToggleRow Title="@Culture[entry.TitleKey]"
                                     Description="@Culture[entry.DescriptionKey]"
                                     Meta="@meta"
                                     Badge="@(entry.BadgeKey is null ? null : Culture[entry.BadgeKey])"
+                                    SourceBadge="@(entry.Kind == PlatformSettingKind.Bool ? FlagSourceBadge(entry.Key) : null)"
+                                    SourceIsOverride="@sourceOverride"
                                     IsDirty="@dirty"
                                     IsLocked="@locked">
                         <Control>
@@ -73,6 +109,15 @@ else if (_snapshot is not null)
                                         @onclick="() => ToggleBool(entry)">
                                     <span class="admin-switch__thumb"></span>
                                 </button>
+                                @if (IsOverridden(entry.Key))
+                                {
+                                    <button type="button"
+                                            class="btn-compact admin-settings-reset"
+                                            disabled="@(_busy || locked)"
+                                            @onclick="() => ResetToDefaultAsync(entry)">
+                                        @Culture["AdminSettings.ResetToDefault"]
+                                    </button>
+                                }
                                 @if (entry.Key == "WhatsAppRemindersEnabled" && !_whatsAppConfigured)
                                 {
                                     <span class="admin-muted admin-settings-note">@Culture["AdminSettings.WhatsAppReminders.NotConfigured"]</span>
@@ -138,6 +183,8 @@ else if (_snapshot is not null)
             }
         </section>
     }
+        </div>
+    </div>
 
     @if (_snapshot.UpdatedAtUtc is DateTime updated)
     {
@@ -226,6 +273,8 @@ else if (_snapshot is not null)
     private string _reason = "";
     private List<AdminAuditItem> _recentChanges = [];
     private Dictionary<string, AdminAuditItem> _lastByField = new(StringComparer.Ordinal);
+    private HashSet<string> _overriddenKeys = new(StringComparer.Ordinal);
+    private string _searchQuery = "";
 
     private bool CanSave
     {
@@ -249,6 +298,75 @@ else if (_snapshot is not null)
             Culture["AdminSettings.LastChangedBy"],
             e.ActorDisplayName,
             AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM-yyyy"));
+    }
+
+    private static string? CombineMeta(string? a, string? b)
+    {
+        if (string.IsNullOrWhiteSpace(a)) return b;
+        if (string.IsNullOrWhiteSpace(b)) return a;
+        return a + " · " + b;
+    }
+
+    private bool IsOverridden(string key) => _overriddenKeys.Contains(key);
+
+    private string FlagSourceBadge(string key)
+        => IsOverridden(key)
+            ? Culture["AdminSettings.FlagBadge.Custom"]
+            : Culture["AdminSettings.FlagBadge.Default"];
+
+    private bool GroupHasVisibleEntries(string groupKey)
+        => VisibleEntries(groupKey).Count > 0;
+
+    private List<PlatformSettingDescriptor> VisibleEntries(string groupKey)
+    {
+        var q = _searchQuery.Trim();
+        var list = _entries.Where(e => e.Group == groupKey);
+        if (q.Length == 0)
+        {
+            return list.ToList();
+        }
+
+        return list.Where(e =>
+                Culture[e.TitleKey].Contains(q, StringComparison.OrdinalIgnoreCase)
+                || Culture[e.DescriptionKey].Contains(q, StringComparison.OrdinalIgnoreCase)
+                || e.Key.Contains(q, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private async Task ResetToDefaultAsync(PlatformSettingDescriptor entry)
+    {
+        if (_busy || entry.Kind != PlatformSettingKind.Bool)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var patch = new PlatformFeaturePatch { ClearAdminFlagOverrideKeys = [entry.Key] };
+            var saved = await Api.PatchPlatformFeaturesAsync(patch);
+            if (saved is null)
+            {
+                throw new InvalidOperationException(Culture["AdminSettings.SaveFailedEmpty"]);
+            }
+
+            ApplySnapshot(ToSnapshot(saved));
+            _draft.Remove(entry.Key);
+            FeatureFlags.Invalidate();
+            await NavRefresh.RequestRefreshAsync();
+            await LoadRecentChangesAsync();
+            _message = Culture["AdminSettings.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _messageIsError = true;
+            _message = string.Format(Culture["AdminSettings.SaveFailed"], ex.Message);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     protected override void OnInitialized()
@@ -281,6 +399,9 @@ else if (_snapshot is not null)
     private void ApplySnapshot(PlatformFeatureSnapshot snap)
     {
         _snapshot = snap;
+        _overriddenKeys = snap.AdminOverriddenFlagKeys is { Count: > 0 } keys
+            ? new HashSet<string>(keys, StringComparer.Ordinal)
+            : new HashSet<string>(StringComparer.Ordinal);
         _baseline.Clear();
         _draft.Clear();
         _confirmedValues.Clear();
@@ -614,6 +735,16 @@ else if (_snapshot is not null)
             MatchCalibrationV1Enabled = u.MatchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled = u.EmployerFitQuestionnairesEnabled,
             KandidatenkaartEnabled = u.KandidatenkaartEnabled,
+            SensitiveExperienceEnabled = u.SensitiveExperienceEnabled,
+            TrainingPartnersEnabled = u.TrainingPartnersEnabled,
+            ReferenceVerificationEnabled = u.ReferenceVerificationEnabled,
+            TestJourneyIllustrationEnabled = u.TestJourneyIllustrationEnabled,
+            OnboardingFinaleV2Enabled = u.OnboardingFinaleV2Enabled,
+            OccupationDayInLifeEnabled = u.OccupationDayInLifeEnabled,
+            ResearchConsentEnabled = u.ResearchConsentEnabled,
+            TestEditModeEnabled = u.TestEditModeEnabled,
+            SamplePdfEnabled = u.SamplePdfEnabled,
+            ClearAdminFlagOverrideKeys = u.ClearAdminFlagOverrideKeys,
             CandidateApplyPerMinuteLimit = u.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit = u.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit = u.CandidateApplyPerDayLimit
@@ -692,6 +823,16 @@ else if (_snapshot is not null)
             MatchCalibrationV1Enabled: f.MatchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled: f.EmployerFitQuestionnairesEnabled,
             KandidatenkaartEnabled: f.KandidatenkaartEnabled,
+            SensitiveExperienceEnabled: f.SensitiveExperienceEnabled,
+            TrainingPartnersEnabled: f.TrainingPartnersEnabled,
+            ReferenceVerificationEnabled: f.ReferenceVerificationEnabled,
+            TestJourneyIllustrationEnabled: f.TestJourneyIllustrationEnabled,
+            OnboardingFinaleV2Enabled: f.OnboardingFinaleV2Enabled,
+            OccupationDayInLifeEnabled: f.OccupationDayInLifeEnabled,
+            ResearchConsentEnabled: f.ResearchConsentEnabled,
+            TestEditModeEnabled: f.TestEditModeEnabled,
+            SamplePdfEnabled: f.SamplePdfEnabled,
+            AdminOverriddenFlagKeys: f.AdminOverriddenFlagKeys,
             CandidateApplyPerMinuteLimit: f.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit: f.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit: f.CandidateApplyPerDayLimit);
