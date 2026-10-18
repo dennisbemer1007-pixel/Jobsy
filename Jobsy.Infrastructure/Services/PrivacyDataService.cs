@@ -1792,6 +1792,34 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.TrainingEnrollments.RemoveRange(trainingEnrollments);
         }
 
+        var initiativeIds = await _db.WorkInitiatives
+            .Where(i => i.CandidateUserId == user.Id)
+            .Select(i => i.Id)
+            .ToListAsync(cancellationToken);
+        if (initiativeIds.Count > 0)
+        {
+            var acceptances = await _db.WorkInitiativeAcceptances
+                .Where(a => initiativeIds.Contains(a.InitiativeId))
+                .ToListAsync(cancellationToken);
+            if (acceptances.Count > 0)
+            {
+                _db.WorkInitiativeAcceptances.RemoveRange(acceptances);
+            }
+
+            var initiatives = await _db.WorkInitiatives
+                .Where(i => i.CandidateUserId == user.Id)
+                .ToListAsync(cancellationToken);
+            _db.WorkInitiatives.RemoveRange(initiatives);
+        }
+
+        var initiativeDrafts = await _db.WorkInitiativeDrafts
+            .Where(d => d.CandidateUserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (initiativeDrafts.Count > 0)
+        {
+            _db.WorkInitiativeDrafts.RemoveRange(initiativeDrafts);
+        }
+
         var deepAnalyses = await _db.CandidateDeepAnalyses
             .Where(d => d.UserId == user.Id)
             .ToListAsync(cancellationToken);

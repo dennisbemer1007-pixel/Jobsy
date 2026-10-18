@@ -5,6 +5,7 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.Werkgever
 @using Jobsy.Web.Components.Bedrijvenkaart
+@attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
 @rendermode @(new InteractiveServerRenderMode(prerender: false))

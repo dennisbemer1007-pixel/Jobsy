@@ -654,7 +654,9 @@ public class AccountUnsubscribeTests
             typeof(VacancyLike),
             typeof(VacancySearchImpression),
             typeof(VacancyShare),
-            typeof(WebPushSubscription)
+            typeof(WebPushSubscription),
+            typeof(WorkInitiative),
+            typeof(WorkInitiativeDraft)
         }
         .OrderBy(type => type.Name)
         .ToArray();

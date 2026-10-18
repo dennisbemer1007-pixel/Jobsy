@@ -70,6 +70,14 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("VacancyEngagementController", "Like", "Own like"),
         ("VacancyEngagementController", "Unlike", "Own unlike"),
         ("VacancyEngagementController", "Share", "Own share signal"),
+        ("CompanyMapInitiativeController", "SaveSettings", "Employer initiative settings in regional scope"),
+        ("CompanyMapInitiativeController", "SaveTeam", "Employer initiative team in regional scope"),
+        ("CompanyMapInitiativeController", "ResendTeamEmail", "Employer initiative team e-mail in regional scope"),
+        ("CompanyMapInitiativeController", "ConfirmGeneralEmail", "Employer initiative settings in regional scope"),
+        ("CompanyMapInitiativeController", "ConfirmTeamEmail", "Employer initiative team in regional scope"),
+        ("CompanyMapInitiativeController", "Accept", "Employer initiative inbox in regional scope"),
+        ("CompanyMapInitiativeController", "Decline", "Employer initiative inbox in regional scope"),
+        ("CompanyMapInitiativeController", "MarkViewed", "Employer initiative inbox in regional scope"),
     ];
 
     [Fact]
