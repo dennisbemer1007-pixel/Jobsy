@@ -1720,6 +1720,14 @@ public partial class MeController : ControllerBase
                         }
                     }
 
+                    Guid? entryId = null;
+                    if (item.TryGetProperty("entryId", out var entryIdEl)
+                        && entryIdEl.ValueKind == JsonValueKind.String
+                        && Guid.TryParse(entryIdEl.GetString(), out var parsedEntry))
+                    {
+                        entryId = parsedEntry;
+                    }
+
                     bool? onlyForMe = null;
                     if (item.TryGetProperty("onlyForMe", out var onlyEl)
                         && onlyEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
@@ -1750,6 +1758,7 @@ public partial class MeController : ControllerBase
                         endMonth,
                         isCurrent,
                         escoId,
+                        entryId,
                         onlyForMe,
                         skills));
                 }

@@ -121,7 +121,9 @@ public class PassportPdfV3DeepCandidateTests
             db,
             new PassportDnaReader(db),
             new PassportPdfService(new FakeCompanySettings()),
-            new EmptyMatchesCompetencyService());
+            new EmptyMatchesCompetencyService(),
+            PassportPdfDownloadDeps.ReferenceVerification(db),
+            PassportPdfDownloadDeps.FeaturesOff());
 
         var file = await download.ForCandidateAsync(user, phoneVerificationRequired: false, showDnaBlocks: true, CancellationToken.None);
 

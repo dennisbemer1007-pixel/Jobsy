@@ -62,7 +62,8 @@ public sealed record PassportPdfFacts(
     IReadOnlyList<PassportDirectionStep>? StudyDirectionSteps = null,
     IReadOnlyList<string>? StudentBestOutTips = null,
     IReadOnlyList<PassportStrengthCard>? StudentStrengthCards = null,
-    IReadOnlyList<PassportHowWorkLine>? StudentHowWorkLines = null);
+    IReadOnlyList<PassportHowWorkLine>? StudentHowWorkLines = null,
+    IReadOnlyList<PassportEndorsedCompetence>? EndorsedCompetences = null);
 
 public static class PassportPdfFactsFactory
 {

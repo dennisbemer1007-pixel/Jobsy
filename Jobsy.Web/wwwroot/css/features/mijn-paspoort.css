@@ -1464,7 +1464,19 @@
     color: var(--muted);
     font-size: var(--text-sm, 0.875rem);
     line-height: 1.45;
-}.kompas-chip {
+}.kompas-chip--verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-color: color-mix(in srgb, var(--success) 45%, var(--border));
+    background: color-mix(in srgb, var(--success) 8%, var(--surface));
+}
+
+.kompas-chip__check {
+    flex-shrink: 0;
+}
+
+.kompas-chip {
     display: inline-flex;
     align-items: center;
     justify-content: center;

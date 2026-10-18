@@ -4,6 +4,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @inject CultureState Culture
 
 <aside class="passport-card @(Compact ?"passport-card--compact" : null)" aria-labelledby="passport-card-name">
@@ -29,7 +30,17 @@
                     {
                         <span class="status-pill status-pill--success">@Culture["Profile.OpenForWork"]</span>
                     }
-                    @foreach (var kw in Keywords.Take(2))
+                    @foreach (var item in VerifiedCompetencePills.Take(2))
+                    {
+                        <span class="kompas-chip kompas-chip--verified"
+                              role="status"
+                              title="@Culture["RefVerif.VerifiedBadge"]"
+                              aria-label="@($"{item} — {Culture["RefVerif.VerifiedBadge"]}")">
+                            <ReferenceVerificationDrawCheck Size="sm" Animate="false" CssClass="kompas-chip__check" />
+                            <span>@item</span>
+                        </span>
+                    }
+                    @foreach (var kw in KeywordPills.Take(Math.Max(0, 2 - VerifiedCompetencePills.Count)))
                     {
                         <span class="kompas-chip">@kw</span>
                     }
@@ -43,9 +54,22 @@
                     {
                         <span class="status-pill status-pill--success">@Culture["Profile.OpenForWork"]</span>
                     }
-                    @foreach (var kw in Keywords.Take(1))
+                    @foreach (var item in VerifiedCompetencePills.Take(1))
                     {
-                        <span class="kompas-chip">@kw</span>
+                        <span class="kompas-chip kompas-chip--verified"
+                              role="status"
+                              title="@Culture["RefVerif.VerifiedBadge"]"
+                              aria-label="@($"{item} — {Culture["RefVerif.VerifiedBadge"]}")">
+                            <ReferenceVerificationDrawCheck Size="sm" Animate="false" CssClass="kompas-chip__check" />
+                            <span>@item</span>
+                        </span>
+                    }
+                    @if (VerifiedCompetencePills.Count == 0)
+                    {
+                        @foreach (var kw in KeywordPills.Take(1))
+                        {
+                            <span class="kompas-chip">@kw</span>
+                        }
                     }
                 </div>
             }
@@ -169,6 +193,8 @@
     [Parameter] public string? StartedStamp { get; set; }
     [Parameter] public bool ShowOpenForWork { get; set; }
     [Parameter] public IReadOnlyList<string> Keywords { get; set; } = [];
+
+    [Parameter] public IReadOnlyList<string> VerifiedCompetenceLabels { get; set; } = [];
     [Parameter] public int CompletenessPercent { get; set; }
     [Parameter] public string? AboutMe { get; set; }
     [Parameter] public string? City { get; set; }
@@ -187,6 +213,27 @@
 
     private int LayerTotal => KompasProfileCompleteness.StepCount;
     private int FilledLayers => KompasProfileCompleteness.FilledSteps(CompletenessPercent);
+
+    private IReadOnlyList<string> VerifiedCompetencePills =>
+        VerifiedCompetenceLabels
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Select(l => l.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+    private IReadOnlyList<string> KeywordPills
+    {
+        get
+        {
+            if (VerifiedCompetencePills.Count == 0)
+            {
+                return Keywords;
+            }
+
+            var verified = new HashSet<string>(VerifiedCompetencePills, StringComparer.OrdinalIgnoreCase);
+            return Keywords.Where(k => !verified.Contains(k)).ToList();
+        }
+    }
 
     private RenderFragment Fact(string labelKey, string? value) => __builder =>
     {

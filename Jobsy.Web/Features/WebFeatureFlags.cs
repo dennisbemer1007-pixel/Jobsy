@@ -72,8 +72,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestsV2Enabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
-                SensitiveExperienceEnabled: dto?.SensitiveExperienceEnabled ?? false,
-                TrainingPartnersEnabled: dto?.TrainingPartnersEnabled ?? false);
+                dto?.ReferenceVerificationEnabled ?? false,
+                dto?.SensitiveExperienceEnabled ?? false,
+                dto?.TrainingPartnersEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -149,6 +150,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("kandidatenkaartEnabled")]
         public bool KandidatenkaartEnabled { get; set; }
+
+        [JsonPropertyName("referenceVerificationEnabled")]
+        public bool ReferenceVerificationEnabled { get; set; }
 
         [JsonPropertyName("sensitiveExperienceEnabled")]
         public bool SensitiveExperienceEnabled { get; set; }

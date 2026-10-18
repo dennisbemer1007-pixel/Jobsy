@@ -50,15 +50,28 @@
                             <img class="mock-interview-bubble__avatar" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
                             <span class="mock-interview-bubble__role">@Culture["Assistant.BotName"]</span>
                         </div>
-                        @foreach (var block in ParseCoachBlocks(msg.Content))
+                        var coachBlocks = ParseCoachBlocks(msg.Content)
+                            .Where(b => !string.IsNullOrWhiteSpace(b.Text))
+                            .ToList();
+                        if (coachBlocks.Count == 0)
                         {
-                            <div class="mock-interview-block mock-interview-block--@block.Kind">
-                                @if (!string.IsNullOrEmpty(block.Label))
-                                {
-                                    <span class="mock-interview-block__label">@block.Label</span>
-                                }
-                                <p>@block.Text</p>
+                            <div class="mock-interview-block mock-interview-block--question">
+                                <span class="mock-interview-block__label">@Culture["MockInterview.LabelQuestion"]</span>
+                                <p>@(string.IsNullOrWhiteSpace(msg.Content) ? Culture["MockInterview.Empty"] : msg.Content.Trim())</p>
                             </div>
+                        }
+                        else
+                        {
+                            foreach (var block in coachBlocks)
+                            {
+                                <div class="mock-interview-block mock-interview-block--@block.Kind">
+                                    @if (!string.IsNullOrEmpty(block.Label))
+                                    {
+                                        <span class="mock-interview-block__label">@block.Label</span>
+                                    }
+                                    <p>@block.Text</p>
+                                </div>
+                            }
                         }
                         <ReadAloudButton Text="@SpeakableCoachText(msg.Content)" SpeechKey="@($"coach-{i}")" />
                     }
@@ -220,7 +233,8 @@
         try
         {
             var reply = await Api.ContinueMockInterviewAsync(Vacancy.Id, []);
-            _messages.Add(new MockInterviewChatMessage("assistant", reply.Reply));
+            var opening = string.IsNullOrWhiteSpace(reply.Reply) ? Culture["MockInterview.Empty"] : reply.Reply.Trim();
+            _messages.Add(new MockInterviewChatMessage("assistant", opening));
             _started = true;
         }
         catch (Exception ex)

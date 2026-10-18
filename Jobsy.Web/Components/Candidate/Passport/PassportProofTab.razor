@@ -66,8 +66,15 @@
                     <ul class="passport-proof__list">
                         @foreach (var emp in Editor.Employers.Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role)))
                         {
+                            var verified = IsVerified(emp.EntryId);
                             <li>
                                 <strong>@(string.IsNullOrWhiteSpace(emp.Role) ? emp.EmployerName : emp.Role)</strong>
+                                @if (verified)
+                                {
+                                    <span class="ref-verif-experience-badge">
+                                        <span aria-hidden="true">✓</span> @Culture["RefVerif.VerifiedBadge"]
+                                    </span>
+                                }
                                 <span class="muted">
                                     @emp.EmployerName
                                     @if (!string.IsNullOrWhiteSpace(emp.StartMonth) || !string.IsNullOrWhiteSpace(emp.EndMonth) || emp.ShowsAsCurrent)
@@ -78,6 +85,10 @@
                                 @if (!string.IsNullOrWhiteSpace(emp.Description))
                                 {
                                     <span class="passport-proof__job-desc">@emp.Description</span>
+                                }
+                                @if (_refVerificationEnabled && _refVerificationEligible && !verified)
+                                {
+                                    <WorkExperienceReferenceAskLink EntryId="emp.EntryId" />
                                 }
                             </li>
                         }
@@ -294,6 +305,9 @@
     [Parameter] public string? InitialItem { get; set; }
 
     private bool _dnaPassport;
+    private bool _refVerificationEnabled;
+    private bool _refVerificationEligible;
+    private List<JobsyApiClient.ReferenceVerificationListItem> _refRows = [];
     private bool _flagsLoaded;
     private bool _loading = true;
     private bool _loadFailed;
@@ -324,6 +338,7 @@
         {
             var flags = await FeatureFlags.GetAsync();
             _dnaPassport = flags.PassportPdfV2Enabled;
+            _refVerificationEnabled = flags.ReferenceVerificationEnabled;
             _flagsLoaded = true;
         }
 
@@ -399,6 +414,12 @@
 
             Editor.ApplyFromProfile(me);
             await LoadConfirmationsAsync();
+            if (_refVerificationEnabled)
+            {
+                Editor.EnsureEmployerEntryIds();
+                _refVerificationEligible = await Api.GetReferenceVerificationEligibleAsync();
+                _refRows = (await Api.GetReferenceVerificationListAsync()).ToList();
+            }
             _loaded = true;
             RefreshStrength();
             TryOpenInitial();
@@ -562,6 +583,13 @@
             // The opener is gone, or JS is blocked. The dialog is still closed.
         }
     }
+
+    private bool IsVerified(Guid? entryId)
+        => entryId is Guid id
+           && _refRows.Any(r =>
+               r.WorkExperienceEntryId == id
+               && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase)
+               && r.Active);
 
     private string FormatRange(string? start, string? end, bool isCurrent = false)
     {

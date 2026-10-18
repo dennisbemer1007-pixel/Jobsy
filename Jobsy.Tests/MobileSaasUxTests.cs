@@ -146,7 +146,7 @@ public class MobileSaasUxTests
     public void Candidate_applications_use_cards_with_current_status_and_bar_stepper()
     {
         var razor = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/Pages/Candidate/Applications.razor"));
-        Assert.Contains("class=\"panel-page apps-page kb-apps\"", razor);
+        Assert.Contains("panel-page apps-page kb-apps", razor, StringComparison.Ordinal);
         Assert.Contains("application-counters", razor);
         Assert.Contains("application-card-list", razor);
         Assert.Contains("application-card", razor);

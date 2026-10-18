@@ -199,6 +199,7 @@ public class CandidateProfileResetTests
             typeof(ReferenceConfirmation),
             typeof(ReferenceConfirmationConsentLog),
             typeof(ReferenceMisuseReport),
+            typeof(WorkExperienceReferenceRequest),
             typeof(CandidateRoleFitCheck),
             typeof(CandidateTestReflection),
             typeof(CandidateUploadedCv),

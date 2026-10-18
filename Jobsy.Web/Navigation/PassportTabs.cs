@@ -11,9 +11,10 @@ public static class PassportTabs
     public const string Fit = "fit";
     public const string Career = "career";
     public const string Proof = "proof";
+    public const string References = "references";
     public const string Data = "data";
 
-    public static readonly string[] All = [Dna, Tests, Fit, Career, Proof, Data];
+    public static readonly string[] All = [Dna, Tests, Fit, Career, Proof, References, Data];
 
     public static string Normalize(string? raw)
     {
@@ -37,6 +38,8 @@ public static class PassportTabs
                 => Career,
             Proof or "bewijzen" or "bewijs"
                 => Proof,
+            References or "referenties" or "referentie"
+                => References,
             Data or "gegevens" or "profile" or "profiel" or "mijn-gegevens" or "mijn gegevens"
                 => Data,
             _ => Dna
@@ -52,7 +55,21 @@ public static class PassportTabs
     /// so the self-check and the new block stay reachable without turning employers on.
     /// </summary>
     public static IReadOnlyList<string> Visible(bool employersEnabled, bool futureJobsEnabled)
-        => employersEnabled || futureJobsEnabled ? All : All.Where(t => t != Fit).ToArray();
+        => Visible(employersEnabled, futureJobsEnabled, referenceVerificationEnabled: false);
+
+    public static IReadOnlyList<string> Visible(
+        bool employersEnabled,
+        bool futureJobsEnabled,
+        bool referenceVerificationEnabled)
+    {
+        var tabs = (employersEnabled || futureJobsEnabled ? All : All.Where(t => t != Fit).ToArray()).ToList();
+        if (!referenceVerificationEnabled)
+        {
+            tabs.Remove(References);
+        }
+
+        return tabs;
+    }
 
     public static string Neighbor(string current, int delta)
         => Neighbor(current, delta, employersEnabled: true);
@@ -61,8 +78,16 @@ public static class PassportTabs
         => Neighbor(current, delta, employersEnabled, futureJobsEnabled: false);
 
     public static string Neighbor(string current, int delta, bool employersEnabled, bool futureJobsEnabled)
+        => Neighbor(current, delta, employersEnabled, futureJobsEnabled, referenceVerificationEnabled: false);
+
+    public static string Neighbor(
+        string current,
+        int delta,
+        bool employersEnabled,
+        bool futureJobsEnabled,
+        bool referenceVerificationEnabled)
     {
-        var tabs = Visible(employersEnabled, futureJobsEnabled);
+        var tabs = Visible(employersEnabled, futureJobsEnabled, referenceVerificationEnabled);
         var index = tabs.ToList().IndexOf(Normalize(current));
         if (index < 0)
         {

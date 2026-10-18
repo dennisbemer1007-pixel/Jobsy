@@ -315,6 +315,17 @@ internal static class IllustratedPagesApiStub
             return """{"completed":true,"dismissedSuggestions":[]}""";
         }
 
+        if (path.Contains("/mock-interview", StringComparison.OrdinalIgnoreCase))
+        {
+            return """
+                {
+                  "reply": "Vraag: Vertel kort waarom je solliciteert als medewerker dierenpension bij De Kooger Dierenopvang — wat spreekt je aan in de vacature?",
+                  "usedAi": false,
+                  "disclaimer": ""
+                }
+                """;
+        }
+
         return "{}";
     }
 

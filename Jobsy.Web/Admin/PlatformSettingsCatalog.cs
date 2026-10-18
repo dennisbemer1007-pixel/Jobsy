@@ -223,6 +223,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("ReferenceVerificationEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ReferenceVerificationEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.ReferenceVerification.Enabled.Title",
+                DescriptionKey: "AdminSettings.ReferenceVerification.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ReferenceVerificationEnabled,
+                Write: v => new PlatformFeatureUpdate(ReferenceVerificationEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
         if (FieldExists("TestsV2Enabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -687,6 +700,7 @@ public static class PlatformSettingsCatalog
         bool? passportPartnersEnabled = null;
         bool? passportPdfV2Enabled = null;
         bool? passportPdfDnaBlocksEnabled = null;
+        bool? referenceVerificationEnabled = null;
         bool? testsV2Enabled = null;
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
@@ -738,6 +752,7 @@ public static class PlatformSettingsCatalog
             if (p.PassportPartnersEnabled is not null) passportPartnersEnabled = p.PassportPartnersEnabled;
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
             if (p.PassportPdfDnaBlocksEnabled is not null) passportPdfDnaBlocksEnabled = p.PassportPdfDnaBlocksEnabled;
+            if (p.ReferenceVerificationEnabled is not null) referenceVerificationEnabled = p.ReferenceVerificationEnabled;
             if (p.TestsV2Enabled is not null) testsV2Enabled = p.TestsV2Enabled;
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
@@ -815,6 +830,7 @@ public static class PlatformSettingsCatalog
             PassportPartnersEnabled: passportPartnersEnabled,
             PassportPdfV2Enabled: passportPdfV2Enabled,
             PassportPdfDnaBlocksEnabled: passportPdfDnaBlocksEnabled,
+            ReferenceVerificationEnabled: referenceVerificationEnabled,
             TestsV2Enabled: testsV2Enabled,
             PhoneVerificationEnabled: phoneVerificationEnabled,
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
