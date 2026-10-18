@@ -207,7 +207,6 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
-<<<<<<< HEAD
     public async Task Intro_header_fits_360_viewport()
     {
         using var web = new TestsV2WebFactory(testsV2On: true);
@@ -218,23 +217,10 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
         await using var context = await _browser!.NewContextAsync(new()
         {
             ViewportSize = new ViewportSize { Width = 360, Height = 740 },
-=======
-    public async Task Item_example_visible_when_flag_on()
-    {
-        using var web = new TestsV2WebFactory(testsV2On: true, itemExamplesOn: true);
-        var baseUrl = web.EnsureServerAddress()
-                      + "/__test/sign-in?return="
-                      + Uri.EscapeDataString("/candidate/competencies?stap=vraag");
-
-        await using var context = await _browser!.NewContextAsync(new()
-        {
-            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
->>>>>>> a44350328 (Add TestItemExamples flag, central catalog, and Quick-Scan UI wiring.)
             Locale = "nl-NL"
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
-<<<<<<< HEAD
         await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await page.Locator(".test-page").WaitForAsync();
@@ -244,16 +230,6 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "competence-intro-mobile-360.png"),
-=======
-        await page.GotoAsync(baseUrl, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.Locator("details.test-example").WaitForAsync();
-        var text = await page.Locator("details.test-example p").First.InnerTextAsync();
-        Assert.Contains("Voorbeeld", text, StringComparison.OrdinalIgnoreCase);
-        await page.ScreenshotAsync(new()
-        {
-            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "item-example-competence-desktop-1440.png"),
->>>>>>> a44350328 (Add TestItemExamples flag, central catalog, and Quick-Scan UI wiring.)
             FullPage = true
         });
     }

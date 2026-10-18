@@ -113,13 +113,7 @@
         </div>
         @if (!string.IsNullOrWhiteSpace(question.Example))
         {
-            <details class="test-example" open="@_exampleOpen">
-                <summary>@Culture["TestFlow.Example"]</summary>
-                <div class="test-example__body">
-                    <p>@question.Example</p>
-                    <ReadAloudButton Text="@question.Example" SpeechKey="@($"ex-{Kind}-{question.Id}")" />
-                </div>
-            </details>
+            <p class="test-example" data-testid="test-item-example">@question.Example</p>
         }
 
         <LikertRadioGroup QuestionId="question.Id"
@@ -220,7 +214,6 @@
     private int _index;
     private int? _appliedExternalIndex;
     private bool _focusRequest;
-    private bool _exampleOpen = true;
     private int? _resumeAfterEdit;
     private readonly HashSet<TestDepthLevel> _firedLevels = [];
     private CancellationTokenSource? _advanceCts;
@@ -261,8 +254,6 @@
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
                 }
 
-                var narrow = await MatchesMediaAsync("(max-width: 639px)");
-                _exampleOpen = !narrow;
             }
             catch
             {

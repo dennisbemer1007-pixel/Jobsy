@@ -100,14 +100,12 @@
 }
 
 .test-example {
-  background: var(--surface);
-  border-inline-start: 3px solid var(--accent-soft);
-  padding: 0.5rem 0.75rem;
-}
-
-.test-example summary {
-  cursor: pointer;
-  font-weight: 600;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-weight: 400;
   color: var(--muted);
 }
 
