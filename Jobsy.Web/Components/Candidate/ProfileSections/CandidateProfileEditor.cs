@@ -101,6 +101,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public HashSet<string> SelectedRoles { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedEducations { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool ShowsEducationDirectionField => EducationDirectionCatalog.ProfileSupportsDirection(SelectedEducations);
     public string EducationDirection { get; set; } = "";
     public HashSet<string> Availability { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Employers { get; } = [];
@@ -802,6 +804,11 @@ public sealed class CandidateProfileEditor : IDisposable
             SelectedEducations.Remove(level);
         }
 
+        if (!ShowsEducationDirectionField)
+        {
+            EducationDirection = "";
+        }
+
         Notify();
     }
 
@@ -1033,7 +1040,9 @@ public sealed class CandidateProfileEditor : IDisposable
                             return idx < 0 ? int.MaxValue : idx;
                         })
                         .ToList(),
-                    EducationDirection = string.IsNullOrWhiteSpace(EducationDirection) ? null : EducationDirection.Trim(),
+                    EducationDirection = ShowsEducationDirectionField && !string.IsNullOrWhiteSpace(EducationDirection)
+                        ? EducationDirection.Trim()
+                        : null,
                     HomeAddress = homeAddressToSave,
                     MinHoursPerWeek = MinHours,
                     MaxHoursPerWeek = MaxHours,
