@@ -29,7 +29,8 @@ internal static class UiStringsTestResults
     {
         ["TestResult.Back"] = "Terug naar mijn tests",
         ["TestResult.ScoresCount"] = "{0} scores",
-        ["TestResult.ScoresFromQuestions"] = "{0} scores uit {1} vragen",
+        ["TestResult.ScoresFromQuestions"] = "{0} thema's uit {1} vragen",
+        ["TestResult.ThemesFromQuestions"] = "{0} thema's uit {1} vragen",
         ["TestResult.Upsell.Self"] = "Een scherper beeld van hoe jij werkt",
         ["TestResult.EditAnswers"] = "Antwoorden wijzigen",
         ["TestResult.Retake"] = "Test opnieuw doen",
@@ -105,7 +106,8 @@ internal static class UiStringsTestResults
     {
         ["TestResult.Back"] = "Back to my tests",
         ["TestResult.ScoresCount"] = "{0} scores",
-        ["TestResult.ScoresFromQuestions"] = "{0} scores from {1} questions",
+        ["TestResult.ScoresFromQuestions"] = "{0} themes from {1} questions",
+        ["TestResult.ThemesFromQuestions"] = "{0} themes from {1} questions",
         ["TestResult.Upsell.Self"] = "A sharper picture of how you work",
         ["TestResult.EditAnswers"] = "Edit answers",
         ["TestResult.Retake"] = "Retake test",
