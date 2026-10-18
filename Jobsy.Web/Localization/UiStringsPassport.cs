@@ -62,7 +62,7 @@ public static class UiStringsPassport
         Add("Passport.StartedStamp",
             "GESTART {0}", "STARTED {0}", "START {0}", "ÎNCEPUT {0}", "بدأ {0}");
         Add("Passport.Layers",
-            "Profiel · {0} van {1}", "Profile · {0} of {1}", "Profil · {0} z {1}", "Profil · {0} din {1}", "الملف · {0} من {1}");
+            "Profiel {0} van {1}", "Profile {0} of {1}", "Profil {0} z {1}", "Profil {0} din {1}", "الملف {0} من {1}");
         Add("Passport.LayersAria",
             "Profiel {0} procent compleet", "Profile {0} percent complete", "Profil kompletny w {0} procent", "Profil complet în proporție de {0} la sută", "الملف مكتمل بنسبة {0} بالمئة");
         Add("Passport.Fill",

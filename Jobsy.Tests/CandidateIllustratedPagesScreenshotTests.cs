@@ -22,7 +22,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 {
     private const string ArtifactsDirR2 = "/opt/cursor/artifacts/candidate-illustrated-r2";
     private const string ArtifactsDirRole = "/opt/cursor/artifacts/kandidaat-rol-r1";
-    private const string ArtifactsDirR4 = "/opt/cursor/artifacts/kandidaat-728-r4";
+    private const string ArtifactsDirR5 = "/opt/cursor/artifacts/kandidaat-728-r5";
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -78,26 +78,26 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_kandidaat_728_r4_delivery_pngs()
+    public async Task Capture_kandidaat_728_r5_delivery_pngs()
     {
-        Directory.CreateDirectory(ArtifactsDirR4);
+        Directory.CreateDirectory(ArtifactsDirR5);
 
-        await CaptureBanenkaartPopupsAsync(ArtifactsDirR4, viewportOnly: true, popupElementShot: true);
+        await CaptureBanenkaartPopupsAsync(ArtifactsDirR5, viewportOnly: true, popupElementShot: true);
 
         await CaptureIllustratedViewportAsync(
-            ArtifactsDirR4,
+            ArtifactsDirR5,
             _web!.ServerAddress,
             "/candidate/paspoort",
             "kompas-tip",
             auth: true,
             sizes: [(1440, 900, "1440"), (390, 844, "390")],
-            prepare: PrepareKompasTipScreenshotAsync);
+            prepare: PrepareKompasTopScreenshotAsync);
 
         await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
         {
             _ = emptyWeb.ServerAddress;
             await CaptureIllustratedViewportAsync(
-                ArtifactsDirR4,
+                ArtifactsDirR5,
                 emptyWeb.ServerAddress,
                 "/candidate/applications",
                 "sollicitaties-leeg",
@@ -106,7 +106,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 prepare: WaitForApplicationsEmptyAsync);
 
             await CaptureIllustratedViewportAsync(
-                ArtifactsDirR4,
+                ArtifactsDirR5,
                 emptyWeb.ServerAddress,
                 "/candidate/liked",
                 "bewaard-leeg",
@@ -116,7 +116,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         }
 
         await CaptureIllustratedViewportAsync(
-            ArtifactsDirR4,
+            ArtifactsDirR5,
             _web.ServerAddress,
             "/candidate/settings?pane=mail",
             "instellingen",
@@ -124,7 +124,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             sizes: [(1440, 900, "1440"), (390, 844, "390")],
             prepare: WaitForSettingsMailPaneAsync);
 
-        var pngs = Directory.GetFiles(ArtifactsDirR4, "*.png");
+        var pngs = Directory.GetFiles(ArtifactsDirR5, "*.png");
         Assert.Equal(10, pngs.Length);
     }
 
@@ -275,10 +275,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         }
     }
 
-    private static async Task PrepareKompasTipScreenshotAsync(IPage page, int width)
+    private static async Task PrepareKompasTopScreenshotAsync(IPage page, int width)
     {
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
-        await page.Locator(".passport-overview").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator(".passport-page--illustrated, .passport-layout").First.WaitForAsync(new() { Timeout = 60_000 });
         if (width < 500)
         {
             await page.AddStyleTagAsync(new()
@@ -290,10 +290,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             });
         }
 
-        var tip = page.Locator(".kompas-tip");
-        await tip.WaitForAsync(new() { Timeout = 30_000 });
-        await tip.ScrollIntoViewIfNeededAsync();
-        await page.Locator(".kompas-tip__art").WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        await page.Locator(".passport-tabs").WaitForAsync(new() { Timeout = 30_000 });
     }
 
     private static async Task WaitForApplicationsEmptyAsync(IPage page, int _)

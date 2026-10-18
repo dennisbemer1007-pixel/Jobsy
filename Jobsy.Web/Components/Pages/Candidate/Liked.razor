@@ -29,7 +29,8 @@
         <div class="panel-page kb-saved kb-saved--illustrated panel-page--cand-ill">
             <CandidateIllustratedBand Title="@Culture["Kb.Saved.Title"]"
                                      Lead="@Culture["Kb.Saved.Lead"]"
-                                     ArtUrl="@BewaardBand" />
+                                     ArtUrl="@BewaardBand"
+                                     FullBleed="true" />
 
             <CandidateJobListTabs />
             <CandidateSavedSubnav />
@@ -41,7 +42,7 @@
             else if (_items.Count == 0)
             {
                 <div class="kb-saved__empty-layout">
-                    <CandidateIllustratedEmpty ArtUrl="@EmptyLikesArt">
+                    <CandidateIllustratedEmpty ArtUrl="@SpotKaart">
                         <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="@KbRoutes.Map">@Culture["Saved.Discover"]</a>.</p>
                     </CandidateIllustratedEmpty>
                     @RenderSavedRail()

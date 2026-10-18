@@ -712,26 +712,6 @@ window.jobMap = (function () {
             return "";
         }
         const inner = parts.join("");
-        if (illustratedPopup && illustratedTravelSpot) {
-            const travelOnly = parts.filter(function (p) {
-                return p.indexOf("map-popup__meta-item--travel") >= 0;
-            });
-            const rest = parts.filter(function (p) {
-                return p.indexOf("map-popup__meta-item--travel") < 0;
-            });
-            let html = "";
-            if (travelOnly.length) {
-                html +=
-                    "<div class=\"map-popup__travel-band\" style=\"--map-popup-travel-spot:url('" +
-                    escapeAttr(illustratedTravelSpot) + "')\">" +
-                    "<div class=\"map-popup__meta map-popup__meta--travel\">" + travelOnly.join("") + "</div>" +
-                    "</div>";
-            }
-            if (rest.length) {
-                html += "<div class=\"map-popup__meta\">" + rest.join("") + "</div>";
-            }
-            return html;
-        }
         return "<div class=\"map-popup__meta\">" + inner + "</div>";
     }
 

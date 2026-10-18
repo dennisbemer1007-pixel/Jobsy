@@ -40,7 +40,8 @@
     }
     <CandidateIllustratedBand Title="@Culture["Nav.MyApplications"]"
                              Lead="@appsLead"
-                             ArtUrl="@SollicitatiesBand" />
+                             ArtUrl="@SollicitatiesBand"
+                             FullBleed="true" />
 
     <CandidateJobListTabs />
 
@@ -75,7 +76,7 @@
     else if (_filtered.Count == 0)
     {
         <div class="kb-apps__layout kb-apps__layout--empty">
-            <CandidateIllustratedEmpty ArtUrl="@(_items.Count == 0 ? SpotWerkgever : null)"
+            <CandidateIllustratedEmpty ArtUrl="@(_items.Count == 0 ? SpotKaart : null)"
                                        Compact="@(_items.Count > 0)"
                                        CssClass="@(_items.Count == 0 ? "cand-empty--apps-prominent" : null)">
                 @if (_items.Count == 0)

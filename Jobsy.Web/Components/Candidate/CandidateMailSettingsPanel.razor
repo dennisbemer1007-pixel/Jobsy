@@ -42,7 +42,31 @@ else
                     </label>
                 </div>
             }
-            <ComebackWhatsAppFields Available="_whatsAppAvailable" OptedIn="_whatsAppOptedIn" Phone="@_whatsAppPhone" />
+            @if (_whatsAppAvailable)
+            {
+                <input type="hidden" name="whatsapp_shown" value="1" />
+                <div class="cand-toggle cand-toggle--whatsapp">
+                    <div>
+                        <strong class="mail-settings__label">@Culture["Comeback.WhatsApp.Title"]</strong>
+                        <span class="muted mail-settings__hint" style="display:block">@Culture["Comeback.WhatsApp.Hint"]</span>
+                    </div>
+                    <label class="cand-toggle__switch @(_whatsAppOptedIn ? "is-on" : null)">
+                        <input type="checkbox"
+                               name="whatsapp_optin"
+                               value="1"
+                               checked="@_whatsAppOptedIn"
+                               @onchange="OnWhatsAppToggleChanged" />
+                    </label>
+                </div>
+                @if (_whatsAppOptedIn)
+                {
+                    <label class="login-field cand-settings__whatsapp-phone">
+                        <span class="cand-settings__field-label">@Culture["Comeback.WhatsApp.Phone"]</span>
+                        <input type="tel" name="whatsapp_phone" value="@_whatsAppPhone" autocomplete="tel" inputmode="tel" />
+                        <span class="muted">@Culture["Comeback.WhatsApp.PhoneHint"]</span>
+                    </label>
+                }
+            }
             <button type="submit" class="btn btn-primary" style="margin-top:1rem">@Culture["MailSettings.Save"]</button>
         }
         else
@@ -146,4 +170,9 @@ else
         "ComebackReminder" => Culture["MailSettings.Comeback.Hint"],
         _ => ""
     };
+
+    private void OnWhatsAppToggleChanged(ChangeEventArgs e)
+    {
+        _whatsAppOptedIn = e.Value is true or "true" or "on";
+    }
 }

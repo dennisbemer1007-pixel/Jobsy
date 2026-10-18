@@ -87,6 +87,24 @@
   flex-direction: column;
 }
 
+@media (min-width: 900px) {
+  .jobsy-discovery .map-popup--illustrated {
+    max-height: none;
+  }
+
+  .jobsy-discovery .map-popup--illustrated .map-popup__main {
+    overflow-y: visible;
+    flex: 0 1 auto;
+  }
+
+  .jobsy-discovery .map-popup--illustrated .map-popup__media,
+  .jobsy-discovery .map-popup--illustrated .map-popup__media--figure {
+    height: clamp(96px, 16vh, 120px) !important;
+    min-height: clamp(96px, 16vh, 120px) !important;
+    max-height: clamp(96px, 16vh, 120px) !important;
+  }
+}
+
 .jobsy-discovery .map-popup--illustrated .map-popup__main {
   display: flex;
   flex-direction: column;

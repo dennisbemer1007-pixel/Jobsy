@@ -252,8 +252,13 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
+<<<<<<< HEAD
     "sha256": "c7aff1e65adc7b11e5b80df014a4c73969f6c456233638000b435051dcb473fe",
     "v": "20261018-18"
+=======
+    "sha256": "375fb3fe2c010b130b4b3a7cd13363bb392d1e9d2efbf1ba03dbbcaebba1999c",
+    "v": "20261018-17"
+>>>>>>> 2f067f29f (Ronde 5 (#728): full-bleed heroes, popup/travel pill, WhatsApp toggle, kompas polish.)
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",
