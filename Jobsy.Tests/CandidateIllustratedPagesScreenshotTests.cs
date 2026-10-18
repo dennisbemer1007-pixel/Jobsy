@@ -26,6 +26,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirR6 = "/opt/cursor/artifacts/kandidaat-728-r6";
     private const string ArtifactsDirR7 = "/opt/cursor/artifacts/kandidaat-728-r7";
     private const string ArtifactsDirR8 = "/opt/cursor/artifacts/kandidaat-728-r8";
+    private const string ArtifactsDirR9 = "/opt/cursor/artifacts/kandidaat-728-r9";
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -315,6 +316,68 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             prepare: WaitForSettingsMailPaneAsync);
 
         var pngs = Directory.GetFiles(ArtifactsDirR8, "*.png");
+        Assert.Equal(5, pngs.Length);
+    }
+
+    [Fact]
+    public async Task Capture_kandidaat_728_r9_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirR9);
+        if (Directory.Exists(ArtifactsDirR8))
+        {
+            Directory.Delete(ArtifactsDirR8, recursive: true);
+        }
+
+        await CaptureBanenkaartPopupsAsync(
+            ArtifactsDirR9,
+            viewportOnly: true,
+            popupElementShot: true,
+            captures:
+            [
+                (390, 844, "390", "b1000008-0000-0000-0000-000000000008", "popup-no-photo"),
+            ]);
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR9,
+            _web!.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            auth: true,
+            sizes: [(1440, 900, "1440")],
+            prepare: PrepareKompasTopScreenshotAsync);
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR9,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                auth: true,
+                sizes: [(1440, 900, "1440")],
+                prepare: WaitForApplicationsEmptyAsync);
+
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR9,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                auth: true,
+                sizes: [(1440, 900, "1440")],
+                prepare: WaitForSavedEmptyAsync);
+        }
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR9,
+            _web.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            auth: true,
+            sizes: [(1440, 900, "1440")],
+            prepare: WaitForSettingsMailPaneAsync);
+
+        var pngs = Directory.GetFiles(ArtifactsDirR9, "*.png");
         Assert.Equal(5, pngs.Length);
     }
 

@@ -65,10 +65,9 @@
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) 74%,
-    var(--pearl) 78%,
-    color-mix(in srgb, var(--pearl) 92%, transparent) 84%,
-    transparent 92%
+    var(--pearl) calc(52% - 2.5rem),
+    color-mix(in srgb, var(--pearl) 55%, transparent) calc(52% - 1.25rem),
+    transparent calc(52% + 1.25rem)
   );
 }
 
@@ -203,7 +202,7 @@
 
 @media (min-width: 640px) {
   .cand-apply-tip {
-    grid-template-columns: minmax(0, 1fr) minmax(7.5rem, 11rem);
+    grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 9.5rem);
     padding: 1.05rem 1.25rem 1.15rem;
   }
 }
@@ -218,6 +217,8 @@
   font-weight: 700;
   color: var(--brand);
   line-height: 1.25;
+  max-width: none;
+  text-wrap: pretty;
 }
 
 .cand-apply-tip__body {
@@ -225,7 +226,7 @@
   font-size: 0.92rem;
   color: var(--muted);
   line-height: 1.45;
-  max-width: 75ch;
+  max-width: none;
 }
 
 .cand-apply-tip__art {
