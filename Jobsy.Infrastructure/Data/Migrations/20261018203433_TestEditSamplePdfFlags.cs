@@ -10,6 +10,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<bool>(
+                name: "TestEditModeEnabled",
+                table: "PlatformFeatureSettings",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<bool>(
+                name: "SamplePdfEnabled",
+                table: "PlatformFeatureSettings",
+                type: "boolean",
+                nullable: false,
+                defaultValue: false);
+
             migrationBuilder.AlterColumn<bool>(
                 name: "OccupationDayInLifeEnabled",
                 table: "PlatformFeatureSettings",
@@ -49,6 +63,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 defaultValue: "[]",
                 oldClrType: typeof(string),
                 oldType: "text");
+
+            migrationBuilder.DropColumn(
+                name: "SamplePdfEnabled",
+                table: "PlatformFeatureSettings");
+
+            migrationBuilder.DropColumn(
+                name: "TestEditModeEnabled",
+                table: "PlatformFeatureSettings");
         }
     }
 }

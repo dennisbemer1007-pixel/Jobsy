@@ -20,13 +20,6 @@ public partial class FeatureFlagAdminOverrides : Migration
             defaultValue: "[]");
 
         migrationBuilder.AddColumn<bool>(
-            name: "ReferenceVerificationEnabled",
-            table: "PlatformFeatureSettings",
-            type: "boolean",
-            nullable: false,
-            defaultValue: false);
-
-        migrationBuilder.AddColumn<bool>(
             name: "TestJourneyIllustrationEnabled",
             table: "PlatformFeatureSettings",
             type: "boolean",
@@ -51,7 +44,6 @@ public partial class FeatureFlagAdminOverrides : Migration
     protected override void Down(MigrationBuilder migrationBuilder)
     {
         migrationBuilder.DropColumn(name: "AdminFlagOverridesJson", table: "PlatformFeatureSettings");
-        migrationBuilder.DropColumn(name: "ReferenceVerificationEnabled", table: "PlatformFeatureSettings");
         migrationBuilder.DropColumn(name: "TestJourneyIllustrationEnabled", table: "PlatformFeatureSettings");
         migrationBuilder.DropColumn(name: "OnboardingFinaleV2Enabled", table: "PlatformFeatureSettings");
         migrationBuilder.DropColumn(name: "OccupationDayInLifeEnabled", table: "PlatformFeatureSettings");
