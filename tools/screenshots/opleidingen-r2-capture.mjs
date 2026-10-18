@@ -48,6 +48,7 @@ await loginCandidate(page, 'kandidaat@jobsy.local', 'Jobsy123!');
 
 await page.goto(`${base}/carriere/leren`, { waitUntil: 'networkidle', timeout: 120_000 });
 await shot(page, 'leren-groeien-desktop-1440', 1440, true);
+await shot(page, 'leren-groeien-desktop-viewport-1440', 1440, false);
 await shot(page, 'leren-groeien-mobiel-390', 390, false);
 
 await page.goto(`${base}/candidate/paspoort?tab=tests`, { waitUntil: 'networkidle', timeout: 120_000 });
