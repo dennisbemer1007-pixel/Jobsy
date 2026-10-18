@@ -383,6 +383,8 @@ public class AdminRun4PlaywrightTests
         await Assertions.Expect(page.Locator(".admin-breadcrumbs")).ToContainTextAsync("Meldingen referent");
 
         await GotoInteractiveAsync(page, root + "/admin/vacatures");
+        var metricHeaders = page.Locator(".vacancy-grid .data-table th button.linkish");
+        await metricHeaders.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var headerCase = await page.EvaluateAsync<string>(
             """
             () => {
