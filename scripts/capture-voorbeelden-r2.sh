@@ -21,7 +21,7 @@ export E2E__SkipHttpsRedirect=true
 export JOBSY_CAPTURE_OUT="${OUT}"
 export JOBSY_CAPTURE_VOORBEELDEN=1
 export JOBSY_CAPTURE_PROFILE_NAME="Sanne de Vries"
-unset JOBSY_CAPTURE_MOBILE_ONLY JOBSY_CAPTURE_DESKTOP_ONLY JOBSY_TESTBLOKKEN_STEM
+unset JOBSY_CAPTURE_MOBILE_ONLY JOBSY_CAPTURE_DESKTOP_ONLY JOBSY_TESTBLOKKEN_STEM JOBSY_CAPTURE_LANG
 
 dotnet build "${ROOT}/Jobsy.Web/Jobsy.Web.csproj" -v q
 dotnet build "${ROOT}/Jobsy.Tools.Capture/Jobsy.Tools.Capture.csproj" -v q

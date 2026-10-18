@@ -16,6 +16,7 @@ export ASPNETCORE_URLS=http://localhost:5201
 export Jobsy__CaptureMode=true
 export E2E__SkipHttpsRedirect=true
 export JOBSY_CAPTURE_OUT="${OUT}"
+unset JOBSY_CAPTURE_MOBILE_ONLY JOBSY_CAPTURE_DESKTOP_ONLY JOBSY_CAPTURE_VOORBEELDEN
 
 dotnet build "${ROOT}/Jobsy.Web/Jobsy.Web.csproj" -v q
 dotnet build "${ROOT}/Jobsy.Tools.Capture/Jobsy.Tools.Capture.csproj" -v q
