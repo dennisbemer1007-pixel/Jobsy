@@ -30,14 +30,27 @@
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
     [Parameter] public string ArtPosition { get; set; } = "58% center";
+    [Parameter] public string? MobileArtPosition { get; set; }
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private string? StyleValue => string.IsNullOrWhiteSpace(ArtUrl)
-        ? null
-        : $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
+    private string HeroVars
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ArtUrl))
+            {
+                return "";
+            }
 
-    private string? MediaStyleValue => string.IsNullOrWhiteSpace(ArtUrl)
-        ? null
-        : $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
+            var mobile = string.IsNullOrWhiteSpace(MobileArtPosition)
+                ? ArtPosition
+                : MobileArtPosition;
+            return $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition};--ref-verif-hero-pos-mobile:{mobile}";
+        }
+    }
+
+    private string? StyleValue => string.IsNullOrWhiteSpace(ArtUrl) ? null : HeroVars;
+
+    private string? MediaStyleValue => string.IsNullOrWhiteSpace(ArtUrl) ? null : HeroVars;
 }

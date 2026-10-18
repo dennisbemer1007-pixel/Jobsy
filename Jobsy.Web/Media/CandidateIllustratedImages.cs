@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261018-r12d";
+    public const string Version = "20261018-r13b";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -29,4 +29,7 @@ public static class CandidateIllustratedImages
 
     /// <summary>Profession-band hero (Carrière #732): art rechts, crème links in asset.</summary>
     public const string RefVerifHeroArtPosition = "right center";
+
+    /// <summary>Mobile band: keep both men fully in frame on the wide asset.</summary>
+    public const string RefVerifHeroMobilePosition = "62% center";
 }

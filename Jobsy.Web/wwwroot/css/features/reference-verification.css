@@ -1529,14 +1529,8 @@
 }
 
 .ref-verif-cand-hero.cand-hero--profession-band::before {
-  background: linear-gradient(
-    90deg,
-    var(--pearl) 0%,
-    var(--pearl) 48%,
-    color-mix(in srgb, var(--pearl) 94%, transparent) 52%,
-    color-mix(in srgb, var(--pearl) 35%, transparent) 56%,
-    transparent 60%
-  );
+  content: none;
+  display: none;
 }
 
 .ref-verif-cand-hero .cand-hero__copy {
@@ -1638,7 +1632,7 @@
   }
 
   .ref-verif-cand-hero.cand-hero--profession-band .cand-hero__media {
-    background-position: right center;
+    background-position: var(--ref-verif-hero-pos-mobile, 62% center);
     background-size: auto 100%;
   }
 
