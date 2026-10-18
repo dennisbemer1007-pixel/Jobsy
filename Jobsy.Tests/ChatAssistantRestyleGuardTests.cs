@@ -41,6 +41,14 @@ public class ChatAssistantRestyleGuardTests
         Assert.Contains(".app-shell:has(.kb-detail) .lobsy-coach-dock", css, StringComparison.Ordinal);
         Assert.DoesNotContain(".app-shell:has(.kb-detail) .lobsy-coach-cta", css, StringComparison.Ordinal);
         Assert.Contains("resize: none", css, StringComparison.Ordinal);
+        var ctaMedallionIdx = css.IndexOf(".lobsy-coach-cta__medallion", StringComparison.Ordinal);
+        Assert.True(ctaMedallionIdx >= 0);
+        var ctaMedallionBlock = css.Substring(ctaMedallionIdx, Math.Min(220, css.Length - ctaMedallionIdx));
+        Assert.Contains("position: static", ctaMedallionBlock, StringComparison.Ordinal);
+        Assert.DoesNotContain("inset-inline-start: -6px", ctaMedallionBlock, StringComparison.Ordinal);
+        var kbCss = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/kandidaat-banen.css"));
+        Assert.Contains(".kb-detail__photo img", kbCss, StringComparison.Ordinal);
+        Assert.Contains("object-fit: cover", kbCss, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

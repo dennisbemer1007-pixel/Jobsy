@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Jobsy.Core.Media;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
@@ -6,7 +7,7 @@ namespace Jobsy.Tests;
 
 public class ChatRestyleScreenshotTests
 {
-    private const string OutDir = "/opt/cursor/artifacts/chat-r3";
+    private const string OutDir = "/opt/cursor/artifacts/chat-r4";
     private static readonly Guid PreviewVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     [Fact]
@@ -25,14 +26,11 @@ public class ChatRestyleScreenshotTests
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
         var vacancyEntry = VacancyDetailEntryBody(mark, logo);
-        var vacancyOpen = VacancyDetailOpenBody(mark, logo);
 
         var shots = new (string Name, string Body, int W, int H)[]
         {
             ("vacancy-mock-interview-entry-1440", vacancyEntry, 1440, 900),
             ("vacancy-mock-interview-entry-390", vacancyEntry, 390, 844),
-            ("vacancy-mock-interview-open-1440", vacancyOpen, 1440, 900),
-            ("vacancy-mock-interview-open-390", vacancyOpen, 390, 844),
         };
 
         foreach (var (name, body, w, h) in shots)
@@ -47,10 +45,8 @@ public class ChatRestyleScreenshotTests
             await page.GotoAsync("/chat-restyle", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await WaitForBrandImagesAsync(page);
             await AssertBrandImagesLoadedAsync(page);
-            if (name.Contains("entry", StringComparison.Ordinal))
-            {
-                await AssertMockInterviewPillVisibleAsync(page, w);
-            }
+            await AssertMockInterviewPillVisibleAsync(page, w);
+            await AssertMockInterviewPillMedallionDoesNotOverlapLabelAsync(page, w);
 
             await page.ScreenshotAsync(new()
             {
@@ -84,6 +80,34 @@ public class ChatRestyleScreenshotTests
         var page = await context.NewPageAsync();
         await page.GotoAsync("/chat-restyle", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await AssertMockInterviewPillVisibleAsync(page, viewportWidth);
+        await AssertMockInterviewPillMedallionDoesNotOverlapLabelAsync(page, viewportWidth);
+    }
+
+    [Theory]
+    [InlineData(1440)]
+    [InlineData(390)]
+    public async Task Vacancy_entry_mock_interview_pill_medallion_does_not_overlap_label(int viewportWidth)
+    {
+        var root = FindRoot();
+        var www = Path.GetFullPath(Path.Combine(root, "Jobsy.Web/wwwroot"));
+        var appCss = await File.ReadAllTextAsync(Path.Combine(www, "css/app.min.css"));
+        var kbCss = await File.ReadAllTextAsync(Path.Combine(www, "css/features/kandidaat-banen.css"));
+        var mark = BrandImages.MarkSvg;
+        var logo = BrandImages.HorizontalSvg;
+        var height = viewportWidth >= 1024 ? 900 : 844;
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = viewportWidth, Height = height },
+            BaseURL = "https://jobsy.preview/",
+        });
+        await RegisterWwwrootRoutesAsync(context, www, PreviewDocument(appCss, kbCss, VacancyDetailEntryBody(mark, logo)));
+        var page = await context.NewPageAsync();
+        await page.GotoAsync("/chat-restyle", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await AssertMockInterviewPillMedallionDoesNotOverlapLabelAsync(page, viewportWidth);
     }
 
     [Fact]
@@ -198,14 +222,44 @@ public class ChatRestyleScreenshotTests
         </html>
         """;
 
+    private static string MockInterviewPillSlot(int viewportWidth)
+        => viewportWidth >= 1024 ? ".lobsy-coach-cta--kb-rail" : ".lobsy-coach-cta--kb-mobile";
+
     private static async Task AssertMockInterviewPillVisibleAsync(IPage page, int viewportWidth)
     {
-        var slot = viewportWidth >= 1024 ? ".lobsy-coach-cta--kb-rail" : ".lobsy-coach-cta--kb-mobile";
+        var slot = MockInterviewPillSlot(viewportWidth);
         var pill = page.Locator($"{slot} .lobsy-coach-cta__label");
         await Microsoft.Playwright.Assertions.Expect(pill).ToBeVisibleAsync();
         await Microsoft.Playwright.Assertions.Expect(pill).ToHaveTextAsync("Oefen je sollicitatiegesprek");
         var hiddenSlot = viewportWidth >= 1024 ? ".lobsy-coach-cta--kb-mobile" : ".lobsy-coach-cta--kb-rail";
         await Microsoft.Playwright.Assertions.Expect(page.Locator(hiddenSlot)).ToBeHiddenAsync();
+    }
+
+    private static async Task AssertMockInterviewPillMedallionDoesNotOverlapLabelAsync(IPage page, int viewportWidth)
+    {
+        var slot = MockInterviewPillSlot(viewportWidth);
+        var metrics = await page.EvaluateAsync<JsonElement>(
+            """
+            (slot) => {
+              const root = document.querySelector(slot + ' .lobsy-coach-cta__btn--warm');
+              const medallion = root?.querySelector('.lobsy-coach-cta__medallion');
+              const label = root?.querySelector('.lobsy-coach-cta__label');
+              if (!root || !medallion || !label) {
+                return { overlaps: true, gapPx: -1 };
+              }
+              const a = medallion.getBoundingClientRect();
+              const b = label.getBoundingClientRect();
+              const gapPx = b.left - a.right;
+              const overlaps = a.right > b.left + 0.5;
+              return { overlaps, gapPx };
+            }
+            """,
+            slot);
+
+        var overlaps = metrics.GetProperty("overlaps").GetBoolean();
+        var gapPx = metrics.GetProperty("gapPx").GetDouble();
+        Assert.False(overlaps, $"Medallion overlaps label (gap {gapPx}px) at {viewportWidth}px.");
+        Assert.InRange(gapPx, 8, 14);
     }
 
     private static string VacancyFallbackPhoto()
@@ -215,7 +269,7 @@ public class ChatRestyleScreenshotTests
         <div class="lobsy-coach-cta lobsy-coach-cta--kb-{placement}" data-testid="vacancy-mock-interview-cta">
           <button type="button" class="lobsy-coach-cta__btn lobsy-coach-cta__btn--warm" aria-label="Oefen sollicitatiegesprek">
             <span class="lobsy-coach-cta__medallion" aria-hidden="true">
-              <img src="{mark}" srcset="{BrandImages.SrcSet56}" sizes="56px" alt="" width="56" height="56" decoding="async" />
+              <img src="{mark}" srcset="{BrandImages.SrcSet56}" sizes="40px" alt="" width="40" height="40" decoding="async" />
             </span>
             <span class="lobsy-coach-cta__label">Oefen je sollicitatiegesprek</span>
           </button>
