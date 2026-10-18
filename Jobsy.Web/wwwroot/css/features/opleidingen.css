@@ -1111,8 +1111,20 @@
     background-color: transparent;
     background-image: var(--cand-hero-mobile-atmosphere, none);
     background-repeat: no-repeat;
-    background-size: cover;
-    background-position: right bottom;
+    background-size: auto 100%;
+    background-position: left bottom;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(0 0 0 / 0.45) 14%,
+      #000 26%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(0 0 0 / 0.45) 14%,
+      #000 26%
+    );
   }
 
   /* Gradient only in the strip between copy (left) and illustration (right). */
@@ -1149,8 +1161,8 @@
     background-color: transparent !important;
     background-image: var(--cand-hero-figures, none) !important;
     background-repeat: no-repeat;
-    background-size: auto 92%;
-    background-position: right bottom;
+    background-size: auto 90%;
+    background-position: left bottom;
     opacity: 1;
   }
 
@@ -1190,6 +1202,36 @@
 
   .opl-page .cand-hero--learn-grow + .opl-wrap .opl-search--below {
     margin-top: var(--space-3);
+  }
+
+  .opl-page .opl-filters__chip-rail {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      #000 0%,
+      #000 calc(100% - 4.25rem),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      #000 0%,
+      #000 calc(100% - 4.25rem),
+      transparent 100%
+    );
+  }
+
+  .opl-page .opl-filters__chip-rail::after {
+    z-index: 2;
+    width: 4.25rem;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--surface) 70%, transparent) 35%,
+      var(--surface) 88%
+    );
+  }
+
+  .opl-page .opl-filters__subject-scroll {
+    padding-inline-end: 3.5rem;
   }
 }
 
