@@ -253,11 +253,15 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.IllustratedSidebarTitle"] = english ? "Tip for this step" : "Tip bij deze stap";
         map["Onboarding.IllustratedSidebar.SubstepsAria"] = english ? "Steps in this onboarding flow" : "Stappen in deze onboarding";
         map["Onboarding.IllustratedSidebar.Step1"] = english ? "We only use your address for travel time. Employers never see your home address." : "Je adres gebruiken we alleen voor reistijd. Werkgevers zien je woonadres niet.";
-        map["Onboarding.IllustratedSidebar.Step2"] = english ? "Pick what fits now — you can fine-tune days and hours later." : "Kies wat nu bij je past — dagen en uren kun je later nog finetunen.";
+        map["Onboarding.IllustratedSidebar.Step2"] = english ? "Pick what fits now. You can fine-tune days and hours later." : "Kies wat nu bij je past. Dagen en uren kun je later nog finetunen.";
         map["Onboarding.IllustratedSidebar.Step3"] = english ? "We match jobs you can actually reach with how you travel." : "We tonen banen die passen bij hoe jij reist en hoe ver je wilt.";
         map["Onboarding.IllustratedSidebar.Step4"] = english ? "Side jobs, volunteering and internships count too. Skip if you prefer." : "Bijbaan, vrijwilligerswerk en stage tellen ook. Overslaan mag.";
-        map["Onboarding.IllustratedSidebar.Step5"] = english ? "Your highest finished level is enough — direction is optional." : "Je hoogste afgeronde niveau is genoeg — richting is optioneel.";
-        map["Onboarding.IllustratedSidebar.Step6"] = english ? "Dream big — we will shape a route in Career, even if you are not sure yet." : "Denk groot — in Carrière maken we er een route naartoe, ook als je het nog niet weet.";
+        map["Onboarding.IllustratedSidebar.Step5"] = english ? "Your highest finished level is enough. Direction is optional." : "Je hoogste afgeronde niveau is genoeg. Richting is optioneel.";
+        map["Onboarding.IllustratedSidebar.Step6"] = english ? "Dream big. In Career we shape a route, even if you are not sure yet." : "Denk groot. In Carrière maken we er een route naartoe, ook als je het nog niet weet.";
+        map["Onboarding.Step6.Suggest.FitTitle"] = english ? "Fits you" : "Past bij jou";
+        map["Onboarding.Step6.Suggest.RegionalTitle"] = english ? "Popular near you" : "Populair in de buurt";
+        map["Onboarding.Step6.Suggest.ReasonProfile"] = english ? "Based on your background so far" : "Op basis van wat je tot nu toe invulde";
+        map["Onboarding.Step6.Suggest.ReasonPopular"] = english ? "Often chosen in the region" : "Vaak gekozen in de regio";
         map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who are you" : "Wie ben jij";
         map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
         AddPresets(map, english);

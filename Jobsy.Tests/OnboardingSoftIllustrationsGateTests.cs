@@ -44,4 +44,28 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}.webp")), $"{slug}.webp");
         Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}.jpg")), $"{slug}.jpg");
     }
+
+    [Fact]
+    public void Illustrated_sidebar_tips_avoid_em_dash_in_dutch()
+    {
+        var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Localization/UiStringsOnboardingV2.cs"));
+        for (var step = 1; step <= 6; step++)
+        {
+            var key = $"Onboarding.IllustratedSidebar.Step{step}";
+            var idx = src.IndexOf(key, StringComparison.Ordinal);
+            Assert.True(idx >= 0, key);
+            var slice = src[idx..Math.Min(src.Length, idx + 280)];
+            Assert.DoesNotContain(" — ", slice);
+            Assert.DoesNotContain("Denk groot —", slice, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void Hero_band_css_splits_title_and_full_color_art()
+    {
+        var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
+        Assert.Contains("grid-template-columns", css, StringComparison.Ordinal);
+        Assert.Contains(".ob-illustrated-step__art", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("inset: 0", css, StringComparison.Ordinal);
+    }
 }

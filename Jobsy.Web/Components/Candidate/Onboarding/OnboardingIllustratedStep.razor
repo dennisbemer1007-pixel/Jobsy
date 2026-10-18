@@ -2,6 +2,12 @@
 
 <section class="ob-illustrated-step" data-testid="@TestId">
     <div class="ob-illustrated-step__hero-band">
+        @if (HeadContent is not null)
+        {
+            <div class="ob-illustrated-step__head">
+                @HeadContent
+            </div>
+        }
         <div class="ob-illustrated-step__art" aria-hidden="true" data-testid="onboarding-illustration-art">
             <picture>
                 <source type="image/webp" srcset="@WebpSrc" />
@@ -15,12 +21,6 @@
                      data-testid="onboarding-illustration-img" />
             </picture>
         </div>
-        @if (HeadContent is not null)
-        {
-            <div class="ob-illustrated-step__head">
-                @HeadContent
-            </div>
-        }
     </div>
     <div class="ob-illustrated-step__body">
         @ChildContent

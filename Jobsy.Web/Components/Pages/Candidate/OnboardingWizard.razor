@@ -28,9 +28,9 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-08" />
-    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-r3" />
+    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-r4" />
     <link rel="stylesheet" href="css/features/onboarding-test-blocks.css?v=20261018-r2" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-r3b" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-r4" />
     @if (TestJourneyIllustration.Enabled)
     {
         <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
@@ -376,6 +376,7 @@
                                         <DreamJobStep Draft="Draft"
                                                       ShowValidation="_showValidation"
                                                       Young="@IsYoungCandidate"
+                                                      RegionalVacancyTitles="@DreamStepRegionalTitles"
                                                       ChooseDream="ChooseDream"
                                                       ChooseTitle="ChooseDreamTitle"
                                                       ChooseOwnDream="ChooseOwnDream"
@@ -530,6 +531,10 @@
         6 => Culture["Onboarding.IllustratedSidebar.Step6"],
         _ => null,
     };
+
+    private IReadOnlyList<string> DreamStepRegionalTitles =>
+        _nearbySignal?.Examples.Select(example => example.Title).ToList() ?? [];
+
     private int _currentQuestion;
     private string _installMessage = "";
     private string? _error;
