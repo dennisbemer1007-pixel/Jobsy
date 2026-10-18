@@ -148,22 +148,20 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
         await RegisterAndSkipToBanenkaartAsync(page, baseUrl);
-        await page.EvaluateAsync(
-            """
-            async () => {
-              const res = await fetch('/api/me/profile', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'include',
-                body: JSON.stringify({ openForWork: false }),
-              });
-              if (!res.ok) throw new Error('profile patch failed ' + res.status);
-            }
-            """);
+        await page.GotoAsync($"{baseUrl}/candidate/paspoort?tab=data", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+        var openForWorkSwitch = page.Locator(".passport-data__switch-input").First;
+        await openForWorkSwitch.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        if (await openForWorkSwitch.IsCheckedAsync())
+        {
+            await openForWorkSwitch.UncheckAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(1500);
+        }
+
         await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
         await WaitForCircuitReadyAsync(page);
         await page.Locator("[data-testid=open-for-work-prompt]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-        await page.Locator("[data-testid=kb-view-lijst]").ClickAsync(new() { Force = true });
+        await page.Locator(".vacancy-pane [data-testid=kb-view-lijst]").First.ClickAsync(new() { Force = true });
         await page.WaitForTimeoutAsync(800);
         var pane = page.Locator(".vacancy-pane");
         await pane.ScreenshotAsync(new()

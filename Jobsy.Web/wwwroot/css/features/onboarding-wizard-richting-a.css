@@ -518,58 +518,30 @@
     gap: 0.4rem;
   }
 
-  .ob-wizard--richting-a .ob-fields__address .kb-panel-head__address.kb-address {
-    overflow: visible;
-  }
-
   .ob-wizard--richting-a .ob-fields__address .kb-address__field {
-    position: relative;
-    display: block;
-  }
-
-  .ob-wizard--richting-a .ob-fields__address .kb-address__field input {
-    width: 100%;
-    min-height: 48px;
-    padding-inline-end: 48px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-
-  .ob-wizard--richting-a .ob-fields__address .kb-address--with-clear .kb-address__field input {
-    padding-inline-end: calc(48px + 8px + 40px);
-  }
-
-  .ob-wizard--richting-a .ob-fields__address .kb-address__geo,
-  .ob-wizard--richting-a .ob-fields__address .kb-address__clear {
-    position: absolute;
-    top: 0;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-    padding: 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-  }
-
-  .ob-wizard--richting-a .ob-fields__address .kb-address__clear {
-    inset-inline-end: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: stretch;
   }
 
   .ob-wizard--richting-a .ob-fields__address .kb-address__geo {
-    inset-inline-end: 0;
+    min-height: 48px;
+    padding: 0 0.85rem;
+    border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border));
+    border-radius: var(--radius-sm);
     background: var(--accent-soft);
     color: var(--brand);
-  }
-
-  .ob-wizard--richting-a .ob-fields__address .kb-address--with-clear .kb-address__geo {
-    inset-inline-end: 48px;
+    font-size: 0.875rem;
+    font-weight: 600;
   }
 
   .ob-wizard--richting-a .ob-fields__address .kb-address__geo-icon svg {
-    display: inline;
+    display: none;
+  }
+
+  .ob-wizard--richting-a .ob-fields__address .kb-address__geo::after {
+    content: "GPS";
   }
 
   .ob-wizard--richting-a .ob-wizard__test-tabs {
