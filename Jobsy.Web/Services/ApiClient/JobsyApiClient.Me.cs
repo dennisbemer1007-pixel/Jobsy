@@ -293,6 +293,10 @@ public sealed partial class JobsyApiClient
         {
             return null;
         }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
     }
 
     public async Task<CandidateDiscoveryOverviewPanelDto?> GetDiscoveryOverviewPanelAsync(CancellationToken ct = default)

@@ -1,10 +1,10 @@
 {
   "css/app.min.css": {
-    "sha256": "024bb1791ceb4b2c8ce0ec69e365659d838b32d0b5c96302cb6df4d4e665b122",
+    "sha256": "a83a058190afcc117c6ed5f502257f1e8c6a8dfd2a6efbce6d7b02dc35417b05",
     "v": "20261017-03"
   },
   "css/critical.css": {
-    "sha256": "3a99a9a216cdf8bc2e4410503115fd778c06884a9727d734b3d3dad1cff9a075",
+    "sha256": "94b9e9f0833faebdcbf4281da401379c93851562b64d48d838d27004f6862cab",
     "v": "20261004-13"
   },
   "css/features/account-mfa.css": {
@@ -52,7 +52,7 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "c6208ff54f0a9655443cfc25f74a1de74c9dcc5defd96200319a7ceb8dbf85b5",
+    "sha256": "f14f58ce1a300166e49e0e835d14e394a53f2532bebb4d26a63a7f555ab82db1",
     "v": "20261015-04"
   },
   "css/features/future-jobs.css": {
@@ -68,7 +68,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "f23c672c697fe5a49c1c5818b95c1b83626ddb5094afa4170803aea9f5afbb70",
+    "sha256": "6dcf6faf117fa0b0b9e7ae1966ef39081793fa3e6cb3e50c941c6232e542424e",
     "v": "20261015-27"
   },
   "css/features/kandidaatinzichten.css": {
@@ -103,21 +103,37 @@
     "sha256": "b63a6b010adbdba176ada22dfa5d19b2699c2096d05c6225428e9a72d5a7f44c",
     "v": "20261005-23"
   },
+  "css/features/onboarding-finale-v2.css": {
+    "sha256": "e621c182c6a56b5acd322365ff2c2ea1df52b97f4b85076633a4bbd08dc2d3c7",
+    "v": "20261018-15"
+  },
   "css/features/onboarding-wizard-mobile-bar.css": {
     "sha256": "2aa2e9fb9c528693ad4002eb4c76175dfb817b6f75045d1a585d06944fce11c7",
     "v": "20261016-02"
   },
+  "css/features/onboarding-wizard-nearby-panel.css": {
+    "sha256": "b24af2c35135df9e840d82d56ad1413b17d4058cd7df042697ec8080acee617f",
+    "v": "20261018-01"
+  },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "c833351e69fa5ae234ed2046fa4696599b365b91eb7cde4b5b631c2b2d95caf4",
+    "sha256": "a35e24d5ecb4a39d45fac0288211dd4dc2fee11b97b2c71fcd2db36f0532ee2a",
     "v": "20261017-01"
+  },
+  "css/features/onboarding-wizard-test-journey.css": {
+    "sha256": "3b8d58979c481091afb041cfcf3de1017fb336d65b8993f4de703f55e4c3c293",
+    "v": "20261018-07"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
     "sha256": "6084d709e44d2ef876cd62248a11df4d678a1832c4720ee2193f303d6b1c822c",
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "f1f1ad351beddbc57d95e0c1215296e476ec8ae2467b9eb9123999fcddcabc79",
+    "sha256": "d94ce51e3bb8cde64fcb90b6d9f3eb13278450f667e4285b8ccd8b0e8bd27e47",
     "v": "20261015-06"
+  },
+  "css/features/onboarding-work-history.css": {
+    "sha256": "a0e3be6b95086a191587758d0bac38669ed4ac71f5f11a3528b47e342bcc0edf",
+    "v": "20261018-07"
   },
   "css/features/ontdekkingsreis.css": {
     "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
@@ -160,7 +176,7 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "1a731671219f9ad4528662a392da06a57592afa826f3f8d7c84974d71ced41b4",
+    "sha256": "59f25d5348c287a1b4501bb8bc4e03e2dc6295d0d58a1dad6b795a10affffe12",
     "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {
@@ -192,7 +208,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "4d27d3ad3b4ed8c73873f187307aaadf2afdba68948db0f4b543a9470c8f9c93",
+    "sha256": "08838ff2e54ae52f0c34d8cb2a266bf978873ea1939cb5902dcdc2ff55f33372",
     "v": "20261017-04"
   },
   "js/app-extras.js": {
@@ -232,8 +248,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "36eceb6a38f849812e27e01b4c130934ecb1cce135c8f13e00683ee84879ff88",
-    "v": "20261018-12"
+    "sha256": "0a75302c009d8d05c3b444df2d19e864aa019e8f4c9dfd4d9cb0b80e0cd44503",
+    "v": "20261018-hotfix-fitpill"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",

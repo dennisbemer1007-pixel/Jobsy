@@ -2,6 +2,7 @@
 @using System.Text.RegularExpressions
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 @inject IJSRuntime Js
@@ -13,7 +14,7 @@
     var question = Ordered.Count > 0 ? Ordered[index] : null;
     var answered = question is not null && FlowAnswers.ContainsKey(question.Id);
     var isLast = Ordered.Count > 0 && index >= targetCount - 1;
-    var answeredCount = FlowAnswers.Count;
+    var answeredCount = AnsweredInTargetCount();
     var reached = TestDepthRules.Reached(Kind, answeredCount);
     var nextLevel = TestDepthRules.Next(Kind, answeredCount);
     var blocks = targetCount > 50 ? 25 : targetCount;
@@ -24,9 +25,9 @@
     {
         @if (TestBlockStageActive && Compact && !string.IsNullOrWhiteSpace(QuestionTitle))
         {
-            <div class="test-block-stage__mobile-hero test-block-stage__mobile-hero--compact">
+            <TestBlockMobileHero CssClass="test-block-stage__mobile-hero--compact">
                 <h2 class="test-block-stage__mobile-hero-title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
-            </div>
+            </TestBlockMobileHero>
         }
 
         @if (Target != TestDepthLevel.Bottom)
@@ -70,12 +71,15 @@
                     <span class="test-flow__seg @cls" aria-hidden="@(segCurrent ? null : "true")"></span>
                 }
             }
-            @foreach (var band in TestDepthRules.Levels(Kind))
+            @if (!Compact)
             {
-                if (band.Count <= targetCount)
+                @foreach (var band in TestDepthRules.Levels(Kind))
                 {
-                    var pct = band.Count * 100.0 / targetCount;
-                    <span class="test-flow__tick" style="--tick:@pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                    if (band.Count < targetCount)
+                    {
+                        var pct = band.Count * 100.0 / targetCount;
+                        <span class="test-flow__tick" style="--tick:@pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                    }
                 }
             }
         </div>
@@ -123,8 +127,9 @@
             <p class="test-example" data-testid="test-item-example">@question.Example</p>
         }
 
-        <LikertRadioGroup QuestionId="question.Id"
-                          Value="@(answered ? FlowAnswers[question.Id] : null)"
+        <LikertRadioGroup @key="question.Id"
+                          QuestionId="question.Id"
+                          Value="@(FlowAnswers.TryGetValue(question.Id, out var saved) ? saved : null)"
                           Interactive="true"
                           InputPrefix="@InputPrefix"
                           StatementId="@($"tf-stmt-{question.Id}")"
@@ -220,6 +225,7 @@
     [Parameter] public EventCallback OnLeave { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
+    [Parameter] public EventCallback<int> OnIndexChanged { get; set; }
     [Parameter] public bool LoadFailed { get; set; }
     /// <summary>Overrides <see cref="UiStrings"/> TestFlow.Finish on the last question (e.g. onboarding “Volgende test”).</summary>
     [Parameter] public string? FinishLabel { get; set; }
@@ -248,6 +254,7 @@
     private readonly Dictionary<int, int> _flowAnswers = new();
     private IReadOnlyDictionary<int, int> FlowAnswers => _flowAnswers;
     private IReadOnlyList<FlowQuestion> Ordered => Questions;
+    private string? _orderedSignature;
 
     private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
 
@@ -261,27 +268,9 @@
 
     protected override void OnInitialized()
     {
+        _orderedSignature = BuildOrderedSignature();
         MergeParameterAnswers();
-        _index = Math.Clamp(StartAt, 0, Math.Max(0, TargetCount - 1));
-        // Prefer first unanswered within target.
-        var resumed = false;
-        for (var i = 0; i < TargetCount; i++)
-        {
-            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
-            {
-                _index = i;
-                resumed = true;
-                break;
-            }
-        }
-
-        if (!resumed && TargetCount > 0)
-        {
-            _index = StartAt > 0
-                ? Math.Clamp(StartAt, 0, TargetCount - 1)
-                : TargetCount - 1;
-        }
-
+        ApplyFirstUnansweredIndex();
         _focusRequest = true;
         RefreshProgressInsight();
     }
@@ -442,9 +431,7 @@
 
         if (token.IsCancellationRequested || generation != _advanceGeneration || _index != answeredIndex) return;
         if (_index >= TargetCount - 1) return;
-        _index = answeredIndex + 1;
-        _focusRequest = true;
-        await InvokeAsync(StateHasChanged);
+        await SetIndexAsync(answeredIndex + 1);
     }
 
     private void CancelPendingAdvance()
@@ -469,25 +456,87 @@
         return null;
     }
 
+    private int AnsweredInTargetCount()
+    {
+        var count = 0;
+        for (var i = 0; i < TargetCount; i++)
+        {
+            if (_flowAnswers.ContainsKey(Ordered[i].Id))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static bool IsInCurrentFlow(int id, IReadOnlyList<FlowQuestion> ordered, int targetCount)
+    {
+        for (var i = 0; i < targetCount && i < ordered.Count; i++)
+        {
+            if (ordered[i].Id == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private string BuildOrderedSignature()
+        => $"{(int)Kind}:{Target}:{string.Join(',', Ordered.Take(TargetCount).Select(q => q.Id))}";
+
+    private void ApplyFirstUnansweredIndex()
+    {
+        _index = Math.Clamp(StartAt, 0, Math.Max(0, TargetCount - 1));
+        for (var i = 0; i < TargetCount; i++)
+        {
+            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
+            {
+                _index = i;
+                break;
+            }
+        }
+    }
+
     private void MergeParameterAnswers()
     {
         foreach (var (id, val) in Answers)
         {
-            _flowAnswers[id] = val;
+            if (IsInCurrentFlow(id, Ordered, TargetCount))
+            {
+                _flowAnswers[id] = val;
+            }
         }
 
         if (Autosave is not null)
         {
             foreach (var (id, val) in Autosave.Answers)
             {
-                _flowAnswers[id] = val;
+                if (IsInCurrentFlow(id, Ordered, TargetCount))
+                {
+                    _flowAnswers[id] = val;
+                }
             }
         }
     }
 
     protected override void OnParametersSet()
     {
-        MergeParameterAnswers();
+        var signature = BuildOrderedSignature();
+        if (!string.Equals(signature, _orderedSignature, StringComparison.Ordinal))
+        {
+            _orderedSignature = signature;
+            _flowAnswers.Clear();
+            _firedLevels.Clear();
+            MergeParameterAnswers();
+            ApplyFirstUnansweredIndex();
+        }
+        else
+        {
+            MergeParameterAnswers();
+        }
+
         RefreshProgressInsight();
 
         // Apply an external jump only when it changes. Re-applying the same index
@@ -508,7 +557,7 @@
 
     private async Task FireLevelsAsync()
     {
-        var count = _flowAnswers.Count;
+        var count = AnsweredInTargetCount();
         foreach (var band in TestDepthRules.Levels(Kind))
         {
             if (count >= band.Count && _firedLevels.Add(band.Level) && OnLevelReached.HasDelegate)
@@ -561,8 +610,19 @@
 
             return;
         }
-        _index--;
+
+        await SetIndexAsync(_index - 1);
+    }
+
+    private async Task SetIndexAsync(int index)
+    {
+        _index = Math.Clamp(index, 0, Math.Max(0, TargetCount - 1));
         _focusRequest = true;
+        if (OnIndexChanged.HasDelegate)
+        {
+            await OnIndexChanged.InvokeAsync(_index);
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 
@@ -601,9 +661,7 @@
             return;
         }
 
-        _index++;
-        _focusRequest = true;
-        await InvokeAsync(StateHasChanged);
+        await SetIndexAsync(_index + 1);
     }
 
     private async Task LaterAsync()

@@ -4,6 +4,8 @@
 @using Jobsy.Web.Admin
 @using Jobsy.Web.Components
 @using Jobsy.Web.Components.Admin.Ui
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Core.Rules
 @using Jobsy.Core.Features
 @using Jobsy.Web.Features
 @using Jobsy.Web.Navigation
@@ -95,11 +97,11 @@ else if (_snapshot is not null)
                             else if (entry.Kind == PlatformSettingKind.Date)
                             {
                                 <div class="admin-settings-date">
-                                    <input type="date"
-                                           class="admin-settings-input"
-                                           value="@FormatDateInput(value as DateOnly?)"
-                                           disabled="@locked"
-                                           @onchange="e => SetDate(entry, e)" />
+                                    <JobsyDateField CssClass="admin-settings-input"
+                                                    Value="value as DateOnly?"
+                                                    ValueChanged="d => SetDraftDate(entry, d)"
+                                                    Disabled="@locked"
+                                                    TestId="@($"admin-setting-date-{entry.Key}")" />
                                     <button type="button"
                                             class="btn-compact"
                                             disabled="@(locked || value is null)"
@@ -354,20 +356,7 @@ else if (_snapshot is not null)
         SetDraft(entry, n);
     }
 
-    private void SetDate(PlatformSettingDescriptor entry, ChangeEventArgs e)
-    {
-        var raw = e.Value?.ToString();
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            SetDraft(entry, null);
-            return;
-        }
-
-        if (DateOnly.TryParse(raw, out var d))
-        {
-            SetDraft(entry, d);
-        }
-    }
+    private void SetDraftDate(PlatformSettingDescriptor entry, DateOnly? date) => SetDraft(entry, date);
 
     private void ClearDate(PlatformSettingDescriptor entry) => SetDraft(entry, null);
 

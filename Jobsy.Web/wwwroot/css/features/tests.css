@@ -534,21 +534,25 @@
 
 .test-block-stage--hoe-je-werkt {
   --test-block-tint: #e6eef7;
+  --test-block-hero-cream: color-mix(in srgb, var(--surface) 93%, var(--pearl-cool, var(--pearl)));
   --test-block-band-image: url("/images/tests/bg-hoe-je-werkt.jpg");
 }
 
 .test-block-stage--leuk {
   --test-block-tint: color-mix(in srgb, var(--coral-soft, #ffe8e0) 38%, var(--surface));
+  --test-block-hero-cream: color-mix(in srgb, var(--surface) 90%, var(--coral-soft, #ffe8e0));
   --test-block-band-image: url("/images/tests/bg-leuk.jpg");
 }
 
 .test-block-stage--sfeer {
   --test-block-tint: #f3ebe2;
+  --test-block-hero-cream: color-mix(in srgb, var(--surface) 88%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-sfeer.jpg");
 }
 
 .test-block-stage--waarden {
   --test-block-tint: color-mix(in srgb, #d8e8dc 42%, var(--surface));
+  --test-block-hero-cream: color-mix(in srgb, var(--surface) 90%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-waarden.jpg");
 }
 
@@ -624,33 +628,55 @@
 
   .test-block-stage__mobile-hero--band,
   .test-block-stage__mobile-hero--compact {
-    display: block;
+    display: grid;
     position: relative;
     box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr) clamp(0.55rem, 3.8vw, 1rem) min(45%, 10.75rem);
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
     inline-size: 100%;
     max-block-size: 12.5rem;
-    min-block-size: 8.75rem;
+    min-block-size: 7.5rem;
+    block-size: clamp(7.5rem, 24vw, 12.5rem);
     margin: 0;
     border: 0;
     border-radius: 0;
     overflow: hidden;
     isolation: isolate;
-    background-color: var(--test-block-tint);
-    background-image:
-      linear-gradient(
-        102deg,
-        color-mix(in srgb, var(--surface) 96%, var(--pearl)) 0%,
-        color-mix(in srgb, var(--surface) 72%, transparent) 42%,
-        transparent 58%
-      ),
-      var(--test-block-band-image);
-    background-repeat: no-repeat, no-repeat;
-    background-size: 100% 100%, auto min(11.5rem, 92%);
-    background-position: 0 0, 100% 100%;
+    background-color: var(--test-block-hero-cream, color-mix(in srgb, var(--surface) 96%, var(--pearl)));
   }
 
   .test-block-stage__mobile-hero--compact {
     margin-block-end: 0.65rem;
+  }
+
+  .test-block-stage__mobile-hero__figure {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: end;
+    justify-self: end;
+    inline-size: 100%;
+    block-size: 82%;
+    min-block-size: 5.5rem;
+    max-block-size: 90%;
+    background-image: var(--test-block-band-image);
+    background-repeat: no-repeat;
+    background-position: 100% 100%;
+    background-size: contain;
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  .test-block-stage__mobile-hero__fade {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+    background: linear-gradient(
+      to right,
+      var(--test-block-hero-cream, color-mix(in srgb, var(--surface) 96%, var(--pearl))),
+      transparent
+    );
+    pointer-events: none;
   }
 
   .test-page:has([data-testid="test-block-stage"]) {
@@ -661,49 +687,31 @@
     margin-inline: 0.85rem;
   }
 
-  .test-block-stage__mobile-hero--band::before,
-  .test-block-stage__mobile-hero--compact::before {
-    content: none;
-  }
-
   .test-block-stage__mobile-hero h1,
   .test-block-stage__mobile-hero-title {
+    grid-column: 1;
+    grid-row: 1;
     position: relative;
     z-index: 1;
+    align-self: start;
     margin: 0;
-    padding: 0.8rem 0.9rem;
-    max-inline-size: 56%;
+    padding: 0.75rem 0.85rem;
+    max-inline-size: 100%;
     font-size: clamp(1.12rem, 4.1vw, 1.42rem);
     line-height: 1.22;
     font-weight: 700;
     color: var(--ink);
-    background: none;
+    background: var(--test-block-hero-cream, color-mix(in srgb, var(--surface) 96%, var(--pearl)));
     border: 0;
     box-shadow: none;
   }
 
-  .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero--band,
-  .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero--compact {
-    --test-block-hero-figure-size: min(76vw, 17rem);
-    background-position: 0 0, 100% 100%;
+  .test-block-stage--leuk .test-block-stage__mobile-hero__figure {
+    block-size: 86%;
   }
 
-  .test-block-stage--leuk .test-block-stage__mobile-hero--band,
-  .test-block-stage--leuk .test-block-stage__mobile-hero--compact {
-    --test-block-hero-figure-size: min(82vw, 18rem);
-    background-position: 0 0, 100% 100%;
-  }
-
-  .test-block-stage--sfeer .test-block-stage__mobile-hero--band,
-  .test-block-stage--sfeer .test-block-stage__mobile-hero--compact {
-    --test-block-hero-figure-size: min(70vw, 15.75rem);
-    background-position: 0 0, 100% 100%;
-  }
-
-  .test-block-stage--waarden .test-block-stage__mobile-hero--band,
-  .test-block-stage--waarden .test-block-stage__mobile-hero--compact {
-    --test-block-hero-figure-size: min(68vw, 15.5rem);
-    background-position: 0 0, 100% 100%;
+  .test-block-stage--sfeer .test-block-stage__mobile-hero__figure {
+    block-size: 80%;
   }
 
   .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {

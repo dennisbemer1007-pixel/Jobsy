@@ -155,5 +155,6 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("kandidatenkaartEnabled")]
         public bool KandidatenkaartEnabled { get; set; }
+
     }
 }

@@ -42,6 +42,9 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Fit.Some",
             "Enige match", "Some fit",
             "Częściowe dopasowanie", "Potrivire parțială", "تطابق جزئي");
+        Add("Kb.Fit.PastWhy",
+            "Past bij je: {reason}", "Fits you: {reason}",
+            "Pasuje do ciebie: {reason}", "Ți se potrivește: {reason}", "يناسبك: {reason}");
         Add("Kb.Fit.Gate",
             "Maak je paspoort af", "Finish your passport",
             "Uzupełnij paszport", "Finalizează pașaportul", "أكمل جوازك");

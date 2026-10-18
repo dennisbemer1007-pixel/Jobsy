@@ -49,8 +49,9 @@ public sealed class AvailabilityStartDatePlaywrightTests
         await page.Locator(".ob-fields input").Nth(1).FillAsync("Jansen");
         await page.Locator(".ob-fields input").Nth(2).FillAsync("1234AB");
         var birth = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-22);
-        await page.Locator("[data-testid=onboarding-birth-date] input[type=date]").First.FillAsync(birth.ToString("yyyy-MM-dd"));
-        var birthDisplay = await page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__display-text").InnerTextAsync();
+        await page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__text").First.FillAsync(
+            JobsyDateInputRules.FormatDisplayDate(birth, "nl"));
+        var birthDisplay = await page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__text").InputValueAsync();
         Assert.Contains(JobsyDateInputRules.FormatDisplayDate(birth, "nl"), birthDisplay, StringComparison.Ordinal);
         await page.Locator(".ob-fields input[type=tel]").FillAsync("0612345678");
         await KbE2e.AssertSelectorLooksStyledAsync(page, ".ob-fields input");
@@ -76,11 +77,12 @@ public sealed class AvailabilityStartDatePlaywrightTests
 
         await page.Locator(".ob-wizard__start-option").Filter(new() { HasText = "Vanaf een datum" }).First.ClickAsync();
         var start = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7);
-        await page.Locator("[data-testid=availability-start-date] input[type=date]").First.FillAsync(start.ToString("yyyy-MM-dd"));
+        await page.Locator("[data-testid=availability-start-date] .jobsy-date-field__text").First.FillAsync(
+            JobsyDateInputRules.FormatDisplayDate(start, "nl"));
         Assert.Equal(1, await page.Locator(".ob-wizard__start-option.is-selected").CountAsync());
         var selectedText = await page.Locator(".ob-wizard__start-option.is-selected").InnerTextAsync();
         Assert.Contains("Vanaf een datum", selectedText, StringComparison.Ordinal);
-        var dateDisplay = await page.Locator("[data-testid=availability-start-date] .jobsy-date-field__display-text").InnerTextAsync();
+        var dateDisplay = await page.Locator("[data-testid=availability-start-date] .jobsy-date-field__text").InputValueAsync();
         Assert.Equal(JobsyDateInputRules.FormatDisplayDate(start, "nl"), dateDisplay.Trim());
         await page.Locator(".ob-wizard__start-date").ScrollIntoViewIfNeededAsync();
         await CandidateJourneyE2e.ShotViewportAsync(page, Path.Combine(outDir, $"03-after-onboarding-availability-date-{label}.png"));

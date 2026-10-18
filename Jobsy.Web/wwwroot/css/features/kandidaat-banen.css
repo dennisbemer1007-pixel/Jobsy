@@ -583,6 +583,19 @@
   outline-offset: 2px;
 }
 
+.jobsy-discovery.kb-start-prompt-open .kb-ext__promo {
+  display: none !important;
+}
+
+.kb-open-for-work {
+  padding-inline: 16px;
+  padding-block: 0.35rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .kb-start-prompt {
   position: absolute;
   z-index: 8;
@@ -2743,13 +2756,17 @@ ol.apply-steps.apply-steps--three {
   border-radius: var(--radius-sm, 8px);
   overflow: hidden;
   border: 1px solid var(--border);
+  flex: 0 0 auto;
 }
 
 .kb-view-toggle--mobile .kb-view-toggle__btn {
   min-height: 40px;
   height: 40px;
-  padding: 0 12px;
+  min-width: 3.15rem;
+  padding: 0 10px;
   border-radius: 0;
+  font-size: 0.8125rem;
+  white-space: nowrap;
 }
 
 

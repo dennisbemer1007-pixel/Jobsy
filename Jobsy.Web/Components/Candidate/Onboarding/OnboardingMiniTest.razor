@@ -25,9 +25,9 @@
 {
     @if (Questions.Count > 0)
     {
-        <div class="test-block-stage__mobile-hero test-block-stage__mobile-hero--band">
+        <TestBlockMobileHero>
             <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
-        </div>
+        </TestBlockMobileHero>
     }
     else
     {
@@ -57,6 +57,7 @@ else
                       InputPrefix="@InputPrefix"
                       AfterLikert="@JourneyAfterLikert"
                       OnAnswer="OnFlowAnswer"
+                      OnIndexChanged="OnFlowIndexChanged"
                       OnFinished="OnFlowFinished"
                       OnLeave="OnLeave"
                       OnLater="OnLater"
@@ -126,6 +127,9 @@ else
 
     private Task OnFlowAnswer((int Id, int Value) pair)
         => Answer.InvokeAsync(pair);
+
+    private Task OnFlowIndexChanged(int index)
+        => ExpandQuestion.HasDelegate ? ExpandQuestion.InvokeAsync(index) : Task.CompletedTask;
 
     private Task OnFlowFinished()
         => OnFinished.InvokeAsync();

@@ -27,14 +27,19 @@
 {
     <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
 }
-<div class="ob-wizard__dream-search">
+<div class="ob-wizard__dream-search" id="onboarding-field-dream">
     <input role="combobox"
            aria-expanded="@(Draft.DreamSearch.Length > 0)"
            aria-autocomplete="list"
+           aria-invalid="@(ShowValidation && string.IsNullOrWhiteSpace(Draft.Dream) ? "true" : "false")"
            placeholder="@Culture["Onboarding.DreamSearch"]"
            @bind="Draft.DreamSearch"
            @bind:event="oninput"
            @onkeydown="DreamKeyDown" />
+    @if (ShowValidation && string.IsNullOrWhiteSpace(Draft.Dream))
+    {
+        <p class="error" role="alert">@Culture["Onboarding.Validation.Dream"]</p>
+    }
     @if (Draft.DreamSearch.Length > 0)
     {
         <div role="listbox">
@@ -113,4 +118,5 @@
     [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public bool ShowLead { get; set; } = true;
     [Parameter] public bool AsSubsection { get; set; }
+    [Parameter] public bool ShowValidation { get; set; }
 }
