@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Simulate desktop hero composite; assert column jump <= 6 in left 55% (cream zone)."""
+"""Simulate R15 desktop hero (ref-full.jpg); assert column jump <= 6 in left 55%."""
 
 from __future__ import annotations
 
@@ -10,11 +10,11 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "Jobsy.Web/wwwroot/images/candidate/ref-full-desktop.jpg"
+SRC = ROOT / "Jobsy.Web/wwwroot/images/candidate/ref-full.jpg"
 CREAM = (251, 245, 236)
 HERO_W, HERO_H = 1440, 200
-ART_FRAC = 0.50
-FADE_PX = 140
+ART_INSET_LEFT = 0.34
+FADE_PX = 160
 MAX_JUMP = 6.0
 CHECK_FRAC = 0.55
 
@@ -45,20 +45,26 @@ def _max_jump(cols: list[tuple[float, float, float]], until_x: int) -> float:
 
 def compose_desktop() -> Image.Image:
     canvas = Image.new("RGB", (HERO_W, HERO_H), CREAM)
-    art_w = int(HERO_W * ART_FRAC)
-    art_box = Image.open(SRC).convert("RGB")
-    art = art_box.resize((art_w, HERO_H), Image.Resampling.LANCZOS)
-    art_rgba = art.convert("RGBA")
-    apx = art_rgba.load()
+    art = Image.open(SRC).convert("RGBA")
+    scale = HERO_H / art.height
+    art_w = int(art.width * scale)
+    art = art.resize((art_w, HERO_H), Image.Resampling.LANCZOS)
     paste_x = HERO_W - art_w
+    art_left = int(HERO_W * ART_INSET_LEFT)
+    if paste_x < art_left:
+        paste_x = art_left
+    fade_px = FADE_PX
+    apx = art.load()
     for x in range(art_w):
+        vx = paste_x + x
         alpha = 255
-        if x < FADE_PX:
-            alpha = int(255 * (x / FADE_PX))
+        if vx < art_left + fade_px:
+            t = max(0.0, min(1.0, (vx - art_left) / fade_px))
+            alpha = int(255 * t)
         for y in range(HERO_H):
             r, g, b = apx[x, y][:3]
             apx[x, y] = (r, g, b, alpha)
-    canvas.paste(art_rgba, (paste_x, 0), art_rgba)
+    canvas.paste(art, (paste_x, 0), art)
     return canvas
 
 

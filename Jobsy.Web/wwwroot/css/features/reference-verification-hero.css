@@ -1,4 +1,4 @@
-/* Reference verification hero — PR #737 ref-full (gev-hero desktop + mobile figure lane) */
+/* Reference verification hero — desktop R15 / #737 ref-full; mobile gevoelig-mobhero (#737 390) */
 
 .ref-verif-gev-hero {
   --ref-verif-hero-cream: #fbf5ec;
@@ -24,7 +24,7 @@
 
 .ref-verif-gev-hero__wrap {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   max-width: 1100px;
   margin: 0 auto;
   padding: 0.65rem 1.25rem;
@@ -46,7 +46,7 @@
   align-items: flex-start;
   text-align: left;
   min-width: 0;
-  max-width: min(34rem, 48vw);
+  max-width: min(34rem, 52vw);
   padding-right: 0.5rem;
 }
 
@@ -85,7 +85,7 @@
   padding: 0;
 }
 
-/* Desktop — #737 referent hero (901px+): art in right ~50% lane, mask fade at cream edge only */
+/* Desktop — R15 / #737 1440: both figures full height, soft mask */
 @media (min-width: 901px) {
   .ref-verif-gev-hero__lead--mobile {
     display: none;
@@ -94,27 +94,48 @@
   .ref-verif-gev-hero__art {
     position: absolute;
     z-index: 0;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: auto;
-    width: 50%;
-    height: 100%;
+    inset: 0 0 0 34%;
     pointer-events: none;
     overflow: hidden;
-    background-color: transparent;
+    background-color: var(--ref-verif-hero-cream);
     background-image: var(--ref-verif-hero-art, none);
     background-repeat: no-repeat;
     background-position: right bottom;
-    background-size: cover;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 140px);
-    mask-image: linear-gradient(to right, transparent 0, #000 140px);
+    background-size: auto 100%;
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0, #000 160px),
+      linear-gradient(to top, transparent 0, #000 32px);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to right, transparent 0, #000 160px),
+      linear-gradient(to top, transparent 0, #000 32px);
+    mask-composite: intersect;
   }
 
-  .ref-verif-gev-hero__art::before,
+  .ref-verif-gev-hero__art::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    z-index: 2;
+    width: 100%;
+    height: 36px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--ref-verif-hero-cream) 0%, rgba(251, 245, 236, 0) 100%);
+  }
+
   .ref-verif-gev-hero__art::after {
-    content: none;
-    display: none;
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 1;
+    width: min(42%, 240px);
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--ref-verif-hero-cream) 0%,
+      rgba(251, 245, 236, 0.96) 38%,
+      rgba(251, 245, 236, 0) 100%
+    );
   }
 }
 
@@ -136,85 +157,53 @@
   border-block-end: 0;
 }
 
+/* Mobile — gevoelig-mobhero / #737 390 (ref-full.jpg, no crop) */
 @media (max-width: 900px) {
   .ref-verif-gev-hero {
-    --cand-hero-mobile-h: 16.25rem;
-
     display: block;
-    min-height: 0;
+    position: relative;
+    height: 16.25rem;
     max-height: 16.25rem;
-    height: var(--cand-hero-mobile-h);
-    background: var(--ref-verif-hero-cream);
+    min-height: 0;
+    overflow: hidden;
   }
 
   .ref-verif-gev-hero__lead--desktop {
     display: none;
   }
 
-  .ref-verif-gev-hero__wrap {
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    max-width: none;
-    margin: 0;
-    padding: 0.7rem 0.85rem;
-    align-items: flex-start;
-    min-height: 0;
-    max-height: none;
-    background: transparent;
-  }
-
-  .ref-verif-gev-hero__copy {
-    width: 55%;
-    max-width: 55%;
-    padding-right: 0.25rem;
-  }
-
-  .ref-verif-gev-hero__copy h1 {
-    font-size: clamp(1rem, 4.2vw, 1.14rem);
-    line-height: 1.14;
-  }
-
-  .ref-verif-gev-hero__lead {
-    font-size: clamp(0.8rem, 3.4vw, 0.88rem);
-  }
-
-  /* Gradient strip between text and figures — never over figure pixels */
   .ref-verif-gev-hero::before {
     content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 58%;
-    z-index: 2;
+    inset: 0;
+    z-index: 1;
     pointer-events: none;
     background: linear-gradient(
-      90deg,
-      var(--ref-verif-hero-cream) 0%,
-      var(--ref-verif-hero-cream) 88%,
-      rgba(251, 245, 236, 0.85) 94%,
-      rgba(251, 245, 236, 0) 100%
+      115deg,
+      rgba(251, 245, 236, 0.98) 0%,
+      rgba(251, 245, 236, 0.93) 36%,
+      rgba(251, 245, 236, 0.52) 50%,
+      rgba(251, 245, 236, 0.12) 62%,
+      transparent 72%
     );
   }
 
   .ref-verif-gev-hero__art {
-    display: block;
     position: absolute;
-    right: 0;
-    bottom: 0;
-    z-index: 1;
-    width: 45%;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
     height: 100%;
+    margin: 0;
     pointer-events: none;
     overflow: hidden;
-    background-color: transparent;
+    background-color: var(--ref-verif-hero-cream);
     background-image: var(--ref-verif-hero-art-mobile, var(--ref-verif-hero-art, none));
     background-repeat: no-repeat;
     background-position: right bottom;
-    background-size: contain;
-    -webkit-mask-image: none;
-    mask-image: none;
+    background-size: auto 94%;
+    -webkit-mask-image: linear-gradient(to top, transparent 0, #000 12px);
+    mask-image: linear-gradient(to top, transparent 0, #000 12px);
   }
 
   .ref-verif-gev-hero__art::before,
@@ -223,15 +212,67 @@
     display: none;
   }
 
-  .ref-verif-gev-hero--compact {
-    --cand-hero-mobile-h: 11.5rem;
+  .ref-verif-gev-hero__wrap {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    height: 100%;
+    max-height: 16.25rem;
+    min-height: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0.5rem 1rem 0.45rem;
+    background: transparent;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
 
-    height: var(--cand-hero-mobile-h);
+  .ref-verif-gev-hero__copy {
+    justify-content: flex-start;
+    width: auto;
+    max-width: 70%;
+    padding-right: 0;
+  }
+
+  .ref-verif-gev-hero__copy h1 {
+    font-size: 1.08rem;
+    line-height: 1.12;
+    margin: 0.15rem 0 0.2rem;
+  }
+
+  .ref-verif-gev-hero__lead {
+    font-size: 0.76rem;
+    line-height: 1.32;
+    max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ref-verif-cand-hero__privacy {
+    margin: 0.3rem 0 0;
+    padding: 0;
+    font-size: 0.7rem;
+    line-height: 1.28;
+    max-width: 100%;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ref-verif-gev-hero--compact {
+    height: 11.5rem;
+    max-height: 11.5rem;
+  }
+
+  .ref-verif-gev-hero--compact .ref-verif-gev-hero__wrap {
     max-height: 11.5rem;
   }
 
   .ref-verif-gev-hero--public-open .ref-verif-cand-hero__privacy {
-    display: none;
+    display: block;
   }
 }
-
