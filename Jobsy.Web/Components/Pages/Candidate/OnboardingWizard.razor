@@ -275,6 +275,7 @@
 
                         case 6:
                             <DreamJobStep Draft="Draft"
+                                          ShowValidation="_showValidation"
                                           Young="@IsYoungCandidate"
                                           ChooseDream="ChooseDream"
                                           ChooseTitle="ChooseDreamTitle"
@@ -284,6 +285,7 @@
 
                         case 7 when !Draft.HasConsent:
                             <TestConsentStep Draft="Draft"
+                                             ShowValidation="_showValidation"
                                              TestTabs="ConsentTabs"
                                              ConsentChanged="OnConsentChanged" />
                             break;
@@ -519,6 +521,11 @@
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
+        if (value)
+        {
+            ClearStepValidation();
+        }
+
         StateHasChanged();
     }
 
@@ -554,6 +561,8 @@
             _ => []
         };
     }
+
+    private void ClearStepValidation() => _showValidation = false;
 
     private async Task ScrollToFirstIssueAsync(IReadOnlyList<OnboardingValidationIssue> issues)
     {
@@ -738,6 +747,7 @@
         {
             _earlyMoment = EarlyRewardMoment.None;
             _earlyStrength = null;
+            ClearStepValidation();
             RequestStepScrollReset();
             return;
         }
@@ -746,12 +756,14 @@
         {
             _earlyMoment = EarlyRewardMoment.None;
             _nearbySignal = null;
+            ClearStepValidation();
             RequestStepScrollReset();
             return;
         }
 
         if (_step <= 1) return;
         await FlushAsync();
+        ClearStepValidation();
         _miniArrivedViaBack = true;
         _step--;
         await MarkStartedAsync();
@@ -787,7 +799,6 @@
             else if (issues.Count > 0)
             {
                 _showValidation = true;
-                _error = Culture[issues[0].MessageKey];
                 await ScrollToFirstIssueAsync(issues);
                 return;
             }
@@ -872,6 +883,7 @@
     private async Task SkipOptionalAsync()
     {
         await FlushAsync();
+        ClearStepValidation();
         _miniArrivedViaBack = false;
         _step++;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
@@ -1135,6 +1147,7 @@
         if (dream.Length == 0) return;
         Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
+        ClearStepValidation();
         ScheduleDreamSave();
     }
 
@@ -1143,6 +1156,7 @@
         var dream = Draft.DreamSearch.Trim();
         Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
+        ClearStepValidation();
         ScheduleDreamSave();
     }
 
@@ -1156,6 +1170,7 @@
     private async Task DreamUnknownAsync()
     {
         Draft.Dream = "";
+        ClearStepValidation();
         await SaveDreamAsync();
         _miniArrivedViaBack = false;
         _step = 7;
