@@ -17,17 +17,17 @@
   "vervoer-mob-figures.png": {
     "source": "vervoer-profession-wide.jpg",
     "box": [
-      198,
-      12,
-      512,
-      698
+      268,
+      72,
+      598,
+      712
     ],
     "out_size": [
-      314,
-      403
+      330,
+      368
     ],
-    "opaque_pixels": 48724,
-    "aspect": 1.283
+    "opaque_pixels": 52418,
+    "aspect": 1.115
   },
   "beschikbaarheid-mob-figures.png": {
     "source": "beschikbaarheid-profession-wide.jpg",
@@ -47,17 +47,17 @@
   "kompas-mob-figures.png": {
     "source": "kompas-hero-wide.jpg",
     "box": [
-      8,
-      248,
-      518,
-      692
+      1490,
+      180,
+      1710,
+      500
     ],
     "out_size": [
-      510,
-      353
+      220,
+      290
     ],
-    "opaque_pixels": 121355,
-    "aspect": 0.692
+    "opaque_pixels": 47523,
+    "aspect": 1.318
   },
   "droombaan-mob-figures.png": {
     "source": "droombaan-profession-wide.jpg",

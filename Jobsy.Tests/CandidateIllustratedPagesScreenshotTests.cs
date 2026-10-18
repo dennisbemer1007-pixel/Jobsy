@@ -40,6 +40,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirMobhero = "/opt/cursor/artifacts/kandidaat-728-mobhero";
     private const string ArtifactsDirMobheroV3 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v3";
     private const string ArtifactsDirMobheroV4 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v4";
+    private const string ArtifactsDirMobheroV5 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v5";
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -1180,6 +1181,107 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Console.WriteLine(mobReports);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_728_mobhero_v5_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirMobheroV5);
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        var mobReports = new StringBuilder();
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobheroV5,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                WaitForApplicationsEmptyAsync);
+
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobheroV5,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                WaitForSavedEmptyAsync);
+        }
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV5,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            PrepareKompasTopScreenshotAsync);
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV5,
+            deliveryWeb.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            WaitForSettingsMailPaneAsync);
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV5,
+            deliveryWeb.ServerAddress,
+            "/vacancies/" + SampleVacancyId,
+            "vacature",
+            WaitForVacancyDetailAsync,
+            heroSelector: ".kb-detail__hero");
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV5,
+            deliveryWeb.ServerAddress,
+            "/carriere",
+            "carriere-leeg",
+            WaitForCareerEmptyAsync);
+
+        await AssertMobheroLeadNotTruncatedAsync(deliveryWeb.ServerAddress, emptyApps: true);
+
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobheroV5, $"{name}-390.png");
+            var metaPath = Path.Combine(ArtifactsDirMobheroV5, $"{name}-390-hero-meta.txt");
+            var report = ValidateMobileHeroPixels390(
+                await File.ReadAllBytesAsync(pngPath),
+                name,
+                gateV4: true,
+                heroMetaPath: File.Exists(metaPath) ? metaPath : null,
+                mobArtifactsDir: ArtifactsDirMobheroV5);
+            mobReports.AppendLine(report);
+        }
+
+        var mobReportPath = Path.Combine(ArtifactsDirMobheroV5, "mobhero-pixel-gate-v5-390.txt");
+        await File.WriteAllTextAsync(mobReportPath, mobReports.ToString());
+
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobheroV5, $"{name}-390.png");
+            var metaPath = Path.Combine(ArtifactsDirMobheroV5, $"{name}-390-hero-meta.txt");
+            var report = ValidateMobileHeroPixels390(
+                await File.ReadAllBytesAsync(pngPath),
+                name,
+                gateV4: true,
+                heroMetaPath: File.Exists(metaPath) ? metaPath : null,
+                mobArtifactsDir: ArtifactsDirMobheroV5);
+            Assert.DoesNotContain("PASS=False", report, StringComparison.Ordinal);
+        }
+
+        await deliveryWeb.DisposeAsync();
+
+        var pngs = Directory.GetFiles(ArtifactsDirMobheroV5, "*.png");
+        Assert.Equal(6, pngs.Length);
+        Console.WriteLine(mobReports);
+    }
+
     private async Task AssertMobheroLeadNotTruncatedAsync(string serverAddress, bool emptyApps = false)
     {
         async Task CheckLeadAsync(string address, (string path, Func<IPage, int, Task> prepare)[] paths)
@@ -1489,6 +1591,8 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private static async Task WaitForCareerEmptyAsync(IPage page, int _)
     {
         await page.Locator(".career-page--illustrated .cand-hero").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator(".career-card--empty").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator(".career-card__error").WaitForAsync(new() { State = WaitForSelectorState.Hidden, Timeout = 60_000 });
     }
 
     private static string ValidateMobileHeroPixels390(
@@ -1496,7 +1600,8 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         string label,
         bool gateV3 = false,
         bool gateV4 = false,
-        string? heroMetaPath = null)
+        string? heroMetaPath = null,
+        string? mobArtifactsDir = null)
     {
         using var img = Image.Load<Rgb24>(pngBytes);
         var sb = new StringBuilder();
@@ -1797,7 +1902,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
         if ((gateV3 || gateV4) && isVacature)
         {
-            var vacatureDir = gateV4 ? ArtifactsDirMobheroV4 : ArtifactsDirMobheroV3;
+            var vacatureDir = mobArtifactsDir ?? (gateV4 ? ArtifactsDirMobheroV4 : ArtifactsDirMobheroV3);
             passed = File.Exists(Path.Combine(vacatureDir, "vacature-390.png"));
         }
 
@@ -2518,9 +2623,38 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 return """{"available":true,"optedIn":false,"phone":null}""";
             }
 
-            if (path.Contains("/me/career", StringComparison.OrdinalIgnoreCase))
+            if (path.Contains("/career-path/archived", StringComparison.OrdinalIgnoreCase))
             {
-                return """{"hasPlan":true,"dreamTitle":"Dierenarts","currentStoneIndex":1,"stones":[{"title":"Nu","state":"Done"},{"title":"Mbo 4 paraveterinair","state":"Current"}]}""";
+                return "[]";
+            }
+
+            if (path.Contains("/career-path/dream-options", StringComparison.OrdinalIgnoreCase))
+            {
+                return """
+                    {
+                      "suggestions": [
+                        { "catalogKey": "dierenarts", "title": "Dierenarts", "reasonKey": "CareerDream.Reason.Test" },
+                        { "catalogKey": "verpleegkundige", "title": "Verpleegkundige", "reasonKey": "CareerDream.Reason.Wish" },
+                        { "catalogKey": "logistiek_medewerker", "title": "Logistiek medewerker", "reasonKey": "CareerDream.Reason.Test" }
+                      ],
+                      "results": []
+                    }
+                    """;
+            }
+
+            if (path.Contains("/career-path", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"dreamTitle":"","steps":[]}""";
+            }
+
+            if (path.Contains("/career-interests", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"realistic":72,"investigative":58,"artistic":41,"social":80,"enterprising":55,"conventional":48}""";
+            }
+
+            if (path.Contains("/me/onboarding", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"isComplete":true,"currentStep":6,"totalSteps":6}""";
             }
 
             if (path.Contains("/applications", StringComparison.OrdinalIgnoreCase))

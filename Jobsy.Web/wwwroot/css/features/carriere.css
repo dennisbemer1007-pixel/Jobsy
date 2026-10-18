@@ -27,7 +27,8 @@
 
 @media (max-width: 639px) {
   /* Hero toont al Career.Empty.Title; geen dubbele h1 in de kaart. */
-  .career-page--illustrated:has(> .cand-hero) .career-card--empty #career-title {
+  .career-page--illustrated:has(> .cand-hero) .career-card--empty #career-title,
+  .career-page--illustrated:has(> .cand-hero) .career-card--empty .career-card__lead {
     position: absolute;
     width: 1px;
     height: 1px;

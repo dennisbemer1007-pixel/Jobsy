@@ -279,6 +279,12 @@
     pointer-events: none;
   }
 
+  /* Kompas: tall portrait mob crop — fill ~80–95% of hero height */
+  .cand-hero--kompas-band.cand-hero--with-art .cand-hero__mob-figures {
+    max-height: 92%;
+    max-width: min(100%, 10.5rem);
+  }
+
   .cand-hero--with-art .cand-hero__copy {
     position: relative;
     z-index: 3;

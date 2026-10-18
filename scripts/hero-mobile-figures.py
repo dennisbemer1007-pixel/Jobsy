@@ -88,8 +88,8 @@ SCENES: dict[str, dict] = {
     },
     "vervoer-profession-wide.jpg": {
         "out": "vervoer-mob-figures.png",
-        # Left: cyclist + passenger, full figures (not wheel-only)
-        "box": (198, 12, 512, 698),
+        # One complete cyclist (head to wheel), Bewaard band
+        "box": (268, 72, 598, 712),
     },
     "beschikbaarheid-profession-wide.jpg": {
         "out": "beschikbaarheid-mob-figures.png",
@@ -98,8 +98,8 @@ SCENES: dict[str, dict] = {
     },
     "kompas-hero-wide.jpg": {
         "out": "kompas-mob-figures.png",
-        # Family inset (people only), not the wide landscape
-        "box": (8, 248, 518, 692),
+        # Craftsman at bench (~x1500) — one full figure, tall for mob hero
+        "box": (1490, 180, 1710, 500),
     },
     "droombaan-profession-wide.jpg": {
         "out": "droombaan-mob-figures.png",
