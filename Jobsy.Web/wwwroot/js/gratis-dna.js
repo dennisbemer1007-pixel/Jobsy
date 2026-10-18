@@ -165,7 +165,7 @@ window.jobsyGratisDna = (function () {
             img.crossOrigin = "anonymous";
             img.onload = () => resolve(img);
             img.onerror = () => resolve(null);
-            img.src = "/brand/svg/lobsy-logo-horizontaal.svg?v=20261018-e";
+            img.src = "/brand/svg/lobsy-logo-horizontaal.svg?v=20261018-23";
         });
     }
 

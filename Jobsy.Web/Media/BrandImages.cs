@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned Lobsy brand asset URLs (variant E, wwwroot/brand).</summary>
 public static class BrandImages
 {
-    public const string Version = "20261018-e";
+    public const string Version = "20261018-23";
     public const string MascotVersion = "20261004-13";
 
     public const string BrandRoot = "brand";

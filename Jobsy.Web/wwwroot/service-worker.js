@@ -1,19 +1,19 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-v20261018-e";
+var CACHE_VERSION = "lobsy-shell-v20261018-23";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 
 var PRECACHE = [
     "/",
     "/manifest.webmanifest?v=20261004-14",
-    "/css/critical.css?v=20261018-e",
-    "/css/app.min.css?v=20261018-e",
+    "/css/critical.css?v=20261018-23",
+    "/css/app.min.css?v=20261018-23",
     "/js/app-core.js?v=20261017-04",
-    "/icons/icon-192.png?v=20261004-13",
-    "/icons/icon-512.png?v=20261004-13",
-    "/favicon.ico?v=20261018-e",
-    "/brand/svg/lobsy-merkteken.svg?v=20261018-e"
+    "/icons/icon-192.png?v=20261018-23",
+    "/icons/icon-512.png?v=20261018-23",
+    "/favicon.ico?v=20261018-23",
+    "/brand/svg/lobsy-merkteken.svg?v=20261018-23"
 ];
 
 self.addEventListener("install", function (event) {
@@ -169,8 +169,8 @@ self.addEventListener("push", function (event) {
     event.waitUntil(
         self.registration.showNotification(payload.title, {
             body: payload.body,
-            icon: "/icons/icon-192.png?v=20261004-13",
-            badge: "/icons/icon-192.png?v=20261004-13",
+            icon: "/icons/icon-192.png?v=20261018-23",
+            badge: "/icons/icon-192.png?v=20261018-23",
             tag: payload.tag || "lobsy",
             renotify: true,
             data: { url: payload.url },

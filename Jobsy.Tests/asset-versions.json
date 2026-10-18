@@ -1,27 +1,27 @@
 {
   "brand/png/lobsy-apple-touch-icon-180.png": {
     "sha256": "fbfbe90467ca5887879d642a0dc5fa6b48d4080b716b7b09c1ad198077dfa758",
-    "v": "@BrandImages.Version"
+    "v": "20261018-23"
   },
   "brand/png/lobsy-favicon-16.png": {
     "sha256": "0e24c4f8a8c96309f04ddd715f5c78d077155daf3d7b0d5fc525128b10104089",
-    "v": "@BrandImages.Version"
+    "v": "20261018-23"
   },
   "brand/png/lobsy-favicon-32.png": {
     "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
-    "v": "@BrandImages.Version"
+    "v": "20261018-23"
   },
   "brand/png/lobsy-favicon-48.png": {
     "sha256": "b4d98dfff0413e1c28dcda8dd3f5502658e9071eb78e9da4f484bf3daf6ad32b",
-    "v": "@BrandImages.Version"
+    "v": "20261018-23"
   },
   "css/app.min.css": {
     "sha256": "9d92d303cfdecdd894d50005fad5fed9912d6bb7c56c236944c40e4191bc0138",
-    "v": "20261018-e"
+    "v": "20261018-23"
   },
   "css/critical.css": {
     "sha256": "64cbe72b150901710db5fa228468cbf99dc7d0364469b010b5c38bdc9ba75c5a",
-    "v": "20261018-e"
+    "v": "20261018-23"
   },
   "css/features/account-mfa.css": {
     "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
@@ -209,7 +209,7 @@
   },
   "favicon.ico": {
     "sha256": "b8f4025ded7aa6a6eb5ff0f8e82e1c5fcac343705e2d62883d00472b03029239",
-    "v": "@BrandImages.Version"
+    "v": "20261018-23"
   },
   "favicon.png": {
     "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
@@ -260,7 +260,7 @@
     "v": "20261002-ch10"
   },
   "js/gratis-dna.js": {
-    "sha256": "c9d59f624a98c43da53f0b1a83f2ef66172f1ae2bcb453840073f54b65945c3a",
+    "sha256": "2cc0b16f3618167ffb562906e1e46ff66eea2a5a815a07e40a5ca916ada64d70",
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
@@ -300,23 +300,23 @@
     "v": "20261015-03"
   },
   "js/vacancyDetailMap.min.js": {
-    "sha256": "fd7f5d0ad03db3269949db91730ccd8b7f0a383acf0770219720bc57f3ad7ee8",
+    "sha256": "a27bfba641d379c14e28f13587e4264ea449a99a2dacaf6fd5aaf038d41199fd",
     "v": "20261004-13"
   },
   "manifest.webmanifest": {
-    "sha256": "12ce1e543f688b319021597c259f8cb3ef643aab582d1dbcec2856628d5a9649",
+    "sha256": "544284248f300ebea2efedac2ae97582f5fd7841e904a5f5a83c49801aac230d",
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "e679880b8e8219aebcecd45573bc8e83bbe36bc3f5cb957563ca4a7088c7171d",
+    "sha256": "08b1e362160407c34b3693e38ec1b3d0dc13ba36dca0e77114330d805ca0ed62",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "7ebf6b90a4c3dfe4618d87956e74c1039edec29e63ab28501fa97a1d20ffa201",
+    "sha256": "6103c36f107f4f5ed82fb0f71cee9217457ef8a440fc7dcd2a8238ed3a24bd63",
     "v": "20261016-06"
   },
   "site.webmanifest": {
-    "sha256": "12ce1e543f688b319021597c259f8cb3ef643aab582d1dbcec2856628d5a9649",
-    "v": "@BrandImages.Version"
+    "sha256": "544284248f300ebea2efedac2ae97582f5fd7841e904a5f5a83c49801aac230d",
+    "v": "20261018-23"
   }
 }
