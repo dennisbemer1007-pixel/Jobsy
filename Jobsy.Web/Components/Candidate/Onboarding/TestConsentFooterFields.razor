@@ -1,0 +1,48 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="ob-journey__consent-block" id="onboarding-field-consent" data-testid="test-journey-consent-fields">
+    <label class="ob-journey__consent-line @(ShowError ? "ob-journey__consent-line--error" : null)"
+           role="switch"
+           aria-checked="@(Draft.ConsentRequested ? "true" : "false")">
+        <input type="checkbox"
+               class="ob-journey__consent-check"
+               checked="@Draft.ConsentRequested"
+               @onchange="OnConsentChanged" />
+        <span class="ob-journey__consent-label">
+            <span class="ob-journey__consent-phrase">@Culture["Onboarding.Journey.Consent.Check"]</span>
+            <button type="button"
+                    class="ob-journey__consent-more-link"
+                    aria-expanded="@(_moreOpen ? "true" : "false")"
+                    @onclick="ToggleMore"
+                    @onclick:preventDefault="true"
+                    @onclick:stopPropagation="true">@Culture["Onboarding.Consent.More"]</button>
+        </span>
+    </label>
+    @if (_moreOpen)
+    {
+        <p class="ob-journey__consent-detail" id="onboarding-journey-consent-more">@Culture["Onboarding.Journey.Consent.MoreText"]</p>
+    }
+    @if (ShowError)
+    {
+        <p class="ob-journey__consent-error" role="alert">@Culture["Onboarding.Journey.Validation.Consent"]</p>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public EventCallback<bool> ConsentChanged { get; set; }
+    [Parameter] public bool ShowError { get; set; }
+
+    private bool _moreOpen;
+
+    private async Task OnConsentChanged(ChangeEventArgs args)
+    {
+        var value = args.Value is bool flag && flag;
+        Draft.ConsentRequested = value;
+        await ConsentChanged.InvokeAsync(value);
+    }
+
+    private void ToggleMore() => _moreOpen = !_moreOpen;
+}
