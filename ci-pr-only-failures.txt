@@ -1,2 +1,1 @@
-# PR-only failures (cursor/onboarding-soft-illustrations-f41d vs origin/acceptatie)
-# OnboardingSoftIllustrations* 30/30 passed locally; no PR-only regression names.
+# PR-only failures: none (OnboardingSoftIllustrations* 30/30 local).

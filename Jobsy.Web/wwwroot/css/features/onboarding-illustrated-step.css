@@ -68,10 +68,11 @@
   justify-self: stretch;
   background: linear-gradient(
     90deg,
-    color-mix(in srgb, var(--pearl) 94%, transparent) 0%,
-    color-mix(in srgb, var(--pearl) 78%, transparent) 34%,
-    color-mix(in srgb, var(--pearl) 38%, transparent) 52%,
-    transparent 72%
+    color-mix(in srgb, var(--pearl) 96%, transparent) 0%,
+    color-mix(in srgb, var(--pearl) 88%, transparent) 28%,
+    color-mix(in srgb, var(--pearl) 55%, transparent) 48%,
+    color-mix(in srgb, var(--pearl) 18%, transparent) 58%,
+    transparent 80%
   );
 }
 
@@ -96,7 +97,12 @@
   line-height: 1.12;
   color: var(--brand);
   text-wrap: balance;
-  max-inline-size: 58%;
+  max-inline-size: 52%;
+}
+
+.ob-illustrated-step__mobile-eyebrow,
+.ob-illustrated-step__mobile-lead {
+  max-inline-size: 52%;
 }
 
 .ob-illustrated-step__mobile-eyebrow {
@@ -114,7 +120,6 @@
   font-size: 0.8rem;
   line-height: 1.33;
   color: color-mix(in srgb, var(--text) 82%, var(--muted));
-  max-inline-size: 56%;
 }
 
 .ob-illustrated-step__mobile-cover-copy .ob-wizard__badge {
@@ -257,17 +262,6 @@
     display: grid;
   }
 
-  .ob-illustrated-step--mobile-tall .ob-illustrated-step__mobile-cover {
-    max-block-size: 16.25rem;
-    aspect-ratio: 390 / 268;
-  }
-
-  .ob-illustrated-step--mobile-tall .ob-illustrated-step__mobile-cover-copy h1 {
-    font-size: 1.1rem;
-    line-height: 1.14;
-    max-inline-size: 62%;
-  }
-
   .ob-illustrated-step__hero-band {
     display: none;
   }
@@ -300,27 +294,27 @@
 }
 
 .ob-illustrated-step--mobile-kennismaken {
-  --ob-mobile-hero-pos: 68% 48%;
+  --ob-mobile-hero-pos: 74% 48%;
 }
 
 .ob-illustrated-step--mobile-beschikbaarheid {
-  --ob-mobile-hero-pos: 76% 50%;
+  --ob-mobile-hero-pos: 88% 52%;
 }
 
 .ob-illustrated-step--mobile-vervoer {
-  --ob-mobile-hero-pos: 74% 56%;
+  --ob-mobile-hero-pos: 80% 54%;
 }
 
 .ob-illustrated-step--mobile-werkervaring {
-  --ob-mobile-hero-pos: 72% 52%;
+  --ob-mobile-hero-pos: 78% 50%;
 }
 
 .ob-illustrated-step--mobile-opleiding {
-  --ob-mobile-hero-pos: 75% 48%;
+  --ob-mobile-hero-pos: 90% 48%;
 }
 
 .ob-illustrated-step--mobile-droombaan {
-  --ob-mobile-hero-pos: 70% 50%;
+  --ob-mobile-hero-pos: 76% 50%;
 }
 
 @media (min-width: 1024px) {

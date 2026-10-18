@@ -75,7 +75,6 @@
     [Parameter, EditorRequired] public string? HeroTitle { get; set; }
     [Parameter] public string? HeroLead { get; set; }
     [Parameter] public string? Eyebrow { get; set; }
-    [Parameter] public bool TallMobileHero { get; set; }
     [Parameter] public RenderFragment? HeroExtra { get; set; }
     [Parameter] public int ImageWidth { get; set; } = 1280;
     [Parameter] public int ImageHeight { get; set; } = 720;
@@ -83,8 +82,5 @@
     [Parameter] public RenderFragment? HeadContent { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private string MobileCoverModifier =>
-        TallMobileHero
-            ? $"ob-illustrated-step--mobile-tall ob-illustrated-step--mobile-{MobileHeroSlug}"
-            : $"ob-illustrated-step--mobile-{MobileHeroSlug}";
+    private string MobileCoverModifier => $"ob-illustrated-step--mobile-{MobileHeroSlug}";
 }

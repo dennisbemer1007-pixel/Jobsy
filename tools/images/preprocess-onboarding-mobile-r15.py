@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""R15: full-bleed mobile hero plates (one continuous scene, cover crop, no cut-out figures)."""
+"""R15/R16: full-bleed mobile hero plates (one continuous scene, cover crop, no cut-out figures)."""
 from __future__ import annotations
 
 import math
@@ -23,11 +23,20 @@ PAGE_BG = (245, 242, 238)
 # Tuned so figures sit bottom-right with headroom; left keeps sky/path for text gradient.
 CROP: dict[str, tuple[float, float, float, float]] = {
     "kennismaken": (0.0, 0.0, 0.95, 1.0),
-    "beschikbaarheid": (0.0, 0.0, 0.78, 1.0),
-    "vervoer": (0.22, 0.0, 1.0, 1.0),
+    "beschikbaarheid": (0.0, 0.0, 0.72, 1.0),
+    "vervoer": (0.28, 0.0, 1.0, 1.0),
     "werkervaring": (0.0, 0.0, 0.72, 1.0),
-    "opleiding": (0.0, 0.0, 0.80, 1.0),
+    "opleiding": (0.0, 0.0, 0.76, 1.0),
     "droombaan": (0.0, 0.0, 0.72, 1.0),
+}
+
+ANCHOR_X: dict[str, float] = {
+    "kennismaken": 0.84,
+    "beschikbaarheid": 0.94,
+    "vervoer": 0.82,
+    "werkervaring": 0.78,
+    "opleiding": 0.94,
+    "droombaan": 0.84,
 }
 
 # Flip so figures that live on the left in desktop art read on the right on mobile.
@@ -77,11 +86,32 @@ def figure_alpha_from_jpg(path: Path) -> Image.Image:
     return im
 
 
+def wash_left_pearl(img: Image.Image, frac: float = 0.5) -> None:
+    px = img.load()
+    w, h = img.size
+    x_end = int(w * frac)
+    for y in range(h):
+        for x in range(x_end):
+            t = 1.0 - (x / max(1, x_end))
+            t = t * t
+            r, g, b = px[x, y][:3]
+            px[x, y] = (
+                int(PAGE_BG[0] * t + r * (1.0 - t)),
+                int(PAGE_BG[1] * t + g * (1.0 - t)),
+                int(PAGE_BG[2] * t + b * (1.0 - t)),
+            )
+
+
 def build_werkervaring_scene() -> Image.Image:
     base = Image.open(OUT_DIR / "werkervaring.jpg").convert("RGB")
     w, h = base.size
-    left_scene = crop_frac(base, (0.0, 0.0, 0.72, 1.0))
-    scene = cover_to(left_scene, w, h, anchor_x=0.0, anchor_y=0.5)
+    scene = Image.new("RGB", (w, h), PAGE_BG)
+    # Pearl left zone for copy; art strip on the right only (no desk ghost).
+    art_strip = crop_frac(base, (0.56, 0.06, 0.98, 0.98))
+    art_w = int(w * 0.64)
+    art_placed = cover_to(art_strip, art_w, h, anchor_x=0.35, anchor_y=0.48)
+    scene.paste(art_placed, (int(w * 0.36), 0))
+    wash_left_pearl(scene, 0.48)
 
     log = figure_alpha_from_jpg(DIV_DIR / "figuur-logistiek.jpg")
     zorg = figure_alpha_from_jpg(DIV_DIR / "figuur-schoonmaak.jpg")
@@ -94,8 +124,8 @@ def build_werkervaring_scene() -> Image.Image:
         y = h - th - int(h * 0.06)
         scene.paste(fig_r, (x, y), fig_r)
 
-    paste_figure(log, 0.66, 0.56)
-    paste_figure(zorg, 0.84, 0.52)
+    paste_figure(log, 0.70, 0.56)
+    paste_figure(zorg, 0.88, 0.52)
     return scene
 
 
@@ -107,7 +137,8 @@ def build_mobile_hero(slug: str) -> Image.Image:
     patch = crop_frac(src, CROP[slug])
     if slug in FLIP_H:
         patch = patch.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
-    return cover_to(patch, MOBILE_W, MOBILE_H, anchor_x=0.78 if slug in FLIP_H else 0.68, anchor_y=0.52)
+    ax = ANCHOR_X.get(slug, 0.82 if slug in FLIP_H else 0.72)
+    return cover_to(patch, MOBILE_W, MOBILE_H, anchor_x=ax, anchor_y=0.52)
 
 
 def write_webp(jpg: Path) -> None:
@@ -130,7 +161,7 @@ def main() -> int:
             write_webp(jpg)
         manifest[slug] = {"width": MOBILE_W, "height": MOBILE_H}
         print("wrote", jpg)
-    meta = OUT_DIR / "mobile-hero-r15-manifest.json"
+    meta = OUT_DIR / "mobile-hero-r16-manifest.json"
     meta.write_text(__import__("json").dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return 0
 

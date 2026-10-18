@@ -107,6 +107,9 @@ public sealed class OnboardingSoftIllustrationsGateTests
             @"(?s)@media \(max-width: 767px\).*\.ob-illustrated-step__mobile-cover\s*\{[^}]*display:\s*grid",
             css);
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r15.py")));
+        Assert.Matches(
+            @"(?s)\.ob-illustrated-step__mobile-cover-copy h1\s*\{[^}]*max-inline-size:\s*52%",
+            css);
     }
 
     [Fact]
@@ -115,7 +118,7 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-figure-crop.py")));
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r13.py")));
         var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
-        Assert.Contains("20261018-r15", assets, StringComparison.Ordinal);
+        Assert.Contains("20261018-r16", assets, StringComparison.Ordinal);
         Assert.Contains("MobileHeroWebp", assets, StringComparison.Ordinal);
         Assert.Contains("mobile-hero", assets, StringComparison.Ordinal);
     }
