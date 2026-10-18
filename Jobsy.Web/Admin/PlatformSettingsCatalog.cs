@@ -335,6 +335,20 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("ContextualTipsEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ContextualTipsEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.ContextualTips.Enabled.Title",
+                DescriptionKey: "AdminSettings.ContextualTips.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ContextualTipsEnabled,
+                Write: v => new PlatformFeatureUpdate(ContextualTipsEnabled: ToBool(v)),
+                ImpactLevel: PlatformSettingImpactLevel.None,
+                ShowOnDashboard: false));
+        }
+
         // --- Vacatures ---
         list.Add(new PlatformSettingDescriptor(
             Key: "VacancyContentModerationEnabled",
@@ -461,20 +475,6 @@ public static class PlatformSettingsCatalog
                 Read: s => s.TrainingPartnersEnabled,
                 Write: v => new PlatformFeatureUpdate(TrainingPartnersEnabled: ToBool(v)),
                 ImpactKey: "AdminSettings.TrainingPartners.Enabled.ImpactOff",
-                ImpactLevel: PlatformSettingImpactLevel.None,
-                ShowOnDashboard: false));
-        }
-
-        if (FieldExists("ContextualTipsEnabled"))
-        {
-            list.Add(new PlatformSettingDescriptor(
-                Key: "ContextualTipsEnabled",
-                Group: GroupPlatformMode,
-                TitleKey: "AdminSettings.ContextualTips.Enabled.Title",
-                DescriptionKey: "AdminSettings.ContextualTips.Enabled.Desc",
-                Kind: PlatformSettingKind.Bool,
-                Read: s => s.ContextualTipsEnabled,
-                Write: v => new PlatformFeatureUpdate(ContextualTipsEnabled: ToBool(v)),
                 ImpactLevel: PlatformSettingImpactLevel.None,
                 ShowOnDashboard: false));
         }

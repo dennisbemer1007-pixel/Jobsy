@@ -185,6 +185,7 @@ public class CandidateProfileResetTests
             typeof(CandidateCareerPlan),
             typeof(CandidateCareerStepProgress),
             typeof(CandidateCompetency),
+            typeof(CandidateContextualTipsSettings),
             typeof(CandidateCulturePersonalityProfile),
             typeof(CandidateDeepAnalysis),
             typeof(CandidateDiplomaEvaluation),
