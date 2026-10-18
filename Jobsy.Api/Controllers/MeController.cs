@@ -1366,7 +1366,14 @@ public partial class MeController : ControllerBase
             .Where(r => r.UserId == user.Id)
             .OrderBy(r => r.SortOrder)
             .ThenBy(r => r.CreatedAtUtc)
-            .Select(r => new CandidateReferenceDto(r.Id, r.EmployerName, r.ContactName, r.Email, r.Phone))
+            .Select(r => new CandidateReferenceDto(
+                r.Id,
+                r.EmployerName,
+                r.ContactName,
+                r.Email,
+                r.Phone,
+                r.ReferenceType,
+                r.RelationshipContext))
             .ToListAsync(cancellationToken);
 
         var diplomaEvaluations = await LoadDiplomaEvaluationFactsAsync(user.Id, cancellationToken);
@@ -1453,7 +1460,9 @@ public partial class MeController : ControllerBase
                 Employer: CandidateReferenceRules.NormalizeName(r.EmployerName),
                 Contact: CandidateReferenceRules.NormalizeName(r.ContactName),
                 Email: CandidateReferenceRules.NormalizeEmail(r.Email),
-                Phone: CandidatePhoneRules.Normalize(r.Phone)))
+                Phone: CandidatePhoneRules.Normalize(r.Phone),
+                ReferenceType: ReferenceTypeCatalog.Normalize(r.ReferenceType),
+                RelationshipContext: NormalizeRelationshipContext(r.RelationshipContext)))
             .Where(r => !string.IsNullOrWhiteSpace(r.Employer)
                         || !string.IsNullOrWhiteSpace(r.Contact)
                         || !string.IsNullOrWhiteSpace(r.Email)
@@ -1498,6 +1507,8 @@ public partial class MeController : ControllerBase
                 ContactName = row.Contact!,
                 Email = row.Email!,
                 Phone = row.Phone!,
+                ReferenceType = row.ReferenceType,
+                RelationshipContext = row.RelationshipContext,
                 SortOrder = order++,
                 CreatedAtUtc = DateTime.UtcNow
             };
@@ -1641,15 +1652,15 @@ public partial class MeController : ControllerBase
                                && employerNameEl.ValueKind == JsonValueKind.String
                         ? employerNameEl.GetString()
                         : null;
-                    if (string.IsNullOrWhiteSpace(name))
-                    {
-                        continue;
-                    }
 
                     var role = item.TryGetProperty("role", out var roleEl)
                                && roleEl.ValueKind == JsonValueKind.String
                         ? roleEl.GetString()
                         : null;
+                    if (string.IsNullOrWhiteSpace(name) && string.IsNullOrWhiteSpace(role))
+                    {
+                        continue;
+                    }
                     int? years = null;
                     if (item.TryGetProperty("years", out var yearsEl)
                         && yearsEl.ValueKind == JsonValueKind.Number
@@ -1717,8 +1728,29 @@ public partial class MeController : ControllerBase
                         entryId = parsedEntry;
                     }
 
+                    bool? onlyForMe = null;
+                    if (item.TryGetProperty("onlyForMe", out var onlyEl)
+                        && onlyEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                    {
+                        onlyForMe = onlyEl.GetBoolean();
+                    }
+
+                    IReadOnlyList<string>? skills = null;
+                    if (item.TryGetProperty("skills", out var skillsEl)
+                        && skillsEl.ValueKind == JsonValueKind.Array)
+                    {
+                        skills = skillsEl.EnumerateArray()
+                            .Where(x => x.ValueKind == JsonValueKind.String)
+                            .Select(x => x.GetString()?.Trim())
+                            .Where(x => !string.IsNullOrWhiteSpace(x))
+                            .Select(x => x!.Length > 40 ? x[..40] : x)
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .Take(NeutralRoleSuggestions.MaxSkills)
+                            .ToList();
+                    }
+
                     employers.Add(new CandidateEmployerHistoryDto(
-                        name.Trim(),
+                        string.IsNullOrWhiteSpace(name) ? string.Empty : name.Trim(),
                         string.IsNullOrWhiteSpace(role) ? null : role.Trim(),
                         years,
                         description,
@@ -1726,7 +1758,34 @@ public partial class MeController : ControllerBase
                         endMonth,
                         isCurrent,
                         escoId,
-                        entryId));
+                        entryId,
+                        onlyForMe,
+                        skills));
+                }
+            }
+
+            var timelineGaps = new List<CandidateTimelineGapDto>();
+            if (root.TryGetProperty("timelineGaps", out var gapsEl) && gapsEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var gap in gapsEl.EnumerateArray())
+                {
+                    if (gap.ValueKind != JsonValueKind.Object)
+                    {
+                        continue;
+                    }
+
+                    var gapStart = ReadEmployerMonth(gap, "startMonth", "startDate");
+                    var gapEnd = ReadEmployerMonth(gap, "endMonth", "endDate");
+                    if (gapStart is null || gapEnd is null)
+                    {
+                        continue;
+                    }
+
+                    var choice = gap.TryGetProperty("choice", out var choiceEl)
+                                 && choiceEl.ValueKind == JsonValueKind.String
+                        ? SensitiveExperienceRules.NormalizeGapChoice(choiceEl.GetString())
+                        : null;
+                    timelineGaps.Add(new CandidateTimelineGapDto(gapStart, gapEnd, choice));
                 }
             }
 
@@ -1995,7 +2054,8 @@ public partial class MeController : ControllerBase
                 ShareablePreferenceNormalizer.NormalizeRegion(workRegion, null),
                 hasOwnCar,
                 ShareablePreferenceNormalizer.NormalizeContracts(contractPreferences, null),
-                workStatuses);
+                workStatuses,
+                timelineGaps);
 
             return CandidatePreferencesValidator.Sanitize(parsed);
         }
@@ -2025,6 +2085,17 @@ public partial class MeController : ControllerBase
         }
 
         return el.GetBoolean();
+    }
+
+    private static string? NormalizeRelationshipContext(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var trimmed = value.Trim();
+        return trimmed.Length > 200 ? trimmed[..200] : trimmed;
     }
 
     private static List<string> ReadStringArray(JsonElement arrayEl)
@@ -2139,7 +2210,7 @@ public partial class MeController : ControllerBase
                 .ToArray(),
             availability = sanitized.Availability,
             employers = sanitized.Employers?
-                .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+                .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
                 .Select(e =>
                 {
                     var description = string.IsNullOrWhiteSpace(e.Description) ? null : e.Description.Trim();
@@ -2147,6 +2218,13 @@ public partial class MeController : ControllerBase
                     {
                         description = description[..1000];
                     }
+
+                    var skills = e.Skills?
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .Select(s => s.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .Take(NeutralRoleSuggestions.MaxSkills)
+                        .ToArray();
 
                     return new
                     {
@@ -2159,9 +2237,20 @@ public partial class MeController : ControllerBase
                         isCurrent = e.IsCurrent,
                         escoId = string.IsNullOrWhiteSpace(e.Role) || string.IsNullOrWhiteSpace(e.EscoId)
                             ? null
-                            : e.EscoId.Trim()
+                            : e.EscoId.Trim(),
+                        onlyForMe = e.OnlyForMe == true ? true : (bool?)null,
+                        skills = skills is { Length: > 0 } ? skills : null
                     };
                 })
+                .ToArray(),
+            timelineGaps = sanitized.TimelineGaps?
+                .Select(g => new
+                {
+                    startMonth = LobsyCvModelFactory.NormalizeMonth(g.StartMonth),
+                    endMonth = LobsyCvModelFactory.NormalizeMonth(g.EndMonth),
+                    choice = SensitiveExperienceRules.NormalizeGapChoice(g.Choice)
+                })
+                .Where(g => g.startMonth is not null && g.endMonth is not null)
                 .ToArray(),
             educations = sanitized.Educations?
                 .Where(x => !string.IsNullOrWhiteSpace(x))

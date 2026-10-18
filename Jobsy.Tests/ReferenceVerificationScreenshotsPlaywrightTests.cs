@@ -30,6 +30,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private const string EnvRunR18 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R18";
     private const string EnvRunFinal = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_FINAL";
     private const string EnvRunFinalR2 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_FINAL_R2";
+    private const string EnvRunFinalR3 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_FINAL_R3";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -76,6 +77,8 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private static string OutputDirFinal => "/opt/cursor/artifacts/references-final";
 
     private static string OutputDirFinalR2 => "/opt/cursor/artifacts/references-final-r2";
+
+    private static string OutputDirFinalR3 => "/opt/cursor/artifacts/references-final-r3";
 
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
@@ -133,6 +136,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static bool ShouldRunFinalR2 =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunFinalR2), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunFinalR3 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunFinalR3), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -1259,6 +1265,33 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         }
 
         await Capture_reference_verification_screenshots_final_to_dir(OutputDirFinalR2);
+    }
+
+    [Fact]
+    public async Task Capture_reference_verification_screenshots_final_r3()
+    {
+        if (!ShouldRunFinalR3)
+        {
+            return;
+        }
+
+        await Capture_reference_verification_screenshots_final_to_dir(OutputDirFinalR3);
+        var keep = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "08-paspoort-endorsed-1440.png",
+            "08-paspoort-endorsed-390.png",
+            "02-request-form-390.png",
+            "04-referent-public-390.png"
+        };
+        foreach (var path in Directory.GetFiles(OutputDirFinalR3))
+        {
+            if (!keep.Contains(Path.GetFileName(path)))
+            {
+                File.Delete(path);
+            }
+        }
+
+        Assert.Equal(keep.Count, Directory.GetFiles(OutputDirFinalR3).Length);
     }
 
     private static async Task Capture_reference_verification_screenshots_final_to_dir(string outputDir)

@@ -254,6 +254,8 @@ projects:
                 value: "true"
               - key: Jobsy__StudentPassportEnabled
                 value: "true"
+              - key: Jobsy__SensitiveExperienceEnabled
+                value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true
               - key: JobsyAuth__LocalSessionSigningKey

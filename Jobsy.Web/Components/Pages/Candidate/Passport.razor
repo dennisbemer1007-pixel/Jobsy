@@ -49,6 +49,7 @@
                               StartedStamp="@_startedStamp"
                               ShowOpenForWork="@_showOpenForWork"
                               Keywords="_keywords"
+                              VerifiedCompetenceLabels="_verifiedCompetenceLabels"
                               CompletenessPercent="_completeness"
                               AboutMe="@_aboutMe"
                               City="@_city"
@@ -75,6 +76,7 @@
                                   StartedStamp="@_startedStamp"
                                   ShowOpenForWork="@_showOpenForWork"
                                   Keywords="_keywords"
+                                  VerifiedCompetenceLabels="_verifiedCompetenceLabels"
                                   CompletenessPercent="_completeness"
                                   OneLiner="@_oneLiner"
                                   CvBusy="_pdfBusy"
@@ -337,6 +339,7 @@
     private bool _hasConfirmedReference;
     private Guid? _firstWorkEntryId;
     private List<JobsyApiClient.VerifiedCompetenceItem> _verifiedCompetences = [];
+    private IReadOnlyList<string> _verifiedCompetenceLabels = [];
     private List<JobsyApiClient.ReferenceVerificationListItem> _refVerificationRows = [];
     private List<CandidateEmployerHistory> _employers = [];
     private PersistingComponentStateSubscription _persistSubscription;
@@ -418,6 +421,11 @@
 
         _refVerificationEligible = await Api.GetReferenceVerificationEligibleAsync();
         _verifiedCompetences = (await Api.GetVerifiedCompetencesAsync()).ToList();
+        _verifiedCompetenceLabels = _verifiedCompetences
+            .Select(c => c.Label)
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         _refVerificationRows = (await Api.GetReferenceVerificationListAsync()).ToList();
         _hasConfirmedReference = _refVerificationRows.Any(r =>
             r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase));

@@ -41,10 +41,12 @@
   mask-image: linear-gradient(90deg, transparent, #000 22%);
 }
 
-.passport-layout__sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+@media (min-width: 1024px) {
+  .passport-layout__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
 }
 
 .kompas-tip {

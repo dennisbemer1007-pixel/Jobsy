@@ -73,6 +73,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
                 dto?.ReferenceVerificationEnabled ?? false,
+                dto?.SensitiveExperienceEnabled ?? false,
                 dto?.TrainingPartnersEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
@@ -152,6 +153,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("referenceVerificationEnabled")]
         public bool ReferenceVerificationEnabled { get; set; }
+
+        [JsonPropertyName("sensitiveExperienceEnabled")]
+        public bool SensitiveExperienceEnabled { get; set; }
 
         [JsonPropertyName("trainingPartnersEnabled")]
         public bool TrainingPartnersEnabled { get; set; }

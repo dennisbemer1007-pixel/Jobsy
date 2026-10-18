@@ -22,7 +22,7 @@ internal static class UiStringsOnboardingV2
         PatchWorkStatusPl(pl);
         PatchWorkStatusRo(ro);
         PatchWorkStatusAr(ar);
-        PatchFinaleV2(nl, en);
+        PatchFinaleV2(nl, en, pl, ro, ar);
 
         nl["Onboarding.Age.TooYoung"] = "Je moet minstens {0} jaar zijn om Lobsy te gebruiken.";
         en["Onboarding.Age.TooYoung"] = "You must be at least {0} to use Lobsy.";
@@ -260,7 +260,12 @@ internal static class UiStringsOnboardingV2
         AddDreamJobs(map, language);
     }
 
-    private static void PatchFinaleV2(Dictionary<string, string> nl, Dictionary<string, string> en)
+    private static void PatchFinaleV2(
+        Dictionary<string, string> nl,
+        Dictionary<string, string> en,
+        Dictionary<string, string> pl,
+        Dictionary<string, string> ro,
+        Dictionary<string, string> ar)
     {
         nl["Onboarding.FinaleV2.Badge"] = "Onboarding en tests afgerond";
         en["Onboarding.FinaleV2.Badge"] = "Onboarding and tests completed";
@@ -341,6 +346,14 @@ internal static class UiStringsOnboardingV2
         Do("Onboarding.FinaleV2.Soon.Notifications.Body", "Een seintje zodra er een baan bijkomt die bij je past.", "A nudge when a job appears that fits you.");
         Do("Onboarding.FinaleV2.Soon.Employers.Title", "Werkgevers vinden jou", "Employers find you");
         Do("Onboarding.FinaleV2.Soon.Employers.Body", "Werkgevers zien je profiel anoniem en nodigen je zelf uit.", "Employers see your profile anonymously and invite you.");
+
+        foreach (var key in en.Keys.Where(k => k.StartsWith("Onboarding.FinaleV2.", StringComparison.Ordinal)))
+        {
+            var enText = en[key];
+            pl.TryAdd(key, enText);
+            ro.TryAdd(key, enText);
+            ar.TryAdd(key, enText);
+        }
     }
 
     private static void AddWorkStatuses(Dictionary<string, string> map, bool english)

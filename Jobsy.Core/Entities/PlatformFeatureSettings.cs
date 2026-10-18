@@ -172,6 +172,9 @@ public class PlatformFeatureSettings
     /// <summary>Work-experience reference verification for candidates. Default false.</summary>
     public bool ReferenceVerificationEnabled { get; set; }
 
+    /// <summary>Gevoelige werkervaring: Alleen voor mij, neutrale titels, andere periode. Default false.</summary>
+    public bool SensitiveExperienceEnabled { get; set; }
+
     /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
     public bool TrainingPartnersEnabled { get; set; }
 
