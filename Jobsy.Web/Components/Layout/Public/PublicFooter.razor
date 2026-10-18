@@ -16,7 +16,8 @@
 
         @foreach (var column in PublicNavCatalog.Footer(Variant))
         {
-            <div class="pub-footer__col">
+            var isLegal = string.Equals(column.TitleKey, "PublicFooter.Legal", StringComparison.Ordinal);
+            <div class="pub-footer__col @(isLegal ? "pub-footer__col--legal" : null)">
                 <h2 class="pub-footer__heading">@Culture[column.TitleKey]</h2>
                 <ul class="pub-footer__list">
                     @foreach (var item in column.Items.Where(i => i.IsAvailable))
