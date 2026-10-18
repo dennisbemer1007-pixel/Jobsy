@@ -169,6 +169,9 @@ public class PlatformFeatureSettings
     /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
     public bool KandidatenkaartEnabled { get; set; }
 
+    /// <summary>Work-experience reference verification for candidates. Default false.</summary>
+    public bool ReferenceVerificationEnabled { get; set; }
+
     /// <summary>Gevoelige werkervaring: Alleen voor mij, neutrale titels, andere periode. Default false.</summary>
     public bool SensitiveExperienceEnabled { get; set; }
 

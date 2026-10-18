@@ -127,4 +127,15 @@ public static class CandidateIllustratedImages
             ["dieren"] = SpotJobDieren,
             ["default"] = SpotInclusiefKantoor
         };
+
+    /// <summary>Reference heroes — PR #737 ref-full (two women at table).</summary>
+    public const string RefVerifRequest = $"/images/candidate/ref-full.jpg?v={Version}";
+
+    public const string RefVerifPublic = $"/images/candidate/ref-full.jpg?v={Version}";
+
+    public const string RefVerifMobile = $"/images/candidate/ref-full.jpg?v={Version}";
+
+    public const string RefVerifHeroArtPosition = "right bottom";
+
+    public const string RefVerifHeroMobilePosition = "right bottom";
 }

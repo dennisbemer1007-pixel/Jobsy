@@ -67,6 +67,9 @@ public sealed class EmailLinks
     public string ReferenceConfirmation(string token)
         => Absolute("/referentie/" + Uri.EscapeDataString(token));
 
+    public string WorkExperienceReference(string token)
+        => Absolute("/werk-referentie/" + Uri.EscapeDataString(token));
+
     // Dependencies B — WerkgeverNav targets
     public string EmployerHome => Absolute("/werkgever");
     public string EmployerApplications(Guid? applicationId = null)

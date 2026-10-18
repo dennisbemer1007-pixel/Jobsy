@@ -2049,6 +2049,15 @@ window.jobsyProfileEncourage = window.jobsyProfileEncourage || {
   }
 };
 
+window.jobsyRefVerificationTip = window.jobsyRefVerificationTip || {
+  isDismissed: function (key) {
+    try { return localStorage.getItem("lobsy-ref-verification:" + key) === "1"; } catch (e) { return false; }
+  },
+  dismiss: function (key) {
+    try { localStorage.setItem("lobsy-ref-verification:" + key, "1"); } catch (e) { }
+  }
+};
+
 window.jobsyCoachDock = window.jobsyCoachDock || {
   bind: function (el, cssVar) {
     if (!el || !cssVar) return;

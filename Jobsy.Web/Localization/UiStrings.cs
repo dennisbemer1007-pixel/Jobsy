@@ -3726,6 +3726,7 @@ public static class UiStrings
         UiStringsComeback.MergeAll(nl, en, pl, ro, ar);
         UiStringsReadAloud.MergeAll(nl, en, pl, ro, ar);
         UiStringsReferee.MergeAll(nl, en, pl, ro, ar);
+        UiStringsReferenceVerification.MergeAll(nl, en, pl, ro, ar);
         // Wave 1: last merge wins, so pl/ro/ar overlays replace English copies.
         UiStringsGolf1.MergeAll(nl, en, pl, ro, ar);
         UiStringsRun8.MergeAll(nl, en, pl, ro, ar);

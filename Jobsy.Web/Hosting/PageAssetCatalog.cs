@@ -57,8 +57,10 @@ public static class PageAssetCatalog
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261018-01",
+        "css/features/mijn-paspoort.css?v=20261018-06",
         "css/features/kompas-illustrated.css?v=20261018-05",
+        "css/features/reference-verification-hero.css?v=20261018-16",
+        "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261018-04",
         "css/features/candidate-illustrated-app.css?v=20261018-19",
@@ -227,6 +229,15 @@ public static class PageAssetCatalog
         if (path.Equals("/werkgever/kandidatenkaart", StringComparison.OrdinalIgnoreCase))
         {
             return KandidatenkaartCss;
+        }
+
+        if (path.StartsWith("/werk-referentie/", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                "css/features/reference-verification-hero.css?v=20261018-16",
+                "css/features/reference-verification.css?v=20261018-16"
+            ];
         }
 
         return [];

@@ -100,7 +100,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "7524414915615b07fdbc8722491faefaedd90eb0ee1eb04daec28e8631379f65",
+    "sha256": "8153c2bf25b54c1805ca10eb48a627bc18b72bcb1e7a5f4de54a2eb3228c3307",
     "v": "20261015-09"
   },
   "css/features/nav-feedback.css": {
@@ -224,7 +224,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "7127781473df83e53f9952ea21c746bd1de74eeb8498877cc2188c29f74b33a2",
+    "sha256": "8738ee899f6b445b4a0d7e681bb8bb3f949e699c84681fde664c7859fc03dd8b",
     "v": "20261017-04"
   },
   "js/app-extras.js": {

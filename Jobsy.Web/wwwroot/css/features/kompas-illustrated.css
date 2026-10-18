@@ -41,10 +41,34 @@
   mask-image: linear-gradient(90deg, transparent, #000 22%);
 }
 
-.passport-layout__sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+@media (min-width: 1024px) {
+  .passport-page--illustrated .passport-layout {
+    align-items: start;
+  }
+
+  .passport-layout__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .passport-page--illustrated .passport-layout__sidebar {
+    align-self: start;
+    justify-content: flex-start;
+  }
+
+  .passport-page--illustrated .passport-layout__card--desktop {
+    align-self: start;
+    position: relative;
+    inset-block-start: auto;
+    top: auto;
+  }
+
+  .passport-page--illustrated .passport-layout__sidebar > .passport-card {
+    position: sticky;
+    inset-block-start: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
+    top: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
+  }
 }
 
 .kompas-tip {
@@ -220,14 +244,43 @@
 }
 
 .passport-page--illustrated .passport-dna__grid {
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.28fr) minmax(0, 0.92fr);
-  align-items: start;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .passport-page--illustrated .passport-dna__grid {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.28fr) minmax(0, 0.92fr);
+    align-items: start;
+  }
 }
 
 .passport-page--illustrated .passport-dna__story-head {
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-start;
-  gap: 0.35rem;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.passport-page--illustrated .passport-dna__story-head .read-aloud--icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  margin-block-start: 0;
+  padding: 0;
+}
+
+.passport-page--illustrated .passport-dna__story-head .read-aloud--icon .read-aloud__icon {
+  font-size: 0.85rem;
+}
+
+@media (min-width: 900px) {
+  .passport-page--illustrated .passport-dna__story-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
 }
 
 .passport-page--illustrated .passport-dna__story-head .passport-dna__h {

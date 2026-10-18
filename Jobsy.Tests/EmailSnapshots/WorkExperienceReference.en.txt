@@ -1,0 +1,36 @@
+KEY: WorkExperienceReference
+SUBJECT: Jan de Vries asks you to confirm work experience
+PREHEADER: Short questions, no account needed
+KIND: Essential
+--- TEXT ---
+Hello Alex,
+
+Will you confirm this?
+======================
+
+Jan de Vries asks you to confirm they worked at Bakkerij De Gouden Korrel as
+vakkenvuller. You have 14 days. No account needed.
+
+Lobsy asks this because this person named you. Your contact details stay
+private. You do not have to answer.
+
+Rather not? On the page you can decline or say you do not know this person.
+
+Open the questions: https://lobsy.nl/werk-referentie/voorbeeld
+
+Team Lobsy
+
+Someone named you as a person who can confirm this work.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Will you confirm this?
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open the questions -> https://lobsy.nl/werk-referentie/voorbeeld
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

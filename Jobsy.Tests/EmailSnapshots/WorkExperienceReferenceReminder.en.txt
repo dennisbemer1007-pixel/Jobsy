@@ -1,0 +1,33 @@
+KEY: WorkExperienceReferenceReminder
+SUBJECT: Reminder: Jan de Vries is waiting for your confirmation
+PREHEADER: One more time, no account needed
+KIND: Essential
+--- TEXT ---
+Hello Alex,
+
+Reminder
+========
+
+Jan de Vries is still waiting for your confirmation about work at Bakkerij
+De Gouden Korrel.
+
+This is at most one reminder. Rather not? You can decline on the page.
+
+Open the questions: https://lobsy.nl/werk-referentie/voorbeeld
+
+Team Lobsy
+
+Someone named you as a person who can confirm this work.
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Lobsy
+--- STRUCTURE ---
+h1: Reminder
+marker: table data-lobsy-layout=2
+marker: table data-lobsy-block=note
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open the questions -> https://lobsy.nl/werk-referentie/voorbeeld
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36
