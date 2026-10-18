@@ -1,0 +1,8 @@
+# PR-only failures vs acceptatie baseline (acceptatie tip d4c11371)
+# PR run: 39171362804 (commit 95ab0187d, merge acceptatie #724 + #739)
+# Acceptatie run: 39168676605 (push on d4c11371 — same base)
+# Regenerate: PR_CI_RUN_ID=39171362804 ACCEPTATIE_CI_RUN_ID=39168676605 tools/ci/compare-pr-acceptatie-failures.sh ci-pr-only-failures.txt
+#
+Jobsy.Tests.MigrationsApplyOnFreshDatabaseTests.All_migrations_apply_on_a_fresh_database
+Jobsy.Tests.MigrationsApplyOnFreshDatabaseTests.No_migration_recreates_schema_that_an_earlier_migration_already_created
+Jobsy.Tests.TestAccounts.TestAccountsPostgresSeedTests.Seed_and_status_survive_missing_hmac_and_a_second_run_is_unchanged
