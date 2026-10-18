@@ -1,0 +1,207 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@inject UserFacingError UserFacing
+
+@if (!_enabled)
+{
+    return;
+}
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_rows.Count == 0)
+{
+    return;
+}
+else
+{
+    <div class="opl-passport-growth">
+        <div class="opl-ttl">
+            <h2 class="career-card__block-title">@Culture["Training.PassportGrowth.Intro"]</h2>
+            <a class="btn btn-ghost btn-sm" href="/carriere/leren">@Culture["Training.PassportGrowth.ViewAll"]</a>
+        </div>
+
+        <div class="opl-layout">
+            <div class="opl-grid">
+                @foreach (var row in _rows)
+                {
+                    var mod = CompetencySkillBands.CssModifier(row.Score);
+                    <article class="opl-comp">
+                        <div class="opl-comp__head">
+                            <span class="opl-section__icon" aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+                            <h3>@Culture[$"Competency.Cat.{row.Category}"]</h3>
+                            <span class="opl-comp__tag opl-comp__tag--@TagClass(mod)">@Culture[row.BandKey]</span>
+                        </div>
+                        <p class="opl-comp__text">@Culture[row.MeaningKey]</p>
+                        @if (row.ShowOffers && row.Offers.Count > 0)
+                        {
+                            <div class="opl-grow-box opl-grow-box--compact">
+                                <p class="opl-grow-box__label">@Culture["Training.PassportGrowth.MatchLine"]</p>
+                                @foreach (var offer in row.Offers)
+                                {
+                                    <div class="opl-grow-row opl-grow-row--card">
+                                        <div class="opl-grow-row__main">
+                                            <div class="opl-grow-row__tags">
+                                                <span class="@TypeClass(offer.Type)">@TypeLabel(offer.Type)</span>
+                                                @if (offer.IsFree)
+                                                {
+                                                    <span class="opl-badge-free">@Culture["Training.Free"]</span>
+                                                }
+                                            </div>
+                                            <strong class="opl-grow-row__title">@offer.Title</strong>
+                                            <p class="opl-grow-row__meta muted">@MetaLine(offer)</p>
+                                        </div>
+                                        <button type="button"
+                                                class="btn btn-secondary btn-sm opl-grow-row__action"
+                                                disabled="@_busy"
+                                                @onclick="() => OpenAsync(offer)">
+                                            @Culture["Training.Open"]
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </article>
+                }
+            </div>
+            <aside class="opl-side opl-only-desktop">
+                <section class="opl-progress-card">
+                    <h3>@Culture["Training.PassportGrowth.PromoTitle"]</h3>
+                    <p class="muted">@Culture["Training.LearnGrow.Lead"]</p>
+                    <a class="btn btn-primary" href="/carriere/leren">@Culture["Training.PassportGrowth.ViewAll"]</a>
+                </section>
+                <section class="opl-progress-card">
+                    <h3>@Culture["Training.PassportGrowth.PrivacyTitle"]</h3>
+                    <p class="muted">@Culture["Training.PassportGrowth.PrivacyBody"]</p>
+                </section>
+            </aside>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(_message))
+        {
+            <p class="state-message" role="alert">@_message</p>
+        }
+    </div>
+}
+
+@code {
+    private bool _enabled;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _message;
+    private List<TrainingCompetencyGrowthModel> _rows = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners);
+        if (!_enabled)
+        {
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _rows = (await Api.GetTrainingCompetencyGrowthAsync()).ToList();
+        }
+        catch
+        {
+            _rows = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string TagClass(string mod) => mod switch
+    {
+        "strong" => "strong",
+        "growing" => "mid",
+        _ => "grow"
+    };
+
+    private static string TypeClass(string? type) => type switch
+    {
+        "Workshop" => "opl-type opl-type--workshop",
+        "Opleiding" => "opl-type opl-type--opleiding",
+        _ => "opl-type opl-type--cursus"
+    };
+
+    private string TypeLabel(string? type) => type switch
+    {
+        "Workshop" => Culture["Training.Type.Workshop"],
+        "Opleiding" => Culture["Training.Type.Opleiding"],
+        _ => Culture["Training.Type.Cursus"]
+    };
+
+    private string MetaLine(TrainingPartnerOfferModel offer)
+    {
+        var parts = new List<string> { offer.ProviderName };
+        if (offer.DurationValue is int dv
+            && Enum.TryParse<TrainingDurationUnit>(offer.DurationUnit, true, out var unit))
+        {
+            var duration = unit switch
+            {
+                TrainingDurationUnit.Days when dv == 1 => Culture["Training.Duration.OneDay"],
+                TrainingDurationUnit.Weeks when dv == 1 => Culture["Training.Duration.OneWeek"],
+                _ => TrainingDurationFormat.UnitKey(unit) is { } unitKey ? Culture.Format(unitKey, dv) : null
+            };
+            if (!string.IsNullOrWhiteSpace(duration))
+            {
+                parts.Insert(0, duration);
+            }
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    private async Task OpenAsync(TrainingPartnerOfferModel offer)
+    {
+        _busy = true;
+        _message = null;
+        try
+        {
+            var tracked = await Api.TrackTrainingOfferAsync(offer.OfferId, TrainingTracking.CampaignCompetence);
+            if (string.IsNullOrWhiteSpace(tracked.Url)
+                || !TrainingDeepLinkRules.IsCourseDeepLink(tracked.Url))
+            {
+                _message = Culture["Common.Error"];
+                return;
+            }
+
+            if (offer.IsPartnerLink)
+            {
+                await Js.InvokeVoidAsync("open", tracked.Url, "_blank", "noopener,noreferrer");
+            }
+            else
+            {
+                Navigation.NavigateTo(tracked.Url, forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            _message = UserFacing.Describe(ex);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

@@ -38,11 +38,41 @@ internal static class UiStringsRun8
             "Merită și asta",
             "يستحق النظر أيضًا");
         Add("Kompas.FitExplainer",
-            "Het percentage is het gemiddelde van je scores. Richtingen die dit beroep meer vraagt, tellen zwaarder. Dezelfde score staat in dezelfde groep.",
-            "The percentage is the average of your scores. Letters this job needs more count for more. The same score sits in the same group.",
-            "Procent to średnia twoich wyników. Litery, których ten zawód potrzebuje bardziej, liczą się bardziej. Ten sam wynik jest w tej samej grupie.",
-            "Procentul este media scorurilor tale. Literele de care această meserie are mai multă nevoie contează mai mult. Același scor stă în același grup.",
-            "النسبة هي متوسط درجاتك. الحروف التي تحتاجها هذه المهنة أكثر تُحسب أكثر. الدرجة نفسها في المجموعة نفسها.");
+            "We groeperen beroepen op hoe goed ze bij je scores passen. Richtingen die een beroep extra vraagt, wegen zwaarder.",
+            "We group jobs by how well they fit your scores. Directions a job needs more weigh heavier.",
+            "Grupujemy zawody według tego, jak pasują do twoich wyników. Kierunki, których zawód wymaga więcej, liczą się bardziej.",
+            "Grupăm meseriile după cât de bine se potrivesc scorurilor tale. Direcțiile pe care meseria le cere mai mult contează mai mult.",
+            "نجمع المهن حسب مدى ملاءمتها لنتائجك. الاتجاهات التي تحتاجها المهنة أكثر تُوزن أكثر.");
+        Add("Kompas.CompletenessDone",
+            "Profiel compleet",
+            "Profile complete",
+            "Profil ukończony",
+            "Profil complet",
+            "الملف مكتمل");
+        Add("Kompas.CompletenessAlmost",
+            "Profiel bijna compleet · ",
+            "Profile almost complete · ",
+            "Profil prawie ukończony · ",
+            "Profil aproape complet · ",
+            "الملف شبه مكتمل · ");
+        Add("Kompas.CompletenessGood",
+            "Profiel goed op weg · ",
+            "Profile well underway · ",
+            "Profil w dobrym tempie · ",
+            "Profil pe drumul cel bun · ",
+            "الملف في تقدم جيد · ");
+        Add("Kompas.CompletenessStarted",
+            "Profiel is gestart · ",
+            "Profile started · ",
+            "Profil rozpoczęty · ",
+            "Profil început · ",
+            "الملف بدأ · ");
+        Add("Kompas.CompletenessBegin",
+            "Maak je profiel af · ",
+            "Complete your profile · ",
+            "Uzupełnij profil · ",
+            "Completează profilul · ",
+            "أكمل ملفك · ");
         Add("Kompas.RankChoice",
             "{0}e keus",
             "choice {0}",

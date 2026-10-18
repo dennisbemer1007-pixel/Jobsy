@@ -104,8 +104,18 @@ public static class UiStringsTests
         Add("TestFlow.Bubble.Question", "Er zijn geen foute antwoorden. Kies wat het eerst in je opkomt.", "There are no wrong answers. Choose what comes first.", "There are no wrong answers. Choose what comes first. ·", "There are no wrong answers. Choose what comes first.", "‏There are no wrong answers. Choose what comes first.");
         Add("TestDone.Title", "Weer een laag eraf", "Another layer off", "Kolejna warstwa spadła", "Încă un strat a căzut", "طبقة أخرى سقطت");
         Add("TestDone.Eyebrow", "In de diepte · {0} · {1} klaar", "Diving · {0} · {1} done", "Nurkowanie · {0} · {1} done", "Scufundare · {0} · {1} done", "غوص · {0} · {1} done");
-        Add("TestDone.LeadFull", "{0} is helemaal klaar. Dit staat nu in je paspoort:", "{0} is fully done. This is now in your passport:", "{0} is fully done. This is now in tyr passport:", "{0} is fully done. This is now in your passport:", "‏{0} is fully done. This is now in your passport:");
-        Add("TestDone.LeadLevel", "{0}: {1} is klaar. Dit staat nu in je paspoort:", "{0}: {1} is done. This is now in your passport:", "{0}: {1} is done. This is now in tyr passport:", "{0}: {1} is done. This is now in your passport:", "‏{0}: {1} is done. This is now in your passport:");
+        Add("TestDone.LeadFull",
+            "{0} is helemaal klaar. Je scores staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0} is fully done. Your scores are in your passport; your personal mirror stays private.",
+            "{0} is fully done. Your scores are in tyr passport; your personal mirror stays private.",
+            "{0} is fully done. Your scores are in your passport; your personal mirror stays private.",
+            "‏{0} is fully done. Your scores are in your passport; your personal mirror stays private.");
+        Add("TestDone.LeadLevel",
+            "{0}: {1} is klaar. Je scores staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your scores are in tyr passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.",
+            "‏{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.");
         Add("TestDone.Live", "Weer een laag eraf. {0} {1} is klaar.", "Another layer off. {0} {1} is done.", "Another warstwa off. {0} {1} is done.", "Another layer off. {0} {1} is done.", "‏Another layer off. {0} {1} is done.");
         Add("TestDone.Back", "Terug naar Mijn tests", "Back to My tests", "Wstecz to Moje testy", "Înapoi to Testele mele", "رجوع to اختباراتي");
         Add("TestDone.ViewResult", "Bekijk je uitslag", "View your result", "View tyr result", "View your result", "‏View your result");
@@ -213,5 +223,7 @@ public static class UiStringsTests
         Add("Deep.Checkout.TileParts", "In 5 onderwerpen, met rustpunten.", "In 5 topics, with pause points.", "In 5 topics, with pause points. ·", "In 5 topics, with pause points.", "‏In 5 topics, with pause points.");
         Add("Deep.Checkout.TileStop", "Stoppen mag", "Stopping is fine", "Stopping is fine ·", "Stopping is fine", "‏Stopping is fine");
         Add("Deep.Checkout.TileStopLead", "Je gaat later verder waar je was.", "You’ll continue later where you left off.", "You’ll continue later where ty left off.", "You’ll continue later where you left off.", "‏You’ll continue later where you left off.");
+
+        UiStringsTestReflection.MergeAll(nl, en, pl, ro, ar);
     }
 }

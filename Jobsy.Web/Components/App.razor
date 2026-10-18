@@ -13,6 +13,9 @@
         <meta name="robots" content="noindex, nofollow" />
     }
     <meta name="theme-color" content="#0f2d5c" />
+    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/fraunces/fraunces-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="application-name" content="Lobsy" />
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -21,7 +24,7 @@
     <meta name="format-detection" content="telephone=no" />
     <meta name="lobsy-commit" content="@GitCommit" />
     <base href="/" />
-    <link rel="manifest" href="/site.webmanifest?v=20261018-23" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20261004-14" />
     <link rel="icon" href="favicon.ico?v=20261018-23" sizes="any" />
     <link rel="icon" type="image/png" sizes="16x16" href="/brand/png/lobsy-favicon-16.png?v=20261018-23" />
     <link rel="icon" type="image/png" sizes="32x32" href="/brand/png/lobsy-favicon-32.png?v=20261018-23" />
@@ -43,10 +46,13 @@
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
     }
     <link rel="stylesheet" href="css/critical.css?v=20261018-23" />
+    <link rel="stylesheet" href="css/tokens.css?v=20261018-06" />
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
-    <link rel="stylesheet" href="css/features/auth.css?v=20261017-01" />
-    <link rel="stylesheet" href="css/features/landing.css?v=20261015-14" />
+    <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
+    <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
+    <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
+    <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
     <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
@@ -84,8 +90,9 @@
                 @:<link rel="stylesheet" href="@href" />
             }
             <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
-            <link rel="stylesheet" href="css/features/auth.css?v=20261017-01" />
-            <link rel="stylesheet" href="css/features/landing.css?v=20261015-14" />
+            <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
+            <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
+            <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
             <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
             <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
             <link rel="stylesheet" href="css/features/reconnect.css?v=20261015-02" />
@@ -150,10 +157,8 @@
                     return !!(window.matchMedia && window.matchMedia("(min-width: 900px)").matches);
                 }
             };
-            var brandAssetV = "20261018-23";
-            var webp = "/images/brand/lobsy-256.webp?v=" + brandAssetV;
-            var png = "/images/brand/lobsy-128.png?v=" + brandAssetV;
-            var svgMark = "/brand/svg/lobsy-merkteken.svg?v=" + brandAssetV;
+            var webp = "/images/brand/lobsy-256.webp?v=20261004-13";
+            var png = "/images/brand/lobsy-128.png?v=20261004-13";
             var mascotPng = "/images/brand/mascot-128.png?v=20261004-13";
             var svg = "data:image/svg+xml," + encodeURIComponent(
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#e7eef7"/><text x="32" y="40" text-anchor="middle" font-size="22" font-family="Segoe UI,Arial,sans-serif" fill="#0f2d5c">L</text></svg>'
@@ -200,15 +205,10 @@
                     img.src = png;
                     return true;
                 }
-                if (src.indexOf("/brand/svg/") !== -1 || src.indexOf("lobsy-logo-horizontaal") !== -1 || src.indexOf("lobsy-merkteken") !== -1) {
-                    img.dataset.fb = "png";
-                    img.src = png;
-                    return true;
-                }
                 if (src.indexOf("lobsy-128.png") !== -1 || src.indexOf("lobsy-180.png") !== -1 || src.indexOf("lobsy-64.png") !== -1) {
                     img.dataset.fb = "done";
                     img.onerror = null;
-                    img.src = svgMark || svg;
+                    img.src = svg;
                     img.classList.add("img-fallback-empty");
                     return true;
                 }

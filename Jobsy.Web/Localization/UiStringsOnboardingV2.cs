@@ -48,6 +48,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Resume.Lead"] = resumeLead;
         map["Onboarding.Resume.Cta"] = resumeCta;
         var english = language != "nl";
+        map["Onboarding.AccountPrivacyLink"] = english ? "My data & account" : "Mijn gegevens & account";
         map["Onboarding.Step1.Title"] = english ? "Let’s get acquainted" : "Even kennismaken";
         map["Onboarding.Step1.Lead"] = english ? "Is this correct? We copied your name from your account." : "Klopt dit? We hebben je naam overgenomen van je account.";
         map["Onboarding.UseMyLocation"] = english ? "Use my location" : "Gebruik mijn locatie";
@@ -271,8 +272,8 @@ internal static class UiStringsOnboardingV2
         en["Onboarding.FinaleV2.Highlight.Title"] = "{0} jobs already fit you";
         nl["Onboarding.FinaleV2.Highlight.Sub"] = "Allemaal binnen {0} minuten reizen vanaf {1}";
         en["Onboarding.FinaleV2.Highlight.Sub"] = "All within {0} minutes travel from {1}";
-        nl["Onboarding.FinaleV2.Highlight.Link"] = "Bekijk ze →";
-        en["Onboarding.FinaleV2.Highlight.Link"] = "View them →";
+        nl["Onboarding.FinaleV2.Highlight.Link"] = "Bekijk ze";
+        en["Onboarding.FinaleV2.Highlight.Link"] = "View them";
         nl["Onboarding.FinaleV2.Insights.Title"] = "Dit valt ons nu al op";
         en["Onboarding.FinaleV2.Insights.Title"] = "This already stands out";
         nl["Onboarding.FinaleV2.Insights.Lead"] = "Een eerste indruk uit je Quick-Scan. Met de verdieping wordt dit scherper.";

@@ -2,7 +2,7 @@
 @* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; 07 redesigns in place (no CandidateJobListTabs) *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
 @using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Core.Features
@@ -17,49 +17,23 @@
 @inject PersistentComponentState Persist
 @inject IFeatureFlags FeatureFlags
 @using Jobsy.Core.Contracts
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Media
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @implements IDisposable
 
 <PageTitle>@Culture["Kb.Saved.Title"] · Lobsy</PageTitle>
 
 <AuthorizeView Roles="Candidate">
     <Authorized>
-        <div class="panel-page kb-saved">
-            <header class="panel-header">
-                <div>
-                    <h1>@Culture["Kb.Saved.Title"]</h1>
-                    <p class="login-lead">@Culture["Kb.Saved.Lead"]</p>
-                </div>
-            </header>
+        <div class="panel-page kb-saved kb-saved--illustrated panel-page--cand-ill">
+            <CandidateIllustratedHero Title="@Culture["Kb.Saved.Title"]"
+                                      Lead="@Culture["Kb.Saved.Lead"]"
+                                      ArtUrl="@BewaardBand"
+                                      ArtPosition="right center"
+                                      CssClass="cand-hero--profession-band" />
 
             <CandidateJobListTabs />
-            <CandidateSavedSubnav />
-
-            @if (_externalOn)
-            {
-                <section class="kb-ext__card kb-saved__external" aria-labelledby="ext-saved-title">
-                    <h2 id="ext-saved-title" class="kb-ext__method-title">@Culture["ExtVac.Saved.Title"]</h2>
-                    <p class="muted">@Culture["ExtVac.Saved.Lead"]</p>
-                    @if (_externalItems.Count == 0)
-                    {
-                        <p class="state-message">@Culture["ExtVac.Saved.Empty"] <a href="@KbRoutes.ExternalVacancyAdd">@Culture["ExtVac.Saved.Add"]</a>.</p>
-                    }
-                    else
-                    {
-                        <ul class="kb-ext__list">
-                            @foreach (var ext in _externalItems)
-                            {
-                                <li>
-                                    <a href="@KbRoutes.ExternalVacancyDetail(ext.Id)">
-                                        <strong>@ext.Title</strong>
-                                        <span class="muted">@ext.CompanyName · @ext.Place</span>
-                                    </a>
-                                </li>
-                            }
-                        </ul>
-                        <p><a href="@KbRoutes.ExternalVacancyAdd">@Culture["ExtVac.Saved.Add"]</a></p>
-                    }
-                </section>
-            }
 
             @if (_loading)
             {
@@ -67,7 +41,15 @@
             }
             else if (_items.Count == 0)
             {
-                <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="@KbRoutes.Map">@Culture["Saved.Discover"]</a>.</p>
+                <div class="kb-saved__empty-layout">
+                    <CandidateIllustratedEmpty ArtUrl="@SpotKaart"
+                                               CssClass="cand-empty--apps-prominent">
+                        <h2 class="cand-empty__title">@Culture["Kb.Saved.Title"]</h2>
+                        <p class="cand-empty__lead">@Culture["Saved.EmptyLikes"]</p>
+                        <a class="btn btn-primary cand-empty__cta" href="@KbRoutes.Map">@Culture["CandidateVacancies.BrowseMap"]</a>
+                    </CandidateIllustratedEmpty>
+                    <CandidateIllustratedApplyTip />
+                </div>
             }
             else
             {
@@ -96,6 +78,13 @@
                     </div>
                 </div>
 
+                <div class="kb-saved__body">
+                @if (_filtered.Count == 0)
+                {
+                    <CandidateIllustratedEmpty ArtUrl="@EmptyLikesArt" Compact="true">
+                        <p class="state-message">@Culture["Kb.Saved.FilterEmpty"]</p>
+                    </CandidateIllustratedEmpty>
+                }
                 <div class="kb-saved__grid">
                     @foreach (var item in _filtered)
                     {
@@ -152,7 +141,8 @@
                             </button>
                         </article>
                         <article class="kb-saved-card @(closed ?"kb-saved-card--closed" : null)">
-                            <div class="kb-saved-card__media">
+                            <div class="kb-saved-card__media @(string.IsNullOrWhiteSpace(item.ImageUrl) && string.IsNullOrWhiteSpace(item.CompanyLogoUrl) ? "kb-saved-card__media--illustrated" : null)"
+                                 style="@(string.IsNullOrWhiteSpace(item.ImageUrl) && string.IsNullOrWhiteSpace(item.CompanyLogoUrl) ? $"--kb-saved-illustrated:url('{SavedNoPhotoArt}')" : null)">
                                 <a class="kb-saved-card__media-link" href="@($"/vacancies/{item.VacancyId}")">
                                     <VacancyPhoto Src="@item.ImageUrl"
                                                   FallbackSrc="@item.CompanyLogoUrl"
@@ -217,6 +207,9 @@
                         </article>
                     }
                 </div>
+
+                @RenderSavedRail()
+                </div>
             }
 
             @if (_undoItem is not null)
@@ -274,8 +267,51 @@
     private CandidateEngagementItem? _undoItem;
     private bool _externalOn;
     private List<ExternalVacancyListItemDto> _externalItems = [];
+    private IReadOnlyList<Shared.SharedVacancyGroup> _sharedGroups = [];
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
+
+    private string SharedWithLabel(int count)
+        => count <= 1
+            ? Culture["Saved.SharedWithOne"]
+            : Culture.Format("Saved.SharedWithMany", count);
+
+    private RenderFragment RenderSavedRail() => __builder =>
+    {
+        <aside class="kb-saved-rail" aria-label="@Culture["Saved.TabShared"]">
+            <section class="kb-saved-rail__card cand-side-card--spot"
+                     style="@($"--cand-side-spot:url('{SpotKaart}')")">
+                <h2>@Culture["Saved.TabShared"]</h2>
+                @if (_sharedGroups.Count == 0)
+                {
+                    <p class="muted">@Culture["Saved.EmptyShared"]</p>
+                }
+                else
+                {
+                    <ul class="kb-saved-rail__list">
+                        @foreach (var group in _sharedGroups.Take(5))
+                        {
+                            <li>
+                                <a href="@($"/vacancies/{group.VacancyId}")">
+                                    <strong>@group.VacancyTitle</strong>
+                                    <span class="muted">@SharedWithLabel(group.ShareCount) · @group.LastSharedAt.ToLocalTime().ToString("d MMM", Dutch)</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+            @if (_externalOn)
+            {
+                <section class="kb-saved-rail__card cand-side-card--spot"
+                         style="@($"--cand-side-spot:url('{SpotWerkgever}')")">
+                    <h2>@Culture["ExtVac.Saved.Title"]</h2>
+                    <p class="muted">@Culture["ExtVac.Saved.Lead"]</p>
+                    <a class="btn btn-secondary" href="@KbRoutes.ExternalVacancyAdd">@Culture["ExtVac.Saved.Add"]</a>
+                </section>
+            }
+        </aside>
+    };
 
     protected override void OnInitialized()
     {
@@ -325,6 +361,14 @@
             }
 
             _items = (await Api.GetMyLikesAsync()).ToList();
+            try
+            {
+                _sharedGroups = Shared.GroupShares(await Api.GetMySharesAsync());
+            }
+            catch
+            {
+                _sharedGroups = [];
+            }
             RefreshCounts();
             ApplyFilter();
         }
@@ -337,6 +381,14 @@
         try
         {
             _items = (await Api.GetMyLikesAsync()).ToList();
+            try
+            {
+                _sharedGroups = Shared.GroupShares(await Api.GetMySharesAsync());
+            }
+            catch
+            {
+                _sharedGroups = [];
+            }
             RefreshCounts();
             ApplyFilter();
         }
