@@ -201,16 +201,16 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Early.Nearby.JobHours"] = english ? "{0} h/week" : "{0} uur";
         map["Onboarding.Early.Nearby.FallbackCtaLead"] = english
             ? "Explore the map — your basics are already saved."
-            : "Verken de banenkaart — je basisgegevens zijn al bewaard.";
+            : "Verken de banenkaart. Je basisgegevens zijn al bewaard.";
         map["Onboarding.Early.Nearby.Lead"] = english ? "Based on your address, hours and {1} (max. {0} min). More detail follows in your Compass." : "Op basis van je adres, uren en {1} (max. {0} min). Meer detail volgt in je Kompas.";
         map["Onboarding.Early.Nearby.LeadNoLocation"] = english ? "Share your location so we can count reachable jobs." : "Deel je locatie zodat we bereikbare banen kunnen tellen.";
         map["Onboarding.Early.Nearby.LeadEmployersOff"] = english ? "Job matching is not available in this environment yet." : "Banenmatching is in deze omgeving nog niet beschikbaar.";
         map["Onboarding.Early.Nearby.TimeBanner"] = english ? "About <strong>2 minutes</strong> until your first personal result after the short tests." : "Nog <strong>±2 minuten</strong> tot je eerste persoonlijke resultaat na de korte tests.";
         map["Onboarding.Early.Nearby.Examples"] = english ? "{0} examples nearby" : "{0} voorbeelden dichtbij";
-        map["Onboarding.Early.Nearby.Fineprint"] = english ? "Teaser on location and hours — no personality score. Full match after the tests." : "Teaser op locatie en uren — geen persoonlijkheidsscore. Volledige match na de tests.";
-        map["Onboarding.Early.Nearby.FallbackZero"] = english ? "Nothing within your travel time yet — that can change quickly as new jobs go live." : "Nog niets binnen je reistijd — dat kan snel veranderen als er nieuwe vacatures live gaan.";
+        map["Onboarding.Early.Nearby.Fineprint"] = english ? "Teaser on location and hours — no personality score. Full match after the tests." : "Teaser op locatie en uren. Geen persoonlijkheidsscore. Volledige match na de tests.";
+        map["Onboarding.Early.Nearby.FallbackZero"] = english ? "Nothing within your travel time yet — that can change quickly as new jobs go live." : "Nog niets binnen je reistijd. Dat kan snel veranderen als er nieuwe vacatures live gaan.";
         map["Onboarding.Early.Nearby.FallbackNoLocation"] = english ? "We need your postcode or city to show nearby jobs." : "Vul je postcode of woonplaats in om banen in de buurt te tonen.";
-        map["Onboarding.Early.Nearby.FallbackEmployersOff"] = english ? "You can explore the job map while we finish matching here." : "Verken intussen de banenkaart — matching komt hier zo snel mogelijk.";
+        map["Onboarding.Early.Nearby.FallbackEmployersOff"] = english ? "You can explore the job map while we finish matching here." : "Verken intussen de banenkaart. Matching komt hier zo snel mogelijk.";
         map["Onboarding.Early.Nearby.WiderHint"] = english ? "With a slightly wider radius there are already {0} jobs." : "Met iets ruimere reistijd zijn er al {0} banen.";
         map["Onboarding.Early.Nearby.Banenkaart"] = english ? "Open the job map" : "Naar de banenkaart";
         map["Onboarding.Early.Nearby.Cta"] = english ? "Continue profile" : "Verder met profiel";
@@ -232,7 +232,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Panel.Nearby.MobileZero"] = english ? "Jobs nearby" : "Banen in de buurt";
         map["Onboarding.Panel.Nearby.Footnote"] = english
             ? "Based on your home location, travel time and hours — examples only."
-            : "Op basis van je adres, reistijd en uren — voorbeelden ter inspiratie.";
+            : "Op basis van je adres, reistijd en uren. Voorbeelden ter inspiratie.";
         map["Onboarding.Panel.Nearby.MapCaption"] = english
             ? "Your area on the job map"
             : "Jouw buurt op de banenkaart";

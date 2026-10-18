@@ -61,11 +61,22 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
-    public void Hero_band_css_splits_title_and_full_color_art()
+    public void Hero_band_css_uses_seamless_art_with_fade_and_mobile_scene_band()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
-        Assert.Contains("grid-template-columns", css, StringComparison.Ordinal);
-        Assert.Contains(".ob-illustrated-step__art", css, StringComparison.Ordinal);
-        Assert.DoesNotContain("inset: 0", css, StringComparison.Ordinal);
+        Assert.Contains("object-position: right center", css, StringComparison.Ordinal);
+        Assert.Contains(".ob-illustrated-step__hero-band::before", css, StringComparison.Ordinal);
+        Assert.Contains("block-size: 120px", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Nearby_panel_footnote_has_no_em_dash_in_dutch()
+    {
+        var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Localization/UiStringsOnboardingV2.cs"));
+        var idx = src.IndexOf("Onboarding.Panel.Nearby.Footnote", StringComparison.Ordinal);
+        Assert.True(idx >= 0);
+        var slice = src[idx..Math.Min(src.Length, idx + 320)];
+        Assert.Contains("Voorbeelden ter inspiratie.", slice, StringComparison.Ordinal);
+        Assert.DoesNotContain(" — voorbeelden", slice, StringComparison.OrdinalIgnoreCase);
     }
 }

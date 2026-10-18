@@ -1,15 +1,12 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Careers
 @using Jobsy.Core.Rules
-@using Jobsy.Web.Models
 @using Jobsy.Web.Onboarding
-@using Jobsy.Web.Services
 @using Microsoft.Extensions.Configuration
 @inject IConfiguration Config
 @inject IHostEnvironment HostEnv
 @using Jobsy.Web.Localization
 @inject CultureState Culture
-@inject JobsyApiClient Api
 
 @if (ShowHeading)
 {
@@ -106,9 +103,9 @@
                         </span>
                         <span class="ob-wizard__dream-suggest-text">
                             <span class="ob-wizard__dream-suggest-label">@item.Title</span>
-                            @if (!string.IsNullOrWhiteSpace(item.ReasonKey))
+                            @if (!string.IsNullOrWhiteSpace(item.Reason))
                             {
-                                <span class="ob-wizard__dream-suggest-reason">@Culture[item.ReasonKey]</span>
+                                <span class="ob-wizard__dream-suggest-reason">@item.Reason</span>
                             }
                         </span>
                     </button>
@@ -184,52 +181,15 @@
     [Parameter] public bool ShowValidation { get; set; }
     [Parameter] public IReadOnlyList<string> RegionalVacancyTitles { get; set; } = [];
 
-    private IReadOnlyList<CareerDreamOptionApiItem> _fitSuggestions = [];
-    private IReadOnlyList<string> _regionalTitles = [];
-    private bool _apiRefreshScheduled;
-
-    private IReadOnlyList<CareerDreamOptionApiItem> FitSuggestions =>
-        _fitSuggestions.Count > 0
-            ? _fitSuggestions
-            : OnboardingDreamSuggestionPicker.BuildFitSuggestions([], Draft.Education, max: 4);
-
-    private IReadOnlyList<string> RegionalTitles =>
-        _regionalTitles.Count > 0
-            ? _regionalTitles
-            : OnboardingDreamSuggestionPicker.BuildRegionalTitles(RegionalVacancyTitles, max: 4);
+    private IReadOnlyList<OnboardingDreamSuggestItem> FitSuggestions { get; set; } = [];
+    private IReadOnlyList<string> RegionalTitles { get; set; } = [];
 
     private bool ShowIdleSuggestions =>
         !Young && string.IsNullOrWhiteSpace(Draft.DreamSearch);
 
     protected override void OnParametersSet()
     {
-        _regionalTitles = OnboardingDreamSuggestionPicker.BuildRegionalTitles(RegionalVacancyTitles, max: 4);
-        if (_fitSuggestions.Count == 0)
-        {
-            _fitSuggestions = OnboardingDreamSuggestionPicker.BuildFitSuggestions([], Draft.Education, max: 4);
-        }
-
-        if (!_apiRefreshScheduled)
-        {
-            _apiRefreshScheduled = true;
-            _ = RefreshDreamSuggestionsFromApiAsync();
-        }
-    }
-
-    private async Task RefreshDreamSuggestionsFromApiAsync()
-    {
-        try
-        {
-            var options = await Api.GetCareerDreamOptionsAsync();
-            _fitSuggestions = OnboardingDreamSuggestionPicker.BuildFitSuggestions(
-                options?.Suggestions ?? [],
-                Draft.Education,
-                max: 4);
-            await InvokeAsync(StateHasChanged);
-        }
-        catch
-        {
-            // Sync catalog fallback already shown.
-        }
+        FitSuggestions = OnboardingDreamSuggestionPicker.BuildFromProfile(Draft, RegionalVacancyTitles, max: 4);
+        RegionalTitles = OnboardingDreamSuggestionPicker.BuildRegionalTitles(RegionalVacancyTitles, max: 4);
     }
 }
