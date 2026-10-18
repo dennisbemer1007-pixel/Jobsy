@@ -1,0 +1,6 @@
+# PR-only failures (PR run 39162188665 vs acceptatie 39159428434)
+# Generated 2026-10-18T20:31:44Z
+Jobsy.Tests.AdminRun5Tests.Hospital_menu_titles_are_not_vacancies_and_versions_only_increase
+Jobsy.Tests.MigrationsApplyOnFreshDatabaseTests.All_migrations_apply_on_a_fresh_database
+Jobsy.Tests.PendingModelChangesTests.Model_matches_snapshot_without_pending_changes
+Jobsy.Tests.TestAccounts.TestAccountsPostgresSeedTests.Seed_and_status_survive_missing_hmac_and_a_second_run_is_unchanged

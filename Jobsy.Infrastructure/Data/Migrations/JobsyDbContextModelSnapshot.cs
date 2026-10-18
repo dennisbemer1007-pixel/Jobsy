@@ -5507,6 +5507,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AdminFlagOverridesJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("AmbassadorsEnabled")
                         .HasColumnType("boolean");
 
@@ -5595,6 +5599,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<int>("MinimumSessionVersion")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("OccupationDayInLifeEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("OnboardingFinaleV2Enabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("PassportPartnersEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -5627,10 +5637,16 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("ReferenceVerificationEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("ResearchConsentEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("SamplePdfEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("SchoolPerCodeResultsEnabled")
                         .HasColumnType("boolean");
@@ -5647,31 +5663,6 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("SensitiveExperienceEnabled")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("AdminFlagOverridesJson")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasDefaultValue("[]");
-
-                    b.Property<bool>("ReferenceVerificationEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("TestJourneyIllustrationEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("OnboardingFinaleV2Enabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("SamplePdfEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("TestEditModeEnabled")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("OccupationDayInLifeEnabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
                     b.Property<int>("SessionInactivityTimeoutMinutes")
                         .HasColumnType("integer");
 
@@ -5684,6 +5675,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("SupportAccessNotifySubject")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("TestEditModeEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("TestJourneyIllustrationEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("TestsV2Enabled")
