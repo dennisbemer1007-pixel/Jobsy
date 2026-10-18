@@ -70,7 +70,15 @@
 
 .ob-wizard--richting-a.ob-wizard .ob-wizard__content label.ob-job-dates__current {
   margin-top: 4px !important;
-  margin-bottom: 1rem !important;
+  margin-bottom: 0 !important;
+}
+
+.ob-wizard--richting-a .ob-job-card .ob-job-dates {
+  margin-bottom: 12px;
+}
+
+.ob-wizard--richting-a.ob-wizard .ob-wizard__content .ob-job-card label.ob-job-duties {
+  margin-top: 0 !important;
 }
 
 .ob-job-dates__to {
