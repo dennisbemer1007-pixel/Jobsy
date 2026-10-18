@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Bunit;
 using Jobsy.Core.Ai;
 using Jobsy.Core.Legal;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Privacy;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Components.Legal;
@@ -38,6 +39,7 @@ public abstract class PrivacyRenderTestBase : BunitContext
 
     protected PrivacyRenderTestBase()
     {
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddLogging();
         Services.AddMemoryCache();
@@ -68,6 +70,7 @@ public abstract class PrivacyRenderTestBase : BunitContext
         {
             Config.Dispose();
             _culture.Dispose();
+            JobsyLanguages.ResetEnabledForTests();
         }
 
         base.Dispose(disposing);
