@@ -6,7 +6,8 @@
   --obf-text: #122033;
   --obf-muted: #5a6a7d;
   --obf-border: #ddd5cc;
-  --obf-art-position: 70% 60%;
+  --obf-cream: #fbf5ec;
+  --obf-art-position: 75% 60%;
   --obf-hero-height: clamp(32.5rem, 38vw, 35rem);
   color: var(--obf-text);
   background: var(--obf-pearl);
@@ -22,29 +23,38 @@
   max-width: 100vw;
   margin-inline: calc(50% - 50vw);
   overflow: hidden;
-  background: #e8dcc8;
+  background: var(--obf-cream);
   isolation: isolate;
+}
+
+.ob-finale__hero::before {
+  content: "";
+  grid-area: 1 / 1;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--obf-cream) 0%,
+    var(--obf-cream) 38%,
+    rgba(251, 245, 236, 0.92) 46%,
+    rgba(251, 245, 236, 0.62) 54%,
+    rgba(251, 245, 236, 0.22) 60%,
+    rgba(251, 245, 236, 0) 62%
+  );
 }
 
 .ob-finale__hero::after {
   content: "";
   grid-area: 1 / 1;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
-  background:
-    radial-gradient(
-      ellipse 68% 118% at 16% 50%,
-      rgba(253, 248, 242, 0.62) 0%,
-      rgba(253, 248, 242, 0.28) 42%,
-      rgba(253, 248, 242, 0.06) 60%,
-      transparent 76%
-    ),
-    linear-gradient(
-      98deg,
-      rgba(253, 248, 242, 0.32) 0%,
-      rgba(253, 248, 242, 0.1) 26%,
-      transparent 48%
-    );
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 68%,
+    rgba(245, 242, 238, 0.45) 84%,
+    var(--obf-pearl) 100%
+  );
 }
 
 .ob-finale__art,
@@ -74,7 +84,7 @@
 
 .ob-finale__intro {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   align-self: stretch;
   display: flex;
   flex-direction: column;
@@ -500,27 +510,27 @@
 
 @media (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 70% 60%;
+    --obf-art-position: 75% 60%;
   }
 }
 
 @media (min-width: 1600px) {
   .ob-finale {
-    --obf-art-position: 68% 58%;
+    --obf-art-position: 73% 58%;
     --obf-hero-height: clamp(32.5rem, 34vw, 35rem);
   }
 }
 
 @media (max-width: 1280px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 72% 60%;
+    --obf-art-position: 76% 60%;
     --obf-hero-height: clamp(32.5rem, 40vw, 35rem);
   }
 }
 
 @media (max-width: 1024px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 74% 62%;
+    --obf-art-position: 77% 62%;
     --obf-hero-height: clamp(31rem, 44vw, 34rem);
   }
 }
@@ -537,6 +547,7 @@
     background: var(--obf-pearl);
   }
 
+  .ob-finale__hero::before,
   .ob-finale__hero::after {
     display: none;
   }
@@ -548,7 +559,7 @@
     flex: none;
     justify-content: flex-start;
     padding: 1rem 1rem 0.875rem;
-    background: linear-gradient(180deg, #fdf8f2 0%, var(--obf-pearl) 100%);
+    background: linear-gradient(180deg, var(--obf-cream) 0%, var(--obf-pearl) 100%);
   }
 
   .ob-finale__art {
@@ -556,20 +567,51 @@
     flex: none;
     position: relative;
     width: 100%;
+    height: clamp(13.75rem, 60vw, 16.25rem);
     min-height: 0;
     margin-top: 0;
-    background: linear-gradient(180deg, var(--obf-pearl) 0%, #ebe3d6 100%);
+    overflow: hidden;
+    background: var(--obf-pearl);
+  }
+
+  .ob-finale__art::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      var(--obf-cream) 0%,
+      rgba(251, 245, 236, 0.88) 10%,
+      rgba(251, 245, 236, 0.35) 22%,
+      transparent 36%
+    );
+  }
+
+  .ob-finale__art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 72%,
+      rgba(245, 242, 238, 0.55) 88%,
+      var(--obf-pearl) 100%
+    );
   }
 
   .ob-finale__art img {
-    position: relative;
-    inset: auto;
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
-    height: auto;
-    aspect-ratio: 1640 / 720;
-    object-fit: contain;
-    object-position: center bottom;
+    height: 100%;
+    object-fit: cover;
+    object-position: 74% 58%;
   }
 
   .ob-finale__hero-inner {
