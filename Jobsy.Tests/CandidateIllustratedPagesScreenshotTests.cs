@@ -34,6 +34,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirR11 = "/opt/cursor/artifacts/kandidaat-728-r11";
     private const string ArtifactsDirR12 = "/opt/cursor/artifacts/kandidaat-728-r12";
     private const string ArtifactsDirR13 = "/opt/cursor/artifacts/kandidaat-728-r13";
+    private const string ArtifactsDirR14 = "/opt/cursor/artifacts/kandidaat-728-r14";
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -683,6 +684,79 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Console.WriteLine(pixelReports);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_728_r14_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirR14);
+        if (Directory.Exists(ArtifactsDirR13))
+        {
+            Directory.Delete(ArtifactsDirR13, recursive: true);
+        }
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        var heroSizes = new[] { (1440, 900, "1440"), (1024, 768, "1024") };
+        var pixelReports = new StringBuilder();
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR14,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                auth: true,
+                sizes: heroSizes,
+                prepare: WaitForApplicationsEmptyAsync);
+
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR14,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                auth: true,
+                sizes: heroSizes,
+                prepare: WaitForSavedEmptyAsync);
+        }
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR14,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            auth: true,
+            sizes: heroSizes,
+            prepare: PrepareKompasTopScreenshotAsync);
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR14,
+            deliveryWeb.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            auth: true,
+            sizes: heroSizes,
+            prepare: WaitForSettingsMailPaneAsync);
+
+        foreach (var name in new[] { "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen" })
+        {
+            var pngPath = Path.Combine(ArtifactsDirR14, $"{name}-1440.png");
+            var report = ValidateViewportHeroPixels1440(await File.ReadAllBytesAsync(pngPath), name, gateR14: true);
+            pixelReports.AppendLine(report);
+            Assert.DoesNotContain("PASS=False", report, StringComparison.Ordinal);
+        }
+
+        await deliveryWeb.DisposeAsync();
+
+        var pngs = Directory.GetFiles(ArtifactsDirR14, "*.png");
+        Assert.Equal(8, pngs.Length);
+
+        var reportPath = Path.Combine(ArtifactsDirR14, "hero-pixel-gate-r14.txt");
+        await File.WriteAllTextAsync(reportPath, pixelReports.ToString());
+        Console.WriteLine(pixelReports);
+    }
+
     private async Task CaptureBanenkaartPopupsAsync(
         string artifactsDir = ArtifactsDirR2,
         string? serverAddress = null,
@@ -889,11 +963,11 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Assert.True(report.MaxStepDelta <= 150, report.Log);
     }
 
-    private static string ValidateViewportHeroPixels1440(byte[] pngBytes, string label)
+    private static string ValidateViewportHeroPixels1440(byte[] pngBytes, string label, bool gateR14 = false)
     {
         using var img = Image.Load<Rgb24>(pngBytes);
         var sb = new StringBuilder();
-        sb.AppendLine($"=== Hero pixel gate R13 (viewport 1440): {label} ({img.Width}x{img.Height}) ===");
+        sb.AppendLine($"=== Hero pixel gate {(gateR14 ? "R14" : "R13")} (viewport 1440): {label} ({img.Width}x{img.Height}) ===");
 
         var ys = new[] { 330, 350, 370 };
         var maxStepOverall = 0;
@@ -939,23 +1013,67 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         sb.AppendLine($"  hero top y≈{heroTopY}, pearl strip at x={topX}: {pearlStripPx}px (max 4)");
 
         const int scanY = 350;
-        var fadeEndX = 868;
-        for (var x = 860; x <= 980; x++)
+        var fadeEndX = gateR14 ? (int)Math.Round(img.Width * 0.78) : 868;
+        if (!gateR14)
         {
-            if (!IsExactPearl(img[x, scanY]))
+            for (var x = 860; x <= 980; x++)
             {
-                fadeEndX = x - 1;
-                break;
+                if (!IsExactPearl(img[x, scanY]))
+                {
+                    fadeEndX = x - 1;
+                    break;
+                }
             }
         }
 
-        var firstFigureX = FindFirstFigureX(img, scanY, fadeEndX);
+        var firstFigureX = gateR14
+            ? FindFirstFigureEdgeX(img, scanY, 860)
+            : FindFirstFigureX(img, scanY, fadeEndX);
         var figureGap = firstFigureX - fadeEndX;
-        sb.AppendLine($"  fade end x≈{fadeEndX}, first figure x≈{firstFigureX}, gap={figureGap}px (min 60)");
+        sb.AppendLine($"  fade end x≈{fadeEndX}, first figure edge x≈{firstFigureX}, gap={figureGap}px (min 60)");
 
-        var passed = maxStepOverall <= 40 && pearlStripPx <= 4 && figureGap >= 60;
-        sb.AppendLine($"  PASS={passed} (maxStep≤40, pearlStrip≤4, figureGap≥60)");
+        var ghostPixels = 0;
+        if (gateR14)
+        {
+            for (var y = 100; y <= 280; y++)
+            {
+                for (var x = 860; x <= 1000; x++)
+                {
+                    if (IsGhostFadePixel(img[x, y]))
+                    {
+                        ghostPixels++;
+                    }
+                }
+            }
+
+            sb.AppendLine($"  ghost wash pixels (x 860–1000, y 100–280): {ghostPixels} (max 0)");
+        }
+
+        var passed = maxStepOverall <= 40 && pearlStripPx <= 4 && figureGap >= 60
+            && (!gateR14 || ghostPixels == 0);
+        sb.AppendLine($"  PASS={passed} (maxStep≤40, pearlStrip≤4, figureGap≥60{(gateR14 ? ", ghosts=0" : "")})");
         return sb.ToString();
+    }
+
+    private static bool IsGhostFadePixel(Rgb24 px)
+    {
+        var dist = RgbStep(PearlReference, px);
+        return dist is > 12 and < 200;
+    }
+
+    private static int FindFirstFigureEdgeX(Image<Rgb24> img, int y, int startX)
+    {
+        for (var x = startX; x < img.Width; x++)
+        {
+            var px = img[x, y];
+            var dist = RgbStep(PearlReference, px);
+            if (dist > 80 && px.R + px.G + px.B < 600)
+            {
+                return x;
+            }
+        }
+
+        return img.Width - 1;
     }
 
     private static bool IsExactPearl(Rgb24 px) =>

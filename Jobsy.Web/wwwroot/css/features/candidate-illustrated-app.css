@@ -65,10 +65,10 @@
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) 62%,
-    color-mix(in srgb, var(--pearl) 96%, transparent) 68%,
+    var(--pearl) 65%,
+    color-mix(in srgb, var(--pearl) 96%, transparent) 70%,
     color-mix(in srgb, var(--pearl) 35%, transparent) 74%,
-    transparent 82%
+    transparent 78%
   );
 }
 
