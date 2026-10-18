@@ -1,68 +1,92 @@
 {
   "werkervaring-mob-figures.png": {
-    "width": 1379,
-    "height": 639,
-    "opaque_pixels": 299061,
+    "source": "werkervaring-profession-wide.jpg",
     "box": [
-      1180,
-      80,
-      2559,
+      1478,
+      72,
+      1928,
       719
-    ]
+    ],
+    "out_size": [
+      450,
+      568
+    ],
+    "opaque_pixels": 88284,
+    "aspect": 1.262
   },
   "vervoer-mob-figures.png": {
-    "width": 1379,
-    "height": 599,
-    "opaque_pixels": 170247,
+    "source": "vervoer-profession-wide.jpg",
     "box": [
-      1180,
-      120,
-      2559,
-      719
-    ]
+      178,
+      152,
+      668,
+      706
+    ],
+    "out_size": [
+      490,
+      404
+    ],
+    "opaque_pixels": 85317,
+    "aspect": 0.824
   },
   "beschikbaarheid-mob-figures.png": {
-    "width": 1379,
-    "height": 679,
-    "opaque_pixels": 172417,
+    "source": "beschikbaarheid-profession-wide.jpg",
     "box": [
-      1180,
-      40,
-      2559,
+      28,
+      208,
+      628,
       719
-    ]
+    ],
+    "out_size": [
+      600,
+      485
+    ],
+    "opaque_pixels": 206499,
+    "aspect": 0.808
   },
   "kompas-mob-figures.png": {
-    "width": 1179,
-    "height": 639,
-    "opaque_pixels": 225701,
+    "source": "kompas-hero-wide.jpg",
     "box": [
-      1380,
       80,
-      2559,
-      719
-    ]
+      285,
+      340,
+      530
+    ],
+    "out_size": [
+      260,
+      222
+    ],
+    "opaque_pixels": 43144,
+    "aspect": 0.854
   },
   "droombaan-mob-figures.png": {
-    "width": 1239,
-    "height": 579,
-    "opaque_pixels": 299521,
+    "source": "droombaan-profession-wide.jpg",
     "box": [
-      1320,
-      140,
-      2559,
+      1668,
+      88,
+      2388,
       719
-    ]
+    ],
+    "out_size": [
+      720,
+      458
+    ],
+    "opaque_pixels": 164522,
+    "aspect": 0.636
   },
   "opleiding-mob-figures.png": {
-    "width": 759,
-    "height": 639,
-    "opaque_pixels": 94276,
+    "source": "opleiding.jpg",
     "box": [
-      520,
-      80,
-      1279,
+      8,
+      168,
+      720,
       719
-    ]
+    ],
+    "out_size": [
+      712,
+      507
+    ],
+    "opaque_pixels": 185800,
+    "aspect": 0.712
   }
 }

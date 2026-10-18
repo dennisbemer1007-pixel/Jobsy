@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract opaque mobile hero figure PNGs from wide band art (no cream ghosting)."""
+"""Mobile hero figure PNGs: tight crop on people, transparent background."""
 from __future__ import annotations
 
 import json
@@ -12,34 +12,7 @@ SRC_DIR = ROOT / "Jobsy.Web/wwwroot/images/candidate-illustrated"
 OUT_DIR = SRC_DIR / "mob-figures"
 
 PEARL = (247, 244, 240)
-
-# Source wide file -> output PNG (crop box x0,y0,x1,y1 in source pixels; tuned per scene)
-SCENES: dict[str, dict] = {
-    "werkervaring-profession-wide.jpg": {
-        "out": "werkervaring-mob-figures.png",
-        "box": (1180, 80, 2559, 719),
-    },
-    "vervoer-profession-wide.jpg": {
-        "out": "vervoer-mob-figures.png",
-        "box": (1180, 120, 2559, 719),
-    },
-    "beschikbaarheid-profession-wide.jpg": {
-        "out": "beschikbaarheid-mob-figures.png",
-        "box": (1180, 40, 2559, 719),
-    },
-    "kompas-hero-wide.jpg": {
-        "out": "kompas-mob-figures.png",
-        "box": (1380, 80, 2559, 719),
-    },
-    "droombaan-profession-wide.jpg": {
-        "out": "droombaan-mob-figures.png",
-        "box": (1320, 140, 2559, 719),
-    },
-    "opleiding.jpg": {
-        "out": "opleiding-mob-figures.png",
-        "box": (520, 80, 1279, 719),
-    },
-}
+MARGIN = 20
 
 
 def rgb_step(a: tuple[int, int, int], b: tuple[int, int, int]) -> int:
@@ -47,34 +20,127 @@ def rgb_step(a: tuple[int, int, int], b: tuple[int, int, int]) -> int:
 
 
 def is_background(px: tuple[int, int, int]) -> bool:
-    if rgb_step(PEARL, px) <= 42:
+    if rgb_step(PEARL, px) <= 44:
         return True
-    # peach sky / sand wash
-    if px[0] >= 248 and px[1] >= 228 and px[2] >= 210 and px[0] - px[2] <= 45:
+    if px[0] >= 248 and px[1] >= 228 and px[2] >= 210 and px[0] - px[2] <= 48:
         return True
-    if px[0] >= 250 and px[1] >= 235 and px[2] >= 200 and px[0] - px[2] >= 18:
+    if px[0] >= 250 and px[1] >= 235 and px[2] >= 198 and px[0] - px[2] >= 16:
         return True
     return False
 
 
-def extract_figures(src: Path, box: tuple[int, int, int, int], out: Path) -> dict:
-    img = Image.open(src).convert("RGBA")
-    crop = img.crop(box)
-    w, h = crop.size
-    px = crop.load()
-    opaque = 0
+def is_skin(px: tuple[int, int, int]) -> bool:
+    r, g, b = px
+    if r < 90 or sum(px) > 700:
+        return False
+    return r >= 130 and g >= 90 and b >= 70 and r >= g >= b - 25
+
+
+def is_person_pixel(px: tuple[int, int, int]) -> bool:
+    if is_background(px):
+        return False
+    if is_skin(px):
+        return True
+    r, g, b = px
+    if sum(px) > 710:
+        return False
+    if r < 95 and g < 95 and b < 110:
+        return True
+    if b > r + 12 and b > 105 and r < 130:
+        return True
+    if 35 < r < 130 and 55 < g < 175 and 90 < b < 220:
+        return True
+    if 150 < r < 240 and 80 < g < 190 and 60 < b < 160 and rgb_step(PEARL, px) > 55:
+        return True
+    return False
+
+
+def people_bbox(img: Image.Image, x0: int, x1: int) -> tuple[int, int, int, int] | None:
+    w, h = img.size
+    x0 = max(0, x0)
+    x1 = min(w, x1)
+    minx, miny, maxx, maxy = w, h, 0, 0
+    hits = 0
     for y in range(h):
-        for x in range(w):
-            r, g, b, _ = px[x, y]
-            rgb = (r, g, b)
+        for x in range(x0, x1):
+            if is_person_pixel(img.getpixel((x, y))):
+                minx = min(minx, x)
+                maxx = max(maxx, x)
+                miny = min(miny, y)
+                maxy = max(maxy, y)
+                hits += 1
+    if hits < 800:
+        return None
+    return (
+        max(0, minx - MARGIN),
+        max(0, miny - MARGIN),
+        min(w - 1, maxx + MARGIN),
+        min(h - 1, maxy + MARGIN),
+    )
+
+
+# Tuned boxes (x0,y0,x1,y1) on source wide art — people only, no landscape/props-only
+SCENES: dict[str, dict] = {
+    "werkervaring-profession-wide.jpg": {
+        "out": "werkervaring-mob-figures.png",
+        "box": (1478, 72, 1928, 719),
+    },
+    "vervoer-profession-wide.jpg": {
+        "out": "vervoer-mob-figures.png",
+        "box": (178, 152, 668, 706),
+    },
+    "beschikbaarheid-profession-wide.jpg": {
+        "out": "beschikbaarheid-mob-figures.png",
+        "box": (28, 208, 628, 719),
+    },
+    "kompas-hero-wide.jpg": {
+        "out": "kompas-mob-figures.png",
+        "box": (80, 285, 340, 530),
+    },
+    "droombaan-profession-wide.jpg": {
+        "out": "droombaan-mob-figures.png",
+        "box": (1668, 88, 2388, 719),
+    },
+    "opleiding.jpg": {
+        "out": "opleiding-mob-figures.png",
+        "box": (8, 168, 720, 719),
+    },
+}
+
+
+def trim_alpha(im: Image.Image) -> Image.Image:
+    bbox = im.getbbox()
+    return im.crop(bbox) if bbox else im
+
+
+def extract_scene(src: Path, cfg: dict) -> dict:
+    img = Image.open(src).convert("RGB")
+    w, h = img.size
+    box = tuple(cfg["box"])
+    if "search" in cfg:
+        sx0, sx1 = int(w * cfg["search"][0]), int(w * cfg["search"][1])
+        detected = people_bbox(img, sx0, sx1)
+        if detected:
+            box = detected
+    crop_rgb = img.crop(box)
+    cw, ch = crop_rgb.size
+    rgba = Image.new("RGBA", (cw, ch))
+    opx = rgba.load()
+    opaque = 0
+    for y in range(ch):
+        for x in range(cw):
+            rgb = crop_rgb.getpixel((x, y))
             if is_background(rgb):
-                px[x, y] = (r, g, b, 0)
+                opx[x, y] = (*rgb, 0)
             else:
-                px[x, y] = (r, g, b, 255)
+                opx[x, y] = (*rgb, 255)
                 opaque += 1
+    rgba = trim_alpha(rgba)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    crop.save(out, optimize=True)
-    return {"width": w, "height": h, "opaque_pixels": opaque, "box": box}
+    out = OUT_DIR / cfg["out"]
+    rgba.save(out, optimize=True)
+    ow, oh = rgba.size
+    return {"source": src.name, "box": box, "out_size": [ow, oh], "opaque_pixels": opaque, "aspect": round(oh / max(ow, 1), 3)}
 
 
 def main() -> None:
@@ -83,13 +149,11 @@ def main() -> None:
         src = SRC_DIR / src_name
         if not src.is_file():
             raise SystemExit(f"Missing source: {src}")
-        out = OUT_DIR / cfg["out"]
-        manifest[cfg["out"]] = extract_figures(src, tuple(cfg["box"]), out)
-        print(f"Wrote {out.relative_to(ROOT)} ({manifest[cfg['out']]['opaque_pixels']} px)")
+        manifest[cfg["out"]] = extract_scene(src, cfg)
+        m = manifest[cfg["out"]]
+        print(f"{cfg['out']}: box={m['box']} size={m['out_size']} aspect={m['aspect']}")
 
-    manifest_path = OUT_DIR / "manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    print(f"Manifest: {manifest_path.relative_to(ROOT)}")
+    (OUT_DIR / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -96,6 +96,10 @@
   display: none;
 }
 
+.cand-hero__mob-figures-wrap {
+  display: none;
+}
+
 .cand-hero__mob-figures {
   display: none;
 }
@@ -177,11 +181,14 @@
     max-width: 100vw;
     margin-inline: calc(50% - 50vw);
     margin-bottom: 0.75rem;
-    display: block;
+    display: grid;
+    grid-template-columns: 55% 45%;
+    grid-template-rows: max-content;
+    align-items: stretch;
     position: relative;
-    height: min(16.25rem, 66.67vw);
+    min-height: 0 !important;
+    height: auto !important;
     max-height: 16.25rem;
-    min-height: 12.5rem;
     min-width: 0;
     background-image: none !important;
     background-color: var(--pearl);
@@ -196,7 +203,7 @@
     top: 0;
     bottom: 0;
     left: 55%;
-    width: 12%;
+    width: 11%;
     z-index: 4;
     pointer-events: none;
     background: linear-gradient(
@@ -207,9 +214,17 @@
     );
   }
 
-  .cand-hero--with-art::after {
+  .cand-hero--with-art::after,
+  .cand-hero--with-art.cand-hero--profession-band::after,
+  header.cand-hero.cand-hero--with-art.cand-hero--profession-band::after {
     display: none !important;
     content: none !important;
+    background: none !important;
+    background-image: none !important;
+    opacity: 0 !important;
+  }
+
+  .cand-hero--with-art.cand-hero--profession-band {
     background-image: none !important;
   }
 
@@ -217,37 +232,51 @@
     display: none !important;
   }
 
+  .cand-hero--with-art .cand-hero__mob-figures-wrap {
+    display: block;
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    z-index: 5;
+    min-height: 6.5rem;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
   .cand-hero--with-art .cand-hero__mob-figures {
     display: block;
     position: absolute;
-    left: 55%;
     right: 0;
     bottom: 0;
-    z-index: 1;
-    width: 45%;
-    max-width: 45%;
-    height: 94%;
-    overflow: hidden;
+    width: auto;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
     object-fit: contain;
     object-position: right bottom;
+    transform: scale(1.78);
+    transform-origin: right bottom;
     pointer-events: none;
   }
 
   .cand-hero--with-art .cand-hero__copy {
-    position: absolute;
-    inset: 0 auto 0 0;
+    position: relative;
     z-index: 3;
+    grid-column: 1;
+    grid-row: 1;
+    align-self: start;
     box-sizing: border-box;
-    width: 55%;
-    max-width: 55%;
-    height: 100%;
-    min-height: 0;
+    width: 100%;
+    max-width: none;
     margin: 0;
-    padding: 0.65rem 0.85rem 0.5rem;
+    padding: 0.55rem 0.75rem 0.35rem;
     background: var(--pearl);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    height: auto !important;
+    min-height: 0 !important;
   }
 
   .cand-hero--with-art .cand-hero__copy h1 {
@@ -267,7 +296,7 @@
     margin-top: 0.28rem;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     overflow: hidden;
   }
 

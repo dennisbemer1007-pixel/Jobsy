@@ -22,7 +22,9 @@
         <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
         @if (MobileFigureUrl is not null)
         {
-            <img class="cand-hero__mob-figures" src="@MobileFigureUrl" alt="" aria-hidden="true" decoding="async" />
+            <div class="cand-hero__mob-figures-wrap" aria-hidden="true">
+                <img class="cand-hero__mob-figures" src="@MobileFigureUrl" alt="" decoding="async" />
+            </div>
         }
     }
 </header>
