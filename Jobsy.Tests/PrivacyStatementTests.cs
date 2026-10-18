@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Bunit;
 using Jobsy.Core.Ai;
 using Jobsy.Core.Legal;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Privacy;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Components.Legal;
@@ -27,6 +28,7 @@ namespace Jobsy.Tests;
 /// Shared bUnit host for the privacy statement (03.7). The statement is static SSR, so a plain
 /// render is exactly what a visitor gets.
 /// </summary>
+[Collection("JobsyLanguagesState")]
 public abstract class PrivacyRenderTestBase : BunitContext
 {
     protected static readonly string[] Languages = ["nl", "en", "pl", "ro", "ar"];
@@ -68,6 +70,7 @@ public abstract class PrivacyRenderTestBase : BunitContext
         {
             Config.Dispose();
             _culture.Dispose();
+            JobsyLanguages.ResetEnabledForTests();
         }
 
         base.Dispose(disposing);
@@ -76,7 +79,8 @@ public abstract class PrivacyRenderTestBase : BunitContext
     protected void UseLanguage(string language)
     {
         _http.Request.QueryString = new QueryString($"?lang={language}");
-        Services.GetRequiredService<CultureState>().InitializeFromRequest(_http);
+        // CultureState is constructed without IHttpContextAccessor so SSR tests pin catalog codes via Normalize.
+        Services.GetRequiredService<CultureState>().InitializeFromLanguage(language);
     }
 
     protected IRenderedComponent<PrivacyNl> RenderPrivacy() => Render<PrivacyNl>();
