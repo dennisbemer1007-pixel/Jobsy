@@ -123,6 +123,10 @@
         </div>
         <ReadAloudButton Text="@SpeechText" SpeechKey="@($"mirror-{Mirror.Kind}")" />
     </div>
+    @if (MetaAfterFeedback is not null)
+    {
+        @MetaAfterFeedback
+    }
     <p class="test-mirror__privacy">
         <span aria-hidden="true">🔒</span>
         @Culture["TestReflection.Privacy"]
@@ -143,6 +147,7 @@
     [Parameter] public TestReflectionFeedback? Feedback { get; set; }
     [Parameter] public bool Busy { get; set; }
     [Parameter] public EventCallback<TestReflectionFeedback> OnFeedback { get; set; }
+    [Parameter] public RenderFragment? MetaAfterFeedback { get; set; }
 
     private string SpeechText =>
         string.Join(". ", new[]
