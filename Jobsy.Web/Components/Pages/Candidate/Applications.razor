@@ -15,7 +15,9 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
 @inject JobsyApiClient Api
@@ -28,26 +30,17 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
-<div class="panel-page apps-page kb-apps" @onkeydown="OnPageKeyDown">
-    <header class="panel-header">
-        <div>
-            <h1>@Culture["Nav.MyApplications"]</h1>
-            <p class="login-lead apps-page__lead">
-                @if (_readOnly)
-                {
-                    @Culture["Apps.LeadReadOnly"]
-                }
-                else if (!string.IsNullOrWhiteSpace(_givenName))
-                {
-                    @string.Format(Culture["Apps.LeadFriendly"], _givenName)
-                }
-                else
-                {
-                    @Culture["Apps.LeadFriendlyNoName"]
-                }
-            </p>
-        </div>
-    </header>
+<div class="panel-page apps-page kb-apps kb-apps--illustrated panel-page--cand-ill" @onkeydown="OnPageKeyDown">
+    @{
+        var appsLead = _readOnly
+            ? Culture["Apps.LeadReadOnly"]
+            : !string.IsNullOrWhiteSpace(_givenName)
+                ? string.Format(Culture["Apps.LeadFriendly"], _givenName)
+                : Culture["Apps.LeadFriendlyNoName"];
+    }
+    <CandidateIllustratedBand Title="@Culture["Nav.MyApplications"]"
+                             Lead="@appsLead"
+                             ArtUrl="@SollicitatiesBand" />
 
     <CandidateJobListTabs />
 
@@ -81,47 +74,78 @@
     }
     else if (_filtered.Count == 0)
     {
-        <div class="apps-empty">
-            <p class="state-message">
-                @if (_items.Count == 0)
-                {
-                    @(Culture["Apps.Empty"] + (_readOnly ? "" : " "))
-                    @if (!_readOnly)
+        <div class="kb-apps__layout kb-apps__layout--empty">
+            <CandidateIllustratedEmpty ArtUrl="@(_items.Count == 0 ? SpotWerkgever : null)"
+                                       Compact="@(_items.Count > 0)">
+                <p class="state-message">
+                    @if (_items.Count == 0)
                     {
-                        <a href="@KbRoutes.Map">@Culture["Apps.BrowseMap"]</a><text>.</text>
+                        @(Culture["Apps.Empty"] + (_readOnly ? "" : " "))
+                        @if (!_readOnly)
+                        {
+                            <a href="@KbRoutes.Map">@Culture["Apps.BrowseMap"]</a><text>.</text>
+                        }
                     }
-                }
-                else
-                {
-                    @Culture["Apps.EmptyTab"]
-                }
-            </p>
+                    else
+                    {
+                        @Culture["Apps.EmptyTab"]
+                    }
+                </p>
+            </CandidateIllustratedEmpty>
+            @if (_appsWide)
+            {
+                <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
+                    <div class="kb-saved-rail__card cand-side-card--spot kb-apps__rail-card"
+                         style="@($"--cand-side-spot:url('{SpotVragen}')")">
+                        <h2>@Culture["Kb.Steps.Title"]</h2>
+                        <dl class="kb-apps__steps-legend">
+                            <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Seen"]</dt><dd>@Culture["Kb.Steps.Seen"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Interview"]</dt><dd>@Culture["Kb.Steps.Interview"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Outcome"]</dt><dd>@Culture["Kb.Steps.Outcome"]</dd></div>
+                        </dl>
+                    </div>
+                </aside>
+            }
         </div>
     }
     else
     {
         <div class="kb-apps__layout">
             <div class="kb-apps__list application-card-list">
-                @{
-                    var primary = _filtered[0];
-                    var rest = _filtered.Skip(1).ToList();
-                }
-                @RenderActiveCard(primary)
-                @foreach (var a in rest)
+                @foreach (var a in _filtered)
                 {
-                    @RenderCompactCard(a)
+                    if (!_appsWide && ReferenceEquals(a, _filtered[0]))
+                    {
+                        @RenderActiveCard(a)
+                    }
+                    else
+                    {
+                        @RenderCompactCard(a, _selectedId == a.Id)
+                    }
                 }
             </div>
-            <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
-                <div class="kb-apps__rail-card">
-                    <h2>@Culture["Kb.Steps.Title"]</h2>
-                    <dl class="kb-apps__steps-legend">
-                        <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>
-                        <div><dt>@Culture["Kb.Timeline.Seen"]</dt><dd>@Culture["Kb.Steps.Seen"]</dd></div>
-                        <div><dt>@Culture["Kb.Timeline.Interview"]</dt><dd>@Culture["Kb.Steps.Interview"]</dd></div>
-                        <div><dt>@Culture["Kb.Timeline.Outcome"]</dt><dd>@Culture["Kb.Steps.Outcome"]</dd></div>
-                    </dl>
-                </div>
+            <aside class="kb-apps__rail" aria-label="@(_appsWide ? Culture["Nav.MyApplications"] : Culture["Kb.Steps.Title"])">
+                @if (_appsWide && SelectedApplication is { } selected)
+                {
+                    <div class="kb-apps__detail-rail kb-apps__rail-card">
+                        @RenderActiveCard(selected, forceVertical: true)
+                        @RenderDetailActions(selected)
+                    </div>
+                }
+                else
+                {
+                    <div class="kb-saved-rail__card cand-side-card--spot kb-apps__rail-card"
+                         style="@($"--cand-side-spot:url('{SpotVragen}')")">
+                        <h2>@Culture["Kb.Steps.Title"]</h2>
+                        <dl class="kb-apps__steps-legend">
+                            <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Seen"]</dt><dd>@Culture["Kb.Steps.Seen"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Interview"]</dt><dd>@Culture["Kb.Steps.Interview"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Outcome"]</dt><dd>@Culture["Kb.Steps.Outcome"]</dd></div>
+                        </dl>
+                    </div>
+                }
             </aside>
         </div>
     }
@@ -132,11 +156,11 @@
     }
 </div>
 
-@if (_expandedId is Guid expandId)
-{
-    var expanded = _items.FirstOrDefault(x => x.Id == expandId);
-    if (expanded is not null)
+@if (!_appsWide && _expandedId is Guid expandId)
     {
+        var expanded = _items.FirstOrDefault(x => x.Id == expandId);
+        if (expanded is not null)
+        {
         <div class="kb-apps__sheet-backdrop" @onclick="CloseExpanded"></div>
         <div class="kb-apps__sheet" role="dialog" aria-modal="true" aria-label="@expanded.VacancyTitle">
             <button type="button" class="kb-apps__sheet-close" @onclick="CloseExpanded">@Culture["Common.Close"]</button>
@@ -179,6 +203,8 @@
     private Guid? _busyId;
     private Guid? _openMenuId;
     private Guid? _expandedId;
+    private Guid? _selectedId;
+    private bool _appsWide;
     private VacancyListItem? _mockVacancy;
     private bool _pdfBusy;
     private string? _message;
@@ -193,6 +219,9 @@
     private int _menuFocusIndex;
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
+
+    private static string ApplicationThumbUrl(string? pictureUrl)
+        => string.IsNullOrWhiteSpace(pictureUrl) ? SavedNoPhotoArt : pictureUrl;
 
     private string StatusText(ApplicationItem a)
     {
@@ -213,9 +242,7 @@
         var hired = string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase);
         var menuOpen = _openMenuId == a.Id;
         var vacancyHref = $"/vacancies/{a.VacancyId}";
-        var pictureUrl = string.IsNullOrWhiteSpace(a.PictureUrl)
-            ? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex")
-            : a.PictureUrl!;
+        var pictureUrl = ApplicationThumbUrl(a.PictureUrl);
         var steps = a.Timeline ?? [];
         <article class="application-card kb-apps__card @(hired ?"application-card--hired" : "") @(rejected ? "application-card--closed" : "") @(menuOpen ? "is-menu-open" : "")">
             <div class="kb-apps__card-top">
@@ -260,7 +287,12 @@
         </article>
     };
 
-    private RenderFragment RenderCompactCard(ApplicationItem a) => __builder =>
+    private ApplicationItem? SelectedApplication
+        => _selectedId is Guid id
+            ? _filtered.FirstOrDefault(x => x.Id == id) ?? _filtered.FirstOrDefault()
+            : _filtered.FirstOrDefault();
+
+    private RenderFragment RenderCompactCard(ApplicationItem a, bool selected = false) => __builder =>
     {
         var steps = a.Timeline ?? [];
         var doneCount = steps.Count(s => string.Equals(s.State, "Done", StringComparison.OrdinalIgnoreCase)
@@ -270,10 +302,10 @@
                      ?? a.RespondedAt
                      ?? a.CreatedAt;
         var finished = IsFinished(a.Status);
-        <article class="kb-apps__compact application-card @(IsRejected(a.Status) ?"application-card--closed" : "") @(string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase) ? "application-card--hired" : "")">
+        <article class="kb-apps__compact application-card @(selected ? "is-selected" : null) @(IsRejected(a.Status) ?"application-card--closed" : "") @(string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase) ? "application-card--hired" : "")">
             <div class="kb-apps__compact-row">
                 <button type="button" class="kb-apps__compact-btn" @onclick="() => OpenExpanded(a.Id)">
-                    <img class="application-card__img" src="@(a.PictureUrl ?? Jobsy.Core.Media.VacancyImageUrls.Placeholder(Guid.Empty, "flex"))" alt="" width="56" height="56" loading="lazy" />
+                    <img class="application-card__img" src="@ApplicationThumbUrl(a.PictureUrl)" alt="" width="56" height="56" loading="lazy" />
                     <div class="kb-apps__compact-body">
                         <h2 class="application-card__title">@a.VacancyTitle</h2>
                         <p class="application-card__company">@CompanyLine(a)</p>
@@ -296,6 +328,26 @@
                 @RenderMenu(a, $"/vacancies/{a.VacancyId}")
             </div>
         </article>
+    };
+
+    private RenderFragment RenderDetailActions(ApplicationItem a) => __builder =>
+    {
+        var vacancyHref = $"/vacancies/{a.VacancyId}";
+        <div class="kb-apps__detail-actions">
+            @if (!_readOnly)
+            {
+                <button type="button" @onclick="() => OnMenuCvAsync(a)">
+                    @Culture["Apps.MenuCv"]
+                </button>
+            }
+            <a href="@vacancyHref">@Culture["Apps.MenuVacancy"]</a>
+            @if (!_readOnly && CanWithdraw(a.Status))
+            {
+                <button type="button" class="is-danger" @onclick="() => OpenWithdrawConfirm(a)">
+                    @Culture["Apps.MenuWithdraw"]
+                </button>
+            }
+        </div>
     };
 
     private RenderFragment RenderNextStep(ApplicationItem a) => __builder =>
@@ -420,6 +472,21 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            try
+            {
+                var wide = await Js.InvokeAsync<bool>("jobsyViewport.isKompasWide");
+                if (wide != _appsWide)
+                {
+                    _appsWide = wide;
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (JSException) { }
+            catch (InvalidOperationException) { }
+        }
+
         if (_focusMenuOnRender is not null)
         {
             _focusMenuOnRender = null;
@@ -469,6 +536,16 @@
             "done" => _items.Where(a => IsFinished(a.Status)).ToList(),
             _ => _items.ToList()
         };
+        if (_filtered.Count == 0)
+        {
+            _selectedId = null;
+            return;
+        }
+
+        if (_selectedId is not Guid sid || _filtered.All(x => x.Id != sid))
+        {
+            _selectedId = _filtered[0].Id;
+        }
     }
 
     private void RefreshCounts()
@@ -492,7 +569,16 @@
     private static string CompanyLine(ApplicationItem a)
         => string.IsNullOrWhiteSpace(a.LocationLabel) ? a.CompanyName : $"{a.CompanyName} · {a.LocationLabel}";
 
-    private void OpenExpanded(Guid id) => _expandedId = id;
+    private void OpenExpanded(Guid id)
+    {
+        if (_appsWide)
+        {
+            _selectedId = id;
+            return;
+        }
+
+        _expandedId = id;
+    }
     private void CloseExpanded() => _expandedId = null;
     private void OpenMockInterview(Guid vacancyId)
     {

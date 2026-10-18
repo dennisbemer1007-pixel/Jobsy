@@ -41,6 +41,14 @@
   max-width: 460px;
 }
 
+.pub-theme .au-eyebrow {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: color-mix(in srgb, var(--coral) 70%, var(--brand));
+}
+
 .pub-theme .au-card--illustrated .au-card__mascot {
   display: none;
 }
@@ -75,7 +83,7 @@
     inset-inline: 0;
     top: var(--pub-header-h, 4.75rem);
     height: 140px;
-    background: var(--au-art-left) no-repeat center 70% / cover;
+    background: var(--au-art-mobile, var(--au-art-left)) no-repeat center 70% / cover;
     -webkit-mask-image: linear-gradient(#000, transparent);
     mask-image: linear-gradient(#000, transparent);
     pointer-events: none;

@@ -27,6 +27,18 @@ public static class UiStringsCandidateHub
             "Konto, powiadomienia i preferencje — w jednym miejscu.",
             "Cont, notificări și preferințe — într-un singur loc.",
             "حسابك وإشعاراتك وتفضيلاتك — في مكان واحد.");
+        Add("CandidateSettings.NavSettings",
+            "Instellingen", "Settings",
+            "Ustawienia", "Setări", "الإعدادات");
+        Add("CandidateSettings.NavPrivacy",
+            "Privacy", "Privacy",
+            "Prywatność", "Confidențialitate", "الخصوصية");
+        Add("CandidateSettings.PickPane",
+            "Kies links wat je wilt bekijken. Op desktop staat mail hier direct open.",
+            "Pick a section on the left. On desktop, mail settings open here by default.",
+            "Wybierz sekcję po lewej. Na desktopie ustawienia maila są tutaj.",
+            "Alege o secțiune în stânga. Pe desktop, mailul se deschide aici.",
+            "اختر قسمًا على اليسار. على سطح المكتب تفتح إعدادات البريد هنا.");
         Add("CandidateSettings.Mail.Title",
             "E-mail en meldingen", "E-mail and notifications",
             "E-mail i powiadomienia", "E-mail și notificări", "البريد والإشعارات");
