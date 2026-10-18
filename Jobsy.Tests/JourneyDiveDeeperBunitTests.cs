@@ -34,6 +34,8 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        Services.AddSingleton<MeGetCache>();
+        Services.AddSingleton<DiscoveryOverviewCache>();
     }
 
     [Fact]
@@ -110,7 +112,20 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
             }
 
+            if (path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase))
+            {
+                var answered = CompetencyAnswers.Count;
+                return Task.FromResult(Json(
+                    $$"""{"profileRevision":"test","competencyAnswered":{{answered}},"careerAnswered":0,"cultureAnswered":0,"valuesAnswered":0}"""));
+            }
+
+            if (path.Contains("private-preferences", StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.FromResult(Json("""{"dislikes":[],"customDislikes":[]}"""));
+            }
+
             var body = path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
+                && !path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase)
                 ? """
                   {"currentStep":7,"isComplete":false,"wizardVersion":3,"shouldShow":true,"steps":[],"impression":{"strengths":[],"riasec":[],"matchCards":[]}}
                   """
@@ -121,11 +136,11 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
                     : path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
                         ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", CompetencyAnswers.Select(pair => $"\"{pair.Key}\":{pair.Value}")) + "}}"
                         : "{\"status\":\"Draft\",\"answers\":{}}";
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(body, Encoding.UTF8, "application/json")
-            });
+            return Task.FromResult(Json(body));
         }
+
+        private static HttpResponseMessage Json(string body)
+            => new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
     }
 
     private sealed class NoGeocoder : IGeocodingClient

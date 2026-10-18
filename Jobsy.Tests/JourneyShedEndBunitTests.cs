@@ -37,6 +37,8 @@ public sealed class JourneyShedEndBunitTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        Services.AddSingleton<MeGetCache>();
+        Services.AddSingleton<DiscoveryOverviewCache>();
     }
 
     [Fact]
@@ -85,7 +87,21 @@ public sealed class JourneyShedEndBunitTests : BunitContext
 
         private static string BodyFor(string path)
         {
-            if (path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase))
+            if (path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase))
+            {
+                return """
+                    {"profileRevision":"test","competencyAnswered":25,"careerAnswered":25,"cultureAnswered":25,"valuesAnswered":25}
+                    """;
+            }
+
+            if (path.Contains("private-preferences", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"dislikes":[],"customDislikes":[]}""";
+            }
+
+            if (path.Contains("onboarding/complete", StringComparison.OrdinalIgnoreCase)
+                || (path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
+                    && !path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase)))
             {
                 return """
                     {
@@ -131,7 +147,8 @@ public sealed class JourneyShedEndBunitTests : BunitContext
                 || path.Contains("career-interest", StringComparison.OrdinalIgnoreCase)
                 || path.Contains("/culture", StringComparison.OrdinalIgnoreCase))
             {
-                return "{\"status\":\"Completed\",\"answers\":{}}";
+                var mini = string.Join(",", new[] { 1, 6, 11, 16, 21 }.Select(id => $"\"{id}\":4"));
+                return "{\"status\":\"Completed\",\"answers\":{" + mini + "}}";
             }
 
             return "{}";
