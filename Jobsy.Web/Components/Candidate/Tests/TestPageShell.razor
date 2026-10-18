@@ -51,17 +51,24 @@
         </div>
         @if (ShowScene)
         {
-            <div class="test-shell__scene" aria-hidden="true">
-                <TestDiveScene Kind="Kind"
-                               Answered="Answered"
-                               Target="TargetCount"
-                               Deep="Deep"
-                               Mobile="false"
-                               Celebrate="@(Mode == ShellMode.Done)"
-                               FallingShard="@(Mode == ShellMode.Done)"
-                               PlatesShed="PlatesShed"
-                               NewShell="NewShell"
-                               BubbleText="@BubbleText" />
+            <div class="test-shell__scene @(SidePanel is not null ? "test-shell__scene--panel" : null)" aria-hidden="@(SidePanel is not null ? null : "true")">
+                @if (SidePanel is not null)
+                {
+                    @SidePanel
+                }
+                else
+                {
+                    <TestDiveScene Kind="Kind"
+                                   Answered="Answered"
+                                   Target="TargetCount"
+                                   Deep="Deep"
+                                   Mobile="false"
+                                   Celebrate="@(Mode == ShellMode.Done)"
+                                   FallingShard="@(Mode == ShellMode.Done)"
+                                   PlatesShed="PlatesShed"
+                                   NewShell="NewShell"
+                                   BubbleText="@BubbleText" />
+                }
             </div>
         }
     </div>
@@ -92,10 +99,11 @@
     [Parameter] public EventCallback<TestDepthLevel> OnDepthSelected { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RailContent { get; set; }
+    [Parameter] public RenderFragment? SidePanel { get; set; }
 
     private bool ShowScene => Mode switch
     {
-        ShellMode.Question => Deep,
+        ShellMode.Question => Deep || SidePanel is not null,
         ShellMode.Intro or ShellMode.Done or ShellMode.Offer or ShellMode.Pause or ShellMode.Checkout => true,
         _ => false
     };

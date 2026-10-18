@@ -60,9 +60,25 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Progress_insight_card_after_answer_milestones()
+    public async Task Progress_insight_panel_milestones_desktop_and_mobile()
     {
-        foreach (var answered in new[] { 5, 10, 15 })
+        var scenarios = new (int Answered, string Slug)[]
+        {
+            (0, "start"),
+            (7, "mid-block"),
+            (5, "after-block-1"),
+            (15, "after-block-3"),
+            (24, "last-block")
+        };
+
+        var only = (Environment.GetEnvironmentVariable("JOBSY_INSIGHT_ONLY") ?? "").Trim();
+        if (!string.IsNullOrEmpty(only))
+        {
+            scenarios = scenarios.Where(s => s.Slug.Equals(only, StringComparison.OrdinalIgnoreCase)).ToArray();
+            Assert.NotEmpty(scenarios);
+        }
+
+        foreach (var (answered, slug) in scenarios)
         {
             foreach (var (width, height, tag) in new (int, int, string)[]
                      {
@@ -71,100 +87,54 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
                      })
             {
                 using var web = new InsightWebFactory(answered);
-                var url = web.EnsureServerAddress()
-                          + "/__test/sign-in?return="
-                          + Uri.EscapeDataString("/candidate/competencies?stap=vraag");
+                var signInUrl = web.EnsureServerAddress()
+                              + "/__test/sign-in?return="
+                              + Uri.EscapeDataString("/candidate/competencies?stap=vraag");
 
                 await using var context = await _browser!.NewContextAsync(new()
                 {
                     ViewportSize = new ViewportSize { Width = width, Height = height },
-                    Locale = "nl-NL"
+                    Locale = "nl-NL",
+                    IsMobile = width < 640,
+                    HasTouch = width < 640
                 });
                 await PlaywrightCookieConsent.AcceptAsync(context);
                 var page = await context.NewPageAsync();
                 page.SetDefaultTimeout(45_000);
-                await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+                await page.GotoAsync(signInUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
                 await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                await page.Locator(".test-flow").WaitForAsync(new() { Timeout = 60_000 });
 
-                var insight = page.Locator("[data-testid=test-progress-insight]");
-                await insight.WaitForAsync();
-                var title = await insight.Locator(".test-progress-insight__title").InnerTextAsync();
-                Assert.Contains("beeld", title, StringComparison.OrdinalIgnoreCase);
-
-                if (width < 640)
+                if (width >= 1024)
                 {
-                    var collapsed = await page.EvaluateAsync<bool>(
-                        """
-                        () => {
-                          const d = document.querySelector('[data-testid=test-progress-insight]');
-                          const body = d?.querySelector('.test-progress-insight__body');
-                          if (!d || !body) return false;
-                          return !d.open && getComputedStyle(body).display === 'none';
-                        }
-                        """);
-                    Assert.True(collapsed);
-
-                    var statementVisible = await page.EvaluateAsync<bool>(
-                        """
-                        () => {
-                          const el = document.querySelector('.test-flow__statement');
-                          if (!el) return false;
-                          const r = el.getBoundingClientRect();
-                          return r.top >= 0 && r.top < window.innerHeight * 0.85;
-                        }
-                        """);
-                    Assert.True(statementVisible);
-
-                    var coachHidden = await page.EvaluateAsync<bool>(
-                        "() => !document.querySelector('.lobsy-coach-dock') || getComputedStyle(document.querySelector('.lobsy-coach-dock')).display === 'none'");
-                    Assert.True(coachHidden);
+                    var panel = page.Locator("[data-testid=test-progress-insight-panel]");
+                    await panel.WaitForAsync();
+                    var title = await panel.Locator(".test-progress-panel__title").InnerTextAsync();
+                    Assert.Contains("beeld", title, StringComparison.OrdinalIgnoreCase);
+                    if (answered >= TestProgressInsight.BlockSize)
+                    {
+                        var listCount = await panel.Locator(".test-progress-panel__list li").CountAsync();
+                        Assert.True(listCount >= 1);
+                    }
                 }
-                else
+                else if (answered >= TestProgressInsight.BlockSize)
                 {
-                    var listCount = await insight.Locator(".test-progress-insight__list li").CountAsync();
-                    Assert.True(listCount >= 1);
+                    var mobileLine = page.Locator("[data-testid=test-progress-insight-mobile]");
+                    await mobileLine.WaitForAsync();
+                    var text = await mobileLine.InnerTextAsync();
+                    Assert.Contains("Jouw beeld", text, StringComparison.OrdinalIgnoreCase);
                 }
 
-                var fileName = $"competence-insight-after-{answered}-answers-{tag}.png";
+                var coachHidden = await page.EvaluateAsync<bool>(
+                    "() => !document.querySelector('.lobsy-coach-dock') || getComputedStyle(document.querySelector('.lobsy-coach-dock')).display === 'none'");
+                Assert.True(coachHidden);
+
+                var fileName = $"competence-insight-{slug}-{tag}.png";
                 var artifactPath = Path.Combine(FindRepoRoot(), ArtifactDir, fileName);
                 await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = true });
                 File.Copy(artifactPath, Path.Combine(AgentStoreDir, fileName), overwrite: true);
             }
         }
-    }
-
-    [Theory]
-    [InlineData(1440, 900, "desktop-1440")]
-    [InlineData(390, 844, "mobile-390")]
-    public async Task Progress_insight_shows_motivation_cue_at_block_boundary(int width, int height, string tag)
-    {
-        using var web = new InsightWebFactory(answered: 12);
-        var url = web.EnsureServerAddress()
-                  + "/__test/sign-in?return="
-                  + Uri.EscapeDataString("/candidate/competencies?stap=vraag");
-
-        await using var context = await _browser!.NewContextAsync(new()
-        {
-            ViewportSize = new ViewportSize { Width = width, Height = height },
-            Locale = "nl-NL"
-        });
-        await PlaywrightCookieConsent.AcceptAsync(context);
-        var page = await context.NewPageAsync();
-        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-
-        await page.EvaluateAsync(
-            "() => { const d = document.querySelector('[data-testid=test-progress-insight]'); if (d) d.open = true; }");
-
-        var motivation = page.Locator("[data-testid=test-progress-motivation]");
-        await motivation.WaitForAsync(new() { State = WaitForSelectorState.Visible });
-        var text = await motivation.InnerTextAsync();
-        Assert.False(string.IsNullOrWhiteSpace(text));
-
-        var fileName = $"competence-insight-motivation-{tag}.png";
-        var artifactPath = Path.Combine(FindRepoRoot(), ArtifactDir, fileName);
-        await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = true });
-        File.Copy(artifactPath, Path.Combine(AgentStoreDir, fileName), overwrite: true);
     }
 
     private static string FindRepoRoot()

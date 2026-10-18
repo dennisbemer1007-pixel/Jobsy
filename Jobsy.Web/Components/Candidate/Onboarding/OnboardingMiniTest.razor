@@ -49,7 +49,10 @@ else
                       OnFinished="OnFlowFinished"
                       OnLeave="OnLeave"
                       OnLater="OnLater"
-                      LaterLabel="@LaterLabel" />
+                      LaterLabel="@LaterLabel"
+                      ShowProgressInsight="ShowProgressInsight"
+                      DomainForQuestionId="DomainForQuestionId"
+                      ProgressInsightChanged="ProgressInsightChanged" />
     </div>
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint && !JourneyShell)
@@ -83,6 +86,9 @@ else
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
     [Parameter] public RenderFragment? JourneyAfterLikert { get; set; }
+    [Parameter] public bool ShowProgressInsight { get; set; }
+    [Parameter] public Func<int, string>? DomainForQuestionId { get; set; }
+    [Parameter] public EventCallback<TestQuestionFlow.ProgressInsightSnapshot> ProgressInsightChanged { get; set; }
 
     private AssessmentKind _kind = AssessmentKind.Competence;
     private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];

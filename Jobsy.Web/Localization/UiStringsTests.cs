@@ -140,6 +140,14 @@ public static class UiStringsTests
         Add("TestFlow.EarlierAnswers", "Eerdere antwoorden ({0})", "Earlier answers ({0})", "Wcześniejsze odpowiedzi ({0})", "Răspunsuri anterioare ({0})", "‏الإجابات السابقة ({0})");
         Add("TestFlow.ProgressInsight.Title", "Jouw beeld tot nu toe", "Your picture so far", "Twój obraz dotąd", "Imaginea ta până acum", "صورتك حتى الآن");
         Add("TestFlow.ProgressInsight.Lead", "Op basis van je antwoorden tot nu toe:", "Based on your answers so far:", "Na podstawie dotychczasowych odpowiedzi:", "Pe baza răspunsurilor tale de până acum:", "بناءً على إجاباتك حتى الآن:");
+        Add("TestFlow.ProgressInsight.Empty", "Na een paar antwoorden vullen we dit rustig aan.", "After a few answers we gently add to this.", "After a few answers we gently add to this.", "After a few answers we gently add to this.", "After a few answers we gently add to this.");
+        Add("TestFlow.ProgressInsight.Line", "{0}: {1}", "{0}: {1}", "{0}: {1}", "{0}: {1}", "{0}: {1}");
+        Add("TestFlow.ProgressInsight.Prefix.Competence", "Hoe je werkt", "How you work", "How you work", "How you work", "How you work");
+        Add("TestFlow.ProgressInsight.Prefix.Career", "Werk dat bij je past", "Work that fits you", "Work that fits you", "Work that fits you", "Work that fits you");
+        Add("TestFlow.ProgressInsight.Prefix.Culture", "Sfeer op de werkvloer", "Workplace vibe", "Workplace vibe", "Workplace vibe", "Workplace vibe");
+        Add("TestFlow.ProgressInsight.Prefix.Values", "Belangrijk voor jou", "Important to you", "Important to you", "Important to you", "Important to you");
+        Add("TestFlow.ProgressInsight.Mobile", "Jouw beeld: {0}", "Your picture: {0}", "Your picture: {0}", "Your picture: {0}", "Your picture: {0}");
+        Add("TestFlow.ProgressInsight.MobileNew", "+{0} nieuw", "+{0} new", "+{0} new", "+{0} new", "+{0} new");
         Add("TestFlow.ProgressInsight.Block", "Blok {0}", "Block {0}", "Blok {0}", "Blocul {0}", "الكتلة {0}");
         Add("TestFlow.JumpToQuestion", "Ga naar vraag {0}", "Go to question {0}", "Przejdź do pytania {0}", "Mergi la întrebarea {0}", "‏انتقل إلى السؤال {0}");
         Add("TestFlow.Adjust", "Aanpassen", "Adjust", "Adjust ·", "Adjust", "‏Adjust");

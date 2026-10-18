@@ -17,6 +17,7 @@
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.KandidaatBanen
 @implements IAsyncDisposable
 
@@ -136,7 +137,7 @@
     else
     {
         var currentPhase = OnboardingWizardCatalog.PhaseForStep(_step);
-        <div class="ob-wizard__layout">
+        <div class="ob-wizard__layout @(ShowOnboardingProgressInsightPanel ? "ob-wizard__layout--insight" : null)">
             <aside class="ob-wizard__sidebar">
                 <div class="lobsy-logo">
                     <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
@@ -221,12 +222,6 @@
                     {
                         <EarlyRewardNearbyStep Signal="_nearbySignal" TransportLabel="@Draft.Transport" />
                     }
-                    else if (_earlyMoment == EarlyRewardMoment.FirstInsight)
-                    {
-                        <EarlyRewardFirstInsightStep TestTabs="MiniTestTabs"
-                                                     CompletedTestStep="7"
-                                                     Strength="_earlyStrength" />
-                    }
                     else
                     {
                     @switch (_step)
@@ -298,6 +293,9 @@
                                                 Depth="TestDepthLevel.First"
                                                 InputPrefix="@MiniPrefix"
                                                 LaterLabel="@Culture["Onboarding.Tests.LaterDoen"]"
+                                                ShowProgressInsight="_showProgressInsight"
+                                                DomainForQuestionId="MiniDomainFor"
+                                                ProgressInsightChanged="OnProgressInsightAsync"
                                                 Answer="OnMiniAnswer"
                                                 OnFinished="FinishMiniAsync"
                                                 OnLeave="BackAsync"
@@ -355,13 +353,21 @@
                     </footer>
                 }
             </main>
+            @if (ShowOnboardingProgressInsightPanel)
+            {
+                <aside class="ob-wizard__insight-panel" aria-hidden="false">
+                    <TestProgressInsightPanel Kind="@MiniAssessmentKind"
+                                              Lines="_progressInsightLines"
+                                              NewLineCount="_progressInsightNew" />
+                </aside>
+            }
         </div>
     }
 </div>
 
 @code {
     private enum WizardPhase { Wizard, Install }
-    private enum EarlyRewardMoment { None, Nearby, FirstInsight }
+    private enum EarlyRewardMoment { None, Nearby }
     private sealed record SidebarItem(int Number, int First, int Last, string Title, string Lead);
     private sealed record WelcomePhase(int Number, string Title, string Lead, string Time);
     
@@ -382,7 +388,10 @@
     private bool _loadingNearby;
     private EarlyRewardMoment _earlyMoment;
     private OnboardingNearbySignal? _nearbySignal;
-    private OnboardingImpressionItem? _earlyStrength;
+    private bool _showProgressInsight;
+    private int _miniQuickScanVersion = AssessmentTestVersions.V1;
+    private IReadOnlyList<string> _progressInsightLines = [];
+    private int _progressInsightNew;
     private int _step = 1;
     private int _currentQuestion;
     private string _installMessage = "";
@@ -466,11 +475,6 @@
                 return Culture["Onboarding.Early.Nearby.Badge"];
             }
 
-            if (_earlyMoment == EarlyRewardMoment.FirstInsight)
-            {
-                return Culture["Onboarding.Early.Insight.Badge"];
-            }
-
             if (Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
             {
                 return $"Stap {_step} van 10";
@@ -484,7 +488,6 @@
     private string MobileTopMeta => _earlyMoment switch
     {
         EarlyRewardMoment.Nearby => Culture["Onboarding.Early.Nearby.Meta"],
-        EarlyRewardMoment.FirstInsight => Culture["Onboarding.Early.Insight.Meta"],
         _ => Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
             .Replace(" van 10 ·", " ·", StringComparison.Ordinal)
             .Replace(" of 10 ·", " ·", StringComparison.Ordinal)
@@ -494,9 +497,7 @@
 
     private string NextLabel => _earlyMoment == EarlyRewardMoment.Nearby
         ? Culture["Onboarding.Early.Nearby.Cta"]
-        : _earlyMoment == EarlyRewardMoment.FirstInsight
-            ? Culture["Onboarding.NextTest"]
-            : _step == 7 && !Draft.HasConsent
+        : _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
         : _step == 10 ? Culture["Onboarding.ViewKompas"]
         : _step is >= 7 ? Culture["Onboarding.NextTest"]
@@ -511,9 +512,23 @@
         && _miniQuestions.Count > 0;
 
     private bool ShowTestsLaterOffer =>
-        _earlyMoment == EarlyRewardMoment.FirstInsight
-        || (_step == 7 && !Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None)
+        (_step == 7 && !Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None)
         || (_step is >= 7 and <= 10 && Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None);
+
+    private bool ShowOnboardingProgressInsightPanel =>
+        _showProgressInsight
+        && _earlyMoment == EarlyRewardMoment.None
+        && _step is >= 7 and <= 10
+        && Draft.HasConsent
+        && _miniQuestions.Count > 0;
+
+    private AssessmentKind MiniAssessmentKind => _step switch
+    {
+        8 => AssessmentKind.Career,
+        9 => AssessmentKind.Culture,
+        10 => AssessmentKind.Values,
+        _ => AssessmentKind.Competence
+    };
 
     private const string BanenkaartPath = KbRoutes.Map;
     private void OnConsentChanged(bool value)
@@ -602,6 +617,7 @@
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
 
+        _showProgressInsight = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestProgressInsight);
         await LoadAsync();
     }
 
@@ -734,14 +750,6 @@
 
     private async Task BackAsync()
     {
-        if (_earlyMoment == EarlyRewardMoment.FirstInsight)
-        {
-            _earlyMoment = EarlyRewardMoment.None;
-            _earlyStrength = null;
-            RequestStepScrollReset();
-            return;
-        }
-
         if (_earlyMoment == EarlyRewardMoment.Nearby)
         {
             _earlyMoment = EarlyRewardMoment.None;
@@ -803,19 +811,6 @@
             {
                 _earlyMoment = EarlyRewardMoment.None;
                 _nearbySignal = null;
-                _step++;
-                _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-                FlashSaved();
-                await PrepareMiniAsync();
-                await TryAutoAdvanceEmptyMiniStepAsync();
-                RequestStepScrollReset();
-                return;
-            }
-
-            if (_earlyMoment == EarlyRewardMoment.FirstInsight)
-            {
-                _earlyMoment = EarlyRewardMoment.None;
-                _earlyStrength = null;
                 _step++;
                 _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
                 FlashSaved();
@@ -918,7 +913,6 @@
             }
 
             _earlyMoment = EarlyRewardMoment.None;
-            _earlyStrength = null;
             _nearbySignal = null;
 
             _state = await Api.SaveMyOnboardingProgressAsync(6, stepCompleted: true, finishReached: true);
@@ -1210,6 +1204,8 @@
         _lockedIds.Clear();
         _miniQuestions = [];
         _currentQuestion = 0;
+        _progressInsightLines = [];
+        _progressInsightNew = 0;
         if (_step is < 7 or > 10 || !Draft.HasConsent) return;
 
         Dictionary<string, int>? answers;
@@ -1222,6 +1218,7 @@
                 var competency = await Api.GetMyCompetenciesAsync();
                 answers = competency?.Answers;
                 var compVersion = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = compVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Competence, compVersion);
                 catalog = AssessmentQuickScanCatalog.CompetenceQuestions(compVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1230,6 +1227,7 @@
                 var career = await Api.GetMyCareerInterestsAsync();
                 answers = career?.Answers;
                 var careerVersion = ResolveQuickScanVersion(career?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = careerVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Career, careerVersion);
                 catalog = AssessmentQuickScanCatalog.CareerQuestions(careerVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1238,6 +1236,7 @@
                 var culture = await Api.GetMyCultureAsync();
                 answers = culture?.Answers;
                 var cultureVersion = ResolveQuickScanVersion(culture?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = cultureVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Culture, cultureVersion);
                 catalog = AssessmentQuickScanCatalog.CultureQuestions(cultureVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1246,6 +1245,7 @@
                 var values = await Api.GetMyValuesAsync();
                 answers = values?.Answers;
                 var valuesVersion = ResolveQuickScanVersion(values?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = valuesVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Values, valuesVersion);
                 catalog = AssessmentQuickScanCatalog.ValuesQuestions(valuesVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1314,8 +1314,10 @@
 
         if (_step == 7 && Draft.HasConsent && await CompetencyMiniCompleteAsync())
         {
-            await LoadEarlyStrengthAsync();
-            _earlyMoment = EarlyRewardMoment.FirstInsight;
+            _step++;
+            _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
+            FlashSaved();
+            await PrepareMiniAsync();
             RequestStepScrollReset();
             return;
         }
@@ -1389,28 +1391,10 @@
     {
         if (_step == 7)
         {
-            _busy = true;
-            try
+            if (_autosave is not null)
             {
-                if (_autosave is not null)
-                {
-                    await _autosave.FlushAsync();
-                }
-
-                await LoadEarlyStrengthAsync();
-                _earlyMoment = EarlyRewardMoment.FirstInsight;
-                RequestStepScrollReset();
+                await _autosave.FlushAsync();
             }
-            catch (Exception ex)
-            {
-                _error = UserFacing.Describe(ex);
-            }
-            finally
-            {
-                _busy = false;
-            }
-
-            return;
         }
 
         await NextAsync(fromMiniTestFinish: true);
@@ -1582,23 +1566,19 @@
         }
     }
 
-    private async Task LoadEarlyStrengthAsync()
+    private string MiniDomainFor(int id) => MiniAssessmentKind switch
     {
-        var competency = await Api.GetMyCompetenciesAsync();
-        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
-        var version = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2);
-        var answerMap = ParseMiniAnswers(competency?.Answers);
-        var preview = AssessmentQuickScanCatalog.ScoreCompetence(answerMap, version);
-        var top = OnboardingImpressionComposer.TopCompetencyItems(preview, 1).FirstOrDefault();
-        _earlyStrength = top is null
-            ? null
-            : new OnboardingImpressionItem
-            {
-                Code = top.Code,
-                Label = top.Label,
-                Sentence = top.Sentence,
-                Percent = top.Percent
-            };
+        AssessmentKind.Career => AssessmentQuickScanCatalog.CareerQuestions(_miniQuickScanVersion).First(x => x.Id == id).Category,
+        AssessmentKind.Culture => AssessmentQuickScanCatalog.CultureQuestions(_miniQuickScanVersion).First(x => x.Id == id).Category,
+        AssessmentKind.Values => AssessmentQuickScanCatalog.ValuesQuestions(_miniQuickScanVersion).First(x => x.Id == id).Category,
+        _ => AssessmentQuickScanCatalog.CompetenceQuestions(_miniQuickScanVersion).First(x => x.Id == id).Category
+    };
+
+    private Task OnProgressInsightAsync(TestQuestionFlow.ProgressInsightSnapshot snapshot)
+    {
+        _progressInsightLines = snapshot.Lines;
+        _progressInsightNew = snapshot.NewLineCount;
+        return Task.CompletedTask;
     }
 
     private async Task<bool> CompetencyMiniCompleteAsync()

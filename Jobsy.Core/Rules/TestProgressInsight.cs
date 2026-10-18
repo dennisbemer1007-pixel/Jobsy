@@ -41,4 +41,13 @@ public static class TestProgressInsight
 
         return labels;
     }
+
+    public static string PrefixKey(AssessmentKind kind)
+        => kind switch
+        {
+            AssessmentKind.Career => "TestFlow.ProgressInsight.Prefix.Career",
+            AssessmentKind.Culture => "TestFlow.ProgressInsight.Prefix.Culture",
+            AssessmentKind.Values => "TestFlow.ProgressInsight.Prefix.Values",
+            _ => "TestFlow.ProgressInsight.Prefix.Competence"
+        };
 }

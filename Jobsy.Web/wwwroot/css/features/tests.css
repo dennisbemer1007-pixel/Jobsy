@@ -99,64 +99,86 @@
   quotes: none;
 }
 
-.test-progress-insight {
-  margin: 1rem 0 1.25rem;
-  padding: 0.85rem 1rem;
+.test-progress-panel {
+  padding: 1rem 1.1rem;
   border-radius: var(--radius);
-  background: var(--accent-soft);
+  background: var(--surface);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  user-select: none;
 }
 
-.test-progress-insight__title {
-  margin: 0 0 0.35rem;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
+.test-progress-panel__title {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--ink);
 }
 
-.test-progress-insight__title::-webkit-details-marker {
-  display: none;
-}
-
-.test-progress-insight__body {
-  margin-top: 0.35rem;
-}
-
-@media (max-width: 639px) {
-  .test-progress-insight:not([open]) .test-progress-insight__body {
-    display: none;
-  }
-}
-
-@media (min-width: 640px) {
-  .test-progress-insight__title {
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .test-progress-insight .test-progress-insight__body {
-    display: block;
-  }
-}
-
-.test-progress-insight__lead {
-  margin: 0 0 0.5rem;
+.test-progress-panel__empty {
+  margin: 0;
   font-size: 0.85rem;
+  line-height: 1.45;
   color: var(--muted);
 }
 
-.test-progress-insight__list {
-  margin: 0 0 0.5rem;
-  padding-left: 1.1rem;
-  font-size: 0.9rem;
+.test-progress-panel__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.45rem;
 }
 
-.test-progress-insight__motivation {
-  margin: 0.35rem 0 0;
-  font-size: 0.85rem;
+.test-progress-panel__item {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+@keyframes test-progress-panel-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.test-progress-panel__item.is-new {
+  animation: test-progress-panel-fade-in 0.55s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .test-progress-panel__item.is-new {
+    animation: none;
+  }
+}
+
+.test-flow__insight-mobile {
+  margin: 0.65rem 0 0.35rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--text);
+  pointer-events: none;
+  user-select: none;
+}
+
+.test-flow__insight-mobile-new {
+  color: var(--muted);
   font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  .test-flow__insight-mobile {
+    display: none;
+  }
 }
 
 .test-example {
@@ -690,14 +712,57 @@
     gap: 1.25rem;
   }
 
-  .test-shell[data-mode="Question"]:not(.test-shell--deep) .test-shell__layout {
+  .test-shell[data-mode="Question"]:not(.test-shell--deep):not(:has(.test-shell__scene--panel)) .test-shell__layout {
     grid-template-columns: minmax(0, 42rem);
     justify-content: center;
     max-inline-size: 42rem;
     margin-inline: auto;
   }
 
-  .test-shell[data-mode="Question"]:not(.test-shell--deep) .test-shell__scene {
+  .test-shell[data-mode="Question"]:not(.test-shell--deep):not(:has(.test-shell__scene--panel)) .test-shell__scene {
+    display: none;
+  }
+
+  .test-shell[data-mode="Question"]:has(.test-shell__scene--panel) .test-shell__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 13.5rem);
+    max-inline-size: min(100%, 56rem);
+    margin-inline: auto;
+  }
+
+  .test-shell__scene--panel {
+    max-block-size: none;
+    align-self: start;
+  }
+
+  .test-shell__scene--panel .test-progress-panel {
+    position: sticky;
+    inset-block-start: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .test-page.journey-page:has(.test-shell__scene--panel) {
+    max-inline-size: min(100%, 58rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ob-wizard__layout--insight {
+    grid-template-columns: 300px minmax(0, 1fr) minmax(11rem, 13.5rem);
+  }
+
+  .ob-wizard__insight-panel {
+    display: block;
+    padding: 28px 20px 28px 0;
+    position: sticky;
+    inset-block-start: 1rem;
+    align-self: start;
+    min-inline-size: 0;
+  }
+}
+
+@media (max-width: 1023px) {
+  .ob-wizard__insight-panel {
     display: none;
   }
 }

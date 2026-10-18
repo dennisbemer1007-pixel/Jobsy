@@ -76,6 +76,14 @@ else
                                ActiveDepth="_target"
                                SaveHint="@_liveSave"
                                BubbleText="@Culture["TestFlow.Bubble.Question"]">
+                    <SidePanel>
+                        @if (_showProgressInsight)
+                        {
+                            <TestProgressInsightPanel Kind="AssessmentKind.Culture"
+                                                      Lines="_progressInsightLines"
+                                                      NewLineCount="_progressInsightNew" />
+                        }
+                    </SidePanel>
                     <ChildContent>
                         <TestQuestionFlow Kind="AssessmentKind.Culture"
                                           Questions="_flowQuestions"
@@ -84,6 +92,7 @@ else
                                           Autosave="_autosave"
                                           ShowProgressInsight="_showProgressInsight"
                                           DomainForQuestionId="CultureDomainFor"
+                                          ProgressInsightChanged="OnProgressInsightAsync"
                                           OnLevelReached="OnLevelReached"
                                           OnFinished="OnFinished"
                                           OnLater="LaterAsync"
@@ -141,6 +150,8 @@ else
 
     private int _quickScanVersion = AssessmentTestVersions.V1;
     private bool _showProgressInsight;
+    private IReadOnlyList<string> _progressInsightLines = [];
+    private int _progressInsightNew;
     private string IntroLead => AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)
         ? Culture.Format("TestFlow.Lead.Culture.V2", _fullCount)
         : Culture["TestFlow.Lead.Culture"];
@@ -238,6 +249,13 @@ else
         {
             _target = level;
         }
+    }
+
+    private Task OnProgressInsightAsync(TestQuestionFlow.ProgressInsightSnapshot snapshot)
+    {
+        _progressInsightLines = snapshot.Lines;
+        _progressInsightNew = snapshot.NewLineCount;
+        return Task.CompletedTask;
     }
 
     private string CultureDomainFor(int id)

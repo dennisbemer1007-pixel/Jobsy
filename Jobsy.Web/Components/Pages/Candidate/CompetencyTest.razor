@@ -80,6 +80,14 @@ else
                                ActiveDepth="_target"
                                SaveHint="@_liveSave"
                                BubbleText="@Culture["TestFlow.Bubble.Question"]">
+                    <SidePanel>
+                        @if (_showProgressInsight)
+                        {
+                            <TestProgressInsightPanel Kind="AssessmentKind.Competence"
+                                                      Lines="_progressInsightLines"
+                                                      NewLineCount="_progressInsightNew" />
+                        }
+                    </SidePanel>
                     <ChildContent>
                         <TestQuestionFlow Kind="AssessmentKind.Competence"
                                           Questions="_flowQuestions"
@@ -89,6 +97,7 @@ else
                                           LoadFailed="_loadFailed"
                                           ShowProgressInsight="_showProgressInsight"
                                           DomainForQuestionId="CompetenceDomainFor"
+                                          ProgressInsightChanged="OnProgressInsightAsync"
                                           OnLevelReached="OnLevelReached"
                                           OnFinished="OnFinished"
                                           OnLater="LaterAsync"
@@ -146,6 +155,8 @@ else
 
     private int _quickScanVersion = AssessmentTestVersions.V1;
     private bool _showProgressInsight;
+    private IReadOnlyList<string> _progressInsightLines = [];
+    private int _progressInsightNew;
     private string IntroLead => AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)
         ? Culture.Format("TestFlow.Lead.Competence.V2", _fullCount)
         : Culture["TestFlow.Lead.Competence"];
@@ -247,6 +258,13 @@ else
 
     private string CompetenceDomainFor(int id)
         => AssessmentQuickScanCatalog.CompetenceQuestions(_quickScanVersion).First(x => x.Id == id).Category;
+
+    private Task OnProgressInsightAsync(TestQuestionFlow.ProgressInsightSnapshot snapshot)
+    {
+        _progressInsightLines = snapshot.Lines;
+        _progressInsightNew = snapshot.NewLineCount;
+        return Task.CompletedTask;
+    }
 
     private void StartQuestions()
     {

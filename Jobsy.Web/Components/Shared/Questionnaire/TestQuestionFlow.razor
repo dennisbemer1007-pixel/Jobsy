@@ -72,25 +72,6 @@
                 }
             }
         </div>
-        @if (ShowProgressInsight && _insightLabels.Count > 0)
-        {
-            <details class="test-progress-insight" data-testid="test-progress-insight" open="@_insightOpen">
-                <summary class="test-progress-insight__title">@Culture["TestFlow.ProgressInsight.Title"]</summary>
-                <div class="test-progress-insight__body">
-                    <p class="test-progress-insight__lead">@Culture["TestFlow.ProgressInsight.Lead"]</p>
-                    <ul class="test-progress-insight__list">
-                        @foreach (var label in _insightLabels)
-                        {
-                            <li>@label</li>
-                        }
-                    </ul>
-                    @if (!string.IsNullOrWhiteSpace(_motivationText))
-                    {
-                        <p class="test-progress-insight__motivation" data-testid="test-progress-motivation">@_motivationText</p>
-                    }
-                </div>
-            </details>
-        }
         @if (!Compact && Target != TestDepthLevel.Bottom)
         {
             <p class="test-flow__level">
@@ -176,6 +157,17 @@
             }
         }
 
+        @if (ShowProgressInsight && _insightLines.Count > 0)
+        {
+            <p class="test-flow__insight-mobile" data-testid="test-progress-insight-mobile" aria-live="polite">
+                @Culture.Format("TestFlow.ProgressInsight.Mobile", _insightLines[^1])
+                @if (_insightNewCount > 0)
+                {
+                    <span class="test-flow__insight-mobile-new"> · @Culture.Format("TestFlow.ProgressInsight.MobileNew", _insightNewCount)</span>
+                }
+            </p>
+        }
+
         <footer class="test-flow__footer" @ref="_footer" data-sticky-footer>
             <button type="button"
                     class="test-flow__back"
@@ -231,6 +223,9 @@
     [Parameter] public RenderFragment? AfterLikert { get; set; }
     [Parameter] public bool ShowProgressInsight { get; set; }
     [Parameter] public Func<int, string>? DomainForQuestionId { get; set; }
+    [Parameter] public EventCallback<ProgressInsightSnapshot> ProgressInsightChanged { get; set; }
+
+    public sealed record ProgressInsightSnapshot(IReadOnlyList<string> Lines, int NewLineCount);
 
     private int _index;
     private int? _appliedExternalIndex;
@@ -248,11 +243,11 @@
 
     private IReadOnlyList<int> OrderedQuestionIds { get; set; } = [];
 
-    private IReadOnlyList<string> _insightLabels = [];
+    private IReadOnlyList<string> _insightLines = [];
 
-    private string? _motivationText;
+    private int _insightNewCount;
 
-    private bool _insightOpen;
+    private int _previousInsightLineCount;
 
     protected override void OnInitialized()
     {
@@ -284,9 +279,6 @@
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
                 }
 
-                var narrow = await MatchesMediaAsync("(max-width: 639px)");
-                _insightOpen = !narrow;
-                await InvokeAsync(StateHasChanged);
             }
             catch
             {
@@ -605,32 +597,32 @@
     {
         if (!ShowProgressInsight || DomainForQuestionId is null)
         {
-            _insightLabels = [];
-            _motivationText = null;
+            _insightLines = [];
+            _insightNewCount = 0;
+            _ = NotifyProgressInsightAsync();
             return;
         }
 
         OrderedQuestionIds = Ordered.Take(TargetCount).Select(q => q.Id).ToList();
-        _insightLabels = TestProgressInsight.DomainLabelsSoFar(
+        var labels = TestProgressInsight.DomainLabelsSoFar(
             Kind,
             OrderedQuestionIds,
             _flowAnswers,
             DomainForQuestionId);
-        var key = TestProgressMotivation.ForQuickScan(Kind, _flowAnswers.Count, TargetCount, _index);
-        _motivationText = key is null ? null : FormatMotivationKey(key);
+        var prefix = Culture[TestProgressInsight.PrefixKey(Kind)];
+        _insightLines = labels
+            .Select(label => Culture.Format("TestFlow.ProgressInsight.Line", prefix, label))
+            .ToList();
+        _insightNewCount = Math.Max(0, _insightLines.Count - _previousInsightLineCount);
+        _previousInsightLineCount = _insightLines.Count;
+        _ = NotifyProgressInsightAsync();
     }
 
-    private string FormatMotivationKey(string key)
+    private async Task NotifyProgressInsightAsync()
     {
-        var block = TestProgressMotivation.QuickScanBlockIndex(_index);
-        var blockName = Culture.Format("TestFlow.ProgressInsight.Block", block);
-        return key switch
+        if (ProgressInsightChanged.HasDelegate)
         {
-            TestProgressMotivation.PartStart => Culture.Format("Deep.Motivation.PartStart", block, blockName),
-            TestProgressMotivation.Halfway => Culture["Deep.Motivation.Halfway"],
-            TestProgressMotivation.LastPart => Culture["Deep.Motivation.LastPart"],
-            TestProgressMotivation.BeforePause => Culture["Deep.Motivation.BeforePause"],
-            _ => key
-        };
+            await ProgressInsightChanged.InvokeAsync(new ProgressInsightSnapshot(_insightLines, _insightNewCount));
+        }
     }
 }
