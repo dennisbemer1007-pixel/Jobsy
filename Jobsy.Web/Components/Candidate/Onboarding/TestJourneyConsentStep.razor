@@ -1,5 +1,4 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
-@using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
@@ -9,51 +8,54 @@
         @Culture["Passport.PrivacyPromise"]
     </p>
 
-    <div class="ob-journey__hero">
-        <picture>
-            <source srcset="/images/onboarding/wie-ben-jij-reis-lobsy.webp" type="image/webp" />
-            <img class="ob-journey__art"
-                 src="/images/onboarding/wie-ben-jij-reis-lobsy.jpg"
-                 alt=""
-                 width="1280"
-                 height="720"
-                 decoding="async" />
-        </picture>
+    <div class="ob-journey__art-block">
         <div class="ob-journey__promise">
             <h1 tabindex="-1" class="ob-journey__title">@Culture["Onboarding.Journey.Headline"]</h1>
             <p class="ob-journey__lead">@Culture["Onboarding.Journey.Subline"]</p>
         </div>
-        <ol class="ob-journey__stations ob-journey__stations--overlay" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
-            @foreach (var station in Stations)
-            {
-                var state = StationState(station.Step);
-                <li class="ob-journey__station ob-journey__station--@state.Css @($"ob-journey__station--pos-{station.Index}")">
-                    <span class="ob-journey__station-marker" aria-hidden="true">
-                        @if (state.Done)
-                        {
-                            <span class="ob-journey__check">✓</span>
-                        }
-                        else
-                        {
-                            <span>@station.Index</span>
-                        }
-                    </span>
-                    <div class="ob-journey__station-copy">
-                        <strong>@Culture[station.TitleKey]</strong>
-                        <span>@Culture[station.BenefitKey]</span>
-                        <small>@Culture[station.DurationKey]</small>
-                    </div>
-                </li>
-            }
-        </ol>
+        <div class="ob-journey__hero">
+            <picture>
+                <source srcset="/images/onboarding/wie-ben-jij-reis-lobsy.webp" type="image/webp" />
+                <img class="ob-journey__art"
+                     src="/images/onboarding/wie-ben-jij-reis-lobsy.jpg"
+                     alt=""
+                     width="1280"
+                     height="720"
+                     decoding="async" />
+            </picture>
+        </div>
     </div>
+
+    <ol class="ob-journey__stations ob-journey__stations--grid" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
+        @foreach (var station in Stations)
+        {
+            var state = StationState(station.Step);
+            <li class="ob-journey__grid-item ob-journey__grid-item--@state.Css">
+                <span class="ob-journey__badge ob-journey__badge--@station.Tone" aria-hidden="true">
+                    @if (state.Done)
+                    {
+                        <span class="ob-journey__check">✓</span>
+                    }
+                    else
+                    {
+                        <span>@station.Index</span>
+                    }
+                </span>
+                <div class="ob-journey__grid-copy">
+                    <strong>@Culture[station.TitleKey]</strong>
+                    <span>@Culture[station.BenefitKey]</span>
+                    <small>@Culture[station.DurationKey]</small>
+                </div>
+            </li>
+        }
+    </ol>
 
     <ol class="ob-journey__stations ob-journey__stations--mobile" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
         @foreach (var station in Stations)
         {
             var state = StationState(station.Step);
             <li class="ob-journey__mobile-row ob-journey__mobile-row--@state.Css">
-                <span class="ob-journey__mobile-icon ob-journey__mobile-icon--@station.Tone" aria-hidden="true">
+                <span class="ob-journey__badge ob-journey__badge--@station.Tone" aria-hidden="true">
                     @if (state.Done)
                     {
                         <span class="ob-journey__check">✓</span>

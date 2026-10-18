@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-07" />
     @if (TestJourneyIllustration.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-02" />
+        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-03" />
     }
 </HeadContent>
 
@@ -326,7 +326,7 @@
 
                 @if (_earlyMoment != EarlyRewardMoment.None || !ShowMiniTestFooter)
                 {
-                    <footer class="ob-wizard__footer @(ShowTestsLaterOffer ? "ob-wizard__footer--with-later" : null)"
+                    <footer class="ob-wizard__footer @(ShowJourneyConsent ? "ob-wizard__footer--journey" : null) @(ShowTestsLaterOffer ? "ob-wizard__footer--with-later" : null)"
                             data-sticky-footer="true">
                         @if (ShowNearbyPanel)
                         {

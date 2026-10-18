@@ -86,6 +86,7 @@ public sealed class TestJourneyEvidencePlaywrightTests
     private static async Task CaptureClassicAsync(IBrowser browser, string baseUrl, int width, int height, string fileName)
     {
         await using var ctx = await browser.NewContextAsync(new() { ViewportSize = new() { Width = width, Height = height } });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, Email, Password));
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
@@ -103,12 +104,14 @@ public sealed class TestJourneyEvidencePlaywrightTests
             IsMobile = width < 500,
             HasTouch = width < 500
         });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, Email, Password));
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
         await page.Locator("[data-testid=test-journey-consent], .ob-wizard__consent, h1")
             .First
             .WaitForAsync(new() { Timeout = 90_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
         await page.WaitForTimeoutAsync(600);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, fileName), FullPage = false });

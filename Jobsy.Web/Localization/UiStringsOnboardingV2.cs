@@ -154,10 +154,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Journey.Headline"] = english ? "In ±6 minutes you discover what fits you" : "In ±6 minuten ontdek je wat bij je past";
         map["Onboarding.Journey.Subline"] = english ? "That is how we find jobs that truly match you." : "Zo vinden we banen die écht bij jou passen.";
         map["Onboarding.Journey.StationsAria"] = english ? "Four short tests on your journey" : "Vier korte tests op je reis";
-        map["Onboarding.Journey.Benefit.Work"] = english ? "How you work: where you are strong" : "Hoe je werkt: waar je sterk in bent";
-        map["Onboarding.Journey.Benefit.Fun"] = english ? "Fun: which careers energise you" : "Leuk: welke beroepen je energie geven";
-        map["Onboarding.Journey.Benefit.Vibe"] = english ? "Atmosphere: where you feel at home" : "Sfeer: waar je je thuis voelt";
-        map["Onboarding.Journey.Benefit.Values"] = english ? "Values: what matters to you" : "Waarden: wat je belangrijk vindt";
+        map["Onboarding.Journey.Benefit.Work"] = english ? "Where you are strong" : "Waar je sterk in bent";
+        map["Onboarding.Journey.Benefit.Fun"] = english ? "Which careers energise you" : "Welke beroepen je energie geven";
+        map["Onboarding.Journey.Benefit.Vibe"] = english ? "Where you feel at home" : "Waar je je thuis voelt";
+        map["Onboarding.Journey.Benefit.Values"] = english ? "What matters to you" : "Wat je belangrijk vindt";
         map["Onboarding.Journey.Duration.One"] = english ? "~1.5 min" : "~1,5 min";
         map["Onboarding.Journey.CtaStart"] = english ? "Start with test 1" : "Start met test 1";
         map["Onboarding.Journey.CtaContinue"] = english ? "Continue with test {0}" : "Ga verder met test {0}";

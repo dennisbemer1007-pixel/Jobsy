@@ -52,6 +52,8 @@ public class TestJourneyConsentStepBunitTests : BunitContext
         Assert.Contains("In ±6 minuten ontdek je wat bij je past", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("ob-journey__mobile-row--done", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("ob-journey__mobile-row--next", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("ob-journey__stations--grid", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("ob-journey__stations--overlay", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
