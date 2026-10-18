@@ -203,6 +203,64 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
 
     }
 
+    [Fact]
+    public async Task Footer_screenshots_short_mobile_and_long_desktop()
+    {
+        using var web = new TestsV2WebFactory(testsV2On: true);
+        var baseUrl = web.EnsureServerAddress();
+        var shortCandidate = baseUrl
+                             + "/__test/sign-in?return="
+                             + Uri.EscapeDataString("/candidate/competencies?stap=intro");
+        var longCandidate = baseUrl
+                            + "/__test/sign-in?return="
+                            + Uri.EscapeDataString("/candidate/hoe-werkt-lobsy");
+
+        await using var mobile = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(mobile);
+        var mPage = await mobile.NewPageAsync();
+        await mPage.GotoAsync(shortCandidate, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(mPage);
+        await mPage.Locator(".test-page").WaitForAsync();
+        // Mobile candidate shell hides .app-footer while bottom nav is visible; unwrap for layout evidence.
+        await mPage.EvaluateAsync(
+            """
+            () => {
+              document.querySelector('.app-shell')?.classList.remove('has-bottom-nav');
+              document.querySelector('.bottom-nav')?.remove();
+            }
+            """);
+        await mPage.Locator(".app-footer").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
+        await mPage.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "footer-short-page-mobile-390.png"),
+            FullPage = false
+        });
+
+        await using var desktop = await _browser.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(desktop);
+        var dPage = await desktop.NewPageAsync();
+        await dPage.GotoAsync(longCandidate, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(dPage);
+        await dPage.Locator(".app-footer").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await dPage.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "footer-long-page-desktop-1440.png"),
+            FullPage = true
+        });
+    }
+
     [Theory]
     [InlineData("/candidate/competencies?stap=intro", "competence")]
     [InlineData("/candidate/career?stap=intro", "career")]
