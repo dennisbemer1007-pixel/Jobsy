@@ -118,6 +118,18 @@ public static class UiStringsFeatureFlags
             "Wył. = bez bloków DNA, “Jak lubię pracować” i “Jak wydobyć z … to, co najlepsze” w PDF.",
             "Oprit = fără “ADN-ul meu în 4 straturi”, “Cum îmi place să lucrez” și “Cum scoți ce e mai bun din …” în PDF.",
             "إيقاف = بدون “DNA في 4 طبقات” و“كيف أحب العمل” و“كيف تستخرج الأفضل من …” في PDF.");
+        Add("AdminSettings.ReferenceVerification.Enabled.Title",
+            "Referentieverificatie (werkervaring)",
+            "Work experience reference verification",
+            "Weryfikacja referencji (doświadczenie)",
+            "Verificare referințe (experiență)",
+            "التحقق من مراجع الخبرة");
+        Add("AdminSettings.ReferenceVerification.Enabled.Desc",
+            "Uit = kandidaten zien geen tip, referentieverzoeken of bevestigde competenties. Acceptatie kan Jobsy:ReferenceVerificationEnabled gebruiken.",
+            "Off = candidates do not see the tip, reference requests or confirmed competencies. Acceptatie may use Jobsy:ReferenceVerificationEnabled.",
+            "Wył. = kandydaci nie widzą tipu, próśb o referencje ani potwierdzonych kompetencji.",
+            "Oprit = candidații nu văd sfatul, cererile de referință sau competențele confirmate.",
+            "إيقاف = لا يرى المرشحون النصيحة أو طلبات المراجع أو الكفاءات المؤكدة.");
         Add("AdminSettings.TestsV2.Enabled.Title",
             "Quick-Scan v2 (TestsV2)",
             "Quick-Scan v2 (TestsV2)",

@@ -1,0 +1,333 @@
+@page "/werk-referentie/{Token}"
+@attribute [AllowAnonymous]
+@layout PublicLayout
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using Jobsy.Web.Components.Layout.Public
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject CultureState Culture
+@inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+
+<PageTitle>@Culture["RefVerif.Public.PageTitle"] · Lobsy</PageTitle>
+
+<section class="pub-section ref-verif-public" aria-labelledby="ref-verif-public-title">
+    <div class="pub-card">
+        <PublicLangMenu ReturnPath="@ReturnPath" />
+        <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
+
+        @if (_thanks is not null)
+        {
+            <p role="status">@_thanks</p>
+        }
+        else if (_problem is not null)
+        {
+            <p role="alert">@_problem</p>
+        }
+        else if (_view is not null)
+        {
+            <p class="login-lead">@Culture.Format("RefVerif.Public.Intro", _view.CandidateName)</p>
+            <p class="muted">@Culture["RefVerif.Public.Privacy"]</p>
+
+            <ul class="ref-verif-public__facts">
+                <li><strong>@Culture["RefVerif.Public.Employer"]:</strong> @_view.EmployerName</li>
+                <li><strong>@Culture["RefVerif.Public.Role"]:</strong> @_view.RoleTitle</li>
+                <li><strong>@Culture["RefVerif.Public.Period"]:</strong> @FormatPeriod(_view)</li>
+                @if (!string.IsNullOrWhiteSpace(_view.DutiesText))
+                {
+                    <li><strong>@Culture["RefVerif.Public.Duties"]:</strong> @_view.DutiesText</li>
+                }
+            </ul>
+
+            @if (_view.State == "open")
+            {
+                <EditForm Model="_form" OnValidSubmit="SubmitAsync">
+                    <fieldset class="ref-verif-public__q">
+                        <legend>@Culture.Format("RefVerif.Public.Q.Employer", _view.CandidateName, _view.EmployerName)</legend>
+                        <div class="ref-verif-public__choices">
+                            <label><input type="radio" name="emp" checked="@(_form.ConfirmedEmployer == true)" @onchange="_ => _form.ConfirmedEmployer = true" /> @Culture["RefVerif.Public.Yes"]</label>
+                            <label><input type="radio" name="emp" checked="@(_form.ConfirmedEmployer == false)" @onchange="_ => _form.ConfirmedEmployer = false" /> @Culture["RefVerif.Public.No"]</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="ref-verif-public__q">
+                        <legend>@Culture["RefVerif.Public.Q.Period"]</legend>
+                        <div class="ref-verif-public__choices">
+                            <label><input type="radio" name="period" checked="@(_form.ConfirmedPeriod == true)" @onchange="_ => _form.ConfirmedPeriod = true" /> @Culture["RefVerif.Public.Yes"]</label>
+                            <label><input type="radio" name="period" checked="@(_form.ConfirmedPeriod == false)" @onchange="_ => _form.ConfirmedPeriod = false" /> @Culture["RefVerif.Public.No"]</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="ref-verif-public__q">
+                        <legend>@Culture["RefVerif.Public.Q.Role"]</legend>
+                        <div class="ref-verif-public__choices">
+                            <label><input type="radio" name="role" checked="@(_form.ConfirmedRole == true)" @onchange="_ => _form.ConfirmedRole = true" /> @Culture["RefVerif.Public.Yes"]</label>
+                            <label><input type="radio" name="role" checked="@(_form.ConfirmedRole == false)" @onchange="_ => _form.ConfirmedRole = false" /> @Culture["RefVerif.Public.No"]</label>
+                        </div>
+                    </fieldset>
+
+                    @if (_form is { ConfirmedEmployer: true, ConfirmedPeriod: true, ConfirmedRole: true })
+                    {
+                        <fieldset class="ref-verif-public__q">
+                            <legend>@Culture["RefVerif.Public.Q.Duties"]</legend>
+                            <div class="ref-verif-public__choices">
+                                <label><input type="radio" name="duties" checked="@(_form.ConfirmedDuties == true)" @onchange="_ => _form.ConfirmedDuties = true" /> @Culture["RefVerif.Public.Yes"]</label>
+                                <label><input type="radio" name="duties" checked="@(_form.ConfirmedDuties == false)" @onchange="_ => _form.ConfirmedDuties = false" /> @Culture["RefVerif.Public.No"]</label>
+                                <label><input type="radio" name="duties" checked="@(_form.ConfirmedDuties == null)" @onchange="_ => _form.ConfirmedDuties = null" /> @Culture["RefVerif.Public.SkipDuties"]</label>
+                            </div>
+                        </fieldset>
+
+                        @if (_view.Competences.Count > 0)
+                        {
+                            <fieldset class="ref-verif-public__q">
+                                <legend>@Culture["RefVerif.Public.Competences"]</legend>
+                                <div class="ref-verif-competences">
+                                    @foreach (var c in _view.Competences)
+                                    {
+                                        var selected = _endorsed.Contains(c.Code);
+                                        <label>
+                                            <input type="checkbox"
+                                                   checked="@selected"
+                                                   @onchange="e => ToggleCompetence(c.Code, e.Value is true)" />
+                                            <span>@c.Label</span>
+                                        </label>
+                                    }
+                                </div>
+                            </fieldset>
+                        }
+
+                        <label class="field-label" for="ref-comment">@Culture["RefVerif.Public.Comment"]</label>
+                        <textarea id="ref-comment" class="text-input" rows="3" maxlength="400" @bind="_form.Comment"></textarea>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(_submitProblem))
+                    {
+                        <p role="alert">@_submitProblem</p>
+                    }
+
+                    <button type="submit" class="login-submit" disabled="@_busy">@Culture["RefVerif.Public.Submit"]</button>
+                </EditForm>
+
+                <div class="ref-verif-public__side">
+                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="DeclineAsync">@Culture["RefVerif.Public.Decline"]</button>
+                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="UnknownAsync">@Culture["RefVerif.Public.Unknown"]</button>
+                </div>
+            }
+            else
+            {
+                <p role="status">@ProblemForState(_view.State)</p>
+            }
+        }
+        else
+        {
+            <p role="status">@Culture["Common.Loading"]</p>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public string Token { get; set; } = "";
+
+    private JobsyApiClient.ReferenceVerificationPublicView? _view;
+    private string? _thanks;
+    private string? _problem;
+    private string? _submitProblem;
+    private bool _busy;
+    private readonly HashSet<string> _endorsed = new(StringComparer.Ordinal);
+    private SubmitForm _form = new();
+
+    private string ReturnPath => "/werk-referentie/" + Token;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Token.Length != 64)
+        {
+            _problem = Culture["RefVerif.Public.Invalid"];
+            return;
+        }
+
+        try
+        {
+            var client = CreateClient();
+            var view = await client.GetFromJsonAsync<JobsyApiClient.ReferenceVerificationPublicView>(
+                $"api/public/reference-verification/{Uri.EscapeDataString(Token)}",
+                JobsyApiClient.ApiJson);
+            if (view is null)
+            {
+                _problem = Culture["RefVerif.Public.Invalid"];
+                return;
+            }
+
+            _view = view;
+            if (view.State != "open")
+            {
+                _problem = ProblemForState(view.State);
+            }
+        }
+        catch
+        {
+            _problem = Culture["RefVerif.Public.Invalid"];
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (_view is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        _submitProblem = null;
+        try
+        {
+            if (_form.ConfirmedEmployer is null || _form.ConfirmedPeriod is null || _form.ConfirmedRole is null)
+            {
+                _submitProblem = Culture["RefVerif.Public.AnswersMissing"];
+                return;
+            }
+
+            var client = CreateClient();
+            var response = await client.PostAsJsonAsync(
+                $"api/public/reference-verification/{Uri.EscapeDataString(Token)}/submit",
+                new
+                {
+                    confirmedEmployer = _form.ConfirmedEmployer,
+                    confirmedPeriod = _form.ConfirmedPeriod,
+                    confirmedRole = _form.ConfirmedRole,
+                    confirmedDuties = _form.ConfirmedDuties,
+                    endorsedCompetenceCodes = _endorsed.ToList(),
+                    comment = _form.Comment
+                },
+                JobsyApiClient.ApiJson);
+            if (response.IsSuccessStatusCode)
+            {
+                _thanks = Culture["RefVerif.Public.Thanks"];
+                return;
+            }
+
+            var body = await response.Content.ReadAsStringAsync();
+            _submitProblem = MapSubmitError(body);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DeclineAsync()
+    {
+        _busy = true;
+        try
+        {
+            var client = CreateClient();
+            var response = await client.PostAsync(
+                $"api/public/reference-verification/{Uri.EscapeDataString(Token)}/decline",
+                null);
+            if (response.IsSuccessStatusCode)
+            {
+                _thanks = Culture["RefVerif.Public.ThanksDecline"];
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task UnknownAsync()
+    {
+        _busy = true;
+        try
+        {
+            var client = CreateClient();
+            var response = await client.PostAsync(
+                $"api/public/reference-verification/{Uri.EscapeDataString(Token)}/unknown",
+                null);
+            if (response.IsSuccessStatusCode)
+            {
+                _thanks = Culture["RefVerif.Public.ThanksDecline"];
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private void ToggleCompetence(string code, bool on)
+    {
+        if (on)
+        {
+            if (_endorsed.Count >= 5)
+            {
+                return;
+            }
+
+            _endorsed.Add(code);
+        }
+        else
+        {
+            _endorsed.Remove(code);
+        }
+    }
+
+    private HttpClient CreateClient()
+    {
+        var apiBase = (Configuration["ApiBaseUrl"] ?? Configuration["JobsyApi:BaseUrl"] ?? "http://localhost:5200").TrimEnd('/');
+        var client = HttpClientFactory.CreateClient();
+        client.BaseAddress = new Uri(apiBase + "/");
+        return client;
+    }
+
+    private string ProblemForState(string state) => state switch
+    {
+        "expired" => Culture["RefVerif.Public.Expired"],
+        "used" => Culture["RefVerif.Public.Used"],
+        _ => Culture["RefVerif.Public.Invalid"]
+    };
+
+    private string MapSubmitError(string body)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("error", out var err))
+            {
+                return err.GetString() switch
+                {
+                    "answers" => Culture["RefVerif.Public.AnswersMissing"],
+                    "expired" => Culture["RefVerif.Public.Expired"],
+                    "used" => Culture["RefVerif.Public.Used"],
+                    _ => Culture["RefVerif.Public.Invalid"]
+                };
+            }
+        }
+        catch
+        {
+            // ignore
+        }
+
+        return Culture["RefVerif.Public.Invalid"];
+    }
+
+    private static string FormatPeriod(JobsyApiClient.ReferenceVerificationPublicView view)
+    {
+        static string Part(string? m) => string.IsNullOrWhiteSpace(m) ? "…" : m;
+        var end = view.IsCurrent ? "…" : Part(view.EndMonth);
+        return $"{Part(view.StartMonth)} – {end}";
+    }
+
+    private sealed class SubmitForm
+    {
+        public bool? ConfirmedEmployer { get; set; }
+        public bool? ConfirmedPeriod { get; set; }
+        public bool? ConfirmedRole { get; set; }
+        public bool? ConfirmedDuties { get; set; }
+        public string? Comment { get; set; }
+    }
+}

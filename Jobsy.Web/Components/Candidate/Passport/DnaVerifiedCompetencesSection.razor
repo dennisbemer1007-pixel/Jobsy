@@ -1,0 +1,47 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@inject CultureState Culture
+
+@if (Verified.Count > 0 || UnverifiedLabels.Count > 0)
+{
+    <section class="detail-card passport-dna__card ref-verif-dna-competences" data-testid="dna-verified-competences">
+        @if (Verified.Count > 0)
+        {
+            <PassportVerifiedCompetences Items="Verified" Preview="false" />
+        }
+
+        @if (UnverifiedLabels.Count > 0)
+        {
+            <div class="ref-verif-unverified">
+                <p class="ref-verif-unverified__title">@Culture["RefVerif.UnverifiedCompetences.Title"]</p>
+                <div class="ref-verif-unverified__chips">
+                    @foreach (var label in UnverifiedLabels)
+                    {
+                        <span class="kompas-chip">@label</span>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<JobsyApiClient.VerifiedCompetenceItem> Verified { get; set; } = [];
+
+    [Parameter] public IReadOnlyList<string> ProfileCompetenceLabels { get; set; } = [];
+
+    private IReadOnlyList<string> UnverifiedLabels { get; set; } = [];
+
+    protected override void OnParametersSet()
+    {
+        var verifiedLabels = Verified
+            .Select(v => v.Label.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        UnverifiedLabels = ProfileCompetenceLabels
+            .Where(l => !string.IsNullOrWhiteSpace(l) && !verifiedLabels.Contains(l.Trim()))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(8)
+            .ToList();
+    }
+}

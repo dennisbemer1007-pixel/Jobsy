@@ -733,6 +733,7 @@ public static class DependencyInjection
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<ReferenceConfirmationService>();
+        services.AddScoped<ReferenceVerificationService>();
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
         services.AddScoped<IFeedbackService, FeedbackService>();
@@ -768,6 +769,7 @@ public static class DependencyInjection
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<Jobs.ExternalVacancyReminderHostedService>();
+        services.AddHostedService<Jobs.ReferenceVerificationReminderHostedService>();
         services.AddHostedService<Jobs.ProactiveMatchingHostedService>();
         services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();

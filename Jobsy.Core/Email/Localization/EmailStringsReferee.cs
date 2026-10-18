@@ -37,7 +37,26 @@ internal static class EmailStringsReferee
         ["Email.ReferenceConfirmed.PushTitle"] = "Je referent heeft geantwoord",
         ["Email.ReferenceConfirmed.PushBody"] = "{0} heeft je werk bevestigd. Je ziet de antwoorden in je paspoort.",
         ["Email.ReferenceDeclined.PushTitle"] = "Je referent doet niet mee",
-        ["Email.ReferenceDeclined.PushBody"] = "{0} wil de vragen niet invullen."
+        ["Email.ReferenceDeclined.PushBody"] = "{0} wil de vragen niet invullen.",
+        ["Email.WorkExpRefAsk.Subject"] = "{0} vraagt je werkervaring te bevestigen",
+        ["Email.WorkExpRefAsk.Preheader"] = "Korte vragen, geen account nodig",
+        ["Email.WorkExpRefAsk.Heading"] = "Wil je dit bevestigen?",
+        ["Email.WorkExpRefAsk.P1"] = "{0} vraagt je te bevestigen dat hij/zij bij {1} werkte als {2}. Je hebt {3} dagen. Geen account nodig.",
+        ["Email.WorkExpRefAsk.Cta"] = "Open de vragen",
+        ["Email.WorkExpRefAsk.Eyebrow"] = "Referentie",
+        ["Email.WorkExpRefAsk.Note"] = "Liever niet? Op de pagina kun je weigeren of aangeven dat je deze persoon niet kent.",
+        ["Email.WorkExpRefAsk.Privacy"] = "Lobsy vraagt dit omdat deze persoon jou noemde. Je contactgegevens blijven privé. Je hoeft niet te antwoorden.",
+        ["Email.WorkExpRefConfirmed.PushTitle"] = "Je referent heeft bevestigd",
+        ["Email.WorkExpRefConfirmed.PushBody"] = "{0} heeft je werkervaring bevestigd.",
+        ["Email.WorkExpRefDeclined.PushTitle"] = "Je referent doet niet mee",
+        ["Email.WorkExpRefDeclined.PushBody"] = "{0} heeft niet bevestigd.",
+        ["Email.WorkExpRefReminder.Subject"] = "Herinnering: {0} wacht op je bevestiging",
+        ["Email.WorkExpRefReminder.Preheader"] = "Nog een keer, geen account nodig",
+        ["Email.WorkExpRefReminder.Heading"] = "Herinnering",
+        ["Email.WorkExpRefReminder.P1"] = "{0} wacht nog op je bevestiging over werk bij {1}.",
+        ["Email.WorkExpRefReminder.Cta"] = "Open de vragen",
+        ["Email.WorkExpRefReminder.Eyebrow"] = "Referentie",
+        ["Email.WorkExpRefReminder.Note"] = "Dit is hooguit één herinnering. Liever niet? Op de pagina kun je weigeren."
     };
 
     private static readonly Dictionary<string, string> En = new(StringComparer.Ordinal)
@@ -54,7 +73,26 @@ internal static class EmailStringsReferee
         ["Email.ReferenceConfirmed.PushTitle"] = "Your referee answered",
         ["Email.ReferenceConfirmed.PushBody"] = "{0} confirmed your work. You can see the answers in your passport.",
         ["Email.ReferenceDeclined.PushTitle"] = "Your referee will not take part",
-        ["Email.ReferenceDeclined.PushBody"] = "{0} does not want to answer the questions."
+        ["Email.ReferenceDeclined.PushBody"] = "{0} does not want to answer the questions.",
+        ["Email.WorkExpRefAsk.Subject"] = "{0} asks you to confirm work experience",
+        ["Email.WorkExpRefAsk.Preheader"] = "Short questions, no account needed",
+        ["Email.WorkExpRefAsk.Heading"] = "Will you confirm this?",
+        ["Email.WorkExpRefAsk.P1"] = "{0} asks you to confirm they worked at {1} as {2}. You have {3} days. No account needed.",
+        ["Email.WorkExpRefAsk.Cta"] = "Open the questions",
+        ["Email.WorkExpRefAsk.Eyebrow"] = "Reference",
+        ["Email.WorkExpRefAsk.Note"] = "Rather not? On the page you can decline or say you do not know this person.",
+        ["Email.WorkExpRefAsk.Privacy"] = "Lobsy asks this because this person named you. Your contact details stay private. You do not have to answer.",
+        ["Email.WorkExpRefConfirmed.PushTitle"] = "Your referee confirmed",
+        ["Email.WorkExpRefConfirmed.PushBody"] = "{0} confirmed your work experience.",
+        ["Email.WorkExpRefDeclined.PushTitle"] = "Your referee will not take part",
+        ["Email.WorkExpRefDeclined.PushBody"] = "{0} did not confirm.",
+        ["Email.WorkExpRefReminder.Subject"] = "Reminder: {0} is waiting for your confirmation",
+        ["Email.WorkExpRefReminder.Preheader"] = "One more time, no account needed",
+        ["Email.WorkExpRefReminder.Heading"] = "Reminder",
+        ["Email.WorkExpRefReminder.P1"] = "{0} is still waiting for your confirmation about work at {1}.",
+        ["Email.WorkExpRefReminder.Cta"] = "Open the questions",
+        ["Email.WorkExpRefReminder.Eyebrow"] = "Reference",
+        ["Email.WorkExpRefReminder.Note"] = "This is at most one reminder. Rather not? You can decline on the page."
     };
 
     private static readonly Dictionary<string, string> Pl = new(StringComparer.Ordinal)

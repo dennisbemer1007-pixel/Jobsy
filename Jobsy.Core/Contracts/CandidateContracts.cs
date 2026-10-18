@@ -84,7 +84,9 @@ public record CandidateEmployerHistoryDto(
     string? EndMonth = null,
     bool? IsCurrent = null,
     /// <summary>ESCO occupation id confirmed by the candidate. Never set from a CV upload.</summary>
-    string? EscoId = null);
+    string? EscoId = null,
+    /// <summary>Stable id for reference verification and other per-entry links.</summary>
+    Guid? EntryId = null);
 
 public record CandidateCertificateDto(
     string Name,

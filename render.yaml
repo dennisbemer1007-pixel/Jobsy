@@ -291,6 +291,8 @@ projects:
                 value: "https://acceptatie.lobsy.nl"
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
+              - key: Jobsy__ReferenceVerificationEnabled
+                value: "true"
               # Dennis sets true in Dashboard after passwords are configured.
               - key: TestAccounts__Enabled
                 sync: false
@@ -440,6 +442,8 @@ projects:
                   property: connectionString
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
+              - key: Jobsy__ReferenceVerificationEnabled
+                value: "true"
               - key: PublicWebBaseUrl
                 value: "https://acceptatie.lobsy.nl"
               # Combo homepage (On) at / for acceptatie preview; production has no override.

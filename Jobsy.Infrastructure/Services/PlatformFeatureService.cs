@@ -229,6 +229,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
+        if (update.ReferenceVerificationEnabled is bool referenceVerificationEnabled)
+        {
+            row.ReferenceVerificationEnabled = referenceVerificationEnabled;
+        }
+
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
         {
             row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
@@ -346,6 +351,16 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         }
 
         return row?.StudentPassportEnabled ?? false;
+    }
+
+    private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:ReferenceVerificationEnabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.ReferenceVerificationEnabled ?? false;
     }
 
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
@@ -470,6 +485,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
+            ResolveReferenceVerificationEnabled(row),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
             CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));

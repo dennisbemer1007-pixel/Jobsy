@@ -66,5 +66,10 @@ public enum PlatformFeature
     /// Paid employer kandidatenkaart (reverse job map). Default false.
     /// Requires <see cref="Employers"/> when enabled.
     /// </summary>
-    Kandidatenkaart
+    Kandidatenkaart,
+
+    /// <summary>
+    /// Work-experience reference verification (referent link, verified checkmarks). Default false.
+    /// </summary>
+    ReferenceVerification
 }

@@ -276,6 +276,7 @@ public sealed class CandidatePrivatePreferences
 
 public sealed class CandidateEmployerHistory
 {
+    public Guid? EntryId { get; set; }
     public string EmployerName { get; set; } = string.Empty;
     public string? Role { get; set; }
     public int? Years { get; set; }
