@@ -420,7 +420,7 @@ internal static class IllustratedPagesApiStub
               "companyLogoUrl": null,
               "travelMinutes": 9,
               "matchGaps": ["Werken in het weekend"],
-              "descriptionHtml": "{{descriptionSections}}"
+              "description": "{{descriptionSections}}"
             }
             """;
     }

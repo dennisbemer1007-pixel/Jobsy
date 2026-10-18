@@ -227,9 +227,12 @@
                         </p>
                     }
 
-            <section class="kb-detail__section kb-detail__section--copy">
-                <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
-            </section>
+            @if (VacancyPublicDisplay.HasDescriptionContent(_vacancy))
+            {
+                <section class="kb-detail__section kb-detail__section--copy">
+                    <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
+                </section>
+            }
             <p class="travel-hint">
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
