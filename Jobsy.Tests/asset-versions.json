@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "3e6bc5057ed7e9b749c49bd41abd37765c6fcf6dd2ded6408730cab1861ec49e",
+    "sha256": "024bb1791ceb4b2c8ce0ec69e365659d838b32d0b5c96302cb6df4d4e665b122",
     "v": "20261017-03"
   },
   "css/critical.css": {
@@ -92,7 +92,7 @@
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "4204f23977e59b1b7dbe4eb15f7b1a4280420f0021f1797c6fbdcfd3633e62e2",
+    "sha256": "1d16cbbfe873a3d60efaf6af0cca1806a282655e37439e78f66b5c860cb1279e",
     "v": "20261015-09"
   },
   "css/features/nav-feedback.css": {
@@ -160,7 +160,7 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "4c8c0385e165e6fa6eceed14112ba5a612ffee52cc8bb07a436439cbc0a9dee7",
+    "sha256": "1a731671219f9ad4528662a392da06a57592afa826f3f8d7c84974d71ced41b4",
     "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {

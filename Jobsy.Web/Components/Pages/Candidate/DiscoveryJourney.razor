@@ -185,6 +185,7 @@
                 {
                     <p class="journey-step__eyebrow">@Culture["Discovery.Consent.Eyebrow"]</p>
                     <TestConsentStep Draft="Draft"
+                                     ShowValidation="_showValidation"
                                      TestTabs="ConsentTabs"
                                      ConsentChanged="OnConsentChanged" />
                     @MobileCoachInlineOnCard
@@ -317,6 +318,7 @@
                                       TitleKey="Discovery.Step4.DreamTitle"
                                       AsSubsection="true"
                                       ShowLead="false"
+                                      ShowValidation="_showValidation"
                                       Young="@IsYoungCandidate"
                                       ChooseDream="ChooseDream"
                                       ChooseTitle="ChooseDreamTitle"
@@ -991,6 +993,11 @@
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
+        if (value)
+        {
+            ClearStepValidation();
+        }
+
         StateHasChanged();
     }
 
@@ -1032,6 +1039,8 @@
             _ => []
         };
     }
+
+    private void ClearStepValidation() => _showValidation = false;
 
     private async Task ScrollToFirstIssueAsync(IReadOnlyList<OnboardingValidationIssue> issues)
     {
@@ -1484,7 +1493,6 @@
         if (issues.Count > 0)
         {
             _showValidation = true;
-            _error = Culture[issues[0].MessageKey];
             await ScrollToFirstIssueAsync(issues);
             return;
         }
@@ -1558,6 +1566,7 @@
     private async Task SkipAsync()
     {
         if (_busy || _countedStep != 6) return;
+        ClearStepValidation();
         _busy = true;
         try
         {
@@ -1585,6 +1594,7 @@
 
     private void GoToConsent()
     {
+        ClearStepValidation();
         _screen = "toestemming";
         _countedStep = 6;
         _depth = 6;
@@ -1593,6 +1603,7 @@
 
     private async Task GoToCountedStepAsync(int step, bool markPreviousCompleted = false)
     {
+        ClearStepValidation();
         _countedStep = step;
         _screen = step.ToString();
         _depth = step;
@@ -2135,6 +2146,7 @@
         if (_screen == "toestemming")
         {
             await FlushAsync();
+            ClearStepValidation();
             _countedStep = 6;
             _screen = "6";
             _depth = 6;
@@ -2152,6 +2164,7 @@
         }
 
         await FlushAsync();
+        ClearStepValidation();
         _miniArrivedViaBack = true;
         if (_countedStep == 7 && !Draft.HasConsent)
         {
@@ -2627,6 +2640,7 @@
         if (dream.Length == 0) return;
         Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
+        ClearStepValidation();
         ScheduleDreamSave();
     }
 
@@ -2635,6 +2649,7 @@
         var dream = Draft.DreamSearch.Trim();
         Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
+        ClearStepValidation();
         ScheduleDreamSave();
     }
 

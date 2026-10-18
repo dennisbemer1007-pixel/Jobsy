@@ -199,10 +199,6 @@ public partial class MeController : ControllerBase
 
             user.DateOfBirth = request.DateOfBirth;
         }
-        else if (user.DateOfBirth is null)
-        {
-            return BadRequest(new { message = "Vul eerst je geboortedatum in. Die hebben we nodig voor veilige leeftijdschecks." });
-        }
 
         if (request.OpenForWork is not null)
         {

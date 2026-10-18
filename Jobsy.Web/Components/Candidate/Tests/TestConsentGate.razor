@@ -7,51 +7,50 @@
 
 @if (_loading)
 {
-    <div class="test-skeleton" aria-busy="true">
-        <span class="skeleton-line skeleton-line--title"></span>
-        <span class="skeleton-line skeleton-line--row"></span>
+    <div class="test-page journey-page">
+        <div class="test-skeleton" aria-busy="true">
+            <span class="skeleton-line skeleton-line--title"></span>
+            <span class="skeleton-line skeleton-line--row"></span>
+        </div>
     </div>
 }
 else if (_parentalMissing)
 {
-    <div class="test-consent card" data-consent="parental">
-        <h2>@Culture["TestFlow.Consent.ParentalTitle"]</h2>
-        <p>@Culture["TestFlow.Consent.ParentalLead"]</p>
-        <a class="btn btn-primary" href="/candidate/profile">@Culture["TestFlow.Consent.ParentalCta"]</a>
+    <div class="test-page journey-page">
+        <div class="test-consent card" data-consent="parental">
+            <h2>@Culture["TestFlow.Consent.ParentalTitle"]</h2>
+            <p>@Culture["TestFlow.Consent.ParentalLead"]</p>
+            <a class="btn btn-primary" href="/candidate/profile">@Culture["TestFlow.Consent.ParentalCta"]</a>
+        </div>
     </div>
 }
 else if (_testConsentMissing)
 {
-    <div class="test-consent card" data-consent="test">
-        <h2>@Culture["TestFlow.Consent.Title"]</h2>
-        <p>@Culture["TestFlow.Consent.Lead"]</p>
-        <p class="muted">@Culture["AssessmentV2.Transparency.NotDiagnosis"]</p>
-        <p class="muted">@Culture["AssessmentV2.Transparency.HumanOversight"]</p>
-        <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="GiveConsentAsync">
-            @Culture["TestFlow.Consent.Cta"]
-        </button>
-        <p><a href="/privacy">@Culture["TestFlow.Consent.Why"]</a></p>
-        @if (!string.IsNullOrEmpty(_error))
-        {
-            <p class="form-error" role="alert">@_error</p>
-        }
+    <div class="test-page journey-page">
+        <div class="test-consent card" data-consent="test">
+            <h2>@Culture["TestFlow.Consent.Title"]</h2>
+            <p>@Culture["TestFlow.Consent.Lead"]</p>
+            <p class="muted">@Culture["AssessmentV2.Transparency.NotDiagnosis"]</p>
+            <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="GiveConsentAsync">
+                @Culture["TestFlow.Consent.Cta"]
+            </button>
+            <p><a href="/privacy">@Culture["TestFlow.Consent.Why"]</a></p>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <p class="form-error" role="alert">@_error</p>
+            }
+        </div>
     </div>
 }
 else
 {
-    @if (_showV2Transparency)
-    {
-        <aside class="test-transparency card" data-testid="assessment-v2-transparency">
-            <h2 class="test-transparency__title">@Culture["AssessmentV2.Transparency.Title"]</h2>
-            <p>@Culture["AssessmentV2.Transparency.Lead"]</p>
-            <ul class="test-transparency__list">
-                <li>@Culture["AssessmentV2.Transparency.NotDiagnosis"]</li>
-                <li>@Culture["AssessmentV2.Transparency.HumanOversight"]</li>
-                <li>@Culture["AssessmentV2.Transparency.MatchIndicative"]</li>
-            </ul>
-        </aside>
-    }
-    @ChildContent
+    <div class="test-page journey-page">
+        @if (_showV2Transparency)
+        {
+            <TestAboutPanel />
+        }
+        @ChildContent
+    </div>
 }
 
 @code {

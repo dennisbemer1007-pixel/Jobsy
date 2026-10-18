@@ -1571,6 +1571,15 @@ public sealed class PrivacyDataService : IPrivacyDataService
             .ToListAsync(cancellationToken);
         if (externalVacancies.Count > 0)
         {
+            var externalIds = externalVacancies.Select(v => v.Id).ToList();
+            var outbounds = await _db.CandidateExternalVacancyOutbounds
+                .Where(o => externalIds.Contains(o.ExternalVacancyId))
+                .ToListAsync(cancellationToken);
+            if (outbounds.Count > 0)
+            {
+                _db.CandidateExternalVacancyOutbounds.RemoveRange(outbounds);
+            }
+
             _db.CandidateExternalVacancies.RemoveRange(externalVacancies);
         }
 
