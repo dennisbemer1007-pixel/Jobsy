@@ -1,4 +1,5 @@
 using Bunit;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Components;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Components.Layout.Public;
@@ -71,6 +72,7 @@ public class PublicLayoutBunitTests : BunitContext
     [Fact]
     public void Rtl_when_culture_is_ar()
     {
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         var http = Services.GetRequiredService<IHttpContextAccessor>().HttpContext!;
         http.Request.QueryString = new QueryString("?lang=ar");
         var culture = Services.GetRequiredService<CultureState>();
@@ -81,6 +83,7 @@ public class PublicLayoutBunitTests : BunitContext
         var root = cut.Find(".pub-theme");
         Assert.Equal("rtl", root.GetAttribute("dir"));
         Assert.Equal("ar", root.GetAttribute("lang"));
+        JobsyLanguages.ResetEnabledForTests();
     }
 
     [Fact]

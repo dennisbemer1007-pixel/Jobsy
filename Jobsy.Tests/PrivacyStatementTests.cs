@@ -39,7 +39,6 @@ public abstract class PrivacyRenderTestBase : BunitContext
 
     protected PrivacyRenderTestBase()
     {
-        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddLogging();
         Services.AddMemoryCache();
@@ -79,7 +78,8 @@ public abstract class PrivacyRenderTestBase : BunitContext
     protected void UseLanguage(string language)
     {
         _http.Request.QueryString = new QueryString($"?lang={language}");
-        Services.GetRequiredService<CultureState>().InitializeFromRequest(_http);
+        // CultureState is constructed without IHttpContextAccessor so SSR tests pin catalog codes via Normalize.
+        Services.GetRequiredService<CultureState>().InitializeFromLanguage(language);
     }
 
     protected IRenderedComponent<PrivacyNl> RenderPrivacy() => Render<PrivacyNl>();

@@ -100,6 +100,7 @@ public class ErrorCultureRenderTests
     [Fact]
     public async Task Arabic_cookie_renders_rtl_and_arabic_copy_when_catalog_enabled()
     {
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         await using var factory = new ErrorPagesWebFactory
         {
             EmployersEnabled = true,
@@ -112,6 +113,7 @@ public class ErrorCultureRenderTests
 
         Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
         Assert.Contains("هذه الصفحة غير موجودة", html, StringComparison.Ordinal);
+        JobsyLanguages.ResetEnabledForTests();
     }
 
     [Fact]
