@@ -543,7 +543,7 @@ public sealed partial class JobsyApiClient
 
         try
         {
-            return await _http.GetFromJsonAsync<TestReflectionState>(url, ct);
+            return await GetApiJsonAsync<TestReflectionState>(url, ct);
         }
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
         {
