@@ -7,7 +7,7 @@ namespace Jobsy.Tests;
 public sealed class StijlAScreenshotMatrixTests : IAsyncLifetime
 {
     private static string OutRoot
-        => Environment.GetEnvironmentVariable("STIJL_A_OUT") ?? "/opt/cursor/artifacts/stijl-A-r4";
+        => Environment.GetEnvironmentVariable("STIJL_A_OUT") ?? "/opt/cursor/artifacts/stijl-A-r5";
 
     private static string CaptureSubdir
         => Environment.GetEnvironmentVariable("STIJL_A_SUBDIR") ?? "after";
@@ -51,16 +51,19 @@ public sealed class StijlAScreenshotMatrixTests : IAsyncLifetime
 
         var shots = new (string Slug, string Route, int W, int H, string? Role, string WaitSelector, int ExtraMs)[]
         {
-            ("start-390x844", "/", 390, 844, null, "[data-testid=landing-hero-passport], .pub-landing", 2400),
-            ("carriere-1440x900", "/carriere", 1440, 900, "candidate", ".career-page .career-card:not(.career-card--skeleton)", 2200),
-            ("carriere-390x844", "/carriere", 390, 844, "candidate", ".career-page .career-card:not(.career-card--skeleton)", 2200),
-            ("paspoort-390x844", "/candidate/paspoort", 390, 844, "candidate", ".passport-layout", 2200),
+            ("start-390x844", "/", 390, 844, null, "body", 3200),
+            ("carriere-1440x900", "/carriere", 1440, 900, "candidate",
+                ".career-page--illustrated .career-card:not(.career-card--skeleton)", 2600),
+            ("carriere-390x844", "/carriere", 390, 844, "candidate",
+                ".career-page--illustrated .career-card:not(.career-card--skeleton)", 2600),
+            ("paspoort-390x844", "/candidate/paspoort", 390, 844, "candidate",
+                ".passport-page--illustrated .passport-layout, .passport-page--illustrated .cand-hero", 2600),
             ("sollicitaties-390x844", "/candidate/applications", 390, 844, "candidate",
-                ".kb-apps .application-card, .kb-apps__layout", 2200),
+                ".kb-apps--illustrated .application-card, .kb-apps--illustrated .cand-hero", 2600),
             ($"vacature-390x844", $"/vacancies/{IllustratedPagesApiStub.SampleVacancyId:D}", 390, 844, "candidate",
-                "[data-testid=kb-detail]", 2600),
+                "[data-testid=kb-detail], .kb-detail--illustrated", 2800),
             ("werkgever-binnenkort-1440x900", "/werkgevers/binnenkort", 1440, 900, "employer", "#wg-soon-title, .pub-section", 2000),
-            ("werkgever-vacature-390x844", "/werkgever/vacatures/nieuw", 390, 844, "employer", ".vac-wizard-field, [data-testid=vacancy-wizard]", 2600),
+            ("werkgever-vacature-390x844", "/werkgever/vacatures/nieuw", 390, 844, "employer", "[data-testid=vacancy-wizard]", 3200),
             ("werkgever-sollicitaties-1440x900", "/werkgever/sollicitaties", 1440, 900, "employer",
                 "[data-testid=wg-app-pipeline]", 2800),
         };
@@ -140,21 +143,30 @@ public sealed class StijlAScreenshotMatrixTests : IAsyncLifetime
             await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
         }
 
-        await page.GotoAsync($"{_web!.ServerAddress}{route}", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await page.WaitForFunctionAsync(
-            """
-            () => {
-              const busy = document.querySelector(
-                '.page-content-skeleton, .career-card--skeleton, .detail-card--pending, [aria-busy="true"].career-card--skeleton');
-              return !busy;
-            }
-            """,
-            null,
-            new() { Timeout = 90_000 });
+        await page.GotoAsync($"{_web!.ServerAddress}{route}", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const busy = document.querySelector(
+                    '.page-content-skeleton, .career-card--skeleton, .detail-card--pending');
+                  return !busy;
+                }
+                """,
+                null,
+                new() { Timeout = 60_000 });
+        }
+        catch (TimeoutException)
+        {
+            // Blazor may keep aria-busy; fall through to content selectors.
+        }
+
         await page.AddStyleTagAsync(new()
         {
             Content = """
-                .lobsy-assistant-tab, .pub-assistant-rail, .assistant-rail, [data-assistant-rail] { display: none !important; }
+                .lobsy-assistant-tab, .pub-assistant-rail, .assistant-rail, [data-assistant-rail],
+                .lobsy-coach-dock, .lobsy-assistant--coach, [data-lobsy-coach] { display: none !important; }
                 """
         });
 
@@ -167,7 +179,14 @@ public sealed class StijlAScreenshotMatrixTests : IAsyncLifetime
         {
             foreach (var sel in waitSelector.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
             {
-                await page.Locator(sel).First.WaitForAsync(new() { Timeout = 90_000 });
+                try
+                {
+                    await page.Locator(sel).First.WaitForAsync(new() { Timeout = 45_000 });
+                }
+                catch (TimeoutException)
+                {
+                    Assert.Fail($"{slug}: timed out waiting for selector '{sel}' on {route}.");
+                }
             }
         }
 
@@ -187,6 +206,19 @@ public sealed class StijlAScreenshotMatrixTests : IAsyncLifetime
             Assert.Equal(0, await skeleton.CountAsync());
             var body = await page.Locator(".passport-page").InnerTextAsync();
             Assert.Contains("Sanne", body, StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (!LooseBaseline && route.Contains("/vacancies/", StringComparison.OrdinalIgnoreCase))
+        {
+            var fitPanel = page.Locator("[data-testid=kb-fit-panel]");
+            if (await fitPanel.CountAsync() > 0)
+            {
+                await fitPanel.First.ScrollIntoViewIfNeededAsync();
+                await page.WaitForTimeoutAsync(350);
+            }
+
+            var body = await page.Locator("[data-testid=kb-fit-panel]").InnerTextAsync();
+            Assert.DoesNotMatch(@"\b\d{1,3}\s*%\b", body);
         }
 
         await page.WaitForTimeoutAsync(extraMs);

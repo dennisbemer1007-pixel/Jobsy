@@ -2,7 +2,7 @@
 # Stijl A r4 matrix: PR branch "after" + acceptatie worktree "before" + pairs.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-OUT="${STIJL_A_OUT:-/opt/cursor/artifacts/stijl-A-r4}"
+OUT="${STIJL_A_OUT:-/opt/cursor/artifacts/stijl-A-r5}"
 WORKTREE="${STIJL_A_ACC_WORKTREE:-/tmp/jobsy-acceptatie-stijl-a-r4}"
 
 export STIJL_A_OUT="$OUT"
