@@ -16,28 +16,17 @@
 
 @media (min-width: 640px) {
   .opl-page .cand-hero--learn-grow {
-    background-image: none !important;
     background-color: var(--pearl);
-  }
-
-  .opl-page .cand-hero--learn-grow::after {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    inset-inline: 39% 0;
-    z-index: 0;
-    background-image: var(--cand-hero-art-desktop, var(--cand-hero-art));
+    background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
     background-repeat: no-repeat;
-    background-size: cover;
-    background-position: var(--cand-hero-pos-desktop, right center);
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 100%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 5%, #000 100%);
+    background-size: auto 100%;
+    background-position: right center;
   }
 
-  .opl-page .cand-hero--learn-grow::before {
-    inset-inline: 0 61%;
-    width: auto;
-    background: var(--pearl) !important;
+  .opl-page .cand-hero--learn-grow::before,
+  .opl-page .cand-hero--learn-grow::after {
+    content: none !important;
+    display: none !important;
   }
 }
 
