@@ -690,18 +690,28 @@
 }
 
 .cand-hero--profession-band {
-  background-size: 66% auto;
-  background-position: 100% bottom;
+  background-image: none;
+}
+
+.cand-hero--profession-band::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 46%;
+  z-index: 0;
+  background-image: var(--cand-hero-art, none);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: 18% bottom;
 }
 
 .cand-hero--profession-band::before {
+  z-index: 1;
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) 52%,
-    color-mix(in srgb, var(--pearl) 82%, transparent) 58%,
-    color-mix(in srgb, var(--pearl) 25%, transparent) 64%,
-    transparent 76%
+    var(--pearl) 44%,
+    color-mix(in srgb, var(--pearl) 75%, transparent) 50%,
+    transparent 58%
   );
 }
 
