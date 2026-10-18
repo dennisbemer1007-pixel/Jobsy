@@ -1,6 +1,6 @@
 KEY: KandidatenkaartInviteBundled
 SUBJECT: Uitnodiging om te solliciteren: Weekendhulp verkoop
-PREHEADER: Match 82% — bekijk de vacature
+PREHEADER: Match 82% - bekijk de vacature
 KIND: Optional
 --- TEXT ---
 Hoi Alex,

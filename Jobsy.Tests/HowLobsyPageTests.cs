@@ -32,6 +32,7 @@ public abstract class HowLobsyRenderTestBase : BunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
+    private readonly EnabledCulturesScope _enabledCultures = new();
 
     protected HowLobsyRenderTestBase()
     {
@@ -65,6 +66,7 @@ public abstract class HowLobsyRenderTestBase : BunitContext
         base.Dispose(disposing);
         if (disposing)
         {
+            _enabledCultures.Dispose();
             _culture.Dispose();
         }
     }

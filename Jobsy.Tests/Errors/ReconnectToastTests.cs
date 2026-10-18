@@ -37,7 +37,11 @@ public class ReconnectToastTests
     [Fact]
     public async Task App_shell_renders_the_toast_in_arabic_when_the_culture_cookie_says_so()
     {
-        await using var factory = new ErrorPagesWebFactory { EmployersEnabled = true };
+        await using var factory = new ErrorPagesWebFactory
+        {
+            EmployersEnabled = true,
+            EnabledCultures = "nl,en,pl,ro,ar"
+        };
         using var client = factory.CreateHtmlClient();
         client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
 

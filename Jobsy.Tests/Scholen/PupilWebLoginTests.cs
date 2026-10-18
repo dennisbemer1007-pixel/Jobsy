@@ -337,7 +337,7 @@ public class PupilWebLoginTests : IClassFixture<RoleFunctionalWebAppFactory>
         var html = await page.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.OK, page.StatusCode);
         Assert.Contains("css/features/scholen.css", html, StringComparison.Ordinal);
-        Assert.Contains("css/app.min.css?v=20261016-08", html, StringComparison.Ordinal);
+        Assert.Contains("css/app.min.css?v=20261017-03", html, StringComparison.Ordinal);
         Assert.Contains("js/leerling-login.js", html, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"leerling-vo-paspoort\"", html, StringComparison.Ordinal);
     }

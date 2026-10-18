@@ -53,6 +53,7 @@ public sealed class TranslationCopyGuardTests
     [Fact]
     public void Candidate_facing_pl_ro_ar_are_not_english_copies()
     {
+        JobsyLanguages.ResetEnabledForTests();
         var checkedLangs = CopyGuardLanguages().ToArray();
         if (checkedLangs.Length == 0)
         {

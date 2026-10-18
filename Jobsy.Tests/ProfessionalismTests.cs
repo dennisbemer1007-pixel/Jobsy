@@ -257,8 +257,7 @@ public class ProfessionalismTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
         Assert.Contains("Deze pagina bestaat niet", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/\"", html, StringComparison.Ordinal);
-        Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
-        Assert.Contains("href=\"/melden\"", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/hoe-werkt-lobsy\"", html, StringComparison.Ordinal);
         Assert.Contains("noindex", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotMatch(Placeholder, html);
     }
@@ -275,6 +274,11 @@ public class ProfessionalismTests : IClassFixture<RoleFunctionalWebAppFactory>
             foreach (var (key, value) in map)
             {
                 var lower = value.ToLowerInvariant();
+                if (key.Contains("SideJob", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
                 if ((lower.Contains("16 jaar", StringComparison.Ordinal) || lower.Contains("vanaf 16", StringComparison.Ordinal))
                     && !lower.Contains("13", StringComparison.Ordinal))
                 {

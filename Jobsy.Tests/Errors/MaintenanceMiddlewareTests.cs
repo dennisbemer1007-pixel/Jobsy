@@ -54,6 +54,7 @@ public class MaintenanceMiddlewareTests
     [Fact]
     public async Task Page_is_in_the_cookie_language()
     {
+        using var cultures = new EnabledCulturesScope();
         await using var factory = new MaintenanceWebFactory { MaintenanceEnabled = true };
         using var client = factory.CreateHtmlClient("pl");
 

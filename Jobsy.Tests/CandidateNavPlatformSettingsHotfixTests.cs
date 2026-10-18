@@ -16,8 +16,12 @@ public class CandidateDesktopNavCssTests
     public void Desktop_candidate_shell_keeps_bottom_nav_visible()
     {
         var css = File.ReadAllText(FindRepoRoot("Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".app-shell--candidate .bottom-nav", css, StringComparison.Ordinal);
-        Assert.Contains("display: flex", css, StringComparison.Ordinal);
+        // Mobile/PWA: candidate shell uses bottom nav; desktop (≥1024px) hides it globally.
+        Assert.Contains(".bottom-nav {", css, StringComparison.Ordinal);
+        Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell .bottom-nav", css, StringComparison.Ordinal);
+        Assert.Contains("display: none !important", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell--candidate .lobsy-assistant.has-bottom-nav", css, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot(string relative)

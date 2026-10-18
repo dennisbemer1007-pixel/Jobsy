@@ -58,7 +58,8 @@ public sealed class MaintenanceWebFactory : WebWebApplicationFactory
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                 ["Support:Email"] = "support@lobsy.nl",
                 [ErrorPagesExtensions.ForceHandlerConfigKey] = "true",
-                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
+                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
+                ["Localization:EnabledCultures"] = "nl,en,pl,ro,ar"
             });
         });
 

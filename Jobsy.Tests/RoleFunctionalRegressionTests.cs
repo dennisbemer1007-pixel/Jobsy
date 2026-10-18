@@ -793,7 +793,22 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
     public async Task OpenForWork_off_hides_fit_percent_and_blocks_apply()
     {
         var client = CandidateClient();
-        var off = await client.PutAsJsonAsync("api/me/profile", new { openForWork = false });
+        // Match scores hide only when open-for-work is off *and* availability is empty (CandidateOpenForWorkGate).
+        var off = await client.PutAsJsonAsync("api/me/profile", new
+        {
+            openForWork = false,
+            preferences = new
+            {
+                roles = new[] { "Winkel" },
+                maxTravelMinutes = 30,
+                preferredTransport = "Fiets",
+                minHoursPerWeek = 12,
+                maxHoursPerWeek = 24,
+                flexibleTimes = false,
+                availability = new Dictionary<string, string[]>(),
+                workStatuses = new[] { "zoekend" }
+            }
+        });
         Assert.True(off.IsSuccessStatusCode, await off.Content.ReadAsStringAsync());
         try
         {
@@ -819,7 +834,26 @@ public class RoleFunctionalRegressionTests : IClassFixture<RoleFunctionalWebAppF
         }
         finally
         {
-            var back = await client.PutAsJsonAsync("api/me/profile", new { openForWork = true });
+            var back = await client.PutAsJsonAsync("api/me/profile", new
+            {
+                openForWork = true,
+                preferences = new
+                {
+                    roles = new[] { "Winkel" },
+                    maxTravelMinutes = 30,
+                    preferredTransport = "Fiets",
+                    minHoursPerWeek = 12,
+                    maxHoursPerWeek = 24,
+                    flexibleTimes = false,
+                    availability = new Dictionary<string, string[]>
+                    {
+                        ["Ma"] = new[] { "Ochtend", "Middag" },
+                        ["Di"] = new[] { "Ochtend" },
+                        ["Wo"] = new[] { "Middag" }
+                    },
+                    workStatuses = new[] { "zoekend" }
+                }
+            });
             Assert.True(back.IsSuccessStatusCode);
         }
     }
@@ -1901,7 +1935,8 @@ public sealed class RoleFunctionalWebAppFactory : ApiWebApplicationFactory
                     aboutMe = "Ervaren vulploegmedewerker.",
                     employers = new[] { new { employerName = "Jumbo", role = "Vulploeg", years = 2 } },
                     educations = Array.Empty<string>(),
-                    drivingLicenses = Array.Empty<string>()
+                    drivingLicenses = Array.Empty<string>(),
+                    workStatuses = new[] { "zoekend" }
                 })
             },
             new User

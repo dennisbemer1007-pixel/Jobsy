@@ -80,6 +80,8 @@
     height: 44px;
     border: 0;
     border-radius: var(--radius-sm);
+    appearance: none;
+    -webkit-appearance: none;
     background: transparent;
     color: inherit;
     cursor: pointer;

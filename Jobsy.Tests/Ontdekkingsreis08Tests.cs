@@ -357,7 +357,7 @@ public class Ontdekkingsreis08SourceTests
         Assert.Contains("PrepareShedAsync", src, StringComparison.Ordinal);
         Assert.Contains("JourneyTestFlow.ShedQuery", src, StringComparison.Ordinal);
         Assert.DoesNotContain("NavigateStep(\"shed\")", src, StringComparison.Ordinal);
-        Assert.Contains("DeclineConsentAndFinishAsync", src, StringComparison.Ordinal);
+        Assert.Contains("AcceptConsentAsync", src, StringComparison.Ordinal);
         Assert.Contains("OnboardingInstallPrompt",
             File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Candidate/Discovery/JourneyEndScreen.razor")),
             StringComparison.Ordinal);

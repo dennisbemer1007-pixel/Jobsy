@@ -138,7 +138,7 @@ public class PupilPassportV2Tests
     [Fact]
     public void Writes_demo_artifacts_to_v3_store()
     {
-        var outDir = "/cursor/stores/self/leerlingpaspoort/v3";
+        var outDir = Path.Combine(Path.GetTempPath(), "jobsy-leerlingpaspoort-v3", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(outDir);
         var pupilSvc = new PupilPassportPdfService();
         var studentSvc = StudentPdfService();

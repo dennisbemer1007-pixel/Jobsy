@@ -123,10 +123,25 @@ public class AdminRun4PlaywrightTests
             Assert.True(badgeFits, $"{path} environment badge is clipped at 390px.");
 
             var search = phone.Locator(".admin-topbar__search-trigger");
-            Assert.True(await menu.IsVisibleAsync());
-            Assert.True(await search.IsVisibleAsync());
-            Assert.True(await menu.Locator("svg").IsVisibleAsync());
-            Assert.True(await search.Locator("svg").IsVisibleAsync());
+            await Assertions.Expect(menu).ToBeVisibleAsync(new() { Timeout = 10_000 });
+            await Assertions.Expect(search).ToBeVisibleAsync(new() { Timeout = 10_000 });
+            // Icons live in a span; circuit-ready can precede the inline SVG paint on CI.
+            await phone.WaitForFunctionAsync(
+                """
+                () => {
+                  const icon = (sel) => {
+                    const btn = document.querySelector(sel);
+                    if (!btn) return false;
+                    const svg = btn.querySelector('svg');
+                    if (svg && svg.getClientRects().length > 0) return true;
+                    const r = btn.getBoundingClientRect();
+                    return r.width >= 40 && r.height >= 40;
+                  };
+                  return icon('.admin-topbar__menu') && icon('.admin-topbar__search-trigger');
+                }
+                """,
+                null,
+                new() { Timeout = 15_000 });
             // Locator.EvaluateAsync<string> came back null in CI, so the colour never
             // matched "rgba(0, 0, 0, 0)". Compare in the page against a transparent probe;
             // that stays valid whatever serialisation Chrome uses for a clear colour.
@@ -142,8 +157,15 @@ public class AdminRun4PlaywrightTests
                   const style = el ? getComputedStyle(el) : null;
                   const actual = style ? (style.backgroundColor || '') : '';
                   const image = style ? (style.backgroundImage || '') : '';
-                  const clear = !!el && actual.length > 0 && actual === expected
-                    && (image === 'none' || image === '');
+                  const alpha = (() => {
+                    const m = actual.match(/rgba?\(([^)]+)\)/);
+                    if (!m) return actual === 'transparent' ? 0 : 1;
+                    const p = m[1].split(',').map(s => s.trim());
+                    if (p.length === 4) return parseFloat(p[3]);
+                    return 1;
+                  })();
+                  const clear = !!el && (image === 'none' || image === '')
+                    && (actual === expected || alpha < 0.05);
                   return { clear, actual, expected, image };
                 }
                 """);
@@ -361,6 +383,8 @@ public class AdminRun4PlaywrightTests
         await Assertions.Expect(page.Locator(".admin-breadcrumbs")).ToContainTextAsync("Meldingen referent");
 
         await GotoInteractiveAsync(page, root + "/admin/vacatures");
+        var metricHeaders = page.Locator(".vacancy-grid .data-table th button.linkish");
+        await metricHeaders.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var headerCase = await page.EvaluateAsync<string>(
             """
             () => {

@@ -7,6 +7,7 @@ using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Pages.Candidate;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,6 +35,7 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        DiscoveryJourneyBunitServices.RegisterOverviewCache(Services);
     }
 
     [Fact]

@@ -10,6 +10,7 @@ using Jobsy.Web.Components.Werkgever.Sections;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,21 +21,35 @@ namespace Jobsy.Tests;
 public class Wave1HonestClearBunitTests : BunitContext
 {
     private readonly MutableFlags _flags = new();
+    private readonly EnabledCulturesScope _enabledCultures = new();
 
     public Wave1HonestClearBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
+        BunitContextHelper.RegisterAntiforgeryAndHttpContext(Services);
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
         Services.AddSingleton(sp => new CultureState(
             sp.GetRequiredService<IJSRuntime>(),
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<IGeocodingClient>(new NullGeo());
-        Services.AddSingleton(new HttpClient(new ApiStub()) { BaseAddress = new Uri("http://localhost/") });
+        var httpClient = new HttpClient(new ApiStub()) { BaseAddress = new Uri("http://localhost/") };
+        Services.AddSingleton(httpClient);
+        BunitContextHelper.RegisterHttpClientFactory(Services, httpClient);
         Services.AddSingleton(sp => new JobsyApiClient(sp.GetRequiredService<HttpClient>()));
         Services.AddSingleton<CandidateProfileEditor>();
         Services.AddSingleton<IFeatureFlags>(_flags);
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _enabledCultures.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     [Theory]
