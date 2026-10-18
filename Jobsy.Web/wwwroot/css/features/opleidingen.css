@@ -1116,14 +1116,14 @@
     -webkit-mask-image: linear-gradient(
       90deg,
       transparent 0%,
-      rgb(0 0 0 / 0.45) 14%,
-      #000 26%
+      rgb(0 0 0 / 0.5) 18%,
+      #000 32%
     );
     mask-image: linear-gradient(
       90deg,
       transparent 0%,
-      rgb(0 0 0 / 0.45) 14%,
-      #000 26%
+      rgb(0 0 0 / 0.5) 18%,
+      #000 32%
     );
   }
 
@@ -1134,8 +1134,8 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 52%;
-    width: 8%;
+    left: 54%;
+    width: 6%;
     z-index: 1;
     pointer-events: none;
     background: linear-gradient(
@@ -1162,7 +1162,7 @@
     background-image: var(--cand-hero-figures, none) !important;
     background-repeat: no-repeat;
     background-size: auto 90%;
-    background-position: left bottom;
+    background-position: 22% 100%;
     opacity: 1;
   }
 
