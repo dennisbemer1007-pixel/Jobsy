@@ -29,6 +29,7 @@ public class LegalDocumentRenderTests : BunitContext
 {
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
+    private readonly EnabledCulturesScope _enabledCultures = new();
 
     public LegalDocumentRenderTests()
     {
@@ -61,6 +62,7 @@ public class LegalDocumentRenderTests : BunitContext
         base.Dispose(disposing);
         if (disposing)
         {
+            _enabledCultures.Dispose();
             _culture.Dispose();
         }
     }

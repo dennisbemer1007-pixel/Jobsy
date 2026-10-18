@@ -5,6 +5,7 @@ using Jobsy.Core.Features;
 using Jobsy.Web.Components.Pages.Candidate;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +38,7 @@ public sealed class JourneyShedEndBunitTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        DiscoveryJourneyBunitServices.RegisterOverviewCache(Services);
     }
 
     [Fact]
@@ -85,6 +87,13 @@ public sealed class JourneyShedEndBunitTests : BunitContext
 
         private static string BodyFor(string path)
         {
+            if (path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase))
+            {
+                return """
+                    {"profileRevision":"test-rev","competencyAnswered":25,"careerAnswered":25,"cultureAnswered":25,"valuesAnswered":25}
+                    """;
+            }
+
             if (path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase))
             {
                 return """

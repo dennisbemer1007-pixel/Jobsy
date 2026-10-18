@@ -57,7 +57,8 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
             cut.Find("button.test-flow__next").Click();
         }
 
-        cut.WaitForAssertion(() => Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal));
+        cut.WaitForAssertion(() =>
+            Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal));
 
         cut.Render(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Career)
@@ -65,7 +66,8 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
             .Add(p => p.Answers, new Dictionary<int, int>())
             .Add(p => p.Target, TestDepthLevel.First));
 
-        Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal);
+        cut.WaitForAssertion(() =>
+            Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal));
         Assert.Contains("Career", cut.Markup, StringComparison.Ordinal);
     }
 

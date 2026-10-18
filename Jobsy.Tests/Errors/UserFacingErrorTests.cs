@@ -57,6 +57,7 @@ public class UserFacingErrorTests
     [Fact]
     public void Describe_speaks_the_visitors_language()
     {
+        using var _ = new EnabledCulturesScope();
         Assert.Equal(
             UiStrings.Get("Common.Error.Network", "nl"),
             Create("nl").Describe(new HttpRequestException(Secret)));

@@ -36,6 +36,7 @@ public class EmployerRun3FollowupTests
     [InlineData("ar", 11, "11 رمزاً")]
     public void Token_phrase_uses_the_locale_plural(string lang, int count, string expected)
     {
+        using var _ = new EnabledCulturesScope();
         var culture = new CultureState(null!, null!, null!);
         culture.InitializeFromLanguage(lang);
         Assert.Equal(expected, CountPhrase.Tokens(culture, count));

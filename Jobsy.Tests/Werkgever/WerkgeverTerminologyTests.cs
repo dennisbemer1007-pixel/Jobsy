@@ -182,6 +182,7 @@ public class WerkgeverHardcodedDutchTests
         "RegionsSection.razor",
         "TalentPoolSection.razor",
         "TalentContactsSection.razor",
+        "VacancyCreateWizard.razor",
     };
 
     [Fact]

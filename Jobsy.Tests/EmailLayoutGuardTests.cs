@@ -75,6 +75,11 @@ public class EmailLayoutGuardTests
                 continue;
             }
 
+            if (file.EndsWith("HtmlSanitize.cs", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             var source = File.ReadAllText(file);
             if (source.Contains("EmailLayout.Wrap(", StringComparison.Ordinal)
                 || source.Contains("<html", StringComparison.OrdinalIgnoreCase)

@@ -77,9 +77,9 @@ public class ProfileSectionsExtractionTests
     public void Sections_keep_key_markup_classes()
     {
         var root = FindRepoRoot();
-        var blob = string.Concat(Directory.EnumerateFiles(
-            Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections"),
-            "*.razor").Select(File.ReadAllText));
+        var sectionsDir = Path.Combine(root, "Jobsy.Web/Components/Candidate/ProfileSections");
+        var blob = string.Concat(Directory.EnumerateFiles(sectionsDir, "*.razor").Select(File.ReadAllText))
+            + File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Shared/AvailabilityDayPartMatrix.razor"));
         Assert.Contains("profile-contact__names", blob);
         Assert.Contains("profile-devices", blob);
         Assert.Contains("profile-check-grid", blob);

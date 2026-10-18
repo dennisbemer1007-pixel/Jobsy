@@ -33,6 +33,7 @@ public abstract class TermsRenderTestBase : BunitContext
 
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
+    private readonly EnabledCulturesScope _enabledCultures = new();
 
     /// <summary>Response of <c>GET api/site/legal</c>; tests override it to drop identity rows.</summary>
     protected string LegalJson { get; set; } =
@@ -70,6 +71,7 @@ public abstract class TermsRenderTestBase : BunitContext
         base.Dispose(disposing);
         if (disposing)
         {
+            _enabledCultures.Dispose();
             _culture.Dispose();
         }
     }

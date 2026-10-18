@@ -100,6 +100,7 @@ public class ErrorCultureRenderTests
     [Fact]
     public async Task Arabic_cookie_renders_rtl_and_arabic_copy_when_catalog_enabled()
     {
+        using var cultures = new EnabledCulturesScope();
         await using var factory = new ErrorPagesWebFactory
         {
             EmployersEnabled = true,
@@ -117,6 +118,7 @@ public class ErrorCultureRenderTests
     [Fact]
     public async Task Polish_accept_language_renders_polish_copy_when_catalog_enabled()
     {
+        using var cultures = new EnabledCulturesScope();
         await using var factory = new ErrorPagesWebFactory
         {
             EmployersEnabled = true,

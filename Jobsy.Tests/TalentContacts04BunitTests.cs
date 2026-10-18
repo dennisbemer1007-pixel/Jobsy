@@ -22,6 +22,7 @@ namespace Jobsy.Tests;
 /// </summary>
 public class TalentContacts04BunitTests : BunitContext
 {
+    private readonly EnabledCulturesScope _enabledCultures = new();
     private readonly StubHandler _handler = new();
     private bool _employers = true;
     private bool _passport;
@@ -40,6 +41,16 @@ public class TalentContacts04BunitTests : BunitContext
             BaseAddress = new Uri("http://localhost/")
         }));
         Services.AddLogging();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _enabledCultures.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     // ---------- page shell (T1, T2) ----------

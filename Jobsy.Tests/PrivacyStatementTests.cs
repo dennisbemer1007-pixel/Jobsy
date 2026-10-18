@@ -33,6 +33,7 @@ public abstract class PrivacyRenderTestBase : BunitContext
 
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
+    private readonly EnabledCulturesScope _enabledCultures = new();
 
     protected readonly ConfigurationManager Config = new();
 
@@ -67,6 +68,7 @@ public abstract class PrivacyRenderTestBase : BunitContext
         if (disposing)
         {
             Config.Dispose();
+            _enabledCultures.Dispose();
             _culture.Dispose();
         }
 

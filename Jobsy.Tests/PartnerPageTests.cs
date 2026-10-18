@@ -42,6 +42,7 @@ public class PartnerPageTests : BunitContext
 
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
+    private readonly EnabledCulturesScope _enabledCultures = new();
     private HttpStatusCode _catalogStatus = HttpStatusCode.OK;
 
     public PartnerPageTests()
@@ -73,6 +74,7 @@ public class PartnerPageTests : BunitContext
         base.Dispose(disposing);
         if (disposing)
         {
+            _enabledCultures.Dispose();
             _culture.Dispose();
         }
     }

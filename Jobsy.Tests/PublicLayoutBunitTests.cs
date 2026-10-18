@@ -20,6 +20,8 @@ namespace Jobsy.Tests;
 
 public class PublicLayoutBunitTests : BunitContext
 {
+    private readonly EnabledCulturesScope _enabledCultures = new();
+
     public PublicLayoutBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
@@ -44,6 +46,16 @@ public class PublicLayoutBunitTests : BunitContext
         Services.AddScoped<PageSeoContext>();
         Services.AddSingleton(new Jobsy.Web.Hosting.MaintenanceState());
         Services.AddSingleton<NavigationManager>(new FakeNavigation("/"));
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _enabledCultures.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     [Fact]

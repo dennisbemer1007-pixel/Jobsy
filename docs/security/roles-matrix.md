@@ -77,6 +77,7 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 |---|---|---|---|---|
 | `/werkgever` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary` |
 | `/werkgever/te-doen` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager` |
+| `/werkgever/meldingen` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary` |
 | `/werkgever/vacatures` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/vacatures/nieuw` | ● | — | ◯ | `BranchManager,EnterpriseManager,Intermediary` |
 | `/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |

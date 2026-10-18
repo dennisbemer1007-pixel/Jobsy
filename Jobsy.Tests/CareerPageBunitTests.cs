@@ -15,6 +15,8 @@ namespace Jobsy.Tests;
 
 public class CareerPageBunitTests : BunitContext
 {
+    private readonly EnabledCulturesScope _enabledCultures = new();
+
     public CareerPageBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
@@ -24,6 +26,16 @@ public class CareerPageBunitTests : BunitContext
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<CareerPathService>();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _enabledCultures.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     // ---------- empty state ----------
