@@ -25,7 +25,7 @@ public class PublicLayoutBunitTests : BunitContext
     public PublicLayoutBunitTests()
     {
         JobsyLanguages.ResetEnabledForTests();
-        JobsyLanguages.ConfigureEnabledCultures("nl,en,ar");
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());

@@ -194,5 +194,24 @@ public static class UiStringsSensitiveExperience
         Add("Sensitive.Passport.EditPassport", "Paspoort aanpassen", "Edit passport", "Edit passport", "Edit passport", "Edit passport");
         Add("Sensitive.Passport.NoEmployerGapLabel", "Geen label voor werkgevers", "No label for employers", "No label for employers", "No label for employers", "No label for employers");
         Add("Sensitive.Passport.CountsForMatches", "Telt mee voor je matches", "Counts for your matches", "Counts for your matches", "Counts for your matches", "Counts for your matches");
+
+        Add("AdminSettings.SensitiveExperience.Enabled.Title",
+            "Gevoelige werkervaring",
+            "Sensitive work history",
+            "Sensitive work history",
+            "Sensitive work history",
+            "Sensitive work history");
+        Add("AdminSettings.SensitiveExperience.Enabled.Desc",
+            "Schakelaars Alleen voor mij, neutrale titels en andere periode in onboarding en paspoort.",
+            "Only for me, neutral titles and other period controls in onboarding and passport.",
+            "Only for me, neutral titles and other period controls in onboarding and passport.",
+            "Only for me, neutral titles and other period controls in onboarding and passport.",
+            "Only for me, neutral titles and other period controls in onboarding and passport.");
+        Add("AdminSettings.SensitiveExperience.Enabled.ImpactOff",
+            "Kandidaten zien geen privacy-opties voor gevoelige ervaring.",
+            "Candidates do not see privacy options for sensitive experience.",
+            "Candidates do not see privacy options for sensitive experience.",
+            "Candidates do not see privacy options for sensitive experience.",
+            "Candidates do not see privacy options for sensitive experience.");
     }
 }

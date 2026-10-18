@@ -8,7 +8,7 @@
     <div class="pub-footer__inner">
         <div class="pub-footer__brand">
             <a class="pub-footer__logo-link" href="@PublicRoutes.Landing" aria-label="Lobsy">
-                <LobsyLogo Class="pub-footer__logo" Alt="" Animate="false" />
+                <LobsyLogo Class="pub-footer__logo" Alt="Lobsy" Animate="false" Variant="LobsyLogoVariant.Horizontal" />
                 <span class="pub-footer__name">Lobsy</span>
             </a>
             <p class="pub-footer__tagline">@LandingText.For("PublicFooter.BrandLine", Variant, Culture.Language)</p>
@@ -16,7 +16,8 @@
 
         @foreach (var column in PublicNavCatalog.Footer(Variant))
         {
-            <div class="pub-footer__col">
+            var isLegal = string.Equals(column.TitleKey, "PublicFooter.Legal", StringComparison.Ordinal);
+            <div class="pub-footer__col @(isLegal ? "pub-footer__col--legal" : null)">
                 <h2 class="pub-footer__heading">@Culture[column.TitleKey]</h2>
                 <ul class="pub-footer__list">
                     @foreach (var item in column.Items.Where(i => i.IsAvailable))

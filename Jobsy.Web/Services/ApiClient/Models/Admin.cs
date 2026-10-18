@@ -263,6 +263,16 @@ public sealed class PlatformFeatureItem
     public bool EmployerFitQuestionnairesEnabled { get; set; }
     public bool KandidatenkaartEnabled { get; set; }
     public bool AfterMatchEnabled { get; set; }
+    public bool SensitiveExperienceEnabled { get; set; }
+    public bool TrainingPartnersEnabled { get; set; }
+    public bool ReferenceVerificationEnabled { get; set; }
+    public bool TestJourneyIllustrationEnabled { get; set; }
+    public bool OnboardingFinaleV2Enabled { get; set; }
+    public bool OccupationDayInLifeEnabled { get; set; } = true;
+    public bool ResearchConsentEnabled { get; set; }
+    public bool TestEditModeEnabled { get; set; }
+    public bool SamplePdfEnabled { get; set; }
+    public IReadOnlyList<string>? AdminOverriddenFlagKeys { get; set; }
     public int CandidateApplyPerMinuteLimit { get; set; } = 5;
     public int CandidateApplyPerHourLimit { get; set; } = 30;
     public int CandidateApplyPerDayLimit { get; set; } = 100;
@@ -312,6 +322,16 @@ public sealed class PlatformFeaturePatch
     public bool? EmployerFitQuestionnairesEnabled { get; set; }
     public bool? KandidatenkaartEnabled { get; set; }
     public bool? AfterMatchEnabled { get; set; }
+    public bool? SensitiveExperienceEnabled { get; set; }
+    public bool? TrainingPartnersEnabled { get; set; }
+    public bool? ReferenceVerificationEnabled { get; set; }
+    public bool? TestJourneyIllustrationEnabled { get; set; }
+    public bool? OnboardingFinaleV2Enabled { get; set; }
+    public bool? OccupationDayInLifeEnabled { get; set; }
+    public bool? ResearchConsentEnabled { get; set; }
+    public bool? TestEditModeEnabled { get; set; }
+    public bool? SamplePdfEnabled { get; set; }
+    public IReadOnlyList<string>? ClearAdminFlagOverrideKeys { get; set; }
     public bool? CandidateExternalVacanciesEnabled { get; set; }
     public bool? EmployerPhase2Enabled { get; set; }
     public int? CandidateApplyPerMinuteLimit { get; set; }

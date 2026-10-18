@@ -1,17 +1,17 @@
 @namespace Jobsy.Web.Components
 @using Jobsy.Web.Media
 
-<span class="lobsy-logo @(Animate ? "lobsy-logo--animate" : null) @Class"
+<span class="lobsy-logo @BrandImages.CssModifier(Variant) @(Animate ? "lobsy-logo--animate" : null) @Class"
       role="@(string.IsNullOrEmpty(Alt) ? null : "img")"
       aria-hidden="@(string.IsNullOrEmpty(Alt) ? "true" : null)"
       aria-label="@(string.IsNullOrEmpty(Alt) ? null : Alt)">
     <img class="lobsy-logo__img"
          src="@Src"
          srcset="@SrcSet"
-         sizes="56px"
+         sizes="@Sizes"
          alt=""
-         width="56"
-         height="56"
+         width="@Width"
+         height="@Height"
          decoding="async"
          data-logo-fallback="1"
          draggable="false" />
@@ -21,9 +21,29 @@
     [Parameter] public string? Class { get; set; }
     [Parameter] public string Alt { get; set; } = "Lobsy";
     [Parameter] public bool Animate { get; set; }
-    /// <summary>Use the illustrated mascot (chatbots / sollicitatiebots) instead of the pin mark.</summary>
+    [Parameter] public LobsyLogoVariant Variant { get; set; } = LobsyLogoVariant.Mark;
+    /// <summary>Use the illustrated mascot (chatbots / sollicitatiebots) instead of the brand mark.</summary>
     [Parameter] public bool UseMascot { get; set; }
 
-    private string Src => UseMascot ? BrandImages.MascotWebp128 : BrandImages.Webp128;
-    private string SrcSet => UseMascot ? BrandImages.MascotSrcSet56 : BrandImages.SrcSet56;
+    private string Src => UseMascot ? BrandImages.MascotWebp128 : BrandImages.ForVariant(Variant);
+
+    private string? SrcSet => UseMascot
+        ? BrandImages.MascotSrcSet56
+        : Variant == LobsyLogoVariant.Mark ? BrandImages.SrcSet56 : null;
+
+    private string Sizes => Variant == LobsyLogoVariant.Mark ? "56px" : "180px";
+
+    private int Width => Variant switch
+    {
+        LobsyLogoVariant.Horizontal or LobsyLogoVariant.HorizontalDark => 154,
+        LobsyLogoVariant.Stacked => 100,
+        _ => 56,
+    };
+
+    private int Height => Variant switch
+    {
+        LobsyLogoVariant.Horizontal or LobsyLogoVariant.HorizontalDark => 44,
+        LobsyLogoVariant.Stacked => 88,
+        _ => 56,
+    };
 }

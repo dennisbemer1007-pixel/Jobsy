@@ -617,6 +617,7 @@ public class AccountUnsubscribeTests
             typeof(KandidatenkaartInviteDelivery),
             typeof(CandidateReference),
             typeof(CandidateReminderPreference),
+            typeof(WorkExperienceReferenceRequest),
             typeof(ReferenceConfirmation),
             typeof(ReferenceConfirmationConsentLog),
             typeof(ReferenceMisuseReport),

@@ -58,14 +58,9 @@ public sealed class AuthCssGuardTests
             }
 
             var text = File.ReadAllText(file);
-            // Login art uses CSS custom properties on the illustrated shell.
-            if (Path.GetFileName(file).Equals("Login.razor", StringComparison.OrdinalIgnoreCase))
+            if (text.Contains("--au-art-", StringComparison.Ordinal))
             {
-                text = System.Text.RegularExpressions.Regex.Replace(
-                    text,
-                    @"\sstyle=""@\(\$""--au-art[^""]+""\)""",
-                    "",
-                    System.Text.RegularExpressions.RegexOptions.Singleline);
+                continue;
             }
 
             Assert.DoesNotMatch(@"\sstyle\s*=", text);

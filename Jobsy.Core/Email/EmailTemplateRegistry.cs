@@ -173,6 +173,10 @@ public static class EmailTemplateRegistry
             "Uitnodiging ingetrokken", "Vacature vol — uitnodiging ingetrokken.", requiresEmployers: true),
         Def("ReferenceConfirmation", "ReferenceConfirmation", "Referent", EmailKind.Essential, "ReferenceAsked", false,
             "Bevestiging van een referent", "Mail met een eenmalige link naar 5 korte vragen."),
+        Def("WorkExperienceReference", "WorkExperienceReference", "Referent", EmailKind.Essential, "ReferenceAsked", false,
+            "Werkervaring bevestigen", "Mail met link naar feiten en competenties."),
+        Def("WorkExperienceReferenceReminder", "WorkExperienceReferenceReminder", "Referent", EmailKind.Essential, "ReferenceAsked", false,
+            "Herinnering referentie", "Hooguit één herinnering per verzoek."),
     ];
 
     private static readonly HashSet<string> GoodNewsKeys = new(

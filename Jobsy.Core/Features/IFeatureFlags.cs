@@ -30,8 +30,14 @@ public sealed record FeatureFlagSnapshot(
     bool EmployerFitQuestionnairesEnabled = false,
     bool KandidatenkaartEnabled = false,
     bool AfterMatchEnabled = false,
+    bool ReferenceVerificationEnabled = false,
     bool SensitiveExperienceEnabled = false,
-    bool TrainingPartnersEnabled = false)
+    bool TrainingPartnersEnabled = false,
+    bool TestJourneyIllustrationEnabled = false,
+    bool OnboardingFinaleV2Enabled = false,
+    bool OccupationDayInLifeEnabled = true,
+    bool TestEditModeEnabled = false,
+    bool SamplePdfEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -55,7 +61,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.TestsV2 => TestsV2Enabled,
         PlatformFeature.EmployerFitQuestionnaires => EmployerFitQuestionnairesEnabled,
         PlatformFeature.Kandidatenkaart => KandidatenkaartEnabled,
-        PlatformFeature.ReferenceVerification => false,
+        PlatformFeature.ReferenceVerification => ReferenceVerificationEnabled,
         PlatformFeature.AfterMatch => AfterMatchEnabled,
         PlatformFeature.SensitiveExperience => SensitiveExperienceEnabled,
         PlatformFeature.TrainingPartners => TrainingPartnersEnabled,

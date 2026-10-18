@@ -75,7 +75,8 @@ public sealed record PassportPdfModel(
     bool StudentLayout = false,
     IReadOnlyList<PassportJobFit> StageVacancyMatches = null!,
     string? StageVacanciesEmpty = null,
-    bool SingleSectorFullWidth = false);
+    bool SingleSectorFullWidth = false,
+    IReadOnlyList<PassportEndorsedCompetence> EndorsedCompetences = null!);
 
 public sealed record PassportStrengthCard(string Title, string Subtitle);
 
@@ -103,6 +104,8 @@ public sealed record PassportGlossLine(string Label, string Gloss);
 public sealed record PassportJobFit(string Title, string Why);
 
 public sealed record PassportReferenceQuote(string Attribution, string Quote);
+
+public sealed record PassportEndorsedCompetence(string Label, string RecognitionLine);
 
 public sealed record PassportDirectionStep(string Title, string State);
 

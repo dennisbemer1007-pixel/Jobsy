@@ -34,9 +34,25 @@ public static class JobsyDbSeeder
         await SeedDataAsync(services);
     }
 
+    public static async Task EnsureFeatureFlagAdminOverrideColumnsAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("JobsyDbSeeder");
+        try
+        {
+            await db.Database.ExecuteSqlRawAsync(PlatformFeatureSchemaIdempotentSql.EnsureFeatureFlagAdminOverrides);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            logger.LogWarning(ex, "Feature flag admin override columns ensure failed; migrate may repair.");
+        }
+    }
+
     public static async Task MigrateAsync(IServiceProvider services)
     {
         await EnsurePassportPdfDnaBlocksColumnAsync(services);
+        await EnsureFeatureFlagAdminOverrideColumnsAsync(services);
 
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
@@ -137,6 +153,15 @@ public static class JobsyDbSeeder
             // Hierarchy / salary-table demo fixes before wage sync.
             try
             {
+                await ReferenceVerificationDemoSeeder.EnsureAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Reference verification demo seed failed; continuing.");
+            }
+
+            try
+            {
                 await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
             }
             catch (Exception ex)
@@ -175,6 +200,15 @@ public static class JobsyDbSeeder
 
         await DemoCompaniesSeeder.SeedCompaniesAsync(db, logger);
         await DemoUsersSeeder.SeedUsersAsync(db, logger);
+        try
+        {
+            await ReferenceVerificationDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Reference verification demo seed failed; continuing.");
+        }
+
         try
         {
             await ApplicationsAndWagesSeeder.SeedApplicationsAndWagesAsync(db, logger);

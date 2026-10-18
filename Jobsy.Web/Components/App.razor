@@ -25,10 +25,11 @@
     <meta name="lobsy-commit" content="@GitCommit" />
     <base href="/" />
     <link rel="manifest" href="/manifest.webmanifest?v=20261004-14" />
-    <link rel="icon" href="favicon.ico?v=20261004-13" sizes="any" />
-    <link rel="icon" type="image/png" href="favicon.png?v=20261004-13" />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=20261004-13" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png?v=20261004-13" />
+    <link rel="icon" href="favicon.ico?v=20261018-23" sizes="any" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/brand/png/lobsy-favicon-16.png?v=20261018-23" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/brand/png/lobsy-favicon-32.png?v=20261018-23" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/brand/png/lobsy-favicon-48.png?v=20261018-23" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/brand/png/lobsy-apple-touch-icon-180.png?v=20261018-23" />
     @if (IncludeMapPreconnect)
     {
         <link rel="dns-prefetch" href="https://tiles.openfreemap.org" />
@@ -44,10 +45,10 @@
         <link rel="stylesheet" href="css/features/gratis-dna.css?v=20261004-10" />
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
     }
-    <link rel="stylesheet" href="css/critical.css?v=20261004-13" />
+    <link rel="stylesheet" href="css/critical.css?v=20261018-23" />
     <link rel="stylesheet" href="css/tokens.css?v=20261018-06" />
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
-    <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
+    <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
     <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
     <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
@@ -88,7 +89,7 @@
             {
                 @:<link rel="stylesheet" href="@href" />
             }
-            <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
+            <link rel="stylesheet" href="css/features/public-theme.css?v=20261018-09" />
             <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
             <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
             <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
@@ -278,7 +279,7 @@
         <script src="js/public-pages.js?v=20261004-13" nonce="@Nonce" defer></script>
         @if (IncludeLandingScript)
         {
-            <script src="js/landing.js?v=20261004-13" nonce="@Nonce" defer></script>
+            <script src="js/landing.js?v=20261018-02" nonce="@Nonce" defer></script>
         }
         @if (IncludeGratisDnaScript)
         {
