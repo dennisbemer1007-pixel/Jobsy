@@ -41,6 +41,10 @@ public sealed class OnboardingDreamSuggestionPickerTests
     {
         Assert.Equal("Barista", OnboardingDreamSuggestionPicker.FormatProfessionFromVacancy("Barista centrum Naaldwijk"));
         Assert.Equal("Teamleider kas", OnboardingDreamSuggestionPicker.FormatRegionalVacancyLine("Teamleider kas"));
+        Assert.Equal("Magazijnmedewerker", OnboardingDreamSuggestionPicker.FormatRegionalVacancyLine("Magazijn Naaldwijk"));
+        Assert.Equal("Horecamedewerker", OnboardingDreamSuggestionPicker.FormatRegionalVacancyLine("Flex horeca weekend"));
+        Assert.Equal("Monteur", OnboardingDreamSuggestionPicker.FormatRegionalVacancyLine("Senior monteur kas"));
+        Assert.Equal("", OnboardingDreamSuggestionPicker.FormatRegionalVacancyLine("Flex"));
         Assert.Equal("HR-adviseur", OnboardingDreamSuggestionPicker.FormatProfessionFromVacancy("hr adviseur"));
     }
 

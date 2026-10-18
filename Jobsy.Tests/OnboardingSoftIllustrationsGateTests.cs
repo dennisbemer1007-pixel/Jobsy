@@ -61,14 +61,21 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
+    public void Transport_step_shows_vervoer_label_when_illustrated()
+    {
+        var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Candidate/Onboarding/TransportStep.razor"));
+        Assert.Contains("data-testid=\"onboarding-transport-heading\"", src, StringComparison.Ordinal);
+        Assert.Contains("Onboarding.Transport", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Hero_band_css_uses_seamless_art_with_fade_and_mobile_scene_band()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
         Assert.Contains("object-fit: contain", css, StringComparison.Ordinal);
-        Assert.Contains("ob-illustrated-step__art-img-wrap", css, StringComparison.Ordinal);
-        Assert.Contains("padding-inline-start: 140px", css, StringComparison.Ordinal);
-        Assert.Contains("mask-origin: border-box", css, StringComparison.Ordinal);
-        Assert.Contains("mask-image: linear-gradient(to right, transparent 0, transparent 120px, #000 140px", css, StringComparison.Ordinal);
+        Assert.Contains("ob-illustrated-step__art::after", css, StringComparison.Ordinal);
+        Assert.Contains("object-fit: cover", css, StringComparison.Ordinal);
+        Assert.DoesNotContain("mask-image: linear-gradient", css, StringComparison.Ordinal);
         Assert.Contains("block-size: 120px", css, StringComparison.Ordinal);
     }
 

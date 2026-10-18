@@ -13,6 +13,12 @@ public static class OnboardingDreamSuggestionPicker
 {
     private static readonly CultureInfo Nl = CultureInfo.GetCultureInfo("nl-NL");
 
+    private static readonly HashSet<string> VacancyLocationTokens = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "naaldwijk", "centrum", "weekend", "regio", "delft", "den", "haag", "rotterdam", "amsterdam",
+        "winkel", "lunchroom", "kas",
+    };
+
     private static readonly (string Title, string Reason)[] SectorFallback =
     [
         ("verpleegkundige", "Veel vraag in de zorg"),
@@ -116,14 +122,27 @@ public static class OnboardingDreamSuggestionPicker
             ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             : excludeTitles.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        return nearbyVacancyTitles
-            .Where(title => !string.IsNullOrWhiteSpace(title))
-            .Select(FormatRegionalVacancyLine)
-            .Where(title => !string.IsNullOrWhiteSpace(title))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Where(title => !IsDuplicateProfession(title, exclude))
-            .Take(max)
-            .ToList();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var list = new List<string>();
+        foreach (var raw in nearbyVacancyTitles)
+        {
+            if (list.Count >= max)
+            {
+                break;
+            }
+
+            var title = MapVacancyToRegionalProfession(raw);
+            if (string.IsNullOrWhiteSpace(title)
+                || !seen.Add(title)
+                || IsDuplicateProfession(title, exclude))
+            {
+                continue;
+            }
+
+            list.Add(title);
+        }
+
+        return list;
     }
 
     private static bool IsDuplicateProfession(string candidate, HashSet<string> exclude)
@@ -154,13 +173,75 @@ public static class OnboardingDreamSuggestionPicker
         => FormatProfession(ExtractProfessionToken(raw));
 
     internal static string FormatRegionalVacancyLine(string? raw)
+        => MapVacancyToRegionalProfession(raw) ?? "";
+
+    private static string? MapVacancyToRegionalProfession(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return "";
+            return null;
         }
 
-        var words = raw.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var lower = raw.Trim().ToLower(Nl);
+        var phrase = InferProfessionPhrase(lower);
+        if (string.IsNullOrWhiteSpace(phrase) || !LooksLikeRecognizableProfession(phrase))
+        {
+            return null;
+        }
+
+        return FormatProfession(phrase);
+    }
+
+    private static string InferProfessionPhrase(string lower)
+    {
+        if (lower.Contains("teamleider", StringComparison.Ordinal) && lower.Contains("kas", StringComparison.Ordinal))
+        {
+            return "teamleider kas";
+        }
+
+        if (lower.Contains("barista", StringComparison.Ordinal))
+        {
+            return "barista";
+        }
+
+        if (lower.Contains("magazijn", StringComparison.Ordinal))
+        {
+            return "magazijnmedewerker";
+        }
+
+        if (lower.Contains("flex", StringComparison.Ordinal) && lower.Contains("horeca", StringComparison.Ordinal))
+        {
+            return "horecamedewerker";
+        }
+
+        if (lower.Contains("monteur", StringComparison.Ordinal))
+        {
+            return "monteur";
+        }
+
+        if (lower.Contains("klantenservice", StringComparison.Ordinal))
+        {
+            return "klantenservice medewerker";
+        }
+
+        if (lower.Contains("bediening", StringComparison.Ordinal))
+        {
+            return "bedienend medewerker";
+        }
+
+        if (lower.Contains("kassamedewerker", StringComparison.Ordinal))
+        {
+            return "kassamedewerker";
+        }
+
+        if (lower.Contains("hr", StringComparison.Ordinal) && lower.Contains("adviseur", StringComparison.Ordinal))
+        {
+            return "HR-adviseur";
+        }
+
+        var words = lower.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Where(word => !VacancyLocationTokens.Contains(word))
+            .ToArray();
         if (words.Length == 0)
         {
             return "";
@@ -168,10 +249,40 @@ public static class OnboardingDreamSuggestionPicker
 
         if (words.Length >= 3)
         {
-            return FormatProfession(words[0]);
+            return words[0];
         }
 
-        return FormatProfession(string.Join(' ', words));
+        return string.Join(' ', words);
+    }
+
+    private static bool LooksLikeRecognizableProfession(string phrase)
+    {
+        var text = phrase.Trim().ToLower(Nl);
+        if (text.Length < 4)
+        {
+            return false;
+        }
+
+        if (text is "flex" or "senior" or "magazijn" or "weekend")
+        {
+            return false;
+        }
+
+        if (VacancyLocationTokens.Contains(text))
+        {
+            return false;
+        }
+
+        if (text.Contains("medewerker", StringComparison.Ordinal)
+            || text.Contains("monteur", StringComparison.Ordinal)
+            || text.Contains("leider", StringComparison.Ordinal)
+            || text.Contains("adviseur", StringComparison.Ordinal)
+            || text is "barista" or "accountmanager")
+        {
+            return true;
+        }
+
+        return text.Contains(' ') && text.Length >= 8;
     }
 
     private static string ExtractProfessionToken(string? raw)

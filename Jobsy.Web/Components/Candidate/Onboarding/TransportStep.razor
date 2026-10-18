@@ -14,9 +14,22 @@ else if (!Illustrated)
     <h2 class="ob-wizard__subhead">@Culture["Onboarding.Step3.Title"]</h2>
 }
 <div class="ob-wizard__card @(Illustrated ? "ob-wizard__card--illustrated" : null)">
-<fieldset id="onboarding-field-transport">
-    <legend>@Culture["Onboarding.Transport"]</legend>
-    <p class="ob-wizard__hint">@Culture["Onboarding.TransportMulti"]</p>
+@if (Illustrated)
+{
+    <div class="ob-wizard__section-title ob-illustrated-step__field-label"
+         id="onboarding-transport-label"
+         data-testid="onboarding-transport-heading">@Culture["Onboarding.Transport"]</div>
+}
+<fieldset id="onboarding-field-transport" aria-labelledby="@(Illustrated ? "onboarding-transport-label" : null)">
+    @if (!Illustrated)
+    {
+        <legend class="ob-wizard__section-title">@Culture["Onboarding.Transport"]</legend>
+    }
+    else
+    {
+        <legend class="visually-hidden">@Culture["Onboarding.Transport"]</legend>
+    }
+    <p class="ob-wizard__hint @(Illustrated ? "ob-wizard__section-hint" : null)">@Culture["Onboarding.TransportMulti"]</p>
     <ChoiceTileGrid Class="ob-wizard__transport" AriaLabel="@Culture["Onboarding.Transport"]">
         @foreach (var transport in TransportOptions)
         {

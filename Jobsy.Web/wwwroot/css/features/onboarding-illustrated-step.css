@@ -121,6 +121,14 @@
   margin-block: 10px;
 }
 
+.ob-illustrated-step__field-label {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--brand);
+}
+
 .ob-illustrated-step__form .ob-wizard__card--illustrated {
   padding: 0;
   border: 0;
@@ -196,37 +204,51 @@
   }
 
   .ob-illustrated-step__art {
-    display: flex;
-    justify-content: flex-end;
-    align-items: stretch;
+    inset: 0;
   }
 
   .ob-illustrated-step__art-img-wrap {
+    position: absolute;
+    inset: 0;
     display: block;
-    box-sizing: border-box;
-    block-size: 100%;
-    inline-size: auto;
-    max-inline-size: 100%;
-    padding-inline-start: 140px;
-    -webkit-mask-origin: border-box;
-    mask-origin: border-box;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 120px, #000 140px, #000 100%);
-    mask-image: linear-gradient(to right, transparent 0, transparent 120px, #000 140px, #000 100%);
+    padding: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .ob-illustrated-step__art-img-wrap picture {
     display: block;
     block-size: 100%;
-    inline-size: auto;
+    inline-size: 100%;
   }
 
   .ob-illustrated-step__art-img-wrap img {
     display: block;
     block-size: 100%;
-    inline-size: auto;
-    max-inline-size: 100%;
-    object-fit: contain;
-    object-position: right center;
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+    object-fit: cover;
+    object-position: 100% 38%;
+  }
+
+  /* Cream overlay — figures stay opaque; peach art blends into page bg */
+  .ob-illustrated-step__art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      to right,
+      var(--bg) 0,
+      var(--bg) 160px,
+      color-mix(in srgb, var(--bg) 97%, transparent) 240px,
+      color-mix(in srgb, var(--bg) 88%, transparent) 320px,
+      color-mix(in srgb, var(--bg) 62%, transparent) 400px,
+      color-mix(in srgb, var(--bg) 28%, transparent) 480px,
+      transparent min(560px, 62%)
+    );
   }
 }
 
@@ -293,6 +315,21 @@
     block-size: 100%;
     object-fit: cover;
     object-position: center 42%;
+  }
+
+  .ob-illustrated-step__form fieldset > legend.ob-wizard__section-title {
+    display: block;
+    float: none;
+    inline-size: 100%;
+    margin: 0 0 0.35rem;
+    padding: 0;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .ob-illustrated-step__form .ob-wizard__section-hint {
+    margin: 0 0 0.65rem;
   }
 }
 
