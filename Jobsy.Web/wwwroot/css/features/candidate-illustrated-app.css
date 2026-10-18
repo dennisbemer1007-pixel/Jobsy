@@ -3,6 +3,12 @@
 .panel-page--cand-ill {
   background: var(--pearl);
   overflow-x: visible;
+  padding-top: 0;
+}
+
+.panel-page.passport-page--illustrated {
+  padding-top: 0;
+  padding-block-start: 0;
 }
 
 .career-page--illustrated.panel-page--cand-ill,
@@ -51,10 +57,19 @@
 }
 
 .cand-hero--profession-band {
+  background-image: none !important;
+}
+
+.cand-hero--profession-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--cand-hero-art, none);
+  background-repeat: no-repeat;
   background-size: auto 100%;
-  background-position: 100% -1.5rem;
-  background-origin: border-box;
-  background-clip: border-box;
+  background-position: 100% top;
 }
 
 @media (min-width: 640px) {
@@ -63,11 +78,6 @@
     height: clamp(11.25rem, 15.28vw, 13.75rem);
     margin-top: 0;
   }
-}
-
-.cand-hero--profession-band::after {
-  content: none;
-  display: none;
 }
 
 .cand-hero--profession-band::before {
@@ -141,6 +151,13 @@
     margin-inline: auto;
     padding-inline: 1.25rem;
     box-sizing: border-box;
+    background: linear-gradient(
+      90deg,
+      var(--pearl) 0%,
+      var(--pearl) 58%,
+      color-mix(in srgb, var(--pearl) 92%, transparent) 66%,
+      transparent 76%
+    );
   }
 
   .cand-hero--profession-band .cand-hero__copy h1,
@@ -397,6 +414,7 @@
   width: 100%;
   margin-inline: 0;
   padding-inline: 0;
+  padding-block-start: 0;
 }
 
 .panel-page--cand-ill.candidate-hub .cand-settings {

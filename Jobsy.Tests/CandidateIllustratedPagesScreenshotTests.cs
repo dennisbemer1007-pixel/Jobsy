@@ -37,7 +37,6 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirR14 = "/opt/cursor/artifacts/kandidaat-728-r14";
     private const string ArtifactsDirR15 = "/opt/cursor/artifacts/kandidaat-728-r15";
     private const string ArtifactsDirR16 = "/opt/cursor/artifacts/kandidaat-728-r16";
-    private static readonly Rgb24 PageCreamReference = new(245, 242, 238);
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -1221,9 +1220,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         var maxHeroWidthStep = 0;
         var artWidthPx = 0;
         var rightEdgeCutoff = false;
+        var kompasScaleGhostPx = 0;
         if (gateModern)
         {
-            foreach (var y in new[] { 160, 200, 240 })
+            foreach (var y in new[] { 160, 185, 240 })
             {
                 if (y >= img.Height)
                 {
@@ -1243,7 +1243,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 }
             }
 
-            sb.AppendLine($"  fade band max column step (x 680–1040, y 160/200/240): {maxHeroWidthStep} (max 45)");
+            sb.AppendLine($"  fade band max column step (x 680–1040, y 160/185/240): {maxHeroWidthStep} (max 45)");
 
             const int artScanY = 200;
             const int heroHeightPx = 220;
@@ -1264,6 +1264,17 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
             if (label.Contains("kompas", StringComparison.OrdinalIgnoreCase))
             {
+                for (var y = 210; y <= 250; y++)
+                {
+                    for (var x = 980; x <= 1020; x++)
+                    {
+                        if (IsGhostFadePixel(img[x, y]))
+                        {
+                            kompasScaleGhostPx++;
+                        }
+                    }
+                }
+
                 for (var y = 110; y <= 260; y++)
                 {
                     var edge = img[img.Width - 1, y];
@@ -1276,6 +1287,11 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 }
             }
 
+            if (label.Contains("kompas", StringComparison.OrdinalIgnoreCase))
+            {
+                sb.AppendLine($"  kompas scale fade ghosts (x 980–1020, y 210–250): {kompasScaleGhostPx} (max 0)");
+            }
+
             sb.AppendLine($"  right-edge figure cutoff{(label.Contains("kompas", StringComparison.OrdinalIgnoreCase) ? " (kompas)" : " (n/a)")}: {rightEdgeCutoff}");
         }
 
@@ -1284,43 +1300,29 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             && (!useR14Gap || (figureGap >= 60))
             && (!(gateR14 || gateModern) || ghostPixels == 0)
             && (!gateModern || (maxHeroWidthStep <= 45 && artWidthPx >= img.Width * 0.40
-                && (!label.Contains("kompas", StringComparison.OrdinalIgnoreCase) || !rightEdgeCutoff)));
+                && (!label.Contains("kompas", StringComparison.OrdinalIgnoreCase)
+                    || (!rightEdgeCutoff && kompasScaleGhostPx == 0))));
         sb.AppendLine($"  PASS={passed}");
         return sb.ToString();
     }
 
     private static int CountTopCreamStripPx(Image<Rgb24> img, int x, int heroTopY)
     {
-        var strip = 0;
+        var artStartY = heroTopY + 40;
         for (var y = heroTopY; y < Math.Min(heroTopY + 40, img.Height); y++)
         {
-            var px = img[x, y];
-            if (IsTopCreamStripPixel(px))
+            if (IsHeroArtPeach(img[x, y]))
             {
-                strip++;
-            }
-            else
-            {
+                artStartY = y;
                 break;
             }
         }
 
-        return strip;
-    }
-
-    private static bool IsTopCreamStripPixel(Rgb24 px)
-    {
-        if (IsHeroArtPeach(px))
-        {
-            return false;
-        }
-
-        return RgbStep(PageCreamReference, px) <= 14
-            || RgbStep(PearlReference, px) <= 10;
+        return Math.Max(0, artStartY - heroTopY);
     }
 
     private static bool IsHeroArtPeach(Rgb24 px) =>
-        px.R >= 249 && px.G >= 235 && px.B >= 215 && px.R - px.B >= 18;
+        px.R >= 250 && px.G >= 230 && px.B >= 185 && px.R - px.B >= 22;
 
     private static bool IsGhostFadePixel(Rgb24 px)
     {

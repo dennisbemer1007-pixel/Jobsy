@@ -11,5 +11,4 @@ make_scene "$W/werkervaring.jpg" "$W/werkervaring-profession-wide.jpg" 0.20 0.14
 make_scene "$W/beschikbaarheid.jpg" "$W/beschikbaarheid-profession-wide.jpg" 0.18 0.14 0
 make_scene "$W/vervoer.jpg" "$W/vervoer-profession-wide.jpg" 0.16 0.14 0
 make_scene "$W/wie-ben-jij.jpg" "$W/wie-ben-jij-profession-wide.jpg" 0.22 0.14 0
-# Kompas: trim left scene so the scale bubble is out of the fade (removed, not ghosted)
-make_scene "$W/wie-ben-jij.jpg" "$W/kompas-hero-wide.jpg" 0.38 0.14 0
+make_scene "$W/wie-ben-jij.jpg" "$W/kompas-hero-wide.jpg" 0.50 0.23 0
