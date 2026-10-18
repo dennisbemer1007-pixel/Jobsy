@@ -64,7 +64,12 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.ReferenceVerificationEnabled,
                 snap.SensitiveExperienceEnabled,
                 snap.TrainingPartnersEnabled,
-                snap.ContextualTipsEnabled);
+                snap.ContextualTipsEnabled,
+                snap.TestJourneyIllustrationEnabled,
+                snap.OnboardingFinaleV2Enabled,
+                snap.OccupationDayInLifeEnabled,
+                snap.TestEditModeEnabled,
+                snap.SamplePdfEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }
