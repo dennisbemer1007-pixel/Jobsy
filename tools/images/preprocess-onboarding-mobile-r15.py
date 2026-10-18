@@ -2,6 +2,7 @@
 """R15–R19: mobile hero plates (R19 purpose-made sources for steps 2/4/5; cover for 1/3/6)."""
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import math
@@ -166,9 +167,14 @@ def main() -> int:
         hero = build_mobile_hero(slug)
         jpg = OUT_DIR / f"{slug}-mobile-hero.jpg"
         hero.save(jpg, quality=90, optimize=True)
-        if shutil.which("cwebp"):
-            write_webp(jpg)
+        if not shutil.which("cwebp"):
+            print("cwebp is required to build mobile-hero.webp assets", file=sys.stderr)
+            failed += 1
+            continue
+        webp = jpg.with_suffix(".webp")
+        write_webp(jpg)
         if slug in R19_SLUGS:
+            _r19_module().sync_companion_mobile_assets(slug, jpg)
             audit = _r19_module().audit_mobile_hero(hero, slug=slug)
         else:
             audit = audit_mobile_hero(hero, slug=slug)
@@ -176,13 +182,22 @@ def main() -> int:
         print("audit", audit)
         if not audit["ok"]:
             failed += 1
-        manifest[slug] = {"width": MOBILE_W, "height": MOBILE_H, "audit": audit}
-        print("wrote", jpg)
+        jpg_md5 = hashlib.md5(jpg.read_bytes()).hexdigest()
+        webp_md5 = hashlib.md5(webp.read_bytes()).hexdigest() if webp.is_file() else ""
+        manifest[slug] = {
+            "width": MOBILE_W,
+            "height": MOBILE_H,
+            "audit": audit,
+            "mobile_hero_jpg_md5": jpg_md5,
+            "mobile_hero_webp_md5": webp_md5,
+            "mobile_hero_webp_bytes": webp.stat().st_size if webp.is_file() else 0,
+        }
+        print("wrote", jpg, webp, f"webp_md5={webp_md5}")
 
-    meta = OUT_DIR / "mobile-hero-r19-manifest.json"
+    meta = OUT_DIR / "mobile-hero-r20-manifest.json"
     meta.write_text(json.dumps({"steps": manifest, "audits": audits}, indent=2) + "\n", encoding="utf-8")
     if failed:
-        print(f"R19 pixel audit failed for {failed} slug(s)", file=sys.stderr)
+        print(f"R20 pixel audit failed for {failed} slug(s)", file=sys.stderr)
         return 1
     return 0
 

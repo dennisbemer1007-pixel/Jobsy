@@ -118,7 +118,7 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-figure-crop.py")));
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r13.py")));
         var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
-        Assert.Contains("20261018-r19", assets, StringComparison.Ordinal);
+        Assert.Contains("20261018-r20", assets, StringComparison.Ordinal);
         Assert.Contains("MobileHeroWebp", assets, StringComparison.Ordinal);
         Assert.Contains("mobile-hero", assets, StringComparison.Ordinal);
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r19.py")));
@@ -142,6 +142,22 @@ public sealed class OnboardingSoftIllustrationsGateTests
         var webRoot = Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/images/onboarding");
         Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile-hero.webp")), $"{slug}-mobile-hero.webp");
         Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile-hero.jpg")), $"{slug}-mobile-hero.jpg");
+    }
+
+    [Theory]
+    [InlineData("beschikbaarheid")]
+    [InlineData("werkervaring")]
+    [InlineData("opleiding")]
+    public void R19_mobile_hero_webp_is_regenerated_not_stamp(string slug)
+    {
+        var webRoot = Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/images/onboarding");
+        var webp = new FileInfo(Path.Combine(webRoot, $"{slug}-mobile-hero.webp"));
+        var jpg = new FileInfo(Path.Combine(webRoot, $"{slug}-mobile-hero.jpg"));
+        Assert.True(webp.Exists);
+        Assert.True(jpg.Exists);
+        // R17 stamp webps were ~7KB; R19 full-bleed heroes encode much larger.
+        Assert.True(webp.Length > 12_000, $"{slug}-mobile-hero.webp too small ({webp.Length} bytes), likely stale stamp");
+        Assert.True(webp.LastWriteTimeUtc >= jpg.LastWriteTimeUtc.AddMinutes(-5), $"{slug}-mobile-hero.webp older than jpg");
     }
 
     [Fact]

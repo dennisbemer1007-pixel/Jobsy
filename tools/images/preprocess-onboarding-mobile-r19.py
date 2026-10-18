@@ -108,13 +108,28 @@ def audit_mobile_hero(img: Image.Image, *, slug: str) -> dict[str, object]:
     }
 
 
-def write_webp(jpg: Path) -> None:
-    webp = jpg.with_suffix(".webp")
-    subprocess.run(
-        ["cwebp", "-q", "86", str(jpg), "-o", str(webp)],
-        check=True,
-        capture_output=True,
-    )
+def write_webp(from_path: Path, webp_path: Path | None = None) -> None:
+    webp = webp_path or from_path.with_suffix(".webp")
+    if from_path.suffix.lower() in {".jpg", ".jpeg"}:
+        subprocess.run(
+            ["cwebp", "-q", "86", str(from_path), "-o", str(webp)],
+            check=True,
+            capture_output=True,
+        )
+    else:
+        im = Image.open(from_path).convert("RGB")
+        im.save(webp, format="WEBP", quality=86, method=6)
+
+
+def sync_companion_mobile_assets(slug: str, hero_jpg: Path) -> None:
+    """Keep legacy -mobile / -mobile-bg files aligned with mobile-hero (avoid stale stamp plates)."""
+    im = Image.open(hero_jpg).convert("RGB")
+    png_mobile = OUT_DIR / f"{slug}-mobile.png"
+    png_bg = OUT_DIR / f"{slug}-mobile-bg.png"
+    im.save(png_mobile, optimize=True)
+    im.save(png_bg, optimize=True)
+    write_webp(png_mobile, OUT_DIR / f"{slug}-mobile.webp")
+    write_webp(png_bg, OUT_DIR / f"{slug}-mobile-bg.webp")
 
 
 def build_r19_mobile_heroes() -> int:
@@ -129,8 +144,12 @@ def build_r19_mobile_heroes() -> int:
         hero = extend_top_to_mobile(Image.open(src_path))
         jpg = OUT_DIR / f"{slug}-mobile-hero.jpg"
         hero.save(jpg, quality=90, optimize=True)
-        if shutil.which("cwebp"):
-            write_webp(jpg)
+        if not shutil.which("cwebp"):
+            print("cwebp missing; cannot build mobile-hero.webp", file=sys.stderr)
+            failed += 1
+            continue
+        write_webp(jpg, OUT_DIR / f"{slug}-mobile-hero.webp")
+        sync_companion_mobile_assets(slug, jpg)
         audit = audit_mobile_hero(hero, slug=slug)
         manifest[slug] = {"width": MOBILE_W, "height": MOBILE_H, "audit": audit, "source": str(src_path)}
         print("audit", audit)
