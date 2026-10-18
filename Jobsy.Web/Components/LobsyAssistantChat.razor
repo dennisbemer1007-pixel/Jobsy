@@ -24,7 +24,7 @@
                         class="lobsy-assistant-launcher__btn"
                         @onclick="Toggle"
                         aria-haspopup="dialog"
-                        aria-expanded="false"
+                        aria-expanded="@(_open ? "true" : "false")"
                         aria-controls="lobsy-assistant-panel">
                     <img src="@BrandImages.ChatSilhouetteSvg" alt="" width="28" height="28" decoding="async" />
                     <span class="visually-hidden">@Culture["Assistant.Open"]</span>
