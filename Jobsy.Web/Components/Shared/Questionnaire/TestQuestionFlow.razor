@@ -124,7 +124,12 @@
         </div>
         @if (!string.IsNullOrWhiteSpace(question.Example))
         {
-            <p class="test-example" data-testid="test-item-example">@question.Example</p>
+            <p class="test-example" data-testid="test-item-example">
+                @question.Example
+                <ReadAloudButton Text="@question.Example"
+                                 SpeechKey="@($"ex-{Kind}-{question.Id}")"
+                                 PlayAria="@Culture["ReadAloud.Play"]" />
+            </p>
         }
 
         <LikertRadioGroup @key="question.Id"
@@ -676,7 +681,11 @@
         {
             _insightLines = [];
             _insightNewCount = 0;
-            _ = NotifyProgressInsightAsync();
+            if (ProgressInsightChanged.HasDelegate)
+            {
+                _ = NotifyProgressInsightAsync();
+            }
+
             return;
         }
 

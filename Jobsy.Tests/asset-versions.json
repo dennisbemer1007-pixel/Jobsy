@@ -36,7 +36,7 @@
     "v": "20261018-01"
   },
   "css/features/carriere.css": {
-    "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
+    "sha256": "c23b39281dc74f87a13714960bc33cb89fe4a285101ef4b1d74581c2a63b18a4",
     "v": "20261011-01"
   },
   "css/features/choice-tiles.css": {
@@ -120,7 +120,7 @@
     "v": "20261018-01"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "956bc0a958b342bd3a06db57f3a37e2efa8132ccd603f7e68dd141b23d222afe",
+    "sha256": "388d76b37bd29b63a965bb89c7fcca4fb472d8c226a95c508a79e5430fceb99f",
     "v": "20261018-02"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -140,7 +140,7 @@
     "v": "20261018-07"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
+    "sha256": "c4073fa83d5b4d7bac739ec12b45eb41832de8608057082e32891fd8e5168791",
     "v": "20261015-21"
   },
   "css/features/proactive-matching.css": {
@@ -180,7 +180,7 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "59f25d5348c287a1b4501bb8bc4e03e2dc6295d0d58a1dad6b795a10affffe12",
+    "sha256": "0849b213796647efa639bfcc6975cbe4891360a8c40aaeab5fdf9f4723e2ba9e",
     "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {
