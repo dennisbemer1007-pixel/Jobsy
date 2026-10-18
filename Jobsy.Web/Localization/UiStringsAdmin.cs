@@ -825,6 +825,7 @@ public static class UiStringsAdmin
         Add("AdminAudit.Action.Block", "Gebruiker geblokkeerd", "User blocked", "Użytkownik zablokowany", "Utilizator blocat", "مستخدم محظور");
         Add("AdminAudit.Action.Tokens", "Tokens verleend", "Tokens granted", "Przyznano tokeny", "Tokenuri acordate", "رموز ممنوحة");
         Add("AdminAudit.Action.Deleted", "Account verwijderd", "Account deleted", "Konto usunięte", "Cont șters", "حساب محذوف");
+        Add("AdminAudit.Action.CandidateProfileReset", "Kandidaatprofiel gereset", "Candidate profile reset", "Profil kandydata zresetowany", "Profil candidat resetat", "إعادة ضبط ملف المرشح");
         Add("AdminAudit.Action.LoginFailed", "Login mislukt", "Login failed", "Nieudane logowanie", "Autentificare eșuată", "فشل تسجيل الدخول");
         Add("AdminAudit.Action.SystemAdminLogin", "Break-glass beheerder ingelogd", "Break-glass administrator signed in", "Logowanie break-glass admin", "Autentificare administrator break-glass", "تسجيل دخول مشرف break-glass");
         Add("AdminAudit.ActiveSupport", "Actieve support-toegang", "Active support access", "Aktywny dostęp support", "Acces support activ", "وصول دعم نشط");

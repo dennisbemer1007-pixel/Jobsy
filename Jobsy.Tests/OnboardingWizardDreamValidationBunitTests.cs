@@ -44,6 +44,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             sp.GetRequiredService<GratisDnaStorage>(),
             sp.GetRequiredService<JobsyApiClient>(),
             sp.GetRequiredService<ILogger<GratisDnaMergeService>>()));
+        Services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate());
     }
 
     [Fact]
@@ -159,5 +160,11 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
         public string ContentRootPath { get; set; } = "/";
         public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; }
             = new Microsoft.Extensions.FileProviders.NullFileProvider();
+    }
+
+    private sealed class StubReferenceGate : IReferenceVerificationFeatureGate
+    {
+        public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
     }
 }

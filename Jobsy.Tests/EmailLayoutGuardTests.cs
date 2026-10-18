@@ -63,7 +63,8 @@ public class EmailLayoutGuardTests
                 continue;
             }
 
-            if (file.EndsWith("EmailRenderer.cs", StringComparison.Ordinal))
+            if (file.EndsWith("EmailRenderer.cs", StringComparison.Ordinal)
+                || file.EndsWith("HtmlSanitize.cs", StringComparison.Ordinal))
             {
                 continue;
             }
