@@ -42,6 +42,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirMobheroV4 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v4";
     private const string ArtifactsDirMobheroV5 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v5";
     private const string ArtifactsDirMobheroV6 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v6";
+    private const string ArtifactsDirMobheroV7 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v7";
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -1382,6 +1383,65 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         await deliveryWeb.DisposeAsync();
 
         var pngs = Directory.GetFiles(ArtifactsDirMobheroV6, "*.png");
+        Assert.Equal(6, pngs.Length);
+        Console.WriteLine(mobReports);
+    }
+
+    [Fact]
+    public async Task Capture_kandidaat_728_mobhero_v7_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirMobheroV7);
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var src = Path.Combine(ArtifactsDirMobheroV6, $"{name}-390.png");
+            var dst = Path.Combine(ArtifactsDirMobheroV7, $"{name}-390.png");
+            Assert.True(File.Exists(src), $"Missing v6 baseline PNG: {src}");
+            File.Copy(src, dst, overwrite: true);
+            var metaSrc = Path.Combine(ArtifactsDirMobheroV6, $"{name}-390-hero-meta.txt");
+            if (File.Exists(metaSrc))
+            {
+                File.Copy(metaSrc, Path.Combine(ArtifactsDirMobheroV7, $"{name}-390-hero-meta.txt"), overwrite: true);
+            }
+        }
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV7,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            PrepareKompasTopScreenshotAsync);
+
+        await deliveryWeb.DisposeAsync();
+
+        var mobReports = new StringBuilder();
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobheroV7, $"{name}-390.png");
+            var metaPath = Path.Combine(ArtifactsDirMobheroV7, $"{name}-390-hero-meta.txt");
+            var report = ValidateMobileHeroPixels390(
+                await File.ReadAllBytesAsync(pngPath),
+                name,
+                gateV4: true,
+                gateV6: true,
+                heroMetaPath: File.Exists(metaPath) ? metaPath : null,
+                mobArtifactsDir: ArtifactsDirMobheroV7);
+            mobReports.AppendLine(report);
+            Assert.DoesNotContain("PASS=False", report, StringComparison.Ordinal);
+        }
+
+        var mobReportPath = Path.Combine(ArtifactsDirMobheroV7, "mobhero-pixel-gate-v7-390.txt");
+        await File.WriteAllTextAsync(mobReportPath, mobReports.ToString());
+
+        var pngs = Directory.GetFiles(ArtifactsDirMobheroV7, "*.png");
         Assert.Equal(6, pngs.Length);
         Console.WriteLine(mobReports);
     }

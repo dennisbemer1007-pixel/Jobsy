@@ -98,11 +98,11 @@ SCENES: dict[str, dict] = {
         "box": (0, 214, 469, 719),
         "feather": {"left": 80, "bottom": 44, "right": 14, "top": 14},
     },
-    "kompas-hero-wide.jpg": {
+    "finale-hero.jpg": {
         "out": "kompas-mob-figures.png",
-        # Laptop worker at desk, head to lap
-        "box": (1760, 150, 1945, 465),
-        "feather": {"left": 48, "bottom": 36, "right": 16, "top": 16},
+        # Onboarding finale — woman with compass, head to feet (Kompas mob hero)
+        "box": (460, 311, 939, 719),
+        "feather": {"left": 72, "bottom": 40, "right": 14, "top": 18},
     },
     "droombaan-profession-wide.jpg": {
         "out": "droombaan-mob-figures.png",

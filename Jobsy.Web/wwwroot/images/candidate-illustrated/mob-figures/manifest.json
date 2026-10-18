@@ -45,19 +45,19 @@
     "aspect": 1.034
   },
   "kompas-mob-figures.png": {
-    "source": "kompas-hero-wide.jpg",
+    "source": "finale-hero.jpg",
     "box": [
-      1760,
-      150,
-      1945,
-      465
+      460,
+      311,
+      939,
+      719
     ],
     "out_size": [
-      185,
-      302
+      479,
+      388
     ],
-    "opaque_pixels": 28071,
-    "aspect": 1.632
+    "opaque_pixels": 74313,
+    "aspect": 0.81
   },
   "droombaan-mob-figures.png": {
     "source": "droombaan-profession-wide.jpg",
