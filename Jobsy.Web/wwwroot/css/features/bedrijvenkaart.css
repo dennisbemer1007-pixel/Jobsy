@@ -1058,7 +1058,7 @@ textarea.bk-wg-input {
   align-self: flex-start;
 }
 
-.bk-page .bk-cand-hero.cand-hero--learn-grow {
+.bk-page .bk-cand-hero.cand-hero--bk-single {
   width: 100%;
   max-width: 100%;
   margin-inline: 0;
@@ -1084,15 +1084,22 @@ textarea.bk-wg-input {
     margin: 0;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--learn-grow {
+  .bk-page .bk-cand-hero.cand-hero--bk-single {
     min-height: clamp(11.25rem, 15.28vw, 13.75rem);
     height: clamp(11.25rem, 15.28vw, 13.75rem);
     max-height: 280px;
   }
+
+  .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
+    background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
+    background-size: auto 100%;
+    background-position: 100% top;
+    opacity: 1;
+  }
 }
 
 @media (max-width: 639px) {
-  .bk-page .bk-cand-hero.cand-hero--learn-grow {
+  .bk-page .bk-cand-hero.cand-hero--bk-single {
     position: relative;
     display: block !important;
     width: 100vw;
@@ -1102,71 +1109,44 @@ textarea.bk-wg-input {
     max-height: 260px !important;
     min-height: 0 !important;
     background-color: var(--pearl, #f7f4f0) !important;
-    background-image: none !important;
+    background-image: var(--cand-hero-art) !important;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: 84% 100%;
     border-block-end: 1px solid color-mix(in srgb, var(--gold, #c9a227) 22%, var(--border, #ddd5cc));
     overflow: hidden;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--learn-grow::after {
-    display: block !important;
-    content: "";
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 50%;
-    max-width: 50%;
-    height: 100%;
-    z-index: 0;
-    pointer-events: none;
-    background-image: var(--cand-hero-mobile-atmosphere, none);
-    background-repeat: no-repeat;
-    background-size: auto 100%;
-    background-position: left bottom;
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.5) 18%, #000 32%);
-    mask-image: linear-gradient(90deg, transparent 0%, rgb(0 0 0 / 0.5) 18%, #000 32%);
+  .bk-page .bk-cand-hero.cand-hero--bk-single::after,
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__media {
+    display: none !important;
+    content: none !important;
+    background: none !important;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--learn-grow::before {
+  .bk-page .bk-cand-hero.cand-hero--bk-single::before {
     display: block !important;
     content: "";
     position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 54%;
-    width: 6%;
+    inset: 0;
     z-index: 1;
     pointer-events: none;
     background: linear-gradient(
       90deg,
       var(--pearl, #f7f4f0) 0%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 38%, transparent) 70%,
-      transparent 100%
+      color-mix(in srgb, var(--pearl, #f7f4f0) 92%, transparent) 38%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 45%, transparent) 52%,
+      transparent 68%
     );
   }
 
-  .bk-page .bk-cand-hero.cand-hero--learn-grow .cand-hero__media {
-    display: block !important;
-    position: absolute;
-    z-index: 2;
-    right: 0;
-    bottom: 0;
-    width: 50%;
-    max-width: 50%;
-    height: 100%;
-    margin: 0;
-    background-image: var(--cand-hero-figures, none) !important;
-    background-repeat: no-repeat;
-    background-size: auto 90%;
-    background-position: 22% 100%;
-  }
-
-  .bk-page .bk-cand-hero.cand-hero--learn-grow .cand-hero__copy {
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy {
     position: absolute !important;
-    z-index: 3;
+    z-index: 2;
     inset: 0 auto auto 0;
     box-sizing: border-box;
-    width: 55%;
-    max-width: 55%;
+    width: 52%;
+    max-width: 52%;
     height: 100%;
     margin: 0;
     padding: 0.65rem 0.75rem 0.45rem;
@@ -1176,12 +1156,12 @@ textarea.bk-wg-input {
     background: transparent;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--learn-grow .cand-hero__copy h1 {
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy h1 {
     font-size: 1.35rem;
     line-height: 1.12;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--learn-grow .cand-hero__lead {
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__lead {
     font-size: 0.8125rem;
     line-height: 1.35;
     margin-bottom: 0.35rem;
@@ -1258,6 +1238,38 @@ textarea.bk-wg-input {
 
 .pp-company__sfeer .pp-sfeer-grid:has(> :nth-child(3):last-child) {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.pp-company__sfeer-inner {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (min-width: 901px) {
+  .pp-company__sfeer--has-media .pp-company__sfeer-inner {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.5fr);
+    gap: 1.25rem;
+  }
+
+  .pp-company__sfeer--has-media .pp-sfeer-grid {
+    width: 100%;
+  }
+
+  .pp-company__sfeer--has-media .pp-sfeer-grid--1 {
+    grid-template-columns: 1fr;
+  }
+
+  .pp-company__sfeer--has-media .pp-sfeer-grid--1 img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  .pp-company__sfeer--has-media .pp-sfeer-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .bk-wg-switch {

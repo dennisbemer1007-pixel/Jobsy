@@ -1,5 +1,6 @@
 using Jobsy.Core;
 using Jobsy.Core.Entities;
+using Jobsy.Core.Features;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Options;
 using Jobsy.Core.Rules;
@@ -154,15 +155,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.PassportPdfV2Enabled = pdfV2Enabled;
         }
 
-        if (update.PupilPassportV2Enabled is bool pupilPassportV2)
-        {
-            row.PupilPassportV2Enabled = pupilPassportV2;
-        }
-
-        if (update.StudentPassportEnabled is bool studentPassport)
-        {
-            row.StudentPassportEnabled = studentPassport;
-        }
+        ApplyAdminBoolUpdate(row, "PupilPassportV2Enabled", update.PupilPassportV2Enabled, v => row.PupilPassportV2Enabled = v);
+        ApplyAdminBoolUpdate(row, "StudentPassportEnabled", update.StudentPassportEnabled, v => row.StudentPassportEnabled = v);
 
         if (update.PassportPdfDnaBlocksEnabled is bool dnaBlocksEnabled)
         {
@@ -229,24 +223,26 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
-        if (update.CompanyMapInitiativeEnabled is bool companyMapInitiativeEnabled)
-        {
-            row.CompanyMapInitiativeEnabled = companyMapInitiativeEnabled;
-        }
+        ApplyAdminBoolUpdate(row, "CompanyMapInitiativeEnabled", update.CompanyMapInitiativeEnabled, v => row.CompanyMapInitiativeEnabled = v);
+        ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
+        ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
+        ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestJourneyIllustrationEnabled", update.TestJourneyIllustrationEnabled, v => row.TestJourneyIllustrationEnabled = v);
+        ApplyAdminBoolUpdate(row, "OnboardingFinaleV2Enabled", update.OnboardingFinaleV2Enabled, v => row.OnboardingFinaleV2Enabled = v);
+        ApplyAdminBoolUpdate(row, "OccupationDayInLifeEnabled", update.OccupationDayInLifeEnabled, v => row.OccupationDayInLifeEnabled = v);
+        ApplyAdminBoolUpdate(row, "ResearchConsentEnabled", update.ResearchConsentEnabled, v => row.ResearchConsentEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestEditModeEnabled", update.TestEditModeEnabled, v => row.TestEditModeEnabled = v);
+        ApplyAdminBoolUpdate(row, "SamplePdfEnabled", update.SamplePdfEnabled, v => row.SamplePdfEnabled = v);
 
-        if (update.ReferenceVerificationEnabled is bool referenceVerificationEnabled)
+        if (update.ClearAdminFlagOverrideKeys is { Count: > 0 } clearKeys)
         {
-            row.ReferenceVerificationEnabled = referenceVerificationEnabled;
-        }
+            var json = row.AdminFlagOverridesJson;
+            foreach (var key in clearKeys)
+            {
+                json = PlatformFeatureFlagOverrides.RemoveKey(json, key);
+            }
 
-        if (update.SensitiveExperienceEnabled is bool sensitiveExperienceEnabled)
-        {
-            row.SensitiveExperienceEnabled = sensitiveExperienceEnabled;
-        }
-
-        if (update.TrainingPartnersEnabled is bool trainingPartnersEnabled)
-        {
-            row.TrainingPartnersEnabled = trainingPartnersEnabled;
+            row.AdminFlagOverridesJson = json;
         }
 
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
@@ -349,53 +345,84 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     }
 
     private bool ResolvePupilPassportV2Enabled(PlatformFeatureSettings? row)
-    {
-        if (bool.TryParse(_configuration["Jobsy:PupilPassportV2Enabled"], out var configured))
-        {
-            return configured;
-        }
-
-        return row?.PupilPassportV2Enabled ?? false;
-    }
+        => ResolveAdminBool(row, "PupilPassportV2Enabled", row?.PupilPassportV2Enabled ?? false, false, "Jobsy:PupilPassportV2Enabled");
 
     private bool ResolveStudentPassportEnabled(PlatformFeatureSettings? row)
-    {
-        if (bool.TryParse(_configuration["Jobsy:StudentPassportEnabled"], out var configured))
-        {
-            return configured;
-        }
+        => ResolveAdminBool(row, "StudentPassportEnabled", row?.StudentPassportEnabled ?? false, false, "Jobsy:StudentPassportEnabled");
 
-        return row?.StudentPassportEnabled ?? false;
-    }
+    private bool ResolveSensitiveExperienceEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "SensitiveExperienceEnabled", row?.SensitiveExperienceEnabled ?? false, false, "Jobsy:SensitiveExperienceEnabled");
+
+    private bool ResolveTrainingPartnersEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TrainingPartnersEnabled", row?.TrainingPartnersEnabled ?? false, false, "Jobsy:TrainingPartnersEnabled");
+
+    private bool ResolveCompanyMapInitiativeEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "CompanyMapInitiativeEnabled", row?.CompanyMapInitiativeEnabled ?? true, true, configurationKey: null);
 
     private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
     {
+        var baseline = row?.ReferenceVerificationEnabled ?? false;
         if (bool.TryParse(_configuration["Jobsy:ReferenceVerificationEnabled"], out var configured))
         {
-            return configured;
+            baseline = configured;
         }
 
-        return row?.ReferenceVerificationEnabled ?? false;
+        return ResolveAdminBool(row, "ReferenceVerificationEnabled", baseline, false, configurationKey: null);
     }
 
-    private bool ResolveSensitiveExperienceEnabled(PlatformFeatureSettings? row)
+    private bool ResolveTestJourneyIllustrationEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestJourneyIllustrationEnabled", row?.TestJourneyIllustrationEnabled ?? false, false, "TestJourneyIllustrationEnabled");
+
+    private bool ResolveOnboardingFinaleV2Enabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "OnboardingFinaleV2Enabled", row?.OnboardingFinaleV2Enabled ?? false, false, "Onboarding:FinaleV2Enabled");
+
+    private bool ResolveOccupationDayInLifeEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "OccupationDayInLifeEnabled", row?.OccupationDayInLifeEnabled ?? true, true, "OccupationDayInLifeEnabled");
+
+    private bool ResolveResearchConsentEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "ResearchConsentEnabled", row?.ResearchConsentEnabled ?? false, false, "JobsyFeatures:ResearchConsentEnabled");
+
+    private bool ResolveTestEditModeEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestEditModeEnabled", row?.TestEditModeEnabled ?? false, false, "JobsyFeatures:TestEditMode");
+
+    private bool ResolveSamplePdfEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "SamplePdfEnabled", row?.SamplePdfEnabled ?? false, false, "JobsyFeatures:SamplePdf");
+
+    private bool ResolveAdminBool(
+        PlatformFeatureSettings? row,
+        string key,
+        bool rowStoredValue,
+        bool defaultWhenMissing,
+        string? configurationKey)
     {
-        if (bool.TryParse(_configuration["Jobsy:SensitiveExperienceEnabled"], out var configured))
+        var overrides = PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson);
+        if (row is not null && overrides.Contains(key))
+        {
+            return rowStoredValue;
+        }
+
+        if (configurationKey is not null
+            && bool.TryParse(_configuration[configurationKey], out var configured))
         {
             return configured;
         }
 
-        return row?.SensitiveExperienceEnabled ?? false;
+        return defaultWhenMissing;
     }
 
-    private bool ResolveTrainingPartnersEnabled(PlatformFeatureSettings? row)
+    private static void ApplyAdminBoolUpdate(
+        PlatformFeatureSettings row,
+        string key,
+        bool? value,
+        Action<bool> setter)
     {
-        if (bool.TryParse(_configuration["Jobsy:TrainingPartnersEnabled"], out var configured))
+        if (value is not bool v)
         {
-            return configured;
+            return;
         }
 
-        return row?.TrainingPartnersEnabled ?? false;
+        setter(v);
+        row.AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(row.AdminFlagOverridesJson, key);
     }
 
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
@@ -525,6 +552,13 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),
+            ResolveTestJourneyIllustrationEnabled(row),
+            ResolveOnboardingFinaleV2Enabled(row),
+            ResolveOccupationDayInLifeEnabled(row),
+            ResolveResearchConsentEnabled(row),
+            ResolveTestEditModeEnabled(row),
+            ResolveSamplePdfEnabled(row),
+            AdminOverriddenFlagKeys: PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson).OrderBy(k => k, StringComparer.Ordinal).ToList(),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
             CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));

@@ -28,8 +28,8 @@
     "v": "20261004-10"
   },
   "css/features/admin.css": {
-    "sha256": "16e6a6d8d563e4ba89ac6a4f038c1b28fe1d5dcb7276de13ff7be9c99e4bf905",
-    "v": "20261013-02"
+    "sha256": "57d56bfc61f023d2789374e45b34743b446836ae16c848639f34e07d38b5cfa3",
+    "v": "20261018-11"
   },
   "css/features/applications.css": {
     "sha256": "0ad9072d8b4f0f36f4b8cf7d52e4f2565cbb9d5e3b780dfa4023e4121de0e9f0",
@@ -332,7 +332,7 @@
     "v": "20261016-06"
   },
   "css/features/bedrijvenkaart.css": {
-    "v": "20261018-13",
-    "sha256": "3333fa0e1f23cb3890e67348542ce359d3abf8b0e95891c572dbdeb84cee18d0"
+    "v": "20261018-14",
+    "sha256": "251a509bf212bbda81d59e04933b4a65d8d932bf529161c5bfb5f20d37a66889"
   }
 }

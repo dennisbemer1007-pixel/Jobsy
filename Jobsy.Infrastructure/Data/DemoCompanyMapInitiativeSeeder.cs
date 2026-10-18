@@ -12,7 +12,7 @@ internal static class DemoCompanyMapInitiativeSeeder
 {
     private static readonly string[] HubPhotos =
     [
-        "/images/teaser/westland-hero.jpg"
+        "/images/candidate-illustrated/spots/job-retail.jpg"
     ];
 
     private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
@@ -185,7 +185,7 @@ internal static class DemoCompanyMapInitiativeSeeder
             "Bakkerij De Korenaar is een familiebedrijf in het hart van Den Haag. We bakken dagvers brood en patisserie.";
         root.HubCultureText =
             "Klein team, korte lijnen, veel vakmanschap en ruimte om te groeien.";
-        root.HubVideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        root.HubVideoUrl = null;
         root.HubPhotoUrlsJson = JsonSerializer.Serialize(HubPhotos);
         root.InitiativeAvgResponseDays = 2;
 

@@ -39,6 +39,9 @@ public static class UiStringsInitiative
         Add("Bk.Apps.FilterVacancy", "Op vacature", "On vacancy");
         Add("Bk.Apps.FilterSource", "Type sollicitatie", "Application type");
         Add("Bk.Apps.FilterSourceAll", "Alle types", "All types");
+        Add("AdminSettings.CompanyMapInitiative.Enabled.Title", "Bedrijvenkaart (kandidaat)", "Company map (candidate)");
+        Add("AdminSettings.CompanyMapInitiative.Enabled.Desc", "Bedrijvenkaart, Ik wil hier werken en werkgever-initiatief flows. Vereist werkgevers aan.", "Company map, open applications and employer initiative flows. Requires employers on.");
+        Add("AdminSettings.CompanyMapInitiative.Enabled.ImpactOff", "Kandidaten zien geen bedrijvenkaart; initiatief-routes en toggles zijn uit.", "Candidates won't see the company map; initiative routes and toggles are off.");
         Add("Bk.Initiative.Next.Wait", "Het bedrijf reageert binnen 5 werkdagen.", "The company responds within 5 business days.");
         Add("Bk.AutoDecline.Lead", "Het zegt niets over jou.", "It says nothing about you.");
         Add("Bk.Status.AutoDeclined", "Automatisch nu niet", "Automatically not now");

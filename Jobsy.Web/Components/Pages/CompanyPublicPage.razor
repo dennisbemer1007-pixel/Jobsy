@@ -155,38 +155,27 @@ else
                 @{
                     var sfeerPhotos = (_initiative?.HubPhotoUrls ?? [])
                         .Where(static u => IsHubSfeerPhoto(u))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
                         .ToList();
-                    var sfeerVideoUrl = _initiative?.HubVideoUrl;
-                    var hasSfeerMedia = sfeerPhotos.Count > 0 || !string.IsNullOrWhiteSpace(sfeerVideoUrl);
                 }
-                @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText) || hasSfeerMedia)
+                @if (sfeerPhotos.Count > 0)
                 {
-                    <section class="pub-card pp-company__sfeer" aria-labelledby="company-sfeer">
-                        <h2 id="company-sfeer">@Culture["CompanyPage.Sfeer"]</h2>
-                        @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText))
-                        {
-                            <p>@_initiative!.HubCultureText</p>
-                        }
-                        @if (hasSfeerMedia)
-                        {
-                            <div class="pp-sfeer-grid">
+                    <section class="pub-card pp-company__sfeer pp-company__sfeer--has-media" aria-labelledby="company-sfeer">
+                        <div class="pp-company__sfeer-inner">
+                            <div class="pp-company__sfeer-copy">
+                                <h2 id="company-sfeer">@Culture["CompanyPage.Sfeer"]</h2>
+                                @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText))
+                                {
+                                    <p>@_initiative!.HubCultureText</p>
+                                }
+                            </div>
+                            <div class="pp-sfeer-grid pp-sfeer-grid--@Math.Min(sfeerPhotos.Count, 3)">
                                 @foreach (var photo in sfeerPhotos)
                                 {
                                     <img src="@photo" alt="" loading="lazy" decoding="async" />
                                 }
-                                @if (!string.IsNullOrWhiteSpace(sfeerVideoUrl) && sfeerPhotos.Count > 0)
-                                {
-                                    var videoPoster = sfeerPhotos[0];
-                                    <a class="pp-sfeer-video"
-                                       href="@sfeerVideoUrl"
-                                       target="_blank"
-                                       rel="noopener noreferrer">
-                                        <img src="@videoPoster" alt="" loading="lazy" decoding="async" />
-                                        <span class="pp-sfeer-video__play" aria-hidden="true"></span>
-                                    </a>
-                                }
                             </div>
-                        }
+                        </div>
                     </section>
                 }
             </div>

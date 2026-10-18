@@ -1,3 +1,0 @@
-# PR-only failures (PR run 39167270600 vs acceptatie PR-tests 39159428434)
-# acceptatie_ref=origin/acceptatie
-# Generated 2026-10-18T21:38:08Z

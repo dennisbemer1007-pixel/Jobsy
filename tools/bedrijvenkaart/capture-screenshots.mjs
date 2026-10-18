@@ -9,7 +9,7 @@ import { chromium } from "../screenshots/node_modules/playwright/index.mjs";
 const baseUrl = (process.argv[2] ?? "http://localhost:5201").replace(/\/$/, "");
 const apiUrl = (process.argv[3] ?? "http://127.0.0.1:5200").replace(/\/$/, "");
 const outDir =
-  process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r12/live";
+  process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r13/live";
 const captureOnly = process.env.CAPTURE_ONLY ?? "";
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
