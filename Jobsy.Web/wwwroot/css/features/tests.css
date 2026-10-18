@@ -500,6 +500,98 @@
   box-sizing: border-box;
 }
 
+.test-page:has([data-testid="test-block-stage"]) {
+  max-inline-size: min(100%, 58rem);
+  gap: 0;
+  padding-block-end: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+/* Per-block bottom-band backgrounds (Quick-Scan, verdieping, diepte-analyse). */
+.test-block-stage {
+  --test-block-band-height: clamp(6.5rem, 26vh, 12.5rem);
+  --test-block-band-image: none;
+  --test-block-tint: var(--pearl-cool, var(--pearl));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-block-size: min(100%, calc(100dvh - 6.5rem));
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+  background: var(--test-block-tint);
+  isolation: isolate;
+}
+
+.test-block-stage--hoe-je-werkt {
+  --test-block-tint: #e6eef7;
+  --test-block-band-image: url("/images/tests/bg-hoe-je-werkt.jpg");
+}
+
+.test-block-stage--leuk {
+  --test-block-tint: color-mix(in srgb, var(--coral-soft, #ffe8e0) 38%, var(--surface));
+  --test-block-band-image: url("/images/tests/bg-leuk.jpg");
+}
+
+.test-block-stage--sfeer {
+  --test-block-tint: #f3ebe2;
+  --test-block-band-image: url("/images/tests/bg-sfeer.jpg");
+}
+
+.test-block-stage--waarden {
+  --test-block-tint: color-mix(in srgb, #d8e8dc 42%, var(--surface));
+  --test-block-band-image: url("/images/tests/bg-waarden.jpg");
+}
+
+.test-block-stage__content {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  display: grid;
+  gap: inherit;
+  padding-block-end: calc(var(--test-block-band-height) * 0.35);
+  min-inline-size: 0;
+}
+
+.test-block-stage__band {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: var(--test-block-band-height);
+  background-image: var(--test-block-band-image);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center bottom;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.test-block-stage .test-shell__card,
+.test-block-stage .ob-wizard__card {
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 1023px) {
+  .test-block-stage {
+    --test-block-band-height: clamp(4.25rem, 17vh, 7rem);
+    min-block-size: min(100%, calc(100dvh - 5.5rem));
+    border-radius: var(--radius-md, 8px);
+  }
+
+  .test-block-stage__content {
+    padding-block-end: calc(var(--test-block-band-height) * 0.2);
+  }
+}
+
+.ob-wizard__content:has([data-testid="test-block-stage"]) {
+  padding-inline: 12px;
+}
+
+@media (min-width: 1024px) {
+  .ob-wizard__content:has([data-testid="test-block-stage"]) {
+    padding-inline: 20px 12px;
+  }
+}
+
 .test-about {
   border: 1px solid var(--border);
   border-radius: var(--radius-md, 8px);

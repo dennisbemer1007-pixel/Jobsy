@@ -176,7 +176,8 @@ else
                                Answered="_answered"
                                TargetCount="_questionCount"
                                BubbleText="@Culture["Deep.Bubble.Question"]"
-                               ShowProgressSidePanel="_showProgressInsight">
+                               ShowProgressSidePanel="_showProgressInsight"
+                               BlockArtSlug="@TestBlockArt.SlugForDeepDomain(_kind, part?.Domains.FirstOrDefault())">
                     <SidePanel>
                         @if (_showProgressInsight)
                         {

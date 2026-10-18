@@ -1,0 +1,22 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Rules
+
+@if (Enabled)
+{
+    <div class="test-block-stage test-block-stage--@Slug" data-testid="test-block-stage" data-block="@Slug">
+        <div class="test-block-stage__content">
+            @ChildContent
+        </div>
+        <div class="test-block-stage__band" aria-hidden="true"></div>
+    </div>
+}
+else
+{
+    @ChildContent
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = TestBlockArt.SlugForFamily(TestBlockFamily.HoeJeWerkt);
+    [Parameter] public bool Enabled { get; set; } = true;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
