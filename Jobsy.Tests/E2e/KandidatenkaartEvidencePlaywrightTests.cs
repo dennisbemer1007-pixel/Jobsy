@@ -91,11 +91,9 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                 await page.WaitForTimeoutAsync(2000);
             }
 
-            var mobileViewportShot = width < 640;
-
             await WaitForMapReadyAsync(page);
             await KbE2e.AssertNoCircuitErrorAsync(page);
-            await ShotPageAsync(page, $"kk-map-areas-{suffix}.png", mobileViewportShot);
+            await ShotPageAsync(page, $"kk-map-areas-{suffix}.png");
 
             var more = width < 640
                 ? page.Locator(".kk-mobile-bar .kk-filter-more")
@@ -112,7 +110,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             }
 
             await page.WaitForTimeoutAsync(400);
-            await ShotPageAsync(page, $"kk-filters-open-{suffix}.png", mobileViewportShot);
+            await ShotPageAsync(page, $"kk-filters-open-{suffix}.png");
 
             if (width < 640)
             {
@@ -150,7 +148,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             await inviteCta.First.ClickAsync();
             await page.WaitForSelectorAsync(".kk-modal", new() { Timeout = 15_000 });
             await page.WaitForTimeoutAsync(400);
-            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png", fullViewport: true);
+            await ShotPageAsync(page, $"kk-invite-preview-{suffix}.png");
             await page.Locator(".kk-modal .btn-compact").Filter(new() { HasText = "Annuleren" }).First.ClickAsync();
             await page.WaitForTimeoutAsync(400);
 
@@ -174,7 +172,7 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             Assert.True(
                 await page.Locator(".kk-below-min").CountAsync() > 0,
                 "Expected below-30 notice after strict filters.");
-            await ShotPageAsync(page, $"kk-below-30-{suffix}.png", mobileViewportShot);
+            await ShotPageAsync(page, $"kk-below-30-{suffix}.png");
         }
 
         await using (var ctx = await browser.NewContextAsync(new()
@@ -201,16 +199,16 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
 
             await page.GotoAsync($"{baseUrl.TrimEnd('/')}/candidate/dashboard", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForTimeoutAsync(1500);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-reavail-banner-1440.png"), FullPage = true });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-reavail-banner-1440.png"), FullPage = false });
             await page.SetViewportSizeAsync(390, 844);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-reavail-banner-390.png"), FullPage = true });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-reavail-banner-390.png"), FullPage = false });
 
             await page.GotoAsync($"{baseUrl.TrimEnd('/')}/candidate/settings/kandidatenkaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForTimeoutAsync(1200);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-candidate-settings-1440.png"), FullPage = true });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-candidate-settings-1440.png"), FullPage = false });
 
             await page.SetViewportSizeAsync(390, 844);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-candidate-settings-390.png"), FullPage = true });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-candidate-settings-390.png"), FullPage = false });
         }
 
         await EnableKandidatenkaartAsync(baseUrl, conn, enabled: false);
@@ -223,12 +221,12 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, employerEmail, password));
             await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/vacatures", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForTimeoutAsync(1200);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-nav-flag-off-1440.png"), FullPage = true });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-nav-flag-off-1440.png"), FullPage = false });
             var resp = await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/kandidatenkaart");
             Assert.NotNull(resp);
             Assert.True(resp!.Status is 404 or 200);
             await page.WaitForTimeoutAsync(1200);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-route-flag-off-404-1440.png"), FullPage = true });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "kk-route-flag-off-404-1440.png"), FullPage = false });
         }
 
         var required = new[]
@@ -346,9 +344,9 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
         await page.WaitForTimeoutAsync(mobile ? 800 : 1200);
     }
 
-    private static async Task ShotPageAsync(IPage page, string fileName, bool fullViewport = false)
+    private static async Task ShotPageAsync(IPage page, string fileName)
     {
-            await page.EvaluateAsync("""
+        await page.EvaluateAsync("""
             window.scrollTo(0, 0);
             document.documentElement.scrollTop = 0;
             document.body.scrollTop = 0;
@@ -356,23 +354,11 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             document.querySelector('.kk-page')?.scrollTo?.(0, 0);
             """);
 
-        if (fullViewport)
+        await page.ScreenshotAsync(new()
         {
-            await page.ScreenshotAsync(new()
-            {
-                Path = Path.Combine(OutDir, fileName),
-                FullPage = false
-            });
-            return;
-        }
-
-        var root = page.Locator(".wg-main .kk-page");
-        if (await root.CountAsync() == 0)
-        {
-            root = page.Locator(".kk-page");
-        }
-
-        await root.First.ScreenshotAsync(new() { Path = Path.Combine(OutDir, fileName) });
+            Path = Path.Combine(OutDir, fileName),
+            FullPage = false
+        });
     }
 
     private static async Task ClickFilterAsync(IPage page, string label)

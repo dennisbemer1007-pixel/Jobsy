@@ -305,6 +305,9 @@
 }
 
 .wg-bottom-nav {
+    --wg-bottom-nav-block-h: calc(
+        52px + var(--space-1) + max(var(--space-1), env(safe-area-inset-bottom, 0px))
+    );
     position: fixed;
     inset-inline: 0;
     bottom: 0;

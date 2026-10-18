@@ -1725,10 +1725,11 @@ html.vp-mobile .kk-list-invite-bar {
 }
 
 html.vp-mobile .kk-mobile-sheet__invite {
+    --kk-invite-bar-block-h: calc(0.65rem + 0.75rem + 44px);
     position: fixed;
     left: 0;
     right: 0;
-    bottom: var(--bottom-nav-clearance);
+    bottom: var(--wg-bottom-nav-block-h, 3.625rem);
     z-index: 44;
     flex-shrink: 0;
     padding: 0.65rem 1rem 0.75rem;
@@ -1738,7 +1739,9 @@ html.vp-mobile .kk-mobile-sheet__invite {
 }
 
 html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-mobile-sheet__body--list {
-    padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(
+        var(--kk-invite-bar-block-h, 3.75rem) + var(--wg-bottom-nav-block-h, 3.625rem)
+    );
 }
 
 .wg-shell:has(.kk-page) .lobsy-assistant-tab,
