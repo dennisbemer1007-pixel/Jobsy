@@ -80,6 +80,22 @@ public static partial class CandidateFactGuard
         return null;
     }
 
+    /// <summary>Jouw-spiegel copy is candidate-facing: no score jargon or em dashes.</summary>
+    public static string? MirrorCopyRejection(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        if (text.Contains('\u2014') || text.Contains('—'))
+        {
+            return "mirror-em-dash";
+        }
+
+        return MirrorScoreWording().IsMatch(text) ? "mirror-score-wording" : null;
+    }
+
     /// <summary>One Dutch sentence for a second model attempt. No profile text.</summary>
     public static string ReasonSentence(string? reason) => reason switch
     {
@@ -98,6 +114,8 @@ public static partial class CandidateFactGuard
         "claimed-completed" => "Zeg niet dat een opleiding is afgerond. Dat staat niet in de feiten.",
         "unknown-outlook" => "Citeer alleen een vooruitblikzin uit de feitenlijst. Verzin geen andere zin over 2030 of AI.",
         "unknown-advice" => "Citeer alleen een eerlijk advies uit de feitenlijst. Verzin geen ander advies over het beroep of over AI.",
+        "mirror-score-wording" => "Noem geen scores, percentages of hoogste uitslagen. Schrijf concreet over werk en omgeving.",
+        "mirror-em-dash" => "Gebruik geen gedachtestreepje. Schrijf twee zinnen of gebruik een dubbele punt.",
         _ => "Gebruik alleen de feitenlijst. Verzin niets."
     };
 
@@ -900,4 +918,9 @@ public static partial class CandidateFactGuard
 
     [GeneratedRegex(@"\s+of\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex ComboSplit();
+
+    [GeneratedRegex(
+        @"\bscores?\b|\bscore\b|\bpercent(?:age)?\b|\bhoogste scores?\b|\bsterkste scores?\b|\bscoorde\b|\bscoring\b|\bhighest scores?\b|\bstrongest scores?\b|\btop scores?\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex MirrorScoreWording();
 }

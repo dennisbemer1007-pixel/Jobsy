@@ -1681,6 +1681,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateWhoAmIProfiles.RemoveRange(whoAmI);
         }
 
+        var testReflections = await _db.CandidateTestReflections
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (testReflections.Count > 0)
+        {
+            _db.CandidateTestReflections.RemoveRange(testReflections);
+        }
+
         var privatePrefs = await _db.CandidatePrivatePreferences
             .Where(p => p.UserId == user.Id)
             .ToListAsync(cancellationToken);

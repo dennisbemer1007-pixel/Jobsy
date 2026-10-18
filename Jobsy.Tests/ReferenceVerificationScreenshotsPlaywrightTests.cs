@@ -29,6 +29,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private const string EnvRunR17 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R17";
     private const string EnvRunR18 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R18";
     private const string EnvRunFinal = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_FINAL";
+    private const string EnvRunFinalR2 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_FINAL_R2";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -73,6 +74,8 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private static string OutputDirR18 => "/opt/cursor/artifacts/references-r18";
 
     private static string OutputDirFinal => "/opt/cursor/artifacts/references-final";
+
+    private static string OutputDirFinalR2 => "/opt/cursor/artifacts/references-final-r2";
 
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
@@ -127,6 +130,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static bool ShouldRunFinal =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunFinal), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunFinalR2 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunFinalR2), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -1241,14 +1247,30 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             return;
         }
 
+        await Capture_reference_verification_screenshots_final_to_dir(OutputDirFinal);
+    }
+
+    [Fact]
+    public async Task Capture_reference_verification_screenshots_final_r2()
+    {
+        if (!ShouldRunFinalR2)
+        {
+            return;
+        }
+
+        await Capture_reference_verification_screenshots_final_to_dir(OutputDirFinalR2);
+    }
+
+    private static async Task Capture_reference_verification_screenshots_final_to_dir(string outputDir)
+    {
         var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
         if (baseUrl is null)
         {
             Assert.Fail("JOBSY_E2E_BASE_URL unreachable — start API :5200 and Web :5201 with seeded DB.");
         }
 
-        Directory.CreateDirectory(OutputDirFinal);
-        foreach (var stale in Directory.GetFiles(OutputDirFinal))
+        Directory.CreateDirectory(outputDir);
+        foreach (var stale in Directory.GetFiles(outputDir))
         {
             File.Delete(stale);
         }
@@ -1274,9 +1296,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             await Task.Delay(350);
             await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
                 candidatePage,
-                Path.Combine(OutputDirFinal, $"08-paspoort-endorsed-{tag}.png"));
+                Path.Combine(outputDir, $"08-paspoort-endorsed-{tag}.png"));
 
-            await CaptureRequestFormAndConfirmAsync(candidatePage, baseUrl, tag, OutputDirFinal, useRealisticDemoName: true);
+            await CaptureRequestFormAndConfirmAsync(candidatePage, baseUrl, tag, outputDir, useRealisticDemoName: true);
             if (tag == "390")
             {
                 await AssertMobileGevoeligHeroAsync(candidatePage);
@@ -1304,11 +1326,11 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             await Task.Delay(350);
             await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
                 publicPage,
-                Path.Combine(OutputDirFinal, $"04-referent-public-{tag}.png"));
+                Path.Combine(outputDir, $"04-referent-public-{tag}.png"));
             await publicContext.CloseAsync();
         }
 
-        var pngs = Directory.GetFiles(OutputDirFinal, "*.png");
+        var pngs = Directory.GetFiles(outputDir, "*.png");
         Assert.Equal(8, pngs.Length);
     }
 

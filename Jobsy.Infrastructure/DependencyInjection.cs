@@ -659,6 +659,15 @@ public static class DependencyInjection
         {
             AllowAutoRedirect = false
         }).AddHttpMessageHandler<AiRouteLoggingHandler>();
+        services.AddHttpClient(OpenAiTestReflectionAiService.HttpClientName, client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(20);
+        }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+        {
+            AllowAutoRedirect = false
+        }).AddHttpMessageHandler<AiRouteLoggingHandler>();
+        services.AddScoped<ITestReflectionAiService, OpenAiTestReflectionAiService>();
+        services.AddScoped<ITestReflectionService, TestReflectionService>();
         services.AddScoped<ICompetenceDeepReportAiService, OpenAiCompetenceDeepReportAiService>();
         services.AddScoped<ICompetenceDeepReportService, CompetenceDeepReportService>();
         services.AddScoped<IKindDeepReportService, KindDeepReportService>();
