@@ -16,7 +16,7 @@ public class CandidateDesktopNavCssTests
     public void Desktop_candidate_shell_keeps_bottom_nav_visible()
     {
         var css = File.ReadAllText(FindRepoRoot("Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".app-shell--candidate .bottom-nav", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell--candidate:has(.jobsy-discovery) .bottom-nav", css, StringComparison.Ordinal);
         Assert.Contains("display: flex", css, StringComparison.Ordinal);
     }
 

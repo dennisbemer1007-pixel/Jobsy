@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
     "sha256": "a83a058190afcc117c6ed5f502257f1e8c6a8dfd2a6efbce6d7b02dc35417b05",
-    "v": "20261017-03"
+    "v": "20261018-02"
   },
   "css/critical.css": {
     "sha256": "94b9e9f0833faebdcbf4281da401379c93851562b64d48d838d27004f6862cab",
@@ -172,7 +172,7 @@
     "v": "20261017-02"
   },
   "css/features/testresultaten.css": {
-    "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
+    "sha256": "250d80a99d142c7fd3b2ca25520a5d0f705d456e4574b0889bb4dcddddafd82f",
     "v": "20261004-10"
   },
   "css/features/tests.css": {
@@ -248,7 +248,7 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "fa819a687c95bce7effbd05437ead923dbb4d8ce9139a034ed7b85555edfb94c",
+    "sha256": "0a75302c009d8d05c3b444df2d19e864aa019e8f4c9dfd4d9cb0b80e0cd44503",
     "v": "20261018-hotfix-fitpill"
   },
   "js/jobsyMapLibre.min.js": {
@@ -292,11 +292,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "4b18dca255fda4a7df87886580a2683d1ee30fad56ed7660948e128daa777629",
+    "sha256": "6dbe7ecc4917fe4d07f2a1b783cecf370d98f1c80ee99ac5c840dd0afd25b977",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "f58f50a5ed8da738b9f69b0703b89f000f2551d8461635615d30fa3c51ea1c28",
+    "sha256": "2a618fda8eb01921e3ef4f3e6dd54181be243f7abd24dfe8b7266021c2b12b30",
     "v": "20261016-06"
   }
 }

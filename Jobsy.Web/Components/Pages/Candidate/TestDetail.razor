@@ -59,7 +59,7 @@
                 <TestResultDoneHeader CssClass="test-result-header--mirror-desktop"
                                       TitleKey="@_def.TitleKey"
                                       DeepCompleted="_deepCompleted"
-                                      CompletedMeta="_completedMeta"
+                                      CompletedMeta="@_completedMeta"
                                       ThemeCount="_scoreBars.Count"
                                       QuestionCount="@(_deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)"
                                       EditModeEnabled="_editModeEnabled"
@@ -105,7 +105,7 @@
         {
             <TestResultDoneHeader TitleKey="@_def.TitleKey"
                                   DeepCompleted="_deepCompleted"
-                                  CompletedMeta="_completedMeta"
+                                  CompletedMeta="@_completedMeta"
                                   ThemeCount="_scoreBars.Count"
                                   QuestionCount="@(_deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)"
                                   EditModeEnabled="_editModeEnabled"
