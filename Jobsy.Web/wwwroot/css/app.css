@@ -7202,6 +7202,14 @@ a.engagement-btn {
     line-height: 1.35;
 }
 
+.mock-interview-modal__disclaimer-link {
+    color: var(--brand);
+    font-size: inherit;
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 .mock-interview-progress {
     margin: 0 0.75rem 0.45rem;
     font-size: 0.78rem;

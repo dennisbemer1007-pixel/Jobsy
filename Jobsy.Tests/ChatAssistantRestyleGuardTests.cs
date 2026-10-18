@@ -31,7 +31,10 @@ public class ChatAssistantRestyleGuardTests
         Assert.Contains("mock-interview-modal--warm", mock, StringComparison.Ordinal);
         Assert.Contains("BrandImages.MarkSvg", mock, StringComparison.Ordinal);
         Assert.DoesNotContain("LobsyCoachAvatar", mock, StringComparison.Ordinal);
-        Assert.Contains("lobsy-coach-cta__btn--warm", vacancy, StringComparison.Ordinal);
+        Assert.Contains("VacancyMockInterviewCta", vacancy, StringComparison.Ordinal);
+        Assert.Contains("lobsy-coach-cta--kb-rail", File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/kandidaat-banen.css")), StringComparison.Ordinal);
+        Assert.DoesNotContain(".app-shell:has(.kb-detail) .lobsy-coach-cta", File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/features/kandidaat-banen.css")), StringComparison.Ordinal);
+        Assert.Contains("mock-interview-modal__disclaimer-link", mock, StringComparison.Ordinal);
         Assert.Contains("Never use numeric scores", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/MockInterviewService.cs")), StringComparison.Ordinal);
         Assert.Contains("mock-interview-compose__restart", mock, StringComparison.Ordinal);
 

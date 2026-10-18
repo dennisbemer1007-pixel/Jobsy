@@ -1,3 +1,4 @@
+using Jobsy.Core.Media;
 using Jobsy.Web.Media;
 using Microsoft.Playwright;
 
@@ -5,7 +6,8 @@ namespace Jobsy.Tests;
 
 public class ChatRestyleScreenshotTests
 {
-    private const string OutDir = "/opt/cursor/artifacts/chat-r2";
+    private const string OutDir = "/opt/cursor/artifacts/chat-r3";
+    private static readonly Guid PreviewVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
     [Fact]
     public async Task Render_chat_restyle_preview_screenshots()
@@ -16,14 +18,14 @@ public class ChatRestyleScreenshotTests
         var appCss = await File.ReadAllTextAsync(Path.Combine(www, "css/app.min.css"));
         var kbCss = await File.ReadAllTextAsync(Path.Combine(www, "css/features/kandidaat-banen.css"));
         var mark = BrandImages.MarkSvg;
-        var sil = BrandImages.ChatSilhouetteSvg;
+        var logo = BrandImages.HorizontalSvg;
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        var vacancyEntry = VacancyDetailEntryBody(mark);
-        var vacancyOpen = VacancyDetailOpenBody(mark);
+        var vacancyEntry = VacancyDetailEntryBody(mark, logo);
+        var vacancyOpen = VacancyDetailOpenBody(mark, logo);
 
         var shots = new (string Name, string Body, int W, int H)[]
         {
@@ -31,12 +33,6 @@ public class ChatRestyleScreenshotTests
             ("vacancy-mock-interview-entry-390", vacancyEntry, 390, 844),
             ("vacancy-mock-interview-open-1440", vacancyOpen, 1440, 900),
             ("vacancy-mock-interview-open-390", vacancyOpen, 390, 844),
-            ("candidate-sollicitaties-1440-closed", WarmBody(mark, false), 1440, 900),
-            ("candidate-sollicitaties-1440-open", WarmBody(mark, true), 1440, 900),
-            ("candidate-sollicitaties-390-closed", WarmBody(mark, false), 390, 844),
-            ("candidate-sollicitaties-390-open", WarmBody(mark, true), 390, 844),
-            ("employer-1440-closed", BusinessBody(sil, false), 1440, 900),
-            ("employer-1440-open", BusinessBody(sil, true), 1440, 900),
         };
 
         foreach (var (name, body, w, h) in shots)
@@ -51,11 +47,43 @@ public class ChatRestyleScreenshotTests
             await page.GotoAsync("/chat-restyle", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await WaitForBrandImagesAsync(page);
             await AssertBrandImagesLoadedAsync(page);
+            if (name.Contains("entry", StringComparison.Ordinal))
+            {
+                await AssertMockInterviewPillVisibleAsync(page, w);
+            }
+
             await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(OutDir, name + ".png"),
             });
         }
+    }
+
+    [Theory]
+    [InlineData(1440)]
+    [InlineData(390)]
+    public async Task Vacancy_entry_mock_interview_pill_is_visible(int viewportWidth)
+    {
+        var root = FindRoot();
+        var www = Path.GetFullPath(Path.Combine(root, "Jobsy.Web/wwwroot"));
+        var appCss = await File.ReadAllTextAsync(Path.Combine(www, "css/app.min.css"));
+        var kbCss = await File.ReadAllTextAsync(Path.Combine(www, "css/features/kandidaat-banen.css"));
+        var mark = BrandImages.MarkSvg;
+        var logo = BrandImages.HorizontalSvg;
+        var height = viewportWidth >= 1024 ? 900 : 844;
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = viewportWidth, Height = height },
+            BaseURL = "https://jobsy.preview/",
+        });
+        await RegisterWwwrootRoutesAsync(context, www, PreviewDocument(appCss, kbCss, VacancyDetailEntryBody(mark, logo)));
+        var page = await context.NewPageAsync();
+        await page.GotoAsync("/chat-restyle", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await AssertMockInterviewPillVisibleAsync(page, viewportWidth);
     }
 
     [Fact]
@@ -75,7 +103,7 @@ public class ChatRestyleScreenshotTests
             ViewportSize = new() { Width = 390, Height = 844 },
             BaseURL = "https://jobsy.preview/",
         });
-        await RegisterWwwrootRoutesAsync(context, www, PreviewDocument(appCss, kbCss, VacancyDetailOpenBody(mark) + WarmBody(mark, true)));
+        await RegisterWwwrootRoutesAsync(context, www, PreviewDocument(appCss, kbCss, VacancyDetailOpenBody(mark, BrandImages.HorizontalSvg)));
         var page = await context.NewPageAsync();
         await page.GotoAsync("/chat-restyle", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await WaitForBrandImagesAsync(page);
@@ -170,8 +198,58 @@ public class ChatRestyleScreenshotTests
         </html>
         """;
 
-    private static string VacancyDetailEntryBody(string mark) => $"""
+    private static async Task AssertMockInterviewPillVisibleAsync(IPage page, int viewportWidth)
+    {
+        var slot = viewportWidth >= 1024 ? ".lobsy-coach-cta--kb-rail" : ".lobsy-coach-cta--kb-mobile";
+        var pill = page.Locator($"{slot} .lobsy-coach-cta__label");
+        await Microsoft.Playwright.Assertions.Expect(pill).ToBeVisibleAsync();
+        await Microsoft.Playwright.Assertions.Expect(pill).ToHaveTextAsync("Oefen je sollicitatiegesprek");
+        var hiddenSlot = viewportWidth >= 1024 ? ".lobsy-coach-cta--kb-mobile" : ".lobsy-coach-cta--kb-rail";
+        await Microsoft.Playwright.Assertions.Expect(page.Locator(hiddenSlot)).ToBeHiddenAsync();
+    }
+
+    private static string VacancyFallbackPhoto()
+        => VacancyImageUrls.Placeholder(PreviewVacancyId, "Zorg");
+
+    private static string MockInterviewPillHtml(string mark, string placement) => $"""
+        <div class="lobsy-coach-cta lobsy-coach-cta--kb-{placement}" data-testid="vacancy-mock-interview-cta">
+          <button type="button" class="lobsy-coach-cta__btn lobsy-coach-cta__btn--warm" aria-label="Oefen sollicitatiegesprek">
+            <span class="lobsy-coach-cta__medallion" aria-hidden="true">
+              <img src="{mark}" srcset="{BrandImages.SrcSet56}" sizes="56px" alt="" width="56" height="56" decoding="async" />
+            </span>
+            <span class="lobsy-coach-cta__label">Oefen je sollicitatiegesprek</span>
+          </button>
+        </div>
+        """;
+
+    private static string CandidateShellHeader(string logo) => $"""
+        <header class="app-header">
+          <div class="app-header__brand">
+            <a class="brand" href="#" aria-label="Lobsy">
+              <img class="brand__logo lobsy-logo lobsy-logo--horizontal" src="{logo}" alt="Lobsy" width="120" height="32" decoding="async" />
+              <span class="brand__text"><span class="brand-tagline">Vind werk dat bij je past</span></span>
+            </a>
+          </div>
+          <nav class="app-header__nav candidate-header-nav" aria-label="Hoofdnavigatie" data-testid="candidate-header-nav">
+            <a class="candidate-header-nav__link is-active" href="#">Banenkaart</a>
+            <a class="candidate-header-nav__link" href="#">Sollicitaties</a>
+            <a class="candidate-header-nav__link" href="#">Paspoort</a>
+          </nav>
+          <div class="app-header__actions">
+            <a class="auth-link" href="#">Help</a>
+            <a class="auth-link" href="#">Inloggen</a>
+          </div>
+        </header>
+        """;
+
+    private static string VacancyDetailEntryBody(string mark, string logo)
+    {
+        var photo = VacancyFallbackPhoto();
+        var pillMobile = MockInterviewPillHtml(mark, "mobile");
+        var pillRail = MockInterviewPillHtml(mark, "rail");
+        return $"""
         <div class="app-shell app-shell--candidate has-bottom-nav" style="--bottom-nav-h:64px;min-height:100vh;background:var(--bg,#f5f2ee)">
+          {CandidateShellHeader(logo)}
           <main class="app-main">
             <div class="app-main__content">
               <div class="panel-page panel-page--vacancy">
@@ -181,7 +259,9 @@ public class ChatRestyleScreenshotTests
                   </div>
                   <div class="kb-detail__layout">
                     <div class="kb-detail__main-top">
-                      <div class="kb-detail__photo" role="img" aria-label="Vacaturefoto" style="background:linear-gradient(135deg,#d4e4f7 0%,#f0e6dc 100%)"></div>
+                      <div class="kb-detail__photo">
+                        <img class="vacancy-photo detail-card__image" src="{photo}" alt="" width="720" height="480" decoding="async" />
+                      </div>
                       <div class="kb-detail__header">
                         <h1>Zorgmedewerker dagbesteding</h1>
                         <p class="kb-detail__company-line company"><span>Kasteelhof Zorg</span><span>· Zaandam</span></p>
@@ -192,6 +272,7 @@ public class ChatRestyleScreenshotTests
                         <div class="kb-facts-grid__item"><span class="kb-facts-grid__label">Wanneer</span><p class="kb-facts-grid__value">Per direct</p></div>
                         <div class="kb-facts-grid__item"><span class="kb-facts-grid__label">Start</span><p class="kb-facts-grid__value">In overleg</p></div>
                       </div>
+                      {pillMobile}
                     </div>
                     <aside class="kb-detail__rail" data-testid="kb-detail-rail">
                       <div class="kb-travel-card">
@@ -205,19 +286,12 @@ public class ChatRestyleScreenshotTests
                         </div>
                         <p class="kb-detail__passport-hint">Vul je paspoort aan voor een snellere sollicitatie.</p>
                       </div>
+                      {pillRail}
                     </aside>
                     <div class="kb-detail__main-bottom">
                       <div class="detail-card__body vacancy-description-html">
                         <p>Als zorgmedewerker dagbesteding begeleid je cliënten bij activiteiten, eetmomenten en rustige ochtenden. Je werkt samen in een team van vaste collega&apos;s.</p>
                         <p>We zoeken iemand met affiniteit met ouderenzorg, geduld en een warme stem.</p>
-                      </div>
-                      <div class="lobsy-coach-cta">
-                        <button type="button" class="lobsy-coach-cta__btn lobsy-coach-cta__btn--warm" aria-label="Oefen sollicitatiegesprek">
-                          <span class="lobsy-coach-cta__medallion" aria-hidden="true">
-                            <img src="{mark}" srcset="{BrandImages.SrcSet56}" sizes="56px" alt="" width="56" height="56" decoding="async" />
-                          </span>
-                          <span class="lobsy-coach-cta__label">Oefen je sollicitatiegesprek</span>
-                        </button>
                       </div>
                       <div id="apply" class="apply-flow">
                         <header class="apply-flow__header">
@@ -236,9 +310,10 @@ public class ChatRestyleScreenshotTests
           </nav>
         </div>
         """;
+    }
 
-    private static string VacancyDetailOpenBody(string mark) =>
-        VacancyDetailEntryBody(mark) + MockInterviewModalBody(mark);
+    private static string VacancyDetailOpenBody(string mark, string logo) =>
+        VacancyDetailEntryBody(mark, logo) + MockInterviewModalBody(mark);
 
     private static string MockInterviewModalBody(string mark) => $"""
         <div class="share-modal-backdrop lobsy-dialog-backdrop"></div>
@@ -254,7 +329,7 @@ public class ChatRestyleScreenshotTests
             </div>
             <button type="button" class="mock-interview-modal__close" aria-label="Sluiten">×</button>
           </header>
-          <p class="mock-interview-modal__disclaimer">Coachingsgesprek op basis van deze vacature. Geen echt gesprek met de werkgever. Deel geen BSN, bankgegevens of wachtwoorden. <a class="auth-link" href="#">Meer over Lobsy</a></p>
+          <p class="mock-interview-modal__disclaimer">Coachingsgesprek op basis van deze vacature. Geen echt gesprek met de werkgever. Deel geen BSN, bankgegevens of wachtwoorden. <a class="auth-link mock-interview-modal__disclaimer-link" href="#">Meer over Lobsy</a></p>
           <p class="mock-interview-progress">Stap 1 · Beantwoord de openingsvraag</p>
           <div class="mock-interview-chat">
             <div class="mock-interview-bubble mock-interview-bubble--assistant">
@@ -280,96 +355,6 @@ public class ChatRestyleScreenshotTests
           </form>
         </div>
         """;
-
-    private static string WarmBody(string mark, bool open)
-    {
-        var pageName = "Sollicitaties";
-        var greeting = "Hoi Sanne. Je hebt dinsdag een gesprek bij Bakkerij De Korenaar, mooi zeg. Zal ik je helpen het voor te bereiden?";
-        var openPanel = open
-            ? $"""
-        <div class="lobsy-assistant is-open lobsy-assistant--skin-warm lobsy-assistant--coach has-bottom-nav">
-          <div id="lobsy-assistant-panel" class="lobsy-assistant__panel">
-            <header class="lobsy-assistant__header">
-              <div class="lobsy-assistant__brand">
-                <img class="lobsy-assistant__avatar" src="{mark}" width="40" height="40" alt="" decoding="async" />
-                <div><h2>Lobsy</h2><p class="lobsy-assistant__lead">Vraag het Lobsy</p></div>
-              </div>
-              <div class="lobsy-assistant__header-actions"><button class="lobsy-assistant__icon-btn" type="button">+</button><button class="lobsy-assistant__icon-btn" type="button">×</button></div>
-            </header>
-            <p class="lobsy-assistant__context"><span class="lobsy-assistant__context-dot"></span>Je bekijkt nu {pageName}, ik denk met je mee</p>
-            <div class="lobsy-assistant__chat">
-              <div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant">
-                <div class="lobsy-assistant__bubble-head">
-                  <img class="lobsy-assistant__bubble-logo" src="{mark}" width="32" height="32" alt="" decoding="async" />
-                  <span>Lobsy</span>
-                </div>
-                <p>{greeting}</p>
-              </div>
-            </div>
-            <div class="lobsy-assistant__chips">
-              <button type="button" class="lobsy-assistant__chip">Ja, help me voorbereiden</button>
-              <button type="button" class="lobsy-assistant__chip">Wat betekent &apos;Bekeken&apos;?</button>
-            </div>
-            <form class="lobsy-assistant__compose">
-              <div class="lobsy-assistant__compose-row"><textarea placeholder="Typ je vraag"></textarea><button type="button" class="lobsy-assistant__send">→</button></div>
-            </form>
-            <p class="lobsy-assistant__disclaimer">Lobsy is een AI-assistent en geeft geen persoonlijk advies. <a href="#">Meer over Lobsy</a></p>
-          </div>
-        </div>
-        """
-            : "";
-        return $"""
-        <div class="app-shell has-bottom-nav" style="--bottom-nav-h:64px;min-height:900px;background:#f5f2ee">
-          <main class="app-main"><div class="app-main__content"><div class="card" style="max-width:720px;margin:2rem auto;padding:1rem;background:#fff;border-radius:12px"><h1>Sollicitaties</h1></div></div></main>
-          <nav class="bottom-nav" style="position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:space-around;align-items:center;z-index:50"><span>Home</span><span>Sollicitaties</span><span>Paspoort</span></nav>
-          {openPanel}
-          <div class="lobsy-coach-dock" data-lobsy-coach>
-            <button id="lobsy-coach-btn" type="button" class="lobsy-coach-dock__btn lobsy-coach-dock__btn--warm">
-              <span class="lobsy-coach-dock__medallion"><img src="{mark}" width="56" height="56" alt="" decoding="async" /></span>
-              <span class="lobsy-coach-dock__label">Vraag het Lobsy</span>
-            </button>
-          </div>
-        </div>
-        """;
-    }
-
-    private static string BusinessBody(string sil, bool open)
-    {
-        var launcher = open
-            ? ""
-            : $"""<div class="lobsy-assistant-launcher lobsy-assistant-launcher--business has-bottom-nav"><button type="button" class="lobsy-assistant-launcher__btn"><img src="{sil}" width="28" height="28" alt="" decoding="async" /></button></div>""";
-        var panel = open
-            ? $"""
-        <div class="lobsy-assistant is-open lobsy-assistant--skin-business lobsy-assistant--business-panel has-bottom-nav">
-          <div class="lobsy-assistant__panel">
-            <header class="lobsy-assistant__header">
-              <div class="lobsy-assistant__brand">
-                <span class="lobsy-assistant__avatar lobsy-assistant__avatar--business"><img src="{sil}" width="24" height="24" alt="" decoding="async" /></span>
-                <div><h2>Lobsy-assistent</h2><p class="lobsy-assistant__lead">Antwoord op je vragen over Lobsy</p></div>
-              </div>
-            </header>
-            <div class="lobsy-assistant__chat">
-              <div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant">
-                <div class="lobsy-assistant__bubble-head">
-                  <span class="lobsy-assistant__avatar lobsy-assistant__avatar--business"><img src="{sil}" width="20" height="20" alt="" decoding="async" /></span>
-                  <span>Lobsy</span>
-                </div>
-                <p>Hoi Sanne. Ik help je met vragen over vacatures en sollicitaties.</p>
-              </div>
-            </div>
-            <form class="lobsy-assistant__compose"><div class="lobsy-assistant__compose-row"><textarea placeholder="Typ je vraag"></textarea><button type="button" class="lobsy-assistant__send">→</button></div></form>
-          </div>
-        </div>
-        """
-            : "";
-        return $"""
-        <div class="wg-shell wg-has-bottom-nav" style="--bottom-nav-h:64px;min-height:900px;background:#eef1f5">
-          <main class="wg-main" style="padding:1rem"><h1>Vacatures</h1></main>
-          {launcher}
-          {panel}
-        </div>
-        """;
-    }
 
     private static string FindRoot()
     {
