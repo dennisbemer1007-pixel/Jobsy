@@ -175,6 +175,14 @@
 }
 
 @media (max-width: 639px) {
+  /* Mobiel: geen wide-art ::after (kompas profession-band); alleen mob-figure PNG */
+  .cand-hero--profession-band::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+    background-image: none !important;
+  }
+
   /* Mobiel: effen crème links (~55%), gradientstrook ertussen, dekkende figure-PNG rechts (~45%) */
   .cand-hero--with-art {
     width: 100vw;
