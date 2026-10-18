@@ -46,7 +46,7 @@ public sealed class ReferenceVerificationRequestFlowPlaywrightTests
         await page.Locator("#ref-email").FillAsync("flow.referent@demo.local");
         await page.Locator("input[type=checkbox]").First.CheckAsync();
         await page.Locator(".ref-verif-request__submit").ClickAsync();
-        await page.WaitForSelectorAsync("text=De mail is onderweg.", new() { Timeout = 20_000 });
+        await page.WaitForSelectorAsync("[data-testid='ref-verif-request-sent']", new() { Timeout = 20_000 });
 
         await page.GotoAsync($"{baseUrl}/candidate/paspoort?tab=references", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForSelectorAsync("[data-testid='passport-references-tab']", new() { Timeout = 15_000 });

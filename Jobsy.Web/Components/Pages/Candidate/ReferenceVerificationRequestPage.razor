@@ -7,6 +7,7 @@
 @using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
@@ -27,78 +28,82 @@
     }
     else if (!_eligible)
     {
-        <div class="ref-verif-request__card detail-card">
-            <p class="state-message">@Culture["RefVerif.Request.NotEligible"]</p>
-            <a class="ref-verif-request__cancel" href="/candidate/paspoort">@Culture["RefVerif.Request.Back"]</a>
-        </div>
+        @RenderCard(Culture["RefVerif.Request.NotEligible"], null, @<a class="ref-verif-request__cancel" href="/candidate/paspoort">@Culture["RefVerif.Request.Back"]</a>)
     }
     else if (_entry is null)
     {
-        <div class="ref-verif-request__card detail-card">
-            <p class="state-message">@Culture["RefVerif.Request.NotFound"]</p>
-            <a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=proof">@Culture["RefVerif.Request.Back"]</a>
-        </div>
-    }
-    else if (_sent)
-    {
-        <div class="ref-verif-request__card detail-card">
-            <p role="status">@Culture["RefVerif.Request.Sent"]</p>
-            <a class="btn btn-primary" href="/candidate/paspoort?tab=references">@Culture["RefVerif.Tip.LinkPassport"]</a>
-        </div>
+        @RenderCard(Culture["RefVerif.Request.NotFound"], null, @<a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=proof">@Culture["RefVerif.Request.Back"]</a>)
     }
     else
     {
-        <div class="ref-verif-request__card detail-card">
-            <header class="ref-verif-request__head">
-                <h1 class="ref-verif-request__title">@Culture["RefVerif.Request.Title"]</h1>
-                <p class="ref-verif-request__lead muted">@Culture["RefVerif.Request.Lead"]</p>
-            </header>
-
-            <div class="ref-verif-request__summary">
-                <strong>@_entry.EmployerName</strong>
-                @if (!string.IsNullOrWhiteSpace(_entry.Role))
+        <div class="ref-verif-request__card detail-card ref-verif-lift-card @(_cardVisible ? "ref-verif-lift-card--visible" : null)">
+            <ReferenceVerificationIllustratedBand ImageUrl="@CandidateIllustratedImages.RefVerifRequest" />
+            <div class="ref-verif-request__body">
+                @if (_sent)
                 {
-                    <span class="muted"> · @_entry.Role</span>
+                    <div class="ref-verif-request__confirm" data-testid="ref-verif-request-sent" role="status">
+                        <ReferenceVerificationDrawCheck Size="lg" Animate="@_confirmAnimate" />
+                        <p class="ref-verif-request__confirm-title">@Culture.Format("RefVerif.Request.SentToName", _sentReferentName)</p>
+                        <p class="ref-verif-request__confirm-note muted">@Culture["RefVerif.Request.SentValidity"]</p>
+                        <p class="ref-verif-request__confirm-link">
+                            <a href="/candidate/paspoort?tab=references">@Culture["RefVerif.Request.Back"]</a>
+                        </p>
+                    </div>
                 }
-            </div>
+                else
+                {
+                    <header class="ref-verif-request__head">
+                        <h1 class="ref-verif-request__title">@Culture["RefVerif.Request.Title"]</h1>
+                        <p class="ref-verif-request__lead muted">@Culture["RefVerif.Request.Lead"]</p>
+                    </header>
 
-            <div class="ref-verif-request__grid">
-                <label class="ref-verif-request__field" for="ref-name">
-                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Name"]</span>
-                    <input id="ref-name" class="ref-verif-request__input" @bind="_name" maxlength="80" autocomplete="name" />
-                </label>
-                <label class="ref-verif-request__field" for="ref-email">
-                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Email"]</span>
-                    <input id="ref-email" class="ref-verif-request__input" type="email" @bind="_email" maxlength="254" autocomplete="email" />
-                </label>
-
-                <label class="ref-verif-request__field ref-verif-request__field--full" for="ref-relation">
-                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Relation"]</span>
-                    <select id="ref-relation" class="ref-verif-request__input ref-verif-request__select" @bind="_relation">
-                        @foreach (var relationCode in RelationCodes)
+                    <div class="ref-verif-request__summary">
+                        <strong>@_entry.EmployerName</strong>
+                        @if (!string.IsNullOrWhiteSpace(_entry.Role))
                         {
-                            <option value="@relationCode">@Culture[$"RefVerif.Relation.{relationCode}"]</option>
+                            <span class="muted"> · @_entry.Role</span>
                         }
-                    </select>
-                </label>
+                    </div>
 
-                <label class="ref-verif-request__consent ref-verif-request__field--full" for="ref-consent">
-                    <input id="ref-consent" type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" />
-                    <span class="ref-verif-request__consent-text">@Culture["RefVerif.Request.Consent"]</span>
-                </label>
+                    <div class="ref-verif-request__grid">
+                        <label class="ref-verif-request__field" for="ref-name">
+                            <span class="ref-verif-request__label">@Culture["RefVerif.Request.Name"]</span>
+                            <input id="ref-name" class="ref-verif-request__input" @bind="_name" maxlength="80" autocomplete="name" />
+                        </label>
+                        <label class="ref-verif-request__field" for="ref-email">
+                            <span class="ref-verif-request__label">@Culture["RefVerif.Request.Email"]</span>
+                            <input id="ref-email" class="ref-verif-request__input" type="email" @bind="_email" maxlength="254" autocomplete="email" />
+                        </label>
 
-                @if (!string.IsNullOrWhiteSpace(_message))
-                {
-                    <p class="ref-verif-request__error ref-verif-request__field--full" role="alert">@_message</p>
+                        <label class="ref-verif-request__field ref-verif-request__field--full" for="ref-relation">
+                            <span class="ref-verif-request__label">@Culture["RefVerif.Request.Relation"]</span>
+                            <select id="ref-relation" class="ref-verif-request__input ref-verif-request__select" @bind="_relation">
+                                @foreach (var relationCode in RelationCodes)
+                                {
+                                    <option value="@relationCode">@Culture[$"RefVerif.Relation.{relationCode}"]</option>
+                                }
+                            </select>
+                        </label>
+
+                        <label class="ref-verif-request__consent ref-verif-request__field--full" for="ref-consent">
+                            <input id="ref-consent" type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" />
+                            <span class="ref-verif-request__consent-text">@Culture["RefVerif.Request.Consent"]</span>
+                        </label>
+
+                        @if (!string.IsNullOrWhiteSpace(_message))
+                        {
+                            <p class="ref-verif-request__error ref-verif-request__field--full" role="alert">@_message</p>
+                        }
+                    </div>
+
+                    <footer class="ref-verif-request__footer">
+                        <a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=references">@Culture["Common.Cancel"]</a>
+                        <button type="button" class="btn btn-primary ref-verif-request__submit" disabled="@_busy" @onclick="SendAsync">
+                            @Culture["RefVerif.Request.Send"]
+                        </button>
+                    </footer>
                 }
             </div>
-
-            <footer class="ref-verif-request__footer">
-                <a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=references">@Culture["Common.Cancel"]</a>
-                <button type="button" class="btn btn-primary ref-verif-request__submit" disabled="@_busy" @onclick="SendAsync">
-                    @Culture["RefVerif.Request.Send"]
-                </button>
-            </footer>
         </div>
     }
 </div>
@@ -113,7 +118,10 @@
     private bool _eligible;
     private bool _busy;
     private bool _sent;
+    private bool _cardVisible;
+    private bool _confirmAnimate;
     private string? _message;
+    private string _sentReferentName = "";
     private CandidateEmployerHistory? _entry;
     private string _name = "";
     private string _email = "";
@@ -154,7 +162,44 @@
                 }
             }
         }
+
+        if (_entry is not null && _eligible)
+        {
+            _cardVisible = true;
+        }
     }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_sent && !_confirmAnimate)
+        {
+            _confirmAnimate = true;
+            StateHasChanged();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private RenderFragment RenderCard(string message, string? extraClass, RenderFragment? actions) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", $"ref-verif-request__card detail-card ref-verif-lift-card ref-verif-lift-card--visible {extraClass}".Trim());
+        builder.OpenComponent<ReferenceVerificationIllustratedBand>(2);
+        builder.AddAttribute(3, nameof(ReferenceVerificationIllustratedBand.ImageUrl), CandidateIllustratedImages.RefVerifRequest);
+        builder.CloseComponent();
+        builder.OpenElement(4, "div");
+        builder.AddAttribute(5, "class", "ref-verif-request__body");
+        builder.OpenElement(6, "p");
+        builder.AddAttribute(7, "class", "state-message");
+        builder.AddContent(8, message);
+        builder.CloseElement();
+        if (actions is not null)
+        {
+            builder.AddContent(9, actions);
+        }
+        builder.CloseElement();
+        builder.CloseElement();
+    };
 
     private async Task SendAsync()
     {
@@ -177,6 +222,8 @@
                 true);
             if (ok)
             {
+                _sentReferentName = string.IsNullOrWhiteSpace(_name) ? Culture["RefVerif.Request.SentNameFallback"] : _name.Trim();
+                _confirmAnimate = false;
                 _sent = true;
                 return;
             }

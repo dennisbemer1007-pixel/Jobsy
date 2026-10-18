@@ -322,6 +322,10 @@ internal static class ReferenceVerificationDemoSeeder
         else
         {
             pending.ReferentName = "Mark Peters";
+            pending.Status = WorkExperienceReferenceStatus.Pending;
+            pending.CompletedAtUtc = null;
+            pending.RemovedByCandidate = false;
+            pending.UpdatedAtUtc = now;
         }
 
         var expired = await db.WorkExperienceReferenceRequests
@@ -355,6 +359,81 @@ internal static class ReferenceVerificationDemoSeeder
                 ExpiresAtUtc = now.AddDays(-2),
                 CreatedAtUtc = now.AddDays(-20)
             });
+        }
+
+        // Playwright flows add tokens; reset demo user to the seeded set on each CI boot.
+        var keepRequestIds = new[]
+        {
+            ReferenceVerificationDemoIds.ConfirmedRequestId,
+            ReferenceVerificationDemoIds.PendingRequestId,
+            ReferenceVerificationDemoIds.ExpiredRequestId
+        };
+        var extraRequests = await db.WorkExperienceReferenceRequests
+            .Where(r => r.UserId == userId && !keepRequestIds.Contains(r.Id))
+            .ToListAsync();
+        if (extraRequests.Count > 0)
+        {
+            var extraIds = extraRequests.Select(r => r.Id).ToList();
+            db.WorkExperienceReferenceTokens.RemoveRange(
+                await db.WorkExperienceReferenceTokens.Where(t => extraIds.Contains(t.RequestId)).ToListAsync());
+            db.WorkExperienceReferenceRequests.RemoveRange(extraRequests);
+        }
+
+        var openHash = VerificationCodes.Hash(ReferenceVerificationDemoIds.OpenReferentToken);
+        var expiredHash = VerificationCodes.Hash(ReferenceVerificationDemoIds.ExpiredReferentToken);
+
+        var monthStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthTokens = await db.WorkExperienceReferenceTokens
+            .Where(t => t.Request.UserId == userId && t.CreatedAtUtc >= monthStart)
+            .Where(t => !(t.RequestId == ReferenceVerificationDemoIds.PendingRequestId && t.TokenHash == openHash))
+            .ToListAsync();
+        if (monthTokens.Count > 0)
+        {
+            db.WorkExperienceReferenceTokens.RemoveRange(monthTokens);
+        }
+
+        var strayExpiredTokens = await db.WorkExperienceReferenceTokens
+            .Where(t => t.RequestId == ReferenceVerificationDemoIds.ExpiredRequestId && t.TokenHash != expiredHash)
+            .ToListAsync();
+        if (strayExpiredTokens.Count > 0)
+        {
+            db.WorkExperienceReferenceTokens.RemoveRange(strayExpiredTokens);
+        }
+
+        var hasExpired = await db.WorkExperienceReferenceTokens.AnyAsync(
+            t => t.RequestId == ReferenceVerificationDemoIds.ExpiredRequestId && t.TokenHash == expiredHash);
+        if (!hasExpired)
+        {
+            db.WorkExperienceReferenceTokens.Add(new WorkExperienceReferenceToken
+            {
+                Id = Guid.NewGuid(),
+                RequestId = ReferenceVerificationDemoIds.ExpiredRequestId,
+                TokenHash = expiredHash,
+                ExpiresAtUtc = now.AddDays(-2),
+                CreatedAtUtc = now.AddDays(-20)
+            });
+        }
+        var hasOpen = await db.WorkExperienceReferenceTokens.AnyAsync(
+            t => t.RequestId == ReferenceVerificationDemoIds.PendingRequestId && t.TokenHash == openHash);
+        if (!hasOpen)
+        {
+            db.WorkExperienceReferenceTokens.Add(new WorkExperienceReferenceToken
+            {
+                Id = Guid.NewGuid(),
+                RequestId = ReferenceVerificationDemoIds.PendingRequestId,
+                TokenHash = openHash,
+                ExpiresAtUtc = now.AddDays(11),
+                CreatedAtUtc = now.AddDays(-3)
+            });
+        }
+
+        var openReferentTokens = await db.WorkExperienceReferenceTokens
+            .Where(t => t.RequestId == ReferenceVerificationDemoIds.PendingRequestId && t.TokenHash == openHash)
+            .ToListAsync();
+        foreach (var token in openReferentTokens)
+        {
+            token.UsedAtUtc = null;
+            token.ExpiresAtUtc = now.AddDays(11);
         }
     }
 }

@@ -114,6 +114,13 @@ internal static class UiStringsReferenceVerification
             "Verstuur verzoek", "Send request");
         Add("RefVerif.Request.Sent",
             "De mail is onderweg.", "The email is on its way.");
+        Add("RefVerif.Request.SentToName",
+            "Verzoek verstuurd naar {0}", "Request sent to {0}");
+        Add("RefVerif.Request.SentValidity",
+            "14 dagen geldig, we sturen één herinnering.",
+            "Valid for 14 days; we send one reminder.");
+        Add("RefVerif.Request.SentNameFallback",
+            "je referent", "your reference");
         Add("RefVerif.Request.Back",
             "Terug naar paspoort", "Back to passport");
         Add("RefVerif.Request.NotFound",

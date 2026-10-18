@@ -12,10 +12,11 @@
         @if (VerifiedCompetences.Count > 0)
         {
             <div class="ref-verif-employer-preview__chips" role="list">
-                @foreach (var item in VerifiedCompetences)
+                @for (var i = 0; i < VerifiedCompetences.Count; i++)
                 {
-                    <span class="ref-verif-employer-preview__chip" role="listitem">
-                        <span class="ref-verif-employer-preview__check" aria-hidden="true">✓</span>
+                    var item = VerifiedCompetences[i];
+                    <span class="ref-verif-employer-preview__chip" role="listitem" style="--ref-verif-chip-i: @i">
+                        <ReferenceVerificationDrawCheck Size="sm" Animate="true" CssClass="ref-verif-employer-preview__check" />
                         @item.Label
                     </span>
                 }
