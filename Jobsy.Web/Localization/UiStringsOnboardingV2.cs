@@ -271,8 +271,8 @@ internal static class UiStringsOnboardingV2
         en["Onboarding.FinaleV2.Highlight.Title"] = "{0} jobs already fit you";
         nl["Onboarding.FinaleV2.Highlight.Sub"] = "Allemaal binnen {0} minuten reizen vanaf {1}";
         en["Onboarding.FinaleV2.Highlight.Sub"] = "All within {0} minutes travel from {1}";
-        nl["Onboarding.FinaleV2.Highlight.Link"] = "Bekijk ze →";
-        en["Onboarding.FinaleV2.Highlight.Link"] = "View them →";
+        nl["Onboarding.FinaleV2.Highlight.Link"] = "Bekijk ze";
+        en["Onboarding.FinaleV2.Highlight.Link"] = "View them";
         nl["Onboarding.FinaleV2.Insights.Title"] = "Dit valt ons nu al op";
         en["Onboarding.FinaleV2.Insights.Title"] = "This already stands out";
         nl["Onboarding.FinaleV2.Insights.Lead"] = "Een eerste indruk uit je Quick-Scan. Met de verdieping wordt dit scherper.";

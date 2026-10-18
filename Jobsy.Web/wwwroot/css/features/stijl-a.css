@@ -1,0 +1,138 @@
+/* Direction A — warm humanistisch (logged-in app + auth shells). Public .pub-theme unchanged. */
+
+html:not(.pub-theme) body,
+.app-shell,
+.wg-shell,
+.admin-shell {
+  font-family: var(--font-body);
+}
+
+/* Headings: Fraunces in candidate journeys; employer/admin page title only */
+.app-shell :is(h1, .journey-page__title, .carriere-hero__title, .ob-finale__intro h1, .ob-wizard__content h1) {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.wg-shell :is(.wg-page-header h1, .wg-page-header__titles h1),
+.admin-shell :is(.admin-page__header h1, .admin-page__header h2) {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.wg-shell :not(.wg-page-header) :is(h2, h3, h4, h5, h6, p, label, button, input, select, textarea, .wg-topbar),
+.admin-shell :not(.admin-page__header) :is(h2, h3, h4, h5, h6, p, label, button, input, select, textarea, .admin-topbar) {
+  font-family: var(--font-body);
+}
+
+/* Sentence case labels (no ALL CAPS chrome) */
+.app-shell :is(.form-label, .field-label, .kb-address__label, .swipe-card__why-label, .status-pill, .wg-page-header small),
+.wg-shell :is(.form-label, .field-label, .insights-kpi__label),
+.admin-shell :is(.form-label, .field-label) {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+}
+
+/* Flat surfaces */
+.app-shell :is(.card, .panel, .swipe-card, .kb-card, .kompas-band, .ob-wizard__card, .carriere-card, .passport-card),
+.app-shell :is(.btn, .btn-primary, .btn-secondary, .engagement-btn, .login-submit),
+.wg-shell :is(.wg-card, .wg-panel, .btn, .btn-primary, .btn-secondary),
+.admin-shell :is(.admin-card, .admin-panel, .btn, .btn-primary, .btn-secondary) {
+  box-shadow: none;
+}
+
+.app-shell .card,
+.app-shell .swipe-card,
+.app-shell .kompas-band,
+.app-shell .carriere-card,
+.wg-shell .wg-card,
+.admin-shell .admin-card {
+  border-radius: var(--r-lg);
+}
+
+.app-shell :is(.btn, .btn-primary, .btn-secondary, .engagement-btn, .login-submit, .provider-btn),
+.wg-shell :is(.btn, .btn-primary, .btn-secondary),
+.admin-shell :is(.btn, .btn-primary, .btn-secondary),
+.app-shell :is(input, select, textarea, .form-control) {
+  border-radius: var(--r-md);
+}
+
+.app-shell :is(.status-pill, .kb-badges__chip, .tag, .badge) {
+  border-radius: var(--r-sm);
+}
+
+/* Primary / secondary / tertiary buttons */
+.app-shell .btn-primary,
+.app-shell .engagement-btn--primary,
+.app-shell .login-submit,
+.wg-shell .btn-primary,
+.admin-shell .btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border: 1.5px solid var(--brand);
+  box-shadow: none;
+}
+
+.app-shell .btn-secondary,
+.wg-shell .btn-secondary,
+.admin-shell .btn-secondary {
+  background: transparent;
+  color: var(--brand);
+  border: 1.5px solid var(--brand);
+  box-shadow: none;
+}
+
+.app-shell .btn-link,
+.app-shell .ob-wizard__ghost,
+.app-shell .ob-finale__link,
+.app-shell a.tertiary-link {
+  background: none;
+  border: none;
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+  box-shadow: none;
+}
+
+/* Popups / menus / modals */
+.share-modal,
+.lobsy-dialog,
+.dropdown-menu,
+.cookie-consent--expanded,
+.admin-drawer,
+.wg-mobile-nav {
+  box-shadow: var(--shadow-pop);
+}
+
+/* Remove decorative blurred blobs on auth/start (keep illustrated hero fades) */
+.pub-theme .au-blob {
+  display: none;
+}
+
+/* Employer/admin: businesslike, no mascot watermarks in shell */
+.wg-shell .lobsy-watermarks,
+.admin-shell .lobsy-watermarks {
+  display: none;
+}
+
+.wg-shell .wg-topbar,
+.admin-shell .admin-topbar {
+  border-radius: 0;
+}
+
+.wg-shell .wg-card,
+.admin-shell .admin-card {
+  border-radius: var(--r-lg);
+}
+
+/* Hide emoji used as UI icons in the logged-in app (user content unchanged) */
+.app-shell .ui-emoji,
+.app-shell [data-ui-emoji="true"] {
+  display: none;
+}
+
+.app-shell .ui-emoji + .ui-emoji-fallback,
+.app-shell [data-ui-emoji="true"] + .ui-emoji-fallback {
+  display: inline-flex;
+}

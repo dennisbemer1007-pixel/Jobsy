@@ -1,3 +1,5 @@
+@import url("tokens.css");
+
 :root {
     /* Lobsy — pearl shell surfaces + deep navy actions */
     --pearl: #f7f4f0;
@@ -33,10 +35,11 @@
     --warn: #a65b00;
     --warn-soft: #fff8e7;
     --hover: #f0ebe6;
-    --shadow: 0 1px 2px rgba(15, 45, 92, 0.06);
-    --shadow-lg: 0 12px 32px rgba(15, 45, 92, 0.12);
-    --radius: 12px;
-    --radius-sm: 8px;
+    --shadow: none;
+    --shadow-lg: var(--shadow-pop);
+    --radius: var(--r-md);
+    --radius-sm: var(--r-sm);
+    --radius-lg: var(--r-lg);
     --map-land: #f8f4f0;
     --map-pin: #22c55e;
     --map-pin-deep: #16a34a;

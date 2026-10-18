@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "a83a058190afcc117c6ed5f502257f1e8c6a8dfd2a6efbce6d7b02dc35417b05",
+    "sha256": "125df1adae9e59ef04b585e718182db6f47ae4b53980e15230d5577f249f76d4",
     "v": "20261017-03"
   },
   "css/critical.css": {
@@ -171,6 +171,10 @@
     "sha256": "cdd2f33c74d431384e54de029ec7984ec3f30660aad88c34eba95f89cdd963f6",
     "v": "20261017-02"
   },
+  "css/features/stijl-a.css": {
+    "sha256": "e0bb475bbccb8552fdc84cae719f41eb995cbdcc7a3d64acc8d4289012a2a31e",
+    "v": "20261018-01"
+  },
   "css/features/testresultaten.css": {
     "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
     "v": "20261004-10"
@@ -190,6 +194,10 @@
   "css/features/werkgever.css": {
     "sha256": "51897e01c27aab8b3231b92a87ba1fe068be7e5b9a5ee9836f01892e2a444baf",
     "v": "20261017-19"
+  },
+  "css/tokens.css": {
+    "sha256": "47caf563d4bcf6870b008e1cabf43a9134a5e3a87a0d4d552e2ed3eb42ca9365",
+    "v": "20261018-01"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
