@@ -105,6 +105,10 @@
 }
 
 /* —— Start page illustrated hero —— */
+.pub-theme .pub-landing__hero-art-band {
+  display: none;
+}
+
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
   position: relative;
   min-height: 520px;
@@ -416,12 +420,69 @@
 }
 
 @media (max-width: 639px) {
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
+    padding: 1.25rem 1rem 1.75rem;
+  }
+}
+
+/* Mobile start hero: headline on cream, art strip, then copy — no text over illustration. */
+@media (max-width: 767px) {
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
     min-height: 0;
-    background-size: 120% auto;
+    background: var(--pearl);
+    background-image: none;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after {
+    display: none;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
-    padding: 1.25rem 1rem 1.75rem;
+    padding: 1.15rem 1rem 1.5rem;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: none;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-head {
+    background: var(--pearl);
+    padding-bottom: 0.35rem;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-art-band {
+    display: block;
+    width: 100vw;
+    max-width: none;
+    margin-inline: calc(50% - 50vw);
+    height: clamp(180px, 54vw, 220px);
+    flex-shrink: 0;
+    background: var(--pub-hero-art) no-repeat center 38% / auto 108%;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 14%,
+      #000 86%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 14%,
+      #000 86%,
+      transparent 100%
+    );
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-rest {
+    background: var(--pearl);
+    padding-top: 0.65rem;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__lead {
+    margin-top: 0;
   }
 }
