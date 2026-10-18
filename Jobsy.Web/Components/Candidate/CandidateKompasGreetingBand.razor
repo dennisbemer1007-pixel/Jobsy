@@ -1,0 +1,42 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+<section class="kompas-greet" aria-labelledby="kompas-greet-title">
+    <div class="kompas-greet__copy">
+        <h1 id="kompas-greet-title" class="kompas-greet__title">@Greeting</h1>
+        <p class="kompas-greet__lead">@Culture["Kompas.Greeting.Lead"]</p>
+    </div>
+    <div class="kompas-greet__art" style="@($"background-image:url('{CandidateIllustratedImages.KompasMedallions}')")" aria-hidden="true"></div>
+</section>
+
+@code {
+    [Parameter] public string? FirstName { get; set; }
+
+    private string Greeting
+    {
+        get
+        {
+            var name = string.IsNullOrWhiteSpace(FirstName) ? "" : FirstName.Trim();
+            var hour = DateTime.Now.Hour;
+            if (string.IsNullOrEmpty(name))
+            {
+                return hour switch
+                {
+                    < 12 => Culture["Kompas.Greeting.PlainMorning"],
+                    < 18 => Culture["Kompas.Greeting.PlainAfternoon"],
+                    _ => Culture["Kompas.Greeting.PlainEvening"]
+                };
+            }
+
+            var key = hour switch
+            {
+                < 12 => "Kompas.Greeting.Morning",
+                < 18 => "Kompas.Greeting.Afternoon",
+                _ => "Kompas.Greeting.Evening"
+            };
+            return Culture.Format(key, name);
+        }
+    }
+}

@@ -1,0 +1,50 @@
+/* Banenkaart illustrated list header + compact cards */
+
+.kb-nearby-banner {
+  margin: 0 0 0.75rem;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+}
+
+.kb-nearby-banner__art {
+  height: 88px;
+  background-size: cover;
+  background-position: center;
+}
+
+.kb-nearby-banner__copy {
+  padding: 0.75rem 1rem 0.85rem;
+}
+
+.kb-nearby-banner__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.kb-nearby-banner__sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+@media (min-width: 900px) {
+  .vacancy-pane .kb-nearby-banner {
+    margin-inline: 0.5rem;
+  }
+}
+
+/* Map popup: keep markers visible (top-right anchor) */
+@media (min-width: 900px) {
+  .job-map-popup.maplibregl-popup-anchor-bottom-left,
+  .job-map-popup.maplibregl-popup-anchor-bottom {
+    transform: translate(12px, -12px);
+  }
+
+  .map-pane .maplibregl-popup {
+    max-width: min(340px, calc(100% - 48px));
+  }
+}

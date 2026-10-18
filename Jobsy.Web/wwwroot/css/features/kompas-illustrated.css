@@ -1,0 +1,131 @@
+/* Illustrated Kompas / Paspoort shell */
+
+.kompas-greet {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  border-radius: 20px;
+  padding: 0 0 0 1.75rem;
+  overflow: hidden;
+  min-height: 150px;
+  margin-bottom: 1.25rem;
+}
+
+.kompas-greet__title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.7rem);
+  color: var(--brand);
+}
+
+.kompas-greet__lead {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  max-width: 32rem;
+  font-size: 0.95rem;
+}
+
+.kompas-greet__copy {
+  padding: 1.35rem 0;
+}
+
+.kompas-greet__art {
+  align-self: stretch;
+  width: min(380px, 42%);
+  flex-shrink: 0;
+  background-size: cover;
+  background-position: center 55%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%);
+  mask-image: linear-gradient(90deg, transparent, #000 22%);
+}
+
+.passport-layout__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.kompas-tip {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.kompas-tip__art {
+  height: 120px;
+  background-size: cover;
+  background-position: 30% 25%;
+}
+
+.kompas-tip__body {
+  padding: 0.85rem 1.25rem 1.15rem;
+}
+
+.kompas-tip__eyebrow {
+  margin: 0;
+  color: var(--coral-deep);
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.kompas-tip__text {
+  margin: 0.25rem 0 0.85rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.kompas-tip__cta {
+  font-size: 0.92rem;
+  padding: 0.55rem 1rem;
+}
+
+.passport-page--illustrated .passport-tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.passport-page--illustrated .passport-tab {
+  flex: 1 1 auto;
+  white-space: nowrap;
+  justify-content: center;
+  border-radius: 10px;
+  min-height: 44px;
+  font-size: 0.86rem;
+}
+
+.passport-page--illustrated .passport-tab--active {
+  background: var(--brand);
+  color: #fff;
+}
+
+.profile-page--illustrated .profile-page__header {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .kompas-greet {
+    flex-direction: column-reverse;
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .kompas-greet__art {
+    width: auto;
+    height: 120px;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .kompas-greet__copy {
+    padding: 1rem 1.15rem 1.15rem;
+  }
+}

@@ -1,0 +1,369 @@
+/* Candidate illustrated public pages — login + start (scoped under .pub-theme) */
+
+.pub-theme .au-stage--illustrated {
+  align-items: center;
+  padding: 4.5rem 1.5rem 3rem;
+  background: var(--pearl);
+}
+
+.pub-theme .au-stage--illustrated .au-blob {
+  display: none;
+}
+
+.pub-theme .au-art {
+  position: absolute;
+  bottom: 0;
+  height: min(680px, 72vh);
+  width: min(491px, 38vw);
+  pointer-events: none;
+  background: no-repeat center bottom / auto 100%;
+  -webkit-mask-image: linear-gradient(transparent, #000 18%);
+  mask-image: linear-gradient(transparent, #000 18%);
+}
+
+.pub-theme .au-art--left {
+  left: 0;
+  background-image: var(--au-art-left);
+}
+
+.pub-theme .au-art--right {
+  right: 0;
+  background-image: var(--au-art-right);
+}
+
+.pub-theme .au-art-band {
+  display: none;
+}
+
+.pub-theme .au-card--illustrated {
+  border-radius: 28px;
+  padding: 2rem 2.25rem 0;
+  max-width: 460px;
+}
+
+.pub-theme .au-card--illustrated .au-card__mascot {
+  display: none;
+}
+
+.pub-theme .au-card__strip {
+  margin: 1.35rem -2.25rem 0;
+  padding: 0.85rem 1.25rem 1rem;
+  background: color-mix(in srgb, var(--border) 35%, var(--surface));
+  border-radius: 0 0 28px 28px;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--muted);
+  text-align: center;
+}
+
+.pub-theme .au-card__strip p {
+  margin: 0.35rem 0 0;
+}
+
+.pub-theme .au-card__strip p:first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 1023px) {
+  .pub-theme .au-art--left,
+  .pub-theme .au-art--right {
+    display: none;
+  }
+
+  .pub-theme .au-art-band {
+    display: block;
+    position: absolute;
+    inset-inline: 0;
+    top: var(--pub-header-h, 4.75rem);
+    height: 140px;
+    background: var(--au-art-left) no-repeat center 70% / cover;
+    -webkit-mask-image: linear-gradient(#000, transparent);
+    mask-image: linear-gradient(#000, transparent);
+    pointer-events: none;
+  }
+
+  .pub-theme .au-stage--illustrated {
+    padding-top: 9rem;
+  }
+
+  .pub-theme .au-card--illustrated {
+    padding: 1.65rem 1.25rem 0;
+    border-radius: 22px;
+  }
+
+  .pub-theme .au-card__strip {
+    margin-inline: -1.25rem;
+    border-radius: 0 0 22px 22px;
+  }
+}
+
+/* —— Start page illustrated hero —— */
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
+  position: relative;
+  min-height: 520px;
+  padding: 0;
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface)) var(--pub-hero-art) no-repeat center top / min(1440px, 100%) auto;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 90px;
+  background: linear-gradient(transparent, var(--pearl));
+  pointer-events: none;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
+  position: relative;
+  z-index: 1;
+  padding: 3rem 2rem 2.5rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-copy {
+  max-width: 660px;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__h1 {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.05;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__band-a {
+  background: var(--pearl);
+}
+
+.pub-theme .pub-landing--calm .pub-landing__band-b {
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+  border-block: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.pub-theme .pub-landing--calm .pub-landing__band-c {
+  background: color-mix(in srgb, var(--success) 6%, var(--surface));
+  border-block: 1px solid color-mix(in srgb, var(--success) 12%, var(--border));
+}
+
+.pub-theme .pub-landing--calm .pub-landing__section--steps {
+  padding-block: 2.75rem 2.25rem;
+}
+
+.pub-theme .pub-landing__steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+  margin-top: 1.35rem;
+}
+
+.pub-theme .pub-landing__step-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.pub-theme .pub-landing__step-art {
+  height: 170px;
+  background-size: cover;
+  background-position: center 60%;
+  background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
+}
+
+.pub-theme .pub-landing__step-body {
+  padding: 1.1rem 1.35rem 1.35rem;
+}
+
+.pub-theme .pub-landing__step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--brand);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.pub-theme .pub-landing__step-body h3 {
+  margin: 0.65rem 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.pub-theme .pub-landing__step-body p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.pub-line-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--brand);
+  flex-shrink: 0;
+}
+
+.pub-line-icon svg {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__get-card .pub-line-icon {
+  margin-bottom: 0.85rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__tg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__trust .pub-landing__tgrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.pub-theme .pub-landing__kaart-ill {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  align-items: center;
+  gap: 0.5rem;
+  background: #fef1e1;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.pub-theme .pub-landing__kaart-ill-copy {
+  padding: 2rem 2.25rem;
+}
+
+.pub-theme .pub-landing__kaart-ill-copy h2 {
+  font-size: 1.65rem;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.pub-theme .pub-landing__kaart-ill-copy p {
+  color: var(--muted);
+  margin: 0;
+}
+
+.pub-theme .pub-landing__kaart-ill-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1.1rem 0 1.25rem;
+}
+
+.pub-theme .pub-landing__kaart-ill-modes span {
+  padding: 0.35rem 0.85rem;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--brand);
+}
+
+.pub-theme .pub-landing__kaart-ill-modes span.is-on {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.pub-theme .pub-landing__kaart-ill-art {
+  padding: 1.25rem 1.5rem 1.25rem 0;
+}
+
+.pub-theme .pub-landing__kaart-ill-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__stat-grid {
+  margin-top: 1.1rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__section--ef .pub-landing__ef-grid {
+  align-items: stretch;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__emp-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pub-theme .pub-landing__emp-art {
+  flex: 1;
+  min-height: 170px;
+  background-size: cover;
+  background-position: center 35%;
+  background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
+}
+
+.pub-theme .pub-landing--calm .pub-landing__faq-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.pub-theme .pub-landing__shead--journey {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.pub-theme .pub-landing__journey-cta--head {
+  margin: 0;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__emp-head,
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__h2,
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__lead,
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__emp-list,
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__emp-row,
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__emp-register {
+  padding-inline: 1.75rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__emp-head {
+  padding-top: 1.25rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__emp-register {
+  padding-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .pub-theme .pub-landing__steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pub-theme .pub-landing__kaart-ill {
+    grid-template-columns: 1fr;
+  }
+
+  .pub-theme .pub-landing__kaart-ill-art {
+    padding: 0 1rem 1rem;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__trust .pub-landing__tgrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 639px) {
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
+    min-height: 0;
+    background-size: 120% auto;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
+    padding: 1.25rem 1rem 1.75rem;
+  }
+}

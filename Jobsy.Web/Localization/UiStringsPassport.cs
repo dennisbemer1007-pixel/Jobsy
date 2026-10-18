@@ -34,6 +34,27 @@ public static class UiStringsPassport
 
         Add("Passport.Title",
             "Mijn Lobsy-paspoort", "My Lobsy passport", "Mój paszport Lobsy", "Pașaportul meu Lobsy", "جواز سفر لوبسي");
+        Add("Kompas.Greeting.Morning", "Goedemorgen, {0}", "Good morning, {0}", "Dzień dobry, {0}", "Bună dimineața, {0}", "صباح الخير، {0}");
+        Add("Kompas.Greeting.Afternoon", "Goedemiddag, {0}", "Good afternoon, {0}", "Dzień dobry, {0}", "Bună ziua, {0}", "مساء الخير، {0}");
+        Add("Kompas.Greeting.Evening", "Goedenavond, {0}", "Good evening, {0}", "Dobry wieczór, {0}", "Bună seara, {0}", "مساء الخير، {0}");
+        Add("Kompas.Greeting.PlainMorning", "Goedemorgen", "Good morning", "Dzień dobry", "Bună dimineața", "صباح الخير");
+        Add("Kompas.Greeting.PlainAfternoon", "Goedemiddag", "Good afternoon", "Dzień dobry", "Bună ziua", "مساء الخير");
+        Add("Kompas.Greeting.PlainEvening", "Goedenavond", "Good evening", "Dobry wieczór", "Bună seara", "مساء الخير");
+        Add("Kompas.Greeting.Lead",
+            "Hier zie je wie je bent, welke tests klaar zijn en welke banen bij je passen.",
+            "See who you are, which tests are done and which jobs fit you.",
+            "Zobacz, kim jesteś, które testy są gotowe i które oferty pasują.",
+            "Vezi cine ești, ce teste sunt gata și ce joburi ți se potrivesc.",
+            "اعرف من أنت وأي الاختبارات جاهزة وأي الوظائف تناسبك.");
+        Add("Kompas.Tip.Eyebrow", "Tip van Lobsy", "Tip from Lobsy", "Wskazówka od Lobsy", "Sfat de la Lobsy", "نصيحة من Lobsy");
+        Add("Kompas.Tip.Body",
+            "Vul je paspoort verder aan — werkgevers zien pas iets als jij dat deelt.",
+            "Keep building your passport — employers only see what you choose to share.",
+            "Uzupełniaj paszport — pracodawcy widzą tylko to, czym się dzielisz.",
+            "Completează pașaportul — angajatorii văd doar ce alegi să arăți.",
+            "أكمل جوازك — أصحاب العمل يرون فقط ما تشاركه.");
+        Add("Kompas.Tip.Cta", "Paspoort aanvullen", "Complete passport", "Uzupełnij paszport", "Completează pașaportul", "أكمل الجواز");
+        Add("Discovery.NearbyTitle", "Banen bij jou in de buurt", "Jobs near you", "Oferty w Twojej okolicy", "Joburi aproape de tine", "وظائف قربك");
         Add("Passport.Banner",
             "LOBSY PASPOORT", "LOBSY PASSPORT", "PASZPORT LOBSY", "PAȘAPORT LOBSY", "جواز لوبسي");
         Add("Passport.MemberNo",
