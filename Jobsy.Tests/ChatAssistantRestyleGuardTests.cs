@@ -33,6 +33,11 @@ public class ChatAssistantRestyleGuardTests
         Assert.DoesNotContain("LobsyCoachAvatar", mock, StringComparison.Ordinal);
         Assert.Contains("lobsy-coach-cta__btn--warm", vacancy, StringComparison.Ordinal);
         Assert.Contains("Never use numeric scores", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/MockInterviewService.cs")), StringComparison.Ordinal);
+        Assert.Contains("mock-interview-compose__restart", mock, StringComparison.Ordinal);
+
+        Assert.Contains(".app-shell:has(.kb-detail) .lobsy-coach-dock", css, StringComparison.Ordinal);
+        Assert.DoesNotContain(".app-shell:has(.kb-detail) .lobsy-coach-cta", css, StringComparison.Ordinal);
+        Assert.Contains("resize: none", css, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

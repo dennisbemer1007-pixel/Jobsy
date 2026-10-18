@@ -7370,8 +7370,8 @@ a.engagement-btn {
 
 .mock-interview-compose__row {
     display: flex;
-    align-items: flex-end;
-    gap: 0.4rem;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .mock-interview-compose__row textarea {
@@ -7401,9 +7401,32 @@ a.engagement-btn {
     justify-content: flex-start;
 }
 
+.mock-interview-compose__restart {
+    margin: 0;
+    padding: 0.35rem 0.65rem;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--brand);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.mock-interview-compose__restart:hover:not(:disabled),
+.mock-interview-compose__restart:focus-visible:not(:disabled) {
+    background: color-mix(in srgb, var(--brand) 8%, transparent);
+}
+
+.mock-interview-compose__restart:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 .mock-interview-compose textarea {
     width: 100%;
-    resize: vertical;
+    resize: none;
     min-height: 3.2rem;
     font: inherit;
     padding: 0.65rem 0.75rem;
@@ -21749,11 +21772,9 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     padding: 0 0.75rem 0.75rem;
 }
 
-/* Vacancy detail + notifications: inline tips only — no floating coach tab overlapping sticky UI. */
+/* Vacancy detail + notifications: mock-interview pill stays inline; hide floating coach only. */
 .app-shell:has(.kb-detail) .lobsy-coach-dock,
 .app-shell:has(.notifications-page) .lobsy-coach-dock,
-.app-shell:has(.kb-detail) .lobsy-coach-cta,
-.app-shell:has(.notifications-page) .lobsy-coach-cta,
 .app-shell:has(.kb-detail) .lobsy-assistant-tab--edge,
 .app-shell:has(.notifications-page) .lobsy-assistant-tab--edge {
     display: none !important;
