@@ -1,7 +1,7 @@
 # PR-only failures vs acceptatie baseline (acceptatie PR tests on same base)
-# PR run: 39164317617 (commit 123406b37, pre asset-versions sha fix)
+# PR run: 39166472981 (commit 0ca009794, r4 datetime + merge acceptatie 05d8f2a6)
 # Acceptatie run: 39159428434
-# Regenerate: PR_CI_RUN_ID=<id> ACCEPTATIE_CI_RUN_ID=39159428434 tools/ci/compare-pr-acceptatie-failures.sh ci-pr-only-failures.txt
+# Regenerate: PR_CI_RUN_ID=39166472981 ACCEPTATIE_CI_RUN_ID=39159428434 tools/ci/compare-pr-acceptatie-failures.sh ci-pr-only-failures.txt
 #
-# After asset-versions.json sync (admin.css r3): expect GEEN except known acceptatie flakes.
-Jobsy.Tests.AdminRun5Tests.Hospital_menu_titles_are_not_vacancies_and_versions_only_increase
+# Result: GEEN (comm found no failure FQNs on PR that were absent on acceptatie).
+# Note: PR run 39166472981 exited with a test-host hang dump (70 cascading failures); diff script compares extracted FQNs only.
