@@ -22,13 +22,6 @@ public static class TestReflectionTemplateBuilder
             .ThenBy(t => t.Code, StringComparer.Ordinal)
             .ToList();
         var themes = BuildThemes(ranked, lang).Take(3).ToList();
-        while (themes.Count < 3 && ranked.Count > themes.Count)
-        {
-            var trait = ranked[themes.Count];
-            themes.Add(new TestReflectionTheme(
-                ThemeTitle(trait.Code, lang),
-                SummaryLine(trait, lang)));
-        }
 
         var practice = BuildPractice(ranked, lang);
         var watch = BuildWatch(ranked, lang);
@@ -69,104 +62,51 @@ public static class TestReflectionTemplateBuilder
         IReadOnlyList<TestReflectionTrait> ranked,
         string lang)
     {
-        foreach (var trait in ranked.Where(t => t.Percent >= DnaSummarySentences.MidMin).Take(3))
+        foreach (var trait in ranked.Where(t => t.Percent >= DnaSummarySentences.HighMin).Take(3))
         {
             yield return new TestReflectionTheme(
                 ThemeTitle(trait.Code, lang),
-                SummaryLine(trait, lang));
+                StrengthSummary(trait, lang));
         }
     }
 
-    private static string SummaryLine(TestReflectionTrait trait, string lang)
-    {
-        if (lang == "en")
-        {
-            return EnSummary(trait);
-        }
-
-        return DnaSummarySentences.Competence(trait.Code, trait.Percent) switch
-        {
-            { Length: > 0 } s when trait.Code is CompetencyTestCatalog.Samenwerken
-                or CompetencyTestCatalog.Resultaatgerichtheid
-                or CompetencyTestCatalog.Stressbestendigheid
-                or CompetencyTestCatalog.Innovatie
-                or CompetencyTestCatalog.Extraversie => Shorten(s),
-            _ => NlSummary(trait)
-        };
-    }
-
-    private static string Shorten(string sentence)
-    {
-        var idx = sentence.IndexOf('.');
-        return idx > 0 ? sentence[..(idx + 1)] : sentence;
-    }
+    private static string StrengthSummary(TestReflectionTrait trait, string lang)
+        => lang == "en" ? EnSummary(trait) : NlSummary(trait);
 
     private static string NlSummary(TestReflectionTrait trait)
         => trait.Code switch
         {
-            CompetencyTestCatalog.Samenwerken =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "Je let op hoe het met anderen gaat, en dat merken mensen."
-                    : "Je houdt rekening met anderen, ook als het druk is.",
-            CompetencyTestCatalog.Resultaatgerichtheid =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "Je werkt precies en levert iets af waar je achter staat."
-                    : "Je wilt klussen netjes afronden voordat je verder gaat.",
-            CompetencyTestCatalog.Stressbestendigheid =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "Je blijft rustig bij gewone drukte en houdt vast aan wat werkt."
-                    : "Je zoekt houvast als het druk wordt.",
-            CompetencyTestCatalog.Innovatie =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "Je zoekt vanzelf een andere route als iets vastloopt."
-                    : "Je staat open voor verbeteringen als het echt nodig is.",
-            CompetencyTestCatalog.Extraversie =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "Contact met mensen geeft je energie op een werkdag."
-                    : "Je kunt goed samenwerken, ook als je liever niet de hele dag praat.",
-            _ => ValuesOrCultureSummary(trait, "nl")
+            CompetencyTestCatalog.Samenwerken => "Je let op hoe het met anderen gaat, en dat merken mensen.",
+            CompetencyTestCatalog.Resultaatgerichtheid => "Je werkt precies en levert iets af waar je achter staat.",
+            CompetencyTestCatalog.Stressbestendigheid => "Je blijft rustig bij gewone drukte en houdt vast aan wat werkt.",
+            CompetencyTestCatalog.Innovatie => "Je zoekt vanzelf een andere route als iets vastloopt.",
+            CompetencyTestCatalog.Extraversie => "Contact met mensen geeft je energie op een werkdag.",
+            _ => ValuesOrCultureStrengthSummary(trait, "nl")
         };
 
     private static string EnSummary(TestReflectionTrait trait)
         => trait.Code switch
         {
-            CompetencyTestCatalog.Samenwerken =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "You notice how others are doing, and people feel that."
-                    : "You take others into account, even when it is busy.",
-            CompetencyTestCatalog.Resultaatgerichtheid =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "You work carefully and deliver something you stand behind."
-                    : "You like to finish tasks neatly before moving on.",
-            CompetencyTestCatalog.Stressbestendigheid =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "You stay calm in everyday pressure and stick with what works."
-                    : "You look for stability when things speed up.",
-            CompetencyTestCatalog.Innovatie =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "You naturally look for another route when something gets stuck."
-                    : "You are open to improvements when they are really needed.",
-            CompetencyTestCatalog.Extraversie =>
-                trait.Percent >= DnaSummarySentences.HighMin
-                    ? "Contact with people gives you energy on a workday."
-                    : "You work well with others even if you prefer not to talk all day.",
-            _ => ValuesOrCultureSummary(trait, "en")
+            CompetencyTestCatalog.Samenwerken => "You notice how others are doing, and people feel that.",
+            CompetencyTestCatalog.Resultaatgerichtheid => "You work carefully and deliver something you stand behind.",
+            CompetencyTestCatalog.Stressbestendigheid => "You stay calm in everyday pressure and stick with what works.",
+            CompetencyTestCatalog.Innovatie => "You naturally look for another route when something gets stuck.",
+            CompetencyTestCatalog.Extraversie => "Contact with people gives you energy on a workday.",
+            _ => ValuesOrCultureStrengthSummary(trait, "en")
         };
 
-    private static string ValuesOrCultureSummary(TestReflectionTrait trait, string lang)
+    private static string ValuesOrCultureStrengthSummary(TestReflectionTrait trait, string lang)
     {
         if (SchwartzValuesCatalog.CategoryCodes.Contains(trait.Code, StringComparer.OrdinalIgnoreCase))
         {
-            var nl = DnaSummarySentences.Values(trait.Code);
-            return lang == "en" ? EnValues(trait.Code) : nl;
+            return lang == "en" ? EnValues(trait.Code) : DnaSummarySentences.Values(trait.Code);
         }
 
         if (CulturePersonalityCatalog.CultureDimensionCodes.Contains(trait.Code, StringComparer.OrdinalIgnoreCase))
         {
-            var high = trait.Percent >= 60;
             return lang == "en"
-                ? EnCulture(trait.Code, high)
-                : DnaSummarySentences.Culture(trait.Code, trait.Percent);
+                ? EnCulture(trait.Code, high: true)
+                : DnaSummarySentences.Culture(trait.Code, Math.Max(trait.Percent, 70));
         }
 
         if (CareerTestCatalog.RiasecCodes.Contains(trait.Code, StringComparer.OrdinalIgnoreCase))
@@ -175,8 +115,8 @@ public static class TestReflectionTemplateBuilder
         }
 
         return lang == "en"
-            ? "This stands out in how you answered."
-            : "Dit valt op in hoe je antwoordde.";
+            ? "This stands out as a strength in how you answered."
+            : "Dit valt op als sterke kant in hoe je antwoordde.";
     }
 
     private static IReadOnlyList<string> BuildPractice(
@@ -244,17 +184,40 @@ public static class TestReflectionTemplateBuilder
             gives.Add(lang == "en" ? "Clear agreements for the day" : "Duidelijke afspraken voor de dag");
         }
 
-        var drains = ranked.Where(t => t.Percent < DnaSummarySentences.MidMin).Take(3)
-            .SelectMany(t => EnergyDrainPool(t.Code, lang).Take(1))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(3)
-            .ToList();
+        var drains = new List<string>();
+        foreach (var trait in ranked.OrderBy(t => t.Percent))
+        {
+            foreach (var line in EnergyDrainPool(trait.Code, lang))
+            {
+                if (drains.Any(d => d.Equals(line, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                drains.Add(line);
+                if (drains.Count >= 3)
+                {
+                    break;
+                }
+            }
+
+            if (drains.Count >= 3)
+            {
+                break;
+            }
+        }
+
         if (drains.Count == 0)
         {
             drains.Add(lang == "en" ? "Constantly switching approach" : "Steeds van aanpak wisselen");
         }
 
-        return (gives, drains);
+        while (drains.Count < 2)
+        {
+            drains.Add(lang == "en" ? "Haste at the expense of accuracy" : "Haast ten koste van zorgvuldigheid");
+        }
+
+        return (gives, drains.Take(3).ToList());
     }
 
     private static (string Title, string Body) BuildEnvironment(

@@ -22,6 +22,12 @@ public static class UiStringsTestReflection
         Add("TestReflection.PracticeLabel", "Sterk in de praktijk", "Strong in practice", "Strong in practice", "Strong in practice", "Strong in practice");
         Add("TestReflection.WatchLabel", "Waar je op let", "What to watch for", "What to watch for", "What to watch for", "What to watch for");
         Add("TestReflection.EnergyLabel", "Energie", "Energy", "Energy", "Energy", "Energy");
+        Add("TestReflection.EnergyHeading",
+            "Wat je oplaadt en wat je leegtrekt",
+            "What charges you and what drains you",
+            "What charges you and what drains you",
+            "What charges you and what drains you",
+            "What charges you and what drains you");
         Add("TestReflection.EnergyGives", "Geeft energie", "Gives energy", "Gives energy", "Gives energy", "Gives energy");
         Add("TestReflection.EnergyDrains", "Kost energie", "Drains energy", "Drains energy", "Drains energy", "Drains energy");
         Add("TestReflection.EnvironmentLabel", "Waar je tot je recht komt", "Where you thrive", "Where you thrive", "Where you thrive", "Where you thrive");
@@ -54,5 +60,35 @@ public static class UiStringsTestReflection
         Add("TestReflection.AboutAccordion", "Over deze test", "About this test", "About this test", "About this test", "About this test");
         Add("TestReflection.AboutAccordionHint", "model, bronnen en hoe we dit schrijven", "model, sources and how we write this", "model, sources and how we write this", "model, sources and how we write this", "model, sources and how we write this");
         Add("TestReflection.Bridge.Cta", "Bekijk wat je krijgt", "See what you get", "See what you get", "See what you get", "See what you get");
+        Add("TestReflection.Bridge.Benefit.Facets",
+            "Per eigenschap de kanten eronder, zodat je ziet wáár je kracht precies zit",
+            "For each trait, the facets underneath so you see exactly where your strength sits",
+            "For each trait, the facets underneath so you see exactly where your strength sits",
+            "For each trait, the facets underneath so you see exactly where your strength sits",
+            "For each trait, the facets underneath so you see exactly where your strength sits");
+        Add("TestReflection.Bridge.Benefit.Comparison",
+            "Hoe je je verhoudt tot anderen die de test deden",
+            "How you compare to others who took the test",
+            "How you compare to others who took the test",
+            "How you compare to others who took the test",
+            "How you compare to others who took the test");
+        Add("TestReflection.Bridge.Benefit.ActionPlan",
+            "Een actieplan met drie concrete stappen",
+            "An action plan with three concrete steps",
+            "An action plan with three concrete steps",
+            "An action plan with three concrete steps",
+            "An action plan with three concrete steps");
+        Add("TestReflection.Bridge.Benefit.Pdf",
+            "Een rapport als PDF voor je sollicitaties",
+            "A report as a PDF for your applications",
+            "A report as a PDF for your applications",
+            "A report as a PDF for your applications",
+            "A report as a PDF for your applications");
+        Add("TestReflection.Bridge.Meta",
+            "{0} vragen · ca. {1} min · eenmalig € {2} · {3}",
+            "{0} questions · approx. {1} min · one-off € {2} · {3}",
+            "{0} questions · approx. {1} min · one-off € {2} · {3}",
+            "{0} questions · approx. {1} min · one-off € {2} · {3}",
+            "{0} questions · approx. {1} min · one-off € {2} · {3}");
     }
 }

@@ -654,18 +654,39 @@
 }
 
 .test-mirror__hero {
+    position: relative;
     border-radius: 1.125rem;
     overflow: hidden;
     border: 1px solid #dde6f1;
-    background: linear-gradient(180deg, #eef3fa 0%, #f7f1e8 100%);
-    min-block-size: 9rem;
+    background: #eef3fa url("/images/test-reflection/band.jpg") no-repeat center bottom / cover;
+    min-block-size: 14.5rem;
+}
+
+.test-mirror__hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse 62% 78% at 50% 28%,
+        rgba(238, 243, 250, 0.94) 0%,
+        rgba(238, 243, 250, 0.72) 42%,
+        transparent 72%
+    );
 }
 
 .test-mirror__hero-inner {
-    padding: 1.75rem 1.25rem 1.5rem;
+    position: relative;
+    z-index: 1;
+    padding: 2rem 1.25rem 1.25rem;
     text-align: center;
     max-inline-size: 36rem;
     margin-inline: auto;
+}
+
+.test-mirror__hero-art {
+    display: none;
 }
 
 .test-mirror__badge {
@@ -754,6 +775,71 @@
     padding: 1.15rem 1.25rem;
 }
 
+.test-mirror__card--spot {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+}
+
+.test-mirror__card-main {
+    position: relative;
+    z-index: 1;
+    padding: 1.15rem 1.25rem;
+    max-inline-size: 100%;
+}
+
+.test-mirror__card-spot {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.22;
+    background-repeat: no-repeat;
+    background-size: cover;
+    -webkit-mask-image: radial-gradient(ellipse 90% 90% at 100% 100%, #000 25%, transparent 72%);
+    mask-image: radial-gradient(ellipse 90% 90% at 100% 100%, #000 25%, transparent 72%);
+}
+
+.test-mirror__card--spot-practice .test-mirror__card-spot {
+    inline-size: 8.5rem;
+    block-size: 6rem;
+    inset-block-end: -0.35rem;
+    inset-inline-end: -0.5rem;
+    background-image: url("/images/test-reflection/band.jpg");
+    background-position: 8% 100%;
+}
+
+.test-mirror__card--spot-watch .test-mirror__card-spot {
+    inline-size: 7.5rem;
+    block-size: 5.25rem;
+    inset-block-end: 0;
+    inset-inline-start: -0.25rem;
+    opacity: 0.16;
+    background-image: url("/images/test-reflection/band-mob.jpg");
+    background-position: 20% 100%;
+    -webkit-mask-image: radial-gradient(ellipse 90% 90% at 0% 100%, #000 20%, transparent 70%);
+    mask-image: radial-gradient(ellipse 90% 90% at 0% 100%, #000 20%, transparent 70%);
+}
+
+.test-mirror__card--spot-energy .test-mirror__card-spot {
+    inline-size: 9rem;
+    block-size: 6.5rem;
+    inset-block-end: -0.5rem;
+    inset-inline-end: -0.75rem;
+    opacity: 0.2;
+    background-image: url("/images/test-reflection/band.jpg");
+    background-position: 92% 100%;
+}
+
+.test-mirror__card--spot-environment .test-mirror__card-spot {
+    inline-size: 10rem;
+    block-size: 7.5rem;
+    inset-block-end: -0.25rem;
+    inset-inline-end: -0.35rem;
+    opacity: 0.24;
+    background-image: url("/images/test-reflection/left.jpg");
+    background-position: 55% 100%;
+}
+
 .test-mirror__card small {
     display: block;
     font-size: 0.74rem;
@@ -818,9 +904,26 @@
 }
 
 .test-mirror__energy h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
     margin: 0 0 0.45rem;
     font-size: 0.92rem;
     color: var(--brand);
+}
+
+.test-mirror__energy-icon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    color: var(--brand);
+}
+
+.test-mirror__energy-icon svg {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
 }
 
 .test-mirror__energy ul {
@@ -833,12 +936,31 @@
 }
 
 .test-mirror__dream {
+    display: flex;
+    gap: 0.65rem;
+    align-items: flex-start;
     margin: 0.85rem 0 0;
     padding: 0.75rem 0.85rem;
     border-radius: 0.75rem;
     background: #eef3fa;
     font-size: 0.92rem;
     color: #24364f;
+}
+
+.test-mirror__dream-icon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: 0.55rem;
+    background: #fff;
+    color: var(--brand);
+}
+
+.test-mirror__dream-icon svg {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
 }
 
 .test-mirror__feedback {
@@ -881,14 +1003,57 @@
 
 .test-mirror-bridge {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 1.25rem;
+    grid-template-columns: 12.5rem 1fr min(16rem, 100%);
+    gap: 1.35rem 1.5rem;
     align-items: center;
     margin-block: 0.5rem 1.75rem;
     padding: 1.35rem 1.5rem;
     border-radius: 1.125rem;
     border: 1px solid #eadcc8;
     background: #fdf6ec;
+}
+
+.test-mirror-bridge__pic {
+    block-size: 9.5rem;
+    border-radius: 0.875rem;
+    background: url("/images/test-reflection/left.jpg") no-repeat 30% 100% / cover;
+}
+
+.test-mirror-bridge__benefits {
+    list-style: none;
+    margin: 0.85rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 1.1rem;
+}
+
+.test-mirror-bridge__benefits li {
+    display: flex;
+    gap: 0.55rem;
+    align-items: flex-start;
+    font-size: 0.92rem;
+    color: #24364f;
+    line-height: 1.4;
+}
+
+.test-mirror-bridge__icon {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    color: #9a6a2e;
+    margin-top: 0.1rem;
+}
+
+.test-mirror-bridge__icon svg {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+}
+
+.test-mirror-bridge__pic {
+    box-shadow: inset 0 0 0 1px rgba(15, 45, 92, 0.06);
 }
 
 .test-mirror-bridge small {
@@ -966,9 +1131,28 @@
 }
 
 @media (max-width: 720px) {
+    .test-mirror__hero {
+        background: #eef3fa;
+        min-block-size: auto;
+    }
+
+    .test-mirror__hero::before {
+        background: linear-gradient(180deg, rgba(238, 243, 250, 0.92) 0%, rgba(238, 243, 250, 0.55) 55%, transparent 100%);
+    }
+
     .test-mirror__hero-inner {
         text-align: start;
-        padding-inline: 1rem;
+        padding: 1.35rem 1rem 0.5rem;
+    }
+
+    .test-mirror__card-spot {
+        opacity: 0.14;
+    }
+
+    .test-mirror__hero-art {
+        display: block;
+        block-size: 9.5rem;
+        background: url("/images/test-reflection/band-mob.jpg") no-repeat 50% 100% / cover;
     }
 
     .test-mirror__themes,
@@ -978,6 +1162,10 @@
     }
 
     .test-mirror-bridge {
+        grid-template-columns: 1fr;
+    }
+
+    .test-mirror-bridge__benefits {
         grid-template-columns: 1fr;
     }
 

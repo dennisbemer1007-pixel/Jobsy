@@ -120,28 +120,13 @@
 
             @if (!_deepCompleted)
             {
-                <section class="test-mirror-bridge" aria-labelledby="test-mirror-bridge-title">
-                    <div class="test-mirror-bridge__copy">
-                        <small>@Culture["TestReflection.Bridge.Eyebrow"]</small>
-                        <h3 id="test-mirror-bridge-title">@Culture["TestReflection.Bridge.Title"]</h3>
-                        <p>@Culture["TestReflection.Bridge.Lead"]</p>
-                    </div>
-                    <div class="test-mirror-bridge__cta">
-                        <button type="button" class="btn btn-outline-brand" disabled="@_busy" @onclick="GoToOfferAsync">
-                            @Culture["TestReflection.Bridge.Cta"]
-                        </button>
-                        @if (_samplePdfEnabled)
-                        {
-                            <button type="button" class="test-mirror-bridge__link" disabled="@_busy" @onclick="OpenSamplePdfAsync">
-                                @Culture["TestResult.Gold.SamplePdf"]
-                            </button>
-                        }
-                        <p class="test-mirror-bridge__fine">
-                            @Culture.Format("TestResult.Gold.Meta", _def.DeepQuestionCount, TestDepthRules.MinutesFor(_def.Kind, TestDepthLevel.Bottom))
-                            · @Culture["TestReflection.Bridge.Fine"]
-                        </p>
-                    </div>
-                </section>
+                <TestMirrorDeepBridge QuestionCount="_def.DeepQuestionCount"
+                                      MinutesApprox="@TestDepthRules.MinutesFor(_def.Kind, TestDepthLevel.Bottom)"
+                                      PriceEuro="_priceEuro"
+                                      Busy="_busy"
+                                      ShowSamplePdf="_samplePdfEnabled"
+                                      OnOffer="GoToOfferAsync"
+                                      OnSamplePdf="OpenSamplePdfAsync" />
             }
         }
         else if (!string.IsNullOrWhiteSpace(_headline))

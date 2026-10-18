@@ -16,8 +16,8 @@ public sealed class TestReflectionTemplateBuilderTests
             25,
             [
                 new(CompetencyTestCatalog.Samenwerken, 73, "Samen"),
-                new(CompetencyTestCatalog.Resultaatgerichtheid, 55, "Afmaken"),
-                new(CompetencyTestCatalog.Stressbestendigheid, 48, "Kalm"),
+                new(CompetencyTestCatalog.Resultaatgerichtheid, 72, "Afmaken"),
+                new(CompetencyTestCatalog.Stressbestendigheid, 71, "Kalm"),
                 new(CompetencyTestCatalog.Innovatie, 41, "Nieuw"),
                 new(CompetencyTestCatalog.Extraversie, 60, "Mensen")
             ],
@@ -28,6 +28,8 @@ public sealed class TestReflectionTemplateBuilderTests
         Assert.Equal(3, mirror.Themes.Count);
         Assert.Equal(3, mirror.PracticeExamples.Count);
         Assert.True(mirror.WatchPoints.Count > 0);
+        Assert.True(mirror.EnergyDrains.Count >= 2);
+        Assert.All(mirror.Themes, t => Assert.DoesNotContain("groeit nog", t.Summary, StringComparison.OrdinalIgnoreCase));
         Assert.Contains("dierenarts", mirror.DreamCallout, StringComparison.OrdinalIgnoreCase);
         Assert.False(mirror.FromOpenAi);
     }
