@@ -2,7 +2,7 @@
 # Format: lang=count
 # LocalizationParityReportTests fails only if a language count increases.
 # 2026-10-17: acceptatie tip (#661/#707) + employer-fit (#655); rebaseline to merged catalog (no new debt vs acceptatie+3 en).
-en=342
-pl=263
-ro=281
-ar=246
+en=344
+pl=265
+ro=282
+ar=247

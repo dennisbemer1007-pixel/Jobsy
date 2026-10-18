@@ -334,6 +334,15 @@ public static class TestDepthRules
         _ => "TestDepth.First"
     };
 
+    public static string ShortNameKey(TestDepthLevel level) => level switch
+    {
+        TestDepthLevel.First => "TestDepth.FirstShort",
+        TestDepthLevel.Deeper => "TestDepth.DeeperShort",
+        TestDepthLevel.Full => "TestDepth.FullShort",
+        TestDepthLevel.Bottom => "TestDepth.Bottom",
+        _ => "TestDepth.FirstShort"
+    };
+
     private static int CeilingMinutes(int questions, int secondsPerQuestion)
         => (int)Math.Ceiling(questions * secondsPerQuestion / 60.0);
 

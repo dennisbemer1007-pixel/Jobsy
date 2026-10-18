@@ -7,65 +7,98 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<div class="test-shell @(Deep ?"test-shell--deep" : null)" data-mode="@Mode">
-    <div class="test-shell__layout">
-        <div class="test-shell__main">
-            @if (ShowDepthSegments)
-            {
-                <TestDepthSegments Kind="Kind"
-                                   Version="QuickScanVersion"
-                                   Answered="Answered"
-                                   ActiveDepth="ActiveDepth"
-                                   Interactive="DepthInteractive"
-                                   OnSelect="OnDepthSelected" />
-            }
-            @if (RailContent is not null)
-            {
-                <aside class="test-shell__aside" aria-label="@Culture["TestFlow.Rail.Aria"]">
-                    @RailContent
-                </aside>
-            }
-            <div class="test-shell__card">
-                <div class="test-shell__head">
-                    <p class="test-shell__eyebrow">@EyebrowText</p>
-                    @if (!string.IsNullOrWhiteSpace(SaveHint))
+<TestBlockBackground Slug="@EffectiveBlockSlug" Enabled="@ShowBlockStage">
+    <div class="test-shell @(Deep ? "test-shell--deep" : null)" data-mode="@Mode">
+        <div class="test-shell__layout">
+            <div class="test-shell__main">
+                @if (ShowDepthSegments)
+                {
+                    <TestDepthSegments Kind="Kind"
+                                       Version="QuickScanVersion"
+                                       Answered="Answered"
+                                       ActiveDepth="ActiveDepth"
+                                       Interactive="DepthInteractive"
+                                       OnSelect="OnDepthSelected" />
+                }
+                @if (RailContent is not null)
+                {
+                    <aside class="test-shell__aside" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                        @RailContent
+                    </aside>
+                }
+                @if (ShowBlockStage && Mode == ShellMode.Question)
+                {
+                    <TestBlockMobileHero>
+                        @if (EffectiveBlockSlug == "hoe-je-werkt")
+                        {
+                            <h1 tabindex="-1">@((MarkupString)Culture["Discovery.Test.Competency.MobileTitle"])</h1>
+                        }
+                        else
+                        {
+                            <h1 tabindex="-1">@H1</h1>
+                        }
+                    </TestBlockMobileHero>
+                }
+                <div class="test-shell__card">
+                    <div class="test-shell__head">
+                        <p class="test-shell__eyebrow">@EyebrowText</p>
+                        @if (!string.IsNullOrWhiteSpace(SaveHint))
+                        {
+                            <p class="test-shell__save" aria-live="polite">@SaveHint</p>
+                        }
+                    </div>
+                    @if (Mode == ShellMode.Done)
                     {
-                        <p class="test-shell__save" aria-live="polite">@SaveHint</p>
+                        <div class="test-done__shard" aria-hidden="true"></div>
+                    }
+                    @if (ShowBlockStage && Mode == ShellMode.Question)
+                    {
+                        <h1 class="test-shell__heading test-shell__heading--desktop" tabindex="-1">@H1</h1>
+                    }
+                    else
+                    {
+                        <h1 tabindex="-1">@H1</h1>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(LeadText))
+                    {
+                        <p class="test-shell__lead">@LeadText</p>
+                    }
+                    @ChildContent
+                    @if (Mode == ShellMode.Done)
+                    {
+                        <div class="test-done__live" aria-live="polite">@Culture.Format("TestDone.Live", TestName, LevelName)</div>
                     }
                 </div>
-                @if (Mode == ShellMode.Done)
-                {
-                    <div class="test-done__shard" aria-hidden="true"></div>
-                }
-                <h1 tabindex="-1">@H1</h1>
-                @if (!string.IsNullOrWhiteSpace(LeadText))
-                {
-                    <p class="test-shell__lead">@LeadText</p>
-                }
-                @ChildContent
-                @if (Mode == ShellMode.Done)
-                {
-                    <div class="test-done__live" aria-live="polite">@Culture.Format("TestDone.Live", TestName, LevelName)</div>
-                }
             </div>
+            @if (ShowScene)
+            {
+                <div class="test-shell__scene @(HasInsightSidePanel ? "test-shell__scene--panel" : null)" aria-hidden="@(HasInsightSidePanel ? null : "true")">
+                    @if (HasInsightSidePanel)
+                    {
+                        @SidePanel
+                        @if (ShowBlockStage)
+                        {
+                            <div class="test-block-stage__scene-band" aria-hidden="true"></div>
+                        }
+                    }
+                    else
+                    {
+                        <TestDiveScene Kind="Kind"
+                                       Answered="Answered"
+                                       Target="TargetCount"
+                                       Deep="Deep"
+                                       Mobile="false"
+                                       Celebrate="@(Mode == ShellMode.Done)"
+                                       FallingShard="@(Mode == ShellMode.Done)"
+                                       PlatesShed="PlatesShed"
+                                       NewShell="NewShell"
+                                       BubbleText="@BubbleText" />
+                    }
+                </div>
+            }
         </div>
-        @if (ShowScene)
-        {
-            <div class="test-shell__scene" aria-hidden="true">
-                <TestDiveScene Kind="Kind"
-                               Answered="Answered"
-                               Target="TargetCount"
-                               Deep="Deep"
-                               Mobile="false"
-                               Celebrate="@(Mode == ShellMode.Done)"
-                               FallingShard="@(Mode == ShellMode.Done)"
-                               PlatesShed="PlatesShed"
-                               NewShell="NewShell"
-                               BubbleText="@BubbleText" />
-            </div>
-        }
     </div>
-</div>
+</TestBlockBackground>
 
 @code {
     public enum ShellMode { Intro, Question, Done, Offer, Pause, Checkout, Other }
@@ -92,10 +125,21 @@
     [Parameter] public EventCallback<TestDepthLevel> OnDepthSelected { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RailContent { get; set; }
+    [Parameter] public RenderFragment? SidePanel { get; set; }
+    [Parameter] public bool ShowProgressSidePanel { get; set; }
+    [Parameter] public string? BlockArtSlug { get; set; }
+
+    private bool HasInsightSidePanel => ShowProgressSidePanel && SidePanel is not null;
+
+    private bool ShowBlockStage => Mode == ShellMode.Question;
+
+    private string EffectiveBlockSlug => string.IsNullOrWhiteSpace(BlockArtSlug)
+        ? TestBlockArt.SlugForAssessment(Kind)
+        : BlockArtSlug;
 
     private bool ShowScene => Mode switch
     {
-        ShellMode.Question => Deep,
+        ShellMode.Question => Deep || HasInsightSidePanel,
         ShellMode.Intro or ShellMode.Done or ShellMode.Offer or ShellMode.Pause or ShellMode.Checkout => true,
         _ => false
     };
@@ -104,7 +148,7 @@
     {
         ShellMode.Intro => Culture.Format("TestFlow.Eyebrow.Intro", TestName),
         ShellMode.Question => string.IsNullOrWhiteSpace(Eyebrow)
-            ? Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName)
+            ? QuestionModeEyebrow()
             : Eyebrow,
         ShellMode.Done => string.IsNullOrWhiteSpace(Eyebrow)
             ? Culture.Format("TestDone.Eyebrow", TestName, LevelName)
@@ -119,4 +163,14 @@
         ShellMode.Done => DoneLead,
         _ => Lead
     };
+
+    private string QuestionModeEyebrow()
+    {
+        if (Deep)
+        {
+            return Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName);
+        }
+
+        return Culture.Format("TestFlow.Eyebrow.QuickScan", TestName, LevelName);
+    }
 }

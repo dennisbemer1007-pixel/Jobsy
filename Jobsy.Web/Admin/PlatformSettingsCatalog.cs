@@ -236,6 +236,32 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("TestItemExamplesEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestItemExamplesEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.TestItemExamples.Enabled.Title",
+                DescriptionKey: "AdminSettings.TestItemExamples.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestItemExamplesEnabled,
+                Write: v => new PlatformFeatureUpdate(TestItemExamplesEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
+        if (FieldExists("TestProgressInsightEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestProgressInsightEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.TestProgressInsight.Enabled.Title",
+                DescriptionKey: "AdminSettings.TestProgressInsight.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestProgressInsightEnabled,
+                Write: v => new PlatformFeatureUpdate(TestProgressInsightEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
         if (FieldExists("PhoneVerificationEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -673,6 +699,8 @@ public static class PlatformSettingsCatalog
         bool? passportPdfV2Enabled = null;
         bool? passportPdfDnaBlocksEnabled = null;
         bool? testsV2Enabled = null;
+        bool? testItemExamplesEnabled = null;
+        bool? testProgressInsightEnabled = null;
         bool? phoneVerificationEnabled = null;
         bool? whatsAppRemindersEnabled = null;
         bool? compactTestPdfEnabled = null;
@@ -723,6 +751,8 @@ public static class PlatformSettingsCatalog
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
             if (p.PassportPdfDnaBlocksEnabled is not null) passportPdfDnaBlocksEnabled = p.PassportPdfDnaBlocksEnabled;
             if (p.TestsV2Enabled is not null) testsV2Enabled = p.TestsV2Enabled;
+            if (p.TestItemExamplesEnabled is not null) testItemExamplesEnabled = p.TestItemExamplesEnabled;
+            if (p.TestProgressInsightEnabled is not null) testProgressInsightEnabled = p.TestProgressInsightEnabled;
             if (p.PhoneVerificationEnabled is not null) phoneVerificationEnabled = p.PhoneVerificationEnabled;
             if (p.WhatsAppRemindersEnabled is not null) whatsAppRemindersEnabled = p.WhatsAppRemindersEnabled;
             if (p.CompactTestPdfEnabled is not null) compactTestPdfEnabled = p.CompactTestPdfEnabled;
@@ -795,6 +825,8 @@ public static class PlatformSettingsCatalog
             PassportPdfV2Enabled: passportPdfV2Enabled,
             PassportPdfDnaBlocksEnabled: passportPdfDnaBlocksEnabled,
             TestsV2Enabled: testsV2Enabled,
+            TestItemExamplesEnabled: testItemExamplesEnabled,
+            TestProgressInsightEnabled: testProgressInsightEnabled,
             PhoneVerificationEnabled: phoneVerificationEnabled,
             WhatsAppRemindersEnabled: whatsAppRemindersEnabled,
             CompactTestPdfEnabled: compactTestPdfEnabled,

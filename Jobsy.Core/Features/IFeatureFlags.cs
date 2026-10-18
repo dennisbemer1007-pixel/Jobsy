@@ -27,6 +27,8 @@ public sealed record FeatureFlagSnapshot(
     bool CandidateExternalVacanciesEnabled = false,
     bool ProactiveMatchingEnabled = false,
     bool TestsV2Enabled = false,
+    bool TestItemExamplesEnabled = false,
+    bool TestProgressInsightEnabled = false,
     bool EmployerFitQuestionnairesEnabled = false,
     bool KandidatenkaartEnabled = false)
 {
@@ -50,6 +52,8 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.CandidateExternalVacancies => CandidateExternalVacanciesEnabled,
         PlatformFeature.ProactiveMatching => ProactiveMatchingEnabled,
         PlatformFeature.TestsV2 => TestsV2Enabled,
+        PlatformFeature.TestItemExamples => TestItemExamplesEnabled,
+        PlatformFeature.TestProgressInsight => TestProgressInsightEnabled,
         PlatformFeature.EmployerFitQuestionnaires => EmployerFitQuestionnairesEnabled,
         PlatformFeature.Kandidatenkaart => KandidatenkaartEnabled,
         PlatformFeature.ReferenceVerification => false,

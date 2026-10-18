@@ -158,6 +158,12 @@ public class PlatformFeatureSettings
     /// <summary>Quick-Scan v2 catalogs for newly started candidate tests. Default false.</summary>
     public bool TestsV2Enabled { get; set; }
 
+    /// <summary>Per-item practice examples on Quick-Scan flows. Default false.</summary>
+    public bool TestItemExamplesEnabled { get; set; }
+
+    /// <summary>Progress insight card + motivation on Quick-Scan. Default false.</summary>
+    public bool TestProgressInsightEnabled { get; set; }
+
     /// <summary>
     /// Realistic match calibration (fit + confidence, no neutral inflation). Default false.
     /// </summary>

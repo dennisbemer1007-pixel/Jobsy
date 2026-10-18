@@ -110,7 +110,7 @@ public sealed class TestQuestionFlowBackNavigationBunitTests : BunitContext
             .Add(p => p.OnFinished, EventCallback.Factory.Create(this, () => { })));
 
         cut.Find("button.test-flow__back").Click();
-        Assert.Equal(0, currentIndex);
+        cut.WaitForAssertion(() => Assert.Equal(0, currentIndex));
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider

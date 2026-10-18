@@ -37,6 +37,12 @@ public sealed class JobsyFeatureOptions
     /// <summary>When true, new Quick-Scan rows use v2 catalogs. Overridden by platform settings when present.</summary>
     public bool TestsV2Enabled { get; set; }
 
+    /// <summary>When true, Quick-Scan questions show per-item practice examples. Overridden by platform settings.</summary>
+    public bool TestItemExamplesEnabled { get; set; }
+
+    /// <summary>When true, Quick-Scan shows motivation + progress insight card. Overridden by platform settings.</summary>
+    public bool TestProgressInsightEnabled { get; set; }
+
     /// <summary>
     /// Personal test mirror after verdieping/volledig free depth. Default on; disable only as emergency kill switch.
     /// </summary>
