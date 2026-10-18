@@ -1092,32 +1092,48 @@
     max-height: 260px !important;
     min-height: 0 !important;
     background-color: var(--pearl) !important;
-    background-image: var(--cand-hero-art) !important;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: 78% 100%;
+    background-image: none !important;
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
     overflow: hidden;
   }
 
+  /* Transition strip only — never over the opaque figure layer (right 45%). */
   .opl-page .cand-hero--learn-grow::before {
     display: block !important;
     content: "";
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 10%;
     z-index: 0;
     pointer-events: none;
     background: linear-gradient(
-      118deg,
+      90deg,
       var(--pearl) 0%,
-      color-mix(in srgb, var(--pearl) 94%, transparent) 28%,
-      color-mix(in srgb, var(--pearl) 52%, transparent) 46%,
-      transparent 58%
+      color-mix(in srgb, var(--pearl) 42%, transparent) 72%,
+      transparent 100%
     );
   }
 
   .opl-page .cand-hero--learn-grow .cand-hero__media {
-    display: none !important;
+    display: block !important;
+    position: absolute;
+    z-index: 0;
+    right: 0;
+    bottom: 0;
+    width: 45%;
+    max-width: 45%;
+    height: 100%;
+    margin: 0;
+    flex: none;
+    border-block-end: 0;
+    background-color: transparent !important;
+    background-image: var(--cand-hero-figures, none) !important;
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: right bottom;
+    opacity: 1;
   }
 
   .opl-page .cand-hero--learn-grow .cand-hero__copy {
@@ -1125,24 +1141,22 @@
     z-index: 1;
     inset: 0 auto 0 0;
     box-sizing: border-box;
-    width: 58%;
-    max-width: 58%;
+    width: 55%;
+    max-width: 55%;
     min-height: 0;
     height: auto;
     padding: 0.75rem 0.65rem 0.65rem 1rem;
-    background: transparent !important;
+    background: var(--pearl) !important;
     justify-content: flex-start;
   }
 
   .opl-page .cand-hero--learn-grow .cand-hero__eyebrow--coral {
     font-size: 0.72rem;
-    text-shadow: 0 1px 0 color-mix(in srgb, var(--pearl) 85%, transparent);
   }
 
   .opl-page .cand-hero--learn-grow h1 {
     font-size: 1.12rem;
     line-height: 1.12;
-    text-shadow: 0 1px 0 color-mix(in srgb, var(--pearl) 80%, transparent);
   }
 
   .opl-page .cand-hero--learn-grow .cand-hero__lead {
@@ -1154,7 +1168,6 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    text-shadow: 0 1px 0 color-mix(in srgb, var(--pearl) 75%, transparent);
   }
 
   .opl-page .cand-hero--learn-grow + .opl-wrap .opl-search--below {
