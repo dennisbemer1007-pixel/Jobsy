@@ -20,7 +20,7 @@
 @inject NavigationManager Navigation
 
 <PageTitle>@_pageTitle · Lobsy</PageTitle>
-<link rel="stylesheet" href="css/features/na-de-match.css?v=20261018-r4" />
+<link rel="stylesheet" href="css/features/na-de-match.css?v=20261018-r5" />
 
 @if (_loading)
 {
@@ -83,9 +83,12 @@ else
         <main class="wrap">
             @if (_panel == "messages")
             {
-                <NdMHero Title="@Culture["AfterMatch.Screen10.Hero.Title"]"
-                         Lead="@Culture["AfterMatch.Screen10.Hero.Lead"]"
-                         ShowArt="false" />
+                <div class="ndm-flow-hero">
+                    <NdMHero Title="@Culture["AfterMatch.Screen10.Hero.Title"]"
+                             Lead="@Culture["AfterMatch.Screen10.Hero.Lead"]"
+                             ShowArt="false" />
+                </div>
+                <div class="ndm-flow-msgs">
                 <NdMMessagePanel Messages="_thread.Messages"
                                  ShowNewPill="@HasUnread(_thread)"
                                  Editable="true"
@@ -94,14 +97,17 @@ else
                                  Preview="_messagePreview"
                                  OnSend="SendMessageAsync"
                                  OnPreview="PreviewMessageAsync" />
+                </div>
             }
             else
             {
-                <NdMHero Title="@_heroTitle" Lead="@_heroLead" />
-                <div class="ndm-mob-timeline card">
+                <div class="ndm-flow-hero">
+                    <NdMHero Title="@_heroTitle" Lead="@_heroLead" />
+                </div>
+                <div class="ndm-mob-timeline ndm-flow-timeline card">
                     <NdMTimeline CurrentStep="@CurrentTimelineStep()" YesDate="@YesDateLabel" InterviewHint="@CurrentTimelineHint()" />
                 </div>
-                <div class="g2">
+                <div class="g2 ndm-flow-main">
                     @if (_panel != "messages" && _thread.Outcome != AfterMatchOutcomeKind.NotNow)
                     {
                         <NdMMessagePanel Messages="_thread.Messages"
@@ -127,9 +133,11 @@ else
                                 </div>
                                 @if (_thread.RecentChanges.Count == 0 && !string.IsNullOrWhiteSpace(_notNowReason))
                                 {
-                                    <div class="note warm" style="margin-top:12px">
-                                        <b>@Culture["AfterMatch.Screen13.FeedbackTitle"]</b>
-                                        <p class="small" style="margin-top:6px;font-style:italic">"@_notNowReason"</p>
+                                    <div class="note warm ndm-feedback" style="margin-top:12px">
+                                        <div class="ndm-feedback__body">
+                                            <b>@Culture["AfterMatch.Screen13.FeedbackTitle"]</b>
+                                            <p class="small ndm-feedback__quote">"@_notNowReason"</p>
+                                        </div>
                                     </div>
                                 }
                             </div>
@@ -193,7 +201,7 @@ else
                     </div>
                 </div>
             }
-            <p style="margin-top:16px"><a class="lk" href="@KbRoutes.Applications">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+            <p class="ndm-back" style="margin-top:16px"><a class="lk" href="@KbRoutes.Applications">@Culture["AfterMatch.Link.BackApplications"]</a></p>
         </main>
     </div>
 }

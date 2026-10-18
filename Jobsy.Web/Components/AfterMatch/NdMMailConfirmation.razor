@@ -1,7 +1,7 @@
 @using Jobsy.Core.Contracts
+@using Jobsy.Web.Components
 @using Jobsy.Web.Localization
 @inject CultureState Culture
-@inject NavigationManager Navigation
 
 <div class="mgrid">
     <div>
@@ -13,7 +13,7 @@
             </div>
             <div class="mail">
                 <div class="mtop">
-                    <img src="@MailLogoUrl" alt="Lobsy" width="36" height="36" />
+                    <span class="ndm-mail-logo"><LobsyMark /></span>
                     <span class="xs muted">@Culture["AfterMatch.Mail.PlannedTag"]</span>
                 </div>
                 <h2>@string.Format(Culture["AfterMatch.Mail.CandidateTitle"], CandidateFirstName)</h2>
@@ -51,7 +51,7 @@
             </div>
             <div class="mail">
                 <div class="mtop">
-                    <img src="@MailLogoUrl" alt="Lobsy" width="36" height="36" />
+                    <span class="ndm-mail-logo"><LobsyMark /></span>
                     <span class="xs muted">@Culture["AfterMatch.Mail.PlannedTag"]</span>
                 </div>
                 <h2>@Culture["AfterMatch.Mail.EmployerTitle"]</h2>
@@ -90,9 +90,6 @@
 
 @code {
     [Parameter, EditorRequired] public AfterMatchThreadDto Thread { get; set; } = default!;
-
-    private string MailLogoUrl =>
-        $"{Navigation.BaseUri}images/email/lobsy-mark-72.png?v=20260930-mail2";
 
     private string CandidateFirstName =>
         Thread.CandidateName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Thread.CandidateName;
