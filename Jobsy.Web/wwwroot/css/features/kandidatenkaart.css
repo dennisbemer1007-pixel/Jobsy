@@ -1229,7 +1229,10 @@ html.vp-mobile .kk-layout-b {
 }
 
 html.vp-mobile .wg-main:has(.kk-page) {
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: var(--wg-bottom-nav-block-h, 3.625rem);
+    box-sizing: border-box;
 }
 
 html.vp-mobile .kk-layout-a__aside,

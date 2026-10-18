@@ -4267,7 +4267,6 @@ window.jobMap = (function () {
             var h = Math.ceil(nav.getBoundingClientRect().height);
             if (h > 0) {
                 document.documentElement.style.setProperty("--kk-wg-nav-offset", h + "px");
-                invite.style.bottom = h + "px";
             }
         } catch (eSync) { /* ignore */ }
     }
