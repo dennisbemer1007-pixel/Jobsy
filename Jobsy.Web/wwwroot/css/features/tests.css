@@ -598,41 +598,72 @@
 @media (max-width: 1023px) {
   .test-block-stage {
     --test-block-band-height: clamp(3rem, 11vh, 4.25rem);
-    border-radius: var(--radius-md, 8px);
+    border-radius: 0;
+    overflow: visible;
+    background: transparent;
   }
 
   .test-block-stage:has(.test-shell__scene--panel) {
-    background: var(--test-block-tint);
+    background: transparent;
   }
 
-  .test-block-stage__mobile-hero {
+  .test-block-stage:has(.test-shell__scene--panel) .test-shell__main {
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    gap: 0.65rem;
+  }
+
+  .test-block-stage .test-shell__card {
+    margin-inline: 0.85rem;
+  }
+
+  .test-shell__heading--desktop {
+    display: none;
+  }
+
+  .test-block-stage__mobile-hero--band,
+  .test-block-stage__mobile-hero--compact {
     display: block;
     position: relative;
     box-sizing: border-box;
+    inline-size: 100%;
     max-block-size: 12.5rem;
     min-block-size: 8.75rem;
-    margin-block: 0 0.75rem;
-    border-radius: var(--radius-md, 8px);
+    margin: 0;
+    border: 0;
+    border-radius: 0;
     overflow: hidden;
     isolation: isolate;
     background-color: var(--test-block-tint);
-    background-image: var(--test-block-band-image);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: 78% 94%;
+    background-image:
+      linear-gradient(
+        102deg,
+        color-mix(in srgb, var(--surface) 96%, var(--pearl)) 0%,
+        color-mix(in srgb, var(--surface) 72%, transparent) 42%,
+        transparent 58%
+      ),
+      var(--test-block-band-image);
+    background-repeat: no-repeat, no-repeat;
+    background-size: 100% 100%, auto min(11.5rem, 92%);
+    background-position: 0 0, 100% 100%;
   }
 
-  .test-block-stage__mobile-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      118deg,
-      color-mix(in srgb, var(--surface) 94%, var(--pearl)) 0%,
-      color-mix(in srgb, var(--surface) 62%, transparent) 40%,
-      transparent 62%
-    );
-    pointer-events: none;
+  .test-block-stage__mobile-hero--compact {
+    margin-block-end: 0.65rem;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) {
+    padding-inline: 0;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-depth-segments {
+    margin-inline: 0.85rem;
+  }
+
+  .test-block-stage__mobile-hero--band::before,
+  .test-block-stage__mobile-hero--compact::before {
+    content: none;
   }
 
   .test-block-stage__mobile-hero h1,
@@ -651,20 +682,28 @@
     box-shadow: none;
   }
 
-  .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero {
-    background-position: 76% 96%;
+  .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero--band,
+  .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero--compact {
+    --test-block-hero-figure-size: min(76vw, 17rem);
+    background-position: 0 0, 100% 100%;
   }
 
-  .test-block-stage--leuk .test-block-stage__mobile-hero {
-    background-position: 84% 96%;
+  .test-block-stage--leuk .test-block-stage__mobile-hero--band,
+  .test-block-stage--leuk .test-block-stage__mobile-hero--compact {
+    --test-block-hero-figure-size: min(82vw, 18rem);
+    background-position: 0 0, 100% 100%;
   }
 
-  .test-block-stage--sfeer .test-block-stage__mobile-hero {
-    background-position: 80% 95%;
+  .test-block-stage--sfeer .test-block-stage__mobile-hero--band,
+  .test-block-stage--sfeer .test-block-stage__mobile-hero--compact {
+    --test-block-hero-figure-size: min(70vw, 15.75rem);
+    background-position: 0 0, 100% 100%;
   }
 
-  .test-block-stage--waarden .test-block-stage__mobile-hero {
-    background-position: 78% 94%;
+  .test-block-stage--waarden .test-block-stage__mobile-hero--band,
+  .test-block-stage--waarden .test-block-stage__mobile-hero--compact {
+    --test-block-hero-figure-size: min(68vw, 15.5rem);
+    background-position: 0 0, 100% 100%;
   }
 
   .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {
@@ -694,6 +733,15 @@
 }
 
 @media (min-width: 1024px) {
+  .test-block-stage__mobile-hero--band,
+  .test-block-stage__mobile-hero--compact {
+    display: none;
+  }
+
+  .test-shell__heading--desktop {
+    display: block;
+  }
+
   .test-block-stage:has(.test-shell__scene--panel) .test-block-stage__scene-band {
     display: block;
   }

@@ -123,9 +123,11 @@ foreach (var (stem, returnPath, captureTarget) in targets)
                 await page.EvaluateAsync("""
                     () => {
                       window.scrollTo(0, 0);
-                      const hero = document.querySelector('.test-block-stage__mobile-hero');
-                      if (hero) {
-                        hero.scrollIntoView({ block: 'start', behavior: 'instant' });
+                      document.documentElement.scrollTop = 0;
+                      document.body.scrollTop = 0;
+                      const scroller = document.querySelector('.app-shell__main, .app-main, main');
+                      if (scroller) {
+                        scroller.scrollTop = 0;
                       }
                     }
                     """);

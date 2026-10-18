@@ -26,6 +26,12 @@
                         @RailContent
                     </aside>
                 }
+                @if (ShowBlockStage && Mode == ShellMode.Question)
+                {
+                    <div class="test-block-stage__mobile-hero test-block-stage__mobile-hero--band">
+                        <h1 tabindex="-1">@H1</h1>
+                    </div>
+                }
                 <div class="test-shell__card">
                     <div class="test-shell__head">
                         <p class="test-shell__eyebrow">@EyebrowText</p>
@@ -40,9 +46,7 @@
                     }
                     @if (ShowBlockStage && Mode == ShellMode.Question)
                     {
-                        <div class="test-block-stage__mobile-hero">
-                            <h1 tabindex="-1">@H1</h1>
-                        </div>
+                        <h1 class="test-shell__heading test-shell__heading--desktop" tabindex="-1">@H1</h1>
                     }
                     else
                     {
