@@ -1,2 +1,2 @@
-# PR-only failures (cursor/onboarding-soft-illustrations-f41d vs origin/acceptatie @ 05d8f2a6)
-# Local gate: OnboardingSoftIllustrations* 24/24 passed; no PR-only regression names identified.
+# PR-only failures (cursor/onboarding-soft-illustrations-f41d vs origin/acceptatie)
+# OnboardingSoftIllustrations* 30/30 passed locally; no PR-only regression names.

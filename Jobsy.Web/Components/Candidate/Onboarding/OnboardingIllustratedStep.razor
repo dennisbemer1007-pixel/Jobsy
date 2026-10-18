@@ -1,22 +1,37 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Onboarding
 
-<section class="ob-illustrated-step" data-testid="@TestId">
-    <div class="ob-illustrated-step__mobile-cand-hero panel-page--cand-ill">
-        <CandidateIllustratedHero Eyebrow="@Eyebrow"
-                                  CoralEyebrow="true"
-                                  Title="@HeroTitle"
-                                  Lead="@HeroLead"
-                                  ArtUrl="@JpgSrc"
-                                  ArtUrlMobileFigures="@MobileFigurePng"
-                                  ArtPosition="right center"
-                                  CssClass="@MobileHeroCssClass"
-                                  TitleTabIndex="-1">
+<section class="ob-illustrated-step @MobileCoverModifier" data-testid="@TestId">
+    <div class="ob-illustrated-step__mobile-cover" data-testid="onboarding-mobile-hero">
+        <picture class="ob-illustrated-step__mobile-cover-art" aria-hidden="true">
+            <source type="image/webp" srcset="@MobileHeroWebp" />
+            <img src="@MobileHeroJpg"
+                 alt=""
+                 width="780"
+                 height="520"
+                 loading="eager"
+                 fetchpriority="high"
+                 decoding="async"
+                 data-testid="onboarding-mobile-hero-img" />
+        </picture>
+        <div class="ob-illustrated-step__mobile-cover-copy">
+            @if (!string.IsNullOrWhiteSpace(Eyebrow))
+            {
+                <span class="ob-illustrated-step__mobile-eyebrow">@Eyebrow</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(HeroTitle))
+            {
+                <h1 tabindex="-1">@HeroTitle</h1>
+            }
+            @if (!string.IsNullOrWhiteSpace(HeroLead))
+            {
+                <p class="ob-illustrated-step__mobile-lead">@HeroLead</p>
+            }
             @if (HeroExtra is not null)
             {
                 @HeroExtra
             }
-        </CandidateIllustratedHero>
+        </div>
     </div>
 
     <div class="ob-illustrated-step__hero-band">
@@ -54,7 +69,9 @@
 @code {
     [Parameter, EditorRequired] public string WebpSrc { get; set; } = default!;
     [Parameter, EditorRequired] public string JpgSrc { get; set; } = default!;
-    [Parameter, EditorRequired] public string MobileFigurePng { get; set; } = default!;
+    [Parameter, EditorRequired] public string MobileHeroWebp { get; set; } = default!;
+    [Parameter, EditorRequired] public string MobileHeroJpg { get; set; } = default!;
+    [Parameter] public string MobileHeroSlug { get; set; } = "kennismaken";
     [Parameter, EditorRequired] public string? HeroTitle { get; set; }
     [Parameter] public string? HeroLead { get; set; }
     [Parameter] public string? Eyebrow { get; set; }
@@ -66,8 +83,8 @@
     [Parameter] public RenderFragment? HeadContent { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private string MobileHeroCssClass =>
+    private string MobileCoverModifier =>
         TallMobileHero
-            ? "cand-hero--profession-band ob-illustrated-step__cand-hero cand-hero--onboarding-tall"
-            : "cand-hero--profession-band ob-illustrated-step__cand-hero";
+            ? $"ob-illustrated-step--mobile-tall ob-illustrated-step--mobile-{MobileHeroSlug}"
+            : $"ob-illustrated-step--mobile-{MobileHeroSlug}";
 }

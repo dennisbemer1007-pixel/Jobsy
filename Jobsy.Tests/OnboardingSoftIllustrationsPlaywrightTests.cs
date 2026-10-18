@@ -84,7 +84,7 @@ public sealed class OnboardingSoftIllustrationsPlaywrightTests
 
         if (mobile && width < 768)
         {
-            await page.Locator(".ob-illustrated-step__mobile-cand-hero .cand-hero__mob-figures").WaitForAsync(new() { Timeout = 60_000 });
+            await page.Locator("[data-testid=onboarding-mobile-hero-img]").WaitForAsync(new() { Timeout = 60_000 });
         }
         else
         {
@@ -115,7 +115,7 @@ public sealed class OnboardingSoftIllustrationsPlaywrightTests
             (mobileCandHero) => {
               const form = document.querySelector('.ob-illustrated-step__form');
               const art = mobileCandHero
-                ? document.querySelector('.ob-illustrated-step__mobile-cand-hero .cand-hero__mob-figures-wrap')
+                ? document.querySelector('[data-testid=onboarding-mobile-hero]')
                 : document.querySelector('[data-testid=onboarding-illustration-art]');
               if (!art || !form) {
                 return { ok: false, reason: 'missing-art-or-form' };

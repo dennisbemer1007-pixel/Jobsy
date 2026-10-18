@@ -93,25 +93,20 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
-    public void Hero_band_css_uses_desktop_seam_art_and_candidate_mob_hero_below_768()
+    public void Hero_band_css_uses_desktop_seam_art_and_full_bleed_mobile_cover_below_768()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
         var step = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Candidate/Onboarding/OnboardingIllustratedStep.razor"));
-        Assert.Contains("CandidateIllustratedHero", step, StringComparison.Ordinal);
+        Assert.Contains("onboarding-mobile-hero", step, StringComparison.Ordinal);
         Assert.Contains("object-fit: contain", css, StringComparison.Ordinal);
-        Assert.Contains("object-position: right bottom", css, StringComparison.Ordinal);
+        Assert.Contains("object-fit: cover", css, StringComparison.Ordinal);
         Assert.Matches(
             @"(?s)@media \(max-width: 767px\).*\.ob-illustrated-step__hero-band\s*\{[^}]*display:\s*none",
             css);
         Assert.Matches(
-            @"(?s)@media \(max-width: 767px\).*\.ob-illustrated-step__mobile-cand-hero\s*\{[^}]*display:\s*block",
+            @"(?s)@media \(max-width: 767px\).*\.ob-illustrated-step__mobile-cover\s*\{[^}]*display:\s*grid",
             css);
-        Assert.Matches(
-            @"(?s)@media \(min-width: 768px\).*\.ob-illustrated-step__mobile-cand-hero",
-            css);
-        var candCss = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/candidate-illustrated-app.css"));
-        Assert.Contains(".ob-illustrated-step__mobile-cand-hero .cand-hero", candCss, StringComparison.Ordinal);
-        Assert.Contains("cand-hero--with-art", candCss, StringComparison.Ordinal);
+        Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r15.py")));
     }
 
     [Fact]
@@ -120,9 +115,23 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-figure-crop.py")));
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r13.py")));
         var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
-        Assert.Contains("20261018-r14", assets, StringComparison.Ordinal);
-        Assert.Contains("MobileFigurePng", assets, StringComparison.Ordinal);
-        Assert.Contains("KennismakenMobilePng", assets, StringComparison.Ordinal);
+        Assert.Contains("20261018-r15", assets, StringComparison.Ordinal);
+        Assert.Contains("MobileHeroWebp", assets, StringComparison.Ordinal);
+        Assert.Contains("mobile-hero", assets, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("kennismaken")]
+    [InlineData("beschikbaarheid")]
+    [InlineData("vervoer")]
+    [InlineData("werkervaring")]
+    [InlineData("opleiding")]
+    [InlineData("droombaan")]
+    public void Mobile_hero_full_bleed_assets_exist(string slug)
+    {
+        var webRoot = Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/images/onboarding");
+        Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile-hero.webp")), $"{slug}-mobile-hero.webp");
+        Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile-hero.jpg")), $"{slug}-mobile-hero.jpg");
     }
 
     [Fact]
