@@ -23,8 +23,8 @@
   max-width: 100vw;
   margin-inline: calc(50% - 50vw);
   margin-bottom: 0.75rem;
-  min-height: clamp(12.5rem, 22.22vw, 20rem);
-  height: clamp(12.5rem, 22.22vw, 20rem);
+  min-height: clamp(11.25rem, 15.28vw, 13.75rem);
+  height: clamp(11.25rem, 15.28vw, 13.75rem);
   background-color: var(--pearl);
   background-image: var(--cand-hero-art, none);
   background-repeat: no-repeat;
@@ -52,7 +52,18 @@
 
 .cand-hero--profession-band {
   background-size: auto 100%;
-  background-position: right center;
+  background-position: right top;
+}
+
+@media (min-width: 640px) {
+  .cand-hero--profession-band {
+    min-height: clamp(11.25rem, 15.28vw, 13.75rem);
+    height: clamp(11.25rem, 15.28vw, 13.75rem);
+  }
+
+  .passport-page--illustrated .cand-hero--profession-band {
+    background-position: 96% top;
+  }
 }
 
 .cand-hero--profession-band::after {
@@ -65,10 +76,10 @@
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) 65%,
-    color-mix(in srgb, var(--pearl) 96%, transparent) 70%,
+    var(--pearl) 62%,
+    color-mix(in srgb, var(--pearl) 96%, transparent) 68%,
     color-mix(in srgb, var(--pearl) 35%, transparent) 74%,
-    transparent 78%
+    transparent 82%
   );
 }
 
