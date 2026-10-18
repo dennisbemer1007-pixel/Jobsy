@@ -51,6 +51,34 @@ public static class UiStringsSensitiveExperience
         d["Sensitive.Edit.EmployerPreviewHidden"] =
             "Geen functienaam, geen periode. Deze ervaring staat op 'Alleen voor mij'.";
         d["Sensitive.Edit.NeutralWhyTitle"] = "Waarom een neutrale naam?";
+        d["Sensitive.Edit.NeutralWhy1"] =
+            "Lobsy kijkt vooral naar wat je kunt, niet alleen naar je functietitel.";
+        d["Sensitive.Edit.NeutralWhy2"] =
+            "Een neutrale naam helpt je skills te laten zien zonder details te delen die je liever privé houdt.";
+        d["Sensitive.Edit.NeutralWhy3"] =
+            "Jij kiest wat werkgevers zien. Verborgen ervaring telt nog steeds mee voor matches.";
+        d["Sensitive.Edit.RoleLabel"] = "Hoe wil je dit werk noemen?";
+        d["Sensitive.Edit.EmployerLabel"] = "Werkgever";
+        d["Sensitive.Edit.PeriodLabel"] = "Periode";
+        d["Sensitive.Edit.Chosen"] = "Gekozen";
+        d["Sensitive.Gap.Sidebar1"] =
+            "Voor periodes die je liever niet invult. Geen tekstvak, geen uitleg aan werkgevers.";
+        d["Sensitive.Gap.Sidebar2"] =
+            "Het telt niet negatief mee in je matches.";
+        d["Sensitive.Gap.Sidebar3"] =
+            "Werkgevers zien geen label en geen melding over een gat.";
+        d["Sensitive.Ref.WhoAsk"] = "Wie vraag je?";
+        d["Sensitive.Ref.Name"] = "Naam";
+        d["Sensitive.Ref.Email"] = "E-mailadres";
+        d["Sensitive.Ref.Relationship"] = "Waar ken je diegene van?";
+        d["Sensitive.Ref.EmployerPreviewTitle"] = "DIT ZIET EEN WERKGEVER";
+        d["Sensitive.Ref.EmployerPreviewShort"] =
+            "Bevestigd door een begeleider bij de competenties die Fatima herkent. Geen naam, geen organisatie, geen traject.";
+        d["Sensitive.Ref.YourReferences"] = "Je referenties";
+        d["Sensitive.Timeline.Title"] = "Jouw tijdlijn";
+        d["Sensitive.Edit.CardTitle"] = "Ervaring bewerken";
+        d["Sensitive.Ref.NewTitle"] = "Nieuwe referentie";
+        d["Sensitive.Ref.Step"] = "Stap 1 van 2";
         d["Sensitive.Gap.Title"] = "Tussen {0} en {1} staat nog niets";
         d["Sensitive.Gap.OtherPeriod"] = "Andere periode";
         d["Sensitive.Gap.Care"] = "Zorg voor familie of mezelf";
@@ -124,6 +152,34 @@ public static class UiStringsSensitiveExperience
         d["Sensitive.Edit.EmployerPreviewHidden"] =
             "No job title, no period. This experience is set to 'Only for me'.";
         d["Sensitive.Edit.NeutralWhyTitle"] = "Why a neutral name?";
+        d["Sensitive.Edit.NeutralWhy1"] =
+            "Lobsy focuses on what you can do, not only your job title.";
+        d["Sensitive.Edit.NeutralWhy2"] =
+            "A neutral name helps show your skills without sharing details you prefer to keep private.";
+        d["Sensitive.Edit.NeutralWhy3"] =
+            "You choose what employers see. Hidden experience still counts for matches.";
+        d["Sensitive.Edit.RoleLabel"] = "What do you want to call this work?";
+        d["Sensitive.Edit.EmployerLabel"] = "Employer";
+        d["Sensitive.Edit.PeriodLabel"] = "Period";
+        d["Sensitive.Edit.Chosen"] = "Chosen";
+        d["Sensitive.Gap.Sidebar1"] =
+            "For periods you prefer not to fill in. No text box, no explanation to employers.";
+        d["Sensitive.Gap.Sidebar2"] =
+            "It does not count negatively in your matches.";
+        d["Sensitive.Gap.Sidebar3"] =
+            "Employers see no label and no gap notice.";
+        d["Sensitive.Ref.WhoAsk"] = "Who are you asking?";
+        d["Sensitive.Ref.Name"] = "Name";
+        d["Sensitive.Ref.Email"] = "Email address";
+        d["Sensitive.Ref.Relationship"] = "How do you know this person?";
+        d["Sensitive.Ref.EmployerPreviewTitle"] = "WHAT AN EMPLOYER SEES";
+        d["Sensitive.Ref.EmployerPreviewShort"] =
+            "Confirmed by a supervisor next to competencies your referee recognises. No name, no organisation, no programme.";
+        d["Sensitive.Ref.YourReferences"] = "Your references";
+        d["Sensitive.Timeline.Title"] = "Your timeline";
+        d["Sensitive.Edit.CardTitle"] = "Edit experience";
+        d["Sensitive.Ref.NewTitle"] = "New reference";
+        d["Sensitive.Ref.Step"] = "Step 1 of 2";
         d["Sensitive.Gap.Title"] = "Nothing listed between {0} and {1}";
         d["Sensitive.Gap.OtherPeriod"] = "Other period";
         d["Sensitive.Gap.Care"] = "Care for family or myself";

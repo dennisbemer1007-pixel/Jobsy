@@ -22,7 +22,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r1";
+    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r2";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -70,14 +70,17 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
                 {
                     ViewportSize = new ViewportSize { Width = width, Height = height }
                 });
+                await PlaywrightCookieConsent.AcceptAsync(context);
                 var page = await context.NewPageAsync();
                 await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.NetworkIdle });
                 await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.NetworkIdle });
-                await page.Locator("[data-testid^='gevoelig-demo-']").WaitForAsync();
-                await page.ScreenshotAsync(new()
+                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                await page.EvaluateAsync("document.documentElement.classList.add('gev-capture')");
+                var root = page.Locator("[data-testid^='gevoelig-demo-']");
+                await root.WaitForAsync();
+                await root.ScreenshotAsync(new()
                 {
-                    Path = Path.Combine(OutDir, $"{slug}-{suffix}.png"),
-                    FullPage = true
+                    Path = Path.Combine(OutDir, $"{slug}-{suffix}.png")
                 });
             }
         }
@@ -203,7 +206,7 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
                     [
                         new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
                         new Claim(ClaimTypes.Role, "Candidate"),
-                        new Claim(ClaimTypes.Name, "Marion Demo")
+                        new Claim(ClaimTypes.Name, "Marion Bakker")
                     ],
                     CookieAuthenticationDefaults.AuthenticationScheme);
                     await ctx.SignInAsync(

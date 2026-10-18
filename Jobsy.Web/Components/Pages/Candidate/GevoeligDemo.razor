@@ -5,207 +5,282 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Features
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Sensitive
 @using Jobsy.Web.Localization
 @attribute [RequiresFeature(PlatformFeature.SensitiveExperience)]
 @inject CultureState Culture
 
 <PageTitle>Gevoelige werkervaring demo</PageTitle>
-<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-1" />
+<link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-r2" />
+<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-r2" />
 
 <div class="gev-page" data-testid="gevoelig-demo-@ActiveScreen">
     @switch (ActiveScreen)
     {
         case "edit":
             @RenderWorkHero()
-            <div class="gev-layout">
-                <div>
+            <div class="gev-wrap">
+                <div class="gev-layout">
                     <div class="gev-card">
-                        <h2>Ervaring bewerken</h2>
-                        <label>Hoe wil je dit werk noemen?
-                            <input class="text-input" value="Zelfstandig ondernemer, persoonlijke dienstverlening" />
-                        </label>
-                        <p class="muted">@Culture["Sensitive.Edit.NeutralTitle"]</p>
-                        @foreach (var title in NeutralRoleSuggestions.SuggestTitles(
-                                      "Zelfstandig ondernemer, persoonlijke dienstverlening", null, "Eigen onderneming"))
-                        {
-                            <label><input type="radio" name="neutral" checked="@(title.Contains("persoonlijke"))" /> @title</label>
-                        }
-                        <p><strong>@Culture["Sensitive.Edit.SkillsTitle"]</strong></p>
-                        <div class="gev-chips">
-                            @foreach (var skill in NeutralRoleSuggestions.ExtractSkills("Zelfstandig ondernemer", "Klantcontact; Discretie; Ondernemerschap"))
+                        <h2>@Culture["Sensitive.Edit.CardTitle"]</h2>
+                        <div class="gev-field">
+                            <label class="field-label" for="gev-role">@Culture["Sensitive.Edit.RoleLabel"]</label>
+                            <input id="gev-role" class="text-input" readonly
+                                   value="Zelfstandig ondernemer, persoonlijke dienstverlening" />
+                        </div>
+                        <p class="gev-skills__label">@Culture["Sensitive.Edit.NeutralTitle"]</p>
+                        <div class="gev-neutral-grid">
+                            @foreach (var title in _neutralTitles)
                             {
-                                <span class="gev-chip">@skill</span>
+                                var on = title.Contains("persoonlijke", StringComparison.OrdinalIgnoreCase);
+                                <button type="button" class="gev-neutral-card @(on ? "is-on" : null)">
+                                    <span>@title</span>
+                                    @if (on)
+                                    {
+                                        <span class="gev-neutral-card__badge">@Culture["Sensitive.Edit.Chosen"]</span>
+                                    }
+                                </button>
                             }
                         </div>
-                        <label>Werkgever <input class="text-input" value="Eigen onderneming" /></label>
-                        <p class="muted">@Culture["Sensitive.Edit.EmployerOptional"]</p>
-                        <p class="muted">@Culture["Sensitive.Edit.YearsOnly"]</p>
-                        <div class="gev-job is-private">
-                            <div class="gev-toggle-row">
-                                <div>
-                                    <strong>@Culture["Sensitive.Work.OnlyForMe"]</strong>
-                                    <p class="muted">@Culture["Sensitive.Work.OnlyForMeOn"]</p>
-                                </div>
-                                <input type="checkbox" checked disabled />
+                        <div class="gev-skills">
+                            <p class="gev-skills__label">@Culture["Sensitive.Edit.SkillsTitle"]</p>
+                            <div class="gev-chips">
+                                @foreach (var skill in _skills)
+                                {
+                                    <span class="gev-chip">@skill <span class="gev-chip__x" aria-hidden="true">×</span></span>
+                                }
                             </div>
                         </div>
-                    </div>
-                </div>
-                <aside>
-                    <div class="gev-card">
-                        <h3>@Culture["Sensitive.Edit.NeutralWhyTitle"]</h3>
-                    </div>
-                    <div class="gev-card">
-                        <h3>@Culture["Sensitive.Edit.EmployerPreviewTitle"]</h3>
-                        <div class="gev-chips">
-                            <span class="gev-chip">Klantcontact</span>
-                            <span class="gev-chip">Discretie</span>
+                        <div class="gev-field">
+                            <label class="field-label" for="gev-employer">@Culture["Sensitive.Edit.EmployerLabel"]</label>
+                            <input id="gev-employer" class="text-input" readonly value="Eigen onderneming" />
+                            <p class="muted">@Culture["Sensitive.Edit.EmployerOptional"]</p>
                         </div>
-                        <p class="muted">@Culture["Sensitive.Edit.EmployerPreviewHidden"]</p>
+                        <div class="gev-field">
+                            <span class="field-label">@Culture["Sensitive.Edit.PeriodLabel"]</span>
+                            <div class="gev-years">
+                                <input class="text-input" readonly value="2003" aria-label="Van" />
+                                <span class="gev-years__sep">@Culture["Profile.EmployerTo"]</span>
+                                <input class="text-input" readonly value="2019" aria-label="Tot" />
+                            </div>
+                            <p class="muted">@Culture["Sensitive.Edit.YearsOnly"]</p>
+                        </div>
+                        <div class="gev-private-panel">
+                            <SensitiveOnlyForMeSwitch Checked="true" Disabled="true" PrivatePanel="true" />
+                        </div>
                     </div>
-                </aside>
+                    <aside class="gev-sidebar">
+                        <div class="gev-card">
+                            <h3>@Culture["Sensitive.Edit.NeutralWhyTitle"]</h3>
+                            <p>@Culture["Sensitive.Edit.NeutralWhy1"]</p>
+                            <p>@Culture["Sensitive.Edit.NeutralWhy2"]</p>
+                            <p class="muted">@Culture["Sensitive.Edit.NeutralWhy3"]</p>
+                        </div>
+                        <div class="gev-card">
+                            <div class="gev-preview">
+                                <div class="gev-preview__title">@Culture["Sensitive.Edit.EmployerPreviewTitle"]</div>
+                                <div class="gev-chips">
+                                    <span class="gev-chip">Klantcontact</span>
+                                    <span class="gev-chip">Discretie</span>
+                                </div>
+                                <p class="muted" style="margin-top:0.65rem">@Culture["Sensitive.Edit.EmployerPreviewHidden"]</p>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
             </div>
             break;
         case "timeline":
             @RenderWorkHero()
-            <div class="gev-layout">
-                <div class="gev-card">
-                    <h2>Jouw tijdlijn</h2>
-                    <p><strong>Medewerker huishouding</strong> · 1994 – 2003 <span class="gev-pill">@Culture["Sensitive.Work.VisibleBadge"]</span></p>
-                    <p><strong>Zelfstandig ondernemer, persoonlijke dienstverlening</strong> · 2003 – 2019 <span class="gev-pill gev-pill--lock">@Culture["Sensitive.Work.OnlyForMe"]</span></p>
-                    <div class="gev-job">
-                        <p>@Culture.Format("Sensitive.Gap.Title", "2019", "2024")</p>
-                        <div class="gev-gap-actions">
-                            <button type="button" class="is-on">@Culture["Sensitive.Gap.OtherPeriod"]</button>
-                            <button type="button">@Culture["Sensitive.Gap.Care"]</button>
-                            <button type="button">@Culture["Sensitive.Gap.Education"]</button>
-                            <button type="button">@Culture["Sensitive.Gap.Leave"]</button>
-                        </div>
-                        <p class="muted">@Culture["Sensitive.Gap.OtherConfirmed"]</p>
-                    </div>
-                    <p><strong>Gastvrouw (vrijwilliger)</strong> · 2024 – nu <span class="gev-pill">@Culture["Sensitive.Work.VisibleBadge"]</span></p>
-                </div>
-                <aside>
-                    <div class="gev-card"><h3>@Culture["Sensitive.Gap.SidebarTitle"]</h3></div>
+            <div class="gev-wrap">
+                <div class="gev-layout">
                     <div class="gev-card">
-                        <h3>@Culture["Sensitive.Edit.EmployerPreviewTitle"]</h3>
-                        <p>Gastvrouw (vrijwilliger) 2024 – nu</p>
-                        <p>Medewerker huishouding 1994 – 2003</p>
-                        <p class="muted">@Culture["Sensitive.Gap.EmployerPreviewFooter"]</p>
+                        <h2>@Culture["Sensitive.Timeline.Title"]</h2>
+                        <div class="gev-timeline-row">
+                            <div class="gev-job__head">
+                                <div>
+                                    <strong>Medewerker huishouding</strong>
+                                    <p class="gev-job__meta">Hotel Duinzicht, Scheveningen · 1994 - 2003</p>
+                                </div>
+                                <span class="gev-pill">@Culture["Sensitive.Work.VisibleBadge"]</span>
+                            </div>
+                        </div>
+                        <div class="gev-timeline-row">
+                            <div class="gev-job__head">
+                                <div>
+                                    <strong>Zelfstandig ondernemer, persoonlijke dienstverlening</strong>
+                                    <p class="gev-job__meta">Eigen onderneming · 2003 - 2019</p>
+                                </div>
+                                <span class="gev-pill gev-pill--lock">@Culture["Sensitive.Work.OnlyForMe"]</span>
+                            </div>
+                        </div>
+                        <div class="gev-job" style="margin-top:0.75rem">
+                            <p><strong>@Culture.Format("Sensitive.Gap.Title", "2019", "2024")</strong></p>
+                            <div class="gev-gap-actions">
+                                <button type="button" class="is-on">@Culture["Sensitive.Gap.OtherPeriod"]</button>
+                                <button type="button">@Culture["Sensitive.Gap.Care"]</button>
+                                <button type="button">@Culture["Sensitive.Gap.Education"]</button>
+                                <button type="button">@Culture["Sensitive.Gap.Leave"]</button>
+                            </div>
+                            <p class="muted">@Culture["Sensitive.Gap.OtherConfirmed"]</p>
+                        </div>
+                        <div class="gev-timeline-row">
+                            <div class="gev-job__head">
+                                <div>
+                                    <strong>Gastvrouw (vrijwilliger)</strong>
+                                    <p class="gev-job__meta">Buurthuis De Linde, Den Haag · 2024 - nu</p>
+                                </div>
+                                <span class="gev-pill">@Culture["Sensitive.Work.VisibleBadge"]</span>
+                            </div>
+                        </div>
                     </div>
-                </aside>
+                    <aside class="gev-sidebar">
+                        <div class="gev-card">
+                            <h3>@Culture["Sensitive.Gap.SidebarTitle"]</h3>
+                            <p>@Culture["Sensitive.Gap.Sidebar1"]</p>
+                            <p>@Culture["Sensitive.Gap.Sidebar2"]</p>
+                            <p class="muted">@Culture["Sensitive.Gap.Sidebar3"]</p>
+                        </div>
+                        <div class="gev-card">
+                            <div class="gev-preview">
+                                <div class="gev-preview__title">@Culture["Sensitive.Edit.EmployerPreviewTitle"]</div>
+                                <p>Gastvrouw (vrijwilliger) · 2024 - nu</p>
+                                <p>Medewerker huishouding · 1994 - 2003</p>
+                                <p class="muted" style="margin-top:0.5rem">@Culture["Sensitive.Gap.EmployerPreviewFooter"]</p>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
             </div>
             break;
         case "referenties":
-            <div class="gev-hero">
-                <div>
-                    <h1>@Culture["Sensitive.Ref.Title"]</h1>
-                    <p>@Culture["Sensitive.Ref.Lead"]</p>
-                    <div class="gev-banner">@Culture["Sensitive.Ref.PrivacyBanner"]</div>
-                </div>
-                <div class="gev-hero__art gev-hero__art--ref" aria-hidden="true"></div>
-            </div>
-            <div class="gev-layout">
-                <div class="gev-card">
-                    <h2>Nieuwe referentie</h2>
-                    <div class="gev-ref-grid">
-                        @RenderRefType(ReferenceTypeCatalog.Manager, "Sensitive.Ref.Type.Manager")
-                        @RenderRefType(ReferenceTypeCatalog.Colleague, "Sensitive.Ref.Type.Colleague")
-                        @RenderRefType(ReferenceTypeCatalog.RegularClient, "Sensitive.Ref.Type.RegularClient")
-                        @RenderRefType(ReferenceTypeCatalog.Coach, "Sensitive.Ref.Type.Coach", selected: true)
-                        @RenderRefType(ReferenceTypeCatalog.CareWorker, "Sensitive.Ref.Type.CareWorker")
-                        @RenderRefType(ReferenceTypeCatalog.Teacher, "Sensitive.Ref.Type.Teacher")
+            @RenderRefHero()
+            <div class="gev-wrap">
+                <div class="gev-layout gev-layout--single">
+                    <div class="gev-card">
+                        <p class="gev-step-tag">@Culture["Sensitive.Ref.Step"]</p>
+                        <h2>@Culture["Sensitive.Ref.NewTitle"]</h2>
+                        <p class="gev-skills__label">@Culture["Sensitive.Ref.WhoAsk"]</p>
+                        <div class="gev-ref-grid">
+                            @RenderRefType("Sensitive.Ref.Type.Manager")
+                            @RenderRefType("Sensitive.Ref.Type.Colleague")
+                            @RenderRefType("Sensitive.Ref.Type.RegularClient")
+                            @RenderRefType("Sensitive.Ref.Type.Coach", selected: true)
+                            @RenderRefType("Sensitive.Ref.Type.CareWorker")
+                            @RenderRefType("Sensitive.Ref.Type.Teacher")
+                        </div>
+                        <p class="muted">@Culture["Sensitive.Ref.TrajectInfo"]</p>
+                        <div class="gev-field">
+                            <label class="field-label" for="gev-ref-name">@Culture["Sensitive.Ref.Name"]</label>
+                            <input id="gev-ref-name" class="text-input" readonly value="Fatima El Amrani" />
+                        </div>
+                        <div class="gev-field">
+                            <label class="field-label" for="gev-ref-email">@Culture["Sensitive.Ref.Email"]</label>
+                            <input id="gev-ref-email" class="text-input" readonly value="f.elamrani@voorbeeld.nl" />
+                        </div>
+                        <div class="gev-field">
+                            <label class="field-label" for="gev-ref-rel">@Culture["Sensitive.Ref.Relationship"]</label>
+                            <input id="gev-ref-rel" class="text-input" readonly value="Begeleidingstraject, 2023 - 2024" />
+                            <p class="muted">@Culture.Format("Sensitive.Ref.RelationshipPrivate", "Fatima")</p>
+                        </div>
                     </div>
-                    <p class="muted">@Culture["Sensitive.Ref.TrajectInfo"]</p>
-                    <label>Naam <input class="text-input" value="Fatima El Amrani" /></label>
-                    <label>E-mail <input class="text-input" value="f.elamrani@voorbeeld.nl" /></label>
-                    <label>Waar ken je diegene van? <input class="text-input" value="Begeleidingstraject, 2023 - 2024" /></label>
-                    <p class="muted">@Culture.Format("Sensitive.Ref.RelationshipPrivate", "Fatima")</p>
-                    <p class="muted">@Culture["Sensitive.Ref.EmployerPreview"]</p>
+                    <aside class="gev-sidebar">
+                        <div class="gev-card">
+                            <h3>@Culture["Sensitive.Ref.YourReferences"]</h3>
+                            <p>Ellen · @Culture["Sensitive.Ref.Type.RegularClient"]</p>
+                            <p class="muted">Ruud Jansen · @Culture["Sensitive.Ref.Type.Manager"]</p>
+                        </div>
+                        <div class="gev-card">
+                            <div class="gev-preview">
+                                <div class="gev-preview__title">@Culture["Sensitive.Ref.EmployerPreviewTitle"]</div>
+                                <p>@Culture["Sensitive.Ref.EmployerPreviewShort"]</p>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             </div>
             break;
         case "paspoort":
-            <div class="gev-hero">
-                <div>
-                    <h1>@Culture["Sensitive.Passport.HeroTitle"]</h1>
-                    <p>@Culture["Sensitive.Passport.HeroLead"]</p>
-                    <div class="gev-view-toggle">
-                        <button type="button">@Culture["Sensitive.Passport.MyView"]</button>
-                        <button type="button" class="is-on">@Culture["Sensitive.Passport.EmployerView"]</button>
-                    </div>
-                </div>
-                <div class="gev-hero__art" aria-hidden="true"></div>
-            </div>
-            <div class="gev-layout">
-                <div class="gev-card">
-                    <h2>Marion B.</h2>
-                    <div class="gev-chips">
-                        @foreach (var skill in EmployerFacingCandidateProfile.VisibleSkillLabels(DemoPreferences))
+            @RenderPaspoortHero()
+            <div class="gev-wrap">
+                <div class="gev-layout">
+                    <div class="gev-card">
+                        <h2>Marion B.</h2>
+                        <p class="muted">Den Haag en omgeving</p>
+                        <div class="gev-chips" style="margin:0.75rem 0">
+                            @foreach (var skill in EmployerFacingCandidateProfile.VisibleSkillLabels(DemoPreferences))
+                            {
+                                <span class="gev-chip">@skill</span>
+                            }
+                        </div>
+                        <p class="muted">
+                            Bevestigd door @ReferenceTypeCatalog.EmployerConfirmationLabel(ReferenceTypeCatalog.Coach, Culture.Language)
+                        </p>
+                        <h3 style="margin-top:1rem">@Culture["Profile.Experience"]</h3>
+                        @foreach (var job in SensitiveExperienceRules.VisibleToEmployers(DemoPreferences.Employers))
                         {
-                            <span class="gev-chip">@skill</span>
+                            <p><strong>@job.Role</strong> · @FormatYears(job.StartMonth, job.EndMonth, job.IsCurrent == true)</p>
                         }
                     </div>
-                    <p>Bevestigd door @ReferenceTypeCatalog.EmployerConfirmationLabel(ReferenceTypeCatalog.Coach, Culture.Language)</p>
-                    <h3>Werkervaring</h3>
-                    @foreach (var job in SensitiveExperienceRules.VisibleToEmployers(DemoPreferences.Employers))
-                    {
-                        <p><strong>@job.Role</strong> @job.StartMonth – @(job.EndMonth ?? "nu")</p>
-                    }
+                    <aside class="gev-sidebar">
+                        <div class="gev-card">
+                            <h3>@Culture["Sensitive.Passport.OnlyForYouTitle"]</h3>
+                            <p>Zelfstandig ondernemer, persoonlijke dienstverlening (2003 - 2019)</p>
+                            <span class="gev-pill gev-pill--lock">@Culture["Sensitive.Passport.CountsForMatches"]</span>
+                            <p style="margin-top:0.75rem">Andere periode (2019 - 2024)</p>
+                            <span class="gev-pill">@Culture["Sensitive.Passport.NoEmployerGapLabel"]</span>
+                        </div>
+                        <div class="gev-card">
+                            <h3>@Culture["Sensitive.Passport.ControlTitle"]</h3>
+                            <p class="muted">@Culture["Sensitive.Passport.ControlLead"]</p>
+                            <button type="button" class="btn btn-secondary">@Culture["Sensitive.Passport.EditPassport"]</button>
+                        </div>
+                    </aside>
                 </div>
-                <aside>
-                    <div class="gev-card">
-                        <h3>@Culture["Sensitive.Passport.OnlyForYouTitle"]</h3>
-                        <p>Zelfstandig ondernemer, persoonlijke dienstverlening (2003–2019)</p>
-                        <span class="gev-pill gev-pill--lock">@Culture["Sensitive.Passport.CountsForMatches"]</span>
-                        <p>Andere periode (2019–2024)</p>
-                        <span class="gev-pill">@Culture["Sensitive.Passport.NoEmployerGapLabel"]</span>
-                    </div>
-                    <div class="gev-card">
-                        <h3>@Culture["Sensitive.Passport.ControlTitle"]</h3>
-                        <p>@Culture["Sensitive.Passport.ControlLead"]</p>
-                        <button type="button" class="btn btn-secondary">@Culture["Sensitive.Passport.EditPassport"]</button>
-                    </div>
-                </aside>
             </div>
             break;
         default:
-            @RenderWorkHero()
-            <div class="gev-layout">
-                <div>
-                    <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
-                    <div class="gev-job">
-                        <p><strong>Medewerker huishouding</strong><br />Hotel Duinzicht · 1994 – 2003</p>
-                        <div class="gev-toggle-row">
-                            <span>@Culture["Sensitive.Work.OnlyForMe"]</span>
-                            <input type="checkbox" disabled />
+            @RenderWorkHero(showBanner: true)
+            <div class="gev-wrap">
+                <div class="gev-layout">
+                    <div>
+                        <div class="gev-job">
+                            <div class="gev-job__head">
+                                <div>
+                                    <strong>Medewerker huishouding</strong>
+                                    <p class="gev-job__meta">Hotel Duinzicht, Scheveningen · 1994 - 2003</p>
+                                </div>
+                            </div>
+                            <SensitiveOnlyForMeSwitch Checked="false" Disabled="true" />
                         </div>
-                        <p class="muted">@Culture["Sensitive.Work.OnlyForMeOff"]</p>
-                    </div>
-                    <div class="gev-job is-private">
-                        <p><strong>Zelfstandig ondernemer, persoonlijke dienstverlening</strong><br />Eigen onderneming · 2003 – 2019</p>
-                        <div class="gev-toggle-row">
-                            <span>@Culture["Sensitive.Work.OnlyForMe"]</span>
-                            <input type="checkbox" checked disabled />
+                        <div class="gev-job is-private">
+                            <div class="gev-job__head">
+                                <div>
+                                    <strong>Zelfstandig ondernemer, persoonlijke dienstverlening</strong>
+                                    <p class="gev-job__meta">Eigen onderneming · 2003 - 2019</p>
+                                </div>
+                            </div>
+                            <SensitiveOnlyForMeSwitch Checked="true" Disabled="true" />
                         </div>
-                        <p class="muted">@Culture["Sensitive.Work.OnlyForMeOn"]</p>
-                    </div>
-                    <div class="gev-job">
-                        <p><strong>Gastvrouw (vrijwilliger)</strong><br />Buurthuis De Linde · 2024 – nu</p>
-                        <div class="gev-toggle-row">
-                            <span>@Culture["Sensitive.Work.OnlyForMe"]</span>
-                            <input type="checkbox" disabled />
+                        <div class="gev-job">
+                            <div class="gev-job__head">
+                                <div>
+                                    <strong>Gastvrouw (vrijwilliger)</strong>
+                                    <p class="gev-job__meta">Buurthuis De Linde, Den Haag · 2024 - nu</p>
+                                </div>
+                            </div>
+                            <SensitiveOnlyForMeSwitch Checked="false" Disabled="true" />
                         </div>
                     </div>
+                    <aside class="gev-card">
+                        <h2>@Culture["Sensitive.Work.SidebarTitle"]</h2>
+                        <p>@Culture["Sensitive.Work.SidebarLead"]</p>
+                        <p><strong>@Culture["Sensitive.Work.SidebarHide"]</strong><br />@Culture["Sensitive.Work.SidebarHideSub"]</p>
+                        <p><strong>@Culture["Sensitive.Work.SidebarMatch"]</strong><br />@Culture["Sensitive.Work.SidebarMatchSub"]</p>
+                        <p><strong>@Culture["Sensitive.Work.SidebarEdit"]</strong><br />@Culture["Sensitive.Work.SidebarEditSub"]</p>
+                        <p class="muted">@Culture["Sensitive.Work.SidebarSkillsNote"]</p>
+                    </aside>
                 </div>
-                <aside class="gev-card">
-                    <h2>@Culture["Sensitive.Work.SidebarTitle"]</h2>
-                    <p>@Culture["Sensitive.Work.SidebarLead"]</p>
-                    <p><strong>@Culture["Sensitive.Work.SidebarHide"]</strong><br />@Culture["Sensitive.Work.SidebarHideSub"]</p>
-                    <p><strong>@Culture["Sensitive.Work.SidebarMatch"]</strong><br />@Culture["Sensitive.Work.SidebarMatchSub"]</p>
-                    <p><strong>@Culture["Sensitive.Work.SidebarEdit"]</strong><br />@Culture["Sensitive.Work.SidebarEditSub"]</p>
-                    <p class="muted">@Culture["Sensitive.Work.SidebarSkillsNote"]</p>
-                </aside>
             </div>
             break;
     }
@@ -215,6 +290,12 @@
     [Parameter] public string? Screen { get; set; }
 
     private string ActiveScreen => string.IsNullOrWhiteSpace(Screen) ? "werkervaring" : Screen.Trim().ToLowerInvariant();
+
+    private readonly IReadOnlyList<string> _neutralTitles =
+        NeutralRoleSuggestions.SuggestTitles("Zelfstandig ondernemer, persoonlijke dienstverlening", null, "Eigen onderneming");
+
+    private readonly IReadOnlyList<string> _skills =
+        NeutralRoleSuggestions.ExtractSkills("Zelfstandig ondernemer", "Klantcontact; Discretie; Ondernemerschap");
 
     private static CandidatePreferencesDto DemoPreferences => new(
         Roles: [],
@@ -230,22 +311,75 @@
                 EndMonth: "2019-12",
                 OnlyForMe: true,
                 Skills: ["Klantcontact", "Discretie", "Ondernemerschap"]),
-            new CandidateEmployerHistoryDto("Buurthuis", "Gastvrouw (vrijwilliger)", StartMonth: "2024-01")
+            new CandidateEmployerHistoryDto("Buurthuis", "Gastvrouw (vrijwilliger)", StartMonth: "2024-01", IsCurrent: true)
         ]);
 
-    private RenderFragment RenderWorkHero() => __builder =>
+    private static string FormatYears(string? startMonth, string? endMonth, bool isCurrent)
     {
-        <div class="gev-hero">
-            <div>
-                <span class="status-pill">@Culture["Onboarding.Optional"]</span>
-                <h1>@Culture["Onboarding.Step4.Title"]</h1>
-                <p>@Culture["Onboarding.Step4.Lead"]</p>
-            </div>
-            <div class="gev-hero__art" aria-hidden="true"></div>
+        static string? Year(string? month) =>
+            string.IsNullOrWhiteSpace(month) || month.Length < 4 ? month : month[..4];
+
+        var start = Year(startMonth) ?? "?";
+        var end = isCurrent || string.IsNullOrWhiteSpace(endMonth) ? "nu" : Year(endMonth) ?? "?";
+        return $"{start} - {end}";
+    }
+
+    private RenderFragment RenderWorkHero(bool showBanner = false) => __builder =>
+    {
+        <div class="ob-finale__hero">
+            <figure class="ob-finale__art" aria-hidden="true">
+                <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
+            </figure>
+            <header class="ob-finale__intro">
+                <div class="ob-finale__hero-inner">
+                    <span class="ob-finale__badge">@Culture["Onboarding.Optional"]</span>
+                    <h1>@Culture["Onboarding.Step4.Title"]</h1>
+                    <p class="ob-finale__lead">@Culture["Onboarding.Step4.Lead"]</p>
+                    @if (showBanner)
+                    {
+                        <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
+                    }
+                </div>
+            </header>
         </div>;
     };
 
-    private RenderFragment RenderRefType(string code, string key, bool selected = false) => __builder =>
+    private RenderFragment RenderRefHero() => __builder =>
+    {
+        <div class="ob-finale__hero">
+            <figure class="ob-finale__art ob-finale__art--ref" aria-hidden="true">
+                <img src="/images/candidate/ref-full.jpg" alt="" width="1280" height="720" decoding="async" />
+            </figure>
+            <header class="ob-finale__intro">
+                <div class="ob-finale__hero-inner">
+                    <h1>@Culture["Sensitive.Ref.Title"]</h1>
+                    <p class="ob-finale__lead">@Culture["Sensitive.Ref.Lead"]</p>
+                    <div class="gev-banner">@Culture["Sensitive.Ref.PrivacyBanner"]</div>
+                </div>
+            </header>
+        </div>;
+    };
+
+    private RenderFragment RenderPaspoortHero() => __builder =>
+    {
+        <div class="ob-finale__hero">
+            <figure class="ob-finale__art" aria-hidden="true">
+                <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
+            </figure>
+            <header class="ob-finale__intro">
+                <div class="ob-finale__hero-inner">
+                    <h1>@Culture["Sensitive.Passport.HeroTitle"]</h1>
+                    <p class="ob-finale__lead">@Culture["Sensitive.Passport.HeroLead"]</p>
+                    <div class="gev-view-toggle">
+                        <button type="button">@Culture["Sensitive.Passport.MyView"]</button>
+                        <button type="button" class="is-on">@Culture["Sensitive.Passport.EmployerView"]</button>
+                    </div>
+                </div>
+            </header>
+        </div>;
+    };
+
+    private RenderFragment RenderRefType(string key, bool selected = false) => __builder =>
     {
         <button type="button" class="gev-ref-type @(selected ? "is-on" : null)">@Culture[key]</button>;
     };

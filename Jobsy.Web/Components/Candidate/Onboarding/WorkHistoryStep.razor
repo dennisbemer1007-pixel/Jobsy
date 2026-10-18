@@ -2,13 +2,15 @@
 @using Jobsy.Core.Careers
 @using Jobsy.Web.Localization
 @using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.Sensitive
 @using Jobsy.Web.Models
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
 
 @if (_sensitiveExperience)
 {
-    <link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-1" />
+    <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-r2" />
+    <link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-r2" />
 }
 @if (ShowHeading)
 {
@@ -109,14 +111,9 @@
             }
             @if (_sensitiveExperience && !item.IsBlank())
             {
-                <div class="gev-toggle-row @(item.OnlyForMe ? "is-private" : null)">
-                    <div>
-                        <strong>@Culture["Sensitive.Work.OnlyForMe"]</strong>
-                        <p class="muted">@(item.OnlyForMe ? Culture["Sensitive.Work.OnlyForMeOn"] : Culture["Sensitive.Work.OnlyForMeOff"])</p>
-                    </div>
-                    <input type="checkbox"
-                           checked="@item.OnlyForMe"
-                           @onchange="e => ToggleOnlyForMe(item, e.Value is true)" />
+                <div class="@(item.OnlyForMe ? "gev-private-panel" : null)" style="margin-top:0.75rem">
+                    <SensitiveOnlyForMeSwitch Checked="@item.OnlyForMe"
+                                                CheckedChanged="value => ToggleOnlyForMe(item, value)" />
                 </div>
             }
         </article>
