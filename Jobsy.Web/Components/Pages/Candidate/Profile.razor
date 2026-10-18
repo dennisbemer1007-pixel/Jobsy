@@ -2,6 +2,7 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ProfileSections
 @inject JobsyApiClient Api
 @inject IGeocodingClient Geocoder
@@ -22,7 +23,8 @@
 
 <PageTitle>@Culture["Profile.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate">
+<div class="panel-page profile-page profile-page--candidate profile-page--illustrated">
+    <CandidateKompasGreetingBand FirstName="@Editor.FirstName" />
     <header class="saved-gate__header profile-page__header">
         <h1>@Culture["Profile.Title"]</h1>
         @if (!string.IsNullOrWhiteSpace(_returnUrl))

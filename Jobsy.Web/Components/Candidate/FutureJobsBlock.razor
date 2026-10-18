@@ -5,6 +5,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Navigation
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -37,9 +38,9 @@
                         <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" />
                         <circle cx="12" cy="9.5" r="2.5" />
                     </svg>
-                    @Culture["FutureJobs.Region"]
+                    @_regionLabel
                 </span>
-                <small>@Culture["FutureJobs.RegionNote"]</small>
+                <small>@_regionNote</small>
             </div>
             <details class="future-jobs__how">
                 <summary>
@@ -146,6 +147,8 @@
     private bool _started;
     private FutureJobsList _list = new(true, [], "");
     private readonly HashSet<string> _dayIds = new(StringComparer.OrdinalIgnoreCase);
+    private string _regionLabel = "";
+    private string _regionNote = "";
 
     /// <summary>Runs the existing functiefit check for this occupation title.</summary>
     [Parameter] public EventCallback<string> OnCheck { get; set; }
@@ -216,6 +219,8 @@
                     scores.Conventional)
                 : null;
             var prefs = profileTask.Result?.Preferences;
+            _regionLabel = FutureJobsRegionDisplay.RegionLabel(Culture, prefs);
+            _regionNote = FutureJobsRegionDisplay.RegionNote(Culture);
             var education = prefs is null
                 ? null
                 : string.Join(

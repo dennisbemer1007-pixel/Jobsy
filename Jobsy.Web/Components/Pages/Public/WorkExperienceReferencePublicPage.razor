@@ -23,7 +23,7 @@
 <section class="pub-section ref-verif-public ref-verif-public-layout" aria-labelledby="ref-verif-public-title">
     @if (_thanks is not null)
     {
-        <CandidateIllustratedHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
+        <RefVerifGevoeligHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
                                   MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                   ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                   MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
@@ -39,7 +39,7 @@
     }
     else if (_problem is not null)
     {
-        <CandidateIllustratedHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
+        <RefVerifGevoeligHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
                                   MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                   ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                   MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
@@ -57,7 +57,7 @@
     {
         @if (_view.State == "open")
         {
-            <CandidateIllustratedHero Eyebrow="@Culture["RefVerif.Public.PageTitle"]"
+            <RefVerifGevoeligHero Eyebrow="@Culture["RefVerif.Public.PageTitle"]"
                                       Title="@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)"
                                       TitleId="ref-verif-public-title"
                                       Lead="@Culture.Format("RefVerif.Public.IntroDetail", _view.CandidateName, _view.EmployerName, _view.RoleTitle)"
@@ -200,7 +200,7 @@
         }
         else
         {
-            <CandidateIllustratedHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
+            <RefVerifGevoeligHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
                                       MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                       ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                       MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"

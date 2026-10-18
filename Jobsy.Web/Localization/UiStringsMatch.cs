@@ -28,6 +28,9 @@ public static class UiStringsMatch
         Add("Match.MoreInfo",
             "Meer info", "More info",
             "Więcej info", "Mai multe info", "مزيد من المعلومات");
+        Add("Match.ViewVacancy",
+            "Bekijk de vacature", "View the vacancy",
+            "Zobacz ofertę", "Vezi vacanța", "عرض الوظيفة");
         Add("Match.KeyFacts",
             "Kerngegevens", "Key facts",
             "Kluczowe dane", "Date esențiale", "البيانات الأساسية");

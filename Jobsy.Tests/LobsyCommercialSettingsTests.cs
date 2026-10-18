@@ -10,6 +10,22 @@ namespace Jobsy.Tests;
 public class LobsyCommercialSettingsTests
 {
     [Fact]
+    public async Task GetAsync_parallel_calls_seed_settings_once()
+    {
+        var dbName = Guid.NewGuid().ToString("N");
+        var results = await Task.WhenAll(Enumerable.Range(0, 8).Select(async _ =>
+        {
+            await using var db = CreateDb(dbName);
+            return await new FlexCommercialService(db).GetAsync();
+        }));
+        Assert.All(results, dto => Assert.True(dto.ContactUnlockCostTokens > 0));
+        await using (var db = CreateDb(dbName))
+        {
+            Assert.Equal(1, await db.FlexCommercialSettings.CountAsync());
+        }
+    }
+
+    [Fact]
     public async Task Update_persists_all_amounts_and_syncs_contact_unlock_spend_cost()
     {
         await using var db = CreateDb();
@@ -71,10 +87,10 @@ public class LobsyCommercialSettingsTests
         Assert.Equal(4500m, (await db.AgencyAnnualSubscriptions.SingleAsync()).PriceEuro);
     }
 
-    private static JobsyDbContext CreateDb()
+    private static JobsyDbContext CreateDb(string? databaseName = null)
     {
         var options = new DbContextOptionsBuilder<JobsyDbContext>()
-            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName ?? Guid.NewGuid().ToString("N"))
             .Options;
         return new JobsyDbContext(options);
     }
