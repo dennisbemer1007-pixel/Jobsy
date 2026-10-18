@@ -8,28 +8,26 @@
 @inject RoleNavItemsState NavItems
 @inject AuthenticationStateProvider AuthState
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IFeatureFlags FeatureFlags
 @implements IAsyncDisposable
 
-@if (_items.Count > 0)
-{
-    <nav class="app-header__nav candidate-header-nav" aria-label="@Culture["Nav.Main"]" data-testid="candidate-header-nav">
-        @foreach (var item in _items)
-        {
-            var title = Culture[item.TitleKey];
-            var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
-                ? Culture[item.ShortTitleKey!]
-                : title;
-            var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
-            <a class="candidate-header-nav__link @(active ? "is-active" : null)"
-               href="@item.Href"
-               title="@title"
-               aria-current="@(active ? "page" : null)"
-               data-testid="@HeaderNavTestId(item)">
-                @shortTitle
-            </a>
-        }
-    </nav>
-}
+<nav class="app-header__nav candidate-header-nav" aria-label="@Culture["Nav.Main"]" data-testid="candidate-header-nav">
+    @foreach (var item in _items)
+    {
+        var title = Culture[item.TitleKey];
+        var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
+            ? Culture[item.ShortTitleKey!]
+            : title;
+        var active = RoleNavCatalog.IsActive(item, Navigation.ToBaseRelativePath(Navigation.Uri), _items);
+        <a class="candidate-header-nav__link @(active ? "is-active" : null)"
+           href="@item.Href"
+           title="@title"
+           aria-current="@(active ? "page" : null)"
+           data-testid="@HeaderNavTestId(item)">
+            @shortTitle
+        </a>
+    }
+</nav>
 
 @code {
     private IReadOnlyList<NavItem> _items = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
@@ -49,33 +47,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        _items = RoleNavCatalog.ForUser(state.User, FeatureFlagSnapshot.Defaults);
-        if (_items.Count == 0)
-        {
-            // Parent only renders this for candidates; auth claims can lag the first circuit tick.
-            _items = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
-        }
-
-        NavItems.Changed += OnNavItemsChanged;
-        _ = SyncNavItemsInBackgroundAsync();
-    }
-
-    private async Task SyncNavItemsInBackgroundAsync()
-    {
+        FeatureFlagSnapshot flags;
         try
         {
-            await NavItems.EnsureInitializedAsync();
-            if (NavItems.Items.Count > 0)
-            {
-                _items = NavItems.Items;
-                await InvokeAsync(StateHasChanged);
-            }
+            flags = await FeatureFlags.GetAsync();
         }
         catch
         {
-            // circuit dispose / auth races
+            flags = FeatureFlagSnapshot.Defaults;
         }
+
+        await NavItems.EnsureInitializedAsync();
+        _items = NavItems.Items.Count > 0
+            ? NavItems.Items
+            : RoleNavCatalog.ForUser((await AuthState.GetAuthenticationStateAsync()).User, flags);
+        if (_items.Count == 0)
+        {
+            _items = RoleNavCatalog.CandidateItems(flags);
+        }
+
+        NavItems.Changed += OnNavItemsChanged;
     }
 
     private void OnNavItemsChanged()

@@ -35,10 +35,11 @@
                     </span>
                 </a>
             </div>
-            @if (_isCandidate || _banenkaartCandidateShell)
-            {
-                <CandidateHeaderNav />
-            }
+            <AuthorizeView Roles="@JobsyRoles.Candidate">
+                <Authorized>
+                    <CandidateHeaderNav />
+                </Authorized>
+            </AuthorizeView>
             <div class="app-header__actions">
                 @if (_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)
                 {
@@ -366,6 +367,7 @@
         }
 
         _isCandidate = true;
+        SyncBanenkaartImmersive();
     }
 
     private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
