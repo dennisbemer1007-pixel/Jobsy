@@ -37,6 +37,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirR14 = "/opt/cursor/artifacts/kandidaat-728-r14";
     private const string ArtifactsDirR15 = "/opt/cursor/artifacts/kandidaat-728-r15";
     private const string ArtifactsDirR16 = "/opt/cursor/artifacts/kandidaat-728-r16";
+    private const string ArtifactsDirMobhero = "/opt/cursor/artifacts/kandidaat-728-mobhero";
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -905,6 +906,82 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Console.WriteLine(pixelReports);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_728_mobhero_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirMobhero);
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        var mob390 = new[] { (390, 844, "390") };
+        var mobReports = new StringBuilder();
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobhero,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                WaitForApplicationsEmptyAsync);
+
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobhero,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                WaitForSavedEmptyAsync);
+
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirMobhero,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                auth: true,
+                sizes: [(1440, 900, "1440-spotcheck")],
+                prepare: WaitForApplicationsEmptyAsync);
+        }
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobhero,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            PrepareKompasTopScreenshotAsync);
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobhero,
+            deliveryWeb.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            WaitForSettingsMailPaneAsync);
+
+        foreach (var name in new[] { "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen" })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobhero, $"{name}-390.png");
+            var report = ValidateMobileHeroPixels390(await File.ReadAllBytesAsync(pngPath), name);
+            mobReports.AppendLine(report);
+        }
+
+        var mobReportPath = Path.Combine(ArtifactsDirMobhero, "mobhero-pixel-gate-390.txt");
+        await File.WriteAllTextAsync(mobReportPath, mobReports.ToString());
+
+        foreach (var name in new[] { "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen" })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobhero, $"{name}-390.png");
+            var report = ValidateMobileHeroPixels390(await File.ReadAllBytesAsync(pngPath), name);
+            Assert.DoesNotContain("PASS=False", report, StringComparison.Ordinal);
+        }
+
+        await deliveryWeb.DisposeAsync();
+
+        var pngs = Directory.GetFiles(ArtifactsDirMobhero, "*.png");
+        Assert.Equal(5, pngs.Length);
+        Console.WriteLine(mobReports);
+    }
+
     private async Task CaptureBanenkaartPopupsAsync(
         string artifactsDir = ArtifactsDirR2,
         string? serverAddress = null,
@@ -1084,6 +1161,156 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             await page.ScreenshotAsync(new() { Path = file, FullPage = false });
             Assert.True(File.Exists(file));
         }
+    }
+
+    private async Task CaptureMobheroViewportAsync(
+        string artifactsDir,
+        string serverAddress,
+        string path,
+        string name,
+        Func<IPage, int, Task> prepare)
+    {
+        const int width = 390;
+        const int height = 844;
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            Locale = "nl-NL",
+            IsMobile = true,
+            HasTouch = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await page.GotoAsync(
+            $"{serverAddress}/__test/sign-in?return={Uri.EscapeDataString(path)}",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync($"{serverAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await prepare(page, width);
+        await page.AddStyleTagAsync(new()
+        {
+            Content = """
+                .pub-header, .jobsy-chrome__header, .bottom-nav, .candidate-bottom-nav,
+                .lobsy-coach-dock, .pub-coach-dock { position: static !important; }
+                .passport-layout__card--desktop { position: static !important; }
+                .lobsy-assistant-tab, .pub-assistant-rail, .assistant-rail, [data-assistant-rail] { display: none !important; }
+                """
+        });
+        await page.Locator(".cand-hero").First.WaitForAsync(new() { Timeout = 60_000 });
+        var heroBox = await page.Locator(".cand-hero").First.BoundingBoxAsync();
+        Assert.NotNull(heroBox);
+        Assert.InRange(heroBox!.Height, 180, 261);
+
+        await page.WaitForTimeoutAsync(600);
+        var file = Path.Combine(artifactsDir, $"{name}-390.png");
+        await page.ScreenshotAsync(new() { Path = file, FullPage = false });
+        Assert.True(File.Exists(file));
+    }
+
+    private static string ValidateMobileHeroPixels390(byte[] pngBytes, string label)
+    {
+        using var img = Image.Load<Rgb24>(pngBytes);
+        var sb = new StringBuilder();
+        sb.AppendLine($"=== Mob hero gate 390: {label} ({img.Width}x{img.Height}) ===");
+
+        var heroTopY = 68;
+        for (var y = 60; y < 76; y++)
+        {
+            var px = img[img.Width / 2, y];
+            if (px.R + px.G + px.B < 560)
+            {
+                heroTopY = y + 1;
+                break;
+            }
+        }
+
+        var heroBottomY = heroTopY + 260;
+        for (var y = heroTopY + 200; y < Math.Min(heroTopY + 280, img.Height); y++)
+        {
+            var px = img[24, y];
+            if (px.R + px.G + px.B > 720)
+            {
+                heroBottomY = y - 1;
+                break;
+            }
+        }
+
+        var heroHeightPx = heroBottomY - heroTopY;
+        sb.AppendLine($"  hero band y≈{heroTopY}–{heroBottomY} ({heroHeightPx}px, max 260)");
+
+        const int textX = 28;
+        var titleInk = false;
+        var titleSampleY = heroTopY;
+        for (var y = heroTopY; y < Math.Min(heroTopY + 96, img.Height); y++)
+        {
+            var px = img[textX, y];
+            if (px.R + px.G + px.B < 380)
+            {
+                titleInk = true;
+                titleSampleY = y;
+                break;
+            }
+        }
+
+        sb.AppendLine($"  title ink scan (x={textX}): {titleInk} (first dark y={titleSampleY})");
+
+        var figureVisible = false;
+        var figureSampleX = 0;
+        var figureSampleY = 0;
+        for (var y = heroTopY + 72; y <= heroBottomY - 4 && !figureVisible; y++)
+        {
+            for (var x = (int)Math.Round(img.Width * 0.48); x <= img.Width - 12; x++)
+            {
+                var px = img[x, y];
+                if (IsMobHeroFigurePixel(px))
+                {
+                    figureVisible = true;
+                    figureSampleX = x;
+                    figureSampleY = y;
+                    break;
+                }
+            }
+        }
+
+        sb.AppendLine($"  figure in art ({figureSampleX},{figureSampleY}): visible={figureVisible}");
+
+        var ghostPixels = 0;
+        for (var y = heroTopY + 88; y <= heroTopY + 200; y++)
+        {
+            for (var x = 190; x <= 248; x++)
+            {
+                if (IsMobGhostFigurePixel(img[x, y]))
+                {
+                    ghostPixels++;
+                }
+            }
+        }
+
+        sb.AppendLine($"  ghost figure pixels (fade zone): {ghostPixels} (max 0)");
+
+        var seamStep = 0;
+        var seamY = heroTopY + Math.Min(100, heroHeightPx / 2);
+        Rgb24? seamPrev = null;
+        for (var x = (int)Math.Round(img.Width * 0.38); x <= (int)Math.Round(img.Width * 0.52); x++)
+        {
+            var px = img[x, seamY];
+            if (seamPrev is { } p)
+            {
+                seamStep = Math.Max(seamStep, RgbStep(p, px));
+            }
+
+            seamPrev = px;
+        }
+
+        sb.AppendLine($"  fade seam max step (mid band): {seamStep} (max 90)");
+
+        var contentBelowY = Math.Min(heroBottomY + 28, img.Height - 1);
+        sb.AppendLine($"  hero ends y≈{heroBottomY}, tabs near y={contentBelowY} (above fold if <420): {contentBelowY < 420}");
+
+        var passed = heroHeightPx <= 260 && titleInk && figureVisible && ghostPixels == 0 && seamStep <= 90
+            && contentBelowY < 420;
+        sb.AppendLine($"  PASS={passed}");
+        return sb.ToString();
     }
 
     private async Task AssertHeroSeamGradientAt1024Async(
@@ -1323,6 +1550,32 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
     private static bool IsHeroArtPeach(Rgb24 px) =>
         px.R >= 250 && px.G >= 230 && px.B >= 185 && px.R - px.B >= 22;
+
+    private static bool IsMobGhostFigurePixel(Rgb24 px)
+    {
+        if (RgbStep(PearlReference, px) < 95)
+        {
+            return false;
+        }
+
+        return px.B >= 105 && px.R <= 95 && px.G <= 135;
+    }
+
+    private static bool IsMobHeroFigurePixel(Rgb24 px)
+    {
+        if (IsPeachDecorPixel(px))
+        {
+            return false;
+        }
+
+        var dist = RgbStep(PearlReference, px);
+        if (dist > 55 && px.R + px.G + px.B < 630)
+        {
+            return true;
+        }
+
+        return dist > 72 && px.R + px.G + px.B < 480;
+    }
 
     private static bool IsGhostFadePixel(Rgb24 px)
     {

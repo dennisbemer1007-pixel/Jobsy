@@ -167,13 +167,123 @@
 }
 
 @media (max-width: 639px) {
-  .cand-hero {
+  /* Mobiel (≤390): tekst in de band, art als achtergrond, figuren rechtsonder */
+  .cand-hero--with-art {
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-bottom: 0.75rem;
+    display: block;
+    position: relative;
+    height: min(16.25rem, 66.67vw);
+    max-height: 16.25rem;
+    min-height: 12.5rem;
+    min-width: 0;
+    background-image: none !important;
+    background-color: var(--pearl);
+    border-block-end: 1px solid color-mix(in srgb, var(--gold) 28%, var(--border));
+    overflow: hidden;
+  }
+
+  .cand-hero--with-art::before {
+    display: block;
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+      linear-gradient(
+        155deg,
+        var(--pearl) 0%,
+        color-mix(in srgb, var(--pearl) 98%, transparent) 32%,
+        color-mix(in srgb, var(--pearl) 72%, transparent) 48%,
+        transparent 64%
+      ),
+      linear-gradient(
+        90deg,
+        var(--pearl) 0%,
+        var(--pearl) 46%,
+        color-mix(in srgb, var(--pearl) 88%, transparent) 54%,
+        transparent 66%
+      );
+  }
+
+  .cand-hero--with-art::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--cand-hero-art, none);
+    background-repeat: no-repeat;
+  }
+
+  .cand-hero--profession-band.cand-hero--with-art::after {
+    background-size: auto 128%;
+    background-position: 98% 100%;
+    clip-path: inset(0 0 0 50%);
+  }
+
+  /* Kompas wide: figuren (vliegtuig/piramide) zitten midden in het art — pan naar rechtsonder */
+  .cand-hero--profession-band.cand-hero--kompas-band.cand-hero--with-art::after {
+    background-size: auto 172%;
+    background-position: 100% 58%;
+    clip-path: inset(0 0 0 44%);
+  }
+
+  .cand-hero--with-art:not(.cand-hero--profession-band)::after {
+    background-size: cover;
+    background-position: var(--cand-hero-pos, 72% 88%);
+  }
+
+  .cand-hero--with-art .cand-hero__media {
+    display: none !important;
+  }
+
+  .cand-hero--with-art .cand-hero__copy {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    box-sizing: border-box;
+    height: auto;
+    min-height: 0;
+    max-width: 74%;
+    margin: 0;
+    padding: 0.65rem 0.85rem 0.5rem;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .cand-hero--with-art .cand-hero__copy h1 {
+    font-size: 1.26rem;
+    line-height: 1.12;
+    text-wrap: balance;
+  }
+
+  .cand-hero--with-art .cand-hero__eyebrow {
+    font-size: 0.68rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .cand-hero--with-art .cand-hero__lead {
+    font-size: 0.8rem;
+    line-height: 1.33;
+    margin-top: 0.28rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+
+  .cand-hero:not(.cand-hero--with-art) {
     width: auto;
     max-width: none;
     margin-inline: 0;
     min-height: 0;
     height: auto;
-    background-image: none !important;
     background-color: var(--pearl);
     border-block-end: 0;
     display: flex;
@@ -181,39 +291,15 @@
     gap: 0;
   }
 
-  .cand-hero::before {
+  .cand-hero:not(.cand-hero--with-art)::before {
     display: none;
   }
 
-  .cand-hero__copy {
+  .cand-hero:not(.cand-hero--with-art) .cand-hero__copy {
     max-width: none;
     min-height: 0;
     padding: 1rem 1.15rem 0.85rem;
     background: var(--pearl);
-  }
-
-  .cand-hero__media {
-    display: block;
-    width: 100vw;
-    margin-inline: calc(50% - 50vw);
-    height: 8.75rem;
-    flex: 0 0 8.75rem;
-    background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
-    background-image: var(--cand-hero-art, none);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: var(--cand-hero-pos, 62% center);
-    border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
-  }
-
-  .cand-hero--profession-band .cand-hero__media {
-    background-position: 88% bottom;
-    background-size: auto 100%;
-  }
-
-  .cand-hero__lead {
-    font-size: 0.88rem;
-    line-height: 1.4;
   }
 }
 
