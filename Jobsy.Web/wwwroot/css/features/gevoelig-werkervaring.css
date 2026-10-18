@@ -128,21 +128,25 @@
   );
 }
 
-.gev-hero__art img {
-  position: absolute;
-  inset: 0;
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  object-position: right bottom;
+.gev-hero__art--werk {
+  background-image: url("/images/candidate/werk-full.jpg");
+}
+
+.gev-hero__art--ref {
+  background-image: url("/images/candidate/ref-full.jpg");
+}
+
+.gev-hero__art {
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: auto 100%;
   -webkit-mask-image:
     linear-gradient(to right, transparent 0, #000 160px),
-    linear-gradient(to top, transparent 0, #000 28px);
+    linear-gradient(to top, transparent 0, #000 32px);
   -webkit-mask-composite: source-in;
   mask-image:
     linear-gradient(to right, transparent 0, #000 160px),
-    linear-gradient(to top, transparent 0, #000 28px);
+    linear-gradient(to top, transparent 0, #000 32px);
   mask-composite: intersect;
 }
 
@@ -569,14 +573,15 @@ html.gev-capture [data-lobsy-coach] {
     background: linear-gradient(to bottom, var(--gev-cream) 0%, rgba(251, 245, 236, 0.72) 55%, rgba(251, 245, 236, 0) 100%);
   }
 
-  .gev-hero__art img {
-    object-position: center bottom;
+  .gev-hero__art {
+    background-position: center bottom;
+    background-size: auto min(100%, 11rem);
     -webkit-mask-image:
-      linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%),
-      linear-gradient(to top, transparent 0, #000 56px);
+      linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%),
+      linear-gradient(to top, transparent 0, #000 64px);
     mask-image:
-      linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%),
-      linear-gradient(to top, transparent 0, #000 56px);
+      linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%),
+      linear-gradient(to top, transparent 0, #000 64px);
   }
 
   .gev-hero .gev-wrap--hero {
