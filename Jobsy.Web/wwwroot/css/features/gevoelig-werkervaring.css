@@ -11,15 +11,41 @@
 }
 
 .gev-page .ob-finale__hero {
-  --obf-hero-height: clamp(11.5rem, 20vw, 15.5rem);
+  --obf-hero-height: clamp(12rem, 21vw, 16rem);
+  --obf-art-position: 82% 24%;
   margin-bottom: 0;
+}
+
+.gev-page .ob-finale__art.gev-hero-art img {
+  position: absolute;
+  inset: 0 0 0 32%;
+  width: 68%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  object-position: 100% 100%;
+  transform: none;
 }
 
 .gev-page .ob-finale__intro {
   z-index: 2;
   align-self: end;
-  padding: 1.25rem 1.5rem 1.5rem;
+  padding: 1rem 0 1.25rem;
+  max-width: none;
+  width: 100%;
+}
+
+.gev-page .ob-finale__intro .gev-wrap--hero {
+  padding-top: 0;
+  padding-bottom: 0.25rem;
+}
+
+.gev-page .ob-finale__hero-inner {
   max-width: 36rem;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .gev-page .ob-finale__hero-inner h1 {
@@ -33,12 +59,10 @@
   margin: 0;
 }
 
-.gev-page .ob-finale__art img {
-  object-position: 72% 42%;
-}
-
-.gev-page .ob-finale__art--ref img {
-  object-position: 68% 38%;
+.gev-page .ob-finale__art--ref.gev-hero-art img {
+  inset: 0 0 0 28%;
+  width: 72%;
+  object-position: 100% 100%;
 }
 
 .gev-wrap {
@@ -112,9 +136,36 @@
   font-size: 0.9rem;
 }
 
-.gev-field .text-input {
+/* Match onboarding step 4 inputs (scoped; demo page may not load ob-wizard.css) */
+.gev-page .gev-field input.gev-input,
+.gev-page input.gev-input[type="text"],
+.gev-page input.gev-input[type="email"] {
+  display: block;
   width: 100%;
   box-sizing: border-box;
+  min-block-size: 44px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #c9bfb4;
+  border-radius: 8px;
+  background: #fbf5ec;
+  color: #122033;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.35;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: inset 0 1px 2px rgba(16, 42, 67, 0.04);
+}
+
+.gev-page .gev-input:focus-visible {
+  outline: 3px solid var(--brand, #0f2d5c);
+  outline-offset: 2px;
+}
+
+.gev-page .gev-years .gev-input {
+  width: 5.5rem;
+  text-align: center;
 }
 
 .gev-neutral-grid {
@@ -191,10 +242,6 @@
   flex-wrap: wrap;
 }
 
-.gev-years .text-input {
-  width: 5.5rem;
-  text-align: center;
-}
 
 .gev-years__sep {
   color: var(--gev-muted);
@@ -214,6 +261,47 @@
   border-radius: 0.75rem;
   border-color: #c7dff7;
   background: #fff;
+}
+
+.gev-page .passport-data__switch-input:not(:checked) {
+  background: #e5ddd3;
+  border: 2px solid #8a7f74;
+  box-shadow: inset 0 0 0 1px rgba(16, 42, 67, 0.08);
+}
+
+.gev-page .passport-data__switch-input:not(:checked)::after {
+  box-shadow: 0 1px 3px rgba(16, 42, 67, 0.22);
+}
+
+.gev-ref-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #f0ebe6;
+  font-size: 0.9rem;
+}
+
+.gev-ref-row:last-child {
+  border-bottom: 0;
+}
+
+.gev-ref-status {
+  font-size: 0.78rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.gev-ref-status--ok {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.gev-ref-status--wait {
+  background: #fff8e7;
+  color: #a65b00;
 }
 
 .gev-job {
@@ -369,8 +457,12 @@
 
 /* Capture mode: hide cookie banner and floating assistant */
 html.gev-capture .cookie-consent,
-html.gev-capture .lobsy-assistant {
+html.gev-capture .lobsy-assistant,
+html.gev-capture .lobsy-assistant-tab,
+html.gev-capture [data-lobsy-coach] {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 @media (max-width: 900px) {

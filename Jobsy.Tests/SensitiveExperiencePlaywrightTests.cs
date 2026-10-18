@@ -22,7 +22,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r2";
+    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r3";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -75,12 +75,20 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
                 await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.NetworkIdle });
                 await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.NetworkIdle });
                 await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-                await page.EvaluateAsync("document.documentElement.classList.add('gev-capture')");
-                var root = page.Locator("[data-testid^='gevoelig-demo-']");
-                await root.WaitForAsync();
-                await root.ScreenshotAsync(new()
+                await page.EvaluateAsync("""
+                    () => {
+                      document.documentElement.classList.add('gev-capture');
+                      document.querySelectorAll('.lobsy-assistant-tab, .lobsy-assistant').forEach(el => {
+                        el.style.display = 'none';
+                      });
+                    }
+                    """);
+                await page.Locator("[data-testid^='gevoelig-demo-']").WaitForAsync();
+                await page.Locator("header, .app-header, .top-bar").First.WaitForAsync(new() { Timeout = 5000 });
+                await page.ScreenshotAsync(new()
                 {
-                    Path = Path.Combine(OutDir, $"{slug}-{suffix}.png")
+                    Path = Path.Combine(OutDir, $"{slug}-{suffix}.png"),
+                    FullPage = false
                 });
             }
         }

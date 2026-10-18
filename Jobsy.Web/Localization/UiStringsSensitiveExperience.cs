@@ -75,6 +75,8 @@ public static class UiStringsSensitiveExperience
         d["Sensitive.Ref.EmployerPreviewShort"] =
             "Bevestigd door een begeleider bij de competenties die Fatima herkent. Geen naam, geen organisatie, geen traject.";
         d["Sensitive.Ref.YourReferences"] = "Je referenties";
+        d["Sensitive.Ref.StatusConfirmed"] = "Bevestigd";
+        d["Sensitive.Ref.StatusPending"] = "Wacht op reactie";
         d["Sensitive.Timeline.Title"] = "Jouw tijdlijn";
         d["Sensitive.Edit.CardTitle"] = "Ervaring bewerken";
         d["Sensitive.Ref.NewTitle"] = "Nieuwe referentie";
@@ -176,6 +178,8 @@ public static class UiStringsSensitiveExperience
         d["Sensitive.Ref.EmployerPreviewShort"] =
             "Confirmed by a supervisor next to competencies your referee recognises. No name, no organisation, no programme.";
         d["Sensitive.Ref.YourReferences"] = "Your references";
+        d["Sensitive.Ref.StatusConfirmed"] = "Confirmed";
+        d["Sensitive.Ref.StatusPending"] = "Waiting for response";
         d["Sensitive.Timeline.Title"] = "Your timeline";
         d["Sensitive.Edit.CardTitle"] = "Edit experience";
         d["Sensitive.Ref.NewTitle"] = "New reference";

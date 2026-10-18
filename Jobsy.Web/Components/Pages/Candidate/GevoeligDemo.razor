@@ -12,7 +12,7 @@
 
 <PageTitle>Gevoelige werkervaring demo</PageTitle>
 <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-r2" />
-<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-r2" />
+<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-r3b" />
 
 <div class="gev-page" data-testid="gevoelig-demo-@ActiveScreen">
     @switch (ActiveScreen)
@@ -25,7 +25,7 @@
                         <h2>@Culture["Sensitive.Edit.CardTitle"]</h2>
                         <div class="gev-field">
                             <label class="field-label" for="gev-role">@Culture["Sensitive.Edit.RoleLabel"]</label>
-                            <input id="gev-role" class="text-input" readonly
+                            <input id="gev-role" class="gev-input" readonly
                                    value="Zelfstandig ondernemer, persoonlijke dienstverlening" />
                         </div>
                         <p class="gev-skills__label">@Culture["Sensitive.Edit.NeutralTitle"]</p>
@@ -53,15 +53,15 @@
                         </div>
                         <div class="gev-field">
                             <label class="field-label" for="gev-employer">@Culture["Sensitive.Edit.EmployerLabel"]</label>
-                            <input id="gev-employer" class="text-input" readonly value="Eigen onderneming" />
+                            <input id="gev-employer" class="gev-input" readonly value="Eigen onderneming" />
                             <p class="muted">@Culture["Sensitive.Edit.EmployerOptional"]</p>
                         </div>
                         <div class="gev-field">
                             <span class="field-label">@Culture["Sensitive.Edit.PeriodLabel"]</span>
                             <div class="gev-years">
-                                <input class="text-input" readonly value="2003" aria-label="Van" />
+                                <input class="gev-input" readonly value="2003" aria-label="Van" />
                                 <span class="gev-years__sep">@Culture["Profile.EmployerTo"]</span>
-                                <input class="text-input" readonly value="2019" aria-label="Tot" />
+                                <input class="gev-input" readonly value="2019" aria-label="Tot" />
                             </div>
                             <p class="muted">@Culture["Sensitive.Edit.YearsOnly"]</p>
                         </div>
@@ -172,23 +172,29 @@
                         <p class="muted">@Culture["Sensitive.Ref.TrajectInfo"]</p>
                         <div class="gev-field">
                             <label class="field-label" for="gev-ref-name">@Culture["Sensitive.Ref.Name"]</label>
-                            <input id="gev-ref-name" class="text-input" readonly value="Fatima El Amrani" />
+                            <input id="gev-ref-name" class="gev-input" readonly value="Fatima El Amrani" />
                         </div>
                         <div class="gev-field">
                             <label class="field-label" for="gev-ref-email">@Culture["Sensitive.Ref.Email"]</label>
-                            <input id="gev-ref-email" class="text-input" readonly value="f.elamrani@voorbeeld.nl" />
+                            <input id="gev-ref-email" class="gev-input" readonly value="f.elamrani@voorbeeld.nl" />
                         </div>
                         <div class="gev-field">
                             <label class="field-label" for="gev-ref-rel">@Culture["Sensitive.Ref.Relationship"]</label>
-                            <input id="gev-ref-rel" class="text-input" readonly value="Begeleidingstraject, 2023 - 2024" />
+                            <input id="gev-ref-rel" class="gev-input" readonly value="Begeleidingstraject, 2023 - 2024" />
                             <p class="muted">@Culture.Format("Sensitive.Ref.RelationshipPrivate", "Fatima")</p>
                         </div>
                     </div>
                     <aside class="gev-sidebar">
                         <div class="gev-card">
                             <h3>@Culture["Sensitive.Ref.YourReferences"]</h3>
-                            <p>Ellen · @Culture["Sensitive.Ref.Type.RegularClient"]</p>
-                            <p class="muted">Ruud Jansen · @Culture["Sensitive.Ref.Type.Manager"]</p>
+                            <div class="gev-ref-row">
+                                <span>Ellen · @Culture["Sensitive.Ref.Type.RegularClient"]</span>
+                                <span class="gev-ref-status gev-ref-status--ok">@Culture["Sensitive.Ref.StatusConfirmed"]</span>
+                            </div>
+                            <div class="gev-ref-row">
+                                <span>Ruud Jansen · @Culture["Sensitive.Ref.Type.Manager"]</span>
+                                <span class="gev-ref-status gev-ref-status--wait">@Culture["Sensitive.Ref.StatusPending"]</span>
+                            </div>
                         </div>
                         <div class="gev-card">
                             <div class="gev-preview">
@@ -327,18 +333,20 @@
     private RenderFragment RenderWorkHero(bool showBanner = false) => __builder =>
     {
         <div class="ob-finale__hero">
-            <figure class="ob-finale__art" aria-hidden="true">
+            <figure class="ob-finale__art gev-hero-art" aria-hidden="true">
                 <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
             </figure>
             <header class="ob-finale__intro">
-                <div class="ob-finale__hero-inner">
-                    <span class="ob-finale__badge">@Culture["Onboarding.Optional"]</span>
-                    <h1>@Culture["Onboarding.Step4.Title"]</h1>
-                    <p class="ob-finale__lead">@Culture["Onboarding.Step4.Lead"]</p>
-                    @if (showBanner)
-                    {
-                        <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
-                    }
+                <div class="gev-wrap gev-wrap--hero">
+                    <div class="ob-finale__hero-inner">
+                        <span class="ob-finale__badge">@Culture["Onboarding.Optional"]</span>
+                        <h1>@Culture["Onboarding.Step4.Title"]</h1>
+                        <p class="ob-finale__lead">@Culture["Onboarding.Step4.Lead"]</p>
+                        @if (showBanner)
+                        {
+                            <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
+                        }
+                    </div>
                 </div>
             </header>
         </div>;
@@ -347,14 +355,16 @@
     private RenderFragment RenderRefHero() => __builder =>
     {
         <div class="ob-finale__hero">
-            <figure class="ob-finale__art ob-finale__art--ref" aria-hidden="true">
+            <figure class="ob-finale__art ob-finale__art--ref gev-hero-art" aria-hidden="true">
                 <img src="/images/candidate/ref-full.jpg" alt="" width="1280" height="720" decoding="async" />
             </figure>
             <header class="ob-finale__intro">
-                <div class="ob-finale__hero-inner">
-                    <h1>@Culture["Sensitive.Ref.Title"]</h1>
-                    <p class="ob-finale__lead">@Culture["Sensitive.Ref.Lead"]</p>
-                    <div class="gev-banner">@Culture["Sensitive.Ref.PrivacyBanner"]</div>
+                <div class="gev-wrap gev-wrap--hero">
+                    <div class="ob-finale__hero-inner">
+                        <h1>@Culture["Sensitive.Ref.Title"]</h1>
+                        <p class="ob-finale__lead">@Culture["Sensitive.Ref.Lead"]</p>
+                        <div class="gev-banner">@Culture["Sensitive.Ref.PrivacyBanner"]</div>
+                    </div>
                 </div>
             </header>
         </div>;
@@ -363,16 +373,18 @@
     private RenderFragment RenderPaspoortHero() => __builder =>
     {
         <div class="ob-finale__hero">
-            <figure class="ob-finale__art" aria-hidden="true">
+            <figure class="ob-finale__art gev-hero-art" aria-hidden="true">
                 <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
             </figure>
             <header class="ob-finale__intro">
-                <div class="ob-finale__hero-inner">
-                    <h1>@Culture["Sensitive.Passport.HeroTitle"]</h1>
-                    <p class="ob-finale__lead">@Culture["Sensitive.Passport.HeroLead"]</p>
-                    <div class="gev-view-toggle">
-                        <button type="button">@Culture["Sensitive.Passport.MyView"]</button>
-                        <button type="button" class="is-on">@Culture["Sensitive.Passport.EmployerView"]</button>
+                <div class="gev-wrap gev-wrap--hero">
+                    <div class="ob-finale__hero-inner">
+                        <h1>@Culture["Sensitive.Passport.HeroTitle"]</h1>
+                        <p class="ob-finale__lead">@Culture["Sensitive.Passport.HeroLead"]</p>
+                        <div class="gev-view-toggle">
+                            <button type="button">@Culture["Sensitive.Passport.MyView"]</button>
+                            <button type="button" class="is-on">@Culture["Sensitive.Passport.EmployerView"]</button>
+                        </div>
                     </div>
                 </div>
             </header>
