@@ -1,0 +1,13 @@
+@namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+<aside class="kompas-tip" aria-labelledby="kompas-tip-title">
+    <div class="kompas-tip__art" style="@($"background-image:url('{CandidateIllustratedImages.TipVragen}')")" aria-hidden="true"></div>
+    <div class="kompas-tip__body">
+        <p class="kompas-tip__eyebrow" id="kompas-tip-title">@Culture["Kompas.Tip.Eyebrow"]</p>
+        <p class="kompas-tip__text">@Culture["Kompas.Tip.Body"]</p>
+        <a class="btn btn-primary kompas-tip__cta" href="/candidate/paspoort?tab=tests">@Culture["Kompas.Tip.Cta"]</a>
+    </div>
+</aside>
