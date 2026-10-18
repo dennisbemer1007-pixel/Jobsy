@@ -121,8 +121,8 @@ public static class UiStringsProactive
             "Încă fără sfaturi — când găsim ceva potrivit, apare aici (și pe e-mail dacă e activ).",
             "لا نصائح بعد — عندما نجد تطابقاً سيظهر هنا (وبالبريد إن كان مفعّلاً).");
         Add("ProactiveMatching.Suggestions.Match",
-            "{0}% match", "{0}% match",
-            "Dopasowanie {0}%", "Potrivire {0}%", "تطابق {0}%");
+            "Match: {0}", "Match: {0}",
+            "Dopasowanie: {0}", "Potrivire: {0}", "تطابق: {0}");
         Add("ProactiveMatching.Suggestions.Rationale",
             "Waarom dit bij je past", "Why this fits you",
             "Dlaczego pasuje", "De ce ți se potrivește", "لماذا يناسبك");
