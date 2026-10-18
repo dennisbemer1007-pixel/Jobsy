@@ -636,8 +636,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
             employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
-            kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
-            referenceVerificationEnabled = snap.ReferenceVerificationEnabled
+            kandidatenkaartEnabled = snap.KandidatenkaartEnabled
         });
     }
 

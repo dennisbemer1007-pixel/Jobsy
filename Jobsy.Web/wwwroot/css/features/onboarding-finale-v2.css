@@ -1,48 +1,44 @@
 .ob-finale {
   --obf-brand: #0f2d5c;
-  --obf-deep: #0a2044;
   --obf-coral: #f54a1b;
   --obf-pearl: #f5f2ee;
   --obf-surf: #fffcfa;
   --obf-text: #122033;
   --obf-muted: #5a6a7d;
   --obf-border: #ddd5cc;
+  --obf-art-position: 34% 68%;
   color: var(--obf-text);
   background: var(--obf-pearl);
   min-height: 100vh;
   padding-bottom: 3rem;
 }
 
-.ob-finale__hero {
-  position: relative;
-  margin-top: -3.5rem;
-  min-height: 28rem;
-  background: #fdf3e4 url(/images/onboarding/finale-hero.jpg) no-repeat center -2.5rem;
-  background-size: 90rem auto;
-}
-
-.ob-finale__hero::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 7.5rem;
-  background: linear-gradient(transparent, var(--obf-pearl));
-  pointer-events: none;
+.ob-finale__intro {
+  padding: 2.5rem 1.5rem 0.75rem;
+  text-align: center;
+  background: linear-gradient(180deg, #fdf8f2 0%, var(--obf-pearl) 100%);
 }
 
 .ob-finale__hero-inner {
-  position: relative;
-  z-index: 1;
   max-width: 47.5rem;
   margin: 0 auto;
-  padding: 5.75rem 1.5rem 0;
-  text-align: center;
 }
 
-.ob-finale__mband {
-  display: none;
+.ob-finale__art {
+  margin: 0;
+  width: 100%;
+  aspect-ratio: 1280 / 720;
+  height: auto;
+  overflow: hidden;
+  background: #fdf3e4;
+}
+
+.ob-finale__art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--obf-art-position);
 }
 
 .ob-finale__badge {
@@ -109,11 +105,9 @@
 }
 
 .ob-finale__wrap {
-  position: relative;
-  z-index: 2;
   max-width: 67.5rem;
-  margin: -2.5rem auto 0;
-  padding: 0 1.5rem 3.5rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.5rem 3.5rem;
 }
 
 .ob-finale__hl {
@@ -409,30 +403,32 @@
   height: 1.25rem;
 }
 
+@media (max-width: 1280px) {
+  .ob-finale {
+    --obf-art-position: 32% 66%;
+  }
+}
+
+@media (max-width: 1024px) {
+  .ob-finale {
+    --obf-art-position: 30% 64%;
+  }
+}
+
 @media (max-width: 600px) {
-  .ob-finale__hero {
-    margin-top: 0;
-    min-height: auto;
-    background: none;
+  .ob-finale__intro {
+    padding: 1.125rem 1rem 0.5rem;
+    text-align: left;
   }
 
-  .ob-finale__hero::after {
-    display: none;
-  }
-
-  .ob-finale__mband {
-    display: block;
-    height: 14.375rem;
+  .ob-finale__art {
     margin: 0 1rem;
     border-radius: 16px;
-    background: url(/images/onboarding/finale-hero.jpg) no-repeat;
-    background-size: auto 25rem;
-    background-position: 96% 62%;
+    height: 14.375rem;
   }
 
-  .ob-finale__hero-inner {
-    padding: 1.125rem 1rem 0;
-    text-align: left;
+  .ob-finale__art img {
+    object-position: 72% 70%;
   }
 
   .ob-finale__ctas {
@@ -440,17 +436,13 @@
     align-items: stretch;
   }
 
-  .ob-finale__btn {
-    text-align: center;
-  }
-
+  .ob-finale__btn,
   .ob-finale__link {
     text-align: center;
   }
 
   .ob-finale__wrap {
-    margin-top: 1.5rem;
-    padding: 0 1rem 2.5rem;
+    padding: 1rem 1rem 2.5rem;
   }
 
   .ob-finale__hl {
@@ -510,10 +502,6 @@
     align-items: stretch;
     text-align: left;
   }
-
-  .ob-finale__end .ob-finale__btn {
-    text-align: center;
-  }
 }
 
 @media (max-width: 360px) {
@@ -523,5 +511,58 @@
 
   .ob-finale__wrap {
     padding-inline: 0.75rem;
+  }
+}
+
+/* Full-page scroll for finale (Playwright + long content); escape wizard flex traps. */
+html:has(.ob-finale),
+body:has(.ob-finale) {
+  height: auto;
+  min-height: 100%;
+  overflow: auto;
+}
+
+.app-shell.app-shell--questionnaire:has(.ob-finale) {
+  height: auto;
+  max-height: none;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+.app-shell.app-shell--questionnaire:has(.ob-finale) .app-main {
+  overflow: visible !important;
+  display: block !important;
+  flex: none !important;
+  min-height: auto !important;
+}
+
+.app-shell.app-shell--questionnaire:has(.ob-finale) .app-main > * {
+  flex: none !important;
+  min-height: auto !important;
+  display: block !important;
+}
+
+.ob-wizard:has(.ob-finale) {
+  min-height: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  display: block !important;
+  flex: none !important;
+}
+
+@media (max-width: 1023px) {
+  .app-main:has(.ob-finale) {
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .ob-wizard:has(.ob-finale),
+  .ob-wizard:has(.ob-finale) .ob-wizard__layout,
+  .ob-wizard:has(.ob-finale) .ob-wizard__main {
+    flex: none !important;
+    min-height: auto !important;
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
   }
 }

@@ -2,6 +2,7 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using Jobsy.Core.Features;
+using Jobsy.Web.Features;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -27,6 +28,13 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
+    public enum FinaleOptionalFlags
+    {
+        AllOff,
+        OneOn,
+        AllOn
+    }
+
     public async ValueTask InitializeAsync()
     {
         var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -47,11 +55,12 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData(false, "flags-off")]
-    [InlineData(true, "flags-on")]
-    public async Task Capture_finale_v2_at_desktop_and_mobile(bool allOptionalOn, string tag)
+    [InlineData(FinaleOptionalFlags.AllOff, "flags-off")]
+    [InlineData(FinaleOptionalFlags.OneOn, "flags-one-on")]
+    [InlineData(FinaleOptionalFlags.AllOn, "flags-on")]
+    public async Task Capture_finale_v2_full_page(FinaleOptionalFlags flags, string tag)
     {
-        using var web = new FinaleWebFactory(allOptionalOn);
+        using var web = new FinaleWebFactory(flags);
         var baseUrl = web.EnsureServerAddress()
                       + "/__test/sign-in?return="
                       + Uri.EscapeDataString("/candidate/start");
@@ -82,6 +91,21 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
                 State = WaitForSelectorState.Visible,
                 Timeout = 90_000
             });
+            await page.Locator(".ob-finale__end").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 30_000
+            });
+
+            var scrollHeight = await page.EvaluateAsync<int>(
+                """
+                () => Math.max(
+                  document.documentElement.scrollHeight,
+                  document.body.scrollHeight,
+                  document.querySelector('.app-main')?.scrollHeight ?? 0,
+                  document.querySelector('.ob-finale')?.scrollHeight ?? 0)
+                """);
+            Assert.True(scrollHeight > height, $"Expected full-page content taller than viewport ({scrollHeight} vs {height}).");
 
             var file = $"finale-v2-{tag}-{suffix}.png";
             var path = Path.Combine(StoreDir, file);
@@ -90,7 +114,7 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
         }
     }
 
-    private sealed class FinaleWebFactory(bool allOptionalOn) : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
+    private sealed class FinaleWebFactory(FinaleOptionalFlags flags) : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>
     {
         private IHost? _kestrel;
         public string ServerAddress { get; private set; } = "";
@@ -124,7 +148,9 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
                     o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
                 services.AddSingleton<IStartupFilter>(new SignInFilter());
                 services.RemoveAll<IFeatureFlags>();
-                services.AddSingleton<IFeatureFlags>(new StubFlags(allOptionalOn));
+                services.AddSingleton<IFeatureFlags>(new StubFlags(flags));
+                services.RemoveAll<IReferenceVerificationFeatureGate>();
+                services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate(flags));
                 services.RemoveAll<IGeocodingClient>();
                 services.AddSingleton<IGeocodingClient>(new StubGeocoder());
                 services.RemoveAll<IHttpClientFactory>();
@@ -165,15 +191,22 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
         }
     }
 
-    private sealed class StubFlags(bool allOn) : IFeatureFlags
+    private sealed class StubFlags(FinaleOptionalFlags flags) : IFeatureFlags
     {
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(new FeatureFlagSnapshot(
+        {
+            var (proactive, kandidaten) = flags switch
+            {
+                FinaleOptionalFlags.AllOn => (true, true),
+                FinaleOptionalFlags.OneOn => (true, false),
+                _ => (false, false)
+            };
+            return ValueTask.FromResult(new FeatureFlagSnapshot(
                 EmployersEnabled: true,
                 CandidatePassportEnabled: true,
-                ProactiveMatchingEnabled: allOn,
-                KandidatenkaartEnabled: allOn,
-                ReferenceVerificationEnabled: allOn));
+                ProactiveMatchingEnabled: proactive,
+                KandidatenkaartEnabled: kandidaten));
+        }
 
         public async ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
             => (await GetAsync(cancellationToken)).IsEnabled(feature);
@@ -181,6 +214,12 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
         public void Invalidate()
         {
         }
+    }
+
+    private sealed class StubReferenceGate(FinaleOptionalFlags flags) : IReferenceVerificationFeatureGate
+    {
+        public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(flags == FinaleOptionalFlags.AllOn);
     }
 
     private sealed class StubGeocoder : IGeocodingClient

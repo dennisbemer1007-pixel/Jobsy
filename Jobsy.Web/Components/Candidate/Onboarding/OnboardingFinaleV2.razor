@@ -6,8 +6,7 @@
 @inject CultureState Culture
 
 <section class="ob-finale" data-testid="onboarding-finale-v2">
-    <div class="ob-finale__hero">
-        <div class="ob-finale__mband" aria-hidden="true"></div>
+    <header class="ob-finale__intro">
         <div class="ob-finale__hero-inner">
             <span class="ob-finale__badge"><i></i>@Culture["Onboarding.FinaleV2.Badge"]</span>
             <h1>@Culture.Format("Onboarding.Finish.Title", FirstName)</h1>
@@ -17,7 +16,11 @@
                 <a class="ob-finale__link" href="/home?tab=tests">@Culture["Onboarding.FinaleV2.FullTests"]</a>
             </div>
         </div>
-    </div>
+    </header>
+
+    <figure class="ob-finale__art" aria-hidden="true">
+        <img src="/images/onboarding/finale-hero.jpg" alt="" width="1440" height="640" decoding="async" />
+    </figure>
 
     <div class="ob-finale__wrap">
         @if (ShowMatchBar)
