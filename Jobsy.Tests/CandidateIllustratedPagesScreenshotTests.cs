@@ -22,6 +22,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 {
     private const string ArtifactsDirR2 = "/opt/cursor/artifacts/candidate-illustrated-r2";
     private const string ArtifactsDirRole = "/opt/cursor/artifacts/kandidaat-rol-r1";
+    private const string ArtifactsDirR3 = "/opt/cursor/artifacts/kandidaat-728-r3";
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -76,7 +77,58 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         await CapturePageAsync(ArtifactsDirRole, "/candidate/settings?pane=mail", "instellingen", auth: true);
     }
 
-    private async Task CaptureBanenkaartPopupsAsync()
+    [Fact]
+    public async Task Capture_kandidaat_728_r3_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirR3);
+
+        await CaptureBanenkaartPopupsAsync(ArtifactsDirR3, viewportOnly: true);
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR3,
+            _web!.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            auth: true,
+            sizes: [(1440, 900, "1440"), (390, 844, "390")],
+            prepare: PrepareKompasTipScreenshotAsync);
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR3,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                auth: true,
+                sizes: [(1440, 900, "1440")],
+                prepare: WaitForApplicationsEmptyAsync);
+
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR3,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                auth: true,
+                sizes: [(1440, 900, "1440")],
+                prepare: WaitForSavedEmptyAsync);
+        }
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR3,
+            _web.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            auth: true,
+            sizes: [(1440, 900, "1440"), (390, 844, "390")],
+            prepare: WaitForSettingsMailPaneAsync);
+
+        var pngs = Directory.GetFiles(ArtifactsDirR3, "*.png");
+        Assert.Equal(10, pngs.Length);
+    }
+
+    private async Task CaptureBanenkaartPopupsAsync(string artifactsDir = ArtifactsDirR2, bool viewportOnly = false)
     {
         const string withPhotoId = "b1000001-0000-0000-0000-000000000001";
         const string noPhotoId = "b1000008-0000-0000-0000-000000000008";
@@ -125,13 +177,130 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 """,
                 vacancyId);
             await page.Locator(".map-popup--illustrated:not(.map-popup--skeleton)").WaitForAsync(new() { Timeout = 90_000 });
-            await page.WaitForTimeoutAsync(800);
+            await page.AddStyleTagAsync(new()
+            {
+                Content = """
+                    .kb-start-prompt { display: none !important; }
+                    .jobsy-discovery.kb-start-prompt-open::before { display: none !important; }
+                    .lobsy-assistant-tab, .pub-assistant-rail, .assistant-rail, [data-assistant-rail] { display: none !important; }
+                    """
+            });
+            await page.WaitForTimeoutAsync(400);
 
-            var card = page.Locator(".map-cluster-card").First;
-            var file = Path.Combine(ArtifactsDirR2, $"banenkaart-{suffix}-{tag}.png");
-            await card.ScreenshotAsync(new() { Path = file });
+            var popup = page.Locator(".map-popup--illustrated:not(.map-popup--skeleton)").First;
+            await popup.WaitForAsync(new() { Timeout = 90_000 });
+            await popup.ScrollIntoViewIfNeededAsync();
+
+            if (suffix == "popup-photo")
+            {
+                var photo = popup.Locator(".map-popup__photo:not(.map-popup__photo--figure)");
+                Assert.True(await photo.CountAsync() > 0, "Vacaturefoto moet zichtbaar zijn in popup met foto.");
+            }
+            else
+            {
+                var figure = popup.Locator(".map-popup__photo--illustrated, .map-popup__photo--figure");
+                Assert.True(await figure.CountAsync() > 0, "Illustratie-fallback verwacht in popup zonder foto.");
+            }
+
+            var file = Path.Combine(artifactsDir, $"banenkaart-{suffix}-{tag}.png");
+            if (viewportOnly)
+            {
+                await page.ScreenshotAsync(new() { Path = file });
+            }
+            else
+            {
+                await popup.ScreenshotAsync(new() { Path = file });
+            }
+
             Assert.True(File.Exists(file));
         }
+    }
+
+    private async Task CaptureIllustratedViewportAsync(
+        string artifactsDir,
+        string serverAddress,
+        string path,
+        string name,
+        bool auth,
+        (int Width, int Height, string Tag)[] sizes,
+        Func<IPage, int, Task>? prepare = null)
+    {
+        foreach (var (width, height, tag) in sizes)
+        {
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                Locale = "nl-NL",
+                IsMobile = width < 500,
+                HasTouch = width < 500
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
+
+            if (auth)
+            {
+                await page.GotoAsync(
+                    $"{serverAddress}/__test/sign-in?return={Uri.EscapeDataString(path)}",
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            }
+
+            await page.GotoAsync($"{serverAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            if (prepare is not null)
+            {
+                await prepare(page, width);
+            }
+
+            await page.AddStyleTagAsync(new()
+            {
+                Content = """
+                    .pub-header, .jobsy-chrome__header, .bottom-nav, .candidate-bottom-nav,
+                    .lobsy-coach-dock, .pub-coach-dock { position: static !important; }
+                    .passport-layout__card--desktop { position: static !important; }
+                    .lobsy-assistant-tab, .pub-assistant-rail, .assistant-rail, [data-assistant-rail] { display: none !important; }
+                    """
+            });
+            await page.WaitForTimeoutAsync(600);
+
+            var file = Path.Combine(artifactsDir, $"{name}-{tag}.png");
+            await page.ScreenshotAsync(new() { Path = file, FullPage = false });
+            Assert.True(File.Exists(file));
+        }
+    }
+
+    private static async Task PrepareKompasTipScreenshotAsync(IPage page, int width)
+    {
+        await page.Locator(".passport-overview").WaitForAsync(new() { Timeout = 60_000 });
+        if (width < 500)
+        {
+            await page.AddStyleTagAsync(new()
+            {
+                Content = """
+                    .passport-layout__card--desktop { display: flex !important; flex-direction: column; }
+                    .passport-layout__card--mobile { display: none !important; }
+                    """
+            });
+        }
+
+        var tip = page.Locator(".kompas-tip");
+        await tip.WaitForAsync(new() { Timeout = 30_000 });
+        await tip.ScrollIntoViewIfNeededAsync();
+        await page.Locator(".kompas-tip__art").WaitForAsync(new() { State = WaitForSelectorState.Visible });
+    }
+
+    private static async Task WaitForApplicationsEmptyAsync(IPage page, int _)
+    {
+        await page.Locator(".kb-apps--illustrated .cand-empty").WaitForAsync(new() { Timeout = 60_000 });
+    }
+
+    private static async Task WaitForSavedEmptyAsync(IPage page, int _)
+    {
+        await page.Locator(".kb-saved--illustrated .cand-empty").WaitForAsync(new() { Timeout = 60_000 });
+    }
+
+    private static async Task WaitForSettingsMailPaneAsync(IPage page, int _)
+    {
+        await page.Locator(".cand-settings").WaitForAsync(new() { Timeout = 60_000 });
     }
 
     private async Task CapturePageAsync(string artifactsDir, string path, string name, bool auth)
@@ -222,9 +391,11 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     {
         public string ServerAddress { get; private set; } = "";
         private IHost? _kestrel;
+        private readonly bool _emptyAppsAndLikes;
 
-        public IllustratedPagesWebFactory()
+        public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false)
         {
+            _emptyAppsAndLikes = emptyAppsAndLikes;
             _ = CreateClient();
         }
 
@@ -248,10 +419,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 services.RemoveAll<IFeatureFlags>();
                 services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
                 services.RemoveAll<IHttpClientFactory>();
-                services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory());
+                services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes));
                 services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
                 services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
-                    new HttpClient(new StubApiHandler(), disposeHandler: false)
+                    new HttpClient(new StubApiHandler(_emptyAppsAndLikes), disposeHandler: false)
                     {
                         BaseAddress = new Uri("http://api.test/")
                     }));
@@ -383,25 +554,25 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         }
     }
 
-    private sealed class StubHttpClientFactory : IHttpClientFactory
+    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
-            => new(new StubApiHandler(), disposeHandler: true) { BaseAddress = new Uri("http://api.test/") };
+            => new(new StubApiHandler(emptyAppsAndLikes), disposeHandler: true) { BaseAddress = new Uri("http://api.test/") };
     }
 
-    private sealed class StubApiHandler : HttpMessageHandler
+    private sealed class StubApiHandler(bool emptyAppsAndLikes) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
-            var json = StubApiHandler.BuildJson(path);
+            var json = StubApiHandler.BuildJson(path, emptyAppsAndLikes);
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
             });
         }
 
-        internal static string BuildJson(string path)
+        internal static string BuildJson(string path, bool emptyAppsAndLikes = false)
         {
             var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
             kompas.Profile!.FullName = "Sanne de Vries";
@@ -448,13 +619,13 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
             if (path.Contains("/applications", StringComparison.OrdinalIgnoreCase))
             {
-                return sampleApplication;
+                return emptyAppsAndLikes ? "[]" : sampleApplication;
             }
 
             if (path.Contains("/likes", StringComparison.OrdinalIgnoreCase)
                 || path.Contains("/engagement/likes", StringComparison.OrdinalIgnoreCase))
             {
-                return sampleLike;
+                return emptyAppsAndLikes ? "[]" : sampleLike;
             }
 
             if (path.Contains("/engagement/shares", StringComparison.OrdinalIgnoreCase))
