@@ -27,10 +27,13 @@ public sealed class EducationDirectionCatalogTests
         Assert.Contains(hits, h => h.Contains("Techniek", StringComparison.OrdinalIgnoreCase));
     }
 
+    private static string RepoRoot =>
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+
     [Fact]
     public void Education_step_razor_uses_typeahead_not_tiles()
     {
-        var src = File.ReadAllText("/workspace/Jobsy.Web/Components/Candidate/Onboarding/EducationStep.razor");
+        var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Candidate/Onboarding/EducationStep.razor"));
         Assert.Contains("EducationDirectionInput", src, StringComparison.Ordinal);
         Assert.DoesNotContain("ob-wizard__direction-chips", src, StringComparison.Ordinal);
         Assert.DoesNotContain("EducationDirectionField", src, StringComparison.Ordinal);

@@ -13,11 +13,12 @@ namespace Jobsy.Tests;
 public class CandidateDesktopNavCssTests
 {
     [Fact]
-    public void Desktop_candidate_shell_keeps_bottom_nav_visible()
+    public void Desktop_candidate_banenkaart_hides_bottom_nav_in_favor_of_header_nav()
     {
         var css = File.ReadAllText(FindRepoRoot("Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".app-shell--candidate .bottom-nav", css, StringComparison.Ordinal);
-        Assert.Contains("display: flex", css, StringComparison.Ordinal);
+        Assert.Contains(".app-shell--candidate:has(.jobsy-discovery) .bottom-nav", css, StringComparison.Ordinal);
+        Assert.Contains("display: none !important", css, StringComparison.Ordinal);
+        Assert.Contains("@media (min-width: 1024px)", css, StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot(string relative)
