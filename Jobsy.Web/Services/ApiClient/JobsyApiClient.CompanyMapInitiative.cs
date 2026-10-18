@@ -5,8 +5,18 @@ namespace Jobsy.Web.Services;
 
 public partial class JobsyApiClient
 {
-    public Task<PublicCompanyInitiativeViewDto?> GetPublicInitiativeProfileAsync(string kvk, CancellationToken ct = default)
-        => _http.GetFromJsonAsync<PublicCompanyInitiativeViewDto>($"api/company-map-initiative/public/{Uri.EscapeDataString(kvk)}/profile", ct);
+    public async Task<PublicCompanyInitiativeViewDto?> GetPublicInitiativeProfileAsync(string kvk, CancellationToken ct = default)
+    {
+        var response = await _http.GetAsync(
+            $"api/company-map-initiative/public/{Uri.EscapeDataString(kvk)}/profile",
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<PublicCompanyInitiativeViewDto>(cancellationToken: ct);
+    }
 
     public async Task<bool> AcceptWorkInitiativeAsync(Guid id, Guid billingCompanyId, CancellationToken ct = default)
     {

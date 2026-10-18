@@ -307,7 +307,15 @@ else
                 kvk,
                 string.IsNullOrWhiteSpace(Vestigingsnummer) ? null : Vestigingsnummer)).ToList();
 
-            _initiative = await Api.GetPublicInitiativeProfileAsync(kvk);
+            try
+            {
+                _initiative = await Api.GetPublicInitiativeProfileAsync(kvk);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Initiative profile optional load failed for {Kvk}", kvk);
+                _initiative = null;
+            }
 
             if (_vacancies.Count == 0 && _initiative is null)
             {

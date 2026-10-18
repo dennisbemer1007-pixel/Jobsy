@@ -36,6 +36,12 @@ public static class UiStringsInitiative
         Add("Bk.Apps.FilterVacancy", "Op vacature", "On vacancy");
         Add("Bk.Initiative.Next.Wait", "Het bedrijf reageert binnen 5 werkdagen.", "The company responds within 5 business days.");
         Add("Bk.AutoDecline.Lead", "Het zegt niets over jou.", "It says nothing about you.");
+        Add("Bk.Status.AutoDeclined", "Automatisch nu niet", "Automatically not now");
+        Add("Bk.AutoDecline.Title", "Wat betekent dit?", "What does this mean?");
+        Add("Bk.AutoDecline.Body", "Het bedrijf heeft niet binnen 5 werkdagen gereageerd. Je sollicitatie staat op Nu niet, zodat je niet blijft wachten.", "The company did not respond within 5 business days. Your application is set to Not now so you are not left waiting.");
+        Add("Bk.AutoDecline.GoodToKnow", "Goed om te weten", "Good to know");
+        Add("Bk.AutoDecline.WeekLimitFreed", "Deze sollicitatie telt niet meer mee voor je weeklimiet van 3 initiatieven.", "This application no longer counts toward your weekly limit of 3 initiatives.");
+        Add("Bk.EmployerApps.InitiativeLead", "Open sollicitaties via Ik wil hier werken.", "Open applications via I want to work here.");
         Add("WgNav.OpenForInitiative", "Open voor initiatief", "Open for initiative");
         Add("WgNav.OpenForInitiative.New", "nieuw", "new");
         Add("Initiative.Panel.Title", "Ik wil hier werken", "I want to work here");

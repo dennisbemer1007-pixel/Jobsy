@@ -29,6 +29,7 @@ public static class InitiativeApplicationMapper
             Status = status,
             RespondedAt = timeline.ClosingAtUtc,
             IsInitiative = true,
+            IsAutoDeclinedInitiative = dto.Status == WorkInitiativeStatus.AutoDeclined,
             TimelineClosingKey = timeline.ClosingLineKey,
             Timeline = timeline.Steps.Select(s => new ApplicationTimelineStepItem
             {

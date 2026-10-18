@@ -1,4 +1,6 @@
 @page "/candidate/applications"
+@page "/candidate/applications/initiatieven"
+@page "/candidate/applications/initiatieven/automatisch-nu-niet"
 @* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; no CandidateJobListTabs *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate,BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
@@ -107,29 +109,71 @@
     }
     else
     {
-        <div class="kb-apps__layout">
+        <div class="kb-apps__layout @(_sourceFilter == "initiative" ? "kb-apps__layout--initiative" : null)">
             <div class="kb-apps__list application-card-list">
-                @{
+                @if (_sourceFilter == "initiative")
+                {
+                    @foreach (var a in _filtered)
+                    {
+                        @RenderInitiativeListCard(a)
+                    }
+                }
+                else
+                {
                     var primary = _filtered[0];
                     var rest = _filtered.Skip(1).ToList();
-                }
-                @RenderActiveCard(primary)
-                @foreach (var a in rest)
-                {
-                    @RenderCompactCard(a)
+                    @RenderActiveCard(primary)
+                    @foreach (var a in rest)
+                    {
+                        @RenderCompactCard(a)
+                    }
                 }
             </div>
-            <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
-                <div class="kb-apps__rail-card">
-                    <h2>@Culture["Kb.Steps.Title"]</h2>
-                    <dl class="kb-apps__steps-legend">
-                        <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>
-                        <div><dt>@Culture["Kb.Timeline.Seen"]</dt><dd>@Culture["Kb.Steps.Seen"]</dd></div>
-                        <div><dt>@Culture["Kb.Timeline.Interview"]</dt><dd>@Culture["Kb.Steps.Interview"]</dd></div>
-                        <div><dt>@Culture["Kb.Timeline.Outcome"]</dt><dd>@Culture["Kb.Steps.Outcome"]</dd></div>
-                    </dl>
-                </div>
-            </aside>
+            @if (_sourceFilter == "initiative" && SelectedInitiative is ApplicationItem detail)
+            {
+                <aside class="kb-apps__rail kb-apps__rail--detail" aria-label="@detail.VacancyTitle">
+                    <div class="kb-apps__rail-card">
+                        <span class="bk-chip bk-chip--open">@Culture["Bk.Apps.SourceInitiative"]</span>
+                        <h2>@detail.VacancyTitle</h2>
+                        <p class="muted">@detail.CompanyName</p>
+                        <span class="application-card__pill application-card__pill--@KbLabels.StatusModifier(detail.Status)">
+                            @StatusText(detail)
+                        </span>
+                        <ol class="kb-timeline kb-timeline--vertical">
+                            @foreach (var step in detail.Timeline ?? [])
+                            {
+                                <li class="kb-timeline__step kb-timeline__step--@step.State.ToLowerInvariant()">
+                                    <span class="kb-timeline__dot" aria-hidden="true"></span>
+                                    <span class="kb-timeline__label">@Culture[step.LabelKey]</span>
+                                </li>
+                            }
+                        </ol>
+                        @if (detail.IsAutoDeclinedInitiative)
+                        {
+                            <section class="bk-auto-decline">
+                                <h3>@Culture["Bk.AutoDecline.Title"]</h3>
+                                <p>@Culture["Bk.AutoDecline.Body"]</p>
+                                <h3>@Culture["Bk.AutoDecline.GoodToKnow"]</h3>
+                                <p>@Culture["Bk.AutoDecline.WeekLimitFreed"]</p>
+                            </section>
+                        }
+                    </div>
+                </aside>
+            }
+            else
+            {
+                <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
+                    <div class="kb-apps__rail-card">
+                        <h2>@Culture["Kb.Steps.Title"]</h2>
+                        <dl class="kb-apps__steps-legend">
+                            <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Seen"]</dt><dd>@Culture["Kb.Steps.Seen"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Interview"]</dt><dd>@Culture["Kb.Steps.Interview"]</dd></div>
+                            <div><dt>@Culture["Kb.Timeline.Outcome"]</dt><dd>@Culture["Kb.Steps.Outcome"]</dd></div>
+                        </dl>
+                    </div>
+                </aside>
+            }
         </div>
     }
 
@@ -185,6 +229,9 @@
     private bool _initiativeEnabled = true;
     private int _countVacancy;
     private int _countInitiative;
+    private Guid? _selectedInitiativeId;
+    private ApplicationItem? SelectedInitiative =>
+        _selectedInitiativeId is Guid id ? _filtered.FirstOrDefault(i => i.Id == id) : _filtered.FirstOrDefault();
     private string? _givenName;
     private Guid? _busyId;
     private Guid? _openMenuId;
@@ -204,6 +251,11 @@
 
     private string StatusText(ApplicationItem a)
     {
+        if (a.IsInitiative && a.IsAutoDeclinedInitiative)
+        {
+            return Culture["Bk.Status.AutoDeclined"];
+        }
+
         if (a.VacancyClosed
             && (string.Equals(a.Status, "Pending", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(a.Status, "Accepted", StringComparison.OrdinalIgnoreCase)
@@ -429,7 +481,9 @@
 
             RefreshCounts();
             ApplyFilter();
+            ApplyRouteDefaults();
             ApplyCaptureQuery();
+            EnsureInitiativeSelection();
         }
         catch
         {
@@ -476,6 +530,19 @@
         _persistSubscription.Dispose();
     }
 
+    private void ApplyRouteDefaults()
+    {
+        var path = Navigation.ToAbsoluteUri(Navigation.Uri).AbsolutePath;
+        if (path.Contains("/initiatieven/automatisch-nu-niet", StringComparison.OrdinalIgnoreCase))
+        {
+            _sourceFilter = "initiative";
+        }
+        else if (path.EndsWith("/initiatieven", StringComparison.OrdinalIgnoreCase))
+        {
+            _sourceFilter = "initiative";
+        }
+    }
+
     private void ApplyCaptureQuery()
     {
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
@@ -486,6 +553,42 @@
             ApplyFilter();
         }
     }
+
+    private void EnsureInitiativeSelection()
+    {
+        if (_sourceFilter != "initiative")
+        {
+            return;
+        }
+
+        ApplyFilter();
+        var path = Navigation.ToAbsoluteUri(Navigation.Uri).AbsolutePath;
+        if (path.Contains("automatisch-nu-niet", StringComparison.OrdinalIgnoreCase))
+        {
+            _selectedInitiativeId = _filtered.FirstOrDefault(i => i.IsAutoDeclinedInitiative)?.Id
+                                    ?? _filtered.FirstOrDefault()?.Id;
+        }
+        else
+        {
+            _selectedInitiativeId = _filtered.FirstOrDefault(i => !i.IsAutoDeclinedInitiative)?.Id
+                                    ?? _filtered.FirstOrDefault()?.Id;
+        }
+    }
+
+    private void SelectInitiative(Guid id)
+    {
+        _selectedInitiativeId = id;
+    }
+
+    private RenderFragment RenderInitiativeListCard(ApplicationItem a) => __builder =>
+    {
+        var active = SelectedInitiative?.Id == a.Id;
+        <button type="button" class="kb-apps__initiative-row @(active ? "is-active" : null)" @onclick="() => SelectInitiative(a.Id)">
+            <strong>@a.VacancyTitle</strong>
+            <p class="muted">@a.CompanyName</p>
+            <span class="application-card__pill application-card__pill--@KbLabels.StatusModifier(a.Status)">@StatusText(a)</span>
+        </button>
+    };
 
     private void SetSourceFilter(string filter)
     {

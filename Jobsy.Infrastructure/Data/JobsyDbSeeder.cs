@@ -3,6 +3,7 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Data;
@@ -118,6 +119,24 @@ public static class JobsyDbSeeder
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Company verification backfill PlatformLog failed; continuing.");
+        }
+
+        try
+        {
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+            var allowBedrijvenkaartDemo = environment.IsDevelopment()
+                                          || configuration.GetValue("Seed:Enabled", false);
+            if (allowBedrijvenkaartDemo && await db.Companies.AnyAsync())
+            {
+                await DemoUsersSeeder.SeedUsersAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Bedrijvenkaart demo ensure after migrate failed; continuing.");
         }
     }
 

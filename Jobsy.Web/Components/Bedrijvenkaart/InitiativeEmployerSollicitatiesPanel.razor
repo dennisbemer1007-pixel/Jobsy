@@ -163,8 +163,14 @@
         _loading = true;
         try
         {
-            _items = await Api.GetEmployerInitiativeInboxAsync(BillingCompanyId);
-            _initiativeCount = _items.Count(i => i.Status is WorkInitiativeStatus.Pending or WorkInitiativeStatus.Viewed);
+            var all = await Api.GetEmployerInitiativeInboxAsync(BillingCompanyId);
+            _items = Source switch
+            {
+                "open" => all.Where(i => i.Status is WorkInitiativeStatus.Pending or WorkInitiativeStatus.Viewed or WorkInitiativeStatus.Accepted).ToList(),
+                "vacancy" => [],
+                _ => all
+            };
+            _initiativeCount = all.Count(i => i.Status is WorkInitiativeStatus.Pending or WorkInitiativeStatus.Viewed);
             _allCount = _vacancyCount + _initiativeCount;
             if (SelectedInitiativeId is Guid id)
             {

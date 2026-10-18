@@ -44,17 +44,6 @@
         else
         {
             <div class="wg-card">
-                @if (_initiativeEnabled && _wgSource != "vacancy")
-                {
-                    <InitiativeEmployerSollicitatiesPanel BillingCompanyId="@BillingCompanyIdForInitiatives"
-                                                          Source="_wgSource"
-                                                          SourceChanged="OnWgSourceChangedAsync"
-                                                          SelectedInitiativeId="_initiativeId"
-                                                          DemoAcceptOpen="_demoAcceptOpen"
-                                                          DemoDeclineOpen="_demoDeclineOpen" />
-                }
-                else
-                {
                 <EntFilterBar Query="@_vacancySearch" QueryChanged="OnVacancySearchChanged" Placeholder="@Culture["WgApp.Filter.Vacancy"]">
                     <label class="ent-filter-bar__select">
                         <span class="visually-hidden">@Culture["WgApp.Filter.Vacancy"]</span>
@@ -274,7 +263,6 @@
                         @MobileCards(ListFiltered)
                     </div>
                 }
-                }
 
             </div>
         }
@@ -363,18 +351,6 @@
 }
 
 @code {
-    [SupplyParameterFromQuery(Name = "source")]
-    public string? SourceQuery { get; set; }
-
-    [SupplyParameterFromQuery(Name = "initiative")]
-    public string? InitiativeQuery { get; set; }
-
-    [SupplyParameterFromQuery(Name = "demoAccept")]
-    public string? DemoAcceptQuery { get; set; }
-
-    [SupplyParameterFromQuery(Name = "demoDecline")]
-    public string? DemoDeclineQuery { get; set; }
-
     private List<EmployerApplicationItem> _items = [];
     private List<VacancyListItem> _vacancies = [];
     private List<CompanySummary> _companies = [];
@@ -402,20 +378,6 @@
     private bool _hireCloseVacancy = true;
     private bool _bulkRejectOpen;
     private bool _phase2Enabled;
-    private bool _initiativeEnabled;
-    private string _wgSource = "vacancy";
-    private Guid? _initiativeId;
-    private bool _demoAcceptOpen;
-    private bool _demoDeclineOpen;
-
-    private static readonly Guid KorenaarRootId = Guid.Parse("33333333-3333-3333-3333-333333333333");
-    private Guid BillingCompanyIdForInitiatives =>
-        Scope.CompanyIds.FirstOrDefault(id => id == KorenaarRootId) is Guid match && match != Guid.Empty
-            ? match
-            : Scope.CompanyIds.FirstOrDefault() is Guid any && any != Guid.Empty
-                ? any
-                : KorenaarRootId;
-
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private bool CanWrite => ApplicationPipelineRules.CanAct(Role);
     private DateTime UtcNow => DateTime.UtcNow;
@@ -585,16 +547,13 @@
     {
         try
         {
-            ApplyCaptureQueryFromParameters();
             await ScopeBootstrap.EnsureLoadedAsync();
             var flags = await FeatureFlags.GetAsync();
             _phase2Enabled = flags.IsEnabled(PlatformFeature.EmployerPhase2);
-            _initiativeEnabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
             _companies = (await Api.GetMyCompaniesAsync())?.ToList() ?? [];
             _vacancies = (await Api.GetManagedVacanciesAsync(Scope.CompanyIds.Count > 0 ? Scope.CompanyIds : null)).ToList();
             ApplyQuery();
             await ReloadAsync();
-            ApplyCaptureQueryFromParameters();
             ApplyQuery();
         }
         catch (Exception ex)
@@ -643,50 +602,6 @@
             OpenCandidate(appId);
         }
 
-        if (q.TryGetValue("source", out var source) && !string.IsNullOrWhiteSpace(source))
-        {
-            _wgSource = source.ToString().ToLowerInvariant() switch
-            {
-                "open" or "initiative" or "initiatives" => "open",
-                "all" => "all",
-                _ => "vacancy"
-            };
-        }
-
-        if (q.TryGetValue("initiative", out var initId) && Guid.TryParse(initId, out var initiativeGuid))
-        {
-            _initiativeId = initiativeGuid;
-        }
-
-        _demoAcceptOpen = q.ContainsKey("demoAccept");
-        _demoDeclineOpen = q.ContainsKey("demoDecline");
-    }
-
-    private Task OnWgSourceChangedAsync(string source)
-    {
-        _wgSource = source;
-        return Task.CompletedTask;
-    }
-
-    private void ApplyCaptureQueryFromParameters()
-    {
-        if (!string.IsNullOrWhiteSpace(SourceQuery))
-        {
-            _wgSource = SourceQuery.ToLowerInvariant() switch
-            {
-                "open" or "initiative" or "initiatives" => "open",
-                "all" => "all",
-                _ => _wgSource
-            };
-        }
-
-        if (!string.IsNullOrWhiteSpace(InitiativeQuery) && Guid.TryParse(InitiativeQuery, out var initiativeGuid))
-        {
-            _initiativeId = initiativeGuid;
-        }
-
-        _demoAcceptOpen = !string.IsNullOrWhiteSpace(DemoAcceptQuery);
-        _demoDeclineOpen = !string.IsNullOrWhiteSpace(DemoDeclineQuery);
     }
 
     private bool Phase2HidesPrimary(EmployerApplicationItem? item)

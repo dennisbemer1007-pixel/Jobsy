@@ -112,6 +112,7 @@ public class ApplicationItem
     public bool LegacyNoHistory { get; set; }
     public bool VacancyClosed { get; set; }
     public bool IsInitiative { get; set; }
+    public bool IsAutoDeclinedInitiative { get; set; }
     public string? TimelineClosingKey { get; set; }
 }
 
