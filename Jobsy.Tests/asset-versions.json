@@ -84,8 +84,8 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "6dcf6faf117fa0b0b9e7ae1966ef39081793fa3e6cb3e50c941c6232e542424e",
-    "v": "20261015-27"
+    "sha256": "77f0698949f1e8ee540f0bb03c5a5ec778b881c3542c9bce7b5637a06f5b4b34",
+    "v": "20261018-24"
   },
   "css/features/kandidaatinzichten.css": {
     "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
@@ -308,19 +308,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-<<<<<<< HEAD
     "sha256": "08b1e362160407c34b3693e38ec1b3d0dc13ba36dca0e77114330d805ca0ed62",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
     "sha256": "6103c36f107f4f5ed82fb0f71cee9217457ef8a440fc7dcd2a8238ed3a24bd63",
-=======
-    "sha256": "6dbe7ecc4917fe4d07f2a1b783cecf370d98f1c80ee99ac5c840dd0afd25b977",
-    "v": "20261016-06"
-  },
-  "service-worker.published.js": {
-    "sha256": "2a618fda8eb01921e3ef4f3e6dd54181be243f7abd24dfe8b7266021c2b12b30",
->>>>>>> origin/acceptatie
     "v": "20261016-06"
   },
   "site.webmanifest": {
