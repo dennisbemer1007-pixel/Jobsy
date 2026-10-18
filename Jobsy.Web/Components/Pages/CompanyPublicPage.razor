@@ -2,7 +2,7 @@
 @page "/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [AllowAnonymous]
-@layout PublicLayout
+@layout MainLayout
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers, FallbackPath = "/")]
 @inject JobsyApiClient Api
