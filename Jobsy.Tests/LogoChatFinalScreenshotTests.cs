@@ -120,7 +120,8 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
 
     private static async Task AssertHeaderLogoLoadedAsync(IPage page)
     {
-        var logo = page.Locator(".app-header .brand__logo, .app-header .lobsy-logo--horizontal").First;
+        var logo = page.Locator(".app-header .lobsy-logo__img").First;
+        await logo.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var width = await logo.EvaluateAsync<int>("el => el.naturalWidth");
         Assert.True(width > 0, "Header logo naturalWidth should be > 0");
     }
