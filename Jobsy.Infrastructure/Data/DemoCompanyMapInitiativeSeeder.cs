@@ -221,11 +221,14 @@ internal static class DemoCompanyMapInitiativeSeeder
         };
         for (var i = 0; i < vacancies.Count; i++)
         {
-            vacancies[i].Title = titles[i % titles.Length];
+            var title = titles[i % titles.Length];
+            vacancies[i].Title = title;
             vacancies[i].WorkTypes = WorkType.Winkel | WorkType.Horeca;
+            var bakeryLike = title.Contains("bakker", StringComparison.OrdinalIgnoreCase)
+                             || title.Contains("vitrine", StringComparison.OrdinalIgnoreCase);
             vacancies[i].ImageUrl = VacancyImageUrls.Placeholder(
                 vacancies[i].Id,
-                i % 2 == 0 ? WorkType.Winkel : WorkType.Horeca);
+                bakeryLike ? WorkType.Horeca : WorkType.Winkel);
         }
 
         var cafeVacancies = await db.Vacancies.Where(v => v.CompanyId == CafeId).ToListAsync(cancellationToken);
