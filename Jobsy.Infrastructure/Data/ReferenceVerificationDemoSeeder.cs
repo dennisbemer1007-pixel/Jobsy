@@ -446,7 +446,19 @@ internal static class ReferenceVerificationDemoSeeder
             token.CreatedAtUtc = backdate;
         }
 
-        // Screenshot flow posts against Albert Heijn entry; keep per-entry monthly cap free after reruns.
+        // Screenshot submit flows hit the bakkerij entry; keep per-entry monthly cap free after CI reruns.
+        var bakkerijTokens = await db.WorkExperienceReferenceTokens
+            .Where(t =>
+                t.Request.UserId == userId
+                && t.Request.WorkExperienceEntryId == ReferenceVerificationDemoIds.WorkEntryBakkerij
+                && t.CreatedAtUtc >= monthStart)
+            .ToListAsync();
+        foreach (var token in bakkerijTokens)
+        {
+            token.CreatedAtUtc = backdate;
+        }
+
+        // Expired-link screenshots use the Albert Heijn entry.
         var ahTokens = await db.WorkExperienceReferenceTokens
             .Where(t =>
                 t.Request.UserId == userId
