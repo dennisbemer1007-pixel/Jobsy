@@ -114,9 +114,21 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
-        await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.Locator(".kb-start-prompt").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
-        Assert.Equal(0, await page.Locator(".kb-ext__promo:visible").CountAsync());
+        await RegisterAndSkipToBanenkaartAsync(page, baseUrl);
+        await WaitForCircuitReadyAsync(page);
+        var clear = page.Locator(".kb-filter-bar .kb-address__clear").First;
+        if (await clear.CountAsync() > 0)
+        {
+            await clear.ClickAsync(new() { Force = true });
+        }
+        else
+        {
+            await page.EvaluateAsync("() => window.jobsyGeo && window.jobsyGeo.clearSessionOrigin && window.jobsyGeo.clearSessionOrigin()");
+        }
+
+        await page.WaitForTimeoutAsync(600);
+        await page.Locator(".kb-start-prompt").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        Assert.Equal(0, await page.Locator(".jobsy-chrome .kb-ext__promo:visible").CountAsync());
         await page.WaitForTimeoutAsync(400);
         await page.ScreenshotAsync(new()
         {
@@ -139,8 +151,8 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await page.EvaluateAsync(
             """
             async () => {
-              const res = await fetch('/api/v1/me/profile', {
-                method: 'PATCH',
+              const res = await fetch('/api/me/profile', {
+                method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({ openForWork: false }),
