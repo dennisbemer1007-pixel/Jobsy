@@ -30,9 +30,27 @@ public sealed class EducationDirectionCatalogTests
     [Fact]
     public void Education_step_razor_uses_typeahead_not_tiles()
     {
-        var src = File.ReadAllText("/workspace/Jobsy.Web/Components/Candidate/Onboarding/EducationStep.razor");
+        var path = FindRepoRoot("Jobsy.Web/Components/Candidate/Onboarding/EducationStep.razor");
+        var src = File.ReadAllText(path);
         Assert.Contains("EducationDirectionInput", src, StringComparison.Ordinal);
         Assert.DoesNotContain("ob-wizard__direction-chips", src, StringComparison.Ordinal);
         Assert.DoesNotContain("EducationDirectionField", src, StringComparison.Ordinal);
+    }
+
+    private static string FindRepoRoot(string relative)
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            var path = Path.Combine(dir.FullName, relative);
+            if (File.Exists(path))
+            {
+                return path;
+            }
+
+            dir = dir.Parent;
+        }
+
+        throw new InvalidOperationException($"Could not find {relative}.");
     }
 }

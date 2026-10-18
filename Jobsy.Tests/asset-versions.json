@@ -1,10 +1,10 @@
 {
   "css/app.min.css": {
-    "sha256": "024bb1791ceb4b2c8ce0ec69e365659d838b32d0b5c96302cb6df4d4e665b122",
+    "sha256": "a83a058190afcc117c6ed5f502257f1e8c6a8dfd2a6efbce6d7b02dc35417b05",
     "v": "20261017-03"
   },
   "css/critical.css": {
-    "sha256": "3a99a9a216cdf8bc2e4410503115fd778c06884a9727d734b3d3dad1cff9a075",
+    "sha256": "94b9e9f0833faebdcbf4281da401379c93851562b64d48d838d27004f6862cab",
     "v": "20261004-13"
   },
   "css/features/account-mfa.css": {
@@ -52,7 +52,7 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "c6208ff54f0a9655443cfc25f74a1de74c9dcc5defd96200319a7ceb8dbf85b5",
+    "sha256": "f14f58ce1a300166e49e0e835d14e394a53f2532bebb4d26a63a7f555ab82db1",
     "v": "20261015-04"
   },
   "css/features/future-jobs.css": {
@@ -68,7 +68,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "f23c672c697fe5a49c1c5818b95c1b83626ddb5094afa4170803aea9f5afbb70",
+    "sha256": "6dcf6faf117fa0b0b9e7ae1966ef39081793fa3e6cb3e50c941c6232e542424e",
     "v": "20261015-27"
   },
   "css/features/kandidaatinzichten.css": {
@@ -107,17 +107,29 @@
     "sha256": "2aa2e9fb9c528693ad4002eb4c76175dfb817b6f75045d1a585d06944fce11c7",
     "v": "20261016-02"
   },
+  "css/features/onboarding-wizard-nearby-panel.css": {
+    "sha256": "b24af2c35135df9e840d82d56ad1413b17d4058cd7df042697ec8080acee617f",
+    "v": "20261018-01"
+  },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "c833351e69fa5ae234ed2046fa4696599b365b91eb7cde4b5b631c2b2d95caf4",
-    "v": "20261017-01"
+    "sha256": "f2082195a18f52d508873a59efc3c812bcb05af016f77bae68ea9ceb063593bf",
+    "v": "20261018-02"
+  },
+  "css/features/onboarding-wizard-test-journey.css": {
+    "sha256": "3b8d58979c481091afb041cfcf3de1017fb336d65b8993f4de703f55e4c3c293",
+    "v": "20261018-07"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
     "sha256": "6084d709e44d2ef876cd62248a11df4d678a1832c4720ee2193f303d6b1c822c",
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "f1f1ad351beddbc57d95e0c1215296e476ec8ae2467b9eb9123999fcddcabc79",
+    "sha256": "95ec6e3a3090dde8749bbc862fbd3f0a07304ea7a4ea988e3622f66d1efb8446",
     "v": "20261015-06"
+  },
+  "css/features/onboarding-work-history.css": {
+    "sha256": "a0e3be6b95086a191587758d0bac38669ed4ac71f5f11a3528b47e342bcc0edf",
+    "v": "20261018-07"
   },
   "css/features/ontdekkingsreis.css": {
     "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
@@ -160,7 +172,7 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "1a731671219f9ad4528662a392da06a57592afa826f3f8d7c84974d71ced41b4",
+    "sha256": "59f25d5348c287a1b4501bb8bc4e03e2dc6295d0d58a1dad6b795a10affffe12",
     "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {

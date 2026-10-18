@@ -45,8 +45,8 @@ internal sealed class OnboardingTestHttpClientFactory : IHttpClientFactory
 }
 
 internal sealed class TestApiForwardHandler : HttpMessageHandler
-    {
-        private readonly HttpMessageInvoker _api;
+{
+    private readonly HttpMessageInvoker _api;
 
     public TestApiForwardHandler(HttpMessageHandler api)
         => _api = new HttpMessageInvoker(api, disposeHandler: false);
