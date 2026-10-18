@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 
 const beforeBase = (process.env.BEFORE_BASE || '').replace(/\/$/, '');
 const afterBase = (process.env.AFTER_BASE || process.env.BASE || 'http://127.0.0.1:5201').replace(/\/$/, '');
-const outRoot = process.env.OUT || '/opt/cursor/artifacts/stijl-A-r3';
+const outRoot = process.env.OUT || '/opt/cursor/artifacts/stijl-A-r4';
 const pairPy = path.join(path.dirname(new URL(import.meta.url).pathname), 'stijl-a-pair.py');
 
 const creds = {
@@ -28,6 +28,9 @@ const shots = [
   ['werkgever-binnenkort', '/werkgevers/binnenkort', 1440, 900, 'employer'],
   ['werkgever-vacature', '/werkgever/vacatures/nieuw', 390, 844, 'employer'],
   ['paspoort', '/candidate/paspoort', 390, 844, 'candidate'],
+  ['sollicitaties', '/candidate/applications', 390, 844, 'candidate'],
+  ['vacature', `/vacancies/${process.env.STIJL_A_VACANCY_ID || '11111111-1111-1111-1111-111111111111'}`, 390, 844, 'candidate'],
+  ['werkgever-sollicitaties', '/werkgever/sollicitaties', 1440, 900, 'employer'],
 ];
 
 const consentInitScript = `
