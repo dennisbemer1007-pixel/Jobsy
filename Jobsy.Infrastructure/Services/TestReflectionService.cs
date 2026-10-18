@@ -157,6 +157,11 @@ public sealed class TestReflectionService : ITestReflectionService
             return null;
         }
 
+        if (CandidateFactGuard.MirrorCopyRejection(text) is not null)
+        {
+            return null;
+        }
+
         var traits = snapshot.Traits
             .Select(t => (Label: DimensionLabels.For(t.Code, mirror.Language), Score: t.Percent))
             .ToList();

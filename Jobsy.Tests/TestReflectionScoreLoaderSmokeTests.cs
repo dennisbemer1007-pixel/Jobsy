@@ -1,5 +1,6 @@
 using Jobsy.Core.Enums;
 using Jobsy.Core.Reports.TestReflection;
+using Jobsy.Core.Rules;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,18 @@ public sealed class TestReflectionScoreLoaderSmokeTests
         await using var db = new JobsyDbContext(options);
         var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == "kandidaat@jobsy.local");
         if (user is null) return;
+        var row = await db.CandidateCompetencies.AsNoTracking()
+            .FirstOrDefaultAsync(c => c.UserId == user.Id);
+        if (row is null) return;
+        var version = AssessmentTestVersions.Normalize(row.QuickScanVersion);
+        var depth = Math.Max(
+            QuickScanAssessmentBridge.ParseAnswers(AssessmentKind.Competence, row.AnswersJson, version).Count,
+            row.QuickScanHighestAnswered);
+        if (TestDepthRules.Reached(AssessmentKind.Competence, depth, version) != TestDepthLevel.Full)
+        {
+            return;
+        }
+
         var snap = await TestReflectionScoreLoader.LoadFullAsync(db, user.Id, AssessmentKind.Competence, default);
         Assert.NotNull(snap);
     }

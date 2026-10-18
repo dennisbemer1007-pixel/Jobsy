@@ -17,9 +17,12 @@ public class TestResultCopyTests
         Assert.DoesNotContain("vacature", self, StringComparison.OrdinalIgnoreCase);
 
         var root = FindRepoRoot();
-        var testDetail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TestDetail.razor"));
-        Assert.Contains("TestResult.ThemesFromQuestions", testDetail, StringComparison.Ordinal);
-        Assert.DoesNotContain("TestResult.ScoresFromQuestions", testDetail, StringComparison.Ordinal);
+        var doneHeader = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/TestResult/TestResultDoneHeader.razor"));
+        var metaTail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/TestResult/TestResultMirrorMetaTail.razor"));
+        Assert.Contains("TestResult.ThemesFromQuestions", doneHeader, StringComparison.Ordinal);
+        Assert.Contains("TestResult.ThemesFromQuestions", metaTail, StringComparison.Ordinal);
+        Assert.DoesNotContain("TestResult.ScoresFromQuestions", doneHeader, StringComparison.Ordinal);
+        Assert.DoesNotContain("TestResult.ScoresFromQuestions", metaTail, StringComparison.Ordinal);
 
         var locked = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/TestResult/LockedDeepReportSection.razor"));
         Assert.DoesNotContain("SubtitleKey", locked, StringComparison.Ordinal);

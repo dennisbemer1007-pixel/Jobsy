@@ -77,7 +77,7 @@ public static partial class CandidateFactGuard
             return "unknown-advice";
         }
 
-        return MirrorCopyRejection(text);
+        return null;
     }
 
     /// <summary>Jouw-spiegel copy is candidate-facing: no score jargon or em dashes.</summary>
