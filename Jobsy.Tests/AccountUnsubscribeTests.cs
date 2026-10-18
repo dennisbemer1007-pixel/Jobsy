@@ -524,6 +524,8 @@ public class AccountUnsubscribeTests
             typeof(CandidateMatchSnapshot),
             typeof(CandidateOnboarding),
             typeof(CandidateProactiveMatchingSettings),
+            typeof(CandidateKandidatenkaartSettings),
+            typeof(KandidatenkaartInviteDelivery),
             typeof(CandidateReference),
             typeof(CandidateReminderPreference),
             typeof(ReferenceConfirmation),

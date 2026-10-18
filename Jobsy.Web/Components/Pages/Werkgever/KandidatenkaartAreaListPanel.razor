@@ -1,0 +1,54 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web
+
+@if (!Compact)
+{
+    <div class="kk-active-sell">
+        <h3>@Culture["Kk.ActiveSell.Title"]</h3>
+        <p>@Culture["Kk.ActiveSell.Body"]</p>
+    </div>
+}
+
+@if (Map?.BelowThreshold == true)
+{
+    <div class="kk-below-min">
+        <p>@(Map.ThresholdMessage ?? Culture["Kk.BelowThreshold"])</p>
+    </div>
+}
+else
+{
+    <ul class="@(Compact ? "kk-area-list kk-area-list--compact" : "kk-area-list")">
+        @foreach (var area in Map?.Areas ?? [])
+        {
+            <li class="kk-area-list__item @(SelectedArea == area.AreaKey ? "is-selected" : null)"
+                @onclick="() => OnSelect.InvokeAsync(area.AreaKey)">
+                <div class="kk-area-list__row">
+                    <div class="kk-area-list__title">@area.Label</div>
+                    @if (area.ActiveThisWeek)
+                    {
+                        <span class="kk-activity-pill">@Culture["Kk.Area.ActiveWeek"]</span>
+                    }
+                </div>
+                <div class="kk-area-list__meta">
+                    @string.Format(Culture["Kk.Area.Meta"], area.CandidateCount, area.CountAbove80)
+                </div>
+            </li>
+        }
+    </ul>
+}
+
+@if (Compact)
+{
+    <details class="kk-active-sell-collapse">
+        <summary>@Culture["Kk.ActiveSell.Title"]</summary>
+        <p>@Culture["Kk.ActiveSell.Body"]</p>
+    </details>
+}
+
+@code {
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public KandidatenkaartMapDto? Map { get; set; }
+    [Parameter] public string? SelectedArea { get; set; }
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+    [Parameter] public CultureState Culture { get; set; } = default!;
+}

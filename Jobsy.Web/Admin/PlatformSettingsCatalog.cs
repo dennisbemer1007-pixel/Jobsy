@@ -422,6 +422,21 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("KandidatenkaartEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "KandidatenkaartEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.Kandidatenkaart.Enabled.Title",
+                DescriptionKey: "AdminSettings.Kandidatenkaart.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.KandidatenkaartEnabled,
+                Write: v => new PlatformFeatureUpdate(KandidatenkaartEnabled: ToBool(v)),
+                ImpactKey: "AdminSettings.Kandidatenkaart.Enabled.ImpactOff",
+                ImpactLevel: PlatformSettingImpactLevel.Warn,
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("CandidateApplyPerHourLimit"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -668,6 +683,7 @@ public static class PlatformSettingsCatalog
         bool? proactiveMatchingEnabled = null;
         bool? matchCalibrationV1Enabled = null;
         bool? employerFitQuestionnairesEnabled = null;
+        bool? kandidatenkaartEnabled = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
         int? candidateApplyPerHour = null;
@@ -734,6 +750,11 @@ public static class PlatformSettingsCatalog
                 employerFitQuestionnairesEnabled = p.EmployerFitQuestionnairesEnabled;
             }
 
+            if (p.KandidatenkaartEnabled is not null)
+            {
+                kandidatenkaartEnabled = p.KandidatenkaartEnabled;
+            }
+
             if (p.CandidateApplyPerMinuteLimit is not null)
             {
                 candidateApplyPerMinute = p.CandidateApplyPerMinuteLimit;
@@ -785,6 +806,7 @@ public static class PlatformSettingsCatalog
             ProactiveMatchingEnabled: proactiveMatchingEnabled,
             MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled: employerFitQuestionnairesEnabled,
+            KandidatenkaartEnabled: kandidatenkaartEnabled,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,
             CandidateApplyPerDayLimit: candidateApplyPerDay);

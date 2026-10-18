@@ -57,6 +57,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.CandidatePassportEnabled ?? true,
                 dto?.PassportPartnersEnabled ?? false,
                 dto?.PassportPdfV2Enabled ?? false,
+                PupilPassportV2Enabled: false,
+                StudentPassportEnabled: false,
                 dto?.PhoneVerificationEnabled ?? false,
                 dto?.SchoolsEnabled ?? false,
                 dto?.AmbassadorsEnabled ?? false,
@@ -68,7 +70,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.CandidateExternalVacanciesEnabled ?? false,
                 dto?.ProactiveMatchingEnabled ?? false,
                 dto?.TestsV2Enabled ?? false,
-                dto?.EmployerFitQuestionnairesEnabled ?? false);
+                dto?.EmployerFitQuestionnairesEnabled ?? false,
+                dto?.KandidatenkaartEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -141,5 +144,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("employerFitQuestionnairesEnabled")]
         public bool EmployerFitQuestionnairesEnabled { get; set; }
+
+        [JsonPropertyName("kandidatenkaartEnabled")]
+        public bool KandidatenkaartEnabled { get; set; }
     }
 }

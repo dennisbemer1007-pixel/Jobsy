@@ -10,6 +10,7 @@ public class PageAssetCatalogTests
     [InlineData("/candidate/paspoort", 3 + 5 + 15)]
     [InlineData("/register", 3 + 4)]
     [InlineData("/werkgever/vacatures", 3 + 4)]
+    [InlineData("/werkgever/kandidatenkaart", 3 + 4 + 2)]
     [InlineData("/admin/users", 3 + 2)]
     [InlineData("/sales/dashboard", 3 + 1)]
     [InlineData("/leerling", 3 + 1)]
@@ -37,6 +38,12 @@ public class PageAssetCatalogTests
         if (path is "/register")
         {
             Assert.Contains(sheets, s => s.StartsWith("css/features/werkgever-aanmelding.css", StringComparison.Ordinal));
+        }
+
+        if (path is "/werkgever/kandidatenkaart")
+        {
+            var kkSheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(areas, path);
+            Assert.Contains(kkSheets, s => s.StartsWith("css/features/kandidatenkaart.css", StringComparison.Ordinal));
         }
 
         if (path.StartsWith("/leerling", StringComparison.Ordinal))

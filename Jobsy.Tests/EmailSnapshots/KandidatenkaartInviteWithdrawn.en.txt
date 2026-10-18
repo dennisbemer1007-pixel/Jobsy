@@ -1,0 +1,34 @@
+KEY: KandidatenkaartInviteWithdrawn
+SUBJECT: Invitation withdrawn: Weekendhulp verkoop
+PREHEADER: Vacancy is full
+KIND: Optional
+--- TEXT ---
+Hi Alex,
+
+Invitation withdrawn
+====================
+
+The vacancy Weekendhulp verkoop at Bakkerij De Gouden Korrel is full. Your
+invitation was withdrawn.
+
+Open job map: https://lobsy.nl/
+
+Team Lobsy
+
+You get this email because you want nearby vacancies.
+No more reminder emails? Unsubscribe: https://lobsy.nl/mail/afmelden
+Help: mailto:support@lobsy.nl
+Privacy: https://lobsy.nl/privacy
+Mail settings: https://lobsy.nl/account/mail-instellingen
+Lobsy
+--- STRUCTURE ---
+h1: Invitation withdrawn
+marker: table data-lobsy-layout=2
+marker: a data-lobsy-cta=
+a: Lobsy -> https://lobsy.nl
+a: Open job map -> https://lobsy.nl/
+a: No more reminder emails? Unsubscribe -> https://lobsy.nl/mail/afmelden
+a: Help -> mailto:support@lobsy.nl
+a: Privacy -> https://lobsy.nl/privacy
+a: Mail settings -> https://lobsy.nl/account/mail-instellingen
+img: src=https://lobsy.nl/images/email/lobsy-mark-72.png?v=20260930-mail2 alt=Lobsy width=36 height=36

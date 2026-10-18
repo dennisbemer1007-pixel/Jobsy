@@ -123,6 +123,13 @@ public class Vacancy
     public Guid? FulfilledByApplicationId { get; set; }
 
     public int MaxApplications { get; set; } = 5;
+
+    /// <summary>Target hires for kandidatenkaart invite rounds. 0 = not tracked.</summary>
+    public int PositionsTarget { get; set; }
+
+    /// <summary>Hires counted toward <see cref="PositionsTarget"/> via kandidatenkaart or hire flow.</summary>
+    public int PositionsFilled { get; set; }
+
     public Guid? SalaryTableId { get; set; }
     public CompanySalaryTable? SalaryTable { get; set; }
 

@@ -3643,6 +3643,7 @@ public static class UiStrings
         UiStringsOnboardingV2.MergeAll(nl, en, pl, ro, ar);
         UiStringsGratisDna.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateInsights.MergeAll(nl, en, pl, ro, ar);
+        UiStringsKandidatenkaart.MergeAll(nl, en, pl, ro, ar);
         UiStringsMatch.MergeAll(nl, en, pl, ro, ar);
         UiStringsMfa.MergeAll(nl, en, pl, ro, ar);
         UiStringsAdmin.MergeAll(nl, en, pl, ro, ar);

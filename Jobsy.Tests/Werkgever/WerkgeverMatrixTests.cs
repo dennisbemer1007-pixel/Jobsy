@@ -42,6 +42,7 @@ public class WerkgeverNavVisibilityTests
             HasTakeovers: true,
             HasSalesReferral: true,
             CandidateInsightsEnabled: true,
+            KandidatenkaartEnabled: true,
             HasMaqqieHours: true);
         var items = WerkgeverNav.For(role, ctx).SelectMany(g => g.Items).ToList();
         foreach (var row in WerkgeverRightsMatrix.Pages)

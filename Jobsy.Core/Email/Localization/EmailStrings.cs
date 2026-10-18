@@ -17,11 +17,21 @@ public static partial class EmailStrings
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> All { get; } =
         new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
-            ["nl"] = EmailStringsReferee.Merge(Merge(EmailStringsNl.Map, EmailStringsComeback.For("nl")), "nl"),
-            ["en"] = EmailStringsReferee.Merge(Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")), "en"),
-            ["pl"] = EmailStringsReferee.Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), "pl"),
-            ["ro"] = EmailStringsReferee.Merge(Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")), "ro"),
-            ["ar"] = EmailStringsReferee.Merge(Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar")), "ar")
+            ["nl"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsNl.Map, EmailStringsComeback.For("nl")), EmailStringsKandidatenkaart.For("nl")),
+                "nl"),
+            ["en"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")), EmailStringsKandidatenkaart.For("en")),
+                "en"),
+            ["pl"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), EmailStringsKandidatenkaart.For("en")),
+                "pl"),
+            ["ro"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")), EmailStringsKandidatenkaart.For("en")),
+                "ro"),
+            ["ar"] = EmailStringsReferee.Merge(
+                Merge(Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar")), EmailStringsKandidatenkaart.For("en")),
+                "ar")
         };
 
     private static IReadOnlyDictionary<string, string> Merge(

@@ -28,6 +28,19 @@ window.jobMap = (function () {
     let ringStyleHandlerBound = false;
     let ringRedrawTries = 0;
     let deferMapReveal = false;
+    let kkMode = false;
+    let kkSelectCallback = null;
+    const KK_SOURCE = "jobsy-kk-areas";
+    const KK_FILL = "jobsy-kk-areas-fill";
+    const KK_LINE = "jobsy-kk-areas-line";
+    const KK_LABELS_SOURCE = "jobsy-kk-areas-labels";
+    const KK_LABELS = "jobsy-kk-areas-labels-layer";
+    const KK_LABELS_HALO = "jobsy-kk-areas-labels-halo";
+    const KK_RADIUS_SOURCE = "jobsy-kk-radius";
+    const KK_RADIUS_FILL = "jobsy-kk-radius-fill";
+    const KK_RADIUS_LINE = "jobsy-kk-radius-line";
+    let kkViewOptions = null;
+    let kkInitialFitDone = false;
     let detailCache = {};
     let pinsUrl = null;
     let pinsBaseUrl = null;
@@ -2958,6 +2971,10 @@ window.jobMap = (function () {
         if (!map || typeof map.addSource !== "function") {
             return;
         }
+        if (kkMode) {
+            drawKkRadiusRing(lat, lng);
+            return;
+        }
         if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
             scheduleTravelRingRedraw();
             return;
@@ -3166,9 +3183,16 @@ window.jobMap = (function () {
         if (!raw || typeof raw !== "object") {
             return null;
         }
-        const lat = Number(raw.lat);
-        const lng = Number(raw.lng);
-        const zoom = Number(raw.zoom);
+        var lat = Number(raw.lat);
+        var lng = Number(raw.lng);
+        var zoom = Number(raw.zoom);
+        if ((!Number.isFinite(lat) || !Number.isFinite(lng)) && Array.isArray(raw.center) && raw.center.length >= 2) {
+            lng = Number(raw.center[0]);
+            lat = Number(raw.center[1]);
+        }
+        if (!Number.isFinite(zoom)) {
+            zoom = Number(raw.zoom);
+        }
         if (!Number.isFinite(lat) || !Number.isFinite(lng) || !Number.isFinite(zoom)) {
             return null;
         }
@@ -3849,6 +3873,17 @@ window.jobMap = (function () {
     }
 
     function restoreOverlays() {
+        if (kkMode) {
+            refreshKkAreasData();
+            if (lastOrigin) {
+                drawKkRadiusRing(lastOrigin.lat, lastOrigin.lng);
+            }
+            if (window.jobsyMapLibre) {
+                window.jobsyMapLibre.hideChrome(map);
+            }
+            kkResizeMapAndFit(false);
+            return;
+        }
         refreshClusters();
         if (lastOrigin) {
             ensureOriginMarker(lastOrigin.lat, lastOrigin.lng);
@@ -3901,7 +3936,11 @@ window.jobMap = (function () {
                     try { map._resizeObserver.disconnect(); } catch (e0) { /* ignore */ }
                 }
                 map._resizeObserver = new ResizeObserver(function () {
-                    invalidate();
+                    if (kkMode) {
+                        kkResizeMapAndFit(false);
+                    } else {
+                        invalidate();
+                    }
                 });
                 map._resizeObserver.observe(el);
             } catch (eRo) { /* ignore */ }
@@ -4073,7 +4112,505 @@ window.jobMap = (function () {
         }
     }
 
+    function kkProp(a, camel, pascal) {
+        if (!a) {
+            return undefined;
+        }
+        if (a[camel] != null) {
+            return a[camel];
+        }
+        return a[pascal];
+    }
+
+    function kkLooksLikeLatLngPair(x, y) {
+        return Math.abs(x) > 20 && Math.abs(y) < 20;
+    }
+
+    function kkNormalizeLngLatPair(x, y) {
+        if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return null;
+        }
+        if (kkLooksLikeLatLngPair(x, y)) {
+            return [y, x];
+        }
+        return [x, y];
+    }
+
+    function kkAreasGeoJson(areas, selectedKey) {
+        var features = (areas || []).map(function (a) {
+            var ring = a.polygonRing || a.PolygonRing || [];
+            var coords = ring.map(function (p) {
+                if (!p || p.length < 2) {
+                    return null;
+                }
+                var pair = kkNormalizeLngLatPair(Number(p[0]), Number(p[1]));
+                return pair;
+            }).filter(Boolean);
+            if (coords.length && (coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1])) {
+                coords.push(coords[0]);
+            }
+            return {
+                type: "Feature",
+                properties: {
+                    key: a.areaKey || a.AreaKey,
+                    label: a.label || a.Label,
+                    count: kkProp(a, "candidateCount", "CandidateCount"),
+                    selected: (a.areaKey || a.AreaKey) === selectedKey
+                },
+                geometry: { type: "Polygon", coordinates: [coords] }
+            };
+        });
+        return { type: "FeatureCollection", features: features };
+    }
+
+    var KK_LABEL_OFFSETS = [
+        [0, 0],
+        [0.85, -0.65],
+        [-0.85, -0.65],
+        [0.65, 0.75],
+        [-0.65, 0.75]
+    ];
+
+    function kkLabelOffsetIndex(key, idx) {
+        if (!key) {
+            return idx % KK_LABEL_OFFSETS.length;
+        }
+        var h = 0;
+        for (var i = 0; i < key.length; i++) {
+            h = ((h << 5) - h) + key.charCodeAt(i);
+            h |= 0;
+        }
+        return Math.abs(h) % KK_LABEL_OFFSETS.length;
+    }
+
+    function kkLabelsGeoJson(areas) {
+        var features = (areas || []).map(function (a, idx) {
+            var lat = kkProp(a, "centerLat", "CenterLat");
+            var lng = kkProp(a, "centerLng", "CenterLng");
+            var count = kkProp(a, "candidateCount", "CandidateCount");
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+                return null;
+            }
+            var key = a.areaKey || a.AreaKey;
+            var off = KK_LABEL_OFFSETS[kkLabelOffsetIndex(key, idx)];
+            var labelLng = lng + off[0] * 0.018;
+            var labelLat = lat + off[1] * 0.018;
+            return {
+                type: "Feature",
+                properties: {
+                    key: key,
+                    count: count != null ? String(count) : ""
+                },
+                geometry: { type: "Point", coordinates: [labelLng, labelLat] }
+            };
+        }).filter(Boolean);
+        return { type: "FeatureCollection", features: features };
+    }
+
+    function applyKkViewOptions(viewOpts) {
+        if (!viewOpts) {
+            return;
+        }
+        kkViewOptions = viewOpts;
+        var travelKm = Number(kkProp(viewOpts, "travelKm", "TravelKm"));
+        if (Number.isFinite(travelKm) && travelKm > 0) {
+            travelOptions.radiusKm = travelKm;
+        }
+        var originLat = kkProp(viewOpts, "originLat", "OriginLat");
+        var originLng = kkProp(viewOpts, "originLng", "OriginLng");
+        if (Number.isFinite(originLat) && Number.isFinite(originLng)) {
+            lastOrigin = { lat: originLat, lng: originLng };
+        }
+    }
+
+    var KK_FIT_PADDING = 48;
+
+    function kkUnionZoneBounds(areas) {
+        var bounds = new maplibregl.LngLatBounds();
+        var hasPoint = false;
+        (areas || []).forEach(function (a, idx) {
+            var ring = a.polygonRing || a.PolygonRing || [];
+            ring.forEach(function (p) {
+                if (!p || p.length < 2) {
+                    return;
+                }
+                var pair = kkNormalizeLngLatPair(Number(p[0]), Number(p[1]));
+                if (pair) {
+                    bounds.extend(pair);
+                    hasPoint = true;
+                }
+            });
+            var lat = kkProp(a, "centerLat", "CenterLat");
+            var lng = kkProp(a, "centerLng", "CenterLng");
+            if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                bounds.extend([lng, lat]);
+                hasPoint = true;
+                var key = a.areaKey || a.AreaKey;
+                var off = KK_LABEL_OFFSETS[kkLabelOffsetIndex(key, idx)];
+                bounds.extend([lng + off[0] * 0.018, lat + off[1] * 0.018]);
+            }
+        });
+        return hasPoint ? bounds : null;
+    }
+
+    function syncKkMobileInviteChrome() {
+        try {
+            var nav = document.querySelector(".wg-bottom-nav");
+            var invite = document.querySelector(".kk-mobile-sheet__invite");
+            if (!nav || !invite) {
+                return;
+            }
+            var style = window.getComputedStyle(nav);
+            if (style.display === "none" || style.visibility === "hidden") {
+                return;
+            }
+            var h = Math.ceil(nav.getBoundingClientRect().height);
+            if (h > 0) {
+                document.documentElement.style.setProperty("--kk-wg-nav-offset", h + "px");
+            }
+        } catch (eSync) { /* ignore */ }
+    }
+
+    function kkResizeMapAndFit(animate) {
+        if (!map || !kkMode) {
+            return;
+        }
+        var runFit = function () {
+            try {
+                var container = typeof map.getContainer === "function" ? map.getContainer() : null;
+                if (container) {
+                    container.style.width = "100%";
+                    container.style.height = "100%";
+                }
+                if (typeof map.resize === "function") {
+                    map.resize();
+                }
+            } catch (e0) { /* ignore */ }
+            if (mapHasUsableSize()) {
+                fitKkView(animate);
+            }
+            syncKkMobileInviteChrome();
+        };
+        if (typeof requestAnimationFrame === "function") {
+            requestAnimationFrame(function () {
+                requestAnimationFrame(runFit);
+            });
+        } else {
+            setTimeout(runFit, 0);
+        }
+    }
+
+    function kkScheduleLayoutPasses() {
+        if (!map || !kkMode) {
+            return;
+        }
+        syncKkMobileInviteChrome();
+        [0, 80, 200, 450, 900].forEach(function (delay) {
+            setTimeout(function () {
+                kkResizeMapAndFit(false);
+                syncKkMobileInviteChrome();
+            }, delay);
+        });
+    }
+
+    function drawKkRadiusRing(lat, lng) {
+        if (!map || !kkMode || typeof map.addSource !== "function") {
+            return;
+        }
+        if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
+            map.once("load", function () { drawKkRadiusRing(lat, lng); });
+            return;
+        }
+        clearTravelRings();
+        var travelKm = Number(travelOptions.radiusKm) || 25;
+        var radiusM = travelKm * 1000;
+        var feature = {
+            type: "Feature",
+            properties: {},
+            geometry: { type: "Polygon", coordinates: circlePolygon(lat, lng, radiusM) }
+        };
+        var data = { type: "FeatureCollection", features: [feature] };
+        try {
+            if (!map.getSource(KK_RADIUS_SOURCE)) {
+                map.addSource(KK_RADIUS_SOURCE, { type: "geojson", data: data });
+                map.addLayer({
+                    id: KK_RADIUS_FILL,
+                    type: "fill",
+                    source: KK_RADIUS_SOURCE,
+                    paint: {
+                        "fill-color": "rgba(15, 45, 92, 0.05)"
+                    }
+                }, KK_FILL);
+                map.addLayer({
+                    id: KK_RADIUS_LINE,
+                    type: "line",
+                    source: KK_RADIUS_SOURCE,
+                    paint: {
+                        "line-color": "rgba(15, 45, 92, 0.32)",
+                        "line-width": 1.25,
+                        "line-dasharray": [2, 2.5]
+                    }
+                }, KK_FILL);
+            } else {
+                map.getSource(KK_RADIUS_SOURCE).setData(data);
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    function fitKkView(animate) {
+        if (!map || !kkMode) {
+            return;
+        }
+        if (typeof map.isStyleLoaded === "function" && !map.isStyleLoaded()) {
+            map.once("load", function () { fitKkView(animate); });
+            return;
+        }
+        try {
+            if (typeof map.resize === "function") {
+                map.resize();
+            }
+        } catch (eResize) { /* ignore */ }
+        if (!mapHasUsableSize()) {
+            return;
+        }
+        applyKkViewOptions(kkViewOptions);
+        if (lastOrigin) {
+            drawKkRadiusRing(lastOrigin.lat, lastOrigin.lng);
+        }
+        var travelKm = Number(travelOptions.radiusKm) || 25;
+        var bounds = kkUnionZoneBounds(kkAreasCache);
+        if (!bounds || bounds.isEmpty()) {
+            return;
+        }
+        var sw = bounds.getSouthWest();
+        var ne = bounds.getNorthEast();
+        try {
+            console.info("[jobMap.kk] fitBounds", {
+                sw: [sw.lng, sw.lat],
+                ne: [ne.lng, ne.lat],
+                areas: (kkAreasCache || []).length,
+                travelKm: travelKm,
+                origin: lastOrigin
+            });
+        } catch (logErr) { /* ignore */ }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.fitBounds(bounds, {
+                    padding: KK_FIT_PADDING,
+                    maxZoom: 11.25,
+                    animate: animate === true && !prefersReducedMotion(),
+                    duration: animate === true && !prefersReducedMotion() ? 450 : 0
+                });
+                map.once("idle", function () {
+                    var z = map.getZoom();
+                    if (z < 9.75) {
+                        try {
+                            map.fitBounds(bounds, {
+                                padding: KK_FIT_PADDING,
+                                maxZoom: 11.25,
+                                animate: false,
+                                duration: 0
+                            });
+                        } catch (eRetry) { /* ignore */ }
+                    }
+                });
+            } catch (e) { /* ignore */ }
+        });
+    }
+
+    function panKkToSelectedArea(selectedKey) {
+        if (!map || !selectedKey) {
+            return;
+        }
+        var area = (kkAreasCache || []).find(function (a) {
+            return (a.areaKey || a.AreaKey) === selectedKey;
+        });
+        if (!area) {
+            return;
+        }
+        var lat = kkProp(area, "centerLat", "CenterLat");
+        var lng = kkProp(area, "centerLng", "CenterLng");
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return;
+        }
+        runWithViewportNotifySuppressed(function () {
+            try {
+                map.easeTo({ center: [lng, lat], duration: prefersReducedMotion() ? 0 : 450 });
+            } catch (e) { /* ignore */ }
+        });
+    }
+
+    var kkAreasCache = [];
+    var kkSelectedKey = null;
+
+    function ensureKkLayers() {
+        if (!map || !kkMode) {
+            return;
+        }
+        if (!map.getSource(KK_SOURCE)) {
+            map.addSource(KK_SOURCE, { type: "geojson", data: kkAreasGeoJson([], null) });
+            map.addLayer({
+                id: KK_FILL,
+                type: "fill",
+                source: KK_SOURCE,
+                paint: {
+                    "fill-color": [
+                        "case",
+                        ["boolean", ["get", "selected"], false],
+                        "rgba(220, 80, 70, 0.38)",
+                        "rgba(220, 80, 70, 0.22)"
+                    ],
+                    "fill-outline-color": "rgba(180, 50, 45, 0.55)"
+                }
+            });
+            map.addLayer({
+                id: KK_LINE,
+                type: "line",
+                source: KK_SOURCE,
+                paint: {
+                    "line-color": [
+                        "case",
+                        ["boolean", ["get", "selected"], false],
+                        "rgba(180, 45, 40, 0.95)",
+                        "rgba(200, 70, 65, 0.65)"
+                    ],
+                    "line-width": [
+                        "case",
+                        ["boolean", ["get", "selected"], false],
+                        2.5,
+                        1.25
+                    ]
+                }
+            });
+            map.addSource(KK_LABELS_SOURCE, { type: "geojson", data: kkLabelsGeoJson([]) });
+            map.addLayer({
+                id: KK_LABELS_HALO,
+                type: "circle",
+                source: KK_LABELS_SOURCE,
+                paint: {
+                    "circle-radius": 15,
+                    "circle-color": "#fffcfa",
+                    "circle-stroke-color": "rgba(190, 60, 55, 0.85)",
+                    "circle-stroke-width": 2
+                }
+            });
+            map.addLayer({
+                id: KK_LABELS,
+                type: "symbol",
+                source: KK_LABELS_SOURCE,
+                layout: {
+                    "text-field": ["get", "count"],
+                    "text-size": 13,
+                    "text-font": ["Noto Sans Bold"],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true
+                },
+                paint: {
+                    "text-color": "#7f1d1d",
+                    "text-halo-color": "#fff",
+                    "text-halo-width": 1.25
+                }
+            });
+            map.on("click", KK_FILL, function (e) {
+                if (!e.features || !e.features.length) {
+                    return;
+                }
+                var key = e.features[0].properties.key;
+                if (kkSelectCallback && key) {
+                    kkSelectCallback(key);
+                }
+            });
+            map.getCanvas().style.cursor = "pointer";
+        }
+    }
+
+    function refreshKkLabelsData() {
+        if (!map || !kkMode) {
+            return;
+        }
+        var source = map.getSource(KK_LABELS_SOURCE);
+        if (source && typeof source.setData === "function") {
+            source.setData(kkLabelsGeoJson(kkAreasCache));
+        }
+    }
+
+    function refreshKkAreasData() {
+        if (!map || !kkMode) {
+            return;
+        }
+        if (!map.isStyleLoaded || !map.isStyleLoaded()) {
+            map.once("load", refreshKkAreasData);
+            return;
+        }
+        ensureKkLayers();
+        var source = map.getSource(KK_SOURCE);
+        if (source && typeof source.setData === "function") {
+            source.setData(kkAreasGeoJson(kkAreasCache, kkSelectedKey));
+        }
+        refreshKkLabelsData();
+    }
+
+    function initKandidatenkaart(elementId, options) {
+        options = options || {};
+        var el = document.getElementById(elementId);
+        if (!el) {
+            throw new Error("Map element #" + elementId + " not found");
+        }
+        if (map) {
+            dispose();
+        }
+        kkMode = true;
+        kkInitialFitDone = false;
+        if (options.dotNetRef) {
+            kkSelectCallback = function (key) {
+                try {
+                    options.dotNetRef.invokeMethodAsync("OnAreaSelected", key);
+                } catch (e) { /* circuit gone */ }
+            };
+        } else {
+            kkSelectCallback = typeof options.onAreaSelect === "function" ? options.onAreaSelect : null;
+        }
+        kkAreasCache = options.areas || [];
+        kkSelectedKey = options.selectedAreaKey || null;
+        applyKkViewOptions({
+            originLat: options.originLat,
+            originLng: options.originLng,
+            travelKm: options.travelKm
+        });
+        var centerLng = lastOrigin ? lastOrigin.lng : 5.3878;
+        var centerLat = lastOrigin ? lastOrigin.lat : 52.1561;
+        createMapInstance(el, [], { lat: centerLat, lng: centerLng, zoom: 10.5 }, false);
+        setVacancies([]);
+        map.once("load", function () {
+            refreshKkAreasData();
+            kkResizeMapAndFit(false);
+            kkScheduleLayoutPasses();
+            kkInitialFitDone = true;
+            syncKkMobileInviteChrome();
+            if (typeof window !== "undefined" && !window._kkInviteNavResizeBound) {
+                window._kkInviteNavResizeBound = true;
+                window.addEventListener("resize", syncKkMobileInviteChrome, { passive: true });
+            }
+        });
+    }
+
+    function setKandidatenkaartAreas(areas, selectedKey, viewOptions) {
+        kkAreasCache = areas || [];
+        var prevKey = kkSelectedKey;
+        kkSelectedKey = selectedKey || null;
+        if (viewOptions) {
+            applyKkViewOptions(viewOptions);
+        }
+        refreshKkAreasData();
+        if (viewOptions) {
+            kkResizeMapAndFit(kkInitialFitDone);
+        } else if (selectedKey && selectedKey !== prevKey) {
+            panKkToSelectedArea(selectedKey);
+        }
+    }
+
     function init(elementId, vacancies, options) {
+        kkMode = false;
         if (typeof maplibregl === "undefined") {
             throw new Error("MapLibre GL JS (maplibregl) is not loaded");
         }
@@ -4570,6 +5107,10 @@ window.jobMap = (function () {
         }
         runWithViewportNotifySuppressed(function () {
             map.resize();
+            if (kkMode) {
+                kkResizeMapAndFit(false);
+                return;
+            }
             if (originNeedsFrame && lastOrigin) {
                 fitToOriginRings(false);
             }
@@ -4746,6 +5287,8 @@ window.jobMap = (function () {
         focus,
         focusCompany,
         dispose,
+        initKandidatenkaart,
+        setKandidatenkaartAreas,
         invalidate,
         notifyFilterDrawerToggle,
         isAlive,

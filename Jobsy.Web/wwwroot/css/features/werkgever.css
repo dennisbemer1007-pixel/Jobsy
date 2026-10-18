@@ -109,7 +109,8 @@
 .wg-shell__body {
     display: flex;
     flex: 1;
-    min-height: 0;
+    min-height: calc(100dvh - 56px);
+    align-items: stretch;
 }
 
 .wg-sidebar {
@@ -384,6 +385,12 @@
 @media (max-width: 1023px) {
     .wg-shell__sidebar--desktop {
         display: none;
+    }
+
+    .wg-shell.wg-has-bottom-nav {
+        --wg-bottom-nav-block-h: calc(
+            52px + var(--space-1) + max(var(--space-1), env(safe-area-inset-bottom, 0px))
+        );
     }
 
     .wg-bottom-nav {

@@ -73,6 +73,12 @@ public static class PageAssetCatalog
         "css/features/enterprise-ui.css?v=20261004-10",
     ];
 
+    public static readonly string[] KandidatenkaartCss =
+    [
+        "css/features/kandidaatinzichten.css?v=20261004-10",
+        "css/features/kandidatenkaart.css?v=20261018-22",
+    ];
+
     public static readonly string[] BeheerCss =
     [
         "css/features/admin.css?v=20261013-02",
@@ -184,7 +190,7 @@ public static class PageAssetCatalog
         return Area.CandidatePublic | Area.CandidateApp;
     }
 
-    public static IReadOnlyList<string> StylesheetsFor(Area areas)
+    public static IReadOnlyList<string> StylesheetsFor(Area areas, string? rawPath = null)
     {
         var list = new List<string>(BlazorCoreCss.Length + 24);
         list.AddRange(BlazorCoreCss);
@@ -196,13 +202,32 @@ public static class PageAssetCatalog
         AppendUnique(list, areas, Area.School, SchoolCss);
         AppendUnique(list, areas, Area.Account, AccountCss);
         AppendUnique(list, areas, Area.GratisDna, GratisDnaCss);
+        foreach (var url in RouteStylesheets(rawPath))
+        {
+            if (!list.Contains(url, StringComparer.Ordinal))
+            {
+                list.Add(url);
+            }
+        }
+
         return list;
+    }
+
+    public static IReadOnlyList<string> RouteStylesheets(string? rawPath)
+    {
+        var path = PageSeoCatalog.Normalize(rawPath);
+        if (path.Equals("/werkgever/kandidatenkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            return KandidatenkaartCss;
+        }
+
+        return [];
     }
 
     public static bool IncludeMapPreconnect(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
-        return path is "/banenkaart" or "/banen";
+        return path is "/banenkaart" or "/banen" or "/werkgever/kandidatenkaart";
     }
 
     public static bool IncludeLandingScript(string? rawPath)

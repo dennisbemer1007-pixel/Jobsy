@@ -1,7 +1,9 @@
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
+@inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
 @using Microsoft.AspNetCore.Components.Authorization
 @using Jobsy.Core.Authorization
+@using Jobsy.Core.Features
 
 <nav class="admin-sublinks pill-scroller insights-tabs" aria-label="@Culture["Insights.Tab.Insights"]">
     <a class="admin-sublink @(Active == "talent" ? "is-active" : null)"
@@ -17,17 +19,28 @@
             @Culture["Insights.Tab.Insights"]
         </a>
     }
+    @if (_kandidatenkaartOn)
+    {
+        <a class="admin-sublink @(Active == "kandidatenkaart" ? "is-active" : null)"
+           href="/werkgever/kandidatenkaart"
+           aria-current="@(Active == "kandidatenkaart" ? "page" : null)">
+            @Culture["Insights.Tab.Kandidatenkaart"]
+        </a>
+    }
 </nav>
 
 @code {
     [Parameter] public string Active { get; set; } = "talent";
 
     private bool _showInsights = true;
+    private bool _kandidatenkaartOn;
 
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthState.GetAuthenticationStateAsync();
         var user = state.User;
         _showInsights = !RoleClaimMatching.HasRole(user, JobsyRoles.Intermediary);
+        var flags = await FeatureFlags.GetAsync();
+        _kandidatenkaartOn = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
     }
 }

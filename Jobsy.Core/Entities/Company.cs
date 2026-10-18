@@ -227,6 +227,9 @@ public class Company
     /// </summary>
     public bool PendingStartHighlightBonus { get; set; }
 
+    /// <summary>Paid kandidatenkaart access until this UTC instant. Null = no entitlement.</summary>
+    public DateTime? KandidatenkaartActiveUntilUtc { get; set; }
+
     public ICollection<Vacancy> Vacancies { get; set; } = new List<Vacancy>();
     public ICollection<TokenTransaction> TokenTransactions { get; set; } = new List<TokenTransaction>();
     public ICollection<User> PrimaryUsers { get; set; } = new List<User>();

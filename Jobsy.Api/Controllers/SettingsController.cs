@@ -600,6 +600,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("EmployerPhase2Enabled", before.EmployerPhase2Enabled.ToString(), after.EmployerPhase2Enabled.ToString());
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
+        Add("KandidatenkaartEnabled", before.KandidatenkaartEnabled.ToString(), after.KandidatenkaartEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
@@ -634,7 +635,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             candidateExternalVacanciesEnabled = snap.CandidateExternalVacanciesEnabled,
             proactiveMatchingEnabled = snap.ProactiveMatchingEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
-            employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled
+            employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
+            kandidatenkaartEnabled = snap.KandidatenkaartEnabled
         });
     }
 
