@@ -159,6 +159,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Journey.Benefit.Vibe"] = english ? "Where you feel at home" : "Waar je je thuis voelt";
         map["Onboarding.Journey.Benefit.Values"] = english ? "What matters to you" : "Wat je belangrijk vindt";
         map["Onboarding.Journey.Now"] = english ? "Now" : "Nu";
+        map["Onboarding.Journey.Status.Done"] = english ? "Completed" : "Voltooid";
+        map["Onboarding.Journey.Status.Current"] = english ? "Current test" : "Huidige test";
+        map["Onboarding.Journey.Status.Upcoming"] = english ? "Upcoming" : "Nog te doen";
         map["Onboarding.Journey.Duration.One"] = english ? "~1.5 min" : "~1,5 min";
         map["Onboarding.Journey.CtaStart"] = english ? "Start with test 1" : "Start met test 1";
         map["Onboarding.Journey.CtaContinue"] = english ? "Continue with test {0}" : "Ga verder met test {0}";

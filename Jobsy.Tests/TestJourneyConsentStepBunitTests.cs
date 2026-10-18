@@ -55,6 +55,11 @@ public class TestJourneyConsentStepBunitTests : BunitContext
         Assert.Contains("ob-journey__stations--grid", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("ob-journey__badge", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("~1,5 min", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("ob-journey__mark--done", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("ob-journey__mark--next", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("aria-label=\"Voltooid\"", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("aria-label=\"Huidige test\"", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain(">Nu<", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

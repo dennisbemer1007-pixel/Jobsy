@@ -29,42 +29,14 @@
     <ol class="ob-journey__stations ob-journey__stations--grid" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
         @foreach (var station in Stations)
         {
-            var state = StationState(station.Step);
-            <li class="ob-journey__item ob-journey__item--@state.Css">
-                <p class="ob-journey__name">
-                    <span class="ob-journey__name-text">@Culture[station.TitleKey]</span>
-                    @if (state.Done)
-                    {
-                        <span class="ob-journey__tick" aria-hidden="true">✓</span>
-                    }
-                    else if (state.Next)
-                    {
-                        <span class="ob-journey__now">@Culture["Onboarding.Journey.Now"]</span>
-                    }
-                </p>
-                <p class="ob-journey__benefit">@Culture[station.BenefitKey]</p>
-            </li>
+            @StationItem(station)
         }
     </ol>
 
     <ol class="ob-journey__stations ob-journey__stations--mobile" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
         @foreach (var station in Stations)
         {
-            var state = StationState(station.Step);
-            <li class="ob-journey__item ob-journey__item--@state.Css">
-                <p class="ob-journey__name">
-                    <span class="ob-journey__name-text">@Culture[station.TitleKey]</span>
-                    @if (state.Done)
-                    {
-                        <span class="ob-journey__tick" aria-hidden="true">✓</span>
-                    }
-                    else if (state.Next)
-                    {
-                        <span class="ob-journey__now">@Culture["Onboarding.Journey.Now"]</span>
-                    }
-                </p>
-                <p class="ob-journey__benefit">@Culture[station.BenefitKey]</p>
-            </li>
+            @StationItem(station)
         }
     </ol>
 </section>
@@ -82,6 +54,18 @@
         new(9, "Onboarding.Test.Culture", "Onboarding.Journey.Benefit.Vibe"),
         new(10, "Onboarding.Test.Values", "Onboarding.Journey.Benefit.Values")
     ];
+
+    private RenderFragment StationItem(Station station) => __builder =>
+    {
+        var state = StationState(station.Step);
+        <li class="ob-journey__item ob-journey__item--@state.Css">
+            <p class="ob-journey__name">
+                <JourneyStationMark Status="@state.Css" />
+                <span class="ob-journey__name-text">@Culture[station.TitleKey]</span>
+            </p>
+            <p class="ob-journey__benefit">@Culture[station.BenefitKey]</p>
+        </li>;
+    };
 
     private (bool Done, bool Next, string Css) StationState(int step)
     {
