@@ -210,6 +210,7 @@ public class CandidateProfileResetTests
             typeof(CandidatePrivatePreferences),
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
+            typeof(InterviewReminder),
             typeof(LocalAuthCredential),
             typeof(MfaTrustedDevice),
             typeof(OneTimeLink),

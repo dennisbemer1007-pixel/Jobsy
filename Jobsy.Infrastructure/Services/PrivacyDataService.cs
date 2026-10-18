@@ -1517,6 +1517,9 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.AfterMatchReminderPreferences.Remove(afterMatchReminder);
         }
 
+        _db.InterviewReminders.RemoveRange(
+            await _db.InterviewReminders.Where(r => r.UserId == user.Id).ToListAsync(cancellationToken));
+
         var reminderLogs = await _db.ComebackReminderLogs
             .Where(l => l.UserId == user.Id)
             .ToListAsync(cancellationToken);

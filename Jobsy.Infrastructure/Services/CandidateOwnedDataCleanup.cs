@@ -267,6 +267,9 @@ internal static class CandidateOwnedDataCleanup
             db.AfterMatchReminderPreferences.Remove(afterMatchReminder);
         }
 
+        db.InterviewReminders.RemoveRange(
+            await db.InterviewReminders.Where(r => r.UserId == user.Id).ToListAsync(cancellationToken));
+
         var reminderLogs = await db.ComebackReminderLogs
             .Where(l => l.UserId == user.Id)
             .ToListAsync(cancellationToken);
