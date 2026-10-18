@@ -37,7 +37,7 @@ FIGURE_SCENE_BOX: dict[str, tuple[float, float, float, float]] = {
 # Manual figure crops on desktop JPG (left, top, right, bottom) — people + immediate ground.
 MANUAL_FIGURE_BBOX: dict[str, tuple[float, float, float, float]] = {
     # Desktop art: handshake pair sits left-of-center — crop must include both.
-    "kennismaken": (0.06, 0.04, 0.58, 0.98),
+    "kennismaken": (0.06, 0.22, 0.58, 0.98),
     # People cluster on the left; calendar/desk props stay on bg only.
     "beschikbaarheid": (0.0, 0.04, 0.56, 0.98),
     "vervoer": (0.58, 0.10, 0.99, 0.96),
@@ -48,6 +48,7 @@ MANUAL_FIGURE_BBOX: dict[str, tuple[float, float, float, float]] = {
 }
 
 COVER_FIT_SLUGS = frozenset({"beschikbaarheid", "vervoer", "werkervaring"})
+LEFT_COVER_FIT_SLUGS = frozenset({"droombaan"})
 
 FIGURE_DESCRIPTIONS: dict[str, str] = {
     "kennismaken": "Twee personen (vrouw en man) geven elkaar een hand — volledig zichtbaar, rechtsonder.",
@@ -153,12 +154,19 @@ def is_cream_pixel(r: int, g: int, b: int) -> bool:
 
 
 def figure_alpha(r: int, g: int, b: int, palette, seam) -> int:
-    """Opaque subject pixels; transparent only flat cream / soft peach wash."""
+    """Opaque subject pixels; drop flat cream and obvious scenery/plants."""
     if is_cream_pixel(r, g, b):
         return 0
     if is_decor_plant(r, g, b) and rgb_delta((r, g, b), PAGE_BG) < 35:
         return 0
-    if seam.looks_like_soft_background(r, g, b, palette) and rgb_delta((r, g, b), PAGE_BG) < 28:
+    spread = max(r, g, b) - min(r, g, b)
+    if seam.looks_like_scenery(r, g, b) and spread < 45 and g >= r + 6:
+        return 0
+    if (
+        seam.looks_like_soft_background(r, g, b, palette)
+        and rgb_delta((r, g, b), PAGE_BG) < 22
+        and not is_human_tone(r, g, b)
+    ):
         return 0
     return 255
 
@@ -393,6 +401,14 @@ def process_figure_plate(slug: str, seam) -> tuple[int, int, float]:
         scaled = scaled.crop((left, top, left + plate_w, top + plate_h))
         plate = Image.new("RGBA", (plate_w, plate_h), (0, 0, 0, 0))
         plate.paste(scaled, (0, 0), scaled)
+    elif slug in LEFT_COVER_FIT_SLUGS:
+        scale = max(plate_w / crop_w, plate_h / crop_h)
+        nw, nh = max(1, int(crop_w * scale + 0.5)), max(1, int(crop_h * scale + 0.5))
+        scaled = crop.resize((nw, nh), Image.Resampling.LANCZOS)
+        top = max(0, nh - plate_h)
+        scaled = scaled.crop((0, top, min(plate_w, nw), top + min(plate_h, nh)))
+        plate = Image.new("RGBA", (plate_w, plate_h), (0, 0, 0, 0))
+        plate.paste(scaled, (plate_w - scaled.size[0], plate_h - scaled.size[1]), scaled)
     else:
         scale = min(plate_w / crop_w, plate_h / crop_h)
         nw, nh = max(1, int(crop_w * scale + 0.5)), max(1, int(crop_h * scale + 0.5))

@@ -10,8 +10,8 @@
   "steps": {
     "kennismaken": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.26909425451092117,
-      "composite_right_ratio": 0.31607312440645774,
+      "figure_strong_ratio": 0.2562618708452042,
+      "composite_right_ratio": 0.266755698005698,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -19,8 +19,8 @@
     },
     "beschikbaarheid": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.30084876543209876,
-      "composite_right_ratio": 0.3156991927825261,
+      "figure_strong_ratio": 0.26784188034188033,
+      "composite_right_ratio": 0.27951685660018993,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -28,8 +28,8 @@
     },
     "vervoer": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.43238366571699904,
-      "composite_right_ratio": 0.453389126305793,
+      "figure_strong_ratio": 0.37335588793922125,
+      "composite_right_ratio": 0.3965693257359924,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -37,8 +37,8 @@
     },
     "werkervaring": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.2836301044634378,
-      "composite_right_ratio": 0.31945037986704655,
+      "figure_strong_ratio": 0.2623990978157645,
+      "composite_right_ratio": 0.28928656220322885,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -46,8 +46,8 @@
     },
     "opleiding": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.2897732668566002,
-      "composite_right_ratio": 0.3335173314339981,
+      "figure_strong_ratio": 0.2636752136752137,
+      "composite_right_ratio": 0.29241452991452993,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -55,8 +55,8 @@
     },
     "droombaan": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.2535790598290598,
-      "composite_right_ratio": 0.3095322886989554,
+      "figure_strong_ratio": 0.2592651946818613,
+      "composite_right_ratio": 0.27479819563152896,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
