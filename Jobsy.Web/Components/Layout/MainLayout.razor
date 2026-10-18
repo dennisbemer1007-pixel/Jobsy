@@ -83,16 +83,16 @@
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
-    else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage && !_hideFloatingChrome)
     {
-        <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
-        <FeedbackWidget HasBottomNav="_hasBottomNav" />
+        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+        <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
     {
@@ -124,6 +124,7 @@
     private bool _banenkaartImmersive;
     private bool _isQuestionnairePage;
     private bool _hideCoachDock;
+    private bool _hideFloatingChrome;
     private bool _isCandidate;
     private bool _suppressInstallBanner;
     private bool _suppressPwaInstallEntry;
@@ -373,12 +374,19 @@
             changed = true;
         }
 
+        var hidePassportChrome = IsPassportOrProfileCoachHidden(path);
         var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
                         || IsVacancyOrNotificationsCoachHidden(path)
-                        || IsPassportOrProfileCoachHidden(path);
+                        || hidePassportChrome;
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
+            changed = true;
+        }
+
+        if (_hideFloatingChrome != hidePassportChrome)
+        {
+            _hideFloatingChrome = hidePassportChrome;
             changed = true;
         }
 

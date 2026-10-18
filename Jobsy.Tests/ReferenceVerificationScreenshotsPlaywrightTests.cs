@@ -65,30 +65,30 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             var tip = page.Locator("[data-testid='ref-verification-tip']");
             await tip.WaitForAsync(new() { Timeout = 15_000 });
             await tip.ScrollIntoViewIfNeededAsync();
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"01-tip-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"01-tip-{tag}.png"));
 
             var entry = ReferenceVerificationDemoIds.WorkEntryBakkerij;
             await page.GotoAsync($"{baseUrl}/candidate/paspoort/referentie/vraag/{entry:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync(".ref-verif-request", new() { Timeout = 15_000 });
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"02-request-form-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"02-request-form-{tag}.png"));
 
             await page.GotoAsync($"{baseUrl}/candidate/paspoort?tab=references", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync("[data-testid='passport-references-tab']", new() { Timeout = 15_000 });
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"05-status-table-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"05-status-table-{tag}.png"));
 
             var detailId = ReferenceVerificationDemoIds.ConfirmedRequestId;
             await page.GotoAsync($"{baseUrl}/candidate/paspoort/referenties/{detailId:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync("[data-testid='ref-verif-detail']", new() { Timeout = 15_000 });
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"06-bekijken-detail-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"06-bekijken-detail-{tag}.png"));
 
             await page.GotoAsync($"{baseUrl}/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync(".passport-dna", new() { Timeout = 15_000 });
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"07-dna-verified-unverified-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"07-dna-verified-unverified-{tag}.png"));
 
             await page.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync("[data-testid='passport-employer-preview']", new() { Timeout = 15_000 });
             await page.Locator("[data-testid='passport-employer-preview']").ScrollIntoViewIfNeededAsync();
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"08-paspoort-endorsed-only-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"08-paspoort-endorsed-only-{tag}.png"));
 
             await context.CloseAsync();
         }
@@ -107,9 +107,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             var openToken = ReferenceVerificationDemoIds.OpenReferentToken;
             await page.GotoAsync($"{baseUrl}/werk-referentie/{openToken}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync(".ref-verif-public__section", new() { Timeout = 15_000 });
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"03-referent-empty-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"03-referent-empty-{tag}.png"));
 
-            var factRows = page.Locator(".ref-verif-public__row:not(.ref-verif-public__row--duties)");
+            var factRows = page.Locator(".ref-verif-public__row:not(.ref-verif-public__row--stack)");
             var factRowCount = await factRows.CountAsync();
             for (var r = 0; r < factRowCount; r++)
             {
@@ -124,12 +124,12 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             }
 
             await page.Locator("#ref-comment").FillAsync("Korte toelichting voor Sanne — alleen zij ziet dit.");
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"04-referent-filled-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"04-referent-filled-{tag}.png"));
 
             var expired = ReferenceVerificationDemoIds.ExpiredReferentToken;
             await page.GotoAsync($"{baseUrl}/werk-referentie/{expired}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.WaitForSelectorAsync(".ref-verif-public", new() { Timeout = 15_000 });
-            await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"09-referent-expired-{tag}.png"), FullPage = true });
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDir, $"09-referent-expired-{tag}.png"));
 
             await context.CloseAsync();
         }

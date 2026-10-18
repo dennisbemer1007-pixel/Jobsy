@@ -73,12 +73,16 @@
 
                         @if (_form is { ConfirmedEmployer: true, ConfirmedPeriod: true, ConfirmedRole: true })
                         {
-                            <div class="ref-verif-public__row ref-verif-public__row--duties">
+                            <div class="ref-verif-public__row ref-verif-public__row--stack">
                                 <p class="ref-verif-public__question">@Culture["RefVerif.Public.Q.Duties"]</p>
-                                <div class="ref-verif-pills ref-verif-pills--triple" role="radiogroup">
-                                    <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedDuties, true)" @onclick="() => _form.ConfirmedDuties = true">@Culture["RefVerif.Public.Yes"]</button>
-                                    <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedDuties, false)" @onclick="() => _form.ConfirmedDuties = false">@Culture["RefVerif.Public.No"]</button>
-                                    <button type="button" class="ref-verif-pills__btn @PillClassNullable(_form.ConfirmedDuties, null)" @onclick="() => _form.ConfirmedDuties = null">@Culture["RefVerif.Public.SkipDuties"]</button>
+                                <div class="ref-verif-public__row-controls">
+                                    <div class="ref-verif-pills" role="radiogroup">
+                                        <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedDuties, true)" @onclick="() => _form.ConfirmedDuties = true">@Culture["RefVerif.Public.Yes"]</button>
+                                        <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedDuties, false)" @onclick="() => _form.ConfirmedDuties = false">@Culture["RefVerif.Public.No"]</button>
+                                    </div>
+                                    <button type="button" class="ref-verif-public__skip" @onclick="() => _form.ConfirmedDuties = null">
+                                        @Culture["RefVerif.Public.SkipDuties"]
+                                    </button>
                                 </div>
                             </div>
                         }

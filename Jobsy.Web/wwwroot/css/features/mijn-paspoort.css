@@ -576,9 +576,13 @@
     .passport-tabs,
     [dir="rtl"] .passport-tabs {
         inset-block-start: var(--app-header-height, 4.25rem);
-        flex-wrap: wrap;
-        overflow: visible;
-        mask-image: none;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+    }
+
+    [dir="rtl"] .passport-tabs {
+        mask-image: linear-gradient(to left, transparent, #000 12px, #000 calc(100% - 12px), transparent);
     }
 
     /* Coach sits fixed; keep it above the in-flow footer (© line). */

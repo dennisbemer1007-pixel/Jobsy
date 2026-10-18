@@ -26,6 +26,10 @@ public static class ReferenceVerificationDemoIds
 
 internal static class ReferenceVerificationDemoSeeder
 {
+    private const string DemoPreferencesJson = """
+        {"language":"nl","aboutMe":"Ik werk graag in de winkel en vind contact met klanten belangrijk. Betrouwbaar en collegiaal.","workRegion":"Haaglanden","maxTravelMinutes":25,"preferredTransport":"Fiets","minHoursPerWeek":24,"maxHoursPerWeek":36,"spokenLanguages":[{"code":"nl","level":"moedertaal"}],"dutchLevel":"goed","employers":[{"entryId":"88888888-1111-1111-1111-111111111111","employerName":"Bakkerij Jansen","role":"Verkoopmedewerker","startMonth":"2021-03","isCurrent":true},{"entryId":"88888888-2222-2222-2222-222222222222","employerName":"Albert Heijn","role":"Kassamedewerker","startMonth":"2018-09","endMonth":"2021-02"}]}
+        """;
+
     public static async Task EnsureAsync(JobsyDbContext db, ILogger logger)
     {
         try
@@ -41,30 +45,6 @@ internal static class ReferenceVerificationDemoSeeder
 
     private static async Task EnsureUserAndReferencesAsync(JobsyDbContext db)
     {
-        var prefsJson = JsonSerializer.Serialize(new
-        {
-            language = "nl",
-            employers = new object[]
-            {
-                new
-                {
-                    entryId = ReferenceVerificationDemoIds.WorkEntryBakkerij,
-                    employerName = "Bakkerij Jansen",
-                    role = "Verkoopmedewerker",
-                    startMonth = "2021-03",
-                    isCurrent = true
-                },
-                new
-                {
-                    entryId = ReferenceVerificationDemoIds.WorkEntryAh,
-                    employerName = "Albert Heijn",
-                    role = "Kassamedewerker",
-                    startMonth = "2018-09",
-                    endMonth = "2021-02"
-                }
-            }
-        });
-
         var user = await db.Users.FirstOrDefaultAsync(u => u.Id == ReferenceVerificationDemoIds.UserId);
         if (user is null)
         {
@@ -77,15 +57,16 @@ internal static class ReferenceVerificationDemoSeeder
                 Role = UserRole.Candidate,
                 IsActive = true,
                 OpenForWork = true,
-                PreferencesJson = prefsJson
+                PreferencesJson = DemoPreferencesJson
             };
             db.Users.Add(user);
         }
         else
         {
-            user.PreferencesJson = prefsJson;
+            user.PreferencesJson = DemoPreferencesJson;
             user.FirstName = "Sanne";
             user.FullName = "Sanne de Vries";
+            user.OpenForWork = true;
         }
 
         await EnsureDnaCompleteAsync(db, user.Id);
@@ -118,12 +99,12 @@ internal static class ReferenceVerificationDemoSeeder
         else
         {
             competency.Status = CandidateCompetencyStatuses.Completed;
-            competency.CompletedAtUtc ??= done;
-            competency.SamenwerkenPercent ??= 73;
-            competency.ResultaatgerichtheidPercent ??= 55;
-            competency.StressbestendigheidPercent ??= 48;
-            competency.InnovatiePercent ??= 41;
-            competency.ExtraversiePercent ??= 60;
+            competency.CompletedAtUtc = done;
+            competency.SamenwerkenPercent = 73;
+            competency.ResultaatgerichtheidPercent = 55;
+            competency.StressbestendigheidPercent = 48;
+            competency.InnovatiePercent = 41;
+            competency.ExtraversiePercent = 60;
         }
 
         var career = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == userId);
@@ -147,7 +128,13 @@ internal static class ReferenceVerificationDemoSeeder
         else
         {
             career.Status = CandidateCompetencyStatuses.Completed;
-            career.CompletedAtUtc ??= done.AddDays(1);
+            career.CompletedAtUtc = done.AddDays(1);
+            career.RealisticPercent = 22;
+            career.InvestigativePercent = 18;
+            career.ArtisticPercent = 14;
+            career.SocialPercent = 72;
+            career.EnterprisingPercent = 48;
+            career.ConventionalPercent = 35;
         }
 
         var culture = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == userId);
@@ -165,13 +152,29 @@ internal static class ReferenceVerificationDemoSeeder
                 CollaborationPercent = 78,
                 FlexibilityPercent = 42,
                 InnovationPercent = 38,
-                PeopleFirstPercent = 62
+                PeopleFirstPercent = 62,
+                OpennessPercent = 52,
+                ConscientiousnessPercent = 61,
+                ExtraversionPercent = 58,
+                AgreeablenessPercent = 67,
+                EmotionalStabilityPercent = 54
             });
         }
         else
         {
             culture.Status = CandidateCompetencyStatuses.Completed;
-            culture.CompletedAtUtc ??= done.AddDays(2);
+            culture.CompletedAtUtc = done.AddDays(2);
+            culture.AutonomyPercent = 35;
+            culture.InformalPercent = 55;
+            culture.CollaborationPercent = 78;
+            culture.FlexibilityPercent = 42;
+            culture.InnovationPercent = 38;
+            culture.PeopleFirstPercent = 62;
+            culture.OpennessPercent = 52;
+            culture.ConscientiousnessPercent = 61;
+            culture.ExtraversionPercent = 58;
+            culture.AgreeablenessPercent = 67;
+            culture.EmotionalStabilityPercent = 54;
         }
 
         var values = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == userId);
@@ -194,7 +197,12 @@ internal static class ReferenceVerificationDemoSeeder
         else
         {
             values.Status = CandidateCompetencyStatuses.Completed;
-            values.CompletedAtUtc ??= done.AddDays(3);
+            values.CompletedAtUtc = done.AddDays(3);
+            values.AutonomyPercent = 28;
+            values.ConnectionPercent = 62;
+            values.AchievementPercent = 45;
+            values.StabilityPercent = 70;
+            values.ImpactPercent = 40;
         }
     }
 

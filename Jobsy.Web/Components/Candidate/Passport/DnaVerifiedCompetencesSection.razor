@@ -3,7 +3,7 @@
 @using Jobsy.Web.Services
 @inject CultureState Culture
 
-@if (Verified.Count > 0 || UnverifiedLabels.Count > 0)
+@if ((ShowVerifiedList && Verified.Count > 0) || UnverifiedLabels.Count > 0)
 {
     <section class="detail-card passport-dna__card ref-verif-dna-competences" data-testid="dna-verified-competences">
         @if (Verified.Count > 0 && ShowVerifiedList)
