@@ -53,7 +53,8 @@ public static class PageAssetCatalog
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
         "css/features/mijn-paspoort.css?v=20261018-06",
-        "css/features/reference-verification.css?v=20261018-r13b",
+        "css/features/candidate-illustrated-hero.css?v=20261018-mobhero",
+        "css/features/reference-verification.css?v=20261018-mobhero",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261016-05",
         "css/features/carriere.css?v=20261011-01",
@@ -224,7 +225,11 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/werk-referentie/", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/reference-verification.css?v=20261018-r13b"];
+            return
+            [
+                "css/features/candidate-illustrated-hero.css?v=20261018-mobhero",
+                "css/features/reference-verification.css?v=20261018-mobhero"
+            ];
         }
 
         return [];

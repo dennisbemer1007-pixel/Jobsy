@@ -46,7 +46,7 @@
             var mobile = string.IsNullOrWhiteSpace(MobileArtPosition)
                 ? ArtPosition
                 : MobileArtPosition;
-            return $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition};--ref-verif-hero-pos-mobile:{mobile}";
+            return $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition};--cand-hero-pos-mobile:{mobile};--ref-verif-hero-pos-mobile:{mobile}";
         }
     }
 

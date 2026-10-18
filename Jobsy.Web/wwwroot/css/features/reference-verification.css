@@ -1430,91 +1430,7 @@
   gap: 0.4rem;
 }
 
-/* Carrière-style illustrated hero (PR #732 cand-hero, scoped for referent flow) */
-.cand-hero {
-  position: relative;
-  width: 100vw;
-  max-width: 100vw;
-  margin-inline: calc(50% - 50vw);
-  margin-bottom: 0.75rem;
-  min-height: clamp(12.5rem, 22.22vw, 20rem);
-  height: clamp(12.5rem, 22.22vw, 20rem);
-  background-color: var(--pearl);
-  background-image: var(--cand-hero-art, none);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: var(--cand-hero-pos, 62% center);
-  border-block-end: 1px solid color-mix(in srgb, var(--gold) 28%, var(--border));
-  overflow: hidden;
-}
-
-.cand-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    var(--pearl) 0%,
-    color-mix(in srgb, var(--pearl) 96%, transparent) 34%,
-    color-mix(in srgb, var(--pearl) 55%, transparent) 48%,
-    color-mix(in srgb, var(--pearl) 12%, transparent) 62%,
-    transparent 78%
-  );
-}
-
-.cand-hero--profession-band {
-  background-size: auto 100%;
-  background-position: right center;
-}
-
-.cand-hero--profession-band::before {
-  background: linear-gradient(
-    90deg,
-    var(--pearl) 0%,
-    var(--pearl) 56%,
-    color-mix(in srgb, var(--pearl) 92%, transparent) 62%,
-    color-mix(in srgb, var(--pearl) 45%, transparent) 68%,
-    transparent 80%
-  );
-}
-
-.cand-hero__media {
-  display: none;
-}
-
-.cand-hero__copy {
-  position: relative;
-  z-index: 1;
-  box-sizing: border-box;
-  height: 100%;
-  min-height: inherit;
-  max-width: min(56%, 38rem);
-  margin-inline: 0;
-  padding: clamp(1.35rem, 3vw, 2rem) clamp(1.25rem, 4vw, 2.5rem);
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.cand-hero h1 {
-  margin: 0;
-  font-size: clamp(1.45rem, 3.2vw, 2rem);
-  color: var(--brand);
-  line-height: 1.12;
-  text-wrap: balance;
-}
-
-.cand-hero__lead {
-  margin: 0.45rem 0 0;
-  color: color-mix(in srgb, var(--text) 78%, var(--muted));
-  max-width: 36rem;
-  font-size: 0.95rem;
-  line-height: 1.45;
-}
-
+/* Referent-flow hero layout (base .cand-hero → candidate-illustrated-hero.css) */
 .ref-verif-cand-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) min(1100px, 100%) minmax(0, 1fr);
@@ -1582,62 +1498,43 @@
 
 @media (max-width: 639px) {
   .ref-verif-cand-hero {
-    display: flex;
-    flex-direction: column;
-    height: auto;
+    display: block;
+    margin-inline: calc(50% - 50vw);
+    width: 100vw;
+    max-width: 100vw;
+    height: var(--cand-hero-mobile-h, 16.25rem);
+    max-height: 16.25rem;
     min-height: 0;
+    margin-bottom: 0.65rem;
+  }
+
+  .ref-verif-cand-hero.cand-hero--profession-band::before {
+    content: "";
+    display: block;
   }
 
   .ref-verif-cand-hero .cand-hero__copy {
     grid-column: auto;
+    padding-inline: 1rem;
+    width: min(62%, 14.5rem);
+    max-width: min(62%, 14.5rem);
   }
 
-  .cand-hero {
-    width: auto;
+  .ref-verif-cand-hero--compact {
+    --cand-hero-mobile-h: 11.5rem;
+
+    height: var(--cand-hero-mobile-h);
+    max-height: 11.5rem;
+  }
+
+  .ref-verif-cand-hero__privacy {
+    margin-top: 0.28rem;
+    font-size: 0.68rem;
+    line-height: 1.3;
     max-width: none;
-    margin-inline: 0;
-    min-height: 0;
-    height: auto;
-    background-image: none !important;
-    background-color: var(--pearl);
-    border-block-end: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
   }
 
-  .cand-hero::before {
-    display: none;
-  }
-
-  .cand-hero__copy {
-    max-width: none;
-    min-height: 0;
-    padding: 1rem 1.15rem 0.85rem;
-    background: var(--pearl);
-  }
-
-  .cand-hero__media {
-    display: block;
-    width: 100vw;
-    margin-inline: calc(50% - 50vw);
-    height: 8.75rem;
-    flex: 0 0 8.75rem;
-    background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
-    background-image: var(--cand-hero-art, none);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: var(--cand-hero-pos, 62% center);
+  .pub-theme .ref-verif-public-layout > .ref-verif-cand-hero:first-child {
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
-  }
-
-  .ref-verif-cand-hero.cand-hero--profession-band .cand-hero__media {
-    background-position: var(--ref-verif-hero-pos-mobile, 62% center);
-    background-size: auto 100%;
-  }
-
-  .ref-verif-cand-hero--compact .cand-hero__media {
-    height: 7rem;
-    flex-basis: 7rem;
   }
 }
