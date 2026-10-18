@@ -112,6 +112,7 @@ builder.Services.AddOpenApi(ExternalApiOpenApi.DocumentName, ExternalApiOpenApi.
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddJobsyApiAuthorization(builder.Configuration, builder.Environment);
 builder.Services.AddHostedService<DatabaseSeedHostedService>();
+builder.Services.AddHostedService<PlatformFeatureAcceptatieBootstrapHostedService>();
 builder.Services.AddHostedService<MinimumWageUpdateHostedService>();
 
 var allowedOrigins = (builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()

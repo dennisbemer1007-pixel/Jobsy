@@ -1,3 +1,8 @@
+.admin-settings-reset {
+    margin-inline-start: var(--space-2, 0.5rem);
+    white-space: nowrap;
+}
+
 .admin-shell {
     display: flex;
     flex-direction: column;

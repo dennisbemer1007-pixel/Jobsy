@@ -18,6 +18,7 @@
 @inject IConfiguration Configuration
 @inject IReferenceVerificationFeatureGate ReferenceVerificationGate
 @inject Jobsy.Web.Features.ITestJourneyIllustrationGate TestJourneyIllustration
+@inject Jobsy.Web.Features.IOnboardingFinaleV2Gate OnboardingFinaleV2
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Features
@@ -35,7 +36,7 @@
     {
         <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
     }
-    @if (OnboardingFinaleV2Gate.IsEnabled(Configuration))
+    @if (_finaleV2)
     {
         <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
     }
@@ -730,7 +731,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _finaleV2 = OnboardingFinaleV2Gate.IsEnabled(Configuration);
+        _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
         Culture.Changed += CultureChanged;
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
@@ -751,7 +752,7 @@
             ApplyProfile(await profileTask);
 
             var passportOn = await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport);
-            _finaleV2 = OnboardingFinaleV2Gate.IsEnabled(Configuration);
+            _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
             if (_state.IsComplete)
             {
                 if (await ShouldInstallAsync())

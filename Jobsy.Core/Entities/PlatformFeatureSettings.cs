@@ -175,6 +175,21 @@ public class PlatformFeatureSettings
     /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
     public bool TrainingPartnersEnabled { get; set; }
 
+    /// <summary>Geverifieerde referenties on passport/onboarding. Default false.</summary>
+    public bool ReferenceVerificationEnabled { get; set; }
+
+    /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
+    public bool TestJourneyIllustrationEnabled { get; set; }
+
+    /// <summary>Onboarding finale v2 cards layout. Default false.</summary>
+    public bool OnboardingFinaleV2Enabled { get; set; }
+
+    /// <summary>Dag-in-het-leven links on occupation detail. Default true.</summary>
+    public bool OccupationDayInLifeEnabled { get; set; } = true;
+
+    /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
+    public string AdminFlagOverridesJson { get; set; } = "[]";
+
     /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
     public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
 

@@ -5647,6 +5647,25 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("SensitiveExperienceEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("AdminFlagOverridesJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasDefaultValue("[]");
+
+                    b.Property<bool>("ReferenceVerificationEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("TestJourneyIllustrationEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("OnboardingFinaleV2Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("OccupationDayInLifeEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<int>("SessionInactivityTimeoutMinutes")
                         .HasColumnType("integer");
 

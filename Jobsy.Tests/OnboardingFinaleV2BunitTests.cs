@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Bunit;
+using Jobsy.Core.Features;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Features;
@@ -38,19 +39,30 @@ public sealed class OnboardingFinaleV2BunitTests : BunitContext
     }
 
     [Fact]
-    public void Gate_is_off_by_default()
+    public async Task Gate_is_off_by_default()
     {
-        var config = new ConfigurationBuilder().Build();
-        Assert.False(OnboardingFinaleV2Gate.IsEnabled(config));
+        var gate = new OnboardingFinaleV2Gate(new FixedFinaleFlags(false));
+        Assert.False(await gate.IsEnabledAsync());
     }
 
     [Fact]
-    public void Gate_reads_config_when_enabled()
+    public async Task Gate_reads_feature_flags_when_enabled()
     {
-        var config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?> { ["Onboarding:FinaleV2Enabled"] = "true" })
-            .Build();
-        Assert.True(OnboardingFinaleV2Gate.IsEnabled(config));
+        var gate = new OnboardingFinaleV2Gate(new FixedFinaleFlags(true));
+        Assert.True(await gate.IsEnabledAsync());
+    }
+
+    private sealed class FixedFinaleFlags(bool on) : IFeatureFlags
+    {
+        public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(new FeatureFlagSnapshot(false, true, OnboardingFinaleV2Enabled: on));
+
+        public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
+
+        public void Invalidate()
+        {
+        }
     }
 
     [Fact]

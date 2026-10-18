@@ -57,8 +57,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.CandidatePassportEnabled ?? true,
                 dto?.PassportPartnersEnabled ?? false,
                 dto?.PassportPdfV2Enabled ?? false,
-                PupilPassportV2Enabled: false,
-                StudentPassportEnabled: false,
+                dto?.PupilPassportV2Enabled ?? false,
+                dto?.StudentPassportEnabled ?? false,
                 dto?.PhoneVerificationEnabled ?? false,
                 dto?.SchoolsEnabled ?? false,
                 dto?.AmbassadorsEnabled ?? false,
@@ -73,7 +73,11 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
                 SensitiveExperienceEnabled: dto?.SensitiveExperienceEnabled ?? false,
-                TrainingPartnersEnabled: dto?.TrainingPartnersEnabled ?? false);
+                TrainingPartnersEnabled: dto?.TrainingPartnersEnabled ?? false,
+                ReferenceVerificationEnabled: dto?.ReferenceVerificationEnabled ?? false,
+                TestJourneyIllustrationEnabled: dto?.TestJourneyIllustrationEnabled ?? false,
+                OnboardingFinaleV2Enabled: dto?.OnboardingFinaleV2Enabled ?? false,
+                OccupationDayInLifeEnabled: dto?.OccupationDayInLifeEnabled ?? true);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -155,5 +159,23 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("trainingPartnersEnabled")]
         public bool TrainingPartnersEnabled { get; set; }
+
+        [JsonPropertyName("pupilPassportV2Enabled")]
+        public bool PupilPassportV2Enabled { get; set; }
+
+        [JsonPropertyName("studentPassportEnabled")]
+        public bool StudentPassportEnabled { get; set; }
+
+        [JsonPropertyName("referenceVerificationEnabled")]
+        public bool ReferenceVerificationEnabled { get; set; }
+
+        [JsonPropertyName("testJourneyIllustrationEnabled")]
+        public bool TestJourneyIllustrationEnabled { get; set; }
+
+        [JsonPropertyName("onboardingFinaleV2Enabled")]
+        public bool OnboardingFinaleV2Enabled { get; set; }
+
+        [JsonPropertyName("occupationDayInLifeEnabled")]
+        public bool OccupationDayInLifeEnabled { get; set; } = true;
     }
 }

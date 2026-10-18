@@ -48,7 +48,7 @@ else if (_snapshot is not null)
                     var value = CurrentValue(entry);
                     var meta = dirty
                         ? string.Format(Culture["AdminSettings.DirtyMeta"], FormatDisplay(entry, _baseline[entry.Key]))
-                        : LastChangedMeta(entry.Key);
+                        : CombineMeta(LastChangedMeta(entry.Key), FlagSourceMeta(entry.Key));
                     <AdminToggleRow Title="@Culture[entry.TitleKey]"
                                     Description="@Culture[entry.DescriptionKey]"
                                     Meta="@meta"
@@ -73,6 +73,15 @@ else if (_snapshot is not null)
                                         @onclick="() => ToggleBool(entry)">
                                     <span class="admin-switch__thumb"></span>
                                 </button>
+                                @if (IsOverridden(entry.Key))
+                                {
+                                    <button type="button"
+                                            class="btn-compact admin-settings-reset"
+                                            disabled="@(_busy || locked)"
+                                            @onclick="() => ResetToDefaultAsync(entry)">
+                                        @Culture["AdminSettings.ResetToDefault"]
+                                    </button>
+                                }
                                 @if (entry.Key == "WhatsAppRemindersEnabled" && !_whatsAppConfigured)
                                 {
                                     <span class="admin-muted admin-settings-note">@Culture["AdminSettings.WhatsAppReminders.NotConfigured"]</span>
@@ -226,6 +235,7 @@ else if (_snapshot is not null)
     private string _reason = "";
     private List<AdminAuditItem> _recentChanges = [];
     private Dictionary<string, AdminAuditItem> _lastByField = new(StringComparer.Ordinal);
+    private HashSet<string> _overriddenKeys = new(StringComparer.Ordinal);
 
     private bool CanSave
     {
@@ -249,6 +259,56 @@ else if (_snapshot is not null)
             Culture["AdminSettings.LastChangedBy"],
             e.ActorDisplayName,
             AmsterdamTime.ToLocal(e.OccurredAtUtc).ToString("dd-MM-yyyy"));
+    }
+
+    private static string? CombineMeta(string? a, string? b)
+    {
+        if (string.IsNullOrWhiteSpace(a)) return b;
+        if (string.IsNullOrWhiteSpace(b)) return a;
+        return a + " · " + b;
+    }
+
+    private bool IsOverridden(string key) => _overriddenKeys.Contains(key);
+
+    private string? FlagSourceMeta(string key)
+        => IsOverridden(key)
+            ? Culture["AdminSettings.FlagSource.AdminOverride"]
+            : Culture["AdminSettings.FlagSource.Default"];
+
+    private async Task ResetToDefaultAsync(PlatformSettingDescriptor entry)
+    {
+        if (_busy || entry.Kind != PlatformSettingKind.Bool)
+        {
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        try
+        {
+            var patch = new PlatformFeaturePatch { ClearAdminFlagOverrideKeys = [entry.Key] };
+            var saved = await Api.PatchPlatformFeaturesAsync(patch);
+            if (saved is null)
+            {
+                throw new InvalidOperationException(Culture["AdminSettings.SaveFailedEmpty"]);
+            }
+
+            ApplySnapshot(ToSnapshot(saved));
+            _draft.Remove(entry.Key);
+            FeatureFlags.Invalidate();
+            await NavRefresh.RequestRefreshAsync();
+            await LoadRecentChangesAsync();
+            _message = Culture["AdminSettings.Saved"];
+        }
+        catch (Exception ex)
+        {
+            _messageIsError = true;
+            _message = string.Format(Culture["AdminSettings.SaveFailed"], ex.Message);
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     protected override void OnInitialized()
@@ -281,6 +341,9 @@ else if (_snapshot is not null)
     private void ApplySnapshot(PlatformFeatureSnapshot snap)
     {
         _snapshot = snap;
+        _overriddenKeys = snap.AdminOverriddenFlagKeys is { Count: > 0 } keys
+            ? new HashSet<string>(keys, StringComparer.Ordinal)
+            : new HashSet<string>(StringComparer.Ordinal);
         _baseline.Clear();
         _draft.Clear();
         _confirmedValues.Clear();
@@ -614,6 +677,14 @@ else if (_snapshot is not null)
             MatchCalibrationV1Enabled = u.MatchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled = u.EmployerFitQuestionnairesEnabled,
             KandidatenkaartEnabled = u.KandidatenkaartEnabled,
+            SensitiveExperienceEnabled = u.SensitiveExperienceEnabled,
+            TrainingPartnersEnabled = u.TrainingPartnersEnabled,
+            ReferenceVerificationEnabled = u.ReferenceVerificationEnabled,
+            TestJourneyIllustrationEnabled = u.TestJourneyIllustrationEnabled,
+            OnboardingFinaleV2Enabled = u.OnboardingFinaleV2Enabled,
+            OccupationDayInLifeEnabled = u.OccupationDayInLifeEnabled,
+            ResearchConsentEnabled = u.ResearchConsentEnabled,
+            ClearAdminFlagOverrideKeys = u.ClearAdminFlagOverrideKeys,
             CandidateApplyPerMinuteLimit = u.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit = u.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit = u.CandidateApplyPerDayLimit
@@ -692,6 +763,14 @@ else if (_snapshot is not null)
             MatchCalibrationV1Enabled: f.MatchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled: f.EmployerFitQuestionnairesEnabled,
             KandidatenkaartEnabled: f.KandidatenkaartEnabled,
+            SensitiveExperienceEnabled: f.SensitiveExperienceEnabled,
+            TrainingPartnersEnabled: f.TrainingPartnersEnabled,
+            ReferenceVerificationEnabled: f.ReferenceVerificationEnabled,
+            TestJourneyIllustrationEnabled: f.TestJourneyIllustrationEnabled,
+            OnboardingFinaleV2Enabled: f.OnboardingFinaleV2Enabled,
+            OccupationDayInLifeEnabled: f.OccupationDayInLifeEnabled,
+            ResearchConsentEnabled: f.ResearchConsentEnabled,
+            AdminOverriddenFlagKeys: f.AdminOverriddenFlagKeys,
             CandidateApplyPerMinuteLimit: f.CandidateApplyPerMinuteLimit,
             CandidateApplyPerHourLimit: f.CandidateApplyPerHourLimit,
             CandidateApplyPerDayLimit: f.CandidateApplyPerDayLimit);
