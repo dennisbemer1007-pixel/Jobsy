@@ -14,6 +14,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private const string EnvRun = "JOBSY_E2E_REF_VERIF_SCREENSHOTS";
     private const string EnvRunR4 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R4";
     private const string EnvRunR5 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R5";
+    private const string EnvRunR6 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R6";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -29,6 +30,8 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static string OutputDirR5 => "/opt/cursor/artifacts/references-r5";
 
+    private static string OutputDirR6 => "/opt/cursor/artifacts/references-r6";
+
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
 
@@ -37,6 +40,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static bool ShouldRunR5 =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunR5), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunR6 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunR6), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -269,6 +275,48 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
         var pngs = Directory.GetFiles(OutputDirR5, "*.png");
         Assert.Equal(4, pngs.Length);
+    }
+
+    [Fact]
+    public async Task Capture_reference_verification_screenshots_r6()
+    {
+        if (!ShouldRunR6)
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            Assert.Fail("JOBSY_E2E_BASE_URL unreachable — start API :5200 and Web :5201 with seeded DB.");
+        }
+
+        Directory.CreateDirectory(OutputDirR6);
+        foreach (var stale in Directory.GetFiles(OutputDirR6, "*.png"))
+        {
+            File.Delete(stale);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        foreach (var (width, height, tag) in Viewports)
+        {
+            await using var context = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            await LoginAsync(page, baseUrl, Email);
+            await CaptureRequestFormAsync(page, baseUrl, tag, OutputDirR6);
+            await context.CloseAsync();
+        }
+
+        var pngs = Directory.GetFiles(OutputDirR6, "*.png");
+        Assert.Equal(2, pngs.Length);
     }
 
     private static async Task CaptureRequestFormAsync(IPage page, string baseUrl, string tag, string outputDir)

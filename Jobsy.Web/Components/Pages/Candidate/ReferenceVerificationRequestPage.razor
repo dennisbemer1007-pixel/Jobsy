@@ -62,7 +62,7 @@
                 }
             </div>
 
-            <div class="ref-verif-request__grid login-form">
+            <div class="ref-verif-request__grid">
                 <label class="ref-verif-request__field" for="ref-name">
                     <span class="ref-verif-request__label">@Culture["RefVerif.Request.Name"]</span>
                     <input id="ref-name" class="ref-verif-request__input" @bind="_name" maxlength="80" autocomplete="name" />
@@ -82,9 +82,9 @@
                     </select>
                 </label>
 
-                <label class="ref-verif-request__consent ref-verif-request__field--full">
-                    <input type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" />
-                    <span>@Culture["RefVerif.Request.Consent"]</span>
+                <label class="ref-verif-request__consent ref-verif-request__field--full" for="ref-consent">
+                    <input id="ref-consent" type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" />
+                    <span class="ref-verif-request__consent-text">@Culture["RefVerif.Request.Consent"]</span>
                 </label>
 
                 @if (!string.IsNullOrWhiteSpace(_message))
