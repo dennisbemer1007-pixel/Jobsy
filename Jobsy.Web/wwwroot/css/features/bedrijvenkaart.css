@@ -1090,11 +1090,31 @@ textarea.bk-wg-input {
     max-height: 280px;
   }
 
+  .bk-page .cand-hero--bk-single.cand-hero--profession-band::before {
+    z-index: 2;
+    background: linear-gradient(
+      90deg,
+      var(--pearl, #f7f4f0) 0%,
+      var(--pearl, #f7f4f0) 42%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 88%, transparent) 46%,
+      transparent 52%
+    );
+  }
+
   .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
     background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
     background-size: auto 100%;
-    background-position: 100% top;
+    background-position: right top;
+    left: 36%;
+    right: 0;
+    width: auto;
     opacity: 1;
+    z-index: 0;
+  }
+
+  .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy {
+    z-index: 3;
+    max-width: min(40%, 34rem);
   }
 }
 

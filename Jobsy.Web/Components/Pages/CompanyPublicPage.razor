@@ -593,13 +593,18 @@ else
 
         if (url.Contains("/onboarding/", StringComparison.OrdinalIgnoreCase)
             || url.Contains("/candidate-illustrated/", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("/images/vacancies/", StringComparison.OrdinalIgnoreCase)
             || url.Contains("finale-hero", StringComparison.OrdinalIgnoreCase)
-            || url.Contains("wie-ben-jij", StringComparison.OrdinalIgnoreCase))
+            || url.Contains("wie-ben-jij", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("unsplash", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("picsum", StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
 
-        return true;
+        return url.Contains("/uploads/", StringComparison.OrdinalIgnoreCase)
+               || url.Contains("/images/media/", StringComparison.OrdinalIgnoreCase)
+               || url.Contains("/images/demo/bakkerij-korenaar/", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)

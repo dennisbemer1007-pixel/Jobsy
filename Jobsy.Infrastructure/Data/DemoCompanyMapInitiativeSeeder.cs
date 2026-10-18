@@ -12,7 +12,8 @@ internal static class DemoCompanyMapInitiativeSeeder
 {
     private static readonly string[] HubPhotos =
     [
-        "/images/candidate-illustrated/spots/job-retail.jpg"
+        "/images/demo/bakkerij-korenaar/sfeer-bakkerij.webp",
+        "/images/demo/bakkerij-korenaar/sfeer-winkel.webp"
     ];
 
     private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");

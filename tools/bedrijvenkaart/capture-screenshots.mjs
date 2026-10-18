@@ -11,6 +11,13 @@ const apiUrl = (process.argv[3] ?? "http://127.0.0.1:5200").replace(/\/$/, "");
 const outDir =
   process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r13/live";
 const captureOnly = process.env.CAPTURE_ONLY ?? "";
+const captureSet = process.env.CAPTURE_SET ?? "";
+const r14Files = new Set([
+  "01-bedrijvenkaart-desktop.png",
+  "01-bedrijvenkaart-mobiel-top.png",
+  "02-bedrijfspagina-desktop.png",
+  "02-bedrijfspagina-mobiel-top.png",
+]);
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
 const employerEmail = "enterprise@jobsy.local";
@@ -76,7 +83,9 @@ const allShots = [
 
 const shots = captureOnly
   ? allShots.filter((s) => s.file === captureOnly)
-  : allShots;
+  : captureSet === "r14"
+    ? allShots.filter((s) => r14Files.has(s.file))
+    : allShots;
 
 if (shots.length === 0) {
   throw new Error(`CAPTURE_ONLY=${captureOnly} matched no shots`);
