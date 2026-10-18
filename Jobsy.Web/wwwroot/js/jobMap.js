@@ -4246,45 +4246,36 @@ window.jobMap = (function () {
     }
 
     function kkBuildSymmetricFitBounds(areas, origin, travelKm) {
-        var coords = [];
+        var areaCoords = [];
         (areas || []).forEach(function (a) {
             var lat = kkProp(a, "centerLat", "CenterLat");
             var lng = kkProp(a, "centerLng", "CenterLng");
             if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                coords.push({ lat: lat, lng: lng });
+                areaCoords.push({ lat: lat, lng: lng });
             }
         });
-        if (origin && Number.isFinite(origin.lat) && Number.isFinite(origin.lng)) {
-            coords.push({ lat: origin.lat, lng: origin.lng });
-        }
-        if (!coords.length) {
+        if (!areaCoords.length) {
             return null;
         }
-        var minLat = Infinity;
-        var maxLat = -Infinity;
-        var minLng = Infinity;
-        var maxLng = -Infinity;
-        coords.forEach(function (c) {
-            minLat = Math.min(minLat, c.lat);
-            maxLat = Math.max(maxLat, c.lat);
-            minLng = Math.min(minLng, c.lng);
-            maxLng = Math.max(maxLng, c.lng);
+        var cLat = 0;
+        var cLng = 0;
+        areaCoords.forEach(function (c) {
+            cLat += c.lat;
+            cLng += c.lng;
         });
-        if (origin && Number.isFinite(travelKm) && travelKm > 0) {
-            var radiusM = travelKm * 1000 * 1.05;
-            var latRad = origin.lat * Math.PI / 180;
-            var latDelta = radiusM / 111320;
-            var lngDelta = radiusM / (111320 * Math.max(0.25, Math.cos(latRad)));
-            minLat = Math.min(minLat, origin.lat - latDelta);
-            maxLat = Math.max(maxLat, origin.lat + latDelta);
-            minLng = Math.min(minLng, origin.lng - lngDelta);
-            maxLng = Math.max(maxLng, origin.lng + lngDelta);
+        cLat /= areaCoords.length;
+        cLng /= areaCoords.length;
+        var halfLat = 0;
+        var halfLng = 0;
+        areaCoords.forEach(function (c) {
+            halfLat = Math.max(halfLat, Math.abs(c.lat - cLat));
+            halfLng = Math.max(halfLng, Math.abs(c.lng - cLng));
+        });
+        if (origin && Number.isFinite(origin.lat) && Number.isFinite(origin.lng)) {
+            halfLat = Math.max(halfLat, Math.abs(origin.lat - cLat));
+            halfLng = Math.max(halfLng, Math.abs(origin.lng - cLng));
         }
-        var cLat = (minLat + maxLat) / 2;
-        var cLng = (minLng + maxLng) / 2;
-        var halfLat = Math.max(cLat - minLat, maxLat - cLat);
-        var halfLng = Math.max(cLng - minLng, maxLng - cLng);
-        var half = Math.max(halfLat, halfLng) * 1.06;
+        var half = Math.max(halfLat, halfLng) * 1.16;
         var lngHalf = half / Math.max(0.25, Math.cos(cLat * Math.PI / 180));
         var bounds = new maplibregl.LngLatBounds();
         bounds.extend([cLng - lngHalf, cLat - half]);

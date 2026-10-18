@@ -1236,7 +1236,13 @@ html.vp-mobile .wg-sidebar {
 }
 
 html.vp-mobile .wg-shell.wg-has-bottom-nav {
-    padding-bottom: var(--bottom-nav-clearance);
+    padding-bottom: 0;
+}
+
+html.vp-mobile .wg-shell:has(.kk-page) {
+    --wg-bottom-nav-block-h: calc(
+        52px + var(--space-1) + max(var(--space-1), env(safe-area-inset-bottom, 0px))
+    );
 }
 
 html.vp-mobile .wg-shell__body {
@@ -1257,7 +1263,7 @@ html.vp-mobile .wg-main {
 
 html.vp-mobile .wg-bottom-nav {
     display: block;
-    z-index: 45;
+    z-index: var(--z-sticky, 6);
 }
 
 html.vp-mobile .kk-page__chrome--desktop {
@@ -1730,7 +1736,7 @@ html.vp-mobile .kk-mobile-sheet__invite {
     left: 0;
     right: 0;
     bottom: var(--wg-bottom-nav-block-h, 3.625rem);
-    z-index: 44;
+    z-index: calc(var(--z-sticky, 6) + 1);
     flex-shrink: 0;
     padding: 0.65rem 1rem 0.75rem;
     border-top: 1px solid var(--border);
