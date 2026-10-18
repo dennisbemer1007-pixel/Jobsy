@@ -1,9 +1,7 @@
-# PR-only failures vs acceptatie baseline (acceptatie branch PR tests)
-# PR run: 39162188665 (cursor/admin-feature-flags-fb61, commit 211f1bebf — pre EF snapshot fix)
+# PR-only failures vs acceptatie baseline (acceptatie PR tests on same base)
+# PR run: 39164317617 (commit 123406b37, pre asset-versions sha fix)
 # Acceptatie run: 39159428434
-# Regenerate after CI: PR_CI_RUN_ID=<id> ACCEPTATIE_CI_RUN_ID=39159428434 tools/ci/compare-pr-acceptatie-failures.sh ci-pr-only-failures.txt
+# Regenerate: PR_CI_RUN_ID=<id> ACCEPTATIE_CI_RUN_ID=39159428434 tools/ci/compare-pr-acceptatie-failures.sh ci-pr-only-failures.txt
 #
-# Fixed locally (PendingModelChanges + MigrationsApply): EF migration 20261018203433_TestEditSamplePdfFlags
-# Remaining PR-only (not introduced by admin-flags; also fail/flake on acceptatie baseline):
+# After asset-versions.json sync (admin.css r3): expect GEEN except known acceptatie flakes.
 Jobsy.Tests.AdminRun5Tests.Hospital_menu_titles_are_not_vacancies_and_versions_only_increase
-Jobsy.Tests.TestAccounts.TestAccountsPostgresSeedTests.Seed_and_status_survive_missing_hmac_and_a_second_run_is_unchanged
