@@ -7,6 +7,7 @@ using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Core.Security;
 using Jobsy.Infrastructure.Data;
 using Jobsy.Tests.E2e;
@@ -35,8 +36,8 @@ namespace Jobsy.Tests;
 public sealed class AccountDeleteReregisterPlaywrightTests
     : IClassFixture<RoleFunctionalWebAppFactory>, IAsyncLifetime
 {
-    private static readonly string StoreDir = "/cursor/stores/self/reset";
-    private static readonly string ArtifactDir = "/opt/cursor/artifacts/reset";
+    private const string ArtifactDir = "/opt/cursor/artifacts/hotfix-729-r4";
+    private const string DiagnosticDir = "/opt/cursor/artifacts/hotfix-729-r4/diagnostics";
 
     private readonly RoleFunctionalWebAppFactory _api;
     private IPlaywright? _playwright;
@@ -48,8 +49,8 @@ public sealed class AccountDeleteReregisterPlaywrightTests
     {
         Environment.SetEnvironmentVariable("JOBSY_E2E_CAPTURE_EMAIL_CODES", "1");
         DevEmailCodeCapture.Clear();
-        Directory.CreateDirectory(StoreDir);
         Directory.CreateDirectory(ArtifactDir);
+        Directory.CreateDirectory(DiagnosticDir);
         var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         Assert.Equal(0, exit);
         _playwright = await Playwright.CreateAsync();
@@ -96,79 +97,81 @@ public sealed class AccountDeleteReregisterPlaywrightTests
                 () => page.GotoAsync(
                     $"{baseUrl}/__test/sign-in?userId={userId:D}&return={Uri.EscapeDataString("/candidate/start")}",
                     new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 }));
-            await page.Locator(".ob-wizard__loading").WaitForAsync(new()
+
+            try
             {
-                State = WaitForSelectorState.Detached,
-                Timeout = 60_000
-            });
-            if (await page.Locator(".ob-wizard__welcome .ob-wizard__cta").CountAsync() > 0)
-            {
-                await page.Locator(".ob-wizard__welcome .ob-wizard__cta").ClickAsync();
-                await page.Locator(".ob-wizard__loading").WaitForAsync(new()
+                var privacyLink = await OnboardingPlaywrightHelpers.WaitForPrivacyLinkAsync(page);
+                if (width >= 640)
                 {
-                    State = WaitForSelectorState.Detached,
-                    Timeout = 60_000
-                });
-            }
+                    await privacyLink.ScrollIntoViewIfNeededAsync();
+                }
 
-            var privacyLink = page.Locator(".ob-wizard a[href='/privacy/data']").First;
-            await privacyLink.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
-            if (width >= 640)
+                await SaveShotAsync(page, $"onboarding-privacy-link-{tag}.png");
+
+                await page.GotoAsync($"{baseUrl}/privacy/data", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                await page.Locator("#mydata-delete-title").WaitForAsync(new() { Timeout = 60_000 });
+                await SaveShotAsync(page, $"privacy-data-from-onboarding-{tag}.png");
+
+                using (await api.PostAsJsonAsync(
+                           "api/privacy/request-unsubscribe",
+                           new RequestUnsubscribeRequest(AccountUnsubscribeReasons.Privacy)))
+                {
+                }
+
+                var deleteCode = await ReadOtpAsync(api, email);
+                using (await api.PostAsJsonAsync(
+                           "api/privacy/delete-account",
+                           new ConfirmUnsubscribeRequest(deleteCode)))
+                {
+                }
+
+                var anon = _api.CreateClient();
+                anon.DefaultRequestHeaders.TryAddWithoutValidation(
+                    "X-Jobsy-Provision-Secret",
+                    "local-dev-jobsy-provision-secret");
+                using (var start = await anon.PostAsJsonAsync(
+                           "api/auth/email-code/start",
+                           new Jobsy.Api.Models.EmailCodeStartRequest(email, FirstName: "Nieuw", Culture: "nl")))
+                {
+                    var startBody = await start.Content.ReadFromJsonAsync<Jobsy.Api.Models.EmailCodeStartResponse>();
+                    var signUpCode = await ReadOtpAsync(anon, email);
+                    using var verify = await anon.PostAsJsonAsync(
+                        "api/auth/email-code/verify",
+                        new Jobsy.Api.Models.EmailCodeVerifyRequest(startBody!.ChallengeId, signUpCode, RememberDevice: false));
+                    Assert.Equal(System.Net.HttpStatusCode.OK, verify.StatusCode);
+                }
+
+                var newUserId = await LookupActiveUserIdAsync(email);
+                Assert.NotNull(newUserId);
+                Assert.NotEqual(userId, newUserId);
+
+                await context.ClearCookiesAsync();
+                var onboardingSignIn =
+                    $"{baseUrl}/__test/sign-in?userId={newUserId:D}&return={Uri.EscapeDataString("/candidate/start")}";
+                await OnboardingPlaywrightHelpers.WaitForBlazorCircuitAsync(
+                    page,
+                    () => page.GotoAsync(onboardingSignIn, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 }));
+                await OnboardingPlaywrightHelpers.EnsureStep1FieldsAsync(page);
+                await page.Locator("#onboarding-field-firstname input").FillAsync("Nieuw");
+                await page.Locator("#onboarding-field-lastname input").FillAsync("Start");
+                await OnboardingPlaywrightHelpers.WaitForSavedIndicatorAsync(page);
+                await SaveShotAsync(page, $"step1-after-reregister-{tag}.png");
+            }
+            catch (Exception ex)
             {
-                await privacyLink.ScrollIntoViewIfNeededAsync();
+                await DumpPageDiagnosticAsync(page, $"{tag}-failure");
+                throw new Xunit.Sdk.XunitException($"Playwright flow failed for {tag}: {ex.Message}", ex);
             }
-
-            await SaveShotAsync(page, $"onboarding-privacy-link-{tag}.png");
-
-            await page.GotoAsync($"{baseUrl}/privacy/data", new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.Locator("#mydata-delete-title").WaitForAsync(new() { Timeout = 60_000 });
-            await SaveShotAsync(page, $"privacy-data-from-onboarding-{tag}.png");
-
-            using (await api.PostAsJsonAsync(
-                       "api/privacy/request-unsubscribe",
-                       new RequestUnsubscribeRequest(AccountUnsubscribeReasons.Privacy)))
-            {
-            }
-
-            var deleteCode = await ReadOtpAsync(api, email);
-            using (await api.PostAsJsonAsync(
-                       "api/privacy/delete-account",
-                       new ConfirmUnsubscribeRequest(deleteCode)))
-            {
-            }
-
-            var anon = _api.CreateClient();
-            anon.DefaultRequestHeaders.TryAddWithoutValidation(
-                "X-Jobsy-Provision-Secret",
-                "local-dev-jobsy-provision-secret");
-            using (var start = await anon.PostAsJsonAsync(
-                       "api/auth/email-code/start",
-                       new Jobsy.Api.Models.EmailCodeStartRequest(email, FirstName: "Nieuw", Culture: "nl")))
-            {
-                var startBody = await start.Content.ReadFromJsonAsync<Jobsy.Api.Models.EmailCodeStartResponse>();
-                var signUpCode = await ReadOtpAsync(anon, email);
-                using var verify = await anon.PostAsJsonAsync(
-                    "api/auth/email-code/verify",
-                    new Jobsy.Api.Models.EmailCodeVerifyRequest(startBody!.ChallengeId, signUpCode, RememberDevice: false));
-                Assert.Equal(System.Net.HttpStatusCode.OK, verify.StatusCode);
-            }
-
-            var newUserId = await LookupActiveUserIdAsync(email);
-            Assert.NotNull(newUserId);
-            Assert.NotEqual(userId, newUserId);
-
-            await context.ClearCookiesAsync();
-            var onboardingSignIn =
-                $"{baseUrl}/__test/sign-in?userId={newUserId:D}&return={Uri.EscapeDataString("/candidate/start")}";
-            await OnboardingPlaywrightHelpers.WaitForBlazorCircuitAsync(
-                page,
-                () => page.GotoAsync(onboardingSignIn, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 }));
-            await OnboardingPlaywrightHelpers.EnsureStep1FieldsAsync(page);
-            await page.Locator("#onboarding-field-firstname input").FillAsync("Nieuw");
-            await page.Locator("#onboarding-field-lastname input").FillAsync("Start");
-            await OnboardingPlaywrightHelpers.WaitForSavedIndicatorAsync(page);
-            await SaveShotAsync(page, $"step1-after-reregister-{tag}.png");
         }
+    }
+
+    private static async Task DumpPageDiagnosticAsync(IPage page, string tag)
+    {
+        Directory.CreateDirectory(DiagnosticDir);
+        var prefix = Path.Combine(DiagnosticDir, tag);
+        await page.ScreenshotAsync(new() { Path = $"{prefix}.png", FullPage = true });
+        await File.WriteAllTextAsync($"{prefix}.html", await page.ContentAsync());
+        await File.WriteAllTextAsync($"{prefix}-url.txt", page.Url);
     }
 
     private static async Task<string> ReadOtpAsync(HttpClient client, string email)
@@ -209,23 +212,53 @@ public sealed class AccountDeleteReregisterPlaywrightTests
             ConsentVersion = PrivacyConstants.CurrentConsentVersion,
             TermsAcceptedAt = DateTime.UtcNow
         });
-        db.CandidateOnboardings.Add(new CandidateOnboarding
+        await db.SaveChangesAsync();
+        await SeedOnboardingStartedAsync(userId);
+    }
+
+    private async Task SeedOnboardingStartedAsync(Guid userId)
+    {
+        await using var scope = _api.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<JobsyDbContext>();
+        var now = DateTime.UtcNow;
+        var version = OnboardingWizardCatalog.WizardVersionV3;
+        var stepsJson = OnboardingStepAnalytics.MarkStarted(
+            OnboardingStepAnalytics.MarkStarted(null, 1, now, version),
+            2,
+            now,
+            version);
+        var existing = await db.CandidateOnboardings.FirstOrDefaultAsync(o => o.UserId == userId);
+        if (existing is null)
         {
-            Id = Guid.NewGuid(),
-            UserId = userId,
-            CurrentStep = 2,
-            StartedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
-        });
+            db.CandidateOnboardings.Add(new CandidateOnboarding
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CurrentStep = 2,
+                WizardVersion = version,
+                StartedAtUtc = now,
+                UpdatedAtUtc = now,
+                StepsJson = stepsJson
+            });
+        }
+        else
+        {
+            existing.CurrentStep = 2;
+            existing.WizardVersion = version;
+            if (existing.StartedAtUtc == default)
+            {
+                existing.StartedAtUtc = now;
+            }
+            existing.UpdatedAtUtc = now;
+            existing.StepsJson = stepsJson;
+        }
+
         await db.SaveChangesAsync();
     }
 
     private static async Task SaveShotAsync(IPage page, string fileName)
     {
-        var storePath = Path.Combine(StoreDir, fileName);
-        var artifactPath = Path.Combine(ArtifactDir, fileName);
-        await page.ScreenshotAsync(new() { Path = storePath, FullPage = false });
-        await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = false });
+        await page.ScreenshotAsync(new() { Path = Path.Combine(ArtifactDir, fileName), FullPage = false });
     }
 
     private sealed class ReregisterWebFactory : WebWebApplicationFactory
@@ -343,10 +376,24 @@ public sealed class AccountDeleteReregisterPlaywrightTests
                         userId = fromQuery;
                     }
 
+                    var signInEmail = email;
+                    var db = ctx.RequestServices.GetService<JobsyDbContext>();
+                    if (db is not null)
+                    {
+                        var fromDb = await db.Users.AsNoTracking()
+                            .Where(u => u.Id == userId)
+                            .Select(u => u.Email)
+                            .FirstOrDefaultAsync();
+                        if (!string.IsNullOrWhiteSpace(fromDb))
+                        {
+                            signInEmail = fromDb;
+                        }
+                    }
+
                     var identity = new ClaimsIdentity(
                     [
                         new Claim(ClaimTypes.NameIdentifier, userId.ToString("D")),
-                        new Claim(ClaimTypes.Email, email),
+                        new Claim(ClaimTypes.Email, signInEmail),
                         new Claim(ClaimTypes.Role, JobsyRoles.Candidate),
                         new Claim(ClaimTypes.Name, "E2E kandidaat"),
                         new Claim(JobsyClaimTypes.MfaVerified, "1"),

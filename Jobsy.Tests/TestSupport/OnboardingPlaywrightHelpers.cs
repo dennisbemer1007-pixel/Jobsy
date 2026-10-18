@@ -20,16 +20,21 @@ internal static class OnboardingPlaywrightHelpers
     internal static async Task EnsureStep1FieldsAsync(IPage page)
     {
         var loading = page.Locator(".ob-wizard__loading");
+        var entry = page.Locator(".ob-wizard__welcome, .ob-fields, #onboarding-field-firstname input").First;
+        await entry.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 120_000 });
+
         if (await loading.CountAsync() > 0)
         {
             await loading.WaitForAsync(new() { State = WaitForSelectorState.Detached, Timeout = 120_000 });
         }
 
-        if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
+        if (await page.Locator(".ob-wizard__welcome").IsVisibleAsync())
         {
-            var begin = page.Locator(".ob-wizard__welcome .ob-wizard__cta");
-            await begin.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-            await begin.ClickAsync(new() { Delay = 100 });
+            await page.Locator(".ob-wizard__welcome .ob-wizard__cta").ClickAsync(new() { Delay = 100 });
+            await page.WaitForFunctionAsync(
+                "() => !document.querySelector('.ob-wizard__welcome')",
+                null,
+                new() { Timeout = 90_000 });
             if (await loading.CountAsync() > 0)
             {
                 await loading.WaitForAsync(new() { State = WaitForSelectorState.Detached, Timeout = 120_000 });
@@ -38,6 +43,15 @@ internal static class OnboardingPlaywrightHelpers
 
         await page.Locator(".ob-fields, #onboarding-field-firstname input").First
             .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+    }
+
+    internal static async Task<ILocator> WaitForPrivacyLinkAsync(IPage page)
+    {
+        var locator = page.GetByRole(AriaRole.Link, new() { Name = "Mijn gegevens & account" })
+            .Filter(new() { Visible = true })
+            .First;
+        await locator.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        return locator;
     }
 
     internal static Task WaitForSavedIndicatorAsync(IPage page)

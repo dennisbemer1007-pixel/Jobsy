@@ -116,6 +116,10 @@
     else if (_welcome)
     {
         <section class="ob-wizard__welcome">
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="state-message error">@_error</p>
+            }
             <div class="lobsy-logo">
                 <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
             </div>
@@ -827,9 +831,18 @@
 
     private async Task BeginAsync()
     {
+        _error = null;
         _welcome = false;
-        await MarkStartedAsync();
-        RequestStepScrollReset();
+        try
+        {
+            await MarkStartedAsync();
+            RequestStepScrollReset();
+        }
+        catch (Exception ex)
+        {
+            _welcome = true;
+            _error = UserFacing.Describe(ex);
+        }
     }
 
     private async Task MarkStartedAsync()
