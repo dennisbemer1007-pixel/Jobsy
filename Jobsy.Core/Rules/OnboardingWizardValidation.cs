@@ -29,8 +29,14 @@ public static class OnboardingWizardValidation
         double? homeLat,
         double? homeLng,
         string postcode,
-        bool postcodeResolved)
+        bool postcodeResolved,
+        bool geolocationPendingConfirm = false)
     {
+        if (geolocationPendingConfirm)
+        {
+            return false;
+        }
+
         if (homeLat is not null && homeLng is not null)
         {
             return true;
@@ -53,7 +59,8 @@ public static class OnboardingWizardValidation
         double? homeLng,
         string postcode,
         bool postcodeResolved,
-        DateOnly today)
+        DateOnly today,
+        bool geolocationPendingConfirm = false)
     {
         var issues = new List<OnboardingValidationIssue>(4);
         if (string.IsNullOrWhiteSpace(firstName))
@@ -75,7 +82,7 @@ public static class OnboardingWizardValidation
             issues.Add(new(OnboardingValidationField.BirthDate, "Onboarding.Age.TooYoung"));
         }
 
-        if (!HasResolvableLocation(city, homeLat, homeLng, postcode, postcodeResolved))
+        if (!HasResolvableLocation(city, homeLat, homeLng, postcode, postcodeResolved, geolocationPendingConfirm))
         {
             issues.Add(new(OnboardingValidationField.Location, "Onboarding.Validation.Location"));
         }
