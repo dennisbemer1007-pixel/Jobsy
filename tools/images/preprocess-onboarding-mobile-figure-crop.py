@@ -20,6 +20,7 @@ SLUGS = ("kennismaken", "beschikbaarheid", "vervoer", "werkervaring", "opleiding
 # Optional manual figure region (left, top, right, bottom as fractions) when auto mask under-detects.
 MOBILE_FIGURE_BOX_FRAC: dict[str, tuple[float, float, float, float]] = {
     "droombaan": (0.46, 0.06, 0.99, 0.98),
+    "vervoer": (0.72, 0.12, 0.99, 0.98),
 }
 
 PAGE_BG = (245, 242, 238)
@@ -28,6 +29,7 @@ BBOX_PAD = 8
 MIN_CROP_W = 120
 MIN_CROP_H = 160
 MIN_FIGURE_X_FRAC = 0.40
+MIN_FIGURE_X_FRAC_BY_SLUG: dict[str, float] = {"vervoer": 0.52}
 
 
 def load_seam():
@@ -115,7 +117,7 @@ def process_slug(slug: str, seam) -> None:
     px = img.load()
     figure = seam.build_figure_protect_mask(img, palette)
     content = build_content_mask(img, seam)
-    min_x = int(w * MIN_FIGURE_X_FRAC)
+    min_x = int(w * MIN_FIGURE_X_FRAC_BY_SLUG.get(slug, MIN_FIGURE_X_FRAC))
     if slug in MOBILE_FIGURE_BOX_FRAC:
         lf, tf, rf, bf = MOBILE_FIGURE_BOX_FRAC[slug]
         rx0, ry0 = int(w * lf), int(h * tf)
@@ -124,7 +126,9 @@ def process_slug(slug: str, seam) -> None:
         for y in range(ry0, ry1 + 1):
             for x in range(rx0, rx1 + 1):
                 r, g, b = px[x, y][:3]
-                if not seam.looks_like_soft_background(r, g, b, palette):
+                if seam.is_figure_pixel(r, g, b, palette):
+                    manual[y][x] = True
+                elif slug == "vervoer" and not seam.looks_like_soft_background(r, g, b, palette) and not seam.looks_like_scenery(r, g, b):
                     manual[y][x] = True
         fig_only = manual
     else:
@@ -160,16 +164,7 @@ def process_slug(slug: str, seam) -> None:
         for cx in range(crop_w):
             sx, sy = x0 + cx, y0 + cy
             r, g, b = px[sx, sy][:3]
-            if fig_only[sy][sx]:
-                a = 255
-            elif (
-                foot_x0 <= sx <= foot_x1
-                and (fig_box[1] if fig_box else y0) - 8 <= sy <= foot_y1
-                and trimmed[sy][sx]
-            ):
-                a = 255
-            else:
-                a = alpha_for_pixel(r, g, b, seam, palette, False)
+            a = 255 if fig_only[sy][sx] else 0
             out_px[cx, cy] = (r, g, b, a)
 
     alpha_mask = [[out_px[cx, cy][3] >= 128 for cx in range(crop_w)] for cy in range(crop_h)]

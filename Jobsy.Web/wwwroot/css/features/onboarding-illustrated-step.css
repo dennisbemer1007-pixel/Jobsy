@@ -103,6 +103,10 @@
   content: none;
 }
 
+.ob-illustrated-step__hero-bg {
+  display: none;
+}
+
 .ob-illustrated-step__body {
   background: var(--bg);
   padding: 12px clamp(16px, 4vw, 32px) 8px;
@@ -265,17 +269,29 @@
     block-size: clamp(176px, 52vw, 240px);
     overflow: hidden;
     background: var(--bg);
+    border-block-end: 0;
+  }
+
+  .ob-illustrated-step__hero-bg {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    line-height: 0;
+  }
+
+  .ob-illustrated-step__hero-bg picture,
+  .ob-illustrated-step__hero-bg img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: right center;
   }
 
   .ob-illustrated-step__hero-band::before {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    inset-inline-start: 54%;
-    inline-size: 8%;
-    z-index: 1;
-    pointer-events: none;
-    background: linear-gradient(to right, var(--bg) 0%, transparent 100%);
+    content: none;
   }
 
   .ob-illustrated-step__head {
@@ -293,7 +309,7 @@
     max-block-size: 100%;
     padding: 10px 8px 8px 12px;
     overflow: hidden;
-    background: var(--bg);
+    background: transparent;
     border: 0;
     box-shadow: none;
     pointer-events: none;
@@ -321,12 +337,9 @@
 
   .ob-illustrated-step__art {
     position: absolute;
-    inset-block: 0;
-    inset-inline-end: 0;
-    inset-inline-start: 55%;
+    inset: 0;
     z-index: 2;
-    inline-size: 45%;
-    block-size: 100%;
+    pointer-events: none;
     background: transparent;
   }
 
@@ -336,7 +349,11 @@
 
   .ob-illustrated-step__art-img-wrap {
     position: absolute;
-    inset: 0;
+    inset-block-end: 0;
+    inset-inline-end: 0;
+    block-size: 85%;
+    max-block-size: 90%;
+    inline-size: min(62%, 240px);
     display: flex;
     justify-content: flex-end;
     align-items: flex-end;
@@ -351,7 +368,6 @@
     align-items: flex-end;
     block-size: 100%;
     inline-size: 100%;
-    max-inline-size: 100%;
   }
 
   .ob-illustrated-step__art img,
@@ -367,7 +383,8 @@
   }
 
   .ob-illustrated-step__body {
-    padding: 8px 16px 6px;
+    padding: 0 16px 6px;
+    margin-block-start: 0;
   }
 
   .ob-illustrated-step__form fieldset > legend.ob-wizard__section-title {

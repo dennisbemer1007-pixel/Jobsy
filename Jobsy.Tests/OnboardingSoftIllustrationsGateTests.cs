@@ -55,6 +55,8 @@ public sealed class OnboardingSoftIllustrationsGateTests
     public void Mobile_figure_crop_assets_exist(string slug)
     {
         var webRoot = Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/images/onboarding");
+        Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile-bg.webp")), $"{slug}-mobile-bg.webp");
+        Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile-bg.png")), $"{slug}-mobile-bg.png");
         Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile.webp")), $"{slug}-mobile.webp");
         Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile.png")), $"{slug}-mobile.png");
     }
@@ -102,7 +104,9 @@ public sealed class OnboardingSoftIllustrationsGateTests
                 @"\.ob-illustrated-step__art-img-wrap img\s*\{[^}]*object-fit:\s*contain",
                 System.Text.RegularExpressions.RegexOptions.Singleline));
         Assert.DoesNotContain("mask-image: linear-gradient", css, StringComparison.Ordinal);
-        Assert.DoesNotContain("object-fit: cover", css, StringComparison.Ordinal);
+        Assert.Matches(
+            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__art img[^}]*object-fit:\s*contain",
+            css);
         Assert.Matches(
             @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__hero-band\s*\{[^}]*max-block-size:\s*240px",
             css);
@@ -110,16 +114,19 @@ public sealed class OnboardingSoftIllustrationsGateTests
             @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__head\s*\{[^}]*inline-size:\s*55%",
             css);
         Assert.Matches(
-            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__art\s*\{[^}]*inline-size:\s*45%",
+            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__hero-bg img\s*\{[^}]*object-fit:\s*cover",
             css);
+        Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r12.py")));
     }
 
     [Fact]
     public void Mobile_figure_preprocess_script_exists()
     {
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-figure-crop.py")));
+        Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r12.py")));
         var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
-        Assert.Contains("20261018-r11", assets, StringComparison.Ordinal);
+        Assert.Contains("20261018-r12", assets, StringComparison.Ordinal);
+        Assert.Contains("KennismakenMobileBgWebp", assets, StringComparison.Ordinal);
         Assert.Contains("KennismakenMobileWebp", assets, StringComparison.Ordinal);
     }
 

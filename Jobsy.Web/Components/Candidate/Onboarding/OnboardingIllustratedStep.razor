@@ -2,6 +2,13 @@
 
 <section class="ob-illustrated-step" data-testid="@TestId">
     <div class="ob-illustrated-step__hero-band">
+        <div class="ob-illustrated-step__hero-bg" aria-hidden="true" data-testid="onboarding-illustration-mobile-bg">
+            <picture>
+                <source media="(max-width: 1023px)" type="image/webp" srcset="@MobileBgWebpSrc" />
+                <source media="(max-width: 1023px)" srcset="@MobileBgPngSrc" />
+                <img src="@MobileBgPngSrc" alt="" loading="eager" decoding="async" tabindex="-1" />
+            </picture>
+        </div>
         @if (HeadContent is not null)
         {
             <div class="ob-illustrated-step__head">
@@ -36,6 +43,8 @@
 @code {
     [Parameter, EditorRequired] public string WebpSrc { get; set; } = default!;
     [Parameter, EditorRequired] public string JpgSrc { get; set; } = default!;
+    [Parameter, EditorRequired] public string MobileBgWebpSrc { get; set; } = default!;
+    [Parameter, EditorRequired] public string MobileBgPngSrc { get; set; } = default!;
     [Parameter, EditorRequired] public string MobileWebpSrc { get; set; } = default!;
     [Parameter, EditorRequired] public string MobilePngSrc { get; set; } = default!;
     [Parameter] public int ImageWidth { get; set; } = 1280;
