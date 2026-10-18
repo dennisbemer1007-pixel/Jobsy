@@ -28,6 +28,12 @@
     content: none !important;
     display: none !important;
   }
+
+  .opl-page .cand-hero--learn-grow .cand-hero__copy {
+    padding-block: clamp(1.35rem, 3vw, 2rem);
+    padding-inline-start: calc((100vw - min(100vw, 72rem)) / 2 + var(--space-4));
+    padding-inline-end: clamp(1.25rem, 4vw, 2.5rem);
+  }
 }
 
 .opl-hero {
