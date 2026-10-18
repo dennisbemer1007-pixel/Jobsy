@@ -710,6 +710,7 @@
     private readonly Dictionary<int, int> _miniAnswers = new();
     private readonly Dictionary<int, int> _serverAnswers = new();
     private readonly HashSet<int> _lockedIds = [];
+    private int[] _miniBlockQuestionIds = [];
     private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
     private int _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
     private bool _reviewMode;
@@ -1463,17 +1464,98 @@
     }
 
     private bool MiniAnswered(int id)
-        => _serverAnswers.ContainsKey(id) || _miniAnswers.ContainsKey(id);
+        => OnboardingMiniBlockCompletion.MergeVisible(_countedStep, _quickScanVersion, _serverAnswers, _miniAnswers)
+            .ContainsKey(id);
+
+    private IReadOnlyDictionary<int, int> CurrentMiniVisibleAnswers
+        => _countedStep is >= 7 and <= 10
+            ? OnboardingMiniBlockCompletion.MergeVisible(_countedStep, _quickScanVersion, _serverAnswers, _miniAnswers)
+            : _miniAnswers;
+
+    private bool IsCurrentMiniBlockComplete()
+        => OnboardingMiniBlockCompletion.IsMiniBlockComplete(_countedStep, _quickScanVersion, CurrentMiniVisibleAnswers);
+
+    private void ClearMiniAnswersBeforeStepChange()
+    {
+        _miniAnswers.Clear();
+        _serverAnswers.Clear();
+        _lockedIds.Clear();
+        _currentQuestion = 0;
+    }
+
+    private async Task<bool> IsPersistedMiniBlockCompleteAsync(int step)
+    {
+        var loaded = await LoadPersistedMiniAnswersAsync(step);
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        var resolved = ResolveQuickScanVersion(loaded.version, testsV2);
+        return OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, resolved, loaded.answers);
+    }
+
+    private async Task<(Dictionary<int, int> answers, int? version)> LoadPersistedMiniAnswersAsync(int step)
+    {
+        switch (step)
+        {
+            case 8:
+            {
+                var row = await Api.GetMyCareerInterestsAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+            case 9:
+            {
+                var row = await Api.GetMyCultureAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+            case 10:
+            {
+                var row = await Api.GetMyValuesAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+            default:
+            {
+                var row = await Api.GetMyCompetenciesAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+        }
+    }
+
+    private static Dictionary<int, int> ParseMiniAnswers(Dictionary<string, int>? answers)
+    {
+        var result = new Dictionary<int, int>();
+        foreach (var pair in answers ?? [])
+        {
+            if (int.TryParse(pair.Key, out var id) && pair.Value is >= 1 and <= 5)
+            {
+                result[id] = pair.Value;
+            }
+        }
+
+        return result;
+    }
+
+    private async Task<bool> TryRouteToFirstIncompleteMiniBlockAsync()
+    {
+        foreach (var step in new[] { 7, 8, 9, 10 })
+        {
+            if (await IsPersistedMiniBlockCompleteAsync(step))
+            {
+                continue;
+            }
+
+            ClearMiniAnswersBeforeStepChange();
+            _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
+            await GoToCountedStepAsync(step);
+            return false;
+        }
+
+        return true;
+    }
 
     private void FocusFirstOpenMini()
     {
-        var open = _miniQuestions.FindIndex(q => !MiniAnswered(q.Id));
-        if (open < 0)
-        {
-            return;
-        }
-
-        _currentQuestion = open;
+        _currentQuestion = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(
+            _countedStep,
+            _quickScanVersion,
+            CurrentMiniVisibleAnswers);
         _miniFlowEpoch++;
     }
 
@@ -1498,7 +1580,7 @@
         }
 
         if (_countedStep is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0
-            && _miniQuestions.Any(q => !MiniAnswered(q.Id)))
+            && !IsCurrentMiniBlockComplete())
         {
             FocusFirstOpenMini();
             return;
@@ -1604,6 +1686,11 @@
     private async Task GoToCountedStepAsync(int step, bool markPreviousCompleted = false)
     {
         ClearStepValidation();
+        if (_countedStep is >= 7 and <= 10 && step is >= 7 and <= 10 && step != _countedStep)
+        {
+            ClearMiniAnswersBeforeStepChange();
+        }
+
         _countedStep = step;
         _screen = step.ToString();
         _depth = step;
@@ -1777,6 +1864,11 @@
 
     private async Task ShowEndAsync(bool partial)
     {
+        if (!partial && !await TryRouteToFirstIncompleteMiniBlockAsync())
+        {
+            return;
+        }
+
         _partialEnd = partial;
         _screen = "klaar";
         _depth = 11;
@@ -2181,6 +2273,8 @@
         {
             await PrepareMiniAsync();
         }
+
+        _miniArrivedViaBack = false;
     }
 
     private async Task LaterAsync()
@@ -2239,22 +2333,29 @@
     }
 
     private IReadOnlyDictionary<int, int> MiniVisibleAnswers
+        => _countedStep is >= 7 and <= 10
+            ? OnboardingMiniBlockCompletion.MergeVisible(_countedStep, _quickScanVersion, _serverAnswers, _miniAnswers)
+            : _miniAnswers;
+
+    private static IReadOnlyDictionary<int, int> FilterMiniAnswers(
+        IReadOnlyDictionary<int, int> source,
+        IReadOnlySet<int> allowed)
     {
-        get
+        if (allowed.Count == 0)
         {
-            if (_serverAnswers.Count == 0)
-            {
-                return _miniAnswers;
-            }
-
-            var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in _miniAnswers)
-            {
-                merged[answer.Key] = answer.Value;
-            }
-
-            return merged;
+            return source;
         }
+
+        var filtered = new Dictionary<int, int>();
+        foreach (var (id, value) in source)
+        {
+            if (allowed.Contains(id))
+            {
+                filtered[id] = value;
+            }
+        }
+
+        return filtered;
     }
 
     private string SegmentClass(int index)
@@ -2290,6 +2391,7 @@
         _miniAnswers.Clear();
         _serverAnswers.Clear();
         _lockedIds.Clear();
+        _miniBlockQuestionIds = [];
         _miniQuestions = [];
         _currentQuestion = 0;
         if (_countedStep is < 7 or > 10 || !Draft.HasConsent) return;
@@ -2328,11 +2430,16 @@
                 break;
         }
 
-        var questionIds = TestDepthRules.QuestionIdsUpTo(assessmentKind, _targetLevel, _quickScanVersion);
+        var questionIds = _targetLevel <= OnboardingWizardCatalog.MiniLevelCount
+            ? TestDepthRules.MiniIds(assessmentKind, _quickScanVersion)
+            : TestDepthRules.QuestionIdsUpTo(assessmentKind, _targetLevel, _quickScanVersion).ToArray();
+        _miniBlockQuestionIds = TestDepthRules.MiniIds(assessmentKind, _quickScanVersion);
 
         foreach (var answer in answers ?? [])
         {
-            if (int.TryParse(answer.Key, out var id) && answer.Value is >= 1 and <= 5)
+            if (int.TryParse(answer.Key, out var id)
+                && questionIds.Contains(id)
+                && answer.Value is >= 1 and <= 5)
             {
                 _serverAnswers[id] = answer.Value;
             }
@@ -2348,26 +2455,42 @@
             .Where(id => byId.ContainsKey(id))
             .Select(id => new OnboardingMiniTest.MiniQuestion(id, byId[id].Key))
             .ToList();
-        var open = questionIds.Where(id => !_lockedIds.Contains(id)).ToHashSet();
-        var firstOpen = _miniQuestions.FindIndex(question => open.Contains(question.Id));
-        _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
+        var visible = OnboardingMiniBlockCompletion.MergeVisible(_countedStep, _quickScanVersion, _serverAnswers, _miniAnswers);
+        if (_miniArrivedViaBack && _miniQuestions.Count > 0)
+        {
+            _currentQuestion = _miniQuestions.Count - 1;
+        }
+        else
+        {
+            _currentQuestion = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(_countedStep, _quickScanVersion, visible);
+        }
+
+        _miniFlowEpoch++;
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
             var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in draft) merged[answer.Key] = answer.Value;
+            foreach (var answer in draft)
+            {
+                merged[answer.Key] = answer.Value;
+            }
+
+            var payload = _targetLevel <= OnboardingWizardCatalog.MiniLevelCount
+                ? OnboardingMiniBlockCompletion.ScopeToMiniIds(assessmentKind, _quickScanVersion, merged)
+                : merged;
+
             switch (_countedStep)
             {
                 case 7:
-                    await Api.SaveMyCompetenciesAsync(merged, false, cancellationToken);
+                    await Api.SaveMyCompetenciesAsync(payload, false, cancellationToken);
                     break;
                 case 8:
-                    await Api.SaveMyCareerInterestsAsync(merged, false, cancellationToken);
+                    await Api.SaveMyCareerInterestsAsync(payload, false, cancellationToken);
                     break;
                 case 9:
-                    await Api.SaveMyCultureAsync(merged, false, cancellationToken);
+                    await Api.SaveMyCultureAsync(payload, false, cancellationToken);
                     break;
                 case 10:
-                    await Api.SaveMyValuesAsync(merged, false, cancellationToken);
+                    await Api.SaveMyValuesAsync(payload, false, cancellationToken);
                     break;
             }
 
@@ -2384,7 +2507,8 @@
         if (_miniArrivedViaBack || _screen == "start" || _screen == "toestemming") return;
         if (_countedStep is < 7 or > 10) return;
         if (!Draft.HasConsent) return;
-        if (_miniQuestions.Any(q => !_serverAnswers.ContainsKey(q.Id) && !_miniAnswers.ContainsKey(q.Id))) return;
+        if (_targetLevel > OnboardingWizardCatalog.MiniLevelCount) return;
+        if (!await IsPersistedMiniBlockCompleteAsync(_countedStep)) return;
 
         _busy = true;
         try
@@ -2409,7 +2533,6 @@
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
         _saveStatus = "saved";
         QueueMiniSave(id, value);
         _ = InvokeAsync(StateHasChanged);
