@@ -15,6 +15,25 @@
     margin-block-end: 1rem;
 }
 
+html.vp-desktop .wg-shell:has(.kk-page) {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+}
+
+html.vp-desktop .wg-shell__body:has(.kk-page) {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+html.vp-desktop .kk-page > .insights-tabs {
+    position: relative;
+    z-index: 2;
+    flex-shrink: 0;
+    overflow: visible;
+}
+
 .kk-filters--desktop select.jobsy-form-value {
     box-sizing: border-box;
     min-block-size: var(--form-input-min-h, 3.25rem);
@@ -1752,10 +1771,9 @@ html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-mobile-sheet__body--li
 html.vp-desktop .wg-main:has(.kk-page) {
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-height: 0;
     overflow: hidden;
-    height: calc(100dvh - 56px);
-    max-height: calc(100dvh - 56px);
 }
 
 html.vp-desktop .wg-main:has(.kk-page) .kk-page {

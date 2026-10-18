@@ -343,8 +343,11 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
     {
         await page.EvaluateAsync("""
             window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
             document.querySelector('.wg-main')?.scrollTo(0, 0);
             document.querySelector('.kk-page')?.scrollTo?.(0, 0);
+            document.querySelector('.kk-page > .insights-tabs')?.scrollIntoView({ block: 'start', inline: 'nearest' });
             """);
 
         if (fullViewport)
