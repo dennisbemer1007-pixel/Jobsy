@@ -1,0 +1,51 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Microsoft.AspNetCore.Components.Web
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="@WrapperClass">
+    <input role="combobox"
+           aria-expanded="@(TypeaheadOpen ? "true" : "false")"
+           aria-autocomplete="list"
+           aria-controls="@(TypeaheadOpen ? ListboxId : null)"
+           aria-activedescendant="@ActiveDescendantId"
+           aria-label="@Culture["Onboarding.DreamSearch"]"
+           placeholder="@Culture["Onboarding.DreamSearch"]"
+           data-testid="@TestId"
+           value="@Query"
+           @oninput="OnInput"
+           @onkeydown="OnKeyDown" />
+    <DreamJobTypeahead @ref="_typeahead"
+                       Query="@Query"
+                       Young="Young"
+                       Education="Education"
+                       HighlightIndex="HighlightIndex"
+                       ListboxId="@ListboxId"
+                       ChooseDream="ChooseDream"
+                       ChooseTitle="ChooseTitle"
+                       ChooseOwnDream="ChooseOwnDream" />
+</div>
+
+@code {
+    [Parameter] public string WrapperClass { get; set; } = "ob-dream-sfeer__search";
+    [Parameter] public string? TestId { get; set; }
+    [Parameter, EditorRequired] public string Query { get; set; } = "";
+    [Parameter] public EventCallback<ChangeEventArgs> OnInput { get; set; }
+    [Parameter] public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
+    [Parameter] public bool Young { get; set; }
+    [Parameter] public string? Education { get; set; }
+    [Parameter] public int HighlightIndex { get; set; } = -1;
+    [Parameter] public EventCallback<DreamJob> ChooseDream { get; set; }
+    [Parameter] public EventCallback<string> ChooseTitle { get; set; }
+    [Parameter] public EventCallback ChooseOwnDream { get; set; }
+    [Parameter] public string ListboxId { get; set; } = "dream-job-typeahead-list";
+
+    private DreamJobTypeahead? _typeahead;
+
+    private bool TypeaheadOpen => !string.IsNullOrWhiteSpace(Query);
+
+    public DreamJobTypeahead? Typeahead => _typeahead;
+
+    public string? ActiveDescendantId =>
+        TypeaheadOpen ? _typeahead?.ActiveDescendantId : null;
+}

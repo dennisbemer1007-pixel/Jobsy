@@ -1,0 +1,109 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Careers
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Open)
+{
+    <div class="ob-dream-typeahead">
+        <div class="ob-dream-typeahead__scroll"
+             role="listbox"
+             id="@ListboxId"
+             aria-label="@Culture["Onboarding.DreamSearch"]">
+            @if (Young)
+            {
+                @for (var i = 0; i < YoungHits.Count; i++)
+                {
+                    var dreamJob = YoungHits[i];
+                    var optionId = $"{ListboxId}-opt-{i}";
+                    <button type="button"
+                            id="@optionId"
+                            role="option"
+                            class="ob-dream-typeahead__option @(HighlightIndex == i ? "is-active" : null)"
+                            aria-selected="@(HighlightIndex == i ? "true" : "false")"
+                            @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
+                        <span class="ob-dream-typeahead__title">@Culture[$"DreamJob.{dreamJob.Key}"]</span>
+                    </button>
+                }
+            }
+            else
+            {
+                @for (var i = 0; i < AdultHits.Count; i++)
+                {
+                    var hit = AdultHits[i];
+                    var optionId = $"{ListboxId}-opt-{i}";
+                    var desc = DreamJobTypeaheadCopy.DisplayDescription(hit.Description);
+                    <button type="button"
+                            id="@optionId"
+                            role="option"
+                            class="ob-dream-typeahead__option @(HighlightIndex == i ? "is-active" : null)"
+                            aria-selected="@(HighlightIndex == i ? "true" : "false")"
+                            @onclick="() => ChooseTitle.InvokeAsync(hit.Title)">
+                        <span class="ob-dream-typeahead__title">@DreamJobTypeaheadCopy.DisplayTitle(hit.Title)</span>
+                        @if (desc is not null)
+                        {
+                            <span class="ob-dream-typeahead__desc">@desc</span>
+                        }
+                    </button>
+                }
+            }
+        </div>
+        @{
+            var ownIndex = OptionCount;
+            var ownId = $"{ListboxId}-opt-own";
+        }
+        <button type="button"
+                id="@ownId"
+                class="ob-dream-typeahead__own @(HighlightIndex == ownIndex ? "is-active" : null)"
+                @onclick="ChooseOwnDream">
+            ＋ @Culture.Format("Onboarding.DreamOwn", Query.Trim())
+        </button>
+    </div>
+}
+
+@code {
+    private const int MaxOptions = 6;
+
+    [Parameter, EditorRequired] public string Query { get; set; } = "";
+    [Parameter] public bool Young { get; set; }
+    [Parameter] public string? Education { get; set; }
+    [Parameter] public int HighlightIndex { get; set; } = -1;
+    [Parameter] public EventCallback<DreamJob> ChooseDream { get; set; }
+    [Parameter] public EventCallback<string> ChooseTitle { get; set; }
+    [Parameter] public EventCallback ChooseOwnDream { get; set; }
+    [Parameter] public string ListboxId { get; set; } = "dream-job-typeahead";
+
+    private bool Open => !string.IsNullOrWhiteSpace(Query);
+
+    private IReadOnlyList<DreamJob> YoungHits { get; set; } = [];
+    private IReadOnlyList<OccupationSearchHit> AdultHits { get; set; } = [];
+
+    public int OptionCount => Young ? YoungHits.Count : AdultHits.Count;
+
+    public int OwnOptionIndex => OptionCount;
+
+    public string? ActiveDescendantId =>
+        HighlightIndex < 0
+            ? null
+            : HighlightIndex == OwnOptionIndex
+                ? $"{ListboxId}-opt-own"
+                : $"{ListboxId}-opt-{HighlightIndex}";
+
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(Query))
+        {
+            YoungHits = [];
+            AdultHits = [];
+            return;
+        }
+
+        YoungHits = Young
+            ? DreamJobCatalog.Search(Query, MaxOptions)
+            : [];
+        AdultHits = Young
+            ? []
+            : OccupationCatalog.Shared.Search(Query, MaxOptions, Education);
+    }
+}

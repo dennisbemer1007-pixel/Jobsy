@@ -91,6 +91,12 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.EducationDirectionField"] = english ? "Or type yourself" : "Of typ zelf";
         map["Onboarding.Step6.Title"] = english ? "What is your dream job?" : "Wat is je droombaan?";
         map["Onboarding.Step6.Lead"] = english ? "Think big. We make a route towards it in Career." : "Denk groot. We maken er in Carrière een route naartoe.";
+        map["Onboarding.Step6.DreamConfirm"] = english
+            ? "Nice goal. We will build a route towards it in Career."
+            : "Mooi doel. We maken er in Carrière een route naartoe.";
+        map["Onboarding.Step6.Chip.Lasser"] = english ? "Welder" : "Lasser";
+        map["Onboarding.Step6.Chip.AstronautSurprise"] = english ? "Surprise: astronaut" : "Verrassend: astronaut";
+        map["Onboarding.Step6.InspirationLabel"] = english ? "Inspiration" : "Inspiratie";
         map["Onboarding.Step7.Title"] = english ? "How do you work?" : "Hoe werk jij?";
         map["Onboarding.Step8.Title"] = english ? "What do you like?" : "Wat vind je leuk?";
         map["Onboarding.Step9.Title"] = english ? "Where do you feel at home?" : "Waar voel je je thuis?";

@@ -103,6 +103,10 @@
     "sha256": "b63a6b010adbdba176ada22dfa5d19b2699c2096d05c6225428e9a72d5a7f44c",
     "v": "20261005-23"
   },
+  "css/features/onboarding-illustrated-step.css": {
+    "sha256": "bda729e3769b45a8f09b84c0377c5a14f3a29d00c62f11a0dd2a25fdcb0e3d26",
+    "v": "20261018-03"
+  },
   "css/features/onboarding-wizard-mobile-bar.css": {
     "sha256": "2aa2e9fb9c528693ad4002eb4c76175dfb817b6f75045d1a585d06944fce11c7",
     "v": "20261016-02"
