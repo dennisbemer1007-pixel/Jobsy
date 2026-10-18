@@ -2180,6 +2180,8 @@
         {
             await PrepareMiniAsync();
         }
+
+        _miniArrivedViaBack = false;
     }
 
     private async Task LaterAsync()
@@ -2376,7 +2378,14 @@
             .ToList();
         var open = questionIds.Where(id => !_lockedIds.Contains(id)).ToHashSet();
         var firstOpen = _miniQuestions.FindIndex(question => open.Contains(question.Id));
-        _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
+        if (_miniArrivedViaBack && _miniQuestions.Count > 0)
+        {
+            _currentQuestion = _miniQuestions.Count - 1;
+        }
+        else
+        {
+            _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
+        }
         var allowedIds = questionIds.ToHashSet();
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
@@ -2443,7 +2452,6 @@
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
         _saveStatus = "saved";
         QueueMiniSave(id, value);
         _ = InvokeAsync(StateHasChanged);

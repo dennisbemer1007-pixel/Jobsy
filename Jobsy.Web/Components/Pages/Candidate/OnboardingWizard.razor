@@ -841,6 +841,7 @@
         _step--;
         await MarkStartedAsync();
         await PrepareMiniAsync();
+        _miniArrivedViaBack = false;
         RequestStepScrollReset();
     }
 
@@ -1361,7 +1362,14 @@
             .ToList();
         var firstOpen = _miniQuestions.FindIndex(q =>
             !_serverAnswers.ContainsKey(q.Id) && !_miniAnswers.ContainsKey(q.Id));
-        _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
+        if (_miniArrivedViaBack && _miniQuestions.Count > 0)
+        {
+            _currentQuestion = _miniQuestions.Count - 1;
+        }
+        else
+        {
+            _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
+        }
         var allowedIds = questionIds.ToHashSet();
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
@@ -1503,7 +1511,6 @@
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
         FlashSaved();
         if (_autosave is not null)
         {

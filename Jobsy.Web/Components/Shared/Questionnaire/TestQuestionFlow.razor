@@ -125,8 +125,9 @@
             </details>
         }
 
-        <LikertRadioGroup QuestionId="question.Id"
-                          Value="@(answered ? FlowAnswers[question.Id] : null)"
+        <LikertRadioGroup @key="question.Id"
+                          QuestionId="question.Id"
+                          Value="@(FlowAnswers.TryGetValue(question.Id, out var saved) ? saved : null)"
                           Interactive="true"
                           InputPrefix="@InputPrefix"
                           StatementId="@($"tf-stmt-{question.Id}")"
@@ -211,6 +212,7 @@
     [Parameter] public EventCallback OnLeave { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
+    [Parameter] public EventCallback<int> OnIndexChanged { get; set; }
     [Parameter] public bool LoadFailed { get; set; }
     /// <summary>Overrides <see cref="UiStrings"/> TestFlow.Finish on the last question (e.g. onboarding “Volgende test”).</summary>
     [Parameter] public string? FinishLabel { get; set; }
@@ -401,9 +403,7 @@
 
         if (token.IsCancellationRequested || generation != _advanceGeneration || _index != answeredIndex) return;
         if (_index >= TargetCount - 1) return;
-        _index = answeredIndex + 1;
-        _focusRequest = true;
-        await InvokeAsync(StateHasChanged);
+        await SetIndexAsync(answeredIndex + 1);
     }
 
     private void CancelPendingAdvance()
@@ -580,8 +580,19 @@
 
             return;
         }
-        _index--;
+
+        await SetIndexAsync(_index - 1);
+    }
+
+    private async Task SetIndexAsync(int index)
+    {
+        _index = Math.Clamp(index, 0, Math.Max(0, TargetCount - 1));
         _focusRequest = true;
+        if (OnIndexChanged.HasDelegate)
+        {
+            await OnIndexChanged.InvokeAsync(_index);
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 
@@ -620,9 +631,7 @@
             return;
         }
 
-        _index++;
-        _focusRequest = true;
-        await InvokeAsync(StateHasChanged);
+        await SetIndexAsync(_index + 1);
     }
 
     private async Task LaterAsync()
