@@ -13,6 +13,9 @@
         <meta name="robots" content="noindex, nofollow" />
     }
     <meta name="theme-color" content="#0f2d5c" />
+    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/fraunces/fraunces-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="application-name" content="Lobsy" />
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -33,7 +36,7 @@
     }
     @if (LoadBlazorRuntime)
     {
-        <link rel="preload" href="js/app-core.js?v=20261018-07" as="script" crossorigin />
+        <link rel="preload" href="js/app-core.js?v=20261017-04" as="script" crossorigin />
         <link rel="preload" href="_framework/blazor.web.js?v=20260820-r164" as="script" crossorigin />
     }
     @if (!LoadBlazorRuntime && IncludeGratisDnaScript)
@@ -42,8 +45,10 @@
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
     }
     <link rel="stylesheet" href="css/critical.css?v=20261004-13" />
+    <link rel="stylesheet" href="css/tokens.css?v=20261018-06" />
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
+    <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
     <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-01" />
@@ -261,7 +266,7 @@
     </script>
         @if (LoadBlazorRuntime)
         {
-            <script src="js/app-core.js?v=20261018-07" nonce="@Nonce" defer></script>
+            <script src="js/app-core.js?v=20261017-04" nonce="@Nonce" defer></script>
             <script src="js/navFeedback.js?v=20261004-13" nonce="@Nonce" defer></script>
             <script src="js/lobsyPush.js?v=20261016-02" nonce="@Nonce" defer></script>
             <script src="js/read-aloud.js?v=20261015-01" nonce="@Nonce" defer></script>

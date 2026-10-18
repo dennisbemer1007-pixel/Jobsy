@@ -6,6 +6,12 @@
   background: var(--pearl);
 }
 
+/* Login illustrated art (no inline style on Login.razor — AuthCssGuard) */
+.pub-theme .au-stage--illustrated.au-stage--login-art {
+  --au-art-left: url("/images/candidate-illustrated/spots/login-links.jpg?v=20261018-89");
+  --au-art-right: url("/images/candidate-illustrated/spots/login-rechts.jpg?v=20261018-89");
+}
+
 .pub-theme .au-stage--illustrated .au-blob {
   display: none;
 }
@@ -345,6 +351,56 @@
 
 .pub-theme .pub-landing--calm .pub-landing__emp-card .pub-landing__emp-register {
   padding-bottom: 1.5rem;
+}
+
+@media (max-width: 1280px) {
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
+    min-height: 480px;
+    background-size: cover;
+    background-position: center top;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__trust .pub-landing__tgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pub-theme .pub-landing__kaart-ill-copy {
+    padding: 1.65rem 1.75rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
+    min-height: 440px;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
+    padding: 2.25rem 1.5rem 2rem;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__h1 {
+    font-size: clamp(1.85rem, 4.2vw, 2.65rem);
+  }
+
+  .pub-theme .pub-landing__steps-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pub-theme .pub-landing__shead--journey {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .pub-theme .pub-landing__journey-cta--head {
+    width: 100%;
+  }
+
+  .pub-theme .pub-landing__journey-cta--head .btn {
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
+  }
 }
 
 @media (max-width: 900px) {

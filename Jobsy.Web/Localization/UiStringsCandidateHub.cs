@@ -22,11 +22,11 @@ public static class UiStringsCandidateHub
             "Instellingen", "Settings",
             "Ustawienia", "Setări", "الإعدادات");
         Add("CandidateSettings.Lead",
-            "Alles wat je account, meldingen en voorkeuren regelt — op één plek.",
-            "Everything for your account, notifications and preferences — in one place.",
-            "Konto, powiadomienia i preferencje — w jednym miejscu.",
-            "Cont, notificări și preferințe — într-un singur loc.",
-            "حسابك وإشعاراتك وتفضيلاتك — في مكان واحد.");
+            "Alles wat je account, meldingen en voorkeuren regelt, op één plek.",
+            "Everything for your account, notifications and preferences, in one place.",
+            "Konto, powiadomienia i preferencje w jednym miejscu.",
+            "Cont, notificări și preferințe, într-un singur loc.",
+            "حسابك وإشعاراتك وتفضيلاتك في مكان واحد.");
         Add("CandidateSettings.NavSettings",
             "Instellingen", "Settings",
             "Ustawienia", "Setări", "الإعدادات");
@@ -107,11 +107,11 @@ public static class UiStringsCandidateHub
             "Toestemmingen in je profiel", "Consents in your profile",
             "Zgody w profilu", "Consimțăminte în profil", "الموافقات في ملفك");
         Add("CandidatePrivacy.Consent.Desc",
-            "Talentpool, matching en commerciële voorkeuren — aanpassen in Mijn gegevens.",
-            "Talent pool, matching and marketing — edit under My details.",
-            "Talent pool i marketing — w danych paszportu.",
-            "Talent pool și marketing — în datele pașaportului.",
-            "مجموعة المواهب والتسويق — في بيانات الجواز.");
+            "Talentpool, matching en commerciële voorkeuren. Aanpassen in Mijn gegevens.",
+            "Talent pool, matching and marketing. Edit under My details.",
+            "Talent pool i marketing. W danych paszportu.",
+            "Talent pool și marketing. În datele pașaportului.",
+            "مجموعة المواهب والتسويق. في بيانات الجواز.");
         Add("CandidatePrivacy.Mail.Title",
             "E-mailvoorkeuren", "E-mail preferences",
             "Preferencje e-mail", "Preferințe e-mail", "تفضيلات البريد");

@@ -30,7 +30,7 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
-<div class="panel-page apps-page kb-apps kb-apps--illustrated panel-page--cand-ill" @onkeydown="OnPageKeyDown">
+<div class="panel-page apps-page kb-apps" @class="@("kb-apps--illustrated panel-page--cand-ill")" @onkeydown="OnPageKeyDown">
     @{
         var appsLead = _readOnly
             ? Culture["Apps.LeadReadOnly"]
@@ -38,9 +38,11 @@
                 ? string.Format(Culture["Apps.LeadFriendly"], _givenName)
                 : Culture["Apps.LeadFriendlyNoName"];
     }
-    <CandidateIllustratedBand Title="@Culture["Nav.MyApplications"]"
-                             Lead="@appsLead"
-                             ArtUrl="@SollicitatiesBand" />
+    <CandidateIllustratedHero Title="@Culture["Nav.MyApplications"]"
+                              Lead="@appsLead"
+                              ArtUrl="@SollicitatiesBand"
+                              ArtPosition="right center"
+                              CssClass="cand-hero--profession-band" />
 
     <CandidateJobListTabs />
 
@@ -75,28 +77,31 @@
     else if (_filtered.Count == 0)
     {
         <div class="kb-apps__layout kb-apps__layout--empty">
-            <CandidateIllustratedEmpty ArtUrl="@(_items.Count == 0 ? SpotWerkgever : null)"
-                                       Compact="@(_items.Count > 0)">
-                <p class="state-message">
-                    @if (_items.Count == 0)
+            <CandidateIllustratedEmpty ArtUrl="@(_items.Count == 0 ? SpotKaart : null)"
+                                       Compact="@(_items.Count > 0)"
+                                       CssClass="@(_items.Count == 0 ? "cand-empty--apps-prominent" : null)">
+                @if (_items.Count == 0)
+                {
+                    <h2 class="cand-empty__title">@Culture["Nav.MyApplications"]</h2>
+                    <p class="cand-empty__lead">@Culture["Apps.Empty"]</p>
+                    @if (!_readOnly)
                     {
-                        @(Culture["Apps.Empty"] + (_readOnly ? "" : " "))
-                        @if (!_readOnly)
-                        {
-                            <a href="@KbRoutes.Map">@Culture["Apps.BrowseMap"]</a><text>.</text>
-                        }
+                        <a class="btn btn-primary cand-empty__cta" href="@KbRoutes.Map">@Culture["CandidateVacancies.BrowseMap"]</a>
                     }
-                    else
-                    {
-                        @Culture["Apps.EmptyTab"]
-                    }
-                </p>
+                }
+                else
+                {
+                    <p class="state-message">@Culture["Apps.EmptyTab"]</p>
+                }
             </CandidateIllustratedEmpty>
-            @if (_appsWide)
+            @if (_items.Count == 0)
+            {
+                <CandidateIllustratedApplyTip />
+            }
+            else if (_appsWide)
             {
                 <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
-                    <div class="kb-saved-rail__card cand-side-card--spot kb-apps__rail-card"
-                         style="@($"--cand-side-spot:url('{SpotVragen}')")">
+                    <div class="kb-saved-rail__card kb-apps__rail-card">
                         <h2>@Culture["Kb.Steps.Title"]</h2>
                         <dl class="kb-apps__steps-legend">
                             <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>
@@ -136,7 +141,7 @@
                 else
                 {
                     <div class="kb-saved-rail__card cand-side-card--spot kb-apps__rail-card"
-                         style="@($"--cand-side-spot:url('{SpotVragen}')")">
+                         style="@($"--cand-side-spot:url('{SpotInclusiefKantoor}')")">
                         <h2>@Culture["Kb.Steps.Title"]</h2>
                         <dl class="kb-apps__steps-legend">
                             <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>

@@ -148,8 +148,6 @@
                     <KbDetailFactChips Vacancy="_vacancy"
                                        WhenLabel="@DetailWhenLabel"
                                        StartLabel="@Culture["Kb.Detail.StartFlexible"]"
-                                       StartDateLabel="@DetailStartDateLabel"
-                                       CategoryLabel="@DetailCategoryLabel"
                                        TravelChip="@DetailTravelChip" />
                         </div>
                         <div class="kb-detail__hero-accent" aria-hidden="true"></div>
@@ -675,12 +673,15 @@
             </div>@* kb-detail__layout *@
             </div>@* kb-detail__container *@
 
-            @if (!_detailWide && !ShowApplyReadinessRail)
+            @if (!_detailWide)
             {
-                <div class="kb-detail__sticky-apply" data-testid="kb-sticky-apply" data-sticky-footer>
-                    @PrimaryApplyFragment
-                    @SaveButtonFragment
-                </div>
+                @if (!ShowApplyReadinessRail)
+                {
+                    <div class="kb-detail__sticky-apply" data-testid="kb-sticky-apply" data-sticky-footer>
+                        @PrimaryApplyFragment
+                        @SaveButtonFragment
+                    </div>
+                }
             }
 
             <p class="muted">
@@ -764,7 +765,9 @@
         var dnaRows = DnaRows(_vacancy);
 
         <div class="kb-fit-panel kb-fit-panel--card" data-fit-gate="@(_vacancy.FitGate ?? "")" data-testid="kb-fit-panel">
-            <h2 class="kb-fit-panel__title">@Culture["Fit.CheckVacancy"]</h2>
+            <div class="kb-fit-panel__title-row">
+                <h2 class="kb-fit-panel__title">@Culture["Kb.Fit.WhyTitle"]</h2>
+            </div>
             @if (!string.IsNullOrWhiteSpace(detailRank))
             {
                 <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
@@ -897,12 +900,6 @@
             return TravelApprox ? $"± {core}" : core;
         }
     }
-
-    private string? DetailStartDateLabel
-        => _vacancy is null ? null : _vacancy.StartDate.ToString("dd-MM-yyyy");
-
-    private string? DetailCategoryLabel
-        => string.IsNullOrWhiteSpace(_vacancy?.CategoryName) ? null : _vacancy!.CategoryName;
 
     private bool ShowApplyReadinessRail =>
         _signedInCandidate
@@ -1050,7 +1047,7 @@
     {
         @if (_applied)
         {
-            <a class="login-submit kb-detail-apply-btn" href="@KbRoutes.Applications" data-testid="kb-detail-apply">@Culture["Kb.Detail.Applied"]</a>
+            <a class="login-submit kb-detail-apply-btn btn--primary" href="@KbRoutes.Applications" data-testid="kb-detail-apply">@Culture["Kb.Detail.Applied"]</a>
         }
         else
         {
@@ -1060,13 +1057,13 @@
             }
             else if (_signedInCandidate && (!_candidateApplyGateLoaded || !_profileReadyForApply))
             {
-                <a class="login-submit kb-detail-apply-btn"
+                <a class="login-submit kb-detail-apply-btn btn--primary"
                    href="@($"/vacancies/{Id}#apply")"
                    data-testid="kb-detail-apply">@Culture["Apply.StickyCompleteProfileCta"]</a>
             }
             else
             {
-                <a class="login-submit kb-detail-apply-btn" href="@($"/vacancies/{Id}#apply")" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
+                <a class="login-submit kb-detail-apply-btn btn--primary" href="@($"/vacancies/{Id}#apply")" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
             }
         }
     };

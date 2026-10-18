@@ -2,7 +2,7 @@
 @* KB-FALLBACK(C): gate with PlatformFeature.Employers when paspoort 01 lands; 07 redesigns in place (no CandidateJobListTabs) *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
-@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
 @using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Core.Features
@@ -27,12 +27,13 @@
 <AuthorizeView Roles="Candidate">
     <Authorized>
         <div class="panel-page kb-saved kb-saved--illustrated panel-page--cand-ill">
-            <CandidateIllustratedBand Title="@Culture["Kb.Saved.Title"]"
-                                     Lead="@Culture["Kb.Saved.Lead"]"
-                                     ArtUrl="@BewaardBand" />
+            <CandidateIllustratedHero Title="@Culture["Kb.Saved.Title"]"
+                                      Lead="@Culture["Kb.Saved.Lead"]"
+                                      ArtUrl="@BewaardBand"
+                                      ArtPosition="right center"
+                                      CssClass="cand-hero--profession-band" />
 
             <CandidateJobListTabs />
-            <CandidateSavedSubnav />
 
             @if (_loading)
             {
@@ -41,10 +42,13 @@
             else if (_items.Count == 0)
             {
                 <div class="kb-saved__empty-layout">
-                    <CandidateIllustratedEmpty ArtUrl="@BanenkaartCyclists">
-                        <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="@KbRoutes.Map">@Culture["Saved.Discover"]</a>.</p>
+                    <CandidateIllustratedEmpty ArtUrl="@SpotKaart"
+                                               CssClass="cand-empty--apps-prominent">
+                        <h2 class="cand-empty__title">@Culture["Kb.Saved.Title"]</h2>
+                        <p class="cand-empty__lead">@Culture["Saved.EmptyLikes"]</p>
+                        <a class="btn btn-primary cand-empty__cta" href="@KbRoutes.Map">@Culture["CandidateVacancies.BrowseMap"]</a>
                     </CandidateIllustratedEmpty>
-                    @RenderSavedRail()
+                    <CandidateIllustratedApplyTip />
                 </div>
             }
             else
@@ -77,7 +81,7 @@
                 <div class="kb-saved__body">
                 @if (_filtered.Count == 0)
                 {
-                    <CandidateIllustratedEmpty ArtUrl="@BanenkaartCyclists" Compact="true">
+                    <CandidateIllustratedEmpty ArtUrl="@EmptyLikesArt" Compact="true">
                         <p class="state-message">@Culture["Kb.Saved.FilterEmpty"]</p>
                     </CandidateIllustratedEmpty>
                 }

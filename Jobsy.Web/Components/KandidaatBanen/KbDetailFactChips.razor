@@ -45,30 +45,6 @@
             <span class="kb-detail-chip__value">@WhenLabel</span>
         </span>
     </li>
-    @if (!string.IsNullOrWhiteSpace(StartDateLabel))
-    {
-        <li class="kb-detail-chip">
-            <span class="kb-detail-chip__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/></svg>
-            </span>
-            <span class="kb-detail-chip__text">
-                <span class="kb-detail-chip__label">@Culture["Kb.Detail.StartDateFact"]</span>
-                <span class="kb-detail-chip__value">@StartDateLabel</span>
-            </span>
-        </li>
-    }
-    @if (!string.IsNullOrWhiteSpace(CategoryLabel))
-    {
-        <li class="kb-detail-chip">
-            <span class="kb-detail-chip__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 7h16M4 12h10M4 17h14"/></svg>
-            </span>
-            <span class="kb-detail-chip__text">
-                <span class="kb-detail-chip__label">@Culture["Kb.Detail.CategoryFact"]</span>
-                <span class="kb-detail-chip__value">@CategoryLabel</span>
-            </span>
-        </li>
-    }
     <li class="kb-detail-chip">
         <span class="kb-detail-chip__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3 14.5 8.5 20.5 9.2 16 13l1 6-5.5-3-5.5 3 1-6-4.5-3.8 6-0.7z"/></svg>
@@ -101,12 +77,6 @@
 
     [Parameter]
     public string StartLabel { get; set; } = "—";
-
-    [Parameter]
-    public string? StartDateLabel { get; set; }
-
-    [Parameter]
-    public string? CategoryLabel { get; set; }
 
     [Parameter]
     public string? TravelChip { get; set; }

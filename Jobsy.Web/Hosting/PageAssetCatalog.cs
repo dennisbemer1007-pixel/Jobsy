@@ -26,7 +26,9 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
+        "css/tokens.css?v=20261018-06",
         "css/app.min.css?v=20261018-02",
+        "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
@@ -34,8 +36,8 @@ public static class PageAssetCatalog
     public static readonly string[] CandidatePublicCss =
     [
         "css/features/banenkaart.css?v=20261018-02",
-        "css/features/banenkaart-illustrated.css?v=20261018-01",
-        "css/features/candidate-illustrated-app.css?v=20261018-19",
+        "css/features/banenkaart-illustrated.css?v=20261018-14",
+        "css/features/candidate-illustrated-app.css?v=20261018-89",
         "css/features/kandidaat-banen.css?v=20261017-04",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
@@ -56,10 +58,10 @@ public static class PageAssetCatalog
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
         "css/features/mijn-paspoort.css?v=20261018-01",
-        "css/features/kompas-illustrated.css?v=20261018-01",
+        "css/features/kompas-illustrated.css?v=20261018-05",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261018-04",
-        "css/features/carriere.css?v=20261011-01",
+        "css/features/carriere.css?v=20261018-03",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",
         "css/features/future-jobs.css?v=20261006-02",

@@ -79,12 +79,29 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
         Assert.Equal(4, pngs.Length);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_732_r3_review_shots()
+    {
+        const string r3Dir = "/opt/cursor/artifacts/kandidaat-732-r3";
+        Directory.CreateDirectory(r3Dir);
+        var widthsCarriere = new[] { (390, 844, "390"), (1440, 900, "1440") };
+        await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false, widths: widthsCarriere, artifactsDir: r3Dir);
+        await CapturePageAsync("/candidate/match", "top-matches", careerEmpty: false, widths: widthsCarriere, artifactsDir: r3Dir);
+        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r3Dir);
+        await CapturePageAsync("/candidate/paspoort", "kompas", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r3Dir);
+
+        var pngs = Directory.GetFiles(r3Dir, "*.png");
+        Assert.Equal(6, pngs.Length);
+    }
+
     private async Task CapturePageAsync(
         string path,
         string name,
         bool careerEmpty,
-        (int Width, int Height, string Tag)[] widths)
+        (int Width, int Height, string Tag)[] widths,
+        string? artifactsDir = null)
     {
+        var outDir = artifactsDir ?? ArtifactsDir;
         foreach (var (width, height, tag) in widths)
         {
             CombinedStubApiHandler.CareerPlanEmpty = careerEmpty;
@@ -118,9 +135,20 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
                     .WaitForAsync(new() { Timeout = 60_000 });
             }
 
+            if (path.StartsWith("/candidate/match", StringComparison.Ordinal))
+            {
+                await page.Locator("[data-testid='match-page']").WaitForAsync(new() { Timeout = 60_000 });
+            }
+
+            if (path.Contains("/paspoort", StringComparison.Ordinal))
+            {
+                await page.Locator(".passport-page, [data-testid='passport-hub']").First
+                    .WaitForAsync(new() { Timeout = 60_000 });
+            }
+
             await page.WaitForTimeoutAsync(600);
 
-            var file = Path.Combine(ArtifactsDir, $"{name}-{tag}.png");
+            var file = Path.Combine(outDir, $"{name}-{tag}.png");
             var mobileViewport = width < 500;
             await page.ScreenshotAsync(new()
             {
