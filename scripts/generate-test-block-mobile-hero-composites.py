@@ -17,9 +17,11 @@ MOB_H = 400
 SLUGS = ("hoe-je-werkt", "leuk", "sfeer", "waarden")
 
 HERO_REGION = {
-    "hoe-je-werkt": (0.62, 0.0, 1.0, 1.0),
+    # r9: drop leftmost partial figure — no hard vertical slice at text column.
+    "hoe-je-werkt": (0.72, 0.0, 1.0, 1.0),
     "leuk": (0.0, 0.0, 0.82, 0.92),
-    "sfeer": (0.02, 0.0, 0.30, 1.0),
+    # r9: skip window-frame band above/left of desk scene.
+    "sfeer": (0.10, 0.14, 0.34, 1.0),
     "waarden": (0.66, 0.34, 1.0, 1.0),
 }
 
@@ -99,6 +101,84 @@ def _flood_key_figure(arr, bg: tuple[int, int, int], tol: int = 30):
     return arr, person_core
 
 
+def _dilate_bool(mask, r: int):
+    import numpy as np
+
+    if r <= 0:
+        return mask
+    out = mask.copy()
+    h, w = mask.shape
+    ys, xs = np.where(mask)
+    for y, x in zip(ys, xs):
+        y0, y1 = max(0, y - r), min(h, y + r + 1)
+        x0, x1 = max(0, x - r), min(w, x + r + 1)
+        out[y0:y1, x0:x1] = True
+    return out
+
+
+def _remove_alpha_islands(arr, person_core, min_area: int = 96):
+    """Drop tiny speckles not attached to the main figure."""
+    import numpy as np
+
+    alpha = arr[:, :, 3]
+    h, w = alpha.shape
+    fg = alpha > 48
+    visited = np.zeros((h, w), dtype=bool)
+    anchor = _dilate_bool(person_core, 10)
+
+    for sy in range(h):
+        for sx in range(w):
+            if not fg[sy, sx] or visited[sy, sx]:
+                continue
+            q: deque[tuple[int, int]] = deque([(sx, sy)])
+            visited[sy, sx] = True
+            pixels: list[tuple[int, int]] = []
+            touches_anchor = anchor[sy, sx]
+            while q:
+                x, y = q.popleft()
+                pixels.append((x, y))
+                for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+                    if 0 <= nx < w and 0 <= ny < h and fg[ny, nx] and not visited[ny, nx]:
+                        visited[ny, nx] = True
+                        if anchor[ny, nx]:
+                            touches_anchor = True
+                        q.append((nx, ny))
+            if not touches_anchor and len(pixels) < min_area:
+                for x, y in pixels:
+                    arr[y, x, 3] = 0
+
+
+def _trim_partial_left_columns(arr, person_core, max_cols: int = 48, min_col_fill: float = 0.68):
+    """Remove a hard vertical slice from a partially visible person at the left edge."""
+    import numpy as np
+
+    h = arr.shape[0]
+    alpha = arr[:, :, 3]
+    for x in range(min(max_cols, arr.shape[1])):
+        col = alpha[:, x] > 48
+        if col.sum() == 0:
+            break
+        if col.sum() / h >= min_col_fill:
+            break
+        alpha[:, x] = 0
+        person_core[:, x] = False
+
+
+def _antialias_fringe(arr, person_core):
+    """1–2px soft edge on plants/ground; person_core stays fully opaque."""
+    import numpy as np
+    from PIL import Image, ImageFilter
+
+    a = arr[:, :, 3].astype(np.float32)
+    pil_a = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), mode="L")
+    blurred = np.array(pil_a.filter(ImageFilter.GaussianBlur(radius=1.15)), dtype=np.float32)
+    fringe = (a > 0) & ~person_core
+    merged = np.where(person_core, 255.0, np.where(fringe, np.minimum(a, blurred), a))
+    merged[merged < 36] = 0
+    arr[:, :, 3] = np.clip(merged, 0, 255).astype(np.uint8)
+    arr[person_core, 3] = 255
+
+
 def _feather_ground_only(arr, person_mask, bg: tuple[int, int, int], ground_frac: float = 0.24):
     """Fade only low-contrast ground/plants in the bottom band — never person pixels."""
     import numpy as np
@@ -145,9 +225,14 @@ def load_cutout_figure(slug: str, block_bg: tuple[int, int, int]) -> tuple[Image
     )
     figure = hero.crop(region)
     arr = np.array(figure, copy=True)
-    arr, person_mask = _flood_key_figure(arr, block_bg, tol=32)
-    _feather_ground_only(arr, person_mask, block_bg)
+    arr, person_core = _flood_key_figure(arr, block_bg, tol=32)
+    if slug == "hoe-je-werkt":
+        _trim_partial_left_columns(arr, person_core)
+    _remove_alpha_islands(arr, person_core)
+    _feather_ground_only(arr, person_core, block_bg)
+    _antialias_fringe(arr, person_core)
 
+    person_mask = person_core
     figure = Image.fromarray(arr, mode="RGBA")
     mask = Image.fromarray((person_mask.astype(np.uint8) * 255), mode="L")
     bbox = figure.getbbox()

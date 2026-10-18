@@ -2,7 +2,6 @@
 @using System.Text.RegularExpressions
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
-@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 @inject IJSRuntime Js
@@ -23,13 +22,6 @@
 <div class="test-flow @(Compact ? "test-flow--compact" : null) @(Target == TestDepthLevel.Bottom ? "test-flow--deep" : null)" data-test-flow="@Kind">
     @if (question is not null)
     {
-        @if (TestBlockStageActive && Compact && !string.IsNullOrWhiteSpace(QuestionTitle))
-        {
-            <TestBlockMobileHero CssClass="test-block-stage__mobile-hero--compact">
-                <h2 class="test-block-stage__mobile-hero-title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
-            </TestBlockMobileHero>
-        }
-
         @if (Target != TestDepthLevel.Bottom)
         {
             <div class="test-flow__progress-head" id="@($"tf-counter-{Kind}")">
@@ -105,7 +97,7 @@
         var spokenQuestion = StripIdPrefix(question.Text);
         <div class="test-flow__speak">
             <div class="test-flow__question-head">
-                @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle) && !TestBlockStageActive)
+                @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle))
                 {
                     <h2 class="test-flow__title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
                 }
@@ -124,7 +116,13 @@
         </div>
         @if (!string.IsNullOrWhiteSpace(question.Example))
         {
-            <p class="test-example" data-testid="test-item-example">@question.Example</p>
+            <details class="test-example" open="@_exampleOpen">
+                <summary>@Culture["TestFlow.Example"]</summary>
+                <div class="test-example__body">
+                    <p>@question.Example</p>
+                    <ReadAloudButton Text="@question.Example" SpeechKey="@($"ex-{Kind}-{question.Id}")" />
+                </div>
+            </details>
         }
 
         <LikertRadioGroup @key="question.Id"
@@ -167,17 +165,6 @@
                     </ol>
                 </details>
             }
-        }
-
-        @if (ShowProgressInsight && _insightLines.Count > 0)
-        {
-            <p class="test-flow__insight-mobile" data-testid="test-progress-insight-mobile" aria-live="polite">
-                @Culture.Format("TestFlow.ProgressInsight.Mobile", _insightLines[^1])
-                @if (_insightNewCount > 0)
-                {
-                    <span class="test-flow__insight-mobile-new"> · @Culture.Format("TestFlow.ProgressInsight.MobileNew", _insightNewCount)</span>
-                }
-            </p>
         }
 
         <footer class="test-flow__footer" @ref="_footer" data-sticky-footer>
@@ -234,18 +221,11 @@
     [Parameter] public EventCallback<int> OnPauseAfter { get; set; }
     [Parameter] public int? ExternalIndex { get; set; }
     [Parameter] public RenderFragment? AfterLikert { get; set; }
-    [Parameter] public bool ShowProgressInsight { get; set; }
-    [Parameter] public Func<int, string>? DomainForQuestionId { get; set; }
-    [Parameter] public EventCallback<ProgressInsightSnapshot> ProgressInsightChanged { get; set; }
-
-    [CascadingParameter(Name = "TestBlockStageActive")]
-    private bool TestBlockStageActive { get; set; }
-
-    public sealed record ProgressInsightSnapshot(IReadOnlyList<string> Lines, int NewLineCount);
 
     private int _index;
     private int? _appliedExternalIndex;
     private bool _focusRequest;
+    private bool _exampleOpen = true;
     private int? _resumeAfterEdit;
     private readonly HashSet<TestDepthLevel> _firedLevels = [];
     private CancellationTokenSource? _advanceCts;
@@ -258,21 +238,12 @@
 
     private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
 
-    private IReadOnlyList<int> OrderedQuestionIds { get; set; } = [];
-
-    private IReadOnlyList<string> _insightLines = [];
-
-    private int _insightNewCount;
-
-    private int _previousInsightLineCount;
-
     protected override void OnInitialized()
     {
         _orderedSignature = BuildOrderedSignature();
         MergeParameterAnswers();
         ApplyFirstUnansweredIndex();
         _focusRequest = true;
-        RefreshProgressInsight();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -287,6 +258,8 @@
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
                 }
 
+                var narrow = await MatchesMediaAsync("(max-width: 639px)");
+                _exampleOpen = !narrow;
             }
             catch
             {
@@ -362,7 +335,6 @@
 
         var question = Ordered[answeredIndex];
         _flowAnswers[question.Id] = value;
-        RefreshProgressInsight();
 
         if (Autosave is not null)
         {
@@ -537,8 +509,6 @@
             MergeParameterAnswers();
         }
 
-        RefreshProgressInsight();
-
         // Apply an external jump only when it changes. Re-applying the same index
         // on every render put the candidate back on the last question after Next
         // had moved them to the first unanswered one.
@@ -668,38 +638,5 @@
     {
         if (Autosave is not null) await Autosave.FlushAsync();
         await OnLater.InvokeAsync();
-    }
-
-    private void RefreshProgressInsight()
-    {
-        if (!ShowProgressInsight || DomainForQuestionId is null)
-        {
-            _insightLines = [];
-            _insightNewCount = 0;
-            _ = NotifyProgressInsightAsync();
-            return;
-        }
-
-        OrderedQuestionIds = Ordered.Take(TargetCount).Select(q => q.Id).ToList();
-        var labels = TestProgressInsight.DomainLabelsSoFar(
-            Kind,
-            OrderedQuestionIds,
-            _flowAnswers,
-            DomainForQuestionId);
-        var prefix = Culture[TestProgressInsight.PrefixKey(Kind)];
-        _insightLines = labels
-            .Select(label => Culture.Format("TestFlow.ProgressInsight.Line", prefix, label))
-            .ToList();
-        _insightNewCount = Math.Max(0, _insightLines.Count - _previousInsightLineCount);
-        _previousInsightLineCount = _insightLines.Count;
-        _ = NotifyProgressInsightAsync();
-    }
-
-    private async Task NotifyProgressInsightAsync()
-    {
-        if (ProgressInsightChanged.HasDelegate)
-        {
-            await ProgressInsightChanged.InvokeAsync(new ProgressInsightSnapshot(_insightLines, _insightNewCount));
-        }
     }
 }

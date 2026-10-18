@@ -13,9 +13,9 @@ OUT_DIR = JPG_DIR / "figures"
 SLUGS = ("hoe-je-werkt", "leuk", "sfeer", "waarden")
 
 CROP_START = {
-    "hoe-je-werkt": 0.52,
+    "hoe-je-werkt": 0.58,
     "leuk": 0.70,
-    "sfeer": 0.52,
+    "sfeer": 0.56,
     "waarden": 0.34,
 }
 

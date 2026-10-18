@@ -7,6 +7,7 @@ using Jobsy.Web.Components.Candidate.Passport;
 using Jobsy.Web.Components.Candidate.ProfileSections;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
+using Jobsy.Tests.TestSupport;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
@@ -31,6 +32,7 @@ public class PassportSharedSectionBunitTests : BunitContext
         Services.AddSingleton(sp => new JobsyApiClient(sp.GetRequiredService<HttpClient>()));
         Services.AddSingleton<CandidateProfileEditor>();
         Services.AddSingleton<IFeatureFlags>(_flags);
+        BunitAntiforgery.Register(Services);
     }
 
     [Fact]
