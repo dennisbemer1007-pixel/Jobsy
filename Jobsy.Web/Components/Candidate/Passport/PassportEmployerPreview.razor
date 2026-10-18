@@ -16,8 +16,9 @@
                 {
                     var item = VerifiedCompetences[i];
                     <span class="ref-verif-employer-preview__chip" role="listitem" style="--ref-verif-chip-i: @i">
-                        <ReferenceVerificationDrawCheck Size="sm" Animate="true" CssClass="ref-verif-employer-preview__check" />
-                        @item.Label
+                        <ReferenceVerificationDrawCheck Size="sm" Animate="false" CssClass="ref-verif-employer-preview__check" />
+                        <span class="ref-verif-employer-preview__chip-label">@item.Label</span>
+                        <span class="visually-hidden">@Culture["RefVerif.VerifiedBadge"]</span>
                     </span>
                 }
             </div>
@@ -86,6 +87,6 @@
 
         var s = Year(start);
         var e = string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
-        return string.IsNullOrEmpty(s) ? e : $"{s} – {e}";
+        return string.IsNullOrEmpty(s) ? e : $"{s}-{e}";
     }
 }

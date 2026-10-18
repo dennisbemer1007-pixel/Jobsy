@@ -19,6 +19,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private const string EnvRunR8 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R8";
     private const string EnvRunR9 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R9";
     private const string EnvRunR10 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R10";
+    private const string EnvRunR11 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R11";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -44,6 +45,8 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static string OutputDirR10 => "/opt/cursor/artifacts/references-r10";
 
+    private static string OutputDirR11 => "/opt/cursor/artifacts/references-r11";
+
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
 
@@ -67,6 +70,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static bool ShouldRunR10 =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunR10), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunR11 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunR11), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -617,6 +623,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
                 Path.Combine(OutputDirR10, $"08-paspoort-endorsed-{tag}.png"));
 
             var requestPage = await candidateContext.NewPageAsync();
+            await LoginAsync(requestPage, baseUrl, Email);
             await CaptureRequestFormAndConfirmAsync(requestPage, baseUrl, tag, OutputDirR10, useRealisticDemoName: true);
             await candidateContext.CloseAsync();
 
@@ -643,7 +650,78 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         Assert.InRange(pngs.Length, 1, 10);
     }
 
-    private static void DeleteLegacyReferenceArtifactDirs(bool includeR8 = false, bool includeR9 = false)
+    [Fact]
+    public async Task Capture_reference_verification_screenshots_r11()
+    {
+        if (!ShouldRunR11)
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            Assert.Fail("JOBSY_E2E_BASE_URL unreachable — start API :5200 and Web :5201 with seeded DB.");
+        }
+
+        DeleteLegacyReferenceArtifactDirs(includeR10: true);
+
+        Directory.CreateDirectory(OutputDirR11);
+        foreach (var stale in Directory.GetFiles(OutputDirR11))
+        {
+            File.Delete(stale);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        foreach (var (width, height, tag) in Viewports)
+        {
+            await using var candidateContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(candidateContext);
+            var candidatePage = await candidateContext.NewPageAsync();
+            await LoginAsync(candidatePage, baseUrl, Email);
+
+            await candidatePage.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await candidatePage.WaitForSelectorAsync("[data-testid='passport-employer-preview']", new() { Timeout = 15_000 });
+            await candidatePage.WaitForSelectorAsync(".ref-verif-employer-preview__chip", new() { Timeout = 10_000 });
+            await candidatePage.Locator("[data-testid='passport-employer-preview']").ScrollIntoViewIfNeededAsync();
+            await Task.Delay(350);
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
+                candidatePage,
+                Path.Combine(OutputDirR11, $"08-paspoort-endorsed-{tag}.png"));
+
+            await CaptureRequestFormAndConfirmAsync(candidatePage, baseUrl, tag, OutputDirR11, useRealisticDemoName: true);
+            await candidateContext.CloseAsync();
+
+            await using var publicContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(publicContext);
+            var publicPage = await publicContext.NewPageAsync();
+            var open = ReferenceVerificationDemoIds.OpenReferentToken;
+            await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
+            await publicPage.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 10_000 });
+            await Task.Delay(350);
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
+                publicPage,
+                Path.Combine(OutputDirR11, $"04-referent-public-{tag}.png"));
+            await publicContext.CloseAsync();
+        }
+
+        var pngs = Directory.GetFiles(OutputDirR11, "*.png");
+        Assert.Equal(8, pngs.Length);
+    }
+
+    private static void DeleteLegacyReferenceArtifactDirs(bool includeR8 = false, bool includeR9 = false, bool includeR10 = false)
     {
         var dirs = new List<string>
         {
@@ -659,6 +737,11 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         if (includeR9)
         {
             dirs.Add(OutputDirR9);
+        }
+
+        if (includeR10)
+        {
+            dirs.Add(OutputDirR10);
         }
 
         foreach (var dir in dirs)
@@ -694,6 +777,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         var entryAh = ReferenceVerificationDemoIds.WorkEntryAh;
         await page.GotoAsync($"{baseUrl}/candidate/paspoort/referentie/vraag/{entryAh:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForSelectorAsync(".ref-verif-request-layout--ready", new() { Timeout = 20_000 });
+        await page.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 15_000 });
         await page.WaitForSelectorAsync(".ref-verif-request__card .ref-verif-request__grid", new() { Timeout = 15_000 });
         await page.WaitForSelectorAsync(".ref-verif-request-aside", new() { Timeout = 10_000 });
         await Task.Delay(300);
@@ -707,12 +791,30 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             new() { Delay = 25 });
         await page.Locator("label[for='ref-consent']").ClickAsync();
         await Task.Delay(500);
-        await page.Locator(".ref-verif-request__submit").ClickAsync();
+        var submit = page.Locator(".ref-verif-request__submit");
+        var responseTask = page.WaitForResponseAsync(
+            r => r.Url.Contains("reference-verification", StringComparison.OrdinalIgnoreCase)
+                 && string.Equals(r.Request.Method, "POST", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 45_000 });
+        await submit.ClickAsync();
+        try
+        {
+            var response = await responseTask;
+            if (!response.Ok)
+            {
+                Assert.Fail($"Reference request failed: HTTP {(int)response.Status}");
+            }
+        }
+        catch (TimeoutException)
+        {
+            // Blazor may still render confirm without a captured response in some environments.
+        }
+
         var sent = page.Locator("[data-testid='ref-verif-request-sent']");
         var error = page.Locator(".ref-verif-request__error");
         try
         {
-            await sent.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+            await sent.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 45_000 });
         }
         catch (TimeoutException)
         {

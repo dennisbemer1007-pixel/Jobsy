@@ -130,8 +130,8 @@ public static class ReferenceVerificationRules
         var rel = relation.Trim();
         var work = employer.Trim();
         return language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
-            ? $"Recognized by {name}, {rel} at {work}"
-            : $"Herkend door {name}, {rel} bij {work}";
+            ? $"Confirmed by {name}, {rel} at {work}"
+            : $"Bevestigd door {name}, {rel} bij {work}";
     }
 
     private static string? Clean(string? value, int max, int min)

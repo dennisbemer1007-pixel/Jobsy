@@ -1,0 +1,43 @@
+@namespace Jobsy.Web.Components.Candidate
+
+<header class="cand-hero @CssClass" style="@StyleValue">
+    <div class="cand-hero__copy">
+        @if (!string.IsNullOrWhiteSpace(Eyebrow))
+        {
+            <span class="cand-hero__eyebrow @(CoralEyebrow ? "cand-hero__eyebrow--coral" : null)">@Eyebrow</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <h1 id="@TitleId">@Title</h1>
+        }
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p class="cand-hero__lead">@Lead</p>
+        }
+        @ChildContent
+    </div>
+    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    {
+        <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
+    }
+</header>
+
+@code {
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool CoralEyebrow { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public string ArtPosition { get; set; } = "58% center";
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? StyleValue => string.IsNullOrWhiteSpace(ArtUrl)
+        ? null
+        : $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
+
+    private string? MediaStyleValue => string.IsNullOrWhiteSpace(ArtUrl)
+        ? null
+        : $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
+}

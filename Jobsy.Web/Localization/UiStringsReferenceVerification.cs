@@ -281,8 +281,8 @@ internal static class UiStringsReferenceVerification
             "Bedankt. Je antwoord is verstuurd.",
             "Thank you. Your response has been sent.");
         Add("RefVerif.Public.ThanksDecline",
-            "Je hoefde niet mee te doen — bedankt voor het laten weten.",
-            "You did not have to take part — thanks for letting us know.");
+            "Je hoefde niet mee te doen. Bedankt voor het laten weten.",
+            "You did not have to take part. Thanks for letting us know.");
         Add("RefVerif.Public.Invalid",
             "Deze link is ongeldig.", "This link is invalid.");
         Add("RefVerif.Public.Expired",

@@ -4,6 +4,7 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Features
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
@@ -44,13 +45,11 @@ else if (_entry is null)
 else
 {
     <div class="ref-verif-request-layout @(_cardVisible ? "ref-verif-request-layout--ready" : null)">
-        <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifRequest"
-                                              CssClass="ref-verif-hero--request ref-verif-hero--triptych"
-                                              ObjectPosition="@CandidateIllustratedImages.RefVerifHeroDesktopPosition"
-                                              MobileObjectPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition">
-            <h1 class="ref-verif-hero__title">@Culture["RefVerif.Request.Title"]</h1>
-            <p class="ref-verif-hero__lead">@Culture["RefVerif.Request.Lead"]</p>
-        </ReferenceVerificationIllustratedHero>
+        <CandidateIllustratedHero Title="@Culture["RefVerif.Request.Title"]"
+                                  Lead="@Culture["RefVerif.Request.Lead"]"
+                                  ArtUrl="@CandidateIllustratedImages.RefVerifRequest"
+                                  ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
+                                  CssClass="cand-hero--profession-band ref-verif-cand-hero" />
 
         <div class="ref-verif-request-layout__body">
             <div class="ref-verif-request-layout__grid ref-verif-lift-card @(_cardVisible ? "ref-verif-lift-card--visible" : null)">
