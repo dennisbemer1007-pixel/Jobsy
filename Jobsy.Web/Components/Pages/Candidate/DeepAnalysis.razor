@@ -43,6 +43,7 @@ else
             @if (_view == View.Offer)
             {
                 <TestPageShell Kind="_kind"
+                               ShowDepthSegments="false"
                                Mode="TestPageShell.ShellMode.Offer"
                                Deep="true"
                                Eyebrow="@Culture["Deep.Offer.Eyebrow"]"
@@ -136,6 +137,7 @@ else
             else if (_view == View.Done)
             {
                 <TestPageShell Kind="_kind"
+                               ShowDepthSegments="false"
                                Mode="TestPageShell.ShellMode.Done"
                                Deep="true"
                                Eyebrow="@Culture.Format("Deep.Done.Eyebrow", _questionCount, _questionCount)"
@@ -159,6 +161,7 @@ else
             {
                 var next = _parts.FirstOrDefault(p => p.Index == pausePart.Index + 1);
                 <TestPageShell Kind="_kind"
+                               ShowDepthSegments="false"
                                Mode="TestPageShell.ShellMode.Pause"
                                Deep="true"
                                Eyebrow="@ChromeEyebrow(pausePart)"
@@ -194,6 +197,7 @@ else
                     ? null
                     : DeepTestMotivation.ForProgress(_kind, _answered, _questionCount, part.Index);
                 <TestPageShell Kind="_kind"
+                               ShowDepthSegments="false"
                                Mode="TestPageShell.ShellMode.Question"
                                Deep="true"
                                Eyebrow="@ChromeEyebrow(part)"
