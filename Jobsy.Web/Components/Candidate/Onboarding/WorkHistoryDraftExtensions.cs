@@ -42,6 +42,8 @@ public static class WorkHistoryDraftExtensions
             EndMonth = string.IsNullOrWhiteSpace(job.EndMonth) ? null : job.EndMonth.Trim(),
             Description = string.IsNullOrWhiteSpace(job.Description) ? null : job.Description.Trim(),
             IsCurrent = job.IsCurrent,
-            EscoId = string.IsNullOrWhiteSpace(job.EscoId) ? null : job.EscoId.Trim()
+            EscoId = string.IsNullOrWhiteSpace(job.EscoId) ? null : job.EscoId.Trim(),
+            OnlyForMe = job.OnlyForMe,
+            Skills = job.Skills?.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToList() ?? []
         };
 }

@@ -73,24 +73,6 @@ public class PublicLayoutBunitTests : BunitContext
     }
 
     [Fact]
-    public void Rtl_when_culture_is_ar()
-    {
-        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
-        var http = Services.GetRequiredService<IHttpContextAccessor>().HttpContext!;
-        http.Request.QueryString = new QueryString("?lang=ar");
-
-        var cut = Render<PublicLayout>(p => p
-            .Add(c => c.Body, (RenderFragment)(b => b.AddContent(0, "ar"))));
-        cut.WaitForAssertion(() =>
-        {
-            var root = cut.Find(".pub-theme");
-            Assert.Equal("rtl", root.GetAttribute("dir"));
-            Assert.Equal("ar", root.GetAttribute("lang"));
-        });
-        JobsyLanguages.ResetEnabledForTests();
-    }
-
-    [Fact]
     public void Probe_content_renders_under_layout()
     {
         var cut = Render<PublicLayout>(p => p

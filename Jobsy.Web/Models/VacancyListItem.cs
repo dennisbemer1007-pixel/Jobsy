@@ -210,6 +210,15 @@ public sealed class CandidateReferenceItem
     public string ContactName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
+    public string? ReferenceType { get; set; }
+    public string? RelationshipContext { get; set; }
+}
+
+public sealed class CandidateTimelineGapItem
+{
+    public string StartMonth { get; set; } = string.Empty;
+    public string EndMonth { get; set; } = string.Empty;
+    public string? Choice { get; set; }
 }
 
 public sealed class CandidatePreferences
@@ -247,6 +256,7 @@ public sealed class CandidatePreferences
     public bool? HasOwnCar { get; set; }
     public List<string> ContractPreferences { get; set; } = [];
     public List<string> WorkStatuses { get; set; } = [];
+    public List<CandidateTimelineGapItem> TimelineGaps { get; set; } = [];
 }
 
 public sealed class SharedWorkPreferenceChoices
@@ -292,6 +302,11 @@ public sealed class CandidateEmployerHistory
 
     /// <summary>True after "Staat er niet bij". Not stored. A new role asks again.</summary>
     public bool OccupationDismissed { get; set; }
+
+    /// <summary>Hidden from employer-facing surfaces; still used in matching.</summary>
+    public bool OnlyForMe { get; set; }
+
+    public List<string> Skills { get; set; } = [];
 
     public bool ShowsAsCurrent =>
         IsCurrent == true

@@ -37,7 +37,7 @@
   },
   "css/features/carriere.css": {
     "sha256": "c23b39281dc74f87a13714960bc33cb89fe4a285101ef4b1d74581c2a63b18a4",
-    "v": "20261011-01"
+    "v": "20261018-03"
   },
   "css/features/choice-tiles.css": {
     "sha256": "2e74c596d55ddfa6f8fad147d36f25409e36f3dd2005b1d5a1d52437b5d0d1bd",
@@ -62,6 +62,10 @@
   "css/features/future-jobs.css": {
     "sha256": "a4bb8e12f1e3bc07fc2d3cbe8a7686e26968aff22b1efe16e7c0c30f5defd863",
     "v": "20261006-02"
+  },
+  "css/features/gevoelig-werkervaring.css": {
+    "sha256": "27db073965f754d9f2d81712ec3aaede06c59e7109f731dd48821759d1dab889",
+    "v": "20261018-16"
   },
   "css/features/gratis-dna.css": {
     "sha256": "aa943c1f29e2cf27b9da96b9334c61672321f07227c3125bd1ff5eef60e7023f",
@@ -100,8 +104,8 @@
     "v": "20261015-09"
   },
   "css/features/na-de-match.css": {
-    "sha256": "131a60468b4b3379e50ab7d2c62fd8deb1417c7bc7d3cdfe01e76a4d2b17f605",
-    "v": "20261018-21"
+    "sha256": "92a4ca4939fea11156f7a60a589da4f67f9c519050767c414bed42cb362aee64",
+    "v": "20261018-22"
   },
   "css/features/nav-feedback.css": {
     "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",

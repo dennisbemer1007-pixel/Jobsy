@@ -2183,6 +2183,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("ReferenceType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RelationshipContext")
+                        .HasColumnType("text");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
 
@@ -5878,6 +5884,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<bool>("SchoolsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("SensitiveExperienceEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<int>("SessionInactivityTimeoutMinutes")

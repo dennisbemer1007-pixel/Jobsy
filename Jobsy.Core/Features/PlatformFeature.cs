@@ -74,6 +74,9 @@ public enum PlatformFeature
     /// <summary>Na de match: gesprek plannen, berichten en uitkomst. Default false.</summary>
     AfterMatch,
 
+    /// <summary>Privacy controls for sensitive work history. Default false.</summary>
+    SensitiveExperience,
+
     /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
     TrainingPartners
 }

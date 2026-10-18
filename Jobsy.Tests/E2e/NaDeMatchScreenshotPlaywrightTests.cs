@@ -17,7 +17,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS"))
-            ? "/opt/cursor/artifacts/nadematch-r6"
+            ? "/opt/cursor/artifacts/nadematch-r7"
             : Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS")!;
 
     private static string MockupRoot =>
@@ -121,12 +121,22 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         await AssertCapturePageHealthyAsync(page, route.Id, route.Role);
         await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
+        await PrepareCaptureChromeAsync(page, route.Role);
         await page.WaitForTimeoutAsync(400);
         var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
         await page.ScreenshotAsync(new() { Path = file, FullPage = true });
         if (tag is "mobiel" or "desktop")
         {
             CopyMockupSideBySide(route.Id, tag, file, compareDir);
+        }
+    }
+
+    private static async Task PrepareCaptureChromeAsync(IPage page, string role)
+    {
+        if (role == "kandidaat")
+        {
+            await page.EvaluateAsync(
+                "document.documentElement.setAttribute('data-ndm-screenshot','1');");
         }
     }
 
