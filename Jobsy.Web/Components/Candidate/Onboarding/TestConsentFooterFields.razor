@@ -11,7 +11,8 @@
                checked="@Draft.ConsentRequested"
                @onchange="OnConsentChanged" />
         <span class="ob-journey__consent-label">
-            <span class="ob-journey__consent-phrase">@Culture["Onboarding.Journey.Consent.Check"]</span><button type="button"
+            <span class="ob-journey__consent-phrase">@Culture["Onboarding.Journey.Consent.Check"]</span>
+            <button type="button"
                     class="ob-journey__consent-more-link"
                     aria-expanded="@(_moreOpen ? "true" : "false")"
                     @onclick="ToggleMore"
