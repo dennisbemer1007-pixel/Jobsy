@@ -149,6 +149,7 @@ public static class UiStringsAfterMatch
             "Het is nu niet doorgegaan. Hieronder zie je wat Linda schreef en banen die erop lijken.",
             "It did not work out this time. Below you see what Linda wrote and jobs that look similar.");
         Add("AfterMatch.Screen13.Similar", "Banen die erop lijken", "Jobs that look similar");
+        Add("AfterMatch.Screen13.FeedbackTitle", "Wat Bakkerij De Korenaar zegt", "What Bakkerij De Korenaar says");
         Add("AfterMatch.Screen13.Next", "Volgende stap", "Next step");
 
         Add("AfterMatch.Messages.NewPill", "1 nieuw", "1 new");
@@ -168,5 +169,70 @@ public static class UiStringsAfterMatch
 
         Add("AfterMatch.Error.Load", "Gesprek laden mislukt. Probeer het later opnieuw.", "Could not load the interview. Try again later.");
         Add("AfterMatch.Error.NotFound", "Geen gesprek gevonden voor deze sollicitatie.", "No interview found for this application.");
+
+        Add("AfterMatch.Demo.Team", "Team Bakkerij", "Bakery team");
+        Add("AfterMatch.Employer.YesOn", "ja gezegd op {0}", "said yes on {0}");
+        Add("AfterMatch.Employer.Share.Title", "Wat Sanne deelt", "What Sanne shares");
+        Add("AfterMatch.Employer.Share.Passport", "Paspoort, met onderschreven competenties", "Passport with endorsed competencies");
+        Add("AfterMatch.Employer.Share.Phone", "Telefoon zie je na het gesprek, als Sanne dat wil", "Phone after the interview if Sanne agrees");
+        Add("AfterMatch.Employer.Share.Bank", "Bankgegevens pas na een aanbod, voor je eigen administratie", "Bank details only after an offer");
+        Add("AfterMatch.Employer.WhatNow.Slots.Title", "Nu: momenten voorstellen", "Now: propose times");
+        Add("AfterMatch.Employer.WhatNow.Slots.Body", "Stel 2 of 3 momenten voor, of deel je agenda. Doe het liefst binnen twee werkdagen.", "Propose 2 or 3 times or share your calendar within two working days.");
+        Add("AfterMatch.Employer.WhatNow.Interview.Body", "Lobsy stuurt jullie allebei een bevestiging en herinneringen.", "Lobsy sends both of you a confirmation and reminders.");
+        Add("AfterMatch.Employer.WhatNow.Outcome.Body", "Na het gesprek geef je de uitkomst met een korte reden.", "After the interview record the outcome with a short reason.");
+        Add("AfterMatch.Employer.Propose.Title", "Momenten voorstellen", "Propose times");
+        Add("AfterMatch.Employer.Propose.Lead", "Kies 2 of 3 momenten.", "Pick 2 or 3 times.");
+        Add("AfterMatch.Employer.Propose.Manual", "Zelf momenten kiezen", "Pick times yourself");
+        Add("AfterMatch.Employer.Propose.ShareAgenda", "Mijn agenda delen", "Share my calendar");
+        Add("AfterMatch.Employer.Propose.PickHint", "Klik in de weekweergave om momenten te selecteren (2–3).", "Click the week view to select 2–3 times.");
+        Add("AfterMatch.Employer.Propose.AgendaSoon", "Agenda koppelen komt later. Gebruik intussen de weekweergave om handmatig momenten te kiezen.", "Calendar linking comes later. Use the week view to pick times manually for now.");
+        Add("AfterMatch.Employer.Propose.Where", "Locatie of link", "Location or link");
+        Add("AfterMatch.Employer.Propose.WithWhom", "Met wie", "With whom");
+        Add("AfterMatch.Employer.Propose.Note", "Bericht erbij (mag kort)", "Short note (optional)");
+        Add("AfterMatch.Employer.Action.Propose", "Momenten voorstellen", "Propose times");
+        Add("AfterMatch.Employer.Action.Messages", "Bericht sturen", "Send message");
+        Add("AfterMatch.Employer.Expectation", "Sanne verwacht momenten voor donderdag 15 oktober", "Sanne expects times before Thursday 15 October");
+
+        Add("AfterMatch.Mail.CandidateSubject", "Onderwerp: Je gesprek bij Bakkerij De Korenaar staat erin", "Subject: Your interview at Bakkerij De Korenaar is booked");
+        Add("AfterMatch.Mail.EmployerSubject", "Onderwerp: Gesprek met {0} gepland", "Subject: Interview with {0} scheduled");
+        Add("AfterMatch.Mail.PlannedTag", "Gesprek gepland", "Interview scheduled");
+        Add("AfterMatch.Mail.CandidateTitle", "Je gesprek staat erin, {0}", "Your interview is booked, {0}");
+        Add("AfterMatch.Mail.CandidateLead", "Fijn dat het gelukt is. Hieronder staat alles op een rij. Je hoeft niets voor te bereiden.", "Glad it worked out. Everything is below. No preparation needed.");
+        Add("AfterMatch.Mail.When", "Wanneer", "When");
+        Add("AfterMatch.Mail.Where", "Waar", "Where");
+        Add("AfterMatch.Mail.With", "Met wie", "With whom");
+        Add("AfterMatch.Mail.Travel", "Reistijd", "Travel time");
+        Add("AfterMatch.Mail.Candidate", "Kandidaat", "Candidate");
+        Add("AfterMatch.Mail.After", "Na afloop", "Afterwards");
+        Add("AfterMatch.Mail.AfterBody", "Geef binnen 5 werkdagen de uitkomst", "Record the outcome within 5 working days");
+        Add("AfterMatch.Mail.EmployerTitle", "Sanne komt donderdag", "Sanne is coming Thursday");
+        Add("AfterMatch.Mail.EmployerLead", "Sanne koos een van je momenten. Het gesprek staat ook in Lobsy onder Gesprekken.", "Sanne picked one of your times. The interview is also in Lobsy under Interviews.");
+        Add("AfterMatch.Mail.OutlookTitle", "Zo ziet het agenda-item eruit in Outlook", "How the calendar item looks in Outlook");
+        Add("AfterMatch.Mail.OutlookSave", "Opslaan en sluiten", "Save and close");
+        Add("AfterMatch.Mail.OutlookDelete", "Verwijderen", "Delete");
+        Add("AfterMatch.Mail.OutlookBusy", "Beschikbaarheid: Bezet", "Show as: Busy");
+        Add("AfterMatch.Mail.OutlookEventTitle", "Gesprek {0} (via Lobsy)", "Interview {0} (via Lobsy)");
+        Add("AfterMatch.Mail.OutlookStart", "Begin", "Start");
+        Add("AfterMatch.Mail.OutlookEnd", "Einde", "End");
+        Add("AfterMatch.Mail.OutlookReminder", "Herinnering", "Reminder");
+        Add("AfterMatch.Mail.OutlookReminderVal", "2 uur van tevoren", "2 hours before");
+        Add("AfterMatch.Mail.OutlookBody", "Kennismaking voor {0} met {1}.", "Introduction for {0} with {1}.");
+
+        Add("AfterMatch.WhatNext.ReminderDay", "Woensdag 21 oktober, 18:00", "Wednesday 21 October, 18:00");
+        Add("AfterMatch.WhatNext.ReminderDayBody", "Herinnering per mail en melding, met route en tips voor je gesprek", "E-mail and push reminder with route and tips");
+        Add("AfterMatch.WhatNext.Reminder2h", "Donderdag 22 oktober, 8:30", "Thursday 22 October, 8:30");
+        Add("AfterMatch.WhatNext.Reminder2hBody", "Melding 2 uur van tevoren, met je reistijd op de fiets", "Notification 2 hours ahead with bike travel time");
+        Add("AfterMatch.WhatNext.Interview", "Donderdag 22 oktober, 10:30", "Thursday 22 October, 10:30");
+        Add("AfterMatch.WhatNext.InterviewBody", "Het gesprek met Linda bij Bakkerij De Korenaar", "The interview with Linda at Bakkerij De Korenaar");
+        Add("AfterMatch.WhatNext.Outcome", "Binnen 5 werkdagen daarna", "Within 5 working days after");
+        Add("AfterMatch.WhatNext.OutcomeBody", "Je hoort de uitkomst, met een korte reden. Ook als het nee is.", "You hear the outcome with a short reason, even when it is no.");
+
+        Add("AfterMatch.Screen06.PageTitle", "Bevestiging voor allebei, met agenda-item", "Confirmation for both, with calendar item");
+        Add("AfterMatch.Screen07.PageTitle", "Herinneringen", "Reminders");
+        Add("AfterMatch.Employer.Reschedule.Note", "Sanne vroeg om een ander moment. Hieronder zie je de reden en het voorstel.", "Sanne asked for another time. See the reason and proposal below.");
+        Add("AfterMatch.Employer.Reschedule.Accept", "Akkoord met voorstel", "Accept proposal");
+        Add("AfterMatch.Employer.Reschedule.Counter", "Ander moment voorstellen", "Propose another time");
+        Add("AfterMatch.Employer.Outcome.PreviewTitle", "Zo ziet Sanne het", "How Sanne sees it");
+        Add("AfterMatch.Employer.Outcome.PreviewLead", "Dank je wel voor het gesprek. Hier komt je korte uitleg.", "Thank you for the interview. Your short explanation appears here.");
     }
 }

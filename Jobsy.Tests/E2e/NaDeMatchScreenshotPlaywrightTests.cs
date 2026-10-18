@@ -1,10 +1,10 @@
-using Jobsy.Tests.E2e;
+using Jobsy.Infrastructure.Data;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests.E2e;
 
 /// <summary>
-/// Desktop 1440 and mobile 390 screenshots for Na de match dev previews vs mockups.
+/// Desktop 1440 and mobile 390 screenshots for Na de match live routes vs mockups.
 /// Run: JOBSY_NADMATCH_SCREENSHOTS=1 JOBSY_E2E_BASE_URL=http://127.0.0.1:5201
 /// </summary>
 [Collection("PlaywrightSmoke")]
@@ -17,17 +17,35 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS"))
-            ? "/opt/cursor/artifacts/nadematch-r1"
+            ? "/opt/cursor/artifacts/nadematch-r2"
             : Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS")!;
 
     private static string MockupRoot =>
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "docs", "na-de-match-package", "out", "na-de-match"));
 
-    private static readonly string[] ScreenIds =
-        ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13"];
+    private const string CandidateEmail = "kandidaat.denhaag@jobsy.local";
+    private const string EmployerEmail = "ondernemer@jobsy.local";
+    private const string Password = "Jobsy123!";
+
+    private static readonly (string Id, string Path, string Role)[] Routes =
+    [
+        ("01", $"/candidate/applications/{AfterMatchDemoIds.WaitApp:D}/after-match", "kandidaat"),
+        ("02", $"/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match", "werkgever"),
+        ("03", $"/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=propose", "werkgever"),
+        ("04", $"/candidate/applications/{AfterMatchDemoIds.PickSlotsApp:D}/after-match", "kandidaat"),
+        ("05", $"/candidate/applications/{AfterMatchDemoIds.ScheduledApp:D}/after-match", "kandidaat"),
+        ("06", $"/candidate/applications/{AfterMatchDemoIds.ScheduledApp:D}/after-match/bevestiging", "kandidaat"),
+        ("07", $"/candidate/applications/{AfterMatchDemoIds.ScheduledApp:D}/after-match/herinneringen", "kandidaat"),
+        ("08", $"/candidate/applications/{AfterMatchDemoIds.ScheduledApp:D}/after-match?panel=reschedule", "kandidaat"),
+        ("09", $"/werkgever/sollicitaties/{AfterMatchDemoIds.RescheduleApp:D}/after-match", "werkgever"),
+        ("10", $"/candidate/applications/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=messages", "kandidaat"),
+        ("11", $"/werkgever/sollicitaties/{AfterMatchDemoIds.WaitApp:D}/after-match?panel=messages", "werkgever"),
+        ("12", $"/werkgever/sollicitaties/{AfterMatchDemoIds.ScheduledApp:D}/after-match?panel=outcome", "werkgever"),
+        ("13", $"/candidate/applications/{AfterMatchDemoIds.NotNowApp:D}/after-match", "kandidaat"),
+    ];
 
     [Fact]
-    public async Task Capture_na_de_match_previews_desktop_and_mobile()
+    public async Task Capture_na_de_match_live_routes_desktop_and_mobile()
     {
         if (!ShouldRun)
         {
@@ -48,30 +66,34 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
 
         foreach (var (width, height, tag) in new[] { (1440, 900, "desktop"), (390, 844, "mobiel") })
         {
-            await using var context = await browser.NewContextAsync(new()
+            foreach (var role in new[] { "kandidaat", "werkgever" })
             {
-                ViewportSize = new() { Width = width, Height = height },
-                Locale = "nl-NL",
-            });
-            var page = await context.NewPageAsync();
-            page.SetDefaultTimeout(60_000);
-            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
+                var page = await context.NewPageAsync();
+                page.SetDefaultTimeout(60_000);
+                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
-            foreach (var id in ScreenIds)
-            {
-                await page.GotoAsync($"{baseUrl.TrimEnd('/')}/dev/na-de-match/{id}", new()
+                var email = role == "werkgever" ? EmployerEmail : CandidateEmail;
+                Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, Password));
+
+                foreach (var route in Routes.Where(r => r.Role == role))
                 {
-                    WaitUntil = WaitUntilState.DOMContentLoaded,
-                });
-                await page.Locator("[data-testid=ndm-preview]").WaitForAsync(new() { Timeout = 30_000 });
-                await page.WaitForTimeoutAsync(400);
-                var file = Path.Combine(OutDir, $"{id}-capture-{tag}.png");
-                await page.ScreenshotAsync(new() { Path = file, FullPage = true });
-                CopyMockupSideBySide(id, tag, file, compareDir);
+                    await page.GotoAsync($"{baseUrl.TrimEnd('/')}{route.Path}", new()
+                    {
+                        WaitUntil = WaitUntilState.DOMContentLoaded,
+                    });
+                    await page.Locator("[data-testid=ndm-candidate-live], [data-testid=ndm-werkgever-live]").WaitForAsync(new() { Timeout = 45_000 });
+                    var loginVisible = await page.GetByText("Inloggen", new() { Exact = true }).IsVisibleAsync();
+                    Assert.False(loginVisible, $"Screen {route.Id} still shows login for {role}");
+                    await page.WaitForTimeoutAsync(400);
+                    var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
+                    await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+                    CopyMockupSideBySide(route.Id, tag, file, compareDir);
+                }
             }
         }
 
-        Assert.True(Directory.GetFiles(OutDir, "*-capture-*.png").Length >= ScreenIds.Length * 2);
+        Assert.True(Directory.GetFiles(OutDir, "*-capture-*.png").Length >= Routes.Length * 2);
     }
 
     private static void CopyMockupSideBySide(string screenId, string tag, string capturePath, string compareDir)

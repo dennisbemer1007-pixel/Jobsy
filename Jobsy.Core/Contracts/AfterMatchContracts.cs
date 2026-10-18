@@ -22,7 +22,10 @@ public sealed record AfterMatchThreadDto(
     IReadOnlyList<AfterMatchMessageDto> Messages,
     AfterMatchReminderPreferenceDto ReminderPreference,
     IReadOnlyList<AfterMatchChangeDto> RecentChanges,
-    IReadOnlyList<AfterMatchSimilarVacancyDto> SimilarVacancies);
+    IReadOnlyList<AfterMatchSimilarVacancyDto> SimilarVacancies,
+    string CandidateName,
+    string? CandidateEmail,
+    DateTime? AcceptedAtUtc);
 
 public sealed record AfterMatchSlotDto(
     Guid Id,

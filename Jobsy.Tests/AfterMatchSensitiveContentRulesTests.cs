@@ -35,6 +35,10 @@ public sealed class AfterMatchSensitiveContentRulesTests
             SensitiveMessageContentRules.BlockReasonForEmployer(
                 SensitiveMessageContentRules.SensitiveKind.Iban,
                 share));
+
+        Assert.Equal(
+            SensitiveMessageContentRules.SensitiveKind.Iban,
+            SensitiveMessageContentRules.Detect("NL91ABNA0417164300"));
     }
 
     [Fact]

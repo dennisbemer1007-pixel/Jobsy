@@ -30,12 +30,12 @@
         <div class="compose" style="margin-top:12px">
             <input class="sp" style="border:0;outline:0;width:100%;font:inherit;color:inherit"
                    placeholder="@Culture["AfterMatch.Screen10.Compose"]"
-                   @bind="_draft" @bind:event="oninput" />
+                   @bind="_draft" @bind:event="oninput" @bind:after="DraftChangedAsync" />
             <button type="button" class="btn sm" disabled="@Busy" @onclick="SendAsync">
                 @((MarkupString)NdMIcons.Send)
             </button>
         </div>
-        @if (_preview is { WouldBlock: true } preview && preview.Kind != SensitiveMessageContentRules.SensitiveKind.None)
+        @if (ActivePreview is { WouldBlock: true } preview && preview.Kind != SensitiveMessageContentRules.SensitiveKind.None)
         {
             <div class="warnin" style="margin-top:10px" role="alert">
                 @Culture["AfterMatch.Messages.SensitiveWarning"]
@@ -63,10 +63,21 @@
     [Parameter] public bool Compact { get; set; }
     [Parameter] public string? SystemLine { get; set; }
     [Parameter] public EventCallback<string> OnPreview { get; set; }
+    [Parameter] public SensitiveMessagePreview? Preview { get; set; }
     [Parameter] public EventCallback<(string Body, bool ConfirmSensitive)> OnSend { get; set; }
 
     private string _draft = "";
     private SensitiveMessagePreview? _preview;
+
+    private SensitiveMessagePreview? ActivePreview => Preview ?? _preview;
+
+    private async Task DraftChangedAsync()
+    {
+        if (OnPreview.HasDelegate && !string.IsNullOrWhiteSpace(_draft))
+        {
+            await OnPreview.InvokeAsync(_draft);
+        }
+    }
 
     private async Task SendAsync() => await TrySendAsync(false);
 
@@ -82,14 +93,6 @@
         await OnSend.InvokeAsync((_draft.Trim(), confirm));
         _draft = "";
         _preview = null;
-    }
-
-    private async Task OnDraftChanged()
-    {
-        if (OnPreview.HasDelegate && !string.IsNullOrWhiteSpace(_draft))
-        {
-            // Preview handled by parent when binding changes — simplified: parent polls on send only in step 1.
-        }
     }
 
     private static string FormatWhen(DateTime utc)

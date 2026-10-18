@@ -1,0 +1,253 @@
+using Jobsy.Core.Entities;
+using Jobsy.Core.Enums;
+using Jobsy.Core.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace Jobsy.Infrastructure.Data;
+
+/// <summary>Deterministic after-match demo threads for local E2E / screenshot runs.</summary>
+internal static class AfterMatchDemoSeeder
+{
+    private static readonly Guid DemoCompanyId = Guid.Parse("77777771-00bb-4000-8000-0000000000bb");
+    private static readonly Guid BranchManagerId = Guid.Parse("bbbbbbbb-1111-1111-1111-111111111111");
+    private static readonly Guid CandidateId = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222");
+
+    private static readonly DateTime YesAt = new(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Slot1Start = new(2026, 10, 22, 8, 30, 0, DateTimeKind.Utc);
+    private static readonly DateTime Slot2Start = new(2026, 10, 23, 7, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime Slot3Start = new(2026, 10, 26, 12, 0, 0, DateTimeKind.Utc);
+
+    public static async Task EnsureAsync(JobsyDbContext db, ILogger logger)
+    {
+        await EnsureCompanyAsync(db);
+        await EnsureVacancyAsync(db);
+        await EnsureApplicationsAsync(db, logger);
+    }
+
+    private static async Task EnsureCompanyAsync(JobsyDbContext db)
+    {
+        if (!await db.Companies.AnyAsync(c => c.Id == DemoCompanyId))
+        {
+            db.Companies.Add(new Company
+            {
+                Id = DemoCompanyId,
+                Name = "Bakkerij De Korenaar",
+                KvkNumber = "99887766",
+                KvkEstablishmentId = "99887766_0001",
+                Address = "Loosduinseweg 120, Den Haag",
+                ContactEmail = "linda@korenaar.local",
+                Type = CompanyType.Employer,
+                Location = new GeoPoint(52.0780, 4.3100),
+                VerificationStatus = CompanyVerificationStatus.Verified,
+                VerificationMethod = CompanyVerificationMethod.AdminCreated,
+                VerifiedAtUtc = DateTime.UtcNow,
+                VerificationUpdatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        if (!await db.UserCompanies.AnyAsync(m => m.UserId == BranchManagerId && m.CompanyId == DemoCompanyId))
+        {
+            db.UserCompanies.Add(new UserCompany { UserId = BranchManagerId, CompanyId = DemoCompanyId });
+        }
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task EnsureVacancyAsync(JobsyDbContext db)
+    {
+        if (await db.Vacancies.AnyAsync(v => v.Id == AfterMatchDemoIds.DemoVacancyId))
+        {
+            return;
+        }
+
+        var start = DateOnly.FromDateTime(YesAt);
+        db.Vacancies.Add(new Vacancy
+        {
+            Id = AfterMatchDemoIds.DemoVacancyId,
+            CompanyId = DemoCompanyId,
+            Title = "Medewerker bakkerij",
+            Description = "After-match demo vacancy.",
+            HourlyWage = 14.5m,
+            StartDate = start,
+            EndDate = start.AddMonths(6),
+            Status = VacancyStatus.Active,
+            Location = new GeoPoint(52.0780, 4.3100),
+            PublishedAtUtc = YesAt.AddDays(-7),
+            CreatedAtUtc = YesAt.AddDays(-14)
+        });
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task EnsureApplicationsAsync(JobsyDbContext db, ILogger logger)
+    {
+        var candidate = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == CandidateId);
+        if (candidate is null)
+        {
+            return;
+        }
+
+        await UpsertAppAsync(db, AfterMatchDemoIds.WaitApp, InterviewStatus.Proposing, null, hasMessage: true);
+        await UpsertAppAsync(db, AfterMatchDemoIds.PickSlotsApp, InterviewStatus.Proposing, "slots", hasMessage: true);
+        await UpsertAppAsync(db, AfterMatchDemoIds.ScheduledApp, InterviewStatus.Scheduled, "scheduled", hasMessage: true);
+        await UpsertAppAsync(db, AfterMatchDemoIds.RescheduleApp, InterviewStatus.RescheduleRequested, "reschedule", hasMessage: true);
+        await UpsertAppAsync(db, AfterMatchDemoIds.NotNowApp, InterviewStatus.Done, "notnow", hasMessage: false, outcome: AfterMatchOutcomeKind.NotNow);
+
+        await db.SaveChangesAsync();
+        logger.LogInformation("After-match demo applications ensured.");
+    }
+
+    private static async Task UpsertAppAsync(
+        JobsyDbContext db,
+        Guid appId,
+        InterviewStatus interviewStatus,
+        string? scenario,
+        bool hasMessage,
+        AfterMatchOutcomeKind? outcome = null)
+    {
+        var app = await db.Applications
+            .Include(a => a.Vacancy)
+            .FirstOrDefaultAsync(a => a.Id == appId);
+
+        if (app is null)
+        {
+            app = new Application
+            {
+                Id = appId,
+                VacancyId = AfterMatchDemoIds.DemoVacancyId,
+                CandidateUserId = CandidateId,
+                CandidateName = "Sanne de Vries",
+                CandidateEmail = "sanne.devries@mail.nl",
+                CandidateCity = "Den Haag",
+                PreferredTransport = "Fiets",
+                EstimatedTravelMinutes = 9,
+                DistanceKm = 2.1,
+                Status = ApplicationStatus.Accepted,
+                CreatedAt = YesAt.AddDays(-2),
+                RespondedAt = YesAt,
+                EmailVerifiedAt = YesAt
+            };
+            db.Applications.Add(app);
+            db.ApplicationStatusHistories.Add(new ApplicationStatusHistory
+            {
+                Id = Guid.NewGuid(),
+                ApplicationId = appId,
+                Kind = ApplicationStatusEventKind.StatusChanged,
+                FromStatus = ApplicationStatus.Pending,
+                ToStatus = ApplicationStatus.Accepted,
+                OccurredAtUtc = YesAt,
+                ActorKind = ApplicationStatusActorKind.Employer
+            });
+        }
+
+        var interview = await db.Interviews
+            .Include(i => i.Slots)
+            .FirstOrDefaultAsync(i => i.ApplicationId == appId);
+
+        if (interview is null)
+        {
+            interview = new Interview
+            {
+                Id = Guid.NewGuid(),
+                ApplicationId = appId,
+                CalendarUid = $"demo-interview-{appId:N}@lobsy.nl",
+                CreatedAtUtc = YesAt,
+                UpdatedAtUtc = YesAt,
+                Format = InterviewFormat.OnSite,
+                LocationOrLink = "Loosduinseweg 120, Den Haag",
+                WithWhom = "Linda de Wit, eigenaar",
+                Note = "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren."
+            };
+            db.Interviews.Add(interview);
+        }
+
+        interview.Status = interviewStatus;
+        interview.Format = InterviewFormat.OnSite;
+        interview.LocationOrLink = "Loosduinseweg 120, Den Haag · ingang naast de winkel";
+        interview.WithWhom = "Linda de Wit, eigenaar";
+        interview.UpdatedAtUtc = DateTime.UtcNow;
+        interview.ChosenSlotId = null;
+
+        db.InterviewSlots.RemoveRange(interview.Slots);
+        interview.Slots.Clear();
+
+        if (scenario is "slots" or "reschedule")
+        {
+            AddSlot(interview, Slot1Start);
+            AddSlot(interview, Slot2Start);
+            AddSlot(interview, Slot3Start);
+        }
+
+        if (scenario == "scheduled")
+        {
+            var chosen = AddSlot(interview, Slot1Start);
+            chosen.IsSelected = true;
+            interview.ChosenSlotId = chosen.Id;
+        }
+
+        if (scenario == "reschedule")
+        {
+            var candidateSlot = AddSlot(interview, Slot2Start.AddDays(2), InterviewSlotProposer.Candidate, "Ik ben die donderdag ziek geworden.");
+            interview.Status = InterviewStatus.RescheduleRequested;
+            db.InterviewChanges.Add(new InterviewChange
+            {
+                Id = Guid.NewGuid(),
+                InterviewId = interview.Id,
+                Kind = InterviewChangeKind.Reschedule,
+                ActorRole = "Candidate",
+                Reason = candidateSlot.Reason!,
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        if (outcome is AfterMatchOutcomeKind kind)
+        {
+            interview.Status = InterviewStatus.Done;
+            var existing = await db.ApplicationOutcomes.FirstOrDefaultAsync(o => o.ApplicationId == appId);
+            if (existing is null)
+            {
+                db.ApplicationOutcomes.Add(new ApplicationOutcome
+                {
+                    ApplicationId = appId,
+                    Outcome = kind,
+                    Reason = "Je was heel zorgvuldig en vriendelijk. We kozen nu voor iemand die al zelfstandig aan de oven kan staan.",
+                    CreatedAtUtc = DateTime.UtcNow,
+                    RecordedByUserId = BranchManagerId,
+                    ToneCheckOk = true
+                });
+            }
+        }
+
+        if (hasMessage && !await db.ApplicationMessages.AnyAsync(m => m.ApplicationId == appId))
+        {
+            db.ApplicationMessages.Add(new ApplicationMessage
+            {
+                Id = Guid.NewGuid(),
+                ApplicationId = appId,
+                SenderUserId = BranchManagerId,
+                Body = "Hoi Sanne, leuk dat je wilt komen kennismaken! Ik stuur je vandaag nog een paar momenten.",
+                CreatedAtUtc = YesAt.AddHours(3),
+                BlockReason = ApplicationMessageBlockReason.None
+            });
+        }
+    }
+
+    private static InterviewSlot AddSlot(
+        Interview interview,
+        DateTime start,
+        InterviewSlotProposer proposer = InterviewSlotProposer.Employer,
+        string? reason = null)
+    {
+        var slot = new InterviewSlot
+        {
+            Id = Guid.NewGuid(),
+            InterviewId = interview.Id,
+            StartUtc = start,
+            EndUtc = start.AddMinutes(30),
+            ProposedBy = proposer,
+            Reason = reason
+        };
+        interview.Slots.Add(slot);
+        return slot;
+    }
+}

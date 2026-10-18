@@ -64,7 +64,10 @@ public sealed class AfterMatchService : IAfterMatchService
         CancellationToken cancellationToken = default)
     {
         var application = await RequireEmployerApplicationAsync(applicationId, employerUserId, cancellationToken);
-        var interview = await EnsureInterviewEntityAsync(application, cancellationToken);
+        await EnsureInterviewEntityAsync(application, cancellationToken);
+        var interview = await _db.Interviews
+            .Include(i => i.Slots)
+            .FirstAsync(i => i.ApplicationId == applicationId, cancellationToken);
 
         if (request.Slots.Count is < AfterMatchInterviewRules.MinEmployerSlots or > AfterMatchInterviewRules.MaxEmployerSlots)
         {
@@ -87,12 +90,18 @@ public sealed class AfterMatchService : IAfterMatchService
         interview.ChosenSlotId = null;
         interview.UpdatedAtUtc = DateTime.UtcNow;
 
-        _db.InterviewSlots.RemoveRange(interview.Slots);
-        interview.Slots.Clear();
+        var existingSlots = await _db.InterviewSlots
+            .Where(s => s.InterviewId == interview.Id)
+            .ToListAsync(cancellationToken);
+        if (existingSlots.Count > 0)
+        {
+            _db.InterviewSlots.RemoveRange(existingSlots);
+            await _db.SaveChangesAsync(cancellationToken);
+        }
 
         foreach (var slot in request.Slots)
         {
-            interview.Slots.Add(new InterviewSlot
+            _db.InterviewSlots.Add(new InterviewSlot
             {
                 Id = Guid.NewGuid(),
                 InterviewId = interview.Id,
@@ -565,8 +574,14 @@ public sealed class AfterMatchService : IAfterMatchService
             ? await LoadSimilarVacanciesAsync(application, cancellationToken)
             : [];
 
+        var acceptedAt = await _db.ApplicationStatusHistories.AsNoTracking()
+            .Where(h => h.ApplicationId == application.Id && h.ToStatus == ApplicationStatus.Accepted)
+            .OrderBy(h => h.OccurredAtUtc)
+            .Select(h => (DateTime?)h.OccurredAtUtc)
+            .FirstOrDefaultAsync(cancellationToken);
+
         var travel = application.EstimatedTravelMinutes > 0
-            ? $"{application.EstimatedTravelMinutes} min"
+            ? $"{application.EstimatedTravelMinutes} min fietsen"
             : null;
 
         return new AfterMatchThreadDto(
@@ -600,7 +615,10 @@ public sealed class AfterMatchService : IAfterMatchService
                 prefs?.DayBefore18 ?? true,
                 prefs?.TwoHoursBefore ?? true),
             changes.Select(c => new AfterMatchChangeDto(c.Kind, c.ActorRole, c.Reason, c.CreatedAtUtc)).ToList(),
-            similar);
+            similar,
+            application.CandidateName,
+            application.CandidateEmail,
+            acceptedAt);
     }
 
     private async Task<IReadOnlyList<AfterMatchSimilarVacancyDto>> LoadSimilarVacanciesAsync(

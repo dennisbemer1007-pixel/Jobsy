@@ -48,5 +48,8 @@ internal static class NdMDemoData
             [DemoMessage()],
             new AfterMatchReminderPreferenceDto(false, true, true),
             [],
-            []);
+            [],
+            "Sanne de Vries",
+            "sanne.devries@mail.nl",
+            new DateTime(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc));
 }

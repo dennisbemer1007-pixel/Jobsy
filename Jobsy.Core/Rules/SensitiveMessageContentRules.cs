@@ -68,6 +68,14 @@ public static partial class SensitiveMessageContentRules
             }
         }
 
+        foreach (Match match in CompactIbanPattern().Matches(text))
+        {
+            if (Iban.IsValid(Iban.Normalize(match.Value)))
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 
@@ -97,4 +105,8 @@ public static partial class SensitiveMessageContentRules
 
     [GeneratedRegex(@"\b[A-Z]{2}\s?[0-9]{2}(?:\s?[A-Z0-9]{4}){2,7}\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
     private static partial Regex IbanPattern();
+
+    /// <summary>Compact SEPA tokens (e.g. NL91ABNA0417164300) where spaced groups do not match.</summary>
+    [GeneratedRegex(@"\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,27}\b", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase)]
+    private static partial Regex CompactIbanPattern();
 }
