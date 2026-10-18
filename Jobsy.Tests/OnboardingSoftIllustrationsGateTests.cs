@@ -65,7 +65,10 @@ public sealed class OnboardingSoftIllustrationsGateTests
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
         Assert.Contains("object-fit: contain", css, StringComparison.Ordinal);
-        Assert.Contains("mask-image: linear-gradient(to right, transparent 0, #000 100px)", css, StringComparison.Ordinal);
+        Assert.Contains("ob-illustrated-step__art-img-wrap", css, StringComparison.Ordinal);
+        Assert.Contains("padding-inline-start: 140px", css, StringComparison.Ordinal);
+        Assert.Contains("mask-origin: border-box", css, StringComparison.Ordinal);
+        Assert.Contains("mask-image: linear-gradient(to right, transparent 0, transparent 120px, #000 140px", css, StringComparison.Ordinal);
         Assert.Contains("block-size: 120px", css, StringComparison.Ordinal);
     }
 

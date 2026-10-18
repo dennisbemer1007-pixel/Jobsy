@@ -43,4 +43,32 @@ public sealed class OnboardingDreamSuggestionPickerTests
         Assert.Equal("Teamleider kas", OnboardingDreamSuggestionPicker.FormatRegionalVacancyLine("Teamleider kas"));
         Assert.Equal("HR-adviseur", OnboardingDreamSuggestionPicker.FormatProfessionFromVacancy("hr adviseur"));
     }
+
+    [Fact]
+    public void BuildRegionalTitles_skips_titles_already_in_fit_list()
+    {
+        var nearby = new[]
+        {
+            "Barista centrum Naaldwijk",
+            "Teamleider kas",
+            "Klantenservice winkel",
+            "Bediening lunchroom",
+        };
+        var regional = OnboardingDreamSuggestionPicker.BuildRegionalTitles(
+            nearby,
+            max: 4,
+            excludeTitles: ["Barista", "Kassamedewerker"]);
+        Assert.DoesNotContain(regional, t => string.Equals(t, "Barista", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(regional, t => string.Equals(t, "Teamleider kas", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void BuildRegionalTitles_skips_profession_prefix_overlap_with_fit()
+    {
+        var regional = OnboardingDreamSuggestionPicker.BuildRegionalTitles(
+            ["Kassamedewerker Naaldwijk", "Teamleider kas"],
+            max: 4,
+            excludeTitles: ["Kassamedewerker"]);
+        Assert.DoesNotContain(regional, t => t.Contains("Kassamedewerker", StringComparison.OrdinalIgnoreCase));
+    }
 }

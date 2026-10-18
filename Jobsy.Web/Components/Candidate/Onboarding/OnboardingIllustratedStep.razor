@@ -9,17 +9,20 @@
             </div>
         }
         <div class="ob-illustrated-step__art" aria-hidden="true" data-testid="onboarding-illustration-art">
-            <picture>
-                <source type="image/webp" srcset="@WebpSrc" />
-                <img src="@JpgSrc"
-                     alt=""
-                     width="@ImageWidth"
-                     height="@ImageHeight"
-                     loading="lazy"
-                     decoding="async"
-                     tabindex="-1"
-                     data-testid="onboarding-illustration-img" />
-            </picture>
+            <span class="ob-illustrated-step__art-img-wrap">
+                <picture>
+                    <source type="image/webp" srcset="@WebpSrc" />
+                    <img src="@JpgSrc"
+                         alt=""
+                         width="@ImageWidth"
+                         height="@ImageHeight"
+                         loading="eager"
+                         fetchpriority="high"
+                         decoding="async"
+                         tabindex="-1"
+                         data-testid="onboarding-illustration-img" />
+                </picture>
+            </span>
         </div>
     </div>
     <div class="ob-illustrated-step__body">

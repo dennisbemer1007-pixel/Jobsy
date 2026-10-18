@@ -190,6 +190,10 @@
     protected override void OnParametersSet()
     {
         FitSuggestions = OnboardingDreamSuggestionPicker.BuildFromProfile(Draft, RegionalVacancyTitles, max: 4);
-        RegionalTitles = OnboardingDreamSuggestionPicker.BuildRegionalTitles(RegionalVacancyTitles, max: 4);
+        var fitTitles = FitSuggestions.Select(item => item.Title).ToList();
+        RegionalTitles = OnboardingDreamSuggestionPicker.BuildRegionalTitles(
+            RegionalVacancyTitles,
+            max: 4,
+            excludeTitles: fitTitles);
     }
 }

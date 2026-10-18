@@ -107,15 +107,47 @@ public static class OnboardingDreamSuggestionPicker
         return list;
     }
 
-    public static IReadOnlyList<string> BuildRegionalTitles(IEnumerable<string> nearbyVacancyTitles, int max = 4)
+    public static IReadOnlyList<string> BuildRegionalTitles(
+        IEnumerable<string> nearbyVacancyTitles,
+        int max = 4,
+        IEnumerable<string>? excludeTitles = null)
     {
+        var exclude = excludeTitles is null
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : excludeTitles.ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         return nearbyVacancyTitles
             .Where(title => !string.IsNullOrWhiteSpace(title))
             .Select(FormatRegionalVacancyLine)
             .Where(title => !string.IsNullOrWhiteSpace(title))
             .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(title => !IsDuplicateProfession(title, exclude))
             .Take(max)
             .ToList();
+    }
+
+    private static bool IsDuplicateProfession(string candidate, HashSet<string> exclude)
+    {
+        if (exclude.Contains(candidate))
+        {
+            return true;
+        }
+
+        foreach (var fit in exclude)
+        {
+            if (string.Equals(fit, candidate, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (candidate.StartsWith(fit + " ", StringComparison.OrdinalIgnoreCase)
+                || fit.StartsWith(candidate + " ", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     internal static string FormatProfessionFromVacancy(string? raw)
