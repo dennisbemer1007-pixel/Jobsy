@@ -37,7 +37,7 @@
             </ul>
         </div>
     }
-    else
+    else if (!SuppressPremiumUpsell)
     {
         <TestResultPremiumBlock Kind="Kind"
                                 TestTitle="@Culture[TitleKey]"
@@ -72,6 +72,7 @@
     [Parameter] public bool ShowSamplePdf { get; set; }
     [Parameter] public bool AllExtendedDone { get; set; }
     [Parameter] public bool ShowHeading { get; set; } = true;
+    [Parameter] public bool SuppressPremiumUpsell { get; set; }
     [Parameter] public IReadOnlyList<ReportLink> ReportLinks { get; set; } = [];
     [Parameter] public bool FreeForTestAccount { get; set; }
     [Parameter] public bool FreeForEveryone { get; set; }

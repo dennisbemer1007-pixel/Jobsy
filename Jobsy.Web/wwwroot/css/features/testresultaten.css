@@ -644,3 +644,345 @@
 .test-result-history a:hover {
     background: var(--hover);
 }
+
+/* Jouw spiegel — full-depth free test reflection */
+.test-mirror {
+    margin-block: 1.25rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.test-mirror__hero {
+    border-radius: 1.125rem;
+    overflow: hidden;
+    border: 1px solid #dde6f1;
+    background: linear-gradient(180deg, #eef3fa 0%, #f7f1e8 100%);
+    min-block-size: 9rem;
+}
+
+.test-mirror__hero-inner {
+    padding: 1.75rem 1.25rem 1.5rem;
+    text-align: center;
+    max-inline-size: 36rem;
+    margin-inline: auto;
+}
+
+.test-mirror__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 650;
+    color: var(--brand);
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(15, 45, 92, 0.1);
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+}
+
+.test-mirror__title {
+    margin: 0.65rem 0 0.35rem;
+    font-size: clamp(1.45rem, 3vw, 2rem);
+    font-weight: 700;
+    color: var(--brand);
+    line-height: 1.15;
+}
+
+.test-mirror__subtitle {
+    margin: 0;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+.test-mirror__themes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.test-mirror__theme {
+    border-radius: 0.875rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+}
+
+.test-mirror__theme small {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+}
+
+.test-mirror__theme h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    color: var(--brand);
+}
+
+.test-mirror__theme p {
+    margin: 0;
+    font-size: 0.93rem;
+    color: #3d4e63;
+    line-height: 1.45;
+}
+
+.test-mirror__theme--0 { background: #eef3fa; }
+.test-mirror__theme--1 { background: #fdf1ec; }
+.test-mirror__theme--2 { background: #eff4ee; }
+
+.test-mirror__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.1rem;
+}
+
+.test-mirror__col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.test-mirror__card {
+    background: var(--surface, #fffcfa);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.15rem 1.25rem;
+}
+
+.test-mirror__card small {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+}
+
+.test-mirror__card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+    color: var(--brand);
+}
+
+.test-mirror__list {
+    list-style: none;
+    margin: 0.35rem 0 0;
+    padding: 0;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.test-mirror__list li {
+    display: flex;
+    gap: 0.65rem;
+    font-size: 0.95rem;
+    color: #3d4e63;
+    line-height: 1.45;
+}
+
+.test-mirror__list li::before {
+    content: "";
+    flex-shrink: 0;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    margin-top: 0.45rem;
+    background: #2f7a4f;
+}
+
+.test-mirror__list--watch li::before {
+    background: #c99a2e;
+}
+
+.test-mirror__energy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.35rem;
+}
+
+.test-mirror__energy > div {
+    border-radius: 0.75rem;
+    padding: 0.85rem;
+    background: #eff4ee;
+}
+
+.test-mirror__energy--drain {
+    background: #f6efe6 !important;
+}
+
+.test-mirror__energy h4 {
+    margin: 0 0 0.45rem;
+    font-size: 0.92rem;
+    color: var(--brand);
+}
+
+.test-mirror__energy ul {
+    margin: 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    color: #3d4e63;
+}
+
+.test-mirror__dream {
+    margin: 0.85rem 0 0;
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.75rem;
+    background: #eef3fa;
+    font-size: 0.92rem;
+    color: #24364f;
+}
+
+.test-mirror__feedback {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+}
+
+.test-mirror__feedback-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.test-mirror__pill {
+    border: 1px solid #cfd8e4;
+    background: #fff;
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--brand);
+    cursor: pointer;
+}
+
+.test-mirror__pill.is-on {
+    background: #eef3fa;
+    border-color: var(--brand);
+}
+
+.test-mirror__privacy {
+    display: flex;
+    gap: 0.45rem;
+    align-items: flex-start;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0;
+}
+
+.test-mirror-bridge {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.25rem;
+    align-items: center;
+    margin-block: 0.5rem 1.75rem;
+    padding: 1.35rem 1.5rem;
+    border-radius: 1.125rem;
+    border: 1px solid #eadcc8;
+    background: #fdf6ec;
+}
+
+.test-mirror-bridge small {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+}
+
+.test-mirror-bridge h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.2rem;
+    color: var(--brand);
+}
+
+.test-mirror-bridge__copy p {
+    margin: 0;
+    color: #3d4e63;
+    max-inline-size: 36rem;
+}
+
+.test-mirror-bridge__cta {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.45rem;
+    min-inline-size: 12rem;
+}
+
+.test-mirror-bridge__link {
+    border: none;
+    background: transparent;
+    color: var(--brand);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.test-mirror-bridge__fine {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+.test-mirror-scores {
+    margin-block: 0.5rem 1.25rem;
+    border-block: 1px solid var(--border);
+    padding-block: 0.35rem;
+}
+
+.test-mirror-scores summary {
+    cursor: pointer;
+    font-weight: 650;
+    color: var(--brand);
+    padding: 0.65rem 0.25rem;
+    list-style: none;
+}
+
+.test-mirror-scores summary::-webkit-details-marker {
+    display: none;
+}
+
+.test-mirror-scores summary .muted {
+    display: block;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.15rem;
+}
+
+@media (max-width: 720px) {
+    .test-mirror__hero-inner {
+        text-align: start;
+        padding-inline: 1rem;
+    }
+
+    .test-mirror__themes,
+    .test-mirror__grid,
+    .test-mirror__energy {
+        grid-template-columns: 1fr;
+    }
+
+    .test-mirror-bridge {
+        grid-template-columns: 1fr;
+    }
+
+    .test-mirror__feedback {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

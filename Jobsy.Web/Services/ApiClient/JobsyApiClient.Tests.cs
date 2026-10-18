@@ -4,6 +4,7 @@ using System.Net;
 using System.Text.Json;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Reports.TestReflection;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services.Careers;
@@ -529,6 +530,41 @@ public sealed partial class JobsyApiClient
         catch (HttpRequestException)
         {
             return null;
+        }
+    }
+
+    public async Task<TestReflectionState?> GetTestReflectionAsync(string kind, string? lang, CancellationToken ct = default)
+    {
+        var url = $"api/me/test-reflection/{Uri.EscapeDataString(kind)}";
+        if (!string.IsNullOrWhiteSpace(lang))
+        {
+            url += $"?lang={Uri.EscapeDataString(lang)}";
+        }
+
+        try
+        {
+            return await _http.GetFromJsonAsync<TestReflectionState>(url, ct);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden)
+        {
+            return null;
+        }
+    }
+
+    public async Task SaveTestReflectionFeedbackAsync(
+        string kind,
+        TestReflectionFeedback feedback,
+        TestDepthLevel level = TestDepthLevel.Full,
+        CancellationToken ct = default)
+    {
+        var response = await _http.PutAsJsonAsync(
+            $"api/me/test-reflection/{Uri.EscapeDataString(kind)}/feedback",
+            new { feedback = feedback.ToString(), level },
+            ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(ExtractMessage(body) ?? "Feedback opslaan mislukt.");
         }
     }
 

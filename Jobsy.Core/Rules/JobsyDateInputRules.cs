@@ -328,7 +328,6 @@ public static class JobsyDateInputRules
 
     public static bool TryParseVacancyCsvDate(string? raw, out DateOnly date)
     {
-        date = default;
         if (TryParseFlexibleDate(raw, out date))
         {
             return true;

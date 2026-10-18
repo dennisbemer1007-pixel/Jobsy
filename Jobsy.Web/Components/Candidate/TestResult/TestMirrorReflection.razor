@@ -1,0 +1,127 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Core.Reports.TestReflection
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+@if (Mirror is null)
+{
+    return;
+}
+
+<section class="test-mirror" aria-label="@Mirror.HeroTitle">
+    <div class="test-mirror__hero">
+        <div class="test-mirror__hero-inner">
+            <span class="test-mirror__badge"><span aria-hidden="true">●</span> @Mirror.BadgeLabel</span>
+            <h2 class="test-mirror__title">@Mirror.HeroTitle</h2>
+            <p class="test-mirror__subtitle">@Mirror.HeroSubtitle</p>
+        </div>
+    </div>
+
+    @if (Mirror.Themes.Count > 0)
+    {
+        <div class="test-mirror__themes">
+            @foreach (var (theme, index) in Mirror.Themes.Select((t, i) => (t, i)))
+            {
+                <article class="test-mirror__theme test-mirror__theme--@index">
+                    <small>@Culture["TestReflection.ThemeLabel"]</small>
+                    <h3>@theme.Title</h3>
+                    <p>@theme.Summary</p>
+                </article>
+            }
+        </div>
+    }
+
+    <div class="test-mirror__grid">
+        <div class="test-mirror__col">
+            <article class="test-mirror__card">
+                <small>@Culture["TestReflection.PracticeLabel"]</small>
+                <h3>@Mirror.PracticeTitle</h3>
+                <ul class="test-mirror__list test-mirror__list--ok">
+                    @foreach (var line in Mirror.PracticeExamples)
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            </article>
+            <article class="test-mirror__card test-mirror__card--watch">
+                <small>@Culture["TestReflection.WatchLabel"]</small>
+                <h3>@Mirror.WatchTitle</h3>
+                <ul class="test-mirror__list test-mirror__list--watch">
+                    @foreach (var line in Mirror.WatchPoints)
+                    {
+                        <li>@line</li>
+                    }
+                </ul>
+            </article>
+        </div>
+        <div class="test-mirror__col">
+            <article class="test-mirror__card">
+                <small>@Culture["TestReflection.EnergyLabel"]</small>
+                <h3>@Culture["TestReflection.EnergyLabel"]</h3>
+                <div class="test-mirror__energy">
+                    <div>
+                        <h4>@Culture["TestReflection.EnergyGives"]</h4>
+                        <ul>
+                            @foreach (var line in Mirror.EnergyGives)
+                            {
+                                <li>@line</li>
+                            }
+                        </ul>
+                    </div>
+                    <div class="test-mirror__energy--drain">
+                        <h4>@Culture["TestReflection.EnergyDrains"]</h4>
+                        <ul>
+                            @foreach (var line in Mirror.EnergyDrains)
+                            {
+                                <li>@line</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </article>
+            <article class="test-mirror__card">
+                <small>@Culture["TestReflection.EnvironmentLabel"]</small>
+                <h3>@Mirror.EnvironmentTitle</h3>
+                <p>@Mirror.EnvironmentBody</p>
+                @if (!string.IsNullOrWhiteSpace(Mirror.DreamCallout))
+                {
+                    <p class="test-mirror__dream">@Mirror.DreamCallout</p>
+                }
+            </article>
+        </div>
+    </div>
+
+    <div class="test-mirror__feedback">
+        <strong>@Culture["TestReflection.Recognize"]</strong>
+        <div class="test-mirror__feedback-btns" role="group" aria-label="@Culture["TestReflection.Recognize"]">
+            <button type="button" class="test-mirror__pill @(Feedback == TestReflectionFeedback.Yes ? "is-on" : "")" disabled="@Busy" @onclick="() => SaveFeedback(TestReflectionFeedback.Yes)">@Culture["TestReflection.Feedback.Yes"]</button>
+            <button type="button" class="test-mirror__pill @(Feedback == TestReflectionFeedback.Partial ? "is-on" : "")" disabled="@Busy" @onclick="() => SaveFeedback(TestReflectionFeedback.Partial)">@Culture["TestReflection.Feedback.Partial"]</button>
+            <button type="button" class="test-mirror__pill @(Feedback == TestReflectionFeedback.No ? "is-on" : "")" disabled="@Busy" @onclick="() => SaveFeedback(TestReflectionFeedback.No)">@Culture["TestReflection.Feedback.No"]</button>
+        </div>
+        <ReadAloudButton Text="@SpeechText" SpeechKey="@($"mirror-{Mirror.Kind}")" />
+    </div>
+    <p class="test-mirror__privacy">
+        <span aria-hidden="true">🔒</span>
+        @Culture["TestReflection.Privacy"]
+    </p>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public TestReflectionFull Mirror { get; set; } = default!;
+    [Parameter] public TestReflectionFeedback? Feedback { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<TestReflectionFeedback> OnFeedback { get; set; }
+
+    private string SpeechText =>
+        string.Join(". ", new[]
+        {
+            Mirror.HeroTitle,
+            Mirror.HeroSubtitle,
+            string.Join(". ", Mirror.Themes.Select(t => $"{t.Title}: {t.Summary}")),
+            string.Join(". ", Mirror.PracticeExamples),
+            string.Join(". ", Mirror.WatchPoints)
+        }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private Task SaveFeedback(TestReflectionFeedback value) => OnFeedback.InvokeAsync(value);
+}
