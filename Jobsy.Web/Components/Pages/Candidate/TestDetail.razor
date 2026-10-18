@@ -29,7 +29,7 @@
 
 <PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate test-detail-page pb-28">
+<div class="panel-page profile-page profile-page--candidate test-detail-page pb-28 @(_mirror?.Mirror is not null ? "test-detail-page--mirror" : null)">
     <p class="test-detail__back">
         <a href="/candidate/profile?tab=tests" class="btn btn-ghost">← @Culture["Tests.BackToOverview"]</a>
     </p>

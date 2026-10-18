@@ -1152,23 +1152,21 @@
 
 @media (max-width: 720px) {
     .test-mirror__hero {
-        background: #eef3fa url("/images/test-reflection/band-mob.jpg") no-repeat center bottom / cover;
-        min-block-size: 11.5rem;
+        display: flex;
+        flex-direction: column;
+        background: var(--pearl, #f7f4f0);
+        min-block-size: 0;
     }
 
     .test-mirror__hero::before {
-        background: linear-gradient(
-            180deg,
-            rgba(238, 243, 250, 0.96) 0%,
-            rgba(238, 243, 250, 0.82) 45%,
-            rgba(238, 243, 250, 0.35) 72%,
-            transparent 100%
-        );
+        display: none;
     }
 
     .test-mirror__hero-inner {
+        flex: 0 0 auto;
         text-align: start;
-        padding: 1.35rem 1rem 0.75rem;
+        padding: 1rem 1rem 0.85rem;
+        background: var(--pearl, #f7f4f0);
     }
 
     .test-mirror__card-spot {
@@ -1177,9 +1175,12 @@
 
     .test-mirror__hero-art {
         display: block;
-        block-size: 4.25rem;
-        background: url("/images/test-reflection/band-mob.jpg") no-repeat 50% 100% / cover;
-        opacity: 0.55;
+        flex: 0 0 6.875rem;
+        block-size: 6.875rem;
+        inline-size: 100%;
+        background: #eef3fa url("/images/test-reflection/band-mob.jpg") no-repeat center center / cover;
+        opacity: 1;
+        border-block-start: 1px solid #dde6f1;
     }
 
     .test-mirror__card-lead {
@@ -1211,5 +1212,86 @@
     .test-mirror__feedback {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    /* Jouw spiegel test result: tighter top chrome + compact actions */
+    .test-detail-page--mirror.panel-page {
+        padding-block-start: 0.5rem;
+    }
+
+    .test-detail-page--mirror .test-detail__back {
+        margin-block-end: 0.25rem;
+    }
+
+    .test-detail-page--mirror .test-result-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.35rem;
+        margin-block: 0.2rem 0.65rem;
+    }
+
+    .test-detail-page--mirror .test-result-header h1 {
+        font-size: 1.35rem;
+        line-height: 1.2;
+    }
+
+    .test-detail-page--mirror .test-detail__status-row {
+        margin-block-end: 0;
+        gap: 0.35rem 0.5rem;
+    }
+
+    .test-detail-page--mirror .test-result-actions {
+        inline-size: 100%;
+        gap: 0.2rem;
+        margin-block-start: -0.1rem;
+    }
+
+    .test-detail-page--mirror .test-result-actions__btns {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.65rem 1rem;
+        grid-template-columns: none;
+    }
+
+    .test-detail-page--mirror .test-result-actions__btns .btn-outline-brand,
+    .test-detail-page--mirror .test-result-actions__btns .test-result-actions__ghost {
+        inline-size: auto;
+        flex: 0 1 auto;
+        min-block-size: 0;
+        min-height: 0;
+        padding: 0.1rem 0;
+        white-space: nowrap;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        line-height: 1.25;
+        border: 0;
+        background: transparent;
+        color: var(--brand);
+        text-decoration: underline;
+        text-underline-offset: 0.12em;
+        justify-content: flex-start;
+    }
+
+    .test-detail-page--mirror .test-result-quota {
+        font-size: 0.75rem;
+        margin-block-start: 0.15rem;
+    }
+
+    .test-detail-page--mirror .test-mirror {
+        margin-block-start: 0.75rem;
+    }
+
+    .test-detail-page--mirror .test-mirror__card-spot {
+        display: none;
+    }
+
+    /* Floating coach overlaps long mirror scroll — hide on this page only */
+    .app-shell:has(.test-detail-page--mirror) .lobsy-coach-dock {
+        display: none !important;
+    }
+
+    .app-shell:has(.test-detail-page--mirror) .app-main__content {
+        padding-bottom: calc(var(--bottom-nav-h, 4.75rem) + 12px + env(safe-area-inset-bottom, 0px));
     }
 }
