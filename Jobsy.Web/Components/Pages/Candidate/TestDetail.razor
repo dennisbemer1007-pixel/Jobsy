@@ -7,6 +7,7 @@
 @using Jobsy.Core.Reports.Career
 @using Jobsy.Core.Reports.Competence
 @using Jobsy.Core.Reports.Culture
+@using Jobsy.Core.Reports.TestReflection
 @using Jobsy.Core.Reports.Values
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
@@ -28,7 +29,7 @@
 
 <PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate test-detail-page pb-28">
+<div class="panel-page profile-page profile-page--candidate test-detail-page pb-28 @(_mirror?.Mirror is not null ? "test-detail-page--mirror" : null)">
     <p class="test-detail__back">
         <a href="/candidate/profile?tab=tests" class="btn btn-ghost">← @Culture["Tests.BackToOverview"]</a>
     </p>
@@ -52,65 +53,70 @@
             </div>
         }
 
-        <header class="test-result-header">
-            <div class="test-result-header__main">
-                <h1>@Culture[_def.TitleKey]</h1>
-                <p class="test-detail__status-row">
-                    <span class="test-status-badge test-status-badge--@(_deepCompleted ?"gold" : "success")">
-                        <span aria-hidden="true">@(_deepCompleted ? "★" : "✓")</span>
-                        @Culture[_deepCompleted ? "Test.Status.Extended" : "Test.Status.FreeDone"]
-                    </span>
-                    @if (!string.IsNullOrWhiteSpace(_completedMeta))
-                    {
-                        <span class="muted">@_completedMeta · @Culture.Format("TestResult.ScoresFromQuestions", _scoreBars.Count, _deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)</span>
-                    }
-                </p>
-            </div>
-            <div class="test-result-actions">
-                <div class="test-result-actions__btns">
-                    @if (_editModeEnabled)
-                    {
-                        <button type="button"
-                                class="btn-outline-brand"
-                                disabled="@(_busy || _adjustments.Remaining <= 0)"
-                                aria-describedby="test-result-quota"
-                                @onclick="BeginEditAsync">
-                            ✎ @Culture["TestResult.EditAnswers"]
-                        </button>
-                    }
-                    <button type="button"
-                            class="test-result-actions__ghost"
-                            disabled="@(_busy || _adjustments.Remaining <= 0)"
-                            aria-describedby="test-result-quota"
-                            @onclick="() => _redoOpen = true">
-                        ↻ @Culture["TestResult.Retake"]
-                    </button>
-                </div>
-                @if (_adjustments.Remaining <= 0)
-                {
-                    <p id="test-result-quota" class="test-result-quota test-result-quota--zero" role="status">
-                        <span class="test-result-quota__icon" aria-hidden="true">ⓘ</span>
-                        @Culture.Format("TestResult.Quota.Zero", _adjustments.Max)
-                    </p>
-                }
-                else
-                {
-                    <p id="test-result-quota" class="test-result-quota" role="status">
-                        <span aria-hidden="true">ⓘ</span>
-                        @if (_adjustments.Remaining == 1)
-                        {
-                            @Culture.Format("TestResult.Quota.LineOne", _adjustments.Max)
-                        }
-                        else
-                        {
-                            @Culture.Format("TestResult.Quota.Line", _adjustments.Remaining, _adjustments.Max)
-                        }
-                    </p>
-                }
-            </div>
-        </header>
+        @if (_mirror?.Mirror is not null)
+        {
+            <div class="test-mirror-page-shell">
+                <TestResultDoneHeader CssClass="test-result-header--mirror-desktop"
+                                      TitleKey="@_def.TitleKey"
+                                      DeepCompleted="_deepCompleted"
+                                      CompletedMeta="@_completedMeta"
+                                      ThemeCount="_scoreBars.Count"
+                                      QuestionCount="@(_deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)"
+                                      EditModeEnabled="_editModeEnabled"
+                                      Busy="_busy"
+                                      AdjustmentsRemaining="_adjustments.Remaining"
+                                      AdjustmentsMax="_adjustments.Max"
+                                      QuotaElementId="test-result-quota-desktop"
+                                      OnEdit="BeginEditAsync"
+                                      OnRetake="@(() => _redoOpen = true)" />
 
-        @if (!string.IsNullOrWhiteSpace(_headline))
+                <TestMirrorReflection Mirror="_mirror.Mirror"
+                                      Feedback="_mirror.Feedback"
+                                      Busy="_busy"
+                                      OnFeedback="SaveMirrorFeedbackAsync">
+                    <MetaAfterFeedback>
+                        <TestResultMirrorMetaTail TitleKey="@_def.TitleKey"
+                                                  DeepCompleted="_deepCompleted"
+                                                  CompletedMeta="@_completedMeta"
+                                                  ThemeCount="_scoreBars.Count"
+                                                  QuestionCount="@(_deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)"
+                                                  EditModeEnabled="_editModeEnabled"
+                                                  Busy="_busy"
+                                                  AdjustmentsRemaining="_adjustments.Remaining"
+                                                  AdjustmentsMax="_adjustments.Max"
+                                                  OnEdit="BeginEditAsync"
+                                                  OnRetake="@(() => _redoOpen = true)" />
+                    </MetaAfterFeedback>
+                </TestMirrorReflection>
+
+                @if (!_deepCompleted)
+                {
+                    <TestMirrorDeepBridge QuestionCount="_def.DeepQuestionCount"
+                                          MinutesApprox="@TestDepthRules.MinutesFor(_def.Kind, TestDepthLevel.Bottom)"
+                                          PriceEuro="_priceEuro"
+                                          Busy="_busy"
+                                          ShowSamplePdf="_samplePdfEnabled"
+                                          OnOffer="GoToOfferAsync"
+                                          OnSamplePdf="OpenSamplePdfAsync" />
+                }
+            </div>
+        }
+        else
+        {
+            <TestResultDoneHeader TitleKey="@_def.TitleKey"
+                                  DeepCompleted="_deepCompleted"
+                                  CompletedMeta="@_completedMeta"
+                                  ThemeCount="_scoreBars.Count"
+                                  QuestionCount="@(_deepCompleted ? _def.DeepQuestionCount : _def.FreeQuestionCount)"
+                                  EditModeEnabled="_editModeEnabled"
+                                  Busy="_busy"
+                                  AdjustmentsRemaining="_adjustments.Remaining"
+                                  AdjustmentsMax="_adjustments.Max"
+                                  OnEdit="BeginEditAsync"
+                                  OnRetake="@(() => _redoOpen = true)" />
+        }
+
+        @if (_mirror?.Mirror is null && !string.IsNullOrWhiteSpace(_headline))
         {
             <article class="test-result-card">
                 <h2 class="test-result-card__title">@_headline</h2>
@@ -124,20 +130,46 @@
 
         @if (_scoreBars.Count > 0)
         {
-            <ul class="test-score-bars" aria-label="@Culture["Tests.ScoresLabel"]">
-                @foreach (var bar in _scoreBars)
-                {
-                    <li>
-                        <div class="test-score-bars__row">
-                            <span>@bar.Label</span>
-                            <strong>@bar.Percent%</strong>
-                        </div>
-                        <div class="test-score-bars__track" role="presentation">
-                            <span style="width: @(bar.Percent.ToString(CultureInfo.InvariantCulture))%"></span>
-                        </div>
-                    </li>
-                }
-            </ul>
+            @if (_mirror?.Mirror is not null)
+            {
+                <details class="test-mirror-scores">
+                    <summary>
+                        @Culture["TestReflection.ScoresAccordion"]
+                        <span class="muted">@Culture["TestReflection.ScoresAccordionHint"]</span>
+                    </summary>
+                    <ul class="test-score-bars" aria-label="@Culture["Tests.ScoresLabel"]">
+                        @foreach (var bar in _scoreBars)
+                        {
+                            <li>
+                                <div class="test-score-bars__row">
+                                    <span>@bar.Label</span>
+                                    <strong>@bar.Percent%</strong>
+                                </div>
+                                <div class="test-score-bars__track" role="presentation">
+                                    <span style="width: @(bar.Percent.ToString(CultureInfo.InvariantCulture))%"></span>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                </details>
+            }
+            else
+            {
+                <ul class="test-score-bars" aria-label="@Culture["Tests.ScoresLabel"]">
+                    @foreach (var bar in _scoreBars)
+                    {
+                        <li>
+                            <div class="test-score-bars__row">
+                                <span>@bar.Label</span>
+                                <strong>@bar.Percent%</strong>
+                            </div>
+                            <div class="test-score-bars__track" role="presentation">
+                                <span style="width: @(bar.Percent.ToString(CultureInfo.InvariantCulture))%"></span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
         }
 
         @if (_personalityBars.Count > 0)
@@ -240,6 +272,7 @@
                                     ProgressTotal="@_def.DeepQuestionCount"
                                     ShowSamplePdf="_samplePdfEnabled"
                                     ShowHeading="false"
+                                    SuppressPremiumUpsell="_mirror?.Mirror is not null"
                                     FreeForTestAccount="@IsTestAccountMode"
                                     FreeForEveryone="@IsEveryoneFreeMode"
                                     OnStart="GoToOfferAsync"
@@ -427,6 +460,7 @@
     private bool _samplePdfLoading;
     private int _samplePdfTotalPages;
     private IReadOnlyList<string> _samplePdfPages = Array.Empty<string>();
+    private TestReflectionState? _mirror;
 
     protected override void OnInitialized()
     {
@@ -561,6 +595,15 @@
                 case AssessmentKind.Values:
                     await LoadValuesAsync();
                     break;
+            }
+
+            if (FeatureOptions.Value.TestReflectionEnabled)
+            {
+                _mirror = await Api.GetTestReflectionAsync(_def.Key, Culture.Language);
+            }
+            else
+            {
+                _mirror = null;
             }
         }
         catch (Exception)
@@ -1034,6 +1077,29 @@
     {
         _samplePdfOpen = false;
         await StartExtendedAsync();
+    }
+
+    private async Task SaveMirrorFeedbackAsync(TestReflectionFeedback feedback)
+    {
+        if (_def is null || _mirror?.Mirror is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await Api.SaveTestReflectionFeedbackAsync(_def.Key, feedback);
+            _mirror = _mirror with { Feedback = feedback };
+        }
+        catch (Exception)
+        {
+            _payError = Culture["Common.Error"];
+        }
+        finally
+        {
+            _busy = false;
+        }
     }
 
     private sealed record ScoreBar(string Label, int Percent);

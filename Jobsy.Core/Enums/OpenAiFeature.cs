@@ -18,4 +18,5 @@ public enum OpenAiFeature
     RoleFitCheck,
     CompetenceDeepReport,
     ExternalVacancyExtraction,
+    TestReflection,
 }

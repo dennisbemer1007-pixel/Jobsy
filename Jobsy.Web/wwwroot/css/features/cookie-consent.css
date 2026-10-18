@@ -1,11 +1,6 @@
-/* Compact cookie banner layout for NoBlazorRuntime shells. Visual tokens live in
-   public-theme.css (.pub-theme .cookie-consent); this file must not override them. */
-
 html.cookie-consent-known .cookie-consent {
   display: none;
-}
-
-.pub-theme .cookie-consent {
+}.pub-theme .cookie-consent {
   position: fixed;
   left: 0;
   right: 0;
@@ -13,9 +8,7 @@ html.cookie-consent-known .cookie-consent {
   z-index: 80;
   padding: 0.45rem 0.75rem calc(0.45rem + env(safe-area-inset-bottom, 0px));
   pointer-events: auto;
-}
-
-.pub-theme .cookie-consent__inner {
+}.pub-theme .cookie-consent__inner {
   max-width: 72rem;
   margin: 0 auto;
   display: flex;
@@ -23,68 +16,46 @@ html.cookie-consent-known .cookie-consent {
   gap: 0.65rem 1rem;
   align-items: center;
   justify-content: space-between;
-}
-
-.pub-theme .cookie-consent__copy {
+}.pub-theme .cookie-consent__copy {
   flex: 1 1 12rem;
   min-width: 0;
-}
-
-.pub-theme .cookie-consent__title {
+}.pub-theme .cookie-consent__title {
   margin: 0 0 0.2rem;
   font-size: 0.92rem;
   font-weight: 650;
-}
-
-.pub-theme .cookie-consent__text {
+}.pub-theme .cookie-consent__text {
   margin: 0;
   font-size: 0.78rem;
   line-height: 1.35;
   max-width: 36rem;
-}
-
-.pub-theme .cookie-consent__actions {
+}.pub-theme .cookie-consent__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.55rem;
   flex: 0 0 auto;
-}
-
-@media (max-width: 640px) {
-  .pub-theme .cookie-consent__title {
+}@media (max-width: 640px) {.pub-theme .cookie-consent__title {
     display: inline;
     margin: 0 0.35rem 0 0;
     font-size: 0.72rem;
     font-weight: 650;
-  }
-
-  .pub-theme .cookie-consent__copy {
+  }.pub-theme .cookie-consent__copy {
     flex: 1 1 100%;
     line-height: 1.25;
-  }
-
-  .pub-theme .cookie-consent__text {
+  }.pub-theme .cookie-consent__text {
     display: inline;
     font-size: 0.68rem;
     max-width: none;
-  }
-
-  .pub-theme .cookie-consent__inner {
+  }.pub-theme .cookie-consent__inner {
     gap: 0.35rem;
-  }
-
-  .pub-theme .cookie-consent__actions {
+  }.pub-theme .cookie-consent__actions {
     width: 100%;
     flex: 1 1 100%;
     flex-wrap: nowrap;
     gap: 0.35rem;
-  }
-
-  .pub-theme .cookie-consent .btn-compact,
+  }.pub-theme .cookie-consent .btn-compact,
   .pub-theme .cookie-consent .btn-compact--primary {
     flex: 1 1 0;
     min-height: 2.15rem;
     padding: 0.3rem 0.45rem;
     font-size: 0.72rem;
-  }
-}
+  }}

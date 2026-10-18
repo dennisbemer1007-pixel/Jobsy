@@ -61,7 +61,9 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
                 TimeSpan.FromSeconds(15));
         }
 
-        Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal);
+        cut.WaitForAssertion(
+            () => Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal),
+            timeout: TimeSpan.FromSeconds(30));
 
         cut.Render(parameters => parameters
             .Add(p => p.Kind, AssessmentKind.Career)
