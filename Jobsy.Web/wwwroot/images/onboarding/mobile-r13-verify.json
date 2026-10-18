@@ -11,7 +11,7 @@
     "kennismaken": {
       "ghost_left_ratio": 0.0,
       "figure_strong_ratio": 0.26909425451092117,
-      "composite_right_ratio": 0.3148029439696106,
+      "composite_right_ratio": 0.31607312440645774,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -19,8 +19,8 @@
     },
     "beschikbaarheid": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.23647910731244065,
-      "composite_right_ratio": 0.28671058879392214,
+      "figure_strong_ratio": 0.30084876543209876,
+      "composite_right_ratio": 0.3156991927825261,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -28,8 +28,8 @@
     },
     "vervoer": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.34379154795821465,
-      "composite_right_ratio": 0.35903964862298193,
+      "figure_strong_ratio": 0.43238366571699904,
+      "composite_right_ratio": 0.453389126305793,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -37,8 +37,8 @@
     },
     "werkervaring": {
       "ghost_left_ratio": 0.0,
-      "figure_strong_ratio": 0.24897317188983856,
-      "composite_right_ratio": 0.28167141500474835,
+      "figure_strong_ratio": 0.2836301044634378,
+      "composite_right_ratio": 0.31945037986704655,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -47,7 +47,7 @@
     "opleiding": {
       "ghost_left_ratio": 0.0,
       "figure_strong_ratio": 0.2897732668566002,
-      "composite_right_ratio": 0.33221153846153845,
+      "composite_right_ratio": 0.3335173314339981,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,
@@ -56,7 +56,7 @@
     "droombaan": {
       "ghost_left_ratio": 0.0,
       "figure_strong_ratio": 0.2535790598290598,
-      "composite_right_ratio": 0.30732431149097816,
+      "composite_right_ratio": 0.3095322886989554,
       "ghost_ok": true,
       "figure_ok": true,
       "composite_ok": true,

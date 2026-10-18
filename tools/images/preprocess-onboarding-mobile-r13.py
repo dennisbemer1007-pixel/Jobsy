@@ -47,6 +47,8 @@ MANUAL_FIGURE_BBOX: dict[str, tuple[float, float, float, float]] = {
     "droombaan": (0.0, 0.02, 0.40, 0.98),
 }
 
+COVER_FIT_SLUGS = frozenset({"beschikbaarheid", "vervoer", "werkervaring"})
+
 FIGURE_DESCRIPTIONS: dict[str, str] = {
     "kennismaken": "Twee personen (vrouw en man) geven elkaar een hand — volledig zichtbaar, rechtsonder.",
     "beschikbaarheid": "Groep van vier personen (o.a. met baby) bij bureau — volledig zichtbaar, rechtsonder.",
@@ -232,6 +234,41 @@ def scrub_left_zone(img: Image.Image, frac: float = TEXT_FRAC) -> None:
             px[x, y] = PAGE_BG
 
 
+def retain_plants_only_right(img: Image.Image, frac: float = TEXT_FRAC) -> None:
+    """Right hero strip: cream/peach wash with decorative plants only (no desk/calendar props)."""
+    px = img.load()
+    w, h = img.size
+    x0 = int(w * frac)
+    peach = (245, 236, 228)
+    for y in range(h):
+        for x in range(x0, w):
+            r, g, b = px[x, y][:3]
+            if is_decor_plant(r, g, b) and g >= 68:
+                continue
+            t = (x - x0) / max(1, w - x0)
+            px[x, y] = PAGE_BG if t < 0.38 else peach
+
+
+def polish_white_blobs_on_bg(img: Image.Image) -> None:
+    """Remove inpaint/calendar white splotches on the right strip; keep plants."""
+    px = img.load()
+    w, h = img.size
+    x0 = int(w * TEXT_FRAC)
+    peach = (245, 236, 228)
+    for y in range(h):
+        for x in range(x0, w):
+            r, g, b = px[x, y][:3]
+            if is_decor_plant(r, g, b):
+                continue
+            lum = (r + g + b) / 3.0
+            spread = max(r, g, b) - min(r, g, b)
+            if lum >= 208 and spread <= 48:
+                px[x, y] = peach
+                continue
+            if lum >= 195 and spread <= 22 and rgb_delta((r, g, b), PAGE_BG) > 18:
+                px[x, y] = peach
+
+
 def deghost_left_and_bridge(img: Image.Image) -> None:
     """Remove inpaint ghosts (mid-tone silhouettes) from text + bridge band."""
     px = img.load()
@@ -347,13 +384,23 @@ def process_figure_plate(slug: str, seam) -> tuple[int, int, float]:
 
     plate_w = max(1, int(MOBILE_W * FIG_FRAC_W))
     plate_h = max(1, int(MOBILE_H * FIG_FRAC_H))
-    scale = min(plate_w / crop_w, plate_h / crop_h)
-    nw, nh = max(1, int(crop_w * scale + 0.5)), max(1, int(crop_h * scale + 0.5))
-    scaled = crop.resize((nw, nh), Image.Resampling.LANCZOS)
-    plate = Image.new("RGBA", (plate_w, plate_h), (0, 0, 0, 0))
-    paste_x = plate_w - nw
-    paste_y = plate_h - nh
-    plate.paste(scaled, (paste_x, paste_y), scaled)
+    if slug in COVER_FIT_SLUGS:
+        scale = max(plate_w / crop_w, plate_h / crop_h)
+        nw, nh = max(1, int(crop_w * scale + 0.5)), max(1, int(crop_h * scale + 0.5))
+        scaled = crop.resize((nw, nh), Image.Resampling.LANCZOS)
+        left = max(0, nw - plate_w)
+        top = max(0, nh - plate_h)
+        scaled = scaled.crop((left, top, left + plate_w, top + plate_h))
+        plate = Image.new("RGBA", (plate_w, plate_h), (0, 0, 0, 0))
+        plate.paste(scaled, (0, 0), scaled)
+    else:
+        scale = min(plate_w / crop_w, plate_h / crop_h)
+        nw, nh = max(1, int(crop_w * scale + 0.5)), max(1, int(crop_h * scale + 0.5))
+        scaled = crop.resize((nw, nh), Image.Resampling.LANCZOS)
+        plate = Image.new("RGBA", (plate_w, plate_h), (0, 0, 0, 0))
+        paste_x = plate_w - nw
+        paste_y = plate_h - nh
+        plate.paste(scaled, (paste_x, paste_y), scaled)
 
     plate.save(OUT_DIR / f"{slug}-mobile.png", optimize=True)
     plate.save(OUT_DIR / f"{slug}-mobile.webp", format="WEBP", quality=92, method=6, lossless=False)
@@ -390,6 +437,9 @@ def process_mobile_bg(slug: str, seam) -> None:
     apply_text_and_bridge(mobile)
     scrub_left_zone(mobile, TEXT_FRAC)
     deghost_left_and_bridge(mobile)
+    polish_white_blobs_on_bg(mobile)
+    if slug == "beschikbaarheid":
+        retain_plants_only_right(mobile)
     pxm = mobile.load()
     peach_ref = PAGE_BG
     for y in range(MOBILE_H):
