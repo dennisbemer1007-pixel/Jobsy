@@ -13,7 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System.Security.Claims;
+using System.Text;
 
 namespace Jobsy.Tests;
 
@@ -28,6 +31,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirR8 = "/opt/cursor/artifacts/kandidaat-728-r8";
     private const string ArtifactsDirR9 = "/opt/cursor/artifacts/kandidaat-728-r9";
     private const string ArtifactsDirR10 = "/opt/cursor/artifacts/kandidaat-728-r10";
+    private const string ArtifactsDirR11 = "/opt/cursor/artifacts/kandidaat-728-r11";
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -444,12 +448,93 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Assert.Equal(5, pngs.Length);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_728_r11_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirR11);
+        if (Directory.Exists(ArtifactsDirR10))
+        {
+            Directory.Delete(ArtifactsDirR10, recursive: true);
+        }
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await AssertHeroSeamGradientAt1024Async(
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                WaitForApplicationsEmptyAsync);
+        }
+
+        await CaptureBanenkaartPopupsAsync(
+            ArtifactsDirR11,
+            deliveryWeb.ServerAddress,
+            viewportOnly: true,
+            popupElementShot: true,
+            measurePopupMetaGap: true,
+            captures:
+            [
+                (390, 844, "390", "b1000008-0000-0000-0000-000000000008", "popup-no-photo"),
+            ]);
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR11,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            auth: true,
+            sizes: [(1440, 900, "1440")],
+            prepare: PrepareKompasTopScreenshotAsync);
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR11,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                auth: true,
+                sizes: [(1440, 900, "1440")],
+                prepare: WaitForApplicationsEmptyAsync);
+
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR11,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                auth: true,
+                sizes: [(1440, 900, "1440")],
+                prepare: WaitForSavedEmptyAsync);
+        }
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR11,
+            deliveryWeb.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            auth: true,
+            sizes: [(1440, 900, "1440")],
+            prepare: WaitForSettingsMailPaneAsync);
+
+        await deliveryWeb.DisposeAsync();
+
+        var pngs = Directory.GetFiles(ArtifactsDirR11, "*.png");
+        Assert.Equal(5, pngs.Length);
+    }
+
     private async Task CaptureBanenkaartPopupsAsync(
         string artifactsDir = ArtifactsDirR2,
+        string? serverAddress = null,
         bool viewportOnly = false,
         bool popupElementShot = false,
+        bool measurePopupMetaGap = false,
         (int Width, int Height, string Tag, string VacancyId, string Suffix)[]? captures = null)
     {
+        var baseUrl = serverAddress ?? _web!.ServerAddress;
         const string withPhotoId = "b1000001-0000-0000-0000-000000000001";
         const string noPhotoId = "b1000008-0000-0000-0000-000000000008";
 
@@ -475,9 +560,9 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             page.SetDefaultTimeout(120_000);
 
             await page.GotoAsync(
-                $"{_web!.ServerAddress}/__test/sign-in?return={Uri.EscapeDataString("/banenkaart?weergave=kaart")}",
+                $"{baseUrl}/__test/sign-in?return={Uri.EscapeDataString("/banenkaart?weergave=kaart")}",
                 new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-            await page.GotoAsync($"{_web.ServerAddress}/banenkaart?weergave=kaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.GotoAsync($"{baseUrl}/banenkaart?weergave=kaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await WaitForBanenkaartReadyAsync(page, preferListForCards: false);
             await page.WaitForFunctionAsync(
                 "() => window.jobMap && typeof window.jobMap.__testOpenVacancyById === 'function'",
@@ -531,6 +616,25 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 Assert.DoesNotContain("Waarom:", popupText, StringComparison.Ordinal);
                 var figureSrc = await popup.Locator(".map-popup__photo--illustrated, .map-popup__photo--figure").First.GetAttributeAsync("src");
                 Assert.Contains("job-schoonmaak", figureSrc ?? "", StringComparison.OrdinalIgnoreCase);
+            }
+
+            if (measurePopupMetaGap && suffix == "popup-no-photo" && tag == "390")
+            {
+                var gapPx = await page.EvaluateAsync<double>(
+                    """
+                    () => {
+                      const root = document.querySelector('.map-popup--illustrated:not(.map-popup--skeleton)');
+                      if (!root) return -1;
+                      const meta = root.querySelector('.map-popup__meta');
+                      const actions = root.querySelector('.map-popup__actions');
+                      if (!meta || !actions) return -1;
+                      const m = meta.getBoundingClientRect();
+                      const a = actions.getBoundingClientRect();
+                      return Math.round(a.top - m.bottom);
+                    }
+                    """);
+                Console.WriteLine($"R11 popup meta→actions gap: {gapPx}px (target ~16px)");
+                Assert.InRange(gapPx, 0, 22);
             }
 
             var file = Path.Combine(artifactsDir, $"banenkaart-{suffix}-{tag}.png");
@@ -601,6 +705,63 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             await page.ScreenshotAsync(new() { Path = file, FullPage = false });
             Assert.True(File.Exists(file));
         }
+    }
+
+    private async Task AssertHeroSeamGradientAt1024Async(
+        string serverAddress,
+        string path,
+        Func<IPage, int, Task> prepare)
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1024, Height = 768 },
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await page.GotoAsync(
+            $"{serverAddress}/__test/sign-in?return={Uri.EscapeDataString(path)}",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync($"{serverAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await prepare(page, 1024);
+        await page.Locator(".cand-hero__art-band").WaitForAsync(new() { Timeout = 60_000 });
+        var png = await page.Locator(".cand-hero--profession-band").ScreenshotAsync(new() { Type = ScreenshotType.Png });
+        var report = SampleHeroSeamPixels(png, 1024, [610, 625, 640, 660]);
+        Console.WriteLine(report.Log);
+        Assert.True(report.MaxStepDelta <= 100, report.Log);
+    }
+
+    private static HeroSeamReport SampleHeroSeamPixels(byte[] pngBytes, int referenceViewportWidth, int[] pageXs)
+    {
+        using var img = Image.Load<Rgb24>(pngBytes);
+        var y = img.Height / 2;
+        var sb = new StringBuilder();
+        sb.AppendLine($"Hero seam pixel sample (y={y}, img {img.Width}x{img.Height}):");
+        Rgb24? prev = null;
+        var maxStep = 0;
+        foreach (var pageX in pageXs)
+        {
+            var x = (int)Math.Round(pageX / (double)referenceViewportWidth * img.Width);
+            x = Math.Clamp(x, 0, img.Width - 1);
+            var px = img[x, y];
+            sb.AppendLine($"  x={pageX} (px {x}): RGB({px.R},{px.G},{px.B})");
+            if (prev is { } p)
+            {
+                var step = Math.Abs(p.R - px.R) + Math.Abs(p.G - px.G) + Math.Abs(p.B - px.B);
+                maxStep = Math.Max(maxStep, step);
+            }
+
+            prev = px;
+        }
+
+        sb.AppendLine($"  max RGB step between neighbors: {maxStep}");
+        return new HeroSeamReport(sb.ToString(), maxStep);
+    }
+
+    private sealed record HeroSeamReport(string Log, int MaxStepDelta)
+    {
+        public override string ToString() => Log;
     }
 
     private static async Task PrepareKompasTopScreenshotAsync(IPage page, int width)

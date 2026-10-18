@@ -51,46 +51,40 @@
 }
 
 .cand-hero--profession-band {
-  --cand-hero-fade-mid: 57%;
-  --cand-hero-fade-soft: 120px;
-  background-image: none;
+  background-image: none !important;
   background-color: var(--pearl);
 }
 
+.cand-hero--profession-band::before,
 .cand-hero--profession-band::after {
-  content: "";
-  display: block;
+  content: none;
+  display: none;
+}
+
+.cand-hero--profession-band .cand-hero__media--profession-fallback {
+  display: none;
+}
+
+.cand-hero--profession-band .cand-hero__art-band {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 54%;
+  min-width: 22rem;
   z-index: 0;
   pointer-events: none;
+  background-color: transparent;
   background-image: var(--cand-hero-art, none);
   background-repeat: no-repeat;
   background-size: auto 100%;
   background-position: right center;
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    transparent calc(var(--cand-hero-fade-mid) - var(--cand-hero-fade-soft)),
-    #000 calc(var(--cand-hero-fade-mid) + var(--cand-hero-fade-soft))
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    transparent calc(var(--cand-hero-fade-mid) - var(--cand-hero-fade-soft)),
-    #000 calc(var(--cand-hero-fade-mid) + var(--cand-hero-fade-soft))
-  );
-}
-
-.cand-hero--profession-band::before {
-  z-index: 1;
-  background: linear-gradient(
-    90deg,
-    var(--pearl) 0%,
-    var(--pearl) calc(var(--cand-hero-fade-mid) - var(--cand-hero-fade-soft)),
-    color-mix(in srgb, var(--pearl) 92%, transparent) var(--cand-hero-fade-mid),
-    transparent calc(var(--cand-hero-fade-mid) + var(--cand-hero-fade-soft))
-  );
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 140px);
+  mask-image: linear-gradient(to right, transparent 0, #000 140px);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
 }
 
 .cand-hero__media {
@@ -200,17 +194,19 @@
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
   }
 
-  .cand-hero--profession-band .cand-hero__media {
+  .cand-hero--profession-band .cand-hero__art-band {
+    display: none;
+  }
+
+  .cand-hero--profession-band .cand-hero__media--profession-fallback {
+    display: block;
     background-position: right center;
     background-size: auto 100%;
     background-color: var(--pearl);
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent 0,
-      transparent 12%,
-      #000 32%
-    );
-    mask-image: linear-gradient(to right, transparent 0, transparent 12%, #000 32%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 140px);
+    mask-image: linear-gradient(to right, transparent 0, #000 140px);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
   }
 
   .cand-hero__lead {
