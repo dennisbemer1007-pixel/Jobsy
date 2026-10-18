@@ -20,73 +20,22 @@ html:not(.pub-theme) body,
   text-transform: none;
   letter-spacing: normal;
   font-weight: 600;
-}.app-shell :is(.card, .panel, .swipe-card, .kb-card, .kompas-band, .ob-wizard__card, .carriere-card, .passport-card),
-.app-shell :is(.btn, .btn-primary, .btn-secondary, .engagement-btn, .login-submit),
-.wg-shell :is(.wg-card, .wg-panel, .btn, .btn-primary, .btn-secondary),
-.admin-shell :is(.admin-card, .admin-panel, .btn, .btn-primary, .btn-secondary) {
-  box-shadow:none;
-}.app-shell .card,
-.app-shell .swipe-card,
-.app-shell .kompas-band,
-.app-shell .carriere-card,
-.wg-shell .wg-card,
-.admin-shell .admin-card {
-  border-radius:var(--r-lg);
-}.app-shell :is(.btn, .btn-primary, .btn-secondary, .engagement-btn, .login-submit, .provider-btn),
-.wg-shell :is(.btn, .btn-primary, .btn-secondary),
-.admin-shell :is(.btn, .btn-primary, .btn-secondary),
-.app-shell :is(input, select, textarea, .form-control) {
-  border-radius:var(--r-md);
-}.app-shell :is(.status-pill, .kb-badges__chip, .tag, .badge) {
-  border-radius:var(--r-sm);
-}.app-shell .btn-primary,
-.app-shell .engagement-btn--primary,
-.app-shell .login-submit,
-.wg-shell .btn-primary,
-.admin-shell .btn-primary {
-  background:var(--brand);
-  color: #fff;
-  border: 1.5px solid var(--brand);
-  box-shadow:none;
-}.app-shell .btn-secondary,
-.wg-shell .btn-secondary,
-.admin-shell .btn-secondary {
-  background:transparent;
-  color: var(--brand);
-  border: 1.5px solid var(--brand);
-  box-shadow:none;
-}.app-shell .btn-link,
-.app-shell .ob-wizard__ghost,
-.app-shell .ob-finale__link,
-.app-shell a.tertiary-link {
-  background: none;
-  border: none;
-  color: var(--brand);
-  text-decoration: underline;
-  text-underline-offset: 0.14em;
-  box-shadow:none;
-}.share-modal,
-.lobsy-dialog,
-.dropdown-menu,
-.cookie-consent--expanded,
-.admin-drawer,
-.wg-mobile-nav {
-  box-shadow:var(--shadow-pop);
+}.line-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.15em;
+  color: currentColor;
+}.line-icon svg {
+  width: 1.125em;
+  height: 1.125em;
+  display: block;
+}.line-icon--md svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }.pub-theme .au-blob {
   display: none;
 }.wg-shell .lobsy-watermarks,
 .admin-shell .lobsy-watermarks {
   display: none;
-}.wg-shell .wg-topbar,
-.admin-shell .admin-topbar {
-  border-radius:0;
-}.wg-shell .wg-card,
-.admin-shell .admin-card {
-  border-radius:var(--r-lg);
-}.app-shell .ui-emoji,
-.app-shell [data-ui-emoji="true"] {
-  display: none;
-}.app-shell .ui-emoji + .ui-emoji-fallback,
-.app-shell [data-ui-emoji="true"] + .ui-emoji-fallback {
-  display: inline-flex;
 }

@@ -668,7 +668,7 @@
     inset-block: 0;
     inset-inline-start: 0;
     background:color-mix(in srgb, var(--brand) 55%, var(--accent-soft));
-    border-radius:inherit;
+    border-radius:var(--r-md);
 }.passport-tests__bar.is-p25::after { inline-size: 25%; }.passport-tests__bar.is-p50::after { inline-size: 50%; }.passport-tests__bar.is-p75::after { inline-size: 75%; }.passport-tests__bar.is-locked {
     background:transparent;
     box-shadow:none;
@@ -1152,7 +1152,7 @@
 }.passport-proof__seg {
     flex: 1;
     block-size: 0.7rem;
-    border-radius:var(--radius-pill, 999px);
+    border-radius:var(--radius-pill);
     background:var(--pearl-mid);
 }.passport-proof__seg--1.is-filled { background:var(--accent-soft); }.passport-proof__seg--2.is-filled { background:var(--accent); }.passport-proof__seg--3.is-filled { background:var(--brand); }.passport-proof__hint {
     margin: 0;
@@ -1257,7 +1257,7 @@
         max-inline-size: min(40rem, 92vw);
         height: auto;
         max-height: min(85dvh, 42rem);
-        border-radius:var(--radius, 12px);
+        border-radius:var(--r-md);
         padding-bottom: 0;
     }}.passport-data {
     display: flex;
@@ -1301,7 +1301,7 @@
     inline-size: 2.75rem;
     block-size: 1.55rem;
     flex-shrink: 0;
-    border-radius:var(--radius-pill, 999px);
+    border-radius:var(--radius-pill);
     border: 1px solid var(--border);
     background:var(--pearl-mid, var(--hover));
     position: relative;
@@ -1429,7 +1429,7 @@
     min-block-size: 6.5rem;
     padding: var(--form-input-pad-y, 0.75rem) var(--form-input-pad-x, 0.875rem);
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--form-value-color, var(--text));
     font: inherit;
@@ -1553,7 +1553,7 @@
     gap: 0.65rem;
 }.diploma-eval__fact {
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     padding: 0.75rem;
     background:var(--surface, #fffcfa);
     display: flex;
@@ -1606,7 +1606,7 @@
 }.diploma-eval__alert {
     margin: 0;
     padding: 0.55rem 0.7rem;
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--danger-soft, #fef2f2);
     color: var(--danger, #9b1c1c);
 }.diploma-eval__alert[role="status"] {

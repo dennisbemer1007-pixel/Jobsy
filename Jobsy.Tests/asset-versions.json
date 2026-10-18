@@ -1,198 +1,198 @@
 {
   "css/app.min.css": {
-    "sha256": "125df1adae9e59ef04b585e718182db6f47ae4b53980e15230d5577f249f76d4",
+    "sha256": "52c2b69d6356bfab0c1a6d21b0d945a283c08365b9d467673b230505741e1398",
     "v": "20261017-03"
   },
   "css/critical.css": {
-    "sha256": "94b9e9f0833faebdcbf4281da401379c93851562b64d48d838d27004f6862cab",
+    "sha256": "fd8c6e689cf0638894fa8655e4008e268284d160fd631deb767b560ad99fc2b8",
     "v": "20261004-13"
   },
   "css/features/account-mfa.css": {
-    "sha256": "523984a4e1a8f90812833f2a29f8932b3e5fce469f138942a81a960675d39743",
+    "sha256": "77ffff1997179f77bc2086c352bb23b7cea454b05c0fc555a8bcf4e6371f3df3",
     "v": "20261004-10"
   },
   "css/features/admin.css": {
-    "sha256": "b945c8d681867a24d0b9b8bbe8b0b17cbb78d9324350dc26b30899446a1082bf",
+    "sha256": "16e6a6d8d563e4ba89ac6a4f038c1b28fe1d5dcb7276de13ff7be9c99e4bf905",
     "v": "20261013-02"
   },
   "css/features/applications.css": {
-    "sha256": "aec48fd764287fa304049effd9683a236e3e6f47b38d79e88431cae10875d45d",
+    "sha256": "0ad9072d8b4f0f36f4b8cf7d52e4f2565cbb9d5e3b780dfa4023e4121de0e9f0",
     "v": "20261004-10"
   },
   "css/features/auth.css": {
-    "sha256": "19d393a63d6604f3a210cd0e67d18c3b6896c868d6a4f6a77be6ee9ff69ad05d",
+    "sha256": "02384861b1eb4bccf28df6969d0559f18af7bca2a6b6af489c0fc0ea2835cdc7",
     "v": "20261017-01"
   },
   "css/features/banenkaart.css": {
-    "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
+    "sha256": "d8205a7ad9846302d9239a0d33100423ad7f983a6d6a9b384a71493d26b8a66d",
     "v": "20261016-02"
   },
   "css/features/candidate-hub.css": {
-    "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
+    "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
   "css/features/carriere.css": {
-    "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
+    "sha256": "0270c56f125b6ff58f4bbb906f2c040c2001b19f1aad5d6559d58cd3d62c4008",
     "v": "20261011-01"
   },
   "css/features/choice-tiles.css": {
-    "sha256": "9b0dc43ec0c5be91356a2f45c5f4b0602d33e756232d1a0f49ce25a07c5ed0d9",
+    "sha256": "2e74c596d55ddfa6f8fad147d36f25409e36f3dd2005b1d5a1d52437b5d0d1bd",
     "v": "20261015-06"
   },
   "css/features/cookie-consent.css": {
-    "sha256": "11ac022ea3ed9673587aed89826aa8d9fd982b9c9a5809c3f13c00abdd923b9d",
+    "sha256": "aa0cc63194b7e334a9cfafc0298e159908ff9524502fea2a4a92d09de4152fa2",
     "v": "20261017-05"
   },
   "css/features/enterprise-ui.css": {
-    "sha256": "6dd6752dcb8f3b58c1314ecd2a5dda30e357132c9a0ef7f28092bddbf9b80726",
+    "sha256": "4665d3c7ca5ac7e6602ef1deb250c9e2b3014cdb82ee3e0a9d3831b57135940f",
     "v": "20261004-10"
   },
   "css/features/errors.css": {
-    "sha256": "9815efc2872ddd3d2b7d4fcf528ac0d0019fe90494ad060682e8d7091c2fec81",
+    "sha256": "98c52153341f09a872fd80d150fd535e4e62d557f025a25a26462d735345e23a",
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "f14f58ce1a300166e49e0e835d14e394a53f2532bebb4d26a63a7f555ab82db1",
+    "sha256": "2661a034e722352d458380109b5748fd2b83976dc7f8e2a2e0968d7ff894b0c7",
     "v": "20261015-04"
   },
   "css/features/future-jobs.css": {
-    "sha256": "78bf18d1a684c393bd4c61a439436f74488ba496619ab71063a935bee494e3b2",
+    "sha256": "a4bb8e12f1e3bc07fc2d3cbe8a7686e26968aff22b1efe16e7c0c30f5defd863",
     "v": "20261006-02"
   },
   "css/features/gratis-dna.css": {
-    "sha256": "2a7d8f1c132b3556c62fc1cbfbbb8300b579f73ca684b4760bc9275a2fdeada5",
+    "sha256": "aa943c1f29e2cf27b9da96b9334c61672321f07227c3125bd1ff5eef60e7023f",
     "v": "20261004-10"
   },
   "css/features/honest-advice.css": {
-    "sha256": "d5b064e9a289e50881b1c82418401249a30c2bfc987a547cc941b24bfddf02b0",
+    "sha256": "44b1f59854e8b64c07dfc43422ff428fbd19eb076430c8443a1bab86a4e8aedd",
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "6dcf6faf117fa0b0b9e7ae1966ef39081793fa3e6cb3e50c941c6232e542424e",
+    "sha256": "a04e816aa5503d9f58645e7801fecf2dff39e3fca0bf1ad778ceaa2552e6510d",
     "v": "20261015-27"
   },
   "css/features/kandidaatinzichten.css": {
-    "sha256": "d5b1d1cc08c19f97dfcd08ea50568b342a5d3a87b2835bf77f1a40ec3679a41c",
+    "sha256": "45758384a12b52fb030600210a4768cbd00560e003bcda2d8f43cd882bc77f26",
     "v": "20261004-10"
   },
   "css/features/kb-external-vacancy.css": {
-    "sha256": "4b1634bb3f58935e80152d1484c88c8c0a0eae5ddb353febdffe696240e4a603",
+    "sha256": "9f3e4fcee659c120f0fca535027c64e20a790a4fcc3dfcea6b87319239d338c6",
     "v": "20261011-03"
   },
   "css/features/landing.css": {
-    "sha256": "c7e52a6291b6b8ccf67f8591a142c6de1b87f821486c4db247782e5d0fb351ef",
+    "sha256": "ded9a240e72c6957942276ba6b110e53c0cd6bcb481942285ea8fa5d6ea4cb1d",
     "v": "20261015-14"
   },
   "css/features/match-desktop.css": {
-    "sha256": "8a93b7c3157f521af81598edb8ffe256de3b19076ef8ee2bdd26c4d963fa45bb",
+    "sha256": "bf9760ca115f0730a129fcae7aaf97c78ff1ec780b316f29d700ec7b05a26fc0",
     "v": "20261013-01"
   },
   "css/features/mijn-dna.css": {
-    "sha256": "83627c283d3bb38460b2661e74c9021c92186b0d783ce9ebb27d3808dbabee65",
+    "sha256": "dddf9ebaf598d621bce86bc00931b7395cb3bd874af874540c1356626619f26a",
     "v": "20261004-10"
   },
   "css/features/mijn-paspoort.css": {
-    "sha256": "1d16cbbfe873a3d60efaf6af0cca1806a282655e37439e78f66b5c860cb1279e",
+    "sha256": "7524414915615b07fdbc8722491faefaedd90eb0ee1eb04daec28e8631379f65",
     "v": "20261015-09"
   },
   "css/features/nav-feedback.css": {
-    "sha256": "877531683e1868d6dfc5d9f77a4989b0949b24ecdb6efe7261c3b1155b82d1a2",
+    "sha256": "eee2797518aac88fbc3654b8bba0515d30f68bdb360172138f00ef1a15294b67",
     "v": "20261004-10"
   },
   "css/features/occupation-day.css": {
-    "sha256": "b63a6b010adbdba176ada22dfa5d19b2699c2096d05c6225428e9a72d5a7f44c",
+    "sha256": "67c63d1ebe8081d03e2760199b0d1419358d5b61bb5a10f5f92723c0b1170bb9",
     "v": "20261005-23"
   },
   "css/features/onboarding-finale-v2.css": {
-    "sha256": "e621c182c6a56b5acd322365ff2c2ea1df52b97f4b85076633a4bbd08dc2d3c7",
+    "sha256": "aaf49ede60c7b87d6140b779b9dfd71a8e7ce6889218cc3902958a6256c925e8",
     "v": "20261018-15"
   },
   "css/features/onboarding-wizard-mobile-bar.css": {
-    "sha256": "2aa2e9fb9c528693ad4002eb4c76175dfb817b6f75045d1a585d06944fce11c7",
+    "sha256": "1c4b22aad845040d1f4db7321feafc0adae2cd3e23dfe301b2675f449f9af249",
     "v": "20261016-02"
   },
   "css/features/onboarding-wizard-nearby-panel.css": {
-    "sha256": "b24af2c35135df9e840d82d56ad1413b17d4058cd7df042697ec8080acee617f",
+    "sha256": "8aae78bee606dbae5f48cdbd1d6000cf34f7ace20790576c48092c694e832e87",
     "v": "20261018-01"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "a35e24d5ecb4a39d45fac0288211dd4dc2fee11b97b2c71fcd2db36f0532ee2a",
+    "sha256": "b7cf8deaf51f287dd37a49ce39507fcf222cfcf899e9a55aad1540b9f7bca5e6",
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard-test-journey.css": {
-    "sha256": "3b8d58979c481091afb041cfcf3de1017fb336d65b8993f4de703f55e4c3c293",
+    "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
     "v": "20261018-07"
   },
   "css/features/onboarding-wizard-vroeg-resultaat.css": {
-    "sha256": "6084d709e44d2ef876cd62248a11df4d678a1832c4720ee2193f303d6b1c822c",
+    "sha256": "c314b1f49152bd4af5e8e9d769ee6e8006aea2d0e187869ba1b724d721aa3dda",
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "d94ce51e3bb8cde64fcb90b6d9f3eb13278450f667e4285b8ccd8b0e8bd27e47",
+    "sha256": "1c9698af789d2852533d58ffd634b5dabdc26e7c0d10e51989c68dfef47544ad",
     "v": "20261015-06"
   },
   "css/features/onboarding-work-history.css": {
-    "sha256": "a0e3be6b95086a191587758d0bac38669ed4ac71f5f11a3528b47e342bcc0edf",
+    "sha256": "a5d776e7def491d5008493389b28004e0f8d2a93a6fe653bd61a85aa0c3942a4",
     "v": "20261018-07"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
+    "sha256": "88887ede1d1036cfe353a4347dd608eb9d53113d299049519defbb3b2f2f58f7",
     "v": "20261015-21"
   },
   "css/features/proactive-matching.css": {
-    "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
+    "sha256": "8cdcd71b660f4aacf62188dc8f4a3ae0e61c47dbd0e01b7e5564edc965b1ba3c",
     "v": "20261012-03"
   },
   "css/features/public-pages.css": {
-    "sha256": "d9526e04618b31178d9ad2da83fe49574ee0199fd7920ccacb662a7ffc1deb25",
+    "sha256": "9ba4aaa6229f47f132a7ce191fc780a40d102bb7da9ccd0693ce43ad2825408e",
     "v": "20261016-01"
   },
   "css/features/public-theme.css": {
-    "sha256": "372f92ab0d0f192921ffa66aecd1c36df017d4ed08cd0e5d02fa4e58a98b1b55",
+    "sha256": "b6e89ab750aa17124d97dfbd841dc336943d39065ccef6f4318dc811b1fc4deb",
     "v": "20261016-01"
   },
   "css/features/questionnaire.css": {
-    "sha256": "6fb962b5ead402de7d5c178995cab7884f8cb138c55b34a3de163d4df84fddd0",
+    "sha256": "098b16767133630bd1c2c4f4ffd17b7f321c9c5c718fbb5e83a6469c8def706f",
     "v": "20261004-10"
   },
   "css/features/reconnect.css": {
-    "sha256": "bc14c189d7fca29a383530cfa0feee5e63b3c123f12974e71f8a5c12dfd0527e",
+    "sha256": "2cb9fa41cad047d76ad7702f97e7b8f1f49cb938437abd55b2c9b8c4a4ef0ac1",
     "v": "20261015-02"
   },
   "css/features/sales.css": {
-    "sha256": "8ddbe15c3222a39e1f6a22d866ea228c49311cb1f39b329576a47d9ba2c31e11",
+    "sha256": "1f17cd2984d474f41d5b5c5e752db44482ed32d27e9fe639393193cbaa0c4784",
     "v": "20261004-10"
   },
   "css/features/scholen.css": {
-    "sha256": "27596bde44da542dc90eb601bc731b8e91a5cdac5e24febdc958eb320dab5a6e",
+    "sha256": "70d4c395d6b792dd17576b090ea148b4f4d33791f5d96183fb6bad8b056c5df3",
     "v": "20261004-14"
   },
   "css/features/signup-static.css": {
-    "sha256": "cdd2f33c74d431384e54de029ec7984ec3f30660aad88c34eba95f89cdd963f6",
+    "sha256": "2bef7a071ba7c93834490b922d243cd8b5c84db67293bdba244cc856ca3806bd",
     "v": "20261017-02"
   },
   "css/features/stijl-a.css": {
-    "sha256": "e0bb475bbccb8552fdc84cae719f41eb995cbdcc7a3d64acc8d4289012a2a31e",
+    "sha256": "6b9e75c2f72f194040bf0515e7aa451bf9b99f68fc83f277095c8b26bb75dd0f",
     "v": "20261018-01"
   },
   "css/features/testresultaten.css": {
-    "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
+    "sha256": "3f875b4ac25b624ff955eedcb3fc60bb686be669cee7af0c953adeb311c8be34",
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "59f25d5348c287a1b4501bb8bc4e03e2dc6295d0d58a1dad6b795a10affffe12",
+    "sha256": "b88aced1b026d443b3ce7441442dfb043bb4a5c6146c45116b1d0c92552f8fd2",
     "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {
-    "sha256": "d1dfe82df457da2a5ba7fbf14ece342bbed87da0bd1b1f94707987edb9534482",
+    "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",
     "v": "20261015-20"
   },
   "css/features/werkgever-aanmelding.css": {
-    "sha256": "c00a2f34a3fe1008c22004e2a77d259284dbcaf1765ce999a07cc934e2d52b05",
+    "sha256": "aaa550e2f2d97b84e099682d163cdbf03c3c562fd8e833c986d3280e34649221",
     "v": "20261016-06"
   },
   "css/features/werkgever.css": {
-    "sha256": "51897e01c27aab8b3231b92a87ba1fe068be7e5b9a5ee9836f01892e2a444baf",
+    "sha256": "db1ce09af39dabe95aaf63f39fa6c065467b6c8d01433bbbf9672c57e5b8c822",
     "v": "20261017-19"
   },
   "css/tokens.css": {

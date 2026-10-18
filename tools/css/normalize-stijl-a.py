@@ -10,10 +10,6 @@ ROOT = Path(__file__).resolve().parents[2] / "Jobsy.Web" / "wwwroot" / "css"
 
 EXCLUDED_NAMES = frozenset(
     {
-        "public-theme.css",
-        "landing.css",
-        "gratis-dna.css",
-        "public-pages.css",
         "tokens.css",
         "app.min.css",
     }
@@ -54,9 +50,75 @@ def count_metrics(text: str) -> tuple[int, int, int]:
 
 
 def replace_legacy_radius_vars(text: str) -> str:
-    text = re.sub(r"var\(\s*--radius-sm\s*\)", "var(--r-sm)", text, flags=re.I)
-    text = re.sub(r"var\(\s*--radius-lg\s*\)", "var(--r-lg)", text, flags=re.I)
-    text = re.sub(r"var\(\s*--radius\s*\)", "var(--r-md)", text, flags=re.I)
+    subs = [
+        (r"var\(\s*--radius-sm\s*(?:,\s*[^)]+)?\)", "var(--r-sm)"),
+        (r"var\(\s*--radius-lg\s*(?:,\s*[^)]+)?\)", "var(--r-lg)"),
+        (r"var\(\s*--radius-md\s*(?:,\s*[^)]+)?\)", "var(--r-md)"),
+        (r"var\(\s*--radius\s*(?:,\s*[^)]+)?\)", "var(--r-md)"),
+        (r"var\(\s*--radius-pill\s*(?:,\s*[^)]+)?\)", "var(--radius-pill)"),
+        (r"var\(\s*--wa-radius\s*\)", "var(--r-lg)"),
+        (r"var\(\s*--form-card-radius\s*\)", "var(--r-lg)"),
+        (r"var\(\s*--au-radius-card\s*\)", "var(--r-lg)"),
+        (r"var\(\s*--pub-radius-pill\s*\)", "var(--radius-pill)"),
+        (r"var\(\s*--pub-radius-card\s*(?:,\s*[^)]+)?\)", "var(--r-lg)"),
+        (r"var\(\s*--pub-radius-scene\s*(?:,\s*[^)]+)?\)", "var(--r-lg)"),
+        (r"var\(\s*--pub-radius-sm\s*(?:,\s*[^)]+)?\)", "var(--r-sm)"),
+        (r"var\(\s*--radius-sm\s*\)", "var(--r-sm)"),
+    ]
+    for pat, repl in subs:
+        text = re.sub(pat, repl, text, flags=re.I)
+    text = re.sub(
+        r"border-radius\s*:\s*calc\(\s*var\(\s*--form-card-radius\s*\)\s*\+\s*\d+px\s*\)",
+        "border-radius:var(--r-lg)",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"border-radius\s*:\s*calc\(\s*var\(\s*--r-lg\s*\)\s*\+\s*\d+px\s*\)",
+        "border-radius:var(--r-lg)",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"border-radius\s*:\s*[\d.]+%\s+[\d.]+%\s+[\d.]+%\s+[\d.]+%\s*/\s*[\d.]+%\s+[\d.]+%\s+[\d.]+%\s+[\d.]+%",
+        "border-radius:var(--radius-pill)",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(r"border-radius\s*:\s*99px\b", "border-radius:var(--radius-pill)", text, flags=re.I)
+    text = re.sub(r"border-radius\s*:\s*28px\b", "border-radius:var(--r-lg)", text, flags=re.I)
+    text = re.sub(r"border-radius\s*:\s*1\.75rem\b", "border-radius:var(--r-lg)", text, flags=re.I)
+    text = re.sub(r"border-radius\s*:\s*inherit\b", "border-radius:var(--r-md)", text, flags=re.I)
+    text = re.sub(
+        r"--pub-radius-card\s*:\s*[^;]+;",
+        "--pub-radius-card: var(--r-lg);",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"--pub-radius-scene\s*:\s*[^;]+;",
+        "--pub-radius-scene: var(--r-lg);",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"--form-card-radius\s*:\s*var\([^)]+\)\s*;",
+        "--form-card-radius: var(--r-lg);",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"--wa-radius\s*:\s*[^;]+;",
+        "--wa-radius: var(--r-lg);",
+        text,
+        flags=re.I,
+    )
+    text = re.sub(
+        r"--au-radius-card\s*:\s*[^;]+;",
+        "--au-radius-card: var(--r-lg);",
+        text,
+        flags=re.I,
+    )
     return text
 
 
@@ -74,8 +136,8 @@ def normalize_radius_component(raw: str) -> str:
     low = val.lower()
     if low == "0":
         return "0"
-    if low in ("50%", "999px", "9999px"):
-        return "var(--radius-pill)"
+    if low in ("50%", "999px", "9999px", "99px"):
+        return "var(--radius-pill)" if low != "50%" else "50%"
     if low.startswith("var("):
         return val
 
@@ -89,6 +151,8 @@ def normalize_radius_component(raw: str) -> str:
         if px <= 12:
             return "var(--r-md)"
         if px <= 24:
+            return "var(--r-lg)"
+        if px <= 36:
             return "var(--r-lg)"
         return val
 
@@ -298,7 +362,7 @@ def main() -> int:
 
     after = count_metrics("\n".join(updated_files))
 
-    print(f"Processed {len(files)} CSS files (excluded public theme + tokens + app.min.css).")
+    print(f"Processed {len(files)} CSS files (excluded tokens.css + app.min.css).")
     print(f"Distinct border-radius values: before={before[0]} after={after[0]}")
     print(f"Non-none box-shadow declarations: before={before[1]} after={after[1]}")
     print(f"linear-gradient( occurrences: before={before[2]} after={after[2]}")

@@ -8,7 +8,7 @@
 }.kb-ext__card {
   background:var(--surface, #fffcfa);
   border: 1px solid var(--border, #ddd5cc);
-  border-radius:var(--radius, 12px);
+  border-radius:var(--r-md);
   padding: 1.25rem 1rem;
   margin-bottom: 1rem;
 }.kb-ext__title {
@@ -34,7 +34,7 @@
   width: 100%;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--border, #ddd5cc);
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   font: inherit;
 }.kb-ext__btn {
   display: inline-flex;
@@ -43,7 +43,7 @@
   width: 100%;
   padding: 0.75rem 1rem;
   border: none;
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   font-weight: 600;
   font: inherit;
   cursor: pointer;
@@ -85,7 +85,7 @@
     grid-template-columns: 1fr 1fr;
   }}.kb-ext__match-panel {
   padding: 0.75rem;
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   background:var(--accent-soft, #e7eef7);
 }.kb-ext__match-panel--good {
   background:var(--success-soft, #ecfdf3);
@@ -95,7 +95,7 @@
 }.kb-ext__privacy {
   margin-top: 0.75rem;
   padding: 0.65rem 0.75rem;
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   background:var(--success-soft, #ecfdf3);
   color: var(--success, #15803d);
   font-size: 0.85rem;
@@ -103,7 +103,7 @@
   margin-top: 1rem;
   padding: 0.85rem;
   border: 2px dashed var(--border, #ddd5cc);
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
 }.kb-ext__promo {
   margin: 0.5rem 1rem 0;
   text-align: center;
@@ -142,7 +142,7 @@
   display: block;
   padding: 0.75rem;
   border: 1px solid var(--border, #ddd5cc);
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   text-decoration: none;
   color: inherit;
 }.kb-ext__list a:hover {
@@ -188,7 +188,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   padding: 0.65rem 0.85rem;
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   background:var(--brand-deep, #0a2044);
   color: #f7f4f0;
   font-size: 0.875rem;
@@ -196,7 +196,7 @@
 }.kb-ext__toast button {
   flex-shrink: 0;
   border: 1px solid rgba(247, 244, 240, 0.55);
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   background:transparent;
   color: inherit;
   font: inherit;

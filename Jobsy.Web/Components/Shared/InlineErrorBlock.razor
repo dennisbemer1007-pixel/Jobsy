@@ -1,3 +1,4 @@
+@using Jobsy.Web.Components.Ui
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
 @inject CultureState Culture
@@ -9,7 +10,7 @@
 *@
 
 <div class="err-inline" role="status" data-testid="inline-error">
-    <span class="err-inline__icon" aria-hidden="true">⚠️</span>
+    <LineIcon Name="warning" CssClass="err-inline__icon line-icon--md" />
     <div class="err-inline__body">
         <p class="err-inline__text">@MessageText</p>
         @if (!string.IsNullOrEmpty(_apiUserMessage))

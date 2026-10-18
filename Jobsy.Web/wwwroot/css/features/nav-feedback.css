@@ -24,7 +24,7 @@
     display: block;
     height: 100%;
     width: 35%;
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--brand);
     transform: translate3d(-100%, 0, 0);
     animation: nav-route-progress-slide 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;

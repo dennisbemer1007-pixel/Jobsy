@@ -1583,7 +1583,7 @@ body:has(.app-shell--questionnaire) {
     position: absolute;
     inset: 0;
     z-index: 1;
-    border-radius:inherit;
+    border-radius:var(--r-md);
 }.job-card__footer,
 .job-card__actions,
 .job-card .engagement-icon-btn,
@@ -1877,7 +1877,7 @@ body:has(.app-shell--questionnaire) {
     bottom: 0;
     left: var(--hours-low, 0%);
     right: calc(100% - var(--hours-high, 100%));
-    border-radius:inherit;
+    border-radius:var(--r-md);
     background:var(--brand);
 }.hours-range__inputs {
     position: relative;
@@ -1966,7 +1966,7 @@ body:has(.app-shell--questionnaire) {
     box-shadow:var(--shadow-pop);
 }.filter-sheet__cancel {
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--brand);
     font: inherit;
@@ -1983,7 +1983,7 @@ body:has(.app-shell--questionnaire) {
     flex: 1 1 auto;
     margin: 0;
     border: 1px solid var(--brand);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     padding: 0 1rem;
     min-height: 48px;
     height: 48px;
@@ -6302,7 +6302,7 @@ a.map-popup__apply.map-popup__cta:visited {
 }.stat-card__meter-fill {
     display: block;
     height: 100%;
-    border-radius:inherit;
+    border-radius:var(--r-md);
     background:color-mix(in srgb, var(--brand) 75%, #3d7a5f);
 }.stat-card__spark,
 .metric-sparkline {
@@ -6440,7 +6440,7 @@ a.map-popup__apply.map-popup__cta:visited {
 }.bento-rank__bar-fill {
     display: block;
     height: 100%;
-    border-radius:inherit;
+    border-radius:var(--r-md);
 }.bento-rank__bar-fill--good {
     background:color-mix(in srgb, var(--brand) 55%, #3d7a5f);
 }.bento-rank__bar-fill--warn {
@@ -10877,7 +10877,7 @@ a.apply-flow__secondary {
 }.role-badge {
     display: inline-block;
     padding: 0.15rem 0.5rem;
-    border-radius:99px;
+    border-radius:var(--radius-pill);
     font-size: 0.72rem;
     font-weight: 700;
 }.role-badge--em { background:color-mix(in srgb, var(--brand) 16%, transparent); color: var(--brand); }.role-badge--rm { background:color-mix(in srgb, #2563eb 16%, transparent); color: #1d4ed8; }.role-badge--bm { background:color-mix(in srgb, #0f766e 16%, transparent); color: #0f766e; }.role-badge--im { background:color-mix(in srgb, #7c3aed 16%, transparent); color: #6d28d9; }.invite-panel {
@@ -10896,7 +10896,7 @@ a.apply-flow__secondary {
     min-width: 1.4rem;
     height: 1.4rem;
     padding: 0 0.35rem;
-    border-radius:99px;
+    border-radius:var(--radius-pill);
     align-items: center;
     justify-content: center;
     background:#ca8a04;
@@ -11056,7 +11056,7 @@ a.apply-flow__secondary {
     align-items: center;
     gap: 0.35rem;
     padding: 0.28rem 0.65rem;
-    border-radius:99px;
+    border-radius:var(--radius-pill);
     border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border));
     background:color-mix(in srgb, var(--surface) 80%, #fff);
     color: var(--brand);
@@ -11099,7 +11099,7 @@ a.apply-flow__secondary {
     display: inline-block;
     margin-left: 0.35rem;
     padding: 0.1rem 0.4rem;
-    border-radius:99px;
+    border-radius:var(--radius-pill);
     background:color-mix(in srgb, #15803d 16%, transparent);
     color: #15803d;
     font-size: 0.68rem;
@@ -11343,7 +11343,7 @@ a.apply-flow__secondary {
     min-block-size: 72px;
     padding: 12px;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     text-align: start;
     font: inherit;
@@ -11373,7 +11373,7 @@ a.apply-flow__secondary {
     min-block-size: 52px;
     padding: 10px 12px;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--text);
     font: inherit;
@@ -11989,7 +11989,7 @@ a.apply-flow__secondary {
 }.competency-bar__fill {
     display: block;
     height: 100%;
-    border-radius:inherit;
+    border-radius:var(--r-md);
     background:var(--brand);
 }.competency-bar__hint {
     margin: 0.2rem 0 0;
@@ -12020,7 +12020,7 @@ a.apply-flow__secondary {
     padding: 0.75rem 0.85rem;
     background:color-mix(in srgb, var(--surface) 92%, var(--pearl-shine));
     border: 1px solid var(--border);
-    border-radius:var(--radius, 12px);
+    border-radius:var(--r-md);
     box-shadow:none;
 }.deep-analysis-topics {
     list-style: none;
@@ -13043,7 +13043,7 @@ a.apply-flow__secondary {
     }}.swipe-card {
     position: relative;
     background:#fff;
-    border-radius:1.75rem;
+    border-radius:var(--r-lg);
     box-shadow:none;
     padding: 0.4rem 0.5rem 0.45rem;
     touch-action: pan-y;
@@ -13556,7 +13556,7 @@ a.apply-flow__secondary {
 }.profile-hub-scores__bar span {
     display: block;
     height: 100%;
-    border-radius:inherit;
+    border-radius:var(--r-md);
     background:color-mix(in srgb, var(--brand) 85%, var(--accent-hover));
 }.profile-hub-scores p {
     margin: 0;
@@ -13914,7 +13914,7 @@ a.apply-flow__secondary {
     display: block;
     height: 100%;
     background:var(--brand);
-    border-radius:inherit;
+    border-radius:var(--r-md);
 }.test-detail__accordion {
     margin: 0 0 1rem;
     border-top: 1px solid var(--border);

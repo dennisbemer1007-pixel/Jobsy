@@ -278,7 +278,7 @@
     min-block-size: 44px;
     padding: 8px 10px;
     border: 0;
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:transparent;
     color: var(--text);
     font-size: var(--text-sm);

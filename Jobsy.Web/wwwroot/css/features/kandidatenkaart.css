@@ -13,7 +13,7 @@
     padding: var(--form-input-pad-y, 0.75rem) var(--form-input-pad-x, 0.875rem);
     padding-inline-end: 2.5rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--form-value-color, var(--text));
     font: inherit;
@@ -510,7 +510,7 @@
     display: block;
     height: 100%;
     background:var(--brand);
-    border-radius:inherit;
+    border-radius:var(--r-md);
 }.kk-bar__fill--high {
     background:var(--success);
 }.kk-note {
@@ -1195,7 +1195,7 @@ html.vp-desktop .kk-layout-b__list {
   padding: 0 0.75rem;
   border: none;
   background:transparent;
-  border-radius:var(--radius-pill, 999px);
+  border-radius:var(--radius-pill);
   font-size: var(--text-sm, 0.875rem);
   color: var(--muted, #5a6472);
   font-weight: 600;

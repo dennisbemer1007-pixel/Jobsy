@@ -46,7 +46,7 @@
   box-sizing: border-box;
   padding: var(--space-3) var(--space-4);
   border: 0;
-  border-radius:inherit;
+  border-radius:var(--r-md);
   background:transparent;
   text-align: start;
   font: inherit;

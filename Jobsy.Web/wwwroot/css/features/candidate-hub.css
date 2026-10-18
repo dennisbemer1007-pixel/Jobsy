@@ -18,7 +18,7 @@
     display: block;
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:var(--surface);
     box-shadow:none;
     text-decoration: none;

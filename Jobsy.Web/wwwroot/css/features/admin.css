@@ -95,7 +95,7 @@
     gap: 0.35rem;
     min-height: 28px;
     padding-inline: 0.65rem;
-    border-radius:var(--radius-pill, 999px);
+    border-radius:var(--radius-pill);
     font-size: var(--text-xs, 0.75rem);
     font-weight: 600;
 }.admin-env-badge__dot {
@@ -424,7 +424,7 @@
     min-height: 1.35rem;
     padding-inline: 0.35rem;
     margin-inline-start: auto;
-    border-radius:var(--radius-pill, 999px);
+    border-radius:var(--radius-pill);
     background:var(--accent-soft);
     color: var(--brand);
     font-size: var(--text-xs, 0.75rem);
@@ -835,7 +835,7 @@ table td.muted {
     min-height: 44px;
     padding-inline: 0.65rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--text);
     font: inherit;
@@ -1149,7 +1149,7 @@ table td.muted {
     min-height: 44px;
     padding: 0;
     border: none;
-    border-radius:var(--radius-pill, 999px);
+    border-radius:var(--radius-pill);
     background:var(--border);
     cursor: pointer;
     flex-shrink: 0;
@@ -1204,7 +1204,7 @@ table td.muted {
     padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
     background:var(--brand-deep);
     color: var(--on-brand, #fff);
-    border-radius:var(--radius-md, 0.5rem);
+    border-radius:var(--r-md);
 }.admin-save-bar__summary {
     margin: 0;
     font-size: var(--text-sm, 0.875rem);
@@ -1314,7 +1314,7 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
     background:var(--surface);
     color: var(--text);
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     max-height: 16rem;
     overflow: auto;
 }.admin-user-picker__list button {
@@ -1442,7 +1442,7 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
     min-height: 44px;
     padding-inline: var(--space-2, 0.5rem);
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--text);
 }.maintenance-banner {
@@ -1497,7 +1497,7 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
         margin-block-end: 0.75rem;
         padding: 0.75rem;
         border: 1px solid var(--border);
-        border-radius:var(--radius-sm, 8px);
+        border-radius:var(--r-sm);
         background:var(--surface);
     }.admin-data-table td {
         display: flex;
@@ -1525,7 +1525,7 @@ html[data-lobsy-keyboard] .admin-dash__titles h1:focus-visible {
     min-height: 44px;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--text);
 }.admin-school-form .filter-check {

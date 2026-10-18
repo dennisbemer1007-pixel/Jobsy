@@ -106,7 +106,7 @@
     gap: 8px;
     margin: 0;
     padding: 10px 12px;
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:color-mix(in srgb, var(--border) 35%, var(--surface));
     font-size: var(--text-sm, 0.875rem);
     line-height: 1.35;
@@ -203,7 +203,7 @@
     min-block-size: 44px;
     padding: 10px 12px;
     border: 1px solid var(--border);
-    border-radius:var(--radius, 12px);
+    border-radius:var(--r-md);
     background:var(--surface);
     text-align: start;
     color: inherit;
@@ -277,7 +277,7 @@
     min-block-size: 48px;
     padding: 0;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--brand);
     font-weight: 600;

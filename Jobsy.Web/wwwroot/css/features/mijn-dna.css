@@ -35,7 +35,7 @@
 }.dna-story {
     padding: 0.9rem 1rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius, 12px);
+    border-radius:var(--r-md);
     background:var(--surface);
     box-shadow:none;
 }.dna-story .dna-section__title {
@@ -112,7 +112,7 @@
 }.dna-highlight {
     padding: 10px;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     box-shadow:none;
 }.dna-highlight__label {
@@ -154,7 +154,7 @@
     scroll-snap-align: start;
     padding: 0.85rem 0.9rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius, 12px);
+    border-radius:var(--r-md);
     background:var(--surface);
     box-shadow:none;
     outline: none;
@@ -241,7 +241,7 @@
     min-block-size: 150px;
     padding: 0.75rem 0.8rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius, 12px);
+    border-radius:var(--r-md);
     background:var(--surface);
     box-shadow:none;
     text-decoration: none;
@@ -275,7 +275,7 @@
 }.dna-detail {
     padding: 0.9rem 1rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius, 12px);
+    border-radius:var(--r-md);
     background:var(--surface);
     box-shadow:none;
 }.dna-teaser__text {
@@ -289,7 +289,7 @@
     min-block-size: 48px;
     padding-inline: 1rem;
     border: 1px solid var(--brand);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--brand);
     font-weight: 600;
@@ -368,7 +368,7 @@
     display: block;
     block-size: 100%;
     inline-size: var(--w, 0%);
-    border-radius:inherit;
+    border-radius:var(--r-md);
     background:var(--brand);
 }.bar-list__item--muted .bar-list__bar::after {
     background:color-mix(in srgb, var(--brand) 45%, var(--border));

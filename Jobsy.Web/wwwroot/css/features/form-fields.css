@@ -11,7 +11,7 @@
     --form-muted-label: var(--muted);
     --form-placeholder-color: color-mix(in srgb, var(--muted) 88%, var(--text));
     --form-card-pad: 1rem 1.125rem;
-    --form-card-radius: var(--radius-sm, 8px);
+    --form-card-radius: var(--r-lg);
 }.jobsy-form-value,
 .ob-wizard .ob-wizard__content input:not([type="checkbox"]):not([type="radio"]),
 .ob-fields input:not([type="checkbox"]):not([type="radio"]),
@@ -43,7 +43,7 @@ input.jobsy-date-field__input[type="month"] {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--form-value-color);
     font: inherit;
@@ -125,7 +125,7 @@ input.jobsy-date-field__input[type="month"] {
     margin-block: var(--form-section-gap);
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:var(--surface);
     box-shadow:none;
 }.ob-wizard__presets-field {
@@ -188,7 +188,7 @@ input.jobsy-date-field__input[type="month"] {
 }.profile-page--candidate fieldset.ob-wizard__start-options {
     margin-block: var(--form-section-gap);
     padding: 1rem 1.05rem;
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     border: 1px solid var(--border);
     background:var(--surface);
 }.profile-page--candidate .profile-employer-card {
@@ -228,7 +228,7 @@ input.jobsy-date-field__input[type="month"] {
     margin-block: var(--form-section-gap);
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:var(--surface);
 }.profile-form {
     gap: var(--form-field-gap);
@@ -252,7 +252,7 @@ input.jobsy-date-field__input[type="month"] {
     margin-block: var(--form-section-gap) 0.75rem;
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:var(--surface);
 }.ob-wizard__fine-tune {
     margin-block: var(--form-section-gap);
@@ -286,7 +286,7 @@ input.filter-bar__search {
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     padding-inline-end: 2.75rem;
     border: 1px solid var(--border);
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:var(--surface);
     color: var(--form-value-color);
     font: inherit;
@@ -309,7 +309,7 @@ input.filter-bar__search {
     block-size: 2.25rem;
     padding: 0;
     border: 0;
-    border-radius:var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     background:transparent;
     cursor: pointer;
 }.jobsy-date-field__picker-btn:focus-visible {

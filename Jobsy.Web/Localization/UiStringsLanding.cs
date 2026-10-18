@@ -426,11 +426,11 @@ public static class UiStringsLanding
         Add("Landing.Hero.ChipHelp", "Mensen helpen", "Helping people", "Pomaganie ludziom", "Ajutor oameni", "مساعدة الناس");
         Add("Landing.Hero.ChipWarm", "Warm team", "A warm team", "Ciepły zespół", "Echipă caldă", "فريق دافئ");
         Add("Landing.Hero.FitFloatTitle", "Past dit beroep bij mij?", "Does this occupation suit me?", "Czy ten zawód do mnie pasuje?", "Mi se potrivește ocupația?", "هل تناسبني هذه المهنة؟");
-        Add("Landing.Hero.FitFloatMeta", "Verpleegkundige · 82% fit", "Nurse · 82% fit", "Pielęgniarka · 82% dopasowania", "Asistent medical · 82% potrivire", "ممرض · تناسب ٨٢٪");
+        Add("Landing.Hero.FitFloatMeta", "Verpleegkundige · sterke fit", "Nurse · strong fit", "Pielęgniarka · mocne dopasowanie", "Asistent medical · potrivire bună", "ممرض · تناسب قوي");
         Add("Landing.Hero.JourneyFloatTitle", "Ontdekkingsreis", "Discovery journey", "Podróż odkrywcza", "Călătoria de descoperire", "رحلة الاكتشاف");
         Add("Landing.Hero.JourneyFloatMeta", "Stap 3 van 6 · Hier voel je je thuis", "Step 3 of 6 · Where you feel at home", "Krok 3 z 6 · Tu czujesz się jak w domu", "Pasul 3 din 6 · Aici te simți acasă", "الخطوة ٣ من ٦ · هنا تشعر أنك في بيتك");
         Add("Landing.Hero.FitFloatMobile", "Verpleegkundige", "Nurse", "Pielęgniarka", "Asistent medical", "ممرض");
-        Add("Landing.Hero.FitFloatMobileMeta", "82% fit met jou", "82% fit with you", "82% dopasowania do Ciebie", "82% potrivire cu tine", "تناسب ٨٢٪ معك");
+        Add("Landing.Hero.FitFloatMobileMeta", "Sterke fit met jou", "Strong fit with you", "Mocne dopasowanie do Ciebie", "Potrivire bună cu tine", "تناسب قوي معك");
 
         Add("Landing.WhatIs.S2Body.Zw",
             "Welke beroepen passen bij jou? En wat heb je nog nodig voor je droombaan?",

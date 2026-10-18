@@ -87,7 +87,7 @@
     display: block;
     height: 100%;
     background:var(--brand);
-    border-radius:inherit;
+    border-radius:var(--r-md);
     transition: width 0.2s ease;
   }.ob-wizard--richting-a .ob-wizard__content {
     flex: none !important;

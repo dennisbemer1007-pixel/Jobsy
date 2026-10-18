@@ -221,7 +221,7 @@
     display: block;
     block-size: 100%;
     background:var(--brand);
-    border-radius:inherit;
+    border-radius:var(--r-md);
 }.test-result-premium {
     margin-block-start: 1.35rem;
     border-radius:var(--r-lg);

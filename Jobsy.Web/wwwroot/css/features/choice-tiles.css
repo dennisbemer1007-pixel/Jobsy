@@ -97,7 +97,7 @@ fieldset > .lobsy-choice-grid {
   margin: 0;
   padding: 6px 8px 6px 6px;
   border: 1px solid var(--lobsy-choice-border);
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   background:var(--lobsy-choice-fill);
   color: var(--text);
   font: inherit;
@@ -352,7 +352,7 @@ fieldset > .lobsy-choice-grid {
   min-height: var(--lobsy-choice-tile-h);
   padding: 0 10px;
   border: 1px solid var(--lobsy-choice-border);
-  border-radius:var(--radius-sm, 8px);
+  border-radius:var(--r-sm);
   background:var(--lobsy-choice-fill);
   display: inline-flex;
   align-items: center;

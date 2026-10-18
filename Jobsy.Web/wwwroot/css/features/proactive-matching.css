@@ -9,7 +9,7 @@
     margin-inline: auto;
     padding-block: 1.25rem 2.5rem;
     background:var(--pm-cream);
-    border-radius:calc(var(--form-card-radius) + 6px);
+    border-radius:var(--r-lg);
 }.proactive-shortlist-page {
     max-width: 56rem;
     padding-inline: clamp(0.75rem, 3vw, 1.25rem);
@@ -51,7 +51,7 @@
     overflow: hidden;
     margin-block-end: var(--form-section-gap);
     padding: 1.35rem 1.25rem 1.5rem;
-    border-radius:calc(var(--form-card-radius) + 4px);
+    border-radius:var(--r-lg);
     border: 1px solid color-mix(in srgb, var(--brand) 28%, var(--border));
     background:
         radial-gradient(120% 80% at 100% 0%, var(--pm-glow), transparent 55%),
@@ -79,7 +79,7 @@
     margin-block: var(--form-section-gap);
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:var(--surface);
     box-shadow:none;
 }.proactive-card__title {
@@ -127,7 +127,7 @@
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:var(--surface);
     color: var(--form-value-color);
     font-weight: var(--form-value-weight);
@@ -162,7 +162,7 @@
     flex-direction: column;
     gap: 1rem;
 }.proactive-wow-card {
-    border-radius:calc(var(--form-card-radius) + 8px);
+    border-radius:var(--r-lg);
     border: 1px solid color-mix(in srgb, var(--brand) 18%, #ddd5cc);
     background:var(--pm-surface);
     box-shadow:none;
@@ -170,7 +170,7 @@
     position: relative;
     padding: 1rem 1.05rem 1.1rem;
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:var(--surface);
     box-shadow:none;
 }.proactive-tip::before {
@@ -256,7 +256,7 @@
 }.proactive-feedback-btn {
     min-height: 44px;
     padding-inline: 1rem;
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     border: 1px solid var(--border);
     background:var(--surface);
     font-weight: 600;
@@ -277,7 +277,7 @@
     gap: 0.65rem 1rem;
     margin-block-end: 1rem;
     padding: 0.85rem 1rem;
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--border));
     background:color-mix(in srgb, var(--accent-soft) 55%, var(--surface));
 }.proactive-promo__copy {
@@ -298,7 +298,7 @@
 }.proactive-shortlist-promo {
     margin-block: var(--form-section-gap);
     padding: 1.25rem 1.35rem;
-    border-radius:calc(var(--form-card-radius) + 6px);
+    border-radius:var(--r-lg);
     border: 1px solid color-mix(in srgb, var(--brand) 32%, var(--border));
     background:radial-gradient(90% 70% at 100% 0%, color-mix(in srgb, var(--brand) 10%, transparent), transparent 55%);
     box-shadow:none;
@@ -335,7 +335,7 @@
     margin-block: var(--form-section-gap);
     padding: var(--form-card-pad);
     border: 1px dashed color-mix(in srgb, var(--brand) 35%, var(--border));
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     background:color-mix(in srgb, var(--accent-soft) 35%, var(--surface));
 }.proactive-shortlist--page {
     margin-block: 0;
@@ -358,7 +358,7 @@
 }.proactive-shortlist-card {
     padding: 1rem 1.15rem 1.15rem;
     border: 1px solid color-mix(in srgb, var(--brand) 20%, var(--border));
-    border-radius:calc(var(--form-card-radius) + 6px);
+    border-radius:var(--r-lg);
     background:none;
     box-shadow:none;
 }.proactive-shortlist--page .proactive-shortlist-card {
@@ -441,7 +441,7 @@
     margin-block: 0.5rem;
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     border: 1px solid var(--border);
-    border-radius:var(--form-card-radius);
+    border-radius:var(--r-lg);
     font: inherit;
     resize: vertical;
 }@media (min-width: 640px) {.proactive-page {

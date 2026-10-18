@@ -96,7 +96,7 @@
   color: var(--obf-brand);
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(15, 45, 92, 0.1);
-  border-radius:99px;
+  border-radius:var(--radius-pill);
   padding: 0.35rem 0.75rem;
 }.ob-finale__badge i {
   width: 0.5rem;
@@ -317,7 +317,7 @@
   font-weight: 700;
   color: #8f6232;
   background: #f8ecd9;
-  border-radius:99px;
+  border-radius:var(--radius-pill);
   padding: 2px 8px;
   display: inline-block;
   margin-bottom: 0.35rem;
