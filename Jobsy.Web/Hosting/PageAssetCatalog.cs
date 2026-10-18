@@ -33,10 +33,11 @@ public static class PageAssetCatalog
 
     public static readonly string[] CandidatePublicCss =
     [
-        "css/features/banenkaart.css?v=20261018-01",
+        "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-01",
+        "css/features/candidate-illustrated-app.css?v=20261018-03",
         "css/features/kandidaat-banen.css?v=20261017-04",
-        "css/features/match-desktop.css?v=20261013-01",
+        "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
     ];

@@ -20,7 +20,9 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/candidate-illustrated-pages";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-rol-r1";
+    private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -48,18 +50,23 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_four_illustrated_pages_at_1440_and_390()
+    public async Task Capture_eight_candidate_pages_at_1440_390_and_1024()
     {
         Directory.CreateDirectory(ArtifactsDir);
-        await CapturePageAsync("/login", "login", auth: false);
-        await CapturePageAsync("/", "start", auth: false);
-        await CapturePageAsync("/candidate/paspoort", "kompas", auth: true);
-        await CapturePageAsync("/banenkaart", "banenkaart", auth: true);
+        await CapturePageAsync("/vacancies/" + SampleVacancyId, "vacature-no-photo", auth: true);
+        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature-photo", auth: true);
+        await CapturePageAsync("/candidate/match", "match", auth: true);
+        await CapturePageAsync("/candidate/applications", "sollicitaties", auth: true);
+        await CapturePageAsync("/candidate/liked", "bewaard", auth: true);
+        await CapturePageAsync("/account-maken", "account-maken", auth: false);
+        await CapturePageAsync("/account-maken/code", "account-code", auth: false);
+        await CapturePageAsync("/carriere", "carriere", auth: true);
+        await CapturePageAsync("/candidate/settings?pane=mail", "instellingen", auth: true);
     }
 
     private async Task CapturePageAsync(string path, string name, bool auth)
     {
-        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390"), (1024, 900, "1024") })
         {
             await using var context = await _browser!.NewContextAsync(new()
             {
@@ -227,21 +234,55 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
             kompas.Profile!.FullName = "Sanne de Vries";
             kompas.Profile.FirstName = "Sanne";
+            var descriptionSections =
+                "<h2>Wat ga je doen?</h2><p>Je helpt met voeren, schoonmaken en aandacht voor de dieren.</p>" +
+                "<h2>Wat vragen we?</h2><p>Je bent zorgvuldig en vindt het fijn om met dieren te werken.</p>" +
+                "<h2>Wat bieden we?</h2><p>Een warm team, vaste uren en begeleiding.</p>";
+            var sampleVacancy = $$"""
+                {"id":"{{SampleVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":null,"companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"descriptionHtml":"{{descriptionSections}}"}
+                """;
+            var photoVacancy = $$"""
+                {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"/images/candidate-illustrated/finale-hero.jpg","companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"descriptionHtml":"{{descriptionSections}}"}
+                """;
+            var sampleApplication = """
+                [{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Zorgmedewerker dagbesteding","companyName":"Kasteelhof Zorg","locationLabel":"Zaandam","status":"EmployerContacting","createdAt":"2026-10-02T10:00:00Z","timeline":[{"key":"Sent","labelKey":"Kb.Timeline.Sent","state":"Done","occurredAtUtc":"2026-10-02T10:00:00Z"},{"key":"Seen","labelKey":"Kb.Timeline.Seen","state":"Done","occurredAtUtc":"2026-10-04T10:00:00Z"},{"key":"Interview","labelKey":"Kb.Timeline.Interview","state":"Current","occurredAtUtc":"2026-10-09T10:00:00Z"},{"key":"Outcome","labelKey":"Kb.Timeline.Outcome","state":"Pending","occurredAtUtc":null}],"nextStepKey":"Kb.Next.Practice"}]
+                """;
+            var sampleLike = """
+                [{"vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","locationLabel":"Zaandam","fitPercent":81,"fitBand":"Strong","createdAt":"2026-10-10T10:00:00Z","savedStateKind":"Open","imageUrl":null,"companyLogoUrl":null}]
+                """;
             var json = path.Contains("/kompas", StringComparison.OrdinalIgnoreCase)
                 ? System.Text.Json.JsonSerializer.Serialize(kompas)
                 : path.Contains("/site/status", StringComparison.OrdinalIgnoreCase)
                     ? """{"maintenance":false,"expectedEndUtc":null}"""
+                    : path.Contains("/me/email-preferences", StringComparison.OrdinalIgnoreCase)
+                        ? """{"reminderEmailsEnabled":true,"optional":[{"key":"PushBom","enabled":true},{"key":"VacancyEngagementReminder","enabled":true}]}"""
+                    : path.Contains("/me/reminder-whatsapp", StringComparison.OrdinalIgnoreCase)
+                        ? """{"available":true,"optedIn":false,"phone":null}"""
+                    : path.Contains("/me/career", StringComparison.OrdinalIgnoreCase)
+                        ? """{"hasPlan":true,"dreamTitle":"Dierenarts","currentStoneIndex":1,"stones":[{"title":"Nu","state":"Done"},{"title":"Mbo 4 paraveterinair","state":"Current"}]}"""
+                    : path.Contains("/applications", StringComparison.OrdinalIgnoreCase)
+                        ? sampleApplication
+                    : path.Contains("/likes", StringComparison.OrdinalIgnoreCase) || path.Contains("/engagement/likes", StringComparison.OrdinalIgnoreCase)
+                        ? sampleLike
+                    : path.Contains("/engagement/shares", StringComparison.OrdinalIgnoreCase)
+                        ? "[]"
+                    : path.Contains("/travel", StringComparison.OrdinalIgnoreCase)
+                        ? """{"travelMinutes":9,"distanceKm":2.4}"""
                     : path.Contains("vacanc", StringComparison.OrdinalIgnoreCase)
-                        ? path.Contains("pins", StringComparison.OrdinalIgnoreCase)
-                            ? "[]"
-                            : path.Contains("map", StringComparison.OrdinalIgnoreCase)
-                                ? """{"vacancies":[],"clusters":[]}"""
-                                : "[]"
-                        : path.Contains("/applications", StringComparison.OrdinalIgnoreCase)
-                            ? "[]"
-                            : path.Contains("/categories", StringComparison.OrdinalIgnoreCase)
+                        ? path.Contains(PhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
+                            ? photoVacancy
+                            : path.Contains(SampleVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
+                            ? sampleVacancy
+                            : path.Contains("pins", StringComparison.OrdinalIgnoreCase)
                                 ? "[]"
-                                : "{}";
+                                : path.Contains("map", StringComparison.OrdinalIgnoreCase)
+                                    ? """{"vacancies":[],"clusters":[]}"""
+                                    : "[]"
+                        : path.Contains("/categories", StringComparison.OrdinalIgnoreCase)
+                            ? "[]"
+                            : path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase)
+                                ? """{"preferences":{"homeAddress":"1506 AB Zaandam","workRegion":null}}"""
+                            : "{}";
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")

@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261018-01";
+    public const string Version = "20261018-02";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -21,4 +21,16 @@ public static class CandidateIllustratedImages
     public const string StepDna = $"{Base}/spots/dna.jpg?v={Version}";
     public const string StepBanen = $"{Base}/spots/banen.jpg?v={Version}";
     public const string EmpWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
+
+    public const string SollicitatiesBand = $"{Base}/werkervaring.jpg?v={Version}";
+    public const string BewaardBand = $"{Base}/spots/banen.jpg?v={Version}";
+    public const string CarriereBand = $"{Base}/opleiding.jpg?v={Version}";
+    public const string InstellingenBand = $"{Base}/beschikbaarheid.jpg?v={Version}";
+    public const string DroombaanBand = $"{Base}/droombaan.jpg?v={Version}";
+    public const string AccountMobileArt = $"{Base}/kennismaken.jpg?v={Version}";
+    public const string SavedNoPhotoArt = $"{Base}/spots/job-flex.jpg?v={Version}";
+
+    public const string SpotKaart = $"{Base}/spots/kaart.jpg?v={Version}";
+    public const string SpotVragen = $"{Base}/spots/vragen.jpg?v={Version}";
+    public const string SpotWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
 }

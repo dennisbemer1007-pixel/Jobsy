@@ -714,11 +714,13 @@ window.jobMap = (function () {
                 "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
                 escapeAttr(v.company) + " logo\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
         } else {
-            mediaClassFinal = "map-popup__media map-popup__media--empty";
+            const illustratedFallback =
+                "/images/candidate-illustrated/spots/job-flex.jpg?v=20261018-02";
+            mediaClassFinal = "map-popup__media map-popup__media--empty map-popup__media--illustrated";
             mediaInner =
-                "<span class=\"map-popup__media-empty\" aria-hidden=\"true\">" +
-                    "<svg viewBox=\"0 0 24 24\" focusable=\"false\"><path fill=\"currentColor\" d=\"M12 1a5 5 0 0 0-5 5v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 7V6a3 3 0 1 1 6 0v2H9zm3 5a1.75 1.75 0 1 1 0 3.5A1.75 1.75 0 0 1 12 13z\"/></svg>" +
-                "</span>";
+                "<img class=\"map-popup__photo map-popup__photo--illustrated\" src=\"" +
+                escapeAttr(illustratedFallback) +
+                "\" alt=\"\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" />";
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);

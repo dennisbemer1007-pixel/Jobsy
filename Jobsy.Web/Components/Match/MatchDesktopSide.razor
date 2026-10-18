@@ -1,0 +1,93 @@
+@namespace Jobsy.Web.Components.Match
+@using Jobsy.Core.Rules.KandidaatBanen
+@using Jobsy.Web.Models
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Components.KandidaatBanen
+@inject CultureState Culture
+
+@if (Model is not null)
+{
+    var dnaRows = MatchDnaRows.Build(
+        Model.FitDimensions,
+        Model.FitWhyKinds,
+        includeMissing: true,
+        maxWithData: 4);
+
+    <aside class="match-page__side" aria-label="@Culture["Match.WhyYouFit"]">
+        <section class="match-side-card" data-testid="match-side-why">
+            <h2>@Culture["Match.WhyYouFit"]</h2>
+            @if (dnaRows.Count > 0)
+            {
+                <ul class="kb-dna kb-dna--match kb-dna--match-dialog" role="list">
+                    @foreach (var row in dnaRows)
+                    {
+                        <li class="kb-dna__row" data-dna="@row.Kind">
+                            <span class="kb-dna__label">@Culture[row.LabelKey]</span>
+                            @if (row.Percent is int barPct)
+                            {
+                                <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]">@barPct%</progress>
+                                <span class="kb-dna__reason">@Culture[row.WhyKey]</span>
+                            }
+                            else
+                            {
+                                <a class="kb-dna__todo" href="@row.TestHref">@Culture["Kb.Dna.NotDone"]</a>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+            else if (!string.IsNullOrWhiteSpace(Model.WhyYouFit))
+            {
+                <p class="muted">@Model.WhyYouFit</p>
+            }
+        </section>
+
+        <section class="match-side-card match-side-card--info" data-testid="match-side-more">
+            <h2>@Culture["Match.MoreInfo"]</h2>
+            <dl class="match-side-facts">
+                <div>
+                    <dt>@Culture["Kb.Detail.TravelTitle"]</dt>
+                    <dd>
+                        <KbTravelTime Minutes="Model.TravelTimeMinutes"
+                                      Transport="Model.TransportMode"
+                                      ToBureau="Model.TravelToBureau" />
+                    </dd>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.HoursPrimary))
+                {
+                    <div>
+                        <dt>@Culture["Kb.Detail.HoursFact"]</dt>
+                        <dd>@Model.HoursPrimary @Culture["Kb.Match.HoursUnit"]</dd>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.SalaryPrimary))
+                {
+                    <div>
+                        <dt>@Culture["Kb.Detail.WageFact"]</dt>
+                        <dd>@Model.SalaryPrimary</dd>
+                    </div>
+                }
+                <div>
+                    <dt>@Culture["Kb.Detail.StartFact"]</dt>
+                    <dd>@Culture["Kb.Detail.StartFlexible"]</dd>
+                </div>
+            </dl>
+            <div class="match-side-links">
+                @if (Model.VacancyId is Guid id)
+                {
+                    <a class="match-side-links__link" href="@($"/vacancies/{id}")">@Culture["Match.ViewVacancy"]</a>
+                }
+            </div>
+        </section>
+
+        <section class="match-side-card match-side-card--saved">
+            <p><strong>@Culture["Kb.Saved.Title"]</strong> · @Culture["Kb.Saved.Lead"]</p>
+            <a href="@KbRoutes.Saved">@Culture["Kb.Match.ViewSaved"]</a>
+        </section>
+    </aside>
+}
+
+@code {
+    [Parameter] public SwipeViewModel? Model { get; set; }
+
+}
