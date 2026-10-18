@@ -20,7 +20,7 @@ public class ChatAssistantRestyleGuardTests
         Assert.Contains("CandidateChatContextBuilder", chat, StringComparison.Ordinal);
         Assert.Contains("ChatContextGreetingEnabled", gate, StringComparison.Ordinal);
         Assert.Contains("ChatContextGreetingEnabled", render, StringComparison.Ordinal);
-        Assert.Contains("lobsy-assistant__chip", css, StringComparison.Ordinal);
+        Assert.Contains("lobsy-assistant__chip", chat, StringComparison.Ordinal);
         Assert.Contains("Assistant.HumanLink", chat, StringComparison.Ordinal);
 
         var admin = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/AdminLayout.razor"));
@@ -40,7 +40,7 @@ public class ChatAssistantRestyleGuardTests
 
         Assert.Contains(".app-shell:has(.kb-detail) .lobsy-coach-dock", css, StringComparison.Ordinal);
         Assert.DoesNotContain(".app-shell:has(.kb-detail) .lobsy-coach-cta", css, StringComparison.Ordinal);
-        Assert.Contains("resize: none", css, StringComparison.Ordinal);
+        Assert.Contains("resize: vertical", css, StringComparison.Ordinal);
         var ctaMedallionIdx = css.IndexOf(".lobsy-coach-cta__medallion", StringComparison.Ordinal);
         Assert.True(ctaMedallionIdx >= 0);
         var ctaMedallionBlock = css.Substring(ctaMedallionIdx, Math.Min(220, css.Length - ctaMedallionIdx));

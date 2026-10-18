@@ -7013,6 +7013,57 @@ a.engagement-btn {
     justify-content: flex-start;
 }
 
+.lobsy-coach-cta__btn--warm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5625rem;
+    min-height: 48px;
+    padding: 0.45rem 1rem 0.45rem 0.65rem;
+    border: 0;
+    border-radius: 999px;
+    background: #ffc9a8;
+    color: var(--brand-deep, #0a2044);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 18%, transparent);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 650;
+    line-height: 1.2;
+    text-align: start;
+    max-width: 100%;
+}
+
+.lobsy-coach-cta__btn--warm:hover,
+.lobsy-coach-cta__btn--warm:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 22%, transparent);
+}
+
+.lobsy-coach-cta__btn--warm:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand) 55%, white);
+    outline-offset: 2px;
+}
+
+.lobsy-coach-cta__medallion {
+    position: static;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    transform: none;
+    filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--brand) 18%, transparent));
+}
+
+.lobsy-coach-cta__medallion img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.lobsy-coach-cta__label {
+    white-space: normal;
+}
+
 .lobsy-coach-cta__btn {
     display: inline-flex;
     align-items: center;

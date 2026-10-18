@@ -37,7 +37,7 @@ public class CandidateVacanciesTabTests
     {
         var root = FindRepoRoot();
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".lobsy-assistant-launcher {\n    position: fixed;\n    z-index: 45;\n    inset-inline-end: 24px;", css);
+        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 45;\n    inset-inline-end: 24px;", css);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
         Assert.Contains("width: max-content;\n    height: max-content;\n    pointer-events: none;", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);

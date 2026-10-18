@@ -477,13 +477,13 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("Feedback.CaptureFailed", feedback);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".lobsy-assistant-launcher {\n    position: fixed;\n    z-index: 45;\n    inset-inline-end: 24px;", css);
-        Assert.Contains(".lobsy-assistant-launcher__btn {\n    pointer-events: auto;\n    width: 56px;\n    height: 56px;", css);
+        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 45;\n    inset-inline-end: 24px;", css);
+        Assert.Contains(".lobsy-coach-dock__btn {\n    flex: none;\n    width: 56px;\n    height: 56px;", css);
         Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
         Assert.Contains("pointer-events: none;", css);
         Assert.Contains(".feedback-widget__btn {\n    pointer-events: auto;", css);
         Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
-        Assert.Contains(".lobsy-assistant-launcher.has-bottom-nav {\n    bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains(".app-shell.has-bottom-nav .lobsy-coach-dock,\n.app-shell:has(.bottom-nav) .lobsy-coach-dock {\n    bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));", css);
         Assert.Contains(".feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.DoesNotContain(".lobsy-assistant-tab--edge,\n    .feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);
