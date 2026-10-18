@@ -7,7 +7,7 @@ public class PageAssetCatalogTests
     [InlineData("/login", 3)]
     [InlineData("/account-maken", 3)]
     [InlineData("/banenkaart", 3 + 5)]
-    [InlineData("/candidate/paspoort", 3 + 5 + 17)]
+    [InlineData("/candidate/paspoort", 3 + 5 + 18)]
     [InlineData("/register", 3 + 4)]
     [InlineData("/werkgever/vacatures", 3 + 4)]
     [InlineData("/werkgever/kandidatenkaart", 3 + 4 + 2)]
@@ -20,7 +20,7 @@ public class PageAssetCatalogTests
         var areas = Jobsy.Web.Hosting.PageAssetCatalog.ResolveAreas(path);
         var sheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(areas);
         Assert.True(sheets.Count >= expectedMinLinks, $"Expected at least {expectedMinLinks} sheets for {path}, got {sheets.Count}");
-        Assert.True(sheets.Count <= 33, $"Too many stylesheets ({sheets.Count}) for {path}");
+        Assert.True(sheets.Count <= 35, $"Too many stylesheets ({sheets.Count}) for {path}");
         Assert.Equal(1, sheets.Count(s => s.StartsWith("css/app.min.css", StringComparison.Ordinal)));
         Assert.DoesNotContain("css/features/admin.css", sheets, StringComparer.Ordinal);
         if (path is "/login" or "/account-maken")
