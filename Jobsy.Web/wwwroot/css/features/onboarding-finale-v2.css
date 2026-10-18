@@ -6,8 +6,10 @@
   --obf-text: #122033;
   --obf-muted: #5a6a7d;
   --obf-border: #ddd5cc;
-  --obf-art-position: 76% 88%;
-  --obf-hero-min-height: clamp(19rem, 36vw, 34rem);
+  --obf-art-position: 74% 36%;
+  --obf-art-scale: 1.14;
+  --obf-art-origin: 82% 58%;
+  --obf-hero-height: clamp(30rem, 36vw, 32.5rem);
   color: var(--obf-text);
   background: var(--obf-pearl);
   min-height: 100vh;
@@ -17,7 +19,7 @@
 .ob-finale__hero {
   position: relative;
   display: grid;
-  grid-template-rows: minmax(var(--obf-hero-min-height), auto);
+  grid-template-rows: var(--obf-hero-height);
   width: 100vw;
   max-width: 100vw;
   margin-inline: calc(50% - 50vw);
@@ -31,12 +33,20 @@
   grid-area: 1 / 1;
   z-index: 0;
   pointer-events: none;
-  background: radial-gradient(
-    ellipse 90% 130% at 8% 22%,
-    rgba(253, 248, 242, 0.5) 0%,
-    rgba(253, 248, 242, 0.18) 45%,
-    transparent 72%
-  );
+  background:
+    radial-gradient(
+      ellipse 62% 115% at 14% 52%,
+      rgba(253, 248, 242, 0.82) 0%,
+      rgba(253, 248, 242, 0.45) 38%,
+      rgba(253, 248, 242, 0.12) 58%,
+      transparent 72%
+    ),
+    linear-gradient(
+      95deg,
+      rgba(253, 248, 242, 0.55) 0%,
+      rgba(253, 248, 242, 0.22) 22%,
+      transparent 42%
+    );
 }
 
 .ob-finale__art,
@@ -62,6 +72,8 @@
   height: 100%;
   object-fit: cover;
   object-position: var(--obf-art-position);
+  transform: scale(var(--obf-art-scale));
+  transform-origin: var(--obf-art-origin);
 }
 
 .ob-finale__intro {
@@ -70,9 +82,9 @@
   align-self: stretch;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  padding: clamp(1.125rem, 2.8vw, 2.25rem) clamp(1rem, 3vw, 2.5rem)
-    clamp(1.25rem, 2.5vw, 2rem);
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(1rem, 2.2vw, 1.75rem) clamp(1rem, 3vw, 2.5rem);
   max-width: none;
   width: 100%;
   text-align: left;
@@ -80,22 +92,11 @@
 }
 
 .ob-finale__hero-inner {
-  max-width: 26rem;
+  max-width: 32.5rem;
   margin: 0;
   width: 100%;
-  padding: clamp(0.875rem, 1.6vw, 1.25rem) clamp(1rem, 2vw, 1.375rem)
-    clamp(1rem, 1.8vw, 1.25rem);
-  background: linear-gradient(
-    118deg,
-    rgba(253, 248, 242, 0.94) 0%,
-    rgba(253, 248, 242, 0.86) 55%,
-    rgba(253, 248, 242, 0.62) 100%
-  );
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
-  box-shadow: 0 0 40px rgba(253, 248, 242, 0.35);
-  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 78%, transparent 100%);
-  mask-image: linear-gradient(to right, #000 0%, #000 78%, transparent 100%);
+  padding: 0;
+  background: transparent;
 }
 
 .ob-finale__badge {
@@ -503,56 +504,86 @@
 
 @media (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 78% 89%;
-    --obf-hero-min-height: clamp(20rem, 34vw, 36rem);
+    --obf-art-position: 76% 34%;
+    --obf-art-scale: 1.16;
+    --obf-art-origin: 84% 56%;
   }
 }
 
 @media (min-width: 1600px) {
   .ob-finale {
-    --obf-art-position: 80% 88%;
-    --obf-hero-min-height: clamp(21rem, 32vw, 38rem);
+    --obf-art-position: 78% 35%;
+    --obf-art-scale: 1.12;
+    --obf-hero-height: clamp(30rem, 32vw, 32.5rem);
   }
 }
 
 @media (max-width: 1280px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 76% 90%;
-    --obf-hero-min-height: clamp(19rem, 38vw, 33rem);
+    --obf-art-position: 88% 32%;
+    --obf-art-scale: 1.22;
+    --obf-art-origin: 92% 54%;
+    --obf-hero-height: clamp(30rem, 38vw, 32.5rem);
+  }
+
+  .ob-finale__hero::after {
+    background:
+      radial-gradient(
+        ellipse 58% 110% at 12% 50%,
+        rgba(253, 248, 242, 0.86) 0%,
+        rgba(253, 248, 242, 0.48) 36%,
+        rgba(253, 248, 242, 0.1) 56%,
+        transparent 70%
+      ),
+      linear-gradient(
+        95deg,
+        rgba(253, 248, 242, 0.62) 0%,
+        rgba(253, 248, 242, 0.24) 20%,
+        transparent 38%
+      );
   }
 }
 
 @media (max-width: 1024px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 72% 91%;
-    --obf-hero-min-height: clamp(18rem, 40vw, 30rem);
+    --obf-art-position: 86% 33%;
+    --obf-art-scale: 1.2;
+    --obf-art-origin: 90% 55%;
+    --obf-hero-height: clamp(30rem, 42vw, 32.5rem);
   }
-
 }
 
 @media (max-width: 600px) {
   .ob-finale {
-    --obf-art-position: 64% 86%;
-    --obf-hero-min-height: clamp(21rem, 118vw, 28rem);
+    --obf-art-position: 72% 38%;
+    --obf-art-scale: 1.18;
+    --obf-art-origin: 78% 52%;
+    --obf-hero-height: clamp(22rem, 108vw, 26.5rem);
   }
 
   .ob-finale__intro {
-    padding: 1rem 0.75rem 1.125rem;
+    justify-content: flex-start;
+    padding: 1rem 0.875rem 0.875rem;
   }
 
   .ob-finale__hero::after {
-    background: radial-gradient(
-      ellipse 120% 90% at 50% 0%,
-      rgba(253, 248, 242, 0.72) 0%,
-      rgba(253, 248, 242, 0.42) 38%,
-      transparent 68%
-    );
+    background:
+      radial-gradient(
+        ellipse 130% 85% at 50% 0%,
+        rgba(253, 248, 242, 0.9) 0%,
+        rgba(253, 248, 242, 0.55) 32%,
+        rgba(253, 248, 242, 0.15) 52%,
+        transparent 68%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(253, 248, 242, 0.35) 0%,
+        transparent 45%
+      );
   }
 
   .ob-finale__hero-inner {
     max-width: none;
-    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%);
   }
 
   .ob-finale__btn,
@@ -570,9 +601,9 @@
     display: grid;
     grid-template-columns: 3.5rem minmax(0, 1fr);
     grid-template-rows: auto auto;
-    align-items: center;
-    gap: 0.625rem 0.75rem;
-    padding: 1rem 1rem 0.875rem;
+    align-items: start;
+    gap: 0.5rem 0.75rem;
+    padding: 0.875rem 1rem 0.75rem;
     background: #0f2d5c;
     background-color: #0f2d5c;
     opacity: 1;
@@ -582,12 +613,29 @@
 
   .ob-finale__hl-n {
     grid-row: 1 / 3;
+    grid-column: 1;
     align-self: center;
   }
 
   .ob-finale__hl-copy {
     grid-column: 2;
     grid-row: 1;
+    min-width: 0;
+  }
+
+  .ob-finale__hl b {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    line-height: 1.25;
+    font-size: 1.05rem;
+  }
+
+  .ob-finale__hl small {
+    display: block;
+    margin-top: 0.2rem;
+    line-height: 1.35;
   }
 
   .ob-wizard .ob-finale[data-testid="onboarding-finale-v2"] a.ob-finale__hl:link,
