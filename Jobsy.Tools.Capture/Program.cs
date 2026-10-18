@@ -118,14 +118,30 @@ foreach (var (stem, returnPath, captureTarget) in targets)
 
         if (width < 640)
         {
-            await page.EvaluateAsync("""
-                () => {
-                  const likert = document.querySelector('.test-likert');
-                  if (likert) {
-                    likert.scrollIntoView({ block: 'center', behavior: 'instant' });
-                  }
-                }
-                """);
+            if (mobileOnly)
+            {
+                await page.EvaluateAsync("""
+                    () => {
+                      window.scrollTo(0, 0);
+                      const hero = document.querySelector('.test-block-stage__mobile-hero');
+                      if (hero) {
+                        hero.scrollIntoView({ block: 'start', behavior: 'instant' });
+                      }
+                    }
+                    """);
+            }
+            else
+            {
+                await page.EvaluateAsync("""
+                    () => {
+                      const likert = document.querySelector('.test-likert');
+                      if (likert) {
+                        likert.scrollIntoView({ block: 'center', behavior: 'instant' });
+                      }
+                    }
+                    """);
+            }
+
             await page.WaitForTimeoutAsync(350);
         }
 
