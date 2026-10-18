@@ -13,7 +13,7 @@
     var question = Ordered.Count > 0 ? Ordered[index] : null;
     var answered = question is not null && FlowAnswers.ContainsKey(question.Id);
     var isLast = Ordered.Count > 0 && index >= targetCount - 1;
-    var answeredCount = FlowAnswers.Count;
+    var answeredCount = AnsweredInTargetCount();
     var reached = TestDepthRules.Reached(Kind, answeredCount);
     var nextLevel = TestDepthRules.Next(Kind, answeredCount);
     var blocks = targetCount > 50 ? 25 : targetCount;
@@ -36,23 +36,42 @@
                 }
             </div>
         }
-        <div class="test-flow__bar" aria-hidden="true">
-            @for (var i = 0; i < blocks; i++)
+        <div class="test-flow__bar" role="group" aria-label="@Culture.Format("TestFlow.QuestionOf", index + 1, targetCount)">
+            @for (var seg = 0; seg < blocks; seg++)
             {
-                var answeredUpTo = (int)Math.Ceiling((i + 1) * (double)targetCount / blocks);
-                var cls = answeredUpTo <= answeredCount
+                var segIndex = blocks == targetCount
+                    ? seg
+                    : Math.Min(targetCount - 1, (int)Math.Floor(seg * (double)targetCount / blocks));
+                var segQuestion = Ordered[segIndex];
+                var segAnswered = _flowAnswers.ContainsKey(segQuestion.Id);
+                var segCurrent = segIndex == index;
+                var cls = segAnswered
                     ? "is-done"
-                    : answeredUpTo <= CountForLevel(reached) || i == (int)((index) * (double)blocks / targetCount)
+                    : segCurrent
                         ? "is-current"
                         : "is-todo";
-                <i class="@cls"></i>
-            }
-            @foreach (var band in TestDepthRules.Levels(Kind))
-            {
-                if (band.Count <= targetCount)
+                if (segAnswered && !segCurrent)
                 {
-                    var pct = band.Count * 100.0 / targetCount;
-                    <span class="test-flow__tick" style="--tick:@pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                    <button type="button"
+                            class="test-flow__seg @cls"
+                            title="@Culture.Format("TestFlow.JumpToQuestion", segIndex + 1)"
+                            aria-label="@Culture.Format("TestFlow.JumpToQuestion", segIndex + 1)"
+                            @onclick="() => BeginEdit(segIndex)"></button>
+                }
+                else
+                {
+                    <span class="test-flow__seg @cls" aria-hidden="@(segCurrent ? null : "true")"></span>
+                }
+            }
+            @if (!Compact)
+            {
+                @foreach (var band in TestDepthRules.Levels(Kind))
+                {
+                    if (band.Count < targetCount)
+                    {
+                        var pct = band.Count * 100.0 / targetCount;
+                        <span class="test-flow__tick" style="--tick:@pct.ToString(System.Globalization.CultureInfo.InvariantCulture)%"></span>
+                    }
                 }
             }
         </div>
@@ -106,8 +125,9 @@
             </details>
         }
 
-        <LikertRadioGroup QuestionId="question.Id"
-                          Value="@(answered ? FlowAnswers[question.Id] : null)"
+        <LikertRadioGroup @key="question.Id"
+                          QuestionId="question.Id"
+                          Value="@(FlowAnswers.TryGetValue(question.Id, out var saved) ? saved : null)"
                           Interactive="true"
                           InputPrefix="@InputPrefix"
                           StatementId="@($"tf-stmt-{question.Id}")"
@@ -122,24 +142,28 @@
         @if (!Compact)
         {
             var answeredEarlier = RecentAnswered().ToList();
-            var recent = answeredEarlier.Take(_recentLimit).ToList();
-            @if (recent.Count > 0)
+            @if (answeredEarlier.Count > 0)
             {
-                <div class="test-flow__recent">
-                    <p class="test-flow__recent-title">@Culture.Format("TestFlow.Answered", answeredEarlier.Count)</p>
-                    <ul>
-                        @foreach (var (q, val, qi) in recent)
+                <details class="test-flow__earlier" data-testid="test-earlier-answers">
+                    <summary class="test-flow__earlier-summary">
+                        @Culture.Format("TestFlow.EarlierAnswers", answeredEarlier.Count)
+                    </summary>
+                    <ol class="test-flow__earlier-list">
+                        @for (var n = 0; n < answeredEarlier.Count; n++)
                         {
+                            var (q, val, qi) = answeredEarlier[n];
+                            var displayIndex = answeredEarlier.Count - n;
                             <li>
-                                <span>“@StripIdPrefix(q.Text)”</span>
-                                <strong>@val</strong>
-                                <button type="button" class="test-flow__adjust" @onclick="() => JumpTo(qi)">
+                                <span class="test-flow__earlier-num" aria-hidden="true">@displayIndex.</span>
+                                <span class="test-flow__earlier-text">“@StripIdPrefix(q.Text)”</span>
+                                <strong class="test-flow__earlier-val">@val</strong>
+                                <button type="button" class="test-flow__adjust" @onclick="() => BeginEdit(qi)">
                                     @Culture["TestFlow.Adjust"]
                                 </button>
                             </li>
                         }
-                    </ul>
-                </div>
+                    </ol>
+                </details>
             }
         }
 
@@ -188,6 +212,7 @@
     [Parameter] public EventCallback OnLeave { get; set; }
     [Parameter] public EventCallback OnChanged { get; set; }
     [Parameter] public EventCallback<(int Id, int Value)> OnAnswer { get; set; }
+    [Parameter] public EventCallback<int> OnIndexChanged { get; set; }
     [Parameter] public bool LoadFailed { get; set; }
     /// <summary>Overrides <see cref="UiStrings"/> TestFlow.Finish on the last question (e.g. onboarding “Volgende test”).</summary>
     [Parameter] public string? FinishLabel { get; set; }
@@ -201,7 +226,7 @@
     private int? _appliedExternalIndex;
     private bool _focusRequest;
     private bool _exampleOpen = true;
-    private int _recentLimit = 8;
+    private int? _resumeAfterEdit;
     private readonly HashSet<TestDepthLevel> _firedLevels = [];
     private CancellationTokenSource? _advanceCts;
     private int _advanceGeneration;
@@ -209,23 +234,15 @@
     private readonly Dictionary<int, int> _flowAnswers = new();
     private IReadOnlyDictionary<int, int> FlowAnswers => _flowAnswers;
     private IReadOnlyList<FlowQuestion> Ordered => Questions;
+    private string? _orderedSignature;
 
     private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
 
     protected override void OnInitialized()
     {
+        _orderedSignature = BuildOrderedSignature();
         MergeParameterAnswers();
-        _index = Math.Clamp(StartAt, 0, Math.Max(0, TargetCount - 1));
-        // Prefer first unanswered within target.
-        for (var i = 0; i < TargetCount; i++)
-        {
-            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
-            {
-                _index = i;
-                break;
-            }
-        }
-
+        ApplyFirstUnansweredIndex();
         _focusRequest = true;
     }
 
@@ -242,7 +259,6 @@
                 }
 
                 var narrow = await MatchesMediaAsync("(max-width: 639px)");
-                _recentLimit = narrow ? 5 : 8;
                 _exampleOpen = !narrow;
             }
             catch
@@ -281,8 +297,13 @@
 
     private IEnumerable<(FlowQuestion Q, int Value, int Index)> RecentAnswered()
     {
-        for (var i = _index - 1; i >= 0; i--)
+        for (var i = 0; i < TargetCount && i < Ordered.Count; i++)
         {
+            if (i == _index)
+            {
+                continue;
+            }
+
             var q = Ordered[i];
             if (_flowAnswers.TryGetValue(q.Id, out var v))
             {
@@ -328,6 +349,12 @@
         await OnChanged.InvokeAsync();
         await FireLevelsAsync();
         if (generation != _advanceGeneration || _index != answeredIndex) return;
+
+        if (_resumeAfterEdit is not null)
+        {
+            await ReturnFromEditAsync();
+            return;
+        }
 
         if (answeredIndex >= TargetCount - 1)
         {
@@ -376,9 +403,7 @@
 
         if (token.IsCancellationRequested || generation != _advanceGeneration || _index != answeredIndex) return;
         if (_index >= TargetCount - 1) return;
-        _index = answeredIndex + 1;
-        _focusRequest = true;
-        await InvokeAsync(StateHasChanged);
+        await SetIndexAsync(answeredIndex + 1);
     }
 
     private void CancelPendingAdvance()
@@ -403,25 +428,86 @@
         return null;
     }
 
+    private int AnsweredInTargetCount()
+    {
+        var count = 0;
+        for (var i = 0; i < TargetCount; i++)
+        {
+            if (_flowAnswers.ContainsKey(Ordered[i].Id))
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    private static bool IsInCurrentFlow(int id, IReadOnlyList<FlowQuestion> ordered, int targetCount)
+    {
+        for (var i = 0; i < targetCount && i < ordered.Count; i++)
+        {
+            if (ordered[i].Id == id)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private string BuildOrderedSignature()
+        => $"{(int)Kind}:{Target}:{string.Join(',', Ordered.Take(TargetCount).Select(q => q.Id))}";
+
+    private void ApplyFirstUnansweredIndex()
+    {
+        _index = Math.Clamp(StartAt, 0, Math.Max(0, TargetCount - 1));
+        for (var i = 0; i < TargetCount; i++)
+        {
+            if (!_flowAnswers.ContainsKey(Ordered[i].Id))
+            {
+                _index = i;
+                break;
+            }
+        }
+    }
+
     private void MergeParameterAnswers()
     {
         foreach (var (id, val) in Answers)
         {
-            _flowAnswers[id] = val;
+            if (IsInCurrentFlow(id, Ordered, TargetCount))
+            {
+                _flowAnswers[id] = val;
+            }
         }
 
         if (Autosave is not null)
         {
             foreach (var (id, val) in Autosave.Answers)
             {
-                _flowAnswers[id] = val;
+                if (IsInCurrentFlow(id, Ordered, TargetCount))
+                {
+                    _flowAnswers[id] = val;
+                }
             }
         }
     }
 
     protected override void OnParametersSet()
     {
-        MergeParameterAnswers();
+        var signature = BuildOrderedSignature();
+        if (!string.Equals(signature, _orderedSignature, StringComparison.Ordinal))
+        {
+            _orderedSignature = signature;
+            _flowAnswers.Clear();
+            _firedLevels.Clear();
+            MergeParameterAnswers();
+            ApplyFirstUnansweredIndex();
+        }
+        else
+        {
+            MergeParameterAnswers();
+        }
 
         // Apply an external jump only when it changes. Re-applying the same index
         // on every render put the candidate back on the last question after Next
@@ -441,7 +527,7 @@
 
     private async Task FireLevelsAsync()
     {
-        var count = _flowAnswers.Count;
+        var count = AnsweredInTargetCount();
         foreach (var band in TestDepthRules.Levels(Kind))
         {
             if (count >= band.Count && _firedLevels.Add(band.Level) && OnLevelReached.HasDelegate)
@@ -451,11 +537,35 @@
         }
     }
 
+    private void BeginEdit(int index)
+    {
+        CancelPendingAdvance();
+        if (index != _index)
+        {
+            _resumeAfterEdit ??= _index;
+        }
+
+        JumpTo(index);
+    }
+
     private void JumpTo(int index)
     {
         CancelPendingAdvance();
         _index = Math.Clamp(index, 0, Math.Max(0, TargetCount - 1));
         _focusRequest = true;
+    }
+
+    private async Task ReturnFromEditAsync()
+    {
+        if (_resumeAfterEdit is not int resume)
+        {
+            return;
+        }
+
+        _resumeAfterEdit = null;
+        _index = Math.Clamp(resume, 0, Math.Max(0, TargetCount - 1));
+        _focusRequest = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task GoBackAsync()
@@ -470,14 +580,31 @@
 
             return;
         }
-        _index--;
+
+        await SetIndexAsync(_index - 1);
+    }
+
+    private async Task SetIndexAsync(int index)
+    {
+        _index = Math.Clamp(index, 0, Math.Max(0, TargetCount - 1));
         _focusRequest = true;
+        if (OnIndexChanged.HasDelegate)
+        {
+            await OnIndexChanged.InvokeAsync(_index);
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task GoNextAsync()
     {
         CancelPendingAdvance();
+        if (_resumeAfterEdit is not null)
+        {
+            await ReturnFromEditAsync();
+            return;
+        }
+
         if (Ordered.Count == 0 || TargetCount <= 0) return;
         _index = Math.Clamp(_index, 0, TargetCount - 1);
         var question = Ordered[_index];
@@ -504,9 +631,7 @@
             return;
         }
 
-        _index++;
-        _focusRequest = true;
-        await InvokeAsync(StateHasChanged);
+        await SetIndexAsync(_index + 1);
     }
 
     private async Task LaterAsync()

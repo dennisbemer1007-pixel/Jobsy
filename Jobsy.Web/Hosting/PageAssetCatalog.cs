@@ -26,7 +26,7 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
-        "css/app.min.css?v=20261017-03",
+        "css/app.min.css?v=20261018-02",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
@@ -44,9 +44,10 @@ public static class PageAssetCatalog
     [
         "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/onboarding-wizard.css?v=20261016-16",
+        "css/features/onboarding-wizard.css?v=20261018-01",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
         "css/features/onboarding-wizard-richting-a.css?v=20261017-01",
+        "css/features/onboarding-work-history.css?v=20261018-01",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",
@@ -56,7 +57,7 @@ public static class PageAssetCatalog
         "css/features/reference-verification-hero.css?v=20261018-r18",
         "css/features/reference-verification.css?v=20261018-r18",
         "css/features/ontdekkingsreis.css?v=20261015-21",
-        "css/features/tests.css?v=20261016-05",
+        "css/features/tests.css?v=20261018-04",
         "css/features/carriere.css?v=20261011-01",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",

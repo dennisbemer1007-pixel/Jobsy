@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 
 export ASPNETCORE_ENVIRONMENT=Development
+export Jobsy__TestEmployersEnabled=true
 export DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
 export Seed__Enabled=true
 export Seed__BanenkaartPerfCount="${Seed__BanenkaartPerfCount:-0}"

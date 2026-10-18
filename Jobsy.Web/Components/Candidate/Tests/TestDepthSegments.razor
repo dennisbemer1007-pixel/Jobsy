@@ -1,0 +1,54 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="test-depth-segments ob-wizard__test-tabs journey-segments"
+     role="@(Interactive ? "radiogroup" : "group")"
+     aria-label="@Culture["TestFlow.DepthPick"]"
+     data-testid="test-depth-segments">
+    @foreach (var band in TestDepthRules.Levels(Kind, Version))
+    {
+        var done = Answered >= band.Count;
+        var current = ActiveDepth == band.Level;
+        var label = Culture[TestDepthRules.NameKey(band.Level)];
+        var meta = Culture.Format("TestFlow.DepthMetaShort", band.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        if (Interactive)
+        {
+            <button type="button"
+                    class="test-depth-segments__btn @(current ? "is-current" : done ? "is-done" : null)"
+                    role="radio"
+                    aria-checked="@(current ? "true" : "false")"
+                    disabled="@(done && !current)"
+                    @onclick="() => SelectAsync(band.Level)">
+                <span class="test-depth-segments__label">@label</span>
+                <span class="test-depth-segments__meta">@meta</span>
+            </button>
+        }
+        else
+        {
+            <span class="test-depth-segments__pill @(current ? "is-current" : done ? "is-done" : null)"
+                  aria-current="@(current ? "step" : null)">
+                @if (done && !current)
+                {
+                    <span class="test-depth-segments__check" aria-hidden="true">✓</span>
+                }
+                <span class="test-depth-segments__label">@label</span>
+                <span class="test-depth-segments__meta">@meta</span>
+            </span>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public AssessmentKind Kind { get; set; }
+    [Parameter] public int Version { get; set; } = AssessmentTestVersions.V1;
+    [Parameter] public int Answered { get; set; }
+    [Parameter] public TestDepthLevel ActiveDepth { get; set; } = TestDepthLevel.First;
+    [Parameter] public bool Interactive { get; set; }
+    [Parameter] public EventCallback<TestDepthLevel> OnSelect { get; set; }
+
+    private Task SelectAsync(TestDepthLevel level)
+        => Interactive && OnSelect.HasDelegate ? OnSelect.InvokeAsync(level) : Task.CompletedTask;
+}

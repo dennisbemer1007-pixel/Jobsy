@@ -46,6 +46,7 @@ else
                       InputPrefix="@InputPrefix"
                       AfterLikert="@JourneyAfterLikert"
                       OnAnswer="OnFlowAnswer"
+                      OnIndexChanged="OnFlowIndexChanged"
                       OnFinished="OnFlowFinished"
                       OnLeave="OnLeave"
                       OnLater="OnLater"
@@ -106,6 +107,9 @@ else
 
     private Task OnFlowAnswer((int Id, int Value) pair)
         => Answer.InvokeAsync(pair);
+
+    private Task OnFlowIndexChanged(int index)
+        => ExpandQuestion.HasDelegate ? ExpandQuestion.InvokeAsync(index) : Task.CompletedTask;
 
     private Task OnFlowFinished()
         => OnFinished.InvokeAsync();

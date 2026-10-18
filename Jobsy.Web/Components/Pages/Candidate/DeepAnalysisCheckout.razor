@@ -21,6 +21,7 @@
 @if (_state is "loading" or "pending")
 {
     <TestPageShell Kind="kind"
+                   ShowDepthSegments="false"
                    Mode="TestPageShell.ShellMode.Checkout"
                    Deep="true"
                    Eyebrow="@Culture["DeepPay.Title"]"
@@ -54,6 +55,7 @@
 else if (_state == "paid")
 {
     <TestPageShell Kind="kind"
+                   ShowDepthSegments="false"
                    Mode="TestPageShell.ShellMode.Checkout"
                    Deep="true"
                    Eyebrow="@Culture["DeepPay.Title"]"
@@ -122,6 +124,7 @@ else if (_state == "paid")
 else if (_state is "failed" or "cancelled" or "expired")
 {
     <TestPageShell Kind="kind"
+                   ShowDepthSegments="false"
                    Mode="TestPageShell.ShellMode.Checkout"
                    Deep="true"
                    Eyebrow="@Culture["DeepPay.Title"]"

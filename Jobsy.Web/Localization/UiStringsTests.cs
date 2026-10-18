@@ -93,6 +93,7 @@ public static class UiStringsTests
         Add("TestFlow.Lead.Values.V2", "{0} korte zinnen over wat je belangrijk vindt in werk.", "{0} short sentences about what matters to you at work.", "{0} krótkich zdań o tym, co jest dla ciebie ważne w pracy.", "{0} propoziții scurte despre ce este important pentru tine la muncă.", "{0} جملة قصيرة عما يهمك في العمل.");
         Add("TestFlow.DepthPick", "Hoe diep wil je duiken?", "How deep do you want to dive?", "Jak głęboko chcesz zejść?", "Cât de adânc vrei să te scufunzi?", "إلى أي عمق تريد أن تغوص؟");
         Add("TestFlow.DepthMeta", "{0} vragen · + {1} min", "{0} questions · + {1} min", "{0} pytania · + {1} min", "{0} întrebări · + {1} min", "{0} أسئلة · + {1} min");
+        Add("TestFlow.DepthMetaShort", "{0}", "{0}", "{0}", "{0}", "{0}");
         Add("TestFlow.ToMyTests", "Mijn tests", "My tests", "Moje testy", "Testele mele", "اختباراتي");
         Add("TestFlow.Begin", "Begin", "Start", "Start", "Începe", "ابدأ");
         Add("TestFlow.ContinueAt", "Ga verder bij vraag {0}", "Continue at question {0}", "Kontynuuj od pytania {0}", "Continuă de la întrebarea {0}", "تابع من السؤال {0}");
@@ -136,6 +137,8 @@ public static class UiStringsTests
         Add("TestFlow.LevelNext", "nog {0} tot {1}", "{0} left until {1}", "{0} left until {1} ·", "{0} left until {1}", "‏{0} left until {1}");
         Add("TestFlow.Example", "Voorbeeld uit de praktijk", "Example from practice", "Example from practice ·", "Example from practice", "‏Example from practice");
         Add("TestFlow.Answered", "Beantwoord ({0})", "Answered ({0})", "Answered ({0}) ·", "Answered ({0})", "‏Answered ({0})");
+        Add("TestFlow.EarlierAnswers", "Eerdere antwoorden ({0})", "Earlier answers ({0})", "Wcześniejsze odpowiedzi ({0})", "Răspunsuri anterioare ({0})", "‏الإجابات السابقة ({0})");
+        Add("TestFlow.JumpToQuestion", "Ga naar vraag {0}", "Go to question {0}", "Przejdź do pytania {0}", "Mergi la întrebarea {0}", "‏انتقل إلى السؤال {0}");
         Add("TestFlow.Adjust", "Aanpassen", "Adjust", "Adjust ·", "Adjust", "‏Adjust");
         Add("TestFlow.Back", "Terug", "Back", "Wstecz", "Înapoi", "رجوع");
         Add("TestFlow.Later", "Later verder", "Continue later", "Później", "Mai târziu", "لاحقًا");
@@ -148,7 +151,7 @@ public static class UiStringsTests
         Add("TestFlow.Scale.Aria.3", "3", "3", "3 ·", "RO: 3", "عربي: 3");
         Add("TestFlow.Scale.Aria.4", "4", "4", "4 ·", "RO: 4", "عربي: 4");
         Add("TestFlow.Scale.Aria.5", "5, past heel goed", "5, fits very well", "5, fits very well ·", "5, fits very well", "‏5, fits very well");
-        Add("TestFlow.Saved", "Bewaard", "Saved", "Zapisano", "Salvat", "تم الحفظ");
+        Add("TestFlow.Saved", "Automatisch bewaard", "Saved automatically", "Zapisano automatycznie", "Salvat automat", "تم الحفظ تلقائياً");
         Add("TestFlow.SaveFailed", "Je laatste antwoord is nog niet bewaard", "Your last answer is not saved yet", "Twój last answer is not saved yet", "Your last answer is not saved yet", "‏Your last answer is not saved yet");
         Add("TestFlow.Consent.Title", "Eerst even toestemming", "Consent first", "Zgoda first", "Consimțământ first", "موافقة first");
         Add("TestFlow.Consent.Lead", "Voor de tests gebruiken we je antwoorden om te kijken welk werk bij je past. Werkgevers zien je antwoorden niet.", "We use your answers to see which work fits you. Employers do not see your answers.", "We use tyr answers to see which work fits ty. Employers do not see tyr answers.", "We use your answers to see which work fits you. Employers do not see your answers.", "‏We use your answers to see which work fits you. Employers do not see your answers.");

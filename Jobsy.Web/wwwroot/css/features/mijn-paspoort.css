@@ -633,7 +633,7 @@
         padding-inline-end: 5.5rem;
     }
 
-    .app-shell:has(.passport-page) .app-main {
+    .app-shell:has(.passport-page) .app-main__content {
         padding-bottom: 5rem;
     }
 }

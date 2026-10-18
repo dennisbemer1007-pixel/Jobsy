@@ -75,11 +75,15 @@
                                 }
                                 <span class="muted">
                                     @emp.EmployerName
-                                    @if (!string.IsNullOrWhiteSpace(emp.StartMonth) || !string.IsNullOrWhiteSpace(emp.EndMonth))
+                                    @if (!string.IsNullOrWhiteSpace(emp.StartMonth) || !string.IsNullOrWhiteSpace(emp.EndMonth) || emp.ShowsAsCurrent)
                                     {
-                                        <text> · @FormatRange(emp.StartMonth, emp.EndMonth)</text>
+                                        <text> · @FormatRange(emp.StartMonth, emp.EndMonth, emp.ShowsAsCurrent)</text>
                                     }
                                 </span>
+                                @if (!string.IsNullOrWhiteSpace(emp.Description))
+                                {
+                                    <span class="passport-proof__job-desc">@emp.Description</span>
+                                }
                                 @if (_refVerificationEnabled && _refVerificationEligible && !verified)
                                 {
                                     <WorkExperienceReferenceAskLink EntryId="emp.EntryId" />
@@ -585,13 +589,15 @@
                && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase)
                && r.Active);
 
-    private static string FormatRange(string? start, string? end)
+    private string FormatRange(string? start, string? end, bool isCurrent = false)
     {
         static string Year(string? m)
             => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
 
         var s = Year(start);
-        var e = string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
+        var e = isCurrent
+            ? Culture["Profile.EmployerPresent"]
+            : string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
         return string.IsNullOrEmpty(s) ? e : $"{s} - {e}";
     }
 }

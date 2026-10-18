@@ -142,6 +142,11 @@ public static class VacancyCsvParser
             return date;
         }
 
+        if (JobsyDateInputRules.TryParseVacancyCsvDate(trimmed, out date))
+        {
+            return date;
+        }
+
         return DateOnly.TryParse(trimmed, CultureInfo.GetCultureInfo("nl-NL"), DateTimeStyles.None, out date)
             || DateOnly.TryParse(trimmed, CultureInfo.InvariantCulture, DateTimeStyles.None, out date)
             ? date
