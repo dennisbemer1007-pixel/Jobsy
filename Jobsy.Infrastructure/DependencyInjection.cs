@@ -681,6 +681,7 @@ public static class DependencyInjection
         services.Configure<Jobsy.Core.Options.ProactiveMatchingOptions>(
             configuration.GetSection(Jobsy.Core.Options.ProactiveMatchingOptions.SectionName));
         services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();
+        services.AddScoped<IContextualTipsService, ContextualTipsService>();
         services.AddScoped<IProactiveVacancyShortlistService, ProactiveVacancyShortlistService>();
         services.AddScoped<ICandidateInsightsService, CandidateInsightsService>();
         services.AddScoped<KandidatenkaartCandidateAggregator>();

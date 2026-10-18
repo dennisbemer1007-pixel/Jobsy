@@ -1,0 +1,46 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<ContextualTipsGate TipId="offer-contract-checklist" RequireMomentTips="true" RequireVisibleTip="true">
+    <ContextualTipShell TipId="offer-contract-checklist"
+                        Title="@Culture["Tips.Placement.Offer.Title"]"
+                        ReadAloudText="@ReadAloudText"
+                        SpeechKey="tip-offer-checklist">
+        <div class="ctips-offer-sections" data-testid="offer-tips-sidebar">
+            <section class="ctips-offer-section">
+                <h4>@Culture["Tips.Placement.Offer.ContractTitle"]</h4>
+                <ul>
+                    <li>@Culture["Tips.Placement.Offer.Contract1"]</li>
+                    <li>@Culture["Tips.Placement.Offer.Contract2"]</li>
+                    <li>@Culture["Tips.Placement.Offer.Contract3"]</li>
+                </ul>
+            </section>
+            <section class="ctips-offer-section">
+                <h4>@Culture["Tips.Placement.Offer.ProbationTitle"]</h4>
+                <p>@Culture["Tips.Placement.Offer.ProbationBody"]</p>
+            </section>
+            <section class="ctips-offer-section">
+                <h4>@Culture["Tips.Placement.Offer.CaoTitle"]</h4>
+                <p>@Culture["Tips.Placement.Offer.CaoBody"]</p>
+                <p><a href="/candidate/tips/contract">@Culture["Tips.Placement.Offer.CaoLink"]</a></p>
+            </section>
+            <section class="ctips-offer-section">
+                <h4>@Culture["Tips.Placement.Offer.SalaryTitle"]</h4>
+                <p>@Culture["Tips.Placement.Offer.SalaryBody"]</p>
+            </section>
+            <p>@Culture["Tips.Placement.Offer.Reflection"]</p>
+            <a class="btn btn-secondary" href="/candidate/tips/contract" data-testid="offer-all-tips">
+                @Culture["Tips.Placement.Offer.AllTips"]
+            </a>
+        </div>
+    </ContextualTipShell>
+</ContextualTipsGate>
+
+@code {
+    private string ReadAloudText =>
+        Culture["Tips.Placement.Offer.Title"] + ". "
+        + Culture["Tips.Placement.Offer.Contract1"] + " "
+        + Culture["Tips.Placement.Offer.ProbationBody"] + " "
+        + Culture["Tips.Placement.Offer.SalaryBody"];
+}

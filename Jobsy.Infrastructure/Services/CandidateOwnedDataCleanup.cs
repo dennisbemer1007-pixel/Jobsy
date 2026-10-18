@@ -202,6 +202,7 @@ internal static class CandidateOwnedDataCleanup
         await RemoveRangeAsync(db, db.CandidateCareerPlans.Where(p => p.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateOnboardings.Where(o => o.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateProactiveMatchingSettings.Where(s => s.UserId == user.Id), cancellationToken);
+        await RemoveRangeAsync(db, db.CandidateContextualTipsSettings.Where(s => s.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.ProactiveMatchSuggestions.Where(s => s.CandidateUserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateRoleFitChecks.Where(r => r.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateVacancyCultureFits.Where(r => r.UserId == user.Id), cancellationToken);

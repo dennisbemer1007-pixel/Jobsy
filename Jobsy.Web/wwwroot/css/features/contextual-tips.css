@@ -1,0 +1,354 @@
+.ctips-page {
+  max-inline-size: 72rem;
+  margin-inline: auto;
+  padding-block-end: 2rem;
+}
+
+.ctips-hero {
+  margin-block-end: 1.5rem;
+}
+
+.ctips-search {
+  margin-block-end: 1.25rem;
+}
+
+.ctips-search input {
+  inline-size: 100%;
+  max-inline-size: 28rem;
+}
+
+.ctips-cats {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  margin-block-end: 1.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+.ctips-cat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  text-decoration: none;
+  color: inherit;
+  min-block-size: 100%;
+}
+
+.ctips-cat:hover,
+.ctips-cat:focus-visible {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--coral) 35%, transparent);
+}
+
+.ctips-cat__art {
+  block-size: 4.5rem;
+  border-radius: var(--r-sm);
+  background-size: cover;
+  background-position: center;
+}
+
+.ctips-cat__title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.ctips-cat__lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.ctips-cat__count {
+  margin-block-start: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.ctips-now {
+  margin-block-end: 1.5rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--gold-soft) 28%, var(--surface));
+}
+
+.ctips-shell {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.ctips-shell__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--gold-soft) 32%, var(--surface));
+  border-block-end: 1px solid var(--border);
+}
+
+.ctips-shell__bulb {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.ctips-shell__eyebrow {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--navy);
+  flex: 1 1 auto;
+}
+
+.ctips-shell__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.ctips-shell__hide {
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.ctips-shell__body {
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.ctips-prep-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.ctips-prep-steps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem 0.85rem;
+  align-items: start;
+}
+
+.ctips-prep-steps__n {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: var(--navy);
+  color: var(--surface);
+}
+
+.ctips-prep-steps h4 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.ctips-prep-steps p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.ctips-prep-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-block-start: 0.5rem;
+}
+
+.ctips-offer-sections {
+  display: grid;
+  gap: 1rem;
+}
+
+.ctips-offer-section h4 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.ctips-offer-section ul {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+}
+
+.ctips-offer-section p {
+  margin: 0.25rem 0 0;
+}
+
+.ctips-passport-card p {
+  margin: 0 0 0.75rem;
+}
+
+.ctips-career-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ctips-career-card__art {
+  block-size: 7rem;
+  border-radius: var(--r-sm);
+  background-size: cover;
+  background-position: center;
+}
+
+.ctips-career-checks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ctips-career-checks li::before {
+  content: "✓ ";
+  color: var(--coral);
+  font-weight: 700;
+}
+
+.ctips-settings {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+
+.ctips-settings__row {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  cursor: pointer;
+  margin-block: 0.75rem;
+}
+
+.ctips-settings__hint {
+  display: block;
+  color: var(--muted);
+  font-size: 0.88rem;
+  margin-block-start: 0.15rem;
+}
+
+.ctips-detail-blocks {
+  display: grid;
+  gap: 1rem;
+}
+
+.ctips-detail-block {
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.ctips-detail-block__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-block-end: 0.5rem;
+}
+
+.ctips-detail-block h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.ctips-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-block-start: 1.25rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--border);
+}
+
+.ctips-related {
+  margin-block-start: 1.5rem;
+}
+
+.ctips-related ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ctips-related a {
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ctips-app-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .ctips-app-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+    align-items: start;
+  }
+
+  .career-tips-g2 {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    align-items: start;
+    margin-block-end: 1rem;
+  }
+}
+
+.ctips-discovery-link {
+  margin-block: 1.25rem 0;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--r-md);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ctips-inline-link {
+  font-weight: 600;
+}
+
+.ctips-hub-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ctips-hub-list a {
+  display: block;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: inherit;
+}
+
+.ctips-hub-list a:hover {
+  border-color: var(--coral);
+}

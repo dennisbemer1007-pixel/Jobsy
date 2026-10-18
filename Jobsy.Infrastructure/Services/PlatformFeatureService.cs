@@ -244,6 +244,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.TrainingPartnersEnabled = trainingPartnersEnabled;
         }
 
+        if (update.ContextualTipsEnabled is bool contextualTipsEnabled)
+        {
+            row.ContextualTipsEnabled = contextualTipsEnabled;
+        }
+
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
         {
             row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
@@ -393,6 +398,16 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         return row?.TrainingPartnersEnabled ?? false;
     }
 
+    private bool ResolveContextualTipsEnabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:ContextualTipsEnabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.ContextualTipsEnabled ?? false;
+    }
+
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
     {
         row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
@@ -518,6 +533,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),
+            ResolveContextualTipsEnabled(row),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
             CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));

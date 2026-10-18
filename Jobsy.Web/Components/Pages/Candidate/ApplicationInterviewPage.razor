@@ -1,0 +1,84 @@
+@page "/candidate/applications/{ApplicationId:guid}/gesprek"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.ContextualTips)]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Models
+@using static Jobsy.Web.Media.CandidateIllustratedImages
+@inject JobsyApiClient Api
+@inject CultureState Culture
+<PageTitle>@Culture["Tips.Page.Interview.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--cand-ill ctips-page" data-testid="application-interview-page">
+    @if (_loading)
+    {
+        <p class="state-message" aria-busy="true">@Culture["Common.Loading"]</p>
+    }
+    else if (_app is null)
+    {
+        <p class="state-message">@Culture["Tips.Detail.NotFound"]</p>
+        <a href="/candidate/applications">@Culture["Nav.MyApplications"]</a>
+    }
+    else
+    {
+        <CandidateIllustratedHero Title="@Culture["Tips.Page.Interview.Title"]"
+                                  Lead="@Culture["Tips.Page.Interview.Lead"]"
+                                  ArtUrl="@SollicitatiesBand"
+                                  ArtPosition="right center"
+                                  CssClass="cand-hero--profession-band" />
+
+        <div class="ctips-app-layout">
+            <article class="detail-card">
+                <h2>@_app.VacancyTitle</h2>
+                <p class="muted">@_app.CompanyName</p>
+                <a class="btn btn-secondary" href="/candidate/applications">@Culture["Discovery.BackToSearch"]</a>
+            </article>
+            <aside aria-label="@Culture["Tips.Placement.InterviewPrep.Title"]">
+                <InterviewPrepTipCard OnPractice="OpenMockInterview" />
+            </aside>
+        </div>
+    }
+</div>
+
+@if (_mockVacancy is not null)
+{
+    <MockInterviewModal IsOpen="true" Vacancy="_mockVacancy" OnClose="CloseMockInterview" />
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private ApplicationItem? _app;
+    private VacancyListItem? _mockVacancy;
+    private bool _loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var apps = await Api.GetMyApplicationsAsync();
+        _app = apps.FirstOrDefault(a => a.Id == ApplicationId);
+        _loading = false;
+    }
+
+    private async Task OpenMockInterview()
+    {
+        if (_app is null)
+        {
+            return;
+        }
+
+        _mockVacancy = new VacancyListItem
+        {
+            Id = _app.VacancyId,
+            Title = _app.VacancyTitle,
+            CompanyName = _app.CompanyName
+        };
+    }
+
+    private void CloseMockInterview() => _mockVacancy = null;
+}

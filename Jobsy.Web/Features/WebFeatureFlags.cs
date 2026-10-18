@@ -74,7 +74,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.KandidatenkaartEnabled ?? false,
                 dto?.ReferenceVerificationEnabled ?? false,
                 dto?.SensitiveExperienceEnabled ?? false,
-                dto?.TrainingPartnersEnabled ?? false);
+                dto?.TrainingPartnersEnabled ?? false,
+                dto?.ContextualTipsEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -159,5 +160,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("trainingPartnersEnabled")]
         public bool TrainingPartnersEnabled { get; set; }
+
+        [JsonPropertyName("contextualTipsEnabled")]
+        public bool ContextualTipsEnabled { get; set; }
     }
 }

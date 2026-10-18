@@ -178,6 +178,9 @@ public class PlatformFeatureSettings
     /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
     public bool TrainingPartnersEnabled { get; set; }
 
+    /// <summary>Contextual tips for candidates (gesprek, aanbod, paspoort, carrière, Alle tips). Default false.</summary>
+    public bool ContextualTipsEnabled { get; set; }
+
     /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
     public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;
 

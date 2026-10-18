@@ -31,7 +31,8 @@ public sealed record FeatureFlagSnapshot(
     bool KandidatenkaartEnabled = false,
     bool ReferenceVerificationEnabled = false,
     bool SensitiveExperienceEnabled = false,
-    bool TrainingPartnersEnabled = false)
+    bool TrainingPartnersEnabled = false,
+    bool ContextualTipsEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 
@@ -58,6 +59,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.ReferenceVerification => ReferenceVerificationEnabled,
         PlatformFeature.SensitiveExperience => SensitiveExperienceEnabled,
         PlatformFeature.TrainingPartners => TrainingPartnersEnabled,
+        PlatformFeature.ContextualTips => ContextualTipsEnabled,
         _ => false
     };
 }

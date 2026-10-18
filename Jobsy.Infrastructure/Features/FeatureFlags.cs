@@ -63,7 +63,8 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.KandidatenkaartEnabled,
                 snap.ReferenceVerificationEnabled,
                 snap.SensitiveExperienceEnabled,
-                snap.TrainingPartnersEnabled);
+                snap.TrainingPartnersEnabled,
+                snap.ContextualTipsEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

@@ -557,6 +557,17 @@
                                      Tests="_overviewTests"
                                      OnRowAction="OnOverviewRowAsync"
                                      OnDeepen="OnOverviewDeepenAsync" />
+                    @if (_contextualTipsOn)
+                    {
+                        <div class="ctips-discovery-link" data-testid="discovery-tips-link">
+                            <div>
+                                <p class="journey-step__eyebrow">@Culture["Tips.Hub.Eyebrow"]</p>
+                                <p><strong>@Culture["Tips.Discovery.LinkTitle"]</strong></p>
+                                <p class="muted">@Culture["Tips.Discovery.LinkDesc"]</p>
+                            </div>
+                            <a class="btn btn-secondary" href="/candidate/tips">@Culture["Tips.Discovery.LinkCta"]</a>
+                        </div>
+                    }
                 }
                 else if (_screen == "klaar")
                 {
@@ -690,6 +701,7 @@
     private bool _busy;
     private bool _showValidation;
     private bool _employersEnabled = true;
+    private bool _contextualTipsOn;
     private bool _miniArrivedViaBack;
     private string _screen = "start";
     private int _countedStep;
@@ -1133,6 +1145,7 @@
         {
             var flags = await FeatureFlags.GetAsync();
             _employersEnabled = flags.EmployersEnabled;
+            _contextualTipsOn = flags.IsEnabled(PlatformFeature.ContextualTips);
         }
         catch
         {

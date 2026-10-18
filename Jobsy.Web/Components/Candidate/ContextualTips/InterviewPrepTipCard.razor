@@ -1,0 +1,61 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<ContextualTipsGate TipId="interview-prep-scheduled" RequireMomentTips="true" RequireVisibleTip="true">
+    <ContextualTipShell TipId="interview-prep-scheduled"
+                        Title="@Culture["Tips.Placement.InterviewPrep.Title"]"
+                        ReadAloudText="@ReadAloudText"
+                        SpeechKey="tip-interview-prep">
+        <ol class="ctips-prep-steps" data-testid="interview-prep-steps">
+            <li>
+                <span class="ctips-prep-steps__n">1</span>
+                <div>
+                    <h4>@Culture["Tips.Placement.InterviewPrep.Step1Title"]</h4>
+                    <p>@Culture["Tips.Placement.InterviewPrep.Step1Body"]</p>
+                </div>
+            </li>
+            <li>
+                <span class="ctips-prep-steps__n">2</span>
+                <div>
+                    <h4>@Culture["Tips.Placement.InterviewPrep.Step2Title"]</h4>
+                    <p>@Culture["Tips.Placement.InterviewPrep.Step2Body"]</p>
+                </div>
+            </li>
+            <li>
+                <span class="ctips-prep-steps__n">3</span>
+                <div>
+                    <h4>@Culture["Tips.Placement.InterviewPrep.Step3Title"]</h4>
+                    <p>@Culture["Tips.Placement.InterviewPrep.Step3Body"]</p>
+                </div>
+            </li>
+        </ol>
+        <div class="ctips-prep-cta">
+            @if (OnPractice.HasDelegate)
+            {
+                <button type="button" class="btn btn-primary" data-testid="interview-prep-practice" @onclick="OnPractice">
+                    @Culture["Tips.Placement.InterviewPrep.Practice"]
+                </button>
+            }
+            else
+            {
+                <a class="btn btn-primary" href="/candidate/tips/je-eerste-gesprek" data-testid="interview-prep-practice">
+                    @Culture["Tips.Placement.InterviewPrep.Practice"]
+                </a>
+            }
+            <a class="btn btn-secondary" href="/candidate/tips/sollicitatiegesprek" data-testid="interview-prep-all">
+                @Culture["Tips.Placement.InterviewPrep.AllTips"]
+            </a>
+        </div>
+    </ContextualTipShell>
+</ContextualTipsGate>
+
+@code {
+    [Parameter] public EventCallback OnPractice { get; set; }
+
+    private string ReadAloudText =>
+        Culture["Tips.Placement.InterviewPrep.Title"] + ". "
+        + Culture["Tips.Placement.InterviewPrep.Step1Body"] + " "
+        + Culture["Tips.Placement.InterviewPrep.Step2Body"] + " "
+        + Culture["Tips.Placement.InterviewPrep.Step3Body"];
+}

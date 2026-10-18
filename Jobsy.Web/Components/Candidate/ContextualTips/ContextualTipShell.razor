@@ -1,0 +1,54 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.ContextualTips
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="ctips-shell" data-testid="contextual-tip-shell" aria-labelledby="@_titleId">
+    <header class="ctips-shell__head">
+        <span class="ctips-shell__bulb" aria-hidden="true">💡</span>
+        <p class="ctips-shell__eyebrow" id="@_titleId">@(Eyebrow ?? Culture["Tips.Eyebrow"])</p>
+        <div class="ctips-shell__actions">
+            @if (!string.IsNullOrWhiteSpace(ReadAloudText))
+            {
+                <ReadAloudButton Text="@ReadAloudText" SpeechKey="@SpeechKey" IconOnly="true" />
+            }
+            @if (ShowHide && _ctx?.HideTipAsync is not null && !string.IsNullOrWhiteSpace(TipId))
+            {
+                <button type="button" class="ctips-shell__hide" data-testid="contextual-tip-hide" @onclick="HideAsync">
+                    @Culture["Tips.Hide"]
+                </button>
+            }
+        </div>
+    </header>
+    <div class="ctips-shell__body">
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <h3 class="ctips-shell__title">@Title</h3>
+        }
+        @ChildContent
+    </div>
+</section>
+
+@code {
+    [CascadingParameter] private ContextualTipsUiContext? _ctx { get; set; }
+
+    [Parameter] public string? TipId { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public string? ReadAloudText { get; set; }
+    [Parameter] public string SpeechKey { get; set; } = "contextual-tip";
+    [Parameter] public bool ShowHide { get; set; } = true;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private readonly string _titleId = "ctip-" + Guid.NewGuid().ToString("N")[..8];
+
+    private async Task HideAsync()
+    {
+        if (_ctx?.HideTipAsync is null || string.IsNullOrWhiteSpace(TipId))
+        {
+            return;
+        }
+
+        await _ctx.HideTipAsync(TipId);
+    }
+}

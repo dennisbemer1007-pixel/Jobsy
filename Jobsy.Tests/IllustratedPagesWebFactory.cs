@@ -23,10 +23,12 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     public string ServerAddress { get; private set; } = "";
     private IHost? _kestrel;
     private readonly bool _emptyAppsAndLikes;
+    private readonly bool _contextualTipsEnabled;
 
-    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false)
+    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false, bool contextualTipsEnabled = true)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
+        _contextualTipsEnabled = contextualTipsEnabled;
         _ = CreateClient();
     }
 
@@ -48,7 +50,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.RemoveAll<IHostedService>();
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
-            services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
+            services.AddSingleton<IFeatureFlags>(new PassportOnFlags(_contextualTipsEnabled));
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
@@ -86,18 +88,19 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         base.Dispose(disposing);
     }
 
-    private sealed class PassportOnFlags : IFeatureFlags
+    private sealed class PassportOnFlags(bool contextualTipsEnabled) : IFeatureFlags
     {
-        private static readonly FeatureFlagSnapshot Snap = new(
+        private readonly FeatureFlagSnapshot _snap = new(
             EmployersEnabled: true,
             CandidatePassportEnabled: true,
-            ProactiveMatchingEnabled: false);
+            ProactiveMatchingEnabled: false,
+            ContextualTipsEnabled: contextualTipsEnabled);
 
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap);
+            => ValueTask.FromResult(_snap);
 
         public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap.IsEnabled(feature));
+            => ValueTask.FromResult(_snap.IsEnabled(feature));
 
         public void Invalidate()
         {

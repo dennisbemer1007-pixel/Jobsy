@@ -465,6 +465,20 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("ContextualTipsEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ContextualTipsEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.ContextualTips.Enabled.Title",
+                DescriptionKey: "AdminSettings.ContextualTips.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ContextualTipsEnabled,
+                Write: v => new PlatformFeatureUpdate(ContextualTipsEnabled: ToBool(v)),
+                ImpactLevel: PlatformSettingImpactLevel.None,
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("CandidateApplyPerHourLimit"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -714,6 +728,7 @@ public static class PlatformSettingsCatalog
         bool? employerFitQuestionnairesEnabled = null;
         bool? kandidatenkaartEnabled = null;
         bool? trainingPartnersEnabled = null;
+        bool? contextualTipsEnabled = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
         int? candidateApplyPerHour = null;
@@ -791,6 +806,11 @@ public static class PlatformSettingsCatalog
                 trainingPartnersEnabled = p.TrainingPartnersEnabled;
             }
 
+            if (p.ContextualTipsEnabled is not null)
+            {
+                contextualTipsEnabled = p.ContextualTipsEnabled;
+            }
+
             if (p.CandidateApplyPerMinuteLimit is not null)
             {
                 candidateApplyPerMinute = p.CandidateApplyPerMinuteLimit;
@@ -845,6 +865,7 @@ public static class PlatformSettingsCatalog
             EmployerFitQuestionnairesEnabled: employerFitQuestionnairesEnabled,
             KandidatenkaartEnabled: kandidatenkaartEnabled,
             TrainingPartnersEnabled: trainingPartnersEnabled,
+            ContextualTipsEnabled: contextualTipsEnabled,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,
             CandidateApplyPerDayLimit: candidateApplyPerDay);

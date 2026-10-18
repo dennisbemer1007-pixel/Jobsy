@@ -11,6 +11,7 @@
 @using Jobsy.Core.Rules.KandidaatBanen
 @using Jobsy.Web.Components
 @using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.ContextualTips
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -26,6 +27,7 @@
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject UserFacingError UserFacing
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
@@ -135,6 +137,10 @@
                 {
                     <div class="kb-apps__detail-rail kb-apps__rail-card">
                         @RenderActiveCard(selected, forceVertical: true)
+                        @if (_contextualTipsOn && ShowInterviewTips(selected))
+                        {
+                            <InterviewPrepTipCard OnPractice="() => OpenMockInterview(selected.VacancyId)" />
+                        }
                         @RenderDetailActions(selected)
                     </div>
                 }
@@ -224,6 +230,20 @@
     private int _menuFocusIndex;
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
+    private bool _contextualTipsOn;
+
+    private static bool ShowInterviewTips(ApplicationItem a)
+        => string.Equals(a.Status, "EmployerContacting", StringComparison.OrdinalIgnoreCase)
+           || string.Equals(a.Status, "Accepted", StringComparison.OrdinalIgnoreCase);
+
+    private static bool ShowOfferTips(ApplicationItem a)
+        => string.Equals(a.Status, "Hired", StringComparison.OrdinalIgnoreCase);
+
+    private static string InterviewTipsHref(ApplicationItem a)
+        => $"/candidate/applications/{a.Id:D}/gesprek";
+
+    private static string OfferTipsHref(ApplicationItem a)
+        => $"/candidate/applications/{a.Id:D}/aanbod";
 
     private static string ApplicationThumbUrl(string? pictureUrl)
         => string.IsNullOrWhiteSpace(pictureUrl) ? SavedNoPhotoArt : pictureUrl;
@@ -375,6 +395,18 @@
             {
                 <a class="kb-next__link" href="@KbRoutes.Map">@Culture["Kb.Next.ViewSimilar"]</a>
             }
+            else if (_contextualTipsOn && ShowInterviewTips(a) && !_appsWide)
+            {
+                <a class="kb-next__link ctips-inline-link" href="@InterviewTipsHref(a)" data-testid="apps-link-gesprek">
+                    @Culture["Tips.Apps.LinkGesprek"]
+                </a>
+            }
+            else if (_contextualTipsOn && ShowOfferTips(a))
+            {
+                <a class="kb-next__link ctips-inline-link" href="@OfferTipsHref(a)" data-testid="apps-link-aanbod">
+                    @Culture["Tips.Apps.LinkAanbod"]
+                </a>
+            }
         </div>
     };
 
@@ -460,6 +492,8 @@
         _readOnly = !RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate);
         _givenName = state.User.FindFirst(ClaimTypes.GivenName)?.Value
                      ?? state.User.FindFirst("given_name")?.Value;
+        var flags = await FeatureFlags.GetAsync();
+        _contextualTipsOn = flags.IsEnabled(PlatformFeature.ContextualTips);
         try
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();

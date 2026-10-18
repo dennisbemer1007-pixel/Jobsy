@@ -1,0 +1,17 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<ContextualTipsGate TipId="passport-education-course" RequireMomentTips="true" RequireVisibleTip="true">
+    <ContextualTipShell TipId="passport-education-course"
+                        Title="@Culture["Tips.Placement.PassportEducation.Title"]"
+                        ReadAloudText="@Culture["Tips.Placement.PassportEducation.Body"]"
+                        SpeechKey="tip-passport-education">
+        <div class="ctips-passport-card" data-testid="passport-education-tip">
+            <p>@Culture["Tips.Placement.PassportEducation.Body"]</p>
+            <a class="btn btn-secondary" href="/candidate/paspoort?tab=proof#certificates">
+                @Culture["Tips.Placement.PassportEducation.Cta"]
+            </a>
+        </div>
+    </ContextualTipShell>
+</ContextualTipsGate>
