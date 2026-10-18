@@ -20,21 +20,30 @@
             var hour = DateTime.Now.Hour;
             if (string.IsNullOrEmpty(name))
             {
-                return hour switch
+                if (hour < 12)
                 {
-                    < 12 => Culture["Kompas.Greeting.PlainMorning"],
-                    < 18 => Culture["Kompas.Greeting.PlainAfternoon"],
-                    _ => Culture["Kompas.Greeting.PlainEvening"]
-                };
+                    return Culture["Kompas.Greeting.PlainMorning"];
+                }
+
+                if (hour < 18)
+                {
+                    return Culture["Kompas.Greeting.PlainAfternoon"];
+                }
+
+                return Culture["Kompas.Greeting.PlainEvening"];
             }
 
-            var key = hour switch
+            if (hour < 12)
             {
-                < 12 => "Kompas.Greeting.Morning",
-                < 18 => "Kompas.Greeting.Afternoon",
-                _ => "Kompas.Greeting.Evening"
-            };
-            return Culture.Format(key, name);
+                return Culture.Format("Kompas.Greeting.Morning", name);
+            }
+
+            if (hour < 18)
+            {
+                return Culture.Format("Kompas.Greeting.Afternoon", name);
+            }
+
+            return Culture.Format("Kompas.Greeting.Evening", name);
         }
     }
 }
