@@ -38,6 +38,7 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
     : IClassFixture<RoleFunctionalWebAppFactory>, IAsyncLifetime
 {
     private const string ArtifactDir = "/opt/cursor/artifacts/reset";
+    private const string StoreDir = "/cursor/stores/self/reset";
 
     private readonly RoleFunctionalWebAppFactory _api;
     private OnboardingResetWebFactory? _web;
@@ -49,6 +50,7 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
     public async ValueTask InitializeAsync()
     {
         Directory.CreateDirectory(ArtifactDir);
+        Directory.CreateDirectory(StoreDir);
         var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
         Assert.Equal(0, exit);
         _playwright = await Playwright.CreateAsync();
@@ -95,20 +97,21 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
             await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             await page.WaitForFunctionAsync("() => typeof window.Blazor !== 'undefined'");
             await page.WaitForTimeoutAsync(2_000);
-
-            var transport = page.Locator("#onboarding-field-transport button, #onboarding-field-transport .lobsy-choice-tile").First;
-            if (await transport.CountAsync() > 0)
+            if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
             {
-                await transport.ClickAsync();
+                var introFile = $"profile-reset-intro-{tag}.png";
+                await page.ScreenshotAsync(new() { Path = Path.Combine(ArtifactDir, introFile), FullPage = false });
+                await page.ScreenshotAsync(new() { Path = Path.Combine(StoreDir, introFile), FullPage = false });
+                await page.Locator(".ob-wizard__welcome .ob-wizard__cta").ClickAsync();
             }
 
-            await page.GetByText("Bewaard", new() { Exact = false }).First.WaitForAsync(new() { Timeout = 45_000 });
+            await page.Locator("#onboarding-field-firstname input").FillAsync("Dennis");
+            await page.Locator("#onboarding-field-lastname input").FillAsync("Bemer");
+            await OnboardingPlaywrightHelpers.WaitForSavedIndicatorAsync(page);
             await KbE2e.AssertNoCircuitErrorAsync(page);
-            await page.ScreenshotAsync(new()
-            {
-                Path = Path.Combine(ArtifactDir, $"step1-after-reset-{tag}.png"),
-                FullPage = false
-            });
+            var fileName = $"step1-after-reset-{tag}.png";
+            await page.ScreenshotAsync(new() { Path = Path.Combine(ArtifactDir, fileName), FullPage = false });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(StoreDir, fileName), FullPage = false });
         }
     }
 
@@ -179,7 +182,11 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
                 services.RemoveAll<IFeatureFlags>();
                 services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
                 services.RemoveAll<IHttpClientFactory>();
-                services.AddSingleton<IHttpClientFactory>(new ForwardFactory(_api));
+                services.AddSingleton<IHttpClientFactory>(sp =>
+                    new OnboardingTestHttpClientFactory(
+                        _api,
+                        () => ServerAddress,
+                        sp.GetRequiredService<IHttpContextAccessor>()));
                 services.RemoveAll<JobsyApiClient>();
                 services.AddScoped(sp =>
                 {
@@ -190,7 +197,7 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
                         sp.GetRequiredService<IConfiguration>(),
                         sp.GetRequiredService<JobsyAccessTokenIssuer>())
                     {
-                        InnerHandler = new ForwardHandler(_api)
+                        InnerHandler = new TestApiForwardHandler(_api)
                     };
                     var http = new HttpClient(auth, disposeHandler: false)
                     {
@@ -281,46 +288,4 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
         }
     }
 
-    private sealed class ForwardFactory(HttpMessageHandler api) : IHttpClientFactory
-    {
-        public HttpClient CreateClient(string name)
-            => new(new ForwardHandler(api), disposeHandler: false);
-    }
-
-    private sealed class ForwardHandler : HttpMessageHandler
-    {
-        private readonly HttpMessageInvoker _api;
-
-        public ForwardHandler(HttpMessageHandler api)
-            => _api = new HttpMessageInvoker(api, disposeHandler: false);
-
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-        {
-            var path = request.RequestUri?.PathAndQuery ?? "/";
-            if (!path.StartsWith('/'))
-            {
-                path = "/" + path;
-            }
-
-            using var clone = new HttpRequestMessage(request.Method, new Uri("http://localhost" + path));
-            foreach (var header in request.Headers)
-            {
-                clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
-
-            if (request.Content is not null)
-            {
-                var bytes = await request.Content.ReadAsByteArrayAsync(cancellationToken);
-                clone.Content = new ByteArrayContent(bytes);
-                foreach (var header in request.Content.Headers)
-                {
-                    clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
-            }
-
-            return await _api.SendAsync(clone, cancellationToken);
-        }
-    }
 }
