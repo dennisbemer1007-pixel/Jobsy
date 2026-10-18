@@ -650,6 +650,8 @@ public static class DependencyInjection
         }).AddHttpMessageHandler<AiRouteLoggingHandler>();
         services.AddScoped<IRoleFitCheckService, RoleFitCheckService>();
         services.AddScoped<ITrainingUpskillService, TrainingUpskillService>();
+        services.AddScoped<Jobsy.Infrastructure.Training.TrainingPartnerFeedImporter>();
+        services.AddScoped<ITrainingPartnerService, TrainingPartnerService>();
         services.AddScoped<IDeepAnalysisService, DeepAnalysisService>();
         services.AddSingleton<INormProvider, Johnson2014NormProvider>();
         services.AddHttpClient(OpenAiCompetenceDeepReportAiService.HttpClientName, client =>

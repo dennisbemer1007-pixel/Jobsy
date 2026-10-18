@@ -62,6 +62,7 @@ public sealed record PlatformFeatureSnapshot(
     bool MatchCalibrationV1Enabled = false,
     bool EmployerFitQuestionnairesEnabled = false,
     bool KandidatenkaartEnabled = false,
+    bool TrainingPartnersEnabled = false,
     int CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute,
     int CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour,
     int CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay);
@@ -130,6 +131,7 @@ public sealed record PlatformFeatureUpdate(
     bool? MatchCalibrationV1Enabled = null,
     bool? EmployerFitQuestionnairesEnabled = null,
     bool? KandidatenkaartEnabled = null,
+    bool? TrainingPartnersEnabled = null,
     int? CandidateApplyPerMinuteLimit = null,
     int? CandidateApplyPerHourLimit = null,
     int? CandidateApplyPerDayLimit = null);

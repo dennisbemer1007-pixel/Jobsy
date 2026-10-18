@@ -135,6 +135,7 @@
                 <CareerStepDetailCard Step="@step"
                                       Busy="@_busy"
                                       EmployersOn="@_employersOn"
+                                      TrainingPartnersOn="@_trainingPartnersOn"
                                       PassportOn="@_passportOn"
                                       ErrorText="@_error"
                                       CourseSlots="@_courseSlots"
@@ -226,6 +227,7 @@
     private bool _employersOn = true;
     private bool _passportOn;
     private bool _proactiveMatchingOn;
+    private bool _trainingPartnersOn;
 
     private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
 
@@ -292,6 +294,7 @@
             _employersOn = flags.EmployersEnabled;
             _passportOn = flags.CandidatePassportEnabled;
             _proactiveMatchingOn = flags.ProactiveMatchingEnabled;
+            _trainingPartnersOn = flags.TrainingPartnersEnabled;
         }
         catch (Exception)
         {
