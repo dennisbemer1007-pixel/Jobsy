@@ -21,6 +21,7 @@ public static class CandidateProfileResetConfirm
         }
 
         var expected = ExpectedPhrase(language);
-        return string.Equals(typed.Trim(), expected, StringComparison.Ordinal);
+        var normalized = string.Concat(typed.Where(c => !char.IsWhiteSpace(c)));
+        return string.Equals(normalized, expected, StringComparison.Ordinal);
     }
 }

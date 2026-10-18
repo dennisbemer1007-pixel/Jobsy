@@ -245,7 +245,11 @@ public sealed partial class JobsyApiClient
             availableFromDate,
             clearAvailableFromDate
         }, ct);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await ApiErrorException.FromResponseAsync(response, ct);
+        }
+
         InvalidateMeCache(KompasCacheKey);
         InvalidateMeCache(KompasDnaCacheKey);
         return await response.Content.ReadFromJsonAsync<MeProfile>(cancellationToken: ct);

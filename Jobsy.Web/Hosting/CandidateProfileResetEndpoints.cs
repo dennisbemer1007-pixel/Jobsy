@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Jobsy.Core.Contracts;
+using Jobsy.Core.Privacy;
 using Jobsy.Web.Auth;
 using Jobsy.Web.Security;
 using Microsoft.AspNetCore.Antiforgery;
@@ -69,7 +70,20 @@ public static class CandidateProfileResetEndpoints
                         // fall through
                     }
 
-                    return Results.StatusCode((int)response.StatusCode);
+                    var refCode = PrivacyOperationErrors.ShortReference(http.TraceIdentifier);
+                    loggerFactory
+                        .CreateLogger("Jobsy.Web.CandidateProfileReset")
+                        .LogError(
+                            "Profile reset API returned {StatusCode} without message (ref {ReferenceCode})",
+                            (int)response.StatusCode,
+                            refCode);
+                    return Results.Json(
+                        new
+                        {
+                            message = PrivacyOperationErrors.GenericMessageNl,
+                            referenceCode = refCode
+                        },
+                        statusCode: (int)response.StatusCode);
                 }
 
                 var result = JsonSerializer.Deserialize<ResetCandidateProfileResponse>(json, JsonOptions);
@@ -79,11 +93,16 @@ public static class CandidateProfileResetEndpoints
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
             {
+                var refCode = PrivacyOperationErrors.ShortReference(http.TraceIdentifier);
                 loggerFactory
                     .CreateLogger("Jobsy.Web.CandidateProfileReset")
-                    .LogWarning(ex, "Profile reset forward to API failed.");
+                    .LogError(ex, "Profile reset forward to API failed (ref {ReferenceCode})", refCode);
                 return Results.Json(
-                    new { message = "Reset mislukt. Probeer het later opnieuw." },
+                    new
+                    {
+                        message = PrivacyOperationErrors.GenericMessageNl,
+                        referenceCode = refCode
+                    },
                     statusCode: StatusCodes.Status502BadGateway);
             }
         })

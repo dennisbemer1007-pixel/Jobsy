@@ -61,22 +61,24 @@
     }
 
     <main class="app-main">
-        @if (ShowInstallBanner)
-        {
-            <PwaInstallBanner />
-        }
-        <CircuitErrorBoundary BoundaryTag="main">
-            @if (RendererInfo.IsInteractive)
+        <div class="app-main__content">
+            @if (ShowInstallBanner)
             {
-                <Jobsy.Web.Components.Employer.CompanyVerificationBanner />
-                <AuthorizeView Roles="@JobsyRoles.Candidate">
-                    <Authorized>
-                        <Jobsy.Web.Components.Candidate.KandidatenkaartReAvailabilityBanner />
-                    </Authorized>
-                </AuthorizeView>
+                <PwaInstallBanner />
             }
-            @Body
-        </CircuitErrorBoundary>
+            <CircuitErrorBoundary BoundaryTag="main">
+                @if (RendererInfo.IsInteractive)
+                {
+                    <Jobsy.Web.Components.Employer.CompanyVerificationBanner />
+                    <AuthorizeView Roles="@JobsyRoles.Candidate">
+                        <Authorized>
+                            <Jobsy.Web.Components.Candidate.KandidatenkaartReAvailabilityBanner />
+                        </Authorized>
+                    </AuthorizeView>
+                }
+                @Body
+            </CircuitErrorBoundary>
+        </div>
         @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
         {
             <AppFooter />
@@ -425,6 +427,7 @@
 
         var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
                         || IsVacancyOrNotificationsCoachHidden(path)
+                        || IsStandaloneQuickScanCoachHidden(path)
                         || (_isCandidate && IsBanenkaartPath(path));
         if (_hideCoachDock != hideCoach)
         {
@@ -480,6 +483,19 @@
         }
 
         return path.StartsWith("vacancies/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Hide floating coach on standalone Quick-Scan shells (scene bubble + progress).</summary>
+    public static bool IsStandaloneQuickScanCoachHidden(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/competencies", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/career", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/culture", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/disc", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/values", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/deep-analysis", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/deep-analysis/", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Hide sticky LobsyCoach when the journey page already shows its own mascot (desktop grid or mobile dock / inline).</summary>

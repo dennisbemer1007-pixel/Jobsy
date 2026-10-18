@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Api.Controllers;
 
@@ -21,19 +22,22 @@ public sealed class PrivacyController : ControllerBase
     private readonly ISupportAccessService _supportAccess;
     private readonly IUserLookupService _users;
     private readonly ICandidateProfileResetService _profileReset;
+    private readonly ILogger<PrivacyController> _logger;
 
     public PrivacyController(
         IPrivacyDataService privacy,
         IPlatformFeatureService features,
         ISupportAccessService supportAccess,
         IUserLookupService users,
-        ICandidateProfileResetService profileReset)
+        ICandidateProfileResetService profileReset,
+        ILogger<PrivacyController> logger)
     {
         _privacy = privacy;
         _features = features;
         _supportAccess = supportAccess;
         _users = users;
         _profileReset = profileReset;
+        _logger = logger;
     }
 
     /// <summary>AVG Art. 15 / 20 — export personal data as JSON. Own account only.</summary>
@@ -143,6 +147,10 @@ public sealed class PrivacyController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (Exception ex)
+        {
+            return PrivacyFailure(ex, "confirm-unsubscribe");
+        }
     }
 
     /// <summary>
@@ -186,6 +194,10 @@ public sealed class PrivacyController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return PrivacyFailure(ex, "reset-candidate-profile");
         }
     }
 
@@ -237,5 +249,27 @@ public sealed class PrivacyController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (Exception ex)
+        {
+            return PrivacyFailure(ex, "delete-account");
+        }
+    }
+
+    private ObjectResult PrivacyFailure(Exception ex, string operation)
+    {
+        var refCode = PrivacyOperationErrors.ShortReference(HttpContext.TraceIdentifier);
+        _logger.LogError(
+            ex,
+            "Privacy operation {Operation} failed for authenticated user (ref {ReferenceCode}, trace {TraceId})",
+            operation,
+            refCode,
+            HttpContext.TraceIdentifier);
+        return StatusCode(
+            StatusCodes.Status500InternalServerError,
+            new
+            {
+                message = PrivacyOperationErrors.GenericMessageNl,
+                referenceCode = refCode
+            });
     }
 }

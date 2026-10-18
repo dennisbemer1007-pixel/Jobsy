@@ -583,6 +583,19 @@
   outline-offset: 2px;
 }
 
+.jobsy-discovery.kb-start-prompt-open .kb-ext__promo {
+  display: none !important;
+}
+
+.kb-open-for-work {
+  padding-inline: 16px;
+  padding-block: 0.35rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 .kb-start-prompt {
   position: absolute;
   z-index: 8;

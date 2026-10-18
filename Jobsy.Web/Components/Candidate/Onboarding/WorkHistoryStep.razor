@@ -48,6 +48,7 @@
                     <label>
                         @Culture["Profile.EmployerTo"]
                         <MonthYearInput Value="@item.EndMonth"
+                                        ReferenceMonth="@item.StartMonth"
                                         ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
                     </label>
                 }

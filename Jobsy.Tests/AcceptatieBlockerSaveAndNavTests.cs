@@ -92,6 +92,16 @@ public sealed class AcceptatieBlockerSaveAndNavTests
     }
 
     [Fact]
+    public void Banenkaart_hides_external_vacancy_promo_while_location_prompt_open()
+    {
+        var discovery = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/VacancyDiscovery.razor"));
+        var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/kandidaat-banen.css"));
+        Assert.Contains("kb-start-prompt-open", discovery, StringComparison.Ordinal);
+        Assert.Contains("_showStartPrompt", discovery, StringComparison.Ordinal);
+        Assert.Contains("kb-start-prompt-open .kb-ext__promo", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_candidate_shell_hides_duplicate_discovery_header_in_css()
     {
         var critical = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/critical.css"));

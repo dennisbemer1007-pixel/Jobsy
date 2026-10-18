@@ -1,5 +1,7 @@
 @namespace Jobsy.Web.Components.School
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
 @if (Open)
@@ -20,7 +22,10 @@
             {
                 <label>
                     @Culture["School.TestWindow.ClosesOn"]
-                    <InputDate class="input" @bind-Value="_closesOn" />
+                    <JobsyDateField CssClass="input"
+                                    Constraint="JobsyDateConstraint.NotPast"
+                                    @bind-Value="_closesOn"
+                                    TestId="school-test-window-closes" />
                 </label>
             }
 
@@ -68,11 +73,11 @@
     [Parameter] public string? FixHref { get; set; }
     [Parameter] public EventCallback<(string Action, DateOnly? ClosesOn)> OnAction { get; set; }
 
-    private DateTime? _closesOn;
+    private DateOnly? _closesOn;
 
     protected override void OnParametersSet()
     {
-        _closesOn = ClosesOn?.ToDateTime(TimeOnly.MinValue);
+        _closesOn = ClosesOn;
     }
 
     private string StatusLabel => State switch
@@ -101,7 +106,6 @@
 
     private async Task Emit(string action)
     {
-        DateOnly? close = _closesOn is DateTime dt ? DateOnly.FromDateTime(dt) : null;
-        await OnAction.InvokeAsync((action, close));
+        await OnAction.InvokeAsync((action, _closesOn));
     }
 }

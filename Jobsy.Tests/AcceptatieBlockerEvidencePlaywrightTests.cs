@@ -70,7 +70,9 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
         await CaptureSkipBanenkaartMobileOnlyAsync(browser, baseUrl);
+        await CaptureBanenkaartLocationPromptMobileAsync(browser, baseUrl);
         await CaptureCandidateDesktopNavAsync(browser, baseUrl);
+        await CaptureBanenkaartOpenForWorkDesktopAsync(browser, baseUrl);
     }
 
     [Fact]
@@ -97,6 +99,65 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await CaptureSkipBanenkaartShellAsync(browser, baseUrl);
         await CaptureCandidateDesktopNavAsync(browser, baseUrl);
         await CaptureOnboardingFirstCompetencySaveAsync(browser, baseUrl);
+    }
+
+    private static async Task CaptureBanenkaartLocationPromptMobileAsync(IBrowser browser, string baseUrl)
+    {
+        await using var ctx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            DeviceScaleFactor = 2,
+            IsMobile = true,
+            HasTouch = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.Locator(".kb-start-prompt").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        Assert.Equal(0, await page.Locator(".kb-ext__promo:visible").CountAsync());
+        await page.WaitForTimeoutAsync(400);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "skip-banenkaart-mobile-390-location-prompt.png"),
+            FullPage = false,
+        });
+    }
+
+    private static async Task CaptureBanenkaartOpenForWorkDesktopAsync(IBrowser browser, string baseUrl)
+    {
+        await using var ctx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await RegisterAndSkipToBanenkaartAsync(page, baseUrl);
+        await page.EvaluateAsync(
+            """
+            async () => {
+              const res = await fetch('/api/v1/me/profile', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ openForWork: false }),
+              });
+              if (!res.ok) throw new Error('profile patch failed ' + res.status);
+            }
+            """);
+        await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+        await page.Locator("[data-testid=open-for-work-prompt]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await page.Locator("[data-testid=kb-view-lijst]").ClickAsync(new() { Force = true });
+        await page.WaitForTimeoutAsync(800);
+        var pane = page.Locator(".vacancy-pane");
+        await pane.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "banenkaart-open-for-work-desktop-1440.png"),
+        });
     }
 
     private static async Task CaptureSkipBanenkaartMobileOnlyAsync(IBrowser browser, string baseUrl)
