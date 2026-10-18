@@ -1088,8 +1088,8 @@
     width: 100vw;
     max-width: 100vw;
     margin-inline: calc(50% - 50vw);
-    height: min(260px, 68vw) !important;
-    max-height: 260px !important;
+    height: min(240px, 62vw) !important;
+    max-height: 240px !important;
     min-height: 0 !important;
     background-color: var(--pearl) !important;
     background-image: none !important;
@@ -1097,21 +1097,39 @@
     overflow: hidden;
   }
 
-  /* Transition strip only — never over the opaque figure layer (right 45%). */
+  .opl-page .cand-hero--learn-grow::after {
+    display: block !important;
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 50%;
+    max-width: 50%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    background-color: transparent;
+    background-image: var(--cand-hero-mobile-atmosphere, none);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: right bottom;
+  }
+
+  /* Gradient only in the strip between copy (left) and illustration (right). */
   .opl-page .cand-hero--learn-grow::before {
     display: block !important;
     content: "";
     position: absolute;
     top: 0;
     bottom: 0;
-    left: 50%;
-    width: 10%;
-    z-index: 0;
+    left: 52%;
+    width: 8%;
+    z-index: 1;
     pointer-events: none;
     background: linear-gradient(
       90deg,
       var(--pearl) 0%,
-      color-mix(in srgb, var(--pearl) 42%, transparent) 72%,
+      color-mix(in srgb, var(--pearl) 38%, transparent) 70%,
       transparent 100%
     );
   }
@@ -1119,11 +1137,11 @@
   .opl-page .cand-hero--learn-grow .cand-hero__media {
     display: block !important;
     position: absolute;
-    z-index: 0;
+    z-index: 2;
     right: 0;
     bottom: 0;
-    width: 45%;
-    max-width: 45%;
+    width: 50%;
+    max-width: 50%;
     height: 100%;
     margin: 0;
     flex: none;
@@ -1131,21 +1149,21 @@
     background-color: transparent !important;
     background-image: var(--cand-hero-figures, none) !important;
     background-repeat: no-repeat;
-    background-size: contain;
+    background-size: auto 92%;
     background-position: right bottom;
     opacity: 1;
   }
 
   .opl-page .cand-hero--learn-grow .cand-hero__copy {
     position: absolute !important;
-    z-index: 1;
-    inset: 0 auto 0 0;
+    z-index: 3;
+    inset: 0 auto auto 0;
     box-sizing: border-box;
     width: 55%;
     max-width: 55%;
     min-height: 0;
     height: auto;
-    padding: 0.75rem 0.65rem 0.65rem 1rem;
+    padding: 20px 12px 12px 20px;
     background: var(--pearl) !important;
     justify-content: flex-start;
   }
