@@ -59,6 +59,7 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.CandidateExternalVacanciesEnabled,
                 snap.ProactiveMatchingEnabled,
                 snap.TestsV2Enabled,
+                TestItemExamplesEnabled: snap.TestItemExamplesEnabled,
                 snap.EmployerFitQuestionnairesEnabled,
                 snap.KandidatenkaartEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);

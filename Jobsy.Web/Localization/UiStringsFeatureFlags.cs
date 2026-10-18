@@ -130,6 +130,18 @@ public static class UiStringsFeatureFlags
             "Wł. = nowi kandydaci dostają rozszerzone zestawy v2. Istniejące wyniki v1 pozostają.",
             "Pornit = candidații noi primesc seturile v2 extinse. Rezultatele v1 existente rămân.",
             "تشغيل = يحصل المرشحون الجدد على مجموعات v2. نتائج v1 الحالية تبقى.");
+        Add("AdminSettings.TestItemExamples.Enabled.Title",
+            "Voorbeelden per testvraag",
+            "Examples per test item",
+            "Przykłady przy pytaniach testu",
+            "Exemple per întrebare de test",
+            "أمثلة لكل سؤال اختبار");
+        Add("AdminSettings.TestItemExamples.Enabled.Desc",
+            "Aan = Quick-Scan toont een vast praktijkvoorbeeld per vraag (NL/EN). Diepte-analyse gebruikt dezelfde catalogus.",
+            "On = Quick-Scan shows a fixed practice example per item (NL/EN). Deep analysis uses the same catalog.",
+            "Wł. = Quick-Scan pokazuje stały przykład praktyczny (NL/EN). Analiza głęboka używa tej samej katalogu.",
+            "Pornit = Quick-Scan arată un exemplu fix (NL/EN). Analiza profundă folosește același catalog.",
+            "تشغيل = يعرض Quick-Scan مثالاً ثابتاً لكل سؤال (NL/EN). التحليل العميق يستخدم نفس الكatalog.");
         Add("AdminSettings.CompactTestPdf.Enabled.Title",
             "Korte testrapporten",
             "Short test reports",

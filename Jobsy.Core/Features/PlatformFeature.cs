@@ -59,6 +59,9 @@ public enum PlatformFeature
     /// <summary>Quick-Scan v2 question sets for new candidate test rows. Default false.</summary>
     TestsV2,
 
+    /// <summary>Per-item practice examples on Quick-Scan question flow. Default false.</summary>
+    TestItemExamples,
+
     /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
     EmployerFitQuestionnaires,
 

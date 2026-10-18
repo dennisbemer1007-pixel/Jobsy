@@ -2,7 +2,9 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Features
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Features
 @using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
@@ -10,6 +12,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject IFeatureFlags FeatureFlags
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
@@ -191,13 +194,19 @@ else
             }
             _quickScanVersion = state?.QuickScanVersion ?? AssessmentTestVersions.V1;
             _answered = answers.Count;
+            var showExamples = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestItemExamples);
+            var lang = Culture.Language;
             _flowQuestions = TestDepthRules.QuestionIdsFor(
                     AssessmentKind.Career, TestDepthLevel.Full, _quickScanVersion)
                 .Select(id =>
                 {
                     var qItem = AssessmentQuickScanCatalog.CareerQuestions(_quickScanVersion)
                         .First(x => x.Id == id);
-                    return new TestQuestionFlow.FlowQuestion(id, Culture[qItem.TextKey]);
+                    var example = showExamples
+                        ? AssessmentItemExamples.ExampleFor(
+                            AssessmentKind.Career, id, qItem.Category, qItem.Reverse, lang)
+                        : null;
+                    return new TestQuestionFlow.FlowQuestion(id, Culture[qItem.TextKey], example);
                 }).ToList();
             _autosave.ReplaceAll(answers);
             var reached = TestDepthRules.Reached(AssessmentKind.Career, _answered, _quickScanVersion);
