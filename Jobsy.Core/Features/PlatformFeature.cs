@@ -77,6 +77,9 @@ public enum PlatformFeature
     /// </summary>
     CompanyMapInitiative,
 
+    /// <summary>Privacy controls for sensitive work history. Default false.</summary>
+    SensitiveExperience,
+
     /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
     TrainingPartners
 }

@@ -1296,6 +1296,13 @@ textarea.bk-wg-input {
     display: none !important;
   }
 
+  .app-shell:has(.bk-page) .bk-info-banner,
+  .app-shell:has(.bk-page) .bk-filters,
+  .app-shell:has(.bk-page) .bk-result-meta,
+  .app-shell:has(.bk-page) .bk-hero__copy {
+    padding-inline-end: max(1.25rem, calc(env(safe-area-inset-right, 0px) + 3.25rem));
+  }
+
   .bk-card__title {
     overflow-wrap: break-word;
     line-height: 1.25;

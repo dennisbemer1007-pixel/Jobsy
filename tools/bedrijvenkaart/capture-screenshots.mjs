@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Bedrijvenkaart R9 captures: requires API+Web with Seed:Enabled (see run-r9-capture.sh).
+ * Bedrijvenkaart captures: requires API+Web with Seed:Enabled (see run-r*-capture.sh).
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -8,7 +8,9 @@ import { chromium } from "../screenshots/node_modules/playwright/index.mjs";
 
 const baseUrl = (process.argv[2] ?? "http://localhost:5201").replace(/\/$/, "");
 const apiUrl = (process.argv[3] ?? "http://127.0.0.1:5200").replace(/\/$/, "");
-const outDir = "/opt/cursor/artifacts/bedrijvenkaart-build-r9/live";
+const outDir =
+  process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r10/live";
+const captureOnly = process.env.CAPTURE_ONLY ?? "";
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
 const employerEmail = "enterprise@jobsy.local";
@@ -18,7 +20,7 @@ const acceptedInitiative = "88888888-8888-8888-8888-888888888801";
 
 const forbidden = ["deze pagina bestaat niet", "404", "not-found-view", "common.change", "initiative.panel.changeteam"];
 
-const shots = [
+const allShots = [
   { file: "00-banenkaart-link-desktop.png", path: "/banenkaart", width: 1440, role: "candidate", expect: "Bedrijvenkaart" },
   { file: "00-banenkaart-link-mobiel.png", path: "/banenkaart", width: 390, role: "candidate", expect: "Bedrijvenkaart" },
   { file: "01-bedrijvenkaart-desktop.png", path: "/bedrijvenkaart", width: 1440, role: "candidate", expect: "Bedrijven" },
@@ -69,6 +71,14 @@ const shots = [
     expect: "Nu niet",
   },
 ];
+
+const shots = captureOnly
+  ? allShots.filter((s) => s.file === captureOnly)
+  : allShots;
+
+if (shots.length === 0) {
+  throw new Error(`CAPTURE_ONLY=${captureOnly} matched no shots`);
+}
 
 async function assertApiReady() {
   const res = await fetch(`${apiUrl}/api/public/companies/12345678`);

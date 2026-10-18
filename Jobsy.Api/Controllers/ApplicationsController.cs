@@ -824,7 +824,7 @@ public class ApplicationsController : ControllerBase
             vacancy.MinimumEmployers,
             preferences.DrivingLicenses,
             preferences.Educations,
-            preferences.Employers?.Count ?? 0,
+            SensitiveExperienceRules.CountForMinimumEmployers(preferences),
             vacancy.MinimumReferences,
             completeReferences);
         if (requirementError is not null)
@@ -961,7 +961,7 @@ public class ApplicationsController : ControllerBase
             preferences.Educations is null ? null : string.Join(", ", preferences.Educations),
             512);
         application.SnapshotAboutMe = Truncate(preferences.AboutMe, 1024);
-        application.CandidateEmployerCount = preferences.Employers?.Count ?? 0;
+        application.CandidateEmployerCount = SensitiveExperienceRules.CountForMinimumEmployers(preferences);
         application.CandidateReferenceCount = completeReferences;
         await SnapshotUploadedCvAsync(application, candidate.Id, cancellationToken);
         application.SnapshotPhoneNumber = Truncate(candidate.PhoneNumber, 32);

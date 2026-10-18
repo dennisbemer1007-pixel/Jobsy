@@ -33,9 +33,19 @@ comm -23 <(sort -u "$TMP/pr/names.txt" | grep -v '^$' || true) \
          <(sort -u "$TMP/acc/names.txt" | grep -v '^$' || true) > "$OUT" || true
 
 {
-  echo "# PR-only failures (PR run $PR_RUN vs acceptatie $ACC_RUN)"
+  echo "# PR-only failures (PR run $PR_RUN vs acceptatie PR-tests $ACC_RUN)"
+  echo "# acceptatie_ref=${ACCEPTATIE_REF:-origin/acceptatie}"
   echo "# Generated $(date -u +%Y-%m-%dT%H:%M:%SZ)"
   cat "$OUT"
 } > "${OUT%.txt}-report.txt"
+
+# When empty, still record run ids in the deliverable file header.
+if [[ ! -s "$OUT" ]]; then
+  {
+    echo "# PR CI run: $PR_RUN"
+    echo "# Acceptatie baseline PR-tests run: $ACC_RUN"
+    echo "# PR-only failure count: 0"
+  } > "$OUT"
+fi
 
 echo "Wrote $OUT ($(wc -l < "$OUT") lines)"
