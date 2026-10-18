@@ -1281,6 +1281,37 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
         foreach (var (width, height, tag) in Viewports)
         {
+            await using var formContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(formContext);
+            var formPage = await formContext.NewPageAsync();
+            await LoginAsync(formPage, baseUrl, Email);
+            await CaptureRequestFormScreenshotAsync(formPage, baseUrl, tag, outputDir);
+            if (tag == "390")
+            {
+                await AssertMobileGevoeligHeroAsync(formPage);
+            }
+
+            await formContext.CloseAsync();
+        }
+
+        await using var submitContext = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(submitContext);
+        var submitPage = await submitContext.NewPageAsync();
+        await LoginAsync(submitPage, baseUrl, Email);
+        await CaptureRequestSubmitAndConfirmScreenshotsAsync(
+            submitPage, baseUrl, outputDir, useRealisticDemoName: true, alsoConfirmViewport: (390, 844));
+        await submitContext.CloseAsync();
+
+        foreach (var (width, height, tag) in Viewports)
+        {
             await using var candidateContext = await browser.NewContextAsync(new()
             {
                 ViewportSize = new() { Width = width, Height = height },
@@ -1297,12 +1328,6 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
                 candidatePage,
                 Path.Combine(outputDir, $"08-paspoort-endorsed-{tag}.png"));
-
-            await CaptureRequestFormAndConfirmAsync(candidatePage, baseUrl, tag, outputDir, useRealisticDemoName: true);
-            if (tag == "390")
-            {
-                await AssertMobileGevoeligHeroAsync(candidatePage);
-            }
 
             await candidateContext.CloseAsync();
 
@@ -1589,16 +1614,46 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         string baseUrl,
         string tag,
         string outputDir,
-        bool useRealisticDemoName = false)
+        bool useRealisticDemoName = false,
+        Guid? workEntryId = null)
     {
-        var entryAh = ReferenceVerificationDemoIds.WorkEntryAh;
-        await page.GotoAsync($"{baseUrl}/candidate/paspoort/referentie/vraag/{entryAh:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await CaptureRequestFormScreenshotAsync(page, baseUrl, tag, outputDir, workEntryId);
+        await CaptureRequestSubmitAndConfirmScreenshotsAsync(
+            page, baseUrl, outputDir, useRealisticDemoName, workEntryId, confirmTag: tag);
+    }
+
+    private static async Task CaptureRequestFormScreenshotAsync(
+        IPage page,
+        string baseUrl,
+        string tag,
+        string outputDir,
+        Guid? workEntryId = null)
+    {
+        var entryId = workEntryId ?? ReferenceVerificationDemoIds.WorkEntryAh;
+        await page.GotoAsync($"{baseUrl}/candidate/paspoort/referentie/vraag/{entryId:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForSelectorAsync(".ref-verif-request-layout--ready", new() { Timeout = 20_000 });
         await page.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 15_000 });
         await page.WaitForSelectorAsync(".ref-verif-request__card .ref-verif-request__grid", new() { Timeout = 15_000 });
         await page.WaitForSelectorAsync(".ref-verif-request-aside", new() { Timeout = 10_000 });
         await Task.Delay(300);
         await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(outputDir, $"02-request-form-{tag}.png"));
+    }
+
+    private static async Task CaptureRequestSubmitAndConfirmScreenshotsAsync(
+        IPage page,
+        string baseUrl,
+        string outputDir,
+        bool useRealisticDemoName = false,
+        Guid? workEntryId = null,
+        string confirmTag = "1440",
+        (int Width, int Height)? alsoConfirmViewport = null)
+    {
+        var entryId = workEntryId ?? ReferenceVerificationDemoIds.WorkEntryAh;
+        if (!page.Url.Contains(entryId.ToString("D"), StringComparison.OrdinalIgnoreCase))
+        {
+            await page.GotoAsync($"{baseUrl}/candidate/paspoort/referentie/vraag/{entryId:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.WaitForSelectorAsync(".ref-verif-request-layout--ready", new() { Timeout = 20_000 });
+        }
 
         var suffix = Guid.NewGuid().ToString("N")[..8];
         var referentName = useRealisticDemoName ? "Mark de Boer" : "Screenshot Referent";
@@ -1640,12 +1695,20 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
                 Assert.Fail(await error.InnerTextAsync());
             }
 
-            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(outputDir, $"debug-after-submit-{tag}.png"));
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(outputDir, $"debug-after-submit-{confirmTag}.png"));
             throw;
         }
+
         await page.WaitForSelectorAsync(".ref-verif-request__confirm-title", new() { Timeout = 5_000 });
         await Task.Delay(650);
-        await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(outputDir, $"03-request-confirm-{tag}.png"));
+        await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(outputDir, $"03-request-confirm-{confirmTag}.png"));
+
+        if (alsoConfirmViewport is { } mobile)
+        {
+            await page.SetViewportSizeAsync(mobile.Width, mobile.Height);
+            await Task.Delay(650);
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(outputDir, "03-request-confirm-390.png"));
+        }
     }
 
     private static async Task CaptureRequestFormAsync(IPage page, string baseUrl, string tag, string outputDir)

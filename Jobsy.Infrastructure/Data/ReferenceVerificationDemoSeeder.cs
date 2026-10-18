@@ -310,14 +310,6 @@ internal static class ReferenceVerificationDemoSeeder
                 UpdatedAtUtc = now.AddDays(-3)
             };
             db.WorkExperienceReferenceRequests.Add(pending);
-            db.WorkExperienceReferenceTokens.Add(new WorkExperienceReferenceToken
-            {
-                Id = Guid.NewGuid(),
-                RequestId = pending.Id,
-                TokenHash = VerificationCodes.Hash(ReferenceVerificationDemoIds.OpenReferentToken),
-                ExpiresAtUtc = now.AddDays(11),
-                CreatedAtUtc = now.AddDays(-3)
-            });
         }
         else
         {
@@ -351,14 +343,6 @@ internal static class ReferenceVerificationDemoSeeder
                 UpdatedAtUtc = now.AddDays(-20)
             };
             db.WorkExperienceReferenceRequests.Add(expired);
-            db.WorkExperienceReferenceTokens.Add(new WorkExperienceReferenceToken
-            {
-                Id = Guid.NewGuid(),
-                RequestId = expired.Id,
-                TokenHash = VerificationCodes.Hash(ReferenceVerificationDemoIds.ExpiredReferentToken),
-                ExpiresAtUtc = now.AddDays(-2),
-                CreatedAtUtc = now.AddDays(-20)
-            });
         }
 
         // Playwright flows add tokens; reset demo user to the seeded set on each CI boot.
