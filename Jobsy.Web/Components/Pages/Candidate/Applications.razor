@@ -54,17 +54,41 @@
 
     <div class="kb-apps__filters application-counters" role="group" aria-label="@Culture["Nav.MyApplications"]">
         <button type="button"
+                class="application-counters__btn @(_statusFilter == "all" ? "is-selected" : null)"
+                aria-pressed="@(_statusFilter == "all" ? "true" : "false")"
+                @onclick='() => SetStatusFilter("all")'>
+            <span class="application-counters__n">@_items.Count</span>
+            <span class="application-counters__label">@Culture["Kb.Apps.FilterAll"]</span>
+        </button>
+        <button type="button"
+                class="application-counters__btn application-counters__btn--running @(_statusFilter == "running" ? "is-selected" : null)"
+                aria-pressed="@(_statusFilter == "running" ? "true" : "false")"
+                @onclick='() => SetStatusFilter("running")'>
+            <span class="application-counters__n">@_countRunning</span>
+            <span class="application-counters__label">@Culture["Kb.Apps.FilterRunning"]</span>
+        </button>
+        <button type="button"
+                class="application-counters__btn @(_statusFilter == "done" ? "is-selected" : null)"
+                aria-pressed="@(_statusFilter == "done" ? "true" : "false")"
+                @onclick='() => SetStatusFilter("done")'>
+            <span class="application-counters__n">@_countDone</span>
+            <span class="application-counters__label">@Culture["Kb.Apps.FilterDone"]</span>
+        </button>
+    </div>
+
+    <div class="kb-apps__filters application-counters application-counters--source" role="group" aria-label="@Culture["Bk.Apps.FilterSource"]">
+        <button type="button"
                 class="application-counters__btn @(_sourceFilter == "all" ? "is-selected" : null)"
                 aria-pressed="@(_sourceFilter == "all" ? "true" : "false")"
                 @onclick='() => SetSourceFilter("all")'>
-            <span class="application-counters__n">@_items.Count</span>
-            <span class="application-counters__label">@Culture["Kb.Apps.FilterAll"]</span>
+            <span class="application-counters__n">@StatusScopedCount("all")</span>
+            <span class="application-counters__label">@Culture["Bk.Apps.FilterSourceAll"]</span>
         </button>
         <button type="button"
                 class="application-counters__btn @(_sourceFilter == "vacancy" ? "is-selected" : null)"
                 aria-pressed="@(_sourceFilter == "vacancy" ? "true" : "false")"
                 @onclick='() => SetSourceFilter("vacancy")'>
-            <span class="application-counters__n">@_countVacancy</span>
+            <span class="application-counters__n">@StatusScopedCount("vacancy")</span>
             <span class="application-counters__label">@Culture["Bk.Apps.FilterVacancy"]</span>
         </button>
         @if (_initiativeEnabled)
@@ -73,7 +97,7 @@
                     class="application-counters__btn @(_sourceFilter == "initiative" ? "is-selected" : null)"
                     aria-pressed="@(_sourceFilter == "initiative" ? "true" : "false")"
                     @onclick='() => SetSourceFilter("initiative")'>
-                <span class="application-counters__n">@_countInitiative</span>
+                <span class="application-counters__n">@StatusScopedCount("initiative")</span>
                 <span class="application-counters__label">@Culture["Bk.Apps.FilterInitiatives"]</span>
             </button>
         }
@@ -269,9 +293,10 @@
     private bool _disposed;
     private bool _readOnly;
     private string _sourceFilter = "all";
+    private string _statusFilter = "all";
     private bool _initiativeEnabled = true;
-    private int _countVacancy;
-    private int _countInitiative;
+    private int _countRunning;
+    private int _countDone;
     private Guid? _selectedInitiativeId;
     private ApplicationItem? SelectedInitiative =>
         _selectedInitiativeId is Guid id ? _filtered.FirstOrDefault(i => i.Id == id) : _filtered.FirstOrDefault();
@@ -733,14 +758,30 @@
         ApplyFilter();
     }
 
+    private void SetStatusFilter(string filter)
+    {
+        CloseMenu();
+        _statusFilter = filter;
+        ApplyFilter();
+    }
+
     private void ApplyFilter()
     {
-        _filtered = _sourceFilter switch
+        IEnumerable<ApplicationItem> query = _sourceFilter switch
         {
-            "vacancy" => _items.Where(a => !a.IsInitiative).ToList(),
-            "initiative" => _items.Where(a => a.IsInitiative).ToList(),
-            _ => _items.ToList()
+            "vacancy" => _items.Where(a => !a.IsInitiative),
+            "initiative" => _items.Where(a => a.IsInitiative),
+            _ => _items
         };
+
+        query = _statusFilter switch
+        {
+            "running" => query.Where(a => IsRunning(a.Status)),
+            "done" => query.Where(a => IsFinished(a.Status)),
+            _ => query
+        };
+
+        _filtered = query.ToList();
         if (_filtered.Count == 0)
         {
             _selectedId = null;
@@ -755,8 +796,25 @@
 
     private void RefreshCounts()
     {
-        _countVacancy = _items.Count(a => !a.IsInitiative);
-        _countInitiative = _items.Count(a => a.IsInitiative);
+        _countRunning = _items.Count(a => IsRunning(a.Status));
+        _countDone = _items.Count(a => IsFinished(a.Status));
+    }
+
+    private int StatusScopedCount(string source)
+    {
+        IEnumerable<ApplicationItem> query = source switch
+        {
+            "vacancy" => _items.Where(a => !a.IsInitiative),
+            "initiative" => _items.Where(a => a.IsInitiative),
+            _ => _items
+        };
+
+        return _statusFilter switch
+        {
+            "running" => query.Count(a => IsRunning(a.Status)),
+            "done" => query.Count(a => IsFinished(a.Status)),
+            _ => query.Count()
+        };
     }
 
     private static bool IsRunning(string status)

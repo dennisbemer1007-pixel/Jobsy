@@ -37,6 +37,8 @@ public static class UiStringsInitiative
         Add("Initiative.Match.Reasonable", "Past redelijk", "Reasonable fit");
         Add("Bk.Apps.FilterInitiatives", "Initiatieven", "Initiatives");
         Add("Bk.Apps.FilterVacancy", "Op vacature", "On vacancy");
+        Add("Bk.Apps.FilterSource", "Type sollicitatie", "Application type");
+        Add("Bk.Apps.FilterSourceAll", "Alle types", "All types");
         Add("Bk.Initiative.Next.Wait", "Het bedrijf reageert binnen 5 werkdagen.", "The company responds within 5 business days.");
         Add("Bk.AutoDecline.Lead", "Het zegt niets over jou.", "It says nothing about you.");
         Add("Bk.Status.AutoDeclined", "Automatisch nu niet", "Automatically not now");
