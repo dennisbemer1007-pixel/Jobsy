@@ -549,7 +549,7 @@ html.gev-capture [data-lobsy-coach] {
   pointer-events: none !important;
 }
 
-/* Mobile (390): text in hero over art — cream fade left, figure bottom-right */
+/* Mobile (390): solid cream text column ~55%, gradient strip only between, opaque figures ~45% right */
 @media (max-width: 900px) {
   .gev-hero {
     display: block;
@@ -558,39 +558,55 @@ html.gev-capture [data-lobsy-coach] {
     max-height: 16.25rem;
     min-height: 0;
     overflow: hidden;
+    background: var(--gev-cream);
   }
 
+  /* Gradient ends before figure column — never over figures */
   .gev-hero::before {
     content: "";
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 45%;
     z-index: 1;
     pointer-events: none;
     background: linear-gradient(
-      115deg,
-      rgba(251, 245, 236, 0.98) 0%,
-      rgba(251, 245, 236, 0.93) 36%,
-      rgba(251, 245, 236, 0.52) 50%,
-      rgba(251, 245, 236, 0.12) 62%,
-      transparent 72%
+      90deg,
+      var(--gev-cream) 0%,
+      var(--gev-cream) 78%,
+      rgba(251, 245, 236, 0.65) 90%,
+      rgba(251, 245, 236, 0) 100%
     );
+  }
+
+  .gev-hero__art--werk {
+    background-image: url("/images/candidate/werk-mobile-figures.png");
+  }
+
+  .gev-hero__art--ref {
+    background-image: url("/images/candidate/ref-mobile-figures.png");
   }
 
   .gev-hero__art {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 55%;
     z-index: 0;
-    width: 100%;
+    width: 45%;
+    max-width: 45%;
     height: 100%;
     margin: 0;
     pointer-events: none;
     overflow: hidden;
-    background-color: var(--gev-cream);
+    background-color: transparent;
     background-repeat: no-repeat;
     background-position: right bottom;
-    background-size: auto 94%;
-    -webkit-mask-image: linear-gradient(to top, transparent 0, #000 12px);
-    mask-image: linear-gradient(to top, transparent 0, #000 12px);
+    background-size: contain;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .gev-hero__art::before,
@@ -604,18 +620,20 @@ html.gev-capture [data-lobsy-coach] {
     z-index: 2;
     display: flex;
     align-items: flex-start;
+    width: 55%;
+    max-width: 55%;
     height: 100%;
     max-height: 16.25rem;
     min-height: 0;
-    padding: 0.5rem 1rem 0.45rem;
-    background: transparent;
+    padding: 0.5rem 0.65rem 0.45rem 1rem;
+    background: var(--gev-cream);
     box-sizing: border-box;
     overflow: hidden;
   }
 
   .gev-hero__copy {
     justify-content: flex-start;
-    max-width: 70%;
+    max-width: 100%;
     padding-right: 0;
   }
 
