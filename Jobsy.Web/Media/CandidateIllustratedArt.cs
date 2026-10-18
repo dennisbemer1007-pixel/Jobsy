@@ -67,6 +67,13 @@ public static class CandidateIllustratedArt
         return new HeroArt(CandidateIllustratedImages.DroombaanBand, "38% 42%");
     }
 
+    /// <summary>Landscape hero when a vacancy has no employer photo (category + title aware).</summary>
+    public static HeroArt VacancyHeroFallback(string? categoryName, string? title)
+    {
+        var seed = string.Join(' ', new[] { categoryName, title }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        return HeroLandscapeForDream(string.IsNullOrWhiteSpace(seed) ? null : seed);
+    }
+
     /// <summary>Small spots for cards/thumbs only (not heroes).</summary>
     public static string SpotForDream(string? dreamTitle)
     {

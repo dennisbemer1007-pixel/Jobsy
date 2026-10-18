@@ -82,7 +82,7 @@
                 <div class="kb-detail__main-top">
                     <div class="kb-detail__hero">
                         <div class="kb-detail__photo @(HasPhoto ? null : "kb-detail__photo--illustrated")"
-                             style="@(!HasPhoto ? $"--kb-detail-fallback:url('{SavedNoPhotoArt}')" : null)">
+                             style="@(!HasPhoto ? DetailFallbackHeroStyle : null)">
                             @if (HasPhoto)
                             {
                                 <VacancyPhoto Src="@_vacancy.ImageUrl"
@@ -161,11 +161,14 @@
                 <aside class="kb-detail__rail kb-detail__rail-stack" data-testid="kb-detail-rail">
                     <div class="kb-detail__rail-fit">@FitPanelFragment</div>
                     <div class="kb-detail__rail-travel">@TravelCardFragment</div>
-                    @if (_detailWide && ShowApplyReadinessRail)
+                    @if (ShowApplyReadinessRail)
                     {
-                        <KbDetailApplyReadiness Lead="@ApplyReadinessLead"
-                                                Items="@ApplyReadinessItems"
-                                                ProfileHref="@ProfileReturnHref" />
+                        <div class="kb-detail__rail-readiness">
+                            <KbDetailApplyReadiness Compact="true"
+                                                    Lead="@ApplyReadinessLead"
+                                                    Items="@ApplyReadinessItems"
+                                                    ProfileHref="@ProfileReturnHref" />
+                        </div>
                     }
                     <div class="kb-detail__rail-cta kb-detail__rail-actions">
                         @if (_detailWide)
@@ -376,13 +379,13 @@
             </AuthorizeView>
 
             <div id="apply"
-                 class="apply-flow"
+                 class="apply-flow @ApplyFlowVisibilityClass"
                  data-apply-interactive="@(_applyCircuitReady ? "true" : "false")">
                 <AuthorizeView Roles="Candidate">
                     <Authorized>
                         @if (_vacancy is not null && !_vacancy.OpenForWorkRequired)
                         {
-                        @if (!_applied)
+                        @if (!_applied && (_profileReadyForApply || _detailWide))
                         {
                         @if (_encourageContext is not null)
                         {
@@ -443,11 +446,7 @@
                         }
                         else if (!_profileReadyForApply && !_detailWide)
                         {
-                            <div data-testid="apply-profile-blocked">
-                                <KbDetailApplyReadiness Lead="@ApplyReadinessLead"
-                                                        Items="@ApplyReadinessItems"
-                                                        ProfileHref="@ProfileReturnHref" />
-                            </div>
+                            @* Mobile illustrated: checklist in reordered rail; no duplicate apply form. *@
                         }
                         else if (!_profileReadyForApply && _detailWide)
                         {
@@ -755,7 +754,13 @@
                             <span class="kb-dna__label">@Culture[row.LabelKey]</span>
                             @if (row.Percent is int barPct)
                             {
-                                <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]">@barPct%</progress>
+                                <progress class="kb-dna__progress"
+                                          value="@barPct"
+                                          max="100"
+                                          aria-valuenow="@barPct"
+                                          aria-valuemin="0"
+                                          aria-valuemax="100"
+                                          aria-label="@Culture[row.LabelKey]"></progress>
                                 <span class="kb-dna__reason">@Culture[row.WhyKey]</span>
                             }
                             else
@@ -1299,6 +1304,29 @@
         _vacancy is not null
         && (!string.IsNullOrWhiteSpace(VacancyImageUrls.Normalize(_vacancy.ImageUrl))
             || !string.IsNullOrWhiteSpace(VacancyImageUrls.Normalize(_vacancy.CompanyLogoUrl)));
+
+    private string? DetailFallbackHeroStyle
+    {
+        get
+        {
+            if (_vacancy is null || HasPhoto)
+            {
+                return null;
+            }
+
+            var hero = CandidateIllustratedArt.VacancyHeroFallback(_vacancy.CategoryName, _vacancy.Title);
+            return $"--kb-detail-fallback:url('{hero.Url}');--kb-detail-fallback-pos:{hero.BackgroundPosition}";
+        }
+    }
+
+    private string? ApplyFlowVisibilityClass =>
+        !_detailWide
+        && _signedInCandidate
+        && _candidateApplyGateLoaded
+        && !_applied
+        && !_profileReadyForApply
+            ? "apply-flow--rail-only"
+            : null;
 
     private bool HasLocation =>
         _vacancy is not null

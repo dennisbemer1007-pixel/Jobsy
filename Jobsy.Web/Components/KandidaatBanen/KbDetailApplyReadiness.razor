@@ -1,17 +1,27 @@
 @inject CultureState Culture
 
-<section class="kb-detail-readiness" data-testid="kb-detail-readiness">
+<section class="kb-detail-readiness @(Compact ? "kb-detail-readiness--compact" : null)" data-testid="kb-detail-readiness">
     <p class="kb-detail-readiness__title">@Culture["Apply.CompleteProfileTitle"]</p>
-    <p class="kb-detail-readiness__lead">@Lead</p>
+    @if (!Compact)
+    {
+        <p class="kb-detail-readiness__lead">@Lead</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(Lead))
+    {
+        <p class="kb-detail-readiness__lead kb-detail-readiness__lead--compact">@Lead</p>
+    }
     @if (OpenCount > 0)
     {
-        <p class="kb-detail-readiness__count">@Culture.Format("Kb.Detail.ApplyRemaining", OpenCount)</p>
-        <div class="kb-detail-readiness__bar" role="progressbar"
-             aria-valuemin="0"
-             aria-valuemax="@TotalCount"
-             aria-valuenow="@DoneCount">
-            <span class="kb-detail-readiness__bar-fill" style="width:@ProgressPct%"></span>
-        </div>
+        @if (!Compact)
+        {
+            <p class="kb-detail-readiness__count">@Culture.Format("Kb.Detail.ApplyRemaining", OpenCount)</p>
+            <div class="kb-detail-readiness__bar" role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="@TotalCount"
+                 aria-valuenow="@DoneCount">
+                <span class="kb-detail-readiness__bar-fill" style="width:@ProgressPct%"></span>
+            </div>
+        }
         <ul class="kb-detail-readiness__list">
             @foreach (var item in Items.Where(i => !i.Done))
             {
@@ -42,6 +52,7 @@
     [Parameter] public string Lead { get; set; } = "";
     [Parameter] public IReadOnlyList<ReadinessItem> Items { get; set; } = [];
     [Parameter] public string ProfileHref { get; set; } = "";
+    [Parameter] public bool Compact { get; set; }
 
     private int TotalCount => Math.Max(Items.Count, 1);
     private int DoneCount => Items.Count(i => i.Done);

@@ -120,8 +120,11 @@
 }
 
 .kb-detail--warm .kb-detail__photo--illustrated {
-  background: color-mix(in srgb, var(--gold) 12%, var(--surface))
-    var(--kb-detail-fallback, none) no-repeat center bottom / auto min(100%, 14rem);
+  background-color: color-mix(in srgb, var(--gold) 12%, var(--surface));
+  background-image: var(--kb-detail-fallback, none);
+  background-repeat: no-repeat;
+  background-position: var(--kb-detail-fallback-pos, center);
+  background-size: cover;
 }
 
 .kb-detail--warm .kb-detail__hero-body {
@@ -344,6 +347,13 @@
 .kb-dna--detail .kb-dna__progress {
   width: 100%;
   height: 0.42rem;
+  border-radius: 99px;
+  color: transparent;
+}
+
+.kb-detail--illustrated .kb-dna--detail .kb-dna__progress::-webkit-progress-value,
+.kb-detail--illustrated .kb-dna--detail .kb-dna__progress::-moz-progress-bar {
+  background: var(--brand);
   border-radius: 99px;
 }
 
@@ -1567,6 +1577,33 @@
   margin-top: 0.35rem;
 }
 
+.kb-detail-readiness--compact {
+  padding: 0.75rem 0.85rem;
+}
+
+.kb-detail-readiness--compact .kb-detail-readiness__title {
+  font-size: 0.92rem;
+  margin: 0 0 0.25rem;
+}
+
+.kb-detail-readiness__lead--compact {
+  margin: 0 0 0.45rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.kb-detail-readiness--compact .kb-detail-readiness__list {
+  columns: 1;
+  margin-bottom: 0.55rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.kb-detail-readiness--compact .kb-detail-readiness__cta {
+  font-size: 0.88rem;
+  padding-block: 0.55rem;
+}
+
 .kb-detail-link-cards {
   display: grid;
   gap: 0.45rem;
@@ -1634,20 +1671,24 @@
     order: 2;
   }
 
-  .kb-detail--warm .kb-detail__main-bottom {
+  .kb-detail--warm .kb-detail__rail-readiness {
     order: 3;
   }
 
-  .kb-detail--warm .kb-detail__rail-travel {
+  .kb-detail--warm .kb-detail__main-bottom {
     order: 4;
   }
 
-  .kb-detail--warm .kb-detail-link-cards--rail {
+  .kb-detail--warm .kb-detail__rail-travel {
     order: 5;
   }
 
-  .kb-detail--warm .kb-detail__rail-hint {
+  .kb-detail--warm .kb-detail-link-cards--rail {
     order: 6;
+  }
+
+  .kb-detail--warm .kb-detail__rail-hint {
+    order: 7;
     display: none;
   }
 
@@ -1667,5 +1708,9 @@
     z-index: 35;
     margin: 0;
     box-shadow: 0 -4px 18px rgba(15, 45, 92, 0.1);
+  }
+
+  .kb-detail--illustrated .apply-flow--rail-only {
+    display: none;
   }
 }
