@@ -1,4 +1,3 @@
-/* Shared form field tokens — mobile-first, all roles. */
 :root {
     --form-field-gap: 1.125rem;
     --form-section-gap: 1.625rem;
@@ -12,11 +11,8 @@
     --form-muted-label: var(--muted);
     --form-placeholder-color: color-mix(in srgb, var(--muted) 88%, var(--text));
     --form-card-pad: 1rem 1.125rem;
-    --form-card-radius: var(--radius-sm, 8px);
-}
-
-/* Readable filled values; placeholders stay softer */
-.jobsy-form-value,
+    --form-card-radius: var(--r-lg);
+}.jobsy-form-value,
 .ob-wizard .ob-wizard__content input:not([type="checkbox"]):not([type="radio"]),
 .ob-fields input:not([type="checkbox"]):not([type="radio"]),
 .profile-form input:not([type="checkbox"]):not([type="radio"]),
@@ -27,9 +23,7 @@ input.filter-bar__search,
 textarea:not(.code-input) {
     color: var(--form-value-color);
     font-weight: var(--form-value-weight);
-}
-
-.jobsy-form-value::placeholder,
+}.jobsy-form-value::placeholder,
 .ob-wizard .ob-wizard__content input::placeholder,
 .ob-fields input::placeholder,
 .profile-form input::placeholder,
@@ -41,10 +35,7 @@ input.filter-bar__search::placeholder {
     color: var(--form-placeholder-color);
     font-weight: 400;
     opacity: 1;
-}
-
-/* Native date/month pickers — keep OS calendar, readable filled value */
-.jobsy-date-field__input,
+}.jobsy-date-field__input,
 input.jobsy-date-field__input[type="date"],
 input.jobsy-date-field__input[type="month"] {
     box-sizing: border-box;
@@ -52,27 +43,20 @@ input.jobsy-date-field__input[type="month"] {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 8px);
-    background: var(--surface);
+    border-radius:var(--r-sm);
+    background:var(--surface);
     color: var(--form-value-color);
     font: inherit;
     font-weight: var(--form-value-weight);
     line-height: 1.4;
     -webkit-appearance: auto;
     appearance: auto;
-}
-
-.jobsy-date-field__input:focus-visible {
+}.jobsy-date-field__input:focus-visible {
     outline: 3px solid var(--brand);
     outline-offset: 2px;
-}
-
-.jobsy-date-field__input:disabled {
+}.jobsy-date-field__input:disabled {
     opacity: 0.65;
-}
-
-/* Candidate onboarding + discovery personal step */
-.ob-wizard .ob-wizard__content label,
+}.ob-wizard .ob-wizard__content label,
 .ob-fields label,
 .ob-wizard__start-date {
     display: flex;
@@ -83,9 +67,7 @@ input.jobsy-date-field__input[type="month"] {
     font-weight: var(--form-label-weight);
     color: var(--form-label-color);
     line-height: 1.35;
-}
-
-.ob-wizard .ob-wizard__content input:not([type="checkbox"]):not([type="radio"]),
+}.ob-wizard .ob-wizard__content input:not([type="checkbox"]):not([type="radio"]),
 .ob-fields input:not([type="checkbox"]):not([type="radio"]),
 .ob-wizard .ob-wizard__content select,
 .ob-fields select {
@@ -94,137 +76,96 @@ input.jobsy-date-field__input[type="month"] {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     line-height: 1.4;
-}
-
-.ob-wizard fieldset,
+}.ob-wizard fieldset,
 .ob-fields fieldset {
     margin-block: var(--form-section-gap);
-}
-
-.ob-wizard__section {
+}.ob-wizard__section {
     margin-block: var(--form-section-gap) 0.75rem;
-}
-
-.ob-wizard__section-title,
+}.ob-wizard__section-title,
 .ob-wizard fieldset > legend.ob-wizard__section-title {
     margin-block-end: 0.65rem;
     color: var(--form-label-color);
     font-weight: 700;
-}
-
-.ob-wizard__start-option {
+}.ob-wizard__start-option {
     border: 1px solid var(--border);
-    background: var(--surface);
+    background:var(--surface);
     color: var(--text);
     font-weight: 600;
-    box-shadow: none;
-}
-
-.ob-wizard__start-option[aria-checked="false"]:not(.is-selected) {
+    box-shadow:none;
+}.ob-wizard__start-option[aria-checked="false"]:not(.is-selected) {
     border: 1px solid var(--border);
-    background: var(--surface);
+    background:var(--surface);
     color: var(--text);
-}
-
-.ob-wizard__start-option.is-selected,
+}.ob-wizard__start-option.is-selected,
 .ob-wizard__start-option[aria-checked="true"] {
     border: 2px solid var(--brand);
-    background: var(--accent-soft);
+    background:var(--accent-soft);
     color: var(--brand);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 18%, transparent);
-}
-
-.ob-wizard__start-option:not(.is-selected)[aria-checked="false"]:focus {
+    box-shadow:none;
+}.ob-wizard__start-option:not(.is-selected)[aria-checked="false"]:focus {
     outline: 2px solid color-mix(in srgb, var(--brand) 35%, transparent);
     outline-offset: 2px;
-}
-
-.ob-wizard__presets button:not(.lobsy-choice-tile).is-selected,
+}.ob-wizard__presets button:not(.lobsy-choice-tile).is-selected,
 .ob-wizard__transport button:not(.lobsy-choice-tile).is-selected,
 .ob-wizard__education-grid button:not(.lobsy-choice-tile).is-selected,
 .ob-wizard__dream-grid button.is-selected {
     border: 2px solid var(--brand);
-    background: var(--accent-soft);
+    background:var(--accent-soft);
     color: var(--brand);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--brand) 18%, transparent);
-}
-
-.journey-step .ob-wizard__start-options {
+    box-shadow:none;
+}.journey-step .ob-wizard__start-options {
     margin-block: var(--form-section-gap);
     padding: 0;
     border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-}
-
-.ob-wizard:not(.journey-step) .ob-wizard__start-options,
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+}.ob-wizard:not(.journey-step) .ob-wizard__start-options,
 .profile-page--candidate .ob-wizard__start-options {
     margin-block: var(--form-section-gap);
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius: var(--form-card-radius);
-    background: var(--surface);
-    box-shadow: var(--shadow);
-}
-
-.ob-wizard__presets-field {
+    border-radius:var(--r-lg);
+    background:var(--surface);
+    box-shadow:none;
+}.ob-wizard__presets-field {
     border: 0;
     padding: 0;
     margin: 0;
-}
-
-.ob-wizard__preset-required {
+}.ob-wizard__preset-required {
     margin: 0.65rem 0 0;
     padding: 0;
-}
-
-.ob-wizard__availability-summary {
+}.ob-wizard__availability-summary {
     margin-block: var(--form-section-gap);
     padding: 1rem 1.125rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-}
-
-.ob-wizard__availability-summary dl {
+}.ob-wizard__availability-summary dl {
     margin: 0;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
-}
-
-.ob-wizard__availability-summary dl div {
+}.ob-wizard__availability-summary dl div {
     padding-block: 0.35rem;
     border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-}
-
-.ob-wizard__availability-summary dt {
+}.ob-wizard__availability-summary dt {
     color: var(--form-muted-label);
     font-size: var(--text-xs, 0.75rem);
     font-weight: 600;
     text-transform: none;
-}
-
-.ob-wizard__availability-summary dd {
+}.ob-wizard__availability-summary dd {
     margin: 0.15rem 0 0;
     color: var(--form-value-color);
     font-size: var(--text-md, 1rem);
     font-weight: var(--form-value-weight);
     line-height: 1.4;
-}
-
-.ob-wizard__birth-date {
+}.ob-wizard__birth-date {
     margin-block: var(--form-field-gap);
-}
-
-.month-year {
+}.month-year {
     display: block;
     inline-size: 100%;
-}
-
-/* Candidate profile (paspoort data tab) */
-.profile-page--candidate label:not(.profile-toggle):not(.availability-matrix__cell):not(.checkbox-row) {
+}.profile-page--candidate label:not(.profile-toggle):not(.availability-matrix__cell):not(.checkbox-row) {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -232,9 +173,7 @@ input.jobsy-date-field__input[type="month"] {
     font-weight: var(--form-label-weight);
     color: var(--form-label-color);
     line-height: 1.35;
-}
-
-.profile-page--candidate .profile-form input:not([type="checkbox"]):not([type="radio"]),
+}.profile-page--candidate .profile-form input:not([type="checkbox"]):not([type="radio"]),
 .profile-page--candidate .profile-form select,
 .profile-page--candidate .profile-form textarea,
 .profile-page--candidate .jobsy-date-field__input {
@@ -243,54 +182,36 @@ input.jobsy-date-field__input[type="month"] {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     line-height: 1.4;
-}
-
-.profile-page--candidate .profile-accordion__body {
+}.profile-page--candidate .profile-accordion__body {
     gap: var(--form-field-gap);
     padding-block: 0.35rem 0.75rem;
-}
-
-.profile-page--candidate fieldset.ob-wizard__start-options {
+}.profile-page--candidate fieldset.ob-wizard__start-options {
     margin-block: var(--form-section-gap);
     padding: 1rem 1.05rem;
-    border-radius: var(--radius-sm, 8px);
+    border-radius:var(--r-sm);
     border: 1px solid var(--border);
-    background: var(--surface);
-}
-
-.profile-page--candidate .profile-employer-card {
+    background:var(--surface);
+}.profile-page--candidate .profile-employer-card {
     padding: 1rem 1.05rem;
     gap: 0.85rem;
-}
-
-.profile-page--candidate .profile-employer-card__dates {
+}.profile-page--candidate .profile-employer-card__dates {
     gap: 0.75rem 1rem;
-}
-
-/* Employer / admin login-style forms */
-.login-form label {
+}.login-form label {
     gap: 0.5rem;
     margin-block: var(--form-field-gap);
     font-weight: var(--form-label-weight);
     color: var(--form-label-color);
-}
-
-.login-form input:not([type="checkbox"]):not([type="radio"]),
+}.login-form input:not([type="checkbox"]):not([type="radio"]),
 .login-form select,
 .login-form textarea {
     color: var(--form-value-color);
     font-weight: var(--form-value-weight);
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
-}
-
-.admin-filter-input.jobsy-date-field__input,
+}.admin-filter-input.jobsy-date-field__input,
 .admin-settings-input.jobsy-date-field__input {
     max-width: 100%;
-}
-
-/* Discovery journey personal block (outside .ob-wizard shell) */
-.journey-body .ob-fields label {
+}.journey-body .ob-fields label {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -298,123 +219,85 @@ input.jobsy-date-field__input[type="month"] {
     font-weight: var(--form-label-weight);
     color: var(--form-label-color);
     line-height: 1.35;
-}
-
-.journey-body .ob-fields input:not([type="checkbox"]):not([type="radio"]),
+}.journey-body .ob-fields input:not([type="checkbox"]):not([type="radio"]),
 .journey-body .ob-fields select {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     line-height: 1.4;
-}
-
-.journey-body .ob-fields fieldset {
+}.journey-body .ob-fields fieldset {
     margin-block: var(--form-section-gap);
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius: var(--form-card-radius);
-    background: var(--surface);
-}
-
-/* Generic profile + employer edit forms */
-.profile-form {
+    border-radius:var(--r-lg);
+    background:var(--surface);
+}.profile-form {
     gap: var(--form-field-gap);
-}
-
-.profile-form label:not(.profile-toggle):not(.availability-matrix__cell):not(.checkbox-row) {
+}.profile-form label:not(.profile-toggle):not(.availability-matrix__cell):not(.checkbox-row) {
     gap: 0.5rem;
     margin-block: 0;
     font-weight: var(--form-label-weight);
     color: var(--form-label-color);
     line-height: 1.35;
-}
-
-.profile-form input:not([type="checkbox"]):not([type="radio"]),
+}.profile-form input:not([type="checkbox"]):not([type="radio"]),
 .profile-form select,
 .profile-form textarea {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     line-height: 1.4;
-}
-
-.detail-card .profile-form,
+}.detail-card .profile-form,
 .vacancy-form,
 .employer-form-stack {
     padding-block: 0.25rem;
-}
-
-/* Onboarding / discovery review & summary rows */
-.ob-wizard__summary-head {
+}.ob-wizard__summary-head {
     margin-block: var(--form-section-gap) 0.75rem;
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius: var(--form-card-radius);
-    background: var(--surface);
-}
-
-.ob-wizard__fine-tune {
+    border-radius:var(--r-lg);
+    background:var(--surface);
+}.ob-wizard__fine-tune {
     margin-block: var(--form-section-gap);
     padding: 1.125rem 1.25rem;
     display: flex;
     flex-direction: column;
     gap: var(--form-field-gap);
-}
-
-.ob-wizard__fine-tune label {
+}.ob-wizard__fine-tune label {
     margin-block: 0;
-}
-
-/* Admin filter bars */
-.filter-bar label,
+}.filter-bar label,
 .admin-filters label {
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
     font-weight: var(--form-label-weight);
     color: var(--form-label-color);
-}
-
-.admin-filter-input,
+}.admin-filter-input,
 input.filter-bar__search {
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     line-height: 1.4;
-}
-
-/* Typed date (dd-mm-jjjj) + optional native picker */
-.jobsy-date-field--typed {
+}.jobsy-date-field--typed {
     inline-size: 100%;
-}
-
-.jobsy-date-field__control {
+}.jobsy-date-field__control {
     position: relative;
     inline-size: 100%;
-}
-
-.jobsy-date-field__text {
+}.jobsy-date-field__text {
     box-sizing: border-box;
     inline-size: 100%;
     min-block-size: var(--form-input-min-h);
     padding: var(--form-input-pad-y) var(--form-input-pad-x);
     padding-inline-end: 2.75rem;
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm, 8px);
-    background: var(--surface);
+    border-radius:var(--r-sm);
+    background:var(--surface);
     color: var(--form-value-color);
     font: inherit;
     font-weight: var(--form-value-weight);
     line-height: 1.4;
-}
-
-.jobsy-date-field__text:focus-visible {
+}.jobsy-date-field__text:focus-visible {
     outline: 3px solid var(--brand);
     outline-offset: 2px;
-}
-
-.jobsy-date-field__text[aria-invalid="true"] {
+}.jobsy-date-field__text[aria-invalid="true"] {
     border-color: var(--danger, #c0392b);
-}
-
-.jobsy-date-field__picker-btn {
+}.jobsy-date-field__picker-btn {
     position: absolute;
     inset-inline-end: 0.35rem;
     inset-block-start: 50%;
@@ -426,29 +309,21 @@ input.filter-bar__search {
     block-size: 2.25rem;
     padding: 0;
     border: 0;
-    border-radius: var(--radius-sm, 8px);
-    background: transparent;
+    border-radius:var(--r-sm);
+    background:transparent;
     cursor: pointer;
-}
-
-.jobsy-date-field__picker-btn:focus-visible {
+}.jobsy-date-field__picker-btn:focus-visible {
     outline: 3px solid var(--brand);
     outline-offset: 2px;
-}
-
-.jobsy-date-field__picker-btn:disabled {
+}.jobsy-date-field__picker-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
-
-.jobsy-date-field__calendar-icon {
+}.jobsy-date-field__calendar-icon {
     inline-size: 1.25rem;
     block-size: 1.25rem;
     opacity: 0.72;
-    background: center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f2d5c'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z'/%3E%3C/svg%3E");
-}
-
-.jobsy-date-field__input--native {
+    background:center / contain no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%230f2d5c'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M8 7V3m8 4V3M4 11h16M5 21h14a2 2 0 002-2V7H3v12a2 2 0 002 2z'/%3E%3C/svg%3E");
+}.jobsy-date-field__input--native {
     position: absolute;
     inline-size: 1px;
     block-size: 1px;
@@ -458,31 +333,21 @@ input.filter-bar__search {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
-}
-
-.jobsy-date-field__error {
+}.jobsy-date-field__error {
     min-block-size: 1.25rem;
     margin: 0.35rem 0 0;
     font-size: var(--text-xs, 0.75rem);
     line-height: 1.35;
     color: var(--danger, #c0392b);
-}
-
-.jobsy-date-field__error:empty {
+}.jobsy-date-field__error:empty {
     visibility: hidden;
-}
-
-.csv-import-page .jobsy-date-field {
+}.csv-import-page .jobsy-date-field {
     inline-size: 100%;
     min-inline-size: 0;
-}
-
-.csv-import-page .csv-results-table th:nth-child(6),
+}.csv-import-page .csv-results-table th:nth-child(6),
 .csv-import-page .csv-results-table td:nth-child(6) {
     min-inline-size: 11.5rem;
-}
-
-.csv-import-page .jobsy-date-field__text.csv-inline-input {
+}.csv-import-page .jobsy-date-field__text.csv-inline-input {
     min-block-size: 2.5rem;
     min-inline-size: 10.5rem;
     padding: 0.45rem 0.55rem;

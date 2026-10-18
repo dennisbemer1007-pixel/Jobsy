@@ -841,7 +841,7 @@
                                     data-testid="vacancy-preview-actionbar"
                                     aria-label="Bekijk als kandidaat"
                                     @onclick="OpenPreviewFromActionBarAsync">
-                                <span class="vac-wizard__preview-actionbar-icon" aria-hidden="true">👁</span>
+                                <LineIcon Name="eye" CssClass="vac-wizard__preview-actionbar-icon" />
                                 <span class="vac-wizard__preview-actionbar-label">Bekijk</span>
                             </button>
                             <button type="button"
@@ -849,7 +849,7 @@
                                     disabled="@_saving"
                                     @onclick="SaveAsync"
                                     data-testid="vacancy-save-draft">
-                                <span class="vac-wizard-actionbar__save-icon" aria-hidden="true">💾</span>
+                                <LineIcon Name="save" CssClass="vac-wizard-actionbar__save-icon" />
                                 <span>@(_saving ? "Opslaan…" : "Opslaan")</span>
                             </button>
                             @if (_step < TotalSteps)
@@ -881,7 +881,7 @@
                                         class="btn btn-secondary vac-wizard__preview-actionbar"
                                         data-testid="vacancy-preview-actionbar"
                                         @onclick="OpenPreviewFromActionBarAsync">
-                                    <span class="vac-wizard__preview-actionbar-icon" aria-hidden="true">👁</span>
+                                    <LineIcon Name="eye" CssClass="vac-wizard__preview-actionbar-icon" />
                                     <span class="vac-wizard__preview-actionbar-label">Bekijk als kandidaat</span>
                                 </button>
                                 <button type="button" class="btn btn-secondary vac-wizard__save-inline" disabled="@_saving" @onclick="SaveAsync" data-testid="vacancy-save-draft">

@@ -620,6 +620,7 @@ public class AccountUnsubscribeTests
             typeof(ReferenceConfirmationConsentLog),
             typeof(ReferenceMisuseReport),
             typeof(CandidateRoleFitCheck),
+            typeof(CandidateTestReflection),
             typeof(CandidateUploadedCv),
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
