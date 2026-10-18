@@ -36,6 +36,7 @@
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
     [Parameter] public string? ArtUrlDesktop { get; set; }
+    [Parameter] public string? ArtUrlMobile { get; set; }
     [Parameter] public string? ArtUrlMobileFigures { get; set; }
     [Parameter] public string? ArtUrlMobileAtmosphere { get; set; }
     [Parameter] public string ArtPosition { get; set; } = "58% center";
@@ -49,15 +50,18 @@
             : CandidateIllustratedImages.MobileFigureUrl(ArtUrl);
 
     private bool UsesCompositeMobileHero =>
-        CssClass?.Contains("learn-grow", StringComparison.OrdinalIgnoreCase) == true
-        || CssClass?.Contains("tips-moment", StringComparison.OrdinalIgnoreCase) == true;
+        CssClass?.Contains("learn-grow", StringComparison.OrdinalIgnoreCase) == true;
+
+    private bool UsesSingleMobileHeroArt => !string.IsNullOrWhiteSpace(ArtUrlMobile);
 
     private bool ShowMobileFiguresImage =>
-        !UsesCompositeMobileHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
+        !UsesCompositeMobileHero
+        && !UsesSingleMobileHeroArt
+        && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
 
     private bool ShowMediaLayer =>
-        !string.IsNullOrWhiteSpace(ArtUrl)
-        || (UsesCompositeMobileHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures));
+        (UsesCompositeMobileHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures))
+        || (!UsesSingleMobileHeroArt && !string.IsNullOrWhiteSpace(ArtUrl));
 
     private string HeaderClass
     {
@@ -82,12 +86,12 @@
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(ArtUrl) && string.IsNullOrWhiteSpace(ArtUrlDesktop))
+            if (string.IsNullOrWhiteSpace(ArtUrl)
+                && string.IsNullOrWhiteSpace(ArtUrlDesktop)
+                && string.IsNullOrWhiteSpace(ArtUrlMobileAtmosphere)
+                && string.IsNullOrWhiteSpace(ArtUrlMobile))
             {
-                if (string.IsNullOrWhiteSpace(ArtUrlMobileAtmosphere))
-                {
-                    return null;
-                }
+                return null;
             }
 
             var parts = new List<string>();
@@ -106,6 +110,11 @@
             if (!string.IsNullOrWhiteSpace(ArtUrlMobileAtmosphere))
             {
                 parts.Add($"--cand-hero-mobile-atmosphere:url('{ArtUrlMobileAtmosphere}')");
+            }
+
+            if (!string.IsNullOrWhiteSpace(ArtUrlMobile))
+            {
+                parts.Add($"--cand-hero-art-mobile:url('{ArtUrlMobile}')");
             }
 
             return parts.Count == 0 ? null : string.Join(';', parts) + ";";
