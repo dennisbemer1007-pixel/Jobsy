@@ -114,8 +114,8 @@
   box-shadow: none;
   background: transparent;
   overflow-x: hidden;
-  overflow-y: auto;
-  flex: 1 1 auto;
+  overflow-y: visible;
+  flex: 0 0 auto;
   min-height: 0;
   overscroll-behavior: contain;
 }
@@ -227,7 +227,11 @@
   }
 
   .jobsy-discovery .map-popup--illustrated {
-    max-height: min(62vh, 400px);
+    max-height: none;
+  }
+
+  .jobsy-discovery .map-popup--illustrated .map-popup__actions {
+    margin-top: 0;
   }
 }
 

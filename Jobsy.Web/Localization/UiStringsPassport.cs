@@ -160,6 +160,10 @@ public static class UiStringsPassport
             "Bewijzen", "Proof", "Dowody", "Dovezi", "الإثباتات");
         Add("Passport.Tab.Data",
             "Mijn gegevens", "My details", "Moje dane", "Datele mele", "بياناتي");
+        Add("Passport.Tab.Fit.Compact",
+            "Past bij?", "Good fit?", "Pasuje?", "Se potrivește?", "هل يناسب؟");
+        Add("Passport.Tab.Data.Compact",
+            "Gegevens", "Details", "Dane", "Date", "بيانات");
 
         Add("Passport.Bubble.Dna",
             "Je hebt net een laag afgeworpen. Dit is wie eronder zat.",

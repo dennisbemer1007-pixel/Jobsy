@@ -27,10 +27,10 @@
 <AuthorizeView Roles="Candidate">
     <Authorized>
         <div class="panel-page kb-saved kb-saved--illustrated panel-page--cand-ill">
-            <CandidateIllustratedBand Title="@Culture["Kb.Saved.Title"]"
-                                     Lead="@Culture["Kb.Saved.Lead"]"
-                                     ArtUrl="@BewaardBand"
-                                     FullBleed="true" />
+            <CandidateIllustratedHero Title="@Culture["Kb.Saved.Title"]"
+                                      Lead="@Culture["Kb.Saved.Lead"]"
+                                      ArtUrl="@BewaardBand"
+                                      ArtPosition="58% center" />
 
             <CandidateJobListTabs />
             <CandidateSavedSubnav />
@@ -45,7 +45,7 @@
                     <CandidateIllustratedEmpty ArtUrl="@SpotKaart">
                         <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="@KbRoutes.Map">@Culture["Saved.Discover"]</a>.</p>
                     </CandidateIllustratedEmpty>
-                    @RenderSavedRail()
+                    <CandidateIllustratedApplyTip />
                 </div>
             }
             else

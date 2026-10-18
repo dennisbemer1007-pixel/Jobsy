@@ -759,18 +759,27 @@ window.jobMap = (function () {
         );
     }
 
+    function fitWhyReason(v) {
+        return v.fitWhyLine ? String(v.fitWhyLine).trim() : "";
+    }
+
     function whyLineHtml(v) {
+        const why = fitWhyReason(v);
+        if (!why) {
+            return "";
+        }
         if (illustratedPopup) {
             return "";
         }
-        if (!v.fitWhyLine) {
+        const prefix = uiLabels.whyPrefix || "Waarom:";
+        const pastLabel = labelFormat(uiLabels.fitPastWhy || "Past bij je: {reason}", { reason: why });
+        if (why === pastLabel || pastLabel.endsWith(why)) {
             return "";
         }
-        const prefix = uiLabels.whyPrefix || "Waarom:";
         return (
             "<p class=\"map-popup__why\">" +
                 sparkIconHtml() +
-                "<span>" + escapeHtml(prefix) + " " + escapeHtml(String(v.fitWhyLine)) + "</span>" +
+                "<span>" + escapeHtml(prefix) + " " + escapeHtml(why) + "</span>" +
             "</p>"
         );
     }

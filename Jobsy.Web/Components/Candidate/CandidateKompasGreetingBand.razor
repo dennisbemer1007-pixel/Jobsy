@@ -3,13 +3,10 @@
 @using Jobsy.Web.Media
 @inject CultureState Culture
 
-<section class="kompas-greet" aria-labelledby="kompas-greet-title">
-    <div class="kompas-greet__copy">
-        <h1 id="kompas-greet-title" class="kompas-greet__title">@Greeting</h1>
-        <p class="kompas-greet__lead">@Culture["Kompas.Greeting.Lead"]</p>
-    </div>
-    <div class="kompas-greet__art" style="@($"background-image:url('{CandidateIllustratedImages.KompasMedallions}')")" aria-hidden="true"></div>
-</section>
+<CandidateIllustratedHero Title="@Greeting"
+                        Lead="@Culture["Kompas.Greeting.Lead"]"
+                        ArtUrl="@CandidateIllustratedImages.KompasMedallions"
+                        ArtPosition="62% center" />
 
 @code {
     [Parameter] public string? FirstName { get; set; }

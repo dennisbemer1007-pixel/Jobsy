@@ -26,17 +26,20 @@
     {
         var stepTotal = Math.Max(_plan.Stones.Count, 1);
         var stepCurrent = Math.Clamp(_plan.CurrentStoneIndex + 1, 1, stepTotal);
-        <CandidateIllustratedBand Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
-                                 CoralEyebrow="true"
-                                 Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
-                                 Lead="@Culture["Career.Overview.Lead"]"
-                                 ArtUrl="@CarriereBand" />
+        <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
+                                  CoralEyebrow="true"
+                                  Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
+                                  Lead="@Culture["Career.Overview.Lead"]"
+                                  ArtUrl="@CarriereBand"
+                                  ArtPosition="58% center" />
     }
     else if (!_bootstrapping)
     {
-        <CandidateIllustratedBand Title="@Culture["Career.Empty.Title"]"
-                                 Lead="@Culture["Career.Empty.Lead"]"
-                                 ArtUrl="@DroombaanBand" />
+        <CandidateIllustratedHero Title="@Culture["Career.Empty.Title"]"
+                                  Lead="@Culture["Career.Empty.Lead"]"
+                                  ArtUrl="@DroombaanBand"
+                                  ArtPosition="100% bottom"
+                                  CssClass="cand-hero--profession-band" />
     }
 
     @if (_proactiveMatchingOn)

@@ -38,10 +38,10 @@
                 ? string.Format(Culture["Apps.LeadFriendly"], _givenName)
                 : Culture["Apps.LeadFriendlyNoName"];
     }
-    <CandidateIllustratedBand Title="@Culture["Nav.MyApplications"]"
-                             Lead="@appsLead"
-                             ArtUrl="@SollicitatiesBand"
-                             FullBleed="true" />
+    <CandidateIllustratedHero Title="@Culture["Nav.MyApplications"]"
+                              Lead="@appsLead"
+                              ArtUrl="@SollicitatiesBand"
+                              ArtPosition="58% center" />
 
     <CandidateJobListTabs />
 
@@ -93,7 +93,11 @@
                     <p class="state-message">@Culture["Apps.EmptyTab"]</p>
                 }
             </CandidateIllustratedEmpty>
-            @if (_appsWide)
+            @if (_items.Count == 0)
+            {
+                <CandidateIllustratedApplyTip />
+            }
+            else if (_appsWide)
             {
                 <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
                     <div class="kb-saved-rail__card kb-apps__rail-card">

@@ -97,6 +97,7 @@
 
 .passport-page--illustrated {
   padding-block-end: var(--space-4, 1rem);
+  overflow-x: clip;
 }
 
 .passport-page--illustrated .passport-layout__main {
@@ -107,25 +108,48 @@
   position: sticky;
   inset-block-start: var(--app-header-height, 4.25rem);
   z-index: calc(var(--z-sticky, 20) + 1);
-  flex-wrap: wrap;
-  overflow-x: visible;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 4px;
-  gap: 4px;
+  padding: 3px;
+  gap: 3px;
   box-shadow: 0 6px 16px color-mix(in srgb, var(--bg) 88%, transparent);
 }
 
+.passport-page--illustrated .passport-tabs::-webkit-scrollbar {
+  display: none;
+}
+
 .passport-page--illustrated .passport-tabs::after {
-  content: none;
+  content: "";
+  position: sticky;
+  right: 0;
+  flex: 0 0 1.25rem;
+  align-self: stretch;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--surface) 70%);
+}
+
+@media (min-width: 640px) {
+  .passport-page--illustrated .passport-tabs::before {
+    content: "";
+    position: sticky;
+    left: 0;
+    flex: 0 0 0;
+    width: 0;
+  }
 }
 
 @media (min-width: 1024px) {
   .passport-page--illustrated .passport-tabs {
     inset-block-start: var(--app-header-height, 4.25rem);
-    flex-wrap: wrap;
-    overflow-x: visible;
+    flex-wrap: nowrap;
+    overflow-x: auto;
   }
 }
 
@@ -147,16 +171,29 @@
 }
 
 .passport-page--illustrated .passport-tab {
-  flex: 1 1 auto;
-  white-space: normal;
+  flex: 0 0 auto;
+  white-space: nowrap;
   text-align: center;
   justify-content: center;
   border-radius: 10px;
-  min-height: 44px;
-  font-size: 0.78rem;
-  padding-inline: 0.55rem;
-  line-height: 1.2;
-  min-width: min(100%, 7.5rem);
+  min-height: 40px;
+  font-size: 0.74rem;
+  padding-inline: 0.5rem;
+  line-height: 1.15;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .passport-page--illustrated .passport-tab {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 0.76rem;
+    padding-inline: 0.45rem;
+  }
+
+  .passport-page--illustrated .passport-tabs__icon {
+    display: none;
+  }
 }
 
 .passport-page--illustrated .passport-card__fact {

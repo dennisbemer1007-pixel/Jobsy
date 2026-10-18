@@ -305,6 +305,18 @@ public static class UiStringsKandidaatBanen
             "Zobacz je", "Vezi-le", "اعرضها");
 
         // Steps legend (07)
+        Add("Kb.Apps.ApplyTip.Title",
+            "Zo werkt solliciteren met je Lobsy-CV",
+            "How applying works with your Lobsy CV",
+            "Jak działa aplikowanie z CV Lobsy",
+            "Cum funcționează candidatura cu CV-ul Lobsy",
+            "كيف يعمل التقديم مع سيرة Lobsy");
+        Add("Kb.Apps.ApplyTip.Body",
+            "Je Lobsy-CV gaat automatisch mee bij elke sollicitatie. Een aparte motivatiebrief hoef je niet mee te sturen.",
+            "Your Lobsy CV is sent automatically with every application. You do not need a separate cover letter.",
+            "Twoje CV Lobsy wysyłane jest automatycznie przy każdej aplikacji. Osobny list motywacyjny nie jest potrzebny.",
+            "CV-ul tău Lobsy merge automat la fiecare candidatură. Nu ai nevoie de scrisoare de intenție separată.",
+            "تُرسل سيرة Lobsy تلقائياً مع كل طلب. لا تحتاج إلى خطاب تغطية منفصل.");
         Add("Kb.Steps.Title",
             "Wat betekenen de stappen?", "What do the steps mean?",
             "Co oznaczają kroki?", "Ce înseamnă pașii?", "ماذا تعني الخطوات؟");
