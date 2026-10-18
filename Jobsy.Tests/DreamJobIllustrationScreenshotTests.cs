@@ -84,6 +84,7 @@ public sealed class DreamJobIllustrationScreenshotTests : IAsyncLifetime
             await CaptureAsync(web, 390, 844, 2, $"{prefix}-mobile-390-chip.png", chip: true, focusSearch: false);
             await CaptureAsync(web, 390, 844, 2, $"{prefix}-mobile-390-focus.png", chip: false, focusSearch: true);
             await CaptureAsync(web, 360, 780, 2, $"{prefix}-mobile-360-empty.png", chip: false, focusSearch: false);
+            await CaptureAsync(web, 360, 780, 2, $"{prefix}-mobile-360-chip.png", chip: true, focusSearch: false);
         }
     }
 
