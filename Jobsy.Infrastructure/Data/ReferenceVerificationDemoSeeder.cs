@@ -12,7 +12,9 @@ namespace Jobsy.Infrastructure.Data;
 public static class ReferenceVerificationDemoIds
 {
     public const string Email = "referenties.demo@jobsy.local";
+    public const string IncompleteEmail = "referenties.incomplete@jobsy.local";
     public static readonly Guid UserId = Guid.Parse("aaaaaaaa-9999-9999-9999-999999999999");
+    public static readonly Guid IncompleteUserId = Guid.Parse("aaaaaaaa-9998-9998-9998-999999999998");
     public static readonly Guid WorkEntryBakkerij = Guid.Parse("88888888-1111-1111-1111-111111111111");
     public static readonly Guid WorkEntryAh = Guid.Parse("88888888-2222-2222-2222-222222222222");
     public static readonly Guid ConfirmedRequestId = Guid.Parse("88888888-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
@@ -29,6 +31,7 @@ internal static class ReferenceVerificationDemoSeeder
         try
         {
             await EnsureUserAndReferencesAsync(db);
+            await EnsureIncompleteGateUserAsync(db);
         }
         catch (Exception ex)
         {
@@ -92,7 +95,9 @@ internal static class ReferenceVerificationDemoSeeder
 
     private static async Task EnsureDnaCompleteAsync(JobsyDbContext db, Guid userId)
     {
-        if (!await db.CandidateCompetencies.AnyAsync(c => c.UserId == userId))
+        var done = DateTime.UtcNow.AddMonths(-2);
+        var competency = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (competency is null)
         {
             db.CandidateCompetencies.Add(new CandidateCompetency
             {
@@ -102,42 +107,136 @@ internal static class ReferenceVerificationDemoSeeder
                 AnswersJson = "{}",
                 RiasecTagsJson = "[]",
                 MatchTagsJson = "[]",
-                CompletedAtUtc = DateTime.UtcNow.AddMonths(-2)
+                CompletedAtUtc = done,
+                SamenwerkenPercent = 73,
+                ResultaatgerichtheidPercent = 55,
+                StressbestendigheidPercent = 48,
+                InnovatiePercent = 41,
+                ExtraversiePercent = 60
             });
         }
+        else
+        {
+            competency.Status = CandidateCompetencyStatuses.Completed;
+            competency.CompletedAtUtc ??= done;
+            competency.SamenwerkenPercent ??= 73;
+            competency.ResultaatgerichtheidPercent ??= 55;
+            competency.StressbestendigheidPercent ??= 48;
+            competency.InnovatiePercent ??= 41;
+            competency.ExtraversiePercent ??= 60;
+        }
 
-        if (!await db.CandidateCareerInterests.AnyAsync(c => c.UserId == userId))
+        var career = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (career is null)
         {
             db.CandidateCareerInterests.Add(new CandidateCareerInterest
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = "{}"
+                AnswersJson = "{}",
+                CompletedAtUtc = done.AddDays(1),
+                RealisticPercent = 22,
+                InvestigativePercent = 18,
+                ArtisticPercent = 14,
+                SocialPercent = 72,
+                EnterprisingPercent = 48,
+                ConventionalPercent = 35
             });
         }
+        else
+        {
+            career.Status = CandidateCompetencyStatuses.Completed;
+            career.CompletedAtUtc ??= done.AddDays(1);
+        }
 
-        if (!await db.CandidateCulturePersonalityProfiles.AnyAsync(c => c.UserId == userId))
+        var culture = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (culture is null)
         {
             db.CandidateCulturePersonalityProfiles.Add(new CandidateCulturePersonalityProfile
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = "{}"
+                AnswersJson = "{}",
+                CompletedAtUtc = done.AddDays(2),
+                AutonomyPercent = 35,
+                InformalPercent = 55,
+                CollaborationPercent = 78,
+                FlexibilityPercent = 42,
+                InnovationPercent = 38,
+                PeopleFirstPercent = 62
             });
         }
+        else
+        {
+            culture.Status = CandidateCompetencyStatuses.Completed;
+            culture.CompletedAtUtc ??= done.AddDays(2);
+        }
 
-        if (!await db.CandidateValuesProfiles.AnyAsync(c => c.UserId == userId))
+        var values = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == userId);
+        if (values is null)
         {
             db.CandidateValuesProfiles.Add(new CandidateValuesProfile
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 Status = CandidateCompetencyStatuses.Completed,
-                AnswersJson = "{}"
+                AnswersJson = "{}",
+                CompletedAtUtc = done.AddDays(3),
+                AutonomyPercent = 28,
+                ConnectionPercent = 62,
+                AchievementPercent = 45,
+                StabilityPercent = 70,
+                ImpactPercent = 40
             });
         }
+        else
+        {
+            values.Status = CandidateCompetencyStatuses.Completed;
+            values.CompletedAtUtc ??= done.AddDays(3);
+        }
+    }
+
+    private static async Task EnsureIncompleteGateUserAsync(JobsyDbContext db)
+    {
+        var prefsJson = JsonSerializer.Serialize(new
+        {
+            language = "nl",
+            employers = new[]
+            {
+                new
+                {
+                    entryId = Guid.Parse("88888888-dddd-dddd-dddd-dddddddddddd"),
+                    employerName = "Demo Winkel",
+                    role = "Hulpkracht",
+                    startMonth = "2023-01"
+                }
+            }
+        });
+
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Id == ReferenceVerificationDemoIds.IncompleteUserId);
+        if (user is null)
+        {
+            user = new User
+            {
+                Id = ReferenceVerificationDemoIds.IncompleteUserId,
+                Email = ReferenceVerificationDemoIds.IncompleteEmail,
+                FirstName = "Noah",
+                FullName = "Noah Incomplete",
+                Role = UserRole.Candidate,
+                IsActive = true,
+                OpenForWork = true,
+                PreferencesJson = prefsJson
+            };
+            db.Users.Add(user);
+        }
+        else
+        {
+            user.PreferencesJson = prefsJson;
+        }
+
+        await db.SaveChangesAsync();
     }
 
     private static async Task EnsureReferenceRowsAsync(JobsyDbContext db, Guid userId)
@@ -189,7 +288,7 @@ internal static class ReferenceVerificationDemoSeeder
                 Id = ReferenceVerificationDemoIds.PendingRequestId,
                 UserId = userId,
                 WorkExperienceEntryId = ReferenceVerificationDemoIds.WorkEntryBakkerij,
-                ReferentName = "Lisa Bakker",
+                ReferentName = "Mark Peters",
                 Relation = "collega",
                 ReferentEmail = "lisa.bakker@demo.local",
                 Status = WorkExperienceReferenceStatus.Pending,
@@ -211,6 +310,10 @@ internal static class ReferenceVerificationDemoSeeder
                 ExpiresAtUtc = now.AddDays(11),
                 CreatedAtUtc = now.AddDays(-3)
             });
+        }
+        else
+        {
+            pending.ReferentName = "Mark Peters";
         }
 
         var expired = await db.WorkExperienceReferenceRequests

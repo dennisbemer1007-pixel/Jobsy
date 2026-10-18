@@ -132,6 +132,8 @@ internal static class UiStringsReferenceVerification
             "Lobsy does not certify anything itself. A reference confirms what they know from working with you.");
         Add("RefVerif.VerifiedCompetences.EmployerPreview",
             "Zo ziet een werkgever bevestigde competenties", "How an employer sees confirmed competencies");
+        Add("RefVerif.EmployerPreview.CompactTitle",
+            "Zo ziet een werkgever het", "How an employer sees it");
         Add("RefVerif.UnverifiedCompetences.Title",
             "Uit je profiel, nog niet bevestigd",
             "From your profile, not yet confirmed");
@@ -168,9 +170,49 @@ internal static class UiStringsReferenceVerification
         Add("RefVerif.Public.Intro",
             "{0} vraagt je om werkervaring te bevestigen.",
             "{0} asks you to confirm work experience.");
+        Add("RefVerif.Public.Greeting",
+            "Hallo {0}, {1} vraagt je om een referentie",
+            "Hello {0}, {1} is asking you for a reference");
+        Add("RefVerif.Public.IntroDetail",
+            "{0} noemde jou als {2} bij {1}. Het duurt ongeveer 2 minuten. Je hoeft alleen in te vullen wat jij weet.",
+            "{0} named you as their {2} at {1}. It takes about 2 minutes. Only fill in what you know.");
         Add("RefVerif.Public.Privacy",
             "Lobsy vraagt dit omdat deze persoon jou noemde als referent. Je antwoorden gaan naar die persoon. Je hoeft niet te antwoorden.",
             "Lobsy asks because this person named you as a reference. Your answers go to them. You do not have to respond.");
+        Add("RefVerif.Public.PrivacyShort",
+            "Geen account nodig. Je e-mailadres zien werkgevers niet.",
+            "No account needed. Employers do not see your email address.");
+        Add("RefVerif.Public.SectionFacts",
+            "Klopt dit?", "Is this correct?");
+        Add("RefVerif.Public.SectionFactsLead",
+            "Alleen feiten over haar werk bij jullie.", "Only facts about their work with you.");
+        Add("RefVerif.Public.SectionCompetences",
+            "Herken je deze competenties?", "Do you recognise these competencies?");
+        Add("RefVerif.Public.SectionCompetencesLead",
+            "Deze komen uit de tests die {0} heeft gedaan. Vink alleen aan wat je in de praktijk hebt gezien.",
+            "These come from tests {0} took. Only tick what you have seen in practice.");
+        Add("RefVerif.Public.CompetenceCounter",
+            "{0} / {1} gekozen", "{0} / {1} selected");
+        Add("RefVerif.Public.SectionComment",
+            "Wil je nog iets toevoegen?", "Anything else to add?");
+        Add("RefVerif.Public.Optional",
+            "optioneel", "optional");
+        Add("RefVerif.Public.CommentHint",
+            "Korte toelichting", "Short comment");
+        Add("RefVerif.Public.CommentPlaceholder",
+            "Bijvoorbeeld een korte toelichting voor {0}…",
+            "For example a short note for {0}…");
+        Add("RefVerif.Public.CommentPrivate",
+            "Alleen {0} ziet je opmerking. Werkgevers zien die niet.",
+            "Only {0} sees your comment. Employers do not.");
+        Add("RefVerif.Public.Q.EmployerShort",
+            "Werkte {0} bij {1}?", "Did {0} work at {1}?");
+        Add("RefVerif.Public.Q.PeriodDetail",
+            "Van {0}?", "From {0}?");
+        Add("RefVerif.Public.Q.RoleDetail",
+            "Als {0}?", "As {0}?");
+        Add("RefVerif.Public.PeriodPresent",
+            "heden", "present");
         Add("RefVerif.Public.Employer",
             "Werkgever", "Employer");
         Add("RefVerif.Public.Role",

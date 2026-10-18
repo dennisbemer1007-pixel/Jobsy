@@ -361,6 +361,7 @@ public sealed class ReferenceVerificationService(
 
         return new ReferenceVerificationPublicView(
             state,
+            NameParts.FirstName(request.ReferentName) ?? request.ReferentName.Trim(),
             NameParts.FirstName(user.FirstName) ?? NameParts.FirstName(user.FullName) ?? "deze persoon",
             request.EmployerName,
             request.RoleTitle,
@@ -745,6 +746,7 @@ public sealed record ReferenceVerificationListRow(
 
 public sealed record ReferenceVerificationPublicView(
     string State,
+    string ReferentName,
     string CandidateName,
     string EmployerName,
     string RoleTitle,

@@ -25,6 +25,19 @@ public static class ReferenceVerificationRules
     public const int CommentMax = 400;
     public const int DutiesMax = 600;
 
+    public static bool HasWorkExperienceEntry(CandidatePreferencesDto? preferences)
+    {
+        if (preferences?.NoWorkExperience == true)
+        {
+            return false;
+        }
+
+        var jobs = preferences?.Employers ?? [];
+        return jobs.Any(e =>
+            !string.IsNullOrWhiteSpace(e.EmployerName)
+            && (!string.IsNullOrWhiteSpace(e.Role) || !string.IsNullOrWhiteSpace(e.StartMonth)));
+    }
+
     public static bool FeatureEligible(CandidatePreferencesDto? preferences, bool allTestsComplete)
     {
         if (!allTestsComplete)
@@ -32,7 +45,7 @@ public static class ReferenceVerificationRules
             return false;
         }
 
-        return preferences?.Employers?.Any(e => !string.IsNullOrWhiteSpace(e.EmployerName)) == true;
+        return HasWorkExperienceEntry(preferences);
     }
 
     public static string? NormalizeName(string? value) => Clean(value, NameMax, 2);

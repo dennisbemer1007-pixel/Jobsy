@@ -6,7 +6,7 @@
 @if (Verified.Count > 0 || UnverifiedLabels.Count > 0)
 {
     <section class="detail-card passport-dna__card ref-verif-dna-competences" data-testid="dna-verified-competences">
-        @if (Verified.Count > 0)
+        @if (Verified.Count > 0 && ShowVerifiedList)
         {
             <PassportVerifiedCompetences Items="Verified" Preview="false" />
         }
@@ -30,6 +30,9 @@
     [Parameter] public IReadOnlyList<JobsyApiClient.VerifiedCompetenceItem> Verified { get; set; } = [];
 
     [Parameter] public IReadOnlyList<string> ProfileCompetenceLabels { get; set; } = [];
+
+    /// <summary>When false, verified items only appear in the compact employer preview above the tabs.</summary>
+    [Parameter] public bool ShowVerifiedList { get; set; } = true;
 
     private IReadOnlyList<string> UnverifiedLabels { get; set; } = [];
 

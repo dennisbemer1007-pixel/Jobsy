@@ -62,7 +62,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             await LoginAsync(page, baseUrl, Email);
 
             await page.GotoAsync($"{baseUrl}/candidate/profile", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-            await page.WaitForSelectorAsync("[data-testid='ref-verification-tip']", new() { Timeout = 15_000 });
+            var tip = page.Locator("[data-testid='ref-verification-tip']");
+            await tip.WaitForAsync(new() { Timeout = 15_000 });
+            await tip.ScrollIntoViewIfNeededAsync();
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"01-tip-{tag}.png"), FullPage = true });
 
             var entry = ReferenceVerificationDemoIds.WorkEntryBakkerij;
@@ -80,11 +82,12 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"06-bekijken-detail-{tag}.png"), FullPage = true });
 
             await page.GotoAsync($"{baseUrl}/candidate/paspoort?tab=dna", new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await page.WaitForSelectorAsync("[data-testid='dna-verified-competences']", new() { Timeout = 15_000 });
+            await page.WaitForSelectorAsync(".passport-dna", new() { Timeout = 15_000 });
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"07-dna-verified-unverified-{tag}.png"), FullPage = true });
 
             await page.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await page.WaitForSelectorAsync("[data-testid='ref-verif-verified-competences']", new() { Timeout = 15_000 });
+            await page.WaitForSelectorAsync("[data-testid='passport-employer-preview']", new() { Timeout = 15_000 });
+            await page.Locator("[data-testid='passport-employer-preview']").ScrollIntoViewIfNeededAsync();
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"08-paspoort-endorsed-only-{tag}.png"), FullPage = true });
 
             await context.CloseAsync();
@@ -103,20 +106,24 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
             var openToken = ReferenceVerificationDemoIds.OpenReferentToken;
             await page.GotoAsync($"{baseUrl}/werk-referentie/{openToken}", new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await page.WaitForSelectorAsync(".ref-verif-public", new() { Timeout = 15_000 });
+            await page.WaitForSelectorAsync(".ref-verif-public__section", new() { Timeout = 15_000 });
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"03-referent-empty-{tag}.png"), FullPage = true });
 
-            await page.Locator("input[name='emp']").First.ClickAsync();
-            await page.Locator("input[name='period']").First.ClickAsync();
-            await page.Locator("input[name='role']").First.ClickAsync();
-            var checks = page.Locator(".ref-verif-public input[type='checkbox']");
-            var count = await checks.CountAsync();
-            for (var i = 0; i < Math.Min(3, count); i++)
+            var factRows = page.Locator(".ref-verif-public__row:not(.ref-verif-public__row--duties)");
+            var factRowCount = await factRows.CountAsync();
+            for (var r = 0; r < factRowCount; r++)
             {
-                await checks.Nth(i).CheckAsync();
+                await factRows.Nth(r).Locator(".ref-verif-pills__btn").First.ClickAsync();
             }
 
-            await page.Locator("textarea").FillAsync("Korte toelichting voor Sanne — alleen zij ziet dit.");
+            var comps = page.Locator(".ref-verif-public__comp");
+            var compCount = await comps.CountAsync();
+            for (var i = 0; i < Math.Min(3, compCount); i++)
+            {
+                await comps.Nth(i).ClickAsync();
+            }
+
+            await page.Locator("#ref-comment").FillAsync("Korte toelichting voor Sanne — alleen zij ziet dit.");
             await page.ScreenshotAsync(new() { Path = Path.Combine(OutputDir, $"04-referent-filled-{tag}.png"), FullPage = true });
 
             var expired = ReferenceVerificationDemoIds.ExpiredReferentToken;

@@ -160,6 +160,7 @@ public sealed partial class JobsyApiClient
 
     public sealed record ReferenceVerificationPublicView(
         string State,
+        string ReferentName,
         string CandidateName,
         string EmployerName,
         string RoleTitle,

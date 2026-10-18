@@ -23,6 +23,30 @@ public class ReferenceVerificationEligibilityTests
     }
 
     [Fact]
+    public void FeatureEligible_false_when_no_work_experience_flag()
+    {
+        var prefs = new CandidatePreferencesDto(
+            [],
+            null,
+            null,
+            Employers: [new CandidateEmployerHistoryDto("Shop", "Hulp")],
+            NoWorkExperience: true);
+        Assert.False(ReferenceVerificationRules.HasWorkExperienceEntry(prefs));
+        Assert.False(ReferenceVerificationRules.FeatureEligible(prefs, allTestsComplete: true));
+    }
+
+    [Fact]
+    public void HasWorkExperienceEntry_requires_role_or_start_month()
+    {
+        var prefs = new CandidatePreferencesDto(
+            [],
+            null,
+            null,
+            Employers: [new CandidateEmployerHistoryDto("Shop")]);
+        Assert.False(ReferenceVerificationRules.HasWorkExperienceEntry(prefs));
+    }
+
+    [Fact]
     public void FeatureEligible_false_without_completed_tests()
     {
         var prefs = new CandidatePreferencesDto(

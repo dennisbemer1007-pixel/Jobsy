@@ -112,12 +112,12 @@
                     }
                 </FeatureVisible>
 
-                @if (_flags.ReferenceVerificationEnabled && _verifiedCompetences.Count > 0)
+                @if (_flags.ReferenceVerificationEnabled
+                     && (_verifiedCompetences.Count > 0 || _refVerificationRows.Any(r => r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase))))
                 {
-                    <PassportVerifiedCompetences Items="_verifiedCompetences" Preview="true" />
-                    <PassportVerifiedExperience Employers="_employers"
-                                              VerificationRows="_refVerificationRows"
-                                              Preview="true" />
+                    <PassportEmployerPreview VerifiedCompetences="_verifiedCompetences"
+                                             Employers="_employers"
+                                             VerificationRows="_refVerificationRows" />
                 }
 
                 <div class="passport-tabs"
@@ -169,7 +169,8 @@
                                 @if (_flags.ReferenceVerificationEnabled)
                                 {
                                     <DnaVerifiedCompetencesSection Verified="_verifiedCompetences"
-                                                                   ProfileCompetenceLabels="_profileCompetenceLabels" />
+                                                                   ProfileCompetenceLabels="_profileCompetenceLabels"
+                                                                   ShowVerifiedList="@(_verifiedCompetences.Count == 0)" />
                                 }
                             </PanelErrorBoundary>
                         }

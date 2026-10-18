@@ -3,7 +3,7 @@
 @layout PublicLayout
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @using System.Net.Http.Json
-@using System.Text.Json.Serialization
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Layout.Public
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Services
@@ -16,114 +16,149 @@
 <PageTitle>@Culture["RefVerif.Public.PageTitle"] · Lobsy</PageTitle>
 
 <section class="pub-section ref-verif-public" aria-labelledby="ref-verif-public-title">
-    <div class="pub-card">
+    <div class="pub-card ref-verif-public__card">
         <PublicLangMenu ReturnPath="@ReturnPath" />
-        <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
 
         @if (_thanks is not null)
         {
+            <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
             <p role="status">@_thanks</p>
         }
         else if (_problem is not null)
         {
+            <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
             <p role="alert">@_problem</p>
         }
         else if (_view is not null)
         {
-            <p class="login-lead">@Culture.Format("RefVerif.Public.Intro", _view.CandidateName)</p>
-            <p class="muted">@Culture["RefVerif.Public.Privacy"]</p>
-
-            <ul class="ref-verif-public__facts">
-                <li><strong>@Culture["RefVerif.Public.Employer"]:</strong> @_view.EmployerName</li>
-                <li><strong>@Culture["RefVerif.Public.Role"]:</strong> @_view.RoleTitle</li>
-                <li><strong>@Culture["RefVerif.Public.Period"]:</strong> @FormatPeriod(_view)</li>
-                @if (!string.IsNullOrWhiteSpace(_view.DutiesText))
-                {
-                    <li><strong>@Culture["RefVerif.Public.Duties"]:</strong> @_view.DutiesText</li>
-                }
-            </ul>
-
             @if (_view.State == "open")
             {
-                <EditForm Model="_form" OnValidSubmit="SubmitAsync">
-                    <fieldset class="ref-verif-public__q">
-                        <legend>@Culture.Format("RefVerif.Public.Q.Employer", _view.CandidateName, _view.EmployerName)</legend>
-                        <div class="ref-verif-public__choices">
-                            <label><input type="radio" name="emp" checked="@(_form.ConfirmedEmployer == true)" @onchange="_ => _form.ConfirmedEmployer = true" /> @Culture["RefVerif.Public.Yes"]</label>
-                            <label><input type="radio" name="emp" checked="@(_form.ConfirmedEmployer == false)" @onchange="_ => _form.ConfirmedEmployer = false" /> @Culture["RefVerif.Public.No"]</label>
-                        </div>
-                    </fieldset>
+                <header class="ref-verif-public__head">
+                    <h1 id="ref-verif-public-title">@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)</h1>
+                    <p class="ref-verif-public__lead">@Culture.Format("RefVerif.Public.IntroDetail", _view.CandidateName, _view.EmployerName, _view.RoleTitle)</p>
+                    <p class="ref-verif-public__privacy muted">@Culture["RefVerif.Public.PrivacyShort"]</p>
+                </header>
 
-                    <fieldset class="ref-verif-public__q">
-                        <legend>@Culture["RefVerif.Public.Q.Period"]</legend>
-                        <div class="ref-verif-public__choices">
-                            <label><input type="radio" name="period" checked="@(_form.ConfirmedPeriod == true)" @onchange="_ => _form.ConfirmedPeriod = true" /> @Culture["RefVerif.Public.Yes"]</label>
-                            <label><input type="radio" name="period" checked="@(_form.ConfirmedPeriod == false)" @onchange="_ => _form.ConfirmedPeriod = false" /> @Culture["RefVerif.Public.No"]</label>
-                        </div>
-                    </fieldset>
+                <EditForm Model="_form" OnValidSubmit="SubmitAsync" class="ref-verif-public__form">
+                    <div class="ref-verif-public__section detail-card">
+                        <h2 class="ref-verif-public__section-title">
+                            <span class="ref-verif-public__step">1</span>
+                            @Culture["RefVerif.Public.SectionFacts"]
+                        </h2>
+                        <p class="ref-verif-public__section-lead muted">@Culture["RefVerif.Public.SectionFactsLead"]</p>
 
-                    <fieldset class="ref-verif-public__q">
-                        <legend>@Culture["RefVerif.Public.Q.Role"]</legend>
-                        <div class="ref-verif-public__choices">
-                            <label><input type="radio" name="role" checked="@(_form.ConfirmedRole == true)" @onchange="_ => _form.ConfirmedRole = true" /> @Culture["RefVerif.Public.Yes"]</label>
-                            <label><input type="radio" name="role" checked="@(_form.ConfirmedRole == false)" @onchange="_ => _form.ConfirmedRole = false" /> @Culture["RefVerif.Public.No"]</label>
-                        </div>
-                    </fieldset>
-
-                    @if (_form is { ConfirmedEmployer: true, ConfirmedPeriod: true, ConfirmedRole: true })
-                    {
-                        <fieldset class="ref-verif-public__q">
-                            <legend>@Culture["RefVerif.Public.Q.Duties"]</legend>
-                            <div class="ref-verif-public__choices">
-                                <label><input type="radio" name="duties" checked="@(_form.ConfirmedDuties == true)" @onchange="_ => _form.ConfirmedDuties = true" /> @Culture["RefVerif.Public.Yes"]</label>
-                                <label><input type="radio" name="duties" checked="@(_form.ConfirmedDuties == false)" @onchange="_ => _form.ConfirmedDuties = false" /> @Culture["RefVerif.Public.No"]</label>
-                                <label><input type="radio" name="duties" checked="@(_form.ConfirmedDuties == null)" @onchange="_ => _form.ConfirmedDuties = null" /> @Culture["RefVerif.Public.SkipDuties"]</label>
+                        <div class="ref-verif-public__row">
+                            <p class="ref-verif-public__question">@Culture.Format("RefVerif.Public.Q.EmployerShort", _view.CandidateName, _view.EmployerName)</p>
+                            <div class="ref-verif-pills" role="radiogroup" aria-label="@Culture.Format("RefVerif.Public.Q.EmployerShort", _view.CandidateName, _view.EmployerName)">
+                                <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedEmployer, true)" aria-pressed="@(_form.ConfirmedEmployer == true ? "true" : "false")" @onclick="() => _form.ConfirmedEmployer = true">@Culture["RefVerif.Public.Yes"]</button>
+                                <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedEmployer, false)" aria-pressed="@(_form.ConfirmedEmployer == false ? "true" : "false")" @onclick="() => _form.ConfirmedEmployer = false">@Culture["RefVerif.Public.No"]</button>
                             </div>
-                        </fieldset>
+                        </div>
 
-                        @if (_view.Competences.Count > 0)
+                        <div class="ref-verif-public__row">
+                            <p class="ref-verif-public__question">@Culture.Format("RefVerif.Public.Q.PeriodDetail", FormatPeriodLabel(_view))</p>
+                            <div class="ref-verif-pills" role="radiogroup">
+                                <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedPeriod, true)" aria-pressed="@(_form.ConfirmedPeriod == true ? "true" : "false")" @onclick="() => _form.ConfirmedPeriod = true">@Culture["RefVerif.Public.Yes"]</button>
+                                <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedPeriod, false)" aria-pressed="@(_form.ConfirmedPeriod == false ? "true" : "false")" @onclick="() => _form.ConfirmedPeriod = false">@Culture["RefVerif.Public.No"]</button>
+                            </div>
+                        </div>
+
+                        <div class="ref-verif-public__row">
+                            <p class="ref-verif-public__question">@Culture.Format("RefVerif.Public.Q.RoleDetail", _view.RoleTitle)</p>
+                            <div class="ref-verif-pills" role="radiogroup">
+                                <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedRole, true)" aria-pressed="@(_form.ConfirmedRole == true ? "true" : "false")" @onclick="() => _form.ConfirmedRole = true">@Culture["RefVerif.Public.Yes"]</button>
+                                <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedRole, false)" aria-pressed="@(_form.ConfirmedRole == false ? "true" : "false")" @onclick="() => _form.ConfirmedRole = false">@Culture["RefVerif.Public.No"]</button>
+                            </div>
+                        </div>
+
+                        @if (_form is { ConfirmedEmployer: true, ConfirmedPeriod: true, ConfirmedRole: true })
                         {
-                            <fieldset class="ref-verif-public__q">
-                                <legend>@Culture["RefVerif.Public.Competences"]</legend>
-                                <div class="ref-verif-competences">
-                                    @foreach (var c in _view.Competences)
-                                    {
-                                        var selected = _endorsed.Contains(c.Code);
-                                        <label>
-                                            <input type="checkbox"
-                                                   checked="@selected"
-                                                   @onchange="e => ToggleCompetence(c.Code, e.Value is true)" />
-                                            <span>@c.Label</span>
-                                        </label>
-                                    }
+                            <div class="ref-verif-public__row ref-verif-public__row--duties">
+                                <p class="ref-verif-public__question">@Culture["RefVerif.Public.Q.Duties"]</p>
+                                <div class="ref-verif-pills ref-verif-pills--triple" role="radiogroup">
+                                    <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedDuties, true)" @onclick="() => _form.ConfirmedDuties = true">@Culture["RefVerif.Public.Yes"]</button>
+                                    <button type="button" class="ref-verif-pills__btn @PillClass(_form.ConfirmedDuties, false)" @onclick="() => _form.ConfirmedDuties = false">@Culture["RefVerif.Public.No"]</button>
+                                    <button type="button" class="ref-verif-pills__btn @PillClassNullable(_form.ConfirmedDuties, null)" @onclick="() => _form.ConfirmedDuties = null">@Culture["RefVerif.Public.SkipDuties"]</button>
                                 </div>
-                            </fieldset>
+                            </div>
                         }
+                    </div>
 
-                        <label class="field-label" for="ref-comment">@Culture["RefVerif.Public.Comment"]</label>
-                        <textarea id="ref-comment" class="text-input" rows="3" maxlength="400" @bind="_form.Comment"></textarea>
+                    @if (_view.Competences.Count > 0)
+                    {
+                        <div class="ref-verif-public__section detail-card">
+                            <div class="ref-verif-public__section-head">
+                                <h2 class="ref-verif-public__section-title">
+                                    <span class="ref-verif-public__step">2</span>
+                                    @Culture["RefVerif.Public.SectionCompetences"]
+                                </h2>
+                                <p class="ref-verif-public__counter" aria-live="polite">@Culture.Format("RefVerif.Public.CompetenceCounter", _endorsed.Count, ReferenceVerificationRules.MaxCompetencesOffered)</p>
+                            </div>
+                            <p class="ref-verif-public__section-lead muted">@Culture.Format("RefVerif.Public.SectionCompetencesLead", _view.CandidateName)</p>
+                            <div class="ref-verif-public__comp-list">
+                                @foreach (var c in _view.Competences)
+                                {
+                                    var selected = _endorsed.Contains(c.Code);
+                                    var disabled = !selected && _endorsed.Count >= ReferenceVerificationRules.MaxCompetencesOffered;
+                                    <button type="button"
+                                            class="ref-verif-public__comp @(selected ? "is-selected" : null) @(disabled ? "is-disabled" : null)"
+                                            disabled="@disabled"
+                                            aria-pressed="@(selected ? "true" : "false")"
+                                            @onclick="() => ToggleCompetence(c.Code)">
+                                        <span class="ref-verif-public__comp-check" aria-hidden="true">@(selected ? "✓" : "")</span>
+                                        <span class="ref-verif-public__comp-text">
+                                            <span class="ref-verif-public__comp-label">@c.Label</span>
+                                            @if (!string.IsNullOrWhiteSpace(c.Description))
+                                            {
+                                                <span class="ref-verif-public__comp-desc">@c.Description</span>
+                                            }
+                                        </span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
                     }
+
+                    <div class="ref-verif-public__section detail-card">
+                        <h2 class="ref-verif-public__section-title">
+                            <span class="ref-verif-public__step">3</span>
+                            @Culture["RefVerif.Public.SectionComment"]
+                            <span class="ref-verif-public__optional">@Culture["RefVerif.Public.Optional"]</span>
+                        </h2>
+                        <label class="ref-verif-public__comment-label" for="ref-comment">@Culture["RefVerif.Public.CommentHint"]</label>
+                        <textarea id="ref-comment"
+                                  class="ref-verif-public__textarea"
+                                  rows="4"
+                                  maxlength="400"
+                                  placeholder="@Culture.Format("RefVerif.Public.CommentPlaceholder", _view.CandidateName)"
+                                  @bind="_form.Comment"></textarea>
+                        <p class="ref-verif-public__comment-private muted">@Culture.Format("RefVerif.Public.CommentPrivate", _view.CandidateName)</p>
+                    </div>
 
                     @if (!string.IsNullOrWhiteSpace(_submitProblem))
                     {
-                        <p role="alert">@_submitProblem</p>
+                        <p class="ref-verif-public__error" role="alert">@_submitProblem</p>
                     }
 
-                    <button type="submit" class="login-submit" disabled="@_busy">@Culture["RefVerif.Public.Submit"]</button>
+                    <footer class="ref-verif-public__footer">
+                        <div class="ref-verif-public__quiet">
+                            <button type="button" class="ref-verif-public__link" disabled="@_busy" @onclick="UnknownAsync">@Culture["RefVerif.Public.Unknown"]</button>
+                            <span class="ref-verif-public__sep" aria-hidden="true">·</span>
+                            <button type="button" class="ref-verif-public__link" disabled="@_busy" @onclick="DeclineAsync">@Culture["RefVerif.Public.Decline"]</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary ref-verif-public__submit" disabled="@_busy">@Culture["RefVerif.Public.Submit"]</button>
+                    </footer>
                 </EditForm>
-
-                <div class="ref-verif-public__side">
-                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="DeclineAsync">@Culture["RefVerif.Public.Decline"]</button>
-                    <button type="button" class="btn-compact" disabled="@_busy" @onclick="UnknownAsync">@Culture["RefVerif.Public.Unknown"]</button>
-                </div>
             }
             else
             {
+                <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
                 <p role="status">@ProblemForState(_view.State)</p>
             }
         }
         else
         {
+            <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
             <p role="status">@Culture["Common.Loading"]</p>
         }
     </div>
@@ -173,6 +208,12 @@
             _problem = Culture["RefVerif.Public.Invalid"];
         }
     }
+
+    private static string? PillClass(bool? current, bool value)
+        => current == value ? "is-selected" : null;
+
+    private static string? PillClassNullable(bool? current, bool? value)
+        => current == value ? "is-selected" : null;
 
     private async Task SubmitAsync()
     {
@@ -259,21 +300,20 @@
         }
     }
 
-    private void ToggleCompetence(string code, bool on)
+    private void ToggleCompetence(string code)
     {
-        if (on)
-        {
-            if (_endorsed.Count >= 5)
-            {
-                return;
-            }
-
-            _endorsed.Add(code);
-        }
-        else
+        if (_endorsed.Contains(code))
         {
             _endorsed.Remove(code);
+            return;
         }
+
+        if (_endorsed.Count >= ReferenceVerificationRules.MaxCompetencesOffered)
+        {
+            return;
+        }
+
+        _endorsed.Add(code);
     }
 
     private HttpClient CreateClient()
@@ -315,10 +355,10 @@
         return Culture["RefVerif.Public.Invalid"];
     }
 
-    private static string FormatPeriod(JobsyApiClient.ReferenceVerificationPublicView view)
+    private string FormatPeriodLabel(JobsyApiClient.ReferenceVerificationPublicView view)
     {
         static string Part(string? m) => string.IsNullOrWhiteSpace(m) ? "…" : m;
-        var end = view.IsCurrent ? "…" : Part(view.EndMonth);
+        var end = view.IsCurrent ? Culture["RefVerif.Public.PeriodPresent"] : Part(view.EndMonth);
         return $"{Part(view.StartMonth)} – {end}";
     }
 
@@ -330,4 +370,5 @@
         public bool? ConfirmedDuties { get; set; }
         public string? Comment { get; set; }
     }
+
 }
