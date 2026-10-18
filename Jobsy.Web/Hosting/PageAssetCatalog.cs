@@ -58,7 +58,7 @@ public static class PageAssetCatalog
         "css/features/tests.css?v=20261018-04",
         "css/features/candidate-illustrated-app.css?v=20261018-19",
         "css/features/carriere.css?v=20261011-01",
-        "css/features/opleidingen.css?v=20261018-02",
+        "css/features/opleidingen.css?v=20261018-r9",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",
         "css/features/future-jobs.css?v=20261006-02",
