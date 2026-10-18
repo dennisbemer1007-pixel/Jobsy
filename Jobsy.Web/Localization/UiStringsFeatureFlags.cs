@@ -142,6 +142,18 @@ public static class UiStringsFeatureFlags
             "Wł. = Quick-Scan pokazuje stały przykład praktyczny (NL/EN). Analiza głęboka używa tej samej katalogu.",
             "Pornit = Quick-Scan arată un exemplu fix (NL/EN). Analiza profundă folosește același catalog.",
             "تشغيل = يعرض Quick-Scan مثالاً ثابتاً لكل سؤال (NL/EN). التحليل العميق يستخدم نفس الكatalog.");
+        Add("AdminSettings.TestProgressInsight.Enabled.Title",
+            "Voortgang & beeld (Quick-Scan)",
+            "Progress insight (Quick-Scan)",
+            "Wgląd w postęp (Quick-Scan)",
+            "Imagine progres (Quick-Scan)",
+            "لمحة التقدم (Quick-Scan)");
+        Add("AdminSettings.TestProgressInsight.Enabled.Desc",
+            "Aan = motivatie per blok van 5 vragen plus kaart “Jouw beeld tot nu toe”.",
+            "On = motivation every 5 items plus a “Your picture so far” card.",
+            "Wł. = motywacja co 5 pytań i karta „Twój obraz dotąd”.",
+            "Pornit = motivație la fiecare 5 întrebări și card „Imaginea ta până acum”.",
+            "تشغيل = تحفيز كل 5 أسئلة وبطاقة «صورتك حتى الآن».");
         Add("AdminSettings.CompactTestPdf.Enabled.Title",
             "Korte testrapporten",
             "Short test reports",

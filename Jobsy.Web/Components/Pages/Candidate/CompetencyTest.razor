@@ -87,6 +87,8 @@ else
                                           Target="_target"
                                           Autosave="_autosave"
                                           LoadFailed="_loadFailed"
+                                          ShowProgressInsight="_showProgressInsight"
+                                          DomainForQuestionId="CompetenceDomainFor"
                                           OnLevelReached="OnLevelReached"
                                           OnFinished="OnFinished"
                                           OnLater="LaterAsync"
@@ -143,6 +145,7 @@ else
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
     private int _quickScanVersion = AssessmentTestVersions.V1;
+    private bool _showProgressInsight;
     private string IntroLead => AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)
         ? Culture.Format("TestFlow.Lead.Competence.V2", _fullCount)
         : Culture["TestFlow.Lead.Competence"];
@@ -201,6 +204,7 @@ else
             _quickScanVersion = state?.QuickScanVersion ?? AssessmentTestVersions.V1;
             _answered = answers.Count;
             var showExamples = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestItemExamples);
+            _showProgressInsight = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestProgressInsight);
             var lang = Culture.Language;
             _flowQuestions = TestDepthRules.QuestionIdsFor(
                     AssessmentKind.Competence, TestDepthLevel.Full, _quickScanVersion)
@@ -240,6 +244,10 @@ else
             _target = level;
         }
     }
+
+    private string CompetenceDomainFor(int id)
+        => AssessmentQuickScanCatalog.CompetenceQuestions(_quickScanVersion).First(x => x.Id == id).Category;
+
     private void StartQuestions()
     {
         _mode = TestPageShell.ShellMode.Question;

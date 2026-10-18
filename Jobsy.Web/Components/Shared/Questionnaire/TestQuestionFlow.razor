@@ -72,6 +72,23 @@
                 }
             }
         </div>
+        @if (ShowProgressInsight && _insightLabels.Count > 0)
+        {
+            <aside class="test-progress-insight" data-testid="test-progress-insight">
+                <h3 class="test-progress-insight__title">@Culture["TestFlow.ProgressInsight.Title"]</h3>
+                <p class="test-progress-insight__lead">@Culture["TestFlow.ProgressInsight.Lead"]</p>
+                <ul class="test-progress-insight__list">
+                    @foreach (var label in _insightLabels)
+                    {
+                        <li>@label</li>
+                    }
+                </ul>
+                @if (!string.IsNullOrWhiteSpace(_motivationText))
+                {
+                    <p class="test-progress-insight__motivation">@_motivationText</p>
+                }
+            </aside>
+        }
         @if (!Compact && Target != TestDepthLevel.Bottom)
         {
             <p class="test-flow__level">
@@ -210,6 +227,8 @@
     [Parameter] public EventCallback<int> OnPauseAfter { get; set; }
     [Parameter] public int? ExternalIndex { get; set; }
     [Parameter] public RenderFragment? AfterLikert { get; set; }
+    [Parameter] public bool ShowProgressInsight { get; set; }
+    [Parameter] public Func<int, string>? DomainForQuestionId { get; set; }
 
     private int _index;
     private int? _appliedExternalIndex;
@@ -224,6 +243,12 @@
     private IReadOnlyList<FlowQuestion> Ordered => Questions;
 
     private int TargetCount => Math.Min(Ordered.Count, TestDepthRules.CountFor(Kind, Target));
+
+    private IReadOnlyList<int> OrderedQuestionIds { get; set; } = [];
+
+    private IReadOnlyList<string> _insightLabels = [];
+
+    private string? _motivationText;
 
     protected override void OnInitialized()
     {
@@ -240,6 +265,7 @@
         }
 
         _focusRequest = true;
+        RefreshProgressInsight();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -329,6 +355,7 @@
 
         var question = Ordered[answeredIndex];
         _flowAnswers[question.Id] = value;
+        RefreshProgressInsight();
 
         if (Autosave is not null)
         {
@@ -443,6 +470,7 @@
     protected override void OnParametersSet()
     {
         MergeParameterAnswers();
+        RefreshProgressInsight();
 
         // Apply an external jump only when it changes. Re-applying the same index
         // on every render put the candidate back on the last question after Next
@@ -564,5 +592,38 @@
     {
         if (Autosave is not null) await Autosave.FlushAsync();
         await OnLater.InvokeAsync();
+    }
+
+    private void RefreshProgressInsight()
+    {
+        if (!ShowProgressInsight || DomainForQuestionId is null)
+        {
+            _insightLabels = [];
+            _motivationText = null;
+            return;
+        }
+
+        OrderedQuestionIds = Ordered.Take(TargetCount).Select(q => q.Id).ToList();
+        _insightLabels = TestProgressInsight.DomainLabelsSoFar(
+            Kind,
+            OrderedQuestionIds,
+            _flowAnswers,
+            DomainForQuestionId);
+        var key = TestProgressMotivation.ForQuickScan(Kind, _flowAnswers.Count, TargetCount, _index);
+        _motivationText = key is null ? null : FormatMotivationKey(key);
+    }
+
+    private string FormatMotivationKey(string key)
+    {
+        var block = TestProgressMotivation.QuickScanBlockIndex(_index);
+        var blockName = Culture.Format("TestFlow.ProgressInsight.Block", block);
+        return key switch
+        {
+            TestProgressMotivation.PartStart => Culture.Format("Deep.Motivation.PartStart", block, blockName),
+            TestProgressMotivation.Halfway => Culture["Deep.Motivation.Halfway"],
+            TestProgressMotivation.LastPart => Culture["Deep.Motivation.LastPart"],
+            TestProgressMotivation.BeforePause => Culture["Deep.Motivation.BeforePause"],
+            _ => key
+        };
     }
 }

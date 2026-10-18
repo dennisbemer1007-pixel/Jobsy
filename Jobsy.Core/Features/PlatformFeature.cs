@@ -62,6 +62,9 @@ public enum PlatformFeature
     /// <summary>Per-item practice examples on Quick-Scan question flow. Default false.</summary>
     TestItemExamples,
 
+    /// <summary>Motivation cues and “Jouw beeld tot nu toe” on Quick-Scan. Default false.</summary>
+    TestProgressInsight,
+
     /// <summary>Optional employer team/vacancy fit questionnaires and work-context matching. Default false.</summary>
     EmployerFitQuestionnaires,
 

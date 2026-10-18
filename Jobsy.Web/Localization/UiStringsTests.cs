@@ -138,6 +138,9 @@ public static class UiStringsTests
         Add("TestFlow.Example", "Voorbeeld uit de praktijk", "Example from practice", "Example from practice ·", "Example from practice", "‏Example from practice");
         Add("TestFlow.Answered", "Beantwoord ({0})", "Answered ({0})", "Answered ({0}) ·", "Answered ({0})", "‏Answered ({0})");
         Add("TestFlow.EarlierAnswers", "Eerdere antwoorden ({0})", "Earlier answers ({0})", "Wcześniejsze odpowiedzi ({0})", "Răspunsuri anterioare ({0})", "‏الإجابات السابقة ({0})");
+        Add("TestFlow.ProgressInsight.Title", "Jouw beeld tot nu toe", "Your picture so far", "Twój obraz dotąd", "Imaginea ta până acum", "صورتك حتى الآن");
+        Add("TestFlow.ProgressInsight.Lead", "Op basis van je antwoorden tot nu toe:", "Based on your answers so far:", "Na podstawie dotychczasowych odpowiedzi:", "Pe baza răspunsurilor tale de până acum:", "بناءً على إجاباتك حتى الآن:");
+        Add("TestFlow.ProgressInsight.Block", "Blok {0}", "Block {0}", "Blok {0}", "Blocul {0}", "الكتلة {0}");
         Add("TestFlow.JumpToQuestion", "Ga naar vraag {0}", "Go to question {0}", "Przejdź do pytania {0}", "Mergi la întrebarea {0}", "‏انتقل إلى السؤال {0}");
         Add("TestFlow.Adjust", "Aanpassen", "Adjust", "Adjust ·", "Adjust", "‏Adjust");
         Add("TestFlow.Back", "Terug", "Back", "Wstecz", "Înapoi", "رجوع");
