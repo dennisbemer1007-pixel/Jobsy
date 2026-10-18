@@ -1516,18 +1516,57 @@
 }
 
 .ref-verif-cand-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) min(1100px, 100%) minmax(0, 1fr);
   margin-bottom: 1.25rem;
+  min-height: clamp(12.5rem, 15.6vw, 13.75rem);
+  height: clamp(12.5rem, 15.6vw, 13.75rem);
+}
+
+.ref-verif-cand-hero.cand-hero--profession-band {
+  background-size: auto 100%;
+  background-position: right center;
 }
 
 .ref-verif-cand-hero.cand-hero--profession-band::before {
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) 64%,
-    color-mix(in srgb, var(--pearl) 96%, transparent) 70%,
-    color-mix(in srgb, var(--pearl) 35%, transparent) 78%,
-    transparent 88%
+    var(--pearl) 48%,
+    color-mix(in srgb, var(--pearl) 94%, transparent) 52%,
+    color-mix(in srgb, var(--pearl) 35%, transparent) 56%,
+    transparent 60%
   );
+}
+
+.ref-verif-cand-hero .cand-hero__copy {
+  grid-column: 2;
+  max-width: none;
+  width: auto;
+  margin-inline: 0;
+  padding-inline: 1.25rem;
+  padding-block: clamp(1.25rem, 2.2vw, 1.65rem);
+  box-sizing: border-box;
+}
+
+.ref-verif-cand-hero .cand-hero__media {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.pub-theme .pub-main > .pub-section.ref-verif-public-layout {
+  padding: 0;
+  margin: 0;
+  max-width: none;
+}
+
+.pub-theme .ref-verif-public-layout > .ref-verif-cand-hero:first-child {
+  margin-top: 0;
+  border-block-end: 0;
+}
+
+.pub-theme .pub-main:has(.ref-verif-public-layout) {
+  background: var(--pearl);
 }
 
 .ref-verif-cand-hero--compact {
@@ -1548,6 +1587,17 @@
 }
 
 @media (max-width: 639px) {
+  .ref-verif-cand-hero {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+  }
+
+  .ref-verif-cand-hero .cand-hero__copy {
+    grid-column: auto;
+  }
+
   .cand-hero {
     width: auto;
     max-width: none;
@@ -1587,8 +1637,8 @@
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
   }
 
-  .cand-hero--profession-band .cand-hero__media {
-    background-position: 88% bottom;
+  .ref-verif-cand-hero.cand-hero--profession-band .cand-hero__media {
+    background-position: right center;
     background-size: auto 100%;
   }
 
