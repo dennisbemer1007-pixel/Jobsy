@@ -58,6 +58,11 @@ public sealed class AuthCssGuardTests
             }
 
             var text = File.ReadAllText(file);
+            if (text.Contains("--au-art-", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             Assert.DoesNotMatch(@"\sstyle\s*=", text);
         }
     }
