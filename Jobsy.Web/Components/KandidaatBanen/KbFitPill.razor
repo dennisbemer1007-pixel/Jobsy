@@ -13,13 +13,12 @@ else if (!Fit.GateOpen)
         <span class="kb-fit__label">@Culture["Kb.Fit.Gate"]</span>
     </a>
 }
-else if (Fit.Percent is int percent && Fit.Band is KbFitBand band)
+else if (Fit.Band is KbFitBand band)
 {
     var mod = KbLabels.FitBandCss(band);
-    <span class="kb-fit kb-fit--@mod" title="@(band == KbFitBand.Strong ? Culture["Kb.Fit.Strong"] : null)">
+    <span class="kb-fit kb-fit--@mod" title="@KbLabels.FitBand(Culture, band)">
         <span class="kb-fit__icon" aria-hidden="true">@KbIcons.Sparkle</span>
-        <span class="kb-fit__label">@string.Format(Culture["Kb.Fit.Percent"], percent)</span>
-        <span class="visually-hidden">@KbLabels.FitBand(Culture, band)</span>
+        <span class="kb-fit__label">@KbLabels.FitBand(Culture, band)</span>
     </span>
 }
 

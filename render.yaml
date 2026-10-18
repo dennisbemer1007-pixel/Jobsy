@@ -445,6 +445,8 @@ projects:
               # Combo homepage (On) at / for acceptatie preview; production has no override.
               - key: Landing__ForceVariant
                 value: on
+              - key: Onboarding__FinaleV2Enabled
+                value: "true"
               - key: TestJourneyIllustrationEnabled
                 value: "true"
               - key: TestAccounts__Enabled

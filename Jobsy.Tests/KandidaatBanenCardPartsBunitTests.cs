@@ -39,13 +39,21 @@ public class KandidaatBanenCardPartsBunitTests : BunitContext
     [InlineData(74, KbFitBand.Good, "kb-fit--good")]
     [InlineData(75, KbFitBand.Strong, "kb-fit--strong")]
     [InlineData(60, KbFitBand.Some, "kb-fit--some")]
-    public void FitPill_open_shows_percent_and_band_class(int percent, KbFitBand band, string css)
+    public void FitPill_open_shows_band_label_not_percent(int percent, KbFitBand band, string css)
     {
         var cut = Render<KbFitPill>(p => p
             .Add(x => x.Fit, new KbFitView(GateOpen: true, Percent: percent, Band: band)));
 
-        Assert.Contains($"{percent}% past bij jou", cut.Markup, StringComparison.Ordinal);
+        var expected = band switch
+        {
+            KbFitBand.Strong => "Sterke match",
+            KbFitBand.Good => "Goede match",
+            KbFitBand.Some => "Enige match",
+            _ => "Goede match"
+        };
+        Assert.Contains(expected, cut.Markup, StringComparison.Ordinal);
         Assert.Contains(css, cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("% past bij jou", cut.Markup, StringComparison.Ordinal);
         Assert.DoesNotContain("Maak je paspoort af", cut.Markup, StringComparison.Ordinal);
     }
 
