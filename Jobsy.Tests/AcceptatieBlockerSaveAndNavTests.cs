@@ -77,6 +77,21 @@ public sealed class AcceptatieBlockerSaveAndNavTests
     }
 
     [Fact]
+    public void Desktop_candidate_header_shows_primary_nav_links()
+    {
+        var layout = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        var nav = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/CandidateHeaderNav.razor"));
+        var program = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Program.cs"));
+        var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/app.css"));
+
+        Assert.Contains("CandidateHeaderNav", layout, StringComparison.Ordinal);
+        Assert.Contains("RoleNavItemsState", nav, StringComparison.Ordinal);
+        Assert.Contains("RoleNavCatalog.IsActive", nav, StringComparison.Ordinal);
+        Assert.Contains("AddScoped<Jobsy.Web.Services.RoleNavItemsState>", program, StringComparison.Ordinal);
+        Assert.Contains(".app-shell--candidate .candidate-header-nav", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Banenkaart_candidate_shell_hides_duplicate_discovery_header_in_css()
     {
         var critical = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/critical.css"));

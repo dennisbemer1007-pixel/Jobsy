@@ -35,6 +35,10 @@
                     </span>
                 </a>
             </div>
+            @if (_isCandidate)
+            {
+                <CandidateHeaderNav />
+            }
             <div class="app-header__actions">
                 @if (_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)
                 {

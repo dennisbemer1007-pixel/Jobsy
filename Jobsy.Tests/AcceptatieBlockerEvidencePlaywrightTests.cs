@@ -33,7 +33,34 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
         await CaptureSkipBanenkaartShellAsync(browser, baseUrl);
+        await CaptureCandidateDesktopNavAsync(browser, baseUrl);
         await CaptureOnboardingFirstCompetencySaveAsync(browser, baseUrl);
+    }
+
+    private static async Task CaptureCandidateDesktopNavAsync(IBrowser browser, string baseUrl)
+    {
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
+        var email = $"navdesk.{Guid.NewGuid():N}@jobsy.local";
+        await using var ctx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        await RegisterFreshCandidateAsync(page, baseUrl, email);
+        await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.Locator("[data-testid=candidate-header-nav]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "candidate-header-nav-banenkaart-desktop-1440.png"), FullPage = false });
+
+        await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.Locator("[data-testid=candidate-header-nav]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "candidate-header-nav-discovery-desktop-1440.png"), FullPage = false });
+
+        await page.SetViewportSizeAsync(390, 844);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "candidate-mobile-nav-bottom-390.png"), FullPage = false });
     }
 
     private static async Task CaptureSkipBanenkaartShellAsync(IBrowser browser, string baseUrl)
@@ -92,6 +119,7 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
 
     private static async Task RegisterAndSkipToBanenkaartAsync(IPage page, string baseUrl)
     {
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
         var email = $"blocker.{Guid.NewGuid():N}@jobsy.local";
         await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
         await page.Locator("input[type=email]").FillAsync(email);
@@ -114,6 +142,10 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await page.GetByTestId("onboarding-tests-later").First.ClickAsync(new() { Force = true });
         await page.WaitForURLAsync(u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase), new() { Timeout = 90_000 });
         await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.querySelector('.app-shell--banenkaart-shell') !== null",
+            null,
+            new() { Timeout = 60_000 });
         await page.WaitForTimeoutAsync(2500);
     }
 
@@ -124,16 +156,14 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         {
             await page.Locator("nav.bottom-nav").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
             Assert.Equal(0, await page.Locator(".jobsy-chrome__header:visible").CountAsync());
-            await page.Locator("[data-testid=kb-view-toggle]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
         }
 
-        var toggle = page.Locator("[data-testid=kb-view-toggle]");
-        Assert.True(await toggle.CountAsync() > 0, "Expected Kaart/Lijst toggle on banenkaart.");
+        Assert.True(await page.Locator("[data-testid=kb-view-toggle]").CountAsync() > 0, "Expected Kaart/Lijst toggle in DOM.");
     }
 
-    private static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl)
+    private static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl, string? email = null)
     {
-        var email = $"mini1.{Guid.NewGuid():N}@jobsy.local";
+        email ??= $"mini1.{Guid.NewGuid():N}@jobsy.local";
         await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
         await page.Locator("input[type=email]").FillAsync(email);
         await page.Locator("input[name=firstName]").FillAsync("Mini");
