@@ -36,7 +36,7 @@ fi
 wait_http "$WEB_URL/bedrijvenkaart" "Bedrijvenkaart"
 css_v="$(curl -sf "$WEB_URL/bedrijvenkaart" | grep -o 'bedrijvenkaart.css?v=[^"]*' | head -1)"
 echo "Loaded stylesheet: ${css_v:-MISSING}"
-test "$css_v" = "bedrijvenkaart.css?v=20261018-12"
+test "$css_v" = "bedrijvenkaart.css?v=20261018-13"
 
 node "$ROOT/tools/bedrijvenkaart/capture-screenshots.mjs" "$WEB_URL"
 node "$ROOT/tools/bedrijvenkaart/compare-mockups.mjs"
