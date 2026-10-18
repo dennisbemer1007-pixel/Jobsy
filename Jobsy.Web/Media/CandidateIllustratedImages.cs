@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261018-02";
+    public const string Version = "20261018-03";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -14,23 +14,60 @@ public static class CandidateIllustratedImages
     public const string LoginRight = $"{Base}/spots/login-rechts.jpg?v={Version}";
     public const string VervoerBlok = $"{Base}/spots/vervoer-blok.jpg?v={Version}";
     public const string KompasMedallions = $"{Base}/spots/dna.jpg?v={Version}";
-    public const string TipVragen = $"{Base}/spots/vragen.jpg?v={Version}";
     public const string BanenkaartCyclists = $"{Base}/spots/banen.jpg?v={Version}";
+    public const string PopupTravelAccent = $"{Base}/spots/vervoer-blok.jpg?v={Version}";
 
+    /// <summary>Kompas tip card — zorg + logistiek, incl. hijab.</summary>
+    public const string TipVragen = $"{Base}/spots/job-inclusief-zorg-logistiek.jpg?v={Version}";
+
+    /// <summary>Start step 1 — diverse jongvolwassenen (vragen/kompas).</summary>
     public const string StepVragen = $"{Base}/spots/vragen.jpg?v={Version}";
     public const string StepDna = $"{Base}/spots/dna.jpg?v={Version}";
     public const string StepBanen = $"{Base}/spots/banen.jpg?v={Version}";
     public const string EmpWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
 
     public const string SollicitatiesBand = $"{Base}/werkervaring.jpg?v={Version}";
-    public const string BewaardBand = $"{Base}/spots/banen.jpg?v={Version}";
+    public const string BewaardBand = $"{Base}/vervoer.jpg?v={Version}";
     public const string CarriereBand = $"{Base}/opleiding.jpg?v={Version}";
     public const string InstellingenBand = $"{Base}/beschikbaarheid.jpg?v={Version}";
     public const string DroombaanBand = $"{Base}/droombaan.jpg?v={Version}";
     public const string AccountMobileArt = $"{Base}/kennismaken.jpg?v={Version}";
-    public const string SavedNoPhotoArt = $"{Base}/spots/job-flex.jpg?v={Version}";
+
+    /// <summary>Fallback when a saved vacancy has no photo — kantoor, incl. rolstoel.</summary>
+    public const string SavedNoPhotoArt = $"{Base}/spots/job-inclusief-kantoor.jpg?v={Version}";
+
+    public const string EmptyLikesArt = $"{Base}/droombaan.jpg?v={Version}";
 
     public const string SpotKaart = $"{Base}/spots/kaart.jpg?v={Version}";
     public const string SpotVragen = $"{Base}/spots/vragen.jpg?v={Version}";
     public const string SpotWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
+    public const string SpotWerkervaring = $"{Base}/werkervaring.jpg?v={Version}";
+    public const string SpotOpleiding = $"{Base}/opleiding.jpg?v={Version}";
+    public const string SpotDroombaan = $"{Base}/droombaan.jpg?v={Version}";
+
+    public const string SpotJobZorg = $"{Base}/spots/job-zorg.jpg?v={Version}";
+    public const string SpotJobLogistiek = $"{Base}/spots/job-logistiek.jpg?v={Version}";
+    public const string SpotJobRetail = $"{Base}/spots/job-retail.jpg?v={Version}";
+    public const string SpotJobDieren = $"{Base}/spots/job-dieren.jpg?v={Version}";
+    public const string SpotJobFlex = $"{Base}/spots/job-flex.jpg?v={Version}";
+    public const string SpotInclusiefZorgLogistiek = $"{Base}/spots/job-inclusief-zorg-logistiek.jpg?v={Version}";
+    public const string SpotInclusiefKantoor = $"{Base}/spots/job-inclusief-kantoor.jpg?v={Version}";
+
+    /// <summary>Sector keys for banenkaart popup illustrated fallbacks (see jobMap illustratedSpotForVacancy).</summary>
+    public static IReadOnlyDictionary<string, string> BanenkaartIllustratedSpots { get; } =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["zorg"] = SpotJobZorg,
+            ["logistiek"] = SpotJobLogistiek,
+            ["horeca"] = SpotJobZorg,
+            ["retail"] = SpotJobRetail,
+            ["winkel"] = SpotJobRetail,
+            ["bouw"] = SpotJobLogistiek,
+            ["techniek"] = SpotJobLogistiek,
+            ["kantoor"] = SpotInclusiefKantoor,
+            ["schoonmaak"] = SpotInclusiefZorgLogistiek,
+            ["tuin"] = SpotJobDieren,
+            ["dieren"] = SpotJobDieren,
+            ["default"] = SpotInclusiefKantoor
+        };
 }

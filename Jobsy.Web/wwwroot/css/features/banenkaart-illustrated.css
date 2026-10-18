@@ -9,9 +9,30 @@
 }
 
 .kb-nearby-banner__art {
-  height: 88px;
+  height: 104px;
   background-size: cover;
-  background-position: center;
+  background-position: center 12%;
+}
+
+@media (min-width: 900px) {
+  .kb-nearby-banner {
+    display: grid;
+    grid-template-columns: minmax(112px, 38%) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .kb-nearby-banner__art {
+    height: auto;
+    min-height: 108px;
+    background-position: center 8%;
+  }
+
+  .kb-nearby-banner__copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 108px;
+  }
 }
 
 .kb-nearby-banner__copy {
@@ -46,5 +67,121 @@
 
   .map-pane .maplibregl-popup {
     max-width: min(340px, calc(100% - 48px));
+  }
+}
+
+/* —— Illustrated vacancy popup / docked sheet (photo on top) —— */
+.jobsy-discovery .map-cluster-card,
+.jobsy-discovery .map-cluster-sheet {
+  background: color-mix(in srgb, var(--gold) 7%, var(--pearl));
+}
+
+.jobsy-discovery .map-popup--illustrated {
+  background: color-mix(in srgb, var(--gold) 10%, var(--surface));
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  overflow: hidden;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 12%, transparent);
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__main {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: unset;
+  gap: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  overflow: hidden;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__media,
+.jobsy-discovery .map-popup--illustrated .map-popup__media--logo-only,
+.jobsy-discovery .map-popup--illustrated .map-popup__media--figure {
+  flex: none;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: clamp(132px, 28vw, 168px) !important;
+  min-height: clamp(132px, 28vw, 168px) !important;
+  max-height: clamp(132px, 28vw, 168px) !important;
+  border-radius: 0;
+  align-self: stretch;
+  background: color-mix(in srgb, var(--gold) 12%, var(--pearl-mid));
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__photo,
+.jobsy-discovery .map-popup--illustrated .map-popup__media-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__photo--figure {
+  object-position: center 55%;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__body {
+  padding: 0.75rem 0.95rem 0.35rem;
+  gap: 0.35rem;
+  background: color-mix(in srgb, var(--gold) 6%, var(--surface));
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__travel-band {
+  position: relative;
+  margin: 0.35rem 0 0;
+  padding: 0.45rem 4.5rem 0.45rem 0;
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--gold) 14%, var(--surface)) 0%, color-mix(in srgb, var(--gold) 8%, var(--surface)) 72%, transparent 100%),
+    var(--map-popup-travel-spot) no-repeat right center / 4.25rem auto;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  overflow: hidden;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__meta--travel {
+  margin: 0;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__meta {
+  font-size: 0.8125rem;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__why {
+  margin: 0.35rem 0.95rem 0;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gold-soft) 55%, var(--surface));
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__actions {
+  margin: 0.65rem 0.85rem 0.85rem;
+  gap: 0.55rem;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__view {
+  border-radius: 10px;
+  background: var(--brand);
+  border-color: var(--brand);
+  font-weight: 650;
+}
+
+.jobsy-discovery .map-popup--illustrated .map-popup__heart {
+  border-radius: 10px;
+  border-color: color-mix(in srgb, var(--border) 90%, transparent);
+}
+
+.jobsy-discovery .map-popup--illustrated.map-popup--skeleton .map-popup__media {
+  width: 100% !important;
+  height: clamp(132px, 28vw, 168px) !important;
+}
+
+@media (max-width: 899px) {
+  .jobsy-discovery .map-popup--illustrated .map-popup__media,
+  .jobsy-discovery .map-popup--illustrated .map-popup__media--figure {
+    height: clamp(120px, 34vw, 150px) !important;
+    min-height: clamp(120px, 34vw, 150px) !important;
+    max-height: clamp(120px, 34vw, 150px) !important;
   }
 }

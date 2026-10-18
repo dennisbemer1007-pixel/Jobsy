@@ -20,7 +20,8 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-rol-r1";
+    private const string ArtifactsDirR2 = "/opt/cursor/artifacts/candidate-illustrated-r2";
+    private const string ArtifactsDirRole = "/opt/cursor/artifacts/kandidaat-rol-r1";
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -50,23 +51,92 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_eight_candidate_pages_at_1440_390_and_1024()
+    public async Task Capture_four_public_pages_and_banenkaart_popups_r2()
     {
-        Directory.CreateDirectory(ArtifactsDir);
-        await CapturePageAsync("/vacancies/" + SampleVacancyId, "vacature-no-photo", auth: true);
-        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature-photo", auth: true);
-        await CapturePageAsync("/candidate/match", "match", auth: true);
-        await CapturePageAsync("/candidate/applications", "sollicitaties", auth: true);
-        await CapturePageAsync("/candidate/liked", "bewaard", auth: true);
-        await CapturePageAsync("/account-maken", "account-maken", auth: false);
-        await CapturePageAsync("/account-maken/code", "account-code", auth: false);
-        await CapturePageAsync("/carriere", "carriere", auth: true);
-        await CapturePageAsync("/candidate/settings?pane=mail", "instellingen", auth: true);
+        Directory.CreateDirectory(ArtifactsDirR2);
+        await CapturePageAsync(ArtifactsDirR2, "/login", "login", auth: false);
+        await CapturePageAsync(ArtifactsDirR2, "/", "start", auth: false);
+        await CapturePageAsync(ArtifactsDirR2, "/candidate/paspoort", "kompas", auth: true);
+        await CapturePageAsync(ArtifactsDirR2, "/banenkaart?weergave=kaart", "banenkaart", auth: true);
+        await CaptureBanenkaartPopupsAsync();
     }
 
-    private async Task CapturePageAsync(string path, string name, bool auth)
+    [Fact]
+    public async Task Capture_eight_candidate_pages_at_1440_390_and_1024()
     {
-        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390"), (1024, 900, "1024") })
+        Directory.CreateDirectory(ArtifactsDirRole);
+        await CapturePageAsync(ArtifactsDirRole, "/vacancies/" + SampleVacancyId, "vacature-no-photo", auth: true);
+        await CapturePageAsync(ArtifactsDirRole, "/vacancies/" + PhotoVacancyId, "vacature-photo", auth: true);
+        await CapturePageAsync(ArtifactsDirRole, "/candidate/match", "match", auth: true);
+        await CapturePageAsync(ArtifactsDirRole, "/candidate/applications", "sollicitaties", auth: true);
+        await CapturePageAsync(ArtifactsDirRole, "/candidate/liked", "bewaard", auth: true);
+        await CapturePageAsync(ArtifactsDirRole, "/account-maken", "account-maken", auth: false);
+        await CapturePageAsync(ArtifactsDirRole, "/account-maken/code", "account-code", auth: false);
+        await CapturePageAsync(ArtifactsDirRole, "/carriere", "carriere", auth: true);
+        await CapturePageAsync(ArtifactsDirRole, "/candidate/settings?pane=mail", "instellingen", auth: true);
+    }
+
+    private async Task CaptureBanenkaartPopupsAsync()
+    {
+        const string withPhotoId = "b1000001-0000-0000-0000-000000000001";
+        const string noPhotoId = "b1000008-0000-0000-0000-000000000008";
+
+        foreach (var (width, height, tag, vacancyId, suffix) in new[]
+                 {
+                     (1440, 900, "1440", withPhotoId, "popup-photo"),
+                     (1440, 900, "1440", noPhotoId, "popup-no-photo"),
+                     (390, 844, "390", withPhotoId, "popup-photo"),
+                     (390, 844, "390", noPhotoId, "popup-no-photo"),
+                 })
+        {
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                Locale = "nl-NL",
+                IsMobile = width < 500,
+                HasTouch = width < 500
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
+
+            await page.GotoAsync(
+                $"{_web!.ServerAddress}/__test/sign-in?return={Uri.EscapeDataString("/banenkaart?weergave=kaart")}",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.GotoAsync($"{_web.ServerAddress}/banenkaart?weergave=kaart", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await WaitForBanenkaartReadyAsync(page, preferListForCards: false);
+            await page.WaitForFunctionAsync(
+                "() => window.jobMap && typeof window.jobMap.__testOpenVacancyById === 'function'",
+                null,
+                new() { Timeout = 120_000 });
+            await page.EvaluateAsync(
+                """
+                async (id) => {
+                  const map = window.jobMap;
+                  if (map.__testGetMap && map.__testGetMap()) {
+                    map.__testGetMap().jumpTo({ center: [4.59, 52.22], zoom: 10.5, animate: false });
+                  }
+                  await map.reloadPins('/api/vacancies/pins?transport=Fiets&maxMinutes=30&radiusKm=40');
+                  for (let i = 0; i < 40 && map.__testGetPinCount() < 1; i++) {
+                    await new Promise(r => setTimeout(r, 100));
+                  }
+                  map.__testOpenVacancyById(id);
+                }
+                """,
+                vacancyId);
+            await page.Locator(".map-popup--illustrated:not(.map-popup--skeleton)").WaitForAsync(new() { Timeout = 90_000 });
+            await page.WaitForTimeoutAsync(800);
+
+            var card = page.Locator(".map-cluster-card").First;
+            var file = Path.Combine(ArtifactsDirR2, $"banenkaart-{suffix}-{tag}.png");
+            await card.ScreenshotAsync(new() { Path = file });
+            Assert.True(File.Exists(file));
+        }
+    }
+
+    private async Task CapturePageAsync(string artifactsDir, string path, string name, bool auth)
+    {
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (1024, 900, "1024"), (390, 844, "390") })
         {
             await using var context = await _browser!.NewContextAsync(new()
             {
@@ -87,6 +157,15 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             }
 
             await page.GotoAsync($"{_web!.ServerAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            if (name == "banenkaart")
+            {
+                await WaitForBanenkaartReadyAsync(page);
+            }
+            else if (name == "kompas")
+            {
+                await page.Locator(".passport-overview").WaitForAsync(new() { Timeout = 60_000 });
+            }
+
             await page.AddStyleTagAsync(new()
             {
                 Content = """
@@ -95,11 +174,47 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                     .passport-layout__card--desktop { position: static !important; }
                     """
             });
-            await page.WaitForTimeoutAsync(600);
+            await page.WaitForTimeoutAsync(name == "banenkaart" ? 1200 : 600);
 
-            var file = Path.Combine(ArtifactsDir, $"{name}-{tag}.png");
+            var file = Path.Combine(artifactsDir, $"{name}-{tag}.png");
             await page.ScreenshotAsync(new() { Path = file, FullPage = true });
             Assert.True(File.Exists(file));
+        }
+    }
+
+    private static async Task WaitForBanenkaartReadyAsync(IPage page, bool preferListForCards = true)
+    {
+        var later = page.Locator(".kb-start-prompt__later");
+        if (await later.CountAsync() > 0)
+        {
+            await later.ClickAsync();
+        }
+
+        if (preferListForCards)
+        {
+            var listBtn = page.Locator("[data-testid=kb-view-lijst]").First;
+            if (await listBtn.CountAsync() > 0 && await listBtn.IsVisibleAsync())
+            {
+                await listBtn.ClickAsync();
+            }
+        }
+
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              if (document.querySelector('.job-card') || document.querySelector('[data-testid=kb-list-row]')) return true;
+              const m = window.jobMap;
+              return m && m.__testGetPinCount && m.__testGetPinCount() >= 1;
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
+
+        var error = page.Locator(".state-message.error");
+        if (await error.CountAsync() > 0)
+        {
+            var text = await error.First.InnerTextAsync();
+            Assert.Fail($"Banenkaart load error: {text}");
         }
     }
 
@@ -129,7 +244,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IHostedService>();
-                services.AddSingleton<IStartupFilter>(new CandidateSignInFilter());
+                services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
                 services.RemoveAll<IFeatureFlags>();
                 services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
                 services.RemoveAll<IHttpClientFactory>();
@@ -170,13 +285,42 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         }
     }
 
-    private sealed class CandidateSignInFilter : IStartupFilter
+    private sealed class IllustratedPagesStartupFilter : IStartupFilter
     {
         public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
             => app =>
             {
                 app.Use(async (ctx, nxt) =>
                 {
+                    var path = ctx.Request.Path.Value ?? "";
+                    if (HttpMethods.IsGet(ctx.Request.Method)
+                        && ShouldStubVacancyCatalog(path))
+                    {
+                        if (path.EndsWith("/image", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var thumb = IllustratedPagesVacancyStub.ThumbnailForImageRequest(path);
+                            if (thumb is not null)
+                            {
+                                ctx.Response.Redirect(thumb);
+                                return;
+                            }
+
+                            ctx.Response.StatusCode = StatusCodes.Status404NotFound;
+                            return;
+                        }
+
+                        ctx.Response.ContentType = "application/json; charset=utf-8";
+                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
+                        return;
+                    }
+
+                    if (path.StartsWith("/api/travel/isochrones", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ctx.Response.ContentType = "application/json; charset=utf-8";
+                        await ctx.Response.WriteAsync(IllustratedPagesVacancyStub.JsonForPath(path));
+                        return;
+                    }
+
                     if (!ctx.Request.Path.Equals("/__test/sign-in", StringComparison.OrdinalIgnoreCase))
                     {
                         await nxt();
@@ -203,6 +347,25 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 });
                 next(app);
             };
+
+        private static bool ShouldStubVacancyCatalog(string path)
+        {
+            if (!path.StartsWith("/api/vacancies", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            if (path.Contains(SampleVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
+                || path.Contains(PhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            return path.Contains("/discover", StringComparison.OrdinalIgnoreCase)
+                   || path.Contains("/pins", StringComparison.OrdinalIgnoreCase)
+                   || path.Contains("/map-view", StringComparison.OrdinalIgnoreCase)
+                   || path.Contains("/cards", StringComparison.OrdinalIgnoreCase);
+        }
     }
 
     private sealed class PassportOnFlags : IFeatureFlags
@@ -231,6 +394,15 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
+            var json = StubApiHandler.BuildJson(path);
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+            });
+        }
+
+        internal static string BuildJson(string path)
+        {
             var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
             kompas.Profile!.FullName = "Sanne de Vries";
             kompas.Profile.FirstName = "Sanne";
@@ -244,49 +416,94 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             var photoVacancy = $$"""
                 {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"/images/candidate-illustrated/finale-hero.jpg","companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"descriptionHtml":"{{descriptionSections}}"}
                 """;
-            var sampleApplication = """
-                [{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Zorgmedewerker dagbesteding","companyName":"Kasteelhof Zorg","locationLabel":"Zaandam","status":"EmployerContacting","createdAt":"2026-10-02T10:00:00Z","timeline":[{"key":"Sent","labelKey":"Kb.Timeline.Sent","state":"Done","occurredAtUtc":"2026-10-02T10:00:00Z"},{"key":"Seen","labelKey":"Kb.Timeline.Seen","state":"Done","occurredAtUtc":"2026-10-04T10:00:00Z"},{"key":"Interview","labelKey":"Kb.Timeline.Interview","state":"Current","occurredAtUtc":"2026-10-09T10:00:00Z"},{"key":"Outcome","labelKey":"Kb.Timeline.Outcome","state":"Pending","occurredAtUtc":null}],"nextStepKey":"Kb.Next.Practice"}]
-                """;
-            var sampleLike = """
-                [{"vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","locationLabel":"Zaandam","fitPercent":81,"fitBand":"Strong","createdAt":"2026-10-10T10:00:00Z","savedStateKind":"Open","imageUrl":null,"companyLogoUrl":null}]
-                """;
-            var json = path.Contains("/kompas", StringComparison.OrdinalIgnoreCase)
-                ? System.Text.Json.JsonSerializer.Serialize(kompas)
-                : path.Contains("/site/status", StringComparison.OrdinalIgnoreCase)
-                    ? """{"maintenance":false,"expectedEndUtc":null}"""
-                    : path.Contains("/me/email-preferences", StringComparison.OrdinalIgnoreCase)
-                        ? """{"reminderEmailsEnabled":true,"optional":[{"key":"PushBom","enabled":true},{"key":"VacancyEngagementReminder","enabled":true}]}"""
-                    : path.Contains("/me/reminder-whatsapp", StringComparison.OrdinalIgnoreCase)
-                        ? """{"available":true,"optedIn":false,"phone":null}"""
-                    : path.Contains("/me/career", StringComparison.OrdinalIgnoreCase)
-                        ? """{"hasPlan":true,"dreamTitle":"Dierenarts","currentStoneIndex":1,"stones":[{"title":"Nu","state":"Done"},{"title":"Mbo 4 paraveterinair","state":"Current"}]}"""
-                    : path.Contains("/applications", StringComparison.OrdinalIgnoreCase)
-                        ? sampleApplication
-                    : path.Contains("/likes", StringComparison.OrdinalIgnoreCase) || path.Contains("/engagement/likes", StringComparison.OrdinalIgnoreCase)
-                        ? sampleLike
-                    : path.Contains("/engagement/shares", StringComparison.OrdinalIgnoreCase)
-                        ? "[]"
-                    : path.Contains("/travel", StringComparison.OrdinalIgnoreCase)
-                        ? """{"travelMinutes":9,"distanceKm":2.4}"""
-                    : path.Contains("vacanc", StringComparison.OrdinalIgnoreCase)
-                        ? path.Contains(PhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
-                            ? photoVacancy
-                            : path.Contains(SampleVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
-                            ? sampleVacancy
-                            : path.Contains("pins", StringComparison.OrdinalIgnoreCase)
-                                ? "[]"
-                                : path.Contains("map", StringComparison.OrdinalIgnoreCase)
-                                    ? """{"vacancies":[],"clusters":[]}"""
-                                    : "[]"
-                        : path.Contains("/categories", StringComparison.OrdinalIgnoreCase)
-                            ? "[]"
-                            : path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase)
-                                ? """{"preferences":{"homeAddress":"1506 AB Zaandam","workRegion":null}}"""
-                            : "{}";
-            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            const string sampleApplication =
+                """[{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Zorgmedewerker dagbesteding","companyName":"Kasteelhof Zorg","locationLabel":"Zaandam","status":"EmployerContacting","createdAt":"2026-10-02T10:00:00Z","timeline":[{"key":"Sent","labelKey":"Kb.Timeline.Sent","state":"Done","occurredAtUtc":"2026-10-02T10:00:00Z"},{"key":"Seen","labelKey":"Kb.Timeline.Seen","state":"Done","occurredAtUtc":"2026-10-04T10:00:00Z"},{"key":"Interview","labelKey":"Kb.Timeline.Interview","state":"Current","occurredAtUtc":"2026-10-09T10:00:00Z"},{"key":"Outcome","labelKey":"Kb.Timeline.Outcome","state":"Pending","occurredAtUtc":null}],"nextStepKey":"Kb.Next.Practice"}]""";
+            const string sampleLike =
+                """[{"vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","locationLabel":"Zaandam","fitPercent":81,"fitBand":"Strong","createdAt":"2026-10-10T10:00:00Z","savedStateKind":"Open","imageUrl":null,"companyLogoUrl":null}]""";
+
+            if (path.Contains("/kompas", StringComparison.OrdinalIgnoreCase))
             {
-                Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
-            });
+                return System.Text.Json.JsonSerializer.Serialize(kompas);
+            }
+
+            if (path.Contains("/site/status", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"maintenance":false,"expectedEndUtc":null}""";
+            }
+
+            if (path.Contains("/me/email-preferences", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"reminderEmailsEnabled":true,"optional":[{"key":"PushBom","enabled":true},{"key":"VacancyEngagementReminder","enabled":true}]}""";
+            }
+
+            if (path.Contains("/me/reminder-whatsapp", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"available":true,"optedIn":false,"phone":null}""";
+            }
+
+            if (path.Contains("/me/career", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"hasPlan":true,"dreamTitle":"Dierenarts","currentStoneIndex":1,"stones":[{"title":"Nu","state":"Done"},{"title":"Mbo 4 paraveterinair","state":"Current"}]}""";
+            }
+
+            if (path.Contains("/applications", StringComparison.OrdinalIgnoreCase))
+            {
+                return sampleApplication;
+            }
+
+            if (path.Contains("/likes", StringComparison.OrdinalIgnoreCase)
+                || path.Contains("/engagement/likes", StringComparison.OrdinalIgnoreCase))
+            {
+                return sampleLike;
+            }
+
+            if (path.Contains("/engagement/shares", StringComparison.OrdinalIgnoreCase))
+            {
+                return "[]";
+            }
+
+            if (path.Contains("/travel", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"travelMinutes":9,"distanceKm":2.4}""";
+            }
+
+            if (path.Contains("vacanc", StringComparison.OrdinalIgnoreCase))
+            {
+                if (path.Contains(PhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return photoVacancy;
+                }
+
+                if (path.Contains(SampleVacancyId.ToString(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return sampleVacancy;
+                }
+
+                return IllustratedPagesVacancyStub.JsonForPath(path);
+            }
+
+            if (path.Contains("/categories", StringComparison.OrdinalIgnoreCase))
+            {
+                return "[]";
+            }
+
+            if (path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase))
+            {
+                return """
+                    {
+                      "fullName": "Sanne de Vries",
+                      "firstName": "Sanne",
+                      "openForWork": true,
+                      "preferences": {
+                        "homeAddress": "1506 AB Zaandam",
+                        "workRegion": null,
+                        "aboutMe": "Ik werk graag in teamverband."
+                      }
+                    }
+                    """;
+            }
+
+            return "{}";
         }
     }
 }

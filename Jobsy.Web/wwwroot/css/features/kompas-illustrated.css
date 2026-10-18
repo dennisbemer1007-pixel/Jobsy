@@ -82,24 +82,125 @@
   padding: 0.55rem 1rem;
 }
 
+.app-shell:has(.passport-page--illustrated) .lobsy-coach-dock,
+.app-shell:has(.passport-page--illustrated) .lobsy-coach-cta {
+  display: none !important;
+}
+
+.app-shell:has(.passport-page--illustrated) .app-footer {
+  padding-inline-end: var(--space-4, 1rem);
+}
+
+.app-shell:has(.passport-page--illustrated) .app-main__content {
+  padding-bottom: var(--space-4, 1rem);
+}
+
+.passport-page--illustrated {
+  padding-block-end: var(--space-4, 1rem);
+}
+
 .passport-page--illustrated .passport-tabs {
+  position: relative;
   flex-wrap: nowrap;
   overflow-x: auto;
   scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 4px;
+  padding: 4px 1.75rem 4px 4px;
   gap: 2px;
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2.5rem), transparent);
+  box-shadow: inset -2rem 0 1.15rem -1.25rem color-mix(in srgb, var(--bg) 88%, transparent);
+}
+
+.passport-page--illustrated .passport-tabs::after {
+  content: "›";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  pointer-events: none;
+  color: var(--muted);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+@media (min-width: 1024px) {
+  .passport-page--illustrated .passport-tabs {
+    inset-block-start: var(--app-header-height, 4.25rem);
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 2.5rem), transparent);
+  }
 }
 
 .passport-page--illustrated .passport-tab {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   white-space: nowrap;
   justify-content: center;
   border-radius: 10px;
   min-height: 44px;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
+  padding-inline: 0.65rem;
+}
+
+.passport-page--illustrated .passport-dna__grid {
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.28fr) minmax(0, 0.92fr);
+  align-items: start;
+}
+
+.passport-page--illustrated .passport-dna__story-head {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.passport-page--illustrated .passport-dna__story-head .passport-dna__h {
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.passport-page--illustrated .passport-dna__card .passport-dna__h {
+  font-size: 1rem;
+}
+
+.passport-page--illustrated .passport-shells {
+  margin-block-end: 0.5rem;
+}
+
+.kompas-card--illustrated {
+  position: relative;
+  overflow: hidden;
+}
+
+.kompas-card-spot {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 0;
+  width: min(42%, 7.5rem);
+  height: 4.5rem;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: var(--kompas-spot-pos, 70% 20%);
+  opacity: 0.42;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(135deg, #000 15%, transparent 88%);
+  mask-image: linear-gradient(135deg, #000 15%, transparent 88%);
+}
+
+.kompas-card-spot--tests {
+  width: min(36%, 6.5rem);
+  height: 3.75rem;
+  opacity: 0.35;
+}
+
+.passport-page--illustrated .passport-career__empty,
+.passport-page--illustrated .passport-proof__card,
+.passport-page--illustrated .passport-tests__layout {
+  background: color-mix(in srgb, var(--gold) 5%, var(--surface));
 }
 
 .passport-page--illustrated .passport-tab--active {

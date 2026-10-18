@@ -44,6 +44,9 @@ window.jobMap = (function () {
     let detailCache = {};
     let pinsUrl = null;
     let pinsBaseUrl = null;
+    let illustratedPopup = false;
+    let illustratedTravelSpot = "";
+    let illustratedVacancySpots = {};
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
     let viewportListDotNet = null;
@@ -244,6 +247,92 @@ window.jobMap = (function () {
         return Array.isArray(v.workTypes) && v.workTypes.length
             ? v.workTypes[0]
             : (v.workType || "");
+    }
+
+    function workTypeFallbackPhoto(v) {
+        const wt = String(workTypeOf(v) || "").toLowerCase();
+        if (wt.indexOf("logist") >= 0) {
+            return "/images/vacancies/logistiek.webp";
+        }
+        if (wt.indexOf("zorg") >= 0 || wt.indexOf("care") >= 0) {
+            return "/images/vacancies/zorg.webp";
+        }
+        if (wt.indexOf("horeca") >= 0) {
+            return "/images/vacancies/horeca.webp";
+        }
+        if (wt.indexOf("winkel") >= 0 || wt.indexOf("retail") >= 0) {
+            return "/images/vacancies/winkel.webp";
+        }
+        if (wt.indexOf("bouw") >= 0) {
+            return "/images/vacancies/bouw.webp";
+        }
+        if (wt.indexOf("tuin") >= 0) {
+            return "/images/vacancies/tuinbouw.webp";
+        }
+        if (wt.indexOf("kantoor") >= 0 || wt.indexOf("office") >= 0) {
+            return "/images/vacancies/kantoor.webp";
+        }
+        if (wt.indexOf("product") >= 0) {
+            return "/images/vacancies/productie.webp";
+        }
+        if (wt.indexOf("schoon") >= 0) {
+            return "/images/vacancies/schoonmaak.webp";
+        }
+        return "/images/vacancies/flex.webp";
+    }
+
+    function illustratedSpotForVacancy(v) {
+        const spots = illustratedVacancySpots || {};
+        const pick = function (key) {
+            const k = String(key || "").toLowerCase();
+            if (spots[k]) {
+                return String(spots[k]);
+            }
+            return spots.default ? String(spots.default) : "";
+        };
+        const title = String(v && v.title ? v.title : "").toLowerCase();
+        const company = String(v && v.company ? v.company : "").toLowerCase();
+        const wt = String(workTypeOf(v) || "").toLowerCase();
+        const hay = title + " " + company + " " + wt;
+        if (hay.indexOf("zorg") >= 0 || hay.indexOf("care") >= 0) {
+            return pick("zorg");
+        }
+        if (hay.indexOf("order") >= 0 || hay.indexOf("magaz") >= 0 || hay.indexOf("logist") >= 0 || hay.indexOf("pakhuis") >= 0) {
+            return pick("logistiek");
+        }
+        if (hay.indexOf("horeca") >= 0 || hay.indexOf("brasserie") >= 0 || hay.indexOf("chef") >= 0) {
+            return pick("horeca");
+        }
+        if (hay.indexOf("winkel") >= 0 || hay.indexOf("retail") >= 0 || hay.indexOf("mode") >= 0) {
+            return pick("retail");
+        }
+        if (hay.indexOf("bouw") >= 0 || hay.indexOf("tuin") >= 0 || hay.indexOf("groen") >= 0) {
+            return pick("bouw");
+        }
+        if (hay.indexOf("kantoor") >= 0 || hay.indexOf("office") >= 0) {
+            return pick("kantoor");
+        }
+        if (hay.indexOf("schoon") >= 0) {
+            return pick("schoonmaak");
+        }
+        if (hay.indexOf("dier") >= 0) {
+            return pick("dieren");
+        }
+        if (hay.indexOf("techn") >= 0 || hay.indexOf("monteur") >= 0) {
+            return pick("techniek");
+        }
+        return pick("default");
+    }
+
+    function popupRootClass(extra) {
+        let cls = "map-popup map-popup--calm";
+        if (illustratedPopup) {
+            cls += " map-popup--illustrated";
+        }
+        if (extra) {
+            cls += " " + extra;
+        }
+        return cls;
     }
 
     function formatWage(wage) {
@@ -622,7 +711,28 @@ window.jobMap = (function () {
         if (!parts.length) {
             return "";
         }
-        return "<div class=\"map-popup__meta\">" + parts.join("") + "</div>";
+        const inner = parts.join("");
+        if (illustratedPopup && illustratedTravelSpot) {
+            const travelOnly = parts.filter(function (p) {
+                return p.indexOf("map-popup__meta-item--travel") >= 0;
+            });
+            const rest = parts.filter(function (p) {
+                return p.indexOf("map-popup__meta-item--travel") < 0;
+            });
+            let html = "";
+            if (travelOnly.length) {
+                html +=
+                    "<div class=\"map-popup__travel-band\" style=\"--map-popup-travel-spot:url('" +
+                    escapeAttr(illustratedTravelSpot) + "')\">" +
+                    "<div class=\"map-popup__meta map-popup__meta--travel\">" + travelOnly.join("") + "</div>" +
+                    "</div>";
+            }
+            if (rest.length) {
+                html += "<div class=\"map-popup__meta\">" + rest.join("") + "</div>";
+            }
+            return html;
+        }
+        return "<div class=\"map-popup__meta\">" + inner + "</div>";
     }
 
     function agencyPopupLineHtml(v) {
@@ -717,20 +827,22 @@ window.jobMap = (function () {
                 "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
                 escapeAttr(v.company) + " logo\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
         } else {
-            const illustratedFallback =
-                "/images/candidate-illustrated/spots/job-flex.jpg?v=20261018-02";
-            mediaClassFinal = "map-popup__media map-popup__media--empty map-popup__media--illustrated";
+            const fallbackPhoto = workTypeFallbackPhoto(v);
+            const useIllustrated = illustratedPopup;
+            const illustratedFallback = illustratedSpotForVacancy(v);
+            const src = useIllustrated && illustratedFallback ? illustratedFallback : fallbackPhoto;
+            mediaClassFinal = "map-popup__media map-popup__media--figure map-popup__media--illustrated";
             mediaInner =
-                "<img class=\"map-popup__photo map-popup__photo--illustrated\" src=\"" +
-                escapeAttr(illustratedFallback) +
-                "\" alt=\"\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" />";
+                "<img class=\"map-popup__photo map-popup__photo--figure map-popup__photo--illustrated\" src=\"" +
+                escapeAttr(src) +
+                "\" alt=\"\" width=\"400\" height=\"267\" loading=\"lazy\" decoding=\"async\" />";
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
         const viewLabel = escapeHtml(uiLabels.viewJob || "Bekijk deze baan");
 
         return (
-            "<div class=\"map-popup map-popup--calm\">" +
+            "<div class=\"" + popupRootClass("") + "\">" +
                 "<div class=\"map-popup__main\">" +
                     "<a class=\"" + mediaClassFinal + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         mediaInner +
@@ -2006,7 +2118,7 @@ window.jobMap = (function () {
     function skeletonPopupHtml(pin) {
         // Same structure as buildPopupHtml so the sheet does not jump when filled.
         return (
-            "<div class=\"map-popup map-popup--calm map-popup--loading map-popup--skeleton\" aria-busy=\"true\">" +
+            "<div class=\"" + popupRootClass("map-popup--loading map-popup--skeleton") + "\" aria-busy=\"true\">" +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"map-popup__media map-popup__media--logo-only map-popup__shimmer\" aria-hidden=\"true\"></div>" +
                     "<div class=\"map-popup__body\">" +
@@ -4685,6 +4797,13 @@ window.jobMap = (function () {
             pinsBaseUrl = stripViewportParams(nextPinsUrl);
             pinsUrl = pinsBaseUrl + viewportQueryString();
         }
+        illustratedPopup = !!(options && options.illustratedPopup);
+        illustratedTravelSpot = options && options.illustratedTravelSpot
+            ? String(options.illustratedTravelSpot)
+            : "";
+        illustratedVacancySpots = options && options.illustratedVacancySpots
+            ? options.illustratedVacancySpots
+            : {};
 
         bindMapRuntime();
         if (!live || !viewportPinsBound) {

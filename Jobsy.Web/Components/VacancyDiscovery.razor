@@ -20,6 +20,7 @@
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
+@using Jobsy.Web.Media
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Text.Json
@@ -2555,6 +2556,10 @@
                 ["pinsUrl"] = BuildPinsApiUrl(),
                 ["syncViewportList"] = true,
                 ["labels"] = MapUiLabels(),
+                ["illustratedPopup"] = true,
+                ["illustratedTravelSpot"] = CandidateIllustratedImages.PopupTravelAccent,
+                ["illustratedVacancySpots"] = CandidateIllustratedImages.BanenkaartIllustratedSpots
+                    .ToDictionary(static kv => kv.Key, static kv => kv.Value, StringComparer.OrdinalIgnoreCase),
                 ["view"] = new Dictionary<string, object?>
                 {
                     ["lat"] = opening.CenterLat,

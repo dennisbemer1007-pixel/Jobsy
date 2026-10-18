@@ -21,15 +21,19 @@
   },
   "css/features/auth.css": {
     "sha256": "19d393a63d6604f3a210cd0e67d18c3b6896c868d6a4f6a77be6ee9ff69ad05d",
-    "v": "20261017-01"
+    "v": "20261018-01"
   },
   "css/features/banenkaart.css": {
-    "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
+    "sha256": "0b77b38c48253751260a0b6f1797f81a555ab1aa95a8333fb28bc343352eeeeb",
     "v": "20261016-02"
   },
   "css/features/candidate-hub.css": {
     "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
     "v": "20261012-01"
+  },
+  "css/features/candidate-illustrated-public.css": {
+    "sha256": "4e9d6630cccec1312b949090830a277713fa54215a19cc98830cd2c0b7fae068",
+    "v": "20261018-01"
   },
   "css/features/carriere.css": {
     "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
@@ -81,7 +85,7 @@
   },
   "css/features/landing.css": {
     "sha256": "c7e52a6291b6b8ccf67f8591a142c6de1b87f821486c4db247782e5d0fb351ef",
-    "v": "20261015-14"
+    "v": "20261018-01"
   },
   "css/features/match-desktop.css": {
     "sha256": "8a93b7c3157f521af81598edb8ffe256de3b19076ef8ee2bdd26c4d963fa45bb",
@@ -208,7 +212,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "4ed3a13eebb1daefb271e47e160c285b913db5e7e5af6c4135ccc5b7fdecdb2b",
+    "sha256": "45fb7dc9080f5d16c8b49193af2c386d7f92fa48601eb49e6c75a50977a4c25a",
     "v": "20261017-04"
   },
   "js/app-extras.js": {
@@ -248,8 +252,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "fa819a687c95bce7effbd05437ead923dbb4d8ce9139a034ed7b85555edfb94c",
-    "v": "20261018-hotfix-fitpill"
+    "sha256": "d3714c33a25b7063566a4489631662e95dd577540f1fe6ad0bcb8bd0d33d30f1",
+    "v": "20261018-18"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",

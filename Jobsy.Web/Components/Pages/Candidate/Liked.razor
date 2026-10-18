@@ -41,7 +41,7 @@
             else if (_items.Count == 0)
             {
                 <div class="kb-saved__empty-layout">
-                    <CandidateIllustratedEmpty ArtUrl="@BanenkaartCyclists">
+                    <CandidateIllustratedEmpty ArtUrl="@EmptyLikesArt">
                         <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="@KbRoutes.Map">@Culture["Saved.Discover"]</a>.</p>
                     </CandidateIllustratedEmpty>
                     @RenderSavedRail()
@@ -77,7 +77,7 @@
                 <div class="kb-saved__body">
                 @if (_filtered.Count == 0)
                 {
-                    <CandidateIllustratedEmpty ArtUrl="@BanenkaartCyclists" Compact="true">
+                    <CandidateIllustratedEmpty ArtUrl="@EmptyLikesArt" Compact="true">
                         <p class="state-message">@Culture["Kb.Saved.FilterEmpty"]</p>
                     </CandidateIllustratedEmpty>
                 }
