@@ -49,30 +49,35 @@
     else if (_phase == WizardPhase.Install)
     {
         <section class="ob-wizard__install">
-            <h1>@Culture["Onboarding.Install.Title"]</h1>
-            <p>@Culture["Onboarding.Install.Lead"]</p>
-            <div class="ob-install">
-                @if (_installIos)
-                {
-                    <p class="ob-install__hint">@Culture["Pwa.IosHint"]</p>
-                }
-                else if (_installCanPrompt)
-                {
-                    <button type="button" class="btn btn-primary" @onclick="InstallAsync">
-                        @Culture["Onboarding.Install.AddApp"]
-                    </button>
-                }
-                <button type="button" class="btn btn-primary" @onclick="EnablePushAsync">
-                    @Culture["Onboarding.Install.EnablePush"]
-                </button>
-                @if (!string.IsNullOrEmpty(_installMessage))
-                {
-                    <p aria-live="polite">@_installMessage</p>
-                }
+            <div class="push-prompt push-prompt--onboarding" role="dialog" aria-labelledby="onboarding-push-title" aria-describedby="onboarding-push-body">
+                <div class="push-prompt__card">
+                    <h1 id="onboarding-push-title" class="push-prompt__title">@Culture["Push.PromptTitle"]</h1>
+                    <p id="onboarding-push-body" class="push-prompt__body">@Culture["Push.PromptBody"]</p>
+                    <p class="ob-wizard__hint">@Culture["Onboarding.Install.Lead"]</p>
+                    <div class="push-prompt__actions">
+                        @if (_installIos)
+                        {
+                            <p class="ob-install__hint">@Culture["Pwa.IosHint"]</p>
+                        }
+                        else if (_installCanPrompt)
+                        {
+                            <button type="button" class="engagement-btn" @onclick="InstallAsync">
+                                @Culture["Onboarding.Install.AddApp"]
+                            </button>
+                        }
+                        <button type="button" class="login-submit" @onclick="EnablePushAsync">
+                            @Culture["Onboarding.Install.EnablePush"]
+                        </button>
+                        <button type="button" class="engagement-btn" @onclick="InstallLaterAsync">
+                            @Culture["Onboarding.Install.Later"]
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(_installMessage))
+                    {
+                        <p aria-live="polite">@_installMessage</p>
+                    }
+                </div>
             </div>
-            <button type="button" class="ob-wizard__ghost" @onclick="InstallLaterAsync">
-                @Culture["Onboarding.Install.Later"]
-            </button>
         </section>
     }
     else if (_finish || _state?.FinishReached == true)
@@ -642,7 +647,8 @@
                 Draft.HomeLng,
                 Draft.Postcode,
                 Draft.PostcodeResolved,
-                today),
+                today,
+                Draft.GeolocationPendingConfirm),
             2 => OnboardingWizardValidation.ValidateAvailability(
                 Draft.MinHours,
                 Draft.MaxHours,
@@ -1044,7 +1050,7 @@
     private async Task EnsureAddressResolvedAsync()
     {
         if (OnboardingWizardValidation.HasResolvableLocation(
-                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved))
+                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved, Draft.GeolocationPendingConfirm))
         {
             return;
         }

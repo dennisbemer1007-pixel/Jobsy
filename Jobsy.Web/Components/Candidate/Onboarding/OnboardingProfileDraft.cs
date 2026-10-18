@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components;
@@ -31,6 +32,10 @@ public sealed class OnboardingProfileDraft
     public bool ShowCity { get; set; }
     public bool PostcodeMissing { get; set; }
     public bool PostcodeResolved { get; set; }
+    /// <summary>Geolocation prefill shown; user must confirm before save/validation passes.</summary>
+    public bool GeolocationPendingConfirm { get; set; }
+    public GeolocationPrefillMode? GeolocationPrefillMode { get; set; }
+    public int? GeolocationApproximateAccuracyMeters { get; set; }
     public bool HasConsent { get; set; }
     public bool ConsentRequested { get; set; }
     public int MaxTravel { get; set; } = 30;
