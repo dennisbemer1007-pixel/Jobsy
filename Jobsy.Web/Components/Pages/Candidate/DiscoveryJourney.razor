@@ -2591,11 +2591,16 @@
         ScheduleProfileSave();
     }
 
-    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+    private void AddJob()
+    {
+        Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+        ScheduleProfileSave();
+    }
 
     private void RemoveJob(CandidateEmployerHistory job)
     {
         Draft.Jobs.Remove(job);
+        Draft.EnsureFirstJobSlot();
         ScheduleProfileSave();
     }
 
@@ -2626,7 +2631,10 @@
     private void SelectEducation(string level)
     {
         Draft.Education = level == "MBO" ? "MBO 1" : level;
-        if (level == EducationLevelLabels.None) Draft.EducationDirection = "";
+        if (!EducationDirectionCatalog.SupportsDirection(Draft.Education))
+        {
+            Draft.EducationDirection = "";
+        }
         ScheduleProfileSave();
     }
 
@@ -2920,11 +2928,13 @@
                     AvailabilityPresetsOverridden = Draft.PresetsOverridden,
                     Availability = BuildAvailability(),
                     NoWorkExperience = Draft.NoWork,
-                    Employers = Draft.Jobs.ToList(),
+                    Employers = Draft.JobsForSave(),
                     Educations = string.IsNullOrWhiteSpace(Draft.Education)
                         ? []
                         : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],
-                    EducationDirection = Draft.EducationDirection,
+                    EducationDirection = EducationDirectionCatalog.SupportsDirection(Draft.Education) && !string.IsNullOrWhiteSpace(Draft.EducationDirection)
+                        ? Draft.EducationDirection.Trim()
+                        : null,
                     DrivingLicenses = Draft.DrivingLicenses.OrderBy(x => x).ToList(),
                     Roles = Draft.Roles.OrderBy(r => r).ToList(),
                     AboutMe = string.IsNullOrWhiteSpace(Draft.AboutMe) ? null : Draft.AboutMe.Trim(),

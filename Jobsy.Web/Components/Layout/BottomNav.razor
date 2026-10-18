@@ -1,14 +1,11 @@
 @using Jobsy.Core.Authorization
-@using Jobsy.Core.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
-@inject AuthenticationStateProvider AuthState
 @inject CultureState Culture
-@inject JobsyApiClient Api
-@inject BottomNavRefreshService NavRefresh
-@inject IFeatureFlags FeatureFlags
+@inject RoleNavItemsState NavItems
 @inject IJSRuntime Js
 @implements IAsyncDisposable
 
@@ -45,6 +42,23 @@
     private bool _hideForDesktopViewport;
     private DotNetObjectReference<BottomNav>? _dotNetRef;
     private IJSObjectReference? _viewportWatch;
+
+    [Parameter]
+    public EventCallback<bool> HasItemsChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await NavItems.EnsureInitializedAsync();
+        _items = NavItems.Items;
+        NavItems.Changed += OnNavItemsChanged;
+    }
+
+    private async void OnNavItemsChanged()
+    {
+        _items = NavItems.Items;
+        await NotifyHasBottomNavAsync();
+        await InvokeAsync(StateHasChanged);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -101,239 +115,10 @@
 
     private Task NotifyHasBottomNavAsync()
         => HasItemsChanged.InvokeAsync(_items.Count > 0 && !_hideForDesktopViewport);
-    private FeatureFlagSnapshot _flags = FeatureFlagSnapshot.Defaults;
-    private bool _hasTakeoverActions;
-    private bool _salesOnboardingComplete;
-    private bool _ambassadeurOnboardingComplete;
-    private bool _csvImportEnabled;
-    private bool _maqqieHoursNav;
-    private bool _roleFlagsLoaded;
-    private string? _lastRoleFingerprint;
-
-    [Parameter]
-    public EventCallback<bool> HasItemsChanged { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        Navigation.LocationChanged += OnLocationChanged;
-        Culture.Changed += OnCultureChanged;
-        NavRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
-        await RefreshFlagsAsync();
-        await RefreshItemsAsync(forceRoleApis: true);
-    }
-
-    private async Task RefreshFlagsAsync()
-    {
-        try
-        {
-            _flags = await FeatureFlags.GetAsync();
-        }
-        catch
-        {
-            _flags = FeatureFlagSnapshot.Defaults;
-        }
-    }
-
-    private void OnCultureChanged()
-        => InvokeAsync(StateHasChanged);
-
-    private async Task OnNavRefreshRequestedAsync()
-    {
-        await RefreshFlagsAsync();
-        await RefreshItemsAsync(forceRoleApis: true);
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        try
-        {
-            // Active styling is URI-based; avoid re-hitting takeover/sales APIs on every nav.
-            // Feature flags are refreshed on init + NavRefreshRequested only (not every location change).
-            await RefreshItemsAsync(forceRoleApis: false);
-            await InvokeAsync(StateHasChanged);
-        }
-        catch (JSDisconnectedException)
-        {
-        }
-        catch (ObjectDisposedException)
-        {
-        }
-        catch (Exception)
-        {
-            // async void: swallow to avoid crashing the circuit on dispose/nav races.
-        }
-    }
-
-    private async Task RefreshItemsAsync(bool forceRoleApis)
-    {
-        var state = await AuthState.GetAuthenticationStateAsync();
-        var fingerprint = string.Join(',', state.User.Claims
-            .Where(c => c.Type is System.Security.Claims.ClaimTypes.Role or "role")
-            .Select(c => c.Value)
-            .OrderBy(v => v, StringComparer.Ordinal));
-        var catalog = RoleNavCatalog.ForUser(state.User, _flags);
-
-        var rolesChanged = !string.Equals(_lastRoleFingerprint, fingerprint, StringComparison.Ordinal);
-        _lastRoleFingerprint = fingerprint;
-
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.BranchManager)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.EnterpriseManager)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.RegionalManager))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshTakeoverFlagAsync();
-            }
-
-            if (!_hasTakeoverActions)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, RoleNavCatalog.Takeovers.Href, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.SalesManager)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshSalesOnboardingFlagAsync();
-            }
-
-            if (_salesOnboardingComplete)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, "/salesmanager/onboarding", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.Ambassadeur)
-            && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshAmbassadeurOnboardingFlagAsync();
-            }
-
-            if (_ambassadeurOnboardingComplete)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, "/ambassadeur/onboarding", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        // CSV import is no longer a bottom-nav item (Enterprise uses Organization hub).
-        // Defensive filter if a catalog still exposes the route and the company has CSV disabled.
-        if (catalog.Any(i => string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase)))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshCsvImportFlagAsync();
-            }
-
-            if (!_csvImportEnabled)
-            {
-                catalog = catalog
-                    .Where(i => !string.Equals(i.Href, RoleNavCatalog.CsvImport.Href, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-        }
-
-        if (RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate)
-            && _flags.IsEnabled(PlatformFeature.EmployerPhase2))
-        {
-            if (forceRoleApis || rolesChanged || !_roleFlagsLoaded)
-            {
-                await RefreshMaqqieHoursNavAsync();
-            }
-
-            if (_maqqieHoursNav)
-            {
-                catalog = RoleNavCatalog.WithMaqqieHoursNav(catalog);
-            }
-        }
-
-        _roleFlagsLoaded = true;
-
-        var previousCount = _items.Count;
-        _items = catalog;
-        if (previousCount != _items.Count || HasItemsChanged.HasDelegate)
-        {
-            await NotifyHasBottomNavAsync();
-        }
-    }
-
-    private async Task RefreshTakeoverFlagAsync()
-    {
-        try
-        {
-            var inbox = await Api.GetTakeoverInboxAsync();
-            _hasTakeoverActions = inbox.Count > 0;
-        }
-        catch
-        {
-            _hasTakeoverActions = false;
-        }
-    }
-
-    private async Task RefreshSalesOnboardingFlagAsync()
-    {
-        try
-        {
-            var dash = await Api.GetMySalesManagerDashboardAsync();
-            _salesOnboardingComplete = dash?.IsOnboardingComplete == true;
-        }
-        catch
-        {
-            _salesOnboardingComplete = false;
-        }
-    }
-
-    private async Task RefreshAmbassadeurOnboardingFlagAsync()
-    {
-        try
-        {
-            var dash = await Api.GetMyAmbassadeurDashboardAsync();
-            _ambassadeurOnboardingComplete = dash?.IsOnboardingComplete == true;
-        }
-        catch
-        {
-            _ambassadeurOnboardingComplete = false;
-        }
-    }
-
-    private async Task RefreshCsvImportFlagAsync()
-    {
-        try
-        {
-            var companies = await Api.GetMyCompaniesAsync();
-            _csvImportEnabled = companies.Any(c => c.CsvBatchImportEnabled);
-        }
-        catch
-        {
-            _csvImportEnabled = false;
-        }
-    }
-
-    private async Task RefreshMaqqieHoursNavAsync()
-    {
-        try
-        {
-            _maqqieHoursNav = await Api.GetMaqqieHoursActiveAsync();
-        }
-        catch
-        {
-            _maqqieHoursNav = false;
-        }
-    }
 
     public async ValueTask DisposeAsync()
     {
+        NavItems.Changed -= OnNavItemsChanged;
         try
         {
             if (_viewportWatch is not null)
@@ -350,13 +135,5 @@
         _viewportWatch = null;
         _dotNetRef?.Dispose();
         _dotNetRef = null;
-        Dispose();
-    }
-
-    public void Dispose()
-    {
-        Navigation.LocationChanged -= OnLocationChanged;
-        Culture.Changed -= OnCultureChanged;
-        NavRefresh.RefreshRequested -= OnNavRefreshRequestedAsync;
     }
 }
