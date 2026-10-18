@@ -1,12 +1,25 @@
 @namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Rules
 
 <div class="test-block-stage__mobile-hero @CssClass">
-    <div class="test-block-stage__mobile-hero__figure" aria-hidden="true"></div>
+    <div class="test-block-stage__mobile-hero__figure" aria-hidden="true">
+        @if (!string.IsNullOrWhiteSpace(_figureSrc))
+        {
+            <img src="@_figureSrc" alt="" decoding="async" draggable="false" />
+        }
+    </div>
     <div class="test-block-stage__mobile-hero__fade" aria-hidden="true"></div>
     @ChildContent
 </div>
 
 @code {
+    [CascadingParameter(Name = "TestBlockArtSlug")]
+    public string? BlockSlug { get; set; }
+
     [Parameter] public string CssClass { get; set; } = "test-block-stage__mobile-hero--band";
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? _figureSrc => string.IsNullOrWhiteSpace(BlockSlug)
+        ? null
+        : TestBlockArt.HeroFigurePathForSlug(BlockSlug);
 }

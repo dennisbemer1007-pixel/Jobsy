@@ -26,4 +26,10 @@ public sealed class TestBlockArtTests
     [Fact]
     public void ImagePathForSlug_uses_wwwroot_tests_folder()
         => Assert.Equal("/images/tests/bg-leuk.jpg", TestBlockArt.ImagePathForSlug("leuk"));
+
+    [Theory]
+    [InlineData("leuk")]
+    [InlineData("sfeer")]
+    public void HeroFigurePathForSlug_points_at_figure_png(string slug)
+        => Assert.Equal($"/images/tests/figures/{slug}-hero.png", TestBlockArt.HeroFigurePathForSlug(slug));
 }

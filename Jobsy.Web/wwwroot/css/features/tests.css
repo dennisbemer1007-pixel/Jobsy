@@ -536,24 +536,28 @@
   --test-block-tint: #e6eef7;
   --test-block-hero-cream: color-mix(in srgb, var(--surface) 93%, var(--pearl-cool, var(--pearl)));
   --test-block-band-image: url("/images/tests/bg-hoe-je-werkt.jpg");
+  --test-block-hero-figure-image: url("/images/tests/figures/hoe-je-werkt-hero.png");
 }
 
 .test-block-stage--leuk {
   --test-block-tint: color-mix(in srgb, var(--coral-soft, #ffe8e0) 38%, var(--surface));
   --test-block-hero-cream: color-mix(in srgb, var(--surface) 90%, var(--coral-soft, #ffe8e0));
   --test-block-band-image: url("/images/tests/bg-leuk.jpg");
+  --test-block-hero-figure-image: url("/images/tests/figures/leuk-hero.png");
 }
 
 .test-block-stage--sfeer {
   --test-block-tint: #f3ebe2;
   --test-block-hero-cream: color-mix(in srgb, var(--surface) 88%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-sfeer.jpg");
+  --test-block-hero-figure-image: url("/images/tests/figures/sfeer-hero.png");
 }
 
 .test-block-stage--waarden {
   --test-block-tint: color-mix(in srgb, #d8e8dc 42%, var(--surface));
   --test-block-hero-cream: color-mix(in srgb, var(--surface) 90%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-waarden.jpg");
+  --test-block-hero-figure-image: url("/images/tests/figures/waarden-hero.png");
 }
 
 .test-block-stage__content {
@@ -637,9 +641,9 @@
     grid-template-rows: minmax(0, 1fr);
     align-items: stretch;
     inline-size: 100%;
-    max-block-size: 12.5rem;
     min-block-size: 7.5rem;
-    block-size: clamp(7.5rem, 24vw, 12.5rem);
+    block-size: clamp(7.5rem, 24vw, min(12.5rem, 200px));
+    max-block-size: min(12.5rem, 200px);
     margin: 0;
     border: 0;
     border-radius: 0;
@@ -658,15 +662,23 @@
     align-self: end;
     justify-self: end;
     inline-size: 100%;
-    block-size: 86%;
-    min-block-size: 6rem;
-    max-block-size: 90%;
-    background-image: var(--test-block-band-image);
-    background-repeat: no-repeat;
-    background-position: 100% 100%;
-    background-size: auto min(100%, 10.25rem);
+    block-size: min(92%, 11.5rem);
+    min-block-size: 7.25rem;
+    max-block-size: 95%;
     opacity: 1;
     pointer-events: none;
+    overflow: hidden;
+  }
+
+  .test-block-stage__mobile-hero__figure img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    max-block-size: min(94%, 11.75rem);
+    object-fit: contain;
+    object-position: 100% 100%;
+    transform: scale(1.85);
+    transform-origin: 100% 100%;
   }
 
   .test-block-stage__mobile-hero__fade {
@@ -714,6 +726,10 @@
 
   .test-block-stage--sfeer .test-block-stage__mobile-hero__figure {
     block-size: 80%;
+  }
+
+  .test-block-stage--waarden .test-block-stage__mobile-hero__figure img {
+    transform: scale(2.72);
   }
 
   .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {

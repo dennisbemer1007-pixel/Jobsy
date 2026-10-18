@@ -23,6 +23,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Jobsy.Tests;
 
@@ -141,6 +143,100 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
     }
 
+    [Fact]
+    public async Task Capture_test_pages_at_390_have_translated_eyebrows_and_filled_mobhero()
+    {
+        foreach (var target in Targets)
+        {
+            await using var web = new CaptureWebFactory(target);
+            var baseUrl = web.EnsureServerAddress().TrimEnd('/');
+
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+                Locale = "nl-NL",
+                IsMobile = true,
+                HasTouch = true,
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            await SignInViaHttpAsync(context, baseUrl, target.ReturnPath);
+
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            await page.GotoAsync(baseUrl + target.ReturnPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await page.Locator("[data-testid=test-block-stage]").WaitForAsync();
+
+            var eyebrow = (await page.Locator(".test-shell__eyebrow").InnerTextAsync()).Trim();
+            Assert.False(eyebrow.Contains("Culture.Title", StringComparison.Ordinal),
+                $"{target.FileStem}: raw culture key in eyebrow: {eyebrow}");
+            Assert.False(eyebrow.Contains("Values.Title", StringComparison.Ordinal),
+                $"{target.FileStem}: raw values key in eyebrow: {eyebrow}");
+            Assert.DoesNotMatch(new Regex(@"\b(Culture|Values)\.Title\b"), eyebrow);
+
+            var tabs = page.Locator("[data-testid=test-depth-segments]");
+            await tabs.WaitForAsync();
+            var hero = page.Locator(".test-block-stage__mobile-hero--band").First;
+            await hero.WaitForAsync();
+            var figureImg = page.Locator(".test-block-stage__mobile-hero__figure img").First;
+            await figureImg.WaitForAsync();
+            await page.WaitForFunctionAsync(
+                """() => { const i = document.querySelector('.test-block-stage__mobile-hero__figure img'); return i && i.complete && i.naturalWidth > 40; }""",
+                null,
+                new() { Timeout = 30_000 });
+            var tabsBox = await tabs.BoundingBoxAsync();
+            var heroBox = await hero.BoundingBoxAsync();
+            Assert.NotNull(tabsBox);
+            Assert.NotNull(heroBox);
+            Assert.True(tabsBox!.Y + tabsBox.Height <= heroBox!.Y + 2,
+                $"{target.FileStem}: depth tabs must sit above the mobile hero.");
+
+            await page.WaitForTimeoutAsync(400);
+            var png = await page.Locator(".test-block-stage__mobile-hero__figure").First
+                .ScreenshotAsync(new() { Type = ScreenshotType.Png });
+            AssertMobHeroFill(png, target.FileStem);
+        }
+    }
+
+    private static void AssertMobHeroFill(byte[] png, string stem)
+    {
+        using var image = Image.Load<Rgba32>(png);
+        var w = image.Width;
+        var h = image.Height;
+        var cream = 0;
+        var nonCream = 0;
+        for (var y = 0; y < h; y++)
+        {
+            for (var x = 0; x < w; x++)
+            {
+                var p = image[x, y];
+                if (MobHeroPixelIsCream(p))
+                {
+                    cream++;
+                }
+                else
+                {
+                    nonCream++;
+                }
+            }
+        }
+
+        var ratio = (double)nonCream / Math.Max(1, cream + nonCream);
+        Assert.True(ratio >= 0.34,
+            $"{stem}: expected >=34% non-cream pixels in mobhero figure band, got {ratio:P1}.");
+    }
+
+    private static bool MobHeroPixelIsCream(Rgba32 p)
+    {
+        if (p.A < 16)
+        {
+            return true;
+        }
+
+        return p.R > 210 && p.G > 205 && p.B > 190 && p.R - p.B < 45;
+    }
+
     private static void PurgeLegacyArtifactDirs()
     {
         foreach (var dir in new[]
@@ -224,11 +320,24 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         Assert.False(Regex.IsMatch(insightText, @"\d|%"), $"Insight text must not contain digits or %: {insightText}");
 
         var cardBox = await page.Locator(".test-shell__card, .ob-wizard__card").First.BoundingBoxAsync();
-        var bandBox = await page.Locator(".test-block-stage__band").BoundingBoxAsync();
         Assert.NotNull(cardBox);
-        Assert.NotNull(bandBox);
-        Assert.True(cardBox!.Y + cardBox.Height <= bandBox!.Y + 2,
-            "Question card must sit above the art band (not overlapping).");
+        if (width < 1024)
+        {
+            var heroBox = await page.Locator(".test-block-stage__mobile-hero--band, .test-block-stage__mobile-hero--compact")
+                .First.BoundingBoxAsync();
+            Assert.NotNull(heroBox);
+            Assert.True(heroBox!.Y + heroBox.Height <= cardBox!.Y + 2,
+                "Question card must sit below the mobile hero band.");
+            Assert.True(heroBox.Height <= 205,
+                $"Mobile hero should stay near 200px tall, got {heroBox.Height}px.");
+        }
+        else
+        {
+            var bandBox = await page.Locator(".test-block-stage__scene-band").BoundingBoxAsync();
+            Assert.NotNull(bandBox);
+            Assert.True(cardBox!.Y + cardBox.Height <= bandBox!.Y + 2,
+                "Question card must sit above the desktop scene band (not overlapping).");
+        }
     }
 
     private static string FindRepoRoot()
