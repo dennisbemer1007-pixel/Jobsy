@@ -79,27 +79,32 @@ def people_bbox(img: Image.Image, x0: int, x1: int) -> tuple[int, int, int, int]
     )
 
 
-# Tuned boxes (x0,y0,x1,y1) on source wide art — people only, no landscape/props-only
+# Tuned boxes (x0,y0,x1,y1) on source wide art — people only, full heads, no landscape/props-only
 SCENES: dict[str, dict] = {
     "werkervaring-profession-wide.jpg": {
         "out": "werkervaring-mob-figures.png",
-        "box": (1478, 72, 1928, 719),
+        # Right: professional with briefcase, head to knees
+        "box": (1588, 72, 2078, 719),
     },
     "vervoer-profession-wide.jpg": {
         "out": "vervoer-mob-figures.png",
-        "box": (178, 152, 668, 706),
+        # Left: cyclist + passenger, full figures (not wheel-only)
+        "box": (198, 12, 512, 698),
     },
     "beschikbaarheid-profession-wide.jpg": {
         "out": "beschikbaarheid-mob-figures.png",
-        "box": (28, 208, 628, 719),
+        # Three colleagues, heads included
+        "box": (48, 96, 648, 719),
     },
     "kompas-hero-wide.jpg": {
         "out": "kompas-mob-figures.png",
-        "box": (80, 285, 340, 530),
+        # Family inset (people only), not the wide landscape
+        "box": (8, 248, 518, 692),
     },
     "droombaan-profession-wide.jpg": {
         "out": "droombaan-mob-figures.png",
-        "box": (1668, 88, 2388, 719),
+        # 2–3 professions on the right band, include heads
+        "box": (1995, 0, 2295, 640),
     },
     "opleiding.jpg": {
         "out": "opleiding-mob-figures.png",

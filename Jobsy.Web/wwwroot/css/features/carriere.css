@@ -25,6 +25,21 @@
 .career-only-mobile { display: none; }
 .career-only-desktop { display: revert; }
 
+@media (max-width: 639px) {
+  /* Hero toont al Career.Empty.Title; geen dubbele h1 in de kaart. */
+  .career-page--illustrated:has(> .cand-hero) .career-card--empty #career-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
 /* ---------------- scene (illustration layer) ---------------- */
 
 .career-scene {

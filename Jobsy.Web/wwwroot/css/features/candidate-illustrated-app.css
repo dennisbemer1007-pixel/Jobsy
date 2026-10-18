@@ -175,6 +175,13 @@
 }
 
 @media (max-width: 639px) {
+  .panel-page--cand-ill .cand-hero,
+  .passport-page--illustrated .cand-hero,
+  .career-page--illustrated .cand-hero {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
   /* Mobiel: geen wide-art ::after (kompas profession-band); alleen mob-figure PNG */
   .cand-hero--profession-band::after {
     display: none !important;
@@ -191,7 +198,7 @@
     margin-bottom: 0.75rem;
     display: grid;
     grid-template-columns: 55% 45%;
-    grid-template-rows: max-content;
+    grid-template-rows: 1fr;
     align-items: stretch;
     position: relative;
     min-height: 0 !important;
@@ -241,30 +248,34 @@
   }
 
   .cand-hero--with-art .cand-hero__mob-figures-wrap {
-    display: block;
+    display: flex;
     grid-column: 2;
     grid-row: 1;
     position: relative;
     z-index: 5;
-    min-height: 6.5rem;
+    align-items: flex-end;
+    justify-content: flex-end;
+    box-sizing: border-box;
+    padding: 0.45rem 0.85rem 0.4rem 0.35rem;
+    min-height: 0;
+    height: 100%;
     overflow: hidden;
+    clip-path: inset(0 8px 0 0);
     pointer-events: none;
   }
 
   .cand-hero--with-art .cand-hero__mob-figures {
     display: block;
-    position: absolute;
-    right: 0;
-    bottom: 0;
+    position: relative;
     width: auto;
-    height: 100%;
-    max-width: none;
+    height: auto;
+    max-height: 100%;
+    max-width: min(100%, 8.25rem);
     margin: 0;
     padding: 0;
     object-fit: contain;
     object-position: right bottom;
-    transform: scale(1.78);
-    transform-origin: right bottom;
+    transform: translateX(-10px);
     pointer-events: none;
   }
 
@@ -273,7 +284,6 @@
     z-index: 3;
     grid-column: 1;
     grid-row: 1;
-    align-self: start;
     box-sizing: border-box;
     width: 100%;
     max-width: none;
@@ -302,10 +312,7 @@
     font-size: 0.8rem;
     line-height: 1.33;
     margin-top: 0.28rem;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .cand-hero:not(.cand-hero--with-art) {

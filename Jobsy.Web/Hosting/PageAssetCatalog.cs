@@ -35,7 +35,7 @@ public static class PageAssetCatalog
     [
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/candidate-illustrated-app.css?v=20261018-69",
+        "css/features/candidate-illustrated-app.css?v=20261018-78",
         "css/features/kandidaat-banen.css?v=20261017-04",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
@@ -59,7 +59,7 @@ public static class PageAssetCatalog
         "css/features/kompas-illustrated.css?v=20261018-05",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261018-04",
-        "css/features/carriere.css?v=20261011-01",
+        "css/features/carriere.css?v=20261018-02",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",
         "css/features/future-jobs.css?v=20261006-02",

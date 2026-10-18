@@ -39,6 +39,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirR16 = "/opt/cursor/artifacts/kandidaat-728-r16";
     private const string ArtifactsDirMobhero = "/opt/cursor/artifacts/kandidaat-728-mobhero";
     private const string ArtifactsDirMobheroV3 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v3";
+    private const string ArtifactsDirMobheroV4 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v4";
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -1080,6 +1081,163 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Console.WriteLine(mobReports);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_728_mobhero_v4_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirMobheroV4);
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        var mobReports = new StringBuilder();
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobheroV4,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                WaitForApplicationsEmptyAsync);
+
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobheroV4,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                WaitForSavedEmptyAsync);
+        }
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV4,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            PrepareKompasTopScreenshotAsync);
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV4,
+            deliveryWeb.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            WaitForSettingsMailPaneAsync);
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV4,
+            deliveryWeb.ServerAddress,
+            "/vacancies/" + SampleVacancyId,
+            "vacature",
+            WaitForVacancyDetailAsync,
+            heroSelector: ".kb-detail__hero");
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV4,
+            deliveryWeb.ServerAddress,
+            "/carriere",
+            "carriere-leeg",
+            WaitForCareerEmptyAsync);
+
+        await AssertMobheroLeadNotTruncatedAsync(deliveryWeb.ServerAddress, emptyApps: true);
+
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobheroV4, $"{name}-390.png");
+            var metaPath = Path.Combine(ArtifactsDirMobheroV4, $"{name}-390-hero-meta.txt");
+            var report = ValidateMobileHeroPixels390(
+                await File.ReadAllBytesAsync(pngPath),
+                name,
+                gateV4: true,
+                heroMetaPath: File.Exists(metaPath) ? metaPath : null);
+            mobReports.AppendLine(report);
+        }
+
+        var mobReportPath = Path.Combine(ArtifactsDirMobheroV4, "mobhero-pixel-gate-v4-390.txt");
+        await File.WriteAllTextAsync(mobReportPath, mobReports.ToString());
+
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobheroV4, $"{name}-390.png");
+            var metaPath = Path.Combine(ArtifactsDirMobheroV4, $"{name}-390-hero-meta.txt");
+            var report = ValidateMobileHeroPixels390(
+                await File.ReadAllBytesAsync(pngPath),
+                name,
+                gateV4: true,
+                heroMetaPath: File.Exists(metaPath) ? metaPath : null);
+            Assert.DoesNotContain("PASS=False", report, StringComparison.Ordinal);
+        }
+
+        await deliveryWeb.DisposeAsync();
+
+        var pngs = Directory.GetFiles(ArtifactsDirMobheroV4, "*.png");
+        Assert.Equal(6, pngs.Length);
+        Console.WriteLine(mobReports);
+    }
+
+    private async Task AssertMobheroLeadNotTruncatedAsync(string serverAddress, bool emptyApps = false)
+    {
+        async Task CheckLeadAsync(string address, (string path, Func<IPage, int, Task> prepare)[] paths)
+        {
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = 390, Height = 844 },
+                Locale = "nl-NL",
+                IsMobile = true,
+                HasTouch = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
+
+            foreach (var (path, prepare) in paths)
+            {
+                await page.GotoAsync(
+                    $"{address}/__test/sign-in?return={Uri.EscapeDataString(path)}",
+                    new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+                await page.GotoAsync($"{address}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+                await prepare(page, 390);
+                var lead = await page.Locator(".cand-hero__lead").First.InnerTextAsync();
+                Assert.DoesNotContain("...", lead, StringComparison.Ordinal);
+                Assert.DoesNotContain("…", lead, StringComparison.Ordinal);
+                var overflow = await page.EvaluateAsync<bool>(
+                    """
+                    () => {
+                      const el = document.querySelector('.cand-hero__lead');
+                      if (!el) return false;
+                      return el.scrollHeight > el.clientHeight + 2;
+                    }
+                    """);
+                Assert.False(overflow);
+            }
+        }
+
+        if (emptyApps)
+        {
+            await using var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true);
+            _ = emptyWeb.ServerAddress;
+            await CheckLeadAsync(
+                emptyWeb.ServerAddress,
+                [
+                    ("/candidate/applications", WaitForApplicationsEmptyAsync),
+                    ("/candidate/liked", WaitForSavedEmptyAsync),
+                ]);
+        }
+
+        await CheckLeadAsync(
+            serverAddress,
+            [
+                ("/candidate/paspoort", PrepareKompasTopScreenshotAsync),
+                ("/candidate/settings?pane=mail", WaitForSettingsMailPaneAsync),
+                ("/carriere", WaitForCareerEmptyAsync),
+            ]);
+    }
+
     private async Task CaptureBanenkaartPopupsAsync(
         string artifactsDir = ArtifactsDirR2,
         string? serverAddress = null,
@@ -1337,6 +1495,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         byte[] pngBytes,
         string label,
         bool gateV3 = false,
+        bool gateV4 = false,
         string? heroMetaPath = null)
     {
         using var img = Image.Load<Rgb24>(pngBytes);
@@ -1538,19 +1697,108 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             sb.AppendLine($"  right slot non-pearl fill: {rightSlotFillPct:F1}% (min 35 v3)");
         }
 
-        var useMobSplit = !label.Contains("vacature", StringComparison.OrdinalIgnoreCase);
+        var isVacature = label.Contains("vacature", StringComparison.OrdinalIgnoreCase);
+        var useMobSplit = !isVacature;
         var seamOk = !gateV3 || seamStep <= 600;
-        var passed = heroHeightPx <= 260 && titleInk && (!useMobSplit || figureVisible) && ghostPixels == 0
-            && (!useMobSplit || ghostInFigureSlot == 0) && seamOk && contentBelowY < 420;
+        var heroHeightOk = isVacature || heroHeightPx <= 260;
+        var passed = heroHeightOk && (isVacature || titleInk) && (!useMobSplit || figureVisible) && ghostPixels == 0
+            && (!useMobSplit || ghostInFigureSlot == 0) && seamOk && (isVacature || contentBelowY < 420);
 
-        if (gateV3 && useMobSplit)
+        if (gateV3 && useMobSplit && !gateV4)
         {
             passed = passed && textTailGap <= textTailMax && rightSlotFillPct >= 35.0;
         }
 
-        if (gateV3 && label.Contains("vacature", StringComparison.OrdinalIgnoreCase))
+        if (gateV4 && useMobSplit)
         {
-            passed = File.Exists(Path.Combine(ArtifactsDirMobheroV3, "vacature-390.png"));
+            var rightStart = (int)Math.Round(img.Width * 0.55);
+            var figMinX = img.Width;
+            var figMinY = img.Height;
+            var figMaxX = 0;
+            var figMaxY = 0;
+            for (var y = heroTopY; y <= heroBottomY; y++)
+            {
+                for (var x = rightStart; x < img.Width - 2; x++)
+                {
+                    if (!IsMobHeroSolidFigurePixel(img[x, y]))
+                    {
+                        continue;
+                    }
+
+                    figMinX = Math.Min(figMinX, x);
+                    figMinY = Math.Min(figMinY, y);
+                    figMaxX = Math.Max(figMaxX, x);
+                    figMaxY = Math.Max(figMaxY, y);
+                }
+            }
+
+            var hasFigureBox = figMaxX > figMinX && figMaxY > figMinY;
+            sb.AppendLine(hasFigureBox
+                ? $"  figure box: x={figMinX}–{figMaxX} y={figMinY}–{figMaxY}"
+                : "  figure box: (none)");
+
+            var headOk = false;
+            if (hasFigureBox)
+            {
+                var figHeight = figMaxY - figMinY + 1;
+                var headBandBottom = figMinY + Math.Max(24, (int)Math.Round(figHeight * 0.15));
+                var headSamples = 0;
+                var headFigurePx = 0;
+                for (var y = figMinY; y <= headBandBottom; y += 2)
+                {
+                    for (var x = figMinX; x <= figMaxX; x += 3)
+                    {
+                        headSamples++;
+                        if (!IsMobileHeroPearl(img[x, y]) && !IsGhostFadePixel(img[x, y])
+                            && IsMobHeroFigurePixel(img[x, y]))
+                        {
+                            headFigurePx++;
+                        }
+                    }
+                }
+
+                var headFillPct = headSamples == 0 ? 0 : 100.0 * headFigurePx / headSamples;
+                headOk = headFigurePx >= 6 && headFillPct >= 4.0;
+                sb.AppendLine($"  head band (top 15% of figure box) figure ink: {headFillPct:F1}% ({headFigurePx} px, min 4% v4)");
+            }
+            else
+            {
+                sb.AppendLine("  head band (top 15% of figure box) non-pearl: n/a");
+            }
+
+            var touchTop = hasFigureBox && figMinY <= heroTopY + 3;
+            var touchLeft = hasFigureBox && figMinX <= 4;
+            var edgeSolidCount = 0;
+            if (hasFigureBox)
+            {
+                for (var y = heroTopY + 4; y <= heroBottomY - 4; y += 2)
+                {
+                    for (var x = img.Width - 4; x < img.Width; x++)
+                    {
+                        if (IsMobHeroSolidFigurePixel(img[x, y]))
+                        {
+                            edgeSolidCount++;
+                        }
+                    }
+                }
+            }
+
+            var touchRight = edgeSolidCount >= 10;
+            sb.AppendLine($"  figure touches hero top: {touchTop} (must false v4)");
+            sb.AppendLine($"  figure touches hero right edge: {touchRight} ({edgeSolidCount} px on last 4 cols, max 9 v4)");
+            sb.AppendLine($"  figure touches hero left edge: {touchLeft} (must false v4)");
+
+            var copyInsideHero = copyBottomY <= 0 || copyBottomY <= heroBottomY + 6;
+            sb.AppendLine($"  copy inside hero: {copyInsideHero} (v4)");
+
+            passed = passed && hasFigureBox && headOk && !touchTop && !touchRight && !touchLeft
+                && copyInsideHero;
+        }
+
+        if ((gateV3 || gateV4) && isVacature)
+        {
+            var vacatureDir = gateV4 ? ArtifactsDirMobheroV4 : ArtifactsDirMobheroV3;
+            passed = File.Exists(Path.Combine(vacatureDir, "vacature-390.png"));
         }
 
         sb.AppendLine($"  PASS={passed}");
@@ -1829,6 +2077,18 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         }
 
         return dist > 72 && px.R + px.G + px.B < 480;
+    }
+
+    /// <summary>Opaque illustration ink for v4 bbox/head/edge (excludes pearl and fade seam).</summary>
+    private static bool IsMobHeroSolidFigurePixel(Rgb24 px)
+    {
+        if (IsPeachDecorPixel(px) || IsMobileHeroPearl(px) || IsGhostFadePixel(px))
+        {
+            return false;
+        }
+
+        var dist = RgbStep(PearlReference, px);
+        return dist > 80 && px.R + px.G + px.B < 560;
     }
 
     private static bool IsGhostFadePixel(Rgb24 px)

@@ -2,77 +2,77 @@
   "werkervaring-mob-figures.png": {
     "source": "werkervaring-profession-wide.jpg",
     "box": [
-      1478,
+      1588,
       72,
-      1928,
+      2078,
       719
     ],
     "out_size": [
-      450,
-      568
+      490,
+      569
     ],
-    "opaque_pixels": 88284,
-    "aspect": 1.262
+    "opaque_pixels": 144723,
+    "aspect": 1.161
   },
   "vervoer-mob-figures.png": {
     "source": "vervoer-profession-wide.jpg",
     "box": [
-      178,
-      152,
-      668,
-      706
+      198,
+      12,
+      512,
+      698
     ],
     "out_size": [
-      490,
-      404
+      314,
+      403
     ],
-    "opaque_pixels": 85317,
-    "aspect": 0.824
+    "opaque_pixels": 48724,
+    "aspect": 1.283
   },
   "beschikbaarheid-mob-figures.png": {
     "source": "beschikbaarheid-profession-wide.jpg",
     "box": [
-      28,
-      208,
-      628,
+      48,
+      96,
+      648,
       719
     ],
     "out_size": [
       600,
       485
     ],
-    "opaque_pixels": 206499,
+    "opaque_pixels": 198850,
     "aspect": 0.808
   },
   "kompas-mob-figures.png": {
     "source": "kompas-hero-wide.jpg",
     "box": [
-      80,
-      285,
-      340,
-      530
+      8,
+      248,
+      518,
+      692
     ],
     "out_size": [
-      260,
-      222
+      510,
+      353
     ],
-    "opaque_pixels": 43144,
-    "aspect": 0.854
+    "opaque_pixels": 121355,
+    "aspect": 0.692
   },
   "droombaan-mob-figures.png": {
     "source": "droombaan-profession-wide.jpg",
     "box": [
-      1668,
-      88,
-      2388,
-      719
+      1995,
+      0,
+      2295,
+      640
     ],
     "out_size": [
-      720,
-      458
+      300,
+      379
     ],
-    "opaque_pixels": 164522,
-    "aspect": 0.636
+    "opaque_pixels": 59797,
+    "aspect": 1.263
   },
   "opleiding-mob-figures.png": {
     "source": "opleiding.jpg",
