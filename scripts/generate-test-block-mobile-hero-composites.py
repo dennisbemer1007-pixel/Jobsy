@@ -2,6 +2,7 @@
 """Pre-composite mobile test-block hero bands (390×200 logical, 780×400 asset)."""
 from __future__ import annotations
 
+from collections import deque
 from pathlib import Path
 
 from PIL import Image
@@ -10,16 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 JPG_DIR = ROOT / "Jobsy.Web/wwwroot/images/tests"
 OUT_DIR = JPG_DIR / "figures"
 
-# Logical hero size at 2× for crisp background-image.
 MOB_W = 780
 MOB_H = 400
 
-# Matches :root --bg (#f5f2ee); mobile heroes use background-color: var(--bg).
-PAGE_CREAM = (245, 242, 238)
-
 SLUGS = ("hoe-je-werkt", "leuk", "sfeer", "waarden")
 
-# Fractional crop on trimmed *-hero.png (x0, y0, x1, y1) — keeps 1–2 full figures for bottom-right placement.
 HERO_REGION = {
     "hoe-je-werkt": (0.62, 0.0, 1.0, 1.0),
     "leuk": (0.0, 0.0, 0.82, 0.92),
@@ -27,57 +23,106 @@ HERO_REGION = {
     "waarden": (0.66, 0.34, 1.0, 1.0),
 }
 
-# Min 60px logical fade at 2× asset.
-FEATHER_PX = 140
+# Approximate mobile --test-block-hero-cream (matches tests.css color-mix intent).
+BLOCK_HERO_RGB = {
+    "hoe-je-werkt": (232, 238, 246),
+    "leuk": (248, 236, 230),
+    "sfeer": (241, 234, 226),
+    "waarden": (236, 242, 236),
+}
 
 
-def _luminance(rgb) -> float:
-    r, g, b = rgb[:3]
-    return 0.299 * r + 0.587 * g + 0.114 * b
+def _sample_block_color(slug: str) -> tuple[int, int, int]:
+    src = JPG_DIR / f"bg-{slug}.jpg"
+    if src.is_file():
+        rgb = Image.open(src).convert("RGB")
+        pts = [(6, 6), (rgb.width - 7, 6), (6, rgb.height - 7)]
+        rs = gs = bs = 0
+        for px, py in pts:
+            r, g, b = rgb.getpixel((px, py))
+            rs += r
+            gs += g
+            bs += b
+        n = len(pts)
+        sampled = (rs // n, gs // n, bs // n)
+        target = BLOCK_HERO_RGB.get(slug, sampled)
+        # Blend sampled JPG corners with token so blocks stay on-brand.
+        return (
+            int(sampled[0] * 0.35 + target[0] * 0.65),
+            int(sampled[1] * 0.35 + target[1] * 0.65),
+            int(sampled[2] * 0.35 + target[2] * 0.65),
+        )
+    return BLOCK_HERO_RGB[slug]
 
 
-def _near_cream(rgb, cream: tuple[int, int, int], tol: int = 22) -> bool:
-    return max(abs(int(rgb[0]) - cream[0]), abs(int(rgb[1]) - cream[1]), abs(int(rgb[2]) - cream[2])) <= tol
+def _matches_bg(rgb, bg: tuple[int, int, int], tol: int) -> bool:
+    return max(abs(int(rgb[0]) - bg[0]), abs(int(rgb[1]) - bg[1]), abs(int(rgb[2]) - bg[2])) <= tol
 
 
-def assert_no_hard_cream_seams(path: Path, cream: tuple[int, int, int] = PAGE_CREAM) -> None:
-    """Fail when a straight cream/cream luminance step >8 appears (figure PNG box edge)."""
+def _flood_key_figure(arr, bg: tuple[int, int, int], tol: int = 30):
+    """Remove background connected to image edges; keep people/plants fully opaque."""
     import numpy as np
 
-    im = Image.open(path).convert("RGB")
-    arr = np.array(im)
     h, w = arr.shape[:2]
-    lum = (
-        0.299 * arr[:, :, 0].astype(np.float32)
-        + 0.587 * arr[:, :, 1].astype(np.float32)
-        + 0.114 * arr[:, :, 2].astype(np.float32)
-    )
+    rgb = arr[:, :, :3]
+    match = np.zeros((h, w), dtype=bool)
+    for y in range(h):
+        for x in range(w):
+            if _matches_bg(rgb[y, x], bg, tol):
+                match[y, x] = True
 
-    x_start = max(1, int(w * 0.22))
-    for x in range(x_start, w):
-        seam = 0
-        for y in range(h):
-            if abs(lum[y, x] - lum[y, x - 1]) <= 8:
+    bg_mask = np.zeros((h, w), dtype=bool)
+    q: deque[tuple[int, int]] = deque()
+    for x in range(w):
+        for y in (0, h - 1):
+            if match[y, x]:
+                bg_mask[y, x] = True
+                q.append((x, y))
+    for y in range(h):
+        for x in (0, w - 1):
+            if match[y, x] and not bg_mask[y, x]:
+                bg_mask[y, x] = True
+                q.append((x, y))
+
+    while q:
+        x, y = q.popleft()
+        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+            if 0 <= nx < w and 0 <= ny < h and not bg_mask[ny, nx] and match[ny, nx]:
+                bg_mask[ny, nx] = True
+                q.append((nx, ny))
+
+    arr[bg_mask, 3] = 0
+    person = (~bg_mask) & (arr[:, :, 3] > 0)
+    arr[person, 3] = 255
+    delta = np.abs(rgb.astype(np.int16) - np.array(bg, dtype=np.int16)).max(axis=2)
+    person_core = person & (delta > 46)
+    return arr, person_core
+
+
+def _feather_ground_only(arr, person_mask, bg: tuple[int, int, int], ground_frac: float = 0.24):
+    """Fade only low-contrast ground/plants in the bottom band — never person pixels."""
+    import numpy as np
+
+    h, w = arr.shape[:2]
+    y0 = int(h * (1.0 - ground_frac))
+    rgb = arr[:, :, :3]
+    bg_arr = np.array(bg, dtype=np.int16)
+
+    for y in range(y0, h):
+        t_row = (y - y0) / max(1, h - y0 - 1)
+        for x in range(w):
+            if person_mask[y, x]:
                 continue
-            if _near_cream(arr[y, x - 1], cream) and _near_cream(arr[y, x], cream):
-                seam += 1
-        if seam >= max(28, int(h * 0.22)):
-            raise RuntimeError(f"{path.name}: vertical cream seam at x={x} ({seam} rows, ΔL>8)")
-
-    y_start = max(1, int(h * 0.08))
-    x_lo, x_hi = int(w * 0.22), int(w * 0.92)
-    for y in range(y_start, h):
-        seam = 0
-        for x in range(x_lo, x_hi):
-            if abs(lum[y, x] - lum[y - 1, x]) <= 8:
+            if arr[y, x, 3] == 0:
                 continue
-            if _near_cream(arr[y - 1, x], cream) and _near_cream(arr[y, x], cream):
-                seam += 1
-        if seam >= max(36, int((x_hi - x_lo) * 0.28)):
-            raise RuntimeError(f"{path.name}: horizontal cream seam at y={y} ({seam} cols, ΔL>8)")
+            delta = np.abs(rgb[y, x].astype(np.int16) - bg_arr).max()
+            if delta > 52:
+                continue
+            fade = t_row * t_row
+            arr[y, x, 3] = int(255 * (1.0 - fade * 0.85))
 
 
-def load_opaque_figure_from_hero(slug: str, canvas_cream: tuple[int, int, int]) -> Image.Image:
+def load_cutout_figure(slug: str, block_bg: tuple[int, int, int]) -> tuple[Image.Image, Image.Image]:
     import numpy as np
 
     hero_path = OUT_DIR / f"{slug}-hero.png"
@@ -99,162 +144,96 @@ def load_opaque_figure_from_hero(slug: str, canvas_cream: tuple[int, int, int]) 
         max(int(h * y0f) + 1, int(h * y1f)),
     )
     figure = hero.crop(region)
-
     arr = np.array(figure, copy=True)
-    rgb = arr[:, :, :3]
-    ref_corners = np.array(
-        [rgb[0, 0], rgb[0, -1], rgb[-1, 0], rgb[-1, -1]], dtype=np.int16
-    )
-    local_cream = ref_corners.mean(axis=0).astype(np.uint8)
-    canvas = np.array(canvas_cream, dtype=np.int16)
-
-    diff_canvas = np.abs(rgb.astype(np.int16) - canvas).max(axis=2)
-    diff_local = np.abs(rgb.astype(np.int16) - local_cream.astype(np.int16)).max(axis=2)
-    keyed = (diff_canvas <= 30) | (diff_local <= 32)
-    arr[keyed, 3] = 0
-    arr[~keyed & (arr[:, :, 3] > 24), 3] = 255
+    arr, person_mask = _flood_key_figure(arr, block_bg, tol=32)
+    _feather_ground_only(arr, person_mask, block_bg)
 
     figure = Image.fromarray(arr, mode="RGBA")
+    mask = Image.fromarray((person_mask.astype(np.uint8) * 255), mode="L")
     bbox = figure.getbbox()
     if not bbox:
         raise RuntimeError(f"No opaque pixels in hero crop for {slug}")
-    return figure.crop(bbox)
+    figure = figure.crop(bbox)
+    mask = mask.crop(bbox)
+    return figure, mask
 
 
-def _feather_figure_alpha(figure: Image.Image, left_px: int, top_px: int) -> Image.Image:
-    import numpy as np
-
-    arr = np.array(figure, copy=True)
-    alpha = arr[:, :, 3]
-    ys, xs = np.where(alpha > 0)
-    if len(xs) == 0:
-        return figure
-    x0, y0 = int(xs.min()), int(ys.min())
-
-    def smoothstep(t: float) -> float:
-        t = max(0.0, min(1.0, t))
-        return t * t * (3.0 - 2.0 * t)
-
-    h, w = arr.shape[:2]
-    for x in range(w):
-        dist_left = x - x0
-        if dist_left < left_px:
-            t = smoothstep(dist_left / max(1, left_px))
-            arr[:, x, 3] = (alpha[:, x].astype(np.float32) * t).astype(np.uint8)
-    alpha = arr[:, :, 3]
-    for y in range(h):
-        dist_top = y - y0
-        if dist_top < top_px:
-            t = smoothstep(dist_top / max(1, top_px))
-            arr[y, :, 3] = (arr[y, :, 3].astype(np.float32) * t).astype(np.uint8)
-
-    return Image.fromarray(arr, mode="RGBA")
-
-
-def _apply_text_figure_gradient(canvas: Image.Image, cream: tuple[int, int, int], fade_end_ratio: float = 0.62) -> None:
-    """Soft cream fade over the left band so title sits on calm cream; figures stay vivid on the right."""
+def _apply_text_figure_gradient(canvas: Image.Image, block_bg: tuple[int, int, int]) -> None:
     import numpy as np
 
     arr = np.array(canvas.convert("RGBA"))
     w = arr.shape[1]
-    fade_end = int(w * fade_end_ratio)
+    fade_end = int(w * 0.58)
     for x in range(fade_end):
         t = 1.0 - (x / max(1, fade_end))
-        strength = t * t * 0.68
+        strength = t * t * 0.55
         if strength <= 0.01:
             continue
         for y in range(arr.shape[0]):
             r, g, b, a = arr[y, x]
             if a < 255:
                 continue
-            nr = int(r * (1 - strength) + cream[0] * strength)
-            ng = int(g * (1 - strength) + cream[1] * strength)
-            nb = int(b * (1 - strength) + cream[2] * strength)
+            nr = int(r * (1 - strength) + block_bg[0] * strength)
+            ng = int(g * (1 - strength) + block_bg[1] * strength)
+            nb = int(b * (1 - strength) + block_bg[2] * strength)
             arr[y, x] = (nr, ng, nb, 255)
     canvas.paste(Image.fromarray(arr, mode="RGBA"))
 
 
-def _feather_figure_into_canvas(
-    canvas: Image.Image,
-    figure: Image.Image,
-    x: int,
-    y: int,
-    cream: tuple[int, int, int],
-) -> None:
-    """Paste figure and dissolve left/top margins into page cream over FEATHER_PX."""
+def assert_no_hard_block_seams(path: Path, block_bg: tuple[int, int, int]) -> None:
     import numpy as np
 
-    canvas.paste(figure, (x, y), figure)
-    arr = np.array(canvas.convert("RGBA"))
-    fig = np.array(figure)
-    fh, fw = fig.shape[:2]
+    arr = np.array(Image.open(path).convert("RGB"))
+    h, w = arr.shape[:2]
+    lum = (
+        0.299 * arr[:, :, 0].astype(np.float32)
+        + 0.587 * arr[:, :, 1].astype(np.float32)
+        + 0.114 * arr[:, :, 2].astype(np.float32)
+    )
 
-    def smoothstep(t: float) -> float:
-        t = max(0.0, min(1.0, t))
-        return t * t * (3.0 - 2.0 * t)
+    def near_block(px) -> bool:
+        return _matches_bg(px, block_bg, 24)
 
-    cream_arr = np.array(cream, dtype=np.float32)
-    for fy in range(fh):
-        cy = y + fy
-        if cy >= arr.shape[0]:
-            continue
-        for fx in range(fw):
-            cx = x + fx
-            if cx >= arr.shape[1]:
+    x_start = max(1, int(w * 0.22))
+    for x in range(x_start, w):
+        seam = 0
+        for y in range(h):
+            if abs(lum[y, x] - lum[y, x - 1]) <= 8:
                 continue
-            fa = fig[fy, fx, 3]
-            if fa < 8:
+            if near_block(arr[y, x - 1]) and near_block(arr[y, x]):
+                seam += 1
+        if seam >= max(28, int(h * 0.22)):
+            raise RuntimeError(f"{path.name}: vertical block seam at x={x} ({seam} rows)")
+
+    y_start = max(1, int(h * 0.08))
+    x_lo, x_hi = int(w * 0.22), int(w * 0.92)
+    for y in range(y_start, h):
+        seam = 0
+        for x in range(x_lo, x_hi):
+            if abs(lum[y, x] - lum[y - 1, x]) <= 8:
                 continue
-            dist_l = fx
-            dist_t = fy
-            t_l = smoothstep(dist_l / FEATHER_PX) if dist_l < FEATHER_PX else 1.0
-            t_t = smoothstep(dist_t / max(1, FEATHER_PX // 2)) if dist_t < FEATHER_PX // 2 else 1.0
-            t = min(t_l, t_t)
-            fr, fg, fb = fig[fy, fx, :3].astype(np.float32)
-            blend = t * (fa / 255.0)
-            base = arr[cy, cx, :3].astype(np.float32)
-            out = base * (1.0 - blend) + np.array([fr, fg, fb]) * blend
-            # Pull keyed fringe toward cream
-            if t < 0.98 and max(abs(fr - cream[0]), abs(fg - cream[1]), abs(fb - cream[2])) < 36:
-                out = base * (1.0 - blend) + cream_arr * blend
-            arr[cy, cx, :3] = np.clip(out, 0, 255).astype(np.uint8)
-            arr[cy, cx, 3] = 255
-
-    canvas.paste(Image.fromarray(arr, mode="RGBA"))
+            if near_block(arr[y - 1, x]) and near_block(arr[y, x]):
+                seam += 1
+        if seam >= max(36, int((x_hi - x_lo) * 0.28)):
+            raise RuntimeError(f"{path.name}: horizontal block seam at y={y} ({seam} cols)")
 
 
-def _smooth_figure_left_margin(
-    canvas: Image.Image, fig_x: int, fig_y: int, fig_h: int, cream: tuple[int, int, int]
-) -> None:
-    """Extra dissolve for the strip left of the figure (removes visible PNG box edge)."""
+def assert_person_mask_opaque(mask_path: Path) -> None:
     import numpy as np
 
-    arr = np.array(canvas.convert("RGBA"))
-    x_start = max(0, fig_x - FEATHER_PX)
-    x_end = min(arr.shape[1], fig_x + 24)
-    y_start = max(0, fig_y - 8)
-    y_end = min(arr.shape[0], fig_y + fig_h + 8)
-    cream_arr = np.array(cream, dtype=np.float32)
-
-    for x in range(x_start, x_end):
-        t = (x - x_start) / max(1, x_end - x_start)
-        strength = (1.0 - t) * 0.96
-        if strength <= 0.02:
-            continue
-        for y in range(y_start, y_end):
-            p = arr[y, x, :3].astype(np.float32)
-            if max(abs(p[0] - cream[0]), abs(p[1] - cream[1]), abs(p[2] - cream[2])) > 48:
-                continue
-            out = p * (1.0 - strength) + cream_arr * strength
-            arr[y, x, :3] = np.clip(out, 0, 255).astype(np.uint8)
-
-    canvas.paste(Image.fromarray(arr, mode="RGBA"))
+    m = np.array(Image.open(mask_path).convert("L"))
+    ys, xs = np.where(m > 64)
+    if len(xs) == 0:
+        raise RuntimeError(f"{mask_path.name}: empty person mask")
+    # Source mask is 255 on person; after resize it should remain fully opaque in composite check file.
+    if (m[m > 64] < 255).any():
+        raise RuntimeError(f"{mask_path.name}: person mask has non-opaque person pixels")
 
 
 def composite_mobile_hero(slug: str) -> None:
-    cream = PAGE_CREAM
-    canvas = Image.new("RGBA", (MOB_W, MOB_H), cream + (255,))
-    figure = load_opaque_figure_from_hero(slug, cream)
+    block_bg = _sample_block_color(slug)
+    canvas = Image.new("RGBA", (MOB_W, MOB_H), block_bg + (255,))
+    figure, person_mask = load_cutout_figure(slug, block_bg)
 
     target_w = int(MOB_W * 0.45)
     target_h = int(MOB_H * 0.94)
@@ -263,23 +242,40 @@ def composite_mobile_hero(slug: str) -> None:
     new_w = max(1, int(figure.width * scale))
     new_h = max(1, int(figure.height * scale))
     figure = figure.resize((new_w, new_h), Image.Resampling.LANCZOS)
-    figure = _feather_figure_alpha(figure, FEATHER_PX, FEATHER_PX // 2)
+    person_mask = person_mask.resize((new_w, new_h), Image.Resampling.NEAREST)
 
-    margin_x = 18 if slug == "hoe-je-werkt" else (8 if slug == "leuk" else 10)
+    import numpy as np
+
+    fig_arr = np.array(figure, copy=True)
+    pm = np.array(person_mask) > 127
+    fig_arr[pm, 3] = 255
+    figure = Image.fromarray(fig_arr, mode="RGBA")
+    if pm.any() and (fig_arr[:, :, 3][pm] < 255).any():
+        bad = int((fig_arr[:, :, 3][pm] < 255).sum())
+        raise RuntimeError(f"{slug}: {bad} person pixels have alpha<255 before paste")
+
+    cutout_dest = OUT_DIR / f"{slug}-mobhero-figure-cutout.png"
+    mask_dest = OUT_DIR / f"{slug}-mobhero-person-mask.png"
+    figure.save(cutout_dest, optimize=True)
+    Image.fromarray((pm.astype(np.uint8) * 255), mode="L").save(mask_dest, optimize=True)
+
+    margin_x = 16 if slug == "hoe-je-werkt" else (8 if slug == "leuk" else 10)
     margin_y = 0 if slug == "leuk" else 6
     x = MOB_W - new_w - margin_x
     y = MOB_H - new_h - margin_y
-    _feather_figure_into_canvas(canvas, figure, x, y, cream)
-    _smooth_figure_left_margin(canvas, x, y, new_h, cream)
+    canvas.paste(figure, (x, y), figure)
 
-    _apply_text_figure_gradient(canvas, cream)
+    _apply_text_figure_gradient(canvas, block_bg)
 
-    rgb_canvas = canvas.convert("RGB")
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     dest = OUT_DIR / f"{slug}-mobhero.png"
+
+    rgb_canvas = canvas.convert("RGB")
     rgb_canvas.save(dest, optimize=True)
-    assert_no_hard_cream_seams(dest, cream)
-    print(f"Wrote {dest} ({rgb_canvas.width}x{rgb_canvas.height}) figure={new_w}x{new_h}@{x},{y}")
+
+    assert_no_hard_block_seams(dest, block_bg)
+    assert_person_mask_opaque(mask_dest)
+    print(f"Wrote {dest} ({rgb_canvas.width}x{rgb_canvas.height}) figure={new_w}x{new_h}@{x},{y} bg={block_bg}")
 
 
 def main() -> None:

@@ -693,13 +693,6 @@
     background: var(--bg);
   }
 
-  .test-block-stage--hoe-je-werkt,
-  .test-block-stage--leuk,
-  .test-block-stage--sfeer,
-  .test-block-stage--waarden {
-    --test-block-hero-cream: var(--bg);
-  }
-
   .test-page.journey-page:has([data-testid="test-block-stage"]) {
     background: var(--bg);
   }
@@ -774,7 +767,7 @@
     border-radius: 0;
     overflow: hidden;
     isolation: isolate;
-    background-color: var(--bg);
+    background-color: var(--test-block-hero-cream);
     background-image: var(--test-block-mobile-hero-image);
     background-repeat: no-repeat;
     background-size: cover;
@@ -813,8 +806,8 @@
 
   .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero h1 {
     box-sizing: border-box;
-    max-inline-size: min(9.25rem, 44%);
-    padding-inline-end: calc(0.85rem + 14px);
+    max-inline-size: min(11.75rem, 52%);
+    padding-inline-end: calc(0.85rem + 12px);
   }
 
   .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {

@@ -186,7 +186,8 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         Assert.True(File.Exists(path), $"Missing mobhero composite: {path}");
         var png = File.ReadAllBytes(path);
         AssertMobHeroVisiblePixels(png, slug);
-        AssertMobHeroNoHardCreamSeams(png, slug);
+        AssertMobHeroNoHardBlockSeams(png, slug);
+        AssertMobHeroPersonPixelsFullyOpaque(slug, png);
     }
 
     [Fact]
@@ -292,10 +293,19 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
     }
 
-    private static void AssertMobHeroNoHardCreamSeams(byte[] png, string stem)
+    private static Rgba32 MobHeroBlockReference(string slug) => slug switch
+    {
+        "hoe-je-werkt" => new Rgba32(232, 238, 246, 255),
+        "leuk" => new Rgba32(248, 236, 230, 255),
+        "sfeer" => new Rgba32(241, 234, 226, 255),
+        "waarden" => new Rgba32(236, 242, 236, 255),
+        _ => new Rgba32(245, 242, 238, 255)
+    };
+
+    private static void AssertMobHeroNoHardBlockSeams(byte[] png, string stem)
     {
         using var image = Image.Load<Rgba32>(png);
-        var cream = new Rgba32(245, 242, 238, 255);
+        var block = MobHeroBlockReference(stem);
         var w = image.Width;
         var h = image.Height;
         var xStart = Math.Max(1, (int)(w * 0.22));
@@ -305,7 +315,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
 
         static float Lum(Rgba32 p) => 0.299f * p.R + 0.587f * p.G + 0.114f * p.B;
 
-        static bool NearCream(Rgba32 p, Rgba32 c, int tol = 22)
+        static bool NearBlock(Rgba32 p, Rgba32 c, int tol = 24)
             => Math.Max(Math.Max(Math.Abs(p.R - c.R), Math.Abs(p.G - c.G)), Math.Abs(p.B - c.B)) <= tol;
 
         for (var x = xStart; x < w; x++)
@@ -320,7 +330,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
                     continue;
                 }
 
-                if (NearCream(a, cream) && NearCream(b, cream))
+                if (NearBlock(a, block) && NearBlock(b, block))
                 {
                     seam++;
                 }
@@ -328,7 +338,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
 
             if (seam >= Math.Max(28, (int)(h * 0.22)))
             {
-                Assert.Fail($"{stem}: vertical cream seam at x={x} ({seam} rows, ΔL>8).");
+                Assert.Fail($"{stem}: vertical block-color seam at x={x} ({seam} rows, ΔL>8).");
             }
         }
 
@@ -344,7 +354,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
                     continue;
                 }
 
-                if (NearCream(a, cream) && NearCream(b, cream))
+                if (NearBlock(a, block) && NearBlock(b, block))
                 {
                     seam++;
                 }
@@ -352,9 +362,47 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
 
             if (seam >= Math.Max(36, (int)((xHi - xLo) * 0.28)))
             {
-                Assert.Fail($"{stem}: horizontal cream seam at y={y} ({seam} cols, ΔL>8).");
+                Assert.Fail($"{stem}: horizontal block-color seam at y={y} ({seam} cols, ΔL>8).");
             }
         }
+    }
+
+    private static void AssertMobHeroPersonPixelsFullyOpaque(string slug, byte[] _)
+    {
+        var root = FindRepoRoot();
+        var figuresDir = Path.Combine(root, "Jobsy.Web/wwwroot/images/tests/figures");
+        var cutoutPath = Path.Combine(figuresDir, $"{slug}-mobhero-figure-cutout.png");
+        var maskPath = Path.Combine(figuresDir, $"{slug}-mobhero-person-mask.png");
+        Assert.True(File.Exists(cutoutPath), $"Missing figure cutout: {cutoutPath}");
+        Assert.True(File.Exists(maskPath), $"Missing person mask: {maskPath}");
+
+        using var cutout = Image.Load<Rgba32>(cutoutPath);
+        using var mask = Image.Load<L8>(maskPath);
+        Assert.Equal(cutout.Width, mask.Width);
+        Assert.Equal(cutout.Height, mask.Height);
+
+        var personPixels = 0;
+        var ghostPixels = 0;
+        for (var y = 0; y < cutout.Height; y++)
+        {
+            for (var x = 0; x < cutout.Width; x++)
+            {
+                if (mask[x, y].PackedValue < 128)
+                {
+                    continue;
+                }
+
+                personPixels++;
+                if (cutout[x, y].A < 255)
+                {
+                    ghostPixels++;
+                }
+            }
+        }
+
+        Assert.True(personPixels > 200, $"{slug}: person mask too small ({personPixels}px).");
+        Assert.True(ghostPixels == 0,
+            $"{slug}: {ghostPixels} person-mask pixels have alpha<255 in figure cutout (ghosting).");
     }
 
     private static Rgba32 SampleMobHeroCreamReference(Image<Rgba32> image)

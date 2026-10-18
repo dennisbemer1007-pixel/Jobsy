@@ -479,7 +479,7 @@ public static class UiStringsDiscovery
         Add("Discovery.Test.Competency.Title",
             "Hoe werk jij?", "How do you work?", "Jak pracujesz?", "Cum lucrezi?", "كيف تعمل؟");
         Add("Discovery.Test.Competency.MobileTitle",
-            "Hoe werk<br />jij?", "How do<br />you work?", "Jak pracujesz<br />na co dzień?", "Cum lucrezi<br />tu?", "كيف<br />تعمل؟");
+            "Hoe\u00a0werk<br />jij?", "How do<br />you work?", "Jak pracujesz<br />na co dzień?", "Cum lucrezi<br />tu?", "كيف<br />تعمل؟");
         Add("Discovery.Test.Career.Title",
             "Wat vind je leuk?", "What do you enjoy?", "Co lubisz?", "Ce-ți place?", "ماذا تحب؟");
         Add("Discovery.Test.Culture.Title",
