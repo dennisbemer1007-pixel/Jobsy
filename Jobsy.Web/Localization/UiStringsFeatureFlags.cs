@@ -125,8 +125,8 @@ public static class UiStringsFeatureFlags
             "Verificare referințe (experiență)",
             "التحقق من مراجع الخبرة");
         Add("AdminSettings.ReferenceVerification.Enabled.Desc",
-            "Uit = kandidaten zien geen tip, referentieverzoeken of bevestigde competenties. Acceptatie kan Jobsy:ReferenceVerificationEnabled gebruiken.",
-            "Off = candidates do not see the tip, reference requests or confirmed competencies. Acceptatie may use Jobsy:ReferenceVerificationEnabled.",
+            "Uit = kandidaten zien geen tip, referentieverzoeken of bevestigde competenties. Acceptatie kan Lobsy:ReferenceVerificationEnabled gebruiken.",
+            "Off = candidates do not see the tip, reference requests or confirmed competencies. Acceptatie may use Lobsy:ReferenceVerificationEnabled.",
             "Wył. = kandydaci nie widzą tipu, próśb o referencje ani potwierdzonych kompetencji.",
             "Oprit = candidații nu văd sfatul, cererile de referință sau competențele confirmate.",
             "إيقاف = لا يرى المرشحون النصيحة أو طلبات المراجع أو الكفاءات المؤكدة.");
