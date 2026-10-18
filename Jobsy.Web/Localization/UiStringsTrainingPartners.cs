@@ -93,7 +93,8 @@ public static class UiStringsTrainingPartners
         Add("Training.LearnGrow.Lead",
             "Workshops en opleidingen die passen bij jouw route en je test. Gratis staat altijd bovenaan.",
             "Workshops and courses that fit your route and your test. Free always appears first.");
-        Add("Training.LearnGrow.SearchPlaceholder", "Zoek op onderwerp", "Search by topic");
+        Add("Training.LearnGrow.SearchPlaceholder", "Zoek op onderwerp, bijvoorbeeld klantcontact", "Search by topic, e.g. customer contact");
+        Add("Training.LearnGrow.SearchPlaceholderMobile", "Zoek op onderwerp", "Search by topic");
         Add("Training.LearnGrow.SearchHint", ", bijvoorbeeld klantcontact", ", e.g. customer contact");
         Add("Training.LearnGrow.Search", "Zoeken", "Search");
         Add("Training.LearnGrow.NavRoute", "Mijn route", "My route");

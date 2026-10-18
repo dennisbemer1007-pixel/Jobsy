@@ -35,9 +35,13 @@
             <label class="opl-search__field">
                 <span class="visually-hidden">@Culture["Training.LearnGrow.SearchPlaceholder"]</span>
                 <input type="search"
+                       class="opl-only-mobile"
+                       @bind="_search"
+                       placeholder="@Culture["Training.LearnGrow.SearchPlaceholderMobile"]" />
+                <input type="search"
+                       class="opl-only-desktop"
                        @bind="_search"
                        placeholder="@Culture["Training.LearnGrow.SearchPlaceholder"]" />
-                <span class="opl-search__hint-desktop muted">@Culture["Training.LearnGrow.SearchHint"]</span>
             </label>
             <button type="submit" class="btn btn-primary">@Culture["Training.LearnGrow.Search"]</button>
         </form>
@@ -175,7 +179,6 @@
     private TrainingPartnerOfferModel? _selected;
     private readonly HashSet<string> _expandedSections = [];
     private bool _filtersOpen;
-
     private int AdvancedFilterCount
     {
         get

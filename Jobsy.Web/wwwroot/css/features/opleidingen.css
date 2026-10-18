@@ -101,6 +101,7 @@
   font: inherit;
   color: var(--text);
   min-width: 0;
+  text-align: start;
 }
 
 .opl-search__field input:focus {
@@ -1108,10 +1109,6 @@
   }
 
   .opl-search .btn {
-    display: none;
-  }
-
-  .opl-search__hint-desktop {
     display: none;
   }
 }
