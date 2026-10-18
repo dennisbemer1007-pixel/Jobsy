@@ -74,7 +74,10 @@ window.jobMap = (function () {
         travelFromHome: "{minutes} min {mode} van huis",
         save: "Bewaar",
         saved: "Bewaard",
-        fitPercent: "{percent}% past bij jou",
+        fitStrong: "Sterke match",
+        fitGood: "Goede match",
+        fitSome: "Enige match",
+        fitPastWhy: "Past bij je: {reason}",
         fitGate: "Maak je paspoort af",
         hoursSingle: "{hours} uur",
         hoursRange: "{min}–{max} uur",
@@ -752,6 +755,17 @@ window.jobMap = (function () {
         );
     }
 
+    function fitBandLabel(band) {
+        const b = String(band || "good").toLowerCase();
+        if (b === "strong" || b === "green") {
+            return String(uiLabels.fitStrong || "Sterke match");
+        }
+        if (b === "some" || b === "orange" || b === "red") {
+            return String(uiLabels.fitSome || "Enige match");
+        }
+        return String(uiLabels.fitGood || "Goede match");
+    }
+
     function matchLineHtml(v) {
         if (v.fitGate === "closed") {
             const href = String(uiLabels.passportHref || "/profiel");
@@ -764,13 +778,15 @@ window.jobMap = (function () {
                 "</p>"
             );
         }
-        if (v.matchPercent == null || v.matchPercent === "") {
+        const why = v.fitWhyLine ? String(v.fitWhyLine).trim() : "";
+        const hasFit = why || v.matchPercent != null && v.matchPercent !== "";
+        if (!hasFit) {
             return "";
         }
-        const band = String(v.matchColorBand || "orange");
-        const text = labelFormat(uiLabels.fitPercent || "{percent}% past bij jou", {
-            percent: String(v.matchPercent)
-        });
+        const band = String(v.matchColorBand || "good");
+        const text = why
+            ? labelFormat(uiLabels.fitPastWhy || "Past bij je: {reason}", { reason: why })
+            : fitBandLabel(band);
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
                 "<span class=\"map-popup__fit-pill match-score--" + escapeHtml(band) + "\">" +
@@ -5295,6 +5311,13 @@ window.jobMap = (function () {
         notifyFilterDrawerToggle,
         isAlive,
         /** @internal Playwright / diagnostics */
+        __testOpenVacancyById: function (id) {
+            const key = id != null ? String(id) : "";
+            const rec = key ? markersById[key] : null;
+            if (rec) {
+                openVacancyPopup(rec);
+            }
+        },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
         __testGetAgencyAreaCount: function () {
