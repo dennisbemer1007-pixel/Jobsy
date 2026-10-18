@@ -16,7 +16,7 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "9d92d303cfdecdd894d50005fad5fed9912d6bb7c56c236944c40e4191bc0138",
+    "sha256": "1bf63aae842e46334c7debfd231d9f7940def41458ba585ce773e972273fa050",
     "v": "20261018-23"
   },
   "css/critical.css": {
@@ -132,8 +132,8 @@
     "v": "20261018-01"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "a35e24d5ecb4a39d45fac0288211dd4dc2fee11b97b2c71fcd2db36f0532ee2a",
-    "v": "20261017-01"
+    "sha256": "956bc0a958b342bd3a06db57f3a37e2efa8132ccd603f7e68dd141b23d222afe",
+    "v": "20261018-02"
   },
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "3b8d58979c481091afb041cfcf3de1017fb336d65b8993f4de703f55e4c3c293",
@@ -144,7 +144,7 @@
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "d94ce51e3bb8cde64fcb90b6d9f3eb13278450f667e4285b8ccd8b0e8bd27e47",
+    "sha256": "4d78aa19af1ba1e65e5c923168b35d854132b69d306449be6dbf0ddad36c96cc",
     "v": "20261015-06"
   },
   "css/features/onboarding-work-history.css": {
@@ -308,11 +308,19 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
+<<<<<<< HEAD
     "sha256": "08b1e362160407c34b3693e38ec1b3d0dc13ba36dca0e77114330d805ca0ed62",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
     "sha256": "6103c36f107f4f5ed82fb0f71cee9217457ef8a440fc7dcd2a8238ed3a24bd63",
+=======
+    "sha256": "6dbe7ecc4917fe4d07f2a1b783cecf370d98f1c80ee99ac5c840dd0afd25b977",
+    "v": "20261016-06"
+  },
+  "service-worker.published.js": {
+    "sha256": "2a618fda8eb01921e3ef4f3e6dd54181be243f7abd24dfe8b7266021c2b12b30",
+>>>>>>> origin/acceptatie
     "v": "20261016-06"
   },
   "site.webmanifest": {

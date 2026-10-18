@@ -6,6 +6,7 @@ using Jobsy.Core.Features;
 using Microsoft.AspNetCore.Components;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Pages.Candidate;
+using Jobsy.Web.Features;
 using Jobsy.Web.Localization;
 using Jobsy.Web.Services;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -32,6 +33,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             sp,
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<IFeatureFlags>(new FixedFlags());
+        Services.AddSingleton<ITestJourneyIllustrationGate>(new FixedTestJourneyGate());
         Services.AddSingleton<IGeocodingClient>(new NoGeocoder());
         Services.AddSingleton<UserFacingError>();
         Services.AddSingleton<GratisDnaStorage>();
@@ -130,6 +132,11 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             => Task.FromResult(new AuthenticationState(
                 new ClaimsPrincipal(new ClaimsIdentity(
                     [new Claim(ClaimTypes.Role, "Candidate")], "t"))));
+    }
+
+    private sealed class FixedTestJourneyGate : ITestJourneyIllustrationGate
+    {
+        public bool Enabled => false;
     }
 
     private sealed class FixedFlags : IFeatureFlags

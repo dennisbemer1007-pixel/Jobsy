@@ -11,6 +11,7 @@ namespace Jobsy.Tests;
 /// At launch only <see cref="JobsyLanguages.Enabled"/> cultures are checked; set
 /// <c>JOBSY_I18N_COPYGUARD_ALL=1</c> or enable pl/ro/ar via config to run the full guard.
 /// </summary>
+[Collection("JobsyLanguagesState")]
 public sealed class TranslationCopyGuardTests
 {
     private static readonly string[] SecondaryCatalog = ["pl", "ro", "ar"];
