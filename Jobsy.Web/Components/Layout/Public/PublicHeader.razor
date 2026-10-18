@@ -41,21 +41,23 @@
                     <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
                         <span class="pub-menu__icon" aria-hidden="true"></span>
                     </summary>
+                    <div class="pub-menu__backdrop" data-pub-menu-close aria-hidden="true"></div>
                     <div class="pub-menu__panel" role="dialog" aria-modal="true" aria-label="@Culture["PublicNav.Menu"]">
+                        <div class="pub-menu__grab" aria-hidden="true"></div>
                         <div class="pub-menu__head">
                             <button type="button" class="pub-menu__close" data-pub-menu-close aria-label="@Culture["PublicNav.Close"]">
                                 ×
                             </button>
                         </div>
-                        <div class="pub-menu__actions">
+                        <div class="pub-menu__actions pub-menu__actions--pair">
                             <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-                            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.CompanyRegister">@Culture["PublicNav.CreateAccount"]</a>
+                            <a class="pub-btn pub-btn--secondary pub-menu__btn-outline" href="@PublicRoutes.CompanyRegister">@Culture["PublicNav.CreateAccount"]</a>
                         </div>
-                        <nav class="pub-menu__nav" aria-label="@Culture["PublicNav.QuickLinks"]">
-                            <a class="pub-menu__link" href="@PublicRoutes.Banenkaart">@Culture["PublicNav.JobMap"]</a>
-                            <a class="pub-menu__link" href="@PublicRoutes.About">@Culture["PublicFooter.About"]</a>
+                        <nav class="pub-menu__nav pub-menu__nav--rows" aria-label="@Culture["PublicNav.QuickLinks"]">
+                            <a class="pub-menu__link pub-menu__link--row" href="@PublicRoutes.Banenkaart">@Culture["PublicNav.JobMap"]</a>
+                            <a class="pub-menu__link pub-menu__link--row" href="@PublicRoutes.About">@Culture["PublicFooter.About"]</a>
                         </nav>
-                        <PublicLangMenu ReturnPath="@ReturnPath" />
+                        <PublicLangMenuSegmented ReturnPath="@ReturnPath" />
                     </div>
                 </details>
             </div>
@@ -115,7 +117,9 @@
                     <summary class="pub-menu__toggle" aria-label="@Culture["PublicNav.Menu"]">
                         <span class="pub-menu__icon" aria-hidden="true"></span>
                     </summary>
+                    <div class="pub-menu__backdrop" data-pub-menu-close aria-hidden="true"></div>
                     <div class="pub-menu__panel" role="dialog" aria-modal="true" aria-label="@Culture["PublicNav.Menu"]">
+                        <div class="pub-menu__grab" aria-hidden="true"></div>
                         <div class="pub-menu__head">
                             <button type="button" class="pub-menu__close" data-pub-menu-close aria-label="@Culture["PublicNav.Close"]">
                                 ×
@@ -123,22 +127,22 @@
                         </div>
                         @if (!_signedIn)
                         {
-                            <div class="pub-menu__actions">
+                            <div class="pub-menu__actions pub-menu__actions--pair">
                                 <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Login">@Culture["PublicNav.Login"]</a>
-                                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.CreateAccount">@Culture["PublicNav.CreateAccount"]</a>
+                                <a class="pub-btn pub-btn--secondary pub-menu__btn-outline" href="@PublicRoutes.CreateAccount">@Culture["PublicNav.CreateAccount"]</a>
                             </div>
                         }
                         else
                         {
                             <PublicHeaderAccount />
                         }
-                        <nav class="pub-menu__nav" aria-label="@Culture["PublicNav.MainNav"]">
+                        <nav class="pub-menu__nav pub-menu__nav--rows" aria-label="@Culture["PublicNav.MainNav"]">
                             @foreach (var item in PublicNavCatalog.Header(Variant).Where(i => i.IsAvailable))
                             {
-                                <a class="pub-menu__link" href="@item.Href">@Culture[item.LabelKey]</a>
+                                <a class="pub-menu__link pub-menu__link--row" href="@item.Href">@Culture[item.LabelKey]</a>
                             }
                         </nav>
-                        <PublicLangMenu ReturnPath="@ReturnPath" />
+                        <PublicLangMenuSegmented ReturnPath="@ReturnPath" />
                         @if (!_signedIn)
                         {
                             <a class="pub-btn pub-btn--primary pub-menu__cta" href="@PublicRoutes.Test">@Culture["PublicNav.TakeFreeTest"]</a>

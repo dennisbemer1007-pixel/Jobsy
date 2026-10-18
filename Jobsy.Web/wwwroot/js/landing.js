@@ -28,9 +28,9 @@
       closePubMenu(closeBtn.closest("details.pub-menu"));
       return;
     }
-    var sheet = ev.target && ev.target.closest ? ev.target.closest("details.pub-menu--sheet[open]") : null;
-    if (sheet && ev.target === sheet) {
-      closePubMenu(sheet);
+    var backdrop = ev.target && ev.target.closest ? ev.target.closest(".pub-menu__backdrop[data-pub-menu-close]") : null;
+    if (backdrop) {
+      closePubMenu(backdrop.closest("details.pub-menu"));
     }
   });
 

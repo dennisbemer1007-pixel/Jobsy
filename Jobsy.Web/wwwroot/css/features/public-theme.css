@@ -648,24 +648,28 @@ html[data-header-menu="account"] .pub-theme .account-menu > .account-menu__panel
     display: none;
   }
 
-  .pub-theme details.pub-menu--sheet[open]::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    background: color-mix(in srgb, var(--brand-deep) 35%, transparent);
-    pointer-events: auto;
+  .pub-theme details.pub-menu--sheet:not([open]) > .pub-menu__backdrop,
+  .pub-theme details.pub-menu--sheet:not([open]) > .pub-menu__panel {
+    display: none;
   }
 
   .pub-theme details.pub-menu--sheet[open] > .pub-menu__toggle {
     visibility: hidden;
   }
 
-  .pub-theme:has(details.pub-menu--sheet[open]) .pub-main {
-    visibility: hidden;
+  .pub-theme details.pub-menu--sheet[open] > .pub-menu__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: color-mix(in srgb, var(--brand-deep) 40%, transparent);
+    border: 0;
+    padding: 0;
+    cursor: pointer;
   }
 
-  .pub-theme details.pub-menu--sheet > .pub-menu__panel {
+  .pub-theme details.pub-menu--sheet[open] > .pub-menu__panel {
+    display: block;
     position: fixed;
     left: 0;
     right: 0;
@@ -674,21 +678,23 @@ html[data-header-menu="account"] .pub-theme .account-menu > .account-menu__panel
     width: 100%;
     max-width: 100vw;
     height: auto;
-    max-height: min(88vh, 34rem);
+    max-height: min(88vh, 36rem);
     margin: 0;
-    padding: 0.85rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.35rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
     border-radius: var(--r-lg) var(--r-lg) 0 0;
-    background: var(--pearl);
+    background: var(--surface);
     box-shadow: var(--shadow-pop);
     overflow-y: auto;
     z-index: 201;
-    visibility: hidden;
-    pointer-events: none;
+    isolation: isolate;
   }
 
-  .pub-theme details.pub-menu--sheet[open] > .pub-menu__panel {
-    visibility: visible;
-    pointer-events: auto;
+  .pub-theme .pub-menu__grab {
+    width: 2.5rem;
+    height: 0.28rem;
+    margin: 0.15rem auto 0.5rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--muted) 45%, var(--border));
   }
 
   .pub-theme .pub-menu__head {
@@ -711,28 +717,95 @@ html[data-header-menu="account"] .pub-theme .account-menu > .account-menu__panel
     cursor: pointer;
   }
 
-  .pub-theme .pub-menu__actions {
+  .pub-theme .pub-menu__actions--pair {
     display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.85rem;
   }
 
-  .pub-theme .pub-menu__actions .pub-btn {
+  .pub-theme .pub-menu__actions--pair .pub-btn {
     justify-content: center;
     width: 100%;
+    min-height: 2.75rem;
+    padding-inline: 0.65rem;
+    font-size: 0.9rem;
   }
 
-  .pub-theme .pub-menu__nav {
-    gap: 0.15rem;
+  .pub-theme .pub-menu__btn-outline {
+    background: var(--surface);
+    border-color: var(--brand);
+    color: var(--brand);
   }
 
-  .pub-theme .pub-menu__link {
-    min-height: 2.5rem;
+  .pub-theme .pub-menu__nav--rows {
+    display: grid;
+    gap: 0;
+    margin-bottom: 0.75rem;
+    border-block: 1px solid var(--pub-line);
+  }
+
+  .pub-theme .pub-menu__link--row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 2.85rem;
+    padding: 0.35rem 0.15rem;
+    border-radius: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--pub-line) 85%, transparent);
     font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .pub-theme .pub-menu__nav--rows .pub-menu__link--row:last-child {
+    border-bottom: 0;
+  }
+
+  .pub-theme .pub-menu__link--row::after {
+    content: "›";
+    font-size: 1.15rem;
+    line-height: 1;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .pub-theme .pub-menu__panel .pub-lang {
+    display: none;
+  }
+
+  .pub-theme .pub-lang-seg {
+    display: inline-flex;
+    width: 100%;
+    max-width: 11rem;
+    margin: 0 auto 0.85rem;
+    padding: 0.2rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--pub-line);
+    background: var(--surface);
+  }
+
+  .pub-theme .pub-lang-seg__btn {
+    flex: 1;
+    text-align: center;
+    min-height: 2.15rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--muted);
+  }
+
+  .pub-theme .pub-lang-seg__btn.is-active {
+    background: var(--brand);
+    color: var(--surface);
   }
 
   .pub-theme .pub-menu__cta {
-    margin-top: 0.35rem;
+    margin-top: 0.15rem;
+    justify-content: center;
+    width: 100%;
   }
 
   .pub-theme .pub-footer {

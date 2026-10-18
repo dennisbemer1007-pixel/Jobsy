@@ -18,7 +18,7 @@ namespace Jobsy.Tests;
 public sealed class FooterMobScreenshotTests : IAsyncLifetime
 {
     private static string OutRoot
-        => Environment.GetEnvironmentVariable("FOOTER_MOB_OUT") ?? "/opt/cursor/artifacts/footer-mob-r1";
+        => Environment.GetEnvironmentVariable("FOOTER_MOB_OUT") ?? "/opt/cursor/artifacts/footer-mob-r2";
 
     private static string Phase
         => Environment.GetEnvironmentVariable("FOOTER_MOB_PHASE") ?? "after";
@@ -53,32 +53,32 @@ public sealed class FooterMobScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_footer_mob_r1_start_and_menu()
+    public async Task Capture_footer_mob_r2_menu_and_footer()
     {
-        var dir = Path.Combine(OutRoot, Phase);
+        var dir = Path.Combine(OutRoot, "after");
         Directory.CreateDirectory(dir);
 
-        await CaptureFullAsync(dir, "360-start-full", 360, 844);
-        await CaptureFullAsync(dir, "390-start-full", 390, 844);
+        await CaptureMenuOpenAsync(dir, "360-menu-open", 360, 844);
         await CaptureMenuOpenAsync(dir, "390-menu-open", 390, 844);
-        await CaptureFullAsync(dir, "1440-start-full", 1440, 900);
+        await CaptureFooterAsync(dir, "360-footer", 360, 844);
+        await CaptureFooterAsync(dir, "390-footer", 390, 844);
     }
 
-    private async Task CaptureFullAsync(string dir, string name, int w, int h)
+    private async Task CaptureFooterAsync(string dir, string name, int w, int h)
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
             ViewportSize = new() { Width = w, Height = h },
             Locale = "nl-NL",
-            IsMobile = w < 768,
-            HasTouch = w < 768,
+            IsMobile = true,
+            HasTouch = true,
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
         await page.GotoAsync($"{_baseUrl}/?lang=nl", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
-        await page.Locator(".pub-landing--calm h1, .pub-landing__h1").First.WaitForAsync(new() { Timeout = 60_000 });
-        await page.WaitForTimeoutAsync(600);
-        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{name}.png"), FullPage = true });
+        await page.Locator(".pub-footer").ScrollIntoViewIfNeededAsync();
+        await page.WaitForTimeoutAsync(400);
+        await page.Locator(".pub-footer").ScreenshotAsync(new() { Path = Path.Combine(dir, $"{name}.png") });
     }
 
     private async Task CaptureMenuOpenAsync(string dir, string name, int w, int h)
@@ -98,7 +98,7 @@ public sealed class FooterMobScreenshotTests : IAsyncLifetime
         await sheetActions.WaitForAsync(new() { Timeout = 15_000 });
         if (Phase == "after")
         {
-            await page.Locator(".pub-header .pub-menu--sheet[open] .pub-menu__actions").WaitForAsync(new() { Timeout = 5_000 });
+            await page.Locator(".pub-header .pub-menu--sheet[open] .pub-menu__actions--pair").WaitForAsync(new() { Timeout = 5_000 });
         }
 
         await page.WaitForTimeoutAsync(400);

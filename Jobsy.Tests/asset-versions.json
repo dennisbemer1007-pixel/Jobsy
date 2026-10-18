@@ -156,8 +156,8 @@
     "v": "20261016-01"
   },
   "css/features/public-theme.css": {
-    "sha256": "f29faa75c0978ad2357813fd564a6cc4a8c7c9f64ba002cb14dbb89b423fbf21",
-    "v": "20261018-07"
+    "sha256": "3ab3156159a9fc514e898e22eb1ceba6d7487f7e4089944b9b014249c7de9455",
+    "v": "20261018-09"
   },
   "css/features/questionnaire.css": {
     "sha256": "098b16767133630bd1c2c4f4ffd17b7f321c9c5c718fbb5e83a6469c8def706f",
@@ -272,8 +272,8 @@
     "v": "20261002-ch01"
   },
   "js/landing.js": {
-    "sha256": "5444f60b3a282aaf3c2081ac644c9fe905634ac087cd77ebba861481a2cd5055",
-    "v": "20261018-01"
+    "sha256": "cd942514333ce9c3dbb100475127d528220b67555a53ce2c6d1d28f44c1a043f",
+    "v": "20261018-02"
   },
   "js/leerling-login.js": {
     "sha256": "25521f1a69b2f38a757d8670e8d3f28befe0458b7a2ce2761f3a5d969eaec2d8",
