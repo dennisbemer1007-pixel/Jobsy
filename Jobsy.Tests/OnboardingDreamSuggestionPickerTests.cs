@@ -6,13 +6,13 @@ namespace Jobsy.Tests;
 public sealed class OnboardingDreamSuggestionPickerTests
 {
     [Fact]
-    public void BuildFromProfile_uses_sector_fallback_with_display_titles()
+    public void BuildFromProfile_uses_sector_fallback_with_dutch_profession_casing()
     {
         var draft = new OnboardingProfileDraft { Education = "Basisschool" };
         var items = OnboardingDreamSuggestionPicker.BuildFromProfile(draft, [], max: 4);
         Assert.True(items.Count >= 4);
-        Assert.All(items, item => Assert.True(char.IsUpper(item.Title[0])));
-        Assert.DoesNotContain("hoger onderwijs", items[0].Title, StringComparison.OrdinalIgnoreCase);
+        Assert.All(items, item => Assert.DoesNotContain(" Centrum ", item.Title, StringComparison.Ordinal));
+        Assert.DoesNotContain(items, i => i.Title.Contains(' ') && char.IsUpper(i.Title.Split(' ')[1][0]));
     }
 
     [Fact]
@@ -25,10 +25,22 @@ public sealed class OnboardingDreamSuggestionPickerTests
     }
 
     [Fact]
-    public void BuildFromProfile_adds_education_hints_for_hbo()
+    public void BuildFromProfile_maps_nearby_vacancy_to_profession_for_fit()
     {
         var draft = new OnboardingProfileDraft { Education = "HBO" };
-        var items = OnboardingDreamSuggestionPicker.BuildFromProfile(draft, [], max: 4);
-        Assert.Contains(items, i => i.Title.Contains("Accountmanager", StringComparison.OrdinalIgnoreCase));
+        var items = OnboardingDreamSuggestionPicker.BuildFromProfile(
+            draft,
+            ["Barista centrum Naaldwijk"],
+            max: 6);
+        Assert.Contains(items, i => string.Equals(i.Title, "Barista", StringComparison.Ordinal));
+        Assert.DoesNotContain(items, i => i.Title.Contains("Naaldwijk", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void FormatProfessionFromVacancy_and_regional_use_dutch_norms()
+    {
+        Assert.Equal("Barista", OnboardingDreamSuggestionPicker.FormatProfessionFromVacancy("Barista centrum Naaldwijk"));
+        Assert.Equal("Teamleider kas", OnboardingDreamSuggestionPicker.FormatRegionalVacancyLine("Teamleider kas"));
+        Assert.Equal("HR-adviseur", OnboardingDreamSuggestionPicker.FormatProfessionFromVacancy("hr adviseur"));
     }
 }

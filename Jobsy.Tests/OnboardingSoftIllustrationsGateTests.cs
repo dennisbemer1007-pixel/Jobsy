@@ -64,8 +64,8 @@ public sealed class OnboardingSoftIllustrationsGateTests
     public void Hero_band_css_uses_seamless_art_with_fade_and_mobile_scene_band()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
-        Assert.Contains("object-position: right center", css, StringComparison.Ordinal);
-        Assert.Contains(".ob-illustrated-step__hero-band::before", css, StringComparison.Ordinal);
+        Assert.Contains("object-fit: contain", css, StringComparison.Ordinal);
+        Assert.Contains("mask-image: linear-gradient(to right, transparent 0, #000 100px)", css, StringComparison.Ordinal);
         Assert.Contains("block-size: 120px", css, StringComparison.Ordinal);
     }
 
