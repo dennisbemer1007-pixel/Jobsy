@@ -10,8 +10,16 @@ using System.Net;
 
 namespace Jobsy.Tests;
 
-public class LanguageEndpointTests
+public class LanguageEndpointTests : IDisposable
 {
+    public LanguageEndpointTests() => JobsyLanguages.ResetEnabledForTests();
+
+    public void Dispose()
+    {
+        JobsyLanguages.ResetEnabledForTests();
+        GC.SuppressFinalize(this);
+    }
+
     [Fact]
     public async Task Valid_lang_sets_cookie_and_redirects_local()
     {
