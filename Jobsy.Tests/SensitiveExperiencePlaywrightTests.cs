@@ -22,7 +22,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r3";
+    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r4";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -85,6 +85,17 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
                     """);
                 await page.Locator("[data-testid^='gevoelig-demo-']").WaitForAsync();
                 await page.Locator("header, .app-header, .top-bar").First.WaitForAsync(new() { Timeout = 5000 });
+                if (width == 1440)
+                {
+                    var heroBox = await page.Locator(".gev-hero__copy h1").BoundingBoxAsync();
+                    var cardBox = await page.Locator(".gev-card, .gev-job").First.BoundingBoxAsync();
+                    if (heroBox is not null && cardBox is not null)
+                    {
+                        Assert.True(Math.Abs(heroBox.X - cardBox.X) < 6,
+                            $"{slug}: hero x={heroBox.X} card x={cardBox.X}");
+                    }
+                }
+
                 await page.ScreenshotAsync(new()
                 {
                     Path = Path.Combine(OutDir, $"{slug}-{suffix}.png"),

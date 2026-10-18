@@ -10,59 +10,100 @@
   padding-bottom: 1.5rem;
 }
 
-.gev-page .ob-finale__hero {
-  --obf-hero-height: clamp(12rem, 21vw, 16rem);
-  --obf-art-position: 82% 24%;
-  margin-bottom: 0;
+/* Hero: same gev-wrap column as cards (no full-bleed overlay grid) */
+.gev-hero {
+  background: var(--gev-cream);
+  border-bottom: 1px solid rgba(221, 213, 204, 0.45);
 }
 
-.gev-page .ob-finale__art.gev-hero-art img {
-  position: absolute;
-  inset: 0 0 0 32%;
-  width: 68%;
-  height: 100%;
-  max-width: none;
-  object-fit: contain;
-  object-position: 100% 100%;
-  transform: none;
+.gev-hero .gev-wrap--hero {
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
 }
 
-.gev-page .ob-finale__intro {
-  z-index: 2;
-  align-self: end;
-  padding: 1rem 0 1.25rem;
-  max-width: none;
-  width: 100%;
+.gev-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 38%);
+  gap: 0.75rem;
+  align-items: stretch;
+  min-height: clamp(10.5rem, 14vw, 12.5rem);
+  max-height: 12.5rem;
 }
 
-.gev-page .ob-finale__intro .gev-wrap--hero {
-  padding-top: 0;
-  padding-bottom: 0.25rem;
+@media (min-width: 1440px) {
+  .gev-hero__grid {
+    min-height: 200px;
+    max-height: 200px;
+  }
 }
 
-.gev-page .ob-finale__hero-inner {
-  max-width: 36rem;
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  box-sizing: border-box;
+.gev-hero__copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+  min-width: 0;
+  padding-right: 0.5rem;
 }
 
-.gev-page .ob-finale__hero-inner h1 {
-  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
-  margin: 0.35rem 0 0.5rem;
+.gev-hero__copy h1 {
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  line-height: 1.15;
+  margin: 0.3rem 0 0.4rem;
+  color: var(--gev-ink);
 }
 
-.gev-page .ob-finale__lead {
-  font-size: 0.95rem;
+.gev-hero__lead {
+  font-size: 0.92rem;
   color: var(--gev-muted);
   margin: 0;
+  line-height: 1.4;
+  max-width: 28rem;
 }
 
-.gev-page .ob-finale__art--ref.gev-hero-art img {
-  inset: 0 0 0 28%;
-  width: 72%;
-  object-position: 100% 100%;
+.gev-hero__badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: #0f2d5c;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(15, 45, 92, 0.1);
+  border-radius: 99px;
+  padding: 0.3rem 0.65rem;
+}
+
+.gev-hero__copy .gev-banner {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+.gev-hero__copy .gev-view-toggle {
+  margin-top: 0.5rem;
+}
+
+.gev-hero__art {
+  margin: 0;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  overflow: hidden;
+  background: var(--gev-cream);
+  min-height: 0;
+}
+
+.gev-hero__art img {
+  display: block;
+  height: 100%;
+  max-height: 200px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: right bottom;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 180px);
+  mask-image: linear-gradient(to right, transparent 0, #000 180px);
 }
 
 .gev-wrap {
@@ -466,6 +507,22 @@ html.gev-capture [data-lobsy-coach] {
 }
 
 @media (max-width: 900px) {
+  .gev-hero__grid {
+    grid-template-columns: 1fr;
+    max-height: none;
+    min-height: auto;
+  }
+
+  .gev-hero__art {
+    min-height: 140px;
+    justify-content: center;
+  }
+
+  .gev-hero__art img {
+    max-height: 140px;
+    margin-inline: auto;
+  }
+
   .gev-layout,
   .gev-layout--single {
     grid-template-columns: 1fr;
