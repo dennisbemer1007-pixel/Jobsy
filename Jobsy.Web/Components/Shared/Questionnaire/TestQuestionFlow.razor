@@ -103,33 +103,33 @@
         }
 
         var spokenQuestion = StripIdPrefix(question.Text);
+        var hasExample = !string.IsNullOrWhiteSpace(question.Example);
+        var spokenForReadAloud = hasExample
+            ? $"{spokenQuestion} {question.Example}"
+            : spokenQuestion;
         <div class="test-flow__speak">
-            <div class="test-flow__question-head">
-                @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle) && !TestBlockStageActive)
-                {
+            @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle) && !TestBlockStageActive)
+            {
+                <div class="test-flow__question-head">
                     <h2 class="test-flow__title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
-                }
-                <ReadAloudButton Text="@spokenQuestion"
-                                 SpeechKey="@($"q-{Kind}-{question.Id}")"
-                                 IconOnly="@Compact"
-                                 PlayAria="@Culture["ReadAloud.Play"]" />
-            </div>
+                </div>
+            }
             @if (Compact && !string.IsNullOrWhiteSpace(QuestionLead))
             {
                 <p class="test-flow__lead">@QuestionLead</p>
             }
-            <blockquote class="test-flow__statement" id="@($"tf-stmt-{question.Id}")">
-                “@spokenQuestion”
-            </blockquote>
-        </div>
-        @if (!string.IsNullOrWhiteSpace(question.Example))
-        {
-            <p class="test-example" data-testid="test-item-example">
-                @question.Example
-                <ReadAloudButton Text="@question.Example"
-                                 SpeechKey="@($"ex-{Kind}-{question.Id}")"
+            <div class="test-flow__statement-row">
+                <blockquote class="test-flow__statement" id="@($"tf-stmt-{question.Id}")">
+                    “@spokenQuestion”
+                </blockquote>
+                <ReadAloudButton Text="@spokenForReadAloud"
+                                 SpeechKey="@($"q-{Kind}-{question.Id}")"
                                  PlayAria="@Culture["ReadAloud.Play"]" />
-            </p>
+            </div>
+        </div>
+        @if (hasExample)
+        {
+            <p class="test-example" data-testid="test-item-example">@question.Example</p>
         }
 
         <LikertRadioGroup @key="question.Id"
