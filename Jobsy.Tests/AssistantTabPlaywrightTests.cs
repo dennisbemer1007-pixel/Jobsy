@@ -49,8 +49,8 @@ public class AssistantTabPlaywrightTests
             url => !url.Contains("/login", StringComparison.OrdinalIgnoreCase),
             new() { Timeout = 60_000 });
 
-        // Paspoort hides the coach dock below 1024px so accordion rows stay tappable (mijn-paspoort.css).
-        var coachRoute = width >= 1024 ? "/candidate/paspoort" : "/home";
+        // Paspoort hides the coach dock below 1024px (mijn-paspoort.css). Use another candidate page on phone.
+        var coachRoute = width >= 1024 ? "/candidate/paspoort" : "/carriere";
         await page.GotoAsync(baseUrl + coachRoute, new()
         {
             WaitUntil = WaitUntilState.DOMContentLoaded,

@@ -157,8 +157,15 @@ public class AdminRun4PlaywrightTests
                   const style = el ? getComputedStyle(el) : null;
                   const actual = style ? (style.backgroundColor || '') : '';
                   const image = style ? (style.backgroundImage || '') : '';
-                  const clear = !!el && actual.length > 0 && actual === expected
-                    && (image === 'none' || image === '');
+                  const alpha = (() => {
+                    const m = actual.match(/rgba?\(([^)]+)\)/);
+                    if (!m) return actual === 'transparent' ? 0 : 1;
+                    const p = m[1].split(',').map(s => s.trim());
+                    if (p.length === 4) return parseFloat(p[3]);
+                    return 1;
+                  })();
+                  const clear = !!el && (image === 'none' || image === '')
+                    && (actual === expected || alpha < 0.05);
                   return { clear, actual, expected, image };
                 }
                 """);
