@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Bedrijvenkaart R6 captures: requires API+Web with Seed:Enabled (see run-r6-capture.sh).
+ * Bedrijvenkaart R7 captures: requires API+Web with Seed:Enabled (see run-r7-capture.sh).
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -8,7 +8,7 @@ import { chromium } from "../screenshots/node_modules/playwright/index.mjs";
 
 const baseUrl = (process.argv[2] ?? "http://localhost:5201").replace(/\/$/, "");
 const apiUrl = (process.argv[3] ?? "http://127.0.0.1:5200").replace(/\/$/, "");
-const outDir = "/opt/cursor/artifacts/bedrijvenkaart-build-r6/live";
+const outDir = "/opt/cursor/artifacts/bedrijvenkaart-build-r7/live";
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
 const employerEmail = "enterprise@jobsy.local";
@@ -16,7 +16,7 @@ const employerEmail = "enterprise@jobsy.local";
 const pendingInitiative = "88888888-8888-8888-8888-888888888803";
 const acceptedInitiative = "88888888-8888-8888-8888-888888888801";
 
-const forbidden = ["deze pagina bestaat niet", "404", "not-found-view"];
+const forbidden = ["deze pagina bestaat niet", "404", "not-found-view", "common.change", "initiative.panel.changeteam"];
 
 const shots = [
   { file: "00-banenkaart-link-desktop.png", path: "/banenkaart", width: 1440, role: "candidate", expect: "Bedrijvenkaart" },
@@ -121,6 +121,7 @@ async function waitReady(page, path) {
   }
   if (path.includes("demoKnock")) {
     await page.waitForSelector(".bk-side-panel[role='dialog']", { timeout: 90_000 });
+    await page.waitForSelector(".bk-side-panel__textarea", { timeout: 90_000 });
   }
   if (path.includes("demoSent")) {
     await page.waitForSelector(".bk-modal[role='dialog'], .bk-side-panel[role='dialog']", { timeout: 90_000 });

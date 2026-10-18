@@ -167,7 +167,16 @@ else
                             }
                             @if (!string.IsNullOrWhiteSpace(_initiative?.HubVideoUrl))
                             {
-                                <div class="pp-sfeer-video">▶</div>
+                                var videoPoster = (_initiative?.HubPhotoUrls.Count ?? 0) > 0
+                                    ? _initiative!.HubPhotoUrls[0]
+                                    : "/images/onboarding/finale-hero.jpg";
+                                <a class="pp-sfeer-video"
+                                   href="@_initiative!.HubVideoUrl"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                    <img src="@videoPoster" alt="" loading="lazy" decoding="async" />
+                                    <span class="pp-sfeer-video__play" aria-hidden="true"></span>
+                                </a>
                             }
                         </div>
                     </section>
@@ -188,21 +197,21 @@ else
             </div>
         </div>
 
-        <InitiativeKnockPanel IsOpen="_knockOpen"
-                              IsOpenChanged="v => _knockOpen = v"
-                              CompanyName="@_page.Name"
-                              RootCompanyId="@(_initiative?.RootCompanyId ?? Guid.Empty)"
-                              Teams="@(_initiative?.Teams ?? [])"
-                              SelectedTeamId="_selectedTeamId"
-                              OnSent="OnInitiativeSent" />
-        <InitiativeSentDialog IsOpen="_sentOpen" IsOpenChanged="v => _sentOpen = v" />
-        <InitiativeWeekLimitDialog IsOpen="_weekLimitOpen" IsOpenChanged="v => _weekLimitOpen = v" />
-
         <p class="pp-company__report">
             @Culture["Report.Company.Prompt"]
             <a href="@ReportHref">@Culture["Report.Company.PromptCta"]</a>
         </p>
     </section>
+
+    <InitiativeKnockPanel IsOpen="_knockOpen"
+                          IsOpenChanged="v => _knockOpen = v"
+                          CompanyName="@_page.Name"
+                          RootCompanyId="@(_initiative?.RootCompanyId ?? Guid.Empty)"
+                          Teams="@(_initiative?.Teams ?? [])"
+                          SelectedTeamId="_selectedTeamId"
+                          OnSent="OnInitiativeSent" />
+    <InitiativeSentDialog IsOpen="_sentOpen" IsOpenChanged="v => _sentOpen = v" />
+    <InitiativeWeekLimitDialog IsOpen="_weekLimitOpen" IsOpenChanged="v => _weekLimitOpen = v" />
 }
 
 @code {

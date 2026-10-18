@@ -51,6 +51,7 @@ public static class UiStringsInitiative
         Add("Initiative.WeekLimit.Title", "Je hebt je 3 initiatieven deze week gebruikt", "You used your 3 initiatives this week");
         Add("Initiative.WeekLimit.Body", "Je motivatie is bewaard. Maandag kun je het met één tik versturen.", "Your motivation is saved. On Monday you can send it with one tap.");
         Add("Initiative.Sent.Steps", "Verstuurd · Bekeken · Reactie", "Sent · Viewed · Response");
+        Add("Initiative.Panel.ChangeTeam", "Wijzigen", "Change");
         Add("Initiative.Panel.Team", "Team", "Team");
         Add("Initiative.Panel.GeneralEntry", "Algemene ingang", "General entry");
         Add("Initiative.Panel.PassportGoes", "Wat gaat er mee", "What goes with it");
@@ -67,6 +68,7 @@ public static class UiStringsInitiative
         Add("Initiative.Panel.SeesAfter.Experience", "Werkervaring", "Work experience");
         Add("Initiative.Panel.SeesAfter.Contact", "Contact", "Contact");
         Add("Initiative.Panel.Deadline", "Het bedrijf reageert binnen 5 werkdagen. Hoor je niets, dan wordt het vanzelf Nu niet. Het zegt niets over jou.", "The company responds within 5 business days. If you hear nothing, it becomes Not now automatically. It says nothing about you.");
+        Add("Common.Change", "Wijzigen", "Change");
         Add("Initiative.Panel.Send", "Verstuur bericht", "Send message");
         Add("Initiative.Panel.PrivacyHint", "Naam en contactgegevens zie je pas na acceptatie.", "Name and contact details are visible only after acceptance.");
         Add("Initiative.Sent.Title", "Bericht verstuurd", "Message sent");

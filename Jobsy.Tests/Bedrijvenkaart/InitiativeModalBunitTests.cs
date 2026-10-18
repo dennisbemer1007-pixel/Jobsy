@@ -39,6 +39,26 @@ public class InitiativeModalBunitTests : BunitContext
         Assert.Contains("Klop aan bij Bakkerij De Korenaar", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Verstuur bericht", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("textarea", cut.Markup, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("bk-side-panel__textarea", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Knock_panel_team_change_uses_translated_label()
+    {
+        var teamId = Guid.NewGuid();
+        var cut = Render<InitiativeKnockPanel>(p => p
+            .Add(c => c.IsOpen, true)
+            .Add(c => c.CompanyName, "Bakkerij")
+            .Add(c => c.RootCompanyId, Guid.NewGuid())
+            .Add(c => c.Teams, new List<PublicInitiativeTeamOptionDto>
+            {
+                new(teamId, "Bakkerij", "Brood", null, InitiativeMatchLabel.Good, true),
+                new(Guid.NewGuid(), "Winkel", "Shop", null, InitiativeMatchLabel.Good, true)
+            })
+            .Add(c => c.SelectedTeamId, teamId));
+
+        Assert.Contains("Wijzigen", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Initiative.Panel.ChangeTeam", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -46,6 +66,7 @@ public class InitiativeModalBunitTests : BunitContext
     {
         var cut = Render<InitiativeSentDialog>(p => p.Add(c => c.IsOpen, true));
         Assert.Contains("Bericht verstuurd", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("bk-sent-stepper", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Verstuurd", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Bekeken", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Reactie", cut.Markup, StringComparison.Ordinal);

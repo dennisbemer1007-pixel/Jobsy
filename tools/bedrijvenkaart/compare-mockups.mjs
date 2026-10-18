@@ -4,8 +4,8 @@ import { join } from "node:path";
 import { execSync } from "node:child_process";
 
 const mockDir = process.argv[2] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r1/reference";
-const liveDir = process.argv[3] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r6/live";
-const outDir = process.argv[4] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r6/compare";
+const liveDir = process.argv[3] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r7/live";
+const outDir = process.argv[4] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r7/compare";
 
 await mkdir(outDir, { recursive: true });
 const names = (await readdir(mockDir)).filter((n) => n.endsWith(".png")).sort();

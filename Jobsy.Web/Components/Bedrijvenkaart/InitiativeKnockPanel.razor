@@ -4,11 +4,13 @@
 
 @if (IsOpen)
 {
-    <div class="bk-modal-backdrop" @onclick="Close">
+    <div class="bk-modal-backdrop bk-modal-backdrop--drawer" @onclick="Close">
         <aside class="bk-side-panel" @onclick:stopPropagation="true" role="dialog" aria-modal="true" aria-labelledby="bk-knock-title">
             <header class="bk-side-panel__header">
                 <h2 id="bk-knock-title">@Culture.Format("Initiative.Send.Title", CompanyName)</h2>
-                <button type="button" class="icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">×</button>
+                <button type="button" class="bk-panel-close icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">×</span>
+                </button>
             </header>
             <div class="bk-side-panel__body">
                 <section class="bk-side-panel__card">
@@ -16,7 +18,7 @@
                     <p><strong>@SelectedTeamName</strong></p>
                     @if (Teams.Count > 1)
                     {
-                        <button type="button" class="btn--link" @onclick="ToggleTeamPicker">@Culture["Common.Change"]</button>
+                        <button type="button" class="btn--link" @onclick="ToggleTeamPicker">@Culture["Initiative.Panel.ChangeTeam"]</button>
                     }
                 </section>
                 @if (_showTeamPicker)
@@ -33,11 +35,18 @@
                     <h3>@Culture["Initiative.Panel.PassportGoes"]</h3>
                     <p>@Culture["Initiative.Panel.PassportHint"]</p>
                 </section>
-                <label class="bk-side-panel__motivation">
-                    @Culture["Initiative.Panel.Motivation"]
-                    <textarea maxlength="500" rows="5" @bind="_motivation" @bind:event="oninput"></textarea>
-                    <span class="bk-side-panel__count">@_motivation.Length / 500</span>
-                </label>
+                <div class="bk-side-panel__field">
+                    <label class="bk-side-panel__label" for="bk-knock-motivation">@Culture["Initiative.Panel.Motivation"]</label>
+                    <div class="bk-side-panel__textarea-wrap">
+                        <textarea id="bk-knock-motivation"
+                                  class="bk-side-panel__textarea"
+                                  maxlength="500"
+                                  rows="5"
+                                  @bind="_motivation"
+                                  @bind:event="oninput"></textarea>
+                        <span class="bk-side-panel__count">@_motivation.Length / 500</span>
+                    </div>
+                </div>
                 <div class="bk-privacy-grid">
                     <div class="bk-privacy-grid__now">
                         <h4>@Culture["Initiative.Panel.SeesNow"]</h4>
