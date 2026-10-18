@@ -27,7 +27,7 @@ else
                        Answered="_answeredForShell"
                        TargetCount="_targetCount"
                        ActiveDepth="_depth"
-                       ShowDepthSegments="@(!_deep)"
+                       ShowDepthSegments="true"
                        ShowProgressSidePanel="true"
                        BlockArtSlug="@_blockSlug">
             <SidePanel>
@@ -101,8 +101,8 @@ else
         (_testName, _h1) = _kind switch
         {
             AssessmentKind.Career => (Culture["Career.Title"], Culture["Discovery.Test.Career.Title"]),
-            AssessmentKind.Culture => (Culture["Discovery.Test.Culture.Title"], Culture["Discovery.Test.Culture.Title"]),
-            AssessmentKind.Values => (Culture["Discovery.Test.Values.Title"], Culture["Discovery.Test.Values.Title"]),
+            AssessmentKind.Culture => (Culture["CultureScan.Title"], Culture["Discovery.Test.CultureScan.Title"]),
+            AssessmentKind.Values => (Culture["ValuesScan.Title"], Culture["Discovery.Test.ValuesScan.Title"]),
             _ => (Culture["Competency.Title"], Culture["Discovery.Test.Competency.Title"])
         };
         _levelName = Culture[TestDepthRules.NameKey(_depth)];

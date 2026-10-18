@@ -23,6 +23,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Playwright;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Jobsy.Tests;
 
@@ -141,6 +143,355 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
     }
 
+    [Theory]
+    [InlineData("quick-scan-hoe-je-werkt")]
+    [InlineData("quick-scan-waarden")]
+    [InlineData("diepte-competenties")]
+    public void Mobhero_r5_page_captures_fail_visible_pixel_gate(string stem)
+    {
+        var path = Path.Combine("/opt/cursor/artifacts/testblokken-mobhero-r5", $"{stem}-390.png");
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        using var page = Image.Load<Rgba32>(path);
+        var heroTop = (int)(page.Height * 0.12);
+        var heroBottom = (int)(page.Height * 0.38);
+        var heroHeight = heroBottom - heroTop;
+        using var hero = new Image<Rgba32>(page.Width, heroHeight);
+        for (var y = 0; y < heroHeight; y++)
+        {
+            for (var x = 0; x < page.Width; x++)
+            {
+                hero[x, y] = page[x, heroTop + y];
+            }
+        }
+
+        using var ms = new MemoryStream();
+        hero.SaveAsPng(ms);
+        var ex = Record.Exception(() => AssertMobHeroVisiblePixels(ms.ToArray(), stem));
+        Assert.NotNull(ex);
+    }
+
+    [Theory]
+    [InlineData("hoe-je-werkt")]
+    [InlineData("leuk")]
+    [InlineData("sfeer")]
+    [InlineData("waarden")]
+    public void Mobhero_composite_pngs_have_visible_figure_pixels(string slug)
+    {
+        var root = FindRepoRoot();
+        var path = Path.Combine(root, "Jobsy.Web/wwwroot/images/tests/figures", $"{slug}-mobhero.png");
+        Assert.True(File.Exists(path), $"Missing mobhero composite: {path}");
+        var png = File.ReadAllBytes(path);
+        AssertMobHeroVisiblePixels(png, slug);
+        AssertMobHeroNoHardBlockSeams(png, slug);
+        AssertMobHeroPersonPixelsFullyOpaque(slug, png);
+    }
+
+    [Fact]
+    public void Culture_quick_scan_full_depth_shows_18_not_25()
+        => Assert.Equal(18, TestDepthRules.FullCount(AssessmentKind.Culture));
+
+    [Fact]
+    public async Task Capture_test_pages_at_390_have_translated_eyebrows_and_filled_mobhero()
+    {
+        foreach (var target in Targets)
+        {
+            await using var web = new CaptureWebFactory(target);
+            var baseUrl = web.EnsureServerAddress().TrimEnd('/');
+
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+                DeviceScaleFactor = 1,
+                Locale = "nl-NL",
+                IsMobile = true,
+                HasTouch = true,
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            await SignInViaHttpAsync(context, baseUrl, target.ReturnPath);
+
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+            await page.GotoAsync(baseUrl + target.ReturnPath, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await page.Locator("[data-testid=test-block-stage]").WaitForAsync();
+
+            var eyebrow = (await page.Locator(".test-shell__eyebrow").InnerTextAsync()).Trim();
+            Assert.False(eyebrow.Contains("Culture.Title", StringComparison.Ordinal),
+                $"{target.FileStem}: raw culture key in eyebrow: {eyebrow}");
+            Assert.False(eyebrow.Contains("Values.Title", StringComparison.Ordinal),
+                $"{target.FileStem}: raw values key in eyebrow: {eyebrow}");
+            Assert.DoesNotMatch(new Regex(@"\b(Culture|Values)\.Title\b"), eyebrow);
+
+            var tabs = page.Locator("[data-testid=test-depth-segments]");
+            await tabs.WaitForAsync();
+            var hero = page.Locator(".test-block-stage__mobile-hero--band").First;
+            await hero.WaitForAsync();
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  const h = document.querySelector('.test-block-stage__mobile-hero--band, .test-block-stage__mobile-hero--compact');
+                  if (!h) return false;
+                  const bg = getComputedStyle(h).backgroundImage || '';
+                  return bg.includes('mobhero');
+                }
+                """,
+                null,
+                new() { Timeout = 30_000 });
+            var tabsBox = await tabs.BoundingBoxAsync();
+            var heroBox = await hero.BoundingBoxAsync();
+            Assert.NotNull(tabsBox);
+            Assert.NotNull(heroBox);
+            Assert.True(tabsBox!.Y + tabsBox.Height <= heroBox!.Y + 2,
+                $"{target.FileStem}: depth tabs must sit above the mobile hero.");
+
+            var scrollWidth = await page.EvaluateAsync<double>("""
+                () => {
+                  const el = document.documentElement;
+                  return Math.max(el.scrollWidth, document.body?.scrollWidth ?? 0);
+                }
+                """);
+            Assert.InRange(scrollWidth, 389, 391);
+
+            var stageWidth = await page.Locator("[data-testid=test-block-stage]").EvaluateAsync<double>(
+                "el => el.getBoundingClientRect().width");
+            Assert.InRange(stageWidth, 356, 362);
+
+            var flowWidth = await page.Locator(".test-flow").First.EvaluateAsync<double>(
+                "el => el.getBoundingClientRect().width");
+            Assert.InRange(flowWidth, 322, 332);
+
+            var barOverflow = await page.EvaluateAsync<bool>(""" 
+                () => {
+                  const card = document.querySelector('.test-shell__card');
+                  const bar = document.querySelector('.test-flow__bar');
+                  if (!card || !bar) return false;
+                  const cs = getComputedStyle(card);
+                  const padEnd = parseFloat(cs.paddingInlineEnd) || 0;
+                  const contentRight = card.getBoundingClientRect().right - padEnd;
+                  return bar.getBoundingClientRect().right <= contentRight + 1.5;
+                }
+                """);
+            Assert.True(barOverflow, $"{target.FileStem}: progress bar must stay inside card padding.");
+
+            var pageWidth = await page.Locator(".test-page").EvaluateAsync<double>(
+                "el => el.getBoundingClientRect().width");
+            Assert.InRange(pageWidth, 388, 392);
+
+            await page.WaitForTimeoutAsync(400);
+
+            var heroHeight = await hero.EvaluateAsync<double>("el => el.getBoundingClientRect().height");
+            Assert.True(heroHeight is >= 196 and <= 212,
+                $"{target.FileStem}: mobile hero band height drifted ({heroHeight:F1}px).");
+
+            var png = await hero.ScreenshotAsync(new() { Type = ScreenshotType.Png });
+            AssertMobHeroVisiblePixels(png, target.FileStem);
+        }
+    }
+
+    private static Rgba32 MobHeroBlockReference(string slug) => slug switch
+    {
+        "hoe-je-werkt" => new Rgba32(232, 238, 246, 255),
+        "leuk" => new Rgba32(248, 236, 230, 255),
+        "sfeer" => new Rgba32(241, 234, 226, 255),
+        "waarden" => new Rgba32(236, 242, 236, 255),
+        _ => new Rgba32(245, 242, 238, 255)
+    };
+
+    private static void AssertMobHeroNoHardBlockSeams(byte[] png, string stem)
+    {
+        using var image = Image.Load<Rgba32>(png);
+        var block = MobHeroBlockReference(stem);
+        var w = image.Width;
+        var h = image.Height;
+        var xStart = Math.Max(1, (int)(w * 0.22));
+        var xLo = (int)(w * 0.22);
+        var xHi = (int)(w * 0.92);
+        var yStart = Math.Max(1, (int)(h * 0.08));
+
+        static float Lum(Rgba32 p) => 0.299f * p.R + 0.587f * p.G + 0.114f * p.B;
+
+        static bool NearBlock(Rgba32 p, Rgba32 c, int tol = 24)
+            => Math.Max(Math.Max(Math.Abs(p.R - c.R), Math.Abs(p.G - c.G)), Math.Abs(p.B - c.B)) <= tol;
+
+        for (var x = xStart; x < w; x++)
+        {
+            var seam = 0;
+            for (var y = 0; y < h; y++)
+            {
+                var a = image[x - 1, y];
+                var b = image[x, y];
+                if (Math.Abs(Lum(a) - Lum(b)) <= 8)
+                {
+                    continue;
+                }
+
+                if (NearBlock(a, block) && NearBlock(b, block))
+                {
+                    seam++;
+                }
+            }
+
+            if (seam >= Math.Max(28, (int)(h * 0.22)))
+            {
+                Assert.Fail($"{stem}: vertical block-color seam at x={x} ({seam} rows, ΔL>8).");
+            }
+        }
+
+        for (var y = yStart; y < h; y++)
+        {
+            var seam = 0;
+            for (var x = xLo; x < xHi; x++)
+            {
+                var a = image[x, y - 1];
+                var b = image[x, y];
+                if (Math.Abs(Lum(a) - Lum(b)) <= 8)
+                {
+                    continue;
+                }
+
+                if (NearBlock(a, block) && NearBlock(b, block))
+                {
+                    seam++;
+                }
+            }
+
+            if (seam >= Math.Max(36, (int)((xHi - xLo) * 0.28)))
+            {
+                Assert.Fail($"{stem}: horizontal block-color seam at y={y} ({seam} cols, ΔL>8).");
+            }
+        }
+    }
+
+    private static void AssertMobHeroPersonPixelsFullyOpaque(string slug, byte[] _)
+    {
+        var root = FindRepoRoot();
+        var figuresDir = Path.Combine(root, "Jobsy.Web/wwwroot/images/tests/figures");
+        var cutoutPath = Path.Combine(figuresDir, $"{slug}-mobhero-figure-cutout.png");
+        var maskPath = Path.Combine(figuresDir, $"{slug}-mobhero-person-mask.png");
+        Assert.True(File.Exists(cutoutPath), $"Missing figure cutout: {cutoutPath}");
+        Assert.True(File.Exists(maskPath), $"Missing person mask: {maskPath}");
+
+        using var cutout = Image.Load<Rgba32>(cutoutPath);
+        using var mask = Image.Load<L8>(maskPath);
+        Assert.Equal(cutout.Width, mask.Width);
+        Assert.Equal(cutout.Height, mask.Height);
+
+        var personPixels = 0;
+        var ghostPixels = 0;
+        for (var y = 0; y < cutout.Height; y++)
+        {
+            for (var x = 0; x < cutout.Width; x++)
+            {
+                if (mask[x, y].PackedValue < 128)
+                {
+                    continue;
+                }
+
+                personPixels++;
+                if (cutout[x, y].A < 255)
+                {
+                    ghostPixels++;
+                }
+            }
+        }
+
+        Assert.True(personPixels > 200, $"{slug}: person mask too small ({personPixels}px).");
+        Assert.True(ghostPixels == 0,
+            $"{slug}: {ghostPixels} person-mask pixels have alpha<255 in figure cutout (ghosting).");
+    }
+
+    private static Rgba32 SampleMobHeroCreamReference(Image<Rgba32> image)
+    {
+        var w = image.Width;
+        var h = image.Height;
+        var anchor = image[Math.Min(8, w - 1), Math.Min(8, h - 1)];
+        long r = 0;
+        long g = 0;
+        long b = 0;
+        var count = 0;
+        var leftEnd = Math.Max(4, (int)(w * 0.22));
+        var sampleBottom = Math.Max(4, (int)(h * 0.45));
+        for (var y = 0; y < sampleBottom; y++)
+        {
+            for (var x = 0; x < leftEnd; x++)
+            {
+                var p = image[x, y];
+                if (p.A < 200)
+                {
+                    continue;
+                }
+
+                var delta = Math.Max(Math.Max(Math.Abs(p.R - anchor.R), Math.Abs(p.G - anchor.G)), Math.Abs(p.B - anchor.B));
+                if (delta > 18)
+                {
+                    continue;
+                }
+
+                r += p.R;
+                g += p.G;
+                b += p.B;
+                count++;
+            }
+        }
+
+        if (count == 0)
+        {
+            return anchor;
+        }
+
+        return new Rgba32((byte)(r / count), (byte)(g / count), (byte)(b / count), 255);
+    }
+
+    private static void AssertMobHeroVisiblePixels(byte[] png, string stem)
+    {
+        using var image = Image.Load<Rgba32>(png);
+        var w = image.Width;
+        var h = image.Height;
+        var refPx = SampleMobHeroCreamReference(image);
+        var rightStart = (int)(w * 0.55);
+        // Ignore the top band of the hero where pre-composited sky/clouds can match cream but figures sit lower.
+        var rowStart = (int)(h * 0.28);
+        var strong = 0;
+        var total = 0;
+        var channelSpreadSum = 0;
+        for (var y = rowStart; y < h; y++)
+        {
+            for (var x = rightStart; x < w; x++)
+            {
+                var p = image[x, y];
+                if (p.A < 200)
+                {
+                    continue;
+                }
+
+                total++;
+                var delta = Math.Max(Math.Max(Math.Abs(p.R - refPx.R), Math.Abs(p.G - refPx.G)), Math.Abs(p.B - refPx.B));
+                if (delta > 40)
+                {
+                    strong++;
+                    channelSpreadSum += Math.Max(p.R, Math.Max(p.G, p.B)) - Math.Min(p.R, Math.Min(p.G, p.B));
+                }
+            }
+        }
+
+        Assert.True(total > 100, $"{stem}: hero screenshot too small to evaluate.");
+        var ratio = (double)strong / total;
+        Assert.True(ratio >= 0.25,
+            $"{stem}: expected >=25% strong figure pixels in right 45% of mobhero (delta>40 vs cream), got {ratio:P1}.");
+
+        if (strong > 0)
+        {
+            var avgSpread = channelSpreadSum / (double)strong;
+            Assert.True(avgSpread >= 25,
+                $"{stem}: figure area looks faded (avg channel spread {avgSpread:F1}); expected opaque illustration.");
+        }
+    }
+
     private static void PurgeLegacyArtifactDirs()
     {
         foreach (var dir in new[]
@@ -224,11 +575,24 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         Assert.False(Regex.IsMatch(insightText, @"\d|%"), $"Insight text must not contain digits or %: {insightText}");
 
         var cardBox = await page.Locator(".test-shell__card, .ob-wizard__card").First.BoundingBoxAsync();
-        var bandBox = await page.Locator(".test-block-stage__band").BoundingBoxAsync();
         Assert.NotNull(cardBox);
-        Assert.NotNull(bandBox);
-        Assert.True(cardBox!.Y + cardBox.Height <= bandBox!.Y + 2,
-            "Question card must sit above the art band (not overlapping).");
+        if (width < 1024)
+        {
+            var heroBox = await page.Locator(".test-block-stage__mobile-hero--band, .test-block-stage__mobile-hero--compact")
+                .First.BoundingBoxAsync();
+            Assert.NotNull(heroBox);
+            Assert.True(heroBox!.Y + heroBox.Height <= cardBox!.Y + 2,
+                "Question card must sit below the mobile hero band.");
+            Assert.True(heroBox.Height <= 205,
+                $"Mobile hero should stay near 200px tall, got {heroBox.Height}px.");
+        }
+        else
+        {
+            var bandBox = await page.Locator(".test-block-stage__scene-band").BoundingBoxAsync();
+            Assert.NotNull(bandBox);
+            Assert.True(cardBox!.Y + cardBox.Height <= bandBox!.Y + 2,
+                "Question card must sit above the desktop scene band (not overlapping).");
+        }
     }
 
     private static string FindRepoRoot()

@@ -4,11 +4,13 @@
 @if (Enabled)
 {
     <CascadingValue Value="true" Name="TestBlockStageActive">
+        <CascadingValue Value="Slug" Name="TestBlockArtSlug">
         <div class="test-block-stage test-block-stage--@Slug" data-testid="test-block-stage" data-block="@Slug">
             <div class="test-block-stage__content">
                 @ChildContent
             </div>
         </div>
+        </CascadingValue>
     </CascadingValue>
 }
 else

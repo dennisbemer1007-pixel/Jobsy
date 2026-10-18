@@ -12,20 +12,45 @@ var mobileOnly = string.Equals(
     Environment.GetEnvironmentVariable("JOBSY_CAPTURE_MOBILE_ONLY"),
     "1",
     StringComparison.Ordinal);
+var desktopOnly = string.Equals(
+    Environment.GetEnvironmentVariable("JOBSY_CAPTURE_DESKTOP_ONLY"),
+    "1",
+    StringComparison.Ordinal);
+var captureLang = (Environment.GetEnvironmentVariable("JOBSY_CAPTURE_LANG") ?? "nl").Trim().ToLowerInvariant();
+if (captureLang is not ("nl" or "en"))
+{
+    captureLang = "nl";
+}
+
+var voorbeeldenOnly = string.Equals(
+    Environment.GetEnvironmentVariable("JOBSY_CAPTURE_VOORBEELDEN"),
+    "1",
+    StringComparison.Ordinal);
+var desktopOnly = string.Equals(
+    Environment.GetEnvironmentVariable("JOBSY_CAPTURE_DESKTOP_ONLY"),
+    "1",
+    StringComparison.Ordinal);
 const string baseUrl = "http://localhost:5201";
 const string consentInit = """
     try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
     """;
 
-var targets = new (string Stem, string ReturnPath, string CaptureTarget)[]
-{
-    ("quick-scan-hoe-je-werkt", "/__test/capture-test-block?kind=competence&variant=quick", "competence:0"),
-    ("quick-scan-leuk", "/__test/capture-test-block?kind=career&variant=quick", "career:0"),
-    ("quick-scan-sfeer", "/__test/capture-test-block?kind=culture&variant=quick", "culture:0"),
-    ("quick-scan-waarden", "/__test/capture-test-block?kind=values&variant=quick", "values:0"),
-    ("verdieping-leuk", "/__test/capture-test-block?kind=career&variant=verdieping", "career:12"),
-    ("diepte-competenties", "/__test/capture-test-block?kind=competence&variant=deep", "competence:35:deep")
-};
+var targets = voorbeeldenOnly
+    ? new (string Stem, string ReturnPath, string CaptureTarget)[]
+    {
+        ("voorbeeld-hoe-werkt", "/__test/capture-test-block?kind=competence&variant=quick", "competence:0"),
+        ("voorbeeld-leuk", "/__test/capture-test-block?kind=career&variant=quick", "career:0"),
+        ("voorbeeld-waarden", "/__test/capture-test-block?kind=values&variant=quick", "values:0"),
+    }
+    : new (string Stem, string ReturnPath, string CaptureTarget)[]
+    {
+        ("quick-scan-hoe-je-werkt", "/__test/capture-test-block?kind=competence&variant=quick", "competence:0"),
+        ("quick-scan-leuk", "/__test/capture-test-block?kind=career&variant=quick", "career:0"),
+        ("quick-scan-sfeer", "/__test/capture-test-block?kind=culture&variant=quick", "culture:0"),
+        ("quick-scan-waarden", "/__test/capture-test-block?kind=values&variant=quick", "values:0"),
+        ("verdieping-leuk", "/__test/capture-test-block?kind=career&variant=verdieping", "career:12"),
+        ("diepte-competenties", "/__test/capture-test-block?kind=competence&variant=deep", "competence:35:deep")
+    };
 
 Directory.CreateDirectory(outputDir);
 Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -77,22 +102,39 @@ foreach (var (stem, returnPath, captureTarget) in targets)
 
     var viewports = mobileOnly
         ? new (int, int, string)[] { (390, 844, "390") }
-        : new (int, int, string)[] { (1440, 900, "1440"), (390, 844, "390") };
+        : desktopOnly
+            ? new (int, int, string)[] { (1440, 900, "1440") }
+            : new (int, int, string)[] { (1440, 900, "1440"), (390, 844, "390") };
     foreach (var (width, height, tag) in viewports)
     {
         await using var context = await browser.NewContextAsync(new()
         {
             ViewportSize = new ViewportSize { Width = width, Height = height },
-            Locale = "nl-NL",
+            Locale = captureLang == "en" ? "en-GB" : "nl-NL",
             IsMobile = width < 640,
             HasTouch = width < 640,
             IgnoreHTTPSErrors = true
         });
         await context.AddInitScriptAsync(consentInit);
         await context.AddCookiesAsync(authCookies);
+        var cultureCookie = new Microsoft.Playwright.Cookie
+        {
+            Name = "Jobsy.Culture",
+            Value = captureLang,
+            Domain = "localhost",
+            Path = "/",
+            HttpOnly = false,
+            Secure = false,
+            SameSite = Microsoft.Playwright.SameSiteAttribute.Lax
+        };
+        await context.AddCookiesAsync(new[] { cultureCookie });
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(90_000);
-        await page.GotoAsync(baseUrl + returnPath, new() { WaitUntil = WaitUntilState.Commit, Timeout = 120_000 });
+        var langQuery = captureLang == "en" ? "&lang=en" : "";
+        var pathWithLang = returnPath.Contains('?', StringComparison.Ordinal)
+            ? returnPath + langQuery
+            : returnPath + "?lang=" + captureLang;
+        await page.GotoAsync(baseUrl + pathWithLang, new() { WaitUntil = WaitUntilState.Commit, Timeout = 120_000 });
         await page.EvaluateAsync("""
             () => {
               try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
@@ -111,7 +153,8 @@ foreach (var (stem, returnPath, captureTarget) in targets)
             await page.Locator("[data-testid=test-progress-insight-mobile]").WaitForAsync(new() { Timeout = 60_000 });
         }
 
-        if (stem.StartsWith("quick-scan", StringComparison.OrdinalIgnoreCase))
+        if (stem.StartsWith("quick-scan", StringComparison.OrdinalIgnoreCase)
+            || stem.StartsWith("voorbeeld-", StringComparison.OrdinalIgnoreCase))
         {
             await page.Locator("[data-testid=test-item-example]").WaitForAsync(new() { Timeout = 60_000 });
         }
@@ -147,7 +190,37 @@ foreach (var (stem, returnPath, captureTarget) in targets)
             await page.WaitForTimeoutAsync(350);
         }
 
-        var path = Path.Combine(outputDir, $"{stem}-{tag}.png");
+        if (width < 640)
+        {
+            var scrollWidth = await page.EvaluateAsync<double>("""
+                () => Math.max(document.documentElement.scrollWidth, document.body?.scrollWidth ?? 0)
+                """);
+            if (Math.Abs(scrollWidth - width) > 1.5)
+            {
+                throw new InvalidOperationException($"{stem}: scrollWidth {scrollWidth} != viewport {width}");
+            }
+
+            var layout = await page.EvaluateAsync<string>("""
+                () => {
+                  const pick = (sel) => {
+                    const el = document.querySelector(sel);
+                    if (!el) return null;
+                    const r = el.getBoundingClientRect();
+                    return Math.round(r.width);
+                  };
+                  return JSON.stringify({
+                    page: pick('.test-page'),
+                    stage: pick('[data-testid=test-block-stage]'),
+                    flow: pick('.test-flow'),
+                    footer: pick('.test-flow__footer[data-sticky-footer]')
+                  });
+                }
+                """);
+            Console.WriteLine($"{stem}: layout widths {layout}");
+        }
+
+        var langTag = captureLang == "en" ? "en" : "nl";
+        var path = Path.Combine(outputDir, $"{stem}-{langTag}-{tag}.png");
         await page.ScreenshotAsync(new() { Path = path, FullPage = false });
         Console.WriteLine($"Wrote {path} ({new FileInfo(path).Length} bytes)");
     }

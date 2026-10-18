@@ -29,7 +29,14 @@
                 @if (ShowBlockStage && Mode == ShellMode.Question)
                 {
                     <TestBlockMobileHero>
-                        <h1 tabindex="-1">@H1</h1>
+                        @if (EffectiveBlockSlug == "hoe-je-werkt")
+                        {
+                            <h1 tabindex="-1">@((MarkupString)Culture["Discovery.Test.Competency.MobileTitle"])</h1>
+                        }
+                        else
+                        {
+                            <h1 tabindex="-1">@H1</h1>
+                        }
                     </TestBlockMobileHero>
                 }
                 <div class="test-shell__card">
