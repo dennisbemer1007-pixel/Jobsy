@@ -42,10 +42,26 @@
 }
 
 @media (min-width: 1024px) {
+  .passport-page--illustrated .passport-layout {
+    align-items: start;
+  }
+
   .passport-layout__sidebar {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+  }
+
+  .passport-page--illustrated .passport-layout__sidebar {
+    align-self: start;
+    justify-content: flex-start;
+  }
+
+  .passport-page--illustrated .passport-layout__card--desktop {
+    align-self: start;
+    position: sticky;
+    inset-block-start: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
+    top: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
   }
 }
 

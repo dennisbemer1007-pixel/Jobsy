@@ -19,7 +19,8 @@ internal static class PlaywrightScreenshotSanitizer
         .feedback-widget__tab--edge,
         .lobsy-assistant-tab,
         .lobsy-assistant-tab--edge,
-        .cookie-consent {
+        .cookie-consent,
+        .passport-layout__card--desktop {
           position: static !important;
           inset: auto !important;
           transform: none !important;
