@@ -99,76 +99,87 @@ public sealed class ItemExamplesEvidencePlaywrightTests : IAsyncLifetime
         Assert.True(new FileInfo(path).Length > 500);
     }
 
-    [Theory]
-    [InlineData("/candidate/competencies?stap=vraag", "competence", 1440, 900, "desktop-1440")]
-    [InlineData("/candidate/competencies?stap=vraag", "competence", 390, 844, "mobile-390")]
-    [InlineData("/candidate/career?stap=vraag", "career", 1440, 900, "desktop-1440")]
-    [InlineData("/candidate/career?stap=vraag", "career", 390, 844, "mobile-390")]
-    [InlineData("/candidate/culture?stap=vraag", "culture", 1440, 900, "desktop-1440")]
-    [InlineData("/candidate/culture?stap=vraag", "culture", 390, 844, "mobile-390")]
-    [InlineData("/candidate/values?stap=vraag", "values", 1440, 900, "desktop-1440")]
-    [InlineData("/candidate/values?stap=vraag", "values", 390, 844, "mobile-390")]
-    public async Task Quick_scan_question_shows_calm_example_line(
-        string path, string slug, int width, int height, string tag)
+    [Fact]
+    public async Task Quick_scan_questions_show_calm_example_lines()
     {
         using var web = new ExamplesWebFactory();
-        var url = web.EnsureServerAddress()
-                  + "/__test/sign-in?return="
-                  + Uri.EscapeDataString(path);
+        var baseUrl = web.EnsureServerAddress() + "/__test/sign-in?return=";
 
-        await using var context = await _browser!.NewContextAsync(new()
+        foreach (var (path, slug) in new (string, string)[]
+                 {
+                     ("/candidate/competencies?stap=vraag", "competence"),
+                     ("/candidate/career?stap=vraag", "career"),
+                     ("/candidate/culture?stap=vraag", "culture"),
+                     ("/candidate/values?stap=vraag", "values")
+                 })
         {
-            ViewportSize = new ViewportSize { Width = width, Height = height },
-            Locale = "nl-NL"
-        });
-        await PlaywrightCookieConsent.AcceptAsync(context);
-        var page = await context.NewPageAsync();
-        page.SetDefaultTimeout(45_000);
-        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            foreach (var (width, height, tag) in new (int, int, string)[]
+                     {
+                         (1440, 900, "desktop-1440"),
+                         (390, 844, "mobile-390")
+                     })
+            {
+                var url = baseUrl + Uri.EscapeDataString(path);
+                await using var context = await _browser!.NewContextAsync(new()
+                {
+                    ViewportSize = new ViewportSize { Width = width, Height = height },
+                    Locale = "nl-NL"
+                });
+                await PlaywrightCookieConsent.AcceptAsync(context);
+                var page = await context.NewPageAsync();
+                page.SetDefaultTimeout(45_000);
+                await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
-        var example = page.Locator("[data-testid=test-item-example]");
-        await example.WaitForAsync();
-        var text = await example.InnerTextAsync();
-        Assert.Contains("Voorbeeld", text, StringComparison.OrdinalIgnoreCase);
+                var example = page.Locator("[data-testid=test-item-example]");
+                await example.WaitForAsync();
+                var text = await example.InnerTextAsync();
+                Assert.Contains("Voorbeeld", text, StringComparison.OrdinalIgnoreCase);
 
-        var fileName = $"{slug}-question-{tag}.png";
-        var artifactPath = Path.Combine(FindRepoRoot(), ArtifactDir, fileName);
-        await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = true });
-        CopyToAgentStore(artifactPath, fileName);
+                var fileName = $"{slug}-question-{tag}.png";
+                var artifactPath = Path.Combine(FindRepoRoot(), ArtifactDir, fileName);
+                await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = true });
+                CopyToAgentStore(artifactPath, fileName);
+            }
+        }
     }
 
-    [Theory]
-    [InlineData(1440, 900, "desktop-1440")]
-    [InlineData(390, 844, "mobile-390")]
-    public async Task Deep_analysis_question_shows_example_line(int width, int height, string tag)
+    [Fact]
+    public async Task Deep_analysis_question_shows_example_line()
     {
         using var web = new DeepExamplesWebFactory();
         var url = web.EnsureServerAddress()
                   + "/__test/sign-in?return="
                   + Uri.EscapeDataString("/candidate/deep-analysis/competence");
 
-        await using var context = await _browser!.NewContextAsync(new()
+        foreach (var (width, height, tag) in new (int, int, string)[]
+                 {
+                     (1440, 900, "desktop-1440"),
+                     (390, 844, "mobile-390")
+                 })
         {
-            ViewportSize = new ViewportSize { Width = width, Height = height },
-            Locale = "nl-NL"
-        });
-        await PlaywrightCookieConsent.AcceptAsync(context);
-        var page = await context.NewPageAsync();
-        page.SetDefaultTimeout(45_000);
-        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.Locator(".test-shell[data-mode=Question]").WaitForAsync(new() { Timeout = 60_000 });
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                Locale = "nl-NL"
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(45_000);
+            await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await page.Locator(".test-shell[data-mode=Question]").WaitForAsync(new() { Timeout = 60_000 });
 
-        var example = page.Locator("[data-testid=test-item-example]");
-        await example.WaitForAsync();
-        var text = await example.InnerTextAsync();
-        Assert.Contains("Voorbeeld", text, StringComparison.OrdinalIgnoreCase);
+            var example = page.Locator("[data-testid=test-item-example]");
+            await example.WaitForAsync();
+            var text = await example.InnerTextAsync();
+            Assert.Contains("Voorbeeld", text, StringComparison.OrdinalIgnoreCase);
 
-        var fileName = $"deep-competence-question-{tag}.png";
-        var artifactPath = Path.Combine(FindRepoRoot(), ArtifactDir, fileName);
-        await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = true });
-        CopyToAgentStore(artifactPath, fileName);
+            var fileName = $"deep-competence-question-{tag}.png";
+            var artifactPath = Path.Combine(FindRepoRoot(), ArtifactDir, fileName);
+            await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = true });
+            CopyToAgentStore(artifactPath, fileName);
+        }
     }
 
     private static void CopyToAgentStore(string sourcePath, string fileName)
