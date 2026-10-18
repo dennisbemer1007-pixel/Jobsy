@@ -72,7 +72,7 @@
     }
     else
     {
-        <article class="detail-card kb-detail kb-detail--warm" data-testid="kb-detail">
+        <article class="kb-detail kb-detail--warm kb-detail--flat" data-testid="kb-detail">
             <div class="detail-card__header-row">
                 <a class="back-link" href="@KbRoutes.Map">@Culture["Vacancy.BackToMap"]</a>
             </div>
@@ -159,7 +159,6 @@
                 </div>@* kb-detail__main-top *@
 
                 <aside class="kb-detail__rail kb-detail__rail-stack" data-testid="kb-detail-rail">
-                    <div class="kb-detail__rail-fit">@FitPanelFragment</div>
                     <div class="kb-detail__rail-travel">@TravelCardFragment</div>
                     @if (ShowApplyReadinessRail)
                     {
@@ -167,11 +166,12 @@
                             <KbDetailApplyReadiness Compact="true"
                                                     Lead="@ApplyReadinessLead"
                                                     Items="@ApplyReadinessItems"
-                                                    ProfileHref="@ProfileReturnHref" />
+                                                    ProfileHref="@ProfileReturnHref"
+                                                    CtaKey="Apply.StickyCompleteProfileCta" />
                         </div>
                     }
                     <div class="kb-detail__rail-cta kb-detail__rail-actions">
-                        @if (_detailWide)
+                        @if (_detailWide && !ShowApplyReadinessRail)
                         {
                             @PrimaryApplyFragment
                         }
@@ -233,6 +233,8 @@
                     <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
                 </section>
             }
+
+            <div class="kb-detail__inline-fit">@FitPanelFragment</div>
 
             @if (HasScheduleInfo || HasLegalInfo)
             {
@@ -364,8 +366,12 @@
                 </div>
             }
 
+            @if (ShowApplyFlowSection)
+            {
             <AuthorizeView Roles="Candidate">
                 <Authorized>
+                    @if (_profileReadyForApply)
+                    {
                     <div class="lobsy-coach-cta">
                         <button type="button"
                                 class="lobsy-coach-cta__btn"
@@ -375,6 +381,7 @@
                             <span class="lobsy-coach-cta__bubble">@Culture["MockInterview.CtaBubble"]</span>
                         </button>
                     </div>
+                    }
                 </Authorized>
             </AuthorizeView>
 
@@ -645,6 +652,7 @@
                     </NotAuthorized>
                 </AuthorizeView>
             </div>
+            }
 
                 </div>@* kb-detail__main-bottom *@
             </div>@* kb-detail__layout *@
@@ -653,7 +661,10 @@
             @if (!_detailWide)
             {
                 <div class="kb-detail__sticky-apply" data-testid="kb-sticky-apply" data-sticky-footer>
-                    @PrimaryApplyFragment
+                    @if (!ShowApplyReadinessRail)
+                    {
+                        @PrimaryApplyFragment
+                    }
                     @SaveButtonFragment
                 </div>
             }
@@ -739,7 +750,7 @@
         var dnaRows = DnaRows(_vacancy);
 
         <div class="kb-fit-panel kb-fit-panel--card" data-fit-gate="@(_vacancy.FitGate ?? "")" data-testid="kb-fit-panel">
-            <h2 class="kb-fit-panel__title">@Culture["Kb.Fit.WhyTitle"]</h2>
+            <h2 class="kb-fit-panel__title">@Culture["Fit.CheckVacancy"]</h2>
             @if (!string.IsNullOrWhiteSpace(detailRank))
             {
                 <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
@@ -955,14 +966,6 @@
 
         <div class="kb-detail-link-cards kb-detail-link-cards--rail">
             <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
-            <AuthorizeView Roles="Candidate">
-                <Authorized>
-                    <KbDetailFootLink Href="@($"/candidate/profile?tab=fit&vacancyId={Id}")"
-                                      Title="@Culture["Fit.CheckVacancy"]">
-                        <Icon><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="8"/><path d="M12 8v4M12 16h.01"/></svg></Icon>
-                    </KbDetailFootLink>
-                </Authorized>
-            </AuthorizeView>
         </div>
     };
 
@@ -1319,14 +1322,14 @@
         }
     }
 
-    private string? ApplyFlowVisibilityClass =>
-        !_detailWide
-        && _signedInCandidate
-        && _candidateApplyGateLoaded
-        && !_applied
-        && !_profileReadyForApply
-            ? "apply-flow--rail-only"
-            : null;
+    private bool ShowApplyFlowSection =>
+        !_signedInCandidate
+        || !_candidateApplyGateLoaded
+        || _applied
+        || _profileReadyForApply
+        || _awaitingVerification;
+
+    private string? ApplyFlowVisibilityClass => null;
 
     private bool HasLocation =>
         _vacancy is not null

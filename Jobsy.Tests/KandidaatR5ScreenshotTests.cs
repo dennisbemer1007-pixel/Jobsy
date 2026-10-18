@@ -18,9 +18,12 @@ using System.Security.Claims;
 namespace Jobsy.Tests;
 
 [Collection("PlaywrightSmoke")]
-public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
+public sealed class KandidaatR5ScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/carriere-r4";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-r5";
+    private static readonly Guid NoPhotoVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -29,9 +32,11 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
     {
         foreach (var legacy in new[]
                  {
+                     "/opt/cursor/artifacts/carriere-r4",
+                     "/opt/cursor/artifacts/carriere-r3",
+                     "/opt/cursor/artifacts/vacature-r3",
                      "/opt/cursor/artifacts/kandidaat-rol-r2",
-                     "/opt/cursor/artifacts/kandidaat-rol-r1",
-                     "/opt/cursor/artifacts/carriere-r3"
+                     "/opt/cursor/artifacts/kandidaat-rol-r1"
                  })
         {
             if (Directory.Exists(legacy))
@@ -61,18 +66,20 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_carriere_r4_review_shots()
+    public async Task Capture_kandidaat_r5_review_shots()
     {
         Directory.CreateDirectory(ArtifactsDir);
         await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false);
         await CapturePageAsync("/carriere?empty=1", "carriere-zonder-droombaan", careerEmpty: true);
+        await CapturePageAsync("/vacancies/" + NoPhotoVacancyId, "vacature-zonder-foto", careerEmpty: false);
+        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature-met-foto", careerEmpty: false);
     }
 
     private async Task CapturePageAsync(string path, string name, bool careerEmpty)
     {
         foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
         {
-            CareerStubApiHandler.CareerPlanEmpty = careerEmpty;
+            CombinedStubApiHandler.CareerPlanEmpty = careerEmpty;
             await using var context = await _browser!.NewContextAsync(new()
             {
                 ViewportSize = new() { Width = width, Height = height },
@@ -92,7 +99,14 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
             {
                 Content = """
                     .pub-header, .jobsy-chrome__header { position: static !important; }
-                    .app-main, main.app-main { padding-bottom: 5.5rem !important; min-height: auto !important; }
+                    .app-main, main.app-main {
+                      padding-bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px)) !important;
+                      min-height: auto !important;
+                    }
+                    .career-page--illustrated .career-ill-plan,
+                    .panel-page--vacancy.panel-page--cand-ill .kb-detail--flat {
+                      margin-bottom: 5rem;
+                    }
                     .bottom-nav, .candidate-bottom-nav, nav.bottom-nav {
                       position: fixed !important;
                       left: 0 !important;
@@ -101,9 +115,12 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
                       top: auto !important;
                       z-index: 50 !important;
                     }
+                    .kb-detail__sticky-apply {
+                      bottom: calc(var(--bottom-nav-clearance, 4.5rem) + env(safe-area-inset-bottom, 0px)) !important;
+                    }
                     """
             });
-            await page.WaitForTimeoutAsync(800);
+            await page.WaitForTimeoutAsync(900);
 
             var file = Path.Combine(ArtifactsDir, $"{name}-{tag}.png");
             await page.ScreenshotAsync(new() { Path = file, FullPage = true });
@@ -144,7 +161,7 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
                 services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory());
                 services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
                 services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
-                    new HttpClient(new CareerStubApiHandler(), disposeHandler: false)
+                    new HttpClient(new CombinedStubApiHandler(), disposeHandler: false)
                     {
                         BaseAddress = new Uri("http://api.test/")
                     }));
@@ -231,22 +248,37 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
     private sealed class StubHttpClientFactory : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
-            => new(new CareerStubApiHandler(), disposeHandler: true) { BaseAddress = new Uri("http://api.test/") };
+            => new(new CombinedStubApiHandler(), disposeHandler: true) { BaseAddress = new Uri("http://api.test/") };
     }
 
-    internal sealed class CareerStubApiHandler : HttpMessageHandler
+    internal sealed class CombinedStubApiHandler : HttpMessageHandler
     {
         internal static bool CareerPlanEmpty { get; set; }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
+            var descriptionSections =
+                "<h2>Wat ga je doen?</h2><p>Je helpt met voeren, schoonmaken en aandacht voor de dieren.</p>" +
+                "<h2>Wat vragen we?</h2><p>Je bent zorgvuldig en vindt het fijn om met dieren te werken.</p>";
+            var descJson = System.Text.Json.JsonSerializer.Serialize(descriptionSections);
+            var noPhotoVacancy = $$"""
+                {"id":"{{NoPhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","categoryName":"Dierenverzorging","status":"Active","openForWorkRequired":false,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":null,"companyLogoUrl":null,"travelMinutes":9,"description":{{descJson}}}
+                """;
+            var photoVacancy = $$"""
+                {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","categoryName":"Dierenverzorging","status":"Active","openForWorkRequired":false,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"/images/candidate-illustrated/beschikbaarheid.jpg","companyLogoUrl":null,"travelMinutes":9,"description":{{descJson}}}
+                """;
+            var incompleteProfile = """
+                {"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","email":"sanne@example.nl","fullName":"Sanne de Vries","firstName":"Sanne","lastName":"de Vries","role":"Candidate","openForWork":false,"emailVerified":true,"preferences":{"homeAddress":"1506 AB Zaandam","preferredTransport":"Fiets","employers":[],"educations":[],"availability":{}}}
+                """;
+            var passportCourses = """
+                [{"title":"Paraveterinair","providerName":"ROC Amstelland","delivery":"Online","durationValue":8,"durationUnit":"weken"}]
+                """;
             var json = path.Contains("/career-path/dream-options", StringComparison.OrdinalIgnoreCase)
                 ? """
                   {"suggestions":[
                     {"catalogKey":"dierenarts","title":"Dierenarts","description":"Past bij je zorgzaamheid","noScore":true},
-                    {"catalogKey":"zorg","title":"Zorgmedewerker","description":"Sluit aan op je paspoort","noScore":true},
-                    {"catalogKey":"logistiek","title":"Teamleider logistiek","description":"Gebruik je organiseren-talent","noScore":true}],
+                    {"catalogKey":"zorg","title":"Zorgmedewerker","description":"Sluit aan op je paspoort","noScore":true}],
                   "results":[]}
                   """
                 : path.Contains("/career-path/archived", StringComparison.OrdinalIgnoreCase)
@@ -255,13 +287,27 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
                         ? CareerPlanJson(CareerPlanEmpty)
                         : path.Contains("/career-interests", StringComparison.OrdinalIgnoreCase)
                             ? """{"scores":{"isComplete":true,"realistic":3,"investigative":2,"artistic":2,"social":4,"enterprising":2,"conventional":2}}"""
-                            : path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
-                                ? """{"isComplete":true}"""
-                                : path.Contains("training-offers", StringComparison.OrdinalIgnoreCase)
-                                    ? """[{"offerId":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","title":"Paraveterinair","providerName":"ROC","type":"Cursus","durationValue":8,"durationUnit":"weken","delivery":"Online","isFree":false}]"""
-                                    : path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase)
-                                        ? """{"preferences":{"homeAddress":"1506 AB Zaandam","employers":[{"role":"Dierenverzorger","startMonth":"2022-03","endMonth":null}],"educations":["Mbo niveau 3"],"educationDirection":"Dierenverzorging"}}"""
-                                        : "{}";
+                            : path.Contains("/applications", StringComparison.OrdinalIgnoreCase)
+                                ? "[]"
+                                : path.Contains("/likes", StringComparison.OrdinalIgnoreCase) || path.Contains("/engagement/likes", StringComparison.OrdinalIgnoreCase)
+                                    ? "[]"
+                                    : path.Contains("/travel", StringComparison.OrdinalIgnoreCase)
+                                        ? """{"travelMinutes":9,"distanceKm":2.4}"""
+                                        : path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase)
+                                            ? incompleteProfile
+                                            : path.Contains("training-offers/passport", StringComparison.OrdinalIgnoreCase)
+                                                ? passportCourses
+                                                : path.Contains("training-offers", StringComparison.OrdinalIgnoreCase)
+                                                    ? passportCourses
+                                                    : path.Contains("vacanc", StringComparison.OrdinalIgnoreCase)
+                                                        ? path.Contains(PhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
+                                                            ? photoVacancy
+                                                            : path.Contains(NoPhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
+                                                                ? noPhotoVacancy
+                                                                : "[]"
+                                                        : path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
+                                                            ? """{"isComplete":true}"""
+                                                            : "{}";
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")

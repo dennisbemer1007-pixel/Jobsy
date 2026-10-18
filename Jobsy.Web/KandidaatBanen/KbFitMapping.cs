@@ -27,8 +27,18 @@ public static class KbFitMapping
             return new KbFitView(GateOpen: true, Percent: p, Band: band);
         }
 
+        if (HasDimensionFit(item))
+        {
+            return new KbFitView(GateOpen: true, Percent: null, Band: ParseBand(item.FitBand));
+        }
+
         return null;
     }
+
+    private static bool HasDimensionFit(VacancyListItem item)
+        => item.FitDimensions is not null
+           || item.FitWhyKinds is { Count: > 0 }
+           || string.Equals(item.FitGate, "Open", StringComparison.OrdinalIgnoreCase);
 
     public static string? WhyLine(VacancyListItem? item, CultureState culture)
     {
@@ -66,7 +76,7 @@ public static class KbFitMapping
     public static bool GateOpen(VacancyListItem? item)
         => item is not null
            && !string.Equals(item.FitGate, CandidateFitApply.FitGateClosed, StringComparison.OrdinalIgnoreCase)
-           && (item.FitPercent is not null || item.MatchPercent is not null);
+           && (item.FitPercent is not null || item.MatchPercent is not null || HasDimensionFit(item));
 
     private static KbFitBand BandFromPercent(int percent)
         => CandidateFitDisplay.BandFor(percent);

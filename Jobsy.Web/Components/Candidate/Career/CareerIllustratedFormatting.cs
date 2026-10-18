@@ -18,5 +18,5 @@ internal static class CareerIllustratedFormatting
             : culture.Format("Career.Illustrated.ManySkills", count);
 
     public static string BothHint(CultureState culture, int skills, int courses)
-        => culture.Format("Career.Illustrated.ActionBothFixed", skills, CoursesHint(culture, courses));
+        => $"{CoursesHint(culture, courses)} · {SkillsHint(culture, skills)}";
 }

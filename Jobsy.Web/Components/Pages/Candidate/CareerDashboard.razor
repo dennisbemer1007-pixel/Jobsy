@@ -196,6 +196,21 @@
                             </p>
                         </div>
                     </div>
+                    @if (_panelCourses.Count > 0)
+                    {
+                        <section class="career-ill-training" aria-labelledby="career-ill-training-title">
+                            <h2 id="career-ill-training-title" class="career-ill-training__title">@Culture["Career.Illustrated.StepTrainingTitle"]</h2>
+                            <ul class="career-ill-training__list">
+                                @foreach (var course in _panelCourses.Take(4))
+                                {
+                                    <li class="career-ill-training__item">
+                                        <b>@course.Title</b>
+                                        <span>@TrainingMeta(course)</span>
+                                    </li>
+                                }
+                            </ul>
+                        </section>
+                    }
                     @if ((_showCarriedOver && _plan.CarriedOverCount > 0) || _plan.LanguageDiffers || !string.IsNullOrWhiteSpace(_error))
                     {
                         <CareerOverviewCard Illustrated="true"
@@ -841,4 +856,22 @@
         => ex is CareerApiErrorException api
             ? CareerPathService.ErrorMessage(key => Culture[key], api)
             : Culture["Common.Error"];
+
+    private string TrainingMeta(PassportCourseCard card)
+    {
+        var parts = new List<string>(2);
+        if (!string.IsNullOrWhiteSpace(card.Delivery))
+        {
+            parts.Add(card.Delivery);
+        }
+
+        if (card.DurationValue is > 0 && !string.IsNullOrWhiteSpace(card.DurationUnit))
+        {
+            parts.Add($"{card.DurationValue} {card.DurationUnit}");
+        }
+
+        return parts.Count > 0
+            ? string.Join(" · ", parts)
+            : Culture["Career.Illustrated.CourseMetaFallback"];
+    }
 }

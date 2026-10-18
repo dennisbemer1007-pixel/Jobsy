@@ -27,6 +27,7 @@ public static class CandidateIllustratedImages
     public const string CarriereBand = $"{Base}/opleiding.jpg?v={Version}";
     public const string InstellingenBand = $"{Base}/beschikbaarheid.jpg?v={Version}";
     public const string DroombaanBand = $"{Base}/droombaan.jpg?v={Version}";
+    public const string KennismakenHero = $"{Base}/kennismaken.jpg?v={Version}";
     public const string AccountMobileArt = $"{Base}/kennismaken.jpg?v={Version}";
     public const string SavedNoPhotoArt = $"{Base}/spots/job-flex.jpg?v={Version}";
 

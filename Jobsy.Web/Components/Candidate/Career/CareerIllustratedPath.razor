@@ -9,6 +9,22 @@
 }
 
 <nav class="career-path-svg" aria-label="@Culture["Career.Illustrated.PathAria"]">
+    <ol class="career-path-mobile">
+        @for (var i = 0; i < nodes.Count; i++)
+        {
+            var node = nodes[i];
+            <li class="career-path-mobile__item career-path-mobile__item--@node.State">
+                <span class="career-path-mobile__marker" aria-hidden="true">@MobileMarker(node)</span>
+                <div class="career-path-mobile__copy">
+                    <span class="career-path-mobile__label">@node.Label</span>
+                    @if (!string.IsNullOrWhiteSpace(node.Sub))
+                    {
+                        <span class="career-path-mobile__sub">@node.Sub</span>
+                    }
+                </div>
+            </li>
+        }
+    </ol>
     <div class="career-path-svg__lane">
         <svg class="career-path-svg__svg" viewBox="0 0 1000 56" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
             @foreach (var seg in segments)
@@ -162,4 +178,13 @@
         const double pad = 6;
         return pad + (100 - pad * 2) * index / (count - 1);
     }
+
+    private static string MobileMarker(PathNode node)
+        => node.Kind switch
+        {
+            NodeKind.Dream => "★",
+            NodeKind.Now => "•",
+            _ when node.State == "done" => "✓",
+            _ => node.Order.ToString()
+        };
 }

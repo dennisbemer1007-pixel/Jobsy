@@ -261,35 +261,41 @@ public static class UiStringsCareer
             "Pasul {0} din {1} spre {2}",
             "الخطوة {0} من {1} نحو {2}");
         Add("Career.Illustrated.OneCourse",
-            "1 cursus",
-            "1 course",
-            "1 kurs",
-            "1 curs",
-            "دورة واحدة");
+            "Nog 1 cursus te gaan",
+            "1 course left",
+            "Został 1 kurs",
+            "A mai rămas 1 curs",
+            "دورة واحدة متبقية");
         Add("Career.Illustrated.ManyCourses",
-            "{0} cursussen",
-            "{0} courses",
-            "{0} kursów",
-            "{0} cursuri",
-            "{0} دورات");
+            "Nog {0} cursussen te gaan",
+            "{0} courses left",
+            "Zostało {0} kursów",
+            "Au mai rămas {0} cursuri",
+            "{0} دورات متبقية");
         Add("Career.Illustrated.OneSkill",
-            "1 skill of ervaring",
-            "1 skill or experience item",
-            "1 umiejętność lub doświadczenie",
-            "1 competență sau experiență",
-            "مهارة أو خبرة واحدة");
+            "Ongeveer een jaar ervaring nodig",
+            "About one year of experience needed",
+            "Potrzebny około rok doświadczenia",
+            "Aproximativ un an de experiență necesar",
+            "حوالي سنة خبرة مطلوبة");
         Add("Career.Illustrated.ManySkills",
-            "{0} skills of ervaring",
-            "{0} skills or experience items",
-            "{0} umiejętności lub doświadczeń",
-            "{0} competențe sau experiențe",
-            "{0} مهارات أو خبرات");
+            "Nog {0} ervaringseisen open",
+            "{0} experience requirements open",
+            "Pozostało {0} wymagań doświadczenia",
+            "{0} cerințe de experiență deschise",
+            "{0} متطلبات خبرة مفتوحة");
         Add("Career.Illustrated.ActionBothFixed",
-            "Nog {0} · {1}",
-            "Still {0} · {1}",
-            "Jeszcze {0} · {1}",
-            "Încă {0} · {1}",
-            "متبقٍ {0} · {1}");
+            "{0} · {1}",
+            "{0} · {1}",
+            "{0} · {1}",
+            "{0} · {1}",
+            "{0} · {1}");
+        Add("Career.Illustrated.StepTrainingTitle",
+            "Workshops en opleidingen bij deze stap",
+            "Workshops and courses for this step",
+            "Warsztaty i kursy na tym kroku",
+            "Ateliere și cursuri pentru acest pas",
+            "ورش عمل ودورات لهذه الخطوة");
         Add("Career.Illustrated.CourseMetaFallback",
             "Online · flexibel tempo",
             "Online · flexible pace",
