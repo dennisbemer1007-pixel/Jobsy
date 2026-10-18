@@ -26,6 +26,8 @@ export ConnectionStrings__JobsyDb="${ConnectionStrings__JobsyDb:-Host=127.0.0.1;
 export Cors__AllowedOrigins__0=http://localhost:5201
 export PublicWebBaseUrl=http://localhost:5201
 export ApiBaseUrl=http://localhost:5200/
+# Playwright status/public-page smoke asserts pl/ro/ar + RTL; production default stays nl,en in appsettings.
+export Localization__EnabledCultures=nl,en,pl,ro,ar
 
 mkdir -p /tmp/jobsy-ci-logs
 
