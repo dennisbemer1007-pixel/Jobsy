@@ -449,3 +449,120 @@
 .ctips-hub-list a:hover {
   border-color: var(--coral);
 }
+
+/* Tips hero — mobile composite (atmosphere + figures), aligned with learn-grow / Dennis mob standard */
+@media (max-width: 639px) {
+  .ctips-page .cand-hero--tips-moment {
+    position: relative;
+    display: block !important;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    height: min(16.25rem, 62vw) !important;
+    max-height: 16.25rem !important;
+    min-height: 0 !important;
+    background-color: var(--pearl) !important;
+    background-image: none !important;
+    border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+    overflow: hidden;
+  }
+
+  .ctips-page .cand-hero--tips-moment::after {
+    display: block !important;
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 52%;
+    max-width: 52%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    background-color: transparent;
+    background-image: var(--cand-hero-mobile-atmosphere, none);
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    background-position: left bottom;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(0 0 0 / 0.45) 16%,
+      #000 30%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(0 0 0 / 0.45) 16%,
+      #000 30%
+    );
+  }
+
+  .ctips-page .cand-hero--tips-moment::before {
+    display: block !important;
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 52%;
+    width: 8%;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--pearl) 0%,
+      color-mix(in srgb, var(--pearl) 42%, transparent) 65%,
+      transparent 100%
+    );
+  }
+
+  .ctips-page .cand-hero--tips-moment .cand-hero__media {
+    display: block !important;
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    width: 52%;
+    max-width: 52%;
+    height: 100%;
+    margin: 0;
+    background-color: transparent !important;
+    background-image: var(--cand-hero-figures, none) !important;
+    background-repeat: no-repeat;
+    background-size: auto 92%;
+    background-position: 18% 100%;
+    opacity: 1;
+  }
+
+  .ctips-page .cand-hero--tips-moment .cand-hero__mob-figures-wrap {
+    display: none !important;
+  }
+
+  .ctips-page .cand-hero--tips-moment .cand-hero__copy {
+    position: absolute !important;
+    z-index: 3;
+    inset: 0 auto auto 0;
+    box-sizing: border-box;
+    width: 55%;
+    max-width: 55%;
+    min-height: 0;
+    height: auto;
+    padding: 0.65rem 0.75rem 0.5rem 1rem;
+    background: var(--pearl) !important;
+    justify-content: flex-start;
+  }
+
+  .ctips-page .cand-hero--tips-moment h1 {
+    font-size: 1.18rem;
+    line-height: 1.12;
+  }
+
+  .ctips-page .cand-hero--tips-moment .cand-hero__lead {
+    margin-top: 0.28rem;
+    font-size: 0.72rem;
+    line-height: 1.32;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

@@ -2,6 +2,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Components
+@using Jobsy.Web.Media
 @inject CultureState Culture
 @inject IJSRuntime Js
 
@@ -11,7 +12,7 @@
            data-testid="@($"profile-encourage-{ScreenKey}")"
            data-encourage-tip="@_tip.Id"
            role="note">
-        <LobsyCoachAvatar Class="profile-encourage__mascot" Language="@Culture.Language" Alt="" />
+        <LobsyLogo Class="profile-encourage__mascot lobsy-logo--mark" Alt="" Variant="LobsyLogoVariant.Mark" />
         <div class="profile-encourage__copy">
             <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
             @if (!string.IsNullOrWhiteSpace(_tip.Href))

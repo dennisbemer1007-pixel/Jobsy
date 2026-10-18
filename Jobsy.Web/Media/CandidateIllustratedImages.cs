@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261018-91";
+    public const string Version = "20261018-92";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -139,9 +139,10 @@ public static class CandidateIllustratedImages
 
     public const string RefVerifHeroMobilePosition = "right bottom";
 
-    /// <summary>Tips pages: calm profession-band (cream left, scene right) + mob figures like instellingen.</summary>
+    /// <summary>Tips pages: calm profession-band (cream left, scene right) + composite mobile hero.</summary>
     public const string TipsMomentHeroWide = InstellingenBand;
-    public const string TipsMomentHeroMobileFigures = MobFiguresInstellingen;
+    public const string TipsMomentHeroFiguresMobile = $"{Base}/tips-moment-hero-figures-mobile.png?v={Version}";
+    public const string TipsMomentHeroMobileAtmosphere = $"{Base}/tips-moment-hero-mobile-atmosphere.png?v={Version}";
 
     /// <summary>Contextual tips category art (gesprek, contract, cv, ontwikkeling).</summary>
     public const string TipInterview = AccountMobileArt;

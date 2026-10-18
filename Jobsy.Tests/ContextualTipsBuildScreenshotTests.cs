@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 
 namespace Jobsy.Tests;
@@ -5,7 +8,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r3";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r4";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -118,6 +121,96 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
             var file = Path.Combine(ArtifactsDir, $"{name}-{tag}.png");
             await page.ScreenshotAsync(new() { Path = file, FullPage = true });
             Assert.True(File.Exists(file));
+
+            var auditLines = await BuildHeroAuditAsync(page, _web.ServerAddress);
+            var auditPath = Path.Combine(ArtifactsDir, $"{name}-{tag}-hero-audit.txt");
+            await File.WriteAllTextAsync(auditPath, auditLines, Encoding.UTF8);
         }
     }
+
+    private static async Task<string> BuildHeroAuditAsync(IPage page, string serverAddress)
+    {
+        var raw = await page.EvaluateAsync<string?>(@"() => {
+            const hero = document.querySelector('.cand-hero');
+            if (!hero) return null;
+            const lines = [];
+            const img = hero.querySelector('img.cand-hero__mob-figures');
+            const pictureImg = hero.querySelector('picture img');
+            if (img && (img.currentSrc || img.src)) {
+                lines.push('mob-figures-img:' + (img.currentSrc || img.src));
+            }
+            if (pictureImg && (pictureImg.currentSrc || pictureImg.src)) {
+                lines.push('picture-img:' + (pictureImg.currentSrc || pictureImg.src));
+            }
+            const style = getComputedStyle(hero);
+            if (style.backgroundImage && style.backgroundImage !== 'none') {
+                lines.push('hero-bg:' + style.backgroundImage);
+            }
+            const media = hero.querySelector('.cand-hero__media');
+            if (media) {
+                const ms = getComputedStyle(media);
+                if (ms.backgroundImage && ms.backgroundImage !== 'none') {
+                    lines.push('media-figures:' + ms.backgroundImage);
+                }
+            }
+            const after = getComputedStyle(hero, '::after');
+            if (after.backgroundImage && after.backgroundImage !== 'none') {
+                lines.push('after-atmosphere:' + after.backgroundImage);
+            }
+            return lines.join('\n');
+        }");
+
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return "no .cand-hero on page\n";
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine(raw);
+        foreach (var line in raw.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var url = ExtractUrlFromAuditLine(line);
+            if (url is null)
+            {
+                continue;
+            }
+
+            var md5 = await Md5ForServerUrlAsync(page, serverAddress, url);
+            sb.AppendLine($"{line} md5={md5}");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string? ExtractUrlFromAuditLine(string line)
+    {
+        var match = Regex.Match(line, @"url\(""([^""]+)""\)|url\('([^']+)'\)|(https?://[^\s""')]+|/[^\s""')]+)");
+        if (!match.Success)
+        {
+            return null;
+        }
+
+        return match.Groups[1].Success ? match.Groups[1].Value
+            : match.Groups[2].Success ? match.Groups[2].Value
+            : match.Groups[3].Value;
+    }
+
+#pragma warning disable CA5351 // MD5 for build artifact fingerprinting only
+    private static async Task<string> Md5ForServerUrlAsync(IPage page, string serverAddress, string url)
+    {
+        var absolute = url.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+            ? url
+            : $"{serverAddress.TrimEnd('/')}{url.Split('?')[0]}";
+
+        var response = await page.Context.APIRequest.GetAsync(absolute);
+        if (!response.Ok)
+        {
+            return $"fetch-failed-{response.Status}";
+        }
+
+        var bytes = await response.BodyAsync();
+        var hash = MD5.HashData(bytes);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+#pragma warning restore CA5351
 }

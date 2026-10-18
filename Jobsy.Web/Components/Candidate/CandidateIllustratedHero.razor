@@ -48,15 +48,16 @@
             ? ArtUrlMobileFigures
             : CandidateIllustratedImages.MobileFigureUrl(ArtUrl);
 
-    private bool IsLearnGrowHero =>
-        CssClass?.Contains("learn-grow", StringComparison.OrdinalIgnoreCase) == true;
+    private bool UsesCompositeMobileHero =>
+        CssClass?.Contains("learn-grow", StringComparison.OrdinalIgnoreCase) == true
+        || CssClass?.Contains("tips-moment", StringComparison.OrdinalIgnoreCase) == true;
 
     private bool ShowMobileFiguresImage =>
-        !IsLearnGrowHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
+        !UsesCompositeMobileHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
 
     private bool ShowMediaLayer =>
         !string.IsNullOrWhiteSpace(ArtUrl)
-        || (IsLearnGrowHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures));
+        || (UsesCompositeMobileHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures));
 
     private string HeaderClass
     {

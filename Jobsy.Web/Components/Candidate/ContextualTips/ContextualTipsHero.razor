@@ -8,7 +8,8 @@
                           CoralEyebrow="@CoralEyebrow"
                           ArtUrl="@TipsMomentHeroWide"
                           ArtPosition="right center"
-                          ArtUrlMobileFigures="@TipsMomentHeroMobileFigures"
+                          ArtUrlMobileFigures="@TipsMomentHeroFiguresMobile"
+                          ArtUrlMobileAtmosphere="@TipsMomentHeroMobileAtmosphere"
                           CssClass="@HeroCssClass" />
 
 @code {
@@ -20,6 +21,6 @@
 
     private string HeroCssClass =>
         string.IsNullOrWhiteSpace(ExtraCssClass)
-            ? "cand-hero--profession-band"
-            : $"cand-hero--profession-band {ExtraCssClass}";
+            ? "cand-hero--profession-band cand-hero--tips-moment"
+            : $"cand-hero--profession-band cand-hero--tips-moment {ExtraCssClass}";
 }
