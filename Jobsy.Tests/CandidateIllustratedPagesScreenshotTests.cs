@@ -41,6 +41,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirMobheroV3 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v3";
     private const string ArtifactsDirMobheroV4 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v4";
     private const string ArtifactsDirMobheroV5 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v5";
+    private const string ArtifactsDirMobheroV6 = "/opt/cursor/artifacts/kandidaat-728-mobhero-v6";
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -1282,6 +1283,109 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Console.WriteLine(mobReports);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_728_mobhero_v6_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirMobheroV6);
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        var mobReports = new StringBuilder();
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobheroV6,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                WaitForApplicationsEmptyAsync);
+
+            await CaptureMobheroViewportAsync(
+                ArtifactsDirMobheroV6,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                WaitForSavedEmptyAsync);
+        }
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV6,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            PrepareKompasTopScreenshotAsync);
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV6,
+            deliveryWeb.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            WaitForSettingsMailPaneAsync);
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV6,
+            deliveryWeb.ServerAddress,
+            "/vacancies/" + SampleVacancyId,
+            "vacature",
+            WaitForVacancyDetailAsync,
+            heroSelector: ".kb-detail__hero");
+
+        await CaptureMobheroViewportAsync(
+            ArtifactsDirMobheroV6,
+            deliveryWeb.ServerAddress,
+            "/carriere",
+            "carriere-leeg",
+            WaitForCareerEmptyAsync);
+
+        await AssertMobheroLeadNotTruncatedAsync(deliveryWeb.ServerAddress, emptyApps: true);
+
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobheroV6, $"{name}-390.png");
+            var metaPath = Path.Combine(ArtifactsDirMobheroV6, $"{name}-390-hero-meta.txt");
+            var report = ValidateMobileHeroPixels390(
+                await File.ReadAllBytesAsync(pngPath),
+                name,
+                gateV4: true,
+                gateV6: true,
+                heroMetaPath: File.Exists(metaPath) ? metaPath : null,
+                mobArtifactsDir: ArtifactsDirMobheroV6);
+            mobReports.AppendLine(report);
+        }
+
+        var mobReportPath = Path.Combine(ArtifactsDirMobheroV6, "mobhero-pixel-gate-v6-390.txt");
+        await File.WriteAllTextAsync(mobReportPath, mobReports.ToString());
+
+        foreach (var name in new[]
+                 {
+                     "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen", "vacature", "carriere-leeg"
+                 })
+        {
+            var pngPath = Path.Combine(ArtifactsDirMobheroV6, $"{name}-390.png");
+            var metaPath = Path.Combine(ArtifactsDirMobheroV6, $"{name}-390-hero-meta.txt");
+            var report = ValidateMobileHeroPixels390(
+                await File.ReadAllBytesAsync(pngPath),
+                name,
+                gateV4: true,
+                gateV6: true,
+                heroMetaPath: File.Exists(metaPath) ? metaPath : null,
+                mobArtifactsDir: ArtifactsDirMobheroV6);
+            Assert.DoesNotContain("PASS=False", report, StringComparison.Ordinal);
+        }
+
+        await deliveryWeb.DisposeAsync();
+
+        var pngs = Directory.GetFiles(ArtifactsDirMobheroV6, "*.png");
+        Assert.Equal(6, pngs.Length);
+        Console.WriteLine(mobReports);
+    }
+
     private async Task AssertMobheroLeadNotTruncatedAsync(string serverAddress, bool emptyApps = false)
     {
         async Task CheckLeadAsync(string address, (string path, Func<IPage, int, Task> prepare)[] paths)
@@ -1600,6 +1704,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         string label,
         bool gateV3 = false,
         bool gateV4 = false,
+        bool gateV6 = false,
         string? heroMetaPath = null,
         string? mobArtifactsDir = null)
     {
@@ -1900,6 +2005,46 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 && copyInsideHero;
         }
 
+        if (gateV6 && useMobSplit && gateV4
+            && (label.Contains("bewaard", StringComparison.OrdinalIgnoreCase)
+                || label.Contains("kompas", StringComparison.OrdinalIgnoreCase)
+                || label.Contains("instellingen", StringComparison.OrdinalIgnoreCase)))
+        {
+            var figMinX = img.Width;
+            var figMinY = img.Height;
+            var figMaxX = 0;
+            var figMaxY = 0;
+            var rightStart = (int)Math.Round(img.Width * 0.55);
+            for (var y = heroTopY; y <= heroBottomY; y++)
+            {
+                for (var x = rightStart; x < img.Width - 2; x++)
+                {
+                    if (!IsMobHeroSolidFigurePixel(img[x, y]))
+                    {
+                        continue;
+                    }
+
+                    figMinX = Math.Min(figMinX, x);
+                    figMinY = Math.Min(figMinY, y);
+                    figMaxX = Math.Max(figMaxX, x);
+                    figMaxY = Math.Max(figMaxY, y);
+                }
+            }
+
+            if (figMaxX > figMinX && figMaxY > figMinY)
+            {
+                var edgeScan = MobHeroPilCropEdgeScan(img, heroTopY, heroBottomY, figMinX, figMaxX, figMinY, figMaxY);
+                sb.AppendLine(
+                    $"  PIL crop edge (lum >8, bbox rim): left vert={edgeScan.leftVert} (max 14), bottom horiz={edgeScan.bottomHoriz} (max 14 v6)");
+                passed = passed && edgeScan.leftVert <= 14 && edgeScan.bottomHoriz <= 14;
+            }
+            else
+            {
+                sb.AppendLine("  PIL crop edge: no figure bbox (v6)");
+                passed = false;
+            }
+        }
+
         if ((gateV3 || gateV4) && isVacature)
         {
             var vacatureDir = mobArtifactsDir ?? (gateV4 ? ArtifactsDirMobheroV4 : ArtifactsDirMobheroV3);
@@ -1908,6 +2053,86 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
         sb.AppendLine($"  PASS={passed}");
         return sb.ToString();
+    }
+
+    private static int MobHeroLuminance(Rgb24 px) => (px.R * 299 + px.G * 587 + px.B * 114) / 1000;
+
+    private static (int leftVert, int bottomHoriz) MobHeroPilCropEdgeScan(
+        Image<Rgb24> img,
+        int heroTop,
+        int heroBottom,
+        int figMinX,
+        int figMaxX,
+        int figMinY,
+        int figMaxY)
+    {
+        var leftVert = 0;
+        for (var x = Math.Max(1, figMinX - 1); x <= Math.Min(img.Width - 1, figMinX + 2); x++)
+        {
+            var run = 0;
+            for (var y = Math.Max(heroTop + 1, figMinY); y <= Math.Min(heroBottom, figMaxY); y++)
+            {
+                if (MobHeroPilHardEdgeStep(img, x - 1, y, x, y))
+                {
+                    run++;
+                    leftVert = Math.Max(leftVert, run);
+                }
+                else
+                {
+                    run = 0;
+                }
+            }
+        }
+
+        var bottomHoriz = 0;
+        for (var y = Math.Max(heroTop + 1, figMaxY - 2); y <= Math.Min(heroBottom, figMaxY + 2); y++)
+        {
+            var run = 0;
+            for (var x = figMinX; x <= figMaxX; x++)
+            {
+                if (MobHeroPilHardEdgeStep(img, x, y - 1, x, y))
+                {
+                    run++;
+                    bottomHoriz = Math.Max(bottomHoriz, run);
+                }
+                else
+                {
+                    run = 0;
+                }
+            }
+        }
+
+        return (leftVert, bottomHoriz);
+    }
+
+    private static bool MobHeroPilHardEdgeStep(Image<Rgb24> img, int x0, int y0, int x1, int y1)
+    {
+        var step = Math.Abs(MobHeroLuminance(img[x1, y1]) - MobHeroLuminance(img[x0, y0]));
+        if (step <= 8)
+        {
+            return false;
+        }
+
+        if (IsGhostFadePixel(img[x0, y0]) || IsGhostFadePixel(img[x1, y1]))
+        {
+            return false;
+        }
+
+        var solid0 = IsMobHeroSolidFigurePixel(img[x0, y0]);
+        var solid1 = IsMobHeroSolidFigurePixel(img[x1, y1]);
+        if (solid0 && solid1)
+        {
+            return false;
+        }
+
+        var pearl0 = IsMobileHeroPearl(img[x0, y0]);
+        var pearl1 = IsMobileHeroPearl(img[x1, y1]);
+        if (pearl0 && pearl1)
+        {
+            return false;
+        }
+
+        return (pearl0 && solid1) || (solid0 && pearl1);
     }
 
     private static bool IsMobileHeroPearl(Rgb24 px)

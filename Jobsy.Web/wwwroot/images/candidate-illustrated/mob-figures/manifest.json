@@ -17,47 +17,47 @@
   "vervoer-mob-figures.png": {
     "source": "vervoer-profession-wide.jpg",
     "box": [
-      268,
-      72,
-      598,
-      712
+      430,
+      120,
+      730,
+      708
     ],
     "out_size": [
-      330,
-      368
+      300,
+      364
     ],
-    "opaque_pixels": 52418,
-    "aspect": 1.115
+    "opaque_pixels": 56857,
+    "aspect": 1.213
   },
   "beschikbaarheid-mob-figures.png": {
     "source": "beschikbaarheid-profession-wide.jpg",
     "box": [
-      48,
-      96,
-      648,
+      0,
+      214,
+      469,
       719
     ],
     "out_size": [
-      600,
+      469,
       485
     ],
-    "opaque_pixels": 198850,
-    "aspect": 0.808
+    "opaque_pixels": 178668,
+    "aspect": 1.034
   },
   "kompas-mob-figures.png": {
     "source": "kompas-hero-wide.jpg",
     "box": [
-      1490,
-      180,
-      1710,
-      500
+      1760,
+      150,
+      1945,
+      465
     ],
     "out_size": [
-      220,
-      290
+      185,
+      302
     ],
-    "opaque_pixels": 47523,
-    "aspect": 1.318
+    "opaque_pixels": 28071,
+    "aspect": 1.632
   },
   "droombaan-mob-figures.png": {
     "source": "droombaan-profession-wide.jpg",

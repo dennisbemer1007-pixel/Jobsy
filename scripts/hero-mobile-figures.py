@@ -88,18 +88,21 @@ SCENES: dict[str, dict] = {
     },
     "vervoer-profession-wide.jpg": {
         "out": "vervoer-mob-figures.png",
-        # One complete cyclist (head to wheel), Bewaard band
-        "box": (268, 72, 598, 712),
+        # Single cyclist (left band), full bike + head margin
+        "box": (430, 120, 730, 708),
+        "feather": {"left": 72, "bottom": 40, "right": 14, "top": 14},
     },
     "beschikbaarheid-profession-wide.jpg": {
         "out": "beschikbaarheid-mob-figures.png",
-        # Three colleagues, heads included
-        "box": (48, 96, 648, 719),
+        # Two men (baby + watch), full width of group (Instellingen)
+        "box": (0, 214, 469, 719),
+        "feather": {"left": 80, "bottom": 44, "right": 14, "top": 14},
     },
     "kompas-hero-wide.jpg": {
         "out": "kompas-mob-figures.png",
-        # Craftsman at bench (~x1500) — one full figure, tall for mob hero
-        "box": (1490, 180, 1710, 500),
+        # Laptop worker at desk, head to lap
+        "box": (1760, 150, 1945, 465),
+        "feather": {"left": 48, "bottom": 36, "right": 16, "top": 16},
     },
     "droombaan-profession-wide.jpg": {
         "out": "droombaan-mob-figures.png",
@@ -116,6 +119,30 @@ SCENES: dict[str, dict] = {
 def trim_alpha(im: Image.Image) -> Image.Image:
     bbox = im.getbbox()
     return im.crop(bbox) if bbox else im
+
+
+def feather_rgba(im: Image.Image, *, left: int = 36, bottom: int = 28, right: int = 10, top: int = 10) -> Image.Image:
+    """Soft alpha at crop edges so mob hero figures blend into pearl (ref737-style)."""
+    out = im.copy()
+    w, h = out.size
+    opx = out.load()
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = opx[x, y]
+            if a == 0:
+                continue
+            factor = 1.0
+            if left > 0 and x < left:
+                factor = min(factor, x / left)
+            if right > 0 and x >= w - right:
+                factor = min(factor, (w - 1 - x) / right)
+            if bottom > 0 and y >= h - bottom:
+                factor = min(factor, (h - 1 - y) / bottom)
+            if top > 0 and y < top:
+                factor = min(factor, y / top)
+            factor = max(0.0, min(1.0, factor))
+            opx[x, y] = (r, g, b, int(a * factor))
+    return out
 
 
 def extract_scene(src: Path, cfg: dict) -> dict:
@@ -141,6 +168,14 @@ def extract_scene(src: Path, cfg: dict) -> dict:
                 opx[x, y] = (*rgb, 255)
                 opaque += 1
     rgba = trim_alpha(rgba)
+    feather = cfg.get("feather", {})
+    rgba = feather_rgba(
+        rgba,
+        left=int(feather.get("left", 56)),
+        bottom=int(feather.get("bottom", 40)),
+        right=int(feather.get("right", 14)),
+        top=int(feather.get("top", 14)),
+    )
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out = OUT_DIR / cfg["out"]
     rgba.save(out, optimize=True)

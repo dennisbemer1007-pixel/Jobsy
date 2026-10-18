@@ -259,8 +259,7 @@
     padding: 0.45rem 0.85rem 0.4rem 0.35rem;
     min-height: 0;
     height: 100%;
-    overflow: hidden;
-    clip-path: inset(0 8px 0 0);
+    overflow: visible;
     pointer-events: none;
   }
 
@@ -277,12 +276,18 @@
     object-position: right bottom;
     transform: translateX(-10px);
     pointer-events: none;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 36%, #000 100%),
+      linear-gradient(to top, transparent 0%, #000 24%, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 36%, #000 100%),
+      linear-gradient(to top, transparent 0%, #000 24%, #000 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   /* Kompas: tall portrait mob crop — fill ~80–95% of hero height */
   .cand-hero--kompas-band.cand-hero--with-art .cand-hero__mob-figures {
-    max-height: 92%;
-    max-width: min(100%, 10.5rem);
+    max-height: 96%;
+    max-width: min(100%, 12.5rem);
   }
 
   .cand-hero--with-art .cand-hero__copy {
