@@ -7153,7 +7153,75 @@ a.engagement-btn {
     border: 1px solid var(--border);
     border-radius: 14px;
     box-shadow: var(--shadow-lg);
-    padding: 1.1rem 1.2rem 1.15rem;
+    padding: 0 0 1rem;
+    overflow: hidden;
+}
+
+@media (max-width: 1023px) {
+    .app-shell:has(.mock-interview-modal) .bottom-nav,
+    .app-shell:has(.mock-interview-modal) .kb-detail__sticky-apply {
+        display: none !important;
+    }
+
+    .mock-interview-modal {
+        inset: auto 0 0;
+        top: auto;
+        left: 0;
+        right: 0;
+        transform: none;
+        width: 100%;
+        max-width: none;
+        max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 0.35rem));
+        border-radius: 18px 18px 0 0;
+        border-bottom: 0;
+        box-shadow: 0 -12px 40px color-mix(in srgb, var(--brand) 22%, transparent);
+    }
+
+    .mock-interview-modal .mock-interview-chat {
+        flex: 1;
+        min-height: 12rem;
+        max-height: min(52dvh, 28rem);
+    }
+}
+
+.mock-interview-modal--warm {
+    background: #fffaf5;
+    border-color: #ecd9c8;
+}
+
+.mock-interview-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    background: #f6efe4;
+    border-bottom: 1px solid #e8d8c8;
+}
+
+.mock-interview-modal__lead {
+    margin: 0.1rem 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.mock-interview-modal__vacancy {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--brand);
+    line-height: 1.3;
+}
+
+.mock-interview-modal__close {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .mock-interview-modal__disclaimer {
