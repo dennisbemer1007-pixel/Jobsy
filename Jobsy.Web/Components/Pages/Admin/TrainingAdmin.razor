@@ -3,6 +3,7 @@
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Enums
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Models
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IJSRuntime Js
@@ -22,6 +23,58 @@
     }
     else
     {
+        <section class="training-admin-partners detail-card">
+            <h3>@Culture["Admin.TrainingPartners.Title"]</h3>
+            <p class="login-lead">@Culture["Admin.TrainingPartners.Lead"]</p>
+            @if (_partners.Count == 0)
+            {
+                <p class="muted">@Culture["Common.None"]</p>
+            }
+            else
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Naam</th>
+                            <th>@Culture["Admin.TrainingPartners.FeedKind"]</th>
+                            <th>@Culture["Admin.TrainingPartners.Offers"]</th>
+                            <th>@Culture["Admin.TrainingPartners.LastImport"]</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var partner in _partners)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@partner.Name</strong>
+                                    @if (partner.IsDemoPartner)
+                                    {
+                                        <span class="status-pill">@Culture["Admin.TrainingPartners.Demo"]</span>
+                                    }
+                                    @if (!partner.IsActive)
+                                    {
+                                        <span class="status-pill">@Culture["AdminTraining.Active"]</span>
+                                    }
+                                </td>
+                                <td>@partner.FeedKind</td>
+                                <td>@Culture.Format("Admin.TrainingPartners.Offers", partner.OfferCount)</td>
+                                <td>@(partner.LastImportedAtUtc?.ToString("yyyy-MM-dd HH:mm") ?? Culture["Admin.TrainingPartners.Never"])</td>
+                                <td>
+                                    <button type="button"
+                                            class="btn-compact"
+                                            disabled="@_busy"
+                                            @onclick="() => ImportPartnerAsync(partner.Id)">
+                                        @(_importingId == partner.Id ? Culture["Admin.TrainingPartners.Importing"] : Culture["Admin.TrainingPartners.Import"])
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
         <section class="training-admin-export">
             <h3>Maandexport lokale deals</h3>
             <p class="login-lead">Landelijke affiliates (Awin/Daisycon) lopen via hun eigen dashboard. Dit CSV matcht anonieme hashes voor Den Haag / Westland.</p>
@@ -182,6 +235,8 @@
     private bool _busy;
     private string? _message;
     private List<TrainingProviderAdmin> _providers = [];
+    private List<TrainingPartnerAdminModel> _partners = [];
+    private Guid? _importingId;
     private int _year = DateTime.UtcNow.Year;
     private int _month = DateTime.UtcNow.Month;
     private string _clickId = "";
@@ -220,6 +275,7 @@
         try
         {
             _providers = await Api.GetTrainingProvidersAdminAsync();
+            _partners = (await Api.GetTrainingPartnersAdminAsync()).ToList();
         }
         catch
         {
@@ -352,6 +408,28 @@
         }
         finally
         {
+            _busy = false;
+        }
+    }
+
+    private async Task ImportPartnerAsync(Guid providerId)
+    {
+        _busy = true;
+        _importingId = providerId;
+        _message = null;
+        try
+        {
+            await Api.ImportTrainingPartnerFeedAsync(providerId);
+            _message = Culture["Admin.TrainingPartners.Import"] + " ✓";
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _message = string.IsNullOrWhiteSpace(ex.Message) ? Culture["Common.Error"] : ex.Message;
+        }
+        finally
+        {
+            _importingId = null;
             _busy = false;
         }
     }

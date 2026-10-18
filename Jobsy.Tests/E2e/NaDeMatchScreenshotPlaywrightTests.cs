@@ -17,7 +17,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS"))
-            ? "/opt/cursor/artifacts/nadematch-r3"
+            ? "/opt/cursor/artifacts/nadematch-r4"
             : Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS")!;
 
     private static string MockupRoot =>
@@ -64,36 +64,60 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
+        var widths = new[] { (390, "mobiel"), (360, "mobiel-360") };
+        var expectedCaptures = Routes.Length + Routes.Count(r => r.Role == "kandidaat");
+
         foreach (var route in Routes)
         {
-            var (width, height, tag) = route.Role == "werkgever"
-                ? (1440, 900, "desktop")
-                : (390, 844, "mobiel");
-            var email = route.Role == "werkgever" ? EmployerEmail : CandidateEmail;
-
-            await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
-            await PlaywrightCookieConsent.AcceptAsync(context);
-            var page = await context.NewPageAsync();
-            page.SetDefaultTimeout(60_000);
-            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, Password));
-
-            await page.GotoAsync($"{baseUrl.TrimEnd('/')}{route.Path}", new()
+            if (route.Role == "werkgever")
             {
-                WaitUntil = WaitUntilState.NetworkIdle,
-            });
-            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-            await page.Locator("[data-testid=ndm-candidate-live], [data-testid=ndm-werkgever-live]").WaitForAsync(new() { Timeout = 90_000 });
-            await AssertCapturePageHealthyAsync(page, route.Id, route.Role);
-            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                await CaptureRouteAsync(browser, baseUrl, route, 1440, 900, "desktop", compareDir);
+                continue;
+            }
 
-            await page.WaitForTimeoutAsync(400);
-            var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
-            await page.ScreenshotAsync(new() { Path = file, FullPage = true });
-            CopyMockupSideBySide(route.Id, tag, file, compareDir);
+            foreach (var (width, tag) in widths)
+            {
+                await CaptureRouteAsync(browser, baseUrl, route, width, 844, tag, compareDir);
+            }
         }
 
-        Assert.Equal(Routes.Length, Directory.GetFiles(OutDir, "*-capture-*.png").Length);
+        Assert.Equal(expectedCaptures, Directory.GetFiles(OutDir, "*-capture-*.png").Length);
+    }
+
+    private static async Task CaptureRouteAsync(
+        IBrowser browser,
+        string baseUrl,
+        (string Id, string Path, string Role) route,
+        int width,
+        int height,
+        string tag,
+        string compareDir)
+    {
+        var email = route.Role == "werkgever" ? EmployerEmail : CandidateEmail;
+
+        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(60_000);
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, Password));
+
+        await page.GotoAsync($"{baseUrl.TrimEnd('/')}{route.Path}", new()
+        {
+            WaitUntil = WaitUntilState.NetworkIdle,
+        });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.Locator("[data-testid=ndm-candidate-live], [data-testid=ndm-werkgever-live]").WaitForAsync(new() { Timeout = 90_000 });
+        await AssertCapturePageHealthyAsync(page, route.Id, route.Role);
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+
+        await page.WaitForTimeoutAsync(400);
+        var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
+        await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+        if (tag is "mobiel" or "desktop")
+        {
+            CopyMockupSideBySide(route.Id, tag, file, compareDir);
+        }
     }
 
     private static async Task AssertCapturePageHealthyAsync(IPage page, string screenId, string role)

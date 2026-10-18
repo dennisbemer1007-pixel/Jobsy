@@ -602,6 +602,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
         Add("KandidatenkaartEnabled", before.KandidatenkaartEnabled.ToString(), after.KandidatenkaartEnabled.ToString());
         Add("AfterMatchEnabled", before.AfterMatchEnabled.ToString(), after.AfterMatchEnabled.ToString());
+        Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
@@ -638,7 +639,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
             employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
             kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
-            afterMatchEnabled = snap.AfterMatchEnabled
+            afterMatchEnabled = snap.AfterMatchEnabled,
+            trainingPartnersEnabled = snap.TrainingPartnersEnabled
         });
     }
 

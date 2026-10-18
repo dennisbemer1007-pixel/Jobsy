@@ -39,4 +39,9 @@ public sealed class JobsyFeatureOptions
 
     /// <summary>Na de match (gesprek plannen en berichten). Acceptatie config turns this on.</summary>
     public bool NaDeMatchEnabled { get; set; }
+
+    /// <summary>
+    /// Personal test mirror after verdieping/volledig free depth. Default on; disable only as emergency kill switch.
+    /// </summary>
+    public bool TestReflectionEnabled { get; set; } = true;
 }

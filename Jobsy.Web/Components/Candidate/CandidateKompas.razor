@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Pages.Candidate
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Dna
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Routing
@@ -26,9 +27,9 @@
         else if (EffectiveCompletenessPercent < 100)
         {
             <div class="kompas__completeness"
-                 aria-label="@Culture.Format("Kompas.CompletenessAria", EffectiveCompletenessPercent)">
+                 aria-label="@Culture[CandidateMatchDisplay.CompletenessLineKey(EffectiveCompletenessPercent)]">
                 <p class="kompas__completeness-line">
-                    @Culture.Format("Kompas.CompletenessLine", EffectiveCompletenessPercent)
+                    @Culture[CandidateMatchDisplay.CompletenessLineKey(EffectiveCompletenessPercent)]
                     <button type="button"
                             class="kompas__completeness-link"
                             @onclick='() => SetTab(CandidateKompasTabs.Profile)'>

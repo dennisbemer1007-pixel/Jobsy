@@ -61,7 +61,8 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.TestsV2Enabled,
                 snap.EmployerFitQuestionnairesEnabled,
                 snap.KandidatenkaartEnabled,
-                snap.AfterMatchEnabled);
+                snap.AfterMatchEnabled,
+                snap.TrainingPartnersEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

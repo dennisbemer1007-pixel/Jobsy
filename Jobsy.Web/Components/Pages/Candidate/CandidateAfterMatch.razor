@@ -20,7 +20,7 @@
 @inject NavigationManager Navigation
 
 <PageTitle>@_pageTitle · Lobsy</PageTitle>
-<link rel="stylesheet" href="css/features/na-de-match.css?v=20261018-r2" />
+<link rel="stylesheet" href="css/features/na-de-match.css?v=20261018-r4" />
 
 @if (_loading)
 {
@@ -98,7 +98,26 @@ else
             else
             {
                 <NdMHero Title="@_heroTitle" Lead="@_heroLead" />
+                @{
+                    var timelineStep = _thread.Outcome == AfterMatchOutcomeKind.NotNow ? 3 : TimelineStep(_thread);
+                    var timelineHint = _thread.Outcome == AfterMatchOutcomeKind.NotNow ? "22 okt" : InterviewHint(_thread);
+                }
+                <div class="ndm-mob-timeline show-m">
+                    <NdMTimeline CurrentStep="@timelineStep" YesDate="@YesDateLabel" InterviewHint="@timelineHint" />
+                </div>
                 <div class="g2">
+                    @if (_panel != "messages" && _thread.Outcome != AfterMatchOutcomeKind.NotNow)
+                    {
+                        <NdMMessagePanel Messages="_thread.Messages"
+                                         ShowNewPill="@HasUnread(_thread)"
+                                         Editable="@(_panel != "reschedule")"
+                                         Busy="_busy"
+                                         Compact="true"
+                                         SystemLine="@SystemLine(_thread)"
+                                         Preview="_messagePreview"
+                                         OnSend="SendMessageAsync"
+                                         OnPreview="PreviewMessageAsync" />
+                    }
                     <div class="stack">
                         @if (_thread.Outcome == AfterMatchOutcomeKind.NotNow)
                         {
@@ -106,8 +125,10 @@ else
                                 <NdMVacancyCard Initials="@Initials(_thread.CompanyName)"
                                                 Title="@_thread.VacancyTitle"
                                                 Subtitle="@VacancySubtitle(_thread)" />
-                                <div class="hr"></div>
-                                <NdMTimeline CurrentStep="3" YesDate="@YesDateLabel" InterviewHint="22 okt" />
+                                <div class="hide-m">
+                                    <div class="hr"></div>
+                                    <NdMTimeline CurrentStep="3" YesDate="@YesDateLabel" InterviewHint="22 okt" />
+                                </div>
                                 @if (_thread.RecentChanges.Count == 0 && !string.IsNullOrWhiteSpace(_notNowReason))
                                 {
                                     <div class="note warm" style="margin-top:12px">
@@ -116,19 +137,22 @@ else
                                     </div>
                                 }
                             </div>
-                            <div class="card">
+                            <div class="card ndm-similar-card">
                                 <b>@Culture["AfterMatch.Screen13.Similar"]</b>
-                                <div class="list">
+                                <div class="ndm-similar-jobs">
                                     @foreach (var v in _thread.SimilarVacancies)
                                     {
-                                        <div>
-                                            <span class="pill ok">@v.Title</span>
+                                        <div class="ndm-job-card">
+                                            <b>@v.Title</b>
                                             <span class="small muted">@v.CompanyName</span>
                                         </div>
                                     }
                                     @if (_thread.SimilarVacancies.Count == 0)
                                     {
-                                        <div><span class="small muted">@Culture["AfterMatch.Demo.Vacancy"] · @Culture["AfterMatch.Demo.Company"]</span></div>
+                                        <div class="ndm-job-card">
+                                            <b>@Culture["AfterMatch.Demo.Vacancy"]</b>
+                                            <span class="small muted">@Culture["AfterMatch.Demo.Company"]</span>
+                                        </div>
                                     }
                                 </div>
                             </div>
@@ -139,8 +163,10 @@ else
                                 <NdMVacancyCard Initials="@Initials(_thread.CompanyName)"
                                                 Title="@_thread.VacancyTitle"
                                                 Subtitle="@VacancySubtitle(_thread)" />
-                                <div class="hr"></div>
-                                <NdMTimeline CurrentStep="@TimelineStep(_thread)" YesDate="@YesDateLabel" InterviewHint="@InterviewHint(_thread)" />
+                                <div class="hide-m">
+                                    <div class="hr"></div>
+                                    <NdMTimeline CurrentStep="@TimelineStep(_thread)" YesDate="@YesDateLabel" InterviewHint="@InterviewHint(_thread)" />
+                                </div>
                                 @if (_panel != "reschedule")
                                 {
                                     <NdMWhatGrid />
@@ -169,18 +195,6 @@ else
                             }
                         }
                     </div>
-                    @if (_panel != "messages" && _thread.Outcome != AfterMatchOutcomeKind.NotNow)
-                    {
-                        <NdMMessagePanel Messages="_thread.Messages"
-                                         ShowNewPill="@HasUnread(_thread)"
-                                         Editable="@(_panel != "reschedule")"
-                                         Busy="_busy"
-                                         Compact="true"
-                                         SystemLine="@SystemLine(_thread)"
-                                         Preview="_messagePreview"
-                                         OnSend="SendMessageAsync"
-                                         OnPreview="PreviewMessageAsync" />
-                    }
                 </div>
             }
             <p style="margin-top:16px"><a class="lk" href="@KbRoutes.Applications">@Culture["AfterMatch.Link.BackApplications"]</a></p>

@@ -72,5 +72,8 @@ public enum PlatformFeature
     ReferenceVerification,
 
     /// <summary>Na de match: gesprek plannen, berichten en uitkomst. Default false.</summary>
-    AfterMatch
+    AfterMatch,
+
+    /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
+    TrainingPartners
 }

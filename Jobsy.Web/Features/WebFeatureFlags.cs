@@ -72,7 +72,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestsV2Enabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
-                dto?.AfterMatchEnabled ?? false);
+                dto?.AfterMatchEnabled ?? false,
+                dto?.TrainingPartnersEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -152,5 +153,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
         [JsonPropertyName("afterMatchEnabled")]
         public bool AfterMatchEnabled { get; set; }
 
+        [JsonPropertyName("trainingPartnersEnabled")]
+        public bool TrainingPartnersEnabled { get; set; }
     }
 }

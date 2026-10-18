@@ -100,9 +100,18 @@
         </section>
 
         <div class="career-step__block career-step__block--courses">
-            <CareerStepCourses Slots="@CourseSlots"
-                               CourseNames="@Step.CourseNames"
-                               SkillLabel="@(string.IsNullOrWhiteSpace(Step.FirstGap) ? Step.ShortTitle : Step.FirstGap)" />
+            @if (TrainingPartnersOn)
+            {
+                <CareerStepLearning StepTitle="@Step.Title"
+                                    GapKeys="@Step.CourseSearchKeys"
+                                    CourseNames="@Step.CourseNames" />
+            }
+            else
+            {
+                <CareerStepCourses Slots="@CourseSlots"
+                                   CourseNames="@Step.CourseNames"
+                                   SkillLabel="@(string.IsNullOrWhiteSpace(Step.FirstGap) ? Step.ShortTitle : Step.FirstGap)" />
+            }
         </div>
     </div>
 
@@ -155,6 +164,7 @@
     [Parameter] public CareerStepDetailView Step { get; set; } = new();
     [Parameter] public bool Busy { get; set; }
     [Parameter] public bool EmployersOn { get; set; } = true;
+    [Parameter] public bool TrainingPartnersOn { get; set; }
     [Parameter] public bool PassportOn { get; set; }
     [Parameter] public string? ErrorText { get; set; }
     [Parameter] public IReadOnlyList<PassportCourseCard> CourseSlots { get; set; } = [];

@@ -1674,6 +1674,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateWhoAmIProfiles.RemoveRange(whoAmI);
         }
 
+        var testReflections = await _db.CandidateTestReflections
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (testReflections.Count > 0)
+        {
+            _db.CandidateTestReflections.RemoveRange(testReflections);
+        }
+
         var privatePrefs = await _db.CandidatePrivatePreferences
             .Where(p => p.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -1784,6 +1792,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
         foreach (var click in trainingClicks)
         {
             click.UserId = null;
+        }
+
+        var trainingEnrollments = await _db.TrainingEnrollments
+            .Where(e => e.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (trainingEnrollments.Count > 0)
+        {
+            _db.TrainingEnrollments.RemoveRange(trainingEnrollments);
         }
 
         var deepAnalyses = await _db.CandidateDeepAnalyses

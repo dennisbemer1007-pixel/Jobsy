@@ -234,6 +234,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.AfterMatchEnabled = afterMatchEnabled;
         }
 
+        if (update.TrainingPartnersEnabled is bool trainingPartnersEnabled)
+        {
+            row.TrainingPartnersEnabled = trainingPartnersEnabled;
+        }
+
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
         {
             row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
@@ -351,6 +356,16 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         }
 
         return row?.StudentPassportEnabled ?? false;
+    }
+
+    private bool ResolveTrainingPartnersEnabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:TrainingPartnersEnabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.TrainingPartnersEnabled ?? false;
     }
 
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
@@ -476,6 +491,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
             row?.AfterMatchEnabled ?? _options.NaDeMatchEnabled,
+            ResolveTrainingPartnersEnabled(row),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
             CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));
