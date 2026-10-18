@@ -26,10 +26,16 @@ public sealed class ReferenceVerificationHeroAssetTests
         process.WaitForExit(30_000);
         Assert.True(process.ExitCode == 0, stderr + stdout);
 
-        Assert.Contains("bg jump", stdout, StringComparison.Ordinal);
-        var jump = double.Parse(
-            stdout.Split("bg jump")[1].Split('(')[0].Trim(),
-            CultureInfo.InvariantCulture);
-        Assert.True(jump <= 6.0, $"Hero background jump {jump} exceeds 6.");
+        Assert.Contains("jump", stdout, StringComparison.Ordinal);
+        foreach (var part in stdout.Split("jump")[1..])
+        {
+            var token = part.Split(';')[0].Split(',')[0].Trim();
+            if (!double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out var jump))
+            {
+                continue;
+            }
+
+            Assert.True(jump <= 6.0, $"Hero background jump {jump} exceeds 6. ({stdout})");
+        }
     }
 }

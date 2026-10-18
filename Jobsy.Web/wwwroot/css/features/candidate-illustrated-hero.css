@@ -102,6 +102,10 @@
   .cand-hero__copy > :last-child {
     margin-bottom: 0;
   }
+
+  .cand-hero__lead--mobile {
+    display: none;
+  }
 }
 
 @media (max-width: 639px) {
@@ -115,7 +119,7 @@
     height: var(--cand-hero-mobile-h);
     max-height: 16.25rem;
     min-height: 0;
-    background-image: var(--cand-hero-art, none);
+    background-image: var(--cand-hero-art-mobile, var(--cand-hero-art, none));
     background-repeat: no-repeat;
     background-color: var(--pearl);
     background-size: var(--cand-hero-mobile-size, cover);
@@ -124,6 +128,10 @@
       var(--ref-verif-hero-pos-mobile, var(--cand-hero-pos, 62% center))
     );
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+  }
+
+  .cand-hero__lead--desktop {
+    display: none;
   }
 
   .cand-hero--profession-band {
@@ -149,11 +157,21 @@
 
   .cand-hero--profession-band::before {
     background: linear-gradient(
-      118deg,
+      90deg,
       var(--pearl) 0%,
-      color-mix(in srgb, var(--pearl) 90%, transparent) 40%,
-      color-mix(in srgb, var(--pearl) 42%, transparent) 54%,
-      transparent 70%
+      var(--pearl) 52%,
+      color-mix(in srgb, var(--pearl) 88%, transparent) 58%,
+      transparent 72%
+    );
+  }
+
+  .ref-verif-cand-hero--public-open::before {
+    background: linear-gradient(
+      90deg,
+      var(--pearl) 0%,
+      var(--pearl) 55%,
+      color-mix(in srgb, var(--pearl) 92%, transparent) 62%,
+      transparent 78%
     );
   }
 
@@ -168,8 +186,8 @@
     height: auto;
     min-height: 0;
     min-width: 0;
-    width: min(62%, 14.5rem);
-    max-width: min(62%, 14.5rem);
+    width: min(55%, 14.5rem);
+    max-width: min(55%, 14.5rem);
     margin: 0;
     padding: 0.7rem 0.85rem 0.65rem;
     background: transparent;
@@ -185,16 +203,25 @@
   }
 
   .cand-hero h1 {
-    font-size: clamp(0.98rem, 4.1vw, 1.12rem);
+    font-size: clamp(1rem, 4.2vw, 1.15rem);
     line-height: 1.14;
     max-width: 100%;
   }
 
   .cand-hero__lead {
     margin-top: 0.28rem;
-    font-size: clamp(0.72rem, 3.2vw, 0.8rem);
+    font-size: clamp(0.8rem, 3.4vw, 0.88rem);
     line-height: 1.32;
     max-width: 100%;
+  }
+
+  .ref-verif-cand-hero--public-open .cand-hero__copy {
+    width: min(55%, 13.5rem);
+    max-width: min(55%, 13.5rem);
+  }
+
+  .ref-verif-cand-hero--public-open h1 {
+    font-size: clamp(1.02rem, 4.4vw, 1.18rem);
   }
 
   .cand-hero__eyebrow {

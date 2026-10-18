@@ -12,7 +12,11 @@
         }
         @if (!string.IsNullOrWhiteSpace(Lead))
         {
-            <p class="cand-hero__lead">@Lead</p>
+            <p class="cand-hero__lead @(string.IsNullOrWhiteSpace(LeadMobile) ? null : "cand-hero__lead--desktop")">@Lead</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(LeadMobile))
+        {
+            <p class="cand-hero__lead cand-hero__lead--mobile">@LeadMobile</p>
         }
         @ChildContent
     </div>
@@ -28,7 +32,10 @@
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? TitleId { get; set; }
     [Parameter] public string? Lead { get; set; }
+    /// <summary>Shorter lead shown only on narrow viewports (optional).</summary>
+    [Parameter] public string? LeadMobile { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public string? MobileArtUrl { get; set; }
     [Parameter] public string ArtPosition { get; set; } = "58% center";
     [Parameter] public string? MobileArtPosition { get; set; }
     [Parameter] public string? CssClass { get; set; }
@@ -46,7 +53,8 @@
             var mobile = string.IsNullOrWhiteSpace(MobileArtPosition)
                 ? ArtPosition
                 : MobileArtPosition;
-            return $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition};--cand-hero-pos-mobile:{mobile};--ref-verif-hero-pos-mobile:{mobile}";
+            var mobileArt = string.IsNullOrWhiteSpace(MobileArtUrl) ? ArtUrl : MobileArtUrl;
+            return $"--cand-hero-art:url('{ArtUrl}');--cand-hero-art-mobile:url('{mobileArt}');--cand-hero-pos:{ArtPosition};--cand-hero-pos-mobile:{mobile};--ref-verif-hero-pos-mobile:{mobile}";
         }
     }
 

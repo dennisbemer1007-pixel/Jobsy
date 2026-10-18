@@ -24,6 +24,7 @@
     @if (_thanks is not null)
     {
         <CandidateIllustratedHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                  MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                   ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                   MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
                                   CssClass="cand-hero--profession-band ref-verif-cand-hero ref-verif-cand-hero--compact" />
@@ -39,6 +40,7 @@
     else if (_problem is not null)
     {
         <CandidateIllustratedHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                  MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                   ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                   MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
                                   CssClass="cand-hero--profession-band ref-verif-cand-hero ref-verif-cand-hero--compact" />
@@ -55,15 +57,22 @@
     {
         @if (_view.State == "open")
         {
-            <CandidateIllustratedHero Title="@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)"
+            <CandidateIllustratedHero Eyebrow="@Culture["RefVerif.Public.PageTitle"]"
+                                      Title="@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)"
                                       TitleId="ref-verif-public-title"
                                       Lead="@Culture.Format("RefVerif.Public.IntroDetail", _view.CandidateName, _view.EmployerName, _view.RoleTitle)"
+                                      LeadMobile="@Culture.Format("RefVerif.Public.IntroShort", _view.CandidateName, _view.EmployerName, _view.RoleTitle)"
                                       ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                      MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                       ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                       MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
-                                      CssClass="cand-hero--profession-band ref-verif-cand-hero">
+                                      CssClass="cand-hero--profession-band ref-verif-cand-hero ref-verif-cand-hero--public-open">
                 <p class="ref-verif-cand-hero__privacy">@Culture["RefVerif.Public.PrivacyShort"]</p>
             </CandidateIllustratedHero>
+            <div class="ref-verif-public__hero-more">
+                <p class="ref-verif-public__intro-tail">@Culture["RefVerif.Public.IntroTail"]</p>
+                <p class="ref-verif-public__privacy-more">@Culture["RefVerif.Public.PrivacyShort"]</p>
+            </div>
             <div class="ref-verif-public__shell">
             <div class="pub-card ref-verif-public__card ref-verif-lift-card @(_cardVisible ? "ref-verif-lift-card--visible" : null)">
                 <div class="ref-verif-public__inner">
@@ -193,6 +202,7 @@
         else
         {
             <CandidateIllustratedHero ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                      MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                       ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                       MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
                                       CssClass="cand-hero--profession-band ref-verif-cand-hero ref-verif-cand-hero--compact" />

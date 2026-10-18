@@ -1516,8 +1516,12 @@
   .ref-verif-cand-hero .cand-hero__copy {
     grid-column: auto;
     padding-inline: 1rem;
-    width: min(62%, 14.5rem);
-    max-width: min(62%, 14.5rem);
+    width: min(55%, 14.5rem);
+    max-width: min(55%, 14.5rem);
+  }
+
+  .ref-verif-cand-hero--public-open .ref-verif-cand-hero__privacy {
+    display: none;
   }
 
   .ref-verif-cand-hero--compact {
@@ -1536,5 +1540,33 @@
 
   .pub-theme .ref-verif-public-layout > .ref-verif-cand-hero:first-child {
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+  }
+
+  .ref-verif-public__hero-more {
+    display: block;
+    margin: 0;
+    padding: 0.65rem 1.1rem 0.85rem;
+    background: var(--pearl);
+    border-block-end: 1px solid color-mix(in srgb, var(--gold) 18%, var(--border));
+  }
+
+  .ref-verif-public__intro-tail {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.42;
+    color: color-mix(in srgb, var(--text) 82%, var(--muted));
+  }
+
+  .ref-verif-public__privacy-more {
+    margin: 0.4rem 0 0;
+    font-size: 0.82rem;
+    line-height: 1.35;
+    color: var(--muted);
+  }
+}
+
+@media (min-width: 640px) {
+  .ref-verif-public__hero-more {
+    display: none;
   }
 }

@@ -206,6 +206,12 @@ internal static class UiStringsReferenceVerification
         Add("RefVerif.Public.IntroDetail",
             "{0} noemde jou als {2} bij {1}. Het duurt ongeveer 2 minuten. Je hoeft alleen in te vullen wat jij weet.",
             "{0} named you as their {2} at {1}. It takes about 2 minutes. Only fill in what you know.");
+        Add("RefVerif.Public.IntroShort",
+            "{0} noemde jou als {2} bij {1}.",
+            "{0} named you as their {2} at {1}.");
+        Add("RefVerif.Public.IntroTail",
+            "Het duurt ongeveer 2 minuten. Je hoeft alleen in te vullen wat jij weet.",
+            "It takes about 2 minutes. Only fill in what you know.");
         Add("RefVerif.Public.Privacy",
             "Lobsy vraagt dit omdat deze persoon jou noemde als referent. Je antwoorden gaan naar die persoon. Je hoeft niet te antwoorden.",
             "Lobsy asks because this person named you as a reference. Your answers go to them. You do not have to respond.");
