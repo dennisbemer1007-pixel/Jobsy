@@ -48,7 +48,8 @@ public sealed class OnboardingGeolocationEvidencePlaywrightTests
         {
             ViewportSize = new() { Width = width, Height = height },
             DeviceScaleFactor = mobile ? 2 : 1,
-            IsMobile = mobile,
+            // Headless Chromium geolocation is flaky with IsMobile=true; use touch + narrow viewport instead.
+            IsMobile = false,
             HasTouch = mobile,
             Locale = "nl-NL",
             Geolocation = new() { Latitude = 52.066f, Longitude = 4.235f, Accuracy = accuracyMeters },
@@ -92,9 +93,24 @@ public sealed class OnboardingGeolocationEvidencePlaywrightTests
             await page.WaitForTimeoutAsync(1500);
         }
 
-        await page.Locator(".kb-address__geo").ClickAsync(new() { Force = true });
+        await page.Locator("input[autocomplete=given-name]").FillAsync("Geo");
+        await page.Locator("input[autocomplete=family-name]").FillAsync("Test");
+        var geoBtn = page.Locator(".ob-fields__address .kb-address__geo").First;
+        await geoBtn.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await geoBtn.ClickAsync(new() { Force = true });
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const busy = document.querySelector('.ob-fields__address .kb-address__geo[aria-busy="true"]');
+              if (busy) return false;
+              return document.querySelector('.ob-wizard__hint--geo')
+                || document.querySelector('[data-testid=geolocation-confirm-address]');
+            }
+            """,
+            null,
+            new() { Timeout = 90_000 });
         var hint = page.Locator(".ob-wizard__hint--geo, [data-testid=geolocation-confirm-address]");
-        await hint.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await hint.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5_000 });
         await page.WaitForTimeoutAsync(400);
 
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, fileName), FullPage = false });
