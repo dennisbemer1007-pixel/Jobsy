@@ -6,29 +6,22 @@
 @inject IConfiguration Config
 @inject IHostEnvironment HostEnv
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Onboarding
 @inject CultureState Culture
 
 @if (IllustrationEnabled)
 {
-    <section class="ob-dream-sfeer" data-testid="dream-job-step-illustrated">
-        <div class="ob-dream-sfeer__art" aria-hidden="true">
-            <picture>
-                <source type="image/webp" srcset="/images/onboarding/droombaan-sfeer-a.webp?v=20261018-02" />
-                <img src="/images/onboarding/droombaan-sfeer-a.jpg?v=20261018-02"
-                     alt=""
-                     width="1280"
-                     height="720"
-                     loading="lazy"
-                     decoding="async"
-                     tabindex="-1" />
-            </picture>
-        </div>
-        <div class="ob-dream-sfeer__panel">
+    <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.DreamJobWebp"
+                               JpgSrc="@OnboardingIllustrationAssets.DreamJobJpg"
+                               TestId="dream-job-step-illustrated">
+        <div class="ob-illustrated-step__pearl">
             @RenderHeading
-            @if (Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction())
-            {
-                <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
-            }
+        </div>
+        @if (Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction())
+        {
+            <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
+        }
+        <div class="ob-illustrated-step__form">
             <div class="ob-dream-sfeer__search">
                 <input role="combobox"
                        aria-expanded="@(Draft.DreamSearch.Length > 0)"
@@ -62,7 +55,7 @@
                 </p>
             }
         </div>
-    </section>
+    </OnboardingIllustratedStep>
 }
 else
 {

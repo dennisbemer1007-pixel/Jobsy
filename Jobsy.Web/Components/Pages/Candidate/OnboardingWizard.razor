@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
     @if (DreamIllustrationEnabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-wizard-dream-illustration.css?v=20261018-01" />
+        <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-03" />
     }
 </HeadContent>
 
@@ -216,7 +216,7 @@
                     </div>
                 </header>
 
-                <section class="ob-wizard__content @(_step == 6 && DreamIllustrationEnabled ? "ob-wizard__content--dream-sfeer" : null)">
+                <section class="ob-wizard__content @(_step == 6 && DreamIllustrationEnabled ? "ob-wizard__content--illustrated" : null)">
                     @if (!string.IsNullOrWhiteSpace(_error))
                     {
                         <p class="state-message error">@_error</p>
