@@ -2,66 +2,130 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
+@inject NavigationManager Navigation
 
 <PageTitle>@Culture["CandidateSettings.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page candidate-hub">
-    <header class="panel-header">
-        <h1>@Culture["CandidateSettings.Title"]</h1>
-        <p class="candidate-hub__lead">@Culture["CandidateSettings.Lead"]</p>
-    </header>
+<div class="panel-page candidate-hub panel-page--cand-ill">
+    <CandidateIllustratedHero Title="@Culture["CandidateSettings.Title"]"
+                              Lead="@Culture["CandidateSettings.Lead"]"
+                              ArtUrl="@InstellingenBand"
+                              ArtPosition="right center"
+                              CssClass="cand-hero--profession-band" />
 
-    <ul class="candidate-hub__list">
-        <li>
-            <a class="candidate-hub__link" href="/account/mail-instellingen">
-                <span class="candidate-hub__link-title">@Culture["CandidateSettings.Mail.Title"]</span>
-                <span class="candidate-hub__link-desc">@Culture["CandidateSettings.Mail.Desc"]</span>
-            </a>
-        </li>
-        @if (_proactiveOn)
-        {
-            <li>
-                <a class="candidate-hub__link" href="/candidate/proactive-matching">
-                    <span class="candidate-hub__link-title">@Culture["CandidateSettings.Proactive.Title"]</span>
-                    <span class="candidate-hub__link-desc">@Culture["CandidateSettings.Proactive.Desc"]</span>
+    <div class="cand-settings">
+        <nav class="cand-settings__nav" aria-label="@Culture["CandidateSettings.Title"]">
+            <div class="cand-settings__nav-group">
+                <h2>@Culture["CandidateSettings.NavSettings"]</h2>
+                <a class="@NavClass("mail")" href="@NavHref("mail")">
+                    <span>
+                        <span class="cand-settings__nav-title">@Culture["CandidateSettings.Mail.Title"]</span>
+                        <span class="cand-settings__nav-desc">@Culture["CandidateSettings.Mail.Desc"]</span>
+                    </span>
                 </a>
-            </li>
-        }
-        @if (_kandidatenkaartOn)
-        {
-            <li>
-                <a class="candidate-hub__link" href="/candidate/kandidatenkaart-instellingen">
-                    <span class="candidate-hub__link-title">@Culture["CandidateSettings.Kk.Title"]</span>
-                    <span class="candidate-hub__link-desc">@Culture["CandidateSettings.Kk.Desc"]</span>
+                @if (_proactiveOn)
+                {
+                    <a class="@NavClass("proactive")" href="/candidate/proactive-matching">
+                        <span>
+                            <span class="cand-settings__nav-title">@Culture["CandidateSettings.Proactive.Title"]</span>
+                            <span class="cand-settings__nav-desc">@Culture["CandidateSettings.Proactive.Desc"]</span>
+                        </span>
+                    </a>
+                }
+                @if (_kandidatenkaartOn)
+                {
+                    <a class="@NavClass("kk")" href="/candidate/kandidatenkaart-instellingen">
+                        <span>
+                            <span class="cand-settings__nav-title">@Culture["CandidateSettings.Kk.Title"]</span>
+                            <span class="cand-settings__nav-desc">@Culture["CandidateSettings.Kk.Desc"]</span>
+                        </span>
+                    </a>
+                }
+                <a class="@NavClass("profile")" href="/candidate/paspoort?tab=data">
+                    <span>
+                        <span class="cand-settings__nav-title">@Culture["CandidateSettings.Profile.Title"]</span>
+                        <span class="cand-settings__nav-desc">@Culture["CandidateSettings.Profile.Desc"]</span>
+                    </span>
                 </a>
-            </li>
-        }
-        <li>
-            <a class="candidate-hub__link" href="/candidate/paspoort?tab=data">
-                <span class="candidate-hub__link-title">@Culture["CandidateSettings.Profile.Title"]</span>
-                <span class="candidate-hub__link-desc">@Culture["CandidateSettings.Profile.Desc"]</span>
-            </a>
-        </li>
-        <li>
-            <a class="candidate-hub__link" href="/candidate/hoe-werkt-lobsy">
-                <span class="candidate-hub__link-title">@Culture["CandidateSettings.How.Title"]</span>
-                <span class="candidate-hub__link-desc">@Culture["CandidateSettings.How.Desc"]</span>
-            </a>
-        </li>
-    </ul>
+                <a class="@NavClass("how")" href="/candidate/hoe-werkt-lobsy">
+                    <span>
+                        <span class="cand-settings__nav-title">@Culture["CandidateSettings.How.Title"]</span>
+                        <span class="cand-settings__nav-desc">@Culture["CandidateSettings.How.Desc"]</span>
+                    </span>
+                </a>
+            </div>
+            <div class="cand-settings__nav-group">
+                <h2>@Culture["CandidateSettings.NavPrivacy"]</h2>
+                <a class="@NavClass("privacy")" href="/privacy">
+                    <span>
+                        <span class="cand-settings__nav-title">@Culture["CandidatePrivacy.Policy.Title"]</span>
+                        <span class="cand-settings__nav-desc">@Culture["CandidatePrivacy.Policy.Desc"]</span>
+                    </span>
+                </a>
+                <a class="@NavClass("data")" href="/privacy/data">
+                    <span>
+                        <span class="cand-settings__nav-title">@Culture["CandidatePrivacy.Data.Title"]</span>
+                        <span class="cand-settings__nav-desc">@Culture["CandidatePrivacy.Data.Desc"]</span>
+                    </span>
+                </a>
+                <a class="@NavClass("consent")" href="/candidate/paspoort?tab=data#consent">
+                    <span>
+                        <span class="cand-settings__nav-title">@Culture["CandidatePrivacy.Consent.Title"]</span>
+                        <span class="cand-settings__nav-desc">@Culture["CandidatePrivacy.Consent.Desc"]</span>
+                    </span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="cand-settings__panel">
+            @if (_pane == "mail")
+            {
+                <div class="cand-settings__panel-head">
+                    <div>
+                        <h2>@Culture["MailSettings.Title"]</h2>
+                        <p class="muted">@Culture["CandidateSettings.Mail.Desc"]</p>
+                    </div>
+                </div>
+                <CandidateMailSettingsPanel />
+                <div class="cand-settings__calm-links">
+                    <a href="/candidate/paspoort?tab=data">@Culture["Profile.Reset.Title"]</a>
+                    <a href="/candidate/paspoort?tab=data">@Culture["Profile.UnsubscribeTitle"]</a>
+                </div>
+            }
+            else
+            {
+                <p class="muted">@Culture["CandidateSettings.PickPane"]</p>
+                <p><a class="btn btn-secondary" href="@NavHref("mail")">@Culture["CandidateSettings.Mail.Title"]</a></p>
+            }
+        </div>
+    </div>
 </div>
 
 @code {
+    [SupplyParameterFromQuery(Name = "pane")]
+    public string? Pane { get; set; }
+
     private bool _proactiveOn;
     private bool _kandidatenkaartOn;
+    private string _pane = "mail";
 
     protected override async Task OnInitializedAsync()
     {
         var flags = await FeatureFlags.GetAsync();
         _proactiveOn = flags.IsEnabled(PlatformFeature.ProactiveMatching);
         _kandidatenkaartOn = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
+        _pane = string.IsNullOrWhiteSpace(Pane) ? "mail" : Pane.Trim().ToLowerInvariant();
     }
+
+    private string? NavClass(string pane)
+        => string.Equals(_pane, pane, StringComparison.OrdinalIgnoreCase) ? "is-active" : null;
+
+    private static string NavHref(string pane)
+        => pane == "mail" ? "/candidate/settings?pane=mail" : $"/candidate/settings?pane={Uri.EscapeDataString(pane)}";
 }

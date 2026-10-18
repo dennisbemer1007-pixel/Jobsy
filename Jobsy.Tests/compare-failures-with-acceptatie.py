@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare unit-test TRX failure sets: PR run vs acceptatie baseline (39130960671)."""
+"""Compare unit-test TRX failure sets: PR run vs acceptatie baseline (e.g. run 39145729205 @ 6d1f1ef0f)."""
 from __future__ import annotations
 
 import sys

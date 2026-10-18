@@ -25,11 +25,11 @@
         @if (Variant == LandingVariant.On && ComboLayout)
         {
             <div class="pub-landing__get-five">
-                @ComboCard("Landing.Get.MapCardTitle", "Landing.Get.MapCardBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.PassportTitle", "Landing.Get.PassportBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.JourneyTitle", "Landing.Get.JourneyBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.MatchTitle", "Landing.Get.MatchBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.ReportTitle", "Landing.Get.ReportBody", "Landing.Get.ReportTag", true)
+                @ComboCard("map", "Landing.Get.MapCardTitle", "Landing.Get.MapCardBody", "Landing.Get.FreeTag", false)
+                @ComboCard("pass", "Landing.Get.PassportTitle", "Landing.Get.PassportBody", "Landing.Get.FreeTag", false)
+                @ComboCard("compass", "Landing.Get.JourneyTitle", "Landing.Get.JourneyBody", "Landing.Get.FreeTag", false)
+                @ComboCard("match", "Landing.Get.MatchTitle", "Landing.Get.MatchBody", "Landing.Get.FreeTag", false)
+                @ComboCard("book", "Landing.Get.ReportTitle", "Landing.Get.ReportBody", "Landing.Get.ReportTag", true)
             </div>
         }
         else if (Variant == LandingVariant.On)
@@ -170,9 +170,10 @@
     [Parameter] public decimal? PriceEuro { get; set; }
     [Parameter] public bool ComboLayout { get; set; }
 
-    private RenderFragment ComboCard(string titleKey, string bodyKey, string tagKey, bool paid) => __builder =>
+    private RenderFragment ComboCard(string icon, string titleKey, string bodyKey, string tagKey, bool paid) => __builder =>
     {
         <article class="pub-landing__get-card pub-landing__lift pub-landing__card-calm">
+            <LandingLineIcon Kind="@icon" />
             <h3>@LandingText.For(titleKey, Variant)</h3>
             <p>@LandingText.For(bodyKey, Variant)</p>
             @if (paid && PriceEuro is decimal price)
