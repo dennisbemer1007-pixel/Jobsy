@@ -55,13 +55,22 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_finale_v2_flags_off_1024()
+    public async Task Capture_finale_v2_r5_flags_off()
     {
         using var web = new FinaleWebFactory(FinaleOptionalFlags.AllOff);
         var baseUrl = web.EnsureServerAddress()
                       + "/__test/sign-in?return="
                       + Uri.EscapeDataString("/candidate/start");
-        await CaptureOneAsync(FinaleOptionalFlags.AllOff, "flags-off", 1024, 768, "1024", baseUrl);
+        foreach (var (width, height, suffix) in new (int, int, string)[]
+                 {
+                     (1440, 900, "1440"),
+                     (1280, 900, "1280"),
+                     (1024, 768, "1024"),
+                     (390, 844, "390")
+                 })
+        {
+            await CaptureOneAsync(FinaleOptionalFlags.AllOff, "flags-off", width, height, suffix, baseUrl);
+        }
     }
 
     [Theory]
