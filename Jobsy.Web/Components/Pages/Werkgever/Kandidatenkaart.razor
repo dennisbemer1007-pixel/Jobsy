@@ -131,7 +131,7 @@
 
         <div class="kk-layout-b">
             <div class="kk-layout-b__list">
-                <KandidatenkaartAreaListPanel Compact="false" Map="_map" SelectedArea="_selectedArea" OnSelect="SelectArea" Culture="Culture" />
+                <KandidatenkaartAreaListPanel Compact="false" Map="_map" SelectedArea="@_selectedArea" OnSelect="SelectArea" Culture="Culture" />
                 @if (ShowInviteCta)
                 {
                     <div class="kk-list-invite-bar">
@@ -158,7 +158,7 @@
         <div class="kk-mobile-sheet @(_map?.BelowThreshold == true ? "kk-mobile-sheet--sparse" : null)">
             <div class="kk-mobile-sheet__peek">@Culture["Kk.Mobile.AreasPeek"]</div>
             <div class="kk-mobile-sheet__body kk-mobile-sheet__body--list">
-                <KandidatenkaartAreaListPanel Compact="true" Map="_map" SelectedArea="_selectedArea" OnSelect="SelectArea" Culture="Culture" />
+                <KandidatenkaartAreaListPanel Compact="true" Map="_map" SelectedArea="@_selectedArea" OnSelect="SelectArea" Culture="Culture" />
             </div>
             @if (ShowInviteCta)
             {

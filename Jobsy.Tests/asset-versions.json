@@ -21,15 +21,19 @@
   },
   "css/features/auth.css": {
     "sha256": "19d393a63d6604f3a210cd0e67d18c3b6896c868d6a4f6a77be6ee9ff69ad05d",
-    "v": "20261017-01"
+    "v": "20261018-01"
   },
   "css/features/banenkaart.css": {
-    "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
+    "sha256": "0b77b38c48253751260a0b6f1797f81a555ab1aa95a8333fb28bc343352eeeeb",
     "v": "20261016-02"
   },
   "css/features/candidate-hub.css": {
     "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
     "v": "20261012-01"
+  },
+  "css/features/candidate-illustrated-public.css": {
+    "sha256": "4e9d6630cccec1312b949090830a277713fa54215a19cc98830cd2c0b7fae068",
+    "v": "20261018-01"
   },
   "css/features/carriere.css": {
     "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
@@ -85,7 +89,7 @@
   },
   "css/features/landing.css": {
     "sha256": "c7e52a6291b6b8ccf67f8591a142c6de1b87f821486c4db247782e5d0fb351ef",
-    "v": "20261015-14"
+    "v": "20261018-01"
   },
   "css/features/match-desktop.css": {
     "sha256": "8a93b7c3157f521af81598edb8ffe256de3b19076ef8ee2bdd26c4d963fa45bb",
@@ -176,7 +180,7 @@
     "v": "20261017-02"
   },
   "css/features/testresultaten.css": {
-    "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
+    "sha256": "250d80a99d142c7fd3b2ca25520a5d0f705d456e4574b0889bb4dcddddafd82f",
     "v": "20261004-10"
   },
   "css/features/tests.css": {
@@ -212,7 +216,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "08838ff2e54ae52f0c34d8cb2a266bf978873ea1939cb5902dcdc2ff55f33372",
+    "sha256": "7127781473df83e53f9952ea21c746bd1de74eeb8498877cc2188c29f74b33a2",
     "v": "20261017-04"
   },
   "js/app-extras.js": {
@@ -252,8 +256,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "0a75302c009d8d05c3b444df2d19e864aa019e8f4c9dfd4d9cb0b80e0cd44503",
-    "v": "20261018-hotfix-fitpill"
+    "sha256": "e4b9992b370f05544914b3216135c0a688702276b75f909c6386676d2f53d0ce",
+    "v": "20261018-20"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",

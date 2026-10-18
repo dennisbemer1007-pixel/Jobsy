@@ -50,6 +50,7 @@ public class JobsyDbContext : DbContext
     public DbSet<CompanyEngagementReport> CompanyEngagementReports => Set<CompanyEngagementReport>();
     public DbSet<LenderRegistration> LenderRegistrations => Set<LenderRegistration>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
+    public DbSet<CandidateTestReflection> CandidateTestReflections => Set<CandidateTestReflection>();
     public DbSet<CandidatePrivatePreferences> CandidatePrivatePreferences => Set<CandidatePrivatePreferences>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
@@ -921,6 +922,17 @@ public class JobsyDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateTestReflection>(entity =>
+        {
+            entity.ToTable("CandidateTestReflections");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Language).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.ContentJson).HasColumnType("text").IsRequired();
+            entity.Property(e => e.SourceHash).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Feedback).HasMaxLength(32);
+            entity.HasIndex(e => new { e.UserId, e.Kind, e.Level, e.Language }).IsUnique();
         });
 
         modelBuilder.Entity<CandidatePrivatePreferences>(entity =>

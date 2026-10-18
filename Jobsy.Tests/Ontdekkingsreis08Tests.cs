@@ -193,6 +193,15 @@ public class Ontdekkingsreis08RoutesNavTests
     }
 
     [Fact]
+    public void Illustrated_candidate_pages_hide_floating_coach()
+    {
+        Assert.True(MainLayout.IsIllustratedCandidateCoachHidden("carriere"));
+        Assert.True(MainLayout.IsIllustratedCandidateCoachHidden("candidate/applications"));
+        Assert.True(MainLayout.IsIllustratedCandidateCoachHidden("candidate/paspoort"));
+        Assert.False(MainLayout.IsIllustratedCandidateCoachHidden("candidate/profile"));
+    }
+
+    [Fact]
     public void Discovery_strings_cover_08_keys()
     {
         var nl = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);

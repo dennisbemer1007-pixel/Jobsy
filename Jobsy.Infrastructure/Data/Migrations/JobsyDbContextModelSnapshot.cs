@@ -2181,6 +2181,56 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateRoleFitChecks", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateTestReflection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Feedback")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("FromOpenAi")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("GeneratedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Kind", "Level", "Language")
+                        .IsUnique();
+
+                    b.ToTable("CandidateTestReflections", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateUploadedCv", b =>
                 {
                     b.Property<Guid>("Id")

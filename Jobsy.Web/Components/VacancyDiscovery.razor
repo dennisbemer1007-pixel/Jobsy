@@ -20,6 +20,7 @@
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Models
 @using Jobsy.Web.Services
+@using Jobsy.Web.Media
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.WebUtilities
 @using System.Text.Json
@@ -185,6 +186,16 @@
     </div>
 
     <aside class="vacancy-pane">
+        <div class="kb-nearby-banner" data-testid="kb-nearby-banner">
+            <div class="kb-nearby-banner__art" style="@($"background-image:url('{Jobsy.Web.Media.CandidateIllustratedImages.BanenkaartCyclists}')")" aria-hidden="true"></div>
+            <div class="kb-nearby-banner__copy">
+                <h2 class="kb-nearby-banner__title">@Culture["Discovery.NearbyTitle"]</h2>
+                @if (!string.IsNullOrWhiteSpace(ResultCountSubtitle))
+                {
+                    <p class="kb-nearby-banner__sub">@ResultCountSubtitle</p>
+                }
+            </div>
+        </div>
         <div class="kb-panel-head discovery-toolbar--desktop" role="toolbar" aria-label="@Culture["Discovery.Filters"]" data-testid="kb-panel-head">
             <KbAddressField InputId="discovery-address-desktop"
                             CssClass="kb-panel-head__address"
@@ -2545,6 +2556,10 @@
                 ["pinsUrl"] = BuildPinsApiUrl(),
                 ["syncViewportList"] = true,
                 ["labels"] = MapUiLabels(),
+                ["illustratedPopup"] = true,
+                ["illustratedTravelSpot"] = CandidateIllustratedImages.PopupTravelAccent,
+                ["illustratedVacancySpots"] = CandidateIllustratedImages.BanenkaartIllustratedSpots
+                    .ToDictionary(static kv => kv.Key, static kv => kv.Value, StringComparer.OrdinalIgnoreCase),
                 ["view"] = new Dictionary<string, object?>
                 {
                     ["lat"] = opening.CenterLat,
