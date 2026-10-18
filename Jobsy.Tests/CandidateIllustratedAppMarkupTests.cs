@@ -8,7 +8,7 @@ public class CandidateIllustratedAppMarkupTests
     public void Vacature_detail_has_why_title_and_reason_dna()
     {
         var detail = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
-        Assert.Contains("Kb.Fit.WhyTitle", detail, StringComparison.Ordinal);
+        Assert.Contains("KbWhyLine", detail, StringComparison.Ordinal);
         Assert.Contains("kb-dna--detail", detail, StringComparison.Ordinal);
         Assert.Contains("kb-dna__reason", detail, StringComparison.Ordinal);
         Assert.Contains("Fit.CheckVacancy", detail, StringComparison.Ordinal);
