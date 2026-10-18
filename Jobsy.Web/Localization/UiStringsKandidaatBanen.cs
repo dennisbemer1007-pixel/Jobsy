@@ -501,6 +501,15 @@ public static class UiStringsKandidaatBanen
             "Zobacz zapisane oferty",
             "Vezi joburile salvate",
             "اعرض الوظائف المحفوظة");
+        Add("Vacancy.Tag.PartTime",
+            "Parttime", "Part-time",
+            "W niepełnym wymiarze", "Part-time", "بدوام جزئي");
+        Add("Vacancy.Tag.FullTime",
+            "Fulltime", "Full-time",
+            "Pełny etat", "Full-time", "دوام كامل");
+        Add("Vacancy.Tag.SideJob",
+            "Bijbaan", "Side job",
+            "Dorywcza", "Job secundar", "عمل إضافي");
         Add("Kb.Match.BackToMap",
             "Terug naar de kaart",
             "Back to the map",

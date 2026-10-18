@@ -23,7 +23,7 @@
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
+    @if (!_isQuestionnairePage && !_banenkaartImmersive)
     {
         <header class="app-header">
             <div class="app-header__brand">
@@ -80,7 +80,7 @@
                 @Body
             </CircuitErrorBoundary>
         </div>
-        @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
+        @if (!_isQuestionnairePage && !_banenkaartImmersive)
         {
             <AppFooter />
         }
@@ -90,18 +90,18 @@
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock)
+    @if (RendererInfo.IsInteractive && !_banenkaartImmersive && _isCandidate && !_hideCoachDock)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
-    else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
+    else if (RendererInfo.IsInteractive && !_banenkaartImmersive && !_isQuestionnairePage)
     {
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
+    @if (RendererInfo.IsInteractive && !_banenkaartImmersive && !_isQuestionnairePage)
     {
         <GratisDnaMerge />
         <PushPermissionBanner />

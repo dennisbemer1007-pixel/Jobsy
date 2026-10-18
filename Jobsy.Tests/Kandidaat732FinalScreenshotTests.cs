@@ -97,6 +97,24 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
         Assert.Equal(8, pngs.Length);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_732_r5_review_shots()
+    {
+        const string r5Dir = "/opt/cursor/artifacts/kandidaat-732-r5";
+        Directory.CreateDirectory(r5Dir);
+        var widthsCarriere = new[] { (390, 844, "390"), (1440, 900, "1440") };
+        await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false, widths: widthsCarriere, artifactsDir: r5Dir);
+        CombinedStubApiHandler.MatchProfileComplete = true;
+        await CapturePageAsync("/candidate/match", "top-matches", careerEmpty: false, widths: widthsCarriere, artifactsDir: r5Dir);
+        CombinedStubApiHandler.MatchProfileComplete = false;
+        await CapturePageAsync("/candidate/match", "top-matches-leeg", careerEmpty: false, widths: widthsCarriere, artifactsDir: r5Dir);
+        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r5Dir);
+        await CapturePageAsync("/candidate/paspoort", "kompas", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r5Dir);
+
+        var pngs = Directory.GetFiles(r5Dir, "*.png");
+        Assert.Equal(8, pngs.Length);
+    }
+
     private async Task CapturePageAsync(
         string path,
         string name,

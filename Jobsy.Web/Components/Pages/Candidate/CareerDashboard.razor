@@ -186,7 +186,10 @@
                 <div class="career-ill-plan">
                     <CareerIllustratedPath Plan="@_plan" NowLabel="@_nowLabel" />
                     <div class="career-ill-plan__grid">
-                        <CareerIllustratedStepCards Plan="@_plan" EmployersOn="@_employersOn" />
+                        <div class="career-ill-plan__main">
+                            <CareerIllustratedStepCards Plan="@_plan" EmployersOn="@_employersOn" />
+                            <CareerIllustratedStepLearning Courses="@_panelCourses" />
+                        </div>
                         <div class="career-ill-plan__aside">
                             <CareerIllustratedStepPanel Step="@IllustratedPanelStep"
                                                          CourseSlots="@_panelCourses"
@@ -198,7 +201,6 @@
                             </p>
                         </div>
                     </div>
-                    <CareerIllustratedStepLearning Courses="@_panelCourses" />
                     @if ((_showCarriedOver && _plan.CarriedOverCount > 0) || _plan.LanguageDiffers || !string.IsNullOrWhiteSpace(_error))
                     {
                         <CareerOverviewCard Illustrated="true"
