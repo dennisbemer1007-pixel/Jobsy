@@ -712,5 +712,41 @@ public static class UiStringsDiscovery
             "Verder met starten", "Continue starting", "Kontynuuj start", "Continuă pornirea", "متابعة البدء");
         Add("MatchUnlock.StartOrResume",
             "Start of hervat", "Start or resume", "Start lub wznów", "Pornește sau reia", "ابدأ أو استأنف");
+        Add("MatchUnlock.CompleteTitle",
+            "Maak Match compleet",
+            "Complete your Match",
+            "Dokończ Match",
+            "Finalizează Match",
+            "أكمل Match");
+        Add("MatchUnlock.CompleteLead",
+            "Rond je startprofiel af (ongeveer 6 minuten). Daarna tonen we vacatures die bij jou passen. Geen diploma? Dat mag — kies dan Geen diploma.",
+            "Finish your start profile (about 6 minutes). Then we show jobs that fit you. No diploma? Choose None.",
+            "Dokończ profil startowy (ok. 6 min). Potem pokażemy pasujące oferty.",
+            "Finalizează profilul de start (circa 6 min). Apoi arătăm joburi potrivite.",
+            "أكمل ملف البداية (حوالي 6 دقائق).");
+        Add("MatchUnlock.EducationHint",
+            "Kies je hoogste afgeronde opleiding. Geen diploma? Kies Geen diploma.",
+            "Pick your highest completed education. No diploma? Choose None.",
+            "Wybierz najwyższe ukończone wykształcenie.",
+            "Alege cea mai înaltă educație finalizată.",
+            "اختر أعلى تعليم أكملته.");
+        Add("MatchUnlock.BasicsHint",
+            "Naam, beschikbaarheid en reistijd of vervoer",
+            "Name, availability and travel time or transport",
+            "Imię, dostępność i dojazd",
+            "Nume, disponibilitate și deplasare",
+            "الاسم والتوفر والتنقل");
+        Add("MatchUnlock.WizardHint",
+            "Korte wizard met mini-tests voor je eerste indruk",
+            "Short wizard with mini tests for a first impression",
+            "Krótki kreator z mini testami",
+            "Wizard scurt cu mini-teste",
+            "معالج قصير مع mini-tests");
+        Add("MatchUnlock.BanenkaartHint",
+            "Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de",
+            "Want to search wider or other job types? Go to the",
+            "Szukasz szerzej? Idź do",
+            "Cauți mai larg? Mergi la",
+            "تريد بحثاً أوسع؟ اذهب إلى");
     }
 }

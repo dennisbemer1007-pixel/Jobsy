@@ -29,17 +29,12 @@
             <a class="match-page__cta" href="@($"/login?returnUrl={Uri.EscapeDataString("/candidate/match")}")">Inloggen</a>
             <a class="match-page__cta match-page__cta--ghost" href="@KbRoutes.Map">Naar de banenkaart</a>
         </div>
-        <p class="match-gate__hint">
-            Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de banenkaart.
-        </p>
+        <p class="match-gate__hint">@Culture["MatchUnlock.BanenkaartHint"]</p>
     }
     else
     {
-        <h2 class="match-gate__title">Maak Match compleet</h2>
-        <p class="match-gate__lead">
-            Rond je startprofiel af (ongeveer 6 minuten) — daarna tonen we vacatures die bij jou passen.
-            Opleiding mag <strong>Geen</strong> zijn.
-        </p>
+        <h2 class="match-gate__title">@Culture["MatchUnlock.CompleteTitle"]</h2>
+        <p class="match-gate__lead">@Culture["MatchUnlock.CompleteLead"]</p>
         <p class="match-gate__progress">@Gate.CompletedCount van @Gate.RequiredCount klaar</p>
 
         <ol class="whoami-checklist match-gate__checklist">
@@ -47,7 +42,7 @@
                 <span class="whoami-check" aria-hidden="true">@(Gate.ProfileBasicsFilled ? "✓" : "")</span>
                 <div>
                     <strong>Basisgegevens</strong>
-                    <p>Naam, beschikbaarheid en reistijd/vervoer</p>
+                    <p>@Culture["MatchUnlock.BasicsHint"]</p>
                     @if (!Gate.ProfileBasicsFilled)
                     {
                         <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.ContinueStart"]</a>
@@ -58,7 +53,7 @@
                 <span class="whoami-check" aria-hidden="true">@(Gate.HasEducationLevel ? "✓" : "")</span>
                 <div>
                     <strong>Opleidingsniveau</strong>
-                    <p>Kies je niveau of <em>Geen</em></p>
+                    <p>@Culture["MatchUnlock.EducationHint"]</p>
                     @if (!Gate.HasEducationLevel)
                     {
                         <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.ContinueStart"]</a>
@@ -69,7 +64,7 @@
                 <span class="whoami-check" aria-hidden="true">@(Gate.WizardCompleted ? "✓" : "")</span>
                 <div>
                     <strong>Startprofiel</strong>
-                    <p>Korte wizard met mini-tests voor je eerste indruk</p>
+                    <p>@Culture["MatchUnlock.WizardHint"]</p>
                     @if (!Gate.WizardCompleted)
                     {
                         <a class="engagement-btn" href="@_startPath">@Culture["MatchUnlock.StartOrResume"]</a>
@@ -79,7 +74,7 @@
         </ol>
 
         <p class="match-gate__hint">
-            Wil je breder zoeken of andere typen vacatures vinden? Ga dan naar de
+            @Culture["MatchUnlock.BanenkaartHint"]
             <a href="@KbRoutes.Map">banenkaart</a>.
         </p>
     }

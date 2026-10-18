@@ -32,7 +32,7 @@
     "v": "20261012-01"
   },
   "css/features/candidate-illustrated-public.css": {
-    "sha256": "d6cd64feda724530a4d4d7e37168e7ffc59085507ad5c83687667b164b4aaae2",
+    "sha256": "5ff038c05a663e8b71d62049d79acaaf43979d33ba676817be54dcb3baf7caf9",
     "v": "20261018-01"
   },
   "css/features/carriere.css": {
@@ -175,8 +175,12 @@
     "sha256": "2bef7a071ba7c93834490b922d243cd8b5c84db67293bdba244cc856ca3806bd",
     "v": "20261017-02"
   },
+  "css/features/stijl-a.css": {
+    "sha256": "9e388948163ff96b032e049d010daa40980593cb6c7f50445048e88da915eec9",
+    "v": "20261018-03"
+  },
   "css/features/testresultaten.css": {
-    "sha256": "3f875b4ac25b624ff955eedcb3fc60bb686be669cee7af0c953adeb311c8be34",
+    "sha256": "d3bff4c121299fc2efe0cdea47435dc60986f2fc73a4c308638e0e09b1b81c13",
     "v": "20261004-10"
   },
   "css/features/tests.css": {
@@ -194,6 +198,10 @@
   "css/features/werkgever.css": {
     "sha256": "db1ce09af39dabe95aaf63f39fa6c065467b6c8d01433bbbf9672c57e5b8c822",
     "v": "20261017-19"
+  },
+  "css/tokens.css": {
+    "sha256": "5ce0929c96b169830a30fc10283d80c6f8805715068cfcec698d571a9e07826e",
+    "v": "20261018-06"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
@@ -213,7 +221,7 @@
   },
   "js/app-core.js": {
     "sha256": "cf0cd132928d5d88428d4053cbb98eb83c9256c9d923abde22016d35f5c567d6",
-    "v": "20261018-07"
+    "v": "20261017-04"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -296,11 +304,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "0a11ca166fc5e054a7b6361d535f6df6f148201a7acc992f3116c4256975f48a",
+    "sha256": "49059714edf2e505ad10fc70842b4823b2c7caef9f09796e122c2a70eab9e128",
     "v": "20261018-07"
   },
   "service-worker.published.js": {
-    "sha256": "a6db6693cee2f80ecb43853487da2ebda6b3bd4f6729439cc6692768a88ef539",
+    "sha256": "55214387ffacb19d6b32830668cbebabbaea24002a9496e1ad325791932eae75",
     "v": "20261018-07"
   }
 }

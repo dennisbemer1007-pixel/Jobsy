@@ -70,7 +70,8 @@ public static class CandidateIllustratedImages
             return MobFiguresKompas;
         }
 
-        if (bandArtUrl.Contains("droombaan-profession-wide", StringComparison.OrdinalIgnoreCase))
+        if (bandArtUrl.Contains("droombaan-profession-wide", StringComparison.OrdinalIgnoreCase)
+            || bandArtUrl.Contains("finale-hero", StringComparison.OrdinalIgnoreCase))
         {
             return MobFiguresDroombaan;
         }

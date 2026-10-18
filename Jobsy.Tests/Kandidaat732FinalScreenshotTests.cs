@@ -80,18 +80,21 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_kandidaat_732_r3_review_shots()
+    public async Task Capture_kandidaat_732_r4_review_shots()
     {
-        const string r3Dir = "/opt/cursor/artifacts/kandidaat-732-r3";
-        Directory.CreateDirectory(r3Dir);
+        const string r4Dir = "/opt/cursor/artifacts/kandidaat-732-r4";
+        Directory.CreateDirectory(r4Dir);
         var widthsCarriere = new[] { (390, 844, "390"), (1440, 900, "1440") };
-        await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false, widths: widthsCarriere, artifactsDir: r3Dir);
-        await CapturePageAsync("/candidate/match", "top-matches", careerEmpty: false, widths: widthsCarriere, artifactsDir: r3Dir);
-        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r3Dir);
-        await CapturePageAsync("/candidate/paspoort", "kompas", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r3Dir);
+        await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false, widths: widthsCarriere, artifactsDir: r4Dir);
+        CombinedStubApiHandler.MatchProfileComplete = true;
+        await CapturePageAsync("/candidate/match", "top-matches", careerEmpty: false, widths: widthsCarriere, artifactsDir: r4Dir);
+        CombinedStubApiHandler.MatchProfileComplete = false;
+        await CapturePageAsync("/candidate/match", "top-matches-leeg", careerEmpty: false, widths: widthsCarriere, artifactsDir: r4Dir);
+        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r4Dir);
+        await CapturePageAsync("/candidate/paspoort", "kompas", careerEmpty: false, widths: [(390, 844, "390")], artifactsDir: r4Dir);
 
-        var pngs = Directory.GetFiles(r3Dir, "*.png");
-        Assert.Equal(6, pngs.Length);
+        var pngs = Directory.GetFiles(r4Dir, "*.png");
+        Assert.Equal(8, pngs.Length);
     }
 
     private async Task CapturePageAsync(
@@ -105,6 +108,10 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
         foreach (var (width, height, tag) in widths)
         {
             CombinedStubApiHandler.CareerPlanEmpty = careerEmpty;
+            if (path.StartsWith("/candidate/match", StringComparison.Ordinal) && name.Contains("leeg", StringComparison.Ordinal))
+            {
+                CombinedStubApiHandler.MatchProfileComplete = false;
+            }
             await using var context = await _browser!.NewContextAsync(new()
             {
                 ViewportSize = new() { Width = width, Height = height },
@@ -125,7 +132,10 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
 
             if (path.StartsWith("/carriere", StringComparison.Ordinal) && !careerEmpty)
             {
-                await page.Locator("[data-testid='career-step-learning']").WaitForAsync(new() { Timeout = 60_000 });
+                var careerPath = width >= 640
+                    ? page.Locator(".career-path-svg__lane")
+                    : page.Locator(".career-path-mobile");
+                await careerPath.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
             }
 
             if (path.Contains("/vacancies/", StringComparison.Ordinal))
@@ -138,11 +148,21 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
             if (path.StartsWith("/candidate/match", StringComparison.Ordinal))
             {
                 await page.Locator("[data-testid='match-page']").WaitForAsync(new() { Timeout = 60_000 });
+                if (CombinedStubApiHandler.MatchProfileComplete)
+                {
+                    await page.Locator("[data-testid='match-side-why'], .swipe-card").First
+                        .WaitForAsync(new() { Timeout = 60_000 });
+                }
+                else
+                {
+                    await page.Locator(".match-gate__title").WaitForAsync(new() { Timeout = 60_000 });
+                }
             }
 
             if (path.Contains("/paspoort", StringComparison.Ordinal))
             {
-                await page.Locator(".passport-page, [data-testid='passport-hub']").First
+                await page.Locator(".passport-page").First.WaitForAsync(new() { Timeout = 60_000 });
+                await page.Locator(".cand-hero h1").Filter(new() { HasText = "Sanne" })
                     .WaitForAsync(new() { Timeout = 60_000 });
             }
 
@@ -285,6 +305,7 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
     internal sealed class CombinedStubApiHandler : HttpMessageHandler
     {
         internal static bool CareerPlanEmpty { get; set; }
+        internal static bool MatchProfileComplete { get; set; } = true;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -299,8 +320,23 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
             var photoVacancy = $$"""
                 {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","categoryName":"Dierenverzorging","status":"Active","openForWorkRequired":false,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"{{CandidateIllustratedImages.VacancyDierenStockPhoto}}","companyLogoUrl":null,"travelMinutes":9,"description":{{descJson}}}
                 """;
-            var incompleteProfile = """
-                {"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","email":"sanne@example.nl","fullName":"Sanne de Vries","firstName":"Sanne","lastName":"de Vries","role":"Candidate","openForWork":false,"emailVerified":true,"preferences":{"homeAddress":"1506 AB Zaandam","preferredTransport":"Fiets","employers":[],"educations":[],"availability":{}}}
+            var sanneProfileComplete = """
+                {"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","email":"sanne@example.nl","fullName":"Sanne de Vries","firstName":"Sanne","lastName":"de Vries","role":"Candidate","openForWork":false,"emailVerified":true,"homeLatitude":52.439,"homeLongitude":4.826,"preferences":{"homeAddress":"1506 AB Zaandam","preferredTransport":"Fiets","maxTravelMinutes":30,"employers":[],"educations":["MBO"],"availability":{}}}
+                """;
+            var sanneProfileGate = """
+                {"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","email":"sanne@example.nl","fullName":"Sanne de Vries","firstName":"Sanne","lastName":"de Vries","role":"Candidate","openForWork":false,"emailVerified":true,"homeLatitude":52.439,"homeLongitude":4.826,"preferences":{"homeAddress":"1506 AB Zaandam","preferredTransport":"Fiets","maxTravelMinutes":30,"employers":[],"educations":[],"availability":{}}}
+                """;
+            var whoAmIComplete = """
+                {"profileFilled":true,"competencyCompleted":true,"careerCompleted":true,"cultureCompleted":true,"isUnlocked":true,"insightsStatus":"Ready"}
+                """;
+            var whoAmIGate = """
+                {"profileFilled":false,"competencyCompleted":false,"careerCompleted":false,"cultureCompleted":false,"isUnlocked":false,"insightsStatus":"Ready"}
+                """;
+            var valuesComplete = """{"status":"Completed"}""";
+            var onboardingComplete = """{"isComplete":true,"completedAtUtc":"2026-01-01T12:00:00Z"}""";
+            var onboardingGate = """{"isComplete":false}""";
+            var discoverDeck = $$"""
+                {"items":[{{photoVacancy}},{{noPhotoVacancy}}],"skip":0,"take":24,"totalCount":2,"hasMore":false}
                 """;
             var passportCourses = """
                 [
@@ -328,21 +364,31 @@ public sealed class Kandidaat732FinalScreenshotTests : IAsyncLifetime
                                     ? "[]"
                                     : path.Contains("/travel", StringComparison.OrdinalIgnoreCase)
                                         ? """{"travelMinutes":9,"distanceKm":2.4}"""
-                                        : path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase)
-                                            ? incompleteProfile
-                                            : path.Contains("training-offers/passport", StringComparison.OrdinalIgnoreCase)
-                                                ? passportCourses
-                                                : path.Contains("training-offers", StringComparison.OrdinalIgnoreCase)
-                                                    ? passportCourses
-                                                    : path.Contains("vacanc", StringComparison.OrdinalIgnoreCase)
-                                                        ? path.Contains(PhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
-                                                            ? photoVacancy
-                                                            : path.Contains(NoPhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
-                                                                ? noPhotoVacancy
-                                                                : "[]"
-                                                        : path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
-                                                            ? """{"isComplete":true}"""
-                                                            : "{}";
+                                        : path.Contains("/who-am-i", StringComparison.OrdinalIgnoreCase)
+                                            ? MatchProfileComplete ? whoAmIComplete : whoAmIGate
+                                            : path.Contains("/me/values", StringComparison.OrdinalIgnoreCase)
+                                                ? MatchProfileComplete ? valuesComplete : """{"status":"NotStarted"}"""
+                                                : path.Contains("/me/onboarding", StringComparison.OrdinalIgnoreCase)
+                                                    ? MatchProfileComplete ? onboardingComplete : onboardingGate
+                                                    : path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase)
+                                                        ? MatchProfileComplete ? sanneProfileComplete : sanneProfileGate
+                                                        : path.Contains("vacancies/discover", StringComparison.OrdinalIgnoreCase)
+                                                            ? discoverDeck
+                                                            : path.Contains("/kompas/dna", StringComparison.OrdinalIgnoreCase)
+                                                                ? """{"profileCompletenessPercent":42}"""
+                                                                : path.Contains("/kompas", StringComparison.OrdinalIgnoreCase)
+                                                                    ? """{"profileCompletenessPercent":42,"profile":{"fullName":"Sanne de Vries","firstName":"Sanne","lastName":"de Vries"}}"""
+                                                            : path.Contains("training-offers/passport", StringComparison.OrdinalIgnoreCase)
+                                                                ? passportCourses
+                                                                : path.Contains("training-offers", StringComparison.OrdinalIgnoreCase)
+                                                                    ? passportCourses
+                                                                    : path.Contains("vacanc", StringComparison.OrdinalIgnoreCase)
+                                                                        ? path.Contains(PhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
+                                                                            ? photoVacancy
+                                                                            : path.Contains(NoPhotoVacancyId.ToString(), StringComparison.OrdinalIgnoreCase)
+                                                                                ? noPhotoVacancy
+                                                                                : "[]"
+                                                                        : "{}";
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")

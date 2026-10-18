@@ -413,7 +413,7 @@
                         {
                             <ProfileEncouragementNudge ScreenKey="vacancy-pre-apply"
                                                        Context="_encourageContext"
-                                                       PreviewTipId="_encouragePreviewTipId" />
+                                                       PreviewTipId="@_encouragePreviewTipId" />
                         }
                         <header class="apply-flow__header">
                             <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
@@ -452,7 +452,7 @@
                                 {
                                     <ProfileEncouragementNudge ScreenKey="apply-sent"
                                                                Context="_encourageContext"
-                                                               PreviewTipId="_encouragePreviewTipId" />
+                                                               PreviewTipId="@_encouragePreviewTipId" />
                                 }
                                 @if (_directContact is { Available: true })
                                 {
