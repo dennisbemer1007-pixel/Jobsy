@@ -1,0 +1,19 @@
+@namespace Jobsy.Web.Components.Ui
+
+<span class="line-icon @CssClass" style="@Style" aria-hidden="@AriaHidden.ToString().ToLowerInvariant()">
+    @((MarkupString)(_svg ?? ""))
+</span>
+
+@code {
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public string? Style { get; set; }
+    [Parameter] public bool AriaHidden { get; set; } = true;
+
+    private string? _svg;
+
+    protected override void OnParametersSet()
+    {
+        _svg = LineIcons.Resolve(Name) ?? LineIcons.Check;
+    }
+}

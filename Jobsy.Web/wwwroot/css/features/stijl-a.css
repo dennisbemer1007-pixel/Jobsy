@@ -1,0 +1,111 @@
+html:not(.pub-theme) body,
+.app-shell,
+.wg-shell,
+.admin-shell {
+  font-family: var(--font-body);
+}.app-shell :is(h1, .journey-page__title, .carriere-hero__title, .ob-finale__intro h1, .ob-wizard__content h1) {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}.wg-shell :is(.wg-page-header h1, .wg-page-header__titles h1),
+.admin-shell :is(.admin-page__header h1, .admin-page__header h2) {
+  font-family: var(--font-display);
+  font-weight: 700;
+}.wg-shell :not(.wg-page-header) :is(h2, h3, h4, h5, h6, p, label, button, input, select, textarea, .wg-topbar),
+.admin-shell :not(.admin-page__header) :is(h2, h3, h4, h5, h6, p, label, button, input, select, textarea, .admin-topbar) {
+  font-family: var(--font-body);
+}.app-shell :is(.form-label, .field-label, .kb-address__label, .swipe-card__why-label, .status-pill, .wg-page-header small),
+.wg-shell :is(.form-label, .field-label, .insights-kpi__label),
+.admin-shell :is(.form-label, .field-label) {
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 600;
+}.line-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: -0.15em;
+  color: currentColor;
+}.line-icon svg {
+  width: 1.125em;
+  height: 1.125em;
+  display: block;
+}.line-icon--md svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}.pub-theme .au-blob {
+  display: none;
+}.wg-shell .lobsy-watermarks,
+.admin-shell .lobsy-watermarks {
+  display: none;
+}
+
+/* Candidate fit bars: no numeric fallback text inside <progress>. */
+.kb-dna--detail .kb-dna__progress {
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+}
+
+/* #728 illustrated pages: reserve space above bottom nav when coach is hidden. */
+@media (max-width: 639px) {
+  .app-shell:has(.panel-page--cand-ill) .app-main {
+    padding-bottom: calc(var(--bottom-nav-h, 56px) + 20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-shell:has(.panel-page--cand-ill) .kb-next,
+  .app-shell:has(.panel-page--cand-ill) .career-card__actions,
+  .app-shell:has(.panel-page--cand-ill) .read-aloud-btn {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+/* Werkgever binnenkort — compact, no empty viewport band. */
+.pub-section.wg-soon {
+  min-height: auto;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding-block: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.wg-soon .pp-doc__hero {
+  margin-bottom: 1rem;
+}
+
+.wg-soon__grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.wg-soon__card {
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface);
+}
+
+.wg-soon__card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.wg-soon__card p {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.wg-soon__card a {
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.wg-soon__card a:hover {
+  text-decoration: underline;
+}
