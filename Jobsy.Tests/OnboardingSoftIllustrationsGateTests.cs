@@ -108,7 +108,7 @@ public sealed class OnboardingSoftIllustrationsGateTests
             css);
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r15.py")));
         Assert.Matches(
-            @"(?s)\.ob-illustrated-step__mobile-cover-copy h1\s*\{[^}]*max-inline-size:\s*50%",
+            @"(?s)\.ob-illustrated-step__mobile-cover-copy h1\s*\{[^}]*max-inline-size:\s*48%",
             css);
     }
 
@@ -118,9 +118,16 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-figure-crop.py")));
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r13.py")));
         var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
-        Assert.Contains("20261018-r18", assets, StringComparison.Ordinal);
+        Assert.Contains("20261018-r19", assets, StringComparison.Ordinal);
         Assert.Contains("MobileHeroWebp", assets, StringComparison.Ordinal);
         Assert.Contains("mobile-hero", assets, StringComparison.Ordinal);
+        Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r19.py")));
+        foreach (var slug in new[] { "beschikbaarheid", "werkervaring", "opleiding" })
+        {
+            Assert.True(
+                File.Exists(Path.Combine(RepoRoot, $"Jobsy.Web/wwwroot/images/onboarding/r19-source/{slug}.jpg")),
+                $"r19-source/{slug}.jpg");
+        }
     }
 
     [Theory]

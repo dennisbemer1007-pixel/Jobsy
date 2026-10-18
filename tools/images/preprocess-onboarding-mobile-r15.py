@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""R15–R18: full-bleed mobile hero plates (edge-to-edge cover; figures in right band ≥55%)."""
+"""R15–R19: mobile hero plates (R19 purpose-made sources for steps 2/4/5; cover for 1/3/6)."""
 from __future__ import annotations
 
+import importlib.util
 import json
 import math
 import shutil
@@ -13,6 +14,8 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT_DIR = ROOT / "Jobsy.Web/wwwroot/images/onboarding"
+R19_DIR = OUT_DIR / "r19-source"
+R19_SCRIPT = ROOT / "tools/images/preprocess-onboarding-mobile-r19.py"
 SLUGS = ("kennismaken", "beschikbaarheid", "vervoer", "werkervaring", "opleiding", "droombaan")
 
 MOBILE_W = 780
@@ -113,12 +116,28 @@ def audit_mobile_hero(img: Image.Image, *, slug: str) -> dict[str, object]:
     }
 
 
+R19_SLUGS = frozenset({"beschikbaarheid", "werkervaring", "opleiding"})
+
+
+def _r19_module():
+    spec = importlib.util.spec_from_file_location("ob_mobile_r19", R19_SCRIPT)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"Cannot load {R19_SCRIPT}")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def build_mobile_hero(slug: str) -> Image.Image:
+    if slug in R19_SLUGS:
+        r19 = _r19_module()
+        src_path = R19_DIR / f"{slug}.jpg"
+        if not src_path.is_file():
+            raise FileNotFoundError(f"Missing R19 source: {src_path}")
+        return r19.extend_top_to_mobile(Image.open(src_path))
+
     src = Image.open(OUT_DIR / f"{slug}.jpg").convert("RGB")
-    if slug == "werkervaring":
-        patch = crop_frac(src, (0.28, 0.02, 0.56, 0.98))
-    else:
-        patch = crop_frac(src, CROP[slug])
+    patch = crop_frac(src, CROP[slug])
     if slug in FLIP_H:
         patch = patch.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
 
@@ -149,7 +168,10 @@ def main() -> int:
         hero.save(jpg, quality=90, optimize=True)
         if shutil.which("cwebp"):
             write_webp(jpg)
-        audit = audit_mobile_hero(hero, slug=slug)
+        if slug in R19_SLUGS:
+            audit = _r19_module().audit_mobile_hero(hero, slug=slug)
+        else:
+            audit = audit_mobile_hero(hero, slug=slug)
         audits.append(audit)
         print("audit", audit)
         if not audit["ok"]:
@@ -157,10 +179,10 @@ def main() -> int:
         manifest[slug] = {"width": MOBILE_W, "height": MOBILE_H, "audit": audit}
         print("wrote", jpg)
 
-    meta = OUT_DIR / "mobile-hero-r18-manifest.json"
+    meta = OUT_DIR / "mobile-hero-r19-manifest.json"
     meta.write_text(json.dumps({"steps": manifest, "audits": audits}, indent=2) + "\n", encoding="utf-8")
     if failed:
-        print(f"R18 pixel audit failed for {failed} slug(s)", file=sys.stderr)
+        print(f"R19 pixel audit failed for {failed} slug(s)", file=sys.stderr)
         return 1
     return 0
 
