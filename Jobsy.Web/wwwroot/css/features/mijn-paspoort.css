@@ -578,12 +578,51 @@
         inset-block-start: var(--app-header-height, 4.25rem);
         flex-wrap: nowrap;
         overflow-x: auto;
-        mask-image: linear-gradient(to right, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+        scrollbar-width: none;
+        mask-image: linear-gradient(to right, transparent, #000 10px, #000 calc(100% - 28px), transparent);
     }
 
     [dir="rtl"] .passport-tabs {
-        mask-image: linear-gradient(to left, transparent, #000 12px, #000 calc(100% - 12px), transparent);
+        mask-image: linear-gradient(to left, transparent, #000 10px, #000 calc(100% - 28px), transparent);
     }
+
+    .passport-page .passport-tabs {
+        padding-inline: 2px;
+        gap: 0.2rem;
+    }
+
+    .passport-page .passport-tabs .passport-tab {
+        padding-inline: 0.45rem;
+        font-size: 0.78rem;
+        gap: 3px;
+        min-block-size: 40px;
+    }
+
+    .passport-page .passport-tabs__icon {
+        display: none;
+    }
+}
+
+@media (min-width: 1600px) {
+    .passport-page .passport-tabs .passport-tab {
+        padding-inline: 0.65rem;
+        font-size: 0.875rem;
+        min-block-size: 44px;
+    }
+
+    .passport-page .passport-tabs__icon {
+        display: inline-flex;
+        inline-size: 16px;
+        block-size: 16px;
+    }
+
+    .passport-page .passport-tabs__icon svg {
+        inline-size: 16px;
+        block-size: 16px;
+    }
+}
+
+@media (min-width: 1024px) {
 
     /* Coach sits fixed; keep it above the in-flow footer (© line). */
     .app-shell:has(.passport-page) .lobsy-coach-dock {

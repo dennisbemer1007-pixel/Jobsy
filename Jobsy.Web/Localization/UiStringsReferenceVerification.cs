@@ -34,6 +34,8 @@ internal static class UiStringsReferenceVerification
             "Referent vragen", "Ask a reference");
         Add("RefVerif.Tip.NotNow",
             "Niet nu", "Not now");
+        Add("RefVerif.Tip.AskAnother",
+            "Nog een referent vragen", "Ask another reference");
         Add("RefVerif.Tab.Intro",
             "Een verzoek blijft 14 dagen geldig. Je referent krijgt hooguit één herinnering.",
             "A request stays valid for 14 days. Your referent gets at most one reminder.");

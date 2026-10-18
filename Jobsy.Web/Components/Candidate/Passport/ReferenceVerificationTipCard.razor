@@ -5,7 +5,13 @@
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 
-@if (_visible && Eligible)
+@if (_visible && Eligible && HasConfirmedReference)
+{
+    <p class="ref-verif-tip-followup" data-testid="ref-verification-tip-followup" data-screen="@ScreenKey">
+        <a class="ref-verif-tip-followup__link" href="@_askHref">@Culture["RefVerif.Tip.AskAnother"]</a>
+    </p>
+}
+else if (_visible && Eligible)
 {
     <aside class="ref-verif-tip"
            data-testid="ref-verification-tip"
@@ -37,6 +43,10 @@
 
     [Parameter]
     public Guid? FirstEntryId { get; set; }
+
+    /// <summary>When true, show a quiet follow-up link instead of the full tip card.</summary>
+    [Parameter]
+    public bool HasConfirmedReference { get; set; }
 
     private bool _visible = true;
     private bool _checked;

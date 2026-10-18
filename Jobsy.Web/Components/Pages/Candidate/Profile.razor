@@ -44,7 +44,8 @@
                 <ReferenceVerificationTipCard ScreenKey="profile"
                                               Eligible="true"
                                               UserId="@_profileUserId"
-                                              FirstEntryId="_firstWorkEntryId" />
+                                              FirstEntryId="_firstWorkEntryId"
+                                              HasConfirmedReference="_hasConfirmedReference" />
             }
         </FeatureVisible>
         @if (string.Equals(_insightsStatus, "Updating", StringComparison.OrdinalIgnoreCase))
@@ -193,6 +194,7 @@
     private const string DnaPersistKey = "candidateProfileDna";
     private bool _restored;
     private bool _refVerificationEligible;
+    private bool _hasConfirmedReference;
     private string? _profileUserId;
     private Guid? _firstWorkEntryId;
     private PersistingComponentStateSubscription _persistSubscription;
@@ -309,6 +311,16 @@
         var flags = await FeatureFlags.GetAsync();
         _refVerificationEligible = flags.ReferenceVerificationEnabled
                                    && await Api.GetReferenceVerificationEligibleAsync();
+        if (_refVerificationEligible)
+        {
+            var rows = await Api.GetReferenceVerificationListAsync();
+            _hasConfirmedReference = rows.Any(r =>
+                r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase));
+        }
+        else
+        {
+            _hasConfirmedReference = false;
+        }
     }
 
     private async Task ApplyKompasAsync(CandidateKompasState? kompas, bool allowGeocode)

@@ -108,7 +108,8 @@
                         <ReferenceVerificationTipCard ScreenKey="paspoort-home"
                                                       Eligible="true"
                                                       UserId="@_profile?.Id.ToString()"
-                                                      FirstEntryId="_firstWorkEntryId" />
+                                                      FirstEntryId="_firstWorkEntryId"
+                                                      HasConfirmedReference="_hasConfirmedReference" />
                     }
                 </FeatureVisible>
 
@@ -333,6 +334,7 @@
     private PassportShellRules.ShellProgress _shells = new([], 0, 0, 0);
     private int _applicationCount;
     private bool _refVerificationEligible;
+    private bool _hasConfirmedReference;
     private Guid? _firstWorkEntryId;
     private List<JobsyApiClient.VerifiedCompetenceItem> _verifiedCompetences = [];
     private List<JobsyApiClient.ReferenceVerificationListItem> _refVerificationRows = [];
@@ -418,6 +420,8 @@
         _refVerificationEligible = await Api.GetReferenceVerificationEligibleAsync();
         _verifiedCompetences = (await Api.GetVerifiedCompetencesAsync()).ToList();
         _refVerificationRows = (await Api.GetReferenceVerificationListAsync()).ToList();
+        _hasConfirmedReference = _refVerificationRows.Any(r =>
+            r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase));
         _employers = _profile?.Preferences?.Employers ?? [];
         _firstWorkEntryId = _employers
             .FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.EmployerName))?.EntryId;

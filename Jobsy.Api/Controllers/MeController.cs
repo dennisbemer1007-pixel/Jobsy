@@ -1709,6 +1709,14 @@ public partial class MeController : ControllerBase
                         }
                     }
 
+                    Guid? entryId = null;
+                    if (item.TryGetProperty("entryId", out var entryIdEl)
+                        && entryIdEl.ValueKind == JsonValueKind.String
+                        && Guid.TryParse(entryIdEl.GetString(), out var parsedEntry))
+                    {
+                        entryId = parsedEntry;
+                    }
+
                     employers.Add(new CandidateEmployerHistoryDto(
                         name.Trim(),
                         string.IsNullOrWhiteSpace(role) ? null : role.Trim(),
@@ -1717,7 +1725,8 @@ public partial class MeController : ControllerBase
                         startMonth,
                         endMonth,
                         isCurrent,
-                        escoId));
+                        escoId,
+                        entryId));
                 }
             }
 

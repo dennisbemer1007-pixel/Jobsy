@@ -8,14 +8,14 @@
 
 <div class="ref-verif-tab" data-testid="passport-references-tab">
     <header class="ref-verif-tab__head">
-        <div>
+        <div class="ref-verif-tab__intro">
             <p class="ref-verif-tab__crumb muted">Paspoort › Referenties</p>
             <h2 class="ref-verif-tab__title">Referenties</h2>
-            <p class="login-lead">@Culture["RefVerif.Tab.Intro"]</p>
+            <p class="login-lead ref-verif-tab__lead">@Culture["RefVerif.Tab.Intro"]</p>
         </div>
         @if (FirstWorkExperienceEntryId is Guid entry)
         {
-            <a class="btn btn-primary" href="@($"/candidate/paspoort/referentie/vraag/{entry:D}")">
+            <a class="btn btn-primary ref-verif-tab__new" href="@($"/candidate/paspoort/referentie/vraag/{entry:D}")">
                 @Culture["RefVerif.Tab.NewRequest"]
             </a>
         }
@@ -129,7 +129,7 @@
         if (row.DisplayStatus == "confirmed")
         {
             builder.OpenElement(0, "a");
-            builder.AddAttribute(1, "class", "btn btn-ghost");
+            builder.AddAttribute(1, "class", "ref-verif-tab__action");
             builder.AddAttribute(2, "href", $"/candidate/paspoort/referenties/{row.Id:D}");
             builder.AddContent(3, Culture["RefVerif.Action.View"]);
             builder.CloseElement();
@@ -140,7 +140,7 @@
         {
             builder.OpenElement(4, "button");
             builder.AddAttribute(5, "type", "button");
-            builder.AddAttribute(6, "class", "btn btn-ghost");
+            builder.AddAttribute(6, "class", "ref-verif-tab__action");
             builder.AddAttribute(7, "disabled", _busy);
             builder.AddAttribute(8, "onclick", EventCallback.Factory.Create(this, () => RevokeAsync(row.Id)));
             builder.AddContent(9, Culture["RefVerif.Revoke"]);
@@ -151,7 +151,7 @@
         if (row.DisplayStatus == "expired")
         {
             builder.OpenElement(10, "a");
-            builder.AddAttribute(11, "class", "btn btn-secondary");
+            builder.AddAttribute(11, "class", "ref-verif-tab__action");
             builder.AddAttribute(12, "href", $"/candidate/paspoort/referentie/vraag/{row.WorkExperienceEntryId:D}");
             builder.AddContent(13, Culture["RefVerif.Action.Resend"]);
             builder.CloseElement();

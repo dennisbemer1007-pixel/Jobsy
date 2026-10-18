@@ -33,6 +33,18 @@ public class ReferenceVerificationBunitTests : BunitContext
     }
 
     [Fact]
+    public void Tip_followup_when_confirmed_reference()
+    {
+        var cut = Render<ReferenceVerificationTipCard>(p => p
+            .Add(x => x.ScreenKey, "paspoort-home")
+            .Add(x => x.Eligible, true)
+            .Add(x => x.HasConfirmedReference, true)
+            .Add(x => x.UserId, "aaaaaaaa-1111-1111-1111-111111111111"));
+        Assert.Contains("Nog een referent vragen", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("ref-verification-tip\"", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Tip_hidden_when_not_eligible()
     {
         var cut = Render<ReferenceVerificationTipCard>(p => p
