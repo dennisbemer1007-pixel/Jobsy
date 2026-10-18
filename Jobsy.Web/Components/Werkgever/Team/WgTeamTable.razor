@@ -116,7 +116,10 @@
 
         if (age.TotalDays < 30)
         {
-            return string.Format(Culture["WgTeam.Active.Days"], (int)age.TotalDays);
+            var days = (int)age.TotalDays;
+            return days == 1
+                ? string.Format(Culture["WgTeam.Active.DaysOne"], days)
+                : string.Format(Culture["WgTeam.Active.Days"], days);
         }
 
         return local.ToString("dd-MM-yyyy");

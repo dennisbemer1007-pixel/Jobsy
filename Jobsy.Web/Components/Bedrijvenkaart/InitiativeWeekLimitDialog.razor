@@ -2,21 +2,27 @@
 
 @if (IsOpen)
 {
-    <div class="bk-modal-backdrop">
-        <div class="bk-modal" role="dialog" aria-modal="true">
+    <div class="bk-modal-backdrop bk-modal-backdrop--centered">
+        <div class="bk-modal bk-modal--sent" role="dialog" aria-modal="true" aria-labelledby="bk-weeklimit-title">
             <header class="bk-modal__header">
-                <h2>@Culture["Initiative.WeekLimit.Title"]</h2>
+                <h2 id="bk-weeklimit-title">@Culture["Initiative.WeekLimit.Title"]</h2>
+                <button type="button" class="bk-panel-close icon-btn" @onclick="Close" aria-label="@Culture["Common.Close"]">
+                    <span aria-hidden="true">×</span>
+                </button>
             </header>
             <div class="bk-modal__body">
-                <p>@Culture["Initiative.WeekLimit.Body"]</p>
+                <p class="bk-modal__lead">@Culture["Initiative.WeekLimit.Body"]</p>
             </div>
             <footer class="bk-modal__footer">
-                <button type="button" class="btn--secondary" @onclick="Close">@Culture["Common.Close"]</button>
                 @if (DraftId is Guid draft)
                 {
                     <button type="button" class="btn--primary" @onclick="() => OnSendDraft.InvokeAsync(draft)">
                         @Culture["Initiative.WeekLimit.SendMonday"]
                     </button>
+                }
+                else
+                {
+                    <button type="button" class="btn--primary" @onclick="Close">@Culture["Common.Close"]</button>
                 }
             </footer>
         </div>

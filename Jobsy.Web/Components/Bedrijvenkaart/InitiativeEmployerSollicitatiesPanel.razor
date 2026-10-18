@@ -106,8 +106,8 @@
                             }
                             else
                             {
-                                <button type="button" class="btn--secondary" @onclick="() => OpenDecline(_selected)">Nu niet</button>
-                                <button type="button" class="btn--primary" @onclick="() => OpenAccept(_selected)">Accepteren · 1 token</button>
+                                <button type="button" class="btn--secondary bk-wg-btn" @onclick="() => OpenDecline(_selected)">@Culture["Initiative.Employer.Decline"]</button>
+                                <button type="button" class="btn--primary bk-wg-btn" @onclick="() => OpenAccept(_selected)">@Culture.Format("Initiative.Employer.AcceptWithToken", 1)</button>
                             }
                         </div>
                     </footer>
@@ -209,7 +209,14 @@
     private string AgeLabel(EmployerInitiativeInboxItemDto item)
     {
         var days = (int)(DateTime.UtcNow - item.CreatedAtUtc).TotalDays;
-        return days <= 0 ? "Nieuw · vandaag" : $"Nieuw · {days} dagen geleden";
+        if (days <= 0)
+        {
+            return Culture["Initiative.Inbox.NewToday"];
+        }
+
+        return days == 1
+            ? Culture.Format("Initiative.Inbox.NewOneDayAgo", 1)
+            : Culture.Format("Initiative.Inbox.NewDaysAgo", days);
     }
 
     private static string HoursLabel(EmployerInitiativeInboxItemDto item)

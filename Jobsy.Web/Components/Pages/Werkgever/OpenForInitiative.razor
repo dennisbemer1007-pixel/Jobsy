@@ -18,51 +18,89 @@
 <WgPageShell Title="@Culture["WgNav.OpenForInitiative"]">
     @if (_loading)
     {
-        <p>@Culture["Common.Loading"]</p>
+        <p class="bk-wg-muted">@Culture["Common.Loading"]</p>
     }
     else
     {
         <div class="bk-wg-page">
-            <div class="bk-wg-switch">
-                <div>
-                    <strong>Open voor initiatief</strong>
-                    <p class="login-lead">Kandidaten kunnen zonder vacature kloppen. Je reageert binnen 5 werkdagen.</p>
+            <article class="bk-wg-card">
+                <div class="bk-wg-switch">
+                    <div class="bk-wg-switch__copy">
+                        <h2 class="bk-wg-card__title">@Culture["WgNav.OpenForInitiative"]</h2>
+                        <p class="bk-wg-card__lead">@Culture["Initiative.Settings.Lead"]</p>
+                    </div>
+                    <label class="bk-wg-toggle">
+                        <span class="bk-wg-toggle__label visually-hidden">@Culture["WgNav.OpenForInitiative"]</span>
+                        <input type="checkbox" class="bk-wg-toggle__input" @bind="_editor.IsEnabled" />
+                        <span class="bk-wg-toggle__track" aria-hidden="true"></span>
+                    </label>
                 </div>
-                <input type="checkbox" @bind="_editor.IsEnabled" aria-label="Hoofdschakelaar" />
-            </div>
+            </article>
 
-            <section class="pub-card" style="margin-top:1rem;padding:1rem">
-                <h2>Algemene ingang</h2>
-                <label>E-mailadres contactpersoon
-                    <input type="email" @bind="_editor.ContactEmail" class="form-control" required />
-                </label>
-                @if (!_editor.ContactEmailConfirmed)
-                {
-                    <p class="state-message">Bevestig dit adres via de mail.</p>
-                }
-                <label>Max per week
-                    <input type="number" min="1" max="50" @bind="_editor.MaxPerWeek" />
-                </label>
-            </section>
-
-            <section style="margin-top:1.5rem">
-                <h2>Teams</h2>
-                @foreach (var team in _editor.Teams)
-                {
-                    <article class="pub-card" style="margin:.75rem 0;padding:1rem">
-                        <h3>@team.Name</h3>
-                        <p>@team.Description</p>
-                        <label>Open <input type="checkbox" @bind="team.IsOpen" disabled="@(!team.EmailConfirmed)" /></label>
-                        @if (!team.EmailConfirmed)
+            <article class="bk-wg-card">
+                <h2 class="bk-wg-card__title">@Culture["Initiative.Settings.GeneralEntry"]</h2>
+                <div class="bk-wg-form">
+                    <div class="bk-wg-field">
+                        <label class="bk-wg-label" for="init-contact-email">@Culture["Initiative.Settings.ContactEmail"]</label>
+                        <input id="init-contact-email" type="email" class="bk-wg-input" @bind="_editor.ContactEmail" required />
+                        @if (!_editor.ContactEmailConfirmed)
                         {
-                            <p class="state-message error">Bevestig het team-e-mailadres voordat je dit team opent.</p>
+                            <p class="bk-wg-hint">@Culture["Initiative.Settings.ContactEmailHint"]</p>
                         }
-                    </article>
+                    </div>
+                    <div class="bk-wg-field bk-wg-field--narrow">
+                        <label class="bk-wg-label" for="init-max-week">@Culture["Initiative.Settings.MaxPerWeek"]</label>
+                        <input id="init-max-week" type="number" min="1" max="50" class="bk-wg-input" @bind="_editor.MaxPerWeek" />
+                    </div>
+                </div>
+            </article>
+
+            <section class="bk-wg-teams">
+                <div class="bk-wg-teams__head">
+                    <h2 class="bk-wg-card__title">@Culture["Initiative.Settings.Teams"]</h2>
+                    <button type="button" class="btn--secondary bk-wg-btn" @onclick="() => _teamDialogOpen = true">
+                        @Culture["Initiative.Settings.TeamAdd"]
+                    </button>
+                </div>
+                @if (_editor.Teams.Count == 0)
+                {
+                    <p class="bk-wg-muted">@Culture["Initiative.Settings.TeamsEmpty"]</p>
                 }
-                <button type="button" class="btn--primary" @onclick="() => _teamDialogOpen = true">Team toevoegen</button>
+                else
+                {
+                    <div class="bk-wg-teams__list">
+                        @foreach (var team in _editor.Teams)
+                        {
+                            <article class="bk-wg-team-card">
+                                <div class="bk-wg-team-card__main">
+                                    <h3 class="bk-wg-team-card__name">@team.Name</h3>
+                                    @if (!string.IsNullOrWhiteSpace(team.Description))
+                                    {
+                                        <p class="bk-wg-team-card__desc">@team.Description</p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(team.ContactEmail))
+                                    {
+                                        <p class="bk-wg-team-card__email">@team.ContactEmail</p>
+                                    }
+                                </div>
+                                <label class="bk-wg-toggle bk-wg-toggle--compact">
+                                    <span class="bk-wg-toggle__label">@Culture["Initiative.Settings.TeamOpen"]</span>
+                                    <input type="checkbox" class="bk-wg-toggle__input" @bind="team.IsOpen" disabled="@(!team.EmailConfirmed)" />
+                                    <span class="bk-wg-toggle__track" aria-hidden="true"></span>
+                                </label>
+                                @if (!team.EmailConfirmed)
+                                {
+                                    <p class="bk-wg-hint bk-wg-hint--warn">@Culture["Initiative.Settings.TeamEmailConfirm"]</p>
+                                }
+                            </article>
+                        }
+                    </div>
+                }
             </section>
 
-            <button type="button" class="btn--primary" style="margin-top:1.5rem" @onclick="Save">Opslaan</button>
+            <div class="bk-wg-page__actions">
+                <button type="button" class="btn--primary bk-wg-btn" @onclick="Save">@Culture["Initiative.Settings.Save"]</button>
+            </div>
         </div>
     }
 

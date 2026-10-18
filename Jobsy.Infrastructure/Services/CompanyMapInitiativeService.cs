@@ -350,10 +350,9 @@ public sealed class CompanyMapInitiativeService : ICompanyMapInitiativeService
         return rows.Select(i =>
         {
             var pii = InitiativeVisibilityRules.EmployerMaySeePii(i.Status);
-            var idShort = i.CandidateUserId.ToString("N")[..8];
             return new EmployerInitiativeInboxItemDto(
                 i.Id,
-                $"Kandidaat #{idShort}",
+                InitiativeCandidateDisplay.EmployerListLabel(i.CandidateUserId),
                 i.SnapshotRoleTitle,
                 i.SnapshotRegionLabel,
                 i.SnapshotAvailabilitySummary,

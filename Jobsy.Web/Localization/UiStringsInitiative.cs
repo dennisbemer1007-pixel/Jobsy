@@ -85,6 +85,27 @@ public static class UiStringsInitiative
         Add("Bk.Apps.SourceVacancy", "Vacature", "Vacancy");
         Add("Initiative.Employer.OpenLabel", "OPEN", "OPEN");
         Add("Initiative.Employer.Accept", "Accepteren", "Accept");
+        Add("Initiative.Employer.AcceptWithToken", "Accepteren · {0} token", "Accept · {0} token");
         Add("Initiative.Employer.Decline", "Nu niet", "Not now");
+        Add("Initiative.Settings.TeamsEmpty", "Nog geen teams toegevoegd.", "No teams added yet.");
+        Add("Initiative.Settings.Lead", "Kandidaten kunnen zonder vacature kloppen. Je reageert binnen 5 werkdagen.", "Candidates can reach out without a vacancy. You respond within 5 business days.");
+        Add("Initiative.Settings.GeneralEntry", "Algemene ingang", "General entry");
+        Add("Initiative.Settings.ContactEmail", "E-mailadres contactpersoon", "Contact person email");
+        Add("Initiative.Settings.ContactEmailHint", "Bevestig dit adres via de mail.", "Confirm this address via email.");
+        Add("Initiative.Settings.MaxPerWeek", "Max per week", "Max per week");
+        Add("Initiative.Settings.Teams", "Teams", "Teams");
+        Add("Initiative.Settings.TeamAdd", "Team toevoegen", "Add team");
+        Add("Initiative.Settings.Save", "Opslaan", "Save");
+        Add("Initiative.Settings.TeamOpen", "Open voor initiatief", "Open for initiative");
+        Add("Initiative.Settings.TeamEmailConfirm", "Bevestig het team-e-mailadres voordat je dit team opent.", "Confirm the team email before opening this team.");
+        Add("Initiative.TeamAdd.Title", "Team toevoegen", "Add team");
+        Add("Initiative.TeamAdd.Name", "Naam", "Name");
+        Add("Initiative.TeamAdd.Description", "Omschrijving (max 140)", "Description (max 140)");
+        Add("Initiative.TeamAdd.Email", "E-mail contactpersoon", "Contact email");
+        Add("Initiative.EmailMissing.Title", "E-mailadres ontbreekt", "Email address missing");
+        Add("Initiative.EmailMissing.Body", "Vul een geldig e-mailadres in voordat je dit team opent voor initiatief.", "Enter a valid email before opening this team for initiative.");
+        Add("Initiative.Inbox.NewToday", "Nieuw · vandaag", "New · today");
+        Add("Initiative.Inbox.NewOneDayAgo", "Nieuw · {0} dag geleden", "New · {0} day ago");
+        Add("Initiative.Inbox.NewDaysAgo", "Nieuw · {0} dagen geleden", "New · {0} days ago");
     }
 }
