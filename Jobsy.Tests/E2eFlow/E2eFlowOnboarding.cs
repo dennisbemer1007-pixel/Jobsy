@@ -301,7 +301,6 @@ internal static class E2eFlowOnboarding
                  {
                      ".ob-wizard__education-grid button:not(.is-selected)",
                      ".ob-wizard__mbo-levels button:not(.is-selected)",
-                     ".ob-wizard__direction-chips button:not(.is-selected)",
                      ".ob-wizard__dream-grid button:not(.is-selected)"
                  })
         {
@@ -310,6 +309,12 @@ internal static class E2eFlowOnboarding
             {
                 await pick.ClickAsync(new() { Timeout = 5_000 });
             }
+        }
+
+        var direction = page.Locator("#onboarding-education-direction").First;
+        if (await direction.CountAsync() > 0 && string.IsNullOrWhiteSpace(await direction.InputValueAsync()))
+        {
+            await direction.FillAsync("Techniek");
         }
 
         var dreamSearch = page.Locator(".ob-wizard__dream-search input").First;

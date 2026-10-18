@@ -48,30 +48,14 @@
 @if (ShowDirectionBlock)
 {
     <section class="ob-wizard__section" aria-labelledby="ob-edu-direction">
-        <h2 id="ob-edu-direction" class="ob-wizard__section-title">@Culture["Onboarding.EducationDirection"]</h2>
-        <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.EducationDirectionHint"]</p>
-        @if (DirectionSuggestions.Count > 0)
-        {
-            <ChoiceTileGrid Class="ob-wizard__direction-chips" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.EducationDirection"]">
-                @foreach (var suggestion in DirectionSuggestions)
-                {
-                    var picked = string.Equals(Draft.EducationDirection, suggestion, StringComparison.OrdinalIgnoreCase);
-                    <ChoiceTile Label="@suggestion"
-                                Selected="picked"
-                                AlignIcons="false"
-                                Inline="true"
-                                OnClick="@(() => PickDirection(suggestion))" />
-                }
-            </ChoiceTileGrid>
-        }
-        <label>
-            @Culture["Onboarding.EducationDirectionField"]
-            <input maxlength="128"
-                   placeholder="@Culture["Onboarding.EducationDirectionPlaceholder"]"
-                   @bind="Draft.EducationDirection"
-                   @bind:event="oninput"
-                   @bind:after="NotifyAsync" />
+        <label id="ob-edu-direction" class="ob-wizard__direction-label">
+            @Culture["Onboarding.EducationDirection"]
+            <EducationDirectionInput InputId="onboarding-education-direction"
+                                     Placeholder="@Culture["Onboarding.EducationDirectionPlaceholder"]"
+                                     @bind-Value="Draft.EducationDirection"
+                                     AfterChanged="NotifyAsync" />
         </label>
+        <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.EducationDirectionHint"]</p>
     </section>
 }
 </div>
@@ -83,28 +67,7 @@
 
     private static readonly string[] MboLevels = ["1", "2", "3", "4"];
 
-    private bool ShowDirectionBlock =>
-        !string.IsNullOrWhiteSpace(Draft.Education)
-        && !string.Equals(Draft.Education, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase);
-
-    private IReadOnlyList<string> DirectionSuggestions
-    {
-        get
-        {
-            var level = Draft.Education ?? "";
-            if (level is "HAVO" or "VWO")
-            {
-                return OnboardingWizardCatalog.EducationDirectionHavoVwo;
-            }
-
-            if (level is "VMBO" || level.StartsWith("MBO", StringComparison.Ordinal))
-            {
-                return OnboardingWizardCatalog.EducationDirectionVmboMbo;
-            }
-
-            return Array.Empty<string>();
-        }
-    }
+    private bool ShowDirectionBlock => EducationDirectionCatalog.SupportsDirection(Draft.Education);
 
     private bool EducationSelected(string level)
         => Draft.Education == level || level == "MBO" && Draft.Education.StartsWith("MBO", StringComparison.Ordinal);
@@ -115,12 +78,6 @@
     private static string MboEducation(string level) => $"MBO {level}";
 
     private bool MboLevelSelected(string level) => Draft.Education == MboEducation(level);
-
-    private Task PickDirection(string direction)
-    {
-        Draft.EducationDirection = direction;
-        return NotifyAsync();
-    }
 
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
 }

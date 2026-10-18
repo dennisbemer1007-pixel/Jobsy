@@ -3,6 +3,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@using Jobsy.Core.Features
 @using Microsoft.AspNetCore.Components.Authorization
 @inherits CultureAwareComponentBase
 @inject NavigationManager Navigation
@@ -10,6 +11,7 @@
 @inject IJSRuntime Js
 @inject JobsyApiClient Api
 @inject AuthenticationStateProvider AuthState
+@inject IFeatureFlags FeatureFlags
 
 <div class="auth-header">
     <AuthorizeView>
@@ -47,7 +49,14 @@
                         }
                         @if (RoleClaimMatching.HasRole(context.User, JobsyRoles.Candidate))
                         {
+                            <a class="account-menu__link" href="@_candidateProfileHref" role="menuitem">@Culture["Nav.Profile"]</a>
                             <a class="account-menu__link" href="/candidate/settings" role="menuitem">@Culture["CandidateSettings.Title"]</a>
+                            <a class="account-menu__link account-menu__link--danger"
+                               href="/privacy/data"
+                               role="menuitem"
+                               data-testid="candidate-delete-account-menu">
+                                @Culture["Unsubscribe.Title"]
+                            </a>
                             <a class="account-menu__link" href="/candidate/privacy" role="menuitem">@Culture["CandidatePrivacy.Title"]</a>
                         }
                         <button type="button"
@@ -99,6 +108,7 @@
     private bool _installChecked;
     private bool _isCandidate;
     private string? _profileName;
+    private string _candidateProfileHref = RoleNavCatalog.ProfileItem.Href;
 
     protected override void OnInitialized()
     {
@@ -111,6 +121,17 @@
     {
         await base.OnInitializedAsync();
         await RefreshProfileNameAsync();
+        try
+        {
+            var flags = await FeatureFlags.GetAsync();
+            _candidateProfileHref = flags.CandidatePassportEnabled
+                ? RoleNavCatalog.PassportItem.Href
+                : RoleNavCatalog.ProfileItem.Href;
+        }
+        catch
+        {
+            _candidateProfileHref = RoleNavCatalog.PassportItem.Href;
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)

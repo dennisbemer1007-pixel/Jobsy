@@ -222,6 +222,72 @@ a {
     min-width: 0;
 }
 
+.candidate-header-nav {
+    display: none;
+}
+
+.candidate-header-nav__link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.55rem;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: color-mix(in srgb, var(--brand) 72%, var(--muted));
+    text-decoration: none;
+    white-space: nowrap;
+    line-height: 1.2;
+    border: 1px solid transparent;
+}
+
+.candidate-header-nav__link:hover,
+.candidate-header-nav__link:focus-visible {
+    color: var(--brand-deep);
+    background: color-mix(in srgb, var(--brand) 6%, var(--pearl-shine));
+}
+
+.candidate-header-nav__link.is-active {
+    color: var(--brand-deep);
+    background: color-mix(in srgb, var(--brand) 10%, var(--pearl-shine));
+    border-color: color-mix(in srgb, var(--brand) 18%, var(--border));
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
+}
+
+@media (min-width: 1024px) {
+    /* Show nav when AuthorizeView renders CandidateHeaderNav, even if app-shell--candidate lags auth refresh. */
+    .app-header:has(.candidate-header-nav) {
+        display: grid;
+        grid-template-columns: minmax(0, auto) minmax(0, 1fr) minmax(0, auto);
+        align-items: center;
+        column-gap: 0.75rem;
+    }
+
+    .app-header:has(.candidate-header-nav) .app-header__brand {
+        grid-column: 1;
+        max-width: 11rem;
+    }
+
+    .app-header:has(.candidate-header-nav) .brand-tagline {
+        display: none;
+    }
+
+    .app-header:has(.candidate-header-nav) .candidate-header-nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0.2rem 0.15rem;
+        grid-column: 2;
+        min-width: 0;
+        padding: 0 0.25rem;
+    }
+
+    .app-header:has(.candidate-header-nav) .app-header__actions {
+        grid-column: 3;
+        justify-self: end;
+    }
+}
+
 .auth-header {
     display: flex;
     align-items: center;
@@ -5264,9 +5330,59 @@ a.map-popup__apply.map-popup__cta:visited {
         display: none;
     }
 
-    .app-shell:has(.jobsy-discovery) .app-header,
-    .app-shell:has(.jobsy-discovery) .app-footer {
+    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-header,
+    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-footer {
         display: none;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-chrome__header {
+        display: none !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-chrome {
+        min-height: 0;
+        border-bottom: none;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-list .map-pane {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-list .kb-map-fab {
+        display: none !important;
+    }
+
+    .app-shell--banenkaart-shell .lobsy-coach-dock,
+    .app-shell--banenkaart-shell .lobsy-coach-cta {
+        display: none !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .map-pane {
+        display: flex !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+    }
+
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .job-map .maplibregl-ctrl-top-right,
+    .app-shell--banenkaart-shell .jobsy-discovery.show-map .job-map .maplibregl-ctrl-bottom-right {
+        position: absolute;
+        right: 8px !important;
+        left: auto !important;
+        z-index: 6;
+    }
+
+    .app-shell--banenkaart-shell .kb-filter-bar__count-block {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 52%;
     }
 
     .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main {

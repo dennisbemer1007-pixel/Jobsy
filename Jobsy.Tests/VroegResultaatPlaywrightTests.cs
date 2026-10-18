@@ -59,8 +59,8 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page);
         await FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
-        await ClickNextAsync(page);
+        await page.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
+        Assert.Equal(0, await page.Locator("[data-testid=early-reward-nearby]").CountAsync());
         await NavigateToTestConsentWithoutStartingAsync(page);
         await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
         await page.WaitForTimeoutAsync(1500);
@@ -154,15 +154,14 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page);
         await FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
-        await AssertEarlyScreenChromeAsync(page);
+        await page.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
+        Assert.Equal(0, await page.Locator("[data-testid=early-reward-nearby]").CountAsync());
 
         if (capture)
         {
             await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-mobile-390.png") });
         }
 
-        await ClickNextAsync(page);
         await SkipOptionalStepsToConsentAsync(page);
         await FinishCompetencyMiniAsync(page);
         await page.Locator("[data-testid=early-reward-insight]").WaitForAsync(new() { Timeout = 90_000 });
@@ -190,7 +189,6 @@ public sealed class VroegResultaatPlaywrightTests
             await RegisterFreshCandidateAsync(bPage2x, baseUrl);
             await EnsureWizardStartedAsync(bPage2x);
             await FillStepsThroughTransportAsync(bPage2x, maxTravelMinutes: 30);
-            await ClickNextAsync(bPage2x);
             await ClickNextAsync(bPage2x);
             await SkipOptionalStepsToConsentAsync(bPage2x);
             await FinishCompetencyMiniAsync(bPage2x);
@@ -232,7 +230,7 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page);
         await FillStepsThroughTransportAsync(page, maxTravelMinutes: 5, postcode: "8899EH");
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
         await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-zero-mobile-390@2x.png") });
     }
 
@@ -258,10 +256,10 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page2x);
         await FillStepsThroughTransportAsync(page2x, maxTravelMinutes: 30);
         await ClickNextAsync(page2x);
-        await page2x.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
-        await page2x.Locator(".ob-vroeg__count").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await page2x.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
+        await page2x.Locator(".ob-nearby-panel__count, .ob-nearby-panel__mobile-text").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await page2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-mobile-390@2x.png") });
-        await ClickNextAsync(page2x);
         await NavigateToTestConsentWithoutStartingAsync(page2x);
         await page2x.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
         await page2x.WaitForTimeoutAsync(800);
@@ -483,7 +481,7 @@ combo.save(out)
         public double ScrollTop { get; set; }
     }
 
-    private static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl)
+    internal static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl)
     {
         var email = $"vroeg.{Guid.NewGuid():N}@jobsy.local";
         await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
@@ -497,20 +495,45 @@ combo.save(out)
         await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
 
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await KbE2e.WaitForStyledAppAsync(page);
+        await WaitForOnboardingCircuitReadyAsync(page);
     }
 
-    private static async Task EnsureWizardStartedAsync(IPage page)
+    internal static async Task EnsureWizardStartedAsync(IPage page)
     {
         await WaitForWizardShellAsync(page);
+        await WaitForOnboardingCircuitReadyAsync(page);
 
         if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
         {
             await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-            await page.GetByRole(AriaRole.Button, new() { Name = "Beginnen" }).ClickAsync(new() { Force = true });
-            await page.WaitForTimeoutAsync(500);
+            var start = page.Locator("button.ob-wizard__cta.btn-primary").First;
+            if (await start.CountAsync() == 0)
+            {
+                start = page.GetByRole(AriaRole.Button, new() { Name = "Beginnen" });
+            }
+
+            await start.ClickAsync(new() { Force = true, Timeout = 30_000 });
+            await page.WaitForTimeoutAsync(600);
         }
 
-        await page.Locator(".ob-fields input").First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.Locator("#onboarding-field-firstname input, .ob-fields input").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+    }
+
+    private static async Task WaitForOnboardingCircuitReadyAsync(IPage page)
+    {
+        var hasBlazor = await page.EvaluateAsync<bool>(
+            "() => !!document.querySelector('script[src*=\"blazor.web.js\"]')");
+        if (!hasBlazor)
+        {
+            return;
+        }
+
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
     }
 
     private static async Task WaitForWizardShellAsync(IPage page)
@@ -541,26 +564,15 @@ combo.save(out)
         }
     }
 
-    private static async Task FillStepsThroughTransportAsync(
+    internal static async Task FillStepsThroughTransportAsync(
         IPage page,
         int maxTravelMinutes,
         string postcode = "2671GB")
     {
         await page.Locator(".ob-fields input").First.FillAsync("Vroeg");
         await page.Locator(".ob-fields input").Nth(1).FillAsync("Test");
-        await page.Locator("#onboarding-home-address, .ob-fields input[inputmode=text]").First.FillAsync(postcode);
-        await page.WaitForTimeoutAsync(500);
-        var suggestion = page.Locator(".ob-wizard__suggestions button, .kb-address__suggest button").First;
-        if (await suggestion.CountAsync() > 0)
-        {
-            await suggestion.ClickAsync(new() { Timeout = 8_000 });
-        }
-
-        var birth = page.Locator("[data-testid=onboarding-birth-date] input[type=date]").First;
-        if (await birth.CountAsync() > 0)
-        {
-            await birth.FillAsync("2000-06-15");
-        }
+        await ResolveOnboardingHomeAddressAsync(page, postcode);
+        await FillOnboardingBirthDateIfPresentAsync(page);
 
         await ClickNextAsync(page);
         await page.Locator(".ob-wizard__presets button").First.ClickAsync();
@@ -574,6 +586,65 @@ combo.save(out)
         }
 
         await travel.First.ClickAsync();
+    }
+
+    internal static async Task ResolveOnboardingHomeAddressAsync(IPage page, string postcode = "2671GB")
+    {
+        var address = page.Locator("#onboarding-home-address, .ob-fields input[inputmode=text], .ob-fields input[autocomplete=postal-code]").First;
+        await address.ClickAsync();
+        await address.FillAsync("");
+        await address.PressSequentiallyAsync(postcode, new() { Delay = 40 });
+        await page.WaitForTimeoutAsync(1200);
+
+        var suggestion = page.Locator("button.address-suggestions__item, .address-suggestions__item").First;
+        var resolved = false;
+        for (var attempt = 0; attempt < 45 && !resolved; attempt++)
+        {
+            if (await suggestion.CountAsync() > 0)
+            {
+                await suggestion.ClickAsync(new() { Timeout = 15_000 });
+                resolved = true;
+                break;
+            }
+
+            var hintOk = await page.EvaluateAsync<bool>(
+                "() => { const hint = document.querySelector('.ob-fields .ob-wizard__hint'); return !!(hint?.textContent?.includes('✓')); }");
+            if (hintOk)
+            {
+                resolved = true;
+                break;
+            }
+
+            if (await page.Locator("[data-testid=onboarding-nearby-panel-desktop], [data-testid=onboarding-nearby-panel-mobile]").CountAsync() > 0)
+            {
+                resolved = true;
+                break;
+            }
+
+            if (attempt == 5)
+            {
+                var spaced = postcode.Replace(" ", "", StringComparison.Ordinal);
+                if (spaced.Length == 6)
+                {
+                    await address.PressSequentiallyAsync($"{spaced[..4]} {spaced[4..]}", new() { Delay = 40 });
+                }
+            }
+
+            await page.WaitForTimeoutAsync(1000);
+        }
+
+        Assert.True(resolved, "Expected home address to resolve via suggestion or postcode lookup.");
+        await page.WaitForTimeoutAsync(1200);
+    }
+
+    internal static async Task FillOnboardingBirthDateIfPresentAsync(IPage page)
+    {
+        var birth = page.Locator("[data-testid=onboarding-birth-date] input[type=date]").First;
+        if (await birth.CountAsync() > 0)
+        {
+            await birth.FillAsync("2000-06-15");
+            await birth.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))");
+        }
     }
 
     private static async Task NavigateToTestConsentWithoutStartingAsync(IPage page)
@@ -685,7 +756,7 @@ combo.save(out)
         }
     }
 
-    private static async Task ClickNextAsync(IPage page)
+    internal static async Task ClickNextAsync(IPage page)
     {
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
         await page.Locator("[data-testid=onboarding-next]").ClickAsync(new() { Force = true, Timeout = 20_000 });

@@ -88,7 +88,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.EducationPickLevel"] = english ? "School level" : "Kies je opleidingsniveau";
         map["Onboarding.EducationMboLegend"] = english ? "Which MBO level?" : "Welk MBO-niveau?";
         map["Onboarding.EducationMboLevel"] = english ? "MBO {0}" : "MBO {0}";
-        map["Onboarding.EducationDirectionHint"] = english ? "Optional. Tap a topic or type your own." : "Optioneel. Tik op een richting of typ zelf.";
+        map["Onboarding.EducationDirectionHint"] = english
+            ? "Optional. Start typing or pick a suggestion."
+            : "Optioneel. Begin met typen of kies een suggestie.";
         map["Onboarding.EducationDirectionField"] = english ? "Or type yourself" : "Of typ zelf";
         map["Onboarding.Step6.Title"] = english ? "What is your dream job?" : "Wat is je droombaan?";
         map["Onboarding.Step6.Lead"] = english ? "Think big. We make a route towards it in Career." : "Denk groot. We maken er in Carrière een route naartoe.";
@@ -150,6 +152,29 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Consent.More"] = english ? "More explanation" : "Meer uitleg"; map["Onboarding.Consent.MoreText"] = english ? "Your answers are only used for your personal Compass." : "Je antwoorden worden alleen gebruikt voor jouw persoonlijke Kompas.";
         map["Onboarding.Consent.Private"] = english ? "Employers cannot see your answers." : "Werkgevers zien je antwoorden niet.";
         map["Onboarding.Consent.Cta"] = english ? "Start the first test" : "Start de eerste test"; map["Onboarding.Consent.Failed"] = english ? "Consent could not be saved. Please try again." : "Toestemming opslaan lukt niet. Probeer het opnieuw.";
+        map["Onboarding.Journey.Headline"] = english ? "In ±6 minutes you discover what fits you" : "In ±6 minuten ontdek je wat bij je past";
+        map["Onboarding.Journey.Subline"] = english ? "That is how we find jobs that truly match you." : "Zo vinden we banen die écht bij jou passen.";
+        map["Onboarding.Journey.StationsAria"] = english ? "Four short tests on your journey" : "Vier korte tests op je reis";
+        map["Onboarding.Journey.Benefit.Work"] = english ? "Where you are strong" : "Waar je sterk in bent";
+        map["Onboarding.Journey.Benefit.Fun"] = english ? "Which careers energise you" : "Welke beroepen je energie geven";
+        map["Onboarding.Journey.Benefit.Vibe"] = english ? "Where you feel at home" : "Waar je je thuis voelt";
+        map["Onboarding.Journey.Benefit.Values"] = english ? "What matters to you" : "Wat je belangrijk vindt";
+        map["Onboarding.Journey.Now"] = english ? "Now" : "Nu";
+        map["Onboarding.Journey.Status.Done"] = english ? "Completed" : "Voltooid";
+        map["Onboarding.Journey.Status.Current"] = english ? "Current test" : "Huidige test";
+        map["Onboarding.Journey.Status.Upcoming"] = english ? "Upcoming" : "Nog te doen";
+        map["Onboarding.Journey.Duration.One"] = english ? "~1.5 min" : "~1,5 min";
+        map["Onboarding.Journey.CtaStart"] = english ? "Start with test 1" : "Start met test 1";
+        map["Onboarding.Journey.CtaContinue"] = english ? "Continue with test {0}" : "Ga verder met test {0}";
+        map["Onboarding.Journey.Consent.Check"] = english
+            ? "I consent to analysing my answers."
+            : "Ik geef toestemming om mijn antwoorden te analyseren.";
+        map["Onboarding.Journey.Consent.MoreText"] = english
+            ? "Your answers are only used for your personal Compass. Employers cannot see your answers."
+            : "Je antwoorden worden alleen gebruikt voor jouw persoonlijke Kompas. Werkgevers zien je antwoorden niet.";
+        map["Onboarding.Journey.Validation.Consent"] = english
+            ? "Please tick consent to continue."
+            : "Vink toestemming aan om verder te gaan.";
         map["Onboarding.Test.Lead"] = english ? "How well does each sentence fit you?" : "Hoe goed past elke zin bij jou?";
         map["Onboarding.Test.Competency"] = english ? "How you work" : "Hoe je werkt"; map["Onboarding.Test.Competency.Lead"] = english ? "Competencies such as collaborating" : "Bijvoorbeeld samenwerken";
         map["Onboarding.Test.Career"] = english ? "Fun" : "Leuk"; map["Onboarding.Test.Career.Lead"] = english ? "Careers that fit you" : "Beroepen die bij je passen";
@@ -191,6 +216,22 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Early.Nearby.Banenkaart"] = english ? "Open the job map" : "Naar de banenkaart";
         map["Onboarding.Early.Nearby.Cta"] = english ? "Continue profile" : "Verder met profiel";
         map["Onboarding.Early.Nearby.Meta"] = english ? "Step 3 · done" : "Stap 3 · klaar";
+        map["Onboarding.Panel.Nearby.TitleInitial"] = english
+            ? "<span class=\"ob-nearby-panel__count\">{0}</span> jobs near you"
+            : "<span class=\"ob-nearby-panel__count\">{0}</span> banen bij jou in de buurt";
+        map["Onboarding.Panel.Nearby.TitleRefined"] = english
+            ? "Now <span class=\"ob-nearby-panel__count\">{0}</span> jobs that really fit you"
+            : "Nu <span class=\"ob-nearby-panel__count\">{0}</span> banen die echt bij je passen";
+        map["Onboarding.Panel.Nearby.TitleZero"] = english
+            ? "We are counting jobs near you"
+            : "We tellen banen bij jou in de buurt";
+        map["Onboarding.Panel.Nearby.MobileLine"] = english
+            ? "{0} matching jobs nearby"
+            : "{0} passende banen in de buurt";
+        map["Onboarding.Panel.Nearby.MobileInitial"] = english ? "{0} jobs nearby" : "{0} banen in de buurt";
+        map["Onboarding.Panel.Nearby.MobileRefined"] = english ? "Now {0} fitting jobs nearby" : "Nu {0} passende banen in de buurt";
+        map["Onboarding.Panel.Nearby.MobileZero"] = english ? "Jobs nearby" : "Banen in de buurt";
+        map["Onboarding.Panel.Nearby.RailAria"] = english ? "Jobs near you (informational)" : "Banen in de buurt (ter info)";
         map["Onboarding.Early.Insight.Badge"] = english ? "First insight" : "Eerste inzicht";
         map["Onboarding.Early.Insight.Title"] = english ? "Your strongest point so far" : "Je sterkste punt tot nu toe";
         map["Onboarding.Early.Insight.Lead"] = english ? "Based on your first short test. It gets sharper after the next three." : "Op basis van je eerste korte test. Het wordt scherper na de volgende drie.";
