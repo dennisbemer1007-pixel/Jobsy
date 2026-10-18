@@ -2,7 +2,16 @@ using System.Net;
 using System.Net.Http;
 using Microsoft.Playwright;
 
-const string outputDir = "/opt/cursor/artifacts/testblokken-r3";
+var outputDir = Environment.GetEnvironmentVariable("JOBSY_CAPTURE_OUT")?.Trim();
+if (string.IsNullOrEmpty(outputDir))
+{
+    outputDir = "/opt/cursor/artifacts/testblokken-r3";
+}
+
+var mobileOnly = string.Equals(
+    Environment.GetEnvironmentVariable("JOBSY_CAPTURE_MOBILE_ONLY"),
+    "1",
+    StringComparison.Ordinal);
 const string baseUrl = "http://localhost:5201";
 const string consentInit = """
     try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
@@ -66,7 +75,10 @@ foreach (var (stem, returnPath, captureTarget) in targets)
         })
         .ToArray();
 
-    foreach (var (width, height, tag) in new (int, int, string)[] { (1440, 900, "1440"), (390, 844, "390") })
+    var viewports = mobileOnly
+        ? new (int, int, string)[] { (390, 844, "390") }
+        : new (int, int, string)[] { (1440, 900, "1440"), (390, 844, "390") };
+    foreach (var (width, height, tag) in viewports)
     {
         await using var context = await browser.NewContextAsync(new()
         {

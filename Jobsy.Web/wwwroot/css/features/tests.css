@@ -566,6 +566,10 @@
   padding-block-end: 0;
 }
 
+.test-block-stage__mobile-hero {
+  display: contents;
+}
+
 .test-block-stage__mobile-band {
   display: none;
 }
@@ -601,17 +605,70 @@
     background: var(--test-block-tint);
   }
 
-  .test-block-stage__mobile-band {
+  .test-block-stage__mobile-hero {
     display: block;
-    block-size: var(--test-block-band-height);
-    margin-block: 0.75rem 0.35rem;
+    position: relative;
+    box-sizing: border-box;
+    max-block-size: 12.5rem;
+    min-block-size: 8.75rem;
+    margin-block: 0 0.75rem;
     border-radius: var(--radius-md, 8px);
+    overflow: hidden;
+    isolation: isolate;
     background-color: var(--test-block-tint);
     background-image: var(--test-block-band-image);
     background-repeat: no-repeat;
     background-size: cover;
-    background-position: center bottom;
+    background-position: 78% 94%;
+  }
+
+  .test-block-stage__mobile-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--surface) 94%, var(--pearl)) 0%,
+      color-mix(in srgb, var(--surface) 62%, transparent) 40%,
+      transparent 62%
+    );
     pointer-events: none;
+  }
+
+  .test-block-stage__mobile-hero h1,
+  .test-block-stage__mobile-hero-title {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    padding: 0.8rem 0.9rem;
+    max-inline-size: 56%;
+    font-size: clamp(1.12rem, 4.1vw, 1.42rem);
+    line-height: 1.22;
+    font-weight: 700;
+    color: var(--ink);
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero {
+    background-position: 76% 96%;
+  }
+
+  .test-block-stage--leuk .test-block-stage__mobile-hero {
+    background-position: 84% 96%;
+  }
+
+  .test-block-stage--sfeer .test-block-stage__mobile-hero {
+    background-position: 80% 95%;
+  }
+
+  .test-block-stage--waarden .test-block-stage__mobile-hero {
+    background-position: 78% 94%;
+  }
+
+  .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {
+    margin-inline: 0;
   }
 
   .test-page:has([data-testid="test-block-stage"]) .test-flow:has(.test-flow__footer) {

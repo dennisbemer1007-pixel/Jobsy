@@ -38,7 +38,16 @@
                     {
                         <div class="test-done__shard" aria-hidden="true"></div>
                     }
-                    <h1 tabindex="-1">@H1</h1>
+                    @if (ShowBlockStage && Mode == ShellMode.Question)
+                    {
+                        <div class="test-block-stage__mobile-hero">
+                            <h1 tabindex="-1">@H1</h1>
+                        </div>
+                    }
+                    else
+                    {
+                        <h1 tabindex="-1">@H1</h1>
+                    }
                     @if (!string.IsNullOrWhiteSpace(LeadText))
                     {
                         <p class="test-shell__lead">@LeadText</p>

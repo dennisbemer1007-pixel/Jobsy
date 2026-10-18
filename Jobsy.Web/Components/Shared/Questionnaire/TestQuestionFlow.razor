@@ -22,6 +22,13 @@
 <div class="test-flow @(Compact ? "test-flow--compact" : null) @(Target == TestDepthLevel.Bottom ? "test-flow--deep" : null)" data-test-flow="@Kind">
     @if (question is not null)
     {
+        @if (TestBlockStageActive && Compact && !string.IsNullOrWhiteSpace(QuestionTitle))
+        {
+            <div class="test-block-stage__mobile-hero test-block-stage__mobile-hero--compact">
+                <h2 class="test-block-stage__mobile-hero-title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
+            </div>
+        }
+
         @if (Target != TestDepthLevel.Bottom)
         {
             <div class="test-flow__progress-head" id="@($"tf-counter-{Kind}")">
@@ -94,7 +101,7 @@
         var spokenQuestion = StripIdPrefix(question.Text);
         <div class="test-flow__speak">
             <div class="test-flow__question-head">
-                @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle))
+                @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle) && !TestBlockStageActive)
                 {
                     <h2 class="test-flow__title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
                 }
@@ -114,11 +121,6 @@
         @if (!string.IsNullOrWhiteSpace(question.Example))
         {
             <p class="test-example" data-testid="test-item-example">@question.Example</p>
-        }
-
-        @if (TestBlockStageActive)
-        {
-            <div class="test-block-stage__mobile-band" aria-hidden="true"></div>
         }
 
         <LikertRadioGroup QuestionId="question.Id"

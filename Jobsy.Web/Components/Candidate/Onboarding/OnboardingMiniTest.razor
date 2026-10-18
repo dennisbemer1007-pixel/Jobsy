@@ -23,7 +23,16 @@
 </div>
 @if (!JourneyShell)
 {
-    <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+    @if (Questions.Count > 0)
+    {
+        <div class="test-block-stage__mobile-hero">
+            <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+        </div>
+    }
+    else
+    {
+        <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+    }
     <p class="ob-wizard__lead">@(string.IsNullOrWhiteSpace(LeadKey) ? Culture["Onboarding.Test.Lead"] : Culture[LeadKey])</p>
 }
 @if (Questions.Count == 0)
