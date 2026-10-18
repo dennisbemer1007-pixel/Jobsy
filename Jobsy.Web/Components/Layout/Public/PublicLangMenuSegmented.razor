@@ -1,0 +1,29 @@
+@using Jobsy.Core.Localization
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="pub-lang-seg" role="group" aria-label="@Culture["PublicNav.ChooseLanguage"]">
+    @foreach (var lang in JobsyLanguages.Enabled.Where(l => l.Code is "nl" or "en"))
+    {
+        var href = $"/taal/{lang.Code}?returnUrl={Uri.EscapeDataString(EffectiveReturn)}";
+        <a class="pub-lang-seg__btn @(lang.Code == Culture.Language ? "is-active" : null)"
+           href="@href"
+           hreflang="@lang.Code"
+           lang="@lang.Code"
+           rel="nofollow"
+           aria-current="@(lang.Code == Culture.Language ? "true" : null)">
+            @lang.Code.ToUpperInvariant()
+        </a>
+    }
+</div>
+
+@code {
+    [Parameter] public string? ReturnPath { get; set; }
+
+    private string EffectiveReturn =>
+        string.IsNullOrWhiteSpace(ReturnPath)
+            ? PublicLangMenu.SanitizeReturnPath(Navigation.Uri)
+            : ReturnPath;
+
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+}
