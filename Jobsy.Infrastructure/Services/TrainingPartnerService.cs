@@ -90,10 +90,10 @@ public sealed class TrainingPartnerService : ITrainingPartnerService
 
         return rows
             .Select(o => (Offer: o, Score: ScoreOffer(o, fields, blob, stepTitle)))
-            .Where(x => x.Score > 0)
+            .Where(x => x.Score > 0 && HasWrittenReason(x.Offer))
             .OrderByDescending(x => x.Score)
             .ThenBy(x => x.Offer.SortOrder)
-            .Take(6)
+            .Take(3)
             .Select(x => ToDto(x.Offer, enrollments, english, stepTitle))
             .ToList();
     }
@@ -110,18 +110,19 @@ public sealed class TrainingPartnerService : ITrainingPartnerService
         var dream = await LoadDreamTitleAsync(userId, cancellationToken);
 
         var rows = await ActiveOffersAsync(cancellationToken);
-        rows = ApplyFilters(rows, query).ToList();
+        rows = ApplyFilters(rows, query).Where(HasWrittenReason).ToList();
 
         var nextStepTitle = dream.Contains("dieren", StringComparison.OrdinalIgnoreCase)
             ? "Mbo 4 Dierenartsassistent paraveterinair"
             : dream;
 
         var dtos = rows.Select(o => ToDto(o, enrollments, english, nextStepTitle)).ToList();
+        var visible = dtos.Where(o => o.Section != TrainingOfferSection.General).ToList();
         return new TrainingLearnGrowPageDto(
-            dtos.Where(o => o.Section == TrainingOfferSection.NextStep).ToList(),
-            dtos.Where(o => o.Section == TrainingOfferSection.Growth).ToList(),
-            dtos.Where(o => o.Section == TrainingOfferSection.General).ToList(),
-            dtos.Count,
+            visible.Where(o => o.Section == TrainingOfferSection.NextStep).ToList(),
+            visible.Where(o => o.Section == TrainingOfferSection.Growth).ToList(),
+            [],
+            visible.Count,
             nextStepTitle,
             GrowthSubtitle(scores));
     }
@@ -159,8 +160,9 @@ public sealed class TrainingPartnerService : ITrainingPartnerService
             if (showOffers)
             {
                 matched = offers
-                    .Where(o => TrainingMatchRules.SplitCsv(o.CompetenciesCsv)
-                        .Any(c => c.Equals(category, StringComparison.OrdinalIgnoreCase)))
+                    .Where(o => HasWrittenReason(o)
+                                && TrainingMatchRules.SplitCsv(o.CompetenciesCsv)
+                                    .Any(c => c.Equals(category, StringComparison.OrdinalIgnoreCase)))
                     .Take(3)
                     .Select(o => ToDto(o, enrollments, english, dream))
                     .ToList();
@@ -463,6 +465,9 @@ public sealed class TrainingPartnerService : ITrainingPartnerService
             .Where(e => e.UserId == userId)
             .ToDictionaryAsync(e => e.OfferId, ct);
 
+    private static bool HasWrittenReason(TrainingOffer offer)
+        => !string.IsNullOrWhiteSpace(offer.ReasonNl) || !string.IsNullOrWhiteSpace(offer.ReasonEn);
+
     private static TrainingPartnerOfferDto ToDto(
         TrainingOffer offer,
         IReadOnlyDictionary<Guid, TrainingEnrollment> enrollments,
@@ -475,12 +480,12 @@ public sealed class TrainingPartnerService : ITrainingPartnerService
             english,
             offer.ReasonNl,
             offer.ReasonEn,
-            "Past bij jouw route.",
-            "Fits your route.");
+            "",
+            "");
 
         return new TrainingPartnerOfferDto(
             offer.Id,
-            offer.Title,
+            CleanDisplayTitle(offer.Title),
             offer.Provider.Name,
             offer.Type.ToString(),
             offer.DurationValue,
@@ -495,6 +500,20 @@ public sealed class TrainingPartnerService : ITrainingPartnerService
             offer.Section,
             bullets,
             offer.StartsOn);
+    }
+
+    private static string CleanDisplayTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return title;
+        }
+
+        return title
+            .Replace(" — ", " · ", StringComparison.Ordinal)
+            .Replace("—", "", StringComparison.Ordinal)
+            .Replace("  ", " ", StringComparison.Ordinal)
+            .Trim();
     }
 
     private static IReadOnlyList<string> ParseBullets(string? json)

@@ -156,10 +156,15 @@ else
         if (offer.DurationValue is int dv
             && Enum.TryParse<TrainingDurationUnit>(offer.DurationUnit, true, out var unit))
         {
-            var unitKey = TrainingDurationFormat.UnitKey(unit);
-            if (unitKey is not null)
+            var duration = unit switch
             {
-                parts.Insert(0, Culture.Format(unitKey, dv));
+                TrainingDurationUnit.Days when dv == 1 => Culture["Training.Duration.OneDay"],
+                TrainingDurationUnit.Weeks when dv == 1 => Culture["Training.Duration.OneWeek"],
+                _ => TrainingDurationFormat.UnitKey(unit) is { } unitKey ? Culture.Format(unitKey, dv) : null
+            };
+            if (!string.IsNullOrWhiteSpace(duration))
+            {
+                parts.Insert(0, duration);
             }
         }
 

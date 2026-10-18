@@ -118,6 +118,12 @@ public static class UiStringsTrainingPartners
         Add("Training.LearnGrow.SectionGrowth", "Voor je groeipunten", "For your growth areas");
         Add("Training.LearnGrow.SectionGeneral", "Voor iedereen", "For everyone");
         Add("Training.LearnGrow.Count", "{0} resultaten", "{0} results");
+        Add("Training.LearnGrow.ShowMore", "Toon meer", "Show more");
+        Add("Training.LearnGrow.ShowLess", "Toon minder", "Show less");
+        Add("Training.Duration.OneDay", "1 dag", "1 day");
+        Add("Training.Duration.OneWeek", "1 week", "1 week");
+        Add("Training.Duration.OneMonth", "1 maand", "1 month");
+        Add("Training.Duration.OneHour", "1 uur", "1 hour");
         Add("Training.LearnGrow.HowTitle", "Hoe kiezen we dit?", "How do we choose this?");
         Add("Training.LearnGrow.HowBody",
             "We kijken naar je route, je groeipunten en wat dichtbij is. Gratis staat altijd bovenaan. Een partnerlink zie je altijd aan het label.",

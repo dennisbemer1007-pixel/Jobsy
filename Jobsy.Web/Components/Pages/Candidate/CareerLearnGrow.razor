@@ -3,8 +3,10 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @using Jobsy.Core.Features
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Training
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Models
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -17,24 +19,24 @@
     return;
 }
 
-<div class="journey-page opl-page">
-    <section class="opl-hero">
-        <div class="opl-hero__inner">
-            <p class="opl-hero__eyebrow">@Culture["Training.LearnGrow.NavLearn"]</p>
-            <h1>@Culture["Training.LearnGrow.Title"]</h1>
-            <p class="opl-hero__lead">@Culture["Training.LearnGrow.Lead"]</p>
-            <form class="opl-search" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
-                <label class="opl-search__field">
-                    <span class="visually-hidden">@Culture["Training.LearnGrow.SearchPlaceholder"]</span>
-                    <input type="search"
-                           @bind="_search"
-                           placeholder="@Culture["Training.LearnGrow.SearchPlaceholder"]" />
-                    <span class="opl-search__hint-desktop muted">@Culture["Training.LearnGrow.SearchHint"]</span>
-                </label>
-                <button type="submit" class="btn btn-primary">@Culture["Training.LearnGrow.Search"]</button>
-            </form>
-        </div>
-    </section>
+<div class="opl-page panel-page--cand-ill">
+    <CandidateIllustratedHero Eyebrow="@Culture["Training.LearnGrow.NavLearn"]"
+                              CoralEyebrow="true"
+                              Title="@Culture["Training.LearnGrow.Title"]"
+                              Lead="@Culture["Training.LearnGrow.Lead"]"
+                              ArtUrl="@CandidateIllustratedImages.CarriereBand"
+                              ArtPosition="58% center">
+        <form class="opl-search opl-search--hero" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
+            <label class="opl-search__field">
+                <span class="visually-hidden">@Culture["Training.LearnGrow.SearchPlaceholder"]</span>
+                <input type="search"
+                       @bind="_search"
+                       placeholder="@Culture["Training.LearnGrow.SearchPlaceholder"]" />
+                <span class="opl-search__hint-desktop muted">@Culture["Training.LearnGrow.SearchHint"]</span>
+            </label>
+            <button type="submit" class="btn btn-primary">@Culture["Training.LearnGrow.Search"]</button>
+        </form>
+    </CandidateIllustratedHero>
 
     <main class="opl-wrap">
         <div class="opl-subnav">
@@ -62,7 +64,7 @@
         else
         {
             <div class="opl-layout">
-                <div>
+                <div class="opl-main">
                     <section class="opl-filters">
                         <div class="opl-filters__row">
                             <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterSubject"]</span>
@@ -102,9 +104,8 @@
                         <p class="opl-filters__mobile-trigger muted">@Culture["Training.LearnGrow.MobileFilters"]</p>
                     </section>
 
-                    @OfferSection(Culture["Training.LearnGrow.SectionNext"], _page.NextStepSubtitle, _page.NextStep)
-                    @OfferSection(Culture["Training.LearnGrow.SectionGrowth"], _page.GrowthSubtitle, _page.Growth)
-                    @OfferSection(Culture["Training.LearnGrow.SectionGeneral"], null, _page.General)
+                    @OfferSection("next", Culture["Training.LearnGrow.SectionNext"], _page.NextStepSubtitle, _page.NextStep)
+                    @OfferSection("growth", Culture["Training.LearnGrow.SectionGrowth"], _page.GrowthSubtitle, _page.Growth)
                 </div>
 
                 <div class="opl-side">
@@ -127,6 +128,8 @@
 </div>
 
 @code {
+    private const int SectionPreviewCount = 3;
+
     private bool _enabled;
     private bool _loading = true;
     private bool _busy;
@@ -138,6 +141,7 @@
     private TrainingLearnGrowPageModel? _page;
     private TrainingProgressSummaryModel? _progress;
     private TrainingPartnerOfferModel? _selected;
+    private readonly HashSet<string> _expandedSections = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -178,13 +182,16 @@
         ("opleiding", Culture["Training.LearnGrow.Duration.Programme"])
     ];
 
-    private RenderFragment OfferSection(string title, string? subtitle, IReadOnlyList<TrainingPartnerOfferModel> offers)
+    private RenderFragment OfferSection(string key, string title, string? subtitle, IReadOnlyList<TrainingPartnerOfferModel> offers)
         => __builder =>
         {
             if (offers.Count == 0)
             {
                 return;
             }
+
+            var expanded = _expandedSections.Contains(key);
+            var visible = expanded ? offers : offers.Take(SectionPreviewCount).ToList();
 
             <section class="opl-section">
                 <div class="opl-section__head">
@@ -198,19 +205,35 @@
                     </div>
                 </div>
                 <div class="opl-grid opl-grid--2">
-                    @foreach (var offer in offers)
+                    @foreach (var offer in visible)
                     {
                         <TrainingCourseCard Offer="offer"
                                             Selected="_selected?.OfferId == offer.OfferId"
                                             Busy="_busy"
+                                            ShowDesktopHint="true"
+                                            RequireWrittenReason="true"
                                             Campaign="@TrainingTracking.CampaignCompass"
                                             OnSelect="SelectAsync"
                                             OnToggleSave="ToggleSaveAsync"
                                             OnSavedChanged="OnSavedChanged" />
                     }
                 </div>
+                @if (offers.Count > SectionPreviewCount)
+                {
+                    <button type="button" class="btn btn-ghost opl-section__more" @onclick="() => ToggleSection(key)">
+                        @(expanded ? Culture["Training.LearnGrow.ShowLess"] : Culture["Training.LearnGrow.ShowMore"])
+                    </button>
+                }
             </section>
         };
+
+    private void ToggleSection(string key)
+    {
+        if (!_expandedSections.Add(key))
+        {
+            _expandedSections.Remove(key);
+        }
+    }
 
     private async Task ReloadAsync()
     {

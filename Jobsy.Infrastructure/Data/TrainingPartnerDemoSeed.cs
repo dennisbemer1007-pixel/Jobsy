@@ -14,6 +14,7 @@ public static class TrainingPartnerDemoSeed
 
     public static async Task EnsureAsync(JobsyDbContext db, CancellationToken cancellationToken = default)
     {
+        await CareerDemoPlanSeed.EnsureAsync(db, cancellationToken);
         var provider = await db.TrainingProviders
             .Include(p => p.Offers)
             .FirstOrDefaultAsync(p => p.Id == DemoNetworkId, cancellationToken);

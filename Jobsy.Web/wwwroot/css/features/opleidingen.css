@@ -2,6 +2,16 @@
 
 .opl-page {
   padding-block-end: var(--space-6);
+  background: var(--surface);
+}
+
+.opl-page .cand-hero {
+  margin-bottom: 0;
+}
+
+.opl-search--hero {
+  margin-top: var(--space-3);
+  max-width: 40rem;
 }
 
 .opl-hero {
@@ -144,6 +154,10 @@
   align-items: start;
 }
 
+.opl-main {
+  min-width: 0;
+}
+
 .opl-layout--step {
   grid-template-columns: minmax(0, 1fr) minmax(260px, 24rem);
 }
@@ -239,6 +253,10 @@
 
 .opl-section {
   margin-top: var(--space-5);
+}
+
+.opl-section__more {
+  margin-top: var(--space-2);
 }
 
 .opl-section__head {
@@ -344,11 +362,17 @@
 
 .opl-card__foot {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-2) var(--space-3);
   margin-top: auto;
-  padding-top: var(--space-1);
+  padding-top: var(--space-2);
+  width: 100%;
+}
+
+.opl-card__cta {
+  margin: 0;
 }
 
 .opl-card__foot small {
@@ -712,9 +736,71 @@
 
 .opl-side {
   position: sticky;
-  top: var(--space-4);
+  top: calc(var(--space-4) + 3.5rem);
   display: grid;
   gap: var(--space-3);
+  align-self: start;
+  max-height: calc(100vh - 5rem);
+  overflow: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--gold-deep));
+  background: color-mix(in srgb, var(--gold-light) 22%, var(--surface));
+}
+
+.app-shell:has(.opl-page) .lobsy-coach-dock,
+.app-shell:has(.opl-page) .lobsy-coach-cta,
+.app-shell:has(.opl-page) .pub-coach-dock {
+  display: none !important;
+}
+
+.opl-passport-growth {
+  margin-top: var(--space-4);
+}
+
+.opl-passport-growth .opl-layout {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 20rem);
+}
+
+.opl-passport-growth .opl-comp {
+  min-width: 0;
+}
+
+.opl-passport-growth .opl-grow-row {
+  flex-wrap: wrap;
+}
+
+.opl-passport-growth .opl-grow-row strong {
+  display: block;
+  margin-top: var(--space-1);
+  word-break: break-word;
+}
+
+.career-ill-panel__training {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid color-mix(in srgb, var(--border) 88%, var(--gold-deep));
+}
+
+.career-ill-panel__training-title {
+  margin: 0;
+  font-size: var(--text-md);
+  color: var(--brand);
+}
+
+.career-ill-panel__training-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.career-ill-panel__training-list .opl-card {
+  padding: var(--space-3);
+}
+
+.career-ill-panel__training-list .opl-grid--2 {
+  grid-template-columns: 1fr;
 }
 
 .opl-only-desktop {

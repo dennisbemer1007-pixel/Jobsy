@@ -25,16 +25,28 @@
         </button>
     </div>
     <h3 id="@_titleId">@Offer.Title</h3>
-    <div class="opl-card__meta">
-        <span>@DurationText</span>
-        <span>@FormatText</span>
-    </div>
-    <div class="opl-card__why">
-        <span aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
-        <span>@WhyText</span>
-    </div>
+    @if (HasMeta)
+    {
+        <div class="opl-card__meta">
+            @if (!string.IsNullOrWhiteSpace(DurationText))
+            {
+                <span>@DurationText</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(FormatText))
+            {
+                <span>@FormatText</span>
+            }
+        </div>
+    }
+    @if (ShowWhyBlock)
+    {
+        <div class="opl-card__why">
+            <span aria-hidden="true">@((MarkupString)NavIcons.Claw)</span>
+            <span>@WhyText</span>
+        </div>
+    }
     <div class="opl-card__foot">
-        <button type="button" class="btn btn-ghost btn-sm" disabled="@Busy" @onclick="Select">
+        <button type="button" class="btn btn-ghost btn-sm opl-card__cta" disabled="@Busy" @onclick="Select">
             @FootLabel
         </button>
         <small>@Offer.ProviderName</small>
@@ -56,6 +68,7 @@
     [Parameter] public bool Selected { get; set; }
     [Parameter] public bool ShowInlinePanel { get; set; } = true;
     [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool RequireWrittenReason { get; set; }
     [Parameter] public string Campaign { get; set; } = TrainingTracking.CampaignCompetence;
     [Parameter] public EventCallback<TrainingPartnerOfferModel> OnSelect { get; set; }
     [Parameter] public EventCallback<TrainingPartnerOfferModel> OnToggleSave { get; set; }
@@ -65,9 +78,16 @@
 
     private string FootLabel => Selected
         ? Culture["Training.CareerStep.DetailsHide"]
-        : (ShowDesktopHint ? Culture["Training.CareerStep.DetailsRight"] : Culture["Training.Open"]);
+        : (ShowDesktopHint ? Culture["Training.Open"] : Culture["Training.Open"]);
 
     [Parameter] public bool ShowDesktopHint { get; set; }
+
+    private bool ShowWhyBlock => !string.IsNullOrWhiteSpace(WhyText)
+                                 && (!RequireWrittenReason || !IsFallbackReason);
+
+    private bool IsFallbackReason => string.IsNullOrWhiteSpace(WhyText);
+
+    private bool HasMeta => !string.IsNullOrWhiteSpace(DurationText) || !string.IsNullOrWhiteSpace(FormatText);
 
     private string TypeClass => Offer.Type switch
     {
@@ -91,23 +111,26 @@
         _ => (MarkupString)""
     };
 
-    private string WhyText => string.IsNullOrWhiteSpace(Offer.Reason)
-        ? Culture["Training.Reason.Fallback"]
-        : Offer.Reason;
+    private string WhyText => Offer.Reason?.Trim() ?? "";
 
-    private string DurationText
+    private string DurationText => FormatDuration();
+
+    private string FormatDuration()
     {
-        get
+        if (Offer.DurationValue is not int dv
+            || !Enum.TryParse<TrainingDurationUnit>(Offer.DurationUnit, true, out var unit))
         {
-            if (Offer.DurationValue is not int dv
-                || !Enum.TryParse<TrainingDurationUnit>(Offer.DurationUnit, true, out var unit))
-            {
-                return "—";
-            }
-
-            var unitKey = TrainingDurationFormat.UnitKey(unit);
-            return unitKey is null ? dv.ToString() : Culture.Format(unitKey, dv);
+            return "";
         }
+
+        return unit switch
+        {
+            TrainingDurationUnit.Days when dv == 1 => Culture["Training.Duration.OneDay"],
+            TrainingDurationUnit.Weeks when dv == 1 => Culture["Training.Duration.OneWeek"],
+            TrainingDurationUnit.Months when dv == 1 => Culture["Training.Duration.OneMonth"],
+            TrainingDurationUnit.Hours when dv == 1 => Culture["Training.Duration.OneHour"],
+            _ => TrainingDurationFormat.UnitKey(unit) is { } unitKey ? Culture.Format(unitKey, dv) : ""
+        };
     }
 
     private string FormatText => Offer.Delivery switch
@@ -116,7 +139,8 @@
             ? Culture["Training.Delivery.OnSite"]
             : Offer.Location!,
         "Blended" => Culture["Training.Delivery.Blended"],
-        _ => Culture["Training.Delivery.Online"]
+        "Online" => Culture["Training.Delivery.Online"],
+        _ => ""
     };
 
     private Task Select() => OnSelect.InvokeAsync(Offer);
