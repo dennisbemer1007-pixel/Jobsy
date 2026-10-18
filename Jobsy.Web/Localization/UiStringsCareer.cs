@@ -182,6 +182,78 @@ public static class UiStringsCareer
             "Zrób mój plan rozwoju",
             "Creează planul meu de creștere",
             "أنشئ خطة نموي");
+        Add("Career.Illustrated.ChooseDreamCta",
+            "Kies je droombaan",
+            "Choose your dream job",
+            "Wybierz wymarzoną pracę",
+            "Alege jobul visat",
+            "اختر وظيفة أحلامك");
+        Add("Career.Illustrated.PathAria",
+            "Route naar je droombaan",
+            "Route to your dream job",
+            "Trasa do wymarzonej pracy",
+            "Traseu spre jobul visat",
+            "المسار إلى وظيفة أحلامك");
+        Add("Career.Illustrated.NextStep",
+            "Volgende stap",
+            "Next step",
+            "Następny krok",
+            "Pasul următor",
+            "الخطوة التالية");
+        Add("Career.Illustrated.StepN",
+            "Stap {0}",
+            "Step {0}",
+            "Krok {0}",
+            "Pasul {0}",
+            "الخطوة {0}");
+        Add("Career.Illustrated.ActionBoth",
+            "Nog {0} skills · {1} cursus(sen)",
+            "{0} skills left · {1} course(s)",
+            "Jeszcze {0} umiejętności · {1} kurs(y)",
+            "Încă {0} competențe · {1} curs(uri)",
+            "متبقٍ {0} مهارات · {1} دورة/دورات");
+        Add("Career.Illustrated.ActionCourses",
+            "Opleiding: {0} cursus(sen)",
+            "Training: {0} course(s)",
+            "Szkolenie: {0} kurs(y)",
+            "Formare: {0} curs(uri)",
+            "تدريب: {0} دورة/دورات");
+        Add("Career.Illustrated.ActionSkills",
+            "Ervaring of skill: {0} punt(en)",
+            "Experience or skill: {0} item(s)",
+            "Doświadczenie lub umiejętność: {0} element(ów)",
+            "Experiență sau competență: {0} element(e)",
+            "خبرة أو مهارة: {0} عنصر/عناصر");
+        Add("Career.Illustrated.ActionExperience",
+            "Bouw ervaring op via passende vacatures",
+            "Build experience through matching vacancies",
+            "Zdobywaj doświadczenie przez pasujące oferty",
+            "Câștigă experiență prin joburi potrivite",
+            "ابنِ خبرتك عبر وظائف مناسبة");
+        Add("Career.Illustrated.Courses",
+            "Bekijk cursussen",
+            "View courses",
+            "Zobacz kursy",
+            "Vezi cursuri",
+            "عرض الدورات");
+        Add("Career.Illustrated.Vacancies",
+            "Passende vacatures",
+            "Matching vacancies",
+            "Pasujące oferty",
+            "Joburi potrivite",
+            "وظائف مناسبة");
+        Add("Career.Illustrated.PanelEyebrow",
+            "Deze stap",
+            "This step",
+            "Ten krok",
+            "Acest pas",
+            "هذه الخطوة");
+        Add("Career.Illustrated.PanelCourses",
+            "Cursussen",
+            "Courses",
+            "Kursy",
+            "Cursuri",
+            "الدورات");
 
         Add("Career.Search.Label",
             "Zelf een beroep zoeken",

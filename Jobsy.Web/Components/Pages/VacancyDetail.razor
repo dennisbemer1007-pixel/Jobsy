@@ -77,6 +77,7 @@
                 <a class="back-link" href="@KbRoutes.Map">@Culture["Vacancy.BackToMap"]</a>
             </div>
 
+            <div class="kb-detail__container">
             <div class="kb-detail__layout">
                 <div class="kb-detail__main-top">
                     <div class="kb-detail__hero">
@@ -147,6 +148,8 @@
                     <KbDetailFactChips Vacancy="_vacancy"
                                        WhenLabel="@DetailWhenLabel"
                                        StartLabel="@Culture["Kb.Detail.StartFlexible"]"
+                                       StartDateLabel="@DetailStartDateLabel"
+                                       CategoryLabel="@DetailCategoryLabel"
                                        TravelChip="@DetailTravelChip" />
                         </div>
                         <div class="kb-detail__hero-accent" aria-hidden="true"></div>
@@ -156,30 +159,35 @@
                 </div>@* kb-detail__main-top *@
 
                 <aside class="kb-detail__rail kb-detail__rail-stack" data-testid="kb-detail-rail">
-                    @TravelCardFragment
-                    @FitPanelFragment
-                    <div class="kb-detail__actions kb-detail__rail-actions">
+                    <div class="kb-detail__rail-fit">@FitPanelFragment</div>
+                    <div class="kb-detail__rail-travel">@TravelCardFragment</div>
+                    @if (_detailWide && ShowApplyReadinessRail)
+                    {
+                        <KbDetailApplyReadiness Lead="@ApplyReadinessLead"
+                                                Items="@ApplyReadinessItems"
+                                                ProfileHref="@ProfileReturnHref" />
+                    }
+                    <div class="kb-detail__rail-cta kb-detail__rail-actions">
                         @if (_detailWide)
                         {
                             @PrimaryApplyFragment
                         }
-                        <div class="kb-detail__secondary">
-                            @SaveButtonFragment
-                            <button class="kb-detail__icon-btn"
-                                    type="button"
-                                    title="@Culture["Kb.Detail.Share"]"
-                                    aria-label="@Culture["Kb.Detail.Share"]"
-                                    @onclick="OpenShare">
-                                <svg class="engagement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <circle cx="18" cy="5" r="2.5"/>
-                                    <circle cx="6" cy="12" r="2.5"/>
-                                    <circle cx="18" cy="19" r="2.5"/>
-                                    <path d="M8.5 13.5 15.5 17.5M15.5 6.5 8.5 10.5"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <p class="kb-detail__passport-hint">@(PassportHintText)</p>
+                        @SaveButtonFragment
+                        <button class="kb-detail__icon-btn"
+                                type="button"
+                                title="@Culture["Kb.Detail.Share"]"
+                                aria-label="@Culture["Kb.Detail.Share"]"
+                                @onclick="OpenShare">
+                            <svg class="engagement-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <circle cx="18" cy="5" r="2.5"/>
+                                <circle cx="6" cy="12" r="2.5"/>
+                                <circle cx="18" cy="19" r="2.5"/>
+                                <path d="M8.5 13.5 15.5 17.5M15.5 6.5 8.5 10.5"/>
+                            </svg>
+                        </button>
                     </div>
+                    @FootLinksFragment
+                    <p class="kb-detail__passport-hint kb-detail__rail-hint">@(PassportHintText)</p>
                 </aside>
 
                 <div class="kb-detail__main-bottom">
@@ -216,34 +224,16 @@
                         </p>
                     }
 
-            <section class="kb-detail__section kb-detail__section--copy">
-                <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
-            </section>
-            <p class="travel-hint">
-                @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
-                @if (_vacancy.WorkTypes.Length > 0)
-                {
-                    <text> · @Culture["Vacancy.WorkType"]: @string.Join(", ", _vacancy.WorkTypes.Select(LocalizeWorkType))</text>
-                }
-            </p>
+            @if (VacancyPublicDisplay.HasDescriptionContent(_vacancy))
+            {
+                <section class="kb-detail__section kb-detail__section--copy">
+                    <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
+                </section>
+            }
 
-            @if (HasHoursInfo || HasScheduleInfo || HasLegalInfo)
+            @if (HasScheduleInfo || HasLegalInfo)
             {
                 <aside class="vacancy-facts" aria-label="@Culture["Vacancy.Facts"]">
-                    @if (HasHoursInfo)
-                    {
-                        <div class="vacancy-facts__block">
-                            <h2 class="vacancy-facts__title">@Culture["Vacancy.HoursPerWeek"]</h2>
-                            <p class="vacancy-facts__text">
-                                @HoursRangeText
-                                @if (HoursCategoryLabel is not null)
-                                {
-                                    <span class="muted"> · @HoursCategoryLabel</span>
-                                }
-                            </p>
-                        </div>
-                    }
-
                     @if (HasScheduleInfo)
                     {
                         <div class="vacancy-facts__block">
@@ -451,62 +441,19 @@
                                 <CandidatePwaInstallPostApplyCard />
                             </div>
                         }
-                        else if (!_profileReadyForApply)
+                        else if (!_profileReadyForApply && !_detailWide)
                         {
-                            <div class="apply-panel apply-panel--warn" data-testid="apply-profile-blocked">
-                                <p class="apply-panel__title">@Culture["Apply.CompleteProfileTitle"]</p>
-                                <p class="apply-panel__text">
-                                    @(_applyBasicsIncomplete ? Culture["Apply.BasicsBlockedLead"] : Culture["Apply.CompleteProfileBody"])
-                                </p>
-                                <ul class="apply-checklist">
-                                    @if (_applyBasicsIncomplete)
-                                    {
-                                        @foreach (var gap in _applyBasicsChecklist)
-                                        {
-                                            <li class="@(gap.Done ? "is-done" : null)">
-                                                @if (!gap.Done && gap.Href is not null)
-                                                {
-                                                    <a href="@gap.Href">@Culture[gap.MessageKey]</a>
-                                                }
-                                                else
-                                                {
-                                                    @Culture[gap.MessageKey]
-                                                }
-                                            </li>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <li class="@(_profileHasAvailability ? "is-done" : null)">@Culture["Apply.Availability"]</li>
-                                        @if (_requiresDrivingLicense)
-                                        {
-                                            <li class="@(_profileHasLicense ? "is-done" : null)">@Culture.Format("Apply.LicenseItem", LocalizeLicenseList(_vacancy.RequiredDrivingLicense!))</li>
-                                        }
-                                        <li class="@(_profileHasEmployers ? "is-done" : null)">
-                                            @if (_vacancy.MinimumEmployers is > 0)
-                                            {
-                                                @Culture.Format("Apply.ExperienceMin", _vacancy.MinimumEmployers)
-                                            }
-                                            else
-                                            {
-                                                @Culture["Apply.Experience"]
-                                            }
-                                        </li>
-                                        @if (_requiresEducation)
-                                        {
-                                            <li class="@(_profileHasEducation ? "is-done" : null)">@Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))</li>
-                                        }
-                                        @if (_vacancy.MinimumReferences is > 0)
-                                        {
-                                            <li class="@(_profileHasReferences ? "is-done" : null)">@Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)</li>
-                                        }
-                                    }
-                                </ul>
-                                <a class="login-submit apply-flow__primary"
-                                   href="@ProfileReturnHref">
-                                    @Culture["Apply.CompleteProfileCta"]
-                                </a>
+                            <div data-testid="apply-profile-blocked">
+                                <KbDetailApplyReadiness Lead="@ApplyReadinessLead"
+                                                        Items="@ApplyReadinessItems"
+                                                        ProfileHref="@ProfileReturnHref" />
                             </div>
+                        }
+                        else if (!_profileReadyForApply && _detailWide)
+                        {
+                            <p class="apply-panel apply-panel--compact muted" data-testid="apply-profile-blocked">
+                                @ApplyReadinessLead
+                            </p>
                         }
                         else if (_awaitingVerification)
                         {
@@ -702,6 +649,7 @@
 
                 </div>@* kb-detail__main-bottom *@
             </div>@* kb-detail__layout *@
+            </div>@* kb-detail__container *@
 
             @if (!_detailWide)
             {
@@ -792,10 +740,7 @@
         var dnaRows = DnaRows(_vacancy);
 
         <div class="kb-fit-panel kb-fit-panel--card" data-fit-gate="@(_vacancy.FitGate ?? "")" data-testid="kb-fit-panel">
-            <div class="kb-fit-panel__title-row">
-                <h2 class="kb-fit-panel__title">@Culture["Kb.Fit.WhyTitle"]</h2>
-                <KbFitPill Fit="detailFit" />
-            </div>
+            <h2 class="kb-fit-panel__title">@Culture["Kb.Fit.WhyTitle"]</h2>
             @if (!string.IsNullOrWhiteSpace(detailRank))
             {
                 <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
@@ -845,14 +790,6 @@
             {
                 <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
             }
-            <div class="kb-fit-panel__foot-links">
-                <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
-                <AuthorizeView Roles="Candidate">
-                    <Authorized>
-                        <a href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
-                    </Authorized>
-                </AuthorizeView>
-            </div>
         </div>
     };
 
@@ -926,6 +863,103 @@
             return TravelApprox ? $"± {core}" : core;
         }
     }
+
+    private string? DetailStartDateLabel
+        => _vacancy is null ? null : _vacancy.StartDate.ToString("dd-MM-yyyy");
+
+    private string? DetailCategoryLabel
+        => string.IsNullOrWhiteSpace(_vacancy?.CategoryName) ? null : _vacancy!.CategoryName;
+
+    private bool ShowApplyReadinessRail =>
+        _signedInCandidate
+        && _candidateApplyGateLoaded
+        && !_applied
+        && !_profileReadyForApply
+        && _vacancy is not null
+        && !_vacancy.OpenForWorkRequired;
+
+    private string ApplyReadinessLead
+        => _applyBasicsIncomplete ? Culture["Apply.BasicsBlockedLead"] : Culture["Apply.CompleteProfileBody"];
+
+    private IReadOnlyList<KbDetailApplyReadiness.ReadinessItem> ApplyReadinessItems
+    {
+        get
+        {
+            if (_vacancy is null)
+            {
+                return [];
+            }
+
+            if (_applyBasicsIncomplete)
+            {
+                return _applyBasicsChecklist
+                    .Select(g => new KbDetailApplyReadiness.ReadinessItem(g.MessageKey, g.Done, g.Href))
+                    .ToList();
+            }
+
+            var items = new List<KbDetailApplyReadiness.ReadinessItem>
+            {
+                new("Apply.Availability", _profileHasAvailability)
+            };
+            if (_requiresDrivingLicense)
+            {
+                items.Add(new KbDetailApplyReadiness.ReadinessItem(
+                    "Apply.LicenseItem",
+                    _profileHasLicense,
+                    Literal: Culture.Format("Apply.LicenseItem", LocalizeLicenseList(_vacancy.RequiredDrivingLicense!))));
+            }
+
+            if (_vacancy.MinimumEmployers is > 0)
+            {
+                items.Add(new KbDetailApplyReadiness.ReadinessItem(
+                    "Apply.ExperienceMin",
+                    _profileHasEmployers,
+                    Literal: Culture.Format("Apply.ExperienceMin", _vacancy.MinimumEmployers)));
+            }
+            else
+            {
+                items.Add(new KbDetailApplyReadiness.ReadinessItem("Apply.Experience", _profileHasEmployers));
+            }
+
+            if (_requiresEducation)
+            {
+                items.Add(new KbDetailApplyReadiness.ReadinessItem(
+                    "Apply.EducationItem",
+                    _profileHasEducation,
+                    Literal: Culture.Format("Apply.EducationItem", LocalizeEducationList(_vacancy.RequiredEducation!))));
+            }
+
+            if (_vacancy.MinimumReferences is > 0)
+            {
+                items.Add(new KbDetailApplyReadiness.ReadinessItem(
+                    "Apply.ReferencesMin",
+                    _profileHasReferences,
+                    Literal: Culture.Format("Apply.ReferencesMin", _vacancy.MinimumReferences)));
+            }
+
+            return items;
+        }
+    }
+
+    private RenderFragment FootLinksFragment => __builder =>
+    {
+        if (_vacancy is null)
+        {
+            return;
+        }
+
+        <div class="kb-detail-link-cards kb-detail-link-cards--rail">
+            <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
+            <AuthorizeView Roles="Candidate">
+                <Authorized>
+                    <KbDetailFootLink Href="@($"/candidate/profile?tab=fit&vacancyId={Id}")"
+                                      Title="@Culture["Fit.CheckVacancy"]">
+                        <Icon><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="8"/><path d="M12 8v4M12 16h.01"/></svg></Icon>
+                    </KbDetailFootLink>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+    };
 
     private RenderFragment TravelCardFragment => __builder =>
     {

@@ -323,20 +323,43 @@
 }
 
 .kb-dna--detail .kb-dna__row {
-  grid-template-columns: 6rem minmax(0, 1fr);
-  gap: 0.25rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+}
+
+.kb-dna--detail .kb-dna__row:last-child {
+  border-bottom: 0;
+}
+
+.kb-dna--detail .kb-dna__label {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--brand);
 }
 
 .kb-dna--detail .kb-dna__progress {
-  grid-column: 2;
+  width: 100%;
+  height: 0.42rem;
+  border-radius: 99px;
 }
 
-.kb-dna--detail .kb-dna__reason,
-.kb-dna--detail .kb-dna__todo {
-  grid-column: 2;
+.kb-dna--detail .kb-dna__reason {
   font-size: 0.8rem;
   color: var(--muted);
   font-weight: 400;
+  line-height: 1.35;
+}
+
+.kb-dna--detail .kb-dna__todo {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .kb-dna--detail .kb-dna__value {
@@ -376,12 +399,30 @@
   padding: 1.35rem 1.5rem;
 }
 
+.panel-page--vacancy.panel-page--cand-ill {
+  max-width: none;
+  width: 100%;
+  padding-inline: clamp(0.85rem, 2.5vw, 1.5rem);
+}
+
+.kb-detail__container {
+  width: 100%;
+  max-width: 75rem;
+  margin-inline: auto;
+}
+
 @media (min-width: 1024px) {
   .kb-detail--illustrated .kb-detail__layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
-    gap: 1.25rem;
+    grid-template-columns: minmax(0, 2fr) minmax(17rem, 1fr);
+    gap: 1.35rem;
     align-items: start;
+  }
+
+  .kb-detail--illustrated .kb-detail__rail {
+    position: sticky;
+    top: calc(var(--app-header-height, 4rem) + 0.5rem);
+    align-self: start;
   }
 }
 
@@ -545,11 +586,96 @@
   opacity: 0;
 }
 
-/* Carrière — hide climb scene, show band */
+/* Full-bleed illustrated hero (title in image, not beside a block) */
 .career-page--illustrated {
   min-height: auto;
   background: var(--pearl);
+  overflow-x: clip;
 }
+
+.cand-hero {
+  position: relative;
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  margin-bottom: 1.25rem;
+  min-height: clamp(10.5rem, 22vw, 15.5rem);
+  background: color-mix(in srgb, var(--gold) 14%, var(--surface))
+    var(--cand-hero-art, none) no-repeat center / cover;
+  border-block-end: 1px solid color-mix(in srgb, var(--gold) 28%, var(--border));
+}
+
+.cand-hero__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--surface) 92%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 72%, transparent) 42%,
+    color-mix(in srgb, var(--surface) 18%, transparent) 100%
+  );
+}
+
+.cand-hero__copy {
+  position: relative;
+  z-index: 1;
+  max-width: min(42rem, 88%);
+  padding: clamp(1.35rem, 3vw, 2rem) clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.cand-hero__eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.cand-hero__eyebrow--coral {
+  color: color-mix(in srgb, var(--coral) 70%, var(--brand));
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-size: 0.82rem;
+}
+
+.cand-hero h1 {
+  margin: 0;
+  font-size: clamp(1.45rem, 3.2vw, 2rem);
+  color: var(--brand);
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.cand-hero__lead {
+  margin: 0.45rem 0 0;
+  color: color-mix(in srgb, var(--ink) 78%, var(--muted));
+  max-width: 36rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 639px) {
+  .cand-hero {
+    min-height: 11.5rem;
+  }
+
+  .cand-hero__copy {
+    max-width: 100%;
+    padding: 1.1rem 1.15rem 1.25rem;
+  }
+
+  .cand-hero__lead {
+    font-size: 0.88rem;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+  }
+}
+
+/* Carrière — hide climb scene; illustrated path + side panel */
 
 .career-page--illustrated .career-scene--desktop,
 .career-page--illustrated .career-band,
@@ -571,6 +697,216 @@
   .career-page--illustrated .career-stage {
     grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
     align-items: start;
+  }
+}
+
+.career-ill-layout--plan {
+  display: grid;
+  gap: 1.15rem;
+}
+
+@media (min-width: 1024px) {
+  .career-ill-layout--plan {
+    grid-template-columns: minmax(0, 1.15fr) minmax(16rem, 22rem);
+    align-items: start;
+  }
+}
+
+.career-ill-layout__stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.career-ill-path {
+  padding: 0.85rem 1rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+}
+
+.career-ill-path__track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+  position: relative;
+}
+
+.career-ill-path__track::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 1.05rem;
+  top: 0.75rem;
+  bottom: 0.75rem;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    var(--brand) 0%,
+    color-mix(in srgb, var(--gold) 55%, var(--brand)) 55%,
+    var(--gold-deep) 100%
+  );
+  opacity: 0.35;
+}
+
+.career-ill-path__node {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr);
+  gap: 0.65rem;
+  padding: 0.65rem 0;
+  position: relative;
+}
+
+.career-ill-path__marker {
+  z-index: 1;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--brand) 35%, var(--border));
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.career-ill-path__node--done .career-ill-path__marker {
+  background: color-mix(in srgb, var(--success) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--success) 45%, var(--border));
+}
+
+.career-ill-path__node--current .career-ill-path__marker {
+  background: color-mix(in srgb, var(--coral) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--coral) 50%, var(--border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 12%, transparent);
+}
+
+.career-ill-path__marker--dream {
+  background: color-mix(in srgb, var(--gold) 35%, var(--surface));
+  border-color: color-mix(in srgb, var(--gold-deep) 55%, var(--border));
+}
+
+.career-ill-path__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.career-ill-path__title {
+  margin: 0.12rem 0 0;
+  font-weight: 700;
+  color: var(--brand);
+  line-height: 1.25;
+}
+
+.career-ill-path__action {
+  margin: 0.35rem 0 0;
+  font-size: 0.86rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.career-ill-path__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  margin-top: 0.45rem;
+}
+
+.career-ill-path__link {
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: color-mix(in srgb, var(--coral) 75%, var(--brand));
+  text-decoration: none;
+}
+
+.career-ill-path__link:hover {
+  text-decoration: underline;
+}
+
+.career-ill-panel {
+  padding: 1rem 1.05rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.career-ill-panel__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.career-ill-panel__title {
+  margin: 0.25rem 0 0;
+  font-size: 1.05rem;
+  color: var(--brand);
+}
+
+.career-ill-panel__lead {
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.career-ill-panel__sub {
+  margin: 0.85rem 0 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.career-ill-panel__list {
+  margin: 0;
+  padding-inline-start: 1.1rem;
+  font-size: 0.88rem;
+  color: var(--ink);
+}
+
+.career-ill-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.career-card--overview-illustrated {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.career-card--empty-illustrated {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.career-page--illustrated .career-card--empty-illustrated .cand-empty {
+  margin: 0;
+}
+
+.career-page--illustrated .career-card--empty-illustrated .cand-empty__art {
+  opacity: 0.92;
+  min-height: 9rem;
+  border-radius: 16px;
+}
+
+@media (min-width: 1024px) {
+  .career-ill-panel {
+    position: sticky;
+    top: 5.5rem;
   }
 }
 
@@ -928,4 +1264,172 @@
   background: var(--cand-side-spot, none) no-repeat center / contain;
   opacity: 0.2;
   pointer-events: none;
+}
+
+/* Vacature r2 — rail CTA row, readiness, mobile stack, sticky bar */
+.kb-detail__rail-cta {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.kb-detail__rail-cta .kb-detail-apply-btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+.kb-detail__rail-cta .kb-detail__icon-btn {
+  flex: 0 0 2.75rem;
+}
+
+.kb-detail-readiness {
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--kb-warm-border, var(--border));
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.kb-detail-readiness__count {
+  margin: 0.35rem 0 0.45rem;
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--brand);
+}
+
+.kb-detail-readiness__bar {
+  height: 0.4rem;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--border) 70%, var(--surface));
+  overflow: hidden;
+  margin-bottom: 0.65rem;
+}
+
+.kb-detail-readiness__bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  border-radius: inherit;
+}
+
+.kb-detail-readiness__list {
+  columns: 2;
+  column-gap: 0.85rem;
+  margin: 0 0 0.75rem;
+  padding: 0 0 0 1.1rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.kb-detail-readiness__list a {
+  color: var(--brand);
+  font-weight: 550;
+}
+
+.kb-detail-readiness__cta {
+  margin-top: 0.35rem;
+}
+
+.kb-detail-link-cards {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.kb-detail-link-card {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--kb-warm-border, var(--border)) 90%, var(--border));
+  background: color-mix(in srgb, var(--gold-soft) 35%, var(--surface));
+  text-decoration: none;
+  color: inherit;
+}
+
+.kb-detail-link-card__title {
+  display: block;
+  font-weight: 650;
+  font-size: 0.88rem;
+  color: var(--brand);
+}
+
+.kb-detail-link-card__chev {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 1.1rem;
+}
+
+.kb-detail-link-cards .day-in-life-link {
+  margin: 0;
+}
+
+.kb-detail-link-cards .day-in-life-link a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--kb-warm-border, var(--border)) 90%, var(--border));
+  background: color-mix(in srgb, var(--gold-soft) 35%, var(--surface));
+  font-weight: 650;
+  font-size: 0.88rem;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+@media (max-width: 1023px) {
+  .kb-detail--warm .kb-detail__layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .kb-detail--warm .kb-detail__rail {
+    display: contents;
+  }
+
+  .kb-detail--warm .kb-detail__main-top {
+    order: 1;
+  }
+
+  .kb-detail--warm .kb-detail__rail-fit {
+    order: 2;
+  }
+
+  .kb-detail--warm .kb-detail__main-bottom {
+    order: 3;
+  }
+
+  .kb-detail--warm .kb-detail__rail-travel {
+    order: 4;
+  }
+
+  .kb-detail--warm .kb-detail-link-cards--rail {
+    order: 5;
+  }
+
+  .kb-detail--warm .kb-detail__rail-hint {
+    order: 6;
+    display: none;
+  }
+
+  .kb-detail--warm .kb-detail__rail-cta {
+    display: none;
+  }
+
+  .kb-detail--warm.kb-detail--illustrated .kb-detail {
+    padding-bottom: calc(5.25rem + var(--bottom-nav-clearance, 4.5rem) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .kb-detail--warm .kb-detail__sticky-apply {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--bottom-nav-clearance, 4.5rem) + env(safe-area-inset-bottom, 0px));
+    z-index: 35;
+    margin: 0;
+    box-shadow: 0 -4px 18px rgba(15, 45, 92, 0.1);
+  }
 }

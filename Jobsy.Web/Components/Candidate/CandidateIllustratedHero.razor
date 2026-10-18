@@ -1,0 +1,29 @@
+@namespace Jobsy.Web.Components.Candidate
+
+<header class="cand-hero" style="@(string.IsNullOrWhiteSpace(ArtUrl) ? null : $"--cand-hero-art:url('{ArtUrl}')")">
+    <div class="cand-hero__scrim" aria-hidden="true"></div>
+    <div class="cand-hero__copy">
+        @if (!string.IsNullOrWhiteSpace(Eyebrow))
+        {
+            <span class="cand-hero__eyebrow @(CoralEyebrow ? "cand-hero__eyebrow--coral" : null)">@Eyebrow</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <h1>@Title</h1>
+        }
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p class="cand-hero__lead">@Lead</p>
+        }
+        @ChildContent
+    </div>
+</header>
+
+@code {
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool CoralEyebrow { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

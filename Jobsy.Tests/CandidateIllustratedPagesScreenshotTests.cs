@@ -20,7 +20,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-rol-r1";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-rol-r2";
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -50,23 +50,27 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_eight_candidate_pages_at_1440_390_and_1024()
+    public async Task Capture_r2_candidate_pages_for_review()
     {
         Directory.CreateDirectory(ArtifactsDir);
-        await CapturePageAsync("/vacancies/" + SampleVacancyId, "vacature-no-photo", auth: true);
-        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature-photo", auth: true);
-        await CapturePageAsync("/candidate/match", "match", auth: true);
-        await CapturePageAsync("/candidate/applications", "sollicitaties", auth: true);
-        await CapturePageAsync("/candidate/liked", "bewaard", auth: true);
-        await CapturePageAsync("/account-maken", "account-maken", auth: false);
-        await CapturePageAsync("/account-maken/code", "account-code", auth: false);
-        await CapturePageAsync("/carriere", "carriere", auth: true);
-        await CapturePageAsync("/candidate/settings?pane=mail", "instellingen", auth: true);
+        await CapturePageAsync("/vacancies/" + SampleVacancyId, "vacature-no-photo", auth: true, tags: ["1440", "390"]);
+        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature-photo", auth: true, tags: ["1440", "390"]);
+        await CapturePageAsync("/candidate/applications", "sollicitaties", auth: true, tags: ["1440"]);
+        await CapturePageAsync("/candidate/liked", "bewaard", auth: true, tags: ["1440"]);
+        await CapturePageAsync("/carriere", "carriere-met-droombaan", auth: true, tags: ["1440", "390"]);
+        await CapturePageAsync("/carriere?empty=1", "carriere-zonder-droombaan", auth: true, tags: ["1440", "390"]);
+        await CapturePageAsync("/candidate/settings?pane=mail", "instellingen", auth: true, tags: ["1440"]);
     }
 
-    private async Task CapturePageAsync(string path, string name, bool auth)
+    private async Task CapturePageAsync(string path, string name, bool auth, string[]? tags = null)
     {
-        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390"), (1024, 900, "1024") })
+        var sizes = new[] { (1440, 900, "1440"), (390, 844, "390"), (1024, 900, "1024") };
+        if (tags is { Length: > 0 })
+        {
+            sizes = sizes.Where(s => tags.Contains(s.Item3)).ToArray();
+        }
+
+        foreach (var (width, height, tag) in sizes)
         {
             await using var context = await _browser!.NewContextAsync(new()
             {
@@ -86,13 +90,15 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                     new() { WaitUntil = WaitUntilState.DOMContentLoaded });
             }
 
+            StubApiHandler.CareerPlanEmpty = path.Contains("empty=1", StringComparison.OrdinalIgnoreCase);
             await page.GotoAsync($"{_web!.ServerAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await page.AddStyleTagAsync(new()
             {
                 Content = """
-                    .pub-header, .jobsy-chrome__header, .bottom-nav, .candidate-bottom-nav,
-                    .lobsy-coach-dock, .pub-coach-dock { position: static !important; }
+                    .pub-header, .jobsy-chrome__header, .lobsy-coach-dock, .pub-coach-dock { position: static !important; }
                     .passport-layout__card--desktop { position: static !important; }
+                    .bottom-nav, .candidate-bottom-nav { position: fixed !important; left: 0; right: 0; bottom: 0; }
+                    .kb-detail__sticky-apply { position: fixed !important; left: 0; right: 0; bottom: 4.25rem !important; z-index: 40 !important; }
                     """
             });
             await page.WaitForTimeoutAsync(600);
@@ -228,6 +234,8 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
     private sealed class StubApiHandler : HttpMessageHandler
     {
+        internal static bool CareerPlanEmpty { get; set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
@@ -238,11 +246,12 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 "<h2>Wat ga je doen?</h2><p>Je helpt met voeren, schoonmaken en aandacht voor de dieren.</p>" +
                 "<h2>Wat vragen we?</h2><p>Je bent zorgvuldig en vindt het fijn om met dieren te werken.</p>" +
                 "<h2>Wat bieden we?</h2><p>Een warm team, vaste uren en begeleiding.</p>";
+            var descJson = System.Text.Json.JsonSerializer.Serialize(descriptionSections);
             var sampleVacancy = $$"""
-                {"id":"{{SampleVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":null,"companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"descriptionHtml":"{{descriptionSections}}"}
+                {"id":"{{SampleVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","categoryName":"Dierenverzorging","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":null,"companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"description":{{descJson}}}
                 """;
             var photoVacancy = $$"""
-                {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"/images/candidate-illustrated/finale-hero.jpg","companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"descriptionHtml":"{{descriptionSections}}"}
+                {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","categoryName":"Dierenverzorging","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"/images/candidate-illustrated/werkervaring.jpg","companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"description":{{descJson}}}
                 """;
             var sampleApplication = """
                 [{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Zorgmedewerker dagbesteding","companyName":"Kasteelhof Zorg","locationLabel":"Zaandam","status":"EmployerContacting","createdAt":"2026-10-02T10:00:00Z","timeline":[{"key":"Sent","labelKey":"Kb.Timeline.Sent","state":"Done","occurredAtUtc":"2026-10-02T10:00:00Z"},{"key":"Seen","labelKey":"Kb.Timeline.Seen","state":"Done","occurredAtUtc":"2026-10-04T10:00:00Z"},{"key":"Interview","labelKey":"Kb.Timeline.Interview","state":"Current","occurredAtUtc":"2026-10-09T10:00:00Z"},{"key":"Outcome","labelKey":"Kb.Timeline.Outcome","state":"Pending","occurredAtUtc":null}],"nextStepKey":"Kb.Next.Practice"}]
@@ -258,8 +267,16 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                         ? """{"reminderEmailsEnabled":true,"optional":[{"key":"PushBom","enabled":true},{"key":"VacancyEngagementReminder","enabled":true}]}"""
                     : path.Contains("/me/reminder-whatsapp", StringComparison.OrdinalIgnoreCase)
                         ? """{"available":true,"optedIn":false,"phone":null}"""
-                    : path.Contains("/me/career", StringComparison.OrdinalIgnoreCase)
-                        ? """{"hasPlan":true,"dreamTitle":"Dierenarts","currentStoneIndex":1,"stones":[{"title":"Nu","state":"Done"},{"title":"Mbo 4 paraveterinair","state":"Current"}]}"""
+                    : path.Contains("/career-path/dream-options", StringComparison.OrdinalIgnoreCase)
+                        ? """{"suggestions":[{"catalogKey":"dierenarts","title":"Dierenarts"},{"catalogKey":"zorg","title":"Zorgmedewerker"}],"results":[]}"""
+                    : path.Contains("/career-path/archived", StringComparison.OrdinalIgnoreCase)
+                        ? "[]"
+                    : path.Contains("/career-path", StringComparison.OrdinalIgnoreCase)
+                        ? CareerPlanJson(CareerPlanEmpty)
+                    : path.Contains("/career-interests", StringComparison.OrdinalIgnoreCase)
+                        ? """{"scores":{"isComplete":true,"realistic":3,"investigative":2,"artistic":2,"social":4,"enterprising":2,"conventional":2}}"""
+                    : path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
+                        ? """{"isComplete":true}"""
                     : path.Contains("/applications", StringComparison.OrdinalIgnoreCase)
                         ? sampleApplication
                     : path.Contains("/likes", StringComparison.OrdinalIgnoreCase) || path.Contains("/engagement/likes", StringComparison.OrdinalIgnoreCase)
@@ -281,12 +298,24 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                         : path.Contains("/categories", StringComparison.OrdinalIgnoreCase)
                             ? "[]"
                             : path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase)
-                                ? """{"preferences":{"homeAddress":"1506 AB Zaandam","workRegion":null}}"""
+                                ? """{"preferences":{"homeAddress":"1506 AB Zaandam","workRegion":null,"employers":[{"role":"Dierenverzorger","startMonth":"2022-03","endMonth":null}],"educations":["Mbo niveau 3"],"educationDirection":"Dierenverzorging"}}"""
                             : "{}";
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
             });
+        }
+
+        private static string CareerPlanJson(bool empty)
+        {
+            if (empty)
+            {
+                return "null";
+            }
+
+            return """
+                {"dreamTitle":"Dierenarts","fromAi":false,"planLanguage":"nl","goalReached":false,"matchPercent":48,"carriedOverCount":0,"steps":[{"id":"career-step-1","order":1,"title":"Mbo 4 paraveterinair","status":"Active","summary":"Leer assisteren bij behandelingen en dierenhulp in de praktijk.","skillsGap":["Dierenhulp","Hygiëne kliniek"],"courses":["Paraveterinair"],"actionKinds":["Courses","Vacancies"],"stepFitBand":"Growing"},{"id":"career-step-2","order":2,"title":"Werkervaring dierenkliniek","status":"Open","summary":"Bouw minstens een jaar ervaring op in een dierenkliniek.","skillsGap":["Kliniekervaring"],"yearsExperienceNeeded":1,"courses":[],"actionKinds":["Vacancies"],"stepFitBand":"Open"}]}
+                """;
         }
     }
 }

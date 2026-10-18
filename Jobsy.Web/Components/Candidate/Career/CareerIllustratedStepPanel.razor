@@ -1,0 +1,53 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Step is { } step)
+{
+    <aside class="career-ill-panel card" aria-labelledby="career-ill-panel-title">
+        <p class="career-ill-panel__eyebrow">@Culture["Career.Illustrated.PanelEyebrow"]</p>
+        <h2 id="career-ill-panel-title" class="career-ill-panel__title">@step.ShortTitle</h2>
+        @if (!string.IsNullOrWhiteSpace(step.Lead))
+        {
+            <p class="career-ill-panel__lead">@step.Lead</p>
+        }
+
+        @if (step.Missing.Count > 0)
+        {
+            <h3 class="career-ill-panel__sub">@Culture["CareerStep.Gaps.Title"]</h3>
+            <ul class="career-ill-panel__list">
+                @foreach (var gap in step.Missing.Take(4))
+                {
+                    <li>@gap.Text</li>
+                }
+            </ul>
+        }
+
+        @if (step.CourseNames.Count > 0)
+        {
+            <h3 class="career-ill-panel__sub">@Culture["Career.Illustrated.PanelCourses"]</h3>
+            <ul class="career-ill-panel__list">
+                @foreach (var course in step.CourseNames.Take(3))
+                {
+                    <li>@course</li>
+                }
+            </ul>
+        }
+
+        <div class="career-ill-panel__actions">
+            @if (EmployersOn)
+            {
+                <a class="btn btn-primary" href="@step.VacanciesHref">@Culture["Career.Illustrated.Vacancies"]</a>
+            }
+            <a class="btn btn-secondary" href="@DetailHref">@Culture["Career.Overview.ViewStep"]</a>
+        </div>
+    </aside>
+}
+
+@code {
+    [Parameter] public CareerStepDetailView? Step { get; set; }
+    [Parameter] public bool EmployersOn { get; set; } = true;
+
+    private string DetailHref => Step is null ? "/carriere" : $"/carriere?stap={Step.Order}";
+}

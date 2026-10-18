@@ -26,17 +26,17 @@
     {
         var stepTotal = Math.Max(_plan.Stones.Count, 1);
         var stepCurrent = Math.Clamp(_plan.CurrentStoneIndex + 1, 1, stepTotal);
-        <CandidateIllustratedBand Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
-                                 CoralEyebrow="true"
-                                 Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
-                                 Lead="@Culture["Career.Overview.Lead"]"
-                                 ArtUrl="@CarriereBand" />
+        <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
+                                  CoralEyebrow="true"
+                                  Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
+                                  Lead="@Culture["Career.Overview.LeadShort"]"
+                                  ArtUrl="@CandidateIllustratedArt.HeroForDream(_plan.DreamTitle)" />
     }
     else if (!_bootstrapping)
     {
-        <CandidateIllustratedBand Title="@Culture["Career.Empty.Title"]"
-                                 Lead="@Culture["Career.Empty.Lead"]"
-                                 ArtUrl="@DroombaanBand" />
+        <CandidateIllustratedHero Title="@Culture["Career.Empty.Title"]"
+                                  Lead="@Culture["Career.Empty.Lead"]"
+                                  ArtUrl="@CandidateIllustratedArt.CareerEmptySpot" />
     }
 
     @if (_proactiveMatchingOn)
@@ -84,17 +84,20 @@
                 <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
             </RailContent>
             <ChildContent>
-                <CareerEmptyCard Suggestions="@_suggestions"
-                                 Scores="@_careerScores"
-                                 Education="@_educationLabel"
-                                 Busy="@_busy"
-                                 HasChoice="@(_choice is not null)"
-                                 ErrorText="@_error"
-                                 DiscoveryHref="@DiscoveryHref"
-                                 ShowDiscoveryHint="@(!_journeyComplete)"
-                                 OnChoice="SetChoice"
-                                 OnSearch="SearchDreamsAsync"
-                                 OnSubmit="GeneratePlanAsync" />
+                <CandidateIllustratedEmpty ArtUrl="@CandidateIllustratedArt.CareerEmptySpot">
+                    <CareerEmptyCard Illustrated="true"
+                                     Suggestions="@_suggestions"
+                                     Scores="@_careerScores"
+                                     Education="@_educationLabel"
+                                     Busy="@_busy"
+                                     HasChoice="@(_choice is not null)"
+                                     ErrorText="@_error"
+                                     DiscoveryHref="@DiscoveryHref"
+                                     ShowDiscoveryHint="@(!_journeyComplete)"
+                                     OnChoice="SetChoice"
+                                     OnSearch="SearchDreamsAsync"
+                                     OnSubmit="GeneratePlanAsync" />
+                </CandidateIllustratedEmpty>
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
@@ -179,16 +182,24 @@
                 <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
             </RailContent>
             <ChildContent>
-                <CareerOverviewCard Plan="@_plan"
-                                    Busy="@_busy"
-                                    EmployersOn="@_employersOn"
-                                    PassportOn="@_passportOn"
-                                    ShowCarriedOver="@_showCarriedOver"
-                                    ErrorText="@_error"
-                                    OnChangeDream="OpenDreamDialog"
-                                    OnClearDream="ClearDreamAsync"
-                                    OnDismissCarriedOver="DismissCarriedOver"
-                                    OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                <div class="career-ill-layout career-ill-layout--plan">
+                    <CareerIllustratedPath Plan="@_plan" NowLabel="@_nowLabel" />
+                    <div class="career-ill-layout__stack">
+                        <CareerOverviewCard Illustrated="true"
+                                            Plan="@_plan"
+                                            Busy="@_busy"
+                                            EmployersOn="@_employersOn"
+                                            PassportOn="@_passportOn"
+                                            ShowCarriedOver="@_showCarriedOver"
+                                            ErrorText="@_error"
+                                            OnChangeDream="OpenDreamDialog"
+                                            OnClearDream="ClearDreamAsync"
+                                            OnDismissCarriedOver="DismissCarriedOver"
+                                            OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                        <CareerIllustratedStepPanel Step="@IllustratedPanelStep"
+                                                    EmployersOn="@_employersOn" />
+                    </div>
+                </div>
 
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
 
@@ -294,6 +305,19 @@
     private int FallingPlateIndex => Math.Clamp(_plan.PlatesShed - 1, 0, 9);
 
     private int DoneVacancyCount => _employersOn && _stepFit.ShowsCount ? _stepFit.GoodCount : 0;
+
+    private CareerStepDetailView? IllustratedPanelStep
+    {
+        get
+        {
+            if (!_plan.HasPlan || _step is not null || _done is not null || _plan.CurrentStep is not { } current)
+            {
+                return null;
+            }
+
+            return CareerPlanViewBuilder.BuildStep(_planApi, current.Order, _evidence, _experienceYears);
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

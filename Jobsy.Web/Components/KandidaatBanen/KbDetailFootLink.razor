@@ -1,0 +1,20 @@
+@inject CultureState Culture
+
+<a class="kb-detail-link-card" href="@Href">
+    <span class="kb-detail-link-card__icon" aria-hidden="true">@Icon</span>
+    <span class="kb-detail-link-card__text">
+        <span class="kb-detail-link-card__title">@Title</span>
+        @if (!string.IsNullOrWhiteSpace(Subtitle))
+        {
+            <span class="kb-detail-link-card__sub">@Subtitle</span>
+        }
+    </span>
+    <span class="kb-detail-link-card__chev" aria-hidden="true">›</span>
+</a>
+
+@code {
+    [Parameter, EditorRequired] public string Href { get; set; } = "";
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public RenderFragment? Icon { get; set; }
+}

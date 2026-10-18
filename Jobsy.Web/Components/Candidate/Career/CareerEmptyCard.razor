@@ -5,10 +5,17 @@
 @using Jobsy.Web.Models
 @inject CultureState Culture
 
-<section class="career-card career-card--empty" aria-labelledby="career-title">
-    <p class="career-card__eyebrow">@Culture["Career.Eyebrow"]</p>
-    <h1 id="career-title" tabindex="-1">@Culture["Career.Empty.Title"]</h1>
-    <p class="career-card__lead">@Culture["Career.Empty.Lead"]</p>
+<section class="career-card career-card--empty @(Illustrated ? "career-card--empty-illustrated" : null)" aria-labelledby="career-title">
+    @if (!Illustrated)
+    {
+        <p class="career-card__eyebrow">@Culture["Career.Eyebrow"]</p>
+        <h1 id="career-title" tabindex="-1">@Culture["Career.Empty.Title"]</h1>
+        <p class="career-card__lead">@Culture["Career.Empty.Lead"]</p>
+    }
+    else
+    {
+        <h1 id="career-title" class="visually-hidden" tabindex="-1">@Culture["Career.Empty.Title"]</h1>
+    }
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))
     {
@@ -41,12 +48,13 @@
                 disabled="@(Busy || !HasChoice)"
                 aria-busy="@(Busy ? "true" : "false")"
                 @onclick="OnSubmit">
-            @Culture["Career.Empty.Cta"]
+            @(Illustrated ? Culture["Career.Illustrated.ChooseDreamCta"] : Culture["Career.Empty.Cta"])
         </button>
     </div>
 </section>
 
 @code {
+    [Parameter] public bool Illustrated { get; set; }
     [Parameter] public IReadOnlyList<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
     [Parameter] public RiasecScores? Scores { get; set; }
     [Parameter] public string? Education { get; set; }

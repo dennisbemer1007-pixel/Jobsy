@@ -1,0 +1,97 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services.Careers
+@inject CultureState Culture
+
+<nav class="career-ill-path" aria-label="@Culture["Career.Illustrated.PathAria"]">
+    <ol class="career-ill-path__track">
+        <li class="career-ill-path__node career-ill-path__node--now">
+            <span class="career-ill-path__marker" aria-hidden="true"></span>
+            <div class="career-ill-path__body">
+                <p class="career-ill-path__label">@Culture["Career.Rail.Now"]</p>
+                <p class="career-ill-path__title">@NowText</p>
+            </div>
+        </li>
+
+        @foreach (var step in Plan.Steps)
+        {
+            var state = StepState(step);
+            <li class="career-ill-path__node career-ill-path__node--@state">
+                <span class="career-ill-path__marker" aria-hidden="true">@step.Order</span>
+                <div class="career-ill-path__body">
+                    <p class="career-ill-path__label">@StepLabel(step)</p>
+                    <p class="career-ill-path__title">@step.ShortTitle</p>
+                    @if (state is "current" or "todo")
+                    {
+                        <p class="career-ill-path__action">@ActionHint(step)</p>
+                        <div class="career-ill-path__links">
+                            @if (step.CourseCount > 0)
+                            {
+                                <a class="career-ill-path__link" href="@CoursesHref(step)">@Culture["Career.Illustrated.Courses"]</a>
+                            }
+                            <a class="career-ill-path__link" href="@VacanciesHref(step)">@Culture["Career.Illustrated.Vacancies"]</a>
+                        </div>
+                    }
+                </div>
+            </li>
+        }
+
+        <li class="career-ill-path__node career-ill-path__node--dream @(Plan.GoalReached ? "is-reached" : null)">
+            <span class="career-ill-path__marker career-ill-path__marker--dream" aria-hidden="true"></span>
+            <div class="career-ill-path__body">
+                <p class="career-ill-path__label">@Culture["Career.Stepper.Goal"]</p>
+                <p class="career-ill-path__title">@Plan.DreamTitle</p>
+            </div>
+        </li>
+    </ol>
+</nav>
+
+@code {
+    [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
+    [Parameter] public string NowLabel { get; set; } = "";
+
+    private string NowText => string.IsNullOrWhiteSpace(NowLabel)
+        ? Culture["Career.Rail.NowUnknown"]
+        : NowLabel;
+
+    private static string StepState(CareerPlanStepView step) => step.Status switch
+    {
+        CareerStepStatus.Completed => "done",
+        CareerStepStatus.Active => "current",
+        _ => "todo"
+    };
+
+    private string StepLabel(CareerPlanStepView step) => step.Status switch
+    {
+        CareerStepStatus.Completed => Culture["Career.Rail.NewShell"],
+        CareerStepStatus.Active => Culture["Career.Illustrated.NextStep"],
+        _ => Culture.Format("Career.Illustrated.StepN", step.Order)
+    };
+
+    private string ActionHint(CareerPlanStepView step)
+    {
+        if (step.CourseCount > 0 && step.GapCount > 0)
+        {
+            return Culture.Format("Career.Illustrated.ActionBoth", step.GapCount, step.CourseCount);
+        }
+
+        if (step.CourseCount > 0)
+        {
+            return Culture.Format("Career.Illustrated.ActionCourses", step.CourseCount);
+        }
+
+        if (step.GapCount > 0)
+        {
+            return Culture.Format("Career.Illustrated.ActionSkills", step.GapCount);
+        }
+
+        return Culture["Career.Illustrated.ActionExperience"];
+    }
+
+    private static string VacanciesHref(CareerPlanStepView step)
+        => CareerStepActionLinks.VacanciesSearchHref(step.ShortTitle);
+
+    private static string CoursesHref(CareerPlanStepView step)
+        => $"/carriere?stap={step.Order}#career-courses";
+}

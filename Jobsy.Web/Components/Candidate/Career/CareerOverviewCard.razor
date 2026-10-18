@@ -2,7 +2,9 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<section class="career-card career-card--overview" aria-labelledby="career-title">
+<section class="career-card career-card--overview @(Illustrated ? "career-card--overview-illustrated" : null)" aria-labelledby="career-title">
+    @if (!Illustrated)
+    {
     <div class="career-card__top">
         <p class="career-card__eyebrow">@EyebrowText</p>
         @if (!Plan.GoalReached)
@@ -41,6 +43,11 @@
     </div>
     <p class="career-card__lead career-only-desktop">@Culture["Career.Overview.Lead"]</p>
     <p class="career-card__lead career-card__lead--short career-only-mobile">@Culture["Career.Overview.LeadShort"]</p>
+    }
+    else
+    {
+        <h1 id="career-title" class="visually-hidden" tabindex="-1">@TitleText</h1>
+    }
 
     @if (!string.IsNullOrWhiteSpace(ErrorText))
     {
@@ -62,12 +69,15 @@
         </p>
     }
 
-    <div class="career-only-desktop">
-        <GrowingShellsStepper Stones="@Plan.Stones" Mobile="false" />
-    </div>
-    <div class="career-only-mobile">
-        <GrowingShellsStepper Stones="@Plan.Stones" Mobile="true" />
-    </div>
+    @if (!Illustrated)
+    {
+        <div class="career-only-desktop">
+            <GrowingShellsStepper Stones="@Plan.Stones" Mobile="false" />
+        </div>
+        <div class="career-only-mobile">
+            <GrowingShellsStepper Stones="@Plan.Stones" Mobile="true" />
+        </div>
+    }
 
     @if (Plan.GoalReached)
     {
@@ -190,6 +200,7 @@
 </section>
 
 @code {
+    [Parameter] public bool Illustrated { get; set; }
     [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
     [Parameter] public bool Busy { get; set; }
     [Parameter] public bool EmployersOn { get; set; } = true;

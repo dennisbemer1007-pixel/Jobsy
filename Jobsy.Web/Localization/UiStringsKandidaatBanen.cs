@@ -54,6 +54,15 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Fit.PracticalTitle",
             "Wat nu al past", "What already fits",
             "Co już pasuje", "Ce se potrivește deja", "ما يناسبك الآن");
+        Add("Kb.Detail.ApplyRemaining",
+            "Nog {0} dingen invullen", "Still {0} items to complete",
+            "Jeszcze {0} rzeczy do uzupełnienia", "Încă {0} de completat", "متبقٍ {0} عناصر");
+        Add("Kb.Detail.StartDateFact",
+            "Start", "Start",
+            "Start", "Start", "البدء");
+        Add("Kb.Detail.CategoryFact",
+            "Branche", "Sector",
+            "Branża", "Sector", "القطاع");
         Add("Kb.Fit.WhyTitle",
             "Waarom past dit?", "Why does this fit?",
             "Dlaczego to pasuje?", "De ce se potrivește?", "لماذا يناسبك هذا؟");

@@ -66,12 +66,14 @@ public class CandidateIllustratedAppMarkupTests
     }
 
     [Fact]
-    public void Career_page_uses_opleiding_band_not_climb_scene_css()
+    public void Career_page_uses_full_bleed_hero_and_illustrated_path()
     {
         var career = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/Components/Pages/Candidate/CareerDashboard.razor"));
         var css = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/wwwroot/css/features/candidate-illustrated-app.css"));
         Assert.Contains("career-page--illustrated", career, StringComparison.Ordinal);
-        Assert.Contains("CarriereBand", career, StringComparison.Ordinal);
+        Assert.Contains("CandidateIllustratedHero", career, StringComparison.Ordinal);
+        Assert.Contains("CareerIllustratedPath", career, StringComparison.Ordinal);
+        Assert.Contains(".cand-hero", css, StringComparison.Ordinal);
         Assert.Contains(".career-page--illustrated .career-scene--desktop", css, StringComparison.Ordinal);
     }
 }
