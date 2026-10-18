@@ -74,20 +74,22 @@
         </div>
         @if (ShowProgressInsight && _insightLabels.Count > 0)
         {
-            <aside class="test-progress-insight" data-testid="test-progress-insight">
-                <h3 class="test-progress-insight__title">@Culture["TestFlow.ProgressInsight.Title"]</h3>
-                <p class="test-progress-insight__lead">@Culture["TestFlow.ProgressInsight.Lead"]</p>
-                <ul class="test-progress-insight__list">
-                    @foreach (var label in _insightLabels)
+            <details class="test-progress-insight" data-testid="test-progress-insight" open="@_insightOpen">
+                <summary class="test-progress-insight__title">@Culture["TestFlow.ProgressInsight.Title"]</summary>
+                <div class="test-progress-insight__body">
+                    <p class="test-progress-insight__lead">@Culture["TestFlow.ProgressInsight.Lead"]</p>
+                    <ul class="test-progress-insight__list">
+                        @foreach (var label in _insightLabels)
+                        {
+                            <li>@label</li>
+                        }
+                    </ul>
+                    @if (!string.IsNullOrWhiteSpace(_motivationText))
                     {
-                        <li>@label</li>
+                        <p class="test-progress-insight__motivation" data-testid="test-progress-motivation">@_motivationText</p>
                     }
-                </ul>
-                @if (!string.IsNullOrWhiteSpace(_motivationText))
-                {
-                    <p class="test-progress-insight__motivation">@_motivationText</p>
-                }
-            </aside>
+                </div>
+            </details>
         }
         @if (!Compact && Target != TestDepthLevel.Bottom)
         {
@@ -250,6 +252,8 @@
 
     private string? _motivationText;
 
+    private bool _insightOpen;
+
     protected override void OnInitialized()
     {
         MergeParameterAnswers();
@@ -280,6 +284,9 @@
                     // Auto-advance at once under reduced motion (handled in OnAnswerAsync).
                 }
 
+                var narrow = await MatchesMediaAsync("(max-width: 639px)");
+                _insightOpen = !narrow;
+                await InvokeAsync(StateHasChanged);
             }
             catch
             {

@@ -111,6 +111,34 @@
   margin: 0 0 0.35rem;
   font-size: 1rem;
   font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  color: var(--ink);
+}
+
+.test-progress-insight__title::-webkit-details-marker {
+  display: none;
+}
+
+.test-progress-insight__body {
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 639px) {
+  .test-progress-insight:not([open]) .test-progress-insight__body {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .test-progress-insight__title {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  .test-progress-insight .test-progress-insight__body {
+    display: block;
+  }
 }
 
 .test-progress-insight__lead {
@@ -433,6 +461,10 @@
   .app-shell--candidate .language-selector__code {
     font-size: 0.72rem;
   }
+}
+
+.app-shell:has(.test-page) .lobsy-coach-dock {
+  display: none !important;
 }
 
 .test-page {
