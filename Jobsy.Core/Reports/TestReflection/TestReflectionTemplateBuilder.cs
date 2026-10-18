@@ -27,7 +27,7 @@ public static class TestReflectionTemplateBuilder
         var watch = BuildWatch(ranked, lang);
         var (gives, drains) = BuildEnergy(ranked, lang);
         var (envTitle, envBody) = BuildEnvironment(ranked, snapshot.Kind, lang);
-        var dream = BuildDreamCallout(snapshot.DreamTitle, envTitle, lang);
+        var dream = BuildDreamCallout(snapshot.DreamTitle, ranked, lang);
 
         var title = testTitle ?? DefaultTestTitle(snapshot.Kind, lang);
         return new TestReflectionFull(
@@ -55,7 +55,7 @@ public static class TestReflectionTemplateBuilder
         var parts = snapshot.Traits
             .OrderBy(t => t.Code, StringComparer.Ordinal)
             .Select(t => $"{t.Code}:{t.Percent}");
-        return $"{snapshot.Kind}|v{snapshot.QuickScanVersion}|n{snapshot.AnsweredCount}|{string.Join(",", parts)}|{snapshot.DreamTitle ?? ""}";
+        return $"{snapshot.Kind}|v{snapshot.QuickScanVersion}|tpl-r3|n{snapshot.AnsweredCount}|{string.Join(",", parts)}|{snapshot.DreamTitle ?? ""}";
     }
 
     private static IEnumerable<TestReflectionTheme> BuildThemes(
@@ -163,7 +163,7 @@ public static class TestReflectionTemplateBuilder
         if (lines.Count == 0)
         {
             lines.Add(lang == "en"
-                ? "Big changes at once can take a moment to settle — asking for context upfront helps."
+                ? "Big changes at once can take a moment to settle. Ask upfront what stays the same."
                 : "Bij veel plotselinge veranderingen heb je even tijd nodig om je draai te vinden. Vraag gerust om uitleg vooraf.");
         }
 
@@ -228,22 +228,16 @@ public static class TestReflectionTemplateBuilder
         if (ranked.Count == 0)
         {
             return lang == "en"
-                ? ("A workplace that fits you", "Work with clear tasks and people you can rely on.")
-                : ("Een werkplek die bij je past", "Werk met duidelijke taken en mensen waar je op kunt rekenen.");
+                ? ("A steady team and clear agreements", "Work where you know what is expected and people back each other up.")
+                : ("Een vaste ploeg en duidelijke afspraken", "Werk waar je weet wat er van je verwacht wordt en waar collega's elkaar ondersteunen.");
         }
 
-        var top = ranked[0];
-        if (kind == AssessmentKind.Competence
-            && top.Code is CompetencyTestCatalog.Samenwerken or CompetencyTestCatalog.Resultaatgerichtheid)
+        if (kind == AssessmentKind.Competence)
         {
-            return lang == "en"
-                ? ("A steady team, clear agreements, time to do it well",
-                    "Think of care, logistics, or a small shop where customers know you.")
-                : ("Een vaste ploeg, duidelijke afspraken, tijd om het goed te doen",
-                    "Denk aan zorg, dieren of een kleine winkel waar je klanten kent.");
+            return CompetenceEnvironment(ranked, lang);
         }
 
-        if (kind == AssessmentKind.Career && top.Code == CareerTestCatalog.Social)
+        if (kind == AssessmentKind.Career && ranked[0].Code == CareerTestCatalog.Social)
         {
             return lang == "en"
                 ? ("Helping people in a structured setting", "Guidance, care, or teaching where contact matters.")
@@ -254,30 +248,132 @@ public static class TestReflectionTemplateBuilder
         {
             AssessmentKind.Culture =>
                 lang == "en"
-                    ? ("A team atmosphere that matches your pace", "Look for the culture cues you scored highest on.")
-                    : ("Een teamsfeer die bij je tempo past", "Zoek de cultuurkenmerken waar je het hoogst op scoorde."),
+                    ? ("A team atmosphere that matches your pace", "Look for workplaces where collaboration and tone feel natural to you.")
+                    : ("Een teamsfeer die bij je tempo past", "Zoek werkplekken waar samenwerken en sfeer natuurlijk voor je voelen."),
             AssessmentKind.Values =>
                 lang == "en"
-                    ? ("Work that matches what you find important", "Roles where your top values get room in daily choices.")
-                    : ("Werk dat past bij wat jij belangrijk vindt", "Rollen waar je topwaarden ruimte krijgen in dagelijkse keuzes."),
-            _ =>
-                lang == "en"
-                    ? ("An environment that uses your strengths", "Start with tasks that match your highest scores.")
-                    : ("Een omgeving die je sterke kanten gebruikt", "Begin bij taken die passen bij je hoogste scores.")
+                    ? ("Work that matches what you find important", "Roles where your values show up in daily choices.")
+                    : ("Werk dat past bij wat jij belangrijk vindt", "Rollen waar je waarden terugkomen in dagelijkse keuzes."),
+            _ => CompetenceEnvironment(ranked, lang)
         };
     }
 
-    private static string? BuildDreamCallout(string? dreamTitle, string envTitle, string lang)
+    private static (string Title, string Body) CompetenceEnvironment(IReadOnlyList<TestReflectionTrait> ranked, string lang)
+    {
+        var top = ranked[0];
+        var second = ranked.Count > 1 ? ranked[1] : top;
+        var social = top.Code is CompetencyTestCatalog.Samenwerken or CompetencyTestCatalog.Extraversie
+                     || second.Code is CompetencyTestCatalog.Samenwerken or CompetencyTestCatalog.Extraversie;
+
+        if (social && top.Percent >= DnaSummarySentences.MidMin)
+        {
+            return lang == "en"
+                ? ("A steady team, clear agreements, time to do it well",
+                    "Think of care, a practice, or a small shop where people know you and you can take your time.")
+                : ("Een vaste ploeg, duidelijke afspraken, tijd om het goed te doen",
+                    "Denk aan zorg, een praktijk of een kleine winkel waar mensen je kennen en je de tijd kunt nemen.");
+        }
+
+        return top.Code switch
+        {
+            CompetencyTestCatalog.Innovatie => lang == "en"
+                ? ("Quiet focus with room to improve how things work",
+                    "Think of tech, logistics, or a team that tries a better way when something keeps failing.")
+                : ("Rust om te focussen, met ruimte om te verbeteren hoe dingen werken",
+                    "Denk aan techniek, logistiek of een team dat een betere aanpak probeert als iets blijft haperen."),
+            CompetencyTestCatalog.Resultaatgerichtheid => lang == "en"
+                ? ("Clear tasks, neat handover, and work you can finish",
+                    "Think of production, administration, or a shift where closing the loop really matters.")
+                : ("Duidelijke taken, nette overdracht en werk dat je kunt afronden",
+                    "Denk aan productie, administratie of een dienst waar afronden echt telt."),
+            CompetencyTestCatalog.Stressbestendigheid => lang == "en"
+                ? ("Predictable days and a calm team when it gets busy",
+                    "Think of routes, rosters, or care where someone keeps overview when the pace picks up.")
+                : ("Voorspelbare dagen en een kalm team als het druk wordt",
+                    "Denk aan ritten, roosters of zorg waar iemand overzicht houdt als het tempo omhoog gaat."),
+            CompetencyTestCatalog.Samenwerken or CompetencyTestCatalog.Extraversie => lang == "en"
+                ? ("A steady team, clear agreements, time to do it well",
+                    "Think of care, a practice, or reception where contact and trust matter.")
+                : ("Een vaste ploeg, duidelijke afspraken, tijd om het goed te doen",
+                    "Denk aan zorg, een praktijk of balie waar contact en vertrouwen tellen."),
+            _ => lang == "en"
+                ? ("Clear agreements and work you can finish properly",
+                    "Think of a small team where people know who does what and handover is taken seriously.")
+                : ("Duidelijke afspraken en werk dat je netjes kunt afronden",
+                    "Denk aan een klein team waar iedereen weet wie wat doet en overdracht serieus wordt genomen.")
+        };
+    }
+
+    private static string? BuildDreamCallout(
+        string? dreamTitle,
+        IReadOnlyList<TestReflectionTrait> ranked,
+        string lang)
     {
         if (string.IsNullOrWhiteSpace(dreamTitle))
         {
             return null;
         }
 
+        var dream = dreamTitle.Trim();
+        var hooks = DreamTraitHooks(ranked, lang).Take(2).ToList();
+        if (hooks.Count == 0)
+        {
+            return null;
+        }
+
+        var joined = hooks.Count == 1
+            ? hooks[0]
+            : lang == "en"
+                ? $"{hooks[0]} and {hooks[1]}"
+                : $"{hooks[0]} en {hooks[1]}";
+
         return lang == "en"
-            ? $"For your dream role {dreamTitle.Trim()}, this comes together: {envTitle.ToLowerInvariant()}."
-            : $"Bij je droombaan {dreamTitle.Trim()} komt dit samen: {envTitle.ToLowerInvariant()}.";
+            ? $"For your dream role as {dream}, {joined} fit especially well."
+            : $"Bij je droombaan als {dream} passen vooral {joined}.";
     }
+
+    private static IEnumerable<string> DreamTraitHooks(IReadOnlyList<TestReflectionTrait> ranked, string lang)
+    {
+        foreach (var trait in ranked.Take(3))
+        {
+            var hook = DreamHookForTrait(trait.Code, lang);
+            if (!string.IsNullOrWhiteSpace(hook))
+            {
+                yield return hook!;
+            }
+        }
+    }
+
+    private static string? DreamHookForTrait(string code, string lang)
+        => lang == "en" ? EnDreamHook(code) : NlDreamHook(code);
+
+    private static string? NlDreamHook(string code)
+        => code switch
+        {
+            CompetencyTestCatalog.Samenwerken => "rustig uitleg geven en merken wanneer iemand hulp nodig heeft",
+            CompetencyTestCatalog.Extraversie => "kort contact met mensen en een team op één lijn houden",
+            CompetencyTestCatalog.Resultaatgerichtheid => "zorgvuldig afronden en netjes overdragen",
+            CompetencyTestCatalog.Stressbestendigheid => "kalm blijven als het druk wordt",
+            CompetencyTestCatalog.Innovatie => "een betere aanpak bedenken als iets vastloopt",
+            CareerTestCatalog.Social => "mensen stap voor stap helpen",
+            CareerTestCatalog.Investigative => "begrijpen hoe iets werkt voordat je handelt",
+            CareerTestCatalog.Realistic => "handen uit de mouwen en iets concreets afleveren",
+            _ => null
+        };
+
+    private static string? EnDreamHook(string code)
+        => code switch
+        {
+            CompetencyTestCatalog.Samenwerken => "explaining calmly and noticing when someone needs help",
+            CompetencyTestCatalog.Extraversie => "short contact with people and keeping the team aligned",
+            CompetencyTestCatalog.Resultaatgerichtheid => "finishing carefully and handing over neatly",
+            CompetencyTestCatalog.Stressbestendigheid => "staying calm when it gets busy",
+            CompetencyTestCatalog.Innovatie => "finding a better approach when something gets stuck",
+            CareerTestCatalog.Social => "helping people step by step",
+            CareerTestCatalog.Investigative => "understanding how something works before you act",
+            CareerTestCatalog.Realistic => "hands-on work and delivering something concrete",
+            _ => null
+        };
 
     private static string ThemeTitle(string code, string lang)
     {
@@ -361,7 +457,7 @@ public static class TestReflectionTemplateBuilder
         => lang == "en" ? "How you see this on a normal workday" : "Zo zie je het terug op een gewone werkdag";
 
     private static string WatchSectionTitle(string lang)
-        => lang == "en" ? "No weaknesses — just things to know" : "Geen zwaktes, wel dingen om te weten";
+        => lang == "en" ? "No weaknesses, just things to know" : "Geen zwaktes, wel dingen om te weten";
 
     private static IEnumerable<string> PracticePool(string code, string lang)
     {
@@ -399,7 +495,7 @@ public static class TestReflectionTemplateBuilder
                     "Explaining a task step by step to someone who is learning.",
                     "Checking in with people after a hectic moment."
                 ],
-                _ => ["Turning your highest scores into small habits on ordinary days."]
+                _ => ["Turning your strengths into small habits on ordinary days."]
             };
         }
 
@@ -435,7 +531,7 @@ public static class TestReflectionTemplateBuilder
                 "Een taak stap voor stap uitleggen aan iemand die leert.",
                 "Even bij iemand langsgaan na een hectisch moment."
             ],
-            _ => ["Je hoogste scores zichtbaar maken in kleine gewoontes op gewone dagen."]
+            _ => ["Je sterke kanten zichtbaar maken in kleine gewoontes op gewone dagen."]
         };
     }
 
@@ -448,12 +544,12 @@ public static class TestReflectionTemplateBuilder
                 CompetencyTestCatalog.Samenwerken =>
                     ["You do not say no quickly. You may take on more than is good for you."],
                 CompetencyTestCatalog.Resultaatgerichtheid =>
-                    ["Perfect can take time — agree upfront what 'good enough' means on busy days."],
+                    ["Perfect can take time. Agree upfront what 'good enough' means on busy days."],
                 CompetencyTestCatalog.Innovatie =>
-                    ["Many changes at once need a moment — ask what stays the same."],
+                    ["Many changes at once need a moment. Ask what stays the same."],
                 CompetencyTestCatalog.Extraversie =>
-                    ["Long days full of talk can drain you — plan quiet blocks."],
-                _ => ["When the pace jumps, you need a moment to find your footing — ask for context upfront."]
+                    ["Long days full of talk can drain you. Plan quiet blocks."],
+                _ => ["When the pace jumps, you need a moment to find your footing. Ask for context upfront."]
             };
         }
 
@@ -462,12 +558,12 @@ public static class TestReflectionTemplateBuilder
             CompetencyTestCatalog.Samenwerken =>
                 ["Je zegt niet snel nee. Daardoor neem je soms meer op je dan goed voor je is."],
             CompetencyTestCatalog.Resultaatgerichtheid =>
-                ["Perfectie kost tijd — spreek vooraf af wat op drukke dagen 'goed genoeg' is."],
+                ["Perfectie kost tijd. Spreek vooraf af wat op drukke dagen 'goed genoeg' is."],
             CompetencyTestCatalog.Innovatie =>
-                ["Veel verandering tegelijk vraagt even landen — vraag wat wél hetzelfde blijft."],
+                ["Veel verandering tegelijk vraagt even landen. Vraag wat wél hetzelfde blijft."],
             CompetencyTestCatalog.Extraversie =>
-                ["Lange dagen vol praten kunnen vermoeien — plan stille blokken."],
-            _ => ["Bij veel plotselinge veranderingen heb je even tijd nodig — vraag gerust om uitleg vooraf."]
+                ["Lange dagen vol praten kunnen vermoeien. Plan stille blokken."],
+            _ => ["Bij veel plotselinge veranderingen heb je even tijd nodig. Vraag gerust om uitleg vooraf."]
         };
     }
 
@@ -482,7 +578,7 @@ public static class TestReflectionTemplateBuilder
                 CompetencyTestCatalog.Stressbestendigheid => ["Predictable routines on busy days", "Knowing what is expected of you"],
                 CompetencyTestCatalog.Innovatie => ["Room to improve a stuck process", "Learning something that saves time later"],
                 CompetencyTestCatalog.Extraversie => ["Short contact moments that align the team", "Explaining something to others"],
-                _ => ["Tasks that match your strongest scores"]
+                _ => ["Tasks where you can finish something properly"]
             };
         }
 
@@ -493,7 +589,7 @@ public static class TestReflectionTemplateBuilder
             CompetencyTestCatalog.Stressbestendigheid => ["Vaste routines op drukke dagen", "Weten wat er van je verwacht wordt"],
             CompetencyTestCatalog.Innovatie => ["Ruimte om een vastlopend proces te verbeteren", "Iets leren dat later tijd scheelt"],
             CompetencyTestCatalog.Extraversie => ["Korte contactmomenten die het team op één lijn zetten", "Iets uitleggen aan anderen"],
-            _ => ["Taken die passen bij je sterkste scores"]
+            _ => ["Taken waar je iets concreets kunt afronden"]
         };
     }
 

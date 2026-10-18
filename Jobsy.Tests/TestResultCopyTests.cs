@@ -8,7 +8,7 @@ public class TestResultCopyTests
     public void Score_chip_names_questions_and_upsell_drops_vacancies_when_employers_are_off()
     {
         var chip = string.Format(UiStrings.Get("TestResult.ScoresFromQuestions", "nl"), 5, 25);
-        Assert.Equal("5 scores uit 25 vragen", chip);
+        Assert.Equal("5 thema's uit 25 vragen", chip);
         var self = UiStrings.Get("TestResult.Upsell.Self", "nl");
         Assert.DoesNotContain("vacature", self, StringComparison.OrdinalIgnoreCase);
 

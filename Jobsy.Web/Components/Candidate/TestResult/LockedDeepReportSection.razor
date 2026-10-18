@@ -30,7 +30,6 @@
                     <div class="test-result-card-locked__head">
                         <div>
                             <h3>@Culture[card.TitleKey]</h3>
-                            <small>@Culture[card.SubtitleKey]</small>
                         </div>
                         <span class="test-result-lock-chip">
                             <span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
@@ -38,19 +37,10 @@
                         </span>
                     </div>
                     <div class="test-result-card-locked__body" aria-hidden="true">
-                        <ul class="test-result-dummy-bars">
-                            <li>
-                                <div class="row"><span>@Culture["TestResult.Sample.LabelA"]</span><strong>72%</strong></div>
-                                <div class="trk"><span style="width:72%"></span></div>
-                            </li>
-                            <li>
-                                <div class="row"><span>@Culture["TestResult.Sample.LabelB"]</span><strong>48%</strong></div>
-                                <div class="trk"><span style="width:48%"></span></div>
-                            </li>
-                            <li>
-                                <div class="row"><span>@Culture["TestResult.Sample.LabelC"]</span><strong>81%</strong></div>
-                                <div class="trk"><span style="width:81%"></span></div>
-                            </li>
+                        <ul class="test-result-dummy-bars test-result-dummy-bars--neutral" aria-hidden="true">
+                            <li><div class="trk"><span style="width:68%"></span></div></li>
+                            <li><div class="trk"><span style="width:44%"></span></div></li>
+                            <li><div class="trk"><span style="width:76%"></span></div></li>
                         </ul>
                     </div>
                     <span class="test-result-stamp" aria-hidden="true">@Culture["TestResult.Stamp"]</span>

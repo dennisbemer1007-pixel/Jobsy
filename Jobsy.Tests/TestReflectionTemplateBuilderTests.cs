@@ -31,7 +31,35 @@ public sealed class TestReflectionTemplateBuilderTests
         Assert.True(mirror.EnergyDrains.Count >= 2);
         Assert.All(mirror.Themes, t => Assert.DoesNotContain("groeit nog", t.Summary, StringComparison.OrdinalIgnoreCase));
         Assert.Contains("dierenarts", mirror.DreamCallout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("score", mirror.EnvironmentBody, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("—", mirror.HeroSubtitle + string.Join(' ', mirror.WatchPoints));
+        Assert.Contains("vaste ploeg", mirror.EnvironmentTitle, StringComparison.OrdinalIgnoreCase);
+        Assert.Null(CandidateFactGuard.MirrorCopyRejection(TestReflectionJson.FlattenForGuard(mirror)));
         Assert.False(mirror.FromOpenAi);
+    }
+
+    [Fact]
+    public void BuildFull_analytical_profile_has_concrete_environment_and_dream()
+    {
+        var snapshot = new TestReflectionScoreSnapshot(
+            AssessmentKind.Competence,
+            AssessmentTestVersions.V3,
+            25,
+            [
+                new(CompetencyTestCatalog.Innovatie, 88, "Nieuw"),
+                new(CompetencyTestCatalog.Resultaatgerichtheid, 84, "Afmaken"),
+                new(CompetencyTestCatalog.Stressbestendigheid, 76, "Kalm"),
+                new(CompetencyTestCatalog.Samenwerken, 42, "Samen"),
+                new(CompetencyTestCatalog.Extraversie, 32, "Mensen")
+            ],
+            "softwareontwikkelaar");
+
+        var mirror = TestReflectionTemplateBuilder.BuildFull(snapshot, "hoe je werkt", "nl");
+
+        Assert.Contains("focussen", mirror.EnvironmentTitle, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("softwareontwikkelaar", mirror.DreamCallout, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("sterke kanten gebruikt", mirror.DreamCallout ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.Null(CandidateFactGuard.MirrorCopyRejection(TestReflectionJson.FlattenForGuard(mirror)));
     }
 
     [Fact]

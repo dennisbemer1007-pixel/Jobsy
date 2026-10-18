@@ -39,7 +39,7 @@
                 <div class="test-mirror__card-spot" aria-hidden="true"></div>
                 <div class="test-mirror__card-main">
                     <small>@Culture["TestReflection.PracticeLabel"]</small>
-                    <h3>@Mirror.PracticeTitle</h3>
+                    <h3 class="test-mirror__card-lead">@Mirror.PracticeTitle</h3>
                     <ul class="test-mirror__list test-mirror__list--ok">
                         @foreach (var line in Mirror.PracticeExamples)
                         {
@@ -52,7 +52,7 @@
                 <div class="test-mirror__card-spot" aria-hidden="true"></div>
                 <div class="test-mirror__card-main">
                     <small>@Culture["TestReflection.WatchLabel"]</small>
-                    <h3>@Mirror.WatchTitle</h3>
+                    <h3 class="test-mirror__card-lead">@Mirror.WatchTitle</h3>
                     <ul class="test-mirror__list test-mirror__list--watch">
                         @foreach (var line in Mirror.WatchPoints)
                         {
