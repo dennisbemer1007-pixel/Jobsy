@@ -27,7 +27,7 @@
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-07" />
@@ -142,6 +142,10 @@
     else if (_welcome)
     {
         <section class="ob-wizard__welcome">
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="state-message error">@_error</p>
+            }
             <div class="lobsy-logo">
                 <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
             </div>
@@ -187,7 +191,6 @@
                     </div>
                 }
                 <p class="ob-wizard__saved">✓ @Culture["Onboarding.AllSaved"]</p>
-                <button type="button" class="ob-wizard__ghost" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
             </aside>
 
             <main class="ob-wizard__main">
@@ -199,9 +202,18 @@
                         </div>
                         <div class="ob-wizard__topbar-actions">
                             <p class="ob-wizard__topbar-meta">@MobileTopMeta</p>
-                            <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                            <div class="ob-wizard__topbar-links">
+                                <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                                <a class="ob-wizard__topbar-privacy"
+                                   href="/privacy/data"
+                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                            </div>
                         </div>
                     </div>
+                    <p class="ob-wizard__mobile-privacy">
+                        <a href="/privacy/data"
+                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                    </p>
                     <div class="ob-wizard__progress-thin"
                          role="progressbar"
                          aria-valuemin="1"
@@ -231,7 +243,12 @@
                                 </span>
                             }
                         </div>
-                        <button type="button" class="ob-wizard__later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                        <div class="ob-wizard__header-actions">
+                            <button type="button" class="ob-wizard__later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                            <a class="ob-wizard__later ob-wizard__privacy-link"
+                               href="/privacy/data"
+                               title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                        </div>
                     </div>
                     <div class="ob-wizard__status-row">
                         <span>
@@ -379,6 +396,9 @@
                                                      ConsentChanged="OnConsentChanged"
                                                      ShowError="@(_showValidation && !Draft.ConsentRequested)" />
                         }
+                        <a class="ob-wizard__footer-privacy"
+                           href="/privacy/data"
+                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
                         <div class="ob-wizard__actionbar">
                             <button type="button"
                                     class="ob-wizard__back-footer"
@@ -851,9 +871,18 @@
 
     private async Task BeginAsync()
     {
+        _error = null;
         _welcome = false;
-        await MarkStartedAsync();
-        RequestStepScrollReset();
+        try
+        {
+            await MarkStartedAsync();
+            RequestStepScrollReset();
+        }
+        catch (Exception ex)
+        {
+            _welcome = true;
+            _error = UserFacing.Describe(ex);
+        }
     }
 
     private async Task MarkStartedAsync()

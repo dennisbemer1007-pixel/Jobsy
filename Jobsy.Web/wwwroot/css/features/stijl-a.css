@@ -39,3 +39,73 @@ html:not(.pub-theme) body,
 .admin-shell .lobsy-watermarks {
   display: none;
 }
+
+/* Candidate fit bars: no numeric fallback text inside <progress>. */
+.kb-dna--detail .kb-dna__progress {
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+}
+
+/* #728 illustrated pages: reserve space above bottom nav when coach is hidden. */
+@media (max-width: 639px) {
+  .app-shell:has(.panel-page--cand-ill) .app-main {
+    padding-bottom: calc(var(--bottom-nav-h, 56px) + 20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .app-shell:has(.panel-page--cand-ill) .kb-next,
+  .app-shell:has(.panel-page--cand-ill) .career-card__actions,
+  .app-shell:has(.panel-page--cand-ill) .read-aloud-btn {
+    position: relative;
+    z-index: 2;
+  }
+}
+
+/* Werkgever binnenkort — compact, no empty viewport band. */
+.pub-section.wg-soon {
+  min-height: auto;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding-block: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.wg-soon .pp-doc__hero {
+  margin-bottom: 1rem;
+}
+
+.wg-soon__grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.wg-soon__card {
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface);
+}
+
+.wg-soon__card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.wg-soon__card p {
+  margin: 0 0 0.65rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.wg-soon__card a {
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.wg-soon__card a:hover {
+  text-decoration: underline;
+}

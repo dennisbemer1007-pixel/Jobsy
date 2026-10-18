@@ -48,6 +48,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Resume.Lead"] = resumeLead;
         map["Onboarding.Resume.Cta"] = resumeCta;
         var english = language != "nl";
+        map["Onboarding.AccountPrivacyLink"] = english ? "My data & account" : "Mijn gegevens & account";
         map["Onboarding.Step1.Title"] = english ? "Let’s get acquainted" : "Even kennismaken";
         map["Onboarding.Step1.Lead"] = english ? "Is this correct? We copied your name from your account." : "Klopt dit? We hebben je naam overgenomen van je account.";
         map["Onboarding.UseMyLocation"] = english ? "Use my location" : "Gebruik mijn locatie";

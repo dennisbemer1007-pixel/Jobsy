@@ -33,6 +33,9 @@ public static class UiStringsKandidaatBanen
             "Włącz 'Dostępny do pracy'",
             "Activează 'Disponibil pentru lucru'",
             "فعّل 'متاح للعمل'");
+        Add("Kb.Fit.PastWhy",
+            "Past bij je: {reason}", "Fits you: {reason}",
+            "Pasuje do ciebie: {reason}", "Ți se potrivește: {reason}", "يناسبك: {reason}");
         Add("Kb.Fit.Strong",
             "Sterke match", "Strong fit",
             "Silne dopasowanie", "Potrivire puternică", "تطابق قوي");
@@ -57,6 +60,9 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Fit.PracticalTitle",
             "Wat nu al past", "What already fits",
             "Co już pasuje", "Ce se potrivește deja", "ما يناسبك الآن");
+        Add("Kb.Fit.WhyTitle",
+            "Waarom past dit?", "Why does this fit?",
+            "Dlaczego to pasuje?", "De ce se potrivește?", "لماذا يناسبك هذا؟");
         Add("Kb.Fit.SparkleAria",
             "Fit-indicatie", "Fit indicator",
             "Wskaźnik dopasowania", "Indicator de potrivire", "مؤشر الملاءمة");
@@ -299,6 +305,18 @@ public static class UiStringsKandidaatBanen
             "Zobacz je", "Vezi-le", "اعرضها");
 
         // Steps legend (07)
+        Add("Kb.Apps.ApplyTip.Title",
+            "Zo werkt solliciteren met je Lobsy-CV",
+            "How applying works with your Lobsy CV",
+            "Jak działa aplikowanie z CV Lobsy",
+            "Cum funcționează candidatura cu CV-ul Lobsy",
+            "كيف يعمل التقديم مع سيرة Lobsy");
+        Add("Kb.Apps.ApplyTip.Body",
+            "Je Lobsy-CV gaat automatisch mee bij elke sollicitatie. Een aparte motivatiebrief hoef je niet mee te sturen.",
+            "Your Lobsy CV is sent automatically with every application. You do not need a separate cover letter.",
+            "Twoje CV Lobsy wysyłane jest automatycznie przy każdej aplikacji. Osobny list motywacyjny nie jest potrzebny.",
+            "CV-ul tău Lobsy merge automat la fiecare candidatură. Nu ai nevoie de scrisoare de intenție separată.",
+            "تُرسل سيرة Lobsy تلقائياً مع كل طلب. لا تحتاج إلى خطاب تغطية منفصل.");
         Add("Kb.Steps.Title",
             "Wat betekenen de stappen?", "What do the steps mean?",
             "Co oznaczają kroki?", "Ce înseamnă pașii?", "ماذا تعني الخطوات؟");
@@ -375,6 +393,12 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Saved.FilterOpen",
             "Nog open", "Still open",
             "Jeszcze otwarte", "Încă deschise", "ما زالت مفتوحة");
+        Add("Kb.Saved.FilterEmpty",
+            "Geen banen in deze filter. Kies een andere filter.",
+            "No jobs in this filter. Try another filter.",
+            "Brak ofert w tym filtrze. Wybierz inny filtr.",
+            "Niciun job în acest filtru. Încearcă alt filtru.",
+            "لا توجد وظائف في هذا الفلتر. جرّب فلترًا آخر.");
         Add("Kb.Saved.FilterClosed",
             "Gesloten", "Closed",
             "Zamknięte", "Închise", "مغلقة");

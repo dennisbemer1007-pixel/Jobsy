@@ -67,6 +67,8 @@ public class KbListModeAndDetailBunitTests : BunitContext
         var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "Pages", "VacancyDetail.razor"));
         Assert.Contains("kb-travel-card", detail, StringComparison.Ordinal);
         Assert.Contains("kb-fit-panel", detail, StringComparison.Ordinal);
+        Assert.Contains("Kb.Fit.WhyTitle", detail, StringComparison.Ordinal);
+        Assert.Contains("kb-dna__reason", detail, StringComparison.Ordinal);
         Assert.Contains("btn--primary", detail, StringComparison.Ordinal);
         Assert.Contains("kb-detail__sticky-apply", detail, StringComparison.Ordinal);
         Assert.Contains("data-testid=\"kb-travel-modes\"", detail, StringComparison.Ordinal);
