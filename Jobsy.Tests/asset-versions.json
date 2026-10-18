@@ -116,8 +116,8 @@
     "v": "20261018-01"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "a35e24d5ecb4a39d45fac0288211dd4dc2fee11b97b2c71fcd2db36f0532ee2a",
-    "v": "20261017-01"
+    "sha256": "a901002cf523026f2f32c79c3886186d8553c763089ce5cddd976a10a9f03c7f",
+    "v": "20261018-02"
   },
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "3b8d58979c481091afb041cfcf3de1017fb336d65b8993f4de703f55e4c3c293",
@@ -136,8 +136,8 @@
     "v": "20261018-07"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
-    "v": "20261015-21"
+    "sha256": "c4073fa83d5b4d7bac739ec12b45eb41832de8608057082e32891fd8e5168791",
+    "v": "20261018-01"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
@@ -176,8 +176,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "59f25d5348c287a1b4501bb8bc4e03e2dc6295d0d58a1dad6b795a10affffe12",
-    "v": "20261012-06"
+    "sha256": "6d409bd83d6924bd20b24b44638ee75dd642d3ccb3b2fa82208427a4da6221b9",
+    "v": "20261018-18"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "d1dfe82df457da2a5ba7fbf14ece342bbed87da0bd1b1f94707987edb9534482",
