@@ -68,6 +68,45 @@ public sealed class OnboardingBlockResumePlaywrightTests
     }
 
     [Fact]
+    public async Task Capture_waarden_block_vraag_1_on_journey_step_10_when_requested()
+    {
+        if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCK_RESUME") ?? "").Trim() != "1")
+        {
+            return;
+        }
+
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        if (!await SmokeReachability.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(OutputDir);
+        await PrepareFreshMiniBlockAsync(step: 10);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        await using var ctx = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 1440, Height = 900 } });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, Email, Password));
+        await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis?step=10", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
+        await page.Locator(".test-flow__counter").First.WaitForAsync(new() { Timeout = 90_000 });
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+
+        var counterText = await page.Locator(".test-flow__counter").First.InnerTextAsync();
+        Assert.Contains("Vraag 1 van 5", counterText, StringComparison.Ordinal);
+
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutputDir, "journey-waarden-vraag1-1440.png"),
+            FullPage = false
+        });
+    }
+
+    [Fact]
     public async Task Capture_sfeer_and_waarden_blocks_at_vraag_1_when_requested()
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCK_RESUME") ?? "").Trim() != "1")

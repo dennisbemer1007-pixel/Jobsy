@@ -18,22 +18,22 @@ internal static class OnboardingTestCompletion
 
         var version = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2Enabled);
         var completed = new List<int>(4);
-        if (IsMiniComplete(AssessmentKind.Competence, competency?.Answers, version))
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Competence, version, competency?.Answers))
         {
             completed.Add(7);
         }
 
-        if (IsMiniComplete(AssessmentKind.Career, career?.Answers, version))
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Career, version, career?.Answers))
         {
             completed.Add(8);
         }
 
-        if (IsMiniComplete(AssessmentKind.Culture, culture?.Answers, version))
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Culture, version, culture?.Answers))
         {
             completed.Add(9);
         }
 
-        if (IsMiniComplete(AssessmentKind.Values, values?.Answers, version))
+        if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(AssessmentKind.Values, version, values?.Answers))
         {
             completed.Add(10);
         }
@@ -62,21 +62,6 @@ internal static class OnboardingTestCompletion
         10 => 4,
         _ => 1
     };
-
-    private static bool IsMiniComplete(
-        AssessmentKind kind,
-        Dictionary<string, int>? answers,
-        int quickScanVersion)
-    {
-        if (answers is not { Count: > 0 })
-        {
-            return false;
-        }
-
-        var miniIds = TestDepthRules.MiniIds(kind, quickScanVersion);
-        return miniIds.All(id =>
-            answers.TryGetValue(id.ToString(), out var value) && value is >= 1 and <= 5);
-    }
 
     private static int ResolveQuickScanVersion(int? stored, bool testsV2Enabled)
     {
