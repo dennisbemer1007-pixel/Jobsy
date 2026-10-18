@@ -165,6 +165,10 @@ public sealed class OnboardingNearbyPanelPlaywrightTests
             await page.Locator("[data-testid=onboarding-work-job] input").First.FillAsync("Magazijnmedewerker");
             await page.Locator("[data-testid=onboarding-work-job] input").Nth(1).FillAsync("Lobsy BV");
             await page.WaitForTimeoutAsync(600);
+            var dateTexts = page.Locator("[data-testid=onboarding-work-job] .jobsy-date-field__text");
+            Assert.True(await dateTexts.CountAsync() >= 2);
+            var monthPlaceholder = await dateTexts.First.GetAttributeAsync("placeholder") ?? "";
+            Assert.Contains("mm", monthPlaceholder, StringComparison.OrdinalIgnoreCase);
             var chip = page.Locator(".ob-job-duty-pill").First;
             if (await chip.CountAsync() > 0)
             {
@@ -179,6 +183,11 @@ public sealed class OnboardingNearbyPanelPlaywrightTests
 
             await page.Locator(".ob-job-dates__current input").CheckAsync();
             await page.WaitForTimeoutAsync(400);
+            var currentRow = page.Locator(".ob-job-dates__current").First;
+            Assert.Equal("row", await currentRow.EvaluateAsync<string>("el => getComputedStyle(el).flexDirection"));
+            Assert.Equal("flex-start", await currentRow.EvaluateAsync<string>("el => getComputedStyle(el).justifyContent"));
+            Assert.Equal("16px", await currentRow.Locator("input[type=checkbox]").EvaluateAsync<string>(
+                "el => getComputedStyle(el).width"));
             if (capture)
             {
                 await page.ScreenshotAsync(new() { Path = Path.Combine(artifacts, $"{tag}-work-history-current-job.png") });
