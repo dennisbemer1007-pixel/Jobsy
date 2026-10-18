@@ -14,7 +14,7 @@ SLUGS = ("hoe-je-werkt", "leuk", "sfeer", "waarden")
 
 CROP_START = {
     "hoe-je-werkt": 0.52,
-    "leuk": 0.52,
+    "leuk": 0.75,
     "sfeer": 0.52,
     "waarden": 0.34,
 }
@@ -56,12 +56,21 @@ def crop_figure(slug: str) -> None:
     y1 = min(arr.shape[0], int(ys.max()) + pad + 1)
     trimmed = arr[y0:y1, x0:x1]
 
+    if slug == "leuk":
+        col_alpha = trimmed[:, :, 3].max(axis=0)
+        opaque_cols = np.where(col_alpha > 32)[0]
+        if len(opaque_cols) > 12:
+            left = int(opaque_cols[0])
+            shave = min(18, max(0, left + 4))
+            if shave > 0:
+                trimmed = trimmed[:, shave:, :]
+
     out = Image.fromarray(trimmed, mode="RGBA")
     # Shave a 1px rim so the exported PNG never reads as a JPG stamp box.
     alpha = out.split()[-1]
     alpha = alpha.point(lambda a: 0 if a < 245 else a)
     out.putalpha(alpha)
-    target_h = 360
+    target_h = 380
     scale = target_h / out.height
     target_w = max(1, int(out.width * scale))
     out = out.resize((target_w, target_h), Image.Resampling.LANCZOS)

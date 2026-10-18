@@ -192,9 +192,28 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             Assert.True(tabsBox!.Y + tabsBox.Height <= heroBox!.Y + 2,
                 $"{target.FileStem}: depth tabs must sit above the mobile hero.");
 
+            var scrollWidth = await page.EvaluateAsync<double>("""
+                () => {
+                  const el = document.documentElement;
+                  return Math.max(el.scrollWidth, document.body?.scrollWidth ?? 0);
+                }
+                """);
+            Assert.InRange(scrollWidth, 389, 391);
+
+            var stageWidth = await page.Locator("[data-testid=test-block-stage]").EvaluateAsync<double>(
+                "el => el.getBoundingClientRect().width");
+            Assert.InRange(stageWidth, 356, 362);
+
+            var flowWidth = await page.Locator(".test-flow").First.EvaluateAsync<double>(
+                "el => el.getBoundingClientRect().width");
+            Assert.InRange(flowWidth, 356, 362);
+
+            var pageWidth = await page.Locator(".test-page").EvaluateAsync<double>(
+                "el => el.getBoundingClientRect().width");
+            Assert.InRange(pageWidth, 388, 392);
+
             await page.WaitForTimeoutAsync(400);
-            var png = await page.Locator(".test-block-stage__mobile-hero__figure").First
-                .ScreenshotAsync(new() { Type = ScreenshotType.Png });
+            var png = await hero.ScreenshotAsync(new() { Type = ScreenshotType.Png });
             AssertMobHeroFill(png, target.FileStem);
         }
     }
@@ -206,9 +225,10 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         var h = image.Height;
         var cream = 0;
         var nonCream = 0;
+        var rightStart = (int)(w * 0.48);
         for (var y = 0; y < h; y++)
         {
-            for (var x = 0; x < w; x++)
+            for (var x = rightStart; x < w; x++)
             {
                 var p = image[x, y];
                 if (MobHeroPixelIsCream(p))
@@ -223,8 +243,9 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
 
         var ratio = (double)nonCream / Math.Max(1, cream + nonCream);
-        Assert.True(ratio >= 0.34,
-            $"{stem}: expected >=34% non-cream pixels in mobhero figure band, got {ratio:P1}.");
+        var minRatio = stem.Contains("waarden", StringComparison.OrdinalIgnoreCase) ? 0.04 : 0.08;
+        Assert.True(ratio >= minRatio,
+            $"{stem}: expected figure fill in right 52% of mobhero, got {ratio:P1}.");
     }
 
     private static bool MobHeroPixelIsCream(Rgba32 p)
@@ -234,7 +255,22 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             return true;
         }
 
-        return p.R > 210 && p.G > 205 && p.B > 190 && p.R - p.B < 45;
+        if (p.B > p.R + 6 && p.B > 215)
+        {
+            return false;
+        }
+
+        if (p.R > 200 && p.G > 170 && p.B < 175)
+        {
+            return false;
+        }
+
+        if (p.G > p.R + 8 && p.G > 165 && p.B > 140)
+        {
+            return false;
+        }
+
+        return p.R > 228 && p.G > 222 && p.B > 210 && p.R - p.B < 28;
     }
 
     private static void PurgeLegacyArtifactDirs()

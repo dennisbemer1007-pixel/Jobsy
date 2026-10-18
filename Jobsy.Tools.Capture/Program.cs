@@ -147,6 +147,35 @@ foreach (var (stem, returnPath, captureTarget) in targets)
             await page.WaitForTimeoutAsync(350);
         }
 
+        if (width < 640)
+        {
+            var scrollWidth = await page.EvaluateAsync<double>("""
+                () => Math.max(document.documentElement.scrollWidth, document.body?.scrollWidth ?? 0)
+                """);
+            if (Math.Abs(scrollWidth - width) > 1.5)
+            {
+                throw new InvalidOperationException($"{stem}: scrollWidth {scrollWidth} != viewport {width}");
+            }
+
+            var layout = await page.EvaluateAsync<string>("""
+                () => {
+                  const pick = (sel) => {
+                    const el = document.querySelector(sel);
+                    if (!el) return null;
+                    const r = el.getBoundingClientRect();
+                    return Math.round(r.width);
+                  };
+                  return JSON.stringify({
+                    page: pick('.test-page'),
+                    stage: pick('[data-testid=test-block-stage]'),
+                    flow: pick('.test-flow'),
+                    footer: pick('.test-flow__footer[data-sticky-footer]')
+                  });
+                }
+                """);
+            Console.WriteLine($"{stem}: layout widths {layout}");
+        }
+
         var path = Path.Combine(outputDir, $"{stem}-{tag}.png");
         await page.ScreenshotAsync(new() { Path = path, FullPage = false });
         Console.WriteLine($"Wrote {path} ({new FileInfo(path).Length} bytes)");

@@ -26,7 +26,7 @@ public static class PageAssetCatalog
     /// <summary>Every interactive Blazor page.</summary>
     public static readonly string[] BlazorCoreCss =
     [
-        "css/app.min.css?v=20261018-02",
+        "css/app.min.css?v=20261018-03",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
@@ -55,7 +55,7 @@ public static class PageAssetCatalog
         "css/features/testresultaten.css?v=20261004-10",
         "css/features/mijn-paspoort.css?v=20261017-03",
         "css/features/ontdekkingsreis.css?v=20261018-01",
-        "css/features/tests.css?v=20261018-19",
+        "css/features/tests.css?v=20261018-21",
         "css/features/carriere.css?v=20261011-01",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",

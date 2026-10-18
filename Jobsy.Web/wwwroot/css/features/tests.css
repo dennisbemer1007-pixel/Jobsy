@@ -468,6 +468,50 @@
   .test-flow--compact .test-flow__later {
     display: none;
   }
+
+  .app-shell--candidate .test-page:has([data-testid="test-block-stage"]) .test-flow__footer[data-sticky-footer],
+  .test-page:has([data-testid="test-block-stage"]) .test-flow__footer[data-sticky-footer] {
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.65rem;
+    padding-inline: max(1rem, env(safe-area-inset-inline-start, 0px))
+      max(1rem, env(safe-area-inset-inline-end, 0px));
+    inline-size: 100%;
+    max-inline-size: none;
+    inset-inline: 0;
+    box-sizing: border-box;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-flow__footer .test-flow__back {
+    flex: 0 0 auto;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-flow__footer .test-flow__later {
+    display: none;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-flow__footer .test-flow__next {
+    flex: 1 1 60%;
+    min-inline-size: 60%;
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+    min-block-size: 48px;
+    inline-size: auto;
+    max-inline-size: none;
+    background: var(--brand);
+    color: var(--surface);
+    border-color: var(--brand);
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-flow__footer .test-flow__next:disabled {
+    opacity: 0.55;
+    background: var(--brand);
+    border-color: var(--brand);
+    color: var(--surface);
+  }
 }
 
 @media (max-width: 420px) {
@@ -506,6 +550,43 @@
   padding-block-end: max(0.5rem, env(safe-area-inset-bottom, 0px));
 }
 
+@media (max-width: 1023px) {
+  /* Coach is hidden on test pages but app.css still reserves inline-end gutter. */
+  .app-shell:has([data-lobsy-coach]) .test-page:has([data-testid="test-block-stage"]) {
+    padding-inline-end: max(1rem, env(safe-area-inset-inline-end, 0px)) !important;
+    scroll-padding-inline-end: 0 !important;
+  }
+
+  .app-shell:has([data-lobsy-coach]) .test-page:has([data-testid="test-block-stage"]) a {
+    margin-inline-end: 0;
+  }
+
+  .app-shell:has([data-lobsy-coach])
+    .test-page:has([data-testid="test-block-stage"])
+    .test-flow__footer
+    :is(a, button) {
+    max-inline-size: none;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) {
+    inline-size: 100%;
+    max-inline-size: none;
+    margin-inline: 0;
+    padding-inline: max(1rem, env(safe-area-inset-inline-start, 0px))
+      max(1rem, env(safe-area-inset-inline-end, 0px));
+    box-sizing: border-box;
+    background: var(--bg);
+    overflow-x: clip;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-flow,
+  .test-page:has([data-testid="test-block-stage"]) .test-consent {
+    inline-size: 100%;
+    max-inline-size: none;
+    min-inline-size: 0;
+  }
+}
+
 /* Per-block bottom-band backgrounds (Quick-Scan, verdieping, diepte-analyse). */
 .test-block-stage {
   --test-block-band-height: clamp(6.5rem, 26vh, 12.5rem);
@@ -534,28 +615,28 @@
 
 .test-block-stage--hoe-je-werkt {
   --test-block-tint: #e6eef7;
-  --test-block-hero-cream: color-mix(in srgb, var(--surface) 93%, var(--pearl-cool, var(--pearl)));
+  --test-block-hero-cream: color-mix(in srgb, var(--bg) 62%, var(--pearl-cool, var(--pearl)));
   --test-block-band-image: url("/images/tests/bg-hoe-je-werkt.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/hoe-je-werkt-hero.png");
 }
 
 .test-block-stage--leuk {
   --test-block-tint: color-mix(in srgb, var(--coral-soft, #ffe8e0) 38%, var(--surface));
-  --test-block-hero-cream: color-mix(in srgb, var(--surface) 90%, var(--coral-soft, #ffe8e0));
+  --test-block-hero-cream: color-mix(in srgb, var(--bg) 58%, var(--coral-soft, #ffe8e0));
   --test-block-band-image: url("/images/tests/bg-leuk.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/leuk-hero.png");
 }
 
 .test-block-stage--sfeer {
   --test-block-tint: #f3ebe2;
-  --test-block-hero-cream: color-mix(in srgb, var(--surface) 88%, var(--pearl));
+  --test-block-hero-cream: color-mix(in srgb, var(--bg) 55%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-sfeer.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/sfeer-hero.png");
 }
 
 .test-block-stage--waarden {
   --test-block-tint: color-mix(in srgb, #d8e8dc 42%, var(--surface));
-  --test-block-hero-cream: color-mix(in srgb, var(--surface) 90%, var(--pearl));
+  --test-block-hero-cream: color-mix(in srgb, var(--bg) 58%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-waarden.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/waarden-hero.png");
 }
@@ -604,10 +685,34 @@
 }
 
 @media (max-width: 1023px) {
+  .app-main:has([data-testid="test-block-stage"]) {
+    background: var(--bg);
+  }
+
+  .test-block-stage--hoe-je-werkt,
+  .test-block-stage--leuk,
+  .test-block-stage--sfeer,
+  .test-block-stage--waarden {
+    --test-block-hero-cream: var(--bg);
+  }
+
+  .test-page.journey-page:has([data-testid="test-block-stage"]) {
+    background: var(--bg);
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-block-stage,
+  .test-page:has([data-testid="test-block-stage"]) .test-block-stage__content,
+  .test-page:has([data-testid="test-block-stage"]) .test-shell__layout,
+  .test-page:has([data-testid="test-block-stage"]) .test-shell__main {
+    inline-size: 100%;
+    max-inline-size: none;
+  }
+
   .test-block-stage {
     --test-block-band-height: clamp(3rem, 11vh, 4.25rem);
     border-radius: 0;
-    overflow: visible;
+    overflow-x: clip;
+    overflow-y: visible;
     background: transparent;
   }
 
@@ -623,7 +728,8 @@
   }
 
   .test-block-stage .test-shell__card {
-    margin-inline: 0.85rem;
+    margin-inline: 0;
+    padding-inline: 0;
     box-shadow: none;
     border: 0;
   }
@@ -649,7 +755,13 @@
     border-radius: 0;
     overflow: hidden;
     isolation: isolate;
-    background-color: var(--test-block-hero-cream, color-mix(in srgb, var(--surface) 96%, var(--pearl)));
+    background-color: var(--test-block-hero-cream, var(--bg));
+    background-image: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 92%, var(--surface)) 0%,
+      var(--bg) 100%
+    );
+    box-shadow: none;
   }
 
   .test-block-stage__mobile-hero--compact {
@@ -662,23 +774,26 @@
     align-self: end;
     justify-self: end;
     inline-size: 100%;
+    min-inline-size: 0;
+    max-inline-size: 100%;
     block-size: min(92%, 11.5rem);
     min-block-size: 7.25rem;
     max-block-size: 95%;
     opacity: 1;
     pointer-events: none;
     overflow: hidden;
+    contain: layout paint;
   }
 
   .test-block-stage__mobile-hero__figure img {
     display: block;
-    inline-size: 100%;
-    block-size: 100%;
-    max-block-size: min(94%, 11.75rem);
+    inline-size: 155%;
+    max-inline-size: 155%;
+    block-size: min(98%, 12rem);
+    max-block-size: min(98%, 12rem);
+    margin-inline-start: auto;
     object-fit: contain;
     object-position: 100% 100%;
-    transform: scale(1.85);
-    transform-origin: 100% 100%;
   }
 
   .test-block-stage__mobile-hero__fade {
@@ -693,12 +808,8 @@
     pointer-events: none;
   }
 
-  .test-page:has([data-testid="test-block-stage"]) {
-    padding-inline: 0;
-  }
-
   .test-page:has([data-testid="test-block-stage"]) .test-depth-segments {
-    margin-inline: 0.85rem;
+    margin-inline: 0;
   }
 
   .test-block-stage__mobile-hero h1,
@@ -715,13 +826,13 @@
     line-height: 1.22;
     font-weight: 700;
     color: var(--ink);
-    background: var(--test-block-hero-cream, color-mix(in srgb, var(--surface) 96%, var(--pearl)));
+    background: transparent;
     border: 0;
     box-shadow: none;
   }
 
   .test-block-stage--leuk .test-block-stage__mobile-hero__figure {
-    block-size: 86%;
+    block-size: 92%;
   }
 
   .test-block-stage--sfeer .test-block-stage__mobile-hero__figure {
@@ -729,7 +840,19 @@
   }
 
   .test-block-stage--waarden .test-block-stage__mobile-hero__figure img {
-    transform: scale(2.72);
+    inline-size: 195%;
+    max-inline-size: 195%;
+    block-size: min(98%, 12rem);
+    max-block-size: min(98%, 12rem);
+    object-position: 96% 100%;
+  }
+
+  .test-block-stage--leuk .test-block-stage__mobile-hero__figure img {
+    inline-size: 182%;
+    max-inline-size: 182%;
+    block-size: min(98%, 12rem);
+    max-block-size: min(98%, 12rem);
+    object-position: 100% 100%;
   }
 
   .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {

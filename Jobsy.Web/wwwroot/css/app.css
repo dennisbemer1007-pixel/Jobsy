@@ -21742,7 +21742,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         .passport-tests__bar-labels,
         .passport-tests__row,
         .competence-trait-chips,
-        .test-page
+        .test-page:not(:has([data-testid="test-block-stage"]))
     ) {
         padding-inline-end: calc(56px + 16px);
         scroll-padding-inline-end: calc(56px + 16px);
@@ -21750,7 +21750,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     }
 
     /* Last tab and an empty test link stay left of the 56px coach. */
-    .app-shell:has([data-lobsy-coach]) .test-page a {
+    .app-shell:has([data-lobsy-coach]) .test-page:not(:has([data-testid="test-block-stage"])) a {
         margin-inline-end: calc(56px + 16px);
     }
 
