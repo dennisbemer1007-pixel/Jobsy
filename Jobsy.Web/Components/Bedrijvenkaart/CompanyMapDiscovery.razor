@@ -37,28 +37,30 @@
     <p class="bk-info-banner">@Culture["Bk.InfoBanner"]</p>
 
     <div class="bk-filters">
-        <div class="bk-filters__row">
-            <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllSectors"]">
-                <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllSectors"]</button>
+        <div class="bk-filters__track">
+            <div class="bk-filters__row">
+                <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllSectors"]">
+                    <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllSectors"]</button>
+                </div>
+                <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllFields"]">
+                    <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllFields"]</button>
+                </div>
+                <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.Distance"]">
+                    @foreach (var km in new[] { 10, 25, 40 })
+                    {
+                        <button type="button" class="jobsy-action @(_radiusKm == km ? "is-active" : null)" aria-pressed="@(_radiusKm == km)" @onclick="() => SetRadius(km)">@km km</button>
+                    }
+                </div>
             </div>
-            <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllFields"]">
-                <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllFields"]</button>
+            <div class="bk-filters__row bk-filters__row--chips">
+                <button type="button" class="jobsy-action @(_openOnly ? "is-active" : null)" aria-pressed="@_openOnly" @onclick="ToggleOpenOnly">@Culture["Bk.Filter.OpenOnly"]</button>
+                <button type="button" class="jobsy-action @(_agencies ? "is-active" : null)" aria-pressed="@_agencies" @onclick="ToggleAgencies">@Culture["Bk.Filter.Agencies"]</button>
+                <button type="button" class="jobsy-action @(_respondsFast ? "is-active" : null)" aria-pressed="@_respondsFast" @onclick="ToggleRespondsFast">@Culture["Bk.Filter.RespondsFast"]</button>
             </div>
-            <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.Distance"]">
-                @foreach (var km in new[] { 10, 25, 40 })
-                {
-                    <button type="button" class="jobsy-action @(_radiusKm == km ? "is-active" : null)" aria-pressed="@(_radiusKm == km)" @onclick="() => SetRadius(km)">@km km</button>
-                }
-            </div>
-        </div>
-        <div class="bk-filters__row bk-filters__row--chips">
-            <button type="button" class="jobsy-action @(_openOnly ? "is-active" : null)" aria-pressed="@_openOnly" @onclick="ToggleOpenOnly">@Culture["Bk.Filter.OpenOnly"]</button>
-            <button type="button" class="jobsy-action @(_agencies ? "is-active" : null)" aria-pressed="@_agencies" @onclick="ToggleAgencies">@Culture["Bk.Filter.Agencies"]</button>
-            <button type="button" class="jobsy-action @(_respondsFast ? "is-active" : null)" aria-pressed="@_respondsFast" @onclick="ToggleRespondsFast">@Culture["Bk.Filter.RespondsFast"]</button>
         </div>
     </div>
 
-    <p class="bk-result-meta" style="padding:0 1.25rem;font-size:.875rem;color:#5c6470">
+    <p class="bk-result-meta">
         @_filteredList.Count bedrijven binnen @_radiusKm km • @_openCount staan open voor jou
     </p>
 
