@@ -70,6 +70,7 @@ public class CandidateRegisterLinkGuardTests
                 || rel.StartsWith("Components/Pages/Partner/", StringComparison.OrdinalIgnoreCase)
                 || rel.StartsWith("Components/Admin/", StringComparison.OrdinalIgnoreCase)
                 || rel.StartsWith("Components/Pages/Werkgever/", StringComparison.OrdinalIgnoreCase)
+                || rel.StartsWith("Components/Werkgever/", StringComparison.OrdinalIgnoreCase)
                 || rel.StartsWith("Components/Registration/", StringComparison.OrdinalIgnoreCase)
                 || rel.Equals("Components/Pages/RegisterToegang.razor", StringComparison.OrdinalIgnoreCase)
                 || rel.Equals("Components/Pages/RegisterVerifierenBrief.razor", StringComparison.OrdinalIgnoreCase))

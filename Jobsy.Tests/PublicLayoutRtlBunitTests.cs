@@ -18,6 +18,7 @@ using System.Security.Claims;
 namespace Jobsy.Tests;
 
 /// <summary>Isolated from <see cref="PublicLayoutBunitTests"/> so culture is not pinned before <c>?lang=ar</c>.</summary>
+[Collection("JobsyLanguagesState")]
 public sealed class PublicLayoutRtlBunitTests : BunitContext
 {
     public PublicLayoutRtlBunitTests()
