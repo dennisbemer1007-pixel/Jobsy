@@ -193,6 +193,7 @@ builder.Services.AddScoped<Jobsy.Web.Services.DiscoveryOverviewCache>();
 builder.Services.AddScoped<Jobsy.Web.Services.ApiCallTracker>();
 builder.Services.AddScoped<Jobsy.Web.Services.NotificationUnreadStore>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.BottomNavRefreshService>();
+builder.Services.AddScoped<Jobsy.Web.Services.RoleNavItemsState>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.AssistantChatHost>();
 builder.Services.AddScoped<Jobsy.Web.Navigation.CoachTipBus>();
 builder.Services.AddScoped<Jobsy.Web.Services.LeerlingCoachHint>();
