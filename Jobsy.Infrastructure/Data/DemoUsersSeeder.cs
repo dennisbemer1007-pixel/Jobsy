@@ -53,8 +53,8 @@ internal static class DemoUsersSeeder
         added += await EnsureUserAsync(db, new User
         {
             Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
-            Email = "kandidaat@jobsy.local",
-            FullName = "Demo Kandidaat",
+            Email = "sanne@jobsy.local",
+            FullName = "Sanne de Vries",
             Role = UserRole.Candidate,
             CompanyId = null,
             DateOfBirth = new DateOnly(1998, 4, 12),
@@ -167,7 +167,7 @@ internal static class DemoUsersSeeder
         {
             Id = enterpriseManagerId,
             Email = "enterprise@jobsy.local",
-            FullName = "Bedrijfsmanager Lobsy Retail",
+            FullName = "Linda de Wit",
             Role = UserRole.EnterpriseManager,
             CompanyId = SupermarketId,
             IsActive = true

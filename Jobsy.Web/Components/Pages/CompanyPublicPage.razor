@@ -2,7 +2,7 @@
 @page "/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [AllowAnonymous]
-@layout PublicLayout
+@layout MainLayout
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers, FallbackPath = "/")]
 @inject JobsyApiClient Api
@@ -16,6 +16,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Core.Contracts
 @using Jobsy.Web.Components.Bedrijvenkaart
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Components.Discovery
 @using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Components.Status
@@ -46,7 +47,7 @@
 }
 else
 {
-    <section class="pub-section pp-company" aria-labelledby="company-title">
+    <section class="pub-theme pub-section pp-company" aria-labelledby="company-title">
         <nav class="pp-company__crumbs" aria-label="@Culture["CompanyPage.Breadcrumb.Label"]">
             <a href="@KbRoutes.Map">@Culture["Kb.MapToggle.Jobs"]</a>
             <span class="pp-company__crumb-sep" aria-hidden="true">›</span>
@@ -55,38 +56,45 @@ else
             <span aria-current="page">@_page.Name</span>
         </nav>
 
-        <header class="pub-card pp-company__header">
-            @if (HasUploadedLogo)
-            {
-                <img class="pp-company__logo"
-                     src="@_page.LogoUrl"
-                     alt=""
-                     width="56"
-                     height="56"
-                     decoding="async"
-                     data-logo-fallback="1" />
-            }
-            else
-            {
-                <span class="pp-company__tile" aria-hidden="true">@CategoryGlyph</span>
-            }
-            <div class="pp-company__identity">
-                <h1 id="company-title" class="pp-doc__title">@_page.Name</h1>
-                <p class="pp-company__meta">
-                    @if (!string.IsNullOrWhiteSpace(_page.City))
-                    {
-                        <span>@_page.City</span>
-                        <span class="pp-company__meta-sep" aria-hidden="true">·</span>
-                    }
-                    <span>@VacancyCountText</span>
-                    <span class="pub-chip pp-company__kvk">@Culture["CompanyPage.KvkVerified"]</span>
-                </p>
-                @if (_engagement.Count > 0)
+        <div class="pp-company__hero">
+            <header class="pub-card pp-company__header">
+                @if (HasUploadedLogo)
                 {
-                    <EngagementBadges Items="@_engagement" />
+                    <img class="pp-company__logo"
+                         src="@_page.LogoUrl"
+                         alt=""
+                         width="56"
+                         height="56"
+                         decoding="async"
+                         data-logo-fallback="1" />
                 }
-            </div>
-        </header>
+                else
+                {
+                    <span class="pp-company__tile" aria-hidden="true">@CategoryGlyph</span>
+                }
+                <div class="pp-company__identity">
+                    <h1 id="company-title" class="pp-doc__title">@_page.Name</h1>
+                    <p class="pp-company__meta">
+                        @if (!string.IsNullOrWhiteSpace(_page.City))
+                        {
+                            <span>@_page.City</span>
+                            <span class="pp-company__meta-sep" aria-hidden="true">·</span>
+                        }
+                        <span>@VacancyCountText</span>
+                        <span class="pub-chip pp-company__kvk">@Culture["CompanyPage.KvkVerified"]</span>
+                        @if (_initiative?.OpenForInitiative == true)
+                        {
+                            <span class="bk-chip bk-chip--open">@Culture["Bk.OpenLabel"]</span>
+                        }
+                    </p>
+                    @if (_engagement.Count > 0)
+                    {
+                        <EngagementBadges Items="@_engagement" />
+                    }
+                </div>
+            </header>
+            <div class="pp-company__hero-art" aria-hidden="true"></div>
+        </div>
 
         @if (BranchTabs.Count > 0)
         {
@@ -308,6 +316,7 @@ else
             }
 
             _selectedTeamId = _initiative?.Teams.FirstOrDefault()?.Id;
+            ApplyCaptureQueryFlags();
             _engagementCompanyId = _vacancies.FirstOrDefault()?.CompanyId ?? _initiative?.RootCompanyId ?? Guid.Empty;
             var badges = await Api.GetPublicEngagementAsync(_engagementCompanyId);
             _engagement = badges
@@ -382,6 +391,26 @@ else
         }
 
         return $"{(min ?? max)!.Value:0.#} {unit}";
+    }
+
+    private void ApplyCaptureQueryFlags()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.ContainsKey("demoKnock"))
+        {
+            _knockOpen = true;
+        }
+
+        if (q.ContainsKey("demoSent"))
+        {
+            _sentOpen = true;
+        }
+
+        if (q.ContainsKey("demoWeekLimit"))
+        {
+            _weekLimitOpen = true;
+        }
     }
 
     private void OpenKnockPanel() => _knockOpen = true;

@@ -19,6 +19,7 @@
 @using Jobsy.Web.Bedrijvenkaart
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject AuthenticationStateProvider AuthState
@@ -26,6 +27,7 @@
 @inject PersistentComponentState Persist
 @inject UserFacingError UserFacing
 @inject IFeatureFlags FeatureFlags
+@inject NavigationManager Navigation
 @implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
@@ -427,6 +429,7 @@
 
             RefreshCounts();
             ApplyFilter();
+            ApplyCaptureQuery();
         }
         catch
         {
@@ -471,6 +474,17 @@
         _disposed = true;
         Culture.Changed -= OnCultureChanged;
         _persistSubscription.Dispose();
+    }
+
+    private void ApplyCaptureQuery()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = QueryHelpers.ParseQuery(uri.Query);
+        if (q.TryGetValue("source", out var source) && string.Equals(source, "initiative", StringComparison.OrdinalIgnoreCase))
+        {
+            _sourceFilter = "initiative";
+            ApplyFilter();
+        }
     }
 
     private void SetSourceFilter(string filter)

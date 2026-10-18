@@ -163,6 +163,8 @@ public static class JobsyDbSeeder
                 await AtsScrapeSourceSeeder.SeedAsync(db, logger);
                 await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
                 await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
             }
             catch (Exception ex)
             {
@@ -174,6 +176,7 @@ public static class JobsyDbSeeder
 
         await DemoCompaniesSeeder.SeedCompaniesAsync(db, logger);
         await DemoUsersSeeder.SeedUsersAsync(db, logger);
+        await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
         await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
         try
         {

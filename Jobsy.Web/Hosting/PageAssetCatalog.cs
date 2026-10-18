@@ -142,7 +142,12 @@ public static class PageAssetCatalog
             return Area.GratisDna;
         }
 
-        if (path is "/banenkaart" or "/banen")
+        if (path is "/banenkaart" or "/banen" or "/bedrijvenkaart")
+        {
+            return Area.CandidatePublic;
+        }
+
+        if (path.Length == 8 && path.All(char.IsDigit))
         {
             return Area.CandidatePublic;
         }
@@ -223,13 +228,19 @@ public static class PageAssetCatalog
             return KandidatenkaartCss;
         }
 
+        if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
+        {
+            return ["css/features/bedrijvenkaart.css?v=20261018-02"];
+        }
+
         return [];
     }
 
     public static bool IncludeMapPreconnect(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
-        return path is "/banenkaart" or "/banen" or "/werkgever/kandidatenkaart";
+        return path is "/banenkaart" or "/banen" or "/bedrijvenkaart" or "/werkgever/kandidatenkaart"
+               || (path.Length == 8 && path.All(char.IsDigit));
     }
 
     public static bool IncludeLandingScript(string? rawPath)
