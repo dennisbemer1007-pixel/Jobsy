@@ -176,7 +176,12 @@
                                         <td><input class="csv-inline-input" @bind="row.Data.Title" /></td>
                                         <td><input class="csv-inline-input" @bind="row.Data.Branches" /></td>
                                         <td><input class="csv-inline-input" @bind="row.Data.StartDate" /></td>
-                                        <td><input class="csv-inline-input" @bind="row.Data.EndDate" /></td>
+                                        <td>
+                                            <JobsyDateField CssClass="csv-inline-input"
+                                                            TextValue="@row.Data.EndDate"
+                                                            TextValueChanged="v => row.Data.EndDate = v ?? string.Empty"
+                                                            TestId="csv-vacancy-end-date" />
+                                        </td>
                                         <td><input class="csv-inline-input mono" @bind="row.Data.SalaryTableId" /></td>
                                         <td>
                                             <div class="csv-row-actions">

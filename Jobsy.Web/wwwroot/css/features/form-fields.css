@@ -471,3 +471,15 @@ input.filter-bar__search {
 .jobsy-date-field__error:empty {
     visibility: hidden;
 }
+
+.csv-import-page .jobsy-date-field {
+    inline-size: 100%;
+    min-inline-size: 0;
+}
+
+.csv-import-page .jobsy-date-field__text.csv-inline-input {
+    min-block-size: 2.5rem;
+    padding: 0.45rem 0.55rem;
+    padding-inline-end: 2.25rem;
+    font-size: var(--text-sm, 0.875rem);
+}
