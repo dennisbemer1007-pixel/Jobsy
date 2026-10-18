@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-const liveDir = process.argv[2] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r5/live";
+const liveDir = process.argv[2] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r6/live";
 const manifestPath = process.argv[3] ?? join(liveDir, "capture-manifest.json");
 
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));

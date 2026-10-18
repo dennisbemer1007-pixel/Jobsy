@@ -512,6 +512,19 @@
   background: var(--bk-cream, #f6f0e8) url("/images/onboarding/finale-hero.jpg") right bottom / auto 95% no-repeat;
 }
 
+.pp-company__hero-art::before {
+  content: "";
+  position: absolute;
+  inset: 0 38% 0 0;
+  background: linear-gradient(90deg, var(--bk-cream, #f6f0e8) 42%, transparent);
+  pointer-events: none;
+}
+
+.bk-card__row > div:not(.bk-card__avatar) {
+  min-width: 0;
+  flex: 1;
+}
+
 .pp-company__layout {
   display: grid;
   grid-template-columns: 1fr minmax(280px, 340px);
@@ -614,6 +627,56 @@
   .pp-company__layout {
     grid-template-columns: 1fr;
   }
+
+  .pp-company__hero {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .pp-company__hero .pp-company__header {
+    z-index: 2;
+    padding-bottom: 0.35rem;
+  }
+
+  .pp-company__hero-art {
+    min-height: 0;
+    height: clamp(112px, 36vw, 260px);
+    max-height: 260px;
+    background-size: min(68%, 280px) auto;
+    background-position: right bottom;
+  }
+
+  .pp-company__hero-art::before {
+    inset: 0;
+    background:
+      linear-gradient(180deg, var(--bk-cream, #f6f0e8) 0%, transparent 38%),
+      linear-gradient(90deg, var(--bk-cream, #f6f0e8) 0%, transparent 42%);
+  }
+
+  .pub-theme .pp-company__identity .pp-doc__title {
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .pub-theme .pp-company__meta {
+    gap: 0.35rem 0.5rem;
+  }
+
+  .app-shell:has(.pp-company) .lobsy-assistant-tab,
+  .app-shell:has(.pp-company) .lobsy-coach-dock,
+  .app-shell:has(.pp-company) .lobsy-coach-cta {
+    display: none !important;
+  }
+
+  .bk-card__title {
+    overflow-wrap: break-word;
+    line-height: 1.25;
+  }
+
+  .kb-apps__initiative-card {
+    padding-inline: 0.85rem 1rem;
+  }
+
   .bk-hero__inner {
     grid-template-columns: 1fr;
     max-height: none;
