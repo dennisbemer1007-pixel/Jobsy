@@ -1,0 +1,188 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@{
+    var nodes = BuildNodes();
+    var segments = BuildSegments(nodes);
+}
+
+<nav class="career-path-svg" aria-label="@Culture["Career.Illustrated.PathAria"]">
+    <ol class="career-path-mobile">
+        @for (var i = 0; i < nodes.Count; i++)
+        {
+            var node = nodes[i];
+            <li class="career-path-mobile__item career-path-mobile__item--@node.State">
+                <span class="career-path-mobile__marker" aria-hidden="true">@MobileMarker(node)</span>
+                <div class="career-path-mobile__copy">
+                    <span class="career-path-mobile__label">@node.Label</span>
+                    @if (!string.IsNullOrWhiteSpace(node.Sub))
+                    {
+                        <span class="career-path-mobile__sub">@node.Sub</span>
+                    }
+                </div>
+            </li>
+        }
+    </ol>
+    <div class="career-path-svg__lane">
+        <svg class="career-path-svg__svg" viewBox="0 0 1000 56" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            @foreach (var seg in segments)
+            {
+                <path class="career-path-svg__seg career-path-svg__seg--@seg.State"
+                      d="@seg.Path"
+                      pathLength="100"
+                      vector-effect="non-scaling-stroke" />
+            }
+        </svg>
+        <ol class="career-path-svg__pins">
+            @for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                var left = NodeLeftPercent(i, nodes.Count);
+                <li class="career-path-svg__pin-wrap career-path-svg__pin-wrap--@node.State"
+                    style="--node-x:@(left.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">
+                    <span class="career-path-svg__pin" aria-hidden="true">
+                        @PinContent(node)
+                    </span>
+                </li>
+            }
+        </ol>
+    </div>
+    <ol class="career-path-svg__captions" style="--path-n: @nodes.Count">
+        @for (var i = 0; i < nodes.Count; i++)
+        {
+            var node = nodes[i];
+            <li class="career-path-svg__caption career-path-svg__caption--@node.State">
+                <span class="career-path-svg__label">@node.Label</span>
+                @if (!string.IsNullOrWhiteSpace(node.Sub))
+                {
+                    <span class="career-path-svg__sub">@node.Sub</span>
+                }
+            </li>
+        }
+    </ol>
+</nav>
+
+@code {
+    [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
+    [Parameter] public string NowLabel { get; set; } = "";
+
+    private enum NodeKind { Now, Step, Dream }
+
+    private sealed record PathNode(NodeKind Kind, string State, string Label, string Sub, int Order);
+
+    private sealed record PathSegment(string Path, string State);
+
+    private RenderFragment PinContent(PathNode node) => __builder =>
+    {
+        if (node.Kind == NodeKind.Dream)
+        {
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+                <path d="M8 1.5l1.9 4 4.4.6-3.2 3.1.8 4.3L8 11.5l-3.9 2 .8-4.3L1.7 6.1l4.4-.6z" />
+            </svg>
+        }
+        else if (node.Kind == NodeKind.Now)
+        {
+            <span class="career-path-svg__dot"></span>
+        }
+        else if (node.State == "done")
+        {
+            <span aria-hidden="true">✓</span>
+        }
+        else
+        {
+            <span>@node.Order</span>
+        }
+    };
+
+    private List<PathNode> BuildNodes()
+    {
+        var list = new List<PathNode>
+        {
+            new(
+                NodeKind.Now,
+                "done",
+                Culture["Career.Rail.Now"],
+                string.IsNullOrWhiteSpace(NowLabel) ? Culture["Career.Rail.NowUnknown"] : NowLabel,
+                0)
+        };
+
+        foreach (var step in Plan.Steps)
+        {
+            var state = step.Status switch
+            {
+                CareerStepStatus.Completed => "done",
+                CareerStepStatus.Active => "current",
+                _ => "todo"
+            };
+            list.Add(new(NodeKind.Step, state, Culture.Format("Career.Illustrated.StepN", step.Order), step.ShortTitle, step.Order));
+        }
+
+        list.Add(new(
+            NodeKind.Dream,
+            Plan.GoalReached ? "done" : "goal",
+            Culture["Career.Stepper.Goal"],
+            Plan.DreamTitle,
+            Plan.Steps.Count + 1));
+
+        return list;
+    }
+
+    private List<PathSegment> BuildSegments(IReadOnlyList<PathNode> nodes)
+    {
+        var segments = new List<PathSegment>();
+        if (nodes.Count < 2)
+        {
+            return segments;
+        }
+
+        for (var i = 0; i < nodes.Count - 1; i++)
+        {
+            var x1 = XCoord(i, nodes.Count);
+            var x2 = XCoord(i + 1, nodes.Count);
+            var y = PinY();
+            var path = $"M {x1:0.#} {y:0.#} L {x2:0.#} {y:0.#}";
+            var state = SegmentState(nodes[i + 1]);
+            segments.Add(new(path, state));
+        }
+
+        return segments;
+    }
+
+    private static string SegmentState(PathNode endNode)
+        => endNode.State is "done" or "current" ? "done" : "todo";
+
+    private static double XCoord(int index, int count)
+    {
+        const double pad = 56;
+        if (count <= 1)
+        {
+            return 500;
+        }
+
+        return pad + (1000 - pad * 2) * index / (count - 1);
+    }
+
+    private static double PinY() => 28;
+
+    private static double NodeLeftPercent(int index, int count)
+    {
+        if (count <= 1)
+        {
+            return 50;
+        }
+
+        const double pad = 6;
+        return pad + (100 - pad * 2) * index / (count - 1);
+    }
+
+    private static string MobileMarker(PathNode node)
+        => node.Kind switch
+        {
+            NodeKind.Dream => "★",
+            NodeKind.Now => "•",
+            _ when node.State == "done" => "✓",
+            _ => node.Order.ToString()
+        };
+}

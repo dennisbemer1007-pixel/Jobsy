@@ -108,7 +108,7 @@
                 <p class="wa-lead">@Culture["WaProfile.Cultuur.Lead"]</p>
 
                 <div class="wa-sec">
-                    <h3><span class="pub-emoji" aria-hidden="true">🧭</span> @Culture["WaProfile.Cultuur.SlidersTitle"]</h3>
+                    <h3><LineIcon Name="compass" CssClass="line-icon--md" /> @Culture["WaProfile.Cultuur.SlidersTitle"]</h3>
                     <div class="wa-sliders">
                         @foreach (var (code, index) in CulturePersonalityCatalog.CultureDimensionCodes.Select((c, i) => (c, i)))
                         {
@@ -251,7 +251,7 @@
                 }
 
                 <div class="wa-nb">
-                    <span class="pub-emoji" aria-hidden="true">🎯</span>
+                    <LineIcon Name="target" CssClass="line-icon--md" />
                     <div>
                         <strong>@Culture["WaProfile.Engage.MatchHintTitle"]</strong>
                         <p>@Culture["WaProfile.Engage.MatchHintBody"]</p>

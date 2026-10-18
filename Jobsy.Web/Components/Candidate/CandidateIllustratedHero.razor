@@ -1,0 +1,92 @@
+@namespace Jobsy.Web.Components.Candidate
+
+<header class="cand-hero @CssClass" style="@StyleValue">
+    <div class="cand-hero__copy">
+        @if (!string.IsNullOrWhiteSpace(Eyebrow))
+        {
+            <span class="cand-hero__eyebrow @(CoralEyebrow ? "cand-hero__eyebrow--coral" : null)">@Eyebrow</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <h1>@Title</h1>
+        }
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p class="cand-hero__lead">@Lead</p>
+        }
+        @ChildContent
+    </div>
+    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    {
+        <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
+    }
+</header>
+
+@code {
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool CoralEyebrow { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public string? ArtUrlDesktop { get; set; }
+    [Parameter] public string? ArtUrlMobileFigures { get; set; }
+    [Parameter] public string? ArtUrlMobileAtmosphere { get; set; }
+    [Parameter] public string ArtPosition { get; set; } = "58% center";
+    [Parameter] public string ArtPositionDesktop { get; set; } = "right center";
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? StyleValue
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ArtUrl))
+            {
+                return null;
+            }
+
+            var parts = new List<string>
+            {
+                $"--cand-hero-art:url('{ArtUrl}')",
+                $"--cand-hero-pos:{ArtPosition}",
+            };
+            if (!string.IsNullOrWhiteSpace(ArtUrlDesktop))
+            {
+                parts.Add($"--cand-hero-art-desktop:url('{ArtUrlDesktop}')");
+                parts.Add($"--cand-hero-pos-desktop:{ArtPositionDesktop}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(ArtUrlMobileAtmosphere))
+            {
+                parts.Add($"--cand-hero-mobile-atmosphere:url('{ArtUrlMobileAtmosphere}')");
+            }
+
+            return string.Join(';', parts) + ";";
+        }
+    }
+
+    private string? MediaStyleValue
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ArtUrl) && string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
+            {
+                return null;
+            }
+
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(ArtUrl))
+            {
+                parts.Add($"--cand-hero-art:url('{ArtUrl}')");
+                parts.Add($"--cand-hero-pos:{ArtPosition}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
+            {
+                parts.Add($"--cand-hero-figures:url('{ArtUrlMobileFigures}')");
+            }
+
+            return parts.Count == 0 ? null : string.Join(';', parts) + ";";
+        }
+    }
+}

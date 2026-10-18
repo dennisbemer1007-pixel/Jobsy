@@ -68,7 +68,8 @@ public class MatchDesktopBunitTests : BunitContext
         Assert.Contains("Jouw top-match", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Barista Voorhof", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Zorg Delft Oost", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("83%", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Sterke match", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("83%", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("aria-haspopup=\"dialog\"", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("highlight-carousel__match-badge", cut.Markup, StringComparison.Ordinal);
     }
@@ -379,7 +380,8 @@ public class MatchDesktopBunitTests : BunitContext
 
         Assert.Contains("Jouw top-match", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Helpende Zorg", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("92%", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Sterke match", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("92%", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("14 min fietsen", cut.Markup, StringComparison.Ordinal);
         Assert.NotNull(captured);
     }

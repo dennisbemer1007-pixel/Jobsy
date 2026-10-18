@@ -430,6 +430,7 @@
         var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
                         || IsVacancyOrNotificationsCoachHidden(path)
                         || IsStandaloneQuickScanCoachHidden(path)
+                        || IsIllustratedCandidateCoachHidden(path)
                         || (_isCandidate && IsBanenkaartPath(path));
         if (_hideCoachDock != hideCoach)
         {
@@ -485,6 +486,17 @@
         }
 
         return path.StartsWith("vacancies/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>#728 illustrated candidate shells: hero + inline copy; no floating coach over CTAs.</summary>
+    public static bool IsIllustratedCandidateCoachHidden(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("carriere", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/applications", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/liked", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/settings", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Hide floating coach on standalone Quick-Scan shells (scene bubble + progress).</summary>

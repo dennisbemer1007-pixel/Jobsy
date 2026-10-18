@@ -9,6 +9,7 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.WebUtilities
@@ -21,15 +22,15 @@
 
 <PageTitle>@Culture["Signup.Title"] · Lobsy</PageTitle>
 
-<section class="au-stage pub-signup" aria-labelledby="signup-title">
-    <div class="au-blob au-blob--a" aria-hidden="true"></div>
-    <div class="au-blob au-blob--b" aria-hidden="true"></div>
-    <div class="au-blob au-blob--c" aria-hidden="true"></div>
+<section class="au-stage au-stage--illustrated pub-signup"
+         style="@($"--au-art-left:url('{LoginLeft}');--au-art-right:url('{LoginRight}');--au-art-mobile:url('{AccountMobileArt}')")"
+         aria-labelledby="signup-title">
+    <div class="au-art-band" aria-hidden="true"></div>
+    <div class="au-art au-art--left" aria-hidden="true"></div>
+    <div class="au-art au-art--right" aria-hidden="true"></div>
     <div class="au-col">
-        <div class="au-card">
-            <div class="au-card__mascot" aria-hidden="true">
-                <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Small" Alt="" />
-            </div>
+        <div class="au-card au-card--illustrated">
+            <p class="au-eyebrow">@Culture["Signup.Eyebrow"]</p>
             <h1 id="signup-title" class="au-title">@Culture["Signup.Title"]</h1>
             <p class="au-lead">@Culture["Signup.Lead"]</p>
 

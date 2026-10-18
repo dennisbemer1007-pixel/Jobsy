@@ -5,6 +5,8 @@
 @using Jobsy.Core.Features
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Media
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Jobsy.Web.Components.Candidate.Journey
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
@@ -17,8 +19,28 @@
 
 <PageTitle>@Culture["Career.Title"] · Lobsy</PageTitle>
 
-<div class="journey-page career-page">
+<div class="journey-page career-page career-page--illustrated panel-page--cand-ill">
     <p class="career-live visually-hidden" role="status" aria-live="polite">@_announcement</p>
+
+    @if (_plan.HasPlan)
+    {
+        var stepTotal = Math.Max(_plan.Stones.Count, 1);
+        var stepCurrent = Math.Clamp(_plan.CurrentStoneIndex + 1, 1, stepTotal);
+        <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
+                                  CoralEyebrow="true"
+                                  Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
+                                  Lead="@Culture["Career.Overview.Lead"]"
+                                  ArtUrl="@CarriereBand"
+                                  ArtPosition="58% center" />
+    }
+    else if (!_bootstrapping)
+    {
+        <CandidateIllustratedHero Title="@Culture["Career.Empty.Title"]"
+                                  Lead="@Culture["Career.Empty.Lead"]"
+                                  ArtUrl="@CarriereBand"
+                                  ArtPosition="58% center"
+                                  CssClass="cand-hero--profession-band" />
+    }
 
     @if (_proactiveMatchingOn)
     {

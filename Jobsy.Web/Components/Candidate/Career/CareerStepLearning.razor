@@ -1,0 +1,142 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Training
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
+
+@if (!_enabled)
+{
+    return;
+}
+
+@if (_loading)
+{
+    <p class="career-step__quiet">@Culture["Common.Loading"]</p>
+}
+else if (_offers.Count == 0)
+{
+    if (CourseNames.Count > 0)
+    {
+        <p class="career-courses__plain" id="career-courses">
+            <span class="career-courses__icon" aria-hidden="true">☆</span>
+            @Culture.Format("Training.CareerStep.PlainFallback", string.Join(", ", CourseNames))
+        </p>
+    }
+}
+else
+{
+    <section class="career-step__block career-step__block--courses opl-step-learning" id="career-courses" aria-labelledby="career-courses-title">
+        <div class="opl-ttl">
+            <h2 id="career-courses-title" class="career-card__block-title">@Culture["Training.CareerStep.Title"]</h2>
+            <small class="muted">@Culture["Training.CareerStep.Sub"]</small>
+        </div>
+
+        <div class="opl-layout opl-layout--step">
+            <div class="opl-grid">
+                @foreach (var offer in _offers)
+                {
+                    <TrainingCourseCard Offer="offer"
+                                        Selected="_selected?.OfferId == offer.OfferId"
+                                        ShowDesktopHint="true"
+                                        RequireWrittenReason="true"
+                                        Busy="_busy"
+                                        Campaign="@Campaign"
+                                        OnSelect="SelectAsync"
+                                        OnToggleSave="ToggleSaveAsync"
+                                        OnSavedChanged="OnSavedChanged" />
+                }
+            </div>
+            <div class="opl-side opl-only-desktop">
+                @if (_selected is not null)
+                {
+                    <TrainingCourseDetailPanel Offer="_selected"
+                                               Campaign="@Campaign"
+                                               OnClose="ClearSelection"
+                                               OnSavedChanged="OnSavedChanged" />
+                }
+                else if (_progress is not null)
+                {
+                    <TrainingProgressCard Summary="_progress" />
+                }
+            </div>
+        </div>
+
+        <p class="opl-disc">@Culture["Training.Disclosure"]</p>
+        <a class="btn btn-ghost btn-sm" href="/carriere/leren">@Culture["Training.CareerStep.AllLink"]</a>
+    </section>
+}
+
+@code {
+    [Parameter] public string StepTitle { get; set; } = "";
+    [Parameter] public IReadOnlyList<string> GapKeys { get; set; } = [];
+    [Parameter] public IReadOnlyList<string> CourseNames { get; set; } = [];
+    [Parameter] public string Campaign { get; set; } = TrainingTracking.CampaignCompass;
+
+    private bool _enabled;
+    private bool _loading = true;
+    private bool _busy;
+    private List<TrainingPartnerOfferModel> _offers = [];
+    private TrainingPartnerOfferModel? _selected;
+    private TrainingProgressSummaryModel? _progress;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners);
+        if (!_enabled)
+        {
+            return;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _offers = (await Api.GetTrainingPartnersCareerStepAsync(StepTitle, GapKeys)).ToList();
+            _progress = await Api.GetTrainingProgressAsync();
+            if (_offers.Count > 0)
+            {
+                _selected = _offers[0];
+            }
+        }
+        catch
+        {
+            _offers = [];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private Task SelectAsync(TrainingPartnerOfferModel offer)
+    {
+        _selected = _selected?.OfferId == offer.OfferId ? null : offer;
+        return Task.CompletedTask;
+    }
+
+    private void ClearSelection() => _selected = null;
+
+    private async Task ToggleSaveAsync(TrainingPartnerOfferModel offer)
+    {
+        _busy = true;
+        try
+        {
+            await Api.ToggleTrainingPartnerOfferSavedAsync(offer.OfferId);
+            offer.Saved = !offer.Saved;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private Task OnSavedChanged(TrainingPartnerOfferModel offer) => Task.CompletedTask;
+}

@@ -14,14 +14,19 @@
            aria-current="@(IsApplications ? "page" : null)">
             @Culture["Nav.ApplicationsTab"]
         </a>
-        <a class="admin-sublink @(IsSaved ?"admin-sublink--active" : null)"
+        <a class="admin-sublink @(IsLiked ?"admin-sublink--active" : null)"
            href="/candidate/liked"
-           aria-current="@(IsSaved ? "page" : null)">
+           aria-current="@(IsLiked ? "page" : null)">
             @Culture["Nav.SavedTab"]
             @if (SavedCount is int n && n > 0)
             {
                 <span class="candidate-job-list-tabs__count" aria-hidden="true">@n</span>
             }
+        </a>
+        <a class="admin-sublink @(IsShared ?"admin-sublink--active" : null)"
+           href="/candidate/shared"
+           aria-current="@(IsShared ? "page" : null)">
+            @Culture["Saved.TabShared"]
         </a>
     </nav>
 }
@@ -41,15 +46,13 @@
         }
     }
 
-    private bool IsSaved
-    {
-        get
-        {
-            var path = Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/');
-            return path.StartsWith("candidate/liked", StringComparison.OrdinalIgnoreCase)
-                   || path.StartsWith("candidate/shared", StringComparison.OrdinalIgnoreCase);
-        }
-    }
+    private bool IsLiked
+        => Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/')
+            .StartsWith("candidate/liked", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsShared
+        => Navigation.ToBaseRelativePath(Navigation.Uri).TrimStart('/')
+            .StartsWith("candidate/shared", StringComparison.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {

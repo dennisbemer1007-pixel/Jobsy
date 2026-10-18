@@ -1,15 +1,18 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Core.Features
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.TestResult
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Media
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
+@inject IFeatureFlags FeatureFlags
 
 <div class="passport-tests">
     @if (_loading)
@@ -35,15 +38,20 @@
             <span>@Culture["Passport.Tests.Deep"]</span>
         </div>
 
-        <div class="passport-tests__layout">
+        <div class="passport-tests__layout kompas-card--illustrated">
+            <CandidateIllustratedCardSpot ImageUrl="@CandidateIllustratedImages.SpotJobLogistiek" Class="kompas-card-spot--tests" Position="70% 15%" />
             <div class="passport-tests__rows" role="list">
                 @foreach (var tile in _model.Tiles)
                 {
                     var selected = _model.HighlightKind == tile.Kind;
                     var (quick, extended, report, reportLocked) = TestsOverviewBuilder.ProgressSegments(tile);
-                    var showGrow = tile.Kind == AssessmentKind.Competence
-                                   && tile.FreeDone
-                                   && _courseSlots.Count > 0;
+                    var showGrowLegacy = tile.Kind == AssessmentKind.Competence
+                                         && tile.FreeDone
+                                         && !_trainingPartnersOn
+                                         && _courseSlots.Count > 0;
+                    var showGrowPartners = tile.Kind == AssessmentKind.Competence
+                                           && tile.FreeDone
+                                           && _trainingPartnersOn;
                     <article class="passport-tests__row @(selected ?"passport-tests__row--selected" : null)"
                              role="listitem">
                         <div class="passport-tests__row-main">
@@ -108,11 +116,19 @@
                             }
                         }
 
-                        @if (showGrow)
+                        @if (showGrowLegacy)
                         {
                             <CourseSuggestionBlock SkillLabel="@_skillLabel"
                                                    Slots="_courseSlots"
                                                    Campaign="@TrainingTracking.CampaignCompetence" />
+                        }
+                        else if (showGrowPartners)
+                        {
+                            <button type="button"
+                                    class="btn btn-secondary"
+                                    @onclick="ToggleGrowthView">
+                                @Culture[_showGrowth ? "Training.PassportGrowth.HideInline" : "Training.PassportGrowth.ShowInline"]
+                            </button>
                         }
                     </article>
                 }
@@ -122,7 +138,12 @@
                 </p>
             </div>
 
-            <aside class="passport-tests__aside">
+            @if (_showGrowth && _trainingPartnersOn)
+            {
+                <PassportCompetencyGrowth />
+            }
+
+            <aside class="passport-tests__aside @(_showGrowth && _trainingPartnersOn ? "passport-tests__aside--hidden" : null)">
                 @if (_previewDef is not null)
                 {
                     <TestResultLockedPreview Kind="_previewDef.Kind"
@@ -165,6 +186,8 @@
     private bool _freeForEveryone;
     private List<TestResultLockedPreview.ReportLink> _reportLinks = [];
     private CandidateKompasState? _kompas;
+    private bool _trainingPartnersOn;
+    private bool _showGrowth;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -255,6 +278,15 @@
     private async Task FinishAsync(TestsOverviewBuilder.OverviewModel model, CandidateCompetencyState? competence)
     {
         _model = model;
+        try
+        {
+            _trainingPartnersOn = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners);
+        }
+        catch (Exception ex) when (!CircuitInterop.IsCircuitGone(ex))
+        {
+            _trainingPartnersOn = false;
+        }
+
         try
         {
             var mode = await Api.GetDeepAnalysisPaymentModeAsync();
@@ -373,6 +405,8 @@
         Navigation.NavigateTo(_previewDef.DeepStartHref);
         return Task.CompletedTask;
     }
+
+    private void ToggleGrowthView() => _showGrowth = !_showGrowth;
 
     private static string FillClass(double fill)
     {

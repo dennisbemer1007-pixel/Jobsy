@@ -29,6 +29,8 @@
 @using Jobsy.Web.Components.Candidate.Pwa
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Seo
+@using Jobsy.Web.Media
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
 @implements IAsyncDisposable
@@ -41,7 +43,7 @@
          OgType="article"
          JsonLd="@SeoJsonLd" />
 
-<div class="panel-page panel-page--vacancy">
+<div class="panel-page panel-page--vacancy panel-page--cand-ill kb-detail--illustrated">
     @if (_closed is not null)
     {
         <ClosedVacancyView Info="_closed" Similar="_similar" />
@@ -71,28 +73,31 @@
     }
     else
     {
-        <article class="detail-card kb-detail" data-testid="kb-detail">
+        <article class="detail-card kb-detail kb-detail--warm" data-testid="kb-detail">
             <div class="detail-card__header-row">
                 <a class="back-link" href="@KbRoutes.Map">@Culture["Vacancy.BackToMap"]</a>
             </div>
 
             <div class="kb-detail__layout">
                 <div class="kb-detail__main-top">
-                    @if (HasPhoto)
-                    {
-                        <div class="kb-detail__photo">
-                            <VacancyPhoto Src="@_vacancy.ImageUrl"
-                                          FallbackSrc="@_vacancy.CompanyLogoUrl"
-                                          VacancyId="_vacancy.Id"
-                                          WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
-                                          Class="detail-card__image vacancy-media__photo"
-                                          Width="720"
-                                          Height="480"
-                                          Eager="true"
-                                          Sizes="(max-width: 1024px) 100vw, 720px" />
+                    <div class="kb-detail__hero">
+                        <div class="kb-detail__photo @(HasPhoto ? null : "kb-detail__photo--illustrated")"
+                             style="@(!HasPhoto ? $"--kb-detail-fallback:url('{SavedNoPhotoArt}')" : null)">
+                            @if (HasPhoto)
+                            {
+                                <VacancyPhoto Src="@_vacancy.ImageUrl"
+                                              FallbackSrc="@_vacancy.CompanyLogoUrl"
+                                              VacancyId="_vacancy.Id"
+                                              WorkType="@(_vacancy.WorkTypes.FirstOrDefault())"
+                                              Class="detail-card__image vacancy-media__photo"
+                                              Width="720"
+                                              Height="480"
+                                              Eager="true"
+                                              Sizes="(max-width: 1024px) 100vw, 720px" />
+                            }
                         </div>
-                    }
 
+                        <div class="kb-detail__hero-body">
                     <div class="kb-detail__header">
                         <h1>@_vacancy.Title</h1>
                         <p class="kb-detail__company-line company">
@@ -140,104 +145,12 @@
                         }
                     </div>
 
-                    @{
-                        var detailFit = KbFitMapping.FromVacancy(_vacancy);
-                        var detailWhy = KbFitMapping.WhyLine(_vacancy, Culture);
-                        var detailRank = KbFitMapping.RankLowerLabel(_vacancy, Culture);
-                    }
-                    @if (!_vacancy.OpenForWorkRequired && detailFit is not null)
-                    {
-                        <div class="kb-fit-panel" data-fit-gate="@(_vacancy.FitGate ?? "")" data-testid="kb-fit-panel">
-                            <div class="kb-fit-panel__head">
-                                <KbFitPill Fit="detailFit" />
-                                @if (!string.IsNullOrWhiteSpace(detailRank))
-                                {
-                                    <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
-                                }
-                            </div>
-                            <KbWhyLine Text="@detailWhy" />
-                            @if (detailFit.GateOpen)
-                            {
-                                <ul class="kb-dna" role="list">
-                                    @foreach (var row in DnaRows(_vacancy))
-                                    {
-                                        <li class="kb-dna__row">
-                                            <span class="kb-dna__label">@row.Label</span>
-                                            @if (row.Percent is int barPct)
-                                            {
-                                                <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@row.Label">@barPct%</progress>
-                                                <span class="kb-dna__value">@barPct%</span>
-                                            }
-                                            else
-                                            {
-                                                <a class="kb-dna__todo" href="@row.TestHref">@Culture["Kb.Dna.NotDone"]</a>
-                                            }
-                                        </li>
-                                    }
-                                </ul>
-                                @if (_vacancy.MatchGaps is { Count: > 0 })
-                                {
-                                    <div class="kb-fit-panel__gaps">
-                                        <h2 class="kb-fit-panel__gaps-title">@Culture["Kb.Dna.NewForYou"]</h2>
-                                        <ul>
-                                            @foreach (var gap in _vacancy.MatchGaps.Take(4))
-                                            {
-                                                <li>@gap</li>
-                                            }
-                                        </ul>
-                                    </div>
-                                }
-                            }
-                            else
-                            {
-                                <p class="kb-fit-panel__gate-hint">@Culture["Kb.Fit.GateHint"]</p>
-                                <div class="kb-fit-panel__gate-links">
-                                    <a class="engagement-btn" href="@KbRoutes.CultureTest">@Culture["Kb.Dna.Culture"]</a>
-                                    <a class="engagement-btn" href="@KbRoutes.ValuesTest">@Culture["Kb.Dna.Values"]</a>
-                                </div>
-                            }
-                            @if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
-                            }
+                    <KbDetailFactChips Vacancy="_vacancy"
+                                       WhenLabel="@DetailWhenLabel"
+                                       StartLabel="@Culture["Kb.Detail.StartFlexible"]"
+                                       TravelChip="@DetailTravelChip" />
                         </div>
-                    }
-
-                    <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
-
-                    <div class="kb-facts-grid" aria-label="@Culture["Kb.Detail.FactsAria"]" data-testid="kb-facts-grid">
-                        @if (HasHoursInfo)
-                        {
-                            <div class="kb-facts-grid__item">
-                                <span class="kb-facts-grid__label">@Culture["Kb.Detail.HoursFact"]</span>
-                                <p class="kb-facts-grid__value">@HoursRangeText</p>
-                            </div>
-                        }
-                        <div class="kb-facts-grid__item">
-                            <span class="kb-facts-grid__label">@Culture["Kb.Detail.WageFact"]</span>
-                            <p class="kb-facts-grid__value">
-                                @if (_vacancy.WageVisible && DisplayHourlyWage is decimal wage)
-                                {
-                                    <text>€ @wage.ToString("0.00")</text>
-                                }
-                                else if (!_vacancy.WageVisible)
-                                {
-                                    <a href="#dob">@Culture["Vacancy.EnterDob"]</a>
-                                }
-                                else
-                                {
-                                    <text>—</text>
-                                }
-                            </p>
-                        </div>
-                        <div class="kb-facts-grid__item">
-                            <span class="kb-facts-grid__label">@Culture["Kb.Detail.WhenFact"]</span>
-                            <p class="kb-facts-grid__value">@DetailWhenLabel</p>
-                        </div>
-                        <div class="kb-facts-grid__item">
-                            <span class="kb-facts-grid__label">@Culture["Kb.Detail.StartFact"]</span>
-                            <p class="kb-facts-grid__value">@Culture["Kb.Detail.StartFlexible"]</p>
-                        </div>
+                        <div class="kb-detail__hero-accent" aria-hidden="true"></div>
                     </div>
 
                     <AuthorizeView Roles="Candidate">
@@ -249,8 +162,9 @@
                     @* Travel card lives in the rail (one map instance); CSS places the rail after facts on mobile. *@
                 </div>@* kb-detail__main-top *@
 
-                <aside class="kb-detail__rail" data-testid="kb-detail-rail">
+                <aside class="kb-detail__rail kb-detail__rail-stack" data-testid="kb-detail-rail">
                     @TravelCardFragment
+                    @FitPanelFragment
                     <div class="kb-detail__actions kb-detail__rail-actions">
                         @if (_detailWide)
                         {
@@ -314,7 +228,9 @@
                         </p>
                     }
 
-            <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
+            <section class="kb-detail__section kb-detail__section--copy">
+                <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
+            </section>
             <p class="travel-hint">
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
@@ -491,7 +407,7 @@
                         {
                             <ProfileEncouragementNudge ScreenKey="vacancy-pre-apply"
                                                        Context="_encourageContext"
-                                                       PreviewTipId="_encouragePreviewTipId" />
+                                                       PreviewTipId="@_encouragePreviewTipId" />
                         }
                         <header class="apply-flow__header">
                             <h2 class="apply-flow__title">@Culture["Apply.Title"]</h2>
@@ -530,7 +446,7 @@
                                 {
                                     <ProfileEncouragementNudge ScreenKey="apply-sent"
                                                                Context="_encourageContext"
-                                                               PreviewTipId="_encouragePreviewTipId" />
+                                                               PreviewTipId="@_encouragePreviewTipId" />
                                 }
                                 @if (_directContact is { Available: true })
                                 {
@@ -864,14 +780,90 @@
         _vacancy is not null
         && VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(_vacancy.CategoryId, _vacancy.SuitableFor65Plus);
 
-    private IEnumerable<(string Label, int? Percent, string TestHref)> DnaRows(VacancyListItem v)
+    private IReadOnlyList<MatchDnaRow> DnaRows(VacancyListItem v)
+        => MatchDnaRows.Build(v.FitDimensions, v.FitWhyKinds, includeMissing: true, maxWithData: 4);
+
+    private RenderFragment FitPanelFragment => __builder =>
     {
-        var d = v.FitDimensions;
-        yield return (Culture["Kb.Dna.Culture"], d?.Culture, KbRoutes.CultureTest);
-        yield return (Culture["Kb.Dna.Values"], d?.Values, KbRoutes.ValuesTest);
-        yield return (Culture["Kb.Dna.Competencies"], d?.Competencies, "/candidate/tests");
-        yield return (Culture["Kb.Dna.Interests"], d?.Interests, "/candidate/tests");
-    }
+        if (_vacancy is null || _vacancy.OpenForWorkRequired)
+        {
+            return;
+        }
+
+        var detailFit = KbFitMapping.FromVacancy(_vacancy);
+        if (detailFit is null)
+        {
+            return;
+        }
+
+        var detailWhy = KbFitMapping.WhyLine(_vacancy, Culture);
+        var detailRank = KbFitMapping.RankLowerLabel(_vacancy, Culture);
+        var dnaRows = DnaRows(_vacancy);
+
+        <div class="kb-fit-panel kb-fit-panel--card" data-fit-gate="@(_vacancy.FitGate ?? "")" data-testid="kb-fit-panel">
+            <div class="kb-fit-panel__title-row">
+                <h2 class="kb-fit-panel__title">@Culture["Kb.Fit.WhyTitle"]</h2>
+                <KbFitPill Fit="detailFit" />
+            </div>
+            @if (!string.IsNullOrWhiteSpace(detailRank))
+            {
+                <span class="kb-badges__chip kb-badges__chip--rank-lower">@detailRank</span>
+            }
+            <KbWhyLine Text="@detailWhy" />
+            @if (detailFit.GateOpen)
+            {
+                <ul class="kb-dna kb-dna--detail" role="list">
+                    @foreach (var row in dnaRows)
+                    {
+                        <li class="kb-dna__row" data-dna="@row.Kind">
+                            <span class="kb-dna__label">@Culture[row.LabelKey]</span>
+                            @if (row.Percent is int barPct)
+                            {
+                                <progress class="kb-dna__progress" value="@barPct" max="100" aria-label="@Culture[row.LabelKey]" aria-valuetext="@Culture[row.WhyKey]"></progress>
+                                <span class="kb-dna__reason">@Culture[row.WhyKey]</span>
+                            }
+                            else
+                            {
+                                <a class="kb-dna__todo" href="@row.TestHref">@Culture["Kb.Dna.NotDone"]</a>
+                            }
+                        </li>
+                    }
+                </ul>
+                @if (_vacancy.MatchGaps is { Count: > 0 })
+                {
+                    <div class="kb-fit-panel__gaps">
+                        <h3 class="kb-fit-panel__gaps-title">@Culture["Kb.Dna.NewForYou"]</h3>
+                        <ul>
+                            @foreach (var gap in _vacancy.MatchGaps.Take(4))
+                            {
+                                <li>@gap</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="kb-fit-panel__gate-hint">@Culture["Kb.Fit.GateHint"]</p>
+                <div class="kb-fit-panel__gate-links">
+                    <a class="engagement-btn" href="@KbRoutes.CultureTest">@Culture["Kb.Dna.Culture"]</a>
+                    <a class="engagement-btn" href="@KbRoutes.ValuesTest">@Culture["Kb.Dna.Values"]</a>
+                </div>
+            }
+            @if (string.Equals(_vacancy.CultureFitStatus, "Updating", StringComparison.OrdinalIgnoreCase))
+            {
+                <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
+            }
+            <div class="kb-fit-panel__foot-links">
+                <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
+                <AuthorizeView Roles="Candidate">
+                    <Authorized>
+                        <a href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </div>
+    };
 
     private string DetailWhenLabel
     {
@@ -926,6 +918,21 @@
             }
 
             return Culture["Vacancy.TravelUnavailable"];
+        }
+    }
+
+    private string? DetailTravelChip
+    {
+        get
+        {
+            if (_travelLoading || _vacancy?.TravelMinutes is not int minutes)
+            {
+                return null;
+            }
+
+            var verb = KbLabels.TransportVerb(Culture, _transport);
+            var core = string.Format(Culture["Kb.Travel.Minutes"], minutes, verb);
+            return TravelApprox ? $"± {core}" : core;
         }
     }
 
@@ -988,7 +995,7 @@
     {
         @if (_applied)
         {
-            <a class="btn--primary" href="@KbRoutes.Applications" data-testid="kb-detail-apply">@Culture["Kb.Detail.Applied"]</a>
+            <a class="login-submit kb-detail-apply-btn" href="@KbRoutes.Applications" data-testid="kb-detail-apply">@Culture["Kb.Detail.Applied"]</a>
         }
         else
         {
@@ -998,13 +1005,13 @@
             }
             else if (_signedInCandidate && (!_candidateApplyGateLoaded || !_profileReadyForApply))
             {
-                <a class="btn--primary"
+                <a class="login-submit kb-detail-apply-btn"
                    href="@($"/vacancies/{Id}#apply")"
                    data-testid="kb-detail-apply">@Culture["Apply.StickyCompleteProfileCta"]</a>
             }
             else
             {
-                <a class="btn--primary" href="@($"/vacancies/{Id}#apply")" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
+                <a class="login-submit kb-detail-apply-btn" href="@($"/vacancies/{Id}#apply")" data-testid="kb-detail-apply">@Culture["Kb.Detail.Apply"]</a>
             }
         }
     };
