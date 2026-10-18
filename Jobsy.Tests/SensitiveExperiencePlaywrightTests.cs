@@ -22,7 +22,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r4";
+    private const string OutDir = "/opt/cursor/artifacts/gevoelig-r5";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 

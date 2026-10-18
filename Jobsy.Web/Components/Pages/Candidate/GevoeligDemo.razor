@@ -11,7 +11,7 @@
 @inject CultureState Culture
 
 <PageTitle>Gevoelige werkervaring demo</PageTitle>
-<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-r4b" />
+<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-r5" />
 
 <div class="gev-page" data-testid="gevoelig-demo-@ActiveScreen">
     @switch (ActiveScreen)
@@ -332,20 +332,18 @@
     private RenderFragment RenderWorkHero(bool showBanner = false) => __builder =>
     {
         <section class="gev-hero" aria-label="@Culture["Onboarding.Step4.Title"]">
+            <figure class="gev-hero__art" aria-hidden="true">
+                <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
+            </figure>
             <div class="gev-wrap gev-wrap--hero">
-                <div class="gev-hero__grid">
-                    <div class="gev-hero__copy">
-                        <span class="gev-hero__badge">@Culture["Onboarding.Optional"]</span>
-                        <h1>@Culture["Onboarding.Step4.Title"]</h1>
-                        <p class="gev-hero__lead">@Culture["Onboarding.Step4.Lead"]</p>
-                        @if (showBanner)
-                        {
-                            <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
-                        }
-                    </div>
-                    <figure class="gev-hero__art" aria-hidden="true">
-                        <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
-                    </figure>
+                <div class="gev-hero__copy">
+                    <span class="gev-hero__badge">@Culture["Onboarding.Optional"]</span>
+                    <h1>@Culture["Onboarding.Step4.Title"]</h1>
+                    <p class="gev-hero__lead">@Culture["Onboarding.Step4.Lead"]</p>
+                    @if (showBanner)
+                    {
+                        <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
+                    }
                 </div>
             </div>
         </section>;
@@ -354,16 +352,14 @@
     private RenderFragment RenderRefHero() => __builder =>
     {
         <section class="gev-hero" aria-label="@Culture["Sensitive.Ref.Title"]">
+            <figure class="gev-hero__art" aria-hidden="true">
+                <img src="/images/candidate/ref-full.jpg" alt="" width="1280" height="720" decoding="async" />
+            </figure>
             <div class="gev-wrap gev-wrap--hero">
-                <div class="gev-hero__grid">
-                    <div class="gev-hero__copy">
-                        <h1>@Culture["Sensitive.Ref.Title"]</h1>
-                        <p class="gev-hero__lead">@Culture["Sensitive.Ref.Lead"]</p>
-                        <div class="gev-banner">@Culture["Sensitive.Ref.PrivacyBanner"]</div>
-                    </div>
-                    <figure class="gev-hero__art" aria-hidden="true">
-                        <img src="/images/candidate/ref-full.jpg" alt="" width="1280" height="720" decoding="async" />
-                    </figure>
+                <div class="gev-hero__copy">
+                    <h1>@Culture["Sensitive.Ref.Title"]</h1>
+                    <p class="gev-hero__lead">@Culture["Sensitive.Ref.Lead"]</p>
+                    <div class="gev-banner">@Culture["Sensitive.Ref.PrivacyBanner"]</div>
                 </div>
             </div>
         </section>;
@@ -372,19 +368,17 @@
     private RenderFragment RenderPaspoortHero() => __builder =>
     {
         <section class="gev-hero" aria-label="@Culture["Sensitive.Passport.HeroTitle"]">
+            <figure class="gev-hero__art" aria-hidden="true">
+                <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
+            </figure>
             <div class="gev-wrap gev-wrap--hero">
-                <div class="gev-hero__grid">
-                    <div class="gev-hero__copy">
-                        <h1>@Culture["Sensitive.Passport.HeroTitle"]</h1>
-                        <p class="gev-hero__lead">@Culture["Sensitive.Passport.HeroLead"]</p>
-                        <div class="gev-view-toggle">
-                            <button type="button">@Culture["Sensitive.Passport.MyView"]</button>
-                            <button type="button" class="is-on">@Culture["Sensitive.Passport.EmployerView"]</button>
-                        </div>
+                <div class="gev-hero__copy">
+                    <h1>@Culture["Sensitive.Passport.HeroTitle"]</h1>
+                    <p class="gev-hero__lead">@Culture["Sensitive.Passport.HeroLead"]</p>
+                    <div class="gev-view-toggle">
+                        <button type="button">@Culture["Sensitive.Passport.MyView"]</button>
+                        <button type="button" class="is-on">@Culture["Sensitive.Passport.EmployerView"]</button>
                     </div>
-                    <figure class="gev-hero__art" aria-hidden="true">
-                        <img src="/images/candidate/werk-full.jpg" alt="" width="1280" height="720" decoding="async" />
-                    </figure>
                 </div>
             </div>
         </section>;
