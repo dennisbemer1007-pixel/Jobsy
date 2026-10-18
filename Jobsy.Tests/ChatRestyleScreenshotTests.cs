@@ -26,7 +26,10 @@ public class ChatRestyleScreenshotTests
             ("candidate-sollicitaties-1440-open", WarmBody(mark, true), 1440, 900),
             ("candidate-sollicitaties-390-closed", WarmBody(mark, false), 390, 844),
             ("candidate-sollicitaties-390-open", WarmBody(mark, true), 390, 844),
-            ("candidate-vacancy-390-open", WarmBody(mark, true, vacancy: true), 390, 844),
+            ("vacancy-mock-interview-entry-1440", VacancyEntryBody(mark), 1440, 900),
+            ("vacancy-mock-interview-entry-390", VacancyEntryBody(mark), 390, 844),
+            ("vacancy-mock-interview-open-1440", VacancyPracticeBody(mark), 1440, 900),
+            ("vacancy-mock-interview-open-390", VacancyPracticeBody(mark), 390, 844),
             ("employer-1440-closed", BusinessBody(sil, false), 1440, 900),
             ("employer-1440-open", BusinessBody(sil, true), 1440, 900),
             ("admin-1440-closed", BusinessBody(sil, false), 1440, 900),
@@ -49,12 +52,34 @@ public class ChatRestyleScreenshotTests
         }
     }
 
-    private static string WarmBody(string mark, bool open, bool vacancy = false)
+    private static string VacancyEntryBody(string mark) => $"""
+<div class="app-shell kb-detail" style="min-height:900px;background:#f5f2ee">
+<main style="padding:1rem;max-width:720px;margin:0 auto">
+<h1>Zorgmedewerker dagbesteding</h1>
+<p style="color:#5a6a7d">Kasteelhof Zorg · Zaandam</p>
+<button class="btn btn-primary" style="margin:1rem 0">Solliciteer</button>
+<div class="lobsy-coach-cta"><button type="button" class="lobsy-coach-cta__btn lobsy-coach-cta__btn--warm"><span class="lobsy-coach-cta__medallion"><img src="{mark}" width="56" height="56"/></span><span class="lobsy-coach-cta__label">Oefen je sollicitatiegesprek</span></button></div>
+</main>
+<div class="lobsy-coach-dock" data-lobsy-coach><button class="lobsy-coach-dock__btn lobsy-coach-dock__btn--warm"><span class="lobsy-coach-dock__medallion"><img src="{mark}" width="56" height="56"/></span><span class="lobsy-coach-dock__label">Vraag het Lobsy</span></button></div>
+</div>
+""";
+
+    private static string VacancyPracticeBody(string mark) => $"""
+<div class="share-modal-backdrop lobsy-dialog-backdrop"></div>
+<div class="mock-interview-modal mock-interview-modal--warm lobsy-dialog">
+<header class="mock-interview-modal__header"><div class="mock-interview-modal__brand"><img class="mock-interview-modal__avatar" src="{mark}" width="40" height="40"/><div><h2>Oefen je sollicitatiegesprek</h2><p class="mock-interview-modal__lead">Vraag het Lobsy</p><p class="mock-interview-modal__vacancy">Zorgmedewerker dagbesteding · Kasteelhof Zorg</p></div></div><button class="mock-interview-modal__close">×</button></header>
+<p class="mock-interview-modal__disclaimer">Coachingsgesprek op basis van deze vacature. Geen echt gesprek met de werkgever. Deel geen BSN, bankgegevens of wachtwoorden. <a href="#">Meer over Lobsy</a></p>
+<p class="mock-interview-progress">Stap 1 · Beantwoord de openingsvraag</p>
+<div class="mock-interview-chat"><div class="mock-interview-bubble mock-interview-bubble--assistant"><div class="mock-interview-bubble__head"><img class="mock-interview-bubble__avatar" src="{mark}" width="32" height="32"/><span class="mock-interview-bubble__role">LOBSY</span></div><div class="mock-interview-block mock-interview-block--question"><span class="mock-interview-block__label">Vraag</span><p>In de vacature staat dat je cliënten begeleidt bij dagbesteding. Hoe zou jij iemand op zijn gemak stellen op een drukke ochtend?</p></div></div></div>
+<div class="mock-interview__chips"><span class="mock-interview__chip">Tip: noem iets dat letterlijk in de vacature staat en zeg waarom dat bij jou past.</span></div>
+<form class="mock-interview-compose"><div class="mock-interview-compose__row"><textarea placeholder="Typ je antwoord"></textarea><button type="button" class="mock-interview-compose__send">→</button></div><div class="mock-interview-compose__foot"><button type="button" class="btn btn-ghost">Opnieuw</button></div></form>
+</div>
+""";
+
+    private static string WarmBody(string mark, bool open)
     {
-        var pageName = vacancy ? "deze vacature" : "Sollicitaties";
-        var greeting = vacancy
-            ? "Hoi Sanne. Je bekijkt Zorgmedewerker dagbesteding. Waar kan ik je mee helpen?"
-            : "Hoi Sanne. Je hebt dinsdag een gesprek bij Bakkerij De Korenaar, mooi zeg. Zal ik je helpen het voor te bereiden?";
+        var pageName = "Sollicitaties";
+        var greeting = "Hoi Sanne. Je hebt dinsdag een gesprek bij Bakkerij De Korenaar, mooi zeg. Zal ik je helpen het voor te bereiden?";
         var openPanel = open
             ? $"""
 <div class="lobsy-assistant is-open lobsy-assistant--skin-warm lobsy-assistant--coach has-bottom-nav"><div id="lobsy-assistant-panel" class="lobsy-assistant__panel"><header class="lobsy-assistant__header"><div class="lobsy-assistant__brand"><img class="lobsy-assistant__avatar" src="{mark}" width="40" height="40"/><div><h2>Lobsy</h2><p class="lobsy-assistant__lead">Vraag het Lobsy</p></div></div><div class="lobsy-assistant__header-actions"><button class="lobsy-assistant__icon-btn">+</button><button class="lobsy-assistant__icon-btn">×</button></div></header><p class="lobsy-assistant__context"><span class="lobsy-assistant__context-dot"></span>Je bekijkt nu {pageName}, ik denk met je mee</p><div class="lobsy-assistant__chat"><div class="lobsy-assistant__bubble lobsy-assistant__bubble--assistant"><div class="lobsy-assistant__bubble-head"><img class="lobsy-assistant__bubble-logo" src="{mark}" width="32" height="32"/><span>Lobsy</span></div><p>{greeting}</p></div></div><div class="lobsy-assistant__chips"><button class="lobsy-assistant__chip">Ja, help me voorbereiden</button><button class="lobsy-assistant__chip">Wat betekent 'Bekeken'?</button><button class="lobsy-assistant__chip">Hoe stuur ik een initiatief?</button></div><form class="lobsy-assistant__compose"><div class="lobsy-assistant__compose-row"><textarea placeholder="Typ je vraag"></textarea><button type="button" class="lobsy-assistant__send">→</button></div></form><p class="lobsy-assistant__disclaimer">Lobsy is een AI-assistent en geeft geen persoonlijk advies. Deel geen BSN, bankgegevens of wachtwoorden. <a href="#">Meer over Lobsy</a></p><p class="lobsy-assistant__human">Liever een mens spreken? <button class="auth-link">Stuur ons een bericht</button></p></div></div>

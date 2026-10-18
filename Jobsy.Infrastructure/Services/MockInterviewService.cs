@@ -73,6 +73,7 @@ public sealed class MockInterviewService : IMockInterviewService
         5. Never ask for SSN/BSN, bank details, passwords, or other highly sensitive data.
         6. If asked whether this is real: explain it is a Lobsy practice chat.
         7. After 5–6 questions, wrap up with a compliment + 2 takeaways + one "use this tomorrow" line.
+        8. Never use numeric scores, percentages, star ratings, or "X/10" in feedback. Describe quality in words only.
         """;
 
     private static readonly JsonSerializerOptions JsonOptions = new()

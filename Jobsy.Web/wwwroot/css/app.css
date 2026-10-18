@@ -7006,70 +7006,65 @@ a.engagement-btn {
     outline-offset: 2px;
 }
 
-/* Lobster coach CTA on vacancy detail (candidates only) */
+/* Vacancy detail: mock interview entry (direction E) */
 .lobsy-coach-cta {
     margin: 1.25rem 0 0.5rem;
     display: flex;
     justify-content: flex-start;
 }
 
-.lobsy-coach-cta__btn {
+.lobsy-coach-cta__btn--warm {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.85rem;
-    padding: 0.55rem 0.85rem 0.55rem 0.45rem;
-    border: none;
-    background: transparent;
+    gap: 0.55rem;
+    min-height: 48px;
+    padding: 0.45rem 1rem 0.45rem 2.35rem;
+    border: 0;
+    border-radius: 999px;
+    background: #ffc9a8;
+    color: var(--brand-deep, #0a2044);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 18%, transparent);
     cursor: pointer;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 650;
+    line-height: 1.2;
     text-align: start;
     max-width: 100%;
 }
 
-.lobsy-coach-cta__btn:hover .lobsy-coach-cta__bubble,
-.lobsy-coach-cta__btn:focus-visible .lobsy-coach-cta__bubble {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px color-mix(in srgb, var(--brand) 14%, transparent);
+.lobsy-coach-cta__btn--warm:hover,
+.lobsy-coach-cta__btn--warm:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 22%, transparent);
 }
 
-.lobsy-coach-cta__btn:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--accent) 55%, var(--brand));
-    outline-offset: 3px;
-    border-radius: 14px;
+.lobsy-coach-cta__btn--warm:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand) 55%, white);
+    outline-offset: 2px;
 }
 
-.lobsy-coach-cta__mascot {
-    width: 72px;
-    height: 72px;
-    flex-shrink: 0;
-}
-
-.lobsy-coach-cta__bubble {
-    position: relative;
-    display: inline-block;
-    max-width: 16rem;
-    padding: 0.7rem 0.95rem;
-    border-radius: 16px;
-    background: var(--surface);
-    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
-    color: var(--brand);
-    font-weight: 700;
-    font-size: 0.95rem;
-    line-height: 1.35;
-    box-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 8%, transparent);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.lobsy-coach-cta__bubble::before {
-    content: "";
+.lobsy-coach-cta__medallion {
     position: absolute;
-    left: -8px;
+    inset-inline-start: -6px;
     top: 50%;
-    width: 14px;
-    height: 14px;
-    background: var(--surface);
-    border-left: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
-    border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
-    transform: translateY(-50%) rotate(45deg);
+    transform: translateY(-50%);
+    width: 56px;
+    height: 56px;
+    flex: none;
+    filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--brand) 22%, transparent));
+}
+
+.lobsy-coach-cta__medallion img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.lobsy-coach-cta__label {
+    white-space: normal;
 }
 
 /* Coach avatar (chat + CTA) */
@@ -7123,8 +7118,9 @@ a.engagement-btn {
 }
 
 .mock-interview-modal__avatar {
-    width: 56px;
-    height: 56px;
+    width: 40px;
+    height: 40px;
+    flex: none;
 }
 
 .mock-interview-bubble__head {
@@ -7135,8 +7131,9 @@ a.engagement-btn {
 }
 
 .mock-interview-bubble__avatar {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+    flex: none;
 }
 
 .mock-interview-modal {
@@ -7153,35 +7150,63 @@ a.engagement-btn {
     border: 1px solid var(--border);
     border-radius: 14px;
     box-shadow: var(--shadow-lg);
-    padding: 1.1rem 1.2rem 1.15rem;
+    padding: 0 0 1rem;
+    overflow: hidden;
+}
+
+.mock-interview-modal--warm {
+    background: #fffaf5;
+    border-color: #ecd9c8;
+}
+
+.mock-interview-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    background: #f6efe4;
+    border-bottom: 1px solid #e8d8c8;
+}
+
+.mock-interview-modal__lead {
+    margin: 0.1rem 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
+.mock-interview-modal__vacancy {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--brand);
+    line-height: 1.3;
+}
+
+.mock-interview-modal__close {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
 }
 
 .mock-interview-modal__disclaimer {
-    margin: 0 0 0.55rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: var(--radius-sm);
-    background: var(--accent-soft);
+    margin: 0.55rem 1rem;
+    padding: 0;
     color: var(--muted);
-    font-size: 0.8rem;
-    line-height: 1.4;
+    font-size: 0.72rem;
+    line-height: 1.35;
 }
 
 .mock-interview-progress {
-    margin: 0 0 0.45rem;
+    margin: 0 0.75rem 0.45rem;
     font-size: 0.78rem;
     font-weight: 700;
     color: var(--brand);
-}
-
-.mock-interview-hint {
-    margin: 0.45rem 0 0.35rem;
-    padding: 0.45rem 0.65rem;
-    border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border));
-    color: var(--brand);
-    font-size: 0.8rem;
-    line-height: 1.35;
 }
 
 .mock-interview-chat {
@@ -7192,7 +7217,7 @@ a.engagement-btn {
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
-    padding: 0.35rem 0.15rem 0.65rem;
+    padding: 0.35rem 1rem 0.65rem;
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
 }
@@ -7233,8 +7258,8 @@ a.engagement-btn {
 
 .mock-interview-bubble--assistant {
     align-self: flex-start;
-    background: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent-soft) 65%, white));
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+    background: #fff3e8;
+    border-color: #f0dcc8;
 }
 
 .mock-interview-bubble--user {
@@ -7318,11 +7343,62 @@ a.engagement-btn {
     font-weight: 600;
 }
 
+.mock-interview__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.45rem 1rem 0;
+}
+
+.mock-interview__chip {
+    font: inherit;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: #fff;
+    color: var(--brand);
+}
+
 .mock-interview-compose {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
     margin-top: 0.75rem;
+    padding-inline: 1rem;
+}
+
+.mock-interview-compose__row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.4rem;
+}
+
+.mock-interview-compose__row textarea {
+    flex: 1;
+}
+
+.mock-interview-compose__send {
+    flex: none;
+    width: 2.35rem;
+    height: 2.35rem;
+    border: 0;
+    border-radius: 50%;
+    background: var(--brand-deep, #0a2044);
+    color: #fff;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.mock-interview-compose__send:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.mock-interview-compose__foot {
+    display: flex;
+    justify-content: flex-start;
 }
 
 .mock-interview-compose textarea {

@@ -25,6 +25,14 @@ public class ChatAssistantRestyleGuardTests
 
         var admin = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Layout/AdminLayout.razor"));
         Assert.Contains("UiVariant=\"AssistantChatUiVariant.Business\"", admin, StringComparison.Ordinal);
+
+        var mock = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/MockInterviewModal.razor"));
+        var vacancy = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/VacancyDetail.razor"));
+        Assert.Contains("mock-interview-modal--warm", mock, StringComparison.Ordinal);
+        Assert.Contains("BrandImages.MarkSvg", mock, StringComparison.Ordinal);
+        Assert.DoesNotContain("LobsyCoachAvatar", mock, StringComparison.Ordinal);
+        Assert.Contains("lobsy-coach-cta__btn--warm", vacancy, StringComparison.Ordinal);
+        Assert.Contains("Never use numeric scores", File.ReadAllText(Path.Combine(root, "Jobsy.Infrastructure/Services/MockInterviewService.cs")), StringComparison.Ordinal);
     }
 
     private static string FindRepoRoot()

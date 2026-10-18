@@ -794,8 +794,8 @@ internal sealed class E2eFlowRunner
 
             await page.GotoAsync(_baseUrl + "/notifications");
             await CandidateJourneyE2e.WaitForCandidateChromeAsync(page);
-            var coachOnNotif = await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__mascot").CountAsync() > 0
-                               && await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__mascot").First.IsVisibleAsync();
+            var coachOnNotif = await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__medallion").CountAsync() > 0
+                               && await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__medallion").First.IsVisibleAsync();
             _report.MobileCoachOnNotifications = coachOnNotif;
             await Shot(page, "mobile-390", "13-candidate-notifications");
             FixEvidencePublisher.PublishItem(
@@ -1384,8 +1384,8 @@ internal sealed class E2eFlowRunner
             await page.WaitForTimeoutAsync(1200);
         }
 
-        var coachVisible = await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__mascot").CountAsync() > 0
-                           && await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__mascot").First.IsVisibleAsync();
+        var coachVisible = await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__medallion").CountAsync() > 0
+                           && await page.Locator(".lobsy-coach-dock__btn, .lobsy-coach-cta__medallion").First.IsVisibleAsync();
         _report.MobileCoachOnVacancyDetail = coachVisible;
         await Shot(page, tag, "07-vacancy-no-coach-mobile");
     }
