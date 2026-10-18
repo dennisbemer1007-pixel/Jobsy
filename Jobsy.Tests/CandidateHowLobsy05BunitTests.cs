@@ -22,9 +22,19 @@ namespace Jobsy.Tests;
 /// </summary>
 public class CandidateHowLobsy05BunitTests : BunitContext
 {
+    private readonly AmbientCultureScope _cultureScope = new();
     private readonly StubHandler _handler = new();
     private bool _employers = true;
     private bool _passport = true;
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _cultureScope.Dispose();
+        }
+    }
 
     public CandidateHowLobsy05BunitTests()
     {

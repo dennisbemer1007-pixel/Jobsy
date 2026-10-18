@@ -87,7 +87,8 @@ file sealed class AuthA11yWebFactory : WebWebApplicationFactory
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["JobsyAuth:AllowDevelopmentAuth"] = "true",
-                ["PublicWebBaseUrl"] = "http://localhost"
+                ["PublicWebBaseUrl"] = "http://localhost",
+                ["Localization:EnabledCultures"] = "nl,en,pl,ro,ar"
             });
         });
         builder.ConfigureTestServices(_ => { });

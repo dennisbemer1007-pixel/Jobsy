@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text;
 using Bunit;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Components.Landing;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Components.Pages;
@@ -23,6 +24,17 @@ namespace Jobsy.Tests;
 
 public class LandingBunitTests : BunitContext
 {
+    private readonly AmbientCultureScope _cultureScope = new();
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _cultureScope.Dispose();
+        }
+    }
+
     public LandingBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
