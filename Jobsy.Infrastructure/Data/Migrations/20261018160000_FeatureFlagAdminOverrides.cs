@@ -12,33 +12,13 @@ public partial class FeatureFlagAdminOverrides : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        migrationBuilder.AddColumn<string>(
-            name: "AdminFlagOverridesJson",
-            table: "PlatformFeatureSettings",
-            type: "text",
-            nullable: false,
-            defaultValue: "[]");
-
-        migrationBuilder.AddColumn<bool>(
-            name: "TestJourneyIllustrationEnabled",
-            table: "PlatformFeatureSettings",
-            type: "boolean",
-            nullable: false,
-            defaultValue: false);
-
-        migrationBuilder.AddColumn<bool>(
-            name: "OnboardingFinaleV2Enabled",
-            table: "PlatformFeatureSettings",
-            type: "boolean",
-            nullable: false,
-            defaultValue: false);
-
-        migrationBuilder.AddColumn<bool>(
-            name: "OccupationDayInLifeEnabled",
-            table: "PlatformFeatureSettings",
-            type: "boolean",
-            nullable: false,
-            defaultValue: true);
+        migrationBuilder.Sql(
+            """
+            ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "AdminFlagOverridesJson" text NOT NULL DEFAULT '[]';
+            ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "TestJourneyIllustrationEnabled" boolean NOT NULL DEFAULT false;
+            ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "OnboardingFinaleV2Enabled" boolean NOT NULL DEFAULT false;
+            ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "OccupationDayInLifeEnabled" boolean NOT NULL DEFAULT true;
+            """);
     }
 
     protected override void Down(MigrationBuilder migrationBuilder)
