@@ -6,7 +6,9 @@ const liveDir = process.argv[2] ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r
 const manifestPath = process.argv[3] ?? join(liveDir, "capture-manifest.json");
 
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-const bad = manifest.filter((e) => !e.ok);
+const bad = manifest.filter(
+  (e) => e.ok === false || (e.gutter && e.gutter.ok === false),
+);
 if (bad.length) {
   console.error("Manifest has failed entries:", bad);
   process.exit(1);

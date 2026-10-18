@@ -94,6 +94,32 @@ public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
             FullPage = true
         });
 
+        var companyMapRow = page.Locator(".admin-toggle-row").Filter(new()
+        {
+            HasText = "Bedrijvenkaart (kandidaat)"
+        }).First;
+        await companyMapRow.ScrollIntoViewIfNeededAsync();
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "flag-before-company-map-1440.png"),
+            FullPage = true
+        });
+        var companyMapToggle = companyMapRow.Locator("button.admin-switch").First;
+        await companyMapToggle.ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "flag-after-company-map-off-1440.png"),
+            FullPage = true
+        });
+        await companyMapToggle.ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "flag-after-company-map-on-1440.png"),
+            FullPage = true
+        });
+
         var switchCount = await page.Locator("button.admin-switch").CountAsync();
         Assert.True(switchCount >= 5, $"Expected real toggles, found {switchCount}.");
         var rawKey = await page.Locator("text=AdminSettings.").CountAsync();
