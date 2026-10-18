@@ -139,7 +139,7 @@
   background-image: var(--kb-detail-fallback, none);
   background-repeat: no-repeat;
   background-position: var(--kb-detail-fallback-pos, center bottom);
-  background-size: contain;
+  background-size: cover;
   image-rendering: auto;
 }
 
@@ -690,28 +690,23 @@
 }
 
 .cand-hero--profession-band {
-  background-image: none;
+  background-size: auto 100%;
+  background-position: right center;
 }
 
 .cand-hero--profession-band::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 0 52%;
-  z-index: 0;
-  background-image: var(--cand-hero-art, none);
-  background-repeat: no-repeat;
-  background-size: 220% auto;
-  background-position: 100% bottom;
+  content: none;
+  display: none;
 }
 
 .cand-hero--profession-band::before {
-  z-index: 1;
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) 50%,
-    color-mix(in srgb, var(--pearl) 70%, transparent) 54%,
-    transparent 62%
+    var(--pearl) 56%,
+    color-mix(in srgb, var(--pearl) 92%, transparent) 62%,
+    color-mix(in srgb, var(--pearl) 45%, transparent) 68%,
+    transparent 80%
   );
 }
 

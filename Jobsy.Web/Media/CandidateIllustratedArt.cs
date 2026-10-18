@@ -73,7 +73,7 @@ public static class CandidateIllustratedArt
         var seed = string.Join(' ', new[] { categoryName, title }.Where(s => !string.IsNullOrWhiteSpace(s)));
         if (ContainsAny(seed, "dieren", "pension", "veter", "paraveter", "dierenverzorg"))
         {
-            return new HeroArt(CandidateIllustratedImages.Spot("job-dieren.jpg"), "center bottom");
+            return new HeroArt(CandidateIllustratedImages.DroombaanBand, "36% bottom");
         }
 
         return HeroLandscapeForDream(string.IsNullOrWhiteSpace(seed) ? null : seed);
@@ -106,7 +106,7 @@ public static class CandidateIllustratedArt
         return CandidateIllustratedImages.SavedNoPhotoArt;
     }
 
-    public static string CareerEmptySpot => CandidateIllustratedImages.DroombaanBand;
+    public static string CareerEmptySpot => CandidateIllustratedImages.DroombaanProfessionWide;
 
     private static bool ContainsAny(string text, params string[] parts)
     {

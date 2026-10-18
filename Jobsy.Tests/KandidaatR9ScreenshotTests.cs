@@ -19,9 +19,9 @@ using System.Security.Claims;
 namespace Jobsy.Tests;
 
 [Collection("PlaywrightSmoke")]
-public sealed class KandidaatR8ScreenshotTests : IAsyncLifetime
+public sealed class KandidaatR9ScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-r8";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-r9";
     private static readonly Guid NoPhotoVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
@@ -33,7 +33,7 @@ public sealed class KandidaatR8ScreenshotTests : IAsyncLifetime
     {
         foreach (var legacy in new[]
                  {
-                     "/opt/cursor/artifacts/kandidaat-r7",
+                     "/opt/cursor/artifacts/kandidaat-r8",
                      "/opt/cursor/artifacts/carriere-r4",
                      "/opt/cursor/artifacts/carriere-r3",
                      "/opt/cursor/artifacts/vacature-r3",
@@ -68,21 +68,23 @@ public sealed class KandidaatR8ScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_kandidaat_r8_review_shots()
+    public async Task Capture_kandidaat_r9_review_shots()
     {
         Directory.CreateDirectory(ArtifactsDir);
-        await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false);
-        await CapturePageAsync("/carriere?empty=1", "carriere-zonder-droombaan", careerEmpty: true);
-        await CapturePageAsync("/vacancies/" + NoPhotoVacancyId, "vacature-zonder-foto", careerEmpty: false);
-        await CapturePageAsync("/vacancies/" + PhotoVacancyId, "vacature-met-foto", careerEmpty: false);
+        await CapturePageAsync("/carriere?empty=1", "carriere-zonder-droombaan", careerEmpty: true, widths: [(1440, 900, "1440")]);
+        await CapturePageAsync("/vacancies/" + NoPhotoVacancyId, "vacature-zonder-foto", careerEmpty: false, widths: [(1440, 900, "1440"), (390, 844, "390")]);
 
         var pngs = Directory.GetFiles(ArtifactsDir, "*.png");
-        Assert.InRange(pngs.Length, 8, 10);
+        Assert.Equal(3, pngs.Length);
     }
 
-    private async Task CapturePageAsync(string path, string name, bool careerEmpty)
+    private async Task CapturePageAsync(
+        string path,
+        string name,
+        bool careerEmpty,
+        (int Width, int Height, string Tag)[] widths)
     {
-        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        foreach (var (width, height, tag) in widths)
         {
             CombinedStubApiHandler.CareerPlanEmpty = careerEmpty;
             await using var context = await _browser!.NewContextAsync(new()
