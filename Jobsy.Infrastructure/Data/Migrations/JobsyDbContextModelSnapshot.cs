@@ -5523,6 +5523,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("KandidatenkaartEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("ReferenceVerificationEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<bool>("MaintenanceEnabled")
                         .HasColumnType("boolean");
 

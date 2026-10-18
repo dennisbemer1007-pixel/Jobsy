@@ -15,8 +15,10 @@
 @inject IJSRuntime Js
 @inject GratisDnaMergeService GratisDnaMerge
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
+@inject IConfiguration Configuration
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Features
 @using Jobsy.Web.KandidaatBanen
 @implements IAsyncDisposable
 
@@ -63,6 +65,22 @@
     }
     else if (_finish || _state?.FinishReached == true)
     {
+        if (_finaleV2)
+        {
+            <HeadContent>
+                <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-01" />
+            </HeadContent>
+            <OnboardingFinaleV2 FirstName="@Draft.FirstName"
+                                Impression="_state?.Impression"
+                                MatchCount="@(_state?.Impression?.MatchingVacancyCount ?? 0)"
+                                MaxTravelMinutes="@_finaleMaxTravel"
+                                HomeLabel="@_finaleHomeLabel"
+                                DreamJob="@(string.IsNullOrWhiteSpace(Draft.Dream) ? null : Draft.Dream)"
+                                CardsInput="_finaleCardsInput"
+                                OnComplete="CompleteAsync" />
+        }
+        else
+        {
         <section class="ob-wizard__finish">
             <div class="ob-wizard__compass" aria-hidden="true">⌾</div>
             <span class="ob-wizard__badge">@Culture["Onboarding.Finish.Badge"]</span>
@@ -105,6 +123,7 @@
             </button>
             <a class="ob-wizard__ghost" href="/home?tab=tests">@Culture["Onboarding.Finish.FullTests"]</a>
         </section>
+        }
     }
     else if (_welcome)
     {
@@ -391,6 +410,10 @@
     private string? _error;
     private WizardPhase _phase;
     private OnboardingState? _state;
+    private bool _finaleV2;
+    private OnboardingFinaleCardsInput _finaleCardsInput = new(false, false, false, false, false, false);
+    private int _finaleMaxTravel = 30;
+    private string? _finaleHomeLabel;
     private readonly Dictionary<int, int> _miniAnswers = new();
     private readonly Dictionary<int, int> _serverAnswers = new();
     private readonly HashSet<int> _lockedIds = [];
@@ -607,6 +630,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _finaleV2 = OnboardingFinaleV2Gate.IsEnabled(Configuration);
         Culture.Changed += CultureChanged;
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
@@ -627,6 +651,7 @@
             ApplyProfile(await profileTask);
 
             var passportOn = await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport);
+            _finaleV2 = OnboardingFinaleV2Gate.IsEnabled(Configuration);
             if (_state.IsComplete)
             {
                 if (await ShouldInstallAsync())
@@ -642,7 +667,7 @@
                 return;
             }
 
-            if (passportOn && _state.FinishReached)
+            if (passportOn && _state.FinishReached && !_finaleV2)
             {
                 Navigation.NavigateTo(FeatureRoutes.CandidateDiscoveryPath, true);
                 return;
@@ -650,6 +675,11 @@
 
             _step = Math.Clamp(_state.CurrentStep, 1, 10);
             _finish = _state.FinishReached;
+            if (_finish && _finaleV2)
+            {
+                await LoadFinaleContextAsync();
+            }
+
             _welcome = _step == 1
                 && (_state.Steps.Count == 0 || _state.Steps.All(item => item.Step == 1 && item.CompletedAtUtc is null));
             if (!_welcome && !_finish)
@@ -850,6 +880,11 @@
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;
+                if (_finaleV2)
+                {
+                    await LoadFinaleContextAsync();
+                }
+
                 return;
             }
 
@@ -1344,6 +1379,11 @@
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;
+                if (_finaleV2)
+                {
+                    await LoadFinaleContextAsync();
+                }
+
                 return;
             }
 
@@ -1582,6 +1622,36 @@
         await Task.Delay(2500);
         _savedVisible = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadFinaleContextAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        var testsV2 = flags.TestsV2Enabled;
+        var competency = await Api.GetMyCompetenciesAsync();
+        var career = await Api.GetMyCareerInterestsAsync();
+        var culture = await Api.GetMyCultureAsync();
+        var values = await Api.GetMyValuesAsync();
+        var deeperDone = OnboardingFinaleDeeper.AllKindsReachedDeeper(
+            competency?.Answers,
+            competency?.QuickScanVersion,
+            career?.Answers,
+            career?.QuickScanVersion,
+            culture?.Answers,
+            culture?.QuickScanVersion,
+            values?.Answers,
+            values?.QuickScanVersion,
+            testsV2);
+        _finaleCardsInput = new OnboardingFinaleCardsInput(
+            flags.CandidatePassportEnabled,
+            flags.ReferenceVerificationEnabled,
+            flags.ProactiveMatchingEnabled,
+            flags.KandidatenkaartEnabled,
+            deeperDone,
+            !string.IsNullOrWhiteSpace(Draft.Dream));
+        _nearbySignal ??= await Api.GetOnboardingNearbySignalAsync();
+        _finaleMaxTravel = _nearbySignal?.MaxTravelMinutes ?? Draft.MaxTravel;
+        _finaleHomeLabel = string.IsNullOrWhiteSpace(Draft.City) ? null : Draft.City.Trim();
     }
 
     private async Task LoadNearbySignalAsync()
