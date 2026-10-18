@@ -48,7 +48,7 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
     [Fact]
     public async Task Capture_gevoelig_mobile_hero_390()
     {
-        const string mobDir = "/opt/cursor/artifacts/gevoelig-mobhero-r2";
+        const string mobDir = "/opt/cursor/artifacts/gevoelig-mobhero-r3";
         Directory.CreateDirectory(mobDir);
         using var web = new GevoeligWebFactory();
         var baseUrl = web.EnsureServerAddress();

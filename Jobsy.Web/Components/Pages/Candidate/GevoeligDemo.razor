@@ -11,13 +11,13 @@
 @inject CultureState Culture
 
 <PageTitle>Gevoelige werkervaring demo</PageTitle>
-<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-mobhero-r2" />
+<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-mobhero-r3" />
 
 <div class="gev-page" data-testid="gevoelig-demo-@ActiveScreen">
     @switch (ActiveScreen)
     {
         case "edit":
-            @RenderWorkHero()
+            @RenderWorkHero(showBanner: true)
             <div class="gev-wrap">
                 <div class="gev-layout">
                     <div class="gev-card">
@@ -90,7 +90,7 @@
             </div>
             break;
         case "timeline":
-            @RenderWorkHero()
+            @RenderWorkHero(showBanner: true)
             <div class="gev-wrap">
                 <div class="gev-layout">
                     <div class="gev-card">
@@ -344,7 +344,11 @@
                 </div>
             </div>
             <figure class="gev-hero__art gev-hero__art--werk" aria-hidden="true"></figure>
-        </section>;
+        </section>
+        @if (showBanner)
+        {
+            <div class="gev-hero-tip-mobile">@Culture["Sensitive.Work.PrivacyBanner"]</div>
+        };
     };
 
     private RenderFragment RenderRefHero() => __builder =>
@@ -358,7 +362,8 @@
                 </div>
             </div>
             <figure class="gev-hero__art gev-hero__art--ref" aria-hidden="true"></figure>
-        </section>;
+        </section>
+        <div class="gev-hero-tip-mobile">@Culture["Sensitive.Ref.PrivacyBanner"]</div>;
     };
 
     private RenderFragment RenderPaspoortHero() => __builder =>
