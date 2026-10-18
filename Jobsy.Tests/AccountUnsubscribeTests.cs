@@ -490,6 +490,94 @@ public class AccountUnsubscribeTests
     }
 
     [Fact]
+    public async Task After_account_delete_same_email_can_create_new_active_user()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        const string email = "reuse-after-delete@test.nl";
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "Te verwijderen",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        db.LocalAuthCredentials.Add(new LocalAuthCredential
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Email = email,
+            PasswordHash = "hash"
+        });
+        await db.SaveChangesAsync();
+
+        var privacy = CreatePrivacy(db, out var mail);
+        var principal = CreatePrincipal(email);
+        await privacy.RequestUnsubscribeAsync(principal, AccountUnsubscribeReasons.Privacy, null);
+        await privacy.ConfirmUnsubscribeAsync(principal, ExtractOtpFromMail(mail));
+
+        var deleted = await db.Users.SingleAsync(u => u.Id == userId);
+        Assert.False(deleted.IsActive);
+        Assert.StartsWith("deleted-", deleted.Email);
+        Assert.False(await db.LocalAuthCredentials.AnyAsync(c => c.UserId == userId));
+        Assert.False(await db.UserExternalLogins.AnyAsync(l => l.UserId == userId));
+
+        var freshId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = freshId,
+            Email = email,
+            FullName = "Opnieuw",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        await db.SaveChangesAsync();
+
+        Assert.Equal(email, (await db.Users.SingleAsync(u => u.Id == freshId)).Email);
+        Assert.False(await db.CandidateOnboardings.AnyAsync(o => o.UserId == freshId));
+    }
+
+    [Fact]
+    public async Task Delete_removes_external_vacancy_outbounds_before_parent_rows()
+    {
+        await using var db = CreateDb();
+        var userId = Guid.NewGuid();
+        const string email = "external-delete@test.nl";
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Email = email,
+            FullName = "External",
+            Role = UserRole.Candidate,
+            IsActive = true
+        });
+        var externalId = Guid.NewGuid();
+        db.CandidateExternalVacancies.Add(new CandidateExternalVacancy
+        {
+            Id = externalId,
+            CandidateUserId = userId,
+            SourceUrl = "https://example.com/vacancy",
+            SourceHost = "example.com",
+            SavedAtUtc = DateTime.UtcNow
+        });
+        db.CandidateExternalVacancyOutbounds.Add(new CandidateExternalVacancyOutbound
+        {
+            Id = Guid.NewGuid(),
+            ExternalVacancyId = externalId,
+            EmployerEmailNormalized = "werkgever@example.com",
+            Motivation = "Graag solliciteren",
+            InitialSentAtUtc = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        await CreatePrivacy(db).DeleteOrAnonymizeAsync(CreatePrincipal(email));
+
+        Assert.False(await db.CandidateExternalVacancyOutbounds.AnyAsync());
+        Assert.False(await db.CandidateExternalVacancies.AnyAsync(v => v.CandidateUserId == userId));
+    }
+
+    [Fact]
     public void Candidate_user_relation_catalog_requires_anonymize_coverage_for_every_model_entity()
     {
         using var db = CreateDb();
