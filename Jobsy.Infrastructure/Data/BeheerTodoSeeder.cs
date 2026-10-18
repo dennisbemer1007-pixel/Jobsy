@@ -40,7 +40,7 @@ public static class BeheerTodoSeeder
             {
                 Id = Guid.Parse("b1e0e0e0-e0e0-4000-8000-000000000003"),
                 SeedKey = "seed-acc-feature-flags",
-                Title = "Flags aanzetten op acceptatie: ProactiveMatchingEnabled, EmployersEnabled, MatchCalibrationV1Enabled, TestsV2Enabled, TestItemExamplesEnabled",
+                Title = "Flags aanzetten op acceptatie: ProactiveMatchingEnabled, EmployersEnabled, MatchCalibrationV1Enabled, TestsV2Enabled, TestItemExamplesEnabled, TestProgressInsightEnabled",
                 Body = string.Empty,
                 Priority = BeheerTodoPriority.Normaal,
                 Status = BeheerTodoStatus.Open,

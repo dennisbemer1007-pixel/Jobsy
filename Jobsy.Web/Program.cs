@@ -5,6 +5,7 @@ using Jobsy.Core.Ops;
 using Jobsy.Core.Options;
 using Jobsy.Core.Security;
 using Jobsy.Web.Auth;
+using Jobsy.Web.Capture;
 using Jobsy.Web.Components;
 using Jobsy.Web.Hosting;
 using Jobsy.Web.Localization;
@@ -331,10 +332,21 @@ builder.Services.AddScoped<IGeocodingClient, CompositeGeocodingClient>();
 // Scoped (circuit) registration — do not use IHttpClientFactory + message handler here.
 // That resolves AuthenticationStateProvider outside the Razor component scope.
 // JobsyApiClient is IAsyncDisposable so the circuit scope disposes the HttpClient.
-builder.Services.AddScoped(sp =>
-    new JobsyApiClient(
-        JobsyApiClientFactory.Create(sp, builder.Configuration),
-        sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+if (CaptureModeExtensions.IsEnabled(builder.Configuration))
+{
+    builder.Services.AddCaptureModeStubs(builder.Configuration);
+    builder.Services.AddScoped(sp =>
+        new JobsyApiClient(
+            sp.GetRequiredService<IHttpClientFactory>().CreateClient("capture"),
+            sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+}
+else
+{
+    builder.Services.AddScoped(sp =>
+        new JobsyApiClient(
+            JobsyApiClientFactory.Create(sp, builder.Configuration),
+            sp.GetRequiredService<Jobsy.Web.Services.MeGetCache>()));
+}
 builder.Services.AddScoped<Jobsy.Web.Services.KvkSearchClient>();
 builder.Services.AddScoped<Jobsy.Web.Components.Registration.RegistrationWizardState>();
 builder.Services.AddScoped<IVacancyMapApiForwarder, VacancyMapApiForwarder>();
@@ -560,9 +572,11 @@ app.UseHtmlStatusCodePages();
 // Explicit so it sits *after* the re-executing handlers above: both /Error and /status/{code}
 // need routing to run again on the rewritten path. WebApplication would otherwise add it first.
 app.UseRouting();
+app.UseCaptureMode();
 
 // Render terminates TLS at the edge; keep local HTTPS redirect for Development only.
-if (app.Environment.IsDevelopment())
+var skipHttpsRedirect = app.Configuration.GetValue("E2E:SkipHttpsRedirect", false);
+if (app.Environment.IsDevelopment() && !skipHttpsRedirect)
 {
     app.UseHttpsRedirection();
 }

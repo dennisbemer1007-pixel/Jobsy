@@ -1753,6 +1753,18 @@
   animation: none;
 }
 
+.journey-card-wrap .journey-insight-panel {
+  align-self: start;
+  min-inline-size: 11rem;
+  max-inline-size: 13.5rem;
+  padding-bottom: 0.35rem;
+}
+
+.journey-card-wrap .journey-insight-panel .test-progress-panel {
+  position: sticky;
+  inset-block-start: 1rem;
+}
+
 .journey-lz {
   align-self: center;
   min-height: 0;

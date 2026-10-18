@@ -219,6 +219,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.TestItemExamplesEnabled = testItemExamplesEnabled;
         }
 
+        if (update.TestProgressInsightEnabled is bool testProgressInsightEnabled)
+        {
+            row.TestProgressInsightEnabled = testProgressInsightEnabled;
+        }
+
         if (update.MatchCalibrationV1Enabled is bool matchCalibrationV1)
         {
             row.MatchCalibrationV1Enabled = matchCalibrationV1;
@@ -473,6 +478,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.ProactiveMatchingEnabled ?? false,
             row?.TestsV2Enabled ?? _options.TestsV2Enabled,
             row?.TestItemExamplesEnabled ?? _options.TestItemExamplesEnabled,
+            row?.TestProgressInsightEnabled ?? _options.TestProgressInsightEnabled,
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,

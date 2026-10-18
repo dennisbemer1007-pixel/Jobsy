@@ -39,4 +39,7 @@ public sealed class JobsyFeatureOptions
 
     /// <summary>When true, Quick-Scan questions show per-item practice examples. Overridden by platform settings.</summary>
     public bool TestItemExamplesEnabled { get; set; }
+
+    /// <summary>When true, Quick-Scan shows motivation + progress insight card. Overridden by platform settings.</summary>
+    public bool TestProgressInsightEnabled { get; set; }
 }

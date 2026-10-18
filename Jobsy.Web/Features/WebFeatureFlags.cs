@@ -71,6 +71,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.ProactiveMatchingEnabled ?? false,
                 dto?.TestsV2Enabled ?? false,
                 TestItemExamplesEnabled: dto?.TestItemExamplesEnabled ?? false,
+                TestProgressInsightEnabled: dto?.TestProgressInsightEnabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false);
             _lastKnown = flags;
@@ -145,6 +146,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("testItemExamplesEnabled")]
         public bool TestItemExamplesEnabled { get; set; }
+
+        [JsonPropertyName("testProgressInsightEnabled")]
+        public bool TestProgressInsightEnabled { get; set; }
 
         [JsonPropertyName("employerFitQuestionnairesEnabled")]
         public bool EmployerFitQuestionnairesEnabled { get; set; }

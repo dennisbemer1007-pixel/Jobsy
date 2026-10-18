@@ -1,10 +1,12 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Components.Shared.Questionnaire
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
+<TestBlockBackground Slug="@_blockArtSlug" Enabled="@(Questions.Count > 0)">
 <div class="ob-wizard__test-tabs @(JourneyShell ? "journey-segments" : null)">
     @foreach (var tab in TestTabs)
     {
@@ -21,7 +23,16 @@
 </div>
 @if (!JourneyShell)
 {
-    <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+    @if (Questions.Count > 0)
+    {
+        <TestBlockMobileHero>
+            <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+        </TestBlockMobileHero>
+    }
+    else
+    {
+        <h1 tabindex="-1">@(string.IsNullOrWhiteSpace(TitleKey) ? Culture[$"Onboarding.Step{Step}.Title"] : Culture[TitleKey])</h1>
+    }
     <p class="ob-wizard__lead">@(string.IsNullOrWhiteSpace(LeadKey) ? Culture["Onboarding.Test.Lead"] : Culture[LeadKey])</p>
 }
 @if (Questions.Count == 0)
@@ -50,13 +61,17 @@ else
                       OnFinished="OnFlowFinished"
                       OnLeave="OnLeave"
                       OnLater="OnLater"
-                      LaterLabel="@LaterLabel" />
+                      LaterLabel="@LaterLabel"
+                      ShowProgressInsight="ShowProgressInsight"
+                      DomainForQuestionId="DomainForQuestionId"
+                      ProgressInsightChanged="ProgressInsightChanged" />
     </div>
 }
 @if (!string.IsNullOrWhiteSpace(HintKey) && ShowHint && !JourneyShell)
 {
     <p class="journey-deeper-hint">@Culture[HintKey]</p>
 }
+</TestBlockBackground>
 
 @code {
     public sealed record TestTab(int Step, string Title, string Lead);
@@ -84,8 +99,12 @@ else
     [Parameter] public EventCallback<int> ExpandQuestion { get; set; }
     [Parameter] public Func<MiniQuestion, string>? ResolveQuestionText { get; set; }
     [Parameter] public RenderFragment? JourneyAfterLikert { get; set; }
+    [Parameter] public bool ShowProgressInsight { get; set; }
+    [Parameter] public Func<int, string>? DomainForQuestionId { get; set; }
+    [Parameter] public EventCallback<TestQuestionFlow.ProgressInsightSnapshot> ProgressInsightChanged { get; set; }
 
     private AssessmentKind _kind = AssessmentKind.Competence;
+    private string _blockArtSlug = TestBlockArt.SlugForFamily(TestBlockFamily.HoeJeWerkt);
     private List<TestQuestionFlow.FlowQuestion> _flowQuestions = [];
 
     protected override void OnParametersSet()
@@ -97,6 +116,7 @@ else
             10 => AssessmentKind.Values,
             _ => AssessmentKind.Competence
         };
+        _blockArtSlug = TestBlockArt.SlugForAssessment(_kind);
         _flowQuestions = Questions
             .Select(q => new TestQuestionFlow.FlowQuestion(q.Id, QuestionText(q)))
             .ToList();

@@ -1,0 +1,12 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+
+<div class="test-block-stage__mobile-hero @CssClass">
+    <div class="test-block-stage__mobile-hero__figure" aria-hidden="true"></div>
+    <div class="test-block-stage__mobile-hero__fade" aria-hidden="true"></div>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string CssClass { get; set; } = "test-block-stage__mobile-hero--band";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
