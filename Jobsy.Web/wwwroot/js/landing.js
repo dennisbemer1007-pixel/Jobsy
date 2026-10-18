@@ -6,15 +6,31 @@
     return el && el.closest ? el.closest("details.pub-menu, details.pub-lang") : null;
   }
 
+  function closePubMenu(details) {
+    if (!details) return;
+    var summary = details.querySelector("summary");
+    details.removeAttribute("open");
+    if (summary && typeof summary.focus === "function") {
+      summary.focus();
+    }
+  }
+
   document.addEventListener("keydown", function (ev) {
     if (ev.key !== "Escape") return;
     var open = document.querySelectorAll(".pub-theme details.pub-menu[open], .pub-theme details.pub-lang[open]");
     if (!open.length) return;
-    var last = open[open.length - 1];
-    var summary = last.querySelector("summary");
-    last.removeAttribute("open");
-    if (summary && typeof summary.focus === "function") {
-      summary.focus();
+    closePubMenu(open[open.length - 1]);
+  });
+
+  document.addEventListener("click", function (ev) {
+    var closeBtn = ev.target && ev.target.closest ? ev.target.closest("[data-pub-menu-close]") : null;
+    if (closeBtn) {
+      closePubMenu(closeBtn.closest("details.pub-menu"));
+      return;
+    }
+    var backdrop = ev.target && ev.target.closest ? ev.target.closest(".pub-menu__backdrop[data-pub-menu-close]") : null;
+    if (backdrop) {
+      closePubMenu(backdrop.closest("details.pub-menu"));
     }
   });
 
