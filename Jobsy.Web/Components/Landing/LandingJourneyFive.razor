@@ -4,14 +4,29 @@
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 
-<section class="pub-landing__section" id="ontdekkingsreis">
+<section class="pub-landing__section pub-landing__band-a" id="ontdekkingsreis">
     <div class="pub-landing__wrap">
-        <div class="pub-landing__shead">
+        <div class="pub-landing__shead @(ComboLayout ? "pub-landing__shead--journey" : null)">
             <div>
                 <div class="pub-landing__eyebrow">@LandingText.For("Landing.Journey.Eyebrow", Variant)</div>
                 <h2 class="pub-landing__h2">@LandingText.For("Landing.Journey.Title", Variant)</h2>
+                @if (ComboLayout)
+                {
+                    <p class="pub-landing__lead pub-landing__lead--narrow">@LandingText.For("Landing.Journey.Lead", Variant)</p>
+                }
             </div>
-            <p class="pub-landing__lead pub-landing__lead--narrow">@LandingText.For("Landing.Journey.Lead", Variant)</p>
+            @if (ComboLayout)
+            {
+                <p class="pub-landing__journey-cta pub-landing__journey-cta--head">
+                    <a class="pub-btn pub-btn--primary" href="@PublicRoutes.Test" data-kpi="LandingCtaTest" data-kpi-target="journey">
+                        @LandingText.For("Landing.Journey.Cta", Variant)
+                    </a>
+                </p>
+            }
+            else
+            {
+                <p class="pub-landing__lead pub-landing__lead--narrow">@LandingText.For("Landing.Journey.Lead", Variant)</p>
+            }
         </div>
         <ol class="pub-landing__journey-five">
             @foreach (var (zoneKey, bodyKey, n) in Zones)
@@ -25,16 +40,20 @@
                 </li>
             }
         </ol>
-        <p class="pub-landing__journey-cta">
-            <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Test" data-kpi="LandingCtaTest" data-kpi-target="journey">
-                @LandingText.For("Landing.Journey.Cta", Variant)
-            </a>
-        </p>
+        @if (!ComboLayout)
+        {
+            <p class="pub-landing__journey-cta">
+                <a class="pub-btn pub-btn--ghost" href="@PublicRoutes.Test" data-kpi="LandingCtaTest" data-kpi-target="journey">
+                    @LandingText.For("Landing.Journey.Cta", Variant)
+                </a>
+            </p>
+        }
     </div>
 </section>
 
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
+    [Parameter] public bool ComboLayout { get; set; }
 
     private static readonly (string ZoneKey, string BodyKey, int N)[] Zones =
     [

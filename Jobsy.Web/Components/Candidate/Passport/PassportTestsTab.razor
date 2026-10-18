@@ -8,6 +8,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Media
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
@@ -37,7 +38,8 @@
             <span>@Culture["Passport.Tests.Deep"]</span>
         </div>
 
-        <div class="passport-tests__layout">
+        <div class="passport-tests__layout kompas-card--illustrated">
+            <CandidateIllustratedCardSpot ImageUrl="@CandidateIllustratedImages.SpotJobLogistiek" Class="kompas-card-spot--tests" Position="70% 15%" />
             <div class="passport-tests__rows" role="list">
                 @foreach (var tile in _model.Tiles)
                 {

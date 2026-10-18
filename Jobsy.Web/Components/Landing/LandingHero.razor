@@ -1,11 +1,13 @@
 @namespace Jobsy.Web.Components.Landing
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @inject CultureState Culture
 
-<section class="pub-landing__hero" id="top">
-    <div class="pub-landing__wrap pub-landing__hero-grid @HeroGridClass">
+<section class="pub-landing__hero @(Variant == LandingVariant.On ? "pub-landing__hero--illustrated" : null)" id="top"
+         style="@(Variant == LandingVariant.On ? $"--pub-hero-art:url('{CandidateIllustratedImages.FinaleHero}')" : null)">
+    <div class="pub-landing__wrap @(Variant == LandingVariant.On ? null : $"pub-landing__hero-grid {HeroGridClass}")">
         <div class="pub-landing__hero-copy">
             <span class="pub-pill pub-pill--green">@LandingText.For(HeroEyebrowKey, Variant)</span>
             <h1 class="pub-landing__h1">
@@ -67,11 +69,7 @@
                 </div>
             }
         </div>
-        @if (Variant == LandingVariant.On)
-        {
-            <LandingHeroRadarCard Variant="Variant" />
-        }
-        else
+        @if (Variant == LandingVariant.Zw)
         {
             <LandingHeroPassport Variant="Variant" />
         }
