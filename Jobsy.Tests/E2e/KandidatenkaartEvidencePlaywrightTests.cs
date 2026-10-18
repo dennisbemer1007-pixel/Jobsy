@@ -67,6 +67,13 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
                     """);
             }
             var page = await context.NewPageAsync();
+            if (width >= 640)
+            {
+                await page.AddInitScriptAsync("""
+                    document.documentElement.classList.add('vp-desktop');
+                    document.documentElement.classList.remove('vp-mobile');
+                    """);
+            }
             KbE2e.AttachCapture(page);
             Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, employerEmail, password));
             await PlaywrightCookieConsent.AcceptOnPageAsync(page);
@@ -341,13 +348,12 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
 
     private static async Task ShotPageAsync(IPage page, string fileName, bool fullViewport = false)
     {
-        await page.EvaluateAsync("""
+            await page.EvaluateAsync("""
             window.scrollTo(0, 0);
             document.documentElement.scrollTop = 0;
             document.body.scrollTop = 0;
             document.querySelector('.wg-main')?.scrollTo(0, 0);
             document.querySelector('.kk-page')?.scrollTo?.(0, 0);
-            document.querySelector('.kk-page > .insights-tabs')?.scrollIntoView({ block: 'start', inline: 'nearest' });
             """);
 
         if (fullViewport)

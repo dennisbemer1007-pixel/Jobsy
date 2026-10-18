@@ -15,6 +15,41 @@
     margin-block-end: 1rem;
 }
 
+@media (min-width: 1024px) {
+    .wg-shell:has(.kk-page) {
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow: hidden;
+    }
+
+    .wg-shell__body:has(.kk-page) {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .wg-main:has(.kk-page) {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .wg-main:has(.kk-page) .kk-page {
+        flex: 1;
+        min-height: 0;
+        max-height: 100%;
+    }
+
+    .kk-page > .insights-tabs {
+        position: relative;
+        z-index: 2;
+        flex-shrink: 0;
+        overflow: visible;
+    }
+}
+
 html.vp-desktop .wg-shell:has(.kk-page) {
     height: 100dvh;
     max-height: 100dvh;
