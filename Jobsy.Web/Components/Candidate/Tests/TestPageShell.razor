@@ -51,8 +51,8 @@
         </div>
         @if (ShowScene)
         {
-            <div class="test-shell__scene @(SidePanel is not null ? "test-shell__scene--panel" : null)" aria-hidden="@(SidePanel is not null ? null : "true")">
-                @if (SidePanel is not null)
+            <div class="test-shell__scene @(HasInsightSidePanel ? "test-shell__scene--panel" : null)" aria-hidden="@(HasInsightSidePanel ? null : "true")">
+                @if (HasInsightSidePanel)
                 {
                     @SidePanel
                 }
@@ -100,10 +100,13 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RailContent { get; set; }
     [Parameter] public RenderFragment? SidePanel { get; set; }
+    [Parameter] public bool ShowProgressSidePanel { get; set; }
+
+    private bool HasInsightSidePanel => ShowProgressSidePanel && SidePanel is not null;
 
     private bool ShowScene => Mode switch
     {
-        ShellMode.Question => Deep || SidePanel is not null,
+        ShellMode.Question => Deep || HasInsightSidePanel,
         ShellMode.Intro or ShellMode.Done or ShellMode.Offer or ShellMode.Pause or ShellMode.Checkout => true,
         _ => false
     };
