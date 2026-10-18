@@ -93,6 +93,7 @@ public static class UiStringsTests
         Add("TestFlow.Lead.Values.V2", "{0} korte zinnen over wat je belangrijk vindt in werk.", "{0} short sentences about what matters to you at work.", "{0} krótkich zdań o tym, co jest dla ciebie ważne w pracy.", "{0} propoziții scurte despre ce este important pentru tine la muncă.", "{0} جملة قصيرة عما يهمك في العمل.");
         Add("TestFlow.DepthPick", "Hoe diep wil je duiken?", "How deep do you want to dive?", "Jak głęboko chcesz zejść?", "Cât de adânc vrei să te scufunzi?", "إلى أي عمق تريد أن تغوص؟");
         Add("TestFlow.DepthMeta", "{0} vragen · + {1} min", "{0} questions · + {1} min", "{0} pytania · + {1} min", "{0} întrebări · + {1} min", "{0} أسئلة · + {1} min");
+        Add("TestFlow.DepthMetaShort", "{0}", "{0}", "{0}", "{0}", "{0}");
         Add("TestFlow.ToMyTests", "Mijn tests", "My tests", "Moje testy", "Testele mele", "اختباراتي");
         Add("TestFlow.Begin", "Begin", "Start", "Start", "Începe", "ابدأ");
         Add("TestFlow.ContinueAt", "Ga verder bij vraag {0}", "Continue at question {0}", "Kontynuuj od pytania {0}", "Continuă de la întrebarea {0}", "تابع من السؤال {0}");
@@ -136,6 +137,8 @@ public static class UiStringsTests
         Add("TestFlow.LevelNext", "nog {0} tot {1}", "{0} left until {1}", "{0} left until {1} ·", "{0} left until {1}", "‏{0} left until {1}");
         Add("TestFlow.Example", "Voorbeeld uit de praktijk", "Example from practice", "Example from practice ·", "Example from practice", "‏Example from practice");
         Add("TestFlow.Answered", "Beantwoord ({0})", "Answered ({0})", "Answered ({0}) ·", "Answered ({0})", "‏Answered ({0})");
+        Add("TestFlow.EarlierAnswers", "Eerdere antwoorden ({0})", "Earlier answers ({0})", "Wcześniejsze odpowiedzi ({0})", "Răspunsuri anterioare ({0})", "‏الإجابات السابقة ({0})");
+        Add("TestFlow.JumpToQuestion", "Ga naar vraag {0}", "Go to question {0}", "Przejdź do pytania {0}", "Mergi la întrebarea {0}", "‏انتقل إلى السؤال {0}");
         Add("TestFlow.Adjust", "Aanpassen", "Adjust", "Adjust ·", "Adjust", "‏Adjust");
         Add("TestFlow.Back", "Terug", "Back", "Wstecz", "Înapoi", "رجوع");
         Add("TestFlow.Later", "Later verder", "Continue later", "Później", "Mai târziu", "لاحقًا");

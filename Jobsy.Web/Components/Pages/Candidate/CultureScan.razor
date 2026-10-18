@@ -37,22 +37,12 @@ else
                                TestName="@Culture["CultureScan.Title"]"
                                Answered="_answered"
                                TargetCount="_targetCount"
-                               ShowIndicativeBanner="ShowIndicativeBanner"
+                               QuickScanVersion="_quickScanVersion"
+                               ActiveDepth="_target"
+                               DepthInteractive="true"
+                               OnDepthSelected="SelectDepthAsync"
                                BubbleText="@IntroBubble">
                     <ChildContent>
-                        <fieldset class="test-depth-pick" role="radiogroup" aria-label="@Culture["TestFlow.DepthPick"]">
-                            <legend>@Culture["TestFlow.DepthPick"]</legend>
-                            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Culture, _quickScanVersion))
-                            {
-                                var done = _answered >= band.Count;
-                                <label class="test-depth-pick__card @(done ?"is-done" : null) @(_target == band.Level ? "is-on" : null)">
-                                    <input type="radio" name="depth" value="@band.Level" checked="@(_target == band.Level)"
-                                           disabled="@done" @onchange="() => SelectDepth(band.Level)" />
-                                    <strong>@Culture[TestDepthRules.NameKey(band.Level)]</strong>
-                                    <span>@Culture.Format("TestFlow.DepthMeta", band.Count, TestDepthRules.MinutesFor(AssessmentKind.Culture, band.Level))</span>
-                                </label>
-                            }
-                        </fieldset>
                         <footer class="test-shell__footer">
                             <a href="/profiel/tests/culture">@Culture["TestFlow.ToMyTests"]</a>
                             @if (_answered >= _fullCount)
@@ -79,11 +69,11 @@ else
                                LevelName="@Culture[TestDepthRules.NameKey(_target)]"
                                Answered="_autosave.AnsweredCount"
                                TargetCount="_targetCount"
-                               ShowIndicativeBanner="ShowIndicativeBanner"
+                               QuickScanVersion="_quickScanVersion"
+                               ActiveDepth="_target"
+                               SaveHint="_liveSave"
                                BubbleText="@Culture["TestFlow.Bubble.Question"]">
-                    <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
-                        <p class="test-page__save" aria-live="polite">@_liveSave</p>
                         <TestQuestionFlow Kind="AssessmentKind.Culture"
                                           Questions="_flowQuestions"
                                           Answers="_autosave.Answers"
@@ -106,9 +96,9 @@ else
                                DoneLead="@DoneLead"
                                Answered="_answered"
                                TargetCount="_targetCount"
-                               ShowIndicativeBanner="ShowIndicativeBanner"
+                               QuickScanVersion="_quickScanVersion"
+                               ActiveDepth="@(_reachedLevel ?? _target)"
                                BubbleText="@Culture["TestDone.Bubble.Culture"]">
-                    <RailContent>@RenderRail()</RailContent>
                     <ChildContent>
                         <ul class="test-done__gains">
                             @foreach (var line in _gainLines)
@@ -145,12 +135,6 @@ else
     private QuestionnaireSaveStatus _lastAnnounced = QuestionnaireSaveStatus.Idle;
 
     private int _quickScanVersion = AssessmentTestVersions.V1;
-    private bool _isIndicativeDepth;
-    private bool ShowIndicativeBanner =>
-        (AssessmentTestVersions.IsLegacyExtendedV2(_quickScanVersion)
-            && (_isIndicativeDepth || _targetCount < _fullCount || (_answered > 0 && _answered < _fullCount)))
-        || (AssessmentTestVersions.IsFreeTier25(_quickScanVersion)
-            && (_isIndicativeDepth || (_answered > 0 && _answered < _fullCount)));
     private string IntroLead => AssessmentTestVersions.UsesV2ItemBank(_quickScanVersion)
         ? Culture.Format("TestFlow.Lead.Culture.V2", _fullCount)
         : Culture["TestFlow.Lead.Culture"];
@@ -207,7 +191,6 @@ else
                 }
             }
             _quickScanVersion = state?.QuickScanVersion ?? AssessmentTestVersions.V1;
-            _isIndicativeDepth = state?.IsIndicativeDepth ?? false;
             _answered = answers.Count;
             _flowQuestions = TestDepthRules.QuestionIdsFor(
                     AssessmentKind.Culture, TestDepthLevel.Full, _quickScanVersion)
@@ -229,19 +212,12 @@ else
         finally { _loading = false; }
     }
 
-    private RenderFragment RenderRail() => __builder =>
+
+    private Task SelectDepthAsync(TestDepthLevel level)
     {
-        <ol class="test-rail">
-            @foreach (var band in TestDepthRules.Levels(AssessmentKind.Culture, _quickScanVersion))
-            {
-                var done = _answered >= band.Count;
-                var current = _mode == TestPageShell.ShellMode.Question && _target == band.Level;
-                <li class="@(done ?"is-done" : current ? "is-current" : null)" aria-current="@(current ? "step" : null)">
-                    @Culture[TestDepthRules.NameKey(band.Level)] · @band.Count
-                </li>
-            }
-        </ol>
-    };
+        SelectDepth(level);
+        return Task.CompletedTask;
+    }
 
     private void SelectDepth(TestDepthLevel level)
     {
@@ -265,7 +241,7 @@ else
             {
                 QuestionnaireSaveStatus.Saved => Culture["TestFlow.Saved"],
                 QuestionnaireSaveStatus.Failed => Culture["TestFlow.SaveFailed"],
-                _ => _liveSave
+                _ => null
             };
         }
 
