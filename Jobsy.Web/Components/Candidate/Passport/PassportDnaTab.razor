@@ -44,7 +44,10 @@
                 <h3 id="passport-dna-story-title" class="passport-dna__h">@Culture["Dna.StoryTitle"]</h3>
                 @if (!string.IsNullOrWhiteSpace(Story))
                 {
-                    <ReadAloudButton Text="@Story" SpeechKey="passport-dna-story" />
+                    <ReadAloudButton Text="@Story"
+                                     SpeechKey="passport-dna-story"
+                                     IconOnly="true"
+                                     PlayAria="@Culture["ReadAloud.Play"]" />
                 }
             </div>
             @if (string.IsNullOrWhiteSpace(Story))
