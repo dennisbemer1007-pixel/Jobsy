@@ -151,7 +151,7 @@ public static class UiStringsTests
         Add("TestFlow.Scale.Aria.3", "3", "3", "3 ·", "RO: 3", "عربي: 3");
         Add("TestFlow.Scale.Aria.4", "4", "4", "4 ·", "RO: 4", "عربي: 4");
         Add("TestFlow.Scale.Aria.5", "5, past heel goed", "5, fits very well", "5, fits very well ·", "5, fits very well", "‏5, fits very well");
-        Add("TestFlow.Saved", "Bewaard", "Saved", "Zapisano", "Salvat", "تم الحفظ");
+        Add("TestFlow.Saved", "Automatisch bewaard", "Saved automatically", "Zapisano automatycznie", "Salvat automat", "تم الحفظ تلقائياً");
         Add("TestFlow.SaveFailed", "Je laatste antwoord is nog niet bewaard", "Your last answer is not saved yet", "Twój last answer is not saved yet", "Your last answer is not saved yet", "‏Your last answer is not saved yet");
         Add("TestFlow.Consent.Title", "Eerst even toestemming", "Consent first", "Zgoda first", "Consimțământ first", "موافقة first");
         Add("TestFlow.Consent.Lead", "Voor de tests gebruiken we je antwoorden om te kijken welk werk bij je past. Werkgevers zien je antwoorden niet.", "We use your answers to see which work fits you. Employers do not see your answers.", "We use tyr answers to see which work fits ty. Employers do not see tyr answers.", "We use your answers to see which work fits you. Employers do not see your answers.", "‏We use your answers to see which work fits you. Employers do not see your answers.");

@@ -300,8 +300,13 @@
 
     private IEnumerable<(FlowQuestion Q, int Value, int Index)> RecentAnswered()
     {
-        for (var i = _index - 1; i >= 0; i--)
+        for (var i = 0; i < TargetCount && i < Ordered.Count; i++)
         {
+            if (i == _index)
+            {
+                continue;
+            }
+
             var q = Ordered[i];
             if (_flowAnswers.TryGetValue(q.Id, out var v))
             {

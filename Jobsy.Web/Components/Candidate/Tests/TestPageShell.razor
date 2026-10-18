@@ -93,8 +93,12 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? RailContent { get; set; }
 
-    private bool ShowScene => Mode is ShellMode.Intro or ShellMode.Question or ShellMode.Done
-                              or ShellMode.Offer or ShellMode.Pause or ShellMode.Checkout;
+    private bool ShowScene => Mode switch
+    {
+        ShellMode.Question => Deep,
+        ShellMode.Intro or ShellMode.Done or ShellMode.Offer or ShellMode.Pause or ShellMode.Checkout => true,
+        _ => false
+    };
 
     private string EyebrowText => Mode switch
     {

@@ -201,6 +201,37 @@
   color: var(--muted);
 }
 
+@media (max-width: 639px) {
+  .test-flow__earlier-list li {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "num text val"
+      "adjust adjust adjust";
+  }
+
+  .test-flow__earlier-num {
+    grid-area: num;
+  }
+
+  .test-flow__earlier-text {
+    grid-area: text;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .test-flow__earlier-val {
+    grid-area: val;
+  }
+
+  .test-flow__adjust {
+    grid-area: adjust;
+    justify-self: start;
+    min-block-size: auto;
+    margin-block-start: 0.15rem;
+    padding: 0.35rem 0;
+  }
+}
+
 .test-flow__earlier-num {
   font-weight: 600;
   color: var(--brand);
@@ -359,6 +390,21 @@
   }
 }
 
+@media (max-width: 420px) {
+  .app-shell--candidate .app-header__actions {
+    gap: 0.2rem;
+    flex-wrap: nowrap;
+  }
+
+  .app-shell--candidate .app-header__brand .brand-tagline {
+    display: none;
+  }
+
+  .app-shell--candidate .language-selector__code {
+    font-size: 0.72rem;
+  }
+}
+
 .test-page {
   display: grid;
   gap: 1rem;
@@ -406,7 +452,31 @@
 }
 
 .test-depth-segments {
+  display: flex;
+  gap: 0.25rem;
   margin: 0;
+  padding: 3px;
+  background: var(--pearl);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.test-depth-segments__btn,
+.test-depth-segments__pill {
+  flex: 1;
+  min-inline-size: 0;
+  border-radius: var(--radius-pill);
+}
+
+.test-depth-segments__btn.is-current,
+.test-depth-segments__pill.is-current {
+  background: var(--brand);
+  color: #fff;
+}
+
+.test-depth-segments__btn.is-done,
+.test-depth-segments__pill.is-done {
+  color: var(--brand);
 }
 
 .test-depth-segments__btn,
@@ -444,12 +514,17 @@
 }
 
 .test-depth-segments__meta {
-  font-size: 0.7rem;
-  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--ink) 55%, var(--muted));
 }
 
 .test-depth-segments .is-current .test-depth-segments__meta {
-  color: color-mix(in srgb, #fff 85%, var(--muted));
+  color: color-mix(in srgb, #fff 92%, var(--muted));
+}
+
+.test-depth-segments .is-done .test-depth-segments__meta {
+  color: color-mix(in srgb, var(--brand) 75%, var(--ink));
 }
 
 .test-depth-segments__check {
@@ -551,6 +626,17 @@
   .test-shell__layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 10.5rem);
     gap: 1.25rem;
+  }
+
+  .test-shell[data-mode="Question"]:not(.test-shell--deep) .test-shell__layout {
+    grid-template-columns: minmax(0, 42rem);
+    justify-content: center;
+    max-inline-size: 42rem;
+    margin-inline: auto;
+  }
+
+  .test-shell[data-mode="Question"]:not(.test-shell--deep) .test-shell__scene {
+    display: none;
   }
 }
 

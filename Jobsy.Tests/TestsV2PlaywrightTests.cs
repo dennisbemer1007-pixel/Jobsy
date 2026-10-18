@@ -168,9 +168,9 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             });
             await page.Locator("[data-testid=test-earlier-answers] summary").ClickAsync();
             await page.Locator("details.test-flow__earlier[open]").WaitForAsync();
+            Assert.Contains("(18)", summaryText, StringComparison.Ordinal);
             var itemCount = await page.Locator("details.test-flow__earlier li").CountAsync();
-            Assert.True(itemCount > 0, summaryText);
-            Assert.Contains($"({itemCount})", summaryText, StringComparison.Ordinal);
+            Assert.Equal(18, itemCount);
             await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "earlier-answers-open-desktop-1440.png"),
@@ -194,6 +194,9 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             });
             await page.Locator("[data-testid=test-earlier-answers] summary").ClickAsync();
             await page.Locator("details.test-flow__earlier[open]").WaitForAsync();
+            var mobileSummary = await page.Locator("[data-testid=test-earlier-answers] summary").InnerTextAsync();
+            Assert.Contains("(18)", mobileSummary, StringComparison.Ordinal);
+            Assert.Equal(18, await page.Locator("details.test-flow__earlier li").CountAsync());
             await page.ScreenshotAsync(new()
             {
                 Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "earlier-answers-open-mobile-390.png"),
@@ -201,6 +204,34 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             });
         }
 
+    }
+
+    [Fact]
+    public async Task Intro_header_fits_360_viewport()
+    {
+        using var web = new TestsV2WebFactory(testsV2On: true);
+        var url = web.EnsureServerAddress()
+                  + "/__test/sign-in?return="
+                  + Uri.EscapeDataString("/candidate/competencies?stap=intro");
+
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 360, Height = 740 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.Locator(".test-page").WaitForAsync();
+        var overflow = await page.EvaluateAsync<bool>(
+            "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");
+        Assert.False(overflow);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "competence-intro-mobile-360.png"),
+            FullPage = true
+        });
     }
 
     [Fact]
@@ -493,9 +524,11 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
 
         private static CandidateCompetencyState BuildCompetency()
         {
-            var ids = AssessmentQuickScanCatalog.CompetenceQuestions(AssessmentTestVersions.V3)
+            var ids = TestDepthRules.QuestionIdsFor(
+                    AssessmentKind.Competence,
+                    TestDepthLevel.Full,
+                    AssessmentTestVersions.V3)
                 .Take(18)
-                .Select(q => q.Id)
                 .ToList();
             return new()
             {
