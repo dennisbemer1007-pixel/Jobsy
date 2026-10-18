@@ -72,5 +72,8 @@ public enum PlatformFeature
     ReferenceVerification,
 
     /// <summary>Privacy controls for sensitive work history. Default false.</summary>
-    SensitiveExperience
+    SensitiveExperience,
+
+    /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
+    TrainingPartners
 }

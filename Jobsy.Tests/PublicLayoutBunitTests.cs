@@ -1,4 +1,5 @@
 using Bunit;
+using Jobsy.Core.Localization;
 using Jobsy.Web.Components;
 using Jobsy.Web.Components.Layout;
 using Jobsy.Web.Components.Layout.Public;
@@ -23,6 +24,8 @@ public class PublicLayoutBunitTests : BunitContext
 {
     public PublicLayoutBunitTests()
     {
+        JobsyLanguages.ResetEnabledForTests();
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,ar");
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());

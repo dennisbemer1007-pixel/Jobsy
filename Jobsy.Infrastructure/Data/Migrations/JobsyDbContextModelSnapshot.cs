@@ -5666,6 +5666,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("TrainingPartnersEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -8203,6 +8206,53 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("TrainingConversions", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.TrainingEnrollment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CertificateTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OfferId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("ProgressCurrent")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ProgressTotal")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("VerificationSource")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("VerifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfferId");
+
+                    b.HasIndex("UserId", "OfferId")
+                        .IsUnique();
+
+                    b.ToTable("TrainingEnrollments", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.TrainingOffer", b =>
                 {
                     b.Property<Guid>("Id")
@@ -8212,6 +8262,20 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<string>("AffiliateCode")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
+
+                    b.Property<string>("CareerStepsCsv")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)")
+                        .HasDefaultValue("");
+
+                    b.Property<string>("CompetenciesCsv")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasDefaultValue("");
 
                     b.Property<int>("Delivery")
                         .HasColumnType("integer");
@@ -8231,6 +8295,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<DateTime?>("ImportedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -8249,12 +8316,38 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
+                    b.Property<string>("LearnBulletsJson")
+                        .HasColumnType("text");
+
                     b.Property<string>("Location")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("PartnerExternalId")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<decimal?>("PriceEuro")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("PriceLabel")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
                     b.Property<Guid>("ProviderId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("ReasonEn")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("ReasonNl")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<int>("Section")
+                        .HasColumnType("integer");
 
                     b.Property<bool>("ShowInPassport")
                         .ValueGeneratedOnAdd()
@@ -8263,6 +8356,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
 
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("StartsOn")
+                        .HasColumnType("date");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -8280,6 +8376,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("ProviderId");
 
                     b.HasIndex("ShowInPassport");
+
+                    b.HasIndex("ProviderId", "PartnerExternalId")
+                        .IsUnique();
 
                     b.ToTable("TrainingOffers", (string)null);
                 });
@@ -8303,10 +8402,28 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("numeric(10,2)");
 
+                    b.Property<string>("FeedApiSecretName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<int>("FeedKind")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FeedMappingJson")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("FeedUrl")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
                     b.Property<string>("FieldsCsv")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ImportIntervalHours")
+                        .HasColumnType("integer");
 
                     b.Property<decimal?>("IntakeFeeEuro")
                         .HasPrecision(10, 2)
@@ -8315,8 +8432,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDemoPartner")
+                        .HasColumnType("boolean");
+
                     b.Property<int>("Kind")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastImportedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -11299,6 +11422,23 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Click");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.TrainingEnrollment", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.TrainingOffer", "Offer")
+                        .WithMany()
+                        .HasForeignKey("OfferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Offer");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.TrainingOffer", b =>
