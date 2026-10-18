@@ -1,0 +1,65 @@
+@namespace Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services
+@inject CultureState Culture
+
+@if (_entries.Count > 0)
+{
+    <section class="@(Preview ? "ref-verif-preview-block" : null)" data-testid="ref-verif-verified-experience">
+        @if (Preview)
+        {
+            <p class="ref-verif-preview-block__title">@Culture["RefVerif.VerifiedCompetences.EmployerPreview"]</p>
+        }
+        <h3 class="passport-proof__h">@Culture["RefVerif.VerifiedExperience.Title"]</h3>
+        <ul class="passport-proof__list">
+            @foreach (var entry in _entries)
+            {
+                <li>
+                    <strong>@(string.IsNullOrWhiteSpace(entry.Role) ? entry.EmployerName : entry.Role)</strong>
+                    <span class="ref-verif-experience-badge" title="@Culture["RefVerif.VerifiedBadge"]">
+                        <span aria-hidden="true">✓</span> @Culture["RefVerif.VerifiedBadge"]
+                    </span>
+                    <span class="muted">
+                        @entry.EmployerName
+                        @if (!string.IsNullOrWhiteSpace(entry.StartMonth) || !string.IsNullOrWhiteSpace(entry.EndMonth))
+                        {
+                            <text> · @FormatRange(entry.StartMonth, entry.EndMonth)</text>
+                        }
+                    </span>
+                </li>
+            }
+        </ul>
+    </section>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<CandidateEmployerHistory> Employers { get; set; } = [];
+
+    [Parameter] public IReadOnlyList<JobsyApiClient.ReferenceVerificationListItem> VerificationRows { get; set; } = [];
+
+    [Parameter] public bool Preview { get; set; }
+
+    private IReadOnlyList<CandidateEmployerHistory> _entries = [];
+
+    protected override void OnParametersSet()
+    {
+        var confirmedIds = VerificationRows
+            .Where(r => string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase) && r.Active)
+            .Select(r => r.WorkExperienceEntryId)
+            .ToHashSet();
+        _entries = Employers
+            .Where(e => e.EntryId is Guid id && confirmedIds.Contains(id))
+            .ToList();
+    }
+
+    private static string FormatRange(string? start, string? end)
+    {
+        static string Year(string? m)
+            => string.IsNullOrWhiteSpace(m) ? "" : m.Length >= 4 ? m[..4] : m;
+
+        var s = Year(start);
+        var e = string.IsNullOrWhiteSpace(end) ? "…" : Year(end);
+        return string.IsNullOrEmpty(s) ? e : $"{s} - {e}";
+    }
+}

@@ -73,6 +73,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
                 CompanyMapInitiativeEnabled: dto?.CompanyMapInitiativeEnabled ?? true,
+                ReferenceVerificationEnabled: dto?.ReferenceVerificationEnabled ?? false,
                 SensitiveExperienceEnabled: dto?.SensitiveExperienceEnabled ?? false,
                 TrainingPartnersEnabled: dto?.TrainingPartnersEnabled ?? false);
             flags = ApplyLocalOverrides(flags);
@@ -164,6 +165,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("companyMapInitiativeEnabled")]
         public bool CompanyMapInitiativeEnabled { get; set; } = true;
+
+        [JsonPropertyName("referenceVerificationEnabled")]
+        public bool ReferenceVerificationEnabled { get; set; }
 
         [JsonPropertyName("sensitiveExperienceEnabled")]
         public bool SensitiveExperienceEnabled { get; set; }

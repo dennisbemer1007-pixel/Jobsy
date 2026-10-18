@@ -5665,6 +5665,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("CompanyMapInitiativeEnabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("ReferenceVerificationEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("EmployerFitQuestionnairesEnabled")
                         .HasColumnType("boolean");
 

@@ -4,6 +4,8 @@
 @using Jobsy.Web.Bedrijvenkaart
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Services
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Media
 @inject CultureState Culture
 @inject JobsyApiClient Api
 @inject NavigationManager Navigation
@@ -12,27 +14,30 @@
 @implements IAsyncDisposable
 
 <div class="bk-page">
-    <header class="bk-hero">
-        <div class="bk-hero__inner">
-            <div class="bk-hero__copy">
-                <p class="bk-hero__eyebrow">@Culture["Kb.MapToggle.Companies"]</p>
-                <h1>@Culture["Bk.Title"]</h1>
-                <p class="bk-hero__lead">@Culture["Bk.Lead"]</p>
-                <div class="bk-week-dots" aria-live="polite">
-                    @for (var i = 0; i < _weekMax; i++)
-                    {
-                        <span aria-hidden="true" style="@(i < _weekUsed ? "" : "opacity:.25")"></span>
-                    }
-                    <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
-                </div>
-            </div>
-            <div class="bk-hero__art" aria-hidden="true"></div>
-        </div>
+    <div class="bk-page__hero-stack">
         <div class="bk-map-toggle" role="tablist" aria-label="@Culture["Kb.MapToggle.Jobs"]">
             <a href="@KbRoutes.Map" role="tab">@Culture["Kb.MapToggle.Jobs"]</a>
             <a href="@KbRoutes.CompanyMap" class="is-active" role="tab" aria-selected="true">@Culture["Kb.MapToggle.Companies"]</a>
         </div>
-    </header>
+        <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
+                                  Title="@Culture["Bk.Title"]"
+                                  Lead="@Culture["Bk.Lead"]"
+                                  ArtUrl="@CandidateIllustratedImages.LearnGrowHero"
+                                  ArtUrlDesktop="@CandidateIllustratedImages.LearnGrowHeroWide"
+                                  ArtUrlMobileFigures="@CandidateIllustratedImages.LearnGrowHeroFiguresMobile"
+                                  ArtUrlMobileAtmosphere="@CandidateIllustratedImages.LearnGrowHeroMobileAtmosphere"
+                                  ArtPosition="68% center"
+                                  ArtPositionDesktop="right center"
+                                  CssClass="cand-hero--learn-grow bk-cand-hero">
+            <div class="bk-week-dots" aria-live="polite">
+                @for (var i = 0; i < _weekMax; i++)
+                {
+                    <span aria-hidden="true" style="@(i < _weekUsed ? "" : "opacity:.25")"></span>
+                }
+                <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
+            </div>
+        </CandidateIllustratedHero>
+    </div>
 
     <div class="bk-page__frame">
     <p class="bk-info-banner">@Culture["Bk.InfoBanner"]</p>

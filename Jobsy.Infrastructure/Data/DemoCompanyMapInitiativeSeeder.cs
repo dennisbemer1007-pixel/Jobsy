@@ -12,9 +12,7 @@ internal static class DemoCompanyMapInitiativeSeeder
 {
     private static readonly string[] HubPhotos =
     [
-        "/images/teaser/westland-hero.jpg",
-        "/images/onboarding/wie-ben-jij-reis-lobsy.jpg",
-        "/images/onboarding/finale-hero.jpg"
+        "/images/teaser/westland-hero.jpg"
     ];
 
     private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");

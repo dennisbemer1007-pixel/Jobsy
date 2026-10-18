@@ -4,6 +4,7 @@
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Pwa
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
@@ -28,9 +29,8 @@
         <header class="app-header">
             <div class="app-header__brand">
                 <a class="brand" href="@_homeHref" aria-label="Lobsy">
-                    <LobsyLogo Class="brand__logo" Alt="Lobsy" />
+                    <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
                     <span class="brand__text">
-                        <span class="brand__name">Lobsy</span>
                         <span class="brand-tagline">@HeaderTagline</span>
                     </span>
                 </a>
@@ -90,16 +90,16 @@
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock && !_hideFloatingChrome)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
-    else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage && !_hideFloatingChrome)
     {
-        <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
-        <FeedbackWidget HasBottomNav="_hasBottomNav" />
+        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+        <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
     {
@@ -133,6 +133,7 @@
     private bool _banenkaartCandidateShell;
     private bool _isQuestionnairePage;
     private bool _hideCoachDock;
+    private bool _hideFloatingChrome;
     private bool _isCandidate;
     private bool _suppressInstallBanner;
     private bool _suppressPwaInstallEntry;
@@ -427,14 +428,22 @@
             changed = true;
         }
 
+        var hidePassportChrome = IsPassportOrProfileCoachHidden(path);
         var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
                         || IsVacancyOrNotificationsCoachHidden(path)
+                        || hidePassportChrome
                         || IsStandaloneQuickScanCoachHidden(path)
                         || IsIllustratedCandidateCoachHidden(path)
                         || (_isCandidate && IsBanenkaartPath(path));
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
+            changed = true;
+        }
+
+        if (_hideFloatingChrome != hidePassportChrome)
+        {
+            _hideFloatingChrome = hidePassportChrome;
             changed = true;
         }
 
@@ -482,6 +491,15 @@
     /// <summary>True when the job map should render without app header / bottom nav (anonymous visitors).</summary>
     public static bool UsesBanenkaartImmersiveChrome(string path, bool isAuthenticatedCandidate)
         => IsBanenkaartPath(path) && !isAuthenticatedCandidate;
+
+    /// <summary>Hide floating coach on paspoort/profile (inline tips, read-aloud, bottom nav).</summary>
+    public static bool IsPassportOrProfileCoachHidden(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("candidate/paspoort", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith("candidate/paspoort/", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("candidate/profile", StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>
     public static bool IsVacancyOrNotificationsCoachHidden(string path)

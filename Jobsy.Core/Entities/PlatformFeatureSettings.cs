@@ -172,6 +172,9 @@ public class PlatformFeatureSettings
     /// <summary>Bedrijvenkaart + initiatief solliciteren. Default true on acceptatie.</summary>
     public bool CompanyMapInitiativeEnabled { get; set; } = true;
 
+    /// <summary>Work-experience reference verification for candidates. Default false.</summary>
+    public bool ReferenceVerificationEnabled { get; set; }
+
     /// <summary>Gevoelige werkervaring: Alleen voor mij, neutrale titels, andere periode. Default false.</summary>
     public bool SensitiveExperienceEnabled { get; set; }
 

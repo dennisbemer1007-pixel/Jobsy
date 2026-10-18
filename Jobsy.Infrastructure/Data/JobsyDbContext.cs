@@ -41,6 +41,8 @@ public class JobsyDbContext : DbContext
     public DbSet<ReferenceConfirmationToken> ReferenceConfirmationTokens => Set<ReferenceConfirmationToken>();
     public DbSet<ReferenceConfirmationConsentLog> ReferenceConfirmationConsentLogs => Set<ReferenceConfirmationConsentLog>();
     public DbSet<ReferenceMisuseReport> ReferenceMisuseReports => Set<ReferenceMisuseReport>();
+    public DbSet<WorkExperienceReferenceRequest> WorkExperienceReferenceRequests => Set<WorkExperienceReferenceRequest>();
+    public DbSet<WorkExperienceReferenceToken> WorkExperienceReferenceTokens => Set<WorkExperienceReferenceToken>();
     public DbSet<CandidateCompetency> CandidateCompetencies => Set<CandidateCompetency>();
     public DbSet<CandidateCulturePersonalityProfile> CandidateCulturePersonalityProfiles => Set<CandidateCulturePersonalityProfile>();
     public DbSet<CandidateValuesProfile> CandidateValuesProfiles => Set<CandidateValuesProfile>();
@@ -786,6 +788,42 @@ public class JobsyDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkExperienceReferenceRequest>(entity =>
+        {
+            entity.ToTable("WorkExperienceReferenceRequests");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ReferentName).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.Relation).HasMaxLength(40).IsRequired();
+            entity.Property(e => e.ReferentEmail).HasMaxLength(254).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.EmployerName).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.RoleTitle).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.StartMonth).HasMaxLength(7);
+            entity.Property(e => e.EndMonth).HasMaxLength(7);
+            entity.Property(e => e.DutiesText).HasMaxLength(600);
+            entity.Property(e => e.ReferentComment).HasMaxLength(400);
+            entity.Property(e => e.ConsentVersion).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.EndorsedCompetenceCodesJson).HasMaxLength(500);
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => new { e.UserId, e.WorkExperienceEntryId });
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<WorkExperienceReferenceToken>(entity =>
+        {
+            entity.ToTable("WorkExperienceReferenceTokens");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasOne(e => e.Request)
+                .WithMany()
+                .HasForeignKey(e => e.RequestId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

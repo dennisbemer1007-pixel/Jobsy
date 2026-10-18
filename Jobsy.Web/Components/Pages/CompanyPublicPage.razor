@@ -154,7 +154,7 @@ else
 
                 @{
                     var sfeerPhotos = (_initiative?.HubPhotoUrls ?? [])
-                        .Where(static u => !string.IsNullOrWhiteSpace(u))
+                        .Where(static u => IsHubSfeerPhoto(u))
                         .ToList();
                     var sfeerVideoUrl = _initiative?.HubVideoUrl;
                     var hasSfeerMedia = sfeerPhotos.Count > 0 || !string.IsNullOrWhiteSpace(sfeerVideoUrl);
@@ -174,11 +174,9 @@ else
                                 {
                                     <img src="@photo" alt="" loading="lazy" decoding="async" />
                                 }
-                                @if (!string.IsNullOrWhiteSpace(sfeerVideoUrl))
+                                @if (!string.IsNullOrWhiteSpace(sfeerVideoUrl) && sfeerPhotos.Count > 0)
                                 {
-                                    var videoPoster = sfeerPhotos.Count > 0
-                                        ? sfeerPhotos[0]
-                                        : "/images/onboarding/finale-hero.jpg";
+                                    var videoPoster = sfeerPhotos[0];
                                     <a class="pp-sfeer-video"
                                        href="@sfeerVideoUrl"
                                        target="_blank"
@@ -596,6 +594,24 @@ else
 
     [JSInvokable]
     public Task OnMapLocateClicked() => Task.CompletedTask;
+
+    private static bool IsHubSfeerPhoto(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return false;
+        }
+
+        if (url.Contains("/onboarding/", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("/candidate-illustrated/", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("finale-hero", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("wie-ben-jij", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
+    }
 
     private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)
         => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(vacancy.CategoryId, vacancy.SuitableFor65Plus);

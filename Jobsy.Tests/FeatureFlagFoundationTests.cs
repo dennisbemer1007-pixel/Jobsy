@@ -68,6 +68,7 @@ public class FeatureFlagFoundationTests
         var row = new PlatformFeatureSettings();
         Assert.False(row.EmployersEnabled);
         Assert.True(row.CandidatePassportEnabled);
+        Assert.False(row.ReferenceVerificationEnabled);
     }
 
     [Fact]

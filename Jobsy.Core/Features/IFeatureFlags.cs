@@ -30,6 +30,7 @@ public sealed record FeatureFlagSnapshot(
     bool EmployerFitQuestionnairesEnabled = false,
     bool KandidatenkaartEnabled = false,
     bool CompanyMapInitiativeEnabled = true,
+    bool ReferenceVerificationEnabled = false,
     bool SensitiveExperienceEnabled = false,
     bool TrainingPartnersEnabled = false)
 {
@@ -59,7 +60,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.EmployerFitQuestionnaires => EmployerFitQuestionnairesEnabled,
         PlatformFeature.Kandidatenkaart => KandidatenkaartEnabled,
         PlatformFeature.CompanyMapInitiative => EmployersEnabled && CompanyMapInitiativeEnabled,
-        PlatformFeature.ReferenceVerification => false,
+        PlatformFeature.ReferenceVerification => ReferenceVerificationEnabled,
         PlatformFeature.SensitiveExperience => SensitiveExperienceEnabled,
         PlatformFeature.TrainingPartners => TrainingPartnersEnabled,
         _ => false

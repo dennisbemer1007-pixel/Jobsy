@@ -172,6 +172,23 @@ internal static class CandidateOwnedDataCleanup
             db.ReferenceConfirmations.RemoveRange(confirmations);
         }
 
+        var workExpRefs = await db.WorkExperienceReferenceRequests
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (workExpRefs.Count > 0)
+        {
+            var refIds = workExpRefs.Select(r => r.Id).ToList();
+            var refTokens = await db.WorkExperienceReferenceTokens
+                .Where(t => refIds.Contains(t.RequestId))
+                .ToListAsync(cancellationToken);
+            if (refTokens.Count > 0)
+            {
+                db.WorkExperienceReferenceTokens.RemoveRange(refTokens);
+            }
+
+            db.WorkExperienceReferenceRequests.RemoveRange(workExpRefs);
+        }
+
         await RemoveRangeAsync(db, db.CandidateReferences.Where(r => r.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCompetencies.Where(c => c.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCulturePersonalityProfiles.Where(c => c.UserId == user.Id), cancellationToken);

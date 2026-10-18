@@ -9,7 +9,7 @@ import { chromium } from "../screenshots/node_modules/playwright/index.mjs";
 const baseUrl = (process.argv[2] ?? "http://localhost:5201").replace(/\/$/, "");
 const apiUrl = (process.argv[3] ?? "http://127.0.0.1:5200").replace(/\/$/, "");
 const outDir =
-  process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r11/live";
+  process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r12/live";
 const captureOnly = process.env.CAPTURE_ONLY ?? "";
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
@@ -24,9 +24,11 @@ const allShots = [
   { file: "00-banenkaart-link-desktop.png", path: "/banenkaart", width: 1440, role: "candidate", expect: "Bedrijvenkaart" },
   { file: "00-banenkaart-link-mobiel.png", path: "/banenkaart", width: 390, role: "candidate", expect: "Bedrijvenkaart" },
   { file: "01-bedrijvenkaart-desktop.png", path: "/bedrijvenkaart", width: 1440, role: "candidate", expect: "Bedrijven" },
-  { file: "01-bedrijvenkaart-mobiel.png", path: "/bedrijvenkaart", width: 390, role: "candidate", expect: "Bedrijven" },
+  { file: "01-bedrijvenkaart-mobiel-top.png", path: "/bedrijvenkaart", width: 390, role: "candidate", expect: "Bedrijven", scrollY: 0 },
+  { file: "01-bedrijvenkaart-mobiel-scroll.png", path: "/bedrijvenkaart", width: 390, role: "candidate", expect: "Bedrijven", scrollY: 720 },
   { file: "02-bedrijfspagina-desktop.png", path: "/12345678", width: 1440, role: "candidate", expect: "Korenaar" },
-  { file: "02-bedrijfspagina-mobiel.png", path: "/12345678", width: 390, role: "candidate", expect: "Korenaar" },
+  { file: "02-bedrijfspagina-mobiel-top.png", path: "/12345678", width: 390, role: "candidate", expect: "Korenaar", scrollY: 0 },
+  { file: "02-bedrijfspagina-mobiel-scroll.png", path: "/12345678", width: 390, role: "candidate", expect: "Korenaar", scrollY: 880 },
   { file: "02b-bedrijfspagina-zonder-vacatures-desktop.png", path: "/12345678/0003", width: 1440, role: "anonymous", expect: "Korenaar" },
   { file: "02b-bedrijfspagina-zonder-vacatures-mobiel.png", path: "/12345678/0003", width: 390, role: "anonymous", expect: "Korenaar" },
   { file: "03-bericht-versturen-popup-desktop.png", path: "/12345678?demoKnock=1", width: 1440, role: "candidate", expect: "Klop aan" },
@@ -175,6 +177,10 @@ for (const role of roles) {
     await page.setViewportSize({ width: shot.width, height: viewportHeight });
     await page.goto(`${baseUrl}${shot.path}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
     await waitReady(page, shot.path);
+    if (typeof shot.scrollY === "number") {
+      await page.evaluate((y) => window.scrollTo(0, y), shot.scrollY);
+      await page.waitForTimeout(350);
+    }
     const text = await page.locator("body").innerText();
     const fail404 = pageTextFails(text);
     const failExpect = shot.expect && !text.toLowerCase().includes(shot.expect.toLowerCase());

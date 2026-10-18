@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261018-02",
+        "css/app.min.css?v=20261018-24",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
@@ -37,8 +37,8 @@ public static class PageAssetCatalog
     [
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/bedrijvenkaart.css?v=20261018-10",
-        "css/features/candidate-illustrated-app.css?v=20261018-89",
+        "css/features/bedrijvenkaart.css?v=20261018-12",
+        "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261017-04",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
@@ -58,11 +58,13 @@ public static class PageAssetCatalog
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261018-01",
+        "css/features/mijn-paspoort.css?v=20261018-06",
         "css/features/kompas-illustrated.css?v=20261018-05",
+        "css/features/reference-verification-hero.css?v=20261018-16",
+        "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261018-04",
-        "css/features/candidate-illustrated-app.css?v=20261018-19",
+        "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/carriere.css?v=20261018-03",
         "css/features/opleidingen.css?v=20261018-r12",
         "css/features/occupation-day.css?v=20261005-23",
@@ -237,17 +239,26 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-10"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-12"];
         }
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-10"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-12"];
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-10"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-12"];
+        }
+
+        if (path.StartsWith("/werk-referentie/", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                "css/features/reference-verification-hero.css?v=20261018-16",
+                "css/features/reference-verification.css?v=20261018-16"
+            ];
         }
 
         return [];
