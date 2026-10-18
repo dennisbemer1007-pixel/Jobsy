@@ -72,6 +72,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
             var email = route.Role == "werkgever" ? EmployerEmail : CandidateEmail;
 
             await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
+            await PlaywrightCookieConsent.AcceptAsync(context);
             var page = await context.NewPageAsync();
             page.SetDefaultTimeout(60_000);
             await PlaywrightCookieConsent.AcceptOnPageAsync(page);
@@ -81,8 +82,10 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
             {
                 WaitUntil = WaitUntilState.NetworkIdle,
             });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
             await page.Locator("[data-testid=ndm-candidate-live], [data-testid=ndm-werkgever-live]").WaitForAsync(new() { Timeout = 90_000 });
             await AssertCapturePageHealthyAsync(page, route.Id, route.Role);
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
 
             await page.WaitForTimeoutAsync(400);
             var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
