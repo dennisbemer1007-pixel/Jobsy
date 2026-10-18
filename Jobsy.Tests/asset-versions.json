@@ -16,8 +16,8 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "c207aa78fa4a9ba220fbe3b6d924e8fd552d60469553a293df77d7fa7a83061b",
-    "v": "20261018-26"
+    "sha256": "27dd7ddd920f46231af6abf6a0d70e2b1d76e2d9fda225a55c42f5ebaa09986d",
+    "v": "20261018-28"
   },
   "css/critical.css": {
     "sha256": "64cbe72b150901710db5fa228468cbf99dc7d0364469b010b5c38bdc9ba75c5a",
@@ -28,8 +28,8 @@
     "v": "20261004-10"
   },
   "css/features/admin.css": {
-    "sha256": "16e6a6d8d563e4ba89ac6a4f038c1b28fe1d5dcb7276de13ff7be9c99e4bf905",
-    "v": "20261013-02"
+    "sha256": "57d56bfc61f023d2789374e45b34743b446836ae16c848639f34e07d38b5cfa3",
+    "v": "20261018-11"
   },
   "css/features/applications.css": {
     "sha256": "0ad9072d8b4f0f36f4b8cf7d52e4f2565cbb9d5e3b780dfa4023e4121de0e9f0",
@@ -92,7 +92,7 @@
     "v": "20261005-07"
   },
   "css/features/kandidaat-banen.css": {
-    "sha256": "5269dbe3842beb60ec99bcc03f6798119bb21eea598c1e82714adc72ce6d70b4",
+    "sha256": "4a4ce23685e8ff608dabad3f3f3f7ad927154c77b5d095b6f69c906d896f25f5",
     "v": "20261015-27"
   },
   "css/features/kandidaatinzichten.css": {
@@ -324,11 +324,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "c5bd9e1cfaea9932ac98383ca20345c7680a1dab0c5ce2c51ff6e38650ff6468",
+    "sha256": "f46281a9dcbe0c390288f9330411b72564c9f2dad06b8c8119b2d837153f3a57",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "5f00d276068e838775ce7e8e5b959d403c1467d64add1e334ba9d731ff84b11a",
+    "sha256": "14c2a2580c4c4f737b1514fea9b4dfe8d41212e433e7a355e6a75977d2f62188",
     "v": "20261016-06"
   }
 }

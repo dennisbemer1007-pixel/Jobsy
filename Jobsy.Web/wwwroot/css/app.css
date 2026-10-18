@@ -7006,6 +7006,41 @@ a.engagement-btn {
     outline-offset: 2px;
 }
 
+.apply-panel .profile-encourage {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+}
+
+.apply-panel .profile-encourage__copy {
+    grid-column: 2;
+    width: 100%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.apply-panel .profile-encourage__mascot {
+    grid-column: 1;
+}
+
+.apply-panel .profile-encourage__close {
+    grid-column: 3;
+}
+
+.apply-panel .profile-encourage__text {
+    width: 100%;
+    max-width: none;
+}
+
+.apply-panel .profile-encourage__link {
+    align-self: flex-start;
+}
+
 /* Lobster coach CTA on vacancy detail (candidates only) */
 .lobsy-coach-cta {
     margin: 1.25rem 0 0.5rem;
@@ -7200,6 +7235,7 @@ a.engagement-btn {
     max-height: min(88vh, 720px);
     display: flex;
     flex-direction: column;
+    min-height: 0;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -7229,9 +7265,13 @@ a.engagement-btn {
     }
 
     .mock-interview-modal .mock-interview-chat {
-        flex: 1;
-        min-height: 12rem;
-        max-height: min(52dvh, 28rem);
+        flex: 1 1 0;
+        min-height: 8rem;
+        max-height: none;
+    }
+
+    .mock-interview-modal .mock-interview-compose {
+        flex-shrink: 0;
     }
 }
 
@@ -7279,7 +7319,6 @@ a.engagement-btn {
 .mock-interview-modal--warm > .mock-interview-progress,
 .mock-interview-modal--warm > .mock-interview-hint,
 .mock-interview-modal--warm > .mock-interview-chat,
-.mock-interview-modal--warm > .mock-interview__chips,
 .mock-interview-modal--warm > .state-message,
 .mock-interview-modal--warm > .mock-interview-compose {
     margin-left: 1rem;
@@ -7315,9 +7354,10 @@ a.engagement-btn {
 }
 
 .mock-interview-chat {
-    flex: 1;
-    min-height: 220px;
+    flex: 1 1 auto;
+    min-height: 0;
     max-height: 42vh;
+    overflow-x: hidden;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -7325,6 +7365,7 @@ a.engagement-btn {
     padding: 0.35rem 0.15rem 0.65rem;
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
+    -webkit-overflow-scrolling: touch;
 }
 
 .mock-interview-chat__empty {
@@ -7452,7 +7493,8 @@ a.engagement-btn {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
-    margin-top: 0.75rem;
+    margin-top: 0.35rem;
+    flex-shrink: 0;
 }
 
 .mock-interview-compose textarea {
@@ -7480,7 +7522,8 @@ a.engagement-btn {
 }
 
 .mock-interview__chips {
-    margin: 0 0 0.35rem;
+    margin: 0.15rem 0 0;
+    flex-shrink: 0;
 }
 
 .mock-interview__chip {
@@ -7580,7 +7623,6 @@ a.engagement-btn {
     .mock-interview-modal--warm > .mock-interview-progress,
     .mock-interview-modal--warm > .mock-interview-hint,
     .mock-interview-modal--warm > .mock-interview-chat,
-    .mock-interview-modal--warm > .mock-interview__chips,
     .mock-interview-modal--warm > .state-message,
     .mock-interview-modal--warm > .mock-interview-compose {
         margin-left: 1.125rem;

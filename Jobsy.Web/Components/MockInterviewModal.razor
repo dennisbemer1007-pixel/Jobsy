@@ -92,14 +92,13 @@
                     <p>@Culture["MockInterview.Typing"]</p>
                 </div>
             }
+            @if (_started && !_busy)
+            {
+                <div class="mock-interview__chips">
+                    <span class="mock-interview__chip" role="note">@CurrentHint</span>
+                </div>
+            }
         </div>
-
-        @if (_started && !_busy)
-        {
-            <div class="mock-interview__chips">
-                <span class="mock-interview__chip" role="note">@CurrentHint</span>
-            </div>
-        }
 
         @if (!string.IsNullOrEmpty(_error))
         {

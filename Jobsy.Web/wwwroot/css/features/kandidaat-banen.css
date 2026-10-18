@@ -2076,29 +2076,40 @@
   .app-shell:has(.panel-page--vacancy) .app-footer {
     padding-bottom: 0 !important;
   }}.profile-encourage {
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: start;
   gap: 0.75rem;
   margin: 1rem 0 1.25rem;
   padding: 0.85rem 1rem 0.85rem 0.65rem;
   border-radius:var(--r-lg);
   background:color-mix(in srgb, var(--brand) 6%, var(--surface));
   border: 1px solid color-mix(in srgb, var(--brand) 14%, transparent);
+  width: 100%;
   max-width: 36rem;
   box-shadow:none;
+  box-sizing: border-box;
+}.apply-panel .profile-encourage {
+  max-width: none;
 }.profile-encourage__mascot {
+  grid-column: 1;
   width: 56px;
   height: 56px;
-  flex-shrink: 0;
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 8%));
 }.profile-encourage__copy {
-  flex: 1;
+  grid-column: 2;
   min-width: 0;
+  width: 100%;
+  max-width: none;
   padding: 0.35rem 0.65rem 0.45rem;
   border-radius:var(--r-md);
   background:var(--surface);
   border: 1px solid var(--border);
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
 }.profile-encourage__copy::before {
   content: "";
   position: absolute;
@@ -2120,7 +2131,9 @@
   border-bottom: 6px solid transparent;
   border-right: 6px solid var(--surface);
 }.profile-encourage__text {
-  margin: 0 0 0.5rem;
+  margin: 0;
+  width: 100%;
+  max-width: none;
   font-size: 0.9375rem;
   line-height: 1.45;
   color: var(--text);
@@ -2139,8 +2152,8 @@
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }.profile-encourage__close {
-  flex-shrink: 0;
-  align-self: flex-start;
+  grid-column: 3;
+  align-self: start;
   border: none;
   background:color-mix(in srgb, var(--muted) 12%, transparent);
   font-size: 1.125rem;

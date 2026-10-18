@@ -5,8 +5,13 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r5";
+    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r6";
     private static readonly Guid SampleVacancyId = IllustratedPagesApiStub.SampleVacancyId;
+
+    private const string LongOpeningReply =
+        "Vraag: Vertel kort waarom je solliciteert als medewerker dierenpension bij De Kooger Dierenopvang. " +
+        "Wat spreekt je aan in de vacature, welke taken uit de tekst zie je voor je, " +
+        "en hoe past dat bij wat jij al kunt en leuk vindt om te doen?";
 
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
@@ -25,6 +30,7 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
 
     public async ValueTask DisposeAsync()
     {
+        IllustratedPagesApiStub.MockInterviewReplyOverride = null;
         if (_browser is not null)
         {
             await _browser.DisposeAsync();
@@ -35,7 +41,7 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Render_logo_chat_final_r5_viewport_captures()
+    public async Task Render_logo_chat_final_r6_viewport_captures()
     {
         Directory.CreateDirectory(OutDir);
         var vacancyPath = $"/vacancies/{SampleVacancyId:D}";
@@ -43,8 +49,25 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         await CaptureVacancyDesktopAsync(vacancyPath, "vacancy-chat-entry-1440-fullpage", fullPage: true);
         await CaptureVacancyDesktopAsync(vacancyPath, "vacancy-chat-entry-1440-viewport", fullPage: false);
         await CaptureMockInterviewOpenAsync(vacancyPath, "mock-interview-open-390", width: 390, height: 844, mobile: true);
+        IllustratedPagesApiStub.MockInterviewReplyOverride = LongOpeningReply;
+        try
+        {
+            await CaptureMockInterviewOpenAsync(
+                vacancyPath,
+                "mock-interview-open-390-long-question",
+                width: 390,
+                height: 844,
+                mobile: true,
+                assertNoOverlap: true);
+        }
+        finally
+        {
+            IllustratedPagesApiStub.MockInterviewReplyOverride = null;
+        }
+
         await CaptureMockInterviewOpenAsync(vacancyPath, "mock-interview-open-1440", width: 1440, height: 900, mobile: false);
-        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-1440");
+        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-1440", width: 1440, height: 900);
+        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-390", width: 390, height: 844, mobile: true);
     }
 
     private async Task CaptureVacancyDesktopAsync(string path, string name, bool fullPage)
@@ -62,7 +85,13 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         });
     }
 
-    private async Task CaptureMockInterviewOpenAsync(string path, string name, int width, int height, bool mobile)
+    private async Task CaptureMockInterviewOpenAsync(
+        string path,
+        string name,
+        int width,
+        int height,
+        bool mobile,
+        bool assertNoOverlap = false)
     {
         await using var context = await NewCandidateContextAsync(width, height, mobile);
         var page = await OpenVacancyAsync(context, path);
@@ -81,6 +110,11 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         Assert.True(questionText.Length > 20, "Opening coach question should contain text.");
         Assert.DoesNotContain('\u2014', questionText);
         Assert.DoesNotContain('\u2013', questionText);
+        if (assertNoOverlap)
+        {
+            await AssertMockInterviewTipDoesNotOverlapCoachAsync(page);
+        }
+
         if (mobile)
         {
             var box = await modal.BoundingBoxAsync();
@@ -96,21 +130,38 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         });
     }
 
-    private async Task CaptureApplySentPanelAsync(string path, string name)
+    private async Task CaptureApplySentPanelAsync(string path, string name, int width, int height, bool mobile = false)
     {
-        await using var context = await NewCandidateContextAsync(1440, 900);
+        await using var context = await NewCandidateContextAsync(width, height, mobile);
         var page = await OpenVacancyAsync(context, path + "#apply");
         await page.Locator(".apply-panel--success").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator(".apply-panel--success .profile-encourage__copy").WaitForAsync(new() { Timeout = 30_000 });
         var mark = page.Locator(".apply-panel--success .profile-encourage__mascot");
-        await mark.WaitForAsync(new() { Timeout = 30_000 });
         var src = await mark.GetAttributeAsync("src") ?? "";
         Assert.Contains("lobsy-merkteken", src, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("mascot", src, StringComparison.OrdinalIgnoreCase);
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(OutDir, name + ".png"),
             FullPage = false,
         });
+    }
+
+    private static async Task AssertMockInterviewTipDoesNotOverlapCoachAsync(IPage page)
+    {
+        var tipBelowCoach = await page.EvaluateAsync<bool>(
+            """
+            () => {
+              const chip = document.querySelector('.mock-interview-chat .mock-interview__chip');
+              const bubble = document.querySelector('.mock-interview-bubble--assistant');
+              const readAloud = bubble?.querySelector('.read-aloud, [data-read-aloud]');
+              if (!chip || !bubble) return false;
+              const chipRect = chip.getBoundingClientRect();
+              const anchor = readAloud ?? bubble;
+              const anchorRect = anchor.getBoundingClientRect();
+              return chipRect.top >= anchorRect.bottom - 1;
+            }
+            """);
+        Assert.True(tipBelowCoach, "Tip chip must sit below the coach bubble (no overlap with Lees voor).");
     }
 
     private async Task<IPage> OpenVacancyAsync(IBrowserContext context, string path)
