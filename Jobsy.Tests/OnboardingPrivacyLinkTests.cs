@@ -10,5 +10,6 @@ public sealed class OnboardingPrivacyLinkTests
         var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
         Assert.Contains("href=\"/privacy/data\"", wizard, StringComparison.Ordinal);
         Assert.Contains("Onboarding.AccountPrivacyLink", wizard, StringComparison.Ordinal);
+        Assert.Contains("ob-wizard__mobile-privacy", wizard, StringComparison.Ordinal);
     }
 }

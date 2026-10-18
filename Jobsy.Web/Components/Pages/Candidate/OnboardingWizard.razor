@@ -23,7 +23,7 @@
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
 </HeadContent>
 
@@ -154,7 +154,6 @@
                     </div>
                 }
                 <p class="ob-wizard__saved">✓ @Culture["Onboarding.AllSaved"]</p>
-                <button type="button" class="ob-wizard__ghost" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
             </aside>
 
             <main class="ob-wizard__main">
@@ -174,6 +173,10 @@
                             </div>
                         </div>
                     </div>
+                    <p class="ob-wizard__mobile-privacy">
+                        <a href="/privacy/data"
+                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                    </p>
                     <div class="ob-wizard__progress-thin"
                          role="progressbar"
                          aria-valuemin="1"

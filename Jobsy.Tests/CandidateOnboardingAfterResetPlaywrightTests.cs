@@ -40,6 +40,7 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
     private const string ArtifactDir = "/opt/cursor/artifacts/reset";
     private const string StoreDir = "/cursor/stores/self/reset";
     private const string ReviewR2Dir = "/opt/cursor/artifacts/reset-review-r2";
+    private const string ReviewR3Dir = "/opt/cursor/artifacts/reset-review-r3";
 
     private readonly RoleFunctionalWebAppFactory _api;
     private OnboardingResetWebFactory? _web;
@@ -107,6 +108,57 @@ public sealed class CandidateOnboardingAfterResetPlaywrightTests
 
             var fileName = $"wizard-header-{tag}.png";
             await page.ScreenshotAsync(new() { Path = Path.Combine(ReviewR2Dir, fileName), FullPage = false });
+        }
+    }
+
+    [Fact(Timeout = 180_000)]
+    public async Task Wizard_header_privacy_links_review_r3_screenshots()
+    {
+        _ = TestContext.Current.CancellationToken;
+        await SeedMidOnboardingAsync();
+        var baseUrl = EnsureWeb();
+        Directory.CreateDirectory(ReviewR3Dir);
+        var signIn = $"{baseUrl}/__test/sign-in?return={Uri.EscapeDataString("/candidate/start")}";
+
+        foreach (var (tag, width, height) in new[]
+                 {
+                     ("1440", 1440, 900),
+                     ("1024", 1024, 800),
+                     ("390", 390, 844)
+                 })
+        {
+            await using var context = await _browser!.NewContextAsync(KbE2e.ContextFor(width, height));
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(90_000);
+
+            await OnboardingPlaywrightHelpers.WaitForBlazorCircuitAsync(
+                page,
+                () => page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 }));
+            if (width >= 1024)
+            {
+                await page.Locator(".ob-wizard__header-row")
+                    .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+                await Assertions.Expect(page.Locator(".ob-wizard__header-actions .ob-wizard__privacy-link"))
+                    .ToBeVisibleAsync();
+                await Assertions.Expect(page.Locator(".ob-wizard__sidebar .ob-wizard__ghost"))
+                    .ToHaveCountAsync(0);
+            }
+            else
+            {
+                await page.Locator(".ob-wizard__mobile-top")
+                    .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+                if (width <= 420)
+                {
+                    await Assertions.Expect(page.Locator(".ob-wizard__mobile-privacy a"))
+                        .ToBeVisibleAsync();
+                }
+            }
+
+            await page.WaitForTimeoutAsync(1_000);
+
+            var fileName = $"wizard-header-{tag}.png";
+            await page.ScreenshotAsync(new() { Path = Path.Combine(ReviewR3Dir, fileName), FullPage = false });
         }
     }
 

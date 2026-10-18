@@ -133,13 +133,25 @@
     text-decoration: underline;
     text-underline-offset: 2px;
     white-space: nowrap;
-    max-inline-size: 11.5rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex-shrink: 1;
+    min-inline-size: 0;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__mobile-privacy {
+    display: flex;
+    justify-content: center;
+    padding: 0.15rem 1rem 0.35rem;
+    text-align: center;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__mobile-privacy a {
+    font-size: 0.6875rem;
+    line-height: 1.25;
+    max-inline-size: 100%;
   }
 
   .ob-wizard--richting-a .ob-wizard__footer-privacy {
-    display: none;
+    display: block;
     align-self: center;
     margin-block-end: 6px;
     padding: 0;
@@ -152,10 +164,6 @@
     text-align: center;
     text-decoration: underline;
     text-underline-offset: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-inline-size: 100%;
   }
 
   .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] {
@@ -799,8 +807,10 @@
   .ob-wizard--richting-a .ob-wizard__topbar-privacy {
     display: none;
   }
+}
 
-  .ob-wizard--richting-a .ob-wizard__footer-privacy {
-    display: block;
+@media (min-width: 421px) and (max-width: 1023px) {
+  .ob-wizard--richting-a .ob-wizard__mobile-privacy {
+    display: none;
   }
 }
