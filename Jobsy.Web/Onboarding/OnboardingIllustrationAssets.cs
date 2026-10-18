@@ -4,6 +4,7 @@ namespace Jobsy.Web.Onboarding;
 public static class OnboardingIllustrationAssets
 {
     public const string Version = "20261018-r10";
+    public const string MobileVersion = "20261018-r11";
 
     public const string KennismakenWebp = $"/images/onboarding/kennismaken.webp?v={Version}";
     public const string KennismakenJpg = $"/images/onboarding/kennismaken.jpg?v={Version}";
@@ -22,4 +23,22 @@ public static class OnboardingIllustrationAssets
 
     public const string DreamJobWebp = $"/images/onboarding/droombaan.webp?v={Version}";
     public const string DreamJobJpg = $"/images/onboarding/droombaan.jpg?v={Version}";
+
+    public const string KennismakenMobileWebp = $"/images/onboarding/kennismaken-mobile.webp?v={MobileVersion}";
+    public const string KennismakenMobilePng = $"/images/onboarding/kennismaken-mobile.png?v={MobileVersion}";
+
+    public const string BeschikbaarheidMobileWebp = $"/images/onboarding/beschikbaarheid-mobile.webp?v={MobileVersion}";
+    public const string BeschikbaarheidMobilePng = $"/images/onboarding/beschikbaarheid-mobile.png?v={MobileVersion}";
+
+    public const string VervoerMobileWebp = $"/images/onboarding/vervoer-mobile.webp?v={MobileVersion}";
+    public const string VervoerMobilePng = $"/images/onboarding/vervoer-mobile.png?v={MobileVersion}";
+
+    public const string WerkervaringMobileWebp = $"/images/onboarding/werkervaring-mobile.webp?v={MobileVersion}";
+    public const string WerkervaringMobilePng = $"/images/onboarding/werkervaring-mobile.png?v={MobileVersion}";
+
+    public const string OpleidingMobileWebp = $"/images/onboarding/opleiding-mobile.webp?v={MobileVersion}";
+    public const string OpleidingMobilePng = $"/images/onboarding/opleiding-mobile.png?v={MobileVersion}";
+
+    public const string DreamJobMobileWebp = $"/images/onboarding/droombaan-mobile.webp?v={MobileVersion}";
+    public const string DreamJobMobilePng = $"/images/onboarding/droombaan-mobile.png?v={MobileVersion}";
 }

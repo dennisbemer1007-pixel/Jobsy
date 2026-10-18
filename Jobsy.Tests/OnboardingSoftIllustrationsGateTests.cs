@@ -45,6 +45,20 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}.jpg")), $"{slug}.jpg");
     }
 
+    [Theory]
+    [InlineData("kennismaken")]
+    [InlineData("beschikbaarheid")]
+    [InlineData("vervoer")]
+    [InlineData("werkervaring")]
+    [InlineData("opleiding")]
+    [InlineData("droombaan")]
+    public void Mobile_figure_crop_assets_exist(string slug)
+    {
+        var webRoot = Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/images/onboarding");
+        Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile.webp")), $"{slug}-mobile.webp");
+        Assert.True(File.Exists(Path.Combine(webRoot, $"{slug}-mobile.png")), $"{slug}-mobile.png");
+    }
+
     [Fact]
     public void Illustrated_sidebar_tips_avoid_em_dash_in_dutch()
     {
@@ -77,7 +91,7 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
-    public void Hero_band_css_uses_seamless_art_with_fade_and_mobile_text_in_hero()
+    public void Hero_band_css_uses_seamless_art_with_fade_and_mobile_split_hero()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
         Assert.Contains("object-fit: contain", css, StringComparison.Ordinal);
@@ -93,8 +107,20 @@ public sealed class OnboardingSoftIllustrationsGateTests
             @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__hero-band\s*\{[^}]*max-block-size:\s*240px",
             css);
         Assert.Matches(
-            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__head\s*\{[^}]*position:\s*absolute",
+            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__head\s*\{[^}]*inline-size:\s*55%",
             css);
+        Assert.Matches(
+            @"(?s)@media \(max-width: 1023px\).*\.ob-illustrated-step__art\s*\{[^}]*inline-size:\s*45%",
+            css);
+    }
+
+    [Fact]
+    public void Mobile_figure_preprocess_script_exists()
+    {
+        Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-figure-crop.py")));
+        var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
+        Assert.Contains("20261018-r11", assets, StringComparison.Ordinal);
+        Assert.Contains("KennismakenMobileWebp", assets, StringComparison.Ordinal);
     }
 
     [Fact]
