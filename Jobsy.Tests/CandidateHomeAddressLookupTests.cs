@@ -1,3 +1,4 @@
+using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Services;
 
@@ -56,5 +57,40 @@ public class CandidateHomeAddressLookupTests
         Assert.Equal("2671 GB Naaldwijk", draft.AddressQuery);
         Assert.True(draft.PostcodeResolved);
         Assert.Equal("Naaldwijk", draft.City);
+    }
+
+    [Fact]
+    public void ApplyGeolocationPrefill_precise_sets_coords_and_pending_confirm()
+    {
+        var draft = new OnboardingProfileDraft();
+        var result = CandidateHomeAddressLookup.ApplyGeolocationPrefill(
+            draft,
+            lat: 52.07,
+            lng: 4.23,
+            accuracyMeters: 30,
+            reverseGeocodeLabel: "Westmadeweg 120, 2553 EM Den Haag");
+        Assert.NotNull(result);
+        Assert.Equal(GeolocationPrefillMode.Precise, result!.Mode);
+        Assert.True(draft.GeolocationPendingConfirm);
+        Assert.False(draft.PostcodeResolved);
+        Assert.Equal(52.07, draft.HomeLat);
+        Assert.Equal("Westmadeweg 120, 2553 EM Den Haag", draft.AddressQuery);
+    }
+
+    [Fact]
+    public void ApplyGeolocationPrefill_approximate_omits_coords_and_house_number()
+    {
+        var draft = new OnboardingProfileDraft();
+        var result = CandidateHomeAddressLookup.ApplyGeolocationPrefill(
+            draft,
+            lat: 52.07,
+            lng: 4.23,
+            accuracyMeters: 200,
+            reverseGeocodeLabel: "Westmadeweg 120, 2553 EM Den Haag");
+        Assert.NotNull(result);
+        Assert.Equal(GeolocationPrefillMode.Approximate, result!.Mode);
+        Assert.Null(draft.HomeLat);
+        Assert.Equal("Westmadeweg, 2553 EM Den Haag", draft.AddressQuery);
+        Assert.True(draft.GeolocationPendingConfirm);
     }
 }

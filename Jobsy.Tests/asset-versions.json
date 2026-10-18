@@ -103,6 +103,10 @@
     "sha256": "b63a6b010adbdba176ada22dfa5d19b2699c2096d05c6225428e9a72d5a7f44c",
     "v": "20261005-23"
   },
+  "css/features/onboarding-finale-v2.css": {
+    "sha256": "e621c182c6a56b5acd322365ff2c2ea1df52b97f4b85076633a4bbd08dc2d3c7",
+    "v": "20261018-15"
+  },
   "css/features/onboarding-wizard-mobile-bar.css": {
     "sha256": "2aa2e9fb9c528693ad4002eb4c76175dfb817b6f75045d1a585d06944fce11c7",
     "v": "20261016-02"
@@ -112,7 +116,7 @@
     "v": "20261018-01"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "f2082195a18f52d508873a59efc3c812bcb05af016f77bae68ea9ceb063593bf",
+    "sha256": "956bc0a958b342bd3a06db57f3a37e2efa8132ccd603f7e68dd141b23d222afe",
     "v": "20261018-02"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -124,7 +128,7 @@
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "95ec6e3a3090dde8749bbc862fbd3f0a07304ea7a4ea988e3622f66d1efb8446",
+    "sha256": "4d78aa19af1ba1e65e5c923168b35d854132b69d306449be6dbf0ddad36c96cc",
     "v": "20261015-06"
   },
   "css/features/onboarding-work-history.css": {
@@ -204,7 +208,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "4d27d3ad3b4ed8c73873f187307aaadf2afdba68948db0f4b543a9470c8f9c93",
+    "sha256": "08838ff2e54ae52f0c34d8cb2a266bf978873ea1939cb5902dcdc2ff55f33372",
     "v": "20261017-04"
   },
   "js/app-extras.js": {
@@ -244,8 +248,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "36eceb6a38f849812e27e01b4c130934ecb1cce135c8f13e00683ee84879ff88",
-    "v": "20261018-12"
+    "sha256": "0a75302c009d8d05c3b444df2d19e864aa019e8f4c9dfd4d9cb0b80e0cd44503",
+    "v": "20261018-hotfix-fitpill"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",
