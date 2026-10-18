@@ -5,7 +5,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r4";
+    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r5";
     private static readonly Guid SampleVacancyId = IllustratedPagesApiStub.SampleVacancyId;
 
     private IllustratedPagesWebFactory? _web;
@@ -35,16 +35,19 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Render_logo_chat_final_r4_viewport_captures()
+    public async Task Render_logo_chat_final_r5_viewport_captures()
     {
         Directory.CreateDirectory(OutDir);
         var vacancyPath = $"/vacancies/{SampleVacancyId:D}";
 
-        await CaptureVacancyDesktopViewportAsync(vacancyPath, "vacancy-chat-entry-1440");
-        await CaptureMockInterviewOpenAsync(vacancyPath, "mock-interview-open-390");
+        await CaptureVacancyDesktopAsync(vacancyPath, "vacancy-chat-entry-1440-fullpage", fullPage: true);
+        await CaptureVacancyDesktopAsync(vacancyPath, "vacancy-chat-entry-1440-viewport", fullPage: false);
+        await CaptureMockInterviewOpenAsync(vacancyPath, "mock-interview-open-390", width: 390, height: 844, mobile: true);
+        await CaptureMockInterviewOpenAsync(vacancyPath, "mock-interview-open-1440", width: 1440, height: 900, mobile: false);
+        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-1440");
     }
 
-    private async Task CaptureVacancyDesktopViewportAsync(string path, string name)
+    private async Task CaptureVacancyDesktopAsync(string path, string name, bool fullPage)
     {
         await using var context = await NewCandidateContextAsync(1440, 900);
         var page = await OpenVacancyAsync(context, path);
@@ -55,32 +58,58 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(OutDir, name + ".png"),
-            FullPage = false,
+            FullPage = fullPage,
         });
     }
 
-    private async Task CaptureMockInterviewOpenAsync(string path, string name)
+    private async Task CaptureMockInterviewOpenAsync(string path, string name, int width, int height, bool mobile)
     {
-        await using var context = await NewCandidateContextAsync(390, 844);
+        await using var context = await NewCandidateContextAsync(width, height, mobile);
         var page = await OpenVacancyAsync(context, path);
         await page.Locator("[data-testid=kb-detail]").WaitForAsync(new() { Timeout = 60_000 });
-        var pill = page.Locator("[data-testid=vacancy-mock-interview-cta] button").First;
+        var pill = mobile
+            ? page.Locator(".lobsy-coach-cta--kb-mobile button")
+            : page.Locator(".lobsy-coach-cta--kb-rail button");
         await pill.ClickAsync();
         var modal = page.Locator(".mock-interview-modal");
         await modal.WaitForAsync(new() { Timeout = 30_000 });
         await Microsoft.Playwright.Assertions.Expect(page.Locator(".share-modal-backdrop")).ToBeVisibleAsync();
+        await Microsoft.Playwright.Assertions.Expect(page.Locator(".mock-interview-compose__send")).ToBeVisibleAsync();
         var question = page.Locator(".mock-interview-block--question p, .mock-interview-bubble--assistant p").First;
         await question.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         var questionText = (await question.InnerTextAsync()).Trim();
         Assert.True(questionText.Length > 20, "Opening coach question should contain text.");
-        var box = await modal.BoundingBoxAsync();
-        Assert.NotNull(box);
-        Assert.True(box!.Height >= 280, "Mock interview sheet should fill most of the mobile viewport.");
+        Assert.DoesNotContain('\u2014', questionText);
+        Assert.DoesNotContain('\u2013', questionText);
+        if (mobile)
+        {
+            var box = await modal.BoundingBoxAsync();
+            Assert.NotNull(box);
+            Assert.True(box!.Height >= 280, "Mock interview sheet should fill most of the mobile viewport.");
+        }
+
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(OutDir, name + ".png"),
             FullPage = false,
             Animations = ScreenshotAnimations.Disabled,
+        });
+    }
+
+    private async Task CaptureApplySentPanelAsync(string path, string name)
+    {
+        await using var context = await NewCandidateContextAsync(1440, 900);
+        var page = await OpenVacancyAsync(context, path + "#apply");
+        await page.Locator(".apply-panel--success").WaitForAsync(new() { Timeout = 60_000 });
+        var mark = page.Locator(".apply-panel--success .profile-encourage__mascot");
+        await mark.WaitForAsync(new() { Timeout = 30_000 });
+        var src = await mark.GetAttributeAsync("src") ?? "";
+        Assert.Contains("lobsy-merkteken", src, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("mascot", src, StringComparison.OrdinalIgnoreCase);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, name + ".png"),
+            FullPage = false,
         });
     }
 
@@ -95,14 +124,14 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         return page;
     }
 
-    private async Task<IBrowserContext> NewCandidateContextAsync(int width, int height)
+    private async Task<IBrowserContext> NewCandidateContextAsync(int width, int height, bool mobile = false)
     {
         var context = await _browser!.NewContextAsync(new()
         {
             ViewportSize = new() { Width = width, Height = height },
             Locale = "nl-NL",
-            IsMobile = width < 500,
-            HasTouch = width < 500,
+            IsMobile = mobile,
+            HasTouch = mobile,
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         return context;
@@ -123,5 +152,4 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
             """);
         Assert.Equal(0, emptyShells);
     }
-
 }

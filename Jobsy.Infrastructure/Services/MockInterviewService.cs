@@ -419,7 +419,7 @@ public sealed class MockInterviewService : IMockInterviewService
                 {
                     return
                         $"Hi! I'll help you practice for {plan.Title} at {plan.Company}. " +
-                        "This is a Lobsy practice chat — not a real interview, but with questions from the vacancy text" +
+                        "This is a Lobsy practice chat, not a real interview, but with questions from the vacancy text" +
                         (plan.HasGapQuestions ? " and your profile fit" : "") + ".\n\n" +
                         $"Key themes I see: {plan.ThemeSummary}.\n\n" +
                         $"{labels.Question} {PickQuestion(plan, 0, useEnglish: true)}";
@@ -427,7 +427,7 @@ public sealed class MockInterviewService : IMockInterviewService
 
                 return
                     $"Hoi! Ik help je oefenen voor {plan.Title} bij {plan.Company}. " +
-                    "Dit is een oefengesprek via Lobsy — geen echt gesprek, wél met vragen uit de vacaturetekst" +
+                    "Dit is een oefengesprek via Lobsy, geen echt gesprek, wél met vragen uit de vacaturetekst" +
                     (plan.HasGapQuestions ? " én over verschillen met jouw profiel" : "") + ".\n\n" +
                     $"In de tekst zie ik vooral: {plan.ThemeSummary}.\n\n" +
                     $"{labels.Question} {PickQuestion(plan, 0, useEnglish: false)}";
@@ -475,8 +475,8 @@ public sealed class MockInterviewService : IMockInterviewService
             if (index < 0 || index >= plan.Questions.Count)
             {
                 return useEnglish
-                    ? "Last practice question: what would you ask the employer about this vacancy — and why is that a smart question?"
-                    : "Laatste oefenvraag: welke vraag zou jij zelf aan de werkgever stellen over deze vacature — en waarom is die vraag slim?";
+                    ? "Last practice question: what would you ask the employer about this vacancy? Why is that a smart question?"
+                    : "Laatste oefenvraag: welke vraag zou jij zelf aan de werkgever stellen over deze vacature? Waarom is die vraag slim?";
             }
 
             return useEnglish ? plan.EnglishQuestions[index] : plan.Questions[index];
@@ -703,8 +703,8 @@ public sealed class MockInterviewService : IMockInterviewService
                     themes,
                     "vacaturetekst",
                     "taken uit de vacaturetekst",
-                    $"In de vacature staat: „{Capitalize(quote)}”. Hoe pak jij dat aan — graag met een kort voorbeeld?",
-                    $"The vacancy says: \"{Capitalize(quote)}\". How would you handle that — with a short example?");
+                    $"In de vacature staat: „{Capitalize(quote)}”. Hoe pak jij dat aan, graag met een kort voorbeeld?",
+                    $"The vacancy says: \"{Capitalize(quote)}\". How would you handle that, with a short example?");
             }
 
             // Domain cues from typical Westland / youth job ads
@@ -794,8 +794,8 @@ public sealed class MockInterviewService : IMockInterviewService
                 themes.Add(new InterviewTheme(
                     "motivatie",
                     "motivatie voor deze rol",
-                    $"Waarom past {title} bij jou — noem iets uit de vacaturetekst dat je aanspreekt.",
-                    $"Why does {title} fit you — mention something from the vacancy text that appeals to you."));
+                    $"Vertel kort waarom je solliciteert als {title} bij {company}. Wat spreekt je aan in de vacature?",
+                    $"Tell us briefly why you are applying for {title} at {company}. What appeals to you in the vacancy?"));
             }
 
             while (themes.Count < 3)

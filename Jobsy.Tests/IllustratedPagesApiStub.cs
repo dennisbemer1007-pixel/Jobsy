@@ -319,7 +319,7 @@ internal static class IllustratedPagesApiStub
         {
             return """
                 {
-                  "reply": "Vraag: Vertel kort waarom je solliciteert als medewerker dierenpension bij De Kooger Dierenopvang — wat spreekt je aan in de vacature?",
+                  "reply": "Vraag: Vertel kort waarom je solliciteert als medewerker dierenpension bij De Kooger Dierenopvang. Wat spreekt je aan in de vacature?",
                   "usedAi": false,
                   "disclaimer": ""
                 }
