@@ -114,8 +114,8 @@ else
         _questions = ids.Select(id =>
         {
             var text = QuestionText(_kind, id, lang);
-            var domain = _domainFor(id);
-            var example = AssessmentItemExamples.ExampleFor(_kind, id, domain, reverse: false, lang);
+            var (domain, reverse) = ItemMeta(_kind, id);
+            var example = AssessmentItemExamples.ExampleFor(_kind, id, domain, reverse, lang);
             return new TestQuestionFlow.FlowQuestion(id, text, example);
         }).ToList();
 
@@ -174,12 +174,46 @@ else
         };
     }
 
-    private string _domainFor(int id)
-        => _kind switch
+    private (string Domain, bool Reverse) ItemMeta(AssessmentKind kind, int id)
+    {
+        if (_deep)
         {
-            AssessmentKind.Career => "Social",
-            AssessmentKind.Culture => "Informal",
-            AssessmentKind.Values => "Connection",
-            _ => "Conscientiousness"
+            var q = DeepAnalysisCatalog.QuestionsFor(kind).First(x => x.Id == id);
+            return (q.Domain, q.Reverse);
+        }
+
+        return kind switch
+        {
+            AssessmentKind.Career => CareerMeta(id),
+            AssessmentKind.Culture => CultureMeta(id),
+            AssessmentKind.Values => ValuesMeta(id),
+            _ => CompetenceMeta(id)
         };
+    }
+
+    private static (string Domain, bool Reverse) CompetenceMeta(int id)
+    {
+        var q = CompetencyTestCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private static (string Domain, bool Reverse) CareerMeta(int id)
+    {
+        var q = CareerTestCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private static (string Domain, bool Reverse) CultureMeta(int id)
+    {
+        var q = CulturePersonalityCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private static (string Domain, bool Reverse) ValuesMeta(int id)
+    {
+        var q = SchwartzValuesCatalogV2.Questions.First(x => x.Id == id);
+        return (q.Category, q.Reverse);
+    }
+
+    private string _domainFor(int id) => ItemMeta(_kind, id).Domain;
 }

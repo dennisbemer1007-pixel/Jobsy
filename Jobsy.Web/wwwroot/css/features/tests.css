@@ -509,7 +509,7 @@
 /* Per-block bottom-band backgrounds (Quick-Scan, verdieping, diepte-analyse). */
 .test-block-stage {
   --test-block-band-height: clamp(6.5rem, 26vh, 12.5rem);
-  --test-block-scene-band-height: clamp(10.5rem, 36vh, 17rem);
+  --test-block-scene-band-height: auto;
   --test-block-band-image: none;
   --test-block-tint: var(--pearl-cool, var(--pearl));
   position: relative;
@@ -572,7 +572,8 @@
 
 .test-block-stage__scene-band {
   display: none;
-  block-size: var(--test-block-scene-band-height);
+  flex: 1 1 auto;
+  min-block-size: 7.5rem;
   margin-block-start: 0.85rem;
   border-radius: var(--radius-md, 8px);
   overflow: hidden;
@@ -580,7 +581,7 @@
   background-image: var(--test-block-band-image);
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center 72%;
+  background-position: center 42%;
   pointer-events: none;
 }
 
@@ -646,6 +647,48 @@
     gap: 0;
     min-block-size: 0;
     max-block-size: none;
+    align-self: stretch;
+  }
+
+  .test-shell[data-mode="Question"]:has(.test-shell__scene--panel) .test-shell__layout {
+    align-items: stretch;
+  }
+
+  .test-shell__scene--panel .test-progress-panel {
+    flex: 0 0 auto;
+  }
+}
+
+.test-depth-segments__label--short {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .test-depth-segments__label--long {
+    display: none;
+  }
+
+  .test-depth-segments__label--short {
+    display: inline;
+  }
+
+  .test-depth-segments__btn,
+  .test-depth-segments__pill {
+    font-size: 0.72rem;
+    padding-inline: 0.35rem;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-example {
+    margin-block-end: 0.85rem;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-flow:has(.test-flow__footer) {
+    padding-bottom: calc(
+      var(--sticky-footer-h, 5.5rem)
+      + var(--bottom-nav-h, 4.75rem)
+      + env(safe-area-inset-bottom, 0px)
+      + 11rem
+    );
   }
 }
 

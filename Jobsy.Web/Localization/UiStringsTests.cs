@@ -130,12 +130,15 @@ public static class UiStringsTests
         Add("TestDone.CareerMatches", "{0} vacatures passen goed bij wat je leuk vindt", "{0} vacancies fit well with what you like", "{0} vacancies fit well with what ty like", "{0} vacancies fit well with what you like", "‏{0} vacancies fit well with what you like");
         Add("TestDone.CareerMatchesLink", "Bekijk ze", "View them", "View them ·", "View them", "‏View them");
         Add("TestDepth.First", "Eerste indruk", "First look", "Pierwsze wrażenie", "Prima impresie", "انطباع أول");
+        Add("TestDepth.FirstShort", "Eerste", "First", "Pierwsze", "Prima", "أول");
+        Add("TestDepth.DeeperShort", "Dieper", "Deeper", "Głębiej", "Mai adânc", "أعمق");
+        Add("TestDepth.FullShort", "Heel diep", "Very deep", "B. głęboko", "F. adânc", "عميق");
         Add("TestDepth.Deeper", "Iets dieper", "A bit deeper", "Trochę głębiej", "Un pic mai adânc", "أعمق قليلًا");
         Add("TestDepth.Full", "Heel diep", "Very deep", "Bardzo głęboko", "Foarte adânc", "عميق جدًا");
         Add("TestDepth.Bottom", "De bodem", "The bottom", "Dno", "Fundul", "القاع");
         Add("TestFlow.QuestionOf", "Vraag {0} van {1}", "Question {0} of {1}", "Question {0} of {1} ·", "Question {0} of {1}", "‏Question {0} of {1}");
         Add("TestFlow.LevelDone", "{0} gedaan", "{0} done", "{0} done ·", "{0} done", "‏{0} done");
-        Add("TestFlow.LevelNext", "nog {0} tot {1}", "{0} left until {1}", "{0} left until {1} ·", "{0} left until {1}", "‏{0} left until {1}");
+        Add("TestFlow.LevelNext", "Nog {0} vragen tot je {1}", "{0} more questions to your {1}", "{0} left until {1} ·", "{0} left until {1}", "‏{0} left until {1}");
         Add("TestFlow.Example", "Voorbeeld uit de praktijk", "Example from practice", "Example from practice ·", "Example from practice", "‏Example from practice");
         Add("TestFlow.Answered", "Beantwoord ({0})", "Answered ({0})", "Answered ({0}) ·", "Answered ({0})", "‏Answered ({0})");
         Add("TestFlow.EarlierAnswers", "Eerdere antwoorden ({0})", "Earlier answers ({0})", "Wcześniejsze odpowiedzi ({0})", "Răspunsuri anterioare ({0})", "‏الإجابات السابقة ({0})");

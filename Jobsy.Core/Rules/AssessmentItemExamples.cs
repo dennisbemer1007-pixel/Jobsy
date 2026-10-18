@@ -47,11 +47,46 @@ public static class AssessmentItemExamples
     private static IReadOnlyDictionary<(AssessmentKind Kind, int Id, string Lang), string> BuildCatalog()
     {
         var map = new Dictionary<(AssessmentKind, int, string), string>();
+        var usedNl = new Dictionary<AssessmentKind, HashSet<string>>();
 
-        void Add(AssessmentKind kind, int id, string domain, bool reverse)
+        void Add(AssessmentKind kind, int id, string domain, bool reverse, bool skipIfExists = false)
         {
-            var nl = Trim(ComposeFallback(domain, reverse, id, "nl"));
-            var en = Trim(ComposeFallback(domain, reverse, id, "en"));
+            if (skipIfExists && map.ContainsKey((kind, id, "nl")))
+            {
+                return;
+            }
+
+            var stemsNl = StemsFor(domain, "nl");
+            if (stemsNl.Length == 0)
+            {
+                stemsNl = NlFallbackStems;
+            }
+
+            var stemsEn = StemsFor(domain, "en");
+            if (stemsEn.Length == 0)
+            {
+                stemsEn = EnFallbackStems;
+            }
+
+            if (!usedNl.TryGetValue(kind, out var seen))
+            {
+                seen = [];
+                usedNl[kind] = seen;
+            }
+
+            string nl = "";
+            string en = "";
+            for (var attempt = 0; attempt < stemsNl.Length; attempt++)
+            {
+                var idx = ((id - 1) + attempt) % stemsNl.Length;
+                nl = Trim(stemsNl[idx] + Angle(reverse, "nl"));
+                en = Trim(stemsEn[idx % stemsEn.Length] + Angle(reverse, "en"));
+                if (seen.Add(nl))
+                {
+                    break;
+                }
+            }
+
             map[(kind, id, "nl")] = nl;
             map[(kind, id, "en")] = en;
         }
@@ -80,7 +115,7 @@ public static class AssessmentItemExamples
         {
             foreach (var q in DeepAnalysisCatalog.QuestionsFor(kind))
             {
-                Add(kind, q.Id, q.Domain, q.Reverse);
+                Add(kind, q.Id, q.Domain, q.Reverse, skipIfExists: true);
             }
         }
 
@@ -106,8 +141,8 @@ public static class AssessmentItemExamples
     private static string Angle(bool reverse, string lang)
         => reverse
             ? lang == "en"
-                ? " About sticking to what you know — or not."
-                : " Dit gaat over vasthouden aan het bekende — of juist niet."
+                ? " About sticking to what you know, or not."
+                : " Dit gaat over vasthouden aan het bekende, of juist niet."
             : lang == "en"
                 ? " This is how you usually react when it counts."
                 : " Zo reageer jij meestal als het erop aankomt.";
@@ -174,7 +209,7 @@ public static class AssessmentItemExamples
         ],
         CareerTestCatalog.Realistic =>
         [
-            "Voorbeeld: je werkt liever met je handen — monteren, rijden of iets zichtbaars maken.",
+            "Voorbeeld: je werkt liever met je handen, bijvoorbeeld monteren, rijden of iets zichtbaars maken.",
             "Voorbeeld: een kapotte machine: jij wilt meteen doen, niet alleen praten.",
             "Voorbeeld: je controleert of materiaal op orde is voordat je start.",
             "Voorbeeld: buiten werken of bewegen geeft je energie.",
@@ -395,7 +430,7 @@ public static class AssessmentItemExamples
         CulturePersonalityCatalog.EmotionalStability =>
         [
             "Voorbeeld: de planning valt om. Jij ademt even.",
-            "Voorbeeld: piekdruk — jij houdt je hoofd erbij.",
+            "Voorbeeld: bij piekdruk houd jij je hoofd erbij.",
             "Voorbeeld: kritiek raakt je kort, daarna schakel je door.",
             "Voorbeeld: je blijft vriendelijk onder druk.",
             "Voorbeeld: je vraagt hulp voordat je vastloopt.",
@@ -465,7 +500,7 @@ public static class AssessmentItemExamples
         ],
         CareerTestCatalog.Realistic =>
         [
-            "Example: you prefer hands-on work — fixing, driving, or making something visible.",
+            "Example: you prefer hands-on work, like fixing, driving, or making something visible.",
             "Example: broken kit: you want to act, not only talk.",
             "Example: you check materials before you start.",
             "Example: moving or outdoor work gives you energy.",
@@ -686,7 +721,7 @@ public static class AssessmentItemExamples
         CulturePersonalityCatalog.EmotionalStability =>
         [
             "Example: the plan drops. You take a breath.",
-            "Example: peak pressure — you keep a clear head.",
+            "Example: in peak pressure, you keep a clear head.",
             "Example: criticism stings briefly, then you move on.",
             "Example: you stay friendly under pressure.",
             "Example: you ask for help before you stall.",

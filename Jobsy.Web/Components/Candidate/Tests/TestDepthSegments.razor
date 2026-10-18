@@ -13,6 +13,7 @@
         var done = Answered >= band.Count;
         var current = ActiveDepth == band.Level;
         var label = Culture[TestDepthRules.NameKey(band.Level)];
+        var shortLabel = Culture[TestDepthRules.ShortNameKey(band.Level)];
         var meta = Culture.Format("TestFlow.DepthMetaShort", band.Count.ToString(System.Globalization.CultureInfo.InvariantCulture));
         if (Interactive)
         {
@@ -22,7 +23,8 @@
                     aria-checked="@(current ? "true" : "false")"
                     disabled="@(done && !current)"
                     @onclick="() => SelectAsync(band.Level)">
-                <span class="test-depth-segments__label">@label</span>
+                <span class="test-depth-segments__label test-depth-segments__label--long">@label</span>
+                <span class="test-depth-segments__label test-depth-segments__label--short">@shortLabel</span>
                 <span class="test-depth-segments__meta">@meta</span>
             </button>
         }
@@ -34,7 +36,8 @@
                 {
                     <span class="test-depth-segments__check" aria-hidden="true">✓</span>
                 }
-                <span class="test-depth-segments__label">@label</span>
+                <span class="test-depth-segments__label test-depth-segments__label--long">@label</span>
+                <span class="test-depth-segments__label test-depth-segments__label--short">@shortLabel</span>
                 <span class="test-depth-segments__meta">@meta</span>
             </span>
         }

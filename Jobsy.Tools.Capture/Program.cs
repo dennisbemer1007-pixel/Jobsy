@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http;
 using Microsoft.Playwright;
 
-const string outputDir = "/opt/cursor/artifacts/testblokken-r2";
+const string outputDir = "/opt/cursor/artifacts/testblokken-r3";
 const string baseUrl = "http://localhost:5201";
 const string consentInit = """
     try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
@@ -106,18 +106,15 @@ foreach (var (stem, returnPath, captureTarget) in targets)
 
         if (width < 640)
         {
-            await page.Locator(".test-likert").First.ScrollIntoViewIfNeededAsync();
             await page.EvaluateAsync("""
                 () => {
                   const likert = document.querySelector('.test-likert');
-                  const footer = document.querySelector('.test-flow__footer[data-sticky-footer]');
-                  if (!likert || !footer) return;
-                  const gap = footer.getBoundingClientRect().top - likert.getBoundingClientRect().bottom;
-                  if (gap < 12) {
-                    window.scrollBy(0, gap - 24);
+                  if (likert) {
+                    likert.scrollIntoView({ block: 'center', behavior: 'instant' });
                   }
                 }
                 """);
+            await page.WaitForTimeoutAsync(350);
         }
 
         var path = Path.Combine(outputDir, $"{stem}-{tag}.png");
