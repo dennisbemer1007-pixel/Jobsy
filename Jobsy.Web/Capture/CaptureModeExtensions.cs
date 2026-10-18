@@ -127,7 +127,7 @@ public static class CaptureModeExtensions
                 EmployersEnabled: false,
                 CandidatePassportEnabled: true,
                 TestsV2Enabled: true,
-                TestItemExamplesEnabled: false,
+                TestItemExamplesEnabled: true,
                 TestProgressInsightEnabled: true));
 
         public async ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)

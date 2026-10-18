@@ -509,16 +509,27 @@
 /* Per-block bottom-band backgrounds (Quick-Scan, verdieping, diepte-analyse). */
 .test-block-stage {
   --test-block-band-height: clamp(6.5rem, 26vh, 12.5rem);
+  --test-block-scene-band-height: clamp(10.5rem, 36vh, 17rem);
   --test-block-band-image: none;
   --test-block-tint: var(--pearl-cool, var(--pearl));
   position: relative;
   display: flex;
   flex-direction: column;
-  min-block-size: min(100%, calc(100dvh - 6.5rem));
+  min-block-size: 0;
   border-radius: var(--radius-lg, 12px);
   overflow: hidden;
   background: var(--test-block-tint);
   isolation: isolate;
+}
+
+.test-block-stage:has(.test-shell__scene--panel) {
+  background: transparent;
+}
+
+.test-block-stage:has(.test-shell__scene--panel) .test-shell__main {
+  padding: 0.85rem;
+  border-radius: var(--radius-lg, 12px);
+  background: var(--test-block-tint);
 }
 
 .test-block-stage--hoe-je-werkt {
@@ -547,21 +558,30 @@
   flex: 1 1 auto;
   display: grid;
   gap: inherit;
-  padding-block-end: calc(var(--test-block-band-height) * 0.35);
+  padding-block-end: 0;
   min-inline-size: 0;
 }
 
-.test-block-stage__band {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: 0;
-  block-size: var(--test-block-band-height);
+.test-block-stage:has(.test-shell__scene--panel) .test-block-stage__content {
+  padding-block-end: 0;
+}
+
+.test-block-stage__mobile-band {
+  display: none;
+}
+
+.test-block-stage__scene-band {
+  display: none;
+  block-size: var(--test-block-scene-band-height);
+  margin-block-start: 0.85rem;
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+  background-color: var(--test-block-tint);
   background-image: var(--test-block-band-image);
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center bottom;
+  background-position: center 72%;
   pointer-events: none;
-  z-index: 0;
 }
 
 .test-block-stage .test-shell__card,
@@ -572,13 +592,86 @@
 
 @media (max-width: 1023px) {
   .test-block-stage {
-    --test-block-band-height: clamp(4.25rem, 17vh, 7rem);
-    min-block-size: min(100%, calc(100dvh - 5.5rem));
+    --test-block-band-height: clamp(3rem, 11vh, 4.25rem);
     border-radius: var(--radius-md, 8px);
   }
 
-  .test-block-stage__content {
-    padding-block-end: calc(var(--test-block-band-height) * 0.2);
+  .test-block-stage:has(.test-shell__scene--panel) {
+    background: var(--test-block-tint);
+  }
+
+  .test-block-stage__mobile-band {
+    display: block;
+    block-size: var(--test-block-band-height);
+    margin-block: 0.75rem 0.35rem;
+    border-radius: var(--radius-md, 8px);
+    background-color: var(--test-block-tint);
+    background-image: var(--test-block-band-image);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center bottom;
+    pointer-events: none;
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-flow:has(.test-flow__footer) {
+    padding-bottom: calc(
+      var(--sticky-footer-h, 5.5rem)
+      + var(--bottom-nav-h, 4.75rem)
+      + env(safe-area-inset-bottom, 0px)
+      + 10rem
+    );
+  }
+
+  .app-shell:not(.has-bottom-nav) .test-page:has([data-testid="test-block-stage"]) .test-flow:has(.test-flow__footer) {
+    padding-bottom: calc(
+      var(--sticky-footer-h, 5.5rem)
+      + env(safe-area-inset-bottom, 0px)
+      + 10rem
+    );
+  }
+
+  .test-page:has([data-testid="test-block-stage"]) .test-likert {
+    margin-block-end: 0.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .test-block-stage:has(.test-shell__scene--panel) .test-block-stage__scene-band {
+    display: block;
+  }
+
+  .test-shell__scene--panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-block-size: 0;
+    max-block-size: none;
+  }
+}
+
+.test-flow__question-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  inline-size: 100%;
+}
+
+.test-flow__question-head .read-aloud {
+  flex-shrink: 0;
+  max-inline-size: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .test-flow__question-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .test-flow__question-head .read-aloud {
+    align-self: flex-start;
   }
 }
 

@@ -24,8 +24,9 @@ else
                        H1="@_h1"
                        TestName="@_testName"
                        LevelName="@_levelName"
-                       Answered="_answered"
+                       Answered="_answeredForShell"
                        TargetCount="_targetCount"
+                       ActiveDepth="_depth"
                        ShowDepthSegments="@(!_deep)"
                        ShowProgressSidePanel="true"
                        BlockArtSlug="@_blockSlug">
@@ -39,6 +40,7 @@ else
                                   Questions="_questions"
                                   Answers="_answers"
                                   Target="_depth"
+                                  StartAt="_startAt"
                                   Compact="false"
                                   ShowProgressInsight="true"
                                   DomainForQuestionId="_domainFor"
@@ -58,7 +60,8 @@ else
     private string _h1 = "";
     private string _testName = "";
     private string _levelName = "";
-    private int _answered;
+    private int _answeredForShell;
+    private int _startAt;
     private int _targetCount = 5;
     private Dictionary<int, int> _answers = [];
     private List<TestQuestionFlow.FlowQuestion> _questions = [];
@@ -82,12 +85,15 @@ else
             ? TestBlockArt.SlugForDeepDomain(_kind, DeepSampleDomain(_kind))
             : TestBlockArt.SlugForAssessment(_kind);
 
-        _answered = variant switch
+        var flowAnswered = variant switch
         {
             "verdieping" => 12,
             "deep" => 35,
-            _ => 6
+            _ => 0
         };
+        _answeredForShell = flowAnswered;
+        _startAt = 0;
+
         _targetCount = _deep
             ? TestDepthRules.Bottom(_kind)
             : TestDepthRules.CountFor(_kind, _depth, _quickScanVersion);
@@ -108,12 +114,17 @@ else
         _questions = ids.Select(id =>
         {
             var text = QuestionText(_kind, id, lang);
-            return new TestQuestionFlow.FlowQuestion(id, text);
+            var domain = _domainFor(id);
+            var example = AssessmentItemExamples.ExampleFor(_kind, id, domain, reverse: false, lang);
+            return new TestQuestionFlow.FlowQuestion(id, text, example);
         }).ToList();
 
-        var currentId = ids[Math.Min(_answered, ids.Count) - 1];
-        _answers = ids.Take(Math.Min(_answered, ids.Count))
-            .ToDictionary(id => id, id => 3 + (id % 2));
+        if (flowAnswered > 0)
+        {
+            var answeredIds = ids.Take(Math.Min(flowAnswered, ids.Count)).ToList();
+            _answers = answeredIds.ToDictionary(id => id, id => 3 + (id % 2));
+            _startAt = Math.Min(flowAnswered, Math.Max(0, _targetCount - 1));
+        }
 
         _insightLines = BuildInsightLines(_kind, _answers.Count);
     }

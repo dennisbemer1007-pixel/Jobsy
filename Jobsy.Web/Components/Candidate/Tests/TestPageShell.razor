@@ -56,6 +56,10 @@
                     @if (HasInsightSidePanel)
                     {
                         @SidePanel
+                        @if (ShowBlockStage)
+                        {
+                            <div class="test-block-stage__scene-band" aria-hidden="true"></div>
+                        }
                     }
                     else
                     {
@@ -124,7 +128,7 @@
     {
         ShellMode.Intro => Culture.Format("TestFlow.Eyebrow.Intro", TestName),
         ShellMode.Question => string.IsNullOrWhiteSpace(Eyebrow)
-            ? Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName)
+            ? QuestionModeEyebrow()
             : Eyebrow,
         ShellMode.Done => string.IsNullOrWhiteSpace(Eyebrow)
             ? Culture.Format("TestDone.Eyebrow", TestName, LevelName)
@@ -139,4 +143,14 @@
         ShellMode.Done => DoneLead,
         _ => Lead
     };
+
+    private string QuestionModeEyebrow()
+    {
+        if (Deep)
+        {
+            return Culture.Format("TestFlow.Eyebrow.Dive", TestName, LevelName);
+        }
+
+        return Culture.Format("TestFlow.Eyebrow.QuickScan", TestName, LevelName);
+    }
 }

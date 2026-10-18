@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http;
 using Microsoft.Playwright;
 
-const string outputDir = "/opt/cursor/artifacts/testblokken-r1";
+const string outputDir = "/opt/cursor/artifacts/testblokken-r2";
 const string baseUrl = "http://localhost:5201";
 const string consentInit = """
     try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
@@ -10,10 +10,10 @@ const string consentInit = """
 
 var targets = new (string Stem, string ReturnPath, string CaptureTarget)[]
 {
-    ("quick-scan-hoe-je-werkt", "/__test/capture-test-block?kind=competence&variant=quick", "competence:6"),
-    ("quick-scan-leuk", "/__test/capture-test-block?kind=career&variant=quick", "career:6"),
-    ("quick-scan-sfeer", "/__test/capture-test-block?kind=culture&variant=quick", "culture:6"),
-    ("quick-scan-waarden", "/__test/capture-test-block?kind=values&variant=quick", "values:6"),
+    ("quick-scan-hoe-je-werkt", "/__test/capture-test-block?kind=competence&variant=quick", "competence:0"),
+    ("quick-scan-leuk", "/__test/capture-test-block?kind=career&variant=quick", "career:0"),
+    ("quick-scan-sfeer", "/__test/capture-test-block?kind=culture&variant=quick", "culture:0"),
+    ("quick-scan-waarden", "/__test/capture-test-block?kind=values&variant=quick", "values:0"),
     ("verdieping-leuk", "/__test/capture-test-block?kind=career&variant=verdieping", "career:12"),
     ("diepte-competenties", "/__test/capture-test-block?kind=competence&variant=deep", "competence:35:deep")
 };
@@ -90,13 +90,34 @@ foreach (var (stem, returnPath, captureTarget) in targets)
         await page.Locator("[data-testid=test-block-stage]").WaitForAsync(new() { Timeout = 120_000 });
         await page.Locator(".test-flow, .test-shell__card").First.WaitForAsync(new() { Timeout = 120_000 });
         await page.Locator("[data-testid=test-block-stage]").WaitForAsync();
-        if (width >= 1024)
+        if (width >= 1024 && stem is not ("quick-scan-hoe-je-werkt" or "quick-scan-leuk" or "quick-scan-sfeer" or "quick-scan-waarden"))
         {
             await page.Locator("[data-testid=test-progress-insight-panel]").WaitForAsync(new() { Timeout = 60_000 });
         }
-        else
+        else if (width < 1024 && stem is "verdieping-leuk" or "diepte-competenties")
         {
             await page.Locator("[data-testid=test-progress-insight-mobile]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+
+        if (stem.StartsWith("quick-scan", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.Locator("[data-testid=test-item-example]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+
+        if (width < 640)
+        {
+            await page.Locator(".test-likert").First.ScrollIntoViewIfNeededAsync();
+            await page.EvaluateAsync("""
+                () => {
+                  const likert = document.querySelector('.test-likert');
+                  const footer = document.querySelector('.test-flow__footer[data-sticky-footer]');
+                  if (!likert || !footer) return;
+                  const gap = footer.getBoundingClientRect().top - likert.getBoundingClientRect().bottom;
+                  if (gap < 12) {
+                    window.scrollBy(0, gap - 24);
+                  }
+                }
+                """);
         }
 
         var path = Path.Combine(outputDir, $"{stem}-{tag}.png");

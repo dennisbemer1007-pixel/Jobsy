@@ -116,6 +116,11 @@
             <p class="test-example" data-testid="test-item-example">@question.Example</p>
         }
 
+        @if (TestBlockStageActive)
+        {
+            <div class="test-block-stage__mobile-band" aria-hidden="true"></div>
+        }
+
         <LikertRadioGroup QuestionId="question.Id"
                           Value="@(answered ? FlowAnswers[question.Id] : null)"
                           Interactive="true"
@@ -225,6 +230,9 @@
     [Parameter] public Func<int, string>? DomainForQuestionId { get; set; }
     [Parameter] public EventCallback<ProgressInsightSnapshot> ProgressInsightChanged { get; set; }
 
+    [CascadingParameter(Name = "TestBlockStageActive")]
+    private bool TestBlockStageActive { get; set; }
+
     public sealed record ProgressInsightSnapshot(IReadOnlyList<string> Lines, int NewLineCount);
 
     private int _index;
@@ -254,13 +262,22 @@
         MergeParameterAnswers();
         _index = Math.Clamp(StartAt, 0, Math.Max(0, TargetCount - 1));
         // Prefer first unanswered within target.
+        var resumed = false;
         for (var i = 0; i < TargetCount; i++)
         {
             if (!_flowAnswers.ContainsKey(Ordered[i].Id))
             {
                 _index = i;
+                resumed = true;
                 break;
             }
+        }
+
+        if (!resumed && TargetCount > 0)
+        {
+            _index = StartAt > 0
+                ? Math.Clamp(StartAt, 0, TargetCount - 1)
+                : TargetCount - 1;
         }
 
         _focusRequest = true;

@@ -3,12 +3,13 @@
 
 @if (Enabled)
 {
-    <div class="test-block-stage test-block-stage--@Slug" data-testid="test-block-stage" data-block="@Slug">
-        <div class="test-block-stage__content">
-            @ChildContent
+    <CascadingValue Value="true" Name="TestBlockStageActive">
+        <div class="test-block-stage test-block-stage--@Slug" data-testid="test-block-stage" data-block="@Slug">
+            <div class="test-block-stage__content">
+                @ChildContent
+            </div>
         </div>
-        <div class="test-block-stage__band" aria-hidden="true"></div>
-    </div>
+    </CascadingValue>
 }
 else
 {
