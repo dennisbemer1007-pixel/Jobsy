@@ -646,10 +646,13 @@ public class StatusPagesPlaywrightTests
             "() => parseFloat(getComputedStyle(document.querySelector('.err-hero__lead') || document.body).fontSize)");
         Assert.True(bodyFontPx >= 16, $"Body text is {bodyFontPx}px, below the 16px floor.");
 
-        var primary = page.Locator(".pub-btn--primary");
+        // Hero CTAs only — header/menu primaries exist in DOM but are hidden on mobile (no bounding box).
+        var primary = page.Locator(".err-hero .pub-btn--primary");
         if (await primary.CountAsync() > 0)
         {
-            var box = await primary.First.BoundingBoxAsync();
+            var btn = primary.First;
+            await btn.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
+            var box = await btn.BoundingBoxAsync();
             Assert.NotNull(box);
             Assert.True(box!.Height >= 44, $"Primary button is {box.Height}px high, below the 44px tap target.");
         }
