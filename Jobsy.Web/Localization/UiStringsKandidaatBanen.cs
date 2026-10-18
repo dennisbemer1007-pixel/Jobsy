@@ -85,7 +85,7 @@ public static class UiStringsKandidaatBanen
             "To pasuje do Twoich zainteresowań", "Se potrivește intereselor tale", "هذا يلائم اهتماماتك");
 
         Add("Kb.WhyDetail.AnimalCare.Culture",
-            "Kleine, rustige organisatie — past bij je voorkeur voor overzicht.",
+            "Kleine, rustige organisatie: past bij je voorkeur voor overzicht.",
             "Small, calm organisation — fits your preference for clarity.",
             "Mała, spokojna organizacja — pasuje do Twojej potrzeby przejrzystości.",
             "Organizație mică, liniștită — se potrivește preferinței tale pentru claritate.",

@@ -781,7 +781,7 @@
                         <li class="kb-dna__row" data-dna="@row.Kind">
                             @if (row.Percent is int barPct)
                             {
-                                <span class="visually-hidden">@Culture[row.LabelKey]</span>
+                                <span class="kb-dna__label">@Culture[row.LabelKey]</span>
                                 <p class="kb-dna__reason kb-dna__reason--lead">@KbFitDetailReason.For(_vacancy, row.Kind, Culture)</p>
                                 <progress class="kb-dna__progress"
                                           value="@barPct"

@@ -19,9 +19,9 @@ using System.Security.Claims;
 namespace Jobsy.Tests;
 
 [Collection("PlaywrightSmoke")]
-public sealed class KandidaatR7ScreenshotTests : IAsyncLifetime
+public sealed class KandidaatR8ScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-r7";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/kandidaat-r8";
     private static readonly Guid NoPhotoVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
@@ -33,7 +33,7 @@ public sealed class KandidaatR7ScreenshotTests : IAsyncLifetime
     {
         foreach (var legacy in new[]
                  {
-                     "/opt/cursor/artifacts/kandidaat-r6",
+                     "/opt/cursor/artifacts/kandidaat-r7",
                      "/opt/cursor/artifacts/carriere-r4",
                      "/opt/cursor/artifacts/carriere-r3",
                      "/opt/cursor/artifacts/vacature-r3",
@@ -68,7 +68,7 @@ public sealed class KandidaatR7ScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_kandidaat_r7_review_shots()
+    public async Task Capture_kandidaat_r8_review_shots()
     {
         Directory.CreateDirectory(ArtifactsDir);
         await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false);
