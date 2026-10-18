@@ -2,7 +2,9 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Authorize(Roles = "Admin")]
 @using Jobsy.Core.Contracts.Scholen
+@using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Admin
+@using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Components.Ui.Enterprise
 @inject JobsyApiClient Api
 @inject CultureState Culture
@@ -82,7 +84,10 @@
                 }
                 <EntImpactNote><p>@Culture["AdminScholen.Agreement.Note"]</p></EntImpactNote>
                 <label>@Culture["AdminScholen.Agreement.Date"]
-                    <InputDate class="input" @bind-Value="_agreementDate" />
+                    <JobsyDateField CssClass="input"
+                                    Constraint="JobsyDateConstraint.NotFuture"
+                                    @bind-Value="_agreementDate"
+                                    TestId="admin-school-agreement-date" />
                 </label>
                 <label>@Culture["AdminScholen.Agreement.Version"]
                     <input class="input" @bind="_agreementVersion" />
@@ -157,7 +162,7 @@
     private string? _editBrin;
     private string _editDomains = "";
     private bool _editActive = true;
-    private DateTime? _agreementDate = DateTime.Today;
+    private DateOnly? _agreementDate = DateOnly.FromDateTime(DateTime.Today);
     private string _agreementVersion = "1.0";
     private string _inviteName = "";
     private string _inviteEmail = "";
@@ -185,7 +190,7 @@
                 _editActive = _school.IsActive;
                 if (_school.ProcessorAgreementSignedOn is DateOnly d)
                 {
-                    _agreementDate = d.ToDateTime(TimeOnly.MinValue);
+                    _agreementDate = d;
                 }
 
                 _agreementVersion = _school.ProcessorAgreementVersion ?? "1.0";
@@ -250,7 +255,7 @@
         _error = null;
         try
         {
-            var date = DateOnly.FromDateTime(_agreementDate ?? DateTime.Today);
+            var date = _agreementDate ?? DateOnly.FromDateTime(DateTime.Today);
             _school = await Api.RecordAdminSchoolAgreementAsync(
                 SchoolId,
                 new RecordProcessorAgreementRequest(date, _agreementVersion));
