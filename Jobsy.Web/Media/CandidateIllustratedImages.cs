@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261018-r9";
+    public const string Version = "20261018-r10";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -22,9 +22,14 @@ public static class CandidateIllustratedImages
     public const string StepBanen = $"{Base}/spots/banen.jpg?v={Version}";
     public const string EmpWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
 
-    /// <summary>Reference request hero (work experience, no text in art).</summary>
-    public const string RefVerifRequest = $"{Base}/werkervaring.jpg?v={Version}";
+    /// <summary>Reference heroes — crème left, diverse trio on the right (dedicated crop).</summary>
+    public const string RefVerifRequest = $"{Base}/spots/ref-verif-hero.jpg?v={Version}";
 
-    /// <summary>Public referent hero (diverse werkervaring group).</summary>
-    public const string RefVerifPublic = $"{Base}/werkervaring.jpg?v={Version}";
+    public const string RefVerifPublic = $"{Base}/spots/ref-verif-hero.jpg?v={Version}";
+
+    /// <summary>Desktop hero crop: trio fully in art zone; crème-only in gradient band.</summary>
+    public const string RefVerifHeroDesktopPosition = "100% 42%";
+
+    /// <summary>Mobile illustration band crop (full heads).</summary>
+    public const string RefVerifHeroMobilePosition = "82% 42%";
 }

@@ -435,5 +435,15 @@ internal static class ReferenceVerificationDemoSeeder
             token.UsedAtUtc = null;
             token.ExpiresAtUtc = now.AddDays(11);
         }
+
+        // Playwright submit flows mint tokens; backdate seeded tokens so monthly caps stay free after CI reruns.
+        var demoTokens = await db.WorkExperienceReferenceTokens
+            .Where(t => t.Request.UserId == userId)
+            .ToListAsync();
+        var backdate = now.AddDays(-40);
+        foreach (var token in demoTokens)
+        {
+            token.CreatedAtUtc = backdate;
+        }
     }
 }

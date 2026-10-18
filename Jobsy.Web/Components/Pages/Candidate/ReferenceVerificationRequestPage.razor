@@ -45,8 +45,9 @@ else
 {
     <div class="ref-verif-request-layout @(_cardVisible ? "ref-verif-request-layout--ready" : null)">
         <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifRequest"
-                                              CssClass="ref-verif-hero--request"
-                                              ObjectPosition="74% 28%">
+                                              CssClass="ref-verif-hero--request ref-verif-hero--triptych"
+                                              ObjectPosition="@CandidateIllustratedImages.RefVerifHeroDesktopPosition"
+                                              MobileObjectPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition">
             <h1 class="ref-verif-hero__title">@Culture["RefVerif.Request.Title"]</h1>
             <p class="ref-verif-hero__lead">@Culture["RefVerif.Request.Lead"]</p>
         </ReferenceVerificationIllustratedHero>
@@ -86,11 +87,11 @@ else
                             <div class="ref-verif-request__grid">
                                 <label class="ref-verif-request__field" for="ref-name">
                                     <span class="ref-verif-request__label">@Culture["RefVerif.Request.Name"]</span>
-                                    <input id="ref-name" class="ref-verif-request__input" @bind="_name" maxlength="80" autocomplete="name" />
+                                    <input id="ref-name" class="ref-verif-request__input" @bind="_name" @bind:event="oninput" maxlength="80" autocomplete="name" />
                                 </label>
                                 <label class="ref-verif-request__field" for="ref-email">
                                     <span class="ref-verif-request__label">@Culture["RefVerif.Request.Email"]</span>
-                                    <input id="ref-email" class="ref-verif-request__input" type="email" @bind="_email" maxlength="254" autocomplete="email" />
+                                    <input id="ref-email" class="ref-verif-request__input" type="email" @bind="_email" @bind:event="oninput" maxlength="254" autocomplete="email" />
                                 </label>
 
                                 <label class="ref-verif-request__field ref-verif-request__field--full" for="ref-relation">
@@ -104,7 +105,7 @@ else
                                 </label>
 
                                 <label class="ref-verif-request__consent ref-verif-request__field--full" for="ref-consent">
-                                    <input id="ref-consent" type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" />
+                                    <input id="ref-consent" type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" @bind:event="onchange" />
                                     <span class="ref-verif-request__consent-text">@Culture["RefVerif.Request.Consent"]</span>
                                 </label>
 
@@ -252,11 +253,10 @@ else
                 return;
             }
 
-            var relation = Culture[$"RefVerif.Relation.{_relation}"];
             var (ok, error) = await Api.RequestWorkExperienceReferenceAsync(
                 EntryId,
                 _name,
-                relation,
+                _relation,
                 _email,
                 true);
             if (ok)

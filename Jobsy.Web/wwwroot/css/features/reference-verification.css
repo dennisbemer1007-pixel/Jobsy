@@ -430,6 +430,20 @@
   background-position: var(--ref-verif-hero-position, 76% 34%);
 }
 
+.ref-verif-hero--triptych {
+  background-image:
+    linear-gradient(
+      to right,
+      var(--pearl-shine) 0%,
+      var(--pearl-shine) 52%,
+      color-mix(in srgb, var(--pearl-shine) 98%, transparent) 56%,
+      transparent 72%
+    ),
+    var(--ref-verif-hero-image);
+  background-size: cover, 118% auto;
+  background-position: 0 0, var(--ref-verif-hero-position, 0% 30%);
+}
+
 .ref-verif-hero__art,
 .ref-verif-hero__cream {
   display: none;
@@ -771,7 +785,7 @@
     height: 14rem;
     min-height: 12.5rem;
     max-height: 15rem;
-    background: var(--ref-verif-hero-image) 48% 34% / cover no-repeat;
+    background: var(--ref-verif-hero-image) var(--ref-verif-hero-position-mobile, 82% 42%) / cover no-repeat;
   }
 
   .ref-verif-hero__cream {

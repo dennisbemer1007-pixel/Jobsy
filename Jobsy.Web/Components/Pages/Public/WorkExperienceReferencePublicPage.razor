@@ -22,7 +22,7 @@
     {
         <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifPublic"
                                               CssClass="ref-verif-hero--public ref-verif-hero--public-compact"
-                                              ObjectPosition="46% 36%"
+                                              ObjectPosition="@CandidateIllustratedImages.RefVerifHeroDesktopPosition"
                                               AriaHidden="true" />
         <div class="ref-verif-public__shell">
             <div class="pub-card ref-verif-public__card ref-verif-lift-card ref-verif-lift-card--visible">
@@ -37,7 +37,7 @@
     {
         <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifPublic"
                                               CssClass="ref-verif-hero--public ref-verif-hero--public-compact"
-                                              ObjectPosition="46% 36%"
+                                              ObjectPosition="@CandidateIllustratedImages.RefVerifHeroDesktopPosition"
                                               AriaHidden="true" />
         <div class="ref-verif-public__shell">
             <div class="pub-card ref-verif-public__card ref-verif-lift-card ref-verif-lift-card--visible">
@@ -53,8 +53,9 @@
         @if (_view.State == "open")
         {
             <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifPublic"
-                                                  CssClass="ref-verif-hero--public"
-                                                  ObjectPosition="46% 36%">
+                                                  CssClass="ref-verif-hero--public ref-verif-hero--triptych"
+                                                  ObjectPosition="@CandidateIllustratedImages.RefVerifHeroDesktopPosition"
+                                                  MobileObjectPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition">
                 <h1 id="ref-verif-public-title" class="ref-verif-hero__title">@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)</h1>
                 <p class="ref-verif-hero__lead">@Culture.Format("RefVerif.Public.IntroDetail", _view.CandidateName, _view.EmployerName, _view.RoleTitle)</p>
                 <p class="ref-verif-hero__privacy">@Culture["RefVerif.Public.PrivacyShort"]</p>

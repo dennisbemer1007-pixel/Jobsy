@@ -15,10 +15,12 @@
 
     [Parameter] public string ObjectPosition { get; set; } = "72% 38%";
 
+    [Parameter] public string? MobileObjectPosition { get; set; }
+
     [Parameter] public bool AriaHidden { get; set; }
 
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private string Style =>
-        $"--ref-verif-hero-image: url('{ImageUrl}'); --ref-verif-hero-position: {ObjectPosition};";
+        $"--ref-verif-hero-image: url('{ImageUrl}'); --ref-verif-hero-position: {ObjectPosition}; --ref-verif-hero-position-mobile: {MobileObjectPosition ?? ObjectPosition};";
 }
