@@ -51,13 +51,35 @@
 }
 
 .cand-hero--profession-band {
-  background-size: auto 100%;
-  background-position: right center;
+  --cand-hero-fade-mid: 57%;
+  --cand-hero-fade-soft: 120px;
+  background-image: none;
+  background-color: var(--pearl);
 }
 
 .cand-hero--profession-band::after {
-  content: none;
-  display: none;
+  content: "";
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--cand-hero-art, none);
+  background-repeat: no-repeat;
+  background-size: auto 100%;
+  background-position: right center;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    transparent calc(var(--cand-hero-fade-mid) - var(--cand-hero-fade-soft)),
+    #000 calc(var(--cand-hero-fade-mid) + var(--cand-hero-fade-soft))
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    transparent calc(var(--cand-hero-fade-mid) - var(--cand-hero-fade-soft)),
+    #000 calc(var(--cand-hero-fade-mid) + var(--cand-hero-fade-soft))
+  );
 }
 
 .cand-hero--profession-band::before {
@@ -65,9 +87,9 @@
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) calc(52% - 2.5rem),
-    color-mix(in srgb, var(--pearl) 55%, transparent) calc(52% - 1.25rem),
-    transparent calc(52% + 1.25rem)
+    var(--pearl) calc(var(--cand-hero-fade-mid) - var(--cand-hero-fade-soft)),
+    color-mix(in srgb, var(--pearl) 92%, transparent) var(--cand-hero-fade-mid),
+    transparent calc(var(--cand-hero-fade-mid) + var(--cand-hero-fade-soft))
   );
 }
 
@@ -179,8 +201,16 @@
   }
 
   .cand-hero--profession-band .cand-hero__media {
-    background-position: 88% bottom;
+    background-position: right center;
     background-size: auto 100%;
+    background-color: var(--pearl);
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      transparent 12%,
+      #000 32%
+    );
+    mask-image: linear-gradient(to right, transparent 0, transparent 12%, #000 32%);
   }
 
   .cand-hero__lead {
