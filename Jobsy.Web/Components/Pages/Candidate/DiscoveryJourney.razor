@@ -2,6 +2,8 @@
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
 @attribute [RequiresFeature(PlatformFeature.CandidatePassport, FallbackPath = "/candidate/start")]
+@using Jobsy.Core.Entities
+@using Jobsy.Core.Enums
 @using Jobsy.Core.Features
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Discovery
@@ -702,6 +704,7 @@
     private CancellationTokenSource? _geocodeCts;
     private CancellationTokenSource? _dreamCts;
     private QuestionnaireAutosave? _autosave;
+    private int _quickScanVersion = AssessmentTestVersions.V1;
     private readonly Dictionary<int, int> _miniAnswers = new();
     private readonly Dictionary<int, int> _serverAnswers = new();
     private readonly HashSet<int> _lockedIds = [];
@@ -837,8 +840,8 @@
     {
         get
         {
-            if (_shedFullyDone || _shedSelectedLevel <= OnboardingWizardCatalog.ReachedLevel(_answeredCount,
-                    OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value))
+            if (_shedFullyDone || _shedSelectedLevel <= JourneyTestFlow.ReachedLevel(_answeredCount,
+                    OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value, _quickScanVersion))
             {
                 return _shedStep >= 10
                     ? Culture["Discovery.Shed.ToLight"]
@@ -1407,7 +1410,7 @@
         }
     }
 
-    private void ApplyPrivate(CandidatePrivatePreferences? prefs)
+    private void ApplyPrivate(Models.CandidatePrivatePreferences? prefs)
     {
         Draft.Dislikes.Clear();
         Draft.CustomDislikes.Clear();
@@ -1631,10 +1634,11 @@
     private async Task PrepareShedAsync()
     {
         var kind = OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value;
+        _quickScanVersion = await LoadQuickScanVersionAsync(kind);
         _answeredCount = await CountAnsweredAsync(kind);
-        _shedFullyDone = JourneyTestFlow.IsFullyDone(_answeredCount, kind);
-        _shedSelectedLevel = JourneyTestFlow.DefaultSelectedLevel(_answeredCount, kind);
-        _shedOptions = JourneyTestFlow.BuildDepthOptions(kind, _answeredCount)
+        _shedFullyDone = JourneyTestFlow.IsFullyDone(_answeredCount, kind, _quickScanVersion);
+        _shedSelectedLevel = JourneyTestFlow.DefaultSelectedLevel(_answeredCount, kind, _quickScanVersion);
+        _shedOptions = JourneyTestFlow.BuildDepthOptions(kind, _answeredCount, _quickScanVersion)
             .Select(o => new JourneyShedMoment.DepthOption(o.Level, o.TitleKey, o.SubKey, o.Dots, o.Disabled))
             .ToList();
         await RefreshImpressionAsync();
@@ -1655,7 +1659,7 @@
         try
         {
             var kind = OnboardingWizardCatalog.TestKindForStep(_shedStep)!.Value;
-            var reached = OnboardingWizardCatalog.ReachedLevel(_answeredCount, kind);
+            var reached = JourneyTestFlow.ReachedLevel(_answeredCount, kind, _quickScanVersion);
             if (!_shedFullyDone && _shedSelectedLevel > reached)
             {
                 _targetLevel = _shedSelectedLevel;
@@ -1701,7 +1705,7 @@
             return;
         }
 
-        var completed = JourneyTestFlow.IsFullyDone(_answeredCount, kind);
+        var completed = JourneyTestFlow.IsFullyDone(_answeredCount, kind, _quickScanVersion);
         await SaveTestAnswersAsync(merged, completed);
     }
 
@@ -1715,6 +1719,49 @@
         _error = UserFacing.Describe(ex);
         _saveStatus = "error";
     }
+
+    private void ClearSaveFailure()
+    {
+        if (_saveStatus == "error")
+        {
+            _saveStatus = "saved";
+        }
+
+        _error = null;
+    }
+
+    private static int ResolveQuickScanVersion(int? storedVersion, bool testsV2Enabled)
+    {
+        if (storedVersion is int v && v > 0)
+        {
+            return AssessmentTestVersions.Normalize(v);
+        }
+
+        return testsV2Enabled ? AssessmentTestVersions.V3 : AssessmentTestVersions.V1;
+    }
+
+    private async Task<int> LoadQuickScanVersionAsync(OnboardingWizardCatalog.OnboardingTestKind kind)
+    {
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        return kind switch
+        {
+            OnboardingWizardCatalog.OnboardingTestKind.Competency =>
+                ResolveQuickScanVersion((await Api.GetMyCompetenciesAsync())?.QuickScanVersion, testsV2),
+            OnboardingWizardCatalog.OnboardingTestKind.Career =>
+                ResolveQuickScanVersion((await Api.GetMyCareerInterestsAsync())?.QuickScanVersion, testsV2),
+            OnboardingWizardCatalog.OnboardingTestKind.Culture =>
+                ResolveQuickScanVersion((await Api.GetMyCultureAsync())?.QuickScanVersion, testsV2),
+            _ => ResolveQuickScanVersion((await Api.GetMyValuesAsync())?.QuickScanVersion, testsV2)
+        };
+    }
+
+    private AssessmentKind AssessmentKindForStep(int step) => step switch
+    {
+        8 => AssessmentKind.Career,
+        9 => AssessmentKind.Culture,
+        10 => AssessmentKind.Values,
+        _ => AssessmentKind.Competence
+    };
 
     private async Task ShowEndAsync(bool partial)
     {
@@ -2157,12 +2204,25 @@
         Navigation.NavigateTo(Navigation.GetUriWithQueryParameters(query), replace: true);
     }
 
-    private TestDepthLevel MiniDepth => _targetLevel switch
+    private TestDepthLevel MiniDepth
     {
-        >= 18 => TestDepthLevel.Full,
-        >= OnboardingWizardCatalog.DeeperLevelCount => TestDepthLevel.Deeper,
-        _ => TestDepthLevel.First
-    };
+        get
+        {
+            var kind = AssessmentKindForStep(_countedStep);
+            var full = TestDepthRules.FullCount(kind, _quickScanVersion);
+            if (_targetLevel >= full)
+            {
+                return TestDepthLevel.Full;
+            }
+
+            if (_targetLevel >= TestDepthRules.DeeperCount)
+            {
+                return TestDepthLevel.Deeper;
+            }
+
+            return TestDepthLevel.First;
+        }
+    }
 
     private IReadOnlyDictionary<int, int> MiniVisibleAnswers
     {
@@ -2221,6 +2281,8 @@
         if (_countedStep is < 7 or > 10 || !Draft.HasConsent) return;
 
         var kind = OnboardingWizardCatalog.TestKindForStep(_countedStep)!.Value;
+        var assessmentKind = AssessmentKindForStep(_countedStep);
+        _quickScanVersion = await LoadQuickScanVersionAsync(kind);
         if (_targetLevel < OnboardingWizardCatalog.MiniLevelCount)
         {
             _targetLevel = OnboardingWizardCatalog.MiniLevelCount;
@@ -2232,23 +2294,27 @@
         {
             case 7:
                 answers = (await Api.GetMyCompetenciesAsync())?.Answers;
-                catalog = CompetencyTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                catalog = AssessmentQuickScanCatalog.CompetenceQuestions(_quickScanVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
             case 8:
                 answers = (await Api.GetMyCareerInterestsAsync())?.Answers;
-                catalog = CareerTestCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                catalog = AssessmentQuickScanCatalog.CareerQuestions(_quickScanVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
             case 9:
                 answers = (await Api.GetMyCultureAsync())?.Answers;
-                catalog = CulturePersonalityCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                catalog = AssessmentQuickScanCatalog.CultureQuestions(_quickScanVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
             default:
                 answers = (await Api.GetMyValuesAsync())?.Answers;
-                catalog = SchwartzValuesCatalog.Questions.Select(item => (item.Id, item.TextKey));
+                catalog = AssessmentQuickScanCatalog.ValuesQuestions(_quickScanVersion)
+                    .Select(item => (item.Id, item.TextKey));
                 break;
         }
 
-        var questionIds = OnboardingWizardCatalog.QuestionIdsUpTo(kind, _targetLevel);
+        var questionIds = TestDepthRules.QuestionIdsUpTo(assessmentKind, _targetLevel, _quickScanVersion);
 
         foreach (var answer in answers ?? [])
         {
@@ -2263,17 +2329,12 @@
             if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id);
         }
 
-        // Keep answered questions in the list so the counter stays "6 van 10".
-        // Locked ids are the ones already saved; the first open question is where we start.
         var byId = catalog.ToDictionary(item => item.Id);
         _miniQuestions = questionIds
             .Where(id => byId.ContainsKey(id))
             .Select(id => new OnboardingMiniTest.MiniQuestion(id, byId[id].Key))
             .ToList();
-        var open = catalog
-            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
-            .Select(item => item.Id)
-            .ToHashSet();
+        var open = questionIds.Where(id => !_lockedIds.Contains(id)).ToHashSet();
         var firstOpen = _miniQuestions.FindIndex(question => open.Contains(question.Id));
         _currentQuestion = firstOpen < 0 ? 0 : firstOpen;
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
@@ -2295,7 +2356,13 @@
                     await Api.SaveMyValuesAsync(merged, false, cancellationToken);
                     break;
             }
-        }, () => InvokeAsync(StateHasChanged), 150);
+
+            ClearSaveFailure();
+        }, () => InvokeAsync(StateHasChanged), 150, _ => InvokeAsync(() =>
+        {
+            _saveStatus = "error";
+            return Task.CompletedTask;
+        }));
     }
 
     private async Task TryAutoAdvanceEmptyMiniStepAsync()

@@ -23,7 +23,7 @@
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    @if (!_isMatchPage && !_isQuestionnairePage && !_isBanenkaartPage)
+    @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
     {
         <header class="app-header">
             <div class="app-header__brand">
@@ -73,28 +73,28 @@
             }
             @Body
         </CircuitErrorBoundary>
-        @if (!_isMatchPage && !_isQuestionnairePage && !_isBanenkaartPage)
+        @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
         {
             <AppFooter />
         }
     </main>
 
-    @if (!_isQuestionnairePage && !_isBanenkaartPage)
+    @if (!_isQuestionnairePage && !_banenkaartImmersive)
     {
         <BottomNav HasItemsChanged="OnBottomNavItemsChanged" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && _isCandidate && !_hideCoachDock)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
         <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
-    else if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage)
+    else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
     {
         <LobsyAssistantChat HasBottomNav="_hasBottomNav" />
         <FeedbackWidget HasBottomNav="_hasBottomNav" />
     }
-    @if (RendererInfo.IsInteractive && !_isMatchPage && !_isBanenkaartPage && !_isQuestionnairePage)
+    @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)
     {
         <GratisDnaMerge />
         <PushPermissionBanner />
@@ -120,7 +120,8 @@
     private bool _siteVisitRecorded;
     private bool _hasBottomNav;
     private bool _isMatchPage;
-    private bool _isBanenkaartPage;
+    /// <summary>Public job map: hide app chrome for guests; logged-in candidates keep the normal shell.</summary>
+    private bool _banenkaartImmersive;
     private bool _isQuestionnairePage;
     private bool _hideCoachDock;
     private bool _isCandidate;
@@ -132,7 +133,7 @@
         RendererInfo.IsInteractive
         && !_isCandidate
         && !_isMatchPage
-        && !_isBanenkaartPage
+        && !_banenkaartImmersive
         && !_isQuestionnairePage
         && !_suppressInstallBanner;
     private string _homeHref = "/";
@@ -168,11 +169,18 @@
         {
             var auth = await AuthState.GetAuthenticationStateAsync();
             var user = auth.User;
+            var wasCandidate = _isCandidate;
             _isCandidate = user.Identity?.IsAuthenticated == true
                 && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+            SyncBanenkaartImmersive();
             if (!_isCandidate)
             {
                 _homeHref = "/";
+                if (wasCandidate != _isCandidate)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+
                 return;
             }
 
@@ -296,6 +304,29 @@
         {
             _ = InvokeAsync(StateHasChanged);
         }
+
+        _ = RefreshCandidateRoleAsync();
+    }
+
+    private async Task RefreshCandidateRoleAsync()
+    {
+        var previous = _isCandidate;
+        try
+        {
+            var auth = await AuthState.GetAuthenticationStateAsync();
+            var user = auth.User;
+            _isCandidate = user.Identity?.IsAuthenticated == true
+                && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
+        }
+        catch
+        {
+            _isCandidate = false;
+        }
+
+        if (SyncBanenkaartImmersive() || previous != _isCandidate)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private bool RefreshFocusedFlags()
@@ -303,8 +334,7 @@
         var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var match = path.Equals("candidate/match", StringComparison.OrdinalIgnoreCase);
-        var banenkaart = path.Equals("banenkaart", StringComparison.OrdinalIgnoreCase)
-            || path.Equals("banen", StringComparison.OrdinalIgnoreCase);
+        var banenkaart = IsBanenkaartPath(path);
         var questionnaire = IsQuestionnairePath(path, relative);
         var suppressInstall = SuppressesInstallBanner(path);
         var suppressPwaEntry = SuppressesPwaInstallEntry(path);
@@ -315,9 +345,8 @@
             changed = true;
         }
 
-        if (_isBanenkaartPage != banenkaart)
+        if (SyncBanenkaartImmersive(banenkaart))
         {
-            _isBanenkaartPage = banenkaart;
             changed = true;
         }
 
@@ -354,6 +383,32 @@
 
         return changed;
     }
+
+    private bool SyncBanenkaartImmersive(bool? onBanenkaartRoute = null)
+    {
+        var relative = Navigation.ToBaseRelativePath(Navigation.Uri);
+        var path = relative.Split('?', '#')[0].TrimStart('/');
+        var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
+        var immersive = onRoute && !_isCandidate;
+        if (_banenkaartImmersive == immersive)
+        {
+            return false;
+        }
+
+        _banenkaartImmersive = immersive;
+        return true;
+    }
+
+    public static bool IsBanenkaartPath(string path)
+    {
+        path = path.TrimStart('/');
+        return path.Equals("banenkaart", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("banen", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>True when the job map should render without app header / bottom nav (anonymous visitors).</summary>
+    public static bool UsesBanenkaartImmersiveChrome(string path, bool isAuthenticatedCandidate)
+        => IsBanenkaartPath(path) && !isAuthenticatedCandidate;
 
     /// <summary>Hide floating coach on vacancy detail and notifications (inline tips / list UI only).</summary>
     public static bool IsVacancyOrNotificationsCoachHidden(string path)

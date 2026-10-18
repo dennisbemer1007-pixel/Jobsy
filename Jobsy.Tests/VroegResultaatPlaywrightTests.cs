@@ -76,10 +76,31 @@ public sealed class VroegResultaatPlaywrightTests
         await page.Locator("#jobsy-map-boot").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
         await page.WaitForTimeoutAsync(2500);
         Assert.Contains("/banenkaart", page.Url, StringComparison.OrdinalIgnoreCase);
+        await AssertCandidateShellOnBanenkaartAsync(page, mobile2x || width < 500);
 
-        if (capture)
+        var captureBlockers = capture || (Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCKERS") ?? "").Trim() == "1";
+        if (captureBlockers)
         {
+            Directory.CreateDirectory(afterDir);
             await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, fileName), FullPage = false });
+        }
+    }
+
+    private static async Task AssertCandidateShellOnBanenkaartAsync(IPage page, bool expectMobileBottomNav)
+    {
+        await page.Locator(".app-header").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await page.Locator(".app-header .brand__logo, .app-header .lobsy-logo, .app-header img.brand__logo").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        if (expectMobileBottomNav)
+        {
+            await page.Locator("nav.bottom-nav").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        }
+
+        await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 30_000 });
+        var openForWork = page.Locator("[data-testid=open-for-work-prompt]");
+        if (await openForWork.CountAsync() > 0)
+        {
+            await openForWork.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
         }
     }
 
