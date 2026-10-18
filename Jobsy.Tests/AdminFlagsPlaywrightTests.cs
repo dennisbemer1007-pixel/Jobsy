@@ -21,11 +21,11 @@ using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-/// <summary>Styled admin Functies page captures (admin-flags-r2) via real Web host + CSS.</summary>
+/// <summary>Styled admin Functies page captures (admin-flags-r4) via real Web host + CSS.</summary>
 [Collection("PlaywrightSmoke")]
 public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/admin-flags-r3";
+    private const string OutDir = "/opt/cursor/artifacts/admin-flags-r4";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -64,7 +64,8 @@ public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
 
         await using var ctx = await _browser!.NewContextAsync(new()
         {
-            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+            Locale = "nl-NL"
         });
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
@@ -101,7 +102,8 @@ public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
-            ViewportSize = new ViewportSize { Width = width, Height = 900 }
+            ViewportSize = new ViewportSize { Width = width, Height = 900 },
+            Locale = "nl-NL"
         });
         await PlaywrightCookieConsent.AcceptAsync(context);
         var page = await context.NewPageAsync();
