@@ -153,6 +153,15 @@ public static class JobsyDbSeeder
             // Hierarchy / salary-table demo fixes before wage sync.
             try
             {
+                await ReferenceVerificationDemoSeeder.EnsureAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Reference verification demo seed failed; continuing.");
+            }
+
+            try
+            {
                 await Sprint0DemoSeeder.SeedSprint0DemoAsync(db, logger);
             }
             catch (Exception ex)
@@ -190,6 +199,15 @@ public static class JobsyDbSeeder
 
         await DemoCompaniesSeeder.SeedCompaniesAsync(db, logger);
         await DemoUsersSeeder.SeedUsersAsync(db, logger);
+        try
+        {
+            await ReferenceVerificationDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Reference verification demo seed failed; continuing.");
+        }
+
         try
         {
             await ApplicationsAndWagesSeeder.SeedApplicationsAndWagesAsync(db, logger);

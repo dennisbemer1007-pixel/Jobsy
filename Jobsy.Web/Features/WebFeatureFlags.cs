@@ -72,14 +72,14 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestsV2Enabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
-                SensitiveExperienceEnabled: dto?.SensitiveExperienceEnabled ?? false,
-                TrainingPartnersEnabled: dto?.TrainingPartnersEnabled ?? false,
-                ReferenceVerificationEnabled: dto?.ReferenceVerificationEnabled ?? false,
-                TestJourneyIllustrationEnabled: dto?.TestJourneyIllustrationEnabled ?? false,
-                OnboardingFinaleV2Enabled: dto?.OnboardingFinaleV2Enabled ?? false,
-                OccupationDayInLifeEnabled: dto?.OccupationDayInLifeEnabled ?? true,
-                TestEditModeEnabled: dto?.TestEditModeEnabled ?? false,
-                SamplePdfEnabled: dto?.SamplePdfEnabled ?? false);
+                dto?.ReferenceVerificationEnabled ?? false,
+                dto?.SensitiveExperienceEnabled ?? false,
+                dto?.TrainingPartnersEnabled ?? false,
+                dto?.TestJourneyIllustrationEnabled ?? false,
+                dto?.OnboardingFinaleV2Enabled ?? false,
+                dto?.OccupationDayInLifeEnabled ?? true,
+                dto?.TestEditModeEnabled ?? false,
+                dto?.SamplePdfEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -156,6 +156,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
         [JsonPropertyName("kandidatenkaartEnabled")]
         public bool KandidatenkaartEnabled { get; set; }
 
+        [JsonPropertyName("referenceVerificationEnabled")]
+        public bool ReferenceVerificationEnabled { get; set; }
+
         [JsonPropertyName("sensitiveExperienceEnabled")]
         public bool SensitiveExperienceEnabled { get; set; }
 
@@ -167,9 +170,6 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("studentPassportEnabled")]
         public bool StudentPassportEnabled { get; set; }
-
-        [JsonPropertyName("referenceVerificationEnabled")]
-        public bool ReferenceVerificationEnabled { get; set; }
 
         [JsonPropertyName("testJourneyIllustrationEnabled")]
         public bool TestJourneyIllustrationEnabled { get; set; }

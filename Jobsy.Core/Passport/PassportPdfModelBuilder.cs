@@ -76,6 +76,7 @@ public static class PassportPdfModelBuilder
         var valueLines = ValueLines(lang, facts.Dna);
         var jobFits = JobFits(lang, facts);
         var quotes = Quotes(facts.ReferenceQuotes);
+        var endorsedCompetences = EndorsedCompetences(facts);
         var direction = studentLayout && facts.StudyDirectionSteps is { Count: > 0 }
             ? facts.StudyDirectionSteps
             : Direction(lang, facts);
@@ -201,8 +202,16 @@ public static class PassportPdfModelBuilder
             StudentLayout: studentLayout,
             StageVacancyMatches: stageVacancyMatches,
             StageVacanciesEmpty: stageVacanciesEmpty,
-            SingleSectorFullWidth: singleSectorFullWidth);
+            SingleSectorFullWidth: singleSectorFullWidth,
+            EndorsedCompetences: endorsedCompetences);
     }
+
+    private static IReadOnlyList<PassportEndorsedCompetence> EndorsedCompetences(PassportPdfFacts facts)
+        => (facts.EndorsedCompetences ?? [])
+            .Where(c => !string.IsNullOrWhiteSpace(c.Label))
+            .Select(c => new PassportEndorsedCompetence(c.Label.Trim(), c.RecognitionLine.Trim()))
+            .Take(8)
+            .ToList();
 
     private static IReadOnlyList<PassportChip> StudentChips(
         string lang,

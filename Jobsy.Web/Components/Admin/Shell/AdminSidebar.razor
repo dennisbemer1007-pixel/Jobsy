@@ -1,4 +1,5 @@
 @using Jobsy.Core.Features
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @inject NavigationManager Navigation
 @inject IFeatureFlags Features
@@ -9,6 +10,9 @@
 @implements IDisposable
 
 <aside class="admin-sidebar" aria-label="@Culture["AdminShell.Beheer"]">
+    <a class="admin-sidebar__brand" href="/admin" aria-label="Lobsy Beheer">
+        <LobsyLogo Class="admin-sidebar__logo" Alt="" Variant="LobsyLogoVariant.HorizontalDark" />
+    </a>
     <nav class="admin-sidebar__nav">
         @foreach (var group in AdminNav.Groups)
         {

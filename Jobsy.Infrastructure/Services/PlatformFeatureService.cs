@@ -223,9 +223,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
+        ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
         ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
         ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
-        ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
         ApplyAdminBoolUpdate(row, "TestJourneyIllustrationEnabled", update.TestJourneyIllustrationEnabled, v => row.TestJourneyIllustrationEnabled = v);
         ApplyAdminBoolUpdate(row, "OnboardingFinaleV2Enabled", update.OnboardingFinaleV2Enabled, v => row.OnboardingFinaleV2Enabled = v);
         ApplyAdminBoolUpdate(row, "OccupationDayInLifeEnabled", update.OccupationDayInLifeEnabled, v => row.OccupationDayInLifeEnabled = v);
@@ -356,7 +356,15 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         => ResolveAdminBool(row, "TrainingPartnersEnabled", row?.TrainingPartnersEnabled ?? false, false, "Jobsy:TrainingPartnersEnabled");
 
     private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
-        => ResolveAdminBool(row, "ReferenceVerificationEnabled", row?.ReferenceVerificationEnabled ?? false, false, configurationKey: null);
+    {
+        var baseline = row?.ReferenceVerificationEnabled ?? false;
+        if (bool.TryParse(_configuration["Jobsy:ReferenceVerificationEnabled"], out var configured))
+        {
+            baseline = configured;
+        }
+
+        return ResolveAdminBool(row, "ReferenceVerificationEnabled", baseline, false, configurationKey: null);
+    }
 
     private bool ResolveTestJourneyIllustrationEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "TestJourneyIllustrationEnabled", row?.TestJourneyIllustrationEnabled ?? false, false, "TestJourneyIllustrationEnabled");
@@ -535,9 +543,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
+            ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),
-            ResolveReferenceVerificationEnabled(row),
             ResolveTestJourneyIllustrationEnabled(row),
             ResolveOnboardingFinaleV2Enabled(row),
             ResolveOccupationDayInLifeEnabled(row),

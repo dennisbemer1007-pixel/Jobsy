@@ -320,6 +320,7 @@ public sealed class CandidateProfileEditor : IDisposable
         AvailableFromDate = profile.AvailableFromDate;
         Employers.Clear();
         Employers.AddRange(prefs.Employers ?? []);
+        EnsureEmployerEntryIds();
         Certificates.Clear();
         Certificates.AddRange(prefs.Certificates ?? []);
         ApplyDiplomaEvaluations(profile);
@@ -624,8 +625,26 @@ public sealed class CandidateProfileEditor : IDisposable
 
     public void AddEmployer()
     {
-        Employers.Add(new CandidateEmployerHistory { IsCurrent = false });
+        Employers.Add(new CandidateEmployerHistory { IsCurrent = false, EntryId = Guid.NewGuid() });
         Notify();
+    }
+
+    public void EnsureEmployerEntryIds()
+    {
+        var changed = false;
+        foreach (var employer in Employers)
+        {
+            if (employer.EntryId is null || employer.EntryId == Guid.Empty)
+            {
+                employer.EntryId = Guid.NewGuid();
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            Notify();
+        }
     }
 
     public void RemoveEmployer(int index)
@@ -1021,6 +1040,7 @@ public sealed class CandidateProfileEditor : IDisposable
                         .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
                         .Select(e => new CandidateEmployerHistory
                         {
+                            EntryId = e.EntryId ?? Guid.NewGuid(),
                             EmployerName = e.EmployerName.Trim(),
                             Role = string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
                             Years = e.Years,
@@ -1388,6 +1408,7 @@ public sealed class CandidateProfileEditor : IDisposable
         AboutMe = prefs.AboutMe ?? AboutMe;
         Employers.Clear();
         Employers.AddRange(prefs.Employers ?? []);
+        EnsureEmployerEntryIds();
         Certificates.Clear();
         Certificates.AddRange(prefs.Certificates ?? []);
         ApplyDiplomaEvaluations(profile);

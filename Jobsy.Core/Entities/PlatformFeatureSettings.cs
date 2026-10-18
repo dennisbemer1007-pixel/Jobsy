@@ -169,14 +169,14 @@ public class PlatformFeatureSettings
     /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
     public bool KandidatenkaartEnabled { get; set; }
 
+    /// <summary>Work-experience reference verification for candidates. Default false.</summary>
+    public bool ReferenceVerificationEnabled { get; set; }
+
     /// <summary>Gevoelige werkervaring: Alleen voor mij, neutrale titels, andere periode. Default false.</summary>
     public bool SensitiveExperienceEnabled { get; set; }
 
     /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
     public bool TrainingPartnersEnabled { get; set; }
-
-    /// <summary>Geverifieerde referenties on passport/onboarding. Default false.</summary>
-    public bool ReferenceVerificationEnabled { get; set; }
 
     /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
     public bool TestJourneyIllustrationEnabled { get; set; }

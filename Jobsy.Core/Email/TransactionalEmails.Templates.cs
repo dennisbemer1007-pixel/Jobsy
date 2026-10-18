@@ -485,6 +485,58 @@ public static partial class TransactionalEmails
             culture: c), baseUrl);
     }
 
+    public static ComposedEmail WorkExperienceReferenceReminder(
+        string? baseUrl,
+        string refereeName,
+        string candidateName,
+        string workplace,
+        string confirmUrl,
+        EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var who = EmailBidi.Isolate(c, candidateName);
+        return Finish(Doc(
+            "WorkExperienceReferenceReminder",
+            Sf(c, "Email.WorkExpRefReminder.Subject", who),
+            S(c, "Email.WorkExpRefReminder.Preheader"),
+            S(c, "Email.WorkExpRefReminder.Heading"),
+            [
+                P(T(c, "Email.WorkExpRefReminder.P1", EmailArg.Bold(candidateName), EmailArg.Bold(workplace))),
+                N(S(c, "Email.WorkExpRefReminder.Note"))
+            ],
+            Button(S(c, "Email.WorkExpRefReminder.Cta"), confirmUrl),
+            greeting: GreetOther(c, refereeName),
+            eyebrow: new EmailEyebrow(S(c, "Email.WorkExpRefReminder.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
+    }
+
+    public static ComposedEmail WorkExperienceReferenceRequest(
+        string? baseUrl,
+        string refereeName,
+        string candidateName,
+        string workplace,
+        string roleTitle,
+        string confirmUrl,
+        EmailCulture? culture = null)
+    {
+        var c = culture ?? EmailCulture.Nl;
+        var who = EmailBidi.Isolate(c, candidateName);
+        return Finish(Doc(
+            "WorkExperienceReference",
+            Sf(c, "Email.WorkExpRefAsk.Subject", who),
+            S(c, "Email.WorkExpRefAsk.Preheader"),
+            S(c, "Email.WorkExpRefAsk.Heading"),
+            [
+                P(T(c, "Email.WorkExpRefAsk.P1", EmailArg.Bold(candidateName), EmailArg.Bold(workplace), EmailArg.Bold(roleTitle), EmailArg.Plain(ReferenceVerificationRules.TokenDays.ToString(), isolate: false))),
+                P(S(c, "Email.WorkExpRefAsk.Privacy")),
+                N(S(c, "Email.WorkExpRefAsk.Note"))
+            ],
+            Button(S(c, "Email.WorkExpRefAsk.Cta"), confirmUrl),
+            greeting: GreetOther(c, refereeName),
+            eyebrow: new EmailEyebrow(S(c, "Email.WorkExpRefAsk.Eyebrow"), EmailTone.Sky),
+            culture: c), baseUrl);
+    }
+
     public static ComposedEmail ProactiveMatchSuggestion(
         string vacancyTitle,
         string companyLabel,
