@@ -51,46 +51,25 @@
 }
 
 .cand-hero--profession-band {
-  background-image: none !important;
-  background-color: var(--pearl);
+  background-size: auto 100%;
+  background-position: right center;
 }
 
-.cand-hero--profession-band::before,
 .cand-hero--profession-band::after {
   content: none;
   display: none;
 }
 
-.cand-hero--profession-band .cand-hero__media--profession-fallback {
-  display: none;
-}
-
-.cand-hero--profession-band .cand-hero__art-band {
-  position: absolute;
-  inset: 0 0 0 auto;
-  width: 52%;
-  min-width: 0;
-  max-width: none;
-  height: 100%;
-  margin: 0;
-  padding: 0 0 0 120px;
-  box-sizing: border-box;
-  border: none;
-  z-index: 0;
-  pointer-events: none;
-  background-color: transparent;
-  background-image: var(--cand-hero-art, none);
-  background-repeat: no-repeat;
-  background-size: auto 100%;
-  background-position: right top;
-  background-origin: content-box;
-  background-clip: content-box;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 120px);
-  mask-image: linear-gradient(to right, transparent 0, #000 120px);
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
+.cand-hero--profession-band::before {
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    var(--pearl) 0%,
+    var(--pearl) 62%,
+    color-mix(in srgb, var(--pearl) 96%, transparent) 68%,
+    color-mix(in srgb, var(--pearl) 35%, transparent) 74%,
+    transparent 82%
+  );
 }
 
 .cand-hero__media {
@@ -200,19 +179,9 @@
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
   }
 
-  .cand-hero--profession-band .cand-hero__art-band {
-    display: none;
-  }
-
-  .cand-hero--profession-band .cand-hero__media--profession-fallback {
-    display: block;
-    background-position: right top;
+  .cand-hero--profession-band .cand-hero__media {
+    background-position: 88% bottom;
     background-size: auto 100%;
-    background-color: var(--pearl);
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 140px);
-    mask-image: linear-gradient(to right, transparent 0, #000 140px);
-    -webkit-mask-size: 100% 100%;
-    mask-size: 100% 100%;
   }
 
   .cand-hero__lead {

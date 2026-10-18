@@ -18,16 +18,7 @@
     </div>
     @if (!string.IsNullOrWhiteSpace(ArtUrl))
     {
-        if (IsProfessionBand)
-        {
-            <div class="cand-hero__art-band" style="@MediaStyleValue" aria-hidden="true"></div>
-            @* Mobile strip uses __media; desktop uses __art-band (see CSS). *@
-            <div class="cand-hero__media cand-hero__media--profession-fallback" style="@MediaStyleValue" aria-hidden="true"></div>
-        }
-        else
-        {
-            <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
-        }
+        <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
     }
 </header>
 
@@ -48,7 +39,4 @@
     private string? MediaStyleValue => string.IsNullOrWhiteSpace(ArtUrl)
         ? null
         : $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
-
-    private bool IsProfessionBand =>
-        CssClass?.Contains("profession-band", StringComparison.Ordinal) == true;
 }
