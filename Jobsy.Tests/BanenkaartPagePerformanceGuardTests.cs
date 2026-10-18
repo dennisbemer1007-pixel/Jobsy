@@ -59,14 +59,16 @@ public class BanenkaartPagePerformanceGuardTests
         Assert.Contains(".cookie-consent { position: fixed", critical);
         Assert.Contains(".cookie-consent a { color: #fff; text-decoration: underline", critical);
         Assert.Contains(".bottom-nav { position: fixed", critical);
-        Assert.Contains(".lobsy-logo { display: block; width: 56px; height: 56px", critical);
+        Assert.Contains(".lobsy-logo--mark { width: 56px; height: 56px", critical);
+        Assert.Contains(".lobsy-logo--horizontal { width: auto; height: 44px", critical);
         Assert.Contains("min-height: 10rem", critical);
         Assert.Contains(".app-header { min-height: 4.25rem; }", critical);
         Assert.Contains("contain: layout", critical);
 
         var logo = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "LobsyLogo.razor"));
-        Assert.Contains("width=\"56\"", logo);
-        Assert.Contains("height=\"56\"", logo);
+        Assert.Contains("LobsyLogoVariant", logo);
+        Assert.Contains("width=\"@Width\"", logo);
+        Assert.Contains("height=\"@Height\"", logo);
         Assert.DoesNotContain("width=\"128\"", logo);
     }
 

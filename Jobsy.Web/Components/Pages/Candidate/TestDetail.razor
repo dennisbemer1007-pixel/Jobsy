@@ -12,6 +12,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Core.Features
 @using Jobsy.Core.Options
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.TestResult
@@ -25,6 +26,7 @@
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject IOptionsSnapshot<JobsyFeatureOptions> FeatureOptions
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
@@ -560,8 +562,9 @@
             _careerReport = deep?.CareerReport;
             _cultureReport = deep?.CultureReport;
             _valuesReport = deep?.ValuesReport;
-            _editModeEnabled = FeatureOptions.Value.TestEditMode;
-            _samplePdfEnabled = FeatureOptions.Value.SamplePdf;
+            var flagSnap = await FeatureFlags.GetAsync();
+            _editModeEnabled = flagSnap.TestEditModeEnabled;
+            _samplePdfEnabled = flagSnap.SamplePdfEnabled;
 
             var variant = _deepCompleted ? "deep" : "quick";
             _adjustments = await Api.GetAssessmentAdjustmentsAsync(_def.Key, variant)

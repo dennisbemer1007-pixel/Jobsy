@@ -502,6 +502,17 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     ProactiveMatchingEnabled: request.ProactiveMatchingEnabled,
                     MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled,
                     EmployerFitQuestionnairesEnabled: request.EmployerFitQuestionnairesEnabled,
+                    KandidatenkaartEnabled: request.KandidatenkaartEnabled,
+                    SensitiveExperienceEnabled: request.SensitiveExperienceEnabled,
+                    TrainingPartnersEnabled: request.TrainingPartnersEnabled,
+                    ReferenceVerificationEnabled: request.ReferenceVerificationEnabled,
+                    TestJourneyIllustrationEnabled: request.TestJourneyIllustrationEnabled,
+                    OnboardingFinaleV2Enabled: request.OnboardingFinaleV2Enabled,
+                    OccupationDayInLifeEnabled: request.OccupationDayInLifeEnabled,
+                    ResearchConsentEnabled: request.ResearchConsentEnabled,
+                    TestEditModeEnabled: request.TestEditModeEnabled,
+                    SamplePdfEnabled: request.SamplePdfEnabled,
+                    ClearAdminFlagOverrideKeys: request.ClearAdminFlagOverrideKeys,
                     CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
                     CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
                     CandidateApplyPerDayLimit: request.CandidateApplyPerDayLimit),
@@ -601,7 +612,13 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
         Add("KandidatenkaartEnabled", before.KandidatenkaartEnabled.ToString(), after.KandidatenkaartEnabled.ToString());
+        Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
         Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
+        Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
+        Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
+        Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
+        Add("OccupationDayInLifeEnabled", before.OccupationDayInLifeEnabled.ToString(), after.OccupationDayInLifeEnabled.ToString());
+        Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
@@ -638,8 +655,16 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
             employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
             kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
+            referenceVerificationEnabled = snap.ReferenceVerificationEnabled,
             sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,
-            trainingPartnersEnabled = snap.TrainingPartnersEnabled
+            trainingPartnersEnabled = snap.TrainingPartnersEnabled,
+            pupilPassportV2Enabled = snap.PupilPassportV2Enabled,
+            studentPassportEnabled = snap.StudentPassportEnabled,
+            testJourneyIllustrationEnabled = snap.TestJourneyIllustrationEnabled,
+            onboardingFinaleV2Enabled = snap.OnboardingFinaleV2Enabled,
+            occupationDayInLifeEnabled = snap.OccupationDayInLifeEnabled,
+            testEditModeEnabled = snap.TestEditModeEnabled,
+            samplePdfEnabled = snap.SamplePdfEnabled
         });
     }
 
@@ -961,6 +986,17 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.ProactiveMatchingEnabled,
             snap.MatchCalibrationV1Enabled,
             snap.EmployerFitQuestionnairesEnabled,
+            snap.KandidatenkaartEnabled,
+            snap.SensitiveExperienceEnabled,
+            snap.TrainingPartnersEnabled,
+            snap.ReferenceVerificationEnabled,
+            snap.TestJourneyIllustrationEnabled,
+            snap.OnboardingFinaleV2Enabled,
+            snap.OccupationDayInLifeEnabled,
+            snap.ResearchConsentEnabled,
+            snap.TestEditModeEnabled,
+            snap.SamplePdfEnabled,
+            snap.AdminOverriddenFlagKeys,
             snap.CandidateApplyPerMinuteLimit,
             snap.CandidateApplyPerHourLimit,
             snap.CandidateApplyPerDayLimit);

@@ -18,6 +18,7 @@
 @inject IConfiguration Configuration
 @inject IReferenceVerificationFeatureGate ReferenceVerificationGate
 @inject Jobsy.Web.Features.ITestJourneyIllustrationGate TestJourneyIllustration
+@inject Jobsy.Web.Features.IOnboardingFinaleV2Gate OnboardingFinaleV2
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Features
@@ -38,7 +39,7 @@
     {
         <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
     }
-    @if (OnboardingFinaleV2Gate.IsEnabled(Configuration))
+    @if (_finaleV2)
     {
         <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-15" />
     }
@@ -149,9 +150,7 @@
             {
                 <p class="state-message error">@_error</p>
             }
-            <div class="lobsy-logo">
-                <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
-            </div>
+            <LobsyLogo Variant="LobsyLogoVariant.Stacked" Alt="" />
             <h1>@Culture.Format("Onboarding.Welcome.Title", Draft.FirstName)</h1>
             <p class="ob-wizard__lead">@Culture["Onboarding.Welcome.Lead"]</p>
             <div class="ob-wizard__phase-cards">
@@ -178,9 +177,7 @@
         var currentPhase = OnboardingWizardCatalog.PhaseForStep(_step);
         <div class="ob-wizard__layout @(ShowNearbyPanel ? "ob-wizard__layout--with-nearby" : null)">
             <aside class="ob-wizard__sidebar">
-                <div class="lobsy-logo">
-                    <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
-                </div>
+                <LobsyLogo Variant="LobsyLogoVariant.Mark" Alt="" />
                 @foreach (var item in Sidebar)
                 {
                     var isCurrent = item.First <= _step && _step <= item.Last;
@@ -215,8 +212,7 @@
                 <div class="ob-wizard__mobile-top">
                     <div class="ob-wizard__topbar">
                         <div class="ob-wizard__topbar-brand">
-                            <img src="/images/brand/lobsy-128.png" width="36" height="36" alt="" />
-                            <span>Lobsy</span>
+                            <LobsyLogo Class="ob-wizard__topbar-logo" Alt="" Variant="LobsyLogoVariant.Horizontal" />
                         </div>
                         <div class="ob-wizard__topbar-actions">
                             <p class="ob-wizard__topbar-meta">@MobileTopMeta</p>
@@ -890,7 +886,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _finaleV2 = OnboardingFinaleV2Gate.IsEnabled(Configuration);
+        _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
         Culture.Changed += CultureChanged;
         GratisDnaMergeNotifier.Merged += OnGratisDnaMerged;
         Draft.Changed = EventCallback.Factory.Create(this, ScheduleProfileSave);
@@ -911,7 +907,7 @@
             ApplyProfile(await profileTask);
 
             var passportOn = await FeatureFlags.IsEnabledAsync(Jobsy.Core.Features.PlatformFeature.CandidatePassport);
-            _finaleV2 = OnboardingFinaleV2Gate.IsEnabled(Configuration);
+            _finaleV2 = await OnboardingFinaleV2.IsEnabledAsync();
             if (_state.IsComplete)
             {
                 if (await ShouldInstallAsync())

@@ -92,6 +92,8 @@ public record CandidateEmployerHistoryDto(
     bool? IsCurrent = null,
     /// <summary>ESCO occupation id confirmed by the candidate. Never set from a CV upload.</summary>
     string? EscoId = null,
+    /// <summary>Stable id for reference verification and other per-entry links.</summary>
+    Guid? EntryId = null,
     /// <summary>When true, employers never see this row (still counts for matching skills).</summary>
     bool? OnlyForMe = null,
     /// <summary>Editable skill chips derived from role/duties (candidate view + matching).</summary>

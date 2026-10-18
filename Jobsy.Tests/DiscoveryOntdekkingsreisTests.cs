@@ -320,7 +320,7 @@ public class DiscoveryPassportBunitTests : BunitContext
             .Add(x => x.LookingFor, Array.Empty<string>())
             .Add(x => x.LanguagesLabel, (string?)null));
         Assert.Contains("Talen", empty.Markup, StringComparison.Ordinal);
-        Assert.Contains("—", empty.Markup, StringComparison.Ordinal);
+        Assert.Contains("Aanvullen", empty.Markup, StringComparison.Ordinal);
 
         var filled = Render<PassportCard>(p => p
             .Add(x => x.DisplayName, "Samira")

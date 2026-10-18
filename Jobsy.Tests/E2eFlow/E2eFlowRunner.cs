@@ -1676,7 +1676,9 @@ internal sealed class E2eFlowRunner
             db,
             dnaReader,
             new PassportPdfService(new E2ePassportCompanySettings()),
-            new SnapshotOnlyCompetencyService(db));
+            new SnapshotOnlyCompetencyService(db),
+            PassportPdfDownloadDeps.ReferenceVerification(db),
+            PassportPdfDownloadDeps.FeaturesOff());
         var file = await download.ForCandidateAsync(
             user,
             phoneVerificationRequired: false,

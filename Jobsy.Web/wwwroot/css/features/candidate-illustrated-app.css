@@ -1164,7 +1164,8 @@
 }
 
 .app-shell:has(.panel-page--cand-ill) .lobsy-coach-dock,
-.app-shell:has(.panel-page--cand-ill) .lobsy-coach-cta {
+.app-shell:has(.panel-page--cand-ill) .lobsy-assistant-launcher,
+.app-shell:has(.panel-page--cand-ill) .lobsy-assistant-tab--edge {
   display: none !important;
 }
 

@@ -10,6 +10,8 @@
 @using Jobsy.Web.Components.Candidate.Passport
 @using Jobsy.Web.Components.Shared
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Features
+@using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.WebUtilities
@@ -47,6 +49,7 @@
                               StartedStamp="@_startedStamp"
                               ShowOpenForWork="@_showOpenForWork"
                               Keywords="_keywords"
+                              VerifiedCompetenceLabels="_verifiedCompetenceLabels"
                               CompletenessPercent="_completeness"
                               AboutMe="@_aboutMe"
                               City="@_city"
@@ -73,6 +76,7 @@
                                   StartedStamp="@_startedStamp"
                                   ShowOpenForWork="@_showOpenForWork"
                                   Keywords="_keywords"
+                                  VerifiedCompetenceLabels="_verifiedCompetenceLabels"
                                   CompletenessPercent="_completeness"
                                   OneLiner="@_oneLiner"
                                   CvBusy="_pdfBusy"
@@ -103,11 +107,32 @@
                                                PreviewTipId="@_encouragePreviewTipId" />
                 }
 
+                <FeatureVisible Feature="PlatformFeature.ReferenceVerification">
+                    @if (_refVerificationEligible)
+                    {
+                        <ReferenceVerificationTipCard ScreenKey="paspoort-home"
+                                                      Eligible="true"
+                                                      UserId="@_profile?.Id.ToString()"
+                                                      FirstEntryId="_firstWorkEntryId"
+                                                      HasConfirmedReference="_hasConfirmedReference"
+                                                      HideConfirmedFollowUp="true" />
+                    }
+                </FeatureVisible>
+
+                @if (_flags.ReferenceVerificationEnabled
+                     && (_verifiedCompetences.Count > 0 || _refVerificationRows.Any(r => r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase))))
+                {
+                    <PassportEmployerPreview VerifiedCompetences="_verifiedCompetences"
+                                             Employers="_employers"
+                                             VerificationRows="_refVerificationRows"
+                                             AskAnotherHref="@AskAnotherReferenceHref()" />
+                }
+
                 <div class="passport-tabs"
                      role="tablist"
                      aria-label="@Culture["Passport.Title"]"
                      @onkeydown="OnTabListKeyDown">
-                    @foreach (var tab in PassportTabs.Visible(_flags.EmployersEnabled, _flags.FutureJobsForYouEnabled))
+                    @foreach (var tab in VisibleTabs())
                     {
                         var id = $"passport-tab-{tab}";
                         var selected = _tab == tab;
@@ -219,6 +244,21 @@
                         }
                     </article>
 
+                    <article id="passport-panel-references"
+                             class="passport-panel"
+                             role="tabpanel"
+                             aria-labelledby="passport-tab-references"
+                             hidden="@(_tab != PassportTabs.References)">
+                        @if (_visited.Contains(PassportTabs.References))
+                        {
+                            <LobsyBubble Text="@BubbleFor(PassportTabs.References)" />
+                            <PanelErrorBoundary Name="passport-references">
+                                <PassportReferenceVerificationTab Active="@(_tab == PassportTabs.References)"
+                                                                  FirstWorkExperienceEntryId="_firstWorkEntryId" />
+                            </PanelErrorBoundary>
+                        }
+                    </article>
+
                     <article id="passport-panel-data"
                              class="passport-panel"
                              role="tabpanel"
@@ -295,6 +335,13 @@
     private List<CandidateDnaViewBuilder.DnaHighlight> _highlights = [];
     private PassportShellRules.ShellProgress _shells = new([], 0, 0, 0);
     private int _applicationCount;
+    private bool _refVerificationEligible;
+    private bool _hasConfirmedReference;
+    private Guid? _firstWorkEntryId;
+    private List<JobsyApiClient.VerifiedCompetenceItem> _verifiedCompetences = [];
+    private IReadOnlyList<string> _verifiedCompetenceLabels = [];
+    private List<JobsyApiClient.ReferenceVerificationListItem> _refVerificationRows = [];
+    private List<CandidateEmployerHistory> _employers = [];
     private PersistingComponentStateSubscription _persistSubscription;
 
     protected override void OnInitialized()
@@ -353,6 +400,7 @@
             }
 
             ApplyShells();
+            await LoadReferenceVerificationAsync();
         }
         catch (Exception)
         {
@@ -363,6 +411,39 @@
             _loading = false;
         }
     }
+
+    private async Task LoadReferenceVerificationAsync()
+    {
+        if (!_flags.ReferenceVerificationEnabled)
+        {
+            return;
+        }
+
+        _refVerificationEligible = await Api.GetReferenceVerificationEligibleAsync();
+        _verifiedCompetences = (await Api.GetVerifiedCompetencesAsync()).ToList();
+        _verifiedCompetenceLabels = _verifiedCompetences
+            .Select(c => c.Label)
+            .Where(l => !string.IsNullOrWhiteSpace(l))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        _refVerificationRows = (await Api.GetReferenceVerificationListAsync()).ToList();
+        _hasConfirmedReference = _refVerificationRows.Any(r =>
+            r.Active && string.Equals(r.DisplayStatus, "confirmed", StringComparison.OrdinalIgnoreCase));
+        _employers = _profile?.Preferences?.Employers ?? [];
+        _firstWorkEntryId = _employers
+            .FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.EmployerName))?.EntryId;
+    }
+
+    private string? AskAnotherReferenceHref()
+        => _refVerificationEligible && _hasConfirmedReference && _firstWorkEntryId is Guid id
+            ? $"/candidate/paspoort/referentie/vraag/{id:D}"
+            : null;
+
+    private IReadOnlyList<string> VisibleTabs()
+        => PassportTabs.Visible(
+            _flags.EmployersEnabled,
+            _flags.FutureJobsForYouEnabled,
+            _flags.ReferenceVerificationEnabled);
 
     private Task PersistPassportState()
     {
@@ -452,7 +533,7 @@
             return;
         }
 
-        var visible = PassportTabs.Visible(_flags.EmployersEnabled, _flags.FutureJobsForYouEnabled);
+        var visible = VisibleTabs();
         if (delta == int.MinValue)
         {
             await SetTab(visible[0]);
@@ -465,7 +546,12 @@
             return;
         }
 
-        await SetTab(PassportTabs.Neighbor(_tab, delta, _flags.EmployersEnabled, _flags.FutureJobsForYouEnabled));
+        await SetTab(PassportTabs.Neighbor(
+            _tab,
+            delta,
+            _flags.EmployersEnabled,
+            _flags.FutureJobsForYouEnabled,
+            _flags.ReferenceVerificationEnabled));
     }
 
     private void ApplyModel()
@@ -669,6 +755,7 @@
             PassportTabs.Fit => "Passport.Bubble.Fit",
             PassportTabs.Career => "Passport.Bubble.Career",
             PassportTabs.Proof => "Passport.Bubble.Proof",
+            PassportTabs.References => "Passport.Bubble.References",
             PassportTabs.Data => "Passport.Bubble.Data",
             _ => _freshLayer ? "Passport.Bubble.Dna" : "Passport.Bubble.DnaSteady"
         }];
@@ -680,6 +767,7 @@
         PassportTabs.Fit => "Passport.Tab.Fit.Compact",
         PassportTabs.Career => "Passport.Tab.Career",
         PassportTabs.Proof => "Passport.Tab.Proof",
+        PassportTabs.References => "Passport.Tab.References",
         PassportTabs.Data => "Passport.Tab.Data.Compact",
         _ => "Passport.Tab.Dna"
     };
@@ -690,6 +778,7 @@
         PassportTabs.Fit => NavIcons.Target,
         PassportTabs.Career => NavIcons.Career,
         PassportTabs.Proof => NavIcons.Stone,
+        PassportTabs.References => NavIcons.Shared,
         PassportTabs.Data => NavIcons.Profile,
         _ => NavIcons.DnaHelix
     };

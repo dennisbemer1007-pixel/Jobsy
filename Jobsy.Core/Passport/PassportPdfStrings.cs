@@ -186,6 +186,8 @@ public static class PassportPdfStrings
         ["Page2Hint"] = ["Blad 2 = werkervaring en referenties", "Page 2 = experience and references", "Strona 2 = doświadczenie i referencje", "Pagina 2 = experiență și referințe", "الصفحة 2 = الخبرة والمراجع"],
         ["WorkExperience"] = ["Werkervaring", "Work experience", "Doświadczenie zawodowe", "Experiență de muncă", "خبرة العمل"],
         ["PapersTitle"] = ["Opleiding en papieren", "Education and papers", "Wykształcenie i dokumenty", "Educație și acte", "التعليم والأوراق"],
+        ["EndorsedCompetencesTitle"] = ["Bevestigde competenties", "Confirmed competencies", "Potwierdzone kompetencje", "Competențe confirmate", "كفاءات مؤكدة"],
+        ["EndorsedCompetencesDisclaimer"] = ["Lobsy certificeert zelf niets. Een referent bevestigt wat hij of zij van jouw werk weet.", "Lobsy does not certify anything itself. A reference confirms what they know from working with you.", "Lobsy samo nic nie certyfikuje. Referencja potwierdza to, co wie z waszej współpracy.", "Lobsy nu certifică nimic. O referință confirmă ce știe din munca voastră împreună.", "لوبسي لا تصدّق بنفسها. المرجع يؤكد ما يعرفه من العمل معك."],
         ["ReferencesTitle"] = ["Wat referenties zeggen", "What references say", "Co mówią referencje", "Ce spun referințele", "ماذا تقول المراجع"],
         ["NoReferences"] = ["Nog geen referenties via Lobsy.", "No references via Lobsy yet.", "Nie ma jeszcze referencji przez Lobsy.", "Nicio referință prin Lobsy încă.", "لا توجد مراجع عبر لوبسي بعد."],
         ["NoExperience"] = ["Je hebt nog geen werkervaring ingevuld.", "You have not entered work experience yet.", "Nie wpisałeś jeszcze doświadczenia.", "Nu ai completat încă experiența.", "لم تكتب خبرة عمل بعد."],
