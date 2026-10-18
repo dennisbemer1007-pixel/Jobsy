@@ -10,31 +10,31 @@
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
+  "background_color": "#0f2d5c",
   "theme_color": "#0f2d5c",
   "categories": ["business", "productivity"],
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/icons/icon-192.png?v=20261004-13",
+      "src": "/brand/png/lobsy-android-192.png?v=20261018-e",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png?v=20261004-13",
+      "src": "/brand/png/lobsy-android-512.png?v=20261018-e",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-maskable-192.png?v=20261004-13",
+      "src": "/brand/png/lobsy-android-192.png?v=20261018-e",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon-maskable-512.png?v=20261004-13",
+      "src": "/brand/png/lobsy-android-maskable-512.png?v=20261018-e",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -55,25 +55,25 @@
       "name": "Zoeken",
       "short_name": "Zoeken",
       "url": "/?utm_source=pwa_shortcut",
-      "icons": [{ "src": "/icons/icon-192.png?v=20261004-13", "sizes": "192x192" }]
+      "icons": [{ "src": "/brand/png/lobsy-android-192.png?v=20261018-e", "sizes": "192x192" }]
     },
     {
       "name": "Sollicitaties",
       "short_name": "Sollicitaties",
       "url": "/candidate/applications?utm_source=pwa_shortcut",
-      "icons": [{ "src": "/icons/icon-192.png?v=20261004-13", "sizes": "192x192" }]
+      "icons": [{ "src": "/brand/png/lobsy-android-192.png?v=20261018-e", "sizes": "192x192" }]
     },
     {
       "name": "Carrière",
       "short_name": "Carrière",
       "url": "/carriere?utm_source=pwa_shortcut",
-      "icons": [{ "src": "/icons/icon-192.png?v=20261004-13", "sizes": "192x192" }]
+      "icons": [{ "src": "/brand/png/lobsy-android-192.png?v=20261018-e", "sizes": "192x192" }]
     },
     {
       "name": "Profiel",
       "short_name": "Profiel",
       "url": "/profiel?utm_source=pwa_shortcut",
-      "icons": [{ "src": "/icons/icon-192.png?v=20261004-13", "sizes": "192x192" }]
+      "icons": [{ "src": "/brand/png/lobsy-android-192.png?v=20261018-e", "sizes": "192x192" }]
     }
   ]
 }

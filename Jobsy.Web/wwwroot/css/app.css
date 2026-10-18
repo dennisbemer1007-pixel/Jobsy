@@ -1446,7 +1446,15 @@ html[dir="rtl"] .account-menu__panel {
     text-decoration: none;
 }
 
-.brand__logo {
+.brand__logo.lobsy-logo--horizontal {
+    width: auto;
+    height: 44px;
+    max-width: min(168px, 36vw);
+    flex-shrink: 0;
+    transform: none;
+}
+
+.brand__logo.lobsy-logo--mark {
     width: 56px;
     height: 56px;
     object-fit: contain;
@@ -1454,7 +1462,6 @@ html[dir="rtl"] .account-menu__panel {
     display: block;
     background: transparent;
     flex-shrink: 0;
-    /* Pin-point logo: optical mass sits slightly above geometric center */
     transform: translateY(1px);
 }
 
@@ -1493,7 +1500,12 @@ html[dir="rtl"] .account-menu__panel {
         display: none;
     }
 
-    .brand__logo {
+    .brand__logo.lobsy-logo--horizontal {
+        height: 40px;
+        max-width: min(140px, 44vw);
+    }
+
+    .brand__logo.lobsy-logo--mark {
         width: 44px;
         height: 44px;
     }
@@ -3385,15 +3397,42 @@ html[dir="rtl"] .account-menu__panel {
     display: block;
 }
 
-/* Brand lobster mascot — gentle float when animated */
+/* Lobsy brand lockups (variant E) — gentle float when animated */
 .lobsy-logo {
     display: block;
     position: relative;
     line-height: 0;
     flex-shrink: 0;
     background: transparent;
+}
+
+.lobsy-logo--mark {
     width: 56px;
     height: 56px;
+}
+
+.lobsy-logo--horizontal {
+    width: auto;
+    height: 44px;
+    max-width: min(168px, 42vw);
+}
+
+.lobsy-logo--stacked {
+    width: auto;
+    height: 72px;
+    max-width: 100px;
+}
+
+.lobsy-logo--horizontal .lobsy-logo__img,
+.lobsy-logo--stacked .lobsy-logo__img {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    aspect-ratio: 306.6 / 116;
+}
+
+.lobsy-logo--stacked .lobsy-logo__img {
+    aspect-ratio: 100 / 116;
 }
 
 .lobsy-logo__img {
@@ -5467,29 +5506,10 @@ a.map-popup__apply.map-popup__cta:visited {
         text-decoration: none;
     }
 
-    .jobsy-logo__img {
-        width: 48px;
-        height: 48px;
-        object-fit: contain;
-        object-position: center;
-        display: block;
-        background: transparent;
-        flex-shrink: 0;
-        transform: translateY(1px);
-    }
-
-    .jobsy-logo__mark {
-        display: block;
-        padding: 0;
-        border-radius: 0;
-        background: transparent;
-        color: var(--brand);
-        font-weight: 800;
-        font-size: 1.2rem;
-        letter-spacing: -0.02em;
-        line-height: 1;
-        text-shadow: none;
-        transform: translateY(-1px);
+    .jobsy-logo__img.lobsy-logo--horizontal {
+        height: 44px;
+        width: auto;
+        max-width: min(168px, 40vw);
     }
 
     .jobsy-chrome__search {

@@ -1,6 +1,6 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-published-v20261016-06";
+var CACHE_VERSION = "lobsy-shell-published-v20261018-e";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 var OFFLINE_URL = "/offline.html";
@@ -13,8 +13,8 @@ var PRECACHE = [
     "/js/app-core.js?v=20261017-04",
     "/icons/icon-192.png?v=20261004-13",
     "/icons/icon-512.png?v=20261004-13",
-    "/favicon.png?v=20261004-13",
-    "/images/brand/lobsy-128.webp"
+    "/favicon.ico?v=20261018-e",
+    "/brand/svg/lobsy-merkteken.svg?v=20261018-e"
 ];
 
 self.addEventListener("install", function (event) {

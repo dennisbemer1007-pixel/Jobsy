@@ -87,9 +87,10 @@
   flex-shrink: 0;
 }
 
-.pub-theme .pub-header__logo {
-  width: 2.5rem;
-  height: 2.5rem;
+.pub-theme .pub-header__logo.lobsy-logo--horizontal {
+  width: auto;
+  height: 2.35rem;
+  max-width: min(9.5rem, 40vw);
 }
 
 .pub-theme .pub-header__name {

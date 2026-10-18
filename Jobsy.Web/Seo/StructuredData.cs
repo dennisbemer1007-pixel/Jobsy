@@ -49,7 +49,7 @@ public static class StructuredData
                     ["@id"] = root + "/#organization",
                     ["name"] = "Lobsy",
                     ["url"] = root + "/",
-                    ["logo"] = root + "/images/brand/lobsy-256.webp",
+                    ["logo"] = root + "/brand/svg/lobsy-merkteken.svg",
                     ["description"] = orgDescription
                 },
                 website

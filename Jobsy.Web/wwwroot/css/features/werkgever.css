@@ -41,9 +41,25 @@
     text-decoration: none;
 }
 
-.wg-topbar__logo {
-    width: 1.75rem;
-    height: 1.75rem;
+.wg-topbar__logo.lobsy-logo--horizontal {
+    width: auto;
+    height: 1.65rem;
+    max-width: 7.5rem;
+}
+
+.wg-sidebar__brand {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-4) var(--space-3);
+    margin-bottom: var(--space-2);
+    text-decoration: none;
+    color: inherit;
+}
+
+.wg-sidebar__logo.lobsy-logo--horizontal {
+    width: auto;
+    height: 2rem;
+    max-width: 100%;
 }
 
 .wg-topbar__brand-text {

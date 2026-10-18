@@ -4,6 +4,7 @@
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Pwa
 @using Microsoft.AspNetCore.Components.Authorization
 @inject CultureState Culture
@@ -28,9 +29,8 @@
         <header class="app-header">
             <div class="app-header__brand">
                 <a class="brand" href="@_homeHref" aria-label="Lobsy">
-                    <LobsyLogo Class="brand__logo" Alt="Lobsy" />
+                    <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
                     <span class="brand__text">
-                        <span class="brand__name">Lobsy</span>
                         <span class="brand-tagline">@HeaderTagline</span>
                     </span>
                 </a>

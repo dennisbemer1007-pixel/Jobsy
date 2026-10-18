@@ -51,9 +51,24 @@
     background: var(--surface);
 }
 
-.admin-topbar__logo {
+.admin-topbar__logo.lobsy-logo--mark {
     width: 28px;
     height: 28px;
+}
+
+.admin-sidebar__brand {
+    display: flex;
+    align-items: center;
+    margin: calc(-1 * var(--space-3, 0.75rem)) calc(-1 * 0px) var(--space-3, 0.75rem);
+    padding: var(--space-4, 1rem) var(--space-4, 1rem) var(--space-3, 0.75rem);
+    background: var(--brand-deep);
+    text-decoration: none;
+}
+
+.admin-sidebar__logo.lobsy-logo--horizontal {
+    width: auto;
+    height: 2rem;
+    max-width: 100%;
 }
 
 .admin-topbar__brand-text {
