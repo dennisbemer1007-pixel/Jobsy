@@ -87,7 +87,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.EducationPickLevel"] = english ? "School level" : "Kies je opleidingsniveau";
         map["Onboarding.EducationMboLegend"] = english ? "Which MBO level?" : "Welk MBO-niveau?";
         map["Onboarding.EducationMboLevel"] = english ? "MBO {0}" : "MBO {0}";
-        map["Onboarding.EducationDirectionHint"] = english ? "Optional. Tap a topic or type your own." : "Optioneel. Tik op een richting of typ zelf.";
+        map["Onboarding.EducationDirectionHint"] = english
+            ? "Optional. Start typing or pick a suggestion."
+            : "Optioneel. Begin met typen of kies een suggestie.";
         map["Onboarding.EducationDirectionField"] = english ? "Or type yourself" : "Of typ zelf";
         map["Onboarding.Step6.Title"] = english ? "What is your dream job?" : "Wat is je droombaan?";
         map["Onboarding.Step6.Lead"] = english ? "Think big. We make a route towards it in Career." : "Denk groot. We maken er in Carrière een route naartoe.";

@@ -18,6 +18,17 @@
                                 }
                             </fieldset>
 
+                            @if (Editor.ShowsEducationDirectionField)
+                            {
+                                <label class="profile-education-direction" data-testid="profile-education-direction">
+                                    @Culture["Onboarding.EducationDirection"]
+                                    <EducationDirectionInput InputId="profile-education-direction"
+                                                             Placeholder="@Culture["Onboarding.EducationDirectionPlaceholder"]"
+                                                             @bind-Value="Editor.EducationDirection"
+                                                             AfterChanged="Editor.Notify" />
+                                </label>
+                            }
+
                             <section class="diploma-eval" data-testid="diploma-eval" aria-labelledby="diploma-eval-title">
                                 <h3 id="diploma-eval-title" class="diploma-eval__title">@Culture["DiplomaEval.Title"]</h3>
                                 @if (Editor.DiplomaEvaluations.Count == 0 && Editor.EvaluationDraft is null)

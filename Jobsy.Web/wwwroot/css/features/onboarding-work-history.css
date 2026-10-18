@@ -71,35 +71,6 @@
   margin-block: 8px 4px;
 }
 
-.ob-job-ref-toggle {
-  margin-top: 10px;
-  border: 0;
-  background: transparent;
-  color: var(--brand);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  padding: 6px 0;
-  text-align: start;
-}
-
-.ob-job-ref {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
-}
-
-.ob-job-ref__consent {
-  margin-top: 8px;
-  align-items: flex-start;
-}
-
-.ob-job-ref__privacy {
-  margin: 6px 0 0;
-  font-size: var(--text-xs);
-  color: var(--muted);
-  line-height: 1.4;
-}
-
 .profile-employer-card__dates {
   display: grid;
   gap: 10px;

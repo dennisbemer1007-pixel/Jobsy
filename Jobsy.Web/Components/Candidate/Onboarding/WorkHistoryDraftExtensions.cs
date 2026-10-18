@@ -32,12 +32,6 @@ public static class WorkHistoryDraftExtensions
             .Select(CopyForSave)
             .ToList();
 
-    public static bool HasAnyField(this CandidateEmployerJobReference reference)
-        => !string.IsNullOrWhiteSpace(reference.ContactName)
-           || !string.IsNullOrWhiteSpace(reference.Relationship)
-           || !string.IsNullOrWhiteSpace(reference.Email)
-           || !string.IsNullOrWhiteSpace(reference.Phone);
-
     private static CandidateEmployerHistory CopyForSave(CandidateEmployerHistory job)
         => new()
         {
@@ -48,36 +42,6 @@ public static class WorkHistoryDraftExtensions
             EndMonth = string.IsNullOrWhiteSpace(job.EndMonth) ? null : job.EndMonth.Trim(),
             Description = string.IsNullOrWhiteSpace(job.Description) ? null : job.Description.Trim(),
             IsCurrent = job.IsCurrent,
-            EscoId = string.IsNullOrWhiteSpace(job.EscoId) ? null : job.EscoId.Trim(),
-            Reference = job.Reference?.ForSave()
+            EscoId = string.IsNullOrWhiteSpace(job.EscoId) ? null : job.EscoId.Trim()
         };
-
-    private static CandidateEmployerJobReference? ForSave(this CandidateEmployerJobReference reference)
-    {
-        if (!reference.ConsentConfirmed || !reference.HasAnyField())
-        {
-            return null;
-        }
-
-        if (string.IsNullOrWhiteSpace(reference.ContactName))
-        {
-            return null;
-        }
-
-        var hasEmail = !string.IsNullOrWhiteSpace(reference.Email);
-        var hasPhone = !string.IsNullOrWhiteSpace(reference.Phone);
-        if (!hasEmail && !hasPhone)
-        {
-            return null;
-        }
-
-        return new CandidateEmployerJobReference
-        {
-            ContactName = reference.ContactName.Trim(),
-            Relationship = string.IsNullOrWhiteSpace(reference.Relationship) ? null : reference.Relationship.Trim(),
-            Email = hasEmail ? reference.Email!.Trim() : null,
-            Phone = hasPhone ? reference.Phone!.Trim() : null,
-            ConsentConfirmed = true
-        };
-    }
 }

@@ -363,7 +363,8 @@ public static class OnboardingWizardCatalog
         }
 
         if (string.IsNullOrWhiteSpace(dir)
-            || string.Equals(lvl, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
+            || string.Equals(lvl, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(lvl, "Basisschool", StringComparison.OrdinalIgnoreCase))
         {
             return lvl;
         }

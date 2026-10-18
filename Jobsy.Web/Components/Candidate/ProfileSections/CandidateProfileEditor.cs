@@ -101,6 +101,8 @@ public sealed class CandidateProfileEditor : IDisposable
     public HashSet<string> SelectedRoles { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedLicenses { get; } = new(StringComparer.OrdinalIgnoreCase);
     public HashSet<string> SelectedEducations { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    public bool ShowsEducationDirectionField => EducationDirectionCatalog.ProfileSupportsDirection(SelectedEducations);
     public string EducationDirection { get; set; } = "";
     public HashSet<string> Availability { get; } = new(StringComparer.OrdinalIgnoreCase);
     public List<CandidateEmployerHistory> Employers { get; } = [];
@@ -802,6 +804,11 @@ public sealed class CandidateProfileEditor : IDisposable
             SelectedEducations.Remove(level);
         }
 
+        if (!ShowsEducationDirectionField)
+        {
+            EducationDirection = "";
+        }
+
         Notify();
     }
 
@@ -1023,20 +1030,7 @@ public sealed class CandidateProfileEditor : IDisposable
                             IsCurrent = e.IsCurrent,
                             EscoId = string.IsNullOrWhiteSpace(e.Role) || string.IsNullOrWhiteSpace(e.EscoId)
                                 ? null
-                                : e.EscoId.Trim(),
-                            Reference = e.Reference?.ConsentConfirmed == true
-                                && !string.IsNullOrWhiteSpace(e.Reference.ContactName)
-                                ? new CandidateEmployerJobReference
-                                {
-                                    ContactName = e.Reference.ContactName.Trim(),
-                                    Relationship = string.IsNullOrWhiteSpace(e.Reference.Relationship)
-                                        ? null
-                                        : e.Reference.Relationship.Trim(),
-                                    Email = string.IsNullOrWhiteSpace(e.Reference.Email) ? null : e.Reference.Email.Trim(),
-                                    Phone = string.IsNullOrWhiteSpace(e.Reference.Phone) ? null : e.Reference.Phone.Trim(),
-                                    ConsentConfirmed = true
-                                }
-                                : null
+                                : e.EscoId.Trim()
                         })
                         .ToList(),
                     Educations = SelectedEducations
@@ -1046,7 +1040,9 @@ public sealed class CandidateProfileEditor : IDisposable
                             return idx < 0 ? int.MaxValue : idx;
                         })
                         .ToList(),
-                    EducationDirection = string.IsNullOrWhiteSpace(EducationDirection) ? null : EducationDirection.Trim(),
+                    EducationDirection = ShowsEducationDirectionField && !string.IsNullOrWhiteSpace(EducationDirection)
+                        ? EducationDirection.Trim()
+                        : null,
                     HomeAddress = homeAddressToSave,
                     MinHoursPerWeek = MinHours,
                     MaxHoursPerWeek = MaxHours,

@@ -41,25 +41,19 @@ public sealed class OnboardingWorkHistoryRulesTests
     }
 
     [Fact]
-    public void Reference_without_consent_is_not_persisted()
+    public void Work_history_step_has_no_reference_ui()
     {
-        var job = new Jobsy.Web.Models.CandidateEmployerHistory
-        {
-            EmployerName = "Acme",
-            Role = "Hulp",
-            Reference = new Jobsy.Web.Models.CandidateEmployerJobReference
-            {
-                ContactName = "Jan",
-                Email = "jan@example.com",
-                ConsentConfirmed = false
-            }
-        };
-
-        var draft = new Jobsy.Web.Components.Candidate.Onboarding.OnboardingProfileDraft();
-        draft.Jobs.Add(job);
-        var saved = draft.JobsForSave();
-        Assert.Single(saved);
-        Assert.Null(saved[0].Reference);
+        var path = Path.GetFullPath(Path.Combine(
+            AppContext.BaseDirectory,
+            "..", "..", "..", "..",
+            "Jobsy.Web",
+            "Components",
+            "Candidate",
+            "Onboarding",
+            "WorkHistoryStep.razor"));
+        var src = File.ReadAllText(path);
+        Assert.DoesNotContain("Referentie", src, StringComparison.Ordinal);
+        Assert.DoesNotContain("onboarding-add-reference", src, StringComparison.Ordinal);
     }
 
     [Fact]
