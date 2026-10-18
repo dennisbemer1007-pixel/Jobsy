@@ -27,7 +27,7 @@
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
 <HeadContent>
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
-    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-01" />
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-07" />
@@ -49,30 +49,35 @@
     else if (_phase == WizardPhase.Install)
     {
         <section class="ob-wizard__install">
-            <h1>@Culture["Onboarding.Install.Title"]</h1>
-            <p>@Culture["Onboarding.Install.Lead"]</p>
-            <div class="ob-install">
-                @if (_installIos)
-                {
-                    <p class="ob-install__hint">@Culture["Pwa.IosHint"]</p>
-                }
-                else if (_installCanPrompt)
-                {
-                    <button type="button" class="btn btn-primary" @onclick="InstallAsync">
-                        @Culture["Onboarding.Install.AddApp"]
-                    </button>
-                }
-                <button type="button" class="btn btn-primary" @onclick="EnablePushAsync">
-                    @Culture["Onboarding.Install.EnablePush"]
-                </button>
-                @if (!string.IsNullOrEmpty(_installMessage))
-                {
-                    <p aria-live="polite">@_installMessage</p>
-                }
+            <div class="push-prompt push-prompt--onboarding" role="dialog" aria-labelledby="onboarding-push-title" aria-describedby="onboarding-push-body">
+                <div class="push-prompt__card">
+                    <h1 id="onboarding-push-title" class="push-prompt__title">@Culture["Push.PromptTitle"]</h1>
+                    <p id="onboarding-push-body" class="push-prompt__body">@Culture["Push.PromptBody"]</p>
+                    <p class="ob-wizard__hint">@Culture["Onboarding.Install.Lead"]</p>
+                    <div class="push-prompt__actions">
+                        @if (_installIos)
+                        {
+                            <p class="ob-install__hint">@Culture["Pwa.IosHint"]</p>
+                        }
+                        else if (_installCanPrompt)
+                        {
+                            <button type="button" class="engagement-btn" @onclick="InstallAsync">
+                                @Culture["Onboarding.Install.AddApp"]
+                            </button>
+                        }
+                        <button type="button" class="login-submit" @onclick="EnablePushAsync">
+                            @Culture["Onboarding.Install.EnablePush"]
+                        </button>
+                        <button type="button" class="engagement-btn" @onclick="InstallLaterAsync">
+                            @Culture["Onboarding.Install.Later"]
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(_installMessage))
+                    {
+                        <p aria-live="polite">@_installMessage</p>
+                    }
+                </div>
             </div>
-            <button type="button" class="ob-wizard__ghost" @onclick="InstallLaterAsync">
-                @Culture["Onboarding.Install.Later"]
-            </button>
         </section>
     }
     else if (_finish || _state?.FinishReached == true)
@@ -137,6 +142,10 @@
     else if (_welcome)
     {
         <section class="ob-wizard__welcome">
+            @if (!string.IsNullOrWhiteSpace(_error))
+            {
+                <p class="state-message error">@_error</p>
+            }
             <div class="lobsy-logo">
                 <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
             </div>
@@ -182,7 +191,6 @@
                     </div>
                 }
                 <p class="ob-wizard__saved">✓ @Culture["Onboarding.AllSaved"]</p>
-                <button type="button" class="ob-wizard__ghost" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
             </aside>
 
             <main class="ob-wizard__main">
@@ -194,9 +202,18 @@
                         </div>
                         <div class="ob-wizard__topbar-actions">
                             <p class="ob-wizard__topbar-meta">@MobileTopMeta</p>
-                            <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                            <div class="ob-wizard__topbar-links">
+                                <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                                <a class="ob-wizard__topbar-privacy"
+                                   href="/privacy/data"
+                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                            </div>
                         </div>
                     </div>
+                    <p class="ob-wizard__mobile-privacy">
+                        <a href="/privacy/data"
+                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                    </p>
                     <div class="ob-wizard__progress-thin"
                          role="progressbar"
                          aria-valuemin="1"
@@ -226,7 +243,12 @@
                                 </span>
                             }
                         </div>
-                        <button type="button" class="ob-wizard__later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                        <div class="ob-wizard__header-actions">
+                            <button type="button" class="ob-wizard__later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                            <a class="ob-wizard__later ob-wizard__privacy-link"
+                               href="/privacy/data"
+                               title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                        </div>
                     </div>
                     <div class="ob-wizard__status-row">
                         <span>
@@ -374,6 +396,9 @@
                                                      ConsentChanged="OnConsentChanged"
                                                      ShowError="@(_showValidation && !Draft.ConsentRequested)" />
                         }
+                        <a class="ob-wizard__footer-privacy"
+                           href="/privacy/data"
+                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
                         <div class="ob-wizard__actionbar">
                             <button type="button"
                                     class="ob-wizard__back-footer"
@@ -450,6 +475,8 @@
     private readonly Dictionary<int, int> _miniAnswers = new();
     private readonly Dictionary<int, int> _serverAnswers = new();
     private readonly HashSet<int> _lockedIds = [];
+    private int[] _miniBlockQuestionIds = [];
+    private int _miniQuickScanVersion = AssessmentTestVersions.V1;
     private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
     private IReadOnlyList<int> _journeyCompletedSteps = [];
     private int _journeyNextStep = 7;
@@ -642,7 +669,8 @@
                 Draft.HomeLng,
                 Draft.Postcode,
                 Draft.PostcodeResolved,
-                today),
+                today,
+                Draft.GeolocationPendingConfirm),
             2 => OnboardingWizardValidation.ValidateAvailability(
                 Draft.MinHours,
                 Draft.MaxHours,
@@ -843,9 +871,18 @@
 
     private async Task BeginAsync()
     {
+        _error = null;
         _welcome = false;
-        await MarkStartedAsync();
-        RequestStepScrollReset();
+        try
+        {
+            await MarkStartedAsync();
+            RequestStepScrollReset();
+        }
+        catch (Exception ex)
+        {
+            _welcome = true;
+            _error = UserFacing.Describe(ex);
+        }
     }
 
     private async Task MarkStartedAsync()
@@ -872,6 +909,7 @@
         _step--;
         await MarkStartedAsync();
         await PrepareMiniAsync();
+        _miniArrivedViaBack = false;
         RequestStepScrollReset();
     }
 
@@ -890,15 +928,15 @@
             }
 
             var issues = GetValidationIssues();
-            if (_step is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0)
+            if (_step is >= 7 and <= 10 && Draft.HasConsent && _miniQuestions.Count > 0
+                && !OnboardingMiniBlockCompletion.IsMiniBlockComplete(_step, _miniQuickScanVersion, MiniVisibleAnswers))
             {
-                var open = _miniQuestions.FindIndex(q => !MiniVisibleAnswers.ContainsKey(q.Id));
-                if (open >= 0)
-                {
-                    _currentQuestion = open;
-                    StateHasChanged();
-                    return;
-                }
+                _currentQuestion = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(
+                    _step,
+                    _miniQuickScanVersion,
+                    MiniVisibleAnswers);
+                StateHasChanged();
+                return;
             }
             else if (issues.Count > 0)
             {
@@ -918,6 +956,7 @@
             {
                 _earlyMoment = EarlyRewardMoment.None;
                 _earlyStrength = null;
+                ClearMiniAnswersBeforeStepChange();
                 _step++;
                 _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
                 FlashSaved();
@@ -937,6 +976,11 @@
             if (_step >= 7 && _autosave is not null) await _autosave.FlushAsync();
             if (_step == 10)
             {
+                if (!await TryRouteToFirstIncompleteMiniBlockAsync())
+                {
+                    return;
+                }
+
                 await FinalizeApplyReadinessAsync();
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
@@ -949,6 +993,7 @@
                 return;
             }
 
+            ClearMiniAnswersBeforeStepChange();
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
             FlashSaved();
@@ -972,6 +1017,7 @@
         await FlushAsync();
         ClearStepValidation();
         _miniArrivedViaBack = false;
+        ClearMiniAnswersBeforeStepChange();
         _step++;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
         await PrepareMiniAsync();
@@ -1044,7 +1090,7 @@
     private async Task EnsureAddressResolvedAsync()
     {
         if (OnboardingWizardValidation.HasResolvableLocation(
-                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved))
+                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved, Draft.GeolocationPendingConfirm))
         {
             return;
         }
@@ -1309,6 +1355,14 @@
         await Api.UpdateMyProfileAsync(openForWork: true);
     }
 
+    private void ClearMiniAnswersBeforeStepChange()
+    {
+        _miniAnswers.Clear();
+        _serverAnswers.Clear();
+        _lockedIds.Clear();
+        _currentQuestion = 0;
+    }
+
     private async Task PrepareMiniAsync()
     {
         if (_autosave is not null)
@@ -1319,6 +1373,7 @@
         _miniAnswers.Clear();
         _serverAnswers.Clear();
         _lockedIds.Clear();
+        _miniBlockQuestionIds = [];
         _miniQuestions = [];
         _currentQuestion = 0;
         if (_step is < 7 or > 10 || !Draft.HasConsent) return;
@@ -1333,6 +1388,7 @@
                 var competency = await Api.GetMyCompetenciesAsync();
                 answers = competency?.Answers;
                 var compVersion = ResolveQuickScanVersion(competency?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = compVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Competence, compVersion);
                 catalog = AssessmentQuickScanCatalog.CompetenceQuestions(compVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1341,6 +1397,7 @@
                 var career = await Api.GetMyCareerInterestsAsync();
                 answers = career?.Answers;
                 var careerVersion = ResolveQuickScanVersion(career?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = careerVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Career, careerVersion);
                 catalog = AssessmentQuickScanCatalog.CareerQuestions(careerVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1349,6 +1406,7 @@
                 var culture = await Api.GetMyCultureAsync();
                 answers = culture?.Answers;
                 var cultureVersion = ResolveQuickScanVersion(culture?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = cultureVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Culture, cultureVersion);
                 catalog = AssessmentQuickScanCatalog.CultureQuestions(cultureVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1357,6 +1415,7 @@
                 var values = await Api.GetMyValuesAsync();
                 answers = values?.Answers;
                 var valuesVersion = ResolveQuickScanVersion(values?.QuickScanVersion, testsV2);
+                _miniQuickScanVersion = valuesVersion;
                 questionIds = TestDepthRules.MiniIds(AssessmentKind.Values, valuesVersion);
                 catalog = AssessmentQuickScanCatalog.ValuesQuestions(valuesVersion)
                     .Select(item => (item.Id, item.TextKey));
@@ -1365,37 +1424,57 @@
 
         foreach (var answer in answers ?? [])
         {
-            if (int.TryParse(answer.Key, out var id) && answer.Value is >= 1 and <= 5)
+            if (int.TryParse(answer.Key, out var id)
+                && questionIds.Contains(id)
+                && answer.Value is >= 1 and <= 5)
             {
                 _serverAnswers[id] = answer.Value;
             }
         }
+        _miniBlockQuestionIds = questionIds;
         foreach (var id in questionIds)
         {
             if (_serverAnswers.ContainsKey(id)) _lockedIds.Add(id);
         }
 
-        _miniQuestions = catalog
-            .Where(item => questionIds.Contains(item.Id) && !_lockedIds.Contains(item.Id))
-            .Select(item => new OnboardingMiniTest.MiniQuestion(item.Id, item.Key))
+        var catalogById = catalog.ToDictionary(item => item.Id);
+        _miniQuestions = questionIds
+            .Where(catalogById.ContainsKey)
+            .Select(id => new OnboardingMiniTest.MiniQuestion(id, catalogById[id].Key))
             .ToList();
+        var visible = OnboardingMiniBlockCompletion.MergeVisible(_step, _miniQuickScanVersion, _serverAnswers, _miniAnswers);
+        if (_miniArrivedViaBack && _miniQuestions.Count > 0)
+        {
+            _currentQuestion = _miniQuestions.Count - 1;
+        }
+        else
+        {
+            _currentQuestion = OnboardingMiniBlockCompletion.FirstUnansweredMiniIndex(_step, _miniQuickScanVersion, visible);
+        }
+        var kind = OnboardingMiniBlockCompletion.AssessmentKindForWizardStep(_step);
         _autosave = new QuestionnaireAutosave(async (draft, cancellationToken) =>
         {
             var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in draft) merged[answer.Key] = answer.Value;
+            foreach (var answer in draft)
+            {
+                merged[answer.Key] = answer.Value;
+            }
+
+            var payload = OnboardingMiniBlockCompletion.ScopeToMiniIds(kind, _miniQuickScanVersion, merged);
+
             switch (_step)
             {
                 case 7:
-                    await Api.SaveMyCompetenciesAsync(merged, false, cancellationToken);
+                    await Api.SaveMyCompetenciesAsync(payload, false, cancellationToken);
                     break;
                 case 8:
-                    await Api.SaveMyCareerInterestsAsync(merged, false, cancellationToken);
+                    await Api.SaveMyCareerInterestsAsync(payload, false, cancellationToken);
                     break;
                 case 9:
-                    await Api.SaveMyCultureAsync(merged, false, cancellationToken);
+                    await Api.SaveMyCultureAsync(payload, false, cancellationToken);
                     break;
                 case 10:
-                    await Api.SaveMyValuesAsync(merged, false, cancellationToken);
+                    await Api.SaveMyValuesAsync(payload, false, cancellationToken);
                     break;
             }
         }, () => InvokeAsync(StateHasChanged), 150);
@@ -1436,6 +1515,11 @@
         {
             if (_step == 10)
             {
+                if (!await TryRouteToFirstIncompleteMiniBlockAsync())
+                {
+                    return;
+                }
+
                 await FinalizeApplyReadinessAsync();
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
@@ -1466,31 +1550,94 @@
         }
     }
 
+    private async Task<bool> TryRouteToFirstIncompleteMiniBlockAsync()
+    {
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        foreach (var step in new[] { 7, 8, 9, 10 })
+        {
+            var answers = await LoadMiniAnswersForStepAsync(step);
+            var version = ResolveQuickScanVersion(answers.version, testsV2);
+            if (OnboardingMiniBlockCompletion.IsMiniBlockComplete(step, version, answers.answers))
+            {
+                continue;
+            }
+
+            ClearMiniAnswersBeforeStepChange();
+            _step = step;
+            await PrepareMiniAsync();
+            RequestStepScrollReset();
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<(Dictionary<int, int> answers, int? version)> LoadMiniAnswersForStepAsync(int step)
+    {
+        switch (step)
+        {
+            case 8:
+            {
+                var row = await Api.GetMyCareerInterestsAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+            case 9:
+            {
+                var row = await Api.GetMyCultureAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+            case 10:
+            {
+                var row = await Api.GetMyValuesAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+            default:
+            {
+                var row = await Api.GetMyCompetenciesAsync();
+                return (ParseMiniAnswers(row?.Answers), row?.QuickScanVersion);
+            }
+        }
+    }
+
     private string QuestionText(OnboardingMiniTest.MiniQuestion question) => Culture[question.TextKey];
 
     private IReadOnlyDictionary<int, int> MiniVisibleAnswers
     {
         get
         {
-            if (_serverAnswers.Count == 0)
+            if (_step is < 7 or > 10 || _miniBlockQuestionIds.Length == 0)
             {
                 return _miniAnswers;
             }
 
-            var merged = new Dictionary<int, int>(_serverAnswers);
-            foreach (var answer in _miniAnswers)
-            {
-                merged[answer.Key] = answer.Value;
-            }
-
-            return merged;
+            return OnboardingMiniBlockCompletion.MergeVisible(_step, _miniQuickScanVersion, _serverAnswers, _miniAnswers);
         }
+    }
+
+    private static IReadOnlyDictionary<int, int> FilterMiniAnswers(
+        IReadOnlyDictionary<int, int> source,
+        IReadOnlySet<int> allowed)
+    {
+        if (allowed.Count == 0)
+        {
+            return source;
+        }
+
+        var filtered = new Dictionary<int, int>();
+        foreach (var (id, value) in source)
+        {
+            if (allowed.Contains(id))
+            {
+                filtered[id] = value;
+            }
+        }
+
+        return filtered;
     }
 
     private Task AnswerAsync(int id, int value)
     {
         _miniAnswers[id] = value;
-        _currentQuestion = Math.Min(_currentQuestion + 1, Math.Max(0, _miniQuestions.Count - 1));
         FlashSaved();
         if (_autosave is not null)
         {
