@@ -139,11 +139,9 @@ public static class CandidateIllustratedImages
 
     public const string RefVerifHeroMobilePosition = "right bottom";
 
-    /// <summary>Soft continuous hero for contextual tips pages (no cut-out profession band).</summary>
-    public const string TipsMomentHero = LearnGrowHero;
-    public const string TipsMomentHeroWide = LearnGrowHeroWide;
-    public const string TipsMomentHeroMobileFigures = LearnGrowHeroFiguresMobile;
-    public const string TipsMomentHeroMobileAtmosphere = LearnGrowHeroMobileAtmosphere;
+    /// <summary>Tips pages: calm profession-band (cream left, scene right) + mob figures like instellingen.</summary>
+    public const string TipsMomentHeroWide = InstellingenBand;
+    public const string TipsMomentHeroMobileFigures = MobFiguresInstellingen;
 
     /// <summary>Contextual tips category art (gesprek, contract, cv, ontwikkeling).</summary>
     public const string TipInterview = AccountMobileArt;

@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Media
 
-<header class="cand-hero @CssClass" style="@StyleValue">
+<header class="@HeaderClass" style="@StyleValue">
     <div class="cand-hero__copy">
         @if (!string.IsNullOrWhiteSpace(Eyebrow))
         {
@@ -16,7 +17,13 @@
         }
         @ChildContent
     </div>
-    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    @if (ShowMobileFiguresImage)
+    {
+        <div class="cand-hero__mob-figures-wrap" aria-hidden="true">
+            <img class="cand-hero__mob-figures" src="@ResolvedMobileFigures" alt="" />
+        </div>
+    }
+    @if (ShowMediaLayer)
     {
         <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
     }
@@ -36,20 +43,59 @@
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    private string? ResolvedMobileFigures =>
+        !string.IsNullOrWhiteSpace(ArtUrlMobileFigures)
+            ? ArtUrlMobileFigures
+            : CandidateIllustratedImages.MobileFigureUrl(ArtUrl);
+
+    private bool IsLearnGrowHero =>
+        CssClass?.Contains("learn-grow", StringComparison.OrdinalIgnoreCase) == true;
+
+    private bool ShowMobileFiguresImage =>
+        !IsLearnGrowHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
+
+    private bool ShowMediaLayer =>
+        !string.IsNullOrWhiteSpace(ArtUrl)
+        || (IsLearnGrowHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures));
+
+    private string HeaderClass
+    {
+        get
+        {
+            var parts = new List<string> { "cand-hero" };
+            if (!string.IsNullOrWhiteSpace(CssClass))
+            {
+                parts.Add(CssClass);
+            }
+
+            if (ShowMobileFiguresImage)
+            {
+                parts.Add("cand-hero--with-art");
+            }
+
+            return string.Join(' ', parts);
+        }
+    }
+
     private string? StyleValue
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(ArtUrl))
+            if (string.IsNullOrWhiteSpace(ArtUrl) && string.IsNullOrWhiteSpace(ArtUrlDesktop))
             {
-                return null;
+                if (string.IsNullOrWhiteSpace(ArtUrlMobileAtmosphere))
+                {
+                    return null;
+                }
             }
 
-            var parts = new List<string>
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(ArtUrl))
             {
-                $"--cand-hero-art:url('{ArtUrl}')",
-                $"--cand-hero-pos:{ArtPosition}",
-            };
+                parts.Add($"--cand-hero-art:url('{ArtUrl}')");
+                parts.Add($"--cand-hero-pos:{ArtPosition}");
+            }
+
             if (!string.IsNullOrWhiteSpace(ArtUrlDesktop))
             {
                 parts.Add($"--cand-hero-art-desktop:url('{ArtUrlDesktop}')");
@@ -61,7 +107,7 @@
                 parts.Add($"--cand-hero-mobile-atmosphere:url('{ArtUrlMobileAtmosphere}')");
             }
 
-            return string.Join(';', parts) + ";";
+            return parts.Count == 0 ? null : string.Join(';', parts) + ";";
         }
     }
 
@@ -81,9 +127,9 @@
                 parts.Add($"--cand-hero-pos:{ArtPosition}");
             }
 
-            if (!string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
+            if (!string.IsNullOrWhiteSpace(ResolvedMobileFigures))
             {
-                parts.Add($"--cand-hero-figures:url('{ArtUrlMobileFigures}')");
+                parts.Add($"--cand-hero-figures:url('{ResolvedMobileFigures}')");
             }
 
             return parts.Count == 0 ? null : string.Join(';', parts) + ";";

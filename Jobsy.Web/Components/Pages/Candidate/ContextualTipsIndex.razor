@@ -4,26 +4,17 @@
 @attribute [RequiresFeature(PlatformFeature.ContextualTips)]
 @using Jobsy.Core.ContextualTips
 @using Jobsy.Core.Features
-@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ContextualTips
 @using Jobsy.Web.ContextualTips
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Media
-@using static Jobsy.Web.Media.CandidateIllustratedImages
 @inject CultureState Culture
 <PageTitle>@Culture["Nav.Tips"] · Lobsy</PageTitle>
 
 <div class="panel-page panel-page--cand-ill ctips-page" data-testid="contextual-tips-index">
-    <CandidateIllustratedHero Eyebrow="@Culture["Tips.Hub.Eyebrow"]"
-                              Title="@Culture["Tips.Hub.Title"]"
-                              Lead="@Culture["Tips.Hub.Lead"]"
-                              ArtUrl="@TipsMomentHero"
-                              ArtUrlDesktop="@TipsMomentHeroWide"
-                              ArtUrlMobileFigures="@TipsMomentHeroMobileFigures"
-                              ArtUrlMobileAtmosphere="@TipsMomentHeroMobileAtmosphere"
-                              ArtPosition="68% center"
-                              ArtPositionDesktop="right center"
-                              CssClass="cand-hero--learn-grow ctips-hero" />
+    <ContextualTipsHero Eyebrow="@Culture["Tips.Hub.Eyebrow"]"
+                        Title="@Culture["Tips.Hub.Title"]"
+                        Lead="@Culture["Tips.Hub.Lead"]"
+                        ExtraCssClass="ctips-hero" />
 
     <div class="ctips-search">
         <label class="ctips-search__field" for="tips-search">

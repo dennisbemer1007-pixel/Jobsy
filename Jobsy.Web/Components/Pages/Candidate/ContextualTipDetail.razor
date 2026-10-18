@@ -4,12 +4,8 @@
 @attribute [RequiresFeature(PlatformFeature.ContextualTips)]
 @using Jobsy.Core.ContextualTips
 @using Jobsy.Core.Features
-@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ContextualTips
-@using Jobsy.Web.ContextualTips
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Media
-@using static Jobsy.Web.Media.CandidateIllustratedImages
 @inject CultureState Culture
 
 <PageTitle>@_pageTitle · Lobsy</PageTitle>
@@ -41,27 +37,13 @@
     }
     else
     {
-        var cat = ContextualTipsCatalog.FindCategory(_tip.Category);
-        var catArt = ContextualTipsImages.UrlForKey(cat?.ImageKey);
-
-        <CandidateIllustratedHero Eyebrow="@Culture["Tips.Eyebrow"]"
-                                  Title="@Culture[_tip.TitleKey]"
-                                  Lead="@Culture[_tip.SummaryKey]"
-                                  ArtUrl="@TipsMomentHero"
-                                  ArtUrlDesktop="@TipsMomentHeroWide"
-                                  ArtUrlMobileFigures="@TipsMomentHeroMobileFigures"
-                                  ArtUrlMobileAtmosphere="@TipsMomentHeroMobileAtmosphere"
-                                  ArtPosition="68% center"
-                                  ArtPositionDesktop="right center"
-                                  CssClass="cand-hero--learn-grow ctips-detail-hero" />
+        <ContextualTipsHero Eyebrow="@Culture["Tips.Eyebrow"]"
+                            Title="@Culture[_tip.TitleKey]"
+                            Lead="@Culture[_tip.SummaryKey]"
+                            ExtraCssClass="ctips-detail-hero" />
 
         <div class="ctips-detail-layout">
             <div class="ctips-detail-main">
-                @if (!string.IsNullOrWhiteSpace(catArt))
-                {
-                    <div class="ctips-detail-cat-art" style="@($"background-image:url('{catArt}')")" aria-hidden="true"></div>
-                }
-
                 <ContextualTipsGate TipId="@_tip.Id">
                     <ContextualTipShell TipId="@_tip.Id"
                                         Title=""

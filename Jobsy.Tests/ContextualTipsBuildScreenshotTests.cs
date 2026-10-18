@@ -5,7 +5,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r2";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r3";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;

@@ -4,12 +4,9 @@
 @attribute [RequiresFeature(PlatformFeature.Employers)]
 @attribute [RequiresFeature(PlatformFeature.ContextualTips)]
 @using Jobsy.Core.Features
-@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ContextualTips
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Media
 @using Jobsy.Web.Models
-@using static Jobsy.Web.Media.CandidateIllustratedImages
 @inject JobsyApiClient Api
 @inject CultureState Culture
 <PageTitle>@Culture["Tips.Page.Interview.Title"] · Lobsy</PageTitle>
@@ -26,15 +23,8 @@
     }
     else
     {
-        <CandidateIllustratedHero Title="@Culture["Tips.Page.Interview.Title"]"
-                                  Lead="@Culture["Tips.Page.Interview.Lead"]"
-                                  ArtUrl="@TipsMomentHero"
-                                  ArtUrlDesktop="@TipsMomentHeroWide"
-                                  ArtUrlMobileFigures="@TipsMomentHeroMobileFigures"
-                                  ArtUrlMobileAtmosphere="@TipsMomentHeroMobileAtmosphere"
-                                  ArtPosition="68% center"
-                                  ArtPositionDesktop="right center"
-                                  CssClass="cand-hero--learn-grow" />
+        <ContextualTipsHero Title="@Culture["Tips.Page.Interview.Title"]"
+                            Lead="@Culture["Tips.Page.Interview.Lead"]" />
 
         <div class="ctips-app-layout">
             <InterviewApplicationDetails Application="_app" OnPractice="OpenMockInterview" />

@@ -71,7 +71,7 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
-        "css/features/contextual-tips.css?v=20261018-02",
+        "css/features/contextual-tips.css?v=20261018-03",
     ];
 
     public static readonly string[] WerkgeverCss =

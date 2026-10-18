@@ -372,15 +372,6 @@
   min-inline-size: 0;
 }
 
-.ctips-detail-cat-art {
-  block-size: 7.5rem;
-  border-radius: var(--r-md);
-  background-size: cover;
-  background-position: center;
-  margin-block-end: 1rem;
-  border: 1px solid var(--border);
-}
-
 .ctips-detail-back {
   margin-block-start: 1rem;
 }
@@ -411,10 +402,6 @@
   .ctips-detail-layout {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
     align-items: start;
-  }
-
-  .ctips-detail-cat-art {
-    display: none;
   }
 
   .career-tips-g2 {
