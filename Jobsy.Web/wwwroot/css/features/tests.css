@@ -729,6 +729,16 @@
     margin-inline: auto;
   }
 
+  .test-shell--deep[data-mode="Question"]:has(.test-shell__scene--panel) .test-shell__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(11rem, 13.5rem);
+    max-inline-size: min(100%, 58rem);
+    margin-inline: auto;
+  }
+
+  .test-shell--deep[data-mode="Question"]:has(.test-shell__scene--panel) .test-shell__scene {
+    display: block;
+  }
+
   .test-shell__scene--panel {
     max-block-size: none;
     align-self: start;

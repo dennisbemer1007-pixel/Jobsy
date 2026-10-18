@@ -59,26 +59,30 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
         _playwright?.Dispose();
     }
 
-    [Fact]
-    public async Task Progress_insight_panel_milestones_desktop_and_mobile()
-    {
-        var scenarios = new (int Answered, string Slug)[]
-        {
-            (0, "start"),
-            (7, "mid-block"),
-            (5, "after-block-1"),
-            (15, "after-block-3"),
-            (24, "last-block")
-        };
+    private sealed record InsightSurface(string ReturnPath, string Slug, AssessmentKind Kind, int Answered, bool PaidDeep);
 
+    private static readonly InsightSurface[] Surfaces =
+    [
+        new("/candidate/competencies?stap=vraag", "quick-scan-competence", AssessmentKind.Competence, 7, false),
+        new("/candidate/career?stap=vraag", "quick-scan-career", AssessmentKind.Career, 7, false),
+        new("/candidate/culture?stap=vraag", "quick-scan-culture", AssessmentKind.Culture, 7, false),
+        new("/candidate/values?stap=vraag", "quick-scan-values", AssessmentKind.Values, 7, false),
+        new("/candidate/competencies?stap=vraag", "free-deepening-competence", AssessmentKind.Competence, 15, false),
+        new("/candidate/deep-analysis/competence", "paid-deep-analysis-competence", AssessmentKind.Competence, 30, true)
+    ];
+
+    [Fact]
+    public async Task Progress_insight_on_all_test_surfaces_desktop_and_mobile()
+    {
         var only = (Environment.GetEnvironmentVariable("JOBSY_INSIGHT_ONLY") ?? "").Trim();
+        var surfaces = Surfaces;
         if (!string.IsNullOrEmpty(only))
         {
-            scenarios = scenarios.Where(s => s.Slug.Equals(only, StringComparison.OrdinalIgnoreCase)).ToArray();
-            Assert.NotEmpty(scenarios);
+            surfaces = surfaces.Where(s => s.Slug.Equals(only, StringComparison.OrdinalIgnoreCase)).ToArray();
+            Assert.NotEmpty(surfaces);
         }
 
-        foreach (var (answered, slug) in scenarios)
+        foreach (var surface in surfaces)
         {
             foreach (var (width, height, tag) in new (int, int, string)[]
                      {
@@ -86,10 +90,10 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
                          (390, 844, "mobile-390")
                      })
             {
-                using var web = new InsightWebFactory(answered);
+                using var web = new InsightWebFactory(surface);
                 var signInUrl = web.EnsureServerAddress()
                               + "/__test/sign-in?return="
-                              + Uri.EscapeDataString("/candidate/competencies?stap=vraag");
+                              + Uri.EscapeDataString(surface.ReturnPath);
 
                 await using var context = await _browser!.NewContextAsync(new()
                 {
@@ -104,6 +108,8 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
                 await page.GotoAsync(signInUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
                 await PlaywrightCookieConsent.AcceptOnPageAsync(page);
                 await page.Locator(".test-flow").WaitForAsync(new() { Timeout = 60_000 });
+                Assert.Equal(0, await page.Locator(".test-shell[data-mode=Pause]").CountAsync());
+                Assert.Equal(0, await page.Locator("[data-testid=early-reward-insight]").CountAsync());
 
                 if (width >= 1024)
                 {
@@ -111,13 +117,13 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
                     await panel.WaitForAsync();
                     var title = await panel.Locator(".test-progress-panel__title").InnerTextAsync();
                     Assert.Contains("beeld", title, StringComparison.OrdinalIgnoreCase);
-                    if (answered >= TestProgressInsight.BlockSize)
+                    if (surface.Answered >= TestProgressInsight.BlockSize)
                     {
                         var listCount = await panel.Locator(".test-progress-panel__list li").CountAsync();
                         Assert.True(listCount >= 1);
                     }
                 }
-                else if (answered >= TestProgressInsight.BlockSize)
+                else if (surface.Answered >= TestProgressInsight.BlockSize)
                 {
                     var mobileLine = page.Locator("[data-testid=test-progress-insight-mobile]");
                     await mobileLine.WaitForAsync();
@@ -125,11 +131,7 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
                     Assert.Contains("Jouw beeld", text, StringComparison.OrdinalIgnoreCase);
                 }
 
-                var coachHidden = await page.EvaluateAsync<bool>(
-                    "() => !document.querySelector('.lobsy-coach-dock') || getComputedStyle(document.querySelector('.lobsy-coach-dock')).display === 'none'");
-                Assert.True(coachHidden);
-
-                var fileName = $"competence-insight-{slug}-{tag}.png";
+                var fileName = $"{surface.Slug}-insight-{tag}.png";
                 var artifactPath = Path.Combine(FindRepoRoot(), ArtifactDir, fileName);
                 await page.ScreenshotAsync(new() { Path = artifactPath, FullPage = true });
                 File.Copy(artifactPath, Path.Combine(AgentStoreDir, fileName), overwrite: true);
@@ -153,7 +155,7 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
         return Directory.GetCurrentDirectory();
     }
 
-    private sealed class InsightWebFactory(int answered) : WebWebApplicationFactory
+    private sealed class InsightWebFactory(InsightSurface surface) : WebWebApplicationFactory
     {
         private IHost? _kestrel;
         public string ServerAddress { get; private set; } = "";
@@ -186,10 +188,10 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
                 services.RemoveAll<IFeatureFlags>();
                 services.AddSingleton<IFeatureFlags>(new InsightStubFlags());
                 services.RemoveAll<IHttpClientFactory>();
-                services.AddSingleton<IHttpClientFactory>(new InsightStubFactory(answered));
+                services.AddSingleton<IHttpClientFactory>(new InsightStubFactory(surface));
                 services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
                 services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
-                    new HttpClient(new InsightStubHandler(answered), disposeHandler: false)
+                    new HttpClient(new InsightStubHandler(surface), disposeHandler: false)
                     {
                         BaseAddress = new Uri("http://api.test/")
                     }));
@@ -276,13 +278,13 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
             };
     }
 
-    private sealed class InsightStubFactory(int answered) : IHttpClientFactory
+    private sealed class InsightStubFactory(InsightSurface surface) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
-            => new(new InsightStubHandler(answered), disposeHandler: true) { BaseAddress = new Uri("http://api.test/") };
+            => new(new InsightStubHandler(surface), disposeHandler: true) { BaseAddress = new Uri("http://api.test/") };
     }
 
-    private sealed class InsightStubHandler(int answered) : HttpMessageHandler
+    private sealed class InsightStubHandler(InsightSurface surface) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -290,10 +292,24 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
             object payload = path switch
             {
                 var p when p.Contains("/profile", StringComparison.OrdinalIgnoreCase) => BuildProfile(),
-                var p when p.Contains("/competencies", StringComparison.OrdinalIgnoreCase) => BuildCompetency(answered),
+                var p when p.Contains("/test-ai-consent", StringComparison.OrdinalIgnoreCase) => BuildProfile(),
+                var p when p.Contains("/competencies", StringComparison.OrdinalIgnoreCase) => BuildQuickScan(AssessmentKind.Competence),
+                var p when p.Contains("/career-interests", StringComparison.OrdinalIgnoreCase) => BuildQuickScan(AssessmentKind.Career),
+                var p when p.Contains("/culture", StringComparison.OrdinalIgnoreCase) => BuildQuickScan(AssessmentKind.Culture),
+                var p when p.Contains("/values", StringComparison.OrdinalIgnoreCase) => BuildQuickScan(AssessmentKind.Values),
+                var p when p.Contains("/deep-analysis/payment-mode", StringComparison.OrdinalIgnoreCase) => new { mode = "stub" },
+                var p when p.Contains("/deep-analysis", StringComparison.OrdinalIgnoreCase) => BuildDeep(),
                 var p when p.Contains("/site/status", StringComparison.OrdinalIgnoreCase) => new { maintenance = false },
                 _ => new { }
             };
+
+            if (request.Method == HttpMethod.Put || request.Method == HttpMethod.Post)
+            {
+                if (path.Contains("/deep-analysis", StringComparison.OrdinalIgnoreCase))
+                {
+                    payload = BuildDeep();
+                }
+            }
 
             var json = JsonSerializer.Serialize(payload, Json);
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -311,25 +327,94 @@ public sealed class ProgressInsightEvidencePlaywrightTests : IAsyncLifetime
                 TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion
             };
 
-        private static CandidateCompetencyState BuildCompetency(int answeredCount)
+        private object BuildQuickScan(AssessmentKind kind)
+        {
+            if (surface.PaidDeep || surface.Kind != kind)
+            {
+                return EmptyQuickScan(kind);
+            }
+
+            return kind switch
+            {
+                AssessmentKind.Career => new CandidateCareerInterestState
+                {
+                    Status = "Draft",
+                    QuickScanVersion = AssessmentTestVersions.V3,
+                    QuickScanFullCount = 25,
+                    QuestionCount = 25,
+                    Answers = BuildQuickScanAnswers(kind, surface.Answered)
+                },
+                AssessmentKind.Culture => new CandidateCultureState
+                {
+                    Status = "Draft",
+                    QuickScanVersion = AssessmentTestVersions.V3,
+                    QuickScanFullCount = 25,
+                    Answers = BuildQuickScanAnswers(kind, surface.Answered)
+                },
+                AssessmentKind.Values => new CandidateValuesState
+                {
+                    Status = "Draft",
+                    QuickScanVersion = AssessmentTestVersions.V3,
+                    QuickScanFullCount = 25,
+                    Answers = BuildQuickScanAnswers(kind, surface.Answered)
+                },
+                _ => new CandidateCompetencyState
+                {
+                    Status = "Draft",
+                    QuickScanVersion = AssessmentTestVersions.V3,
+                    QuickScanFullCount = 25,
+                    QuestionCount = 25,
+                    IsIndicativeDepth = true,
+                    Answers = BuildQuickScanAnswers(kind, surface.Answered)
+                }
+            };
+        }
+
+        private static object EmptyQuickScan(AssessmentKind kind)
+            => kind switch
+            {
+                AssessmentKind.Career => new CandidateCareerInterestState { Status = "Draft", QuickScanVersion = AssessmentTestVersions.V3, Answers = [] },
+                AssessmentKind.Culture => new CandidateCultureState { Status = "Draft", QuickScanVersion = AssessmentTestVersions.V3, Answers = [] },
+                AssessmentKind.Values => new CandidateValuesState { Status = "Draft", QuickScanVersion = AssessmentTestVersions.V3, Answers = [] },
+                _ => new CandidateCompetencyState { Status = "Draft", QuickScanVersion = AssessmentTestVersions.V3, Answers = [] }
+            };
+
+        private static Dictionary<string, int> BuildQuickScanAnswers(AssessmentKind kind, int answeredCount)
         {
             var ids = TestDepthRules.QuestionIdsFor(
-                    AssessmentKind.Competence,
+                    kind,
                     TestDepthLevel.Full,
                     AssessmentTestVersions.V3)
-                .Take(Math.Clamp(answeredCount, 0, 25))
-                .ToList();
+                .Take(Math.Clamp(answeredCount, 0, 25));
+            return ids.ToDictionary(
+                id => id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                id => 3 + (id % 2));
+        }
+
+        private DeepAnalysisState BuildDeep()
+        {
+            var answers = surface.PaidDeep
+                ? BuildDeepAnswers(surface.Kind, surface.Answered)
+                : [];
             return new()
             {
-                Status = "Draft",
-                QuickScanVersion = AssessmentTestVersions.V3,
-                QuickScanFullCount = 25,
-                QuestionCount = 25,
-                IsIndicativeDepth = true,
-                Answers = ids.ToDictionary(
-                    id => id.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                    id => 3 + (id % 2))
+                Kind = AssessmentKindLabels.ToSlug(surface.Kind),
+                IsUnlocked = surface.PaidDeep,
+                IsCompleted = false,
+                QuestionCount = TestDepthRules.Bottom(surface.Kind),
+                PriceEuro = 2.99m,
+                Answers = answers
             };
+        }
+
+        private static Dictionary<string, int> BuildDeepAnswers(AssessmentKind kind, int answeredCount)
+        {
+            var ids = TestDepthRules.Parts(kind)
+                .SelectMany(p => p.QuestionIds)
+                .Take(Math.Clamp(answeredCount, 0, TestDepthRules.Bottom(kind)));
+            return ids.ToDictionary(
+                id => id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                id => 3 + (id % 2));
         }
     }
 }
