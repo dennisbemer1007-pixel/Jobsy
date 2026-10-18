@@ -1,52 +1,39 @@
-/* Candidate settings / privacy hubs */
 .candidate-hub {
     max-width: 40rem;
     margin-inline: auto;
     padding-block: 1.25rem 2.5rem;
-}
-
-.candidate-hub__lead {
+}.candidate-hub__lead {
     margin: 0 0 1.25rem;
     color: var(--muted);
     font-size: 0.95rem;
     line-height: 1.45;
-}
-
-.candidate-hub__list {
+}.candidate-hub__list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-}
-
-.candidate-hub__link {
+}.candidate-hub__link {
     display: block;
     padding: var(--form-card-pad);
     border: 1px solid var(--border);
-    border-radius: var(--form-card-radius);
-    background: var(--surface);
-    box-shadow: var(--shadow);
+    border-radius:var(--form-card-radius);
+    background:var(--surface);
+    box-shadow:none;
     text-decoration: none;
     color: inherit;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.candidate-hub__link:hover,
+}.candidate-hub__link:hover,
 .candidate-hub__link:focus-visible {
     border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
-    box-shadow: var(--shadow-lg);
-}
-
-.candidate-hub__link-title {
+    box-shadow:none;
+}.candidate-hub__link-title {
     display: block;
     font-weight: 700;
     color: var(--brand);
     margin-bottom: 0.35rem;
-}
-
-.candidate-hub__link-desc {
+}.candidate-hub__link-desc {
     display: block;
     font-size: 0.9rem;
     color: var(--muted);

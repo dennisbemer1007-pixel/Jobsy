@@ -1,40 +1,26 @@
-/* /notifications — meldingen overzicht (candidate + employer shell) */
-
 .notifications-page.panel-page {
   max-width: 42rem;
   width: 100%;
   box-sizing: border-box;
-}
-
-.notifications-page .panel-header {
+}.notifications-page .panel-header {
   text-align: start;
-}
-
-.notifications-page .panel-header h1 {
+}.notifications-page .panel-header h1 {
   margin: 0 0 0.35rem;
-}
-
-.notifications-page__empty {
+}.notifications-page__empty {
   margin-top: var(--space-4);
   padding: var(--space-5);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
+  border-radius:var(--r-md);
+  background:var(--surface);
   text-align: start;
-}
-
-.notifications-page__empty-title {
+}.notifications-page__empty-title {
   margin: 0 0 var(--space-2);
   font-weight: 600;
   font-size: var(--text-md, 1rem);
-}
-
-.notifications-page__toolbar {
+}.notifications-page__toolbar {
   margin-bottom: var(--space-3);
   text-align: start;
-}
-
-.notifications-page__list {
+}.notifications-page__list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -42,103 +28,71 @@
   flex-direction: column;
   gap: var(--space-2);
   width: 100%;
-}
-
-.notifications-page__item {
+}.notifications-page__item {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--shadow);
+  border-radius:var(--r-sm);
+  background:var(--surface);
+  box-shadow:none;
   width: 100%;
   box-sizing: border-box;
   list-style: none;
-}
-
-.notifications-page__item.is-unread {
+}.notifications-page__item.is-unread {
   border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
-  background: color-mix(in srgb, var(--accent-soft) 65%, var(--surface));
-}
-
-.notifications-page__item-btn {
+  background:color-mix(in srgb, var(--accent-soft) 65%, var(--surface));
+}.notifications-page__item-btn {
   display: block;
   width: 100%;
   box-sizing: border-box;
   padding: var(--space-3) var(--space-4);
   border: 0;
-  border-radius: inherit;
-  background: transparent;
+  border-radius:inherit;
+  background:transparent;
   text-align: start;
   font: inherit;
   color: inherit;
   cursor: pointer;
-}
-
-.notifications-page__item-btn:hover {
-  background: color-mix(in srgb, var(--hover) 80%, transparent);
-}
-
-.notifications-page__item-top {
+}.notifications-page__item-btn:hover {
+  background:color-mix(in srgb, var(--hover) 80%, transparent);
+}.notifications-page__item-top {
   display: block;
   width: 100%;
   box-sizing: border-box;
   margin-bottom: 0.35rem;
   padding-right: 1.25rem;
-}
-
-.notifications-page__item-top strong {
+}.notifications-page__item-top strong {
   display: block;
   font-weight: 600;
   min-width: 0;
-}
-
-/* Do not reuse .notification-bell__dot — app.min.css bell rules override page layout. */
-.notifications-page__unread-dot {
+}.notifications-page__unread-dot {
   position: absolute;
   top: var(--space-3);
   right: var(--space-4);
   width: 0.55rem;
   height: 0.55rem;
   margin: 0;
-  border-radius: 999px;
-  background: var(--brand);
+  border-radius:var(--radius-pill);
+  background:var(--brand);
   flex-shrink: 0;
   pointer-events: none;
-}
-
-.notifications-page__item-btn > .muted {
+}.notifications-page__item-btn > .muted {
   display: block;
   margin-bottom: 0.35rem;
-}
-
-.notifications-page__meta {
+}.notifications-page__meta {
   display: block;
   font-size: var(--text-xs);
   color: var(--muted);
-}
-
-.wg-main .notifications-page {
+}.wg-main .notifications-page {
   max-width: 52rem;
   width: 100%;
   box-sizing: border-box;
-}
-
-@media (min-width: 1024px) {
-  .notifications-page.panel-page {
+}@media (min-width: 1024px) {.notifications-page.panel-page {
     max-width: 52rem;
-  }
-}
-
-/* Coach dock reserves ~68px on narrow viewports (app.css); card rows must stay full width. */
-@media (max-width: 480px) {
-  .app-shell:has([data-lobsy-coach]) main .notifications-page__item-btn {
+  }}@media (max-width: 480px) {.app-shell:has([data-lobsy-coach]) main .notifications-page__item-btn {
     max-inline-size: 100% !important;
     max-width: 100% !important;
     width: 100% !important;
-  }
-}
-
-.app-shell:has(.notifications-page) .lobsy-coach-dock,
+  }}.app-shell:has(.notifications-page) .lobsy-coach-dock,
 .app-shell:has(.notifications-page) .lobsy-coach-cta,
 .app-shell:has(.notifications-page) .lobsy-assistant-tab--edge {
   display: none !important;
