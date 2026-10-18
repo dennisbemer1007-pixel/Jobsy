@@ -28,6 +28,7 @@ namespace Jobsy.Tests;
 /// Shared bUnit host for the privacy statement (03.7). The statement is static SSR, so a plain
 /// render is exactly what a visitor gets.
 /// </summary>
+[Collection("JobsyLanguagesState")]
 public abstract class PrivacyRenderTestBase : BunitContext
 {
     protected static readonly string[] Languages = ["nl", "en", "pl", "ro", "ar"];

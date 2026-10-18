@@ -88,6 +88,7 @@ public class ErrorCultureTests
     }
 }
 
+[Collection("JobsyLanguagesState")]
 public class ErrorCultureRenderTests
 {
     private static async Task<string> ReadStatusPageAsync(HttpClient client)

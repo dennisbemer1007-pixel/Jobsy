@@ -19,6 +19,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
+[Collection("JobsyLanguagesState")]
 public class PublicLayoutBunitTests : BunitContext
 {
     public PublicLayoutBunitTests()

@@ -10,6 +10,7 @@ using System.Net;
 
 namespace Jobsy.Tests;
 
+[Collection("JobsyLanguagesState")]
 public class LanguageEndpointTests : IDisposable
 {
     public LanguageEndpointTests() => JobsyLanguages.ResetEnabledForTests();

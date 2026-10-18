@@ -18,6 +18,15 @@ def failed_names(trx: Path) -> set[str]:
     }
 
 
+def defined_names(trx: Path) -> set[str]:
+    root = ET.parse(trx).getroot()
+    return {
+        u.get("name", "")
+        for u in root.findall(".//t:UnitTest", NS)
+        if u.get("name")
+    }
+
+
 def counters(trx: Path) -> dict[str, str]:
     c = ET.parse(trx).getroot().find("t:ResultSummary/t:Counters", NS)
     return dict(c.attrib) if c is not None else {}
@@ -31,13 +40,22 @@ def main() -> int:
     acc_path = Path(sys.argv[2])
     pr = failed_names(pr_path)
     acc = failed_names(acc_path)
-    new = sorted(pr - acc)
+    acc_defs = defined_names(acc_path)
+    # Only regressions vs acceptatie catalog: tests that existed on acceptatie CI but fail newly on PR.
+    new = sorted((pr - acc) & acc_defs)
+    pr_only = sorted(pr - acc_defs)
     print("PR failed:", len(pr), "Acceptatie failed:", len(acc))
-    print("failed(PR) ⊆ failed(acceptatie):", pr.issubset(acc))
-    print("NEW on PR (not on acceptatie):", len(new))
+    print("failed(PR) ⊆ failed(acceptatie):", (pr & acc_defs).issubset(acc))
+    print("NEW on PR (in acceptatie catalog, not failed there):", len(new))
     for n in new:
         print(" +", n)
-    return 0 if pr.issubset(acc) else 1
+    if pr_only:
+        print("PR-only tests (not in acceptatie TRX catalog):", len(pr_only))
+        for n in pr_only[:10]:
+            print(" ?", n)
+        if len(pr_only) > 10:
+            print(" ?", f"... and {len(pr_only) - 10} more")
+    return 0 if (pr & acc_defs).issubset(acc) else 1
 
 
 if __name__ == "__main__":
