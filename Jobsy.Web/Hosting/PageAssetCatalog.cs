@@ -89,7 +89,7 @@ public static class PageAssetCatalog
 
     public static readonly string[] BeheerCss =
     [
-        "css/features/admin.css?v=20261018-10",
+        "css/features/admin.css?v=20261018-11",
         "css/features/enterprise-ui.css?v=20261004-10",
     ];
 

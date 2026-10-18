@@ -21,11 +21,11 @@ using Jobsy.Tests.TestSupport;
 
 namespace Jobsy.Tests;
 
-/// <summary>Styled admin Functies page captures (admin-flags-r4) via real Web host + CSS.</summary>
+/// <summary>Styled admin Functies page captures (admin-flags-r5) via real Web host + CSS.</summary>
 [Collection("PlaywrightSmoke")]
 public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/admin-flags-r4";
+    private const string OutDir = "/opt/cursor/artifacts/admin-flags-r5";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 

@@ -1184,10 +1184,15 @@ table td.muted {
     font-variant-numeric: tabular-nums;
 }.admin-settings-input--wide {
     width: min(22rem, 100%);
+}.admin-maintenance__datetime.jobsy-date-field--typed {
+    inline-size: min(20rem, 100%);
+    max-inline-size: 100%;
+}.admin-maintenance__datetime .jobsy-date-field__control {
+    inline-size: 100%;
 }.admin-settings-input--datetime,
 .admin-maintenance__field .admin-settings-input--datetime.jobsy-date-field__text {
     box-sizing: border-box;
-    width: min(20rem, 100%);
+    width: 100%;
     min-width: 15rem;
 }.admin-settings-date .jobsy-date-field--typed {
     flex: 1 1 15rem;
