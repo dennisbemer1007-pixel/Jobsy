@@ -102,6 +102,7 @@ public static class UiStringsTrainingPartners
             "Alles wat je bewaart of start, blijft hier staan.",
             "Everything you save or start stays here.");
         Add("Training.LearnGrow.FilterPanel", "Filters", "Filters");
+        Add("Training.LearnGrow.FilterExtraversieShort", "Extraversie", "Extraversion");
         Add("Training.LearnGrow.FilterSubject", "Onderwerp", "Topic");
         Add("Training.LearnGrow.FilterAll", "Alles", "All");
         Add("Training.LearnGrow.FilterFreeOnly", "Alleen gratis", "Free only");
@@ -150,6 +151,9 @@ public static class UiStringsTrainingPartners
         Add("Training.PassportGrowth.GrowLead",
             "Deze passen bij jou en bij je route.",
             "These fit you and your route.");
+        Add("Training.PassportGrowth.MatchLine",
+            "Past bij dit groeipunt",
+            "Fits this growth area");
         Add("Training.PassportGrowth.ViewAll", "Bekijk alles", "View all");
         Add("Training.PassportGrowth.PromoTitle", "Leren & groeien", "Learn & grow");
         Add("Training.PassportGrowth.PrivacyTitle", "Alleen jij ziet je groeipunten", "Only you see your growth areas");

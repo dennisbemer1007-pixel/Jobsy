@@ -47,23 +47,24 @@ else
                         <p class="opl-comp__text">@Culture[row.MeaningKey]</p>
                         @if (row.ShowOffers && row.Offers.Count > 0)
                         {
-                            <div class="opl-grow-box">
-                                <h4>@Culture["Training.PassportGrowth.GrowTitle"]</h4>
-                                <p class="muted">@Culture["Training.PassportGrowth.GrowLead"]</p>
+                            <div class="opl-grow-box opl-grow-box--compact">
+                                <p class="opl-grow-box__label">@Culture["Training.PassportGrowth.MatchLine"]</p>
                                 @foreach (var offer in row.Offers)
                                 {
-                                    <div class="opl-grow-row">
-                                        <div>
-                                            <span class="@TypeClass(offer.Type)">@TypeLabel(offer.Type)</span>
-                                            @if (offer.IsFree)
-                                            {
-                                                <span class="opl-badge-free">@Culture["Training.Free"]</span>
-                                            }
-                                            <strong>@offer.Title</strong>
-                                            <p class="muted">@MetaLine(offer)</p>
+                                    <div class="opl-grow-row opl-grow-row--card">
+                                        <div class="opl-grow-row__main">
+                                            <div class="opl-grow-row__tags">
+                                                <span class="@TypeClass(offer.Type)">@TypeLabel(offer.Type)</span>
+                                                @if (offer.IsFree)
+                                                {
+                                                    <span class="opl-badge-free">@Culture["Training.Free"]</span>
+                                                }
+                                            </div>
+                                            <strong class="opl-grow-row__title">@offer.Title</strong>
+                                            <p class="opl-grow-row__meta muted">@MetaLine(offer)</p>
                                         </div>
                                         <button type="button"
-                                                class="btn btn-ghost btn-sm"
+                                                class="btn btn-secondary btn-sm opl-grow-row__action"
                                                 disabled="@_busy"
                                                 @onclick="() => OpenAsync(offer)">
                                             @Culture["Training.Open"]

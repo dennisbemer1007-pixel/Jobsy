@@ -24,9 +24,9 @@
                               CoralEyebrow="true"
                               Title="@Culture["Training.LearnGrow.Title"]"
                               Lead="@Culture["Training.LearnGrow.Lead"]"
-                              ArtUrl="@CandidateIllustratedImages.FinaleHero"
-                              ArtPosition="58% center"
-                              CssClass="cand-hero--profession-band" />
+                              ArtUrl="@CandidateIllustratedImages.LearnGrowHero"
+                              ArtPosition="62% center"
+                              CssClass="cand-hero--profession-band cand-hero--learn-grow" />
 
     <main class="opl-wrap">
         <form class="opl-search opl-search--below" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
@@ -66,17 +66,19 @@
             <div class="opl-layout">
                 <div class="opl-main">
                     <section class="opl-filters">
-                        <div class="opl-filters__top">
+                        <div class="opl-filters__bar">
                             <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterSubject"]</span>
-                            <div class="opl-filters__subject-scroll">
-                                @foreach (var chip in SubjectChips())
-                                {
-                                    <button type="button"
-                                            class="opl-chip @(_subject == chip.Key ? "is-on" : null)"
-                                            @onclick="() => SetSubject(chip.Key)">
-                                        @chip.Label
-                                    </button>
-                                }
+                            <div class="opl-filters__chip-rail">
+                                <div class="opl-filters__subject-scroll">
+                                    @foreach (var chip in SubjectChips())
+                                    {
+                                        <button type="button"
+                                                class="opl-chip @(_subject == chip.Key ? "is-on" : null)"
+                                                @onclick="() => SetSubject(chip.Key)">
+                                            @chip.Label
+                                        </button>
+                                    }
+                                </div>
                             </div>
                             <button type="button"
                                     class="opl-filters__toggle btn btn-ghost btn-sm @(_filtersOpen ? "is-on" : null)"
@@ -88,7 +90,6 @@
                                     <span class="opl-filters__badge">@AdvancedFilterCount</span>
                                 }
                             </button>
-                            <span class="opl-filters__count muted">@Culture.Format("Training.LearnGrow.Count", _page.TotalCount)</span>
                         </div>
                         @if (_filtersOpen)
                         {
@@ -117,6 +118,8 @@
                             </div>
                         }
                     </section>
+
+                    <p class="opl-result-count muted">@Culture.Format("Training.LearnGrow.Count", _page.TotalCount)</p>
 
                     @OfferSection("next", Culture["Training.LearnGrow.SectionNext"], _page.NextStepSubtitle, _page.NextStep)
                     @OfferSection("growth", Culture["Training.LearnGrow.SectionGrowth"], _page.GrowthSubtitle, _page.Growth)
@@ -199,7 +202,7 @@
         ("all", Culture["Training.LearnGrow.FilterAll"]),
         (CompetencyTestCatalog.Stressbestendigheid, Culture[$"Competency.Cat.{CompetencyTestCatalog.Stressbestendigheid}"]),
         (CompetencyTestCatalog.Samenwerken, Culture[$"Competency.Cat.{CompetencyTestCatalog.Samenwerken}"]),
-        (CompetencyTestCatalog.Extraversie, Culture[$"Competency.Cat.{CompetencyTestCatalog.Extraversie}"]),
+        (CompetencyTestCatalog.Extraversie, Culture["Training.LearnGrow.FilterExtraversieShort"]),
         (CompetencyTestCatalog.Resultaatgerichtheid, Culture[$"Competency.Cat.{CompetencyTestCatalog.Resultaatgerichtheid}"]),
         (CompetencyTestCatalog.Innovatie, Culture[$"Competency.Cat.{CompetencyTestCatalog.Innovatie}"])
     ];
