@@ -101,6 +101,7 @@ public static class UiStringsTrainingPartners
         Add("Training.LearnGrow.NavNote",
             "Alles wat je bewaart of start, blijft hier staan.",
             "Everything you save or start stays here.");
+        Add("Training.LearnGrow.FilterPanel", "Filters", "Filters");
         Add("Training.LearnGrow.FilterSubject", "Onderwerp", "Topic");
         Add("Training.LearnGrow.FilterAll", "Alles", "All");
         Add("Training.LearnGrow.FilterFreeOnly", "Alleen gratis", "Free only");

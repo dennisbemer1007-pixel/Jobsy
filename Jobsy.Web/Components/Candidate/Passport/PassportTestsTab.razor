@@ -131,17 +131,17 @@
                     </article>
                 }
 
-                @if (_showGrowth && _trainingPartnersOn)
-                {
-                    <PassportCompetencyGrowth />
-                }
-
                 <p class="passport-tests__cost">
                     <a class="btn btn-ghost" href="/profiel/tests/competentie">@Culture["Passport.Tests.WhatCosts"]</a>
                 </p>
             </div>
 
-            <aside class="passport-tests__aside">
+            @if (_showGrowth && _trainingPartnersOn)
+            {
+                <PassportCompetencyGrowth />
+            }
+
+            <aside class="passport-tests__aside @(_showGrowth && _trainingPartnersOn ? "passport-tests__aside--hidden" : null)">
                 @if (_previewDef is not null)
                 {
                     <TestResultLockedPreview Kind="_previewDef.Kind"

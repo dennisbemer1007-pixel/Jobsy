@@ -141,10 +141,8 @@
         {
             var x1 = XCoord(i, nodes.Count);
             var x2 = XCoord(i + 1, nodes.Count);
-            var y1 = PinY(i);
-            var y2 = PinY(i + 1);
-            var cx = (x1 + x2) / 2;
-            var path = $"M {x1:0.#} {y1:0.#} Q {cx:0.#} {(y1 + y2) / 2 - 6:0.#} {x2:0.#} {y2:0.#}";
+            var y = PinY();
+            var path = $"M {x1:0.#} {y:0.#} L {x2:0.#} {y:0.#}";
             var state = SegmentState(nodes[i + 1]);
             segments.Add(new(path, state));
         }
@@ -166,7 +164,7 @@
         return pad + (1000 - pad * 2) * index / (count - 1);
     }
 
-    private static double PinY(int index) => index % 2 == 0 ? 30 : 22;
+    private static double PinY() => 28;
 
     private static double NodeLeftPercent(int index, int count)
     {

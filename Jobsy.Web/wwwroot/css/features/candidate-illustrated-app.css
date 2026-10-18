@@ -881,8 +881,8 @@
 .career-path-svg__seg {
   fill: none;
   stroke-width: 3;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
 }
 
 .career-path-svg__seg--done {

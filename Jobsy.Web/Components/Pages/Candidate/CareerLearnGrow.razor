@@ -24,9 +24,12 @@
                               CoralEyebrow="true"
                               Title="@Culture["Training.LearnGrow.Title"]"
                               Lead="@Culture["Training.LearnGrow.Lead"]"
-                              ArtUrl="@CandidateIllustratedImages.CarriereBand"
-                              ArtPosition="58% center">
-        <form class="opl-search opl-search--hero" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
+                              ArtUrl="@CandidateIllustratedImages.FinaleHero"
+                              ArtPosition="58% center"
+                              CssClass="cand-hero--profession-band" />
+
+    <main class="opl-wrap">
+        <form class="opl-search opl-search--below" @onsubmit="SearchAsync" @onsubmit:preventDefault="true">
             <label class="opl-search__field">
                 <span class="visually-hidden">@Culture["Training.LearnGrow.SearchPlaceholder"]</span>
                 <input type="search"
@@ -36,9 +39,6 @@
             </label>
             <button type="submit" class="btn btn-primary">@Culture["Training.LearnGrow.Search"]</button>
         </form>
-    </CandidateIllustratedHero>
-
-    <main class="opl-wrap">
         <div class="opl-subnav">
             <div class="opl-seg">
                 <a href="/carriere">@Culture["Training.LearnGrow.NavRoute"]</a>
@@ -66,42 +66,56 @@
             <div class="opl-layout">
                 <div class="opl-main">
                     <section class="opl-filters">
-                        <div class="opl-filters__row">
+                        <div class="opl-filters__top">
                             <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterSubject"]</span>
-                            @foreach (var chip in SubjectChips())
-                            {
-                                <button type="button"
-                                        class="opl-chip @(_subject == chip.Key ? "is-on" : null)"
-                                        @onclick="() => SetSubject(chip.Key)">
-                                    @chip.Label
-                                </button>
-                            }
-                        </div>
-                        <div class="opl-filters__row opl-filters__row--desktop">
-                            <button type="button" class="opl-chip @(_freeOnly ? "is-on" : null)" @onclick="ToggleFree">
-                                @Culture["Training.LearnGrow.FilterFreeOnly"]
+                            <div class="opl-filters__subject-scroll">
+                                @foreach (var chip in SubjectChips())
+                                {
+                                    <button type="button"
+                                            class="opl-chip @(_subject == chip.Key ? "is-on" : null)"
+                                            @onclick="() => SetSubject(chip.Key)">
+                                        @chip.Label
+                                    </button>
+                                }
+                            </div>
+                            <button type="button"
+                                    class="opl-filters__toggle btn btn-ghost btn-sm @(_filtersOpen ? "is-on" : null)"
+                                    aria-expanded="@(_filtersOpen ? "true" : "false")"
+                                    @onclick="() => _filtersOpen = !_filtersOpen">
+                                @Culture["Training.LearnGrow.FilterPanel"]
+                                @if (AdvancedFilterCount > 0)
+                                {
+                                    <span class="opl-filters__badge">@AdvancedFilterCount</span>
+                                }
                             </button>
-                            <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterFormat"]</span>
-                            @foreach (var f in FormatChips())
-                            {
-                                <button type="button"
-                                        class="opl-chip @(_format == f.Key ? "is-on" : null)"
-                                        @onclick="() => SetFormat(f.Key)">
-                                    @f.Label
-                                </button>
-                            }
-                            <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterDuration"]</span>
-                            @foreach (var d in DurationChips())
-                            {
-                                <button type="button"
-                                        class="opl-chip @(_duration == d.Key ? "is-on" : null)"
-                                        @onclick="() => SetDuration(d.Key)">
-                                    @d.Label
-                                </button>
-                            }
-                            <span class="muted">@Culture.Format("Training.LearnGrow.Count", _page.TotalCount)</span>
+                            <span class="opl-filters__count muted">@Culture.Format("Training.LearnGrow.Count", _page.TotalCount)</span>
                         </div>
-                        <p class="opl-filters__mobile-trigger muted">@Culture["Training.LearnGrow.MobileFilters"]</p>
+                        @if (_filtersOpen)
+                        {
+                            <div class="opl-filters__advanced">
+                                <button type="button" class="opl-chip @(_freeOnly ? "is-on" : null)" @onclick="ToggleFree">
+                                    @Culture["Training.LearnGrow.FilterFreeOnly"]
+                                </button>
+                                <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterFormat"]</span>
+                                @foreach (var f in FormatChips())
+                                {
+                                    <button type="button"
+                                            class="opl-chip @(_format == f.Key ? "is-on" : null)"
+                                            @onclick="() => SetFormat(f.Key)">
+                                        @f.Label
+                                    </button>
+                                }
+                                <span class="opl-filters__label">@Culture["Training.LearnGrow.FilterDuration"]</span>
+                                @foreach (var d in DurationChips())
+                                {
+                                    <button type="button"
+                                            class="opl-chip @(_duration == d.Key ? "is-on" : null)"
+                                            @onclick="() => SetDuration(d.Key)">
+                                        @d.Label
+                                    </button>
+                                }
+                            </div>
+                        }
                     </section>
 
                     @OfferSection("next", Culture["Training.LearnGrow.SectionNext"], _page.NextStepSubtitle, _page.NextStep)
@@ -142,6 +156,31 @@
     private TrainingProgressSummaryModel? _progress;
     private TrainingPartnerOfferModel? _selected;
     private readonly HashSet<string> _expandedSections = [];
+    private bool _filtersOpen;
+
+    private int AdvancedFilterCount
+    {
+        get
+        {
+            var n = 0;
+            if (_freeOnly)
+            {
+                n++;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_format))
+            {
+                n++;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_duration))
+            {
+                n++;
+            }
+
+            return n;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

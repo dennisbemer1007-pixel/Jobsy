@@ -1,0 +1,173 @@
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>:root{--brand:#0f2d5c;--coral:#f54a1b;--pearl:#f7f1e8;--cream:#fcf3e4;--surf:#fffcfa;--text:#122033;--muted:#5a6a7d;--border:#e3d9cd;--ok:#15803d;--soft:#e7eef7}
+*{box-sizing:border-box}html,body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;color:var(--text);background:var(--pearl);-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5}
+h1,h2,h3,h4{color:var(--brand);margin:0;line-height:1.2}p{margin:0}
+.nav{position:relative;z-index:3;display:flex;align-items:center;gap:28px;max-width:1200px;margin:0 auto;padding:16px 32px}
+.brand{display:flex;gap:10px;align-items:center;font-weight:700;color:var(--brand);font-size:1.15rem}.brand img{width:32px;height:32px}
+.nav .links{display:flex;gap:24px;color:#34465c;font-weight:550;font-size:.95rem}
+.nav .right{margin-left:auto;display:flex;gap:18px;align-items:center}
+.lang{font-size:.85rem;color:var(--muted);font-weight:600}
+.lnk{color:var(--brand);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.nolnk{color:var(--brand);font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;border-radius:12px;padding:13px 24px;font-size:1rem;background:var(--brand);color:#fff;white-space:nowrap}
+.btn.coral{background:var(--coral);box-shadow:0 6px 16px rgba(245,74,27,.22)}
+.btn.sm{padding:9px 16px;font-size:.92rem;border-radius:10px}
+.btn.line{background:#fff;color:var(--brand);border:1px solid #cfd8e4}
+.badge{display:inline-flex;gap:8px;align-items:center;font-size:.8rem;font-weight:650;color:var(--brand);background:rgba(255,255,255,.75);border:1px solid rgba(15,45,92,.1);border-radius:99px;padding:4px 12px}
+.badge i{width:8px;height:8px;border-radius:50%;background:var(--coral)}
+.foot{border-top:1px solid var(--border);margin-top:0;background:#f3ece2}
+.foot .fin{max-width:1200px;margin:0 auto;padding:40px 32px 24px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:24px;font-size:.9rem;color:#34465c}
+.foot h5{margin:0 0 10px;color:var(--brand);font-size:.85rem}.foot ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.foot .bot{grid-column:1/-1;display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--border);padding-top:16px;color:var(--muted);font-size:.82rem;flex-wrap:wrap}
+@media(max-width:600px){.nav{padding:12px 16px;gap:12px}.nav .links{display:none}.foot .fin{grid-template-columns:1fr 1fr;padding:28px 16px 20px}.foot .fin>div:first-child{grid-column:1/-1}}
+
+.ah{position:relative;z-index:5;display:flex;align-items:center;gap:22px;padding:10px 28px;background:#fbf6ef;border-bottom:1px solid var(--border)}
+.ah .tag{color:#34465c;font-weight:600;font-size:.88rem;padding-left:6px}
+.ah .anav{display:flex;gap:4px;margin-left:24px}.ah .anav span{padding:7px 12px;border-radius:10px;font-weight:600;font-size:.92rem;color:#34465c}.ah .anav span.on{background:#efe6da;color:var(--brand)}
+.ah .ar{margin-left:auto;display:flex;gap:12px;align-items:center}
+.cb{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--border);background:#fff;color:var(--brand)}.cb svg{width:18px;height:18px}
+.lng{display:flex;gap:6px;align-items:center;font-weight:650;font-size:.85rem;color:var(--brand);border:1px solid var(--border);background:#fff;border-radius:10px;padding:7px 10px}
+.flag{width:18px;height:12px;border-radius:2px;background:linear-gradient(#ae1c28 33%,#fff 33% 66%,#21468b 66%)}
+.who{display:flex;gap:10px;align-items:center;font-weight:650;color:var(--brand);font-size:.92rem}.av{width:34px;height:34px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-weight:700;font-size:.85rem}
+.tabbar{display:none}
+.lf{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 28px;border-top:1px solid var(--border);font-size:.82rem;color:var(--muted)}.lf .ll{display:flex;flex-wrap:wrap;gap:6px 14px}.lf .ll span{text-decoration:underline;text-underline-offset:3px}
+@media(max-width:600px){
+ .ah{padding:8px 14px;gap:10px}.ah .tag,.ah .anav,.who b{display:none}.ah .ar{gap:8px}.cb{width:34px;height:34px}.lng{padding:6px 8px}
+ .tabbar{display:grid;grid-template-columns:repeat(5,1fr);background:#fffcfa;border-top:1px solid var(--border);padding:8px 4px 14px}
+ .tabbar span{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.7rem;font-weight:600;color:var(--muted)}.tabbar span svg{width:22px;height:22px}.tabbar span.on{color:var(--brand)}
+ .tabbar span.on i{background:#efe6da}.tabbar i{display:grid;place-items:center;width:44px;height:28px;border-radius:99px}
+ .lf{padding:16px}
+}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 28px 44px}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:18px}
+.band{display:flex;align-items:stretch;justify-content:space-between;gap:24px;background:#fbf2e3;border:1px solid #efe3d1;border-radius:20px;padding:0 0 0 30px;overflow:hidden;min-height:132px}
+.band .bt{padding:22px 0;align-self:center}.band h1{font-size:1.65rem}.band p{color:#3d4e63;margin-top:6px;max-width:560px}
+.band .sart{width:380px;flex-shrink:0;background:no-repeat center/cover;-webkit-mask-image:linear-gradient(90deg,transparent,#000 24%);mask-image:linear-gradient(90deg,transparent,#000 24%)}
+.eyb{display:block;font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.eyb.c{color:#b4461f;letter-spacing:.02em;text-transform:none;font-size:.82rem}
+.back{display:inline-flex;gap:6px;align-items:center;color:var(--brand);font-weight:600;font-size:.9rem;margin-bottom:14px}
+.photo{position:relative;background:linear-gradient(140deg,#efe5d8 0%,#e9e0d3 55%,#e3dbcf 100%);display:grid;place-items:center;color:#a39583;overflow:hidden}
+.photo:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 78% 22%,rgba(255,255,255,.45),transparent 45%),radial-gradient(circle at 15% 90%,rgba(214,196,172,.35),transparent 50%)}
+.photo span{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:.78rem;font-weight:600}.photo svg{width:26px;height:26px}
+.fitp{display:inline-flex;gap:6px;align-items:center;font-size:.82rem;font-weight:700;color:#1f5135;background:#e8f3ec;border:1px solid #cfe6d7;border-radius:99px;padding:3px 10px;white-space:nowrap}.fitp svg{width:14px;height:14px}
+.fitp.gate{color:#7a5513;background:#fdf3dc;border-color:#ecd49c}
+.chip2{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:650;color:var(--brand);background:var(--soft);border-radius:99px;padding:3px 10px;white-space:nowrap}
+.st{display:inline-flex;gap:6px;align-items:center;font-size:.78rem;font-weight:700;border-radius:99px;padding:3px 10px;white-space:nowrap;background:#eef2f7;color:#2c4a73}.st:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.st.inv{background:#fdf0e3;color:#a2501d}.st.ok{background:#e8f3ec;color:#1f5135}.st.no{background:#f1ede8;color:#6b6259}.st.warn{background:#fdf3dc;color:#7a5513}
+.segtabs{display:inline-flex;gap:2px;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:4px}
+.segtabs span{display:inline-flex;gap:7px;align-items:center;padding:8px 16px;border-radius:10px;font-weight:650;font-size:.9rem;color:var(--brand)}.segtabs span.on{background:var(--brand);color:#fff}
+.segtabs i{font-style:normal;font-size:.72rem;background:#f8ecd9;color:#8f6232;border-radius:99px;padding:1px 7px}
+.ibtn2{width:40px;height:40px;border-radius:12px;border:1px solid #cfd8e4;background:#fff;display:grid;place-items:center;color:var(--brand);flex-shrink:0}.ibtn2 svg{width:18px;height:18px}
+.btn svg{width:17px;height:17px}
+.lk{color:var(--brand);font-weight:650;text-decoration:underline;text-underline-offset:3px}
+.muted{color:var(--muted)}
+.sw{width:40px;height:23px;border-radius:99px;background:#d9d1c6;position:relative;flex-shrink:0}.sw:after{content:"";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.sw.on{background:var(--brand)}.sw.on:after{left:20px}
+.cbx{width:20px;height:20px;border-radius:6px;border:1.5px solid #9aa6b5;background:#fff;flex-shrink:0;display:grid;place-items:center;color:#fff}.cbx.on{background:var(--brand);border-color:var(--brand)}.cbx svg{width:14px;height:14px}
+@media(max-width:600px){.wrap{padding:14px 14px 26px}.band{padding:0;flex-direction:column-reverse;gap:0;min-height:0}.band .sart{width:auto;height:118px;-webkit-mask-image:none;mask-image:none}.band .bt{padding:14px 18px 18px}.band h1{font-size:1.4rem}}
+
+.hero{position:relative;background-color:#f8efe2;background-repeat:no-repeat;overflow:hidden;border-bottom:1px solid #efe3d1}
+.hero .hin{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:40px 28px}
+.hero h1{font-size:2.05rem;letter-spacing:-.01em}.hero p.lead{color:#34465c;font-size:1.02rem;margin-top:8px;max-width:520px}
+.hero .hact{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.subnav{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}
+.subnav .seg2{display:inline-flex;gap:2px;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:4px}
+.subnav .seg2 span{display:inline-flex;gap:7px;align-items:center;padding:8px 16px;border-radius:10px;font-weight:650;font-size:.92rem;color:var(--brand)}.subnav .seg2 span.on{background:var(--brand);color:#fff}.subnav .seg2 svg{width:16px;height:16px}
+.subnav .seg2 i{font-style:normal;font-size:.72rem;background:#f8ecd9;color:#8f6232;border-radius:99px;padding:1px 7px}.subnav .seg2 span.on i{background:rgba(255,255,255,.18);color:#fff}
+.subnav .note{font-size:.86rem;color:var(--muted)}
+/* typepil */
+.tp{display:inline-flex;gap:6px;align-items:center;font-size:.74rem;font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap;letter-spacing:.01em}.tp svg{width:13px;height:13px}
+.tp.ws{background:#fdf0e3;color:#a2501d}.tp.cu{background:#e9eff8;color:#2c4a73}.tp.op{background:#0f2d5c;color:#fff}
+.free{display:inline-flex;gap:5px;align-items:center;font-size:.74rem;font-weight:700;color:#1f5135;background:#e8f3ec;border-radius:99px;padding:3px 9px;white-space:nowrap}.free svg{width:12px;height:12px}
+.cost{font-size:.8rem;font-weight:650;color:#34465c;white-space:nowrap}
+.pl{font-size:.72rem;font-weight:650;color:#6b6259;background:#f1ede8;border-radius:99px;padding:2px 8px;white-space:nowrap}
+/* cursuskaart */
+.cc{position:relative;display:flex;flex-direction:column;gap:9px;background:#fffdfb;border:1px solid #ece2d5;border-radius:16px;padding:16px 18px;min-width:0}
+.cc.sel{border-color:var(--brand);box-shadow:0 0 0 3px rgba(15,45,92,.08)}
+.cc .top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.cc .top .bm{margin-left:auto;color:#8a7a68;width:20px;height:20px}.cc .top .bm.on{color:var(--coral)}
+.cc h4{font-size:1.02rem;color:var(--brand);line-height:1.3}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.84rem;color:#4a5a6e}.meta span{display:inline-flex;gap:6px;align-items:center;white-space:nowrap}.meta svg{width:15px;height:15px;color:#8a7a68}
+.why{display:flex;gap:9px;align-items:flex-start;background:#fbf5ec;border-radius:11px;padding:9px 11px;font-size:.86rem;color:#34465c;line-height:1.4}.why svg{width:16px;height:16px;color:#2f7a4f;flex-shrink:0;margin-top:1px}.why b{color:var(--brand);font-weight:650}
+.cc .ft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:auto;padding-top:2px}
+.cc .ft .lk2{display:inline-flex;gap:6px;align-items:center;font-weight:650;color:var(--brand);font-size:.88rem}.cc .ft .lk2 svg{width:15px;height:15px}
+.cc .ft small{font-size:.78rem;color:var(--muted)}
+.cc.sel .ft .lk2{color:#a2501d}
+.mob{display:none}
+.cc .ft .mob,.cc .inb{display:none}
+@media(max-width:600px){.cc .ft .mob{display:inline-flex}.cc .inb{display:block;margin:4px -15px -14px;border-top:1px dashed #d8cdbf}.cc .ft .desk{display:none}}
+/* zijpaneel */
+.panel{background:var(--surf);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(15,45,92,.06)}
+.panel .ph{position:relative;padding:18px 22px 16px;background:#fbf2e3;border-bottom:1px solid #efe3d1}
+.panel .ph .x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:10px;background:#fff;border:1px solid var(--border);display:grid;place-items:center;color:var(--brand)}.panel .ph .x svg{width:16px;height:16px}
+.panel .ph h3{font-size:1.25rem;margin-top:8px;padding-right:36px;line-height:1.25}.panel .ph .by{font-size:.86rem;color:var(--muted);margin-top:4px}
+.panel .pb,.inb .pb{padding:16px 22px 20px;display:grid;gap:16px}.inb .pb{padding:14px 15px 4px}.pb{grid-template-columns:minmax(0,1fr)}.pact .btn{padding:13px 12px}
+.facts2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.facts2 div{background:#fbf7f1;border:1px solid #f0e7dc;border-radius:12px;padding:9px 11px}.facts2 small{display:flex;gap:6px;align-items:center;font-size:.74rem;font-weight:700;color:#8a7a68;text-transform:uppercase;letter-spacing:.04em}.facts2 small svg{width:13px;height:13px}.facts2 b{display:block;font-size:.9rem;color:var(--brand);margin-top:2px;font-weight:650}
+.pb h5{margin:0 0 6px;font-size:.92rem;color:var(--brand)}.pb ul.ls{margin:0;padding:0;list-style:none;display:grid;gap:6px;font-size:.9rem;color:#34465c}.pb ul.ls li{display:flex;gap:9px;align-items:flex-start}.pb ul.ls svg{width:16px;height:16px;color:#2f7a4f;flex-shrink:0;margin-top:2px}
+.pb p.tx{font-size:.9rem;color:#34465c}
+.gain{display:flex;gap:12px;align-items:center;background:#f4f7fb;border:1px solid #dfe7f1;border-radius:12px;padding:11px 13px;font-size:.88rem;color:#34465c}.gain .gi{width:34px;height:34px;border-radius:10px;background:#fff;display:grid;place-items:center;color:var(--brand);flex-shrink:0}.gain svg{width:18px;height:18px}.gain b{color:var(--brand)}
+.pact{display:grid;grid-template-columns:1fr auto;gap:8px}.pact .btn{width:100%}
+.prog{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--border);padding-top:14px;font-size:.88rem;color:#34465c}.prog b{display:block;color:var(--brand);font-size:.9rem}
+.disc{font-size:.78rem;color:var(--muted)}
+.ttl{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:14px;margin:22px 0 12px}.ttl h3{font-size:1.1rem}.ttl small{font-size:.82rem;color:var(--muted)}
+.spot{border-radius:50%;object-fit:cover;flex-shrink:0;box-shadow:0 0 0 4px #fff,0 0 0 5px #efe3d1}
+@media(max-width:600px){
+ .hero .hin{padding:22px 16px 20px}.hero h1{font-size:1.55rem}.hero p.lead{font-size:.95rem}
+ .subnav{margin-bottom:14px}.subnav .seg2{display:flex;width:100%}.subnav .seg2 span{flex:1;justify-content:center;padding:8px 8px}.subnav .note{display:none}
+ .cc{padding:14px 15px}.panel .ph{padding:16px}.panel .pb{padding:14px 16px 16px}
+}
+.pg{padding:18px 20px}.pg h3{font-size:1.02rem}.pg .pi{display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid #efe6db}.pg .pi:first-of-type{border-top:0;padding-top:10px}
+.pg .pic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex-shrink:0}.pg .pic svg{width:15px;height:15px}.pg .pic.ok{background:#e8f3ec;color:#1f5135}.pg .pic.go{background:#fdf0e3;color:#a2501d}.pg .pic.bm{background:#eef2f7;color:#2c4a73}
+.pg .pi b{display:block;font-size:.9rem;color:var(--brand);line-height:1.3}.pg .pi small{font-size:.8rem;color:var(--muted)}.pg .pi small.g{color:#1f5135;font-weight:650}
+.wk{display:flex;gap:3px;margin-top:6px}.wk i{width:22px;height:5px;border-radius:99px;background:#e3dbd0}.wk i.on{background:#a2501d}
+
+.hero{background-image:url(spots/bg-hoe-je-werkt.jpg);background-size:1440px auto;background-position:center bottom -30px;height:400px;background-color:#eef2f7}
+.hero:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 720px 240px at 24% 20%,rgba(246,248,251,.85),rgba(246,248,251,0) 70%)}
+.hero .hin{padding-top:46px}
+.wrap{padding-top:22px}
+.ptabs{display:inline-flex;gap:2px;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:4px}.ptabs span{padding:8px 15px;border-radius:10px;font-weight:650;font-size:.9rem;color:var(--brand)}.ptabs span.on{background:var(--brand);color:#fff}
+.ptsel{display:none}
+.tg{display:grid;grid-template-columns:1fr 360px;gap:22px;align-items:start;margin-top:4px}.tg>*{min-width:0}
+.cols{display:grid;gap:14px}
+.comp{background:var(--surf);border:1px solid var(--border);border-radius:18px;padding:18px 22px}
+.ch{display:flex;gap:12px;align-items:center}.ch h3{font-size:1.08rem}.ci{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:#eef2f7;color:var(--brand);flex-shrink:0}.ci svg{width:19px;height:19px}
+.ctag{margin-left:auto;font-size:.76rem;font-weight:700;border-radius:99px;padding:3px 10px;white-space:nowrap}.ctag.ok{background:#e8f3ec;color:#1f5135}.ctag.gr{background:#fdf0e3;color:#a2501d}.ctag.mid{background:#fdf3dc;color:#7a5513}.ctag.bal{background:#eef2f7;color:#2c4a73}
+.comp.gr .ci{background:#fdf0e3;color:#a2501d}.comp.ok .ci{background:#e8f3ec;color:#1f5135}.comp.mid .ci{background:#fdf3dc;color:#7a5513}
+.ct{color:#34465c;font-size:.94rem;margin-top:8px}
+.more{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:.86rem;color:#4a5a6e}.more svg{width:15px;height:15px;color:#2f7a4f;flex-shrink:0}.more b{color:var(--brand);font-weight:650}
+.grow{margin-top:14px;background:#fdf8f1;border:1px solid #f1e5d3;border-radius:14px;padding:14px 16px;display:grid;gap:10px}
+.gh{display:flex;gap:14px;align-items:center}.gh .spot{width:58px;height:58px}.gh h4{font-size:.98rem;color:#a2501d}.gh p{font-size:.88rem;color:#3d4e63;margin-top:2px}
+.crow{display:flex;gap:14px;align-items:center;justify-content:space-between;background:#fff;border:1px solid #eee3d5;border-radius:12px;padding:11px 14px}
+.crow .cl{min-width:0;display:grid;gap:4px}.crow .top{display:flex;gap:6px;flex-wrap:wrap}.crow b{color:var(--brand);font-size:.95rem}
+.crow .go{display:inline-flex;gap:4px;align-items:center;font-weight:650;color:var(--brand);font-size:.88rem;white-space:nowrap}.crow .go svg{width:15px;height:15px}
+.side2{display:grid;gap:14px;position:sticky;top:16px}
+.lg{overflow:hidden;padding:0}.lg .im{height:150px;background:url(spots/opl-band.jpg) center 62%/cover}.lg .lb{padding:16px 20px 18px}.lg h3{font-size:1.08rem}.lg p{font-size:.9rem;color:#3d4e63;margin-top:4px}.lg .btn{margin-top:12px;width:100%}
+.lg ul{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px;font-size:.88rem;color:#34465c}.lg li{display:flex;gap:8px;align-items:center}.lg li svg{width:15px;height:15px;color:#2f7a4f}
+.priv{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:#f4f7fb;border-color:#dfe7f1;font-size:.86rem;color:#34465c}.priv svg{width:20px;height:20px;color:var(--brand);flex-shrink:0}.priv b{color:var(--brand);display:block}
+.how2{padding:16px 18px}.how2 h3{font-size:.98rem}.how2 p{font-size:.86rem;color:#3d4e63;margin-top:4px}
+.intro{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin:18px 0 12px}.intro h2{font-size:1.25rem}.intro p{color:var(--muted);font-size:.9rem}
+@media(max-width:600px){
+ .hero{height:auto;background-size:900px auto;background-position:left -12px bottom -10px}.hero .hin{padding-bottom:150px}
+ .hero:before{background:linear-gradient(180deg,rgba(246,248,251,.9) 0%,rgba(246,248,251,.5) 45%,rgba(246,248,251,0) 65%)}
+ .ptabs{display:none}.ptsel{display:flex;justify-content:space-between;align-items:center;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-weight:650;color:var(--brand)}.ptsel svg{width:18px;height:18px}
+ .intro{flex-direction:column;align-items:flex-start;gap:4px;margin:16px 0 10px}
+ .tg{grid-template-columns:1fr;gap:14px}.side2{position:static}
+ .comp{padding:16px}.ch{flex-wrap:wrap;row-gap:4px}.ch h3{flex:1 1 calc(100% - 60px)}.ch .ctag{order:3;margin-left:48px}
+ .grow{padding:12px}.gh .spot{width:48px;height:48px}
+ .crow{flex-direction:column;align-items:flex-start;gap:8px}
+}</style></head><body><header class="ah"><div class="brand"><img src="lobsy-256.png" alt="">Lobsy</div><span class="tag">Dichtbij genoeg om het pantser te laten vallen</span><nav class="anav"><span class="">Reis</span><span class="on">Paspoort</span><span class="">Zoeken</span><span class="">Sollicitaties</span><span class="">Carrière</span></nav><div class="ar"><span class="cb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 21h4"/></svg></span><span class="lng"><i class="flag"></i>NL ▾</span><span class="who"><b>Sanne de Vries</b><span class="av">SV</span></span></div></header><section class="hero"><div class="hin"><span class="eyb c" style="color:#2c4a73">Paspoort · Mijn tests</span><h1 style="margin-top:4px">Hoe jij werkt</h1><p class="lead">Wat je test over je laat zien, in gewone woorden. Bij elk groeipunt staat meteen wat je kunt doen.</p></div></section>
+<main class="wrap"><div class="ptabs"><span>Wie ik ben</span><span class="on">Mijn tests</span><span>Past deze baan?</span><span>Carrière</span><span>Bewijzen</span><span>Mijn gegevens</span></div><div class="ptsel">Mijn tests <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></div>
+<div class="intro"><div><h2>Je sterke punten en groeipunten</h2><p>Uit je Quick-Scan en Verdieping, 35 vragen.</p></div><span class="btn line sm">Rapport downloaden</span></div>
+<div class="tg"><div class="cols">
+<article class="comp ok"><div class="ch"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .6 3.2 2.6 3.7 5.5"/></svg></span><h3>Samenwerken</h3><span class="ctag ok">Sterk punt</span></div><p class="ct">Samenwerken is een sterke kant van jou. Je trekt anderen mee en houdt rekening met het team.</p><p class="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-9"/><path d="M12 12c0-4-3-6-7-6 0 4 3 6 7 6zM12 10c0-3.5 2.5-6 7-6 0 4-2.5 6-7 6z"/></svg><span>Wil je nog verder? <b>Feedback geven en vragen</b> · workshop · gratis</span></p></article>
+<article class="comp gr"><div class="ch"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19 13 11"/></svg></span><h3>Rustig blijven onder druk</h3><span class="ctag gr">Hier kun je in groeien</span></div><p class="ct">Drukte of onverwachte wendingen raken je soms. Dat is heel gewoon, en het is iets wat je kunt leren.</p><div class="grow"><div class="gh"><img class="spot" src="spots/c-peach-sq.png" alt=""><div><h4>Hier kun je in groeien</h4><p>Rust onder druk kun je leren. Deze twee passen bij jou en bij je route naar dierenarts.</p></div></div><div class="crow"><div class="cl"><div class="top"><span class="tp ws"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .6 3.2 2.6 3.7 5.5"/></svg>Workshop</span><span class="free"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Gratis</span></div><b>Rustig blijven als het druk wordt</b><div class="meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>2 dagdelen</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></svg>Klassikaal · Zaandam</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-4 8 4v13"/><path d="M9 21v-6h6v6"/></svg>Leerwerkloket (regio)</span></div></div><span class="go">Bekijk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span></div><div class="crow"><div class="cl"><div class="top"><span class="tp cu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Cursus</span><span class="free"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Gratis</span></div><b>Lastige gesprekken aan de balie</b><div class="meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>4 weken · 1 uur per week</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>Online</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-4 8 4v13"/><path d="M9 21v-6h6v6"/></svg>Open leerplatform</span></div></div><span class="go">Bekijk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span></div></div></article>
+<article class="comp ok"><div class="ch"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18 3 21V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/></svg></span><h3>Klantcontact</h3><span class="ctag ok">Sterk punt</span></div><p class="ct">Je maakt makkelijk contact en voelt aan wat iemand nodig heeft. Fijn aan een balie of in de winkel.</p></article>
+<article class="comp mid"><div class="ch"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg></span><h3>Plannen en afmaken</h3><span class="ctag mid">Groeit nog</span></div><p class="ct">Je pakt dingen graag op. Het afronden als het lang duurt, kan nog makkelijker worden.</p><div class="grow sm"><div class="gh"><div><h4>Hier kun je in groeien</h4></div></div><div class="crow"><div class="cl"><div class="top"><span class="tp ws"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1-3.5 3.5-5.5 6.5-5.5s5.5 2 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .6 3.2 2.6 3.7 5.5"/></svg>Workshop</span><span class="free"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Gratis</span></div><b>Plannen en afmaken wat je begint</b><div class="meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>1 dag</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11z"/><circle cx="12" cy="10" r="2"/></svg>Klassikaal · Zaandam</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V8l8-4 8 4v13"/><path d="M9 21v-6h6v6"/></svg>Bibliotheek (regio)</span></div></div><span class="go">Bekijk <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span></div></div></article>
+<article class="comp bal"><div class="ch"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg></span><h3>Nieuwe dingen proberen</h3><span class="ctag bal">In balans</span></div><p class="ct">Je houdt van wat werkt, en staat open voor iets nieuws als je het nut ziet.</p></article>
+</div>
+<div class="side2"><section class="card lg"><div class="im"></div><div class="lb"><h3>Leren &amp; groeien</h3><p>3 workshops passen bij je groeipunten.</p><ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Allemaal gratis</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Dichtbij in Zaandam of online</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg>Afgerond? Dan staat het in je paspoort</li></ul><span class="btn">Bekijk alles</span></div></section>
+<section class="card pg"><h3>Jouw voortgang</h3>
+<div class="pi"><span class="pic ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg></span><div><b>Eerste hulp bij dieren</b><small class="g">Afgerond · staat in je Bewijzen</small></div></div>
+<div class="pi"><span class="pic go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z"/></svg></span><div><b>Lastige gesprekken aan de balie</b><small>Bezig · week 2 van 4</small><div class="wk"><i class="on"></i><i class="on"></i><i></i><i></i></div></div></div>
+<p class="disc" style="margin-top:8px">Wat je afrondt, zien werkgevers in je paspoort. Vacatures die erom vragen, komen hoger in je matches.</p></section>
+<section class="card how2"><h3>Hoe kiezen we dit?</h3><p>We kijken naar je groeipunten, je route en wat dichtbij is. Gratis staat altijd bovenaan. Een partnerlink zie je altijd aan het label.</p></section>
+<section class="card priv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3z"/></svg><span><b>Alleen jij ziet je groeipunten</b>Werkgevers zien alleen wat jij deelt en wat anderen hebben bevestigd.</span></section></div></div>
+</main><footer class="lf"><div class="ll"><span>Privacyverklaring</span><span>Algemene voorwaarden</span><span>Gebruiksvoorwaarden</span><span>Wie zijn wij</span><span>Toegankelijkheid</span><span>Bronnen</span></div><span>© 2026 Lobsy</span></footer><nav class="tabbar"><span class=""><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2z"/></svg></i>Reis</span><span class="on"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></i>Paspoort</span><span class=""><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg></i>Zoeken</span><span class=""><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 11l2 2 4-4"/></svg></i>Sollicitaties</span><span class=""><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg></i>Carrière</span></nav></body></html>
