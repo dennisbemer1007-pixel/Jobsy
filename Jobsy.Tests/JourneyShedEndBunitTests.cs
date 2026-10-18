@@ -143,11 +143,21 @@ public sealed class JourneyShedEndBunitTests : BunitContext
                 return "{\"status\":\"Completed\",\"answers\":{" + answers + "},\"completedAtUtc\":\"2026-10-03T12:00:00Z\"}";
             }
 
-            if (path.Contains("competenc", StringComparison.OrdinalIgnoreCase)
-                || path.Contains("career-interest", StringComparison.OrdinalIgnoreCase)
-                || path.Contains("/culture", StringComparison.OrdinalIgnoreCase))
+            if (path.Contains("competenc", StringComparison.OrdinalIgnoreCase))
             {
                 var mini = string.Join(",", new[] { 1, 6, 11, 16, 21 }.Select(id => $"\"{id}\":4"));
+                return "{\"status\":\"Completed\",\"answers\":{" + mini + "}}";
+            }
+
+            if (path.Contains("career-interest", StringComparison.OrdinalIgnoreCase))
+            {
+                var mini = string.Join(",", new[] { 1, 6, 14, 18, 22 }.Select(id => $"\"{id}\":4"));
+                return "{\"status\":\"Completed\",\"answers\":{" + mini + "}}";
+            }
+
+            if (path.Contains("/culture", StringComparison.OrdinalIgnoreCase))
+            {
+                var mini = string.Join(",", new[] { 1, 3, 5, 7, 11 }.Select(id => $"\"{id}\":4"));
                 return "{\"status\":\"Completed\",\"answers\":{" + mini + "}}";
             }
 
