@@ -36,16 +36,32 @@
                 }
             </div>
         }
-        <div class="test-flow__bar" aria-hidden="true">
-            @for (var i = 0; i < blocks; i++)
+        <div class="test-flow__bar" role="group" aria-label="@Culture.Format("TestFlow.QuestionOf", index + 1, targetCount)">
+            @for (var seg = 0; seg < blocks; seg++)
             {
-                var answeredUpTo = (int)Math.Ceiling((i + 1) * (double)targetCount / blocks);
-                var cls = answeredUpTo <= answeredCount
+                var segIndex = blocks == targetCount
+                    ? seg
+                    : Math.Min(targetCount - 1, (int)Math.Floor(seg * (double)targetCount / blocks));
+                var segQuestion = Ordered[segIndex];
+                var segAnswered = _flowAnswers.ContainsKey(segQuestion.Id);
+                var segCurrent = segIndex == index;
+                var cls = segAnswered
                     ? "is-done"
-                    : answeredUpTo <= CountForLevel(reached) || i == (int)((index) * (double)blocks / targetCount)
+                    : segCurrent
                         ? "is-current"
                         : "is-todo";
-                <i class="@cls"></i>
+                if (segAnswered && !segCurrent)
+                {
+                    <button type="button"
+                            class="test-flow__seg @cls"
+                            title="@Culture.Format("TestFlow.JumpToQuestion", segIndex + 1)"
+                            aria-label="@Culture.Format("TestFlow.JumpToQuestion", segIndex + 1)"
+                            @onclick="() => BeginEdit(segIndex)"></button>
+                }
+                else
+                {
+                    <span class="test-flow__seg @cls" aria-hidden="@(segCurrent ? null : "true")"></span>
+                }
             }
             @foreach (var band in TestDepthRules.Levels(Kind))
             {
@@ -122,24 +138,28 @@
         @if (!Compact)
         {
             var answeredEarlier = RecentAnswered().ToList();
-            var recent = answeredEarlier.Take(_recentLimit).ToList();
-            @if (recent.Count > 0)
+            @if (answeredEarlier.Count > 0)
             {
-                <div class="test-flow__recent">
-                    <p class="test-flow__recent-title">@Culture.Format("TestFlow.Answered", answeredEarlier.Count)</p>
-                    <ul>
-                        @foreach (var (q, val, qi) in recent)
+                <details class="test-flow__earlier" data-testid="test-earlier-answers">
+                    <summary class="test-flow__earlier-summary">
+                        @Culture.Format("TestFlow.EarlierAnswers", answeredEarlier.Count)
+                    </summary>
+                    <ol class="test-flow__earlier-list">
+                        @for (var n = 0; n < answeredEarlier.Count; n++)
                         {
+                            var (q, val, qi) = answeredEarlier[n];
+                            var displayIndex = answeredEarlier.Count - n;
                             <li>
-                                <span>“@StripIdPrefix(q.Text)”</span>
-                                <strong>@val</strong>
-                                <button type="button" class="test-flow__adjust" @onclick="() => JumpTo(qi)">
+                                <span class="test-flow__earlier-num" aria-hidden="true">@displayIndex.</span>
+                                <span class="test-flow__earlier-text">“@StripIdPrefix(q.Text)”</span>
+                                <strong class="test-flow__earlier-val">@val</strong>
+                                <button type="button" class="test-flow__adjust" @onclick="() => BeginEdit(qi)">
                                     @Culture["TestFlow.Adjust"]
                                 </button>
                             </li>
                         }
-                    </ul>
-                </div>
+                    </ol>
+                </details>
             }
         }
 
@@ -201,7 +221,7 @@
     private int? _appliedExternalIndex;
     private bool _focusRequest;
     private bool _exampleOpen = true;
-    private int _recentLimit = 8;
+    private int? _resumeAfterEdit;
     private readonly HashSet<TestDepthLevel> _firedLevels = [];
     private CancellationTokenSource? _advanceCts;
     private int _advanceGeneration;
@@ -242,7 +262,6 @@
                 }
 
                 var narrow = await MatchesMediaAsync("(max-width: 639px)");
-                _recentLimit = narrow ? 5 : 8;
                 _exampleOpen = !narrow;
             }
             catch
@@ -281,8 +300,13 @@
 
     private IEnumerable<(FlowQuestion Q, int Value, int Index)> RecentAnswered()
     {
-        for (var i = _index - 1; i >= 0; i--)
+        for (var i = 0; i < TargetCount && i < Ordered.Count; i++)
         {
+            if (i == _index)
+            {
+                continue;
+            }
+
             var q = Ordered[i];
             if (_flowAnswers.TryGetValue(q.Id, out var v))
             {
@@ -328,6 +352,12 @@
         await OnChanged.InvokeAsync();
         await FireLevelsAsync();
         if (generation != _advanceGeneration || _index != answeredIndex) return;
+
+        if (_resumeAfterEdit is not null)
+        {
+            await ReturnFromEditAsync();
+            return;
+        }
 
         if (answeredIndex >= TargetCount - 1)
         {
@@ -451,11 +481,35 @@
         }
     }
 
+    private void BeginEdit(int index)
+    {
+        CancelPendingAdvance();
+        if (index != _index)
+        {
+            _resumeAfterEdit ??= _index;
+        }
+
+        JumpTo(index);
+    }
+
     private void JumpTo(int index)
     {
         CancelPendingAdvance();
         _index = Math.Clamp(index, 0, Math.Max(0, TargetCount - 1));
         _focusRequest = true;
+    }
+
+    private async Task ReturnFromEditAsync()
+    {
+        if (_resumeAfterEdit is not int resume)
+        {
+            return;
+        }
+
+        _resumeAfterEdit = null;
+        _index = Math.Clamp(resume, 0, Math.Max(0, TargetCount - 1));
+        _focusRequest = true;
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task GoBackAsync()
@@ -478,6 +532,12 @@
     private async Task GoNextAsync()
     {
         CancelPendingAdvance();
+        if (_resumeAfterEdit is not null)
+        {
+            await ReturnFromEditAsync();
+            return;
+        }
+
         if (Ordered.Count == 0 || TargetCount <= 0) return;
         _index = Math.Clamp(_index, 0, TargetCount - 1);
         var question = Ordered[_index];

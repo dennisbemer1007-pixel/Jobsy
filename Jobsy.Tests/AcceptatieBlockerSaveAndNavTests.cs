@@ -60,7 +60,54 @@ public sealed class AcceptatieBlockerSaveAndNavTests
     {
         var layout = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/MainLayout.razor"));
         Assert.Contains("_banenkaartImmersive", layout, StringComparison.Ordinal);
+        Assert.Contains("_banenkaartCandidateShell", layout, StringComparison.Ordinal);
+        Assert.Contains("app-shell--banenkaart-shell", layout, StringComparison.Ordinal);
         Assert.Contains("UsesBanenkaartImmersiveChrome", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("@if (!_isQuestionnairePage && !_isBanenkaartPage)", layout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Onboarding_wizard_first_mini_test_uses_quick_scan_catalog_version()
+    {
+        var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
+        Assert.Contains("ResolveQuickScanVersion", src, StringComparison.Ordinal);
+        Assert.Contains("TestDepthRules.MiniIds(AssessmentKind.Competence, compVersion)", src, StringComparison.Ordinal);
+        Assert.Contains("AssessmentQuickScanCatalog.CompetenceQuestions(compVersion)", src, StringComparison.Ordinal);
+        Assert.DoesNotContain("OnboardingWizardCatalog.QuestionIdsUpTo", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Desktop_candidate_header_shows_primary_nav_links()
+    {
+        var layout = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        var nav = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/CandidateHeaderNav.razor"));
+        var program = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Program.cs"));
+        var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/app.css"));
+
+        Assert.Contains("CandidateHeaderNav", layout, StringComparison.Ordinal);
+        Assert.Contains("RoleNavItemsState", nav, StringComparison.Ordinal);
+        Assert.Contains("RoleNavCatalog.IsActive", nav, StringComparison.Ordinal);
+        Assert.Contains("AddScoped<Jobsy.Web.Services.RoleNavItemsState>", program, StringComparison.Ordinal);
+        Assert.Contains(".app-header:has(.candidate-header-nav) .candidate-header-nav", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_hides_external_vacancy_promo_while_location_prompt_open()
+    {
+        var discovery = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/VacancyDiscovery.razor"));
+        var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/kandidaat-banen.css"));
+        Assert.Contains("kb-start-prompt-open", discovery, StringComparison.Ordinal);
+        Assert.Contains("_showStartPrompt", discovery, StringComparison.Ordinal);
+        Assert.Contains("kb-start-prompt-open .kb-ext__promo", css, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_candidate_shell_hides_duplicate_discovery_header_in_css()
+    {
+        var critical = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/critical.css"));
+        var app = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".app-shell--banenkaart-shell .jobsy-chrome__header", critical, StringComparison.Ordinal);
+        Assert.Contains(":not(.app-shell--banenkaart-shell) .app-header", critical, StringComparison.Ordinal);
+        Assert.Contains(".app-shell--banenkaart-shell .jobsy-chrome__header", app, StringComparison.Ordinal);
     }
 }

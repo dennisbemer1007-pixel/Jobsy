@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Features;
 using Jobsy.Core.Privacy;
+using Jobsy.Core.Rules;
 using Jobsy.Web.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -77,8 +78,10 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             Assert.Contains("AssessmentQuickScanCatalog", text, StringComparison.Ordinal);
         }
 
+        var about = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Tests/TestAboutPanel.razor"));
+        Assert.Contains("data-testid=\"assessment-v2-transparency\"", about, StringComparison.Ordinal);
         var gate = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/Tests/TestConsentGate.razor"));
-        Assert.Contains("data-testid=\"assessment-v2-transparency\"", gate, StringComparison.Ordinal);
+        Assert.Contains("TestAboutPanel", gate, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -107,18 +110,15 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
 
         var transparency = page.Locator("[data-testid=assessment-v2-transparency]");
         await transparency.WaitForAsync();
-        Assert.Contains("Quick-Scan (v2)", await transparency.InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
-
-        var pick = page.Locator(".test-depth-pick");
-        await pick.WaitForAsync();
-        Assert.True(await pick.IsVisibleAsync());
+        Assert.Contains("Over deze test", await transparency.InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("(v2)", await transparency.InnerTextAsync(), StringComparison.OrdinalIgnoreCase);
 
         var overflow = await page.EvaluateAsync<bool>(
             "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");
         Assert.False(overflow);
 
-        var indicative = page.Locator("[data-testid=assessment-indicative-depth]");
-        await indicative.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        var segments = page.Locator("[data-testid=test-depth-segments]");
+        await segments.WaitForAsync();
 
         await page.ScreenshotAsync(new()
         {
@@ -126,20 +126,216 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             FullPage = true
         });
 
+        if (name == "desktop" && locale.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
+        {
+            var footerOk = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const footer = document.querySelector('.app-footer');
+                  const link = document.querySelector('.app-footer__links a');
+                  if (!footer || !link) return false;
+                  const lr = link.getBoundingClientRect();
+                  return lr.left >= 12 && getComputedStyle(footer).position !== 'fixed';
+                }
+                """);
+            Assert.True(footerOk);
+
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "footer-short-page-desktop-1440.png"),
+                FullPage = false
+            });
+        }
+
         await page.Locator(".test-shell__footer button.btn-primary").ClickAsync();
         await page.Locator(".test-shell[data-mode=Question]").WaitForAsync(new() { Timeout = 45_000 });
-        await indicative.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await segments.WaitForAsync();
 
         var body = await page.ContentAsync();
         Assert.DoesNotContain("AssessmentV2.Competency.Q", body, StringComparison.Ordinal);
-        if (locale.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
+        if (name == "desktop" && locale.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
         {
-            Assert.Contains("samen", body, StringComparison.OrdinalIgnoreCase);
+            var vraagUrl = web.EnsureServerAddress()
+                             + "/__test/sign-in?return="
+                             + Uri.EscapeDataString("/candidate/competencies?stap=vraag");
+            await page.GotoAsync(vraagUrl, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+            await page.Locator("[data-testid=test-earlier-answers]").WaitForAsync();
+            var summaryText = await page.Locator("[data-testid=test-earlier-answers] summary").InnerTextAsync();
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "earlier-answers-collapsed-desktop-1440.png"),
+                FullPage = true
+            });
+            await page.Locator("[data-testid=test-earlier-answers] summary").ClickAsync();
+            await page.Locator("details.test-flow__earlier[open]").WaitForAsync();
+            Assert.Contains("(18)", summaryText, StringComparison.Ordinal);
+            var itemCount = await page.Locator("details.test-flow__earlier li").CountAsync();
+            Assert.Equal(18, itemCount);
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "earlier-answers-open-desktop-1440.png"),
+                FullPage = true
+            });
         }
 
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(FindRepoRoot(), ScreenshotDir, $"competency-v2-question-{locale}-{name}.png"),
+            FullPage = true
+        });
+
+        if (name == "mobile" && locale.StartsWith("nl", StringComparison.OrdinalIgnoreCase))
+        {
+            await page.Locator("[data-testid=test-earlier-answers]").WaitForAsync();
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "earlier-answers-collapsed-mobile-390.png"),
+                FullPage = true
+            });
+            await page.Locator("[data-testid=test-earlier-answers] summary").ClickAsync();
+            await page.Locator("details.test-flow__earlier[open]").WaitForAsync();
+            var mobileSummary = await page.Locator("[data-testid=test-earlier-answers] summary").InnerTextAsync();
+            Assert.Contains("(18)", mobileSummary, StringComparison.Ordinal);
+            Assert.Equal(18, await page.Locator("details.test-flow__earlier li").CountAsync());
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "earlier-answers-open-mobile-390.png"),
+                FullPage = true
+            });
+        }
+
+    }
+
+    [Fact]
+    public async Task Intro_header_fits_360_viewport()
+    {
+        using var web = new TestsV2WebFactory(testsV2On: true);
+        var url = web.EnsureServerAddress()
+                  + "/__test/sign-in?return="
+                  + Uri.EscapeDataString("/candidate/competencies?stap=intro");
+
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 360, Height = 740 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.Locator(".test-page").WaitForAsync();
+        var overflow = await page.EvaluateAsync<bool>(
+            "() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1");
+        Assert.False(overflow);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "competence-intro-mobile-360.png"),
+            FullPage = true
+        });
+    }
+
+    [Fact]
+    public async Task Footer_screenshots_short_mobile_and_long_desktop()
+    {
+        using var web = new TestsV2WebFactory(testsV2On: true);
+        var baseUrl = web.EnsureServerAddress();
+        var shortCandidate = baseUrl
+                             + "/__test/sign-in?return="
+                             + Uri.EscapeDataString("/candidate/competencies?stap=intro");
+        var longCandidate = baseUrl
+                            + "/__test/sign-in?return="
+                            + Uri.EscapeDataString("/candidate/hoe-werkt-lobsy");
+
+        await using var mobile = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(mobile);
+        var mPage = await mobile.NewPageAsync();
+        await mPage.GotoAsync(shortCandidate, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(mPage);
+        await mPage.Locator(".test-page").WaitForAsync();
+        // Mobile candidate shell hides .app-footer while bottom nav is visible; unwrap for layout evidence.
+        await mPage.EvaluateAsync(
+            """
+            () => {
+              document.querySelector('.app-shell')?.classList.remove('has-bottom-nav');
+              document.querySelector('.bottom-nav')?.remove();
+            }
+            """);
+        await mPage.Locator(".app-footer").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 30_000
+        });
+        await mPage.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "footer-short-page-mobile-390.png"),
+            FullPage = false
+        });
+
+        await using var desktop = await _browser.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(desktop);
+        var dPage = await desktop.NewPageAsync();
+        await dPage.GotoAsync(longCandidate, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(dPage);
+        await dPage.Locator(".app-footer").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await dPage.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, "footer-long-page-desktop-1440.png"),
+            FullPage = true
+        });
+    }
+
+    [Theory]
+    [InlineData("/candidate/competencies?stap=intro", "competence")]
+    [InlineData("/candidate/career?stap=intro", "career")]
+    [InlineData("/candidate/culture?stap=intro", "culture")]
+    [InlineData("/candidate/values?stap=intro", "values")]
+    public async Task V2_test_intro_shared_shell(string path, string slug)
+    {
+        using var web = new TestsV2WebFactory(testsV2On: true);
+        var baseUrl = web.EnsureServerAddress()
+                      + "/__test/sign-in?return="
+                      + Uri.EscapeDataString(path);
+
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        await page.GotoAsync(baseUrl, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+
+        await page.Locator("[data-testid=test-depth-segments]").WaitForAsync();
+        await page.Locator(".test-page").WaitForAsync();
+
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, $"{slug}-intro-desktop-1440.png"),
+            FullPage = true
+        });
+
+        await using var mobile = await _browser.NewContextAsync(new()
+        {
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(mobile);
+        var mobilePage = await mobile.NewPageAsync();
+        await mobilePage.GotoAsync(baseUrl, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(mobilePage);
+        await mobilePage.Locator("[data-testid=test-depth-segments]").WaitForAsync();
+        await mobilePage.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(FindRepoRoot(), ScreenshotDir, $"{slug}-intro-mobile-390.png"),
             FullPage = true
         });
     }
@@ -327,15 +523,25 @@ public sealed class TestsV2PlaywrightTests : IAsyncLifetime
             };
 
         private static CandidateCompetencyState BuildCompetency()
-            => new()
+        {
+            var ids = TestDepthRules.QuestionIdsFor(
+                    AssessmentKind.Competence,
+                    TestDepthLevel.Full,
+                    AssessmentTestVersions.V3)
+                .Take(18)
+                .ToList();
+            return new()
             {
                 Status = "Draft",
                 QuickScanVersion = AssessmentTestVersions.V3,
                 QuickScanFullCount = 25,
                 QuestionCount = 25,
                 IsIndicativeDepth = true,
-                Answers = new Dictionary<string, int> { ["1"] = 4, ["2"] = 3 }
+                Answers = ids.ToDictionary(
+                    id => id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    id => 3 + (id % 2))
             };
+        }
 
         private static CandidateCareerInterestState BuildCareer()
             => new()

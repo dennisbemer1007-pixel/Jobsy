@@ -62,7 +62,40 @@ public sealed class TestQuestionFlowBunitTests : BunitContext
             .Add(p => p.Compact, true));
 
         Assert.DoesNotContain("Later verder", cut.Markup);
-        Assert.DoesNotContain("Beantwoord", cut.Markup);
+        Assert.DoesNotContain("Eerdere antwoorden", cut.Markup);
+    }
+
+    [Theory]
+    [InlineData(18)]
+    [InlineData(24)]
+    public void Earlier_answers_disclosure_lists_every_answered_statement(int answeredCount)
+    {
+        var questions = Enumerable.Range(1, 25)
+            .Select(i => new TestQuestionFlow.FlowQuestion(i, $"{i}. Statement {i}"))
+            .ToList();
+        var answers = Enumerable.Range(1, answeredCount)
+            .ToDictionary(i => i, i => 3 + (i % 3));
+        var cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Competence)
+            .Add(p => p.Questions, questions)
+            .Add(p => p.Answers, answers)
+            .Add(p => p.Target, TestDepthLevel.Full)
+            .Add(p => p.ExternalIndex, answeredCount));
+
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Contains($"Eerdere antwoorden ({answeredCount})", cut.Markup, StringComparison.Ordinal);
+            for (var i = 1; i <= answeredCount; i++)
+            {
+                Assert.Contains($"Statement {i}", cut.Markup, StringComparison.Ordinal);
+            }
+        });
+
+        cut.Find("details.test-flow__earlier").SetAttribute("open", "true");
+        cut.WaitForAssertion(() =>
+        {
+            Assert.Equal(answeredCount, cut.FindAll("details.test-flow__earlier li").Count);
+        });
     }
 
     [Fact]

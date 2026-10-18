@@ -15,6 +15,7 @@
 @inject IJSRuntime Js
 @inject GratisDnaMergeService GratisDnaMerge
 @inject Jobsy.Core.Features.IFeatureFlags FeatureFlags
+@inject Jobsy.Web.Features.ITestJourneyIllustrationGate TestJourneyIllustration
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.KandidaatBanen
@@ -25,9 +26,15 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-01" />
+    <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-07" />
+    @if (TestJourneyIllustration.Enabled)
+    {
+        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
+    }
 </HeadContent>
 
-<div class="ob-wizard ob-wizard--richting-a">
+<div class="ob-wizard ob-wizard--richting-a @(ShowJourneyConsent ? "ob-wizard--journey-consent" : null)">
     @if (_loading)
     {
         <p class="ob-wizard__loading" aria-busy="true">@Culture["Common.Loading"]</p>
@@ -136,7 +143,7 @@
     else
     {
         var currentPhase = OnboardingWizardCatalog.PhaseForStep(_step);
-        <div class="ob-wizard__layout">
+        <div class="ob-wizard__layout @(ShowNearbyPanel ? "ob-wizard__layout--with-nearby" : null)">
             <aside class="ob-wizard__sidebar">
                 <div class="lobsy-logo">
                     <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
@@ -230,11 +237,7 @@
 
                     <p class="ob-wizard__step-pill">@MobileStepBadge</p>
 
-                    @if (_earlyMoment == EarlyRewardMoment.Nearby)
-                    {
-                        <EarlyRewardNearbyStep Signal="_nearbySignal" TransportLabel="@Draft.Transport" />
-                    }
-                    else if (_earlyMoment == EarlyRewardMoment.FirstInsight)
+                    @if (_earlyMoment == EarlyRewardMoment.FirstInsight)
                     {
                         <EarlyRewardFirstInsightStep TestTabs="MiniTestTabs"
                                                      CompletedTestStep="7"
@@ -288,6 +291,7 @@
 
                         case 6:
                             <DreamJobStep Draft="Draft"
+                                          ShowValidation="_showValidation"
                                           Young="@IsYoungCandidate"
                                           ChooseDream="ChooseDream"
                                           ChooseTitle="ChooseDreamTitle"
@@ -295,8 +299,14 @@
                                           DreamKeyDown="DreamKeyDown" />
                             break;
 
+                        case 7 when !Draft.HasConsent && ShowJourneyConsent:
+                            <TestJourneyConsentStep CompletedSteps="_journeyCompletedSteps"
+                                                    NextStep="_journeyNextStep" />
+                            break;
+
                         case 7 when !Draft.HasConsent:
                             <TestConsentStep Draft="Draft"
+                                             ShowValidation="_showValidation"
                                              TestTabs="ConsentTabs"
                                              ConsentChanged="OnConsentChanged" />
                             break;
@@ -329,8 +339,15 @@
 
                 @if (_earlyMoment != EarlyRewardMoment.None || !ShowMiniTestFooter)
                 {
-                    <footer class="ob-wizard__footer @(ShowTestsLaterOffer ? "ob-wizard__footer--with-later" : null)"
+                    <footer class="ob-wizard__footer @(ShowJourneyConsent ? "ob-wizard__footer--journey" : null) @(ShowTestsLaterOffer ? "ob-wizard__footer--with-later" : null)"
                             data-sticky-footer="true">
+                        @if (ShowNearbyPanel)
+                        {
+                            <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Mobile"
+                                                   Signal="_nearbySignal"
+                                                   TransportLabel="@Draft.Transport"
+                                                   RefinedHeadline="NearbyRefinedHeadline" />
+                        }
                         @if (_step is 4 or 5)
                         {
                             <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="SkipOptionalAsync">
@@ -342,6 +359,12 @@
                             <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="DreamUnknownAsync">
                                 @Culture["Onboarding.DreamUnknown"]
                             </button>
+                        }
+                        @if (ShowJourneyConsent)
+                        {
+                            <TestConsentFooterFields Draft="Draft"
+                                                     ConsentChanged="OnConsentChanged"
+                                                     ShowError="@(_showValidation && !Draft.ConsentRequested)" />
                         }
                         <a class="ob-wizard__footer-privacy"
                            href="/privacy/data"
@@ -355,9 +378,9 @@
                             <button type="button"
                                     class="btn btn-primary ob-wizard__cta"
                                     data-testid="onboarding-next"
-                                    disabled="@(_busy || _loadingNearby)"
+                                    disabled="@_busy"
                                     @onclick="@(() => NextAsync())">@NextLabel</button>
-                            @if (ShowTestsLaterOffer)
+                            @if (ShowTestsLaterOffer && !ShowJourneyConsent)
                             {
                                 <button type="button"
                                         class="btn btn-secondary ob-wizard__footer-later"
@@ -371,13 +394,22 @@
                     </footer>
                 }
             </main>
+            @if (ShowNearbyPanel)
+            {
+                <aside class="ob-wizard__nearby-rail" aria-label="@Culture["Onboarding.Panel.Nearby.RailAria"]">
+                    <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Desktop"
+                                           Signal="_nearbySignal"
+                                           TransportLabel="@Draft.Transport"
+                                           RefinedHeadline="NearbyRefinedHeadline" />
+                </aside>
+            }
         </div>
     }
 </div>
 
 @code {
     private enum WizardPhase { Wizard, Install }
-    private enum EarlyRewardMoment { None, Nearby, FirstInsight }
+    private enum EarlyRewardMoment { None, FirstInsight }
     private sealed record SidebarItem(int Number, int First, int Last, string Title, string Lead);
     private sealed record WelcomePhase(int Number, string Title, string Lead, string Time);
     
@@ -396,6 +428,7 @@
     private bool _showValidation;
     private bool _pendingStepScroll;
     private bool _loadingNearby;
+    private int _nearbyPeakCount;
     private EarlyRewardMoment _earlyMoment;
     private OnboardingNearbySignal? _nearbySignal;
     private OnboardingImpressionItem? _earlyStrength;
@@ -409,6 +442,8 @@
     private readonly Dictionary<int, int> _serverAnswers = new();
     private readonly HashSet<int> _lockedIds = [];
     private List<OnboardingMiniTest.MiniQuestion> _miniQuestions = [];
+    private IReadOnlyList<int> _journeyCompletedSteps = [];
+    private int _journeyNextStep = 7;
     private CancellationTokenSource? _saveCts;
     private CancellationTokenSource? _geocodeCts;
     private CancellationTokenSource? _dreamCts;
@@ -477,11 +512,6 @@
     {
         get
         {
-            if (_earlyMoment == EarlyRewardMoment.Nearby)
-            {
-                return Culture["Onboarding.Early.Nearby.Badge"];
-            }
-
             if (_earlyMoment == EarlyRewardMoment.FirstInsight)
             {
                 return Culture["Onboarding.Early.Insight.Badge"];
@@ -499,7 +529,6 @@
 
     private string MobileTopMeta => _earlyMoment switch
     {
-        EarlyRewardMoment.Nearby => Culture["Onboarding.Early.Nearby.Meta"],
         EarlyRewardMoment.FirstInsight => Culture["Onboarding.Early.Insight.Meta"],
         _ => Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
             .Replace(" van 10 ·", " ·", StringComparison.Ordinal)
@@ -508,10 +537,13 @@
             .Replace(" min left", " min", StringComparison.Ordinal)
     };
 
-    private string NextLabel => _earlyMoment == EarlyRewardMoment.Nearby
-        ? Culture["Onboarding.Early.Nearby.Cta"]
-        : _earlyMoment == EarlyRewardMoment.FirstInsight
+    private bool ShowJourneyConsent =>
+        TestJourneyIllustration.Enabled && _step == 7 && !Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None;
+
+    private string NextLabel => _earlyMoment == EarlyRewardMoment.FirstInsight
             ? Culture["Onboarding.NextTest"]
+            : ShowJourneyConsent
+                ? JourneyConsentCtaLabel
             : _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
         : _step == 10 ? Culture["Onboarding.ViewKompas"]
@@ -532,10 +564,55 @@
         || (_step is >= 7 and <= 10 && Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None);
 
     private const string BanenkaartPath = KbRoutes.Map;
+
+    private bool NearbyPanelEligible =>
+        !_welcome
+        && !_finish
+        && _earlyMoment != EarlyRewardMoment.FirstInsight
+        && NearbyBasicsSaved();
+
+    private bool ShowNearbyPanel => NearbyPanelEligible && _nearbySignal is not null && !_loadingNearby;
+
+    private bool NearbyRefinedHeadline =>
+        _nearbySignal is { Count: > 0 and var count }
+        && _nearbyPeakCount > count;
+
+    private bool NearbyBasicsSaved() =>
+        OnboardingWizardValidation.HasResolvableLocation(
+            Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved);
+
+    private string JourneyConsentCtaLabel
+    {
+        get
+        {
+            var testNumber = OnboardingTestCompletion.TestNumberForStep(_journeyNextStep);
+            return testNumber <= 1
+                ? Culture["Onboarding.Journey.CtaStart"]
+                : Culture.Format("Onboarding.Journey.CtaContinue", testNumber);
+        }
+    }
+
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
+        if (value)
+        {
+            ClearStepValidation();
+        }
+
         StateHasChanged();
+    }
+
+    private async Task RefreshJourneyCompletionAsync()
+    {
+        if (!TestJourneyIllustration.Enabled || Draft.HasConsent || _step != 7)
+        {
+            return;
+        }
+
+        var testsV2 = await FeatureFlags.IsEnabledAsync(PlatformFeature.TestsV2);
+        _journeyCompletedSteps = await OnboardingTestCompletion.LoadCompletedWizardStepsAsync(Api, testsV2);
+        _journeyNextStep = OnboardingTestCompletion.FirstIncompleteStep(_journeyCompletedSteps);
     }
 
     private bool CanNext => GetValidationIssues().Count == 0
@@ -570,6 +647,8 @@
             _ => []
         };
     }
+
+    private void ClearStepValidation() => _showValidation = false;
 
     private async Task ScrollToFirstIssueAsync(IReadOnlyList<OnboardingValidationIssue> issues)
     {
@@ -662,8 +741,19 @@
             if (!_welcome && !_finish)
             {
                 await MarkStartedAsync();
+                await RefreshJourneyCompletionAsync();
                 await PrepareMiniAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
+                await ApplyLegacyNearbyRedirectAsync();
+                try
+                {
+                    await RefreshNearbySignalIfEligibleAsync();
+                }
+                catch
+                {
+                    // Informational panel only.
+                }
+
                 RequestStepScrollReset();
             }
         }
@@ -754,20 +844,14 @@
         {
             _earlyMoment = EarlyRewardMoment.None;
             _earlyStrength = null;
-            RequestStepScrollReset();
-            return;
-        }
-
-        if (_earlyMoment == EarlyRewardMoment.Nearby)
-        {
-            _earlyMoment = EarlyRewardMoment.None;
-            _nearbySignal = null;
+            ClearStepValidation();
             RequestStepScrollReset();
             return;
         }
 
         if (_step <= 1) return;
         await FlushAsync();
+        ClearStepValidation();
         _miniArrivedViaBack = true;
         _step--;
         await MarkStartedAsync();
@@ -803,7 +887,6 @@
             else if (issues.Count > 0)
             {
                 _showValidation = true;
-                _error = Culture[issues[0].MessageKey];
                 await ScrollToFirstIssueAsync(issues);
                 return;
             }
@@ -815,19 +898,6 @@
         _miniArrivedViaBack = false;
         try
         {
-            if (_earlyMoment == EarlyRewardMoment.Nearby)
-            {
-                _earlyMoment = EarlyRewardMoment.None;
-                _nearbySignal = null;
-                _step++;
-                _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-                FlashSaved();
-                await PrepareMiniAsync();
-                await TryAutoAdvanceEmptyMiniStepAsync();
-                RequestStepScrollReset();
-                return;
-            }
-
             if (_earlyMoment == EarlyRewardMoment.FirstInsight)
             {
                 _earlyMoment = EarlyRewardMoment.None;
@@ -858,15 +928,6 @@
                 return;
             }
 
-            if (_step == 3)
-            {
-                await FlushAsync();
-                await LoadNearbySignalAsync();
-                _earlyMoment = EarlyRewardMoment.Nearby;
-                RequestStepScrollReset();
-                return;
-            }
-
             _step++;
             _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
             FlashSaved();
@@ -888,6 +949,7 @@
     private async Task SkipOptionalAsync()
     {
         await FlushAsync();
+        ClearStepValidation();
         _miniArrivedViaBack = false;
         _step++;
         _state = await Api.SaveMyOnboardingProgressAsync(_step, stepSkipped: true);
@@ -1104,11 +1166,16 @@
 
     private void ShowCustomTravel() => Draft.CustomTravel = true;
 
-    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+    private void AddJob()
+    {
+        Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+        ScheduleProfileSave();
+    }
 
     private void RemoveJob(CandidateEmployerHistory job)
     {
         Draft.Jobs.Remove(job);
+        Draft.EnsureFirstJobSlot();
         ScheduleProfileSave();
     }
 
@@ -1137,7 +1204,11 @@
     private void SelectEducation(string level)
     {
         Draft.Education = level == "MBO" ? MboEducation("1") : level;
-        if (level == EducationLevelLabels.None) Draft.EducationDirection = "";
+        if (!EducationDirectionCatalog.SupportsDirection(Draft.Education))
+        {
+            Draft.EducationDirection = "";
+        }
+
         ScheduleProfileSave();
     }
 
@@ -1151,6 +1222,7 @@
         if (dream.Length == 0) return;
         Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
+        ClearStepValidation();
         ScheduleDreamSave();
     }
 
@@ -1159,6 +1231,7 @@
         var dream = Draft.DreamSearch.Trim();
         Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
+        ClearStepValidation();
         ScheduleDreamSave();
     }
 
@@ -1172,6 +1245,7 @@
     private async Task DreamUnknownAsync()
     {
         Draft.Dream = "";
+        ClearStepValidation();
         await SaveDreamAsync();
         _miniArrivedViaBack = false;
         _step = 7;
@@ -1475,6 +1549,7 @@
 
                 if (!_loading && !_welcome && !_finish && _step is >= 7 and <= 10)
                 {
+                    await RefreshJourneyCompletionAsync();
                     await PrepareMiniAsync();
                     await TryAutoAdvanceEmptyMiniStepAsync();
                 }
@@ -1504,6 +1579,16 @@
         {
             await Task.Delay(350, cancellationToken);
             await SaveProfileAsync(cancellationToken);
+            _error = null;
+            try
+            {
+                await RefreshNearbySignalIfEligibleAsync();
+            }
+            catch
+            {
+                // Nearby panel is informational; a failed refresh must not block autosave UX.
+            }
+
             FlashSaved();
         }
         catch (OperationCanceledException)
@@ -1525,6 +1610,13 @@
     {
         _saveCts?.Cancel();
         await SaveProfileAsync(CancellationToken.None);
+        try
+        {
+            await RefreshNearbySignalIfEligibleAsync();
+        }
+        catch
+        {
+        }
     }
 
     private Task SaveProfileAsync(CancellationToken cancellationToken) => Api.UpdateMyProfileAsync(
@@ -1538,12 +1630,14 @@
             Availability = BuildAvailability(),
             AvailabilityPresets = Draft.Presets.ToList(),
             AvailabilityPresetsOverridden = Draft.PresetsOverridden,
-            Employers = Draft.Jobs,
+            Employers = Draft.JobsForSave(),
             NoWorkExperience = Draft.NoWork,
             Educations = string.IsNullOrWhiteSpace(Draft.Education)
                 ? []
                 : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],
-            EducationDirection = Draft.EducationDirection,
+            EducationDirection = EducationDirectionCatalog.SupportsDirection(Draft.Education) && !string.IsNullOrWhiteSpace(Draft.EducationDirection)
+                ? Draft.EducationDirection.Trim()
+                : null,
             HomeAddress = HomeAddress(),
             WorkStatuses = Draft.WorkStatuses.OrderBy(x => x).ToList()
         },
@@ -1585,17 +1679,52 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task LoadNearbySignalAsync()
+    private async Task RefreshNearbySignalIfEligibleAsync()
     {
+        if (!NearbyPanelEligible)
+        {
+            return;
+        }
+
         _loadingNearby = true;
         try
         {
-            _nearbySignal = await Api.GetOnboardingNearbySignalAsync();
+            var signal = await Api.GetOnboardingNearbySignalAsync();
+            if (signal is not null)
+            {
+                _nearbyPeakCount = Math.Max(_nearbyPeakCount, signal.Count);
+                _nearbySignal = signal;
+            }
+        }
+        catch
+        {
+            // Keep last signal; never surface panel refresh as wizard error.
         }
         finally
         {
             _loadingNearby = false;
         }
+    }
+
+    private async Task ApplyLegacyNearbyRedirectAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query)
+                .TryGetValue("from", out var fromValues)
+            || !string.Equals(fromValues.FirstOrDefault(), "nearby", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (_step != 3)
+        {
+            return;
+        }
+
+        _step = 4;
+        _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
+        FlashSaved();
+        await PrepareMiniAsync();
     }
 
     private async Task LoadEarlyStrengthAsync()

@@ -91,11 +91,28 @@ public sealed class AccountDeleteReregisterPlaywrightTests
             var page = await context.NewPageAsync();
             page.SetDefaultTimeout(90_000);
 
-            await page.GotoAsync(
-                $"{baseUrl}/__test/sign-in?userId={userId:D}&return={Uri.EscapeDataString("/candidate/start")}",
-                new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
-            var privacyLink = page.Locator("a[href='/privacy/data']").First;
-            await privacyLink.WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 60_000 });
+            await OnboardingPlaywrightHelpers.WaitForBlazorCircuitAsync(
+                page,
+                () => page.GotoAsync(
+                    $"{baseUrl}/__test/sign-in?userId={userId:D}&return={Uri.EscapeDataString("/candidate/start")}",
+                    new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 }));
+            await page.Locator(".ob-wizard__loading").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Detached,
+                Timeout = 60_000
+            });
+            if (await page.Locator(".ob-wizard__welcome .ob-wizard__cta").CountAsync() > 0)
+            {
+                await page.Locator(".ob-wizard__welcome .ob-wizard__cta").ClickAsync();
+                await page.Locator(".ob-wizard__loading").WaitForAsync(new()
+                {
+                    State = WaitForSelectorState.Detached,
+                    Timeout = 60_000
+                });
+            }
+
+            var privacyLink = page.Locator(".ob-wizard a[href='/privacy/data']").First;
+            await privacyLink.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
             if (width >= 640)
             {
                 await privacyLink.ScrollIntoViewIfNeededAsync();

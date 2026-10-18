@@ -16,10 +16,16 @@
         </li>
     }
 </ol>
+<div id="onboarding-field-consent">
 <label class="ob-wizard__consent" role="switch" aria-checked="@(Draft.ConsentRequested ? "true" : "false")">
     <input type="checkbox" checked="@Draft.ConsentRequested" @onchange="OnConsentChanged" />
     @Culture["Onboarding.Consent.Check"]
 </label>
+@if (ShowValidation && !Draft.ConsentRequested)
+{
+    <p class="error" role="alert">@Culture["Onboarding.Validation.Consent"]</p>
+}
+</div>
 <details>
     <summary>@Culture["Onboarding.Consent.More"]</summary>
     <p>@Culture["Onboarding.Consent.MoreText"]</p>
@@ -34,6 +40,7 @@
     [Parameter] public IReadOnlyList<TestTab> TestTabs { get; set; } = [];
     /// <summary>Notifies the parent so buttons bound to <see cref="OnboardingProfileDraft.ConsentRequested"/> re-render.</summary>
     [Parameter] public EventCallback<bool> ConsentChanged { get; set; }
+    [Parameter] public bool ShowValidation { get; set; }
 
     private async Task OnConsentChanged(ChangeEventArgs args)
     {
