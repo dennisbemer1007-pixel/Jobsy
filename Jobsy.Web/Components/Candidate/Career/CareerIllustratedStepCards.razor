@@ -1,0 +1,71 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@using Jobsy.Web.Services.Careers
+@inject CultureState Culture
+
+<div class="career-ill-steps">
+    @foreach (var step in Plan.Steps)
+    {
+        var state = StepState(step);
+        <article class="career-ill-steps__card career-ill-steps__card--@state">
+            <header class="career-ill-steps__head">
+                <span class="career-ill-steps__badge">@Culture.Format("Career.Illustrated.StepN", step.Order)</span>
+                <h2 class="career-ill-steps__title">@step.ShortTitle</h2>
+            </header>
+            @if (!string.IsNullOrWhiteSpace(step.Summary))
+            {
+                <p class="career-ill-steps__summary">@step.Summary</p>
+            }
+            <p class="career-ill-steps__hint">@ActionHint(step)</p>
+            <div class="career-ill-steps__links">
+                @if (step.CourseCount > 0)
+                {
+                    <a class="career-ill-steps__link" href="@CoursesHref(step)">@Culture["Career.Illustrated.Courses"]</a>
+                }
+                @if (EmployersOn)
+                {
+                    <a class="career-ill-steps__link" href="@VacanciesHref(step)">@Culture["Career.Illustrated.Vacancies"]</a>
+                }
+            </div>
+        </article>
+    }
+</div>
+
+@code {
+    [Parameter] public CareerPlanViewModel Plan { get; set; } = CareerPlanViewModel.Empty;
+    [Parameter] public bool EmployersOn { get; set; } = true;
+
+    private static string StepState(CareerPlanStepView step) => step.Status switch
+    {
+        CareerStepStatus.Completed => "done",
+        CareerStepStatus.Active => "current",
+        _ => "todo"
+    };
+
+    private string ActionHint(CareerPlanStepView step)
+    {
+        if (step.CourseCount > 0 && step.GapCount > 0)
+        {
+            return Culture.Format("Career.Illustrated.ActionBoth", step.GapCount, step.CourseCount);
+        }
+
+        if (step.CourseCount > 0)
+        {
+            return Culture.Format("Career.Illustrated.ActionCourses", step.CourseCount);
+        }
+
+        if (step.GapCount > 0)
+        {
+            return Culture.Format("Career.Illustrated.ActionSkills", step.GapCount);
+        }
+
+        return Culture["Career.Illustrated.ActionExperience"];
+    }
+
+    private static string VacanciesHref(CareerPlanStepView step)
+        => CareerStepActionLinks.VacanciesSearchHref(step.ShortTitle);
+
+    private static string CoursesHref(CareerPlanStepView step)
+        => $"/carriere?stap={step.Order}#career-courses";
+}

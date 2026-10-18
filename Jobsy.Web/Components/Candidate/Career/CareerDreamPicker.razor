@@ -7,13 +7,13 @@
 @implements IDisposable
 @inject CultureState Culture
 
-<div class="career-picker">
+<div class="career-picker @(Illustrated ? "career-picker--illustrated" : null)">
     @if (Suggestions.Count > 0)
     {
         <div class="career-picker__suggest">
             <p class="career-picker__label" id="@($"{Id}-suggest-label")">@Culture["Career.Empty.SuggestTitle"]</p>
             <p class="career-picker__hint">@Culture["Career.Empty.SuggestLead"]</p>
-            <div class="career-picker__options" role="radiogroup" aria-labelledby="@($"{Id}-suggest-label")">
+            <div class="career-picker__options @(Illustrated ? "career-picker__options--tiles" : null)" role="radiogroup" aria-labelledby="@($"{Id}-suggest-label")">
                 @foreach (var item in Suggestions.Take(3))
                 {
                     var key = SuggestionId(item);
@@ -126,6 +126,7 @@
     private bool _freeInvalid;
     private int _activeIndex = -1;
 
+    [Parameter] public bool Illustrated { get; set; }
     [Parameter] public string Id { get; set; } = "career-dream";
     [Parameter] public IReadOnlyList<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
     [Parameter] public RiasecScores? Scores { get; set; }
@@ -141,6 +142,32 @@
     private static string SuggestionId(CareerDreamOptionApiItem item)
         => string.IsNullOrWhiteSpace(item.CatalogKey) ? $"title:{item.Title}" : $"key:{item.CatalogKey}";
 
+    private static string TileIcon(CareerDreamOptionApiItem item)
+    {
+        var key = (item.CatalogKey ?? item.Title).ToLowerInvariant();
+        if (key.Contains("zorg", StringComparison.Ordinal))
+        {
+            return "🩺";
+        }
+
+        if (key.Contains("dieren", StringComparison.Ordinal) || key.Contains("veter", StringComparison.Ordinal))
+        {
+            return "🐾";
+        }
+
+        if (key.Contains("logist", StringComparison.Ordinal) || key.Contains("magaz", StringComparison.Ordinal))
+        {
+            return "📦";
+        }
+
+        if (key.Contains("kok", StringComparison.Ordinal) || key.Contains("horeca", StringComparison.Ordinal))
+        {
+            return "🍳";
+        }
+
+        return "✨";
+    }
+
     private bool IsSelected(string key) => string.Equals(_selectedKey, key, StringComparison.Ordinal);
 
     private FitPercentExplanation? Explain(string? title)
@@ -151,15 +178,23 @@
     private RenderFragment SuggestButton(CareerDreamOptionApiItem item, string key) => __builder =>
     {
         <button type="button"
-                class="career-option @(IsSelected(key) ? "is-selected" : null)"
+                class="career-option @(IsSelected(key) ? "is-selected" : null) @(Illustrated ? "career-option--tile" : null)"
                 role="radio"
                 aria-checked="@(IsSelected(key) ? "true" : "false")"
                 disabled="@Disabled"
                 @onclick="() => PickSuggestion(item)">
+            @if (Illustrated)
+            {
+                <span class="career-option__icon" aria-hidden="true">@TileIcon(item)</span>
+            }
             <b class="career-option__title">@item.Title</b>
             @if (!string.IsNullOrWhiteSpace(item.ReasonKey))
             {
                 <small class="career-option__reason">@Culture[item.ReasonKey]</small>
+            }
+            else if (Illustrated && !string.IsNullOrWhiteSpace(item.Description))
+            {
+                <small class="career-option__reason">@item.Description</small>
             }
             @if (!string.IsNullOrWhiteSpace(BandLabelKey))
             {

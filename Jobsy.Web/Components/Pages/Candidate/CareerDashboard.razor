@@ -24,13 +24,15 @@
 
     @if (_plan.HasPlan)
     {
-        var stepTotal = Math.Max(_plan.Stones.Count, 1);
-        var stepCurrent = Math.Clamp(_plan.CurrentStoneIndex + 1, 1, stepTotal);
-        <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
+        var heroArt = CandidateIllustratedArt.HeroLandscapeForDream(_plan.DreamTitle);
+        var stepTotal = Math.Max(_plan.TotalSteps, 1);
+        var stepCurrent = Math.Max(_plan.CurrentStepNumber, 1);
+        <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.Illustrated.Progress", stepCurrent, stepTotal)"
                                   CoralEyebrow="true"
                                   Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
                                   Lead="@Culture["Career.Overview.LeadShort"]"
-                                  ArtUrl="@CandidateIllustratedArt.HeroForDream(_plan.DreamTitle)" />
+                                  ArtUrl="@heroArt.Url"
+                                  ArtPosition="@heroArt.BackgroundPosition" />
     }
     else if (!_bootstrapping)
     {
@@ -78,26 +80,22 @@
                      PlatesShed="2"
                      LobsterSizeDesktop="124"
                      LobsterSizeMobile="66"
-                     BubbleDesktop="@(_suggestions.Count > 0 ? Culture["Career.Say.Empty"] : Culture["Career.Say.EmptyShort"])"
-                     BubbleMobile="@Culture["Career.Say.EmptyShort"]">
-            <RailContent>
-                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
-            </RailContent>
+                     BubbleDesktop=""
+                     BubbleMobile="">
+            <RailContent></RailContent>
             <ChildContent>
-                <CandidateIllustratedEmpty ArtUrl="@CandidateIllustratedArt.CareerEmptySpot">
-                    <CareerEmptyCard Illustrated="true"
-                                     Suggestions="@_suggestions"
-                                     Scores="@_careerScores"
-                                     Education="@_educationLabel"
-                                     Busy="@_busy"
-                                     HasChoice="@(_choice is not null)"
-                                     ErrorText="@_error"
-                                     DiscoveryHref="@DiscoveryHref"
-                                     ShowDiscoveryHint="@(!_journeyComplete)"
-                                     OnChoice="SetChoice"
-                                     OnSearch="SearchDreamsAsync"
-                                     OnSubmit="GeneratePlanAsync" />
-                </CandidateIllustratedEmpty>
+                <CareerEmptyCard Illustrated="true"
+                                 Suggestions="@_suggestions"
+                                 Scores="@_careerScores"
+                                 Education="@_educationLabel"
+                                 Busy="@_busy"
+                                 HasChoice="@(_choice is not null)"
+                                 ErrorText="@_error"
+                                 DiscoveryHref="@DiscoveryHref"
+                                 ShowDiscoveryHint="@(!_journeyComplete)"
+                                 OnChoice="SetChoice"
+                                 OnSearch="SearchDreamsAsync"
+                                 OnSubmit="GeneratePlanAsync" />
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
@@ -176,29 +174,31 @@
                      PlatesShed="@_plan.PlatesShed"
                      LobsterSizeDesktop="@_plan.LobsterSizeDesktop"
                      LobsterSizeMobile="@_plan.LobsterSizeMobile"
-                     BubbleDesktop="@BubbleDesktop"
-                     BubbleMobile="@BubbleMobile">
-            <RailContent>
-                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
-            </RailContent>
+                     BubbleDesktop=""
+                     BubbleMobile="">
+            <RailContent></RailContent>
             <ChildContent>
-                <div class="career-ill-layout career-ill-layout--plan">
+                <div class="career-ill-plan">
                     <CareerIllustratedPath Plan="@_plan" NowLabel="@_nowLabel" />
-                    <div class="career-ill-layout__stack">
-                        <CareerOverviewCard Illustrated="true"
-                                            Plan="@_plan"
-                                            Busy="@_busy"
-                                            EmployersOn="@_employersOn"
-                                            PassportOn="@_passportOn"
-                                            ShowCarriedOver="@_showCarriedOver"
-                                            ErrorText="@_error"
-                                            OnChangeDream="OpenDreamDialog"
-                                            OnClearDream="ClearDreamAsync"
-                                            OnDismissCarriedOver="DismissCarriedOver"
-                                            OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                    <div class="career-ill-plan__grid">
+                        <CareerIllustratedStepCards Plan="@_plan" EmployersOn="@_employersOn" />
                         <CareerIllustratedStepPanel Step="@IllustratedPanelStep"
-                                                    EmployersOn="@_employersOn" />
+                                                     CourseSlots="@_panelCourses"
+                                                     Busy="@_busy"
+                                                     EmployersOn="@_employersOn"
+                                                     OnClearDream="ClearDreamAsync" />
                     </div>
+                    <CareerOverviewCard Illustrated="true"
+                                        Plan="@_plan"
+                                        Busy="@_busy"
+                                        EmployersOn="@_employersOn"
+                                        PassportOn="@_passportOn"
+                                        ShowCarriedOver="@_showCarriedOver"
+                                        ErrorText="@_error"
+                                        OnChangeDream="OpenDreamDialog"
+                                        OnClearDream="ClearDreamAsync"
+                                        OnDismissCarriedOver="DismissCarriedOver"
+                                        OnRegenerateLanguage="RegenerateForLanguageAsync" />
                 </div>
 
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
@@ -234,6 +234,7 @@
     private CareerStepDoneView _doneGained = new();
     private CareerStepVacancyFit _stepFit = CareerStepVacancyFit.None;
     private List<PassportCourseCard> _courseSlots = [];
+    private List<PassportCourseCard> _panelCourses = [];
     private string _stepContextId = "";
     private CareerPlanViewModel _plan = CareerPlanViewModel.Empty;
     private IReadOnlyList<CareerDreamOptionApiItem> _suggestions = [];
@@ -373,6 +374,7 @@
         }
 
         await SyncStepAsync();
+        await LoadPanelCoursesAsync();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -384,6 +386,26 @@
         }
 
         await SyncStepAsync();
+        await LoadPanelCoursesAsync();
+    }
+
+    private async Task LoadPanelCoursesAsync()
+    {
+        _panelCourses = [];
+        var panel = IllustratedPanelStep;
+        if (panel is null || panel.CourseSearchKeys.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            _panelCourses = await Api.GetPassportTrainingOffersAsync(string.Join(' ', panel.CourseSearchKeys));
+        }
+        catch (Exception)
+        {
+            _panelCourses = [];
+        }
     }
 
     /// <summary>Resolves <c>?stap=</c> to a step; an unknown or foreign order falls back to the overview.</summary>
@@ -476,6 +498,7 @@
             ApplyPlan(plan);
             _done = step;
             _step = null;
+            await LoadPanelCoursesAsync();
             _announcement = Culture.Format("Career.Done.Announce", step.Order);
         }
         catch (Exception ex)
@@ -511,6 +534,7 @@
             _done = null;
             _doneGained = new CareerStepDoneView();
             _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order, _evidence, _experienceYears);
+            await LoadPanelCoursesAsync();
             _announcement = Culture.Format("Career.Undo.Announce", target.Order);
         }
         catch (Exception ex)
@@ -790,6 +814,7 @@
     {
         _planApi = plan;
         _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel, _evidence, _experienceYears);
+        _ = LoadPanelCoursesAsync();
         if (!_plan.HasPlan && !string.IsNullOrWhiteSpace(_plan.DreamTitle))
         {
             var entry = CareerDreamCatalog.FindByTitleOrAlias(_plan.DreamTitle);

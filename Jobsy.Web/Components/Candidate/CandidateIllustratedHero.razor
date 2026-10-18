@@ -1,6 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate
 
-<header class="cand-hero" style="@(string.IsNullOrWhiteSpace(ArtUrl) ? null : $"--cand-hero-art:url('{ArtUrl}')")">
+<header class="cand-hero" style="@StyleValue">
     <div class="cand-hero__scrim" aria-hidden="true"></div>
     <div class="cand-hero__copy">
         @if (!string.IsNullOrWhiteSpace(Eyebrow))
@@ -25,5 +25,10 @@
     [Parameter] public string? Title { get; set; }
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
+    [Parameter] public string ArtPosition { get; set; } = "42% 38%";
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? StyleValue => string.IsNullOrWhiteSpace(ArtUrl)
+        ? null
+        : $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
 }

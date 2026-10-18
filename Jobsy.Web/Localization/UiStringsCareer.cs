@@ -254,6 +254,18 @@ public static class UiStringsCareer
             "Kursy",
             "Cursuri",
             "الدورات");
+        Add("Career.Illustrated.Progress",
+            "Je zit bij stap {0} van {1}",
+            "You are on step {0} of {1}",
+            "Jesteś na kroku {0} z {1}",
+            "Ești la pasul {0} din {1}",
+            "أنت في الخطوة {0} من {1}");
+        Add("Career.Illustrated.CourseMetaFallback",
+            "Online · flexibel tempo",
+            "Online · flexible pace",
+            "Online · elastyczne tempo",
+            "Online · ritm flexibil",
+            "عبر الإنترنت · وتيرة مرنة");
 
         Add("Career.Search.Label",
             "Zelf een beroep zoeken",

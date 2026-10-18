@@ -99,7 +99,7 @@
             </button>
         </div>
     }
-    else if (Plan.CurrentStep is { } step)
+    else if (!Illustrated && Plan.CurrentStep is { } step)
     {
         <section class="career-now career-only-desktop" aria-labelledby="career-now-title">
             <p class="career-now__eyebrow">@Culture["Career.Overview.NowEyebrow"]</p>
@@ -155,7 +155,7 @@
         </section>
     }
 
-    @if (Plan.AlreadyHave.Count > 0)
+    @if (!Illustrated && Plan.AlreadyHave.Count > 0)
     {
         <section class="career-have career-only-desktop" aria-labelledby="career-have-title">
             <h2 id="career-have-title" class="career-card__block-title">@Culture["Career.Have.Title"]</h2>
@@ -171,7 +171,7 @@
         </section>
     }
 
-    @if (!string.IsNullOrWhiteSpace(Plan.DreamTitle))
+    @if (!Illustrated && !string.IsNullOrWhiteSpace(Plan.DreamTitle))
     {
         <p class="career-card__actions">
             <button type="button" class="btn btn-ghost" disabled="@Busy" @onclick="OnClearDream">

@@ -72,7 +72,7 @@ public class CandidateIllustratedAppMarkupTests
         var css = File.ReadAllText(Path.Combine(Root, "Jobsy.Web/wwwroot/css/features/candidate-illustrated-app.css"));
         Assert.Contains("career-page--illustrated", career, StringComparison.Ordinal);
         Assert.Contains("CandidateIllustratedHero", career, StringComparison.Ordinal);
-        Assert.Contains("CareerIllustratedPath", career, StringComparison.Ordinal);
+        Assert.Contains("CareerIllustratedStepCards", career, StringComparison.Ordinal);
         Assert.Contains(".cand-hero", css, StringComparison.Ordinal);
         Assert.Contains(".career-page--illustrated .career-scene--desktop", css, StringComparison.Ordinal);
     }
