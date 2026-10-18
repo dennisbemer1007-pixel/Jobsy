@@ -5,7 +5,9 @@
 @layout PublicLayout
 @using Jobsy.Web.Auth
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Microsoft.AspNetCore.Antiforgery
 @using Microsoft.AspNetCore.DataProtection
 @using Microsoft.AspNetCore.WebUtilities
@@ -17,9 +19,16 @@
 
 <PageTitle>@Culture["Signup.Code.Title"] · Lobsy</PageTitle>
 
-<section class="pub-section pub-signup" aria-labelledby="signup-code-title">
-    <div class="pub-card pub-signup__card">
-        <h1 id="signup-code-title" class="pub-signup__title">@Culture["Signup.Code.Title"]</h1>
+<section class="au-stage au-stage--illustrated pub-signup"
+         style="@($"--au-art-left:url('{LoginLeft}');--au-art-right:url('{LoginRight}');--au-art-mobile:url('{AccountMobileArt}')")"
+         aria-labelledby="signup-code-title">
+    <div class="au-art-band" aria-hidden="true"></div>
+    <div class="au-art au-art--left" aria-hidden="true"></div>
+    <div class="au-art au-art--right" aria-hidden="true"></div>
+    <div class="au-col">
+    <div class="au-card au-card--illustrated pub-signup__card">
+        <p class="au-eyebrow">@Culture["Signup.Eyebrow"]</p>
+        <h1 id="signup-code-title" class="au-title pub-signup__title">@Culture["Signup.Code.Title"]</h1>
         <p class="pub-signup__lead">@string.Format(Culture["Signup.Code.Lead"], _maskedEmail)</p>
 
         @if (!string.IsNullOrEmpty(_errorMessage))
@@ -72,6 +81,7 @@
                 <a class="auth-link" href="@BackHref">@Culture["Signup.Code.OtherEmail"]</a>
             </p>
         </div>
+    </div>
     </div>
 </section>
 

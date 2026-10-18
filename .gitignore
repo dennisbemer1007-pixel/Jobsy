@@ -61,3 +61,7 @@ __pycache__/
 
 # Screenshot export HTML (generated locally)
 Jobsy.Web/wwwroot/kennismaken-export/
+tmp-opleidingen/
+.dotnet/
+test-results/
+mockups/

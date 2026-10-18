@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
     "sha256": "a83a058190afcc117c6ed5f502257f1e8c6a8dfd2a6efbce6d7b02dc35417b05",
-    "v": "20261017-03"
+    "v": "20261018-02"
   },
   "css/critical.css": {
     "sha256": "94b9e9f0833faebdcbf4281da401379c93851562b64d48d838d27004f6862cab",
@@ -21,15 +21,19 @@
   },
   "css/features/auth.css": {
     "sha256": "19d393a63d6604f3a210cd0e67d18c3b6896c868d6a4f6a77be6ee9ff69ad05d",
-    "v": "20261017-01"
+    "v": "20261018-01"
   },
   "css/features/banenkaart.css": {
-    "sha256": "8ae593cd765eb46578bfda85f6e60bf6e306078d0fb1fd3fa05aff2c557753ca",
+    "sha256": "0b77b38c48253751260a0b6f1797f81a555ab1aa95a8333fb28bc343352eeeeb",
     "v": "20261016-02"
   },
   "css/features/candidate-hub.css": {
     "sha256": "f71cf5ff56f53dbd4a999cd6d6da0467d301fdaab82ca44471c44e087e79eb02",
     "v": "20261012-01"
+  },
+  "css/features/candidate-illustrated-public.css": {
+    "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
+    "v": "20261018-02"
   },
   "css/features/carriere.css": {
     "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
@@ -81,7 +85,7 @@
   },
   "css/features/landing.css": {
     "sha256": "c7e52a6291b6b8ccf67f8591a142c6de1b87f821486c4db247782e5d0fb351ef",
-    "v": "20261015-14"
+    "v": "20261018-01"
   },
   "css/features/match-desktop.css": {
     "sha256": "8a93b7c3157f521af81598edb8ffe256de3b19076ef8ee2bdd26c4d963fa45bb",
@@ -116,7 +120,7 @@
     "v": "20261018-01"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "a901002cf523026f2f32c79c3886186d8553c763089ce5cddd976a10a9f03c7f",
+    "sha256": "956bc0a958b342bd3a06db57f3a37e2efa8132ccd603f7e68dd141b23d222afe",
     "v": "20261018-02"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -128,7 +132,7 @@
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "d94ce51e3bb8cde64fcb90b6d9f3eb13278450f667e4285b8ccd8b0e8bd27e47",
+    "sha256": "4d78aa19af1ba1e65e5c923168b35d854132b69d306449be6dbf0ddad36c96cc",
     "v": "20261015-06"
   },
   "css/features/onboarding-work-history.css": {
@@ -136,8 +140,8 @@
     "v": "20261018-07"
   },
   "css/features/ontdekkingsreis.css": {
-    "sha256": "c4073fa83d5b4d7bac739ec12b45eb41832de8608057082e32891fd8e5168791",
-    "v": "20261018-01"
+    "sha256": "7db66e65fb38d408a4547a35d9d241f8080678c2a02d82c5119e2490cf09d05c",
+    "v": "20261015-21"
   },
   "css/features/proactive-matching.css": {
     "sha256": "472511793b01f40d8d798a32f83cdb0bf3d7a5f07d52467c29a777ac6fc3a444",
@@ -172,12 +176,12 @@
     "v": "20261017-02"
   },
   "css/features/testresultaten.css": {
-    "sha256": "c807c8e18ba5d04c37fb2aa9ae761cea37e9d6660e55cd0ac6317d665efc06b2",
+    "sha256": "250d80a99d142c7fd3b2ca25520a5d0f705d456e4574b0889bb4dcddddafd82f",
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "6d409bd83d6924bd20b24b44638ee75dd642d3ccb3b2fa82208427a4da6221b9",
-    "v": "20261018-18"
+    "sha256": "59f25d5348c287a1b4501bb8bc4e03e2dc6295d0d58a1dad6b795a10affffe12",
+    "v": "20261012-06"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "d1dfe82df457da2a5ba7fbf14ece342bbed87da0bd1b1f94707987edb9534482",
@@ -208,7 +212,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "08838ff2e54ae52f0c34d8cb2a266bf978873ea1939cb5902dcdc2ff55f33372",
+    "sha256": "7127781473df83e53f9952ea21c746bd1de74eeb8498877cc2188c29f74b33a2",
     "v": "20261017-04"
   },
   "js/app-extras.js": {
@@ -248,8 +252,8 @@
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
-    "sha256": "0a75302c009d8d05c3b444df2d19e864aa019e8f4c9dfd4d9cb0b80e0cd44503",
-    "v": "20261018-hotfix-fitpill"
+    "sha256": "e4b9992b370f05544914b3216135c0a688702276b75f909c6386676d2f53d0ce",
+    "v": "20261018-20"
   },
   "js/jobsyMapLibre.min.js": {
     "sha256": "be408c2508b82ed0d1acc9f4fd0dc9eab12c83421c36adc5ad35aaf4e3afcb49",
@@ -292,11 +296,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "4b18dca255fda4a7df87886580a2683d1ee30fad56ed7660948e128daa777629",
+    "sha256": "6dbe7ecc4917fe4d07f2a1b783cecf370d98f1c80ee99ac5c840dd0afd25b977",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "f58f50a5ed8da738b9f69b0703b89f000f2551d8461635615d30fa3c51ea1c28",
+    "sha256": "2a618fda8eb01921e3ef4f3e6dd54181be243f7abd24dfe8b7266021c2b12b30",
     "v": "20261016-06"
   }
 }

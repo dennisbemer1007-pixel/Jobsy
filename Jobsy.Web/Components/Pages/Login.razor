@@ -10,6 +10,7 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
+@using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Security
 @using Microsoft.AspNetCore.Antiforgery
@@ -36,16 +37,16 @@
 
 <PageTitle>@Culture["Login.Title"] · Lobsy</PageTitle>
 
-<section class="au-stage" data-au-login @attributes="_stageAttrs">
-    <div class="au-blob au-blob--a" aria-hidden="true"></div>
-    <div class="au-blob au-blob--b" aria-hidden="true"></div>
-    <div class="au-blob au-blob--c" aria-hidden="true"></div>
+<section class="au-stage au-stage--illustrated"
+         style="@($"--au-art-left:url('{LoginLeft}');--au-art-right:url('{LoginRight}')")"
+         data-au-login
+         @attributes="_stageAttrs">
+    <div class="au-art-band" aria-hidden="true"></div>
+    <div class="au-art au-art--left" aria-hidden="true"></div>
+    <div class="au-art au-art--right" aria-hidden="true"></div>
 
     <div class="au-col">
-        <div class="au-card @(isPause ? "au-pause" : null)">
-            <div class="au-card__mascot" aria-hidden="true">
-                <LobsyMascot Pose="MascotPose.Waving" Size="MascotSize.Small" Alt="" />
-            </div>
+        <div class="au-card au-card--illustrated @(isPause ? "au-pause" : null)">
 
             @if (isPause)
             {
@@ -236,6 +237,9 @@
                         @Culture["Login.CreateAccountLead"]
                         <a href="@CreateAccountHref">@Culture["Login.CreateAccountCta"]</a>
                     </p>
+                </div>
+
+                <div class="au-card__strip">
                     @if (_employersOn)
                     {
                         <p>
@@ -243,6 +247,10 @@
                             <a href="/register">@Culture["Login.RegisterCta"]</a>
                         </p>
                     }
+                    <p class="gd-quiet-link-wrap">
+                        @Culture["GratisDna.QuietLink.Lead"]
+                        <a class="auth-link" href="/ontdek">@Culture["GratisDna.QuietLink.Cta"]</a>
+                    </p>
                 </div>
             }
         </div>
@@ -250,10 +258,6 @@
         <div class="au-below">
             <p>
                 <a href="@_dismissUrl">@Culture[_employersOn ? "Login.BackToMap" : "Login.BackToDiscovery"]</a>
-            </p>
-            <p class="gd-quiet-link-wrap">
-                @Culture["GratisDna.QuietLink.Lead"]
-                <a class="auth-link" href="/ontdek">@Culture["GratisDna.QuietLink.Cta"]</a>
             </p>
         </div>
     </div>

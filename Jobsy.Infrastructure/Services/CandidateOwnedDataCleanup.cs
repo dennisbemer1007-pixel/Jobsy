@@ -177,6 +177,7 @@ internal static class CandidateOwnedDataCleanup
         await RemoveRangeAsync(db, db.CandidateCulturePersonalityProfiles.Where(c => c.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateValuesProfiles.Where(v => v.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateWhoAmIProfiles.Where(c => c.UserId == user.Id), cancellationToken);
+        await RemoveRangeAsync(db, db.CandidateTestReflections.Where(r => r.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidatePrivatePreferences.Where(p => p.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCareerInterests.Where(c => c.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCareerStepProgress.Where(p => p.UserId == user.Id), cancellationToken);
@@ -227,6 +228,11 @@ internal static class CandidateOwnedDataCleanup
         {
             click.UserId = null;
         }
+
+        await RemoveRangeAsync(
+            db,
+            db.TrainingEnrollments.Where(e => e.UserId == user.Id),
+            cancellationToken);
 
         var consumerInvoices = await db.ConsumerPurchaseInvoices
             .Where(i => i.UserId == user.Id)

@@ -28,6 +28,9 @@ public static class UiStringsMatch
         Add("Match.MoreInfo",
             "Meer info", "More info",
             "Więcej info", "Mai multe info", "مزيد من المعلومات");
+        Add("Match.ViewVacancy",
+            "Bekijk de vacature", "View the vacancy",
+            "Zobacz ofertę", "Vezi vacanța", "عرض الوظيفة");
         Add("Match.KeyFacts",
             "Kerngegevens", "Key facts",
             "Kluczowe dane", "Date esențiale", "البيانات الأساسية");
@@ -37,6 +40,9 @@ public static class UiStringsMatch
         Add("Match.Percentage",
             "Matchpercentage", "Match percentage",
             "Procent dopasowania", "Procentaj potrivire", "نسبة التطابق");
+        Add("Match.FitLabel",
+            "Hoe goed je past", "How well you fit",
+            "Jak pasujesz", "Cât de bine te potrivești", "مدى ملاءمتك");
         Add("Match.CompanyFallback",
             "Bedrijf", "Company",
             "Firma", "Companie", "الشركة");
@@ -44,11 +50,11 @@ public static class UiStringsMatch
             "Jouw top-match", "Your top match",
             "Twój top match", "Top match-ul tău", "أفضل تطابق لك");
         Add("Match.TopMatchAria",
-            "Jouw top-match: {0}% — {1}, {2}. Open je matches",
-            "Your top match: {0}% — {1}, {2}. Open your matches",
-            "Twój top match: {0}% — {1}, {2}. Otwórz dopasowania",
-            "Top match-ul tău: {0}% — {1}, {2}. Deschide potrivirile",
-            "أفضل تطابق لك: {0}% — {1}، {2}. افتح مطابقاتك");
+            "Jouw top-match: {0} — {1}, {2}. Open je matches",
+            "Your top match: {0} — {1}, {2}. Open your matches",
+            "Twój top match: {0} — {1}, {2}. Otwórz dopasowania",
+            "Top match-ul tău: {0} — {1}, {2}. Deschide potrivirile",
+            "أفضل تطابق لك: {0} — {1}، {2}. افتح مطابقاتك");
         Add("Match.DialogTitle",
             "Jouw top-matches", "Your top matches",
             "Twoje top dopasowania", "Top potrivirile tale", "أفضل مطابقاتك");

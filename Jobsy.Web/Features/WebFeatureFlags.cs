@@ -73,7 +73,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 TestItemExamplesEnabled: dto?.TestItemExamplesEnabled ?? false,
                 TestProgressInsightEnabled: dto?.TestProgressInsightEnabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
-                dto?.KandidatenkaartEnabled ?? false);
+                dto?.KandidatenkaartEnabled ?? false,
+                dto?.TrainingPartnersEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -156,5 +157,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
         [JsonPropertyName("kandidatenkaartEnabled")]
         public bool KandidatenkaartEnabled { get; set; }
 
+        [JsonPropertyName("trainingPartnersEnabled")]
+        public bool TrainingPartnersEnabled { get; set; }
     }
 }

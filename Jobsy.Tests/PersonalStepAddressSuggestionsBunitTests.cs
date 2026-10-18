@@ -69,12 +69,13 @@ public class PersonalStepAddressSuggestionsBunitTests : BunitContext
         await cut.InvokeAsync(async () => await Task.Delay(200));
         Assert.Empty(cut.FindAll(".address-suggestions"));
 
-        input.Focus(new FocusEventArgs());
-        input.Input("Kerkstraat Naaldwijk");
+        var inputAgain = cut.Find("#onboarding-home-address");
+        inputAgain.Focus(new FocusEventArgs());
+        inputAgain.Input("Kerkstraat Naaldwijk");
         await cut.InvokeAsync(async () => await Task.Delay(450));
         cut.Find(".address-suggestions");
 
-        input.KeyDown(new KeyboardEventArgs { Key = "Escape" });
+        cut.Find("#onboarding-home-address").KeyDown(new KeyboardEventArgs { Key = "Escape" });
         await cut.InvokeAsync(() => Task.CompletedTask);
         Assert.Empty(cut.FindAll(".address-suggestions"));
     }

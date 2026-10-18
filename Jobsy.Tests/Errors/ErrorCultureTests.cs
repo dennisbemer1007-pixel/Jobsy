@@ -1,6 +1,7 @@
 using Jobsy.Core.Localization;
 using Jobsy.Web.Localization;
 using Microsoft.AspNetCore.Http;
+using JobsyLanguages = Jobsy.Core.Localization.JobsyLanguages;
 
 namespace Jobsy.Tests.Errors;
 
@@ -88,6 +89,7 @@ public class ErrorCultureTests
     }
 }
 
+[Collection("JobsyLanguagesState")]
 public class ErrorCultureRenderTests
 {
     private static async Task<string> ReadStatusPageAsync(HttpClient client)
@@ -100,34 +102,50 @@ public class ErrorCultureRenderTests
     [Fact]
     public async Task Arabic_cookie_renders_rtl_and_arabic_copy_when_catalog_enabled()
     {
-        await using var factory = new ErrorPagesWebFactory
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        try
         {
-            EmployersEnabled = true,
-            EnabledCultures = "nl,en,pl,ro,ar"
-        };
-        using var client = factory.CreateHtmlClient();
-        client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
+            await using var factory = new ErrorPagesWebFactory
+            {
+                EmployersEnabled = true,
+                EnabledCultures = "nl,en,pl,ro,ar"
+            };
+            using var client = factory.CreateHtmlClient();
+            client.DefaultRequestHeaders.Add("Cookie", $"{CultureState.CookieName}=ar");
 
-        var html = await ReadStatusPageAsync(client);
+            var html = await ReadStatusPageAsync(client);
 
-        Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
-        Assert.Contains("هذه الصفحة غير موجودة", html, StringComparison.Ordinal);
+            Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
+            Assert.Contains("هذه الصفحة غير موجودة", html, StringComparison.Ordinal);
+        }
+        finally
+        {
+            JobsyLanguages.ResetEnabledForTests();
+        }
     }
 
     [Fact]
     public async Task Polish_accept_language_renders_polish_copy_when_catalog_enabled()
     {
-        await using var factory = new ErrorPagesWebFactory
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        try
         {
-            EmployersEnabled = true,
-            EnabledCultures = "nl,en,pl,ro,ar"
-        };
-        using var client = factory.CreateHtmlClient();
-        client.DefaultRequestHeaders.Add("Accept-Language", "pl");
+            await using var factory = new ErrorPagesWebFactory
+            {
+                EmployersEnabled = true,
+                EnabledCultures = "nl,en,pl,ro,ar"
+            };
+            using var client = factory.CreateHtmlClient();
+            client.DefaultRequestHeaders.Add("Accept-Language", "pl");
 
-        var html = await ReadStatusPageAsync(client);
+            var html = await ReadStatusPageAsync(client);
 
-        Assert.Contains("Ta strona nie istnieje", html, StringComparison.Ordinal);
+            Assert.Contains("Ta strona nie istnieje", html, StringComparison.Ordinal);
+        }
+        finally
+        {
+            JobsyLanguages.ResetEnabledForTests();
+        }
     }
 
     [Fact]

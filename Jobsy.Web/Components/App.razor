@@ -13,6 +13,9 @@
         <meta name="robots" content="noindex, nofollow" />
     }
     <meta name="theme-color" content="#0f2d5c" />
+    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/nunito-sans/nunito-sans-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="fonts/fraunces/fraunces-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <meta name="application-name" content="Lobsy" />
     <meta name="apple-mobile-web-app-title" content="Lobsy" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -42,10 +45,13 @@
         <link rel="stylesheet" href="css/features/questionnaire.css?v=20261004-10" />
     }
     <link rel="stylesheet" href="css/critical.css?v=20261004-13" />
+    <link rel="stylesheet" href="css/tokens.css?v=20261018-06" />
     @* Public theme + landing CSS always available for static SSR (NoBlazorRuntime). *@
     <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
-    <link rel="stylesheet" href="css/features/auth.css?v=20261017-01" />
-    <link rel="stylesheet" href="css/features/landing.css?v=20261015-14" />
+    <link rel="stylesheet" href="css/features/stijl-a.css?v=20261018-03" />
+    <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
+    <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
+    <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
     @* Error/status pages render without the Blazor runtime — keep errors.css outside the gate. *@
     <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
@@ -83,8 +89,9 @@
                 @:<link rel="stylesheet" href="@href" />
             }
             <link rel="stylesheet" href="css/features/public-theme.css?v=20261016-01" />
-            <link rel="stylesheet" href="css/features/auth.css?v=20261017-01" />
-            <link rel="stylesheet" href="css/features/landing.css?v=20261015-14" />
+            <link rel="stylesheet" href="css/features/auth.css?v=20261018-01" />
+            <link rel="stylesheet" href="css/features/landing.css?v=20261018-01" />
+            <link rel="stylesheet" href="css/features/candidate-illustrated-public.css?v=20261018-02" />
             <link rel="stylesheet" href="css/features/public-pages.css?v=20261016-01" />
             <link rel="stylesheet" href="css/features/errors.css?v=20261004-10" />
             <link rel="stylesheet" href="css/features/reconnect.css?v=20261015-02" />

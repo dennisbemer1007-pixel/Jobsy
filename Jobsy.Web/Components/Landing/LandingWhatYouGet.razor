@@ -25,11 +25,11 @@
         @if (Variant == LandingVariant.On && ComboLayout)
         {
             <div class="pub-landing__get-five">
-                @ComboCard("Landing.Get.MapCardTitle", "Landing.Get.MapCardBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.PassportTitle", "Landing.Get.PassportBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.JourneyTitle", "Landing.Get.JourneyBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.MatchTitle", "Landing.Get.MatchBody", "Landing.Get.FreeTag", false)
-                @ComboCard("Landing.Get.ReportTitle", "Landing.Get.ReportBody", "Landing.Get.ReportTag", true)
+                @ComboCard("map", "Landing.Get.MapCardTitle", "Landing.Get.MapCardBody", "Landing.Get.FreeTag", false)
+                @ComboCard("pass", "Landing.Get.PassportTitle", "Landing.Get.PassportBody", "Landing.Get.FreeTag", false)
+                @ComboCard("compass", "Landing.Get.JourneyTitle", "Landing.Get.JourneyBody", "Landing.Get.FreeTag", false)
+                @ComboCard("match", "Landing.Get.MatchTitle", "Landing.Get.MatchBody", "Landing.Get.FreeTag", false)
+                @ComboCard("book", "Landing.Get.ReportTitle", "Landing.Get.ReportBody", "Landing.Get.ReportTag", true)
             </div>
         }
         else if (Variant == LandingVariant.On)
@@ -143,9 +143,9 @@
                     <h4>@LandingText.For("Landing.Get.FitTitle", Variant)</h4>
                     <p>@LandingText.For("Landing.Get.FitBody", Variant)</p>
                     <div class="pub-landing__fit" aria-hidden="true">
-                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc1", Variant)<span class="pub-landing__occ-m" style="--pct:82%"></span><b>82%</b></div>
-                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc2", Variant)<span class="pub-landing__occ-m" style="--pct:74%"></span><b>74%</b></div>
-                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc3", Variant)<span class="pub-landing__occ-m" style="--pct:69%"></span><b>69%</b></div>
+                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc1", Variant)<span class="pub-landing__occ-m" style="--pct:82%"></span><b>Sterk</b></div>
+                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc2", Variant)<span class="pub-landing__occ-m" style="--pct:74%"></span><b>Goed</b></div>
+                        <div class="pub-landing__occ">@LandingText.For("Landing.Get.FitOcc3", Variant)<span class="pub-landing__occ-m" style="--pct:69%"></span><b>Redelijk</b></div>
                     </div>
                 </div>
                 <div class="pub-landing__fc">
@@ -170,9 +170,10 @@
     [Parameter] public decimal? PriceEuro { get; set; }
     [Parameter] public bool ComboLayout { get; set; }
 
-    private RenderFragment ComboCard(string titleKey, string bodyKey, string tagKey, bool paid) => __builder =>
+    private RenderFragment ComboCard(string icon, string titleKey, string bodyKey, string tagKey, bool paid) => __builder =>
     {
         <article class="pub-landing__get-card pub-landing__lift pub-landing__card-calm">
+            <LandingLineIcon Kind="@icon" />
             <h3>@LandingText.For(titleKey, Variant)</h3>
             <p>@LandingText.For(bodyKey, Variant)</p>
             @if (paid && PriceEuro is decimal price)
@@ -242,7 +243,7 @@
             <p>@LandingText.For("Landing.Get.MatchBody", Variant)</p>
             <div class="pub-landing__swipe">
                 <span class="pub-pill">@LandingText.For("Landing.Get.MatchBadge", Variant)</span>
-                <div class="pub-landing__pc">91%</div>
+                <div class="pub-landing__pc">Sterk</div>
                 <b>@LandingText.For("Landing.Get.MatchRole", Variant)</b>
                 <small>@LandingText.For("Landing.Get.MatchMeta", Variant)</small>
             </div>

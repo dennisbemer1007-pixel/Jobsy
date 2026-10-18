@@ -44,7 +44,7 @@
             </div>
         </div>
         <div class="pub-landing__passport-footer">
-            <span class="pub-landing__passport-footer-pct" aria-hidden="true">91%</span>
+            <span class="pub-landing__passport-footer-pct" aria-hidden="true">Sterk</span>
             <div class="pub-landing__passport-footer-copy">
                 <strong>@LandingText.For("Landing.Hero.TopMatch", Variant)</strong>
                 <small>@LandingText.For("Landing.Hero.TopMatchMeta", Variant)</small>
@@ -56,13 +56,15 @@
 @code {
     [Parameter] public LandingVariant Variant { get; set; } = LandingVariant.On;
 
+    private static string FitWord(int pct) => pct >= 85 ? "Sterk" : pct >= 70 ? "Goed" : "Redelijk";
+
     private RenderFragment MatchRow(string titleKey, string metaKey, int pct) => __builder =>
     {
         <div class="pub-landing__match-row">
             <b class="pub-landing__match-job">@LandingText.For(titleKey, Variant)</b>
             <small class="pub-landing__match-meta">@LandingText.For(metaKey, Variant)</small>
             <div class="pub-landing__match-bar">
-                <span class="pub-landing__match-pct">@pct%</span>
+                <span class="pub-landing__match-pct">@FitWord(pct)</span>
                 <span class="pub-landing__match-track"><i style="@($"width:{pct}%")"></i></span>
             </div>
         </div>
