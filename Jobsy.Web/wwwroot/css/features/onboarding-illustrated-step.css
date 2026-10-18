@@ -89,29 +89,78 @@
   font-size: var(--text-base);
 }
 
-.ob-dream-sfeer__search > div {
+.ob-dream-sfeer__search,
+.ob-wizard__dream-search {
+  position: relative;
+  z-index: 2;
+}
+
+.ob-dream-typeahead {
   position: absolute;
-  z-index: 4;
+  z-index: 6;
   inset-inline: 0;
-  margin-block-start: 4px;
-  padding: 4px;
+  inset-block-start: calc(100% + 4px);
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: var(--shadow-lg);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  overflow: hidden;
+  max-block-size: min(16.5rem, calc(100vh - var(--sticky-footer-h, 6.5rem) - 12rem));
+  display: flex;
+  flex-direction: column;
 }
 
-.ob-dream-sfeer__search > div button {
-  display: block;
+.ob-dream-typeahead__scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-block-size: 0;
+  flex: 1 1 auto;
+}
+
+.ob-dream-typeahead__option,
+.ob-dream-typeahead__own {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
   inline-size: 100%;
   text-align: start;
   padding: 10px 12px;
   border: 0;
   background: transparent;
   cursor: pointer;
+  font: inherit;
+  color: inherit;
 }
 
-.ob-dream-sfeer__search > div button:hover {
+.ob-dream-typeahead__option:hover,
+.ob-dream-typeahead__own:hover,
+.ob-dream-typeahead__option.is-active,
+.ob-dream-typeahead__own.is-active {
   background: var(--accent-soft);
+}
+
+.ob-dream-typeahead__title {
+  display: block;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.ob-dream-typeahead__desc {
+  display: block;
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-inline-size: 100%;
+}
+
+.ob-dream-typeahead__own {
+  flex-shrink: 0;
+  border-block-start: 1px solid var(--border);
+  font-weight: 600;
 }
 
 .ob-dream-sfeer__chips {

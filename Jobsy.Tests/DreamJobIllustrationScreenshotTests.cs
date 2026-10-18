@@ -119,6 +119,7 @@ public sealed class DreamJobIllustrationScreenshotTests : IAsyncLifetime
         {
             await page.Locator("[data-testid=dream-inspiration-chip]").First.ClickAsync();
             await page.Locator("[data-testid=dream-job-confirm]").WaitForAsync(new() { Timeout = 15_000 });
+            await page.Locator(".ob-dream-typeahead").WaitForAsync(new() { Timeout = 15_000 });
         }
 
         if (focusSearch)

@@ -3,6 +3,7 @@
 @using Jobsy.Core.Options
 @using Jobsy.Core.Rules
 @using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.Components.Web
 @inject IConfiguration Config
 @inject IHostEnvironment HostEnv
 @using Jobsy.Web.Localization
@@ -22,18 +23,17 @@
             <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
         }
         <div class="ob-illustrated-step__form">
-            <div class="ob-dream-sfeer__search">
-                <input role="combobox"
-                       aria-expanded="@(Draft.DreamSearch.Length > 0)"
-                       aria-autocomplete="list"
-                       aria-label="@Culture["Onboarding.DreamSearch"]"
-                       placeholder="@Culture["Onboarding.DreamSearch"]"
-                       data-testid="dream-job-search"
-                       value="@Draft.DreamSearch"
-                       @oninput="OnIllustratedSearchInput"
-                       @onkeydown="DreamKeyDown" />
-                @RenderSearchSuggestions
-            </div>
+            <DreamJobSearchField @ref="_searchField"
+                                 TestId="dream-job-search"
+                                 Query="@Draft.DreamSearch"
+                                 Young="Young"
+                                 Education="@Draft.Education"
+                                 HighlightIndex="_highlightIndex"
+                                 ChooseDream="ChooseDream"
+                                 ChooseTitle="ChooseTitle"
+                                 ChooseOwnDream="ChooseOwnDream"
+                                 OnInput="OnIllustratedSearchInput"
+                                 OnKeyDown="HandleSearchKeyDown" />
             <div class="ob-dream-sfeer__chips" data-testid="dream-inspiration-chips">
                 <p class="ob-dream-sfeer__chips-label">@Culture["Onboarding.Step6.InspirationLabel"]</p>
                 @foreach (var chip in DreamJobIllustrationChips.Default)
@@ -65,16 +65,17 @@ else
         {
             <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
         }
-        <div class="ob-wizard__dream-search">
-            <input role="combobox"
-                   aria-expanded="@(Draft.DreamSearch.Length > 0)"
-                   aria-autocomplete="list"
-                   placeholder="@Culture["Onboarding.DreamSearch"]"
-                   @bind="Draft.DreamSearch"
-                   @bind:event="oninput"
-                   @onkeydown="DreamKeyDown" />
-            @RenderSearchSuggestions
-        </div>
+        <DreamJobSearchField @ref="_searchField"
+                             WrapperClass="ob-wizard__dream-search"
+                             Query="@Draft.DreamSearch"
+                             Young="Young"
+                             Education="@Draft.Education"
+                             HighlightIndex="_highlightIndex"
+                             ChooseDream="ChooseDream"
+                             ChooseTitle="ChooseTitle"
+                             ChooseOwnDream="ChooseOwnDream"
+                             OnInput="OnClassicSearchInput"
+                             OnKeyDown="HandleSearchKeyDown" />
         @if (ShowChosenChip)
         {
             <p class="journey-chip is-selected" role="status">@Draft.Dream</p>
@@ -98,19 +99,20 @@ else
 }
 
 @code {
+    private int _highlightIndex = -1;
+    private DreamJobSearchField? _searchField;
+
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
     [Parameter] public EventCallback<DreamJob> ChooseDream { get; set; }
     [Parameter] public EventCallback<string> ChooseTitle { get; set; }
     [Parameter] public EventCallback<string> ChooseInspiration { get; set; }
     [Parameter] public EventCallback ChooseOwnDream { get; set; }
-    /// <summary>Teen grid only when age is known and under 18. Unknown age uses the adult catalog.</summary>
     [Parameter] public bool Young { get; set; }
 
     private bool ShowChosenChip =>
         !string.IsNullOrWhiteSpace(Draft.Dream)
         && (!Young || DreamJobCatalog.All.All(job => job.TitleNl != Draft.Dream));
     [Parameter] public EventCallback<KeyboardEventArgs> DreamKeyDown { get; set; }
-    /// <summary>Optional override title key (journey: Discovery.Step4.DreamTitle).</summary>
     [Parameter] public string? TitleKey { get; set; }
     [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public bool ShowLead { get; set; } = true;
@@ -118,6 +120,10 @@ else
 
     private bool IllustrationEnabled =>
         DreamJobIllustrationGate.IsEnabled(Config[DreamJobIllustrationOptions.EnabledKey]);
+
+    private bool TypeaheadOpen => !string.IsNullOrWhiteSpace(Draft.DreamSearch);
+
+    private DreamJobTypeahead? ActiveTypeahead => _searchField?.Typeahead;
 
     private RenderFragment RenderHeading => __builder =>
     {
@@ -150,73 +156,6 @@ else
         }
     };
 
-    private RenderFragment RenderSearchSuggestions => __builder =>
-    {
-        if (Draft.DreamSearch.Length == 0)
-        {
-            return;
-        }
-
-        __builder.OpenElement(0, "div");
-        __builder.AddAttribute(1, "role", "listbox");
-        if (Young)
-        {
-            foreach (var dreamJob in DreamJobCatalog.Search(Draft.DreamSearch))
-            {
-                __builder.OpenElement(2, "button");
-                __builder.AddAttribute(3, "type", "button");
-                __builder.AddAttribute(4, "role", "option");
-                __builder.AddAttribute(5, "onclick", EventCallback.Factory.Create(this, () => ChooseDream.InvokeAsync(dreamJob)));
-                __builder.AddContent(6, (MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""));
-                __builder.OpenElement(7, "span");
-                __builder.AddContent(8, Culture[$"DreamJob.{dreamJob.Key}"]);
-                __builder.CloseElement();
-                __builder.CloseElement();
-            }
-        }
-        else
-        {
-            foreach (var hit in OccupationCatalog.Shared.Search(Draft.DreamSearch, 8, Draft.Education))
-            {
-                __builder.OpenElement(9, "button");
-                __builder.AddAttribute(10, "type", "button");
-                __builder.AddAttribute(11, "role", "option");
-                __builder.AddAttribute(12, "onclick", EventCallback.Factory.Create(this, () => ChooseTitle.InvokeAsync(hit.Title)));
-                __builder.OpenElement(13, "span");
-                __builder.AddContent(14, hit.Title);
-                __builder.CloseElement();
-                if (!string.IsNullOrWhiteSpace(hit.Description))
-                {
-                    __builder.OpenElement(15, "small");
-                    __builder.AddContent(16, hit.Description);
-                    __builder.CloseElement();
-                }
-
-                if (hit.NoScore)
-                {
-                    __builder.OpenElement(17, "small");
-                    __builder.AddContent(18, Culture["Occ.NoScore"] + ". " + Culture["Occ.NoScoreWhy"]);
-                    __builder.CloseElement();
-                }
-                else if (hit.LevelNote)
-                {
-                    __builder.OpenElement(19, "small");
-                    __builder.AddContent(20, Culture["Occ.ExtraTraining"]);
-                    __builder.CloseElement();
-                }
-
-                __builder.CloseElement();
-            }
-        }
-
-        __builder.OpenElement(21, "button");
-        __builder.AddAttribute(22, "type", "button");
-        __builder.AddAttribute(23, "onclick", ChooseOwnDream);
-        __builder.AddContent(24, "＋ " + Culture.Format("Onboarding.DreamOwn", Draft.DreamSearch.Trim()));
-        __builder.CloseElement();
-        __builder.CloseElement();
-    };
-
     private string ChipLabel(DreamJobInspirationChip chip)
     {
         if (!string.IsNullOrEmpty(chip.LabelResourceKey))
@@ -234,6 +173,7 @@ else
 
     private async Task PickInspirationAsync(string titleNl)
     {
+        ResetTypeaheadHighlight();
         if (ChooseInspiration.HasDelegate)
         {
             await ChooseInspiration.InvokeAsync(titleNl);
@@ -249,5 +189,95 @@ else
         Draft.DreamSearch = e.Value?.ToString() ?? "";
         var trimmed = Draft.DreamSearch.Trim();
         Draft.Dream = trimmed.Length == 0 ? "" : trimmed[..Math.Min(128, trimmed.Length)];
+        ResetTypeaheadHighlight();
+    }
+
+    private void OnClassicSearchInput(ChangeEventArgs e)
+    {
+        Draft.DreamSearch = e.Value?.ToString() ?? "";
+        ResetTypeaheadHighlight();
+    }
+
+    private void ResetTypeaheadHighlight() => _highlightIndex = -1;
+
+    private async Task HandleSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (TypeaheadOpen && ActiveTypeahead is not null)
+        {
+            var maxIndex = ActiveTypeahead.OwnOptionIndex;
+            switch (e.Key)
+            {
+                case "ArrowDown":
+                    _highlightIndex = _highlightIndex >= maxIndex ? 0 : _highlightIndex + 1;
+                    if (_highlightIndex < 0)
+                    {
+                        _highlightIndex = 0;
+                    }
+
+                    return;
+                case "ArrowUp":
+                    _highlightIndex = _highlightIndex <= 0 ? maxIndex : _highlightIndex - 1;
+                    return;
+                case "Enter":
+                    if (_highlightIndex >= 0)
+                    {
+                        await SelectHighlightedAsync();
+                        return;
+                    }
+
+                    if (Draft.DreamSearch.Length > 0)
+                    {
+                        await ChooseOwnDream.InvokeAsync();
+                        return;
+                    }
+
+                    break;
+                case "Escape":
+                    Draft.DreamSearch = "";
+                    Draft.Dream = "";
+                    ResetTypeaheadHighlight();
+                    return;
+            }
+        }
+
+        if (DreamKeyDown.HasDelegate)
+        {
+            await DreamKeyDown.InvokeAsync(e);
+        }
+    }
+
+    private async Task SelectHighlightedAsync()
+    {
+        if (ActiveTypeahead is null || _highlightIndex < 0)
+        {
+            return;
+        }
+
+        if (Young)
+        {
+            var hits = DreamJobCatalog.Search(Draft.DreamSearch, 6);
+            if (_highlightIndex < hits.Count)
+            {
+                await ChooseDream.InvokeAsync(hits[_highlightIndex]);
+                ResetTypeaheadHighlight();
+                return;
+            }
+        }
+        else
+        {
+            var hits = OccupationCatalog.Shared.Search(Draft.DreamSearch, 6, Draft.Education);
+            if (_highlightIndex < hits.Count)
+            {
+                await ChooseTitle.InvokeAsync(hits[_highlightIndex].Title);
+                ResetTypeaheadHighlight();
+                return;
+            }
+        }
+
+        if (_highlightIndex == ActiveTypeahead.OwnOptionIndex)
+        {
+            await ChooseOwnDream.InvokeAsync();
+            ResetTypeaheadHighlight();
+        }
     }
 }
