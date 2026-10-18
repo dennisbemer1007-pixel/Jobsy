@@ -1,0 +1,36 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="band">
+    <div class="bt">
+        @if (!string.IsNullOrWhiteSpace(Eyebrow))
+        {
+            <span class="eyb">@Eyebrow</span>
+        }
+        else
+        {
+            <span class="eyb">@Culture["AfterMatch.Nav.Eyebrow"]</span>
+        }
+        <h1>@Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p>@Lead</p>
+        }
+        @if (ChildContent is not null)
+        {
+            <div class="bact">@ChildContent</div>
+        }
+    </div>
+    @if (ShowArt)
+    {
+        <div class="art" style="background-image:url(/img/spots/gesprek.jpg);--asp:680/550" aria-hidden="true"></div>
+    }
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Lead { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool ShowArt { get; set; } = true;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

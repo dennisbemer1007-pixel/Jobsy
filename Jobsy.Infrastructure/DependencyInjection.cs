@@ -22,6 +22,7 @@ using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.AfterMatch;
 using Jobsy.Infrastructure.Services.LenderRegistration;
 using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.AspNetCore.Authorization;
@@ -667,6 +668,8 @@ public static class DependencyInjection
         services.AddScoped<ISampleAssessmentReportPdfService, SampleAssessmentReportPdfService>();
         services.AddHostedService<AssessmentNormSnapshotHostedService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.AddScoped<AfterMatchMailer>();
+        services.AddScoped<IAfterMatchService, AfterMatchService>();
         services.Configure<Jobsy.Core.Options.ProactiveMatchingOptions>(
             configuration.GetSection(Jobsy.Core.Options.ProactiveMatchingOptions.SectionName));
         services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();

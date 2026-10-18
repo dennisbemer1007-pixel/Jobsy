@@ -262,6 +262,7 @@ public sealed class PlatformFeatureItem
     public bool MatchCalibrationV1Enabled { get; set; }
     public bool EmployerFitQuestionnairesEnabled { get; set; }
     public bool KandidatenkaartEnabled { get; set; }
+    public bool AfterMatchEnabled { get; set; }
     public int CandidateApplyPerMinuteLimit { get; set; } = 5;
     public int CandidateApplyPerHourLimit { get; set; } = 30;
     public int CandidateApplyPerDayLimit { get; set; } = 100;
@@ -310,6 +311,7 @@ public sealed class PlatformFeaturePatch
     public bool? MatchCalibrationV1Enabled { get; set; }
     public bool? EmployerFitQuestionnairesEnabled { get; set; }
     public bool? KandidatenkaartEnabled { get; set; }
+    public bool? AfterMatchEnabled { get; set; }
     public bool? CandidateExternalVacanciesEnabled { get; set; }
     public bool? EmployerPhase2Enabled { get; set; }
     public int? CandidateApplyPerMinuteLimit { get; set; }

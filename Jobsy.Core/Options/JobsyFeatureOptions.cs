@@ -36,4 +36,7 @@ public sealed class JobsyFeatureOptions
 
     /// <summary>When true, new Quick-Scan rows use v2 catalogs. Overridden by platform settings when present.</summary>
     public bool TestsV2Enabled { get; set; }
+
+    /// <summary>Na de match (gesprek plannen en berichten). Acceptatie config turns this on.</summary>
+    public bool NaDeMatchEnabled { get; set; }
 }

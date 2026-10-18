@@ -24,6 +24,7 @@
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject UserFacingError UserFacing
+@inject IFeatureFlags FeatureFlags
 @implements IDisposable
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
@@ -191,6 +192,7 @@
     private readonly ElementReference[] _menuItemRefs = new ElementReference[3];
     private int _menuItemCount;
     private int _menuFocusIndex;
+    private bool _afterMatchEnabled;
     private PersistingComponentStateSubscription _persistSubscription;
     private static readonly System.Globalization.CultureInfo Dutch = new("nl-NL");
 
@@ -308,7 +310,13 @@
         <div class="kb-next">
             <p class="kb-next__title">@Culture["Kb.Next.Title"]</p>
             <p class="kb-next__text">@Culture[a.NextStepKey]</p>
-            @if (string.Equals(a.Status, "EmployerContacting", StringComparison.OrdinalIgnoreCase) && !_readOnly)
+            @if (ShowAfterMatch(a) && !_readOnly)
+            {
+                <a class="btn btn-secondary kb-next__action" href="/candidate/applications/@(a.Id)/after-match">
+                    @Culture["AfterMatch.Link.Open"]
+                </a>
+            }
+            else if (string.Equals(a.Status, "EmployerContacting", StringComparison.OrdinalIgnoreCase) && !_readOnly)
             {
                 <button type="button" class="btn btn-secondary kb-next__action" @onclick="() => OpenMockInterview(a.VacancyId)">
                     @Culture["Kb.Next.Practice"]
@@ -403,6 +411,8 @@
         _readOnly = !RoleClaimMatching.HasRole(state.User, JobsyRoles.Candidate);
         _givenName = state.User.FindFirst(ClaimTypes.GivenName)?.Value
                      ?? state.User.FindFirst("given_name")?.Value;
+        var flags = await FeatureFlags.GetAsync();
+        _afterMatchEnabled = flags.IsEnabled(PlatformFeature.AfterMatch);
         try
         {
             _items = (await Api.GetMyApplicationsAsync()).ToList();
@@ -476,6 +486,12 @@
         _countRunning = _items.Count(a => IsRunning(a.Status));
         _countDone = _items.Count(a => IsFinished(a.Status));
     }
+
+    private bool ShowAfterMatch(ApplicationItem a) =>
+        _afterMatchEnabled && AfterMatchEligible(a.Status);
+
+    private static bool AfterMatchEligible(string status) =>
+        status is "Accepted" or "EmployerContacting" or "Hired";
 
     private static bool IsRunning(string status)
         => status is "Pending" or "Accepted" or "EmployerContacting";

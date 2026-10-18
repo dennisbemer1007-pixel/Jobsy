@@ -18,10 +18,10 @@ public static partial class EmailStrings
         new Dictionary<string, IReadOnlyDictionary<string, string>>(StringComparer.OrdinalIgnoreCase)
         {
             ["nl"] = EmailStringsReferee.Merge(
-                Merge(Merge(EmailStringsNl.Map, EmailStringsComeback.For("nl")), EmailStringsKandidatenkaart.For("nl")),
+                Merge(Merge(Merge(EmailStringsNl.Map, EmailStringsComeback.For("nl")), EmailStringsAfterMatch.For("nl")), EmailStringsKandidatenkaart.For("nl")),
                 "nl"),
             ["en"] = EmailStringsReferee.Merge(
-                Merge(Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")), EmailStringsKandidatenkaart.For("en")),
+                Merge(Merge(Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")), EmailStringsAfterMatch.For("en")), EmailStringsKandidatenkaart.For("en")),
                 "en"),
             ["pl"] = EmailStringsReferee.Merge(
                 Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), EmailStringsKandidatenkaart.For("en")),

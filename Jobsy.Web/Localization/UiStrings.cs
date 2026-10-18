@@ -3728,6 +3728,7 @@ public static class UiStrings
         UiStringsGolf1.MergeAll(nl, en, pl, ro, ar);
         UiStringsRun8.MergeAll(nl, en, pl, ro, ar);
         UiStringsProactive.MergeAll(nl, en, pl, ro, ar);
+        UiStringsAfterMatch.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateHub.MergeAll(nl, en, pl, ro, ar);
         UiStringsProfileReset.MergeAll(nl, en, pl, ro, ar);
 

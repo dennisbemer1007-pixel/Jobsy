@@ -1,0 +1,181 @@
+@page "/werkgever/sollicitaties/{ApplicationId:guid}/after-match"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.AfterMatch
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject UserFacingError UserFacing
+
+<PageTitle>@Culture["AfterMatch.Screen02.Hero.Title"] · Lobsy</PageTitle>
+<link rel="stylesheet" href="css/features/na-de-match.css?v=20261018-01" />
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_thread is null)
+{
+    <p class="state-message error">@Culture["AfterMatch.Error.NotFound"]</p>
+    <a class="btn-compact" href="/werkgever/sollicitaties">@Culture["WgApp.Back"]</a>
+}
+else
+{
+    <div class="ndm ndm-page" data-testid="ndm-werkgever-live">
+        <div class="wm">
+            <p class="crumb">@_thread.VacancyTitle · @_thread.CompanyName</p>
+            <div class="wtitle">
+                <h1>@_heroTitle</h1>
+                <p>@_heroLead</p>
+            </div>
+            <div class="g2">
+                <div class="stack">
+                    <NdMSchedulingPanel Mode="@EmployerSchedulingMode(_thread)"
+                                          OpenSlots="_thread.OpenSlots"
+                                          ScheduledLabel="@ScheduledLabel(_thread)"
+                                          LocationOrLink="_thread.LocationOrLink"
+                                          Busy="_busy"
+                                          OnProposeEmployer="ProposeSlotsAsync" />
+                    @if (_thread.InterviewStatus == InterviewStatus.Done || _thread.Outcome is not null)
+                    {
+                        <div class="wc stack">
+                            <b>@Culture["AfterMatch.Screen12.Hero.Title"]</b>
+                            <div class="outc">
+                                <button type="button" class="@OutcomeClass(AfterMatchOutcomeKind.Offer)" @onclick="() => RecordOutcomeAsync(AfterMatchOutcomeKind.Offer)">@Culture["AfterMatch.Screen12.Offer"]</button>
+                                <button type="button" class="@OutcomeClass(AfterMatchOutcomeKind.NextRound)" @onclick="() => RecordOutcomeAsync(AfterMatchOutcomeKind.NextRound)">@Culture["AfterMatch.Screen12.NextRound"]</button>
+                                <button type="button" class="@OutcomeClass(AfterMatchOutcomeKind.NotNow)" @onclick="() => RecordOutcomeAsync(AfterMatchOutcomeKind.NotNow)">@Culture["AfterMatch.Screen12.NotNow"]</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <NdMMessagePanel Messages="_thread.Messages" Editable="true" Busy="_busy" OnSend="SendMessageAsync" />
+            </div>
+            <a class="lk" href="/werkgever/sollicitaties/@ApplicationId">@Culture["WgApp.Back"]</a>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error" role="alert">@_error</p>
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private AfterMatchThreadDto? _thread;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string _heroTitle = "";
+    private string _heroLead = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        try
+        {
+            _thread = await Api.GetAfterMatchForEmployerAsync(ApplicationId);
+            _heroTitle = Culture["AfterMatch.Screen02.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen02.Hero.Lead"];
+            if (_thread?.InterviewStatus == InterviewStatus.RescheduleRequested)
+            {
+                _heroTitle = Culture["AfterMatch.Screen09.Hero.Title"];
+                _heroLead = Culture["AfterMatch.Screen09.Hero.Lead"];
+            }
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static NdMSchedulingMode EmployerSchedulingMode(AfterMatchThreadDto t) =>
+        t.InterviewStatus is InterviewStatus.Proposing or InterviewStatus.RescheduleRequested
+            ? NdMSchedulingMode.EmployerPropose
+            : t.InterviewStatus == InterviewStatus.Scheduled
+                ? NdMSchedulingMode.Scheduled
+                : NdMSchedulingMode.Waiting;
+
+    private static string? ScheduledLabel(AfterMatchThreadDto t)
+    {
+        if (t.ScheduledStartUtc is not DateTime start)
+        {
+            return null;
+        }
+
+        return start.ToLocalTime().ToString("dddd d MMMM, HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private string OutcomeClass(AfterMatchOutcomeKind kind) =>
+        _thread?.Outcome == kind ? "btn on" : "btn line";
+
+    private async Task ProposeSlotsAsync(ProposeEmployerSlotsRequest request)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.ProposeEmployerAfterMatchSlotsAsync(ApplicationId, request);
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SendMessageAsync((string Body, bool ConfirmSensitive) args)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.SendAfterMatchMessageAsync(
+                ApplicationId,
+                new SendMessageRequest(args.Body, args.ConfirmSensitive));
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task RecordOutcomeAsync(AfterMatchOutcomeKind outcome)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.RecordAfterMatchOutcomeAsync(
+                ApplicationId,
+                new RecordOutcomeRequest(outcome, Culture["AfterMatch.Screen12.Reason"]));
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

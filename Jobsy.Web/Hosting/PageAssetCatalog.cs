@@ -62,6 +62,7 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
+        "css/features/na-de-match.css?v=20261018-01",
     ];
 
     public static readonly string[] WerkgeverCss =
@@ -72,6 +73,7 @@ public static class PageAssetCatalog
         "css/features/vacancy-wizard.css?v=20261017-02",
         "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",
+        "css/features/na-de-match.css?v=20261018-01",
     ];
 
     public static readonly string[] KandidatenkaartCss =
@@ -154,6 +156,11 @@ public static class PageAssetCatalog
         if (path.StartsWith("/account/", StringComparison.Ordinal))
         {
             return Area.Account;
+        }
+
+        if (path.StartsWith("/dev/na-de-match", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.CandidatePublic | Area.CandidateApp | Area.Werkgever;
         }
 
         if (path.StartsWith("/candidate/", StringComparison.Ordinal)

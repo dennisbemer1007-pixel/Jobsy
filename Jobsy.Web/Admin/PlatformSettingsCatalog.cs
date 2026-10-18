@@ -437,6 +437,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("AfterMatchEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "AfterMatchEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.AfterMatch.Enabled.Title",
+                DescriptionKey: "AdminSettings.AfterMatch.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.AfterMatchEnabled,
+                Write: v => new PlatformFeatureUpdate(AfterMatchEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("CandidateApplyPerHourLimit"))
         {
             list.Add(new PlatformSettingDescriptor(

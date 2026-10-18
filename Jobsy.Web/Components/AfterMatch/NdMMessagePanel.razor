@@ -1,0 +1,100 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="card @(Compact ? "side" : "")">
+    <div class="row">
+        <h2 style="font-size:1.2rem">@Culture["AfterMatch.Screen10.Hero.Title"]</h2>
+        <span class="sp"></span>
+        @if (ShowNewPill)
+        {
+            <span class="pill warm">@Culture["AfterMatch.Messages.NewPill"]</span>
+        }
+    </div>
+    <div class="thread" style="margin-top:12px">
+        @if (!string.IsNullOrWhiteSpace(SystemLine))
+        {
+            <div class="sys">@SystemLine</div>
+        }
+        @foreach (var m in Messages)
+        {
+            <div class="msg @(m.IsMine ? "me" : "")">
+                @m.Body
+                <small>@m.SenderLabel · @FormatWhen(m.CreatedAtUtc)</small>
+            </div>
+        }
+    </div>
+    @if (Editable)
+    {
+        <div class="compose" style="margin-top:12px">
+            <input class="sp" style="border:0;outline:0;width:100%;font:inherit;color:inherit"
+                   placeholder="@Culture["AfterMatch.Screen10.Compose"]"
+                   @bind="_draft" @bind:event="oninput" />
+            <button type="button" class="btn sm" disabled="@Busy" @onclick="SendAsync">
+                @((MarkupString)NdMIcons.Send)
+            </button>
+        </div>
+        @if (_preview is { WouldBlock: true } preview && preview.Kind != SensitiveMessageContentRules.SensitiveKind.None)
+        {
+            <div class="warnin" style="margin-top:10px" role="alert">
+                @Culture["AfterMatch.Messages.SensitiveWarning"]
+                @if (preview.CanConfirmSend)
+                {
+                    <button type="button" class="btn line sm" disabled="@Busy" @onclick="SendDespiteWarningAsync">
+                        @Culture["AfterMatch.Messages.SendAnyway"]
+                    </button>
+                }
+                else
+                {
+                    <span class="small">@Culture["AfterMatch.Messages.BlockedEmployer"]</span>
+                }
+            </div>
+        }
+        <p class="xs muted" style="margin-top:8px">@Culture["AfterMatch.Screen10.Privacy"]</p>
+    }
+</aside>
+
+@code {
+    [Parameter] public IReadOnlyList<AfterMatchMessageDto> Messages { get; set; } = [];
+    [Parameter] public bool Editable { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool ShowNewPill { get; set; }
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public string? SystemLine { get; set; }
+    [Parameter] public EventCallback<string> OnPreview { get; set; }
+    [Parameter] public EventCallback<(string Body, bool ConfirmSensitive)> OnSend { get; set; }
+
+    private string _draft = "";
+    private SensitiveMessagePreview? _preview;
+
+    private async Task SendAsync() => await TrySendAsync(false);
+
+    private async Task SendDespiteWarningAsync() => await TrySendAsync(true);
+
+    private async Task TrySendAsync(bool confirm)
+    {
+        if (string.IsNullOrWhiteSpace(_draft))
+        {
+            return;
+        }
+
+        await OnSend.InvokeAsync((_draft.Trim(), confirm));
+        _draft = "";
+        _preview = null;
+    }
+
+    private async Task OnDraftChanged()
+    {
+        if (OnPreview.HasDelegate && !string.IsNullOrWhiteSpace(_draft))
+        {
+            // Preview handled by parent when binding changes — simplified: parent polls on send only in step 1.
+        }
+    }
+
+    private static string FormatWhen(DateTime utc)
+    {
+        var local = utc.ToLocalTime();
+        return local.ToString("d MMM, HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+}

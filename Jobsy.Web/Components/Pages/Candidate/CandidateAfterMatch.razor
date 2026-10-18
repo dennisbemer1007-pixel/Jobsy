@@ -1,0 +1,249 @@
+@page "/candidate/applications/{ApplicationId:guid}/after-match"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Features
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.AfterMatch
+@using Jobsy.Web.Components.Shared
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@attribute [RequiresFeature(PlatformFeature.AfterMatch)]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@inject JobsyApiClient Api
+@inject CultureState Culture
+@inject IJSRuntime Js
+@inject UserFacingError UserFacing
+
+<PageTitle>@Culture["AfterMatch.Nav.Eyebrow"] · Lobsy</PageTitle>
+<link rel="stylesheet" href="css/features/na-de-match.css?v=20261018-01" />
+
+@if (_loading)
+{
+    <p class="state-message">@Culture["Common.Loading"]</p>
+}
+else if (_thread is null)
+{
+    <p class="state-message error">@Culture["AfterMatch.Error.NotFound"]</p>
+    <a class="btn btn-secondary" href="@KbRoutes.Applications">@Culture["AfterMatch.Link.BackApplications"]</a>
+}
+else
+{
+    <div class="ndm ndm-page" data-testid="ndm-candidate-live">
+        <main class="wrap">
+            <NdMHero Title="@_heroTitle" Lead="@_heroLead" />
+            <div class="g2">
+                <div class="stack">
+                    <div class="card">
+                        <NdMVacancyCard Initials="@Initials(_thread.CompanyName)"
+                                        Title="@_thread.VacancyTitle"
+                                        Subtitle="@VacancySubtitle(_thread)" />
+                        <div class="hr"></div>
+                        <NdMTimeline CurrentStep="@TimelineStep(_thread)" YesDate="@YesDateLabel" />
+                        <NdMWhatGrid />
+                    </div>
+                    <NdMSchedulingPanel Mode="@SchedulingMode(_thread)"
+                                        OpenSlots="_thread.OpenSlots"
+                                        ScheduledLabel="@ScheduledLabel(_thread)"
+                                        LocationOrLink="@_thread.LocationOrLink"
+                                        Busy="_busy"
+                                        OnSelectSlot="SelectSlotAsync"
+                                        OnDownloadCalendar="DownloadCalendarAsync" />
+                    @if (_thread.InterviewStatus == InterviewStatus.Scheduled)
+                    {
+                        <NdMReminderPanel Preference="_thread.ReminderPreference"
+                                          Editable="true"
+                                          Busy="_busy"
+                                          OnSave="SaveRemindersAsync" />
+                    }
+                </div>
+                <NdMMessagePanel Messages="_thread.Messages"
+                                 ShowNewPill="@HasUnread(_thread)"
+                                 Editable="true"
+                                 Busy="_busy"
+                                 SystemLine="@SystemLine(_thread)"
+                                 OnSend="SendMessageAsync" />
+            </div>
+            <p style="margin-top:16px"><a class="lk" href="@KbRoutes.Applications">@Culture["AfterMatch.Link.BackApplications"]</a></p>
+        </main>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_error))
+{
+    <p class="state-message error" role="alert">@_error</p>
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private AfterMatchThreadDto? _thread;
+    private bool _loading = true;
+    private bool _busy;
+    private string? _error;
+    private string _heroTitle = "";
+    private string _heroLead = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _thread = await Api.GetAfterMatchForCandidateAsync(ApplicationId);
+            ApplyHero(_thread);
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ApplyHero(AfterMatchThreadDto? thread)
+    {
+        if (thread is null)
+        {
+            return;
+        }
+
+        if (thread.InterviewStatus == InterviewStatus.Scheduled)
+        {
+            _heroTitle = Culture["AfterMatch.Screen05.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen05.Hero.Lead"];
+        }
+        else if (thread.InterviewStatus == InterviewStatus.Done && thread.Outcome == AfterMatchOutcomeKind.NotNow)
+        {
+            _heroTitle = Culture["AfterMatch.Screen13.Hero.Title"];
+            _heroLead = Culture["AfterMatch.Screen13.Hero.Lead"];
+        }
+        else
+        {
+            _heroTitle = $"{thread.CompanyName} zei ja";
+            _heroLead = Culture["AfterMatch.Screen01.Hero.Lead"];
+        }
+    }
+
+    private static int TimelineStep(AfterMatchThreadDto t) => t.InterviewStatus switch
+    {
+        InterviewStatus.Proposing or InterviewStatus.RescheduleRequested => 1,
+        InterviewStatus.Scheduled => 2,
+        InterviewStatus.Done => 3,
+        _ => 1
+    };
+
+    private static NdMSchedulingMode SchedulingMode(AfterMatchThreadDto t) => t.InterviewStatus switch
+    {
+        InterviewStatus.Scheduled => NdMSchedulingMode.Scheduled,
+        InterviewStatus.Proposing when t.OpenSlots.Count > 0 => NdMSchedulingMode.CandidatePick,
+        _ => NdMSchedulingMode.Waiting
+    };
+
+    private string? YesDateLabel => "13 okt";
+
+    private static string VacancySubtitle(AfterMatchThreadDto t) =>
+        string.Join(" · ", new[] { t.CompanyName, t.TravelLabel }.Where(s => !string.IsNullOrWhiteSpace(s)));
+
+    private static string Initials(string company)
+    {
+        var parts = company.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+            : company.Length >= 2 ? company[..2].ToUpperInvariant() : company.ToUpperInvariant();
+    }
+
+    private static bool HasUnread(AfterMatchThreadDto t) =>
+        t.Messages.Any(m => !m.IsMine && m.ReadAtUtc is null);
+
+    private string? SystemLine(AfterMatchThreadDto t) =>
+        t.ContactShare.PhoneAllowed ? null : Culture["AfterMatch.Screen10.SysContact"];
+
+    private static string? ScheduledLabel(AfterMatchThreadDto t)
+    {
+        if (t.ScheduledStartUtc is not DateTime start)
+        {
+            return null;
+        }
+
+        return start.ToLocalTime().ToString("dddd d MMMM, HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+    }
+
+    private async Task SelectSlotAsync(Guid slotId)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.SelectAfterMatchSlotAsync(ApplicationId, new SelectSlotRequest(slotId));
+            ApplyHero(_thread);
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SendMessageAsync((string Body, bool ConfirmSensitive) args)
+    {
+        _busy = true;
+        try
+        {
+            _thread = await Api.SendAfterMatchMessageAsync(
+                ApplicationId,
+                new SendMessageRequest(args.Body, args.ConfirmSensitive));
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveRemindersAsync(UpdateReminderPreferenceRequest request)
+    {
+        _busy = true;
+        try
+        {
+            var prefs = await Api.UpdateAfterMatchReminderPreferencesAsync(request);
+            if (_thread is not null)
+            {
+                _thread = _thread with { ReminderPreference = prefs };
+            }
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task DownloadCalendarAsync()
+    {
+        try
+        {
+            await Api.DownloadAfterMatchCalendarAsync(ApplicationId, Js);
+        }
+        catch (Exception ex)
+        {
+            var uf = UserFacing.From(ex);
+            _error = uf.ApiUserMessage ?? Culture[uf.MessageKey];
+        }
+    }
+}
