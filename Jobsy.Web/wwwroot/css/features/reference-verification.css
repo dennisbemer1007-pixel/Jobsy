@@ -1459,8 +1459,15 @@
     border-block-end: 1px solid color-mix(in srgb, var(--gold) 18%, var(--border));
   }
 
-  .ref-verif-public__intro-tail {
+  .ref-verif-public__intro-short {
     margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.42;
+    color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  }
+
+  .ref-verif-public__intro-tail {
+    margin: 0.35rem 0 0;
     font-size: 0.88rem;
     line-height: 1.42;
     color: color-mix(in srgb, var(--text) 82%, var(--muted));

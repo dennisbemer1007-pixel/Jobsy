@@ -27,6 +27,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private const string EnvRunR15 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R15";
     private const string EnvRunR16 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R16";
     private const string EnvRunR17 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R17";
+    private const string EnvRunR18 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R18";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -67,6 +68,8 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private static string OutputDirR16 => "/opt/cursor/artifacts/references-r16";
 
     private static string OutputDirR17 => "/opt/cursor/artifacts/references-r17";
+
+    private static string OutputDirR18 => "/opt/cursor/artifacts/references-r18";
 
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
@@ -115,6 +118,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static bool ShouldRunR17 =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunR17), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunR18 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunR18), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -1222,6 +1228,47 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     }
 
     [Fact]
+    public async Task Capture_reference_verification_public_mobile_r18()
+    {
+        if (!ShouldRunR18)
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            Assert.Fail("JOBSY_E2E_BASE_URL unreachable — start API :5200 and Web :5201 with seeded DB.");
+        }
+
+        Directory.CreateDirectory(OutputDirR18);
+        foreach (var stale in Directory.GetFiles(OutputDirR18))
+        {
+            File.Delete(stale);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var publicContext = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IgnoreHTTPSErrors = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(publicContext);
+        var publicPage = await publicContext.NewPageAsync();
+        var open = ReferenceVerificationDemoIds.OpenReferentToken;
+        await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
+        await publicPage.WaitForSelectorAsync(".ref-verif-public__intro-short", new() { Timeout = 10_000 });
+        await AssertMobilePublicOpenHeroAsync(publicPage);
+        await Task.Delay(350);
+        await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
+            publicPage,
+            Path.Combine(OutputDirR18, "04-referent-public-390.png"));
+    }
+
+    [Fact]
     public async Task Capture_reference_verification_screenshots_mobhero()
     {
         if (!ShouldRunMobhero)
@@ -1290,6 +1337,20 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
         var pngs = Directory.GetFiles(OutputDirMobhero, "*.png");
         Assert.Equal(4, pngs.Length);
+    }
+
+    private static async Task AssertMobilePublicOpenHeroAsync(IPage page)
+    {
+        await AssertMobileGevoeligHeroAsync(page);
+        Assert.Equal(0, await page.Locator(".ref-verif-gev-hero--public-open-split .ref-verif-gev-hero__lead:visible").CountAsync());
+        var hero = page.Locator(".ref-verif-gev-hero").First;
+        var heroBox = await hero.BoundingBoxAsync();
+        Assert.NotNull(heroBox);
+        var introShort = page.Locator(".ref-verif-public__intro-short");
+        await introShort.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5_000 });
+        var introBox = await introShort.BoundingBoxAsync();
+        Assert.NotNull(introBox);
+        Assert.True(introBox!.Y >= heroBox!.Y + heroBox.Height - 2, "Intro copy should sit below the hero band.");
     }
 
     private static async Task AssertMobileGevoeligHeroAsync(IPage page)

@@ -61,15 +61,14 @@
                                       Title="@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)"
                                       TitleId="ref-verif-public-title"
                                       Lead="@Culture.Format("RefVerif.Public.IntroDetail", _view.CandidateName, _view.EmployerName, _view.RoleTitle)"
-                                      LeadMobile="@Culture.Format("RefVerif.Public.IntroShort", _view.CandidateName, _view.EmployerName, _view.RoleTitle)"
+                                      LeadDesktopOnly="true"
                                       ArtUrl="@CandidateIllustratedImages.RefVerifPublic"
                                       MobileArtUrl="@CandidateIllustratedImages.RefVerifMobile"
                                       ArtPosition="@CandidateIllustratedImages.RefVerifHeroArtPosition"
                                       MobileArtPosition="@CandidateIllustratedImages.RefVerifHeroMobilePosition"
-                                      CssClass="ref-verif-gev-hero--public-open">
-                <p class="ref-verif-cand-hero__privacy">@Culture["RefVerif.Public.PrivacyShort"]</p>
-            </CandidateIllustratedHero>
+                                      CssClass="ref-verif-gev-hero--public-open ref-verif-gev-hero--public-open-split" />
             <div class="ref-verif-public__hero-more">
+                <p class="ref-verif-public__intro-short">@Culture.Format("RefVerif.Public.IntroShort", _view.CandidateName, _view.EmployerName, _view.RoleTitle)</p>
                 <p class="ref-verif-public__intro-tail">@Culture["RefVerif.Public.IntroTail"]</p>
                 <p class="ref-verif-public__privacy-more">@Culture["RefVerif.Public.PrivacyShort"]</p>
             </div>

@@ -275,4 +275,20 @@
   .ref-verif-gev-hero--public-open .ref-verif-cand-hero__privacy {
     display: block;
   }
+
+  /* Public open (390): hero = eyebrow + title only; intro lives in .ref-verif-public__hero-more */
+  .ref-verif-gev-hero--public-open-split .ref-verif-gev-hero__lead {
+    display: none !important;
+  }
+
+  .ref-verif-gev-hero--public-open-split .ref-verif-gev-hero__copy {
+    max-width: 55%;
+  }
+
+  .ref-verif-gev-hero--public-open-split .ref-verif-gev-hero__copy h1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }

@@ -13,7 +13,7 @@
             }
             @if (!string.IsNullOrWhiteSpace(Lead))
             {
-                <p class="ref-verif-gev-hero__lead @(string.IsNullOrWhiteSpace(LeadMobile) ? null : "ref-verif-gev-hero__lead--desktop")">@Lead</p>
+                <p class="ref-verif-gev-hero__lead @(string.IsNullOrWhiteSpace(LeadMobile) ? null : "ref-verif-gev-hero__lead--desktop") @(LeadDesktopOnly ? "ref-verif-gev-hero__lead--desktop" : null)">@Lead</p>
             }
             @if (!string.IsNullOrWhiteSpace(LeadMobile))
             {
@@ -35,6 +35,7 @@
     [Parameter] public string? TitleId { get; set; }
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? LeadMobile { get; set; }
+    [Parameter] public bool LeadDesktopOnly { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
     [Parameter] public string? MobileArtUrl { get; set; }
     [Parameter] public string ArtPosition { get; set; } = "right bottom";

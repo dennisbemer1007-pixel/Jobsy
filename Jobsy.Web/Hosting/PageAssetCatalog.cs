@@ -53,8 +53,8 @@ public static class PageAssetCatalog
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
         "css/features/mijn-paspoort.css?v=20261018-06",
-        "css/features/reference-verification-hero.css?v=20261018-r17",
-        "css/features/reference-verification.css?v=20261018-r17",
+        "css/features/reference-verification-hero.css?v=20261018-r18",
+        "css/features/reference-verification.css?v=20261018-r18",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261016-05",
         "css/features/carriere.css?v=20261011-01",
@@ -227,8 +227,8 @@ public static class PageAssetCatalog
         {
             return
             [
-                "css/features/reference-verification-hero.css?v=20261018-r17",
-                "css/features/reference-verification.css?v=20261018-r17"
+                "css/features/reference-verification-hero.css?v=20261018-r18",
+                "css/features/reference-verification.css?v=20261018-r18"
             ];
         }
 
