@@ -12,3 +12,6 @@ make_scene "$W/beschikbaarheid.jpg" "$W/beschikbaarheid-profession-wide.jpg" 0.1
 make_scene "$W/vervoer.jpg" "$W/vervoer-profession-wide.jpg" 0.16 0.14 0
 make_scene "$W/wie-ben-jij.jpg" "$W/wie-ben-jij-profession-wide.jpg" 0.22 0.14 0
 make_scene "$W/wie-ben-jij.jpg" "$W/kompas-hero-wide.jpg" 0.50 0.23 0
+
+# After regenerating *-profession-wide.jpg / kompas-hero-wide.jpg:
+#   python3 scripts/hero-mobile-figures.py

@@ -1,0 +1,68 @@
+{
+  "werkervaring-mob-figures.png": {
+    "width": 1379,
+    "height": 639,
+    "opaque_pixels": 299061,
+    "box": [
+      1180,
+      80,
+      2559,
+      719
+    ]
+  },
+  "vervoer-mob-figures.png": {
+    "width": 1379,
+    "height": 599,
+    "opaque_pixels": 170247,
+    "box": [
+      1180,
+      120,
+      2559,
+      719
+    ]
+  },
+  "beschikbaarheid-mob-figures.png": {
+    "width": 1379,
+    "height": 679,
+    "opaque_pixels": 172417,
+    "box": [
+      1180,
+      40,
+      2559,
+      719
+    ]
+  },
+  "kompas-mob-figures.png": {
+    "width": 1179,
+    "height": 639,
+    "opaque_pixels": 225701,
+    "box": [
+      1380,
+      80,
+      2559,
+      719
+    ]
+  },
+  "droombaan-mob-figures.png": {
+    "width": 1239,
+    "height": 579,
+    "opaque_pixels": 299521,
+    "box": [
+      1320,
+      140,
+      2559,
+      719
+    ]
+  },
+  "opleiding-mob-figures.png": {
+    "width": 759,
+    "height": 639,
+    "opaque_pixels": 94276,
+    "box": [
+      520,
+      80,
+      1279,
+      719
+    ]
+  }
+}

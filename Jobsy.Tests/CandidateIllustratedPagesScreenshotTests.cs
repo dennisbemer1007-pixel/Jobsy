@@ -1257,9 +1257,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         var figureVisible = false;
         var figureSampleX = 0;
         var figureSampleY = 0;
+        var figureMinX = (int)Math.Round(img.Width * 0.55);
         for (var y = heroTopY + 72; y <= heroBottomY - 4 && !figureVisible; y++)
         {
-            for (var x = (int)Math.Round(img.Width * 0.48); x <= img.Width - 12; x++)
+            for (var x = figureMinX; x <= img.Width - 12; x++)
             {
                 var px = img[x, y];
                 if (IsMobHeroFigurePixel(px))
@@ -1272,7 +1273,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             }
         }
 
-        sb.AppendLine($"  figure in art ({figureSampleX},{figureSampleY}): visible={figureVisible}");
+        sb.AppendLine($"  figure in slot ≥x={figureMinX} ({figureSampleX},{figureSampleY}): visible={figureVisible}");
 
         var ghostPixels = 0;
         for (var y = heroTopY + 88; y <= heroTopY + 200; y++)
@@ -1286,7 +1287,20 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             }
         }
 
+        var ghostInFigureSlot = 0;
+        for (var y = heroTopY + 72; y <= heroBottomY - 4; y++)
+        {
+            for (var x = figureMinX; x <= img.Width - 8; x++)
+            {
+                if (IsMobGhostFigurePixel(img[x, y]))
+                {
+                    ghostInFigureSlot++;
+                }
+            }
+        }
+
         sb.AppendLine($"  ghost figure pixels (fade zone): {ghostPixels} (max 0)");
+        sb.AppendLine($"  ghost pixels in figure slot (≥x={figureMinX}): {ghostInFigureSlot} (max 0)");
 
         var seamStep = 0;
         var seamY = heroTopY + Math.Min(100, heroHeightPx / 2);
@@ -1307,8 +1321,8 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         var contentBelowY = Math.Min(heroBottomY + 28, img.Height - 1);
         sb.AppendLine($"  hero ends y≈{heroBottomY}, tabs near y={contentBelowY} (above fold if <420): {contentBelowY < 420}");
 
-        var passed = heroHeightPx <= 260 && titleInk && figureVisible && ghostPixels == 0 && seamStep <= 90
-            && contentBelowY < 420;
+        var passed = heroHeightPx <= 260 && titleInk && figureVisible && ghostPixels == 0 && ghostInFigureSlot == 0
+            && seamStep <= 90 && contentBelowY < 420;
         sb.AppendLine($"  PASS={passed}");
         return sb.ToString();
     }
@@ -1558,7 +1572,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             return false;
         }
 
-        return px.B >= 105 && px.R <= 95 && px.G <= 135;
+        return px.B >= 105 && px.R <= 95 && px.G <= 135 && px.R + px.G + px.B > 480;
     }
 
     private static bool IsMobHeroFigurePixel(Rgb24 px)

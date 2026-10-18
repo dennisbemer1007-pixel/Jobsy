@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Media
 
-<header class="cand-hero @CssClass" style="@StyleValue">
+<header class="cand-hero @(string.IsNullOrWhiteSpace(ArtUrl) ? null : "cand-hero--with-art") @CssClass" style="@StyleValue">
     <div class="cand-hero__copy">
         @if (!string.IsNullOrWhiteSpace(Eyebrow))
         {
@@ -19,6 +20,10 @@
     @if (!string.IsNullOrWhiteSpace(ArtUrl))
     {
         <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
+        @if (MobileFigureUrl is not null)
+        {
+            <img class="cand-hero__mob-figures" src="@MobileFigureUrl" alt="" aria-hidden="true" decoding="async" />
+        }
     }
 </header>
 
@@ -32,9 +37,26 @@
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private string? StyleValue => string.IsNullOrWhiteSpace(ArtUrl)
-        ? null
-        : $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
+    private string? MobileFigureUrl => CandidateIllustratedImages.MobileFigureUrl(ArtUrl);
+
+    private string? StyleValue
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ArtUrl))
+            {
+                return null;
+            }
+
+            var style = $"--cand-hero-art:url('{ArtUrl}');--cand-hero-pos:{ArtPosition}";
+            if (MobileFigureUrl is not null)
+            {
+                style += $";--cand-hero-mob-figures:url('{MobileFigureUrl}')";
+            }
+
+            return style;
+        }
+    }
 
     private string? MediaStyleValue => string.IsNullOrWhiteSpace(ArtUrl)
         ? null
