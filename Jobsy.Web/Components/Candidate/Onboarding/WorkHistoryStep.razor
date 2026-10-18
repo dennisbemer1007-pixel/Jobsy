@@ -1,14 +1,24 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Careers
 @using Jobsy.Web.Localization
+@using Jobsy.Core.Features
 @using Jobsy.Web.Models
 @inject CultureState Culture
+@inject IFeatureFlags FeatureFlags
 
+@if (_sensitiveExperience)
+{
+    <link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-1" />
+}
 @if (ShowHeading)
 {
     <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
     <h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
     <p class="ob-wizard__lead">@Culture["Onboarding.Step4.Lead"]</p>
+    @if (_sensitiveExperience)
+    {
+        <div class="gev-banner">@Culture["Sensitive.Work.PrivacyBanner"]</div>
+    }
 }
 <div class="ob-wizard__card">
 <label class="ob-wizard__check">
@@ -97,6 +107,18 @@
             {
                 <p class="ob-job-duties__hint">@Culture["Onboarding.Work.DutiesHint"]</p>
             }
+            @if (_sensitiveExperience && !item.IsBlank())
+            {
+                <div class="gev-toggle-row @(item.OnlyForMe ? "is-private" : null)">
+                    <div>
+                        <strong>@Culture["Sensitive.Work.OnlyForMe"]</strong>
+                        <p class="muted">@(item.OnlyForMe ? Culture["Sensitive.Work.OnlyForMeOn"] : Culture["Sensitive.Work.OnlyForMeOff"])</p>
+                    </div>
+                    <input type="checkbox"
+                           checked="@item.OnlyForMe"
+                           @onchange="e => ToggleOnlyForMe(item, e.Value is true)" />
+                </div>
+            }
         </article>
     }
     @if (ShowAddJobButton)
@@ -118,6 +140,14 @@
     [Parameter] public EventCallback<CandidateEmployerHistory> RemoveJob { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
+
+    private bool _sensitiveExperience;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var flags = await FeatureFlags.GetAsync();
+        _sensitiveExperience = flags.IsEnabled(PlatformFeature.SensitiveExperience);
+    }
 
     protected override void OnParametersSet()
     {
@@ -160,6 +190,12 @@
         return current
             ? SetJobEnd.InvokeAsync((item, null))
             : Draft.NotifyChangedAsync();
+    }
+
+    private async Task ToggleOnlyForMe(CandidateEmployerHistory item, bool value)
+    {
+        item.OnlyForMe = value;
+        await NotifyAsync();
     }
 
     private async Task AppendDuty(CandidateEmployerHistory item, string chip)

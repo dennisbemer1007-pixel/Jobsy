@@ -69,5 +69,8 @@ public enum PlatformFeature
     Kandidatenkaart,
 
     /// <summary>Geverifieerde referenties on the candidate passport. Default false.</summary>
-    ReferenceVerification
+    ReferenceVerification,
+
+    /// <summary>Privacy controls for sensitive work history. Default false.</summary>
+    SensitiveExperience
 }

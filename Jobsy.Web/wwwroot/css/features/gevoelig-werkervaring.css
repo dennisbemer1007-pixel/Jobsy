@@ -1,0 +1,181 @@
+.gev-page {
+  --gev-cream: #fbf5ec;
+  --gev-ink: #102a43;
+  --gev-accent: #f97316;
+  background: var(--gev-cream);
+  min-height: 100vh;
+  color: var(--gev-ink);
+}
+
+.gev-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
+  gap: 1.5rem;
+  align-items: stretch;
+  padding: 1.5rem 1.25rem 0;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.gev-hero__art {
+  min-height: 220px;
+  background: url("/images/candidate/werk-full.jpg") right center / cover no-repeat;
+  mask-image: linear-gradient(to left, #000 55%, transparent 100%);
+  border-radius: 0 0 0 2rem;
+}
+
+.gev-hero__art--ref {
+  background-image: url("/images/candidate/ref-full.jpg");
+}
+
+.gev-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+  gap: 1.25rem;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem 6rem;
+}
+
+.gev-card {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 8px 24px rgba(16, 42, 67, 0.06);
+}
+
+.gev-banner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid #d7ead9;
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  margin-top: 0.75rem;
+}
+
+.gev-job {
+  border: 1px solid #e8e0d4;
+  border-radius: 0.85rem;
+  padding: 0.85rem;
+  margin-top: 0.75rem;
+}
+
+.gev-job.is-private {
+  background: #eef6ff;
+  border-color: #c7dff7;
+}
+
+.gev-toggle-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e8e0d4;
+}
+
+.gev-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.82rem;
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.gev-pill--lock {
+  background: #eef6ff;
+  color: #1d4ed8;
+}
+
+.gev-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.gev-chip {
+  background: #eef6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.85rem;
+}
+
+.gev-gap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.gev-gap-actions button {
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 0.45rem 0.8rem;
+}
+
+.gev-gap-actions button.is-on {
+  background: var(--gev-ink);
+  color: #fff;
+  border-color: var(--gev-ink);
+}
+
+.gev-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.gev-ref-type {
+  border: 1px solid #e8e0d4;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.gev-ref-type.is-on {
+  border-color: var(--gev-ink);
+  box-shadow: 0 0 0 2px rgba(16, 42, 67, 0.12);
+}
+
+.gev-view-toggle {
+  display: inline-flex;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.75rem;
+}
+
+.gev-view-toggle button {
+  border: 0;
+  background: transparent;
+  padding: 0.45rem 0.9rem;
+}
+
+.gev-view-toggle button.is-on {
+  background: var(--gev-ink);
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .gev-hero,
+  .gev-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gev-hero__art {
+    min-height: 180px;
+    mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+  }
+
+  .gev-ref-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

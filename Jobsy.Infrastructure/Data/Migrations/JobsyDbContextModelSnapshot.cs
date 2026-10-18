@@ -2093,6 +2093,14 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)");
 
+                    b.Property<string>("ReferenceType")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("RelationshipContext")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int>("SortOrder")
                         .HasColumnType("integer");
 
@@ -5521,6 +5529,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<bool>("KandidatenkaartEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("SensitiveExperienceEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<bool>("MaintenanceEnabled")
