@@ -24,6 +24,7 @@ public class PublicLayoutBunitTests : BunitContext
 {
     public PublicLayoutBunitTests()
     {
+        JobsyLanguages.ResetEnabledForTests();
         JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
@@ -80,9 +81,12 @@ public class PublicLayoutBunitTests : BunitContext
 
         var cut = Render<PublicLayout>(p => p
             .Add(c => c.Body, (RenderFragment)(b => b.AddContent(0, "ar"))));
-        var root = cut.Find(".pub-theme");
-        Assert.Equal("rtl", root.GetAttribute("dir"));
-        Assert.Equal("ar", root.GetAttribute("lang"));
+        cut.WaitForAssertion(() =>
+        {
+            var root = cut.Find(".pub-theme");
+            Assert.Equal("rtl", root.GetAttribute("dir"));
+            Assert.Equal("ar", root.GetAttribute("lang"));
+        });
         JobsyLanguages.ResetEnabledForTests();
     }
 

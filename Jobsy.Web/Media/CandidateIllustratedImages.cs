@@ -29,6 +29,10 @@ public static class CandidateIllustratedImages
     public const string SollicitatiesBand = $"{Base}/werkervaring-profession-wide.jpg?v={Version}";
     public const string BewaardBand = $"{Base}/vervoer-profession-wide.jpg?v={Version}";
     public const string CarriereBand = $"{Base}/opleiding.jpg?v={Version}";
+    public const string LearnGrowHero = $"{Base}/leren-groeien-hero.jpg?v={Version}";
+    public const string LearnGrowHeroWide = $"{Base}/leren-groeien-hero-wide.jpg?v={Version}";
+    public const string LearnGrowHeroFiguresMobile = $"{Base}/leren-groeien-hero-figures-mobile.png?v={Version}";
+    public const string LearnGrowHeroMobileAtmosphere = $"{Base}/leren-groeien-hero-mobile-atmosphere.png?v={Version}";
     public const string InstellingenBand = $"{Base}/beschikbaarheid-profession-wide.jpg?v={Version}";
     public const string KompasHeroWide = $"{Base}/kompas-hero-wide.jpg?v={Version}";
 

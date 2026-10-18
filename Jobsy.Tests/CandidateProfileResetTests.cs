@@ -226,6 +226,7 @@ public class CandidateProfileResetTests
             typeof(SiteVisit),
             typeof(TalentContactRequest),
             typeof(TrainingClick),
+            typeof(TrainingEnrollment),
             typeof(UserCompany),
             typeof(UserDeviceSession),
             typeof(UserExternalLogin),

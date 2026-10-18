@@ -1801,6 +1801,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             click.UserId = null;
         }
 
+        var trainingEnrollments = await _db.TrainingEnrollments
+            .Where(e => e.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (trainingEnrollments.Count > 0)
+        {
+            _db.TrainingEnrollments.RemoveRange(trainingEnrollments);
+        }
+
         var deepAnalyses = await _db.CandidateDeepAnalyses
             .Where(d => d.UserId == user.Id)
             .ToListAsync(cancellationToken);

@@ -27,7 +27,7 @@ public static class HorizonCareerPathBuilder
             ContentStep(
                 1,
                 "Profiel als basis",
-                "Je Lobsy-profiel vormt het startpunt. We wegen wat je al meeneemt richting je droombaan — zonder vaste huidige functietitel.",
+                "Je Lobsy-profiel vormt het startpunt. We wegen wat je al meeneemt richting je droombaan, zonder vaste huidige functietitel.",
                 strength,
                 [],
                 ["Profiel bijgewerkt zodat matching scherper wordt"],

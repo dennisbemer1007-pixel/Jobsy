@@ -246,6 +246,11 @@ internal static class CandidateOwnedDataCleanup
             click.UserId = null;
         }
 
+        await RemoveRangeAsync(
+            db,
+            db.TrainingEnrollments.Where(e => e.UserId == user.Id),
+            cancellationToken);
+
         var consumerInvoices = await db.ConsumerPurchaseInvoices
             .Where(i => i.UserId == user.Id)
             .ToListAsync(cancellationToken);
