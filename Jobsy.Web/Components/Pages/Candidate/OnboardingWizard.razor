@@ -19,6 +19,7 @@
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Onboarding
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
@@ -27,7 +28,9 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-01" />
-    <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-07" />
+    <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-08" />
+    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-r2" />
+    <link rel="stylesheet" href="css/features/onboarding-test-blocks.css?v=20261018-r2" />
     @if (TestJourneyIllustration.Enabled)
     {
         <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-07" />
@@ -160,6 +163,13 @@
                         </div>
                     </div>
                 }
+                @if (SoftIllustratedStep && IllustratedSidebarNote is not null)
+                {
+                    <div class="ob-wizard__sidebar-note">
+                        <strong>@Culture["Onboarding.IllustratedSidebarTitle"]</strong>
+                        @IllustratedSidebarNote
+                    </div>
+                }
                 <p class="ob-wizard__saved">✓ @Culture["Onboarding.AllSaved"]</p>
                 <button type="button" class="ob-wizard__ghost" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
             </aside>
@@ -216,7 +226,8 @@
                     </div>
                 </header>
 
-                <section class="ob-wizard__content">
+                <section class="ob-wizard__content @(SoftIllustratedStep ? "ob-wizard__content--illustrated" : null)"
+                         data-onboarding-step="@_step">
                     @if (!string.IsNullOrWhiteSpace(_error))
                     {
                         <p class="state-message error">@_error</p>
@@ -235,55 +246,137 @@
                     @switch (_step)
                     {
                         case 1:
-                            <PersonalStep Draft="Draft"
-                                          ShowValidation="_showValidation"
-                                          AddressChanged="AddressChanged"
-                                          BirthDateChanged="BirthDateChanged"
-                                          ShowCity="ShowCity"
-                                          SelectAddress="SelectAddress" />
+                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.KennismakenWebp"
+                                                       JpgSrc="@OnboardingIllustrationAssets.KennismakenJpg"
+                                                       TestId="onboarding-step-1-illustrated">
+                                <HeadContent>
+                                    <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
+                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step1.Lead"]</p>
+                                </HeadContent>
+                                <ChildContent>
+                                    <div class="ob-illustrated-step__form">
+                                        <PersonalStep Draft="Draft"
+                                                      Illustrated="true"
+                                                      ShowValidation="_showValidation"
+                                                      AddressChanged="AddressChanged"
+                                                      BirthDateChanged="BirthDateChanged"
+                                                      ShowCity="ShowCity"
+                                                      SelectAddress="SelectAddress" />
+                                    </div>
+                                </ChildContent>
+                            </OnboardingIllustratedStep>
                             break;
 
                         case 2:
-                            <AvailabilityStep Draft="Draft"
-                                              ShowValidation="_showValidation"
-                                              Presets="PresetItems"
-                                              TogglePreset="TogglePreset"
-                                              ToggleFineTune="ToggleFineTune"
-                                              SetMinHours="SetMinHoursAsync"
-                                              SetMaxHours="SetMaxHoursAsync"
-                                              ManualAvailability="ManualAvailabilityAsync"
-                                              ToggleAvailability="ToggleAvailability"
-                                              ResetPresets="ResetPresets" />
+                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.BeschikbaarheidWebp"
+                                                       JpgSrc="@OnboardingIllustrationAssets.BeschikbaarheidJpg"
+                                                       TestId="onboarding-step-2-illustrated">
+                                <HeadContent>
+                                    <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
+                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
+                                </HeadContent>
+                                <ChildContent>
+                                    <div class="ob-illustrated-step__form">
+                                        <AvailabilityStep Draft="Draft"
+                                                          Illustrated="true"
+                                                          ShowValidation="_showValidation"
+                                                          Presets="PresetItems"
+                                                          TogglePreset="TogglePreset"
+                                                          ToggleFineTune="ToggleFineTune"
+                                                          SetMinHours="SetMinHoursAsync"
+                                                          SetMaxHours="SetMaxHoursAsync"
+                                                          ManualAvailability="ManualAvailabilityAsync"
+                                                          ToggleAvailability="ToggleAvailability"
+                                                          ResetPresets="ResetPresets" />
+                                    </div>
+                                </ChildContent>
+                            </OnboardingIllustratedStep>
                             break;
 
                         case 3:
-                            <TransportStep Draft="Draft"
-                                           ShowValidation="_showValidation"
-                                           SelectTransport="SelectTransport"
-                                           SelectTravelTime="SelectTravelTime"
-                                           ShowCustomTravel="ShowCustomTravel" />
+                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.VervoerWebp"
+                                                       JpgSrc="@OnboardingIllustrationAssets.VervoerJpg"
+                                                       TestId="onboarding-step-3-illustrated">
+                                <HeadContent>
+                                    <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1>
+                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step3.Lead"]</p>
+                                </HeadContent>
+                                <ChildContent>
+                                    <div class="ob-illustrated-step__form">
+                                        <TransportStep Draft="Draft"
+                                                       Illustrated="true"
+                                                       ShowValidation="_showValidation"
+                                                       SelectTransport="SelectTransport"
+                                                       SelectTravelTime="SelectTravelTime"
+                                                       ShowCustomTravel="ShowCustomTravel" />
+                                    </div>
+                                </ChildContent>
+                            </OnboardingIllustratedStep>
                             break;
 
                         case 4:
-                            <WorkHistoryStep Draft="Draft"
-                                             AddJob="AddJob"
-                                             RemoveJob="RemoveJob"
-                                             SetJobStart="OnSetJobStart"
-                                             SetJobEnd="OnSetJobEnd" />
+                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.WerkervaringWebp"
+                                                       JpgSrc="@OnboardingIllustrationAssets.WerkervaringJpg"
+                                                       TestId="onboarding-step-4-illustrated">
+                                <HeadContent>
+                                    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+                                    <h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
+                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step4.Lead"]</p>
+                                </HeadContent>
+                                <ChildContent>
+                                    <div class="ob-illustrated-step__form">
+                                        <WorkHistoryStep Draft="Draft"
+                                                         Illustrated="true"
+                                                         AddJob="AddJob"
+                                                         RemoveJob="RemoveJob"
+                                                         SetJobStart="OnSetJobStart"
+                                                         SetJobEnd="OnSetJobEnd" />
+                                    </div>
+                                </ChildContent>
+                            </OnboardingIllustratedStep>
                             break;
 
                         case 5:
-                            <EducationStep Draft="Draft" SelectEducation="SelectEducation" />
+                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.OpleidingWebp"
+                                                       JpgSrc="@OnboardingIllustrationAssets.OpleidingJpg"
+                                                       TestId="onboarding-step-5-illustrated">
+                                <HeadContent>
+                                    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+                                    <h1 tabindex="-1">@Culture["Onboarding.Step5.Title"]</h1>
+                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step5.Lead"]</p>
+                                </HeadContent>
+                                <ChildContent>
+                                    <div class="ob-illustrated-step__form">
+                                        <EducationStep Draft="Draft"
+                                                       Illustrated="true"
+                                                       SelectEducation="SelectEducation" />
+                                    </div>
+                                </ChildContent>
+                            </OnboardingIllustratedStep>
                             break;
 
                         case 6:
-                            <DreamJobStep Draft="Draft"
-                                          ShowValidation="_showValidation"
-                                          Young="@IsYoungCandidate"
-                                          ChooseDream="ChooseDream"
-                                          ChooseTitle="ChooseDreamTitle"
-                                          ChooseOwnDream="ChooseOwnDream"
-                                          DreamKeyDown="DreamKeyDown" />
+                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.DreamJobWebp"
+                                                       JpgSrc="@OnboardingIllustrationAssets.DreamJobJpg"
+                                                       TestId="onboarding-step-6-illustrated">
+                                <HeadContent>
+                                    <h1 tabindex="-1">@Culture["Onboarding.Step6.Title"]</h1>
+                                    <p class="ob-wizard__lead">@Culture["Onboarding.Step6.Lead"]</p>
+                                </HeadContent>
+                                <ChildContent>
+                                    <div class="ob-illustrated-step__form">
+                                        <DreamJobStep Draft="Draft"
+                                                      ShowValidation="_showValidation"
+                                                      Young="@IsYoungCandidate"
+                                                      ChooseDream="ChooseDream"
+                                                      ChooseTitle="ChooseDreamTitle"
+                                                      ChooseOwnDream="ChooseOwnDream"
+                                                      DreamKeyDown="DreamKeyDown"
+                                                      ShowHeading="false"
+                                                      ShowLead="false" />
+                                    </div>
+                                </ChildContent>
+                            </OnboardingIllustratedStep>
                             break;
 
                         case 7 when !Draft.HasConsent && ShowJourneyConsent:
@@ -417,6 +510,18 @@
     private OnboardingNearbySignal? _nearbySignal;
     private OnboardingImpressionItem? _earlyStrength;
     private int _step = 1;
+    private bool SoftIllustratedStep => _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= 6;
+
+    private string? IllustratedSidebarNote => _step switch
+    {
+        1 => Culture["Onboarding.IllustratedSidebar.Step1"],
+        2 => Culture["Onboarding.IllustratedSidebar.Step2"],
+        3 => Culture["Onboarding.IllustratedSidebar.Step3"],
+        4 => Culture["Onboarding.IllustratedSidebar.Step4"],
+        5 => Culture["Onboarding.IllustratedSidebar.Step5"],
+        6 => Culture["Onboarding.IllustratedSidebar.Step6"],
+        _ => null,
+    };
     private int _currentQuestion;
     private string _installMessage = "";
     private string? _error;

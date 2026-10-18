@@ -81,6 +81,13 @@
   margin-top: 0 !important;
 }
 
+@media (max-width: 639px) {
+  .ob-wizard--richting-a.ob-wizard .ob-wizard__content .ob-job-card label.ob-job-duties,
+  .ob-job-card label.ob-job-duties {
+    margin-top: 12px !important;
+  }
+}
+
 .ob-job-dates__to {
   margin: 0;
 }

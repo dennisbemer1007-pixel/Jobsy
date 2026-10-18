@@ -1,0 +1,280 @@
+/* Reusable illustrated onboarding step: side art + centered cream form card (steps 1–6). */
+
+.ob-wizard__content.ob-wizard__content--illustrated {
+  inline-size: 100%;
+  max-inline-size: none;
+  margin-inline: 0;
+  padding-block: 12px calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 16px);
+  padding-inline: clamp(8px, 2vw, 24px);
+}
+
+.ob-wizard__content.ob-wizard__content--illustrated .ob-wizard__step-pill {
+  margin-block-end: 0.35rem;
+}
+
+.ob-wizard__content.ob-wizard__content--illustrated .ob-wizard__mascot-anchor {
+  display: none;
+}
+
+.ob-illustrated-step {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.ob-illustrated-step__stage {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 1180px;
+  margin-inline: auto;
+}
+
+.ob-illustrated-step__art {
+  pointer-events: none;
+  user-select: none;
+  line-height: 0;
+}
+
+.ob-illustrated-step__art picture,
+.ob-illustrated-step__art img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: none;
+}
+
+.ob-illustrated-step__overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+  min-inline-size: 0;
+}
+
+.ob-illustrated-step__head {
+  inline-size: min(100%, 600px);
+  padding: 0;
+  text-align: center;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ob-illustrated-step__head h1,
+.ob-illustrated-step__overlay h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+  line-height: 1.15;
+  color: var(--brand);
+}
+
+.ob-illustrated-step__head .ob-wizard__lead,
+.ob-illustrated-step__overlay .ob-wizard__lead {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.ob-illustrated-step__head .ob-wizard__badge {
+  margin-block-end: 0.35rem;
+}
+
+.ob-illustrated-step__form {
+  inline-size: min(100%, 600px);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ob-illustrated-step__form.ob-fields label,
+.ob-illustrated-step__form .ob-wizard__card--illustrated label {
+  margin-block: 10px;
+}
+
+.ob-illustrated-step__form .ob-wizard__card--illustrated {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ob-illustrated-step__form .ob-wizard__job,
+.ob-illustrated-step__form .ob-wizard__check,
+.ob-illustrated-step__form .ob-wizard__availability-summary,
+.ob-illustrated-step__form .ob-wizard__fine-tune,
+.ob-illustrated-step__form fieldset.q-likert {
+  background: var(--surface);
+}
+
+@media (min-width: 1024px) {
+  .ob-wizard__main:has(.ob-wizard__content--illustrated) {
+    min-block-size: 0;
+  }
+
+  .ob-wizard__content.ob-wizard__content--illustrated {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-block-size: calc(100dvh - 11rem);
+    padding-block: 8px calc(var(--sticky-footer-h, 5.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  .ob-wizard__layout:has(.ob-wizard__content--illustrated) .ob-wizard__sidebar {
+    padding-block: 20px 24px;
+  }
+
+  .ob-wizard__sidebar-note {
+    margin-block: 8px 0;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    background: color-mix(in srgb, var(--accent-soft) 75%, var(--surface));
+    font-size: var(--text-xs);
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .ob-wizard__sidebar-note strong {
+    display: block;
+    margin-block-end: 4px;
+    color: var(--brand);
+    font-size: var(--text-sm);
+  }
+
+  .ob-illustrated-step__stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) min(600px, 46vw) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    align-items: start;
+    column-gap: 12px;
+    row-gap: 10px;
+    min-block-size: clamp(380px, 52vh, 560px);
+    max-inline-size: 1200px;
+    margin-inline: auto;
+    padding-block: 0.5rem;
+  }
+
+  .ob-illustrated-step__art {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .ob-illustrated-step__art img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+    object-position: center center;
+    max-block-size: 100%;
+  }
+
+  .ob-illustrated-step__head {
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    z-index: 2;
+    inline-size: 100%;
+    margin-inline: 0;
+    text-align: center;
+  }
+
+  .ob-illustrated-step__overlay {
+    grid-column: 2;
+    grid-row: 2;
+    position: relative;
+    z-index: 2;
+    inline-size: 100%;
+    background: var(--surface);
+    padding: 1.15rem 1.35rem 1.35rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  }
+
+  .ob-illustrated-step__form {
+    inline-size: 100%;
+  }
+
+  .ob-illustrated-step__overlay .lobsy-choice-grid,
+  .ob-illustrated-step__overlay .ob-wizard__presets,
+  .ob-illustrated-step__overlay .ob-wizard__transport {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 1023px) {
+  .ob-wizard__content.ob-wizard__content--illustrated {
+    padding-inline: 12px;
+  }
+
+  .ob-illustrated-step__stage {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .ob-illustrated-step__art {
+    flex-shrink: 0;
+    inline-size: calc(100% + 24px);
+    margin-inline: -12px;
+    order: -1;
+  }
+
+  .ob-illustrated-step__art img {
+    max-block-size: min(38vw, 220px);
+    object-fit: cover;
+    object-position: center 35%;
+  }
+
+  .ob-illustrated-step__overlay {
+    position: relative;
+    inset: auto;
+    transform: none;
+    inline-size: 100%;
+    background: var(--surface);
+    padding: 1rem 1rem 1.1rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  }
+
+  .ob-illustrated-step__head {
+    position: relative;
+    inset: auto;
+    margin-inline: auto;
+    inline-size: min(100%, 600px);
+    z-index: 2;
+    text-align: start;
+  }
+
+  .ob-illustrated-step__head h1,
+  .ob-illustrated-step__overlay h1 {
+    text-align: start;
+  }
+
+  .ob-illustrated-step__head .ob-wizard__lead {
+    text-align: start;
+  }
+
+  .ob-illustrated-step__form {
+    inline-size: 100%;
+  }
+}
+
+.ob-illustrated-step__stage > .ob-illustrated-step__head {
+  pointer-events: none;
+}
+
+@media (max-width: 639px) {
+  .ob-illustrated-step__art img {
+    max-block-size: min(52vw, 200px);
+  }
+}
