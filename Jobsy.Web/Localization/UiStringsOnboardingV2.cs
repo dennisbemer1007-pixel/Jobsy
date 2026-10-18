@@ -201,6 +201,9 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Panel.Nearby.TitleZero"] = english
             ? "We are counting jobs near you"
             : "We tellen banen bij jou in de buurt";
+        map["Onboarding.Panel.Nearby.MobileLine"] = english
+            ? "{0} matching jobs nearby"
+            : "{0} passende banen in de buurt";
         map["Onboarding.Panel.Nearby.MobileInitial"] = english ? "{0} jobs nearby" : "{0} banen in de buurt";
         map["Onboarding.Panel.Nearby.MobileRefined"] = english ? "Now {0} fitting jobs nearby" : "Nu {0} passende banen in de buurt";
         map["Onboarding.Panel.Nearby.MobileZero"] = english ? "Jobs nearby" : "Banen in de buurt";

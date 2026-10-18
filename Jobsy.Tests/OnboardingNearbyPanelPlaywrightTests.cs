@@ -59,6 +59,7 @@ public sealed class OnboardingNearbyPanelPlaywrightTests
 
         await FillPersonalAddressOnlyAsync(page);
         await page.Locator("[data-testid=onboarding-nearby-panel-desktop]").WaitForAsync(new() { Timeout = 90_000 });
+        Assert.Equal(0, await page.Locator(".ob-wizard .state-message.error").CountAsync());
         if (capture)
         {
             await page.ScreenshotAsync(new() { Path = Path.Combine(artifacts, "1440-nearby-after-address.png") });
@@ -115,18 +116,13 @@ public sealed class OnboardingNearbyPanelPlaywrightTests
         await VroegResultaatPlaywrightTests.ClickNextAsync(mPage);
         await mPage.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
 
+        Assert.Equal(0, await mPage.Locator(".ob-nearby-panel__mobile-line, .ob-nearby-panel__mobile-sheet").CountAsync());
+        var mobileLine = await mPage.Locator("[data-testid=onboarding-nearby-panel-mobile]").InnerTextAsync();
+        Assert.Contains("passende banen", mobileLine, StringComparison.OrdinalIgnoreCase);
+
         if (capture)
         {
             await mPage.ScreenshotAsync(new() { Path = Path.Combine(artifacts, "390-nearby-line-collapsed.png") });
-        }
-
-        await mPage.Locator(".ob-nearby-panel__mobile-line").ClickAsync();
-        await mPage.Locator(".ob-nearby-panel__mobile-sheet").WaitForAsync(new() { Timeout = 15_000 });
-        Assert.Equal(0, await mPage.Locator(".ob-nearby-panel__mobile-sheet a").CountAsync());
-
-        if (capture)
-        {
-            await mPage.ScreenshotAsync(new() { Path = Path.Combine(artifacts, "390-nearby-sheet-open.png") });
         }
     }
 
@@ -169,7 +165,7 @@ public sealed class OnboardingNearbyPanelPlaywrightTests
             await page.Locator("[data-testid=onboarding-work-job] input").First.FillAsync("Magazijnmedewerker");
             await page.Locator("[data-testid=onboarding-work-job] input").Nth(1).FillAsync("Lobsy BV");
             await page.WaitForTimeoutAsync(600);
-            var chip = page.Locator(".ob-job-duty-chips .lobsy-choice-tile, .ob-job-duty-chips button").First;
+            var chip = page.Locator(".ob-job-duty-pill").First;
             if (await chip.CountAsync() > 0)
             {
                 await chip.ClickAsync();
@@ -245,6 +241,31 @@ public sealed class OnboardingNearbyPanelPlaywrightTests
                 await page.ScreenshotAsync(new() { Path = Path.Combine(artifacts, $"{tag}-education-basisschool.png") });
             }
         }
+
+        if (capture)
+        {
+            await using var narrow = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = 360, Height = 740 },
+                IsMobile = true,
+                HasTouch = true,
+                Locale = "nl-NL",
+                IgnoreHTTPSErrors = true,
+            });
+            await PlaywrightCookieConsent.AcceptAsync(narrow);
+            var nPage = await narrow.NewPageAsync();
+            nPage.SetDefaultTimeout(120_000);
+            await VroegResultaatPlaywrightTests.RegisterFreshCandidateAsync(nPage, baseUrl);
+            await VroegResultaatPlaywrightTests.EnsureWizardStartedAsync(nPage);
+            await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(nPage, maxTravelMinutes: 30);
+            await VroegResultaatPlaywrightTests.ClickNextAsync(nPage);
+            await nPage.Locator("[data-testid=onboarding-work-job]").WaitForAsync(new() { Timeout = 60_000 });
+            await VroegResultaatPlaywrightTests.ClickNextAsync(nPage);
+            await nPage.Locator(".ob-wizard__education-grid").WaitForAsync(new() { Timeout = 60_000 });
+            await nPage.Locator(".ob-wizard__education-grid .lobsy-choice-tile, .ob-wizard__education-grid button").Filter(new() { HasText = "Basisschool" }).First.ClickAsync();
+            await nPage.WaitForTimeoutAsync(500);
+            await nPage.ScreenshotAsync(new() { Path = Path.Combine(artifacts, "360-education-basisschool.png") });
+        }
     }
 
     private static async Task FillPersonalAddressOnlyAsync(IPage page)
@@ -258,7 +279,7 @@ public sealed class OnboardingNearbyPanelPlaywrightTests
     private static async Task<int> ReadNearbyCountAsync(IPage page, bool mobile)
     {
         var locator = mobile
-            ? page.Locator(".ob-nearby-panel__mobile-text")
+            ? page.Locator("[data-testid=onboarding-nearby-panel-mobile]")
             : page.Locator(".ob-nearby-panel--desktop .ob-nearby-panel__count");
         if (await locator.CountAsync() == 0)
         {

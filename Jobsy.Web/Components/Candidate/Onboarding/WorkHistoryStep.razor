@@ -2,7 +2,6 @@
 @using Jobsy.Core.Careers
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
-@using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
 @if (ShowHeading)
@@ -22,7 +21,7 @@
     {
         var item = job;
         var canRemove = Draft.Jobs.Count > 1 || !item.IsBlank();
-        var dutyChips = OccupationDutySuggestions.ForRole(item.Role);
+        var dutyChips = OccupationDutySuggestions.ForRole(item.Role, Culture.Language);
         <article class="ob-wizard__job ob-job-card" data-testid="onboarding-work-job">
             @if (canRemove)
             {
@@ -44,25 +43,32 @@
                     <MonthYearInput Value="@item.StartMonth"
                                     ValueChanged="value => SetJobStart.InvokeAsync((item, value))" />
                 </label>
-                @if (item.ShowsAsCurrent)
-                {
-                    <p class="ob-job-dates__present" aria-hidden="true">@Culture["Profile.EmployerPresent"]</p>
-                }
-                else
-                {
+                <div class="ob-job-dates__to-block">
                     <label class="ob-job-dates__to">
                         @Culture["Profile.EmployerTo"]
-                        <MonthYearInput Value="@item.EndMonth"
-                                        ReferenceMonth="@item.StartMonth"
-                                        ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
+                        @if (item.ShowsAsCurrent)
+                        {
+                            <input class="ob-job-dates__present-input"
+                                   type="text"
+                                   readonly
+                                   disabled
+                                   value="@Culture["Profile.EmployerPresent"]"
+                                   aria-label="@Culture["Profile.EmployerPresent"]" />
+                        }
+                        else
+                        {
+                            <MonthYearInput Value="@item.EndMonth"
+                                            ReferenceMonth="@item.StartMonth"
+                                            ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
+                        }
                     </label>
-                }
-                <label class="ob-job-dates__current">
-                    <input type="checkbox"
-                           checked="@item.ShowsAsCurrent"
-                           @onchange="e => SetCurrentJob(item, e.Value is true)" />
-                    @Culture["Profile.CurrentJob"]
-                </label>
+                    <label class="ob-job-dates__current">
+                        <input type="checkbox"
+                               checked="@item.ShowsAsCurrent"
+                               @onchange="e => SetCurrentJob(item, e.Value is true)" />
+                        <span>@Culture["Profile.CurrentJob"]</span>
+                    </label>
+                </div>
             </div>
             <label class="ob-job-duties">
                 <span>@Culture["Onboarding.Work.DutiesLabel"] <small class="ob-job-duties__optional">@Culture["Onboarding.Optional"]</small></span>
@@ -75,16 +81,17 @@
             </label>
             @if (dutyChips.Count > 0)
             {
-                <ChoiceTileGrid Class="ob-job-duty-chips" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.Work.DutyChipsAria"]">
+                <div class="ob-job-duty-pills" role="group" aria-label="@Culture["Onboarding.Work.DutyChipsAria"]">
                     @foreach (var chip in dutyChips)
                     {
                         var text = chip;
-                        <ChoiceTile Label="@text"
-                                    Inline="true"
-                                    AlignIcons="false"
-                                    OnClick="@(() => AppendDuty(item, text))" />
+                        <button type="button"
+                                class="ob-job-duty-pill"
+                                @onclick="() => AppendDuty(item, text)">
+                            @text
+                        </button>
                     }
-                </ChoiceTileGrid>
+                </div>
             }
             @if (!string.IsNullOrWhiteSpace(item.EmployerName)
                  && string.IsNullOrWhiteSpace(item.Description)
