@@ -27,25 +27,50 @@
   width: 100%;
 }
 
+.ob-job-card .jobsy-date-field__error:empty {
+  display: none;
+  min-block-size: 0;
+  margin: 0;
+}
+
 .ob-job-card .ob-job-dates {
-  display: grid;
-  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   margin-block: 12px 8px;
 }
 
 @media (min-width: 640px) {
   .ob-job-card .ob-job-dates {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
     align-items: start;
+  }
+
+  .ob-job-card .ob-job-dates__from {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ob-job-card .ob-job-dates__to {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .ob-job-card .ob-job-dates__current {
+    grid-column: 2;
+    grid-row: 2;
   }
 }
 
-.ob-job-dates__to-block {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  min-width: 0;
+.ob-wizard--richting-a.ob-wizard .ob-wizard__content label.ob-job-dates__to {
+  margin-bottom: 0 !important;
+}
+
+.ob-wizard--richting-a.ob-wizard .ob-wizard__content label.ob-job-dates__current {
+  margin-top: 4px !important;
+  margin-bottom: 1rem !important;
 }
 
 .ob-job-dates__to {
@@ -220,8 +245,9 @@
 
   .ob-wizard--richting-a .ob-job-card label,
   .ob-wizard--richting-a .ob-job-card .ob-job-dates,
-  .ob-wizard--richting-a .ob-job-card .ob-job-dates__to-block,
   .ob-wizard--richting-a .ob-job-card .ob-job-dates__from,
+  .ob-wizard--richting-a .ob-job-card .ob-job-dates__to,
+  .ob-wizard--richting-a .ob-job-card label.ob-job-dates__current,
   .ob-wizard--richting-a .ob-job-card .ob-job-duties {
     width: 100%;
     max-width: 100%;

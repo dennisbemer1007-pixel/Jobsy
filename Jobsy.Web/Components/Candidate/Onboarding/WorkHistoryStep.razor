@@ -43,32 +43,30 @@
                     <MonthYearInput Value="@item.StartMonth"
                                     ValueChanged="value => SetJobStart.InvokeAsync((item, value))" />
                 </label>
-                <div class="ob-job-dates__to-block">
-                    <label class="ob-job-dates__to">
-                        @Culture["Profile.EmployerTo"]
-                        @if (item.ShowsAsCurrent)
-                        {
-                            <input class="ob-job-dates__present-input"
-                                   type="text"
-                                   readonly
-                                   disabled
-                                   value="@Culture["Profile.EmployerPresent"]"
-                                   aria-label="@Culture["Profile.EmployerPresent"]" />
-                        }
-                        else
-                        {
-                            <MonthYearInput Value="@item.EndMonth"
-                                            ReferenceMonth="@item.StartMonth"
-                                            ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
-                        }
-                    </label>
-                    <label class="ob-job-dates__current">
-                        <input type="checkbox"
-                               checked="@item.ShowsAsCurrent"
-                               @onchange="e => SetCurrentJob(item, e.Value is true)" />
-                        <span>@Culture["Profile.CurrentJob"]</span>
-                    </label>
-                </div>
+                <label class="ob-job-dates__to">
+                    @Culture["Profile.EmployerTo"]
+                    @if (item.ShowsAsCurrent)
+                    {
+                        <input class="ob-job-dates__present-input"
+                               type="text"
+                               readonly
+                               disabled
+                               value="@Culture["Profile.EmployerPresent"]"
+                               aria-label="@Culture["Profile.EmployerPresent"]" />
+                    }
+                    else
+                    {
+                        <MonthYearInput Value="@item.EndMonth"
+                                        ReferenceMonth="@item.StartMonth"
+                                        ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
+                    }
+                </label>
+                <label class="ob-job-dates__current">
+                    <input type="checkbox"
+                           checked="@item.ShowsAsCurrent"
+                           @onchange="e => SetCurrentJob(item, e.Value is true)" />
+                    <span>@Culture["Profile.CurrentJob"]</span>
+                </label>
             </div>
             <label class="ob-job-duties">
                 <span>@Culture["Onboarding.Work.DutiesLabel"] <small class="ob-job-duties__optional">@Culture["Onboarding.Optional"]</small></span>
