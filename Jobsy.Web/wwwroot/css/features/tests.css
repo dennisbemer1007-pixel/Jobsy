@@ -811,6 +811,12 @@
     box-shadow: none;
   }
 
+  .test-block-stage--hoe-je-werkt .test-block-stage__mobile-hero h1 {
+    box-sizing: border-box;
+    max-inline-size: min(9.25rem, 44%);
+    padding-inline-end: calc(0.85rem + 14px);
+  }
+
   .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {
     margin-inline: 0;
   }

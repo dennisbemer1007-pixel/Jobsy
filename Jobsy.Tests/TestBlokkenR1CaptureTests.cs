@@ -186,7 +186,12 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         Assert.True(File.Exists(path), $"Missing mobhero composite: {path}");
         var png = File.ReadAllBytes(path);
         AssertMobHeroVisiblePixels(png, slug);
+        AssertMobHeroNoHardCreamSeams(png, slug);
     }
+
+    [Fact]
+    public void Culture_quick_scan_full_depth_shows_18_not_25()
+        => Assert.Equal(18, TestDepthRules.FullCount(AssessmentKind.Culture));
 
     [Fact]
     public async Task Capture_test_pages_at_390_have_translated_eyebrows_and_filled_mobhero()
@@ -284,6 +289,71 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
 
             var png = await hero.ScreenshotAsync(new() { Type = ScreenshotType.Png });
             AssertMobHeroVisiblePixels(png, target.FileStem);
+        }
+    }
+
+    private static void AssertMobHeroNoHardCreamSeams(byte[] png, string stem)
+    {
+        using var image = Image.Load<Rgba32>(png);
+        var cream = new Rgba32(245, 242, 238, 255);
+        var w = image.Width;
+        var h = image.Height;
+        var xStart = Math.Max(1, (int)(w * 0.22));
+        var xLo = (int)(w * 0.22);
+        var xHi = (int)(w * 0.92);
+        var yStart = Math.Max(1, (int)(h * 0.08));
+
+        static float Lum(Rgba32 p) => 0.299f * p.R + 0.587f * p.G + 0.114f * p.B;
+
+        static bool NearCream(Rgba32 p, Rgba32 c, int tol = 22)
+            => Math.Max(Math.Max(Math.Abs(p.R - c.R), Math.Abs(p.G - c.G)), Math.Abs(p.B - c.B)) <= tol;
+
+        for (var x = xStart; x < w; x++)
+        {
+            var seam = 0;
+            for (var y = 0; y < h; y++)
+            {
+                var a = image[x - 1, y];
+                var b = image[x, y];
+                if (Math.Abs(Lum(a) - Lum(b)) <= 8)
+                {
+                    continue;
+                }
+
+                if (NearCream(a, cream) && NearCream(b, cream))
+                {
+                    seam++;
+                }
+            }
+
+            if (seam >= Math.Max(28, (int)(h * 0.22)))
+            {
+                Assert.Fail($"{stem}: vertical cream seam at x={x} ({seam} rows, ΔL>8).");
+            }
+        }
+
+        for (var y = yStart; y < h; y++)
+        {
+            var seam = 0;
+            for (var x = xLo; x < xHi; x++)
+            {
+                var a = image[x, y - 1];
+                var b = image[x, y];
+                if (Math.Abs(Lum(a) - Lum(b)) <= 8)
+                {
+                    continue;
+                }
+
+                if (NearCream(a, cream) && NearCream(b, cream))
+                {
+                    seam++;
+                }
+            }
+
+            if (seam >= Math.Max(36, (int)((xHi - xLo) * 0.28)))
+            {
+                Assert.Fail($"{stem}: horizontal cream seam at y={y} ({seam} cols, ΔL>8).");
+            }
         }
     }
 
