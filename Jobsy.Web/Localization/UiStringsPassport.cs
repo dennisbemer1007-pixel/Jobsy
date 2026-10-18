@@ -48,11 +48,11 @@ public static class UiStringsPassport
             "اعرف من أنت وأي الاختبارات جاهزة وأي الوظائف تناسبك.");
         Add("Kompas.Tip.Eyebrow", "Tip van Lobsy", "Tip from Lobsy", "Wskazówka od Lobsy", "Sfat de la Lobsy", "نصيحة من Lobsy");
         Add("Kompas.Tip.Body",
-            "Vul je paspoort verder aan — werkgevers zien pas iets als jij dat deelt.",
-            "Keep building your passport — employers only see what you choose to share.",
-            "Uzupełniaj paszport — pracodawcy widzą tylko to, czym się dzielisz.",
-            "Completează pașaportul — angajatorii văd doar ce alegi să arăți.",
-            "أكمل جوازك — أصحاب العمل يرون فقط ما تشاركه.");
+            "Vul je paspoort verder aan. Werkgevers zien pas iets als jij dat deelt.",
+            "Keep building your passport. Employers only see what you choose to share.",
+            "Uzupełniaj paszport. Pracodawcy widzą tylko to, czym się dzielisz.",
+            "Completează pașaportul. Angajatorii văd doar ce alegi să arăți.",
+            "أكمل جوازك. أصحاب العمل يرون فقط ما تشاركه.");
         Add("Kompas.Tip.Cta", "Paspoort aanvullen", "Complete passport", "Uzupełnij paszport", "Completează pașaportul", "أكمل الجواز");
         Add("Discovery.NearbyTitle", "Banen bij jou in de buurt", "Jobs near you", "Oferty w Twojej okolicy", "Joburi aproape de tine", "وظائف قربك");
         Add("Passport.Banner",
@@ -66,7 +66,7 @@ public static class UiStringsPassport
         Add("Passport.LayersAria",
             "Profiel {0} procent compleet", "Profile {0} percent complete", "Profil kompletny w {0} procent", "Profil complet în proporție de {0} la sută", "الملف مكتمل بنسبة {0} بالمئة");
         Add("Passport.Fill",
-            "aanvullen", "complete", "uzupełnij", "completează", "أكمل");
+            "Aanvullen", "Complete", "Uzupełnij", "Completează", "أكمل");
         Add("Passport.MyStory",
             "Mijn verhaal", "My story", "Moja historia", "Povestea mea", "قصتي");
         Add("Passport.MyStoryEmpty",

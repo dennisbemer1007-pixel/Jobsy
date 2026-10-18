@@ -22,7 +22,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 {
     private const string ArtifactsDirR2 = "/opt/cursor/artifacts/candidate-illustrated-r2";
     private const string ArtifactsDirRole = "/opt/cursor/artifacts/kandidaat-rol-r1";
-    private const string ArtifactsDirR3 = "/opt/cursor/artifacts/kandidaat-728-r3";
+    private const string ArtifactsDirR4 = "/opt/cursor/artifacts/kandidaat-728-r4";
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private IllustratedPagesWebFactory? _web;
@@ -78,14 +78,14 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_kandidaat_728_r3_delivery_pngs()
+    public async Task Capture_kandidaat_728_r4_delivery_pngs()
     {
-        Directory.CreateDirectory(ArtifactsDirR3);
+        Directory.CreateDirectory(ArtifactsDirR4);
 
-        await CaptureBanenkaartPopupsAsync(ArtifactsDirR3, viewportOnly: true);
+        await CaptureBanenkaartPopupsAsync(ArtifactsDirR4, viewportOnly: true, popupElementShot: true);
 
         await CaptureIllustratedViewportAsync(
-            ArtifactsDirR3,
+            ArtifactsDirR4,
             _web!.ServerAddress,
             "/candidate/paspoort",
             "kompas-tip",
@@ -97,7 +97,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         {
             _ = emptyWeb.ServerAddress;
             await CaptureIllustratedViewportAsync(
-                ArtifactsDirR3,
+                ArtifactsDirR4,
                 emptyWeb.ServerAddress,
                 "/candidate/applications",
                 "sollicitaties-leeg",
@@ -106,7 +106,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 prepare: WaitForApplicationsEmptyAsync);
 
             await CaptureIllustratedViewportAsync(
-                ArtifactsDirR3,
+                ArtifactsDirR4,
                 emptyWeb.ServerAddress,
                 "/candidate/liked",
                 "bewaard-leeg",
@@ -116,7 +116,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         }
 
         await CaptureIllustratedViewportAsync(
-            ArtifactsDirR3,
+            ArtifactsDirR4,
             _web.ServerAddress,
             "/candidate/settings?pane=mail",
             "instellingen",
@@ -124,11 +124,11 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             sizes: [(1440, 900, "1440"), (390, 844, "390")],
             prepare: WaitForSettingsMailPaneAsync);
 
-        var pngs = Directory.GetFiles(ArtifactsDirR3, "*.png");
+        var pngs = Directory.GetFiles(ArtifactsDirR4, "*.png");
         Assert.Equal(10, pngs.Length);
     }
 
-    private async Task CaptureBanenkaartPopupsAsync(string artifactsDir = ArtifactsDirR2, bool viewportOnly = false)
+    private async Task CaptureBanenkaartPopupsAsync(string artifactsDir = ArtifactsDirR2, bool viewportOnly = false, bool popupElementShot = false)
     {
         const string withPhotoId = "b1000001-0000-0000-0000-000000000001";
         const string noPhotoId = "b1000008-0000-0000-0000-000000000008";
@@ -202,8 +202,15 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 Assert.True(await figure.CountAsync() > 0, "Illustratie-fallback verwacht in popup zonder foto.");
             }
 
+            var popupText = await popup.InnerTextAsync();
+            Assert.DoesNotContain("% past bij jou", popupText, StringComparison.OrdinalIgnoreCase);
+
             var file = Path.Combine(artifactsDir, $"banenkaart-{suffix}-{tag}.png");
-            if (viewportOnly)
+            if (popupElementShot)
+            {
+                await page.Locator(".map-cluster-card").First.ScreenshotAsync(new() { Path = file });
+            }
+            else if (viewportOnly)
             {
                 await page.ScreenshotAsync(new() { Path = file });
             }
@@ -270,6 +277,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
 
     private static async Task PrepareKompasTipScreenshotAsync(IPage page, int width)
     {
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
         await page.Locator(".passport-overview").WaitForAsync(new() { Timeout = 60_000 });
         if (width < 500)
         {
@@ -577,6 +585,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             var kompas = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
             kompas.Profile!.FullName = "Sanne de Vries";
             kompas.Profile.FirstName = "Sanne";
+            if (kompas.WhoAmI is not null)
+            {
+                kompas.WhoAmI.Story = "Sanne pakt taken concreet op en houdt het overzicht, ook als het druk wordt.";
+            }
             var descriptionSections =
                 "<h2>Wat ga je doen?</h2><p>Je helpt met voeren, schoonmaken en aandacht voor de dieren.</p>" +
                 "<h2>Wat vragen we?</h2><p>Je bent zorgvuldig en vindt het fijn om met dieren te werken.</p>" +

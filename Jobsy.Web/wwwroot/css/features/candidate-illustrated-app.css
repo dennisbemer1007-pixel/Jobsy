@@ -63,6 +63,40 @@
   mask-image: linear-gradient(90deg, transparent, #000 24%);
 }
 
+.cand-band--full-bleed {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(11rem, 42%);
+  padding: 0;
+  min-height: 9.5rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--gold-soft) 70%, var(--surface)) 0%,
+    color-mix(in srgb, var(--gold) 14%, var(--surface)) 52%,
+    color-mix(in srgb, var(--gold) 6%, var(--pearl)) 100%
+  );
+}
+
+.cand-band--full-bleed .cand-band__copy {
+  padding: 1.45rem 1.75rem;
+  align-self: center;
+}
+
+.cand-band--full-bleed .cand-band__art {
+  width: auto;
+  min-height: 9.5rem;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
+  background-position: center 40%;
+}
+
+.panel-page--cand-ill.candidate-hub {
+  max-width: 1100px;
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
 @media (max-width: 639px) {
   .cand-band {
     flex-direction: column-reverse;
@@ -647,6 +681,38 @@
   margin-top: 0.1rem;
 }
 
+.panel-page--cand-ill .comeback-whatsapp {
+  overflow: visible;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem 1rem;
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  outline: 1px solid var(--border);
+  outline-offset: 0;
+}
+
+.panel-page--cand-ill .comeback-whatsapp legend {
+  float: none;
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 0.45rem;
+  font-weight: 650;
+  color: var(--brand);
+  line-height: 1.35;
+  font-size: 0.95rem;
+}
+
+.app-shell:has(.panel-page--cand-ill) .lobsy-coach-dock,
+.app-shell:has(.panel-page--cand-ill) .lobsy-coach-cta {
+  display: none !important;
+}
+
+.app-shell:has(.panel-page--cand-ill) .app-main__content {
+  padding-bottom: var(--space-4, 1rem);
+}
+
 .cand-settings__panel {
   padding: 1.25rem 1.35rem;
   border: 1px solid var(--border);
@@ -843,6 +909,54 @@
 
 .cand-empty__body .state-message {
   margin: 0;
+}
+
+.cand-empty__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+  color: var(--brand);
+}
+
+.cand-empty__lead {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.cand-empty__cta {
+  width: fit-content;
+}
+
+.cand-empty--apps-prominent {
+  min-height: 13rem;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .cand-empty--apps-prominent {
+    grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .cand-empty--apps-prominent .cand-empty__art {
+    height: 11rem;
+    background-size: cover;
+    background-position: center 35%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .kb-apps--illustrated .kb-apps__layout--empty {
+    align-items: stretch;
+  }
+
+  .kb-apps--illustrated .kb-apps__layout--empty .cand-empty--apps-prominent {
+    min-height: 100%;
+  }
+}
+
+.app-shell:has(.panel-page--cand-ill) .lobsy-assistant-tab {
+  display: none !important;
 }
 
 .cand-side-card--spot {

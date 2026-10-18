@@ -230,7 +230,7 @@ window.jobMap = (function () {
         const style = color
             ? " style=\"--map-pin:" + color + ";--map-pin-deep:" + color + ";--map-pin-glow:" + color + "66\""
             : "";
-        const match = matchPercent != null && matchPercent !== ""
+        const match = !illustratedPopup && matchPercent != null && matchPercent !== ""
             ? "<span class=\"job-marker__match job-marker__match--" + escapeHtml(String(matchBand || "orange")) +
               "\">" + escapeHtml(String(matchPercent)) + "%</span>"
             : "";
@@ -780,6 +780,9 @@ window.jobMap = (function () {
     }
 
     function whyLineHtml(v) {
+        if (illustratedPopup) {
+            return "";
+        }
         if (!v.fitWhyLine) {
             return "";
         }
@@ -901,7 +904,7 @@ window.jobMap = (function () {
             : fitBandLabel(band);
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
-                "<span class=\"map-popup__fit-pill match-score--" + escapeHtml(band) + "\">" +
+                "<span class=\"map-popup__fit-pill kb-fit kb-fit--calm match-score--" + escapeHtml(band) + "\">" +
                     escapeHtml(text) +
                 "</span>" +
             "</p>"

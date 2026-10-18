@@ -114,15 +114,11 @@ internal static class IllustratedPagesVacancyStub
             WorkTypes = [s.WorkType],
             CategoryColorHex = "#3366cc",
             MatchPercent = 78,
-<<<<<<< HEAD
             FitPercent = 78,
             FitBand = "Good",
             MatchColorBand = "good",
             FitWhyLine = s.FitWhy,
             FitWhyKinds = ["interest"]
-=======
-            MatchColorBand = "good"
->>>>>>> 92a5e3d1c (Diversify illustrated candidate spots and fix banenkaart popup fallbacks.)
         }).ToList();
 
         return new VacancyListPage
@@ -148,7 +144,6 @@ internal static class IllustratedPagesVacancyStub
         }).ToList();
 
     private static List<VacancyCardStub> BuildCards()
-<<<<<<< HEAD
         => Seeds.Select(s => new VacancyCardStub
         {
             Id = s.Id,
@@ -166,25 +161,6 @@ internal static class IllustratedPagesVacancyStub
             CompanyAddress = s.City,
             FitWhyLine = s.FitWhy
         }).ToList();
-=======
-        => Seeds.Select(s => new VacancyCardStub(
-            s.Id,
-            s.Title,
-            s.Company,
-            null,
-            s.City,
-            s.Image,
-            null,
-            14.50m,
-            true,
-            [s.WorkType],
-            false,
-            18,
-            78,
-            "good",
-            "#3366cc",
-            s.City)).ToList();
->>>>>>> 92a5e3d1c (Diversify illustrated candidate spots and fix banenkaart popup fallbacks.)
 
     private static Guid? TryParseVacancyId(string path)
     {
@@ -201,7 +177,6 @@ internal static class IllustratedPagesVacancyStub
 
     private static string Serialize<T>(T value) => JsonSerializer.Serialize(value, Json);
 
-<<<<<<< HEAD
     private sealed class VacancyCardStub
     {
         public Guid Id { get; init; }
@@ -222,23 +197,4 @@ internal static class IllustratedPagesVacancyStub
         public string? CompanyAddress { get; init; }
         public string? FitWhyLine { get; init; }
     }
-=======
-    private sealed record VacancyCardStub(
-        Guid Id,
-        string Title,
-        string CompanyName,
-        string? OfferedByLabel,
-        string Place,
-        string? ThumbnailUrl,
-        string? LogoUrl,
-        decimal? HourlyWage,
-        bool WageVisible,
-        string[] WorkTypes,
-        bool IsHighlighted,
-        int? TravelMinutes,
-        int? MatchPercent,
-        string? MatchColorBand,
-        string? CategoryColorHex,
-        string? CompanyAddress);
->>>>>>> 92a5e3d1c (Diversify illustrated candidate spots and fix banenkaart popup fallbacks.)
 }

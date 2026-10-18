@@ -33,6 +33,9 @@ public static class UiStringsKandidaatBanen
             "Włącz 'Dostępny do pracy'",
             "Activează 'Disponibil pentru lucru'",
             "فعّل 'متاح للعمل'");
+        Add("Kb.Fit.PastWhy",
+            "Past bij je: {reason}", "Fits you: {reason}",
+            "Pasuje do ciebie: {reason}", "Ți se potrivește: {reason}", "يناسبك: {reason}");
         Add("Kb.Fit.Strong",
             "Sterke match", "Strong fit",
             "Silne dopasowanie", "Potrivire puternică", "تطابق قوي");

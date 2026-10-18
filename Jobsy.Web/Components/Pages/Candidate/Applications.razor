@@ -76,27 +76,26 @@
     {
         <div class="kb-apps__layout kb-apps__layout--empty">
             <CandidateIllustratedEmpty ArtUrl="@(_items.Count == 0 ? SpotWerkgever : null)"
-                                       Compact="@(_items.Count > 0)">
-                <p class="state-message">
-                    @if (_items.Count == 0)
+                                       Compact="@(_items.Count > 0)"
+                                       CssClass="@(_items.Count == 0 ? "cand-empty--apps-prominent" : null)">
+                @if (_items.Count == 0)
+                {
+                    <h2 class="cand-empty__title">@Culture["Nav.MyApplications"]</h2>
+                    <p class="cand-empty__lead">@Culture["Apps.Empty"]</p>
+                    @if (!_readOnly)
                     {
-                        @(Culture["Apps.Empty"] + (_readOnly ? "" : " "))
-                        @if (!_readOnly)
-                        {
-                            <a href="@KbRoutes.Map">@Culture["Apps.BrowseMap"]</a><text>.</text>
-                        }
+                        <a class="btn btn-primary cand-empty__cta" href="@KbRoutes.Map">@Culture["CandidateVacancies.BrowseMap"]</a>
                     }
-                    else
-                    {
-                        @Culture["Apps.EmptyTab"]
-                    }
-                </p>
+                }
+                else
+                {
+                    <p class="state-message">@Culture["Apps.EmptyTab"]</p>
+                }
             </CandidateIllustratedEmpty>
             @if (_appsWide)
             {
                 <aside class="kb-apps__rail" aria-label="@Culture["Kb.Steps.Title"]">
-                    <div class="kb-saved-rail__card cand-side-card--spot kb-apps__rail-card"
-                         style="@($"--cand-side-spot:url('{SpotInclusiefKantoor}')")">
+                    <div class="kb-saved-rail__card kb-apps__rail-card">
                         <h2>@Culture["Kb.Steps.Title"]</h2>
                         <dl class="kb-apps__steps-legend">
                             <div><dt>@Culture["Kb.Timeline.Sent"]</dt><dd>@Culture["Kb.Steps.Sent"]</dd></div>

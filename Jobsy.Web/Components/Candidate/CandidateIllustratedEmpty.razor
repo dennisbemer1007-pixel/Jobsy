@@ -1,6 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate
 
-<div class="cand-empty @(Compact ? "cand-empty--compact" : null)">
+<div class="cand-empty @(Compact ? "cand-empty--compact" : null) @CssClass">
     @if (!string.IsNullOrWhiteSpace(ArtUrl))
     {
         <div class="cand-empty__art" style="background-image:url('@ArtUrl')" aria-hidden="true"></div>
@@ -13,5 +13,6 @@
 @code {
     [Parameter] public string? ArtUrl { get; set; }
     [Parameter] public bool Compact { get; set; }
+    [Parameter] public string? CssClass { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }
