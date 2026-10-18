@@ -1272,7 +1272,7 @@ html.vp-mobile .kk-mobile-sheet {
     flex-direction: column;
     position: relative;
     flex-shrink: 0;
-    z-index: 8;
+    z-index: 1;
     max-height: min(52vh, 460px);
     background: var(--surface);
     border-top: 1px solid var(--border);
@@ -1459,8 +1459,10 @@ html.vp-mobile .kk-modal {
     overflow: auto;
 }
 
-html.vp-desktop .wg-bottom-nav {
-    display: none;
+@media (min-width: 1024px) {
+    html.vp-desktop .wg-bottom-nav {
+        display: none;
+    }
 }
 
 html.vp-desktop .wg-shell.wg-has-bottom-nav {
