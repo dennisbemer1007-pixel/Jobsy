@@ -6,10 +6,8 @@
   --obf-text: #122033;
   --obf-muted: #5a6a7d;
   --obf-border: #ddd5cc;
-  --obf-art-position: 74% 36%;
-  --obf-art-scale: 1.14;
-  --obf-art-origin: 82% 58%;
-  --obf-hero-height: clamp(30rem, 36vw, 32.5rem);
+  --obf-art-position: 70% 60%;
+  --obf-hero-height: clamp(32.5rem, 38vw, 35rem);
   color: var(--obf-text);
   background: var(--obf-pearl);
   min-height: 100vh;
@@ -35,17 +33,17 @@
   pointer-events: none;
   background:
     radial-gradient(
-      ellipse 62% 115% at 14% 52%,
-      rgba(253, 248, 242, 0.82) 0%,
-      rgba(253, 248, 242, 0.45) 38%,
-      rgba(253, 248, 242, 0.12) 58%,
-      transparent 72%
+      ellipse 68% 118% at 16% 50%,
+      rgba(253, 248, 242, 0.62) 0%,
+      rgba(253, 248, 242, 0.28) 42%,
+      rgba(253, 248, 242, 0.06) 60%,
+      transparent 76%
     ),
     linear-gradient(
-      95deg,
-      rgba(253, 248, 242, 0.55) 0%,
-      rgba(253, 248, 242, 0.22) 22%,
-      transparent 42%
+      98deg,
+      rgba(253, 248, 242, 0.32) 0%,
+      rgba(253, 248, 242, 0.1) 26%,
+      transparent 48%
     );
 }
 
@@ -72,8 +70,6 @@
   height: 100%;
   object-fit: cover;
   object-position: var(--obf-art-position);
-  transform: scale(var(--obf-art-scale));
-  transform-origin: var(--obf-art-origin);
 }
 
 .ob-finale__intro {
@@ -504,82 +500,76 @@
 
 @media (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 76% 34%;
-    --obf-art-scale: 1.16;
-    --obf-art-origin: 84% 56%;
+    --obf-art-position: 70% 60%;
   }
 }
 
 @media (min-width: 1600px) {
   .ob-finale {
-    --obf-art-position: 78% 35%;
-    --obf-art-scale: 1.12;
-    --obf-hero-height: clamp(30rem, 32vw, 32.5rem);
+    --obf-art-position: 68% 58%;
+    --obf-hero-height: clamp(32.5rem, 34vw, 35rem);
   }
 }
 
 @media (max-width: 1280px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 88% 32%;
-    --obf-art-scale: 1.22;
-    --obf-art-origin: 92% 54%;
-    --obf-hero-height: clamp(30rem, 38vw, 32.5rem);
-  }
-
-  .ob-finale__hero::after {
-    background:
-      radial-gradient(
-        ellipse 58% 110% at 12% 50%,
-        rgba(253, 248, 242, 0.86) 0%,
-        rgba(253, 248, 242, 0.48) 36%,
-        rgba(253, 248, 242, 0.1) 56%,
-        transparent 70%
-      ),
-      linear-gradient(
-        95deg,
-        rgba(253, 248, 242, 0.62) 0%,
-        rgba(253, 248, 242, 0.24) 20%,
-        transparent 38%
-      );
+    --obf-art-position: 72% 60%;
+    --obf-hero-height: clamp(32.5rem, 40vw, 35rem);
   }
 }
 
 @media (max-width: 1024px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-position: 86% 33%;
-    --obf-art-scale: 1.2;
-    --obf-art-origin: 90% 55%;
-    --obf-hero-height: clamp(30rem, 42vw, 32.5rem);
+    --obf-art-position: 74% 62%;
+    --obf-hero-height: clamp(31rem, 44vw, 34rem);
   }
 }
 
 @media (max-width: 600px) {
-  .ob-finale {
-    --obf-art-position: 72% 38%;
-    --obf-art-scale: 1.18;
-    --obf-art-origin: 78% 52%;
-    --obf-hero-height: clamp(22rem, 108vw, 26.5rem);
-  }
-
-  .ob-finale__intro {
-    justify-content: flex-start;
-    padding: 1rem 0.875rem 0.875rem;
+  .ob-finale__hero {
+    display: flex;
+    flex-direction: column;
+    grid-template-rows: none;
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    overflow: visible;
+    background: var(--obf-pearl);
   }
 
   .ob-finale__hero::after {
-    background:
-      radial-gradient(
-        ellipse 130% 85% at 50% 0%,
-        rgba(253, 248, 242, 0.9) 0%,
-        rgba(253, 248, 242, 0.55) 32%,
-        rgba(253, 248, 242, 0.15) 52%,
-        transparent 68%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(253, 248, 242, 0.35) 0%,
-        transparent 45%
-      );
+    display: none;
+  }
+
+  .ob-finale__intro {
+    position: relative;
+    z-index: 1;
+    order: 1;
+    flex: none;
+    justify-content: flex-start;
+    padding: 1rem 1rem 0.875rem;
+    background: linear-gradient(180deg, #fdf8f2 0%, var(--obf-pearl) 100%);
+  }
+
+  .ob-finale__art {
+    order: 2;
+    flex: none;
+    position: relative;
+    width: 100%;
+    min-height: 0;
+    margin-top: 0;
+    background: linear-gradient(180deg, var(--obf-pearl) 0%, #ebe3d6 100%);
+  }
+
+  .ob-finale__art img {
+    position: relative;
+    inset: auto;
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1640 / 720;
+    object-fit: contain;
+    object-position: center bottom;
   }
 
   .ob-finale__hero-inner {
