@@ -1393,6 +1393,21 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             await page.WaitForSelectorAsync(".passport-dna__grid", new() { Timeout = 15_000 });
             await page.EvaluateAsync("() => window.scrollTo(0, 0)");
             await Task.Delay(400);
+            if (width >= 1024)
+            {
+                var deltaY = await page.EvaluateAsync<int>(
+                    """
+                    () => {
+                      const card = document.querySelector('.passport-layout__sidebar .passport-card');
+                      const overview = document.querySelector('.passport-overview');
+                      if (!card || !overview) return 9999;
+                      return Math.round(card.getBoundingClientRect().top - overview.getBoundingClientRect().top);
+                    }
+                    """);
+                Assert.True(Math.Abs(deltaY) <= 6,
+                    $"Desktop paspoort sidebar should align with overview (deltaY={deltaY}px).");
+            }
+
             await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
                 page,
                 Path.Combine(OutputDirFinalR5, $"08-paspoort-endorsed-{tag}.png"));

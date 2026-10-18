@@ -59,6 +59,12 @@
 
   .passport-page--illustrated .passport-layout__card--desktop {
     align-self: start;
+    position: relative;
+    inset-block-start: auto;
+    top: auto;
+  }
+
+  .passport-page--illustrated .passport-layout__sidebar > .passport-card {
     position: sticky;
     inset-block-start: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
     top: calc(var(--app-header-height, 4.25rem) + var(--space-4, 1rem));
