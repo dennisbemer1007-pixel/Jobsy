@@ -119,7 +119,7 @@ public sealed class TestBlockBackgroundEvidencePlaywrightTests : IAsyncLifetime
                 await PlaywrightCookieConsent.AcceptAsync(context);
                 var page = await context.NewPageAsync();
                 page.SetDefaultTimeout(45_000);
-                await page.GotoAsync(signInUrl, new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await page.GotoAsync(signInUrl, new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
                 await PlaywrightCookieConsent.AcceptOnPageAsync(page);
                 await page.Locator(".test-flow").WaitForAsync(new() { Timeout = 60_000 });
 
