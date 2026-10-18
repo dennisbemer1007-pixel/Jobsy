@@ -13,7 +13,7 @@ Name: Alex de Tester
 Email: alex@voorbeeld.invalid
 Branch: Bakkerij De Gouden Korrel
 Chamber of Commerce branch number: 000012345678
-Requested on: 18 October 2026, 00:07
+Requested on: 19 October 2026, 01:15
 
 Do you not know this person? Then reject the request.
 

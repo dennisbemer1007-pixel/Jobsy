@@ -85,7 +85,9 @@ public class BlazorCircuitGuardTests
         Assert.DoesNotContain("onclick=\"location.reload()\"", app);
         Assert.Contains("closest(\"[data-reconnect-reload]\")", app);
 
-        var appHead = app[..app.IndexOf("@if (LoadBlazorRuntime)", StringComparison.Ordinal)];
+        var headEnd = app.IndexOf("</head>", StringComparison.OrdinalIgnoreCase);
+        Assert.True(headEnd > 0, "App.razor should contain </head>.");
+        var appHead = app[..headEnd];
         Assert.Contains("css/features/reconnect.css?v=", appHead, StringComparison.Ordinal);
         Assert.Contains("data-reconnect-css", appHead, StringComparison.Ordinal);
         var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
