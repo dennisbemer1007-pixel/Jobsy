@@ -1,63 +1,85 @@
 @namespace Jobsy.Web.Components.Shared
-@using System.Globalization
 @using Jobsy.Core.Rules
-@using Jobsy.Web.Localization
 @inject CultureState Culture
 @inject IJSRuntime Js
 
-@if (_localizedShell)
-{
-    <div class="jobsy-date-field jobsy-date-field--localized" data-testid="@TestId">
-        <button type="button"
-                class="jobsy-date-field__display-btn jobsy-form-value"
-                disabled="@Disabled"
-                aria-invalid="@(ShowInvalid ? "true" : null)"
-                aria-describedby="@AriaDescribedBy"
-                @onclick="OpenPickerAsync">
-            <span class="jobsy-date-field__display-text">@(_displayText ?? Placeholder)</span>
-            <span class="jobsy-date-field__calendar-icon" aria-hidden="true"></span>
-        </button>
-        <input @ref="_input"
+<div class="jobsy-date-field @(Kind == JobsyDatePickerKind.Date ? "jobsy-date-field--typed" : null)"
+     data-testid="@TestId">
+    @if (Kind == JobsyDatePickerKind.Month)
+    {
+        <input @ref="_nativeInput"
                id="@InputId"
-               class="jobsy-date-field__input jobsy-date-field__input--native"
-               type="@_inputType"
+               class="jobsy-date-field__input @CssClass"
+               type="month"
                lang="@_htmlLang"
                min="@_min"
                max="@_max"
-               value="@_value"
+               value="@_nativeValue"
                required="@Required"
                disabled="@Disabled"
-               tabindex="-1"
-               aria-hidden="true"
-               @onchange="OnChangedAsync" />
-    </div>
-}
-else
-{
-    <input @ref="_input"
-           id="@InputId"
-           class="jobsy-date-field__input @CssClass"
-           type="@_inputType"
-           lang="@_htmlLang"
-           min="@_min"
-           max="@_max"
-           value="@_value"
-           required="@Required"
-           disabled="@Disabled"
-           aria-invalid="@(ShowInvalid ? "true" : null)"
-           data-testid="@TestId"
-           @onchange="OnChangedAsync" />
-}
+               aria-invalid="@AriaInvalid"
+               aria-describedby="@CombinedAriaDescribedBy"
+               @onchange="OnNativeChangedAsync" />
+    }
+    else
+    {
+        <div class="jobsy-date-field__control">
+            <input @ref="_textInput"
+                   id="@InputId"
+                   class="jobsy-date-field__text @CssClass"
+                   type="text"
+                   inputmode="numeric"
+                   autocomplete="@_autocomplete"
+                   lang="@_htmlLang"
+                   placeholder="@_placeholder"
+                   value="@_text"
+                   required="@Required"
+                   disabled="@Disabled"
+                   aria-invalid="@AriaInvalid"
+                   aria-describedby="@CombinedAriaDescribedBy"
+                   @oninput="OnTextInputAsync"
+                   @onblur="OnTextBlurAsync" />
+            <button type="button"
+                    class="jobsy-date-field__picker-btn"
+                    tabindex="-1"
+                    disabled="@Disabled"
+                    aria-label="@_pickerLabel"
+                    @onclick="OpenPickerAsync">
+                <span class="jobsy-date-field__calendar-icon" aria-hidden="true"></span>
+            </button>
+            <input @ref="_nativeInput"
+                   class="jobsy-date-field__input jobsy-date-field__input--native"
+                   type="date"
+                   lang="@_htmlLang"
+                   min="@_min"
+                   max="@_max"
+                   value="@_nativeValue"
+                   tabindex="-1"
+                   aria-hidden="true"
+                   @onchange="OnNativeChangedAsync" />
+        </div>
+        <p id="@_errorId"
+           class="jobsy-date-field__error"
+           role="status"
+           aria-live="polite">@_errorMessage</p>
+    }
+</div>
 
 @code {
-    private ElementReference _input;
-    private string _inputType = "date";
+    private ElementReference _textInput;
+    private ElementReference _nativeInput;
+    private string _htmlLang = "nl-NL";
     private string? _min;
     private string? _max;
-    private string? _value;
-    private string? _displayText;
-    private string _htmlLang = "nl-NL";
-    private bool _localizedShell;
+    private string? _nativeValue;
+    private string _text = "";
+    private string _placeholder = "dd-mm-jjjj";
+    private string _autocomplete = "bday";
+    private string _pickerLabel = "Open calendar";
+    private readonly string _errorId = $"jobsy-date-err-{Guid.NewGuid():N}";
+    private string? _errorMessage;
+    private JobsyDateValidationCode _validation = JobsyDateValidationCode.None;
+    private bool _touched;
 
     [Parameter] public JobsyDatePickerKind Kind { get; set; } = JobsyDatePickerKind.Date;
     [Parameter] public JobsyDateConstraint Constraint { get; set; } = JobsyDateConstraint.None;
@@ -79,9 +101,35 @@ else
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public bool ShowInvalid { get; set; }
 
+    private string? CombinedAriaDescribedBy
+    {
+        get
+        {
+            if (Kind != JobsyDatePickerKind.Date)
+            {
+                return AriaDescribedBy;
+            }
+
+            var ids = new List<string>();
+            if (!string.IsNullOrWhiteSpace(AriaDescribedBy))
+            {
+                ids.Add(AriaDescribedBy);
+            }
+
+            ids.Add(_errorId);
+            return string.Join(' ', ids);
+        }
+    }
+
+    private string? AriaInvalid
+        => ShowError ? "true" : null;
+
+    private bool ShowError
+        => (_touched || ShowInvalid)
+           && _validation != JobsyDateValidationCode.None;
+
     protected override void OnParametersSet()
     {
-        _inputType = Kind == JobsyDatePickerKind.Month ? "month" : "date";
         _htmlLang = Culture.Language switch
         {
             "en" => "en-GB",
@@ -90,49 +138,84 @@ else
             "ar" => "ar",
             _ => "nl-NL"
         };
-        _localizedShell = Kind == JobsyDatePickerKind.Date
-                          && (_htmlLang.StartsWith("nl", StringComparison.OrdinalIgnoreCase)
-                              || string.IsNullOrWhiteSpace(Culture.Language));
+
+        _placeholder = Placeholder ?? JobsyDateInputRules.Placeholder(Culture.Language);
+        _autocomplete = Constraint == JobsyDateConstraint.CandidateBirthDate ? "bday" : "off";
+        _pickerLabel = Culture.Language switch
+        {
+            "en" => "Open calendar",
+            _ => "Kalender openen"
+        };
 
         var bounds = JobsyDateInputRules.Bounds(Constraint, ReferenceDate);
         _min = Min ?? bounds.Min;
         _max = Max ?? bounds.Max;
-        _value = Kind switch
-        {
-            JobsyDatePickerKind.Month => JobsyDateInputRules.ToMonthInputValue(MonthValue),
-            _ when TextValue is not null => JobsyDateInputRules.ToDateInputValue(
-                JobsyDateInputRules.TryParseDateInput(TextValue, out var d) ? d : null),
-            _ => JobsyDateInputRules.ToDateInputValue(Value)
-        };
 
-        DateOnly? displayDate = Value;
-        if (displayDate is null && JobsyDateInputRules.TryParseDateInput(_value, out var parsedForDisplay))
+        if (Kind == JobsyDatePickerKind.Month)
         {
-            displayDate = parsedForDisplay;
-        }
-
-        _displayText = displayDate is { } picked
-            ? JobsyDateInputRules.FormatDisplayDate(picked, Culture.Language)
-            : null;
-        Placeholder ??= Culture.Language switch
-        {
-            "en" => "dd/mm/yyyy",
-            _ => "dd-mm-jjjj"
-        };
-    }
-
-    private async Task OpenPickerAsync()
-    {
-        if (Disabled)
-        {
+            _nativeValue = JobsyDateInputRules.ToMonthInputValue(MonthValue);
             return;
         }
 
-        await Js.InvokeVoidAsync("jobsyExtras.ensure");
-        await Js.InvokeVoidAsync("jobsyExtras.openDatePicker", _input);
+        DateOnly? modelDate = Value;
+        if (modelDate is null && TextValue is not null && JobsyDateInputRules.TryParseDateInput(TextValue, out var fromText))
+        {
+            modelDate = fromText;
+        }
+
+        _nativeValue = JobsyDateInputRules.ToDateInputValue(modelDate);
+        if (modelDate is { } d)
+        {
+            var formatted = JobsyDateInputRules.FormatDisplayDate(d, Culture.Language);
+            if (!_touched || string.IsNullOrWhiteSpace(_text))
+            {
+                _text = formatted;
+            }
+        }
+        else if (!_touched && TextValue is not null)
+        {
+            _text = JobsyDateInputRules.ApplyDateMask(TextValue);
+        }
+        else if (!_touched && string.IsNullOrWhiteSpace(_text))
+        {
+            _text = "";
+        }
+
+        RefreshValidation(forceMessage: ShowInvalid);
     }
 
-    private async Task OnChangedAsync(ChangeEventArgs e)
+    private async Task OnTextInputAsync(ChangeEventArgs e)
+    {
+        _touched = true;
+        _text = JobsyDateInputRules.ApplyDateMask(e.Value?.ToString());
+        if (JobsyDateInputRules.TryParseFlexibleDate(_text, out var parsed))
+        {
+            await CommitDateAsync(parsed);
+            RefreshValidation(forceMessage: false);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_text))
+        {
+            await CommitDateAsync(null);
+        }
+
+        RefreshValidation(forceMessage: false);
+    }
+
+    private async Task OnTextBlurAsync()
+    {
+        _touched = true;
+        if (JobsyDateInputRules.TryParseFlexibleDate(_text, out var parsed))
+        {
+            _text = JobsyDateInputRules.FormatDisplayDate(parsed, Culture.Language);
+            await CommitDateAsync(parsed);
+        }
+
+        RefreshValidation(forceMessage: true);
+    }
+
+    private async Task OnNativeChangedAsync(ChangeEventArgs e)
     {
         var raw = e.Value?.ToString();
         if (Kind == JobsyDatePickerKind.Month)
@@ -151,25 +234,52 @@ else
 
         if (!JobsyDateInputRules.TryParseDateInput(raw, out var parsed))
         {
-            Value = null;
-            _displayText = null;
-            await ValueChanged.InvokeAsync(null);
-            if (TextValueChanged.HasDelegate)
-            {
-                TextValue = null;
-                await TextValueChanged.InvokeAsync(null);
-            }
-
+            await CommitDateAsync(null);
+            RefreshValidation(forceMessage: true);
             return;
         }
 
-        Value = parsed;
-        _displayText = JobsyDateInputRules.FormatDisplayDate(parsed, Culture.Language);
-        await ValueChanged.InvokeAsync(parsed);
+        _text = JobsyDateInputRules.FormatDisplayDate(parsed, Culture.Language);
+        _touched = true;
+        await CommitDateAsync(parsed);
+        RefreshValidation(forceMessage: true);
+    }
+
+    private async Task CommitDateAsync(DateOnly? date)
+    {
+        Value = date;
+        _nativeValue = JobsyDateInputRules.ToDateInputValue(date);
+        await ValueChanged.InvokeAsync(date);
         if (TextValueChanged.HasDelegate)
         {
-            TextValue = JobsyDateInputRules.ToDateInputValue(parsed);
+            TextValue = JobsyDateInputRules.ToDateInputValue(date);
             await TextValueChanged.InvokeAsync(TextValue);
         }
     }
+
+    private void RefreshValidation(bool forceMessage)
+    {
+        _validation = JobsyDateInputRules.ValidateText(_text, Constraint, ReferenceDate, Required);
+        if (_validation == JobsyDateValidationCode.None
+            && JobsyDateInputRules.TryParseFlexibleDate(_text, out var parsed))
+        {
+            _validation = JobsyDateInputRules.Validate(parsed, Constraint, ReferenceDate);
+        }
+
+        _errorMessage = ShowError || forceMessage
+            ? JobsyDateInputRules.ValidationMessage(_validation, Culture.Language)
+            : "";
+    }
+
+    private async Task OpenPickerAsync()
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        await Js.InvokeVoidAsync("jobsyExtras.ensure");
+        await Js.InvokeVoidAsync("jobsyExtras.openDatePicker", _nativeInput);
+    }
+
 }
