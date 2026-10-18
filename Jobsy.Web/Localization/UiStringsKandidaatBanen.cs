@@ -398,6 +398,18 @@ public static class UiStringsKandidaatBanen
         Add("Kb.Apps.FilterDone",
             "Afgerond", "Finished",
             "Zakończone", "Finalizate", "مكتمل");
+        Add("Kb.Apps.ApplyTip.Title",
+            "Zo solliciteer je via Lobsy",
+            "How to apply with Lobsy",
+            "Jak aplikować przez Lobsy",
+            "Cum aplici prin Lobsy",
+            "كيف تتقدم عبر Lobsy");
+        Add("Kb.Apps.ApplyTip.Body",
+            "Bewaar een baan, kies Snel kennismaken of open de vacature en solliciteer wanneer jij er klaar voor bent.",
+            "Save a job, tap Show interest, or open the vacancy and apply when you are ready.",
+            "Zapisz ofertę, wybierz szybkie poznanie albo otwórz ogłoszenie i aplikuj, gdy będziesz gotowy.",
+            "Salvează un job, alege cunoaștere rapidă sau deschide vacanța și aplică când ești gata.",
+            "احفظ الوظيفة أو اختر التعارف السريع أو افتح الإعلان وتقدم عندما تكون مستعدًا.");
 
         // Saved (07)
         Add("Kb.Saved.State",

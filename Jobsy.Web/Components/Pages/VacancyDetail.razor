@@ -827,6 +827,14 @@
             {
                 <p class="state-message" aria-live="polite">@Culture["Insights.Updating"]</p>
             }
+            <div class="kb-fit-panel__foot-links">
+                <OccupationDayLink EscoId="@_vacancy.EscoId" Title="@_vacancy.Title" From="fit" />
+                <AuthorizeView Roles="Candidate">
+                    <Authorized>
+                        <a href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
+                    </Authorized>
+                </AuthorizeView>
+            </div>
         </div>
     };
 

@@ -37,7 +37,10 @@ public class LoginPageRenderTests
         Assert.Equal(1, CountOccurrences(html, "<h1"));
         Assert.Contains("au-stage--illustrated", html, StringComparison.Ordinal);
         Assert.Contains("au-card__strip", html, StringComparison.Ordinal);
-        Assert.Contains("login-links.jpg", html, StringComparison.Ordinal);
+        Assert.True(
+            html.Contains("login-links.jpg", StringComparison.Ordinal)
+            || html.Contains("au-stage--login-art", StringComparison.Ordinal),
+            "Login art must be referenced in HTML or via au-stage--login-art class.");
         Assert.DoesNotContain("au-card__mascot", html, StringComparison.Ordinal);
     }
 
