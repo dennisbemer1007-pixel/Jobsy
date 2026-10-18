@@ -4223,7 +4223,7 @@ window.jobMap = (function () {
         }
     }
 
-    var KK_FIT_PADDING = 40;
+    var KK_FIT_PADDING = 48;
 
     function kkUnionZoneBounds(areas) {
         var bounds = new maplibregl.LngLatBounds();

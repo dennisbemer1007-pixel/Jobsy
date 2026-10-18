@@ -109,7 +109,8 @@
 .wg-shell__body {
     display: flex;
     flex: 1;
-    min-height: 0;
+    min-height: calc(100dvh - 56px);
+    align-items: stretch;
 }
 
 .wg-sidebar {

@@ -1147,7 +1147,8 @@ html.vp-mobile .wg-shell__body {
 
 html.vp-mobile .wg-main {
     padding: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -1356,11 +1357,11 @@ html.vp-mobile .kk-area-list--compact .kk-area-list__item {
 
 html.vp-mobile .kk-page {
     position: relative;
-    flex: 1;
+    flex: 1 0 auto;
     display: grid;
     grid-template-rows: auto auto minmax(0, 1fr) auto;
-    min-height: 0;
-    overflow: hidden;
+    min-height: min-content;
+    overflow: visible;
 }
 
 html.vp-mobile .kk-page > .insights-tabs {
@@ -1613,12 +1614,7 @@ html.vp-mobile .kk-list-invite-bar {
 
 html.vp-mobile .kk-mobile-sheet__invite {
     --kk-invite-bar-block-h: calc(0.65rem + 0.75rem + 44px);
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: var(--kk-wg-nav-offset, var(--wg-bottom-nav-block-h, 3.625rem));
-    z-index: calc(var(--z-sticky, 6) - 2);
-    pointer-events: auto;
+    position: relative;
     flex-shrink: 0;
     padding: 0.65rem 1rem 0.75rem;
     border-top: 1px solid var(--border);
@@ -1627,9 +1623,7 @@ html.vp-mobile .kk-mobile-sheet__invite {
 }
 
 html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-mobile-sheet__body--list {
-    padding-bottom: calc(
-        var(--kk-invite-bar-block-h, 3.75rem) + var(--kk-wg-nav-offset, var(--wg-bottom-nav-block-h, 3.625rem))
-    );
+    padding-bottom: 0.75rem;
 }
 
 html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-active-sell-collapse {
