@@ -109,7 +109,8 @@
                                                       Eligible="true"
                                                       UserId="@_profile?.Id.ToString()"
                                                       FirstEntryId="_firstWorkEntryId"
-                                                      HasConfirmedReference="_hasConfirmedReference" />
+                                                      HasConfirmedReference="_hasConfirmedReference"
+                                                      HideConfirmedFollowUp="true" />
                     }
                 </FeatureVisible>
 
@@ -118,7 +119,8 @@
                 {
                     <PassportEmployerPreview VerifiedCompetences="_verifiedCompetences"
                                              Employers="_employers"
-                                             VerificationRows="_refVerificationRows" />
+                                             VerificationRows="_refVerificationRows"
+                                             AskAnotherHref="@AskAnotherReferenceHref()" />
                 }
 
                 <div class="passport-tabs"
@@ -167,12 +169,6 @@
                                                 ValuesDetail="_valuesDetail"
                                                 Shells="_shells"
                                                 OnGoTests="() => SetTab(PassportTabs.Tests)" />
-                                @if (_flags.ReferenceVerificationEnabled)
-                                {
-                                    <DnaVerifiedCompetencesSection Verified="_verifiedCompetences"
-                                                                   ProfileCompetenceLabels="_profileCompetenceLabels"
-                                                                   ShowVerifiedList="@(_verifiedCompetences.Count == 0)" />
-                                }
                             </PanelErrorBoundary>
                         }
                     </article>
@@ -339,7 +335,6 @@
     private List<JobsyApiClient.VerifiedCompetenceItem> _verifiedCompetences = [];
     private List<JobsyApiClient.ReferenceVerificationListItem> _refVerificationRows = [];
     private List<CandidateEmployerHistory> _employers = [];
-    private List<string> _profileCompetenceLabels = [];
     private PersistingComponentStateSubscription _persistSubscription;
 
     protected override void OnInitialized()
@@ -425,14 +420,12 @@
         _employers = _profile?.Preferences?.Employers ?? [];
         _firstWorkEntryId = _employers
             .FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.EmployerName))?.EntryId;
-        _profileCompetenceLabels = _view?.Cards
-            .Where(c => c.Kind == AssessmentKind.Competence && !string.IsNullOrWhiteSpace(c.TopLabel))
-            .Select(c => c.TopLabel!)
-            .Concat(_highlights.Select(h => h.Value))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(8)
-            .ToList() ?? [];
     }
+
+    private string? AskAnotherReferenceHref()
+        => _refVerificationEligible && _hasConfirmedReference && _firstWorkEntryId is Guid id
+            ? $"/candidate/paspoort/referentie/vraag/{id:D}"
+            : null;
 
     private IReadOnlyList<string> VisibleTabs()
         => PassportTabs.Visible(

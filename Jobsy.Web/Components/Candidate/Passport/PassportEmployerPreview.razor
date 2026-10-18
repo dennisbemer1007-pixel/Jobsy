@@ -43,6 +43,13 @@
         }
 
         <p class="ref-verif-disclaimer">@Culture["RefVerif.VerifiedCompetences.Disclaimer"]</p>
+
+        @if (!string.IsNullOrWhiteSpace(AskAnotherHref))
+        {
+            <p class="ref-verif-employer-preview__footer-link">
+                <a href="@AskAnotherHref">@Culture["RefVerif.Tip.AskAnother"]</a>
+            </p>
+        }
     </section>
 }
 
@@ -52,6 +59,8 @@
     [Parameter] public IReadOnlyList<CandidateEmployerHistory> Employers { get; set; } = [];
 
     [Parameter] public IReadOnlyList<JobsyApiClient.ReferenceVerificationListItem> VerificationRows { get; set; } = [];
+
+    [Parameter] public string? AskAnotherHref { get; set; }
 
     private IReadOnlyList<CandidateEmployerHistory> _confirmedWork = [];
     private string? _recognitionLine;

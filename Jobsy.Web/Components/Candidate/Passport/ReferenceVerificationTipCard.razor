@@ -5,13 +5,13 @@
 @inject IJSRuntime Js
 @inject NavigationManager Navigation
 
-@if (_visible && Eligible && HasConfirmedReference)
+@if (_visible && Eligible && HasConfirmedReference && !HideConfirmedFollowUp)
 {
     <p class="ref-verif-tip-followup" data-testid="ref-verification-tip-followup" data-screen="@ScreenKey">
         <a class="ref-verif-tip-followup__link" href="@_askHref">@Culture["RefVerif.Tip.AskAnother"]</a>
     </p>
 }
-else if (_visible && Eligible)
+else if (_visible && Eligible && !(HasConfirmedReference && HideConfirmedFollowUp))
 {
     <aside class="ref-verif-tip"
            data-testid="ref-verification-tip"
@@ -47,6 +47,10 @@ else if (_visible && Eligible)
     /// <summary>When true, show a quiet follow-up link instead of the full tip card.</summary>
     [Parameter]
     public bool HasConfirmedReference { get; set; }
+
+    /// <summary>When true with a confirmed reference, hide the floating follow-up (e.g. link lives in employer preview).</summary>
+    [Parameter]
+    public bool HideConfirmedFollowUp { get; set; }
 
     private bool _visible = true;
     private bool _checked;

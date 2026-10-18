@@ -16,10 +16,7 @@
 
 <PageTitle>@Culture["RefVerif.Request.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page ref-verif-request">
-    <h1>@Culture["RefVerif.Request.Title"]</h1>
-    <p class="login-lead">@Culture["RefVerif.Request.Lead"]</p>
-
+<div class="panel-page ref-verif-request-page">
     @if (!_flagsLoaded)
     {
         <p class="state-message">@Culture["Common.Loading"]</p>
@@ -30,59 +27,78 @@
     }
     else if (!_eligible)
     {
-        <p class="state-message">@Culture["RefVerif.Request.NotEligible"]</p>
-        <a class="btn btn-secondary" href="/candidate/paspoort">@Culture["RefVerif.Request.Back"]</a>
+        <div class="ref-verif-request__card detail-card">
+            <p class="state-message">@Culture["RefVerif.Request.NotEligible"]</p>
+            <a class="ref-verif-request__cancel" href="/candidate/paspoort">@Culture["RefVerif.Request.Back"]</a>
+        </div>
     }
     else if (_entry is null)
     {
-        <p class="state-message">@Culture["RefVerif.Request.NotFound"]</p>
-        <a class="btn btn-secondary" href="/candidate/paspoort?tab=proof">@Culture["RefVerif.Request.Back"]</a>
+        <div class="ref-verif-request__card detail-card">
+            <p class="state-message">@Culture["RefVerif.Request.NotFound"]</p>
+            <a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=proof">@Culture["RefVerif.Request.Back"]</a>
+        </div>
     }
     else if (_sent)
     {
-        <p role="status">@Culture["RefVerif.Request.Sent"]</p>
-        <a class="btn btn-primary" href="/candidate/paspoort?tab=references">@Culture["RefVerif.Tip.LinkPassport"]</a>
+        <div class="ref-verif-request__card detail-card">
+            <p role="status">@Culture["RefVerif.Request.Sent"]</p>
+            <a class="btn btn-primary" href="/candidate/paspoort?tab=references">@Culture["RefVerif.Tip.LinkPassport"]</a>
+        </div>
     }
     else
     {
-        <div class="ref-verif-request__summary">
-            <strong>@_entry.EmployerName</strong>
-            @if (!string.IsNullOrWhiteSpace(_entry.Role))
-            {
-                <span class="muted"> · @_entry.Role</span>
-            }
-        </div>
+        <div class="ref-verif-request__card detail-card">
+            <header class="ref-verif-request__head">
+                <h1 class="ref-verif-request__title">@Culture["RefVerif.Request.Title"]</h1>
+                <p class="ref-verif-request__lead muted">@Culture["RefVerif.Request.Lead"]</p>
+            </header>
 
-        <div class="ref-verif-request__grid">
-            <label class="field-label" for="ref-name">@Culture["RefVerif.Request.Name"]</label>
-            <label class="field-label" for="ref-email">@Culture["RefVerif.Request.Email"]</label>
-            <input id="ref-name" class="text-input" @bind="_name" maxlength="80" autocomplete="name" />
-            <input id="ref-email" class="text-input" type="email" @bind="_email" maxlength="254" autocomplete="email" />
-
-            <label class="field-label" for="ref-relation" style="grid-column: 1 / -1">@Culture["RefVerif.Request.Relation"]</label>
-            <select id="ref-relation" class="text-input" style="grid-column: 1 / -1" @bind="_relation">
-                @foreach (var relationCode in RelationCodes)
+            <div class="ref-verif-request__summary">
+                <strong>@_entry.EmployerName</strong>
+                @if (!string.IsNullOrWhiteSpace(_entry.Role))
                 {
-                    <option value="@relationCode">@Culture[$"RefVerif.Relation.{relationCode}"]</option>
+                    <span class="muted"> · @_entry.Role</span>
                 }
-            </select>
+            </div>
 
-            <label class="ref-verif-request__consent">
-                <input type="checkbox" @bind="_consent" />
-                <span>@Culture["RefVerif.Request.Consent"]</span>
-            </label>
+            <div class="ref-verif-request__grid login-form">
+                <label class="ref-verif-request__field" for="ref-name">
+                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Name"]</span>
+                    <input id="ref-name" class="ref-verif-request__input" @bind="_name" maxlength="80" autocomplete="name" />
+                </label>
+                <label class="ref-verif-request__field" for="ref-email">
+                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Email"]</span>
+                    <input id="ref-email" class="ref-verif-request__input" type="email" @bind="_email" maxlength="254" autocomplete="email" />
+                </label>
 
-            @if (!string.IsNullOrWhiteSpace(_message))
-            {
-                <p role="alert" style="grid-column: 1 / -1">@_message</p>
-            }
+                <label class="ref-verif-request__field ref-verif-request__field--full" for="ref-relation">
+                    <span class="ref-verif-request__label">@Culture["RefVerif.Request.Relation"]</span>
+                    <select id="ref-relation" class="ref-verif-request__input ref-verif-request__select" @bind="_relation">
+                        @foreach (var relationCode in RelationCodes)
+                        {
+                            <option value="@relationCode">@Culture[$"RefVerif.Relation.{relationCode}"]</option>
+                        }
+                    </select>
+                </label>
 
-            <div style="grid-column: 1 / -1; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <button type="button" class="btn btn-primary" disabled="@_busy" @onclick="SendAsync">
+                <label class="ref-verif-request__consent ref-verif-request__field--full">
+                    <input type="checkbox" class="ref-verif-request__checkbox" @bind="_consent" />
+                    <span>@Culture["RefVerif.Request.Consent"]</span>
+                </label>
+
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <p class="ref-verif-request__error ref-verif-request__field--full" role="alert">@_message</p>
+                }
+            </div>
+
+            <footer class="ref-verif-request__footer">
+                <a class="ref-verif-request__cancel" href="/candidate/paspoort?tab=references">@Culture["Common.Cancel"]</a>
+                <button type="button" class="btn btn-primary ref-verif-request__submit" disabled="@_busy" @onclick="SendAsync">
                     @Culture["RefVerif.Request.Send"]
                 </button>
-                <a class="btn btn-secondary" href="/candidate/paspoort?tab=references">@Culture["Common.Cancel"]</a>
-            </div>
+            </footer>
         </div>
     }
 </div>

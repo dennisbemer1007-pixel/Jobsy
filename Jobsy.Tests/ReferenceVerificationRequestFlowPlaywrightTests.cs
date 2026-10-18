@@ -32,10 +32,9 @@ public sealed class ReferenceVerificationRequestFlowPlaywrightTests
         await LoginAsync(page, baseUrl, ReferenceVerificationDemoIds.Email);
 
         await page.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 60_000 });
-        var askLink = page.Locator(
-            "[data-testid='ref-verification-tip'] a.btn-primary, [data-testid='ref-verification-tip-followup'] a");
-        await askLink.First.WaitForAsync(new() { Timeout = 20_000 });
-        await askLink.First.ClickAsync();
+        var askLink = page.Locator(".ref-verif-employer-preview__footer-link a");
+        await askLink.WaitForAsync(new() { Timeout = 20_000 });
+        await askLink.ClickAsync();
         await page.WaitForURLAsync("**/referentie/vraag/**", new() { Timeout = 15_000 });
         await page.WaitForSelectorAsync(".ref-verif-request__grid", new() { Timeout = 15_000 });
 
@@ -46,7 +45,7 @@ public sealed class ReferenceVerificationRequestFlowPlaywrightTests
         await page.Locator("#ref-name").FillAsync("Flow Test Referent");
         await page.Locator("#ref-email").FillAsync("flow.referent@demo.local");
         await page.Locator("input[type=checkbox]").First.CheckAsync();
-        await page.Locator(".ref-verif-request button.btn-primary").ClickAsync();
+        await page.Locator(".ref-verif-request__submit").ClickAsync();
         await page.WaitForSelectorAsync("text=De mail is onderweg.", new() { Timeout = 20_000 });
 
         await page.GotoAsync($"{baseUrl}/candidate/paspoort?tab=references", new() { WaitUntil = WaitUntilState.NetworkIdle });

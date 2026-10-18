@@ -13,6 +13,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 {
     private const string EnvRun = "JOBSY_E2E_REF_VERIF_SCREENSHOTS";
     private const string EnvRunR4 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R4";
+    private const string EnvRunR5 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R5";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -26,11 +27,16 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static string OutputDirR4 => "/opt/cursor/artifacts/references-r4";
 
+    private static string OutputDirR5 => "/opt/cursor/artifacts/references-r5";
+
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
 
     private static bool ShouldRunR4 =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunR4), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunR5 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunR5), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -216,11 +222,60 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         Assert.Equal(10, pngs.Length);
     }
 
+    [Fact]
+    public async Task Capture_reference_verification_screenshots_r5()
+    {
+        if (!ShouldRunR5)
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            Assert.Fail("JOBSY_E2E_BASE_URL unreachable — start API :5200 and Web :5201 with seeded DB.");
+        }
+
+        Directory.CreateDirectory(OutputDirR5);
+        foreach (var stale in Directory.GetFiles(OutputDirR5, "*.png"))
+        {
+            File.Delete(stale);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        foreach (var (width, height, tag) in Viewports)
+        {
+            await using var context = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            await LoginAsync(page, baseUrl, Email);
+
+            await CaptureRequestFormAsync(page, baseUrl, tag, OutputDirR5);
+
+            await page.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.WaitForSelectorAsync("[data-testid='passport-employer-preview']", new() { Timeout = 15_000 });
+            await page.Locator("[data-testid='passport-employer-preview']").ScrollIntoViewIfNeededAsync();
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(OutputDirR5, $"08-paspoort-endorsed-only-{tag}.png"));
+
+            await context.CloseAsync();
+        }
+
+        var pngs = Directory.GetFiles(OutputDirR5, "*.png");
+        Assert.Equal(4, pngs.Length);
+    }
+
     private static async Task CaptureRequestFormAsync(IPage page, string baseUrl, string tag, string outputDir)
     {
         var entry = ReferenceVerificationDemoIds.WorkEntryBakkerij;
         await page.GotoAsync($"{baseUrl}/candidate/paspoort/referentie/vraag/{entry:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
-        await page.WaitForSelectorAsync(".ref-verif-request__grid", new() { Timeout = 15_000 });
+        await page.WaitForSelectorAsync(".ref-verif-request__card .ref-verif-request__grid", new() { Timeout = 15_000 });
         Assert.Equal(0, await page.Locator("text=Deze werkervaring is niet gevonden.").CountAsync());
         await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(page, Path.Combine(outputDir, $"02-request-form-{tag}.png"));
     }
