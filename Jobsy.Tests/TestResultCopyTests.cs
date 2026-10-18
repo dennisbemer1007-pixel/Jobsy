@@ -9,11 +9,21 @@ public class TestResultCopyTests
     {
         var chip = string.Format(UiStrings.Get("TestResult.ScoresFromQuestions", "nl"), 5, 25);
         Assert.Equal("5 thema's uit 25 vragen", chip);
+        var themesChip = string.Format(UiStrings.Get("TestResult.ThemesFromQuestions", "nl"), 5, 25);
+        Assert.Equal("5 thema's uit 25 vragen", themesChip);
+        var enChip = string.Format(UiStrings.Get("TestResult.ThemesFromQuestions", "en"), 5, 25);
+        Assert.Equal("5 themes from 25 questions", enChip);
         var self = UiStrings.Get("TestResult.Upsell.Self", "nl");
         Assert.DoesNotContain("vacature", self, StringComparison.OrdinalIgnoreCase);
 
         var root = FindRepoRoot();
+        var testDetail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TestDetail.razor"));
+        Assert.Contains("TestResult.ThemesFromQuestions", testDetail, StringComparison.Ordinal);
+        Assert.DoesNotContain("TestResult.ScoresFromQuestions", testDetail, StringComparison.Ordinal);
+
         var locked = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/TestResult/LockedDeepReportSection.razor"));
+        Assert.DoesNotContain("SubtitleKey", locked, StringComparison.Ordinal);
+        Assert.DoesNotContain("<strong>", locked, StringComparison.OrdinalIgnoreCase);
         var gold = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/TestResult/TestResultPremiumBlock.razor"));
         Assert.Contains("TestResult.Upsell.Self", locked, StringComparison.Ordinal);
         Assert.Contains("EmployersEnabled", locked, StringComparison.Ordinal);
