@@ -24,13 +24,13 @@ public static partial class EmailStrings
                 Merge(Merge(Merge(EmailStringsEn.Map, EmailStringsComeback.For("en")), EmailStringsAfterMatch.For("en")), EmailStringsKandidatenkaart.For("en")),
                 "en"),
             ["pl"] = EmailStringsReferee.Merge(
-                Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), EmailStringsKandidatenkaart.For("en")),
+                Merge(Merge(Merge(EmailStringsPl.Map, EmailStringsComeback.For("pl")), EmailStringsAfterMatch.For("pl")), EmailStringsKandidatenkaart.For("en")),
                 "pl"),
             ["ro"] = EmailStringsReferee.Merge(
-                Merge(Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")), EmailStringsKandidatenkaart.For("en")),
+                Merge(Merge(Merge(EmailStringsRo.Map, EmailStringsComeback.For("ro")), EmailStringsAfterMatch.For("ro")), EmailStringsKandidatenkaart.For("en")),
                 "ro"),
             ["ar"] = EmailStringsReferee.Merge(
-                Merge(Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar")), EmailStringsKandidatenkaart.For("en")),
+                Merge(Merge(Merge(EmailStringsAr.Map, EmailStringsComeback.For("ar")), EmailStringsAfterMatch.For("ar")), EmailStringsKandidatenkaart.For("en")),
                 "ar")
         };
 

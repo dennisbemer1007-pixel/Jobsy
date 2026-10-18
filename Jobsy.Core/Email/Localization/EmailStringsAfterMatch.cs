@@ -5,7 +5,8 @@ internal static class EmailStringsAfterMatch
     public static IReadOnlyDictionary<string, string> For(string language) => language switch
     {
         "en" => En,
-        _ => Nl
+        "nl" => Nl,
+        _ => En
     };
 
     private static readonly Dictionary<string, string> Nl = new(StringComparer.Ordinal)

@@ -70,6 +70,13 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("VacancyEngagementController", "Like", "Own like"),
         ("VacancyEngagementController", "Unlike", "Own unlike"),
         ("VacancyEngagementController", "Share", "Own share signal"),
+        ("AfterMatchController", "ProposeEmployerSlots", "Employer after-match (company scoped in service)"),
+        ("AfterMatchController", "RecordOutcome", "Employer after-match outcome (company scoped in service)"),
+        ("AfterMatchController", "SelectSlot", "After-match slot selection (role checked in service)"),
+        ("AfterMatchController", "Reschedule", "After-match reschedule (role checked in service)"),
+        ("AfterMatchController", "Cancel", "After-match cancel (role checked in service)"),
+        ("AfterMatchController", "PreviewMessage", "After-match message preview (role checked in service)"),
+        ("AfterMatchController", "SendMessage", "After-match messaging (role checked in service)"),
     ];
 
     [Fact]

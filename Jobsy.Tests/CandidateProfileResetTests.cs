@@ -174,6 +174,7 @@ public class CandidateProfileResetTests
 
         var resetCoverage = new[]
         {
+            typeof(AfterMatchReminderPreference),
             typeof(AmbassadeurProfile),
             typeof(Application),
             typeof(AssessmentResearchAttempt),
