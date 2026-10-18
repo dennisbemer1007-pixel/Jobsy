@@ -34,7 +34,9 @@ public sealed record FeatureFlagSnapshot(
     bool ReferenceVerificationEnabled = false,
     bool TestJourneyIllustrationEnabled = false,
     bool OnboardingFinaleV2Enabled = false,
-    bool OccupationDayInLifeEnabled = true)
+    bool OccupationDayInLifeEnabled = true,
+    bool TestEditModeEnabled = false,
+    bool SamplePdfEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
 

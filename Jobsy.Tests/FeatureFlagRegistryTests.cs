@@ -21,6 +21,26 @@ public sealed class FeatureFlagRegistryTests
     }
 
     [Fact]
+    public void Every_registry_flag_has_catalog_entry_or_is_pending_pr()
+    {
+        var catalogKeys = PlatformSettingsCatalog.Entries
+            .Where(e => e.Kind == PlatformSettingKind.Bool)
+            .Select(e => e.Key)
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var def in FeatureFlagRegistry.All)
+        {
+            if (FeatureFlagRegistry.PendingAdminCatalogKeys.Contains(def.Key))
+            {
+                continue;
+            }
+
+            Assert.True(
+                catalogKeys.Contains(def.Key),
+                $"Flag {def.Key} is in FeatureFlagRegistry but missing from admin catalog.");
+        }
+    }
+
+    [Fact]
     public void Every_public_endpoint_flag_has_catalog_entry()
     {
         var catalogKeys = PlatformSettingsCatalog.Entries

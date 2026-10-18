@@ -12,11 +12,11 @@ using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
 
-/// <summary>Exports admin feature settings markup for visual review (admin-flags-r1).</summary>
+/// <summary>Smoke: PlatformSettingsEditor renders switches (styled captures: AdminFlagsPlaywrightTests r2).</summary>
 public sealed class AdminFlagsEvidenceBunitTests : BunitContext
 {
     [Fact]
-    public void Export_admin_settings_markup_for_desktop_and_mobile()
+    public void Renders_admin_switches_without_raw_resource_keys()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton(sp => new CultureState(
@@ -39,18 +39,8 @@ public sealed class AdminFlagsEvidenceBunitTests : BunitContext
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
         cut.WaitForElement(".admin-settings-group");
 
-        var dir = Path.Combine("/opt/cursor/artifacts", "admin-flags-r1");
-        Directory.CreateDirectory(dir);
-        var beforeSensitive = cut.Markup;
-        File.WriteAllText(Path.Combine(dir, "admin-settings-desktop.html"), WrapHtml(beforeSensitive, 1440));
-        File.WriteAllText(Path.Combine(dir, "admin-settings-mobile.html"), WrapHtml(beforeSensitive, 390));
-        File.WriteAllText(Path.Combine(dir, "flag-before-sensitive-off.html"), WrapHtml(beforeSensitive, 1440));
-
-        cut.Instance.SetDraftForTests("SensitiveExperienceEnabled", true);
-        cut.Render();
-        var afterSensitive = cut.Markup;
-        File.WriteAllText(Path.Combine(dir, "admin-settings-sensitive-on-draft.html"), WrapHtml(afterSensitive, 1440));
-        File.WriteAllText(Path.Combine(dir, "flag-after-sensitive-on.html"), WrapHtml(afterSensitive, 1440));
+        Assert.Contains("admin-switch", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("AdminSettings.EmployerFitQuestionnaires", cut.Markup, StringComparison.Ordinal);
     }
 
     private static PlatformFeatureItem SampleFeatures() => new()
@@ -65,11 +55,6 @@ public sealed class AdminFlagsEvidenceBunitTests : BunitContext
         UpdatedAtUtc = DateTime.UtcNow,
         AdminOverriddenFlagKeys = ["TrainingPartnersEnabled"]
     };
-
-    private static string WrapHtml(string body, int width)
-        => "<!DOCTYPE html><html><head><meta charset=\"utf-8\"/>"
-           + $"<style>body{{max-width:{width}px;margin:0 auto;font-family:system-ui,sans-serif;}}</style>"
-           + "</head><body>" + body + "</body></html>";
 
     private static ClaimsPrincipal CreateAdmin()
         => new(new ClaimsIdentity([new Claim(ClaimTypes.Role, "Admin")], "test"));

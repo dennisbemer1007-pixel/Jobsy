@@ -187,6 +187,12 @@ public class PlatformFeatureSettings
     /// <summary>Dag-in-het-leven links on occupation detail. Default true.</summary>
     public bool OccupationDayInLifeEnabled { get; set; } = true;
 
+    /// <summary>Antwoorden wijzigen on completed tests. Default false.</summary>
+    public bool TestEditModeEnabled { get; set; }
+
+    /// <summary>Voorbeeld-PDF on test result pages. Default false.</summary>
+    public bool SamplePdfEnabled { get; set; }
+
     /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
     public string AdminFlagOverridesJson { get; set; } = "[]";
 

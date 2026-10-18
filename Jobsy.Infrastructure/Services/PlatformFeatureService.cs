@@ -230,6 +230,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         ApplyAdminBoolUpdate(row, "OnboardingFinaleV2Enabled", update.OnboardingFinaleV2Enabled, v => row.OnboardingFinaleV2Enabled = v);
         ApplyAdminBoolUpdate(row, "OccupationDayInLifeEnabled", update.OccupationDayInLifeEnabled, v => row.OccupationDayInLifeEnabled = v);
         ApplyAdminBoolUpdate(row, "ResearchConsentEnabled", update.ResearchConsentEnabled, v => row.ResearchConsentEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestEditModeEnabled", update.TestEditModeEnabled, v => row.TestEditModeEnabled = v);
+        ApplyAdminBoolUpdate(row, "SamplePdfEnabled", update.SamplePdfEnabled, v => row.SamplePdfEnabled = v);
 
         if (update.ClearAdminFlagOverrideKeys is { Count: > 0 } clearKeys)
         {
@@ -367,6 +369,12 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
 
     private bool ResolveResearchConsentEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "ResearchConsentEnabled", row?.ResearchConsentEnabled ?? false, false, "JobsyFeatures:ResearchConsentEnabled");
+
+    private bool ResolveTestEditModeEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestEditModeEnabled", row?.TestEditModeEnabled ?? false, false, "JobsyFeatures:TestEditMode");
+
+    private bool ResolveSamplePdfEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "SamplePdfEnabled", row?.SamplePdfEnabled ?? false, false, "JobsyFeatures:SamplePdf");
 
     private bool ResolveAdminBool(
         PlatformFeatureSettings? row,
@@ -534,6 +542,8 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveOnboardingFinaleV2Enabled(row),
             ResolveOccupationDayInLifeEnabled(row),
             ResolveResearchConsentEnabled(row),
+            ResolveTestEditModeEnabled(row),
+            ResolveSamplePdfEnabled(row),
             AdminOverriddenFlagKeys: PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson).OrderBy(k => k, StringComparer.Ordinal).ToList(),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),

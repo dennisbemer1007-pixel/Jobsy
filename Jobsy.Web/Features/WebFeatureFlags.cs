@@ -77,7 +77,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 ReferenceVerificationEnabled: dto?.ReferenceVerificationEnabled ?? false,
                 TestJourneyIllustrationEnabled: dto?.TestJourneyIllustrationEnabled ?? false,
                 OnboardingFinaleV2Enabled: dto?.OnboardingFinaleV2Enabled ?? false,
-                OccupationDayInLifeEnabled: dto?.OccupationDayInLifeEnabled ?? true);
+                OccupationDayInLifeEnabled: dto?.OccupationDayInLifeEnabled ?? true,
+                TestEditModeEnabled: dto?.TestEditModeEnabled ?? false,
+                SamplePdfEnabled: dto?.SamplePdfEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -177,5 +179,11 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("occupationDayInLifeEnabled")]
         public bool OccupationDayInLifeEnabled { get; set; } = true;
+
+        [JsonPropertyName("testEditModeEnabled")]
+        public bool TestEditModeEnabled { get; set; }
+
+        [JsonPropertyName("samplePdfEnabled")]
+        public bool SamplePdfEnabled { get; set; }
     }
 }

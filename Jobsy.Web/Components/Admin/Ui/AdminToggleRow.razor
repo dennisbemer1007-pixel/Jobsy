@@ -23,6 +23,10 @@
         }
     </div>
     <div class="admin-toggle-row__control">
+        @if (!string.IsNullOrWhiteSpace(SourceBadge))
+        {
+            <span class="admin-flag-source-badge @(SourceIsOverride ? "is-override" : null)">@SourceBadge</span>
+        }
         @Control
     </div>
 </div>
@@ -34,6 +38,8 @@
     [Parameter] public string? Badge { get; set; }
     [Parameter] public bool IsDirty { get; set; }
     [Parameter] public bool IsLocked { get; set; }
+    [Parameter] public string? SourceBadge { get; set; }
+    [Parameter] public bool SourceIsOverride { get; set; }
     [Parameter] public RenderFragment? Control { get; set; }
     [Parameter] public RenderFragment? Impact { get; set; }
 }

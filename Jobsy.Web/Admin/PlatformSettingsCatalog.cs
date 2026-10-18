@@ -702,6 +702,45 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("ResearchConsentEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ResearchConsentEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.ResearchConsentEnabled.Title",
+                DescriptionKey: "AdminSettings.ResearchConsentEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ResearchConsentEnabled,
+                Write: v => new PlatformFeatureUpdate(ResearchConsentEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("TestEditModeEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestEditModeEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.TestEditModeEnabled.Title",
+                DescriptionKey: "AdminSettings.TestEditModeEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestEditModeEnabled,
+                Write: v => new PlatformFeatureUpdate(TestEditModeEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("SamplePdfEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "SamplePdfEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.SamplePdfEnabled.Title",
+                DescriptionKey: "AdminSettings.SamplePdfEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.SamplePdfEnabled,
+                Write: v => new PlatformFeatureUpdate(SamplePdfEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "AuthenticatorEnabled",
             Group: GroupDemo,
@@ -799,6 +838,8 @@ public static class PlatformSettingsCatalog
         bool? onboardingFinaleV2Enabled = null;
         bool? occupationDayInLifeEnabled = null;
         bool? researchConsentEnabled = null;
+        bool? testEditModeEnabled = null;
+        bool? samplePdfEnabled = null;
         IReadOnlyList<string>? clearAdminFlagOverrideKeys = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
@@ -906,6 +947,16 @@ public static class PlatformSettingsCatalog
                 researchConsentEnabled = p.ResearchConsentEnabled;
             }
 
+            if (p.TestEditModeEnabled is not null)
+            {
+                testEditModeEnabled = p.TestEditModeEnabled;
+            }
+
+            if (p.SamplePdfEnabled is not null)
+            {
+                samplePdfEnabled = p.SamplePdfEnabled;
+            }
+
             if (p.ClearAdminFlagOverrideKeys is not null)
             {
                 clearAdminFlagOverrideKeys = p.ClearAdminFlagOverrideKeys;
@@ -970,6 +1021,8 @@ public static class PlatformSettingsCatalog
             OnboardingFinaleV2Enabled: onboardingFinaleV2Enabled,
             OccupationDayInLifeEnabled: occupationDayInLifeEnabled,
             ResearchConsentEnabled: researchConsentEnabled,
+            TestEditModeEnabled: testEditModeEnabled,
+            SamplePdfEnabled: samplePdfEnabled,
             ClearAdminFlagOverrideKeys: clearAdminFlagOverrideKeys,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,

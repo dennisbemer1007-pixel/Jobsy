@@ -5661,6 +5661,12 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("OnboardingFinaleV2Enabled")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("SamplePdfEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("TestEditModeEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("OccupationDayInLifeEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")

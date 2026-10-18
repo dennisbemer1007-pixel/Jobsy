@@ -12,6 +12,9 @@ Generated as part of PR: admin feature-flag centralization.
 | CandidatePassportEnabled | Paspoort-nav | Profiel-nav | FeatureRoutes tests | Default aan |
 | TestsV2Enabled | Quick-Scan v2 | v1 catalog | TestsV2PlaywrightTests | |
 | OnboardingFinaleV2Enabled | Finale v2 layout | Klassieke finale | OnboardingFinaleV2BunitTests | Via API flags |
+| ResearchConsentEnabled | Onderzoeksopt-in UI | Geen opt-in flow | Research admin page | Admin + platform DB |
+| TestEditModeEnabled | Antwoorden wijzigen | Geen edit-knop | TestDetail + feature-flags | Admin override |
+| SamplePdfEnabled | Voorbeeld-PDF knop | Geen sample | TestDetail + feature-flags | Admin override |
 | TestJourneyIllustrationEnabled | Illustratie stap 7 | Geen illustratie CSS | TestJourneyConsentStepBunitTests | Via API flags |
 | PupilPassportV2Enabled / StudentPassportEnabled | School PDF varianten | Standaard uit | Scholen API tests | Config + admin override |
 

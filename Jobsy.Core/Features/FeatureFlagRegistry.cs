@@ -30,6 +30,17 @@ public sealed record FeatureFlagDefinition(
 
 public static class FeatureFlagRegistry
 {
+    /// <summary>
+    /// Flags defined in open PRs — registry parity test skips catalog until merged.
+    /// </summary>
+    public static IReadOnlySet<string> PendingAdminCatalogKeys { get; } = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "NaDeMatchEnabled", // PR #742
+        "TestProgressInsightEnabled", // PR #733
+        "DreamJobIllustrationEnabled", // PR #724
+        "BedrijvenkaartEnabled", // PR #738 (separate from EmployersEnabled)
+    };
+
     public static IReadOnlyList<FeatureFlagDefinition> All { get; } = Build();
 
     public static IReadOnlyDictionary<string, FeatureFlagDefinition> ByKey { get; }
@@ -72,6 +83,8 @@ public static class FeatureFlagRegistry
             Def("PassportPdfV2Enabled", FeatureFlagAdminGroup.Tests, PlatformFeature.PassportPdfV2, pub, false),
             Def("PassportPdfDnaBlocksEnabled", FeatureFlagAdminGroup.Tests, null, exposedOnPublicEndpoint: false, defaultValue: true),
             Def("FreeCandidateTestsEnabled", FeatureFlagAdminGroup.Tests, null, exposedOnPublicEndpoint: false, defaultValue: true),
+            Def("TestEditModeEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:TestEditMode"),
+            Def("SamplePdfEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:SamplePdf"),
 
             Def("PassportPartnersEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.PassportPartners, pub, false),
             Def("AmbassadorsEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.Ambassadors, pub, false),

@@ -21,9 +21,12 @@
 | VacancyContentModerationEnabled | API | DB / options | ja |
 | FreeCandidateTestsEnabled | API | DB | ja |
 | MatchCalibrationV1Enabled | API | DB | ja |
-| ResearchConsentEnabled | API | DB | nee (entity only; registry) |
-| TestEditMode / SamplePdf | API options | appsettings | nee (JobsyFeatures, geen UI) |
-| NaDeMatch / TestProgressInsight / DreamJobIllustration | — | — | niet in codebase (oktober 2026) |
+| ResearchConsentEnabled | API | DB + override | ja (Demo & test) |
+| TestEditModeEnabled / SamplePdfEnabled | Web (via feature-flags) | DB + JobsyFeatures | ja (Demo & test) |
+| NaDeMatchEnabled | — | — | pending PR **#742** (registry parity wacht) |
+| TestProgressInsightEnabled | — | — | pending PR **#733** |
+| DreamJobIllustrationEnabled | — | — | pending PR **#724** |
+| BedrijvenkaartEnabled | — | — | pending PR **#738** (nu: EmployersEnabled) |
 | Bedrijvenkaart | beide | `EmployersEnabled` | via Employers |
 
 Bronprioriteit na deze PR: **admin DB override (AdminFlagOverridesJson)** → **env/appsettings** → **default**.
