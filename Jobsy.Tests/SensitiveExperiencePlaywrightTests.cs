@@ -48,7 +48,7 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
     [Fact]
     public async Task Capture_gevoelig_mobile_hero_390()
     {
-        const string mobDir = "/opt/cursor/artifacts/gevoelig-mobhero";
+        const string mobDir = "/opt/cursor/artifacts/gevoelig-mobhero-r2";
         Directory.CreateDirectory(mobDir);
         using var web = new GevoeligWebFactory();
         var baseUrl = web.EnsureServerAddress();
@@ -96,6 +96,7 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
             Assert.InRange(artBox.Height, heroBox.Height - 4, heroBox.Height + 4);
             Assert.True(copyBox.Y >= heroBox.Y - 1 && copyBox.Y + copyBox.Height <= heroBox.Y + heroBox.Height + 1,
                 $"{slug}: copy must stay inside hero overlay, not in a separate band below");
+            Assert.True(copyBox.X <= 24, $"{slug}: copy should align to content margin, x={copyBox.X}");
 
             await page.ScreenshotAsync(new()
             {

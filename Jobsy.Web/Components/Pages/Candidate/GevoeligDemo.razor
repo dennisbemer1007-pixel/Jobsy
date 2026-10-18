@@ -11,7 +11,7 @@
 @inject CultureState Culture
 
 <PageTitle>Gevoelige werkervaring demo</PageTitle>
-<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-mobhero2" />
+<link rel="stylesheet" href="css/features/gevoelig-werkervaring.css?v=20261018-mobhero-r2" />
 
 <div class="gev-page" data-testid="gevoelig-demo-@ActiveScreen">
     @switch (ActiveScreen)
@@ -363,7 +363,7 @@
 
     private RenderFragment RenderPaspoortHero() => __builder =>
     {
-        <section class="gev-hero" aria-label="@Culture["Sensitive.Passport.HeroTitle"]">
+        <section class="gev-hero gev-hero--paspoort" aria-label="@Culture["Sensitive.Passport.HeroTitle"]">
             <div class="gev-wrap gev-wrap--hero">
                 <div class="gev-hero__copy">
                     <h1>@Culture["Sensitive.Passport.HeroTitle"]</h1>
@@ -375,7 +375,13 @@
                 </div>
             </div>
             <figure class="gev-hero__art gev-hero__art--werk" aria-hidden="true"></figure>
-        </section>;
+        </section>
+        <div class="gev-paspoort-toggle-mobile">
+            <div class="gev-view-toggle">
+                <button type="button">@Culture["Sensitive.Passport.MyView"]</button>
+                <button type="button" class="is-on">@Culture["Sensitive.Passport.EmployerView"]</button>
+            </div>
+        </div>;
     };
 
     private RenderFragment RenderRefType(string key, bool selected = false) => __builder =>

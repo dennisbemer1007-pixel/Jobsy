@@ -149,6 +149,10 @@
   }
 }
 
+.gev-paspoort-toggle-mobile {
+  display: none;
+}
+
 .gev-wrap {
   max-width: 68rem;
   margin: 0 auto;
@@ -549,7 +553,7 @@ html.gev-capture [data-lobsy-coach] {
   pointer-events: none !important;
 }
 
-/* Mobile (390): solid cream text column ~55%, gradient strip only between, opaque figures ~45% right */
+/* Mobile (390): text at content margin (~55% width); figures large, bottom-right, gradient only between */
 @media (max-width: 900px) {
   .gev-hero {
     display: block;
@@ -561,52 +565,50 @@ html.gev-capture [data-lobsy-coach] {
     background: var(--gev-cream);
   }
 
-  /* Gradient ends before figure column — never over figures */
+  /* Soft blend strip only between text column and figure — never over figures */
   .gev-hero::before {
     content: "";
     position: absolute;
     top: 0;
     bottom: 0;
     left: 0;
-    right: 45%;
+    width: 58%;
     z-index: 1;
     pointer-events: none;
     background: linear-gradient(
       90deg,
       var(--gev-cream) 0%,
-      var(--gev-cream) 78%,
-      rgba(251, 245, 236, 0.65) 90%,
+      var(--gev-cream) 72%,
+      rgba(251, 245, 236, 0.55) 88%,
       rgba(251, 245, 236, 0) 100%
     );
   }
 
   .gev-hero__art--werk {
-    background-image: url("/images/candidate/werk-mobile-figures.png");
+    background-image: url("/images/candidate/werk-full.jpg");
   }
 
   .gev-hero__art--ref {
-    background-image: url("/images/candidate/ref-mobile-figures.png");
+    background-image: url("/images/candidate/ref-full.jpg");
   }
 
   .gev-hero__art {
     position: absolute;
-    top: 0;
-    bottom: 0;
     right: 0;
-    left: 55%;
+    bottom: 0;
+    left: 46%;
     z-index: 0;
-    width: 45%;
-    max-width: 45%;
+    width: 54%;
     height: 100%;
     margin: 0;
     pointer-events: none;
-    overflow: hidden;
+    overflow: visible;
     background-color: transparent;
     background-repeat: no-repeat;
     background-position: right bottom;
-    background-size: contain;
-    -webkit-mask-image: none;
-    mask-image: none;
+    background-size: auto 156px;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 36px);
+    mask-image: linear-gradient(to right, transparent 0, #000 36px);
   }
 
   .gev-hero__art::before,
@@ -622,10 +624,12 @@ html.gev-capture [data-lobsy-coach] {
     align-items: flex-start;
     width: 55%;
     max-width: 55%;
+    margin: 0;
+    margin-inline: 0;
     height: 100%;
     max-height: 16.25rem;
     min-height: 0;
-    padding: 0.5rem 0.65rem 0.45rem 1rem;
+    padding: 0.45rem 0.2rem 0.4rem 1.25rem;
     background: var(--gev-cream);
     box-sizing: border-box;
     overflow: hidden;
@@ -633,6 +637,7 @@ html.gev-capture [data-lobsy-coach] {
 
   .gev-hero__copy {
     justify-content: flex-start;
+    width: 100%;
     max-width: 100%;
     padding-right: 0;
   }
@@ -654,10 +659,10 @@ html.gev-capture [data-lobsy-coach] {
   }
 
   .gev-hero__copy .gev-banner {
-    margin: 0.3rem 0 0;
+    margin: 0.28rem 0 0;
     padding: 0;
-    font-size: 0.7rem;
-    line-height: 1.28;
+    font-size: 0.68rem;
+    line-height: 1.26;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -667,10 +672,19 @@ html.gev-capture [data-lobsy-coach] {
     overflow: hidden;
   }
 
-  .gev-hero__copy .gev-view-toggle {
-    margin-top: 0.3rem;
-    transform: scale(0.88);
-    transform-origin: left top;
+  .gev-hero--paspoort .gev-hero__copy .gev-view-toggle {
+    display: none;
+  }
+
+  .gev-paspoort-toggle-mobile {
+    display: block;
+    padding: 0.35rem 1.25rem 0.5rem;
+    background: var(--gev-cream);
+    border-bottom: 1px solid rgba(221, 213, 204, 0.45);
+  }
+
+  .gev-paspoort-toggle-mobile .gev-view-toggle {
+    margin: 0;
   }
 
   .gev-layout,
