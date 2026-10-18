@@ -82,8 +82,16 @@ public sealed class OnboardingSoftIllustrationsPlaywrightTests
             await prepare(page);
         }
 
-        await page.Locator("[data-testid=onboarding-illustration-art]").WaitForAsync(new() { Timeout = 60_000 });
-        await AssertNoFormFigureOverlapAsync(page);
+        if (mobile && width < 768)
+        {
+            await page.Locator(".ob-illustrated-step__mobile-cand-hero .cand-hero__mob-figures").WaitForAsync(new() { Timeout = 60_000 });
+        }
+        else
+        {
+            await page.Locator("[data-testid=onboarding-illustration-art]").WaitForAsync(new() { Timeout = 60_000 });
+        }
+
+        await AssertNoFormFigureOverlapAsync(page, mobile && width < 768);
         if (stepNumber == 4 && mobile && width <= 390)
         {
             await AssertWorkHistoryDutiesGapAsync(page);
@@ -100,13 +108,15 @@ public sealed class OnboardingSoftIllustrationsPlaywrightTests
         }
     }
 
-    private static async Task AssertNoFormFigureOverlapAsync(IPage page)
+    private static async Task AssertNoFormFigureOverlapAsync(IPage page, bool mobileCandHero)
     {
         var audit = await page.EvaluateAsync<OverlapAudit>(
             """
-            () => {
-              const art = document.querySelector('[data-testid=onboarding-illustration-art]');
+            (mobileCandHero) => {
               const form = document.querySelector('.ob-illustrated-step__form');
+              const art = mobileCandHero
+                ? document.querySelector('.ob-illustrated-step__mobile-cand-hero .cand-hero__mob-figures-wrap')
+                : document.querySelector('[data-testid=onboarding-illustration-art]');
               if (!art || !form) {
                 return { ok: false, reason: 'missing-art-or-form' };
               }
@@ -137,7 +147,8 @@ public sealed class OnboardingSoftIllustrationsPlaywrightTests
               }
               return { ok: true, reason: '' };
             }
-            """);
+            """,
+            mobileCandHero);
 
         Assert.True(audit.Ok, $"Illustration overlap: {audit.Reason}");
     }

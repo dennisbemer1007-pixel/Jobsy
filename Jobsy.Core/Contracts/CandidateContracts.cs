@@ -49,7 +49,9 @@ public record CandidatePreferencesDto(
     /// <summary>Contract codes, max 3. <c>geen-voorkeur</c> is exclusive.</summary>
     IReadOnlyList<string>? ContractPreferences = null,
     /// <summary>Optional work-status chips (WorkStatusCatalog). Not used in match scoring.</summary>
-    IReadOnlyList<string>? WorkStatuses = null);
+    IReadOnlyList<string>? WorkStatuses = null,
+    /// <summary>Candidate-only gap annotations between jobs (SensitiveExperience).</summary>
+    IReadOnlyList<CandidateTimelineGapDto>? TimelineGaps = null);
 
 /// <summary>Positive, shareable work preferences. Not private dislikes.</summary>
 public record SharedWorkPreferences(
@@ -74,6 +76,11 @@ public record UpdateCandidatePrivatePreferencesRequest(
     IReadOnlyList<string>? Dislikes = null,
     IReadOnlyList<string>? CustomDislikes = null);
 
+public record CandidateTimelineGapDto(
+    string StartMonth,
+    string EndMonth,
+    string? Choice = null);
+
 public record CandidateEmployerHistoryDto(
     string EmployerName,
     string? Role = null,
@@ -84,7 +91,11 @@ public record CandidateEmployerHistoryDto(
     string? EndMonth = null,
     bool? IsCurrent = null,
     /// <summary>ESCO occupation id confirmed by the candidate. Never set from a CV upload.</summary>
-    string? EscoId = null);
+    string? EscoId = null,
+    /// <summary>When true, employers never see this row (still counts for matching skills).</summary>
+    bool? OnlyForMe = null,
+    /// <summary>Editable skill chips derived from role/duties (candidate view + matching).</summary>
+    IReadOnlyList<string>? Skills = null);
 
 public record CandidateCertificateDto(
     string Name,

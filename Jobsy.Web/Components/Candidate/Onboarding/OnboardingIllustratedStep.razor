@@ -1,27 +1,32 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Onboarding
 
 <section class="ob-illustrated-step" data-testid="@TestId">
+    <div class="ob-illustrated-step__mobile-cand-hero panel-page--cand-ill">
+        <CandidateIllustratedHero Eyebrow="@Eyebrow"
+                                  CoralEyebrow="true"
+                                  Title="@HeroTitle"
+                                  Lead="@HeroLead"
+                                  ArtUrl="@JpgSrc"
+                                  ArtUrlMobileFigures="@MobileFigurePng"
+                                  ArtPosition="right center"
+                                  CssClass="@MobileHeroCssClass"
+                                  TitleTabIndex="-1">
+            @if (HeroExtra is not null)
+            {
+                @HeroExtra
+            }
+        </CandidateIllustratedHero>
+    </div>
+
     <div class="ob-illustrated-step__hero-band">
-        <div class="ob-illustrated-step__hero-bg" aria-hidden="true" data-testid="onboarding-illustration-mobile-bg">
-            <picture>
-                <source media="(max-width: 1023px)" type="image/webp" srcset="@MobileBgWebpSrc" />
-                <source media="(max-width: 1023px)" srcset="@MobileBgPngSrc" />
-                <img src="@MobileBgPngSrc" alt="" loading="eager" decoding="async" tabindex="-1" />
-            </picture>
-        </div>
-        @if (HeadContent is not null)
-        {
-            <div class="ob-illustrated-step__head">
-                @HeadContent
-            </div>
-        }
         <div class="ob-illustrated-step__art" aria-hidden="true" data-testid="onboarding-illustration-art">
             <span class="ob-illustrated-step__art-img-wrap">
                 <picture>
                     <source media="(min-width: 1024px)" type="image/webp" srcset="@WebpSrc" />
-                    <source media="(max-width: 1023px)" type="image/webp" srcset="@MobileWebpSrc" />
+                    <source media="(min-width: 768px)" type="image/webp" srcset="@WebpSrc" />
                     <source media="(min-width: 1024px)" srcset="@JpgSrc" />
-                    <source media="(max-width: 1023px)" srcset="@MobilePngSrc" />
+                    <source media="(min-width: 768px)" srcset="@JpgSrc" />
                     <img src="@JpgSrc"
                          alt=""
                          width="@ImageWidth"
@@ -34,6 +39,12 @@
                 </picture>
             </span>
         </div>
+        @if (HeadContent is not null)
+        {
+            <div class="ob-illustrated-step__head">
+                @HeadContent
+            </div>
+        }
     </div>
     <div class="ob-illustrated-step__body">
         @ChildContent
@@ -43,13 +54,20 @@
 @code {
     [Parameter, EditorRequired] public string WebpSrc { get; set; } = default!;
     [Parameter, EditorRequired] public string JpgSrc { get; set; } = default!;
-    [Parameter, EditorRequired] public string MobileBgWebpSrc { get; set; } = default!;
-    [Parameter, EditorRequired] public string MobileBgPngSrc { get; set; } = default!;
-    [Parameter, EditorRequired] public string MobileWebpSrc { get; set; } = default!;
-    [Parameter, EditorRequired] public string MobilePngSrc { get; set; } = default!;
+    [Parameter, EditorRequired] public string MobileFigurePng { get; set; } = default!;
+    [Parameter, EditorRequired] public string? HeroTitle { get; set; }
+    [Parameter] public string? HeroLead { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool TallMobileHero { get; set; }
+    [Parameter] public RenderFragment? HeroExtra { get; set; }
     [Parameter] public int ImageWidth { get; set; } = 1280;
     [Parameter] public int ImageHeight { get; set; } = 720;
     [Parameter] public string? TestId { get; set; }
     [Parameter] public RenderFragment? HeadContent { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string MobileHeroCssClass =>
+        TallMobileHero
+            ? "cand-hero--profession-band ob-illustrated-step__cand-hero cand-hero--onboarding-tall"
+            : "cand-hero--profession-band ob-illustrated-step__cand-hero";
 }

@@ -31,7 +31,8 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261018-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-08" />
-    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-r13" />
+    <link rel="stylesheet" href="css/features/candidate-illustrated-app.css?v=20261018-89" />
+    <link rel="stylesheet" href="css/features/onboarding-illustrated-step.css?v=20261018-r14" />
     <link rel="stylesheet" href="css/features/onboarding-test-blocks.css?v=20261018-r2" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-r4" />
     @if (TestJourneyIllustration.Enabled)
@@ -284,7 +285,7 @@
                         <p class="state-message error">@_error</p>
                     }
 
-                    <p class="ob-wizard__step-pill">@MobileStepBadge</p>
+                    <p class="ob-wizard__step-pill @(SoftIllustratedStep ? "ob-wizard__step-pill--illustrated-hero" : null)">@MobileStepBadge</p>
 
                     @if (_earlyMoment == EarlyRewardMoment.FirstInsight)
                     {
@@ -299,10 +300,10 @@
                         case 1:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.KennismakenWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.KennismakenJpg"
-                                                       MobileBgWebpSrc="@OnboardingIllustrationAssets.KennismakenMobileBgWebp"
-                                                       MobileBgPngSrc="@OnboardingIllustrationAssets.KennismakenMobileBgPng"
-                                                       MobileWebpSrc="@OnboardingIllustrationAssets.KennismakenMobileWebp"
-                                                       MobilePngSrc="@OnboardingIllustrationAssets.KennismakenMobilePng"
+                                                       MobileFigurePng="@OnboardingIllustrationAssets.MobileFigurePng("kennismaken")"
+                                                       Eyebrow="@MobileStepBadge"
+                                                       HeroTitle="@Culture["Onboarding.Step1.Title"]"
+                                                       HeroLead="@Culture["Onboarding.Step1.Lead"]"
                                                        TestId="onboarding-step-1-illustrated">
                                 <HeadContent>
                                     <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
@@ -325,10 +326,10 @@
                         case 2:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.BeschikbaarheidWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.BeschikbaarheidJpg"
-                                                       MobileBgWebpSrc="@OnboardingIllustrationAssets.BeschikbaarheidMobileBgWebp"
-                                                       MobileBgPngSrc="@OnboardingIllustrationAssets.BeschikbaarheidMobileBgPng"
-                                                       MobileWebpSrc="@OnboardingIllustrationAssets.BeschikbaarheidMobileWebp"
-                                                       MobilePngSrc="@OnboardingIllustrationAssets.BeschikbaarheidMobilePng"
+                                                       MobileFigurePng="@OnboardingIllustrationAssets.MobileFigurePng("beschikbaarheid")"
+                                                       Eyebrow="@MobileStepBadge"
+                                                       HeroTitle="@Culture["Onboarding.Step2.Title"]"
+                                                       HeroLead="@Culture["Onboarding.Step2.Lead"]"
                                                        TestId="onboarding-step-2-illustrated">
                                 <HeadContent>
                                     <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
@@ -355,10 +356,11 @@
                         case 3:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.VervoerWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.VervoerJpg"
-                                                       MobileBgWebpSrc="@OnboardingIllustrationAssets.VervoerMobileBgWebp"
-                                                       MobileBgPngSrc="@OnboardingIllustrationAssets.VervoerMobileBgPng"
-                                                       MobileWebpSrc="@OnboardingIllustrationAssets.VervoerMobileWebp"
-                                                       MobilePngSrc="@OnboardingIllustrationAssets.VervoerMobilePng"
+                                                       MobileFigurePng="@OnboardingIllustrationAssets.MobileFigurePng("vervoer")"
+                                                       Eyebrow="@MobileStepBadge"
+                                                       HeroTitle="@Culture["Onboarding.Step3.Title"]"
+                                                       HeroLead="@Culture["Onboarding.Step3.Lead"]"
+                                                       TallMobileHero="true"
                                                        TestId="onboarding-step-3-illustrated">
                                 <HeadContent>
                                     <h1 tabindex="-1">@Culture["Onboarding.Step3.Title"]</h1>
@@ -380,11 +382,14 @@
                         case 4:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.WerkervaringWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.WerkervaringJpg"
-                                                       MobileBgWebpSrc="@OnboardingIllustrationAssets.WerkervaringMobileBgWebp"
-                                                       MobileBgPngSrc="@OnboardingIllustrationAssets.WerkervaringMobileBgPng"
-                                                       MobileWebpSrc="@OnboardingIllustrationAssets.WerkervaringMobileWebp"
-                                                       MobilePngSrc="@OnboardingIllustrationAssets.WerkervaringMobilePng"
+                                                       MobileFigurePng="@OnboardingIllustrationAssets.MobileFigurePng("werkervaring")"
+                                                       Eyebrow="@MobileStepBadge"
+                                                       HeroTitle="@Culture["Onboarding.Step4.Title"]"
+                                                       HeroLead="@Culture["Onboarding.Step4.Lead"]"
                                                        TestId="onboarding-step-4-illustrated">
+                                <HeroExtra>
+                                    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+                                </HeroExtra>
                                 <HeadContent>
                                     <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
                                     <h1 tabindex="-1">@Culture["Onboarding.Step4.Title"]</h1>
@@ -406,11 +411,14 @@
                         case 5:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.OpleidingWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.OpleidingJpg"
-                                                       MobileBgWebpSrc="@OnboardingIllustrationAssets.OpleidingMobileBgWebp"
-                                                       MobileBgPngSrc="@OnboardingIllustrationAssets.OpleidingMobileBgPng"
-                                                       MobileWebpSrc="@OnboardingIllustrationAssets.OpleidingMobileWebp"
-                                                       MobilePngSrc="@OnboardingIllustrationAssets.OpleidingMobilePng"
+                                                       MobileFigurePng="@OnboardingIllustrationAssets.MobileFigurePng("opleiding")"
+                                                       Eyebrow="@MobileStepBadge"
+                                                       HeroTitle="@Culture["Onboarding.Step5.Title"]"
+                                                       HeroLead="@Culture["Onboarding.Step5.Lead"]"
                                                        TestId="onboarding-step-5-illustrated">
+                                <HeroExtra>
+                                    <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
+                                </HeroExtra>
                                 <HeadContent>
                                     <span class="ob-wizard__badge">@Culture["Onboarding.Optional"]</span>
                                     <h1 tabindex="-1">@Culture["Onboarding.Step5.Title"]</h1>
@@ -429,10 +437,10 @@
                         case 6:
                             <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.DreamJobWebp"
                                                        JpgSrc="@OnboardingIllustrationAssets.DreamJobJpg"
-                                                       MobileBgWebpSrc="@OnboardingIllustrationAssets.DreamJobMobileBgWebp"
-                                                       MobileBgPngSrc="@OnboardingIllustrationAssets.DreamJobMobileBgPng"
-                                                       MobileWebpSrc="@OnboardingIllustrationAssets.DreamJobMobileWebp"
-                                                       MobilePngSrc="@OnboardingIllustrationAssets.DreamJobMobilePng"
+                                                       MobileFigurePng="@OnboardingIllustrationAssets.MobileFigurePng("droombaan")"
+                                                       Eyebrow="@MobileStepBadge"
+                                                       HeroTitle="@Culture["Onboarding.Step6.Title"]"
+                                                       HeroLead="@Culture["Onboarding.Step6.Lead"]"
                                                        TestId="onboarding-step-6-illustrated">
                                 <HeadContent>
                                     <h1 tabindex="-1">@Culture["Onboarding.Step6.Title"]</h1>

@@ -166,6 +166,11 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
                 overridesCulture ? null : companyProfile?.Culture,
                 record.CulturePillars)
             : null;
+        var matchLabels = SensitiveExperienceRules.MatchingExperienceLabels(context.Prefs);
+        var mergedRoles = (context.Prefs.Roles ?? Array.Empty<string>())
+            .Concat(matchLabels)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         return ProfileVacancyMatchCalculator.Calculate(new ProfileVacancyMatchInput
         {
             VacancyId = record.Id,
@@ -173,10 +178,10 @@ public sealed class ProfileVacancyMatchService : IProfileVacancyMatchService
             VacancyTitle = record.Title,
             VacancyDescription = record.Description,
             WorkTypes = record.WorkTypeLabelList,
-            CandidateRoles = context.Prefs.Roles,
+            CandidateRoles = mergedRoles,
             CandidateLicenses = context.Prefs.DrivingLicenses,
             CandidateEducations = context.Prefs.Educations,
-            CandidateEmployerCount = context.Prefs.Employers?.Count ?? 0,
+            CandidateEmployerCount = SensitiveExperienceRules.CountForMinimumEmployers(context.Prefs),
             RequiredDrivingLicense = record.RequiredDrivingLicense,
             RequiredEducation = record.RequiredEducation,
             MinimumEmployers = record.MinimumEmployers,

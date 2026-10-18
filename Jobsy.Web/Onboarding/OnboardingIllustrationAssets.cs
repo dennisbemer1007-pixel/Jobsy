@@ -1,10 +1,12 @@
+using Jobsy.Web.Media;
+
 namespace Jobsy.Web.Onboarding;
 
 /// <summary>Shared onboarding illustration paths (WebP + JPG fallback).</summary>
 public static class OnboardingIllustrationAssets
 {
     public const string Version = "20261018-r10";
-    public const string MobileVersion = "20261018-r13";
+    public const string MobileVersion = "20261018-r14";
 
     public const string KennismakenWebp = $"/images/onboarding/kennismaken.webp?v={Version}";
     public const string KennismakenJpg = $"/images/onboarding/kennismaken.jpg?v={Version}";
@@ -53,4 +55,27 @@ public static class OnboardingIllustrationAssets
     public const string DreamJobMobileBgPng = $"/images/onboarding/droombaan-mobile-bg.png?v={MobileVersion}";
     public const string DreamJobMobileWebp = $"/images/onboarding/droombaan-mobile.webp?v={MobileVersion}";
     public const string DreamJobMobilePng = $"/images/onboarding/droombaan-mobile.png?v={MobileVersion}";
+
+    /// <summary>Opaque mobile figure PNG (same assets as candidate illustrated pages).</summary>
+    public static string MobileFigurePng(string slug) => slug switch
+    {
+        "kennismaken" => KennismakenMobilePng,
+        "beschikbaarheid" => CandidateIllustratedImages.MobFiguresInstellingen,
+        "vervoer" => CandidateIllustratedImages.MobFiguresBewaard,
+        "werkervaring" => CandidateIllustratedImages.MobFiguresSollicitaties,
+        "opleiding" => CandidateIllustratedImages.MobFiguresOpleiding,
+        "droombaan" => CandidateIllustratedImages.MobFiguresDroombaan,
+        _ => KennismakenMobilePng,
+    };
+
+    public static string MobileHeroSlug(string testId) => testId switch
+    {
+        "onboarding-step-1-illustrated" => "kennismaken",
+        "onboarding-step-2-illustrated" => "beschikbaarheid",
+        "onboarding-step-3-illustrated" => "vervoer",
+        "onboarding-step-4-illustrated" => "werkervaring",
+        "onboarding-step-5-illustrated" => "opleiding",
+        "onboarding-step-6-illustrated" => "droombaan",
+        _ => "kennismaken",
+    };
 }

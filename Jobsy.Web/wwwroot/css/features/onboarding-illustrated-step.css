@@ -1,4 +1,4 @@
-/* Illustrated onboarding: seamless hero (desktop) + split cream / figure crop (mobile ≤1023). */
+/* Illustrated onboarding: desktop seamless hero (≥768px) + candidate mob hero (<768px). */
 
 .ob-wizard__content.ob-wizard__content--illustrated {
   inline-size: 100%;
@@ -23,6 +23,10 @@
   min-inline-size: 0;
   display: flex;
   flex-direction: column;
+}
+
+.ob-illustrated-step__mobile-cand-hero {
+  display: none;
 }
 
 .ob-illustrated-step__hero-band {
@@ -103,10 +107,6 @@
   content: none;
 }
 
-.ob-illustrated-step__hero-bg {
-  display: none;
-}
-
 .ob-illustrated-step__body {
   background: var(--bg);
   padding: 12px clamp(16px, 4vw, 32px) 8px;
@@ -147,6 +147,77 @@
 .ob-illustrated-step__form .ob-wizard__fine-tune,
 .ob-illustrated-step__form fieldset.q-likert {
   background: var(--surface);
+}
+
+@media (max-width: 767px) {
+  .ob-wizard__content.ob-wizard__content--illustrated {
+    padding-inline: 0;
+    padding-block: 0 calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 8px);
+  }
+
+  .ob-wizard__content.ob-wizard__content--illustrated .ob-wizard__step-pill--illustrated-hero {
+    display: none;
+  }
+
+  .ob-illustrated-step__mobile-cand-hero {
+    display: block;
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+
+  .ob-illustrated-step__mobile-cand-hero .cand-hero--with-art {
+    border-radius: 16px;
+    overflow: hidden;
+    margin-inline: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .ob-illustrated-step__mobile-cand-hero .cand-hero--onboarding-tall.cand-hero--with-art {
+    max-height: 16.25rem;
+    min-height: 11.5rem;
+  }
+
+  .ob-illustrated-step__mobile-cand-hero .cand-hero--onboarding-tall .cand-hero__copy h1 {
+    font-size: 1.12rem;
+    line-height: 1.14;
+  }
+
+  .ob-illustrated-step__mobile-cand-hero .ob-wizard__badge {
+    margin-block: 0.15rem 0.35rem;
+    font-size: var(--text-xs);
+    pointer-events: auto;
+  }
+
+  .ob-illustrated-step__hero-band {
+    display: none;
+  }
+
+  .ob-illustrated-step__body {
+    padding: 0 16px 6px;
+    margin-block-start: 0;
+  }
+
+  .ob-illustrated-step__form fieldset > legend.ob-wizard__section-title {
+    display: block;
+    float: none;
+    inline-size: 100%;
+    margin: 0 0 0.35rem;
+    padding: 0;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--brand);
+  }
+
+  .ob-illustrated-step__form .ob-wizard__section-hint {
+    margin: 0 0 0.65rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .ob-illustrated-step__mobile-cand-hero {
+    display: none !important;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -243,164 +314,6 @@
     min-inline-size: 1px;
     object-fit: contain;
     object-position: right bottom;
-  }
-}
-
-@media (max-width: 1023px) {
-  .ob-wizard__content.ob-wizard__content--illustrated {
-    padding-inline: 0;
-    padding-block: 0 calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 8px);
-  }
-
-  .ob-wizard__content.ob-wizard__content--illustrated .ob-wizard__step-pill {
-    display: inline-block;
-    margin: 0 12px 0.2rem;
-    padding: 0.15rem 0.55rem;
-    max-inline-size: calc(100% - 24px);
-    box-sizing: border-box;
-    font-size: var(--text-xs);
-  }
-
-  .ob-illustrated-step__hero-band {
-    position: relative;
-    display: block;
-    min-block-size: 176px;
-    max-block-size: 240px;
-    block-size: clamp(176px, 52vw, 240px);
-    overflow: hidden;
-    background: var(--bg);
-    border-block-end: 0;
-  }
-
-  .ob-illustrated-step__hero-bg {
-    display: block;
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    line-height: 0;
-  }
-
-  .ob-illustrated-step__hero-bg picture,
-  .ob-illustrated-step__hero-bg img {
-    display: block;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
-    object-position: left center;
-  }
-
-  .ob-illustrated-step__hero-band::before {
-    content: none;
-  }
-
-  .ob-illustrated-step__head {
-    position: absolute;
-    inset-block: 0;
-    inset-inline: 0 auto;
-    z-index: 3;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    inline-size: 55%;
-    max-inline-size: 55%;
-    min-block-size: 0;
-    max-block-size: 100%;
-    padding: 10px 8px 8px 12px;
-    overflow: hidden;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    pointer-events: none;
-  }
-
-  .ob-illustrated-step__head h1 {
-    font-size: clamp(1rem, 4.6vw, 1.28rem);
-    line-height: 1.15;
-    text-wrap: pretty;
-    max-inline-size: 100%;
-  }
-
-  .ob-illustrated-step__head .ob-wizard__lead {
-    margin: 0.28rem 0 0;
-    font-size: var(--text-xs);
-    line-height: 1.35;
-    max-inline-size: 100%;
-  }
-
-  .ob-illustrated-step__head .ob-wizard__badge {
-    margin-block-end: 0.25rem;
-    font-size: var(--text-xs);
-    pointer-events: auto;
-  }
-
-  .ob-illustrated-step__art {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background: transparent;
-  }
-
-  .ob-illustrated-step__art::after {
-    content: none;
-  }
-
-  .ob-illustrated-step__art-img-wrap {
-    position: absolute;
-    inset-block-end: 0;
-    inset-inline-end: 0;
-    block-size: 92%;
-    max-block-size: 95%;
-    inline-size: 45%;
-    max-inline-size: 45%;
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
-    padding: 0;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-
-  .ob-illustrated-step__art picture {
-    display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
-    block-size: 100%;
-    inline-size: 100%;
-  }
-
-  .ob-illustrated-step__art img,
-  .ob-illustrated-step__art-img-wrap img {
-    display: block;
-    block-size: 100%;
-    inline-size: auto;
-    max-inline-size: 100%;
-    min-inline-size: 1px;
-    object-fit: contain;
-    object-position: right bottom;
-    opacity: 1;
-  }
-
-  .ob-illustrated-step__body {
-    padding: 0 16px 6px;
-    margin-block-start: 0;
-  }
-
-  .ob-illustrated-step__form fieldset > legend.ob-wizard__section-title {
-    display: block;
-    float: none;
-    inline-size: 100%;
-    margin: 0 0 0.35rem;
-    padding: 0;
-    font-size: var(--text-sm);
-    font-weight: 700;
-    color: var(--brand);
-  }
-
-  .ob-illustrated-step__form .ob-wizard__section-hint {
-    margin: 0 0 0.65rem;
   }
 }
 

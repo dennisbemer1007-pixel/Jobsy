@@ -37,8 +37,9 @@ public static class LobsyCvModelFactory
         _ = latitude;
         _ = longitude;
 
-        var employers = (preferences.Employers ?? Array.Empty<CandidateEmployerHistoryDto>())
-            .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName))
+        var employerPrefs = EmployerFacingCandidateProfile.FilterPreferences(preferences);
+        var employers = (employerPrefs.Employers ?? Array.Empty<CandidateEmployerHistoryDto>())
+            .Where(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role))
             .Select(e => new LobsyCvEmployerEntry(
                 e.EmployerName.Trim(),
                 string.IsNullOrWhiteSpace(e.Role) ? null : e.Role.Trim(),
