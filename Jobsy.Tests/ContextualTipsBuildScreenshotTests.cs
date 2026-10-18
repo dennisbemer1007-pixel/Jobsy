@@ -8,7 +8,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r5";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r6";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -42,6 +42,7 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         var appId = IllustratedPagesApiStub.SampleApplicationId;
         var offerId = IllustratedPagesApiStub.SampleOfferApplicationId;
 
+        await CaptureReferenceSettingsAsync();
         await CaptureAsync("01-gesprek-gepland", $"/candidate/applications/{appId:D}/gesprek", "[data-testid='application-interview-page']");
         await CaptureAsync("02-aanbod-ontvangen", $"/candidate/applications/{offerId:D}/aanbod", "[data-testid='application-offer-page']");
         await CaptureAsync("03-paspoort-cv-tip", "/candidate/paspoort?tab=proof", "[data-testid='passport-education-tip']");
@@ -98,6 +99,28 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         Assert.True(File.Exists(file));
     }
 
+    private async Task CaptureReferenceSettingsAsync()
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            Locale = "nl-NL",
+            IsMobile = true,
+            HasTouch = true
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await page.GotoAsync(
+            $"{_web!.ServerAddress}/__test/sign-in?return=%2Fcandidate%2Fsettings",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync($"{_web.ServerAddress}/candidate/settings", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(600);
+        var file = Path.Combine(ArtifactsDir, "ref-instellingen-390.png");
+        await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+        Assert.True(File.Exists(file));
+    }
+
     private async Task CaptureAsync(string name, string path, string readySelector)
     {
         foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
@@ -125,6 +148,17 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
             var auditLines = await BuildHeroAuditAsync(page, _web.ServerAddress);
             var auditPath = Path.Combine(ArtifactsDir, $"{name}-{tag}-hero-audit.txt");
             await File.WriteAllTextAsync(auditPath, auditLines, Encoding.UTF8);
+
+            if (width == 390 && name is "01-gesprek-gepland" or "02-aanbod-ontvangen" or "05-alle-tips" or "06-tip-detail")
+            {
+                var heroZoom = Path.Combine(ArtifactsDir, $"{name}-390-hero-zoom.png");
+                var hero = page.Locator(".cand-hero").First;
+                var box = await hero.BoundingBoxAsync();
+                if (box is { Height: > 40, Width: > 40 })
+                {
+                    await hero.ScreenshotAsync(new() { Path = heroZoom });
+                }
+            }
         }
     }
 

@@ -135,13 +135,15 @@
   }
 
   .cand-hero--profession-band {
-    --cand-hero-mobile-size: auto 100%;
+    background-image: var(--cand-hero-art-mobile, var(--cand-hero-art, none)) !important;
+    background-size: cover !important;
+    background-position: var(--cand-hero-pos-mobile, 84% center) !important;
+  }
 
-    background-size: var(--cand-hero-mobile-size);
-    background-position: var(
-      --cand-hero-pos-mobile,
-      var(--ref-verif-hero-pos-mobile, right bottom)
-    );
+  .cand-hero--profession-band::after {
+    display: none !important;
+    content: none !important;
+    background: none !important;
   }
 
   .cand-hero::before {
@@ -159,9 +161,9 @@
     background: linear-gradient(
       90deg,
       var(--pearl) 0%,
-      var(--pearl) 52%,
-      color-mix(in srgb, var(--pearl) 88%, transparent) 58%,
-      transparent 72%
+      var(--pearl) 48%,
+      color-mix(in srgb, var(--pearl) 92%, transparent) 54%,
+      transparent 62%
     );
   }
 
@@ -232,5 +234,32 @@
   .cand-hero--compact-mobile,
   .cand-hero--art-only-mobile {
     --cand-hero-mobile-h: 11.5rem;
+  }
+
+  /* Override candidate-illustrated-app mobile collapse (cream-only) for profession-band */
+  .panel-page--cand-ill .cand-hero.cand-hero--profession-band,
+  .panel-page--cand-ill.kb-saved .cand-hero.cand-hero--profession-band {
+    display: block !important;
+    flex-direction: unset !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    margin-inline: calc(50% - 50vw) !important;
+    margin-bottom: 0.75rem;
+    height: var(--cand-hero-mobile-h) !important;
+    max-height: 16.25rem !important;
+    min-height: 0 !important;
+    border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
+  }
+
+  .panel-page--cand-ill .cand-hero.cand-hero--profession-band::before {
+    display: block !important;
+  }
+
+  .panel-page--cand-ill .cand-hero.cand-hero--profession-band .cand-hero__copy {
+    position: absolute !important;
+    background: transparent !important;
+    max-width: min(55%, 14.5rem) !important;
+    width: min(55%, 14.5rem) !important;
+    padding: 0.7rem 0.85rem 0.65rem !important;
   }
 }
