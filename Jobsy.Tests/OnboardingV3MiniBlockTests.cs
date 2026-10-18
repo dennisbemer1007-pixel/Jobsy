@@ -112,6 +112,15 @@ public sealed class OnboardingV3MiniBlockTests : BunitContext
     }
 
     [Fact]
+    public void Wizard_back_navigation_opens_previous_block_on_last_question()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
+        Assert.Contains("_miniArrivedViaBack && _miniQuestions.Count > 0", wizard, StringComparison.Ordinal);
+        Assert.Contains("_currentQuestion = _miniQuestions.Count - 1", wizard, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Wizard_lists_all_mini_items_not_only_unlocked()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));

@@ -22,6 +22,52 @@ public sealed class OnboardingBlockResumePlaywrightTests
     private const int QuickScanVersion = AssessmentTestVersions.V3;
 
     [Fact]
+    public async Task Capture_terug_shows_selected_answer_when_requested()
+    {
+        if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCK_RESUME") ?? "").Trim() != "1")
+        {
+            return;
+        }
+
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        if (!await SmokeReachability.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(OutputDir);
+        await PrepareFreshMiniBlockAsync(step: 8);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        await using var ctx = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 1440, Height = 900 } });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, Email, Password));
+        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 120_000 });
+        await page.Locator(".test-flow__counter").First.WaitForAsync(new() { Timeout = 90_000 });
+        await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
+
+        await page.Locator(".test-likert__opt").Nth(3).ClickAsync();
+        await page.WaitForTimeoutAsync(500);
+        await page.Locator("button.test-flow__back").ClickAsync();
+        await page.WaitForTimeoutAsync(300);
+
+        var selected = page.Locator(".test-likert__opt.is-on input[type=radio]");
+        await selected.WaitForAsync(new() { Timeout = 15_000 });
+        Assert.Equal("4", await selected.GetAttributeAsync("value"));
+        await Assertions.Expect(page.Locator("button.test-flow__next")).ToBeEnabledAsync();
+
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutputDir, "terug-selected-answer-1440.png"),
+            FullPage = false
+        });
+    }
+
+    [Fact]
     public async Task Capture_sfeer_and_waarden_blocks_at_vraag_1_when_requested()
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCK_RESUME") ?? "").Trim() != "1")
