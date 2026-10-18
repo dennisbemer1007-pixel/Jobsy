@@ -98,12 +98,8 @@ else
             else
             {
                 <NdMHero Title="@_heroTitle" Lead="@_heroLead" />
-                @{
-                    var timelineStep = _thread.Outcome == AfterMatchOutcomeKind.NotNow ? 3 : TimelineStep(_thread);
-                    var timelineHint = _thread.Outcome == AfterMatchOutcomeKind.NotNow ? "22 okt" : InterviewHint(_thread);
-                }
-                <div class="ndm-mob-timeline show-m">
-                    <NdMTimeline CurrentStep="@timelineStep" YesDate="@YesDateLabel" InterviewHint="@timelineHint" />
+                <div class="ndm-mob-timeline card">
+                    <NdMTimeline CurrentStep="@CurrentTimelineStep()" YesDate="@YesDateLabel" InterviewHint="@CurrentTimelineHint()" />
                 </div>
                 <div class="g2">
                     @if (_panel != "messages" && _thread.Outcome != AfterMatchOutcomeKind.NotNow)
@@ -324,6 +320,12 @@ else
 
         _pageTitle = _heroTitle;
     }
+
+    private int CurrentTimelineStep() =>
+        _thread is null || _thread.Outcome == AfterMatchOutcomeKind.NotNow ? 3 : TimelineStep(_thread);
+
+    private string? CurrentTimelineHint() =>
+        _thread is null || _thread.Outcome == AfterMatchOutcomeKind.NotNow ? "22 okt" : InterviewHint(_thread);
 
     private static int TimelineStep(AfterMatchThreadDto t) => t.InterviewStatus switch
     {

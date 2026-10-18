@@ -64,28 +64,45 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        var widths = new[] { (390, "mobiel"), (360, "mobiel-360") };
+        var mobileWidths = new[] { (390, "mobiel"), (360, "mobiel-360") };
         var expectedCaptures = Routes.Length + Routes.Count(r => r.Role == "kandidaat");
 
-        foreach (var route in Routes)
+        await using (var candidateCtx = await browser.NewContextAsync(KbE2e.ContextFor(390, 844)))
         {
-            if (route.Role == "werkgever")
-            {
-                await CaptureRouteAsync(browser, baseUrl, route, 1440, 900, "desktop", compareDir);
-                continue;
-            }
+            await PlaywrightCookieConsent.AcceptAsync(candidateCtx);
+            var candidatePage = await candidateCtx.NewPageAsync();
+            candidatePage.SetDefaultTimeout(60_000);
+            await PlaywrightCookieConsent.AcceptOnPageAsync(candidatePage);
+            Assert.True(await KbE2e.TryLoginAsync(candidatePage, baseUrl, CandidateEmail, Password));
 
-            foreach (var (width, tag) in widths)
+            foreach (var route in Routes.Where(r => r.Role == "kandidaat"))
             {
-                await CaptureRouteAsync(browser, baseUrl, route, width, 844, tag, compareDir);
+                foreach (var (width, tag) in mobileWidths)
+                {
+                    await CaptureOnPageAsync(candidatePage, baseUrl, route, width, 844, tag, compareDir);
+                }
+            }
+        }
+
+        await using (var employerCtx = await browser.NewContextAsync(KbE2e.ContextFor(1440, 900)))
+        {
+            await PlaywrightCookieConsent.AcceptAsync(employerCtx);
+            var employerPage = await employerCtx.NewPageAsync();
+            employerPage.SetDefaultTimeout(60_000);
+            await PlaywrightCookieConsent.AcceptOnPageAsync(employerPage);
+            Assert.True(await KbE2e.TryLoginAsync(employerPage, baseUrl, EmployerEmail, Password));
+
+            foreach (var route in Routes.Where(r => r.Role == "werkgever"))
+            {
+                await CaptureOnPageAsync(employerPage, baseUrl, route, 1440, 900, "desktop", compareDir);
             }
         }
 
         Assert.Equal(expectedCaptures, Directory.GetFiles(OutDir, "*-capture-*.png").Length);
     }
 
-    private static async Task CaptureRouteAsync(
-        IBrowser browser,
+    private static async Task CaptureOnPageAsync(
+        IPage page,
         string baseUrl,
         (string Id, string Path, string Role) route,
         int width,
@@ -93,14 +110,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         string tag,
         string compareDir)
     {
-        var email = route.Role == "werkgever" ? EmployerEmail : CandidateEmail;
-
-        await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
-        await PlaywrightCookieConsent.AcceptAsync(context);
-        var page = await context.NewPageAsync();
-        page.SetDefaultTimeout(60_000);
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, Password));
+        await page.SetViewportSizeAsync(width, height);
 
         await page.GotoAsync($"{baseUrl.TrimEnd('/')}{route.Path}", new()
         {
