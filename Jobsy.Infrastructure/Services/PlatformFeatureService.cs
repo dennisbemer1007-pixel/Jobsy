@@ -229,6 +229,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
+        if (update.SensitiveExperienceEnabled is bool sensitiveExperienceEnabled)
+        {
+            row.SensitiveExperienceEnabled = sensitiveExperienceEnabled;
+        }
+
         if (update.TrainingPartnersEnabled is bool trainingPartnersEnabled)
         {
             row.TrainingPartnersEnabled = trainingPartnersEnabled;
@@ -351,6 +356,16 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         }
 
         return row?.StudentPassportEnabled ?? false;
+    }
+
+    private bool ResolveSensitiveExperienceEnabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:SensitiveExperienceEnabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.SensitiveExperienceEnabled ?? false;
     }
 
     private bool ResolveTrainingPartnersEnabled(PlatformFeatureSettings? row)
@@ -485,6 +500,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
+            ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),

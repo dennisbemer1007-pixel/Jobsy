@@ -53,7 +53,7 @@
   },
   "css/features/carriere.css": {
     "sha256": "c23b39281dc74f87a13714960bc33cb89fe4a285101ef4b1d74581c2a63b18a4",
-    "v": "20261011-01"
+    "v": "20261018-03"
   },
   "css/features/choice-tiles.css": {
     "sha256": "2e74c596d55ddfa6f8fad147d36f25409e36f3dd2005b1d5a1d52437b5d0d1bd",
@@ -78,6 +78,10 @@
   "css/features/future-jobs.css": {
     "sha256": "a4bb8e12f1e3bc07fc2d3cbe8a7686e26968aff22b1efe16e7c0c30f5defd863",
     "v": "20261006-02"
+  },
+  "css/features/gevoelig-werkervaring.css": {
+    "sha256": "27db073965f754d9f2d81712ec3aaede06c59e7109f731dd48821759d1dab889",
+    "v": "20261018-16"
   },
   "css/features/gratis-dna.css": {
     "sha256": "aa943c1f29e2cf27b9da96b9334c61672321f07227c3125bd1ff5eef60e7023f",

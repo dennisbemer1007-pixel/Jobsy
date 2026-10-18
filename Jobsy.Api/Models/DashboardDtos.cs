@@ -223,7 +223,9 @@ public record CandidateReferenceDto(
     string EmployerName,
     string ContactName,
     string Email,
-    string Phone);
+    string Phone,
+    string? ReferenceType = null,
+    string? RelationshipContext = null);
 
 public record UpdateDateOfBirthRequest(DateOnly DateOfBirth);
 
