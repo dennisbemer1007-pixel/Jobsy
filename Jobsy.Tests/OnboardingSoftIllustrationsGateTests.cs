@@ -118,7 +118,7 @@ public sealed class OnboardingSoftIllustrationsGateTests
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-figure-crop.py")));
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-mobile-r13.py")));
         var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
-        Assert.Contains("20261018-r17", assets, StringComparison.Ordinal);
+        Assert.Contains("20261018-r18", assets, StringComparison.Ordinal);
         Assert.Contains("MobileHeroWebp", assets, StringComparison.Ordinal);
         Assert.Contains("mobile-hero", assets, StringComparison.Ordinal);
     }
