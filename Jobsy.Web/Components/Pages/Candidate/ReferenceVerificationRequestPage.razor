@@ -46,7 +46,7 @@ else
     <div class="ref-verif-request-layout @(_cardVisible ? "ref-verif-request-layout--ready" : null)">
         <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifRequest"
                                               CssClass="ref-verif-hero--request"
-                                              ObjectPosition="center 72%">
+                                              ObjectPosition="76% 34%">
             <h1 class="ref-verif-hero__title">@Culture["RefVerif.Request.Title"]</h1>
             <p class="ref-verif-hero__lead">@Culture["RefVerif.Request.Lead"]</p>
         </ReferenceVerificationIllustratedHero>
@@ -64,6 +64,13 @@ else
                                 <p class="ref-verif-request__confirm-link">
                                     <a href="/candidate/paspoort?tab=references">@Culture["RefVerif.Request.Back"]</a>
                                 </p>
+                                @if (_alternateAsk is { } alternateAsk)
+                                {
+                                    <p class="ref-verif-request__confirm-more muted">
+                                        @Culture["RefVerif.Request.ConfirmAskAnother"]
+                                        <a href="@alternateAsk.Href">@Culture.Format("RefVerif.Request.ConfirmAskAnotherLink", alternateAsk.EmployerName)</a>
+                                    </p>
+                                }
                             </div>
                         }
                         else
@@ -141,6 +148,7 @@ else
     private string _email = "";
     private string _relation = RelationCodes[0];
     private bool _consent;
+    private (string Href, string EmployerName)? _alternateAsk;
 
     protected override async Task OnInitializedAsync()
     {
@@ -180,7 +188,27 @@ else
         if (_entry is not null && _eligible)
         {
             _cardVisible = true;
+            _alternateAsk = ResolveAlternateAskEntry(profile?.Preferences?.Employers);
         }
+    }
+
+    private (string Href, string EmployerName)? ResolveAlternateAskEntry(IReadOnlyList<CandidateEmployerHistory>? employers)
+    {
+        if (employers is null || employers.Count < 2)
+        {
+            return null;
+        }
+
+        foreach (var emp in employers)
+        {
+            var id = emp.EntryId ?? WorkExperienceEntryIds.ResolveEntryId(MapEmployer(emp));
+            if (id != EntryId && !string.IsNullOrWhiteSpace(emp.EmployerName))
+            {
+                return ($"/candidate/paspoort/referentie/vraag/{id:D}", emp.EmployerName.Trim());
+            }
+        }
+
+        return null;
     }
 
     protected override Task OnAfterRenderAsync(bool firstRender)

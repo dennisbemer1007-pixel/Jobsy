@@ -17,6 +17,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private const string EnvRunR6 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R6";
     private const string EnvRunR7 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R7";
     private const string EnvRunR8 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R8";
+    private const string EnvRunR9 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R9";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -38,6 +39,8 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static string OutputDirR8 => "/opt/cursor/artifacts/references-r8";
 
+    private static string OutputDirR9 => "/opt/cursor/artifacts/references-r9";
+
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
 
@@ -55,6 +58,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static bool ShouldRunR8 =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunR8), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunR9 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunR9), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -491,14 +497,89 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         Assert.InRange(pngs.Length, 1, 10);
     }
 
-    private static void DeleteLegacyReferenceArtifactDirs()
+    [Fact]
+    public async Task Capture_reference_verification_screenshots_r9()
     {
-        foreach (var dir in new[]
-                 {
-                     "/opt/cursor/artifacts/references-r7",
-                     "/opt/cursor/artifacts/references",
-                     OutputDir
-                 })
+        if (!ShouldRunR9)
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            Assert.Fail("JOBSY_E2E_BASE_URL unreachable — start API :5200 and Web :5201 with seeded DB.");
+        }
+
+        DeleteLegacyReferenceArtifactDirs(includeR8: true);
+
+        Directory.CreateDirectory(OutputDirR9);
+        foreach (var stale in Directory.GetFiles(OutputDirR9))
+        {
+            File.Delete(stale);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        foreach (var (width, height, tag) in Viewports)
+        {
+            await using var candidateContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(candidateContext);
+            var candidatePage = await candidateContext.NewPageAsync();
+            await LoginAsync(candidatePage, baseUrl, Email);
+            await CaptureRequestFormAndConfirmAsync(candidatePage, baseUrl, tag, OutputDirR9, useRealisticDemoName: true);
+
+            await candidatePage.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await candidatePage.WaitForSelectorAsync("[data-testid='passport-employer-preview']", new() { Timeout = 15_000 });
+            await candidatePage.Locator("[data-testid='passport-employer-preview']").ScrollIntoViewIfNeededAsync();
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
+                candidatePage,
+                Path.Combine(OutputDirR9, $"08-paspoort-endorsed-{tag}.png"));
+            await candidateContext.CloseAsync();
+
+            await using var publicContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(publicContext);
+            var publicPage = await publicContext.NewPageAsync();
+            var open = ReferenceVerificationDemoIds.OpenReferentToken;
+            await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
+            await publicPage.WaitForSelectorAsync(".pub-header", new() { Timeout = 10_000 });
+            await Task.Delay(350);
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
+                publicPage,
+                Path.Combine(OutputDirR9, $"04-referent-public-{tag}.png"));
+            await publicContext.CloseAsync();
+        }
+
+        var pngs = Directory.GetFiles(OutputDirR9, "*.png");
+        Assert.Equal(8, pngs.Length);
+        Assert.InRange(pngs.Length, 1, 10);
+    }
+
+    private static void DeleteLegacyReferenceArtifactDirs(bool includeR8 = false)
+    {
+        var dirs = new List<string>
+        {
+            "/opt/cursor/artifacts/references-r7",
+            "/opt/cursor/artifacts/references",
+            OutputDir
+        };
+        if (includeR8)
+        {
+            dirs.Add(OutputDirR8);
+        }
+
+        foreach (var dir in dirs)
         {
             if (!Directory.Exists(dir))
             {

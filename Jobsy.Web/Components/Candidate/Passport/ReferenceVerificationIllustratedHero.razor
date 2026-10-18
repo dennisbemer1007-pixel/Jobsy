@@ -1,7 +1,8 @@
 @namespace Jobsy.Web.Components.Candidate.Passport
 
 <section class="ref-verif-hero @CssClass" style="@Style" aria-hidden="@(AriaHidden ? "true" : null)">
-    <div class="ref-verif-hero__scrim" aria-hidden="true"></div>
+    <div class="ref-verif-hero__art" aria-hidden="true"></div>
+    <div class="ref-verif-hero__cream" aria-hidden="true"></div>
     <div class="ref-verif-hero__inner">
         @ChildContent
     </div>
@@ -12,7 +13,7 @@
 
     [Parameter] public string? CssClass { get; set; }
 
-    [Parameter] public string ObjectPosition { get; set; } = "center 30%";
+    [Parameter] public string ObjectPosition { get; set; } = "72% 38%";
 
     [Parameter] public bool AriaHidden { get; set; }
 

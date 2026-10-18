@@ -138,6 +138,12 @@ internal static class UiStringsReferenceVerification
         Add("RefVerif.Request.NextStep4",
             "De opmerking van je referent zie alleen jij.",
             "Only you can see your reference’s comment.");
+        Add("RefVerif.Request.ConfirmAskAnother",
+            "Wil je nog iemand vragen?",
+            "Want to ask someone else?");
+        Add("RefVerif.Request.ConfirmAskAnotherLink",
+            "Vraag een referent voor {0}",
+            "Ask a reference for {0}");
         Add("RefVerif.Request.NotFound",
             "Deze werkervaring is niet gevonden.", "This work experience was not found.");
         Add("RefVerif.Request.NotEligible",
