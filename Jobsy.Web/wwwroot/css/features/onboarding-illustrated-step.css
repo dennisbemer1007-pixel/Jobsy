@@ -351,9 +351,10 @@
     position: absolute;
     inset-block-end: 0;
     inset-inline-end: 0;
-    block-size: 85%;
-    max-block-size: 90%;
-    inline-size: min(62%, 240px);
+    block-size: 92%;
+    max-block-size: 95%;
+    inline-size: 45%;
+    max-inline-size: 45%;
     display: flex;
     justify-content: flex-end;
     align-items: flex-end;

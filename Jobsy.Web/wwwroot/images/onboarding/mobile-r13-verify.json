@@ -1,0 +1,66 @@
+{
+  "descriptions": {
+    "kennismaken": "Twee personen (vrouw en man) geven elkaar een hand — volledig zichtbaar, rechtsonder.",
+    "beschikbaarheid": "Groep van vier personen (o.a. met baby) bij bureau — volledig zichtbaar, rechtsonder.",
+    "vervoer": "Vrouw bij halte en bestuurder/chauffeur met klembord naast bus/van — volledig zichtbaar, rechtsonder.",
+    "werkervaring": "Diverse werkende personen; man in pak met koffer prominent rechts — volledig zichtbaar.",
+    "opleiding": "Groep (o.a. verpleger, afgestudeerde, vakman) met boeken — volledig zichtbaar, rechtsonder.",
+    "droombaan": "Man in overalls, peinzend, met droompad — volledig zichtbaar, rechtsonder."
+  },
+  "steps": {
+    "kennismaken": {
+      "ghost_left_ratio": 0.0,
+      "figure_strong_ratio": 0.26909425451092117,
+      "composite_right_ratio": 0.3148029439696106,
+      "ghost_ok": true,
+      "figure_ok": true,
+      "composite_ok": true,
+      "person": "Twee personen (vrouw en man) geven elkaar een hand — volledig zichtbaar, rechtsonder."
+    },
+    "beschikbaarheid": {
+      "ghost_left_ratio": 0.0,
+      "figure_strong_ratio": 0.23647910731244065,
+      "composite_right_ratio": 0.28671058879392214,
+      "ghost_ok": true,
+      "figure_ok": true,
+      "composite_ok": true,
+      "person": "Groep van vier personen (o.a. met baby) bij bureau — volledig zichtbaar, rechtsonder."
+    },
+    "vervoer": {
+      "ghost_left_ratio": 0.0,
+      "figure_strong_ratio": 0.34379154795821465,
+      "composite_right_ratio": 0.35903964862298193,
+      "ghost_ok": true,
+      "figure_ok": true,
+      "composite_ok": true,
+      "person": "Vrouw bij halte en bestuurder/chauffeur met klembord naast bus/van — volledig zichtbaar, rechtsonder."
+    },
+    "werkervaring": {
+      "ghost_left_ratio": 0.0,
+      "figure_strong_ratio": 0.24897317188983856,
+      "composite_right_ratio": 0.28167141500474835,
+      "ghost_ok": true,
+      "figure_ok": true,
+      "composite_ok": true,
+      "person": "Diverse werkende personen; man in pak met koffer prominent rechts — volledig zichtbaar."
+    },
+    "opleiding": {
+      "ghost_left_ratio": 0.0,
+      "figure_strong_ratio": 0.2897732668566002,
+      "composite_right_ratio": 0.33221153846153845,
+      "ghost_ok": true,
+      "figure_ok": true,
+      "composite_ok": true,
+      "person": "Groep (o.a. verpleger, afgestudeerde, vakman) met boeken — volledig zichtbaar, rechtsonder."
+    },
+    "droombaan": {
+      "ghost_left_ratio": 0.0,
+      "figure_strong_ratio": 0.2535790598290598,
+      "composite_right_ratio": 0.30732431149097816,
+      "ghost_ok": true,
+      "figure_ok": true,
+      "composite_ok": true,
+      "person": "Man in overalls, peinzend, met droompad — volledig zichtbaar, rechtsonder."
+    }
+  }
+}
