@@ -204,13 +204,21 @@
   }
 
   .ob-illustrated-step__art {
-    inset: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+
+  .ob-illustrated-step__art::after {
+    content: none;
   }
 
   .ob-illustrated-step__art-img-wrap {
     position: absolute;
     inset: 0;
-    display: block;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
     padding: 0;
     -webkit-mask-image: none;
     mask-image: none;
@@ -219,36 +227,18 @@
   .ob-illustrated-step__art-img-wrap picture {
     display: block;
     block-size: 100%;
-    inline-size: 100%;
+    inline-size: auto;
+    max-inline-size: 100%;
   }
 
   .ob-illustrated-step__art-img-wrap img {
     display: block;
     block-size: 100%;
-    inline-size: 100%;
-    max-inline-size: none;
-    min-inline-size: 0;
-    object-fit: cover;
-    object-position: 100% 38%;
-  }
-
-  /* Cream overlay — figures stay opaque; peach art blends into page bg */
-  .ob-illustrated-step__art::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: linear-gradient(
-      to right,
-      var(--bg) 0,
-      var(--bg) 160px,
-      color-mix(in srgb, var(--bg) 97%, transparent) 240px,
-      color-mix(in srgb, var(--bg) 88%, transparent) 320px,
-      color-mix(in srgb, var(--bg) 62%, transparent) 400px,
-      color-mix(in srgb, var(--bg) 28%, transparent) 480px,
-      transparent min(560px, 62%)
-    );
+    inline-size: auto;
+    max-inline-size: 100%;
+    min-inline-size: 1px;
+    object-fit: contain;
+    object-position: right bottom;
   }
 }
 

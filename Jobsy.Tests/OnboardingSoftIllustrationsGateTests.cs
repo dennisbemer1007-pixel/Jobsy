@@ -61,6 +61,14 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
+    public void Preprocess_script_exists_for_hero_seam_assets()
+    {
+        Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-hero-seam.py")));
+        var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
+        Assert.Contains("20261018-r9", assets, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Transport_step_shows_vervoer_label_when_illustrated()
     {
         var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Candidate/Onboarding/TransportStep.razor"));
@@ -73,8 +81,12 @@ public sealed class OnboardingSoftIllustrationsGateTests
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
         Assert.Contains("object-fit: contain", css, StringComparison.Ordinal);
-        Assert.Contains("ob-illustrated-step__art::after", css, StringComparison.Ordinal);
-        Assert.Contains("object-fit: cover", css, StringComparison.Ordinal);
+        Assert.Contains("object-position: right bottom", css, StringComparison.Ordinal);
+        Assert.True(
+            System.Text.RegularExpressions.Regex.IsMatch(
+                css,
+                @"\.ob-illustrated-step__art-img-wrap img\s*\{[^}]*object-fit:\s*contain",
+                System.Text.RegularExpressions.RegexOptions.Singleline));
         Assert.DoesNotContain("mask-image: linear-gradient", css, StringComparison.Ordinal);
         Assert.Contains("block-size: 120px", css, StringComparison.Ordinal);
     }
