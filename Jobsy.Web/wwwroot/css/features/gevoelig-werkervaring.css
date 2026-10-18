@@ -92,42 +92,6 @@
   margin-top: 0.5rem;
 }
 
-.gev-hero__art {
-  margin: 0;
-  position: absolute;
-  z-index: 0;
-  inset: 0 0 0 34%;
-  pointer-events: none;
-  overflow: hidden;
-  background: var(--gev-cream);
-}
-
-.gev-hero__art::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto auto 0;
-  z-index: 2;
-  width: 100%;
-  height: 36px;
-  pointer-events: none;
-  background: linear-gradient(to bottom, var(--gev-cream) 0%, rgba(251, 245, 236, 0) 100%);
-}
-
-.gev-hero__art::after {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  z-index: 1;
-  width: min(42%, 240px);
-  pointer-events: none;
-  background: linear-gradient(
-    90deg,
-    var(--gev-cream) 0%,
-    rgba(251, 245, 236, 0.96) 38%,
-    rgba(251, 245, 236, 0) 100%
-  );
-}
-
 .gev-hero__art--werk {
   background-image: url("/images/candidate/werk-full.jpg");
 }
@@ -136,18 +100,53 @@
   background-image: url("/images/candidate/ref-full.jpg");
 }
 
-.gev-hero__art {
-  background-repeat: no-repeat;
-  background-position: right bottom;
-  background-size: auto 100%;
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0, #000 160px),
-    linear-gradient(to top, transparent 0, #000 32px);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent 0, #000 160px),
-    linear-gradient(to top, transparent 0, #000 32px);
-  mask-composite: intersect;
+@media (min-width: 901px) {
+  .gev-hero__art {
+    margin: 0;
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 0 34%;
+    pointer-events: none;
+    overflow: hidden;
+    background-color: var(--gev-cream);
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    background-size: auto 100%;
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0, #000 160px),
+      linear-gradient(to top, transparent 0, #000 32px);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to right, transparent 0, #000 160px),
+      linear-gradient(to top, transparent 0, #000 32px);
+    mask-composite: intersect;
+  }
+
+  .gev-hero__art::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto auto 0;
+    z-index: 2;
+    width: 100%;
+    height: 36px;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--gev-cream) 0%, rgba(251, 245, 236, 0) 100%);
+  }
+
+  .gev-hero__art::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: 1;
+    width: min(42%, 240px);
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--gev-cream) 0%,
+      rgba(251, 245, 236, 0.96) 38%,
+      rgba(251, 245, 236, 0) 100%
+    );
+  }
 }
 
 .gev-wrap {
@@ -552,40 +551,54 @@ html.gev-capture [data-lobsy-coach] {
 
 @media (max-width: 900px) {
   .gev-hero {
-    min-height: 11.5rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
     max-height: none;
-  }
-
-  .gev-hero__art {
-    inset: 0;
-  }
-
-  .gev-hero__art::after {
-    width: 100%;
-    inset: 0;
-    background:
-      linear-gradient(90deg, var(--gev-cream) 0%, rgba(251, 245, 236, 0) 18%, rgba(251, 245, 236, 0) 82%, var(--gev-cream) 100%),
-      linear-gradient(to bottom, var(--gev-cream) 0%, rgba(251, 245, 236, 0.55) 42%, rgba(251, 245, 236, 0) 68%);
-  }
-
-  .gev-hero__art::before {
-    height: 48%;
-    background: linear-gradient(to bottom, var(--gev-cream) 0%, rgba(251, 245, 236, 0.72) 55%, rgba(251, 245, 236, 0) 100%);
-  }
-
-  .gev-hero__art {
-    background-position: center bottom;
-    background-size: auto min(100%, 11rem);
-    -webkit-mask-image:
-      linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%),
-      linear-gradient(to top, transparent 0, #000 64px);
-    mask-image:
-      linear-gradient(to right, transparent 0, #000 32px, #000 calc(100% - 32px), transparent 100%),
-      linear-gradient(to top, transparent 0, #000 64px);
+    overflow: hidden;
   }
 
   .gev-hero .gev-wrap--hero {
-    min-height: 11.5rem;
+    position: relative;
+    z-index: 2;
+    flex: 0 0 auto;
+    min-height: 0;
+    max-height: none;
+    align-items: stretch;
+    padding-bottom: 0.65rem;
+    background: var(--gev-cream);
+  }
+
+  .gev-hero__art {
+    position: relative;
+    z-index: 1;
+    flex: 0 0 10rem;
+    width: 100%;
+    height: 10rem;
+    margin: 0;
+    pointer-events: none;
+    overflow: hidden;
+    background-color: var(--gev-cream);
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: auto 10rem;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .gev-hero__art::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 2;
+    height: 2rem;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--gev-cream) 0%, rgba(251, 245, 236, 0) 100%);
+  }
+
+  .gev-hero__art::after {
+    content: none;
+    display: none;
   }
 
   .gev-layout,
