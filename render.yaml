@@ -445,6 +445,8 @@ projects:
               # Combo homepage (On) at / for acceptatie preview; production has no override.
               - key: Landing__ForceVariant
                 value: on
+              - key: DreamJobIllustrationEnabled
+                value: "true"
               - key: TestAccounts__Enabled
                 sync: false
               # Same provider and key presence as the API, so the privacy page drops Resend when Lettermint sends.

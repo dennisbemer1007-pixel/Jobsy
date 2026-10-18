@@ -18,6 +18,9 @@
 @inject UserFacingError UserFacing
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.KandidaatBanen
+@using Jobsy.Core.Options
+@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
@@ -25,6 +28,10 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
+    @if (DreamIllustrationEnabled)
+    {
+        <link rel="stylesheet" href="css/features/onboarding-wizard-dream-illustration.css?v=20261018-01" />
+    }
 </HeadContent>
 
 <div class="ob-wizard ob-wizard--richting-a">
@@ -209,7 +216,7 @@
                     </div>
                 </header>
 
-                <section class="ob-wizard__content">
+                <section class="ob-wizard__content @(_step == 6 && DreamIllustrationEnabled ? "ob-wizard__content--dream-sfeer" : null)">
                     @if (!string.IsNullOrWhiteSpace(_error))
                     {
                         <p class="state-message error">@_error</p>
@@ -278,6 +285,7 @@
                                           Young="@IsYoungCandidate"
                                           ChooseDream="ChooseDream"
                                           ChooseTitle="ChooseDreamTitle"
+                                          ChooseInspiration="ChooseDreamInspiration"
                                           ChooseOwnDream="ChooseOwnDream"
                                           DreamKeyDown="DreamKeyDown" />
                             break;
@@ -1129,12 +1137,24 @@
 
     private void ChooseDream(DreamJob job) => ChooseDreamTitle(job.TitleNl);
 
+    private bool DreamIllustrationEnabled =>
+        DreamJobIllustrationGate.IsEnabled(Configuration[DreamJobIllustrationOptions.EnabledKey]);
+
     private void ChooseDreamTitle(string title)
     {
         var dream = (title ?? "").Trim();
         if (dream.Length == 0) return;
         Draft.Dream = dream[..Math.Min(128, dream.Length)];
         Draft.DreamSearch = "";
+        ScheduleDreamSave();
+    }
+
+    private void ChooseDreamInspiration(string title)
+    {
+        var dream = (title ?? "").Trim();
+        if (dream.Length == 0) return;
+        Draft.Dream = dream[..Math.Min(128, dream.Length)];
+        Draft.DreamSearch = Draft.Dream;
         ScheduleDreamSave();
     }
 

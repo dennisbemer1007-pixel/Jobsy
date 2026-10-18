@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Careers
+@using Jobsy.Core.Options
 @using Jobsy.Core.Rules
 @using Microsoft.Extensions.Configuration
 @inject IConfiguration Config
@@ -7,99 +8,107 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-@if (ShowHeading)
+@if (IllustrationEnabled)
 {
-    @if (AsSubsection)
-    {
-        <h2 class="ob-wizard__subhead">@(TitleKey is null ? Culture["Onboarding.Step6.Title"] : Culture[TitleKey])</h2>
-    }
-    else
-    {
-        <h1 tabindex="-1">@(TitleKey is null ? Culture["Onboarding.Step6.Title"] : Culture[TitleKey])</h1>
-    }
-    @if (ShowLead)
-    {
-        <p class="ob-wizard__lead">@Culture["Onboarding.Step6.Lead"]</p>
-    }
-}
-<div class="ob-wizard__card">
-@if (Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction())
-{
-    <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
-}
-<div class="ob-wizard__dream-search">
-    <input role="combobox"
-           aria-expanded="@(Draft.DreamSearch.Length > 0)"
-           aria-autocomplete="list"
-           placeholder="@Culture["Onboarding.DreamSearch"]"
-           @bind="Draft.DreamSearch"
-           @bind:event="oninput"
-           @onkeydown="DreamKeyDown" />
-    @if (Draft.DreamSearch.Length > 0)
-    {
-        <div role="listbox">
-            @if (Young)
-            {
-                @foreach (var dreamJob in DreamJobCatalog.Search(Draft.DreamSearch))
-                {
-                    <button type="button" role="option" @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
-                        @((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))
-                        <span>@Culture[$"DreamJob.{dreamJob.Key}"]</span>
-                    </button>
-                }
-            }
-            else
-            {
-                @foreach (var hit in OccupationCatalog.Shared.Search(Draft.DreamSearch, 8, Draft.Education))
-                {
-                    <button type="button" role="option" @onclick="() => ChooseTitle.InvokeAsync(hit.Title)">
-                        <span>@hit.Title</span>
-                        @if (!string.IsNullOrWhiteSpace(hit.Description))
-                        {
-                            <small>@hit.Description</small>
-                        }
-                        @if (hit.NoScore)
-                        {
-                            <small>@Culture["Occ.NoScore"]. @Culture["Occ.NoScoreWhy"]</small>
-                        }
-                        else if (hit.LevelNote)
-                        {
-                            <small>@Culture["Occ.ExtraTraining"]</small>
-                        }
-                    </button>
-                }
-            }
-            <button type="button" @onclick="ChooseOwnDream">
-                ＋ @Culture.Format("Onboarding.DreamOwn", Draft.DreamSearch.Trim())
-            </button>
+    <section class="ob-dream-sfeer" data-testid="dream-job-step-illustrated">
+        <div class="ob-dream-sfeer__art" aria-hidden="true">
+            <picture>
+                <source type="image/webp" srcset="/images/onboarding/droombaan-sfeer-a.webp?v=20261018-02" />
+                <img src="/images/onboarding/droombaan-sfeer-a.jpg?v=20261018-02"
+                     alt=""
+                     width="1280"
+                     height="720"
+                     loading="lazy"
+                     decoding="async"
+                     tabindex="-1" />
+            </picture>
         </div>
-    }
-</div>
-@if (ShowChosenChip)
-{
-    <p class="journey-chip is-selected" role="status">@Draft.Dream</p>
+        <div class="ob-dream-sfeer__panel">
+            @RenderHeading
+            @if (Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction())
+            {
+                <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
+            }
+            <div class="ob-dream-sfeer__search">
+                <input role="combobox"
+                       aria-expanded="@(Draft.DreamSearch.Length > 0)"
+                       aria-autocomplete="list"
+                       aria-label="@Culture["Onboarding.DreamSearch"]"
+                       placeholder="@Culture["Onboarding.DreamSearch"]"
+                       data-testid="dream-job-search"
+                       value="@Draft.DreamSearch"
+                       @oninput="OnIllustratedSearchInput"
+                       @onkeydown="DreamKeyDown" />
+                @RenderSearchSuggestions
+            </div>
+            <div class="ob-dream-sfeer__chips" data-testid="dream-inspiration-chips">
+                <p class="ob-dream-sfeer__chips-label">@Culture["Onboarding.Step6.InspirationLabel"]</p>
+                @foreach (var chip in DreamJobIllustrationChips.Default)
+                {
+                    var selected = string.Equals(Draft.Dream, chip.TitleNl, StringComparison.OrdinalIgnoreCase);
+                    <button type="button"
+                            class="ob-dream-sfeer__chip @(selected ? "is-selected" : null)"
+                            aria-pressed="@(selected ? "true" : "false")"
+                            data-testid="dream-inspiration-chip"
+                            @onclick="() => PickInspirationAsync(chip.TitleNl)">
+                        @ChipLabel(chip)
+                    </button>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Draft.Dream))
+            {
+                <p class="ob-dream-sfeer__confirm" role="status" data-testid="dream-job-confirm">
+                    @Culture["Onboarding.Step6.DreamConfirm"]
+                </p>
+            }
+        </div>
+    </section>
 }
-@if (Young)
+else
 {
-    <div class="ob-wizard__dream-grid">
-        @foreach (var dreamJob in DreamJobCatalog.All)
+    @RenderHeading
+    <div class="ob-wizard__card" data-testid="dream-job-step-classic">
+        @if (Config.GetValue(OccupationCatalog.PreviewConfigKey, false) && !HostEnv.IsProduction())
         {
-            var isSelected = Draft.Dream == dreamJob.TitleNl;
-            <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
-                    class="@(isSelected ?"is-selected" : null)"
-                    @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
-                <span>@((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))</span>
-                <small>@Culture[$"DreamJob.{dreamJob.Key}"]</small>
-            </button>
+            <p class="muted" role="status">@Culture["Occ.PreviewBanner"]</p>
+        }
+        <div class="ob-wizard__dream-search">
+            <input role="combobox"
+                   aria-expanded="@(Draft.DreamSearch.Length > 0)"
+                   aria-autocomplete="list"
+                   placeholder="@Culture["Onboarding.DreamSearch"]"
+                   @bind="Draft.DreamSearch"
+                   @bind:event="oninput"
+                   @onkeydown="DreamKeyDown" />
+            @RenderSearchSuggestions
+        </div>
+        @if (ShowChosenChip)
+        {
+            <p class="journey-chip is-selected" role="status">@Draft.Dream</p>
+        }
+        @if (Young)
+        {
+            <div class="ob-wizard__dream-grid">
+                @foreach (var dreamJob in DreamJobCatalog.All)
+                {
+                    var isSelected = Draft.Dream == dreamJob.TitleNl;
+                    <button type="button" aria-pressed="@(isSelected ? "true" : "false")"
+                            class="@(isSelected ?"is-selected" : null)"
+                            @onclick="() => ChooseDream.InvokeAsync(dreamJob)">
+                        <span>@((MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""))</span>
+                        <small>@Culture[$"DreamJob.{dreamJob.Key}"]</small>
+                    </button>
+                }
+            </div>
         }
     </div>
 }
-</div>
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
     [Parameter] public EventCallback<DreamJob> ChooseDream { get; set; }
     [Parameter] public EventCallback<string> ChooseTitle { get; set; }
+    [Parameter] public EventCallback<string> ChooseInspiration { get; set; }
     [Parameter] public EventCallback ChooseOwnDream { get; set; }
     /// <summary>Teen grid only when age is known and under 18. Unknown age uses the adult catalog.</summary>
     [Parameter] public bool Young { get; set; }
@@ -113,4 +122,139 @@
     [Parameter] public bool ShowHeading { get; set; } = true;
     [Parameter] public bool ShowLead { get; set; } = true;
     [Parameter] public bool AsSubsection { get; set; }
+
+    private bool IllustrationEnabled =>
+        DreamJobIllustrationGate.IsEnabled(Config[DreamJobIllustrationOptions.EnabledKey]);
+
+    private RenderFragment RenderHeading => __builder =>
+    {
+        if (!ShowHeading)
+        {
+            return;
+        }
+
+        if (AsSubsection)
+        {
+            __builder.OpenElement(0, "h2");
+            __builder.AddAttribute(1, "class", "ob-wizard__subhead");
+            __builder.AddContent(2, TitleKey is null ? Culture["Onboarding.Step6.Title"] : Culture[TitleKey]);
+            __builder.CloseElement();
+        }
+        else
+        {
+            __builder.OpenElement(3, "h1");
+            __builder.AddAttribute(4, "tabindex", "-1");
+            __builder.AddContent(5, TitleKey is null ? Culture["Onboarding.Step6.Title"] : Culture[TitleKey]);
+            __builder.CloseElement();
+        }
+
+        if (ShowLead)
+        {
+            __builder.OpenElement(6, "p");
+            __builder.AddAttribute(7, "class", "ob-wizard__lead");
+            __builder.AddContent(8, Culture["Onboarding.Step6.Lead"]);
+            __builder.CloseElement();
+        }
+    };
+
+    private RenderFragment RenderSearchSuggestions => __builder =>
+    {
+        if (Draft.DreamSearch.Length == 0)
+        {
+            return;
+        }
+
+        __builder.OpenElement(0, "div");
+        __builder.AddAttribute(1, "role", "listbox");
+        if (Young)
+        {
+            foreach (var dreamJob in DreamJobCatalog.Search(Draft.DreamSearch))
+            {
+                __builder.OpenElement(2, "button");
+                __builder.AddAttribute(3, "type", "button");
+                __builder.AddAttribute(4, "role", "option");
+                __builder.AddAttribute(5, "onclick", EventCallback.Factory.Create(this, () => ChooseDream.InvokeAsync(dreamJob)));
+                __builder.AddContent(6, (MarkupString)(DreamJobIcons.TryGet(dreamJob.IconKey) ?? ""));
+                __builder.OpenElement(7, "span");
+                __builder.AddContent(8, Culture[$"DreamJob.{dreamJob.Key}"]);
+                __builder.CloseElement();
+                __builder.CloseElement();
+            }
+        }
+        else
+        {
+            foreach (var hit in OccupationCatalog.Shared.Search(Draft.DreamSearch, 8, Draft.Education))
+            {
+                __builder.OpenElement(9, "button");
+                __builder.AddAttribute(10, "type", "button");
+                __builder.AddAttribute(11, "role", "option");
+                __builder.AddAttribute(12, "onclick", EventCallback.Factory.Create(this, () => ChooseTitle.InvokeAsync(hit.Title)));
+                __builder.OpenElement(13, "span");
+                __builder.AddContent(14, hit.Title);
+                __builder.CloseElement();
+                if (!string.IsNullOrWhiteSpace(hit.Description))
+                {
+                    __builder.OpenElement(15, "small");
+                    __builder.AddContent(16, hit.Description);
+                    __builder.CloseElement();
+                }
+
+                if (hit.NoScore)
+                {
+                    __builder.OpenElement(17, "small");
+                    __builder.AddContent(18, Culture["Occ.NoScore"] + ". " + Culture["Occ.NoScoreWhy"]);
+                    __builder.CloseElement();
+                }
+                else if (hit.LevelNote)
+                {
+                    __builder.OpenElement(19, "small");
+                    __builder.AddContent(20, Culture["Occ.ExtraTraining"]);
+                    __builder.CloseElement();
+                }
+
+                __builder.CloseElement();
+            }
+        }
+
+        __builder.OpenElement(21, "button");
+        __builder.AddAttribute(22, "type", "button");
+        __builder.AddAttribute(23, "onclick", ChooseOwnDream);
+        __builder.AddContent(24, "＋ " + Culture.Format("Onboarding.DreamOwn", Draft.DreamSearch.Trim()));
+        __builder.CloseElement();
+        __builder.CloseElement();
+    };
+
+    private string ChipLabel(DreamJobInspirationChip chip)
+    {
+        if (!string.IsNullOrEmpty(chip.LabelResourceKey))
+        {
+            return Culture[chip.LabelResourceKey];
+        }
+
+        if (!string.IsNullOrEmpty(chip.DreamJobCatalogKey))
+        {
+            return Culture[$"DreamJob.{chip.DreamJobCatalogKey}"];
+        }
+
+        return chip.TitleNl;
+    }
+
+    private async Task PickInspirationAsync(string titleNl)
+    {
+        if (ChooseInspiration.HasDelegate)
+        {
+            await ChooseInspiration.InvokeAsync(titleNl);
+            return;
+        }
+
+        await ChooseTitle.InvokeAsync(titleNl);
+        Draft.DreamSearch = titleNl.Trim()[..Math.Min(128, titleNl.Trim().Length)];
+    }
+
+    private void OnIllustratedSearchInput(ChangeEventArgs e)
+    {
+        Draft.DreamSearch = e.Value?.ToString() ?? "";
+        var trimmed = Draft.DreamSearch.Trim();
+        Draft.Dream = trimmed.Length == 0 ? "" : trimmed[..Math.Min(128, trimmed.Length)];
+    }
 }
