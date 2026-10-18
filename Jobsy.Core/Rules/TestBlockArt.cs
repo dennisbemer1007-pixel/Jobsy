@@ -39,6 +39,9 @@ public static class TestBlockArt
     public static string HeroFigurePathForSlug(string slug)
         => $"/images/tests/figures/{slug}-hero.png";
 
+    public static string HeroMobileCompositePathForSlug(string slug)
+        => $"/images/tests/figures/{slug}-mobhero.png";
+
     /// <summary>Maps diepte-analyse domain codes to the closest Quick-Scan block art.</summary>
     public static string SlugForDeepDomain(AssessmentKind kind, string? domain)
     {

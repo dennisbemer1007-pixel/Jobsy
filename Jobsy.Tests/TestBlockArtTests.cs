@@ -32,4 +32,12 @@ public sealed class TestBlockArtTests
     [InlineData("sfeer")]
     public void HeroFigurePathForSlug_points_at_figure_png(string slug)
         => Assert.Equal($"/images/tests/figures/{slug}-hero.png", TestBlockArt.HeroFigurePathForSlug(slug));
+
+    [Theory]
+    [InlineData("hoe-je-werkt")]
+    [InlineData("leuk")]
+    [InlineData("sfeer")]
+    [InlineData("waarden")]
+    public void HeroMobileCompositePathForSlug_points_at_mobhero_png(string slug)
+        => Assert.Equal($"/images/tests/figures/{slug}-mobhero.png", TestBlockArt.HeroMobileCompositePathForSlug(slug));
 }

@@ -618,6 +618,7 @@
   --test-block-hero-cream: color-mix(in srgb, var(--bg) 62%, var(--pearl-cool, var(--pearl)));
   --test-block-band-image: url("/images/tests/bg-hoe-je-werkt.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/hoe-je-werkt-hero.png");
+  --test-block-mobile-hero-image: url("/images/tests/figures/hoe-je-werkt-mobhero.png");
 }
 
 .test-block-stage--leuk {
@@ -625,6 +626,7 @@
   --test-block-hero-cream: color-mix(in srgb, var(--bg) 58%, var(--coral-soft, #ffe8e0));
   --test-block-band-image: url("/images/tests/bg-leuk.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/leuk-hero.png");
+  --test-block-mobile-hero-image: url("/images/tests/figures/leuk-mobhero.png");
 }
 
 .test-block-stage--sfeer {
@@ -632,6 +634,7 @@
   --test-block-hero-cream: color-mix(in srgb, var(--bg) 55%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-sfeer.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/sfeer-hero.png");
+  --test-block-mobile-hero-image: url("/images/tests/figures/sfeer-mobhero.png");
 }
 
 .test-block-stage--waarden {
@@ -639,6 +642,7 @@
   --test-block-hero-cream: color-mix(in srgb, var(--bg) 58%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-waarden.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/waarden-hero.png");
+  --test-block-mobile-hero-image: url("/images/tests/figures/waarden-mobhero.png");
 }
 
 .test-block-stage__content {
@@ -753,14 +757,14 @@
     display: none;
   }
 
+  .test-block-stage__mobile-hero {
+    display: block;
+  }
+
   .test-block-stage__mobile-hero--band,
   .test-block-stage__mobile-hero--compact {
-    display: grid;
     position: relative;
     box-sizing: border-box;
-    grid-template-columns: minmax(0, 1fr) 0.65rem minmax(10.75rem, 45%);
-    grid-template-rows: minmax(0, 1fr);
-    align-items: stretch;
     inline-size: 100%;
     min-block-size: 12.5rem;
     block-size: 12.5rem;
@@ -770,8 +774,11 @@
     border-radius: 0;
     overflow: hidden;
     isolation: isolate;
-    background-color: var(--test-block-hero-cream, var(--bg));
-    background-image: none;
+    background-color: var(--bg);
+    background-image: var(--test-block-mobile-hero-image);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: right bottom;
     box-shadow: none;
   }
 
@@ -779,64 +786,9 @@
     margin-block-end: 0.65rem;
   }
 
-  .test-block-stage__mobile-hero__figure {
-    position: relative;
-    grid-column: 3;
-    grid-row: 1;
-    align-self: stretch;
-    justify-self: stretch;
-    inline-size: 100%;
-    min-inline-size: 0;
-    max-inline-size: 100%;
-    block-size: 100%;
-    min-block-size: 0;
-    max-block-size: 100%;
-    opacity: 1;
-    pointer-events: none;
-    overflow: hidden;
-    contain: layout paint;
-  }
-
-  .test-block-stage__mobile-hero__figure::before {
-    content: "";
-    position: absolute;
-    inset-block: 0;
-    inset-inline-start: 0;
-    inline-size: 42%;
-    z-index: 1;
-    background: linear-gradient(
-      to right,
-      var(--test-block-hero-cream, var(--bg)),
-      transparent
-    );
-    pointer-events: none;
-  }
-
-  .test-block-stage__mobile-hero__figure img {
-    position: relative;
-    z-index: 0;
-    display: block;
-    inline-size: auto;
-    min-inline-size: 120%;
-    max-inline-size: none;
-    block-size: 96%;
-    max-block-size: 96%;
-    margin-inline-start: auto;
-    margin-inline-end: 0;
-    object-fit: contain;
-    object-position: 100% 100%;
-  }
-
+  .test-block-stage__mobile-hero__figure,
   .test-block-stage__mobile-hero__fade {
-    grid-column: 2;
-    grid-row: 1;
-    align-self: stretch;
-    background: linear-gradient(
-      to right,
-      var(--test-block-hero-cream, var(--bg)),
-      transparent
-    );
-    pointer-events: none;
+    display: none !important;
   }
 
   .test-page:has([data-testid="test-block-stage"]) .test-depth-segments {
@@ -845,14 +797,11 @@
 
   .test-block-stage__mobile-hero h1,
   .test-block-stage__mobile-hero-title {
-    grid-column: 1;
-    grid-row: 1;
     position: relative;
     z-index: 1;
-    align-self: start;
     margin: 0;
     padding: 0.75rem 0.85rem;
-    max-inline-size: 100%;
+    max-inline-size: 58%;
     font-size: clamp(1.12rem, 4.1vw, 1.42rem);
     line-height: 1.22;
     font-weight: 700;
@@ -860,21 +809,6 @@
     background: transparent;
     border: 0;
     box-shadow: none;
-  }
-
-  .test-block-stage--waarden .test-block-stage__mobile-hero__figure img {
-    object-position: 96% bottom;
-  }
-
-  .test-block-stage--leuk .test-block-stage__mobile-hero__figure img {
-    object-position: 90% 100%;
-    min-inline-size: 108%;
-    block-size: 94%;
-    max-block-size: 96%;
-  }
-
-  .test-block-stage--sfeer .test-block-stage__mobile-hero__figure img {
-    object-position: 94% bottom;
   }
 
   .ob-wizard__content:has([data-testid="test-block-stage"]) .test-block-stage__mobile-hero {

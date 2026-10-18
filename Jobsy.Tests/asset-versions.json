@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
     "sha256": "f17548438783153666c892e5cba133950c50744f63123269cbe10d7cc95e81d1",
-    "v": "20261018-03"
+    "v": "20261017-03"
   },
   "css/critical.css": {
     "sha256": "94b9e9f0833faebdcbf4281da401379c93851562b64d48d838d27004f6862cab",
@@ -176,7 +176,7 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "ede312c68b8f7f34f2c3eb877b8c4e6a4821fa67f9534b634236bf2fc127b14e",
+    "sha256": "c46606c43bf568173dcf8451ca0c6d13de8ef9504a5225bd811374efc34020bd",
     "v": "20261018-23"
   },
   "css/features/vacancy-wizard.css": {

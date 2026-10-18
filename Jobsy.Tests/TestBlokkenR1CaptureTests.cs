@@ -143,6 +143,51 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
     }
 
+    [Theory]
+    [InlineData("quick-scan-hoe-je-werkt")]
+    [InlineData("quick-scan-waarden")]
+    [InlineData("diepte-competenties")]
+    public void Mobhero_r5_page_captures_fail_visible_pixel_gate(string stem)
+    {
+        var path = Path.Combine("/opt/cursor/artifacts/testblokken-mobhero-r5", $"{stem}-390.png");
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        using var page = Image.Load<Rgba32>(path);
+        var heroTop = (int)(page.Height * 0.12);
+        var heroBottom = (int)(page.Height * 0.38);
+        var heroHeight = heroBottom - heroTop;
+        using var hero = new Image<Rgba32>(page.Width, heroHeight);
+        for (var y = 0; y < heroHeight; y++)
+        {
+            for (var x = 0; x < page.Width; x++)
+            {
+                hero[x, y] = page[x, heroTop + y];
+            }
+        }
+
+        using var ms = new MemoryStream();
+        hero.SaveAsPng(ms);
+        var ex = Record.Exception(() => AssertMobHeroVisiblePixels(ms.ToArray(), stem));
+        Assert.NotNull(ex);
+    }
+
+    [Theory]
+    [InlineData("hoe-je-werkt")]
+    [InlineData("leuk")]
+    [InlineData("sfeer")]
+    [InlineData("waarden")]
+    public void Mobhero_composite_pngs_have_visible_figure_pixels(string slug)
+    {
+        var root = FindRepoRoot();
+        var path = Path.Combine(root, "Jobsy.Web/wwwroot/images/tests/figures", $"{slug}-mobhero.png");
+        Assert.True(File.Exists(path), $"Missing mobhero composite: {path}");
+        var png = File.ReadAllBytes(path);
+        AssertMobHeroVisiblePixels(png, slug);
+    }
+
     [Fact]
     public async Task Capture_test_pages_at_390_have_translated_eyebrows_and_filled_mobhero()
     {
@@ -154,6 +199,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             await using var context = await _browser!.NewContextAsync(new()
             {
                 ViewportSize = new ViewportSize { Width = 390, Height = 844 },
+                DeviceScaleFactor = 1,
                 Locale = "nl-NL",
                 IsMobile = true,
                 HasTouch = true,
@@ -179,10 +225,15 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
             await tabs.WaitForAsync();
             var hero = page.Locator(".test-block-stage__mobile-hero--band").First;
             await hero.WaitForAsync();
-            var figureImg = page.Locator(".test-block-stage__mobile-hero__figure img").First;
-            await figureImg.WaitForAsync();
             await page.WaitForFunctionAsync(
-                """() => { const i = document.querySelector('.test-block-stage__mobile-hero__figure img'); return i && i.complete && i.naturalWidth > 40; }""",
+                """
+                () => {
+                  const h = document.querySelector('.test-block-stage__mobile-hero--band, .test-block-stage__mobile-hero--compact');
+                  if (!h) return false;
+                  const bg = getComputedStyle(h).backgroundImage || '';
+                  return bg.includes('mobhero');
+                }
+                """,
                 null,
                 new() { Timeout = 30_000 });
             var tabsBox = await tabs.BoundingBoxAsync();
@@ -227,74 +278,100 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
 
             await page.WaitForTimeoutAsync(400);
 
-            var figureBox = await page.Locator(".test-block-stage__mobile-hero__figure").First.BoundingBoxAsync();
-            var imgBox = await figureImg.BoundingBoxAsync();
-            Assert.NotNull(figureBox);
-            Assert.NotNull(imgBox);
-            Assert.True(imgBox!.Height >= heroBox!.Height * 0.72,
-                $"{target.FileStem}: hero figure should fill at least 72% of hero height (got {imgBox.Height:F0}px / {heroBox.Height:F0}px).");
-            Assert.InRange(figureBox!.Width / heroBox.Width, 0.38, 0.52);
-            Assert.True(figureBox.X + figureBox.Width <= heroBox.X + heroBox.Width + 1.5,
-                $"{target.FileStem}: figure area must stay inside the hero band.");
+            var heroHeight = await hero.EvaluateAsync<double>("el => el.getBoundingClientRect().height");
+            Assert.True(heroHeight is >= 196 and <= 212,
+                $"{target.FileStem}: mobile hero band height drifted ({heroHeight:F1}px).");
 
             var png = await hero.ScreenshotAsync(new() { Type = ScreenshotType.Png });
-            AssertMobHeroFill(png, target.FileStem);
+            AssertMobHeroVisiblePixels(png, target.FileStem);
         }
     }
 
-    private static void AssertMobHeroFill(byte[] png, string stem)
+    private static Rgba32 SampleMobHeroCreamReference(Image<Rgba32> image)
+    {
+        var w = image.Width;
+        var h = image.Height;
+        var anchor = image[Math.Min(8, w - 1), Math.Min(8, h - 1)];
+        long r = 0;
+        long g = 0;
+        long b = 0;
+        var count = 0;
+        var leftEnd = Math.Max(4, (int)(w * 0.22));
+        var sampleBottom = Math.Max(4, (int)(h * 0.45));
+        for (var y = 0; y < sampleBottom; y++)
+        {
+            for (var x = 0; x < leftEnd; x++)
+            {
+                var p = image[x, y];
+                if (p.A < 200)
+                {
+                    continue;
+                }
+
+                var delta = Math.Max(Math.Max(Math.Abs(p.R - anchor.R), Math.Abs(p.G - anchor.G)), Math.Abs(p.B - anchor.B));
+                if (delta > 18)
+                {
+                    continue;
+                }
+
+                r += p.R;
+                g += p.G;
+                b += p.B;
+                count++;
+            }
+        }
+
+        if (count == 0)
+        {
+            return anchor;
+        }
+
+        return new Rgba32((byte)(r / count), (byte)(g / count), (byte)(b / count), 255);
+    }
+
+    private static void AssertMobHeroVisiblePixels(byte[] png, string stem)
     {
         using var image = Image.Load<Rgba32>(png);
         var w = image.Width;
         var h = image.Height;
-        var cream = 0;
-        var nonCream = 0;
-        var rightStart = (int)(w * 0.48);
-        for (var y = 0; y < h; y++)
+        var refPx = SampleMobHeroCreamReference(image);
+        var rightStart = (int)(w * 0.55);
+        // Ignore the top band of the hero where pre-composited sky/clouds can match cream but figures sit lower.
+        var rowStart = (int)(h * 0.28);
+        var strong = 0;
+        var total = 0;
+        var channelSpreadSum = 0;
+        for (var y = rowStart; y < h; y++)
         {
             for (var x = rightStart; x < w; x++)
             {
                 var p = image[x, y];
-                if (MobHeroPixelIsCream(p))
+                if (p.A < 200)
                 {
-                    cream++;
+                    continue;
                 }
-                else
+
+                total++;
+                var delta = Math.Max(Math.Max(Math.Abs(p.R - refPx.R), Math.Abs(p.G - refPx.G)), Math.Abs(p.B - refPx.B));
+                if (delta > 40)
                 {
-                    nonCream++;
+                    strong++;
+                    channelSpreadSum += Math.Max(p.R, Math.Max(p.G, p.B)) - Math.Min(p.R, Math.Min(p.G, p.B));
                 }
             }
         }
 
-        var ratio = (double)nonCream / Math.Max(1, cream + nonCream);
-        var minRatio = 0.03;
-        Assert.True(ratio >= minRatio,
-            $"{stem}: expected figure fill in right 52% of mobhero, got {ratio:P1}.");
-    }
+        Assert.True(total > 100, $"{stem}: hero screenshot too small to evaluate.");
+        var ratio = (double)strong / total;
+        Assert.True(ratio >= 0.25,
+            $"{stem}: expected >=25% strong figure pixels in right 45% of mobhero (delta>40 vs cream), got {ratio:P1}.");
 
-    private static bool MobHeroPixelIsCream(Rgba32 p)
-    {
-        if (p.A < 16)
+        if (strong > 0)
         {
-            return true;
+            var avgSpread = channelSpreadSum / (double)strong;
+            Assert.True(avgSpread >= 25,
+                $"{stem}: figure area looks faded (avg channel spread {avgSpread:F1}); expected opaque illustration.");
         }
-
-        if (p.B > p.R + 6 && p.B > 215)
-        {
-            return false;
-        }
-
-        if (p.R > 200 && p.G > 170 && p.B < 175)
-        {
-            return false;
-        }
-
-        if (p.G > p.R + 8 && p.G > 165 && p.B > 140)
-        {
-            return false;
-        }
-
-        return p.R > 228 && p.G > 222 && p.B > 210 && p.R - p.B < 28;
     }
 
     private static void PurgeLegacyArtifactDirs()
