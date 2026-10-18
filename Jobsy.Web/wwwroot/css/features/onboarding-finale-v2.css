@@ -6,9 +6,8 @@
   --obf-text: #122033;
   --obf-muted: #5a6a7d;
   --obf-border: #ddd5cc;
-  --obf-art-position: 94% 93%;
-  --obf-art-inset-left: 0%;
-  --obf-art-ratio: 1440 / 520;
+  --obf-art-position: 76% 88%;
+  --obf-hero-min-height: clamp(19rem, 36vw, 34rem);
   color: var(--obf-text);
   background: var(--obf-pearl);
   min-height: 100vh;
@@ -17,35 +16,86 @@
 
 .ob-finale__hero {
   position: relative;
-  background: var(--obf-pearl);
+  display: grid;
+  grid-template-rows: minmax(var(--obf-hero-min-height), auto);
+  width: 100vw;
+  max-width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  background: #e8dcc8;
+  isolation: isolate;
 }
 
+.ob-finale__hero::after {
+  content: "";
+  grid-area: 1 / 1;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 90% 130% at 8% 22%,
+    rgba(253, 248, 242, 0.5) 0%,
+    rgba(253, 248, 242, 0.18) 45%,
+    transparent 72%
+  );
+}
+
+.ob-finale__art,
 .ob-finale__intro {
-  padding: 1.125rem 1rem 0.75rem;
-  text-align: left;
-  background: linear-gradient(180deg, #fdf8f2 0%, var(--obf-pearl) 100%);
-}
-
-.ob-finale__hero-inner {
-  max-width: 47.5rem;
-  margin: 0 auto;
+  grid-area: 1 / 1;
 }
 
 .ob-finale__art {
   margin: 0;
+  position: relative;
   width: 100%;
-  aspect-ratio: var(--obf-art-ratio);
-  height: auto;
+  min-height: 100%;
+  align-self: stretch;
   overflow: hidden;
-  background: #fdf3e4;
+  pointer-events: none;
 }
 
 .ob-finale__art img {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: var(--obf-art-position);
+}
+
+.ob-finale__intro {
+  position: relative;
+  z-index: 1;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: clamp(1.125rem, 2.8vw, 2.25rem) clamp(1rem, 3vw, 2.5rem)
+    clamp(1.25rem, 2.5vw, 2rem);
+  max-width: none;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+}
+
+.ob-finale__hero-inner {
+  max-width: 26rem;
+  margin: 0;
+  width: 100%;
+  padding: clamp(0.875rem, 1.6vw, 1.25rem) clamp(1rem, 2vw, 1.375rem)
+    clamp(1rem, 1.8vw, 1.25rem);
+  background: linear-gradient(
+    118deg,
+    rgba(253, 248, 242, 0.94) 0%,
+    rgba(253, 248, 242, 0.86) 55%,
+    rgba(253, 248, 242, 0.62) 100%
+  );
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0 40px rgba(253, 248, 242, 0.35);
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to right, #000 0%, #000 78%, transparent 100%);
 }
 
 .ob-finale__badge {
@@ -55,7 +105,7 @@
   font-size: 0.82rem;
   font-weight: 650;
   color: var(--obf-brand);
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(15, 45, 92, 0.1);
   border-radius: 99px;
   padding: 0.35rem 0.75rem;
@@ -78,17 +128,18 @@
 .ob-finale__lead {
   font-size: 1.05rem;
   color: #34465c;
-  margin: 0 auto 1.375rem;
+  margin: 0 0 1.375rem;
   max-width: 35rem;
   line-height: 1.45;
 }
 
 .ob-finale__ctas {
   display: flex;
-  gap: 1.125rem;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-direction: column;
+  flex-wrap: nowrap;
 }
 
 .ob-finale__btn {
@@ -451,145 +502,63 @@
 }
 
 @media (min-width: 601px) {
-  .ob-finale__hero {
-    display: grid;
-    margin-bottom: 0;
-  }
-
-  .ob-finale__art,
-  .ob-finale__intro {
-    grid-area: 1 / 1;
-  }
-
-  .ob-finale__intro {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: flex-start;
-    align-self: stretch;
-    width: min(26.5rem, 36vw);
-    max-width: calc(100% - 1.5rem);
-    padding: clamp(1.35rem, 2.8vw, 2.35rem) clamp(1.25rem, 3vw, 2.25rem)
-      clamp(1rem, 2vw, 1.5rem);
-    padding-right: 1.5rem;
-    text-align: left;
-    background: #fdf8f2;
-    pointer-events: none;
-  }
-
-  .ob-finale__intro::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 100%;
-    width: 1.5rem; /* 24px clearance strip */
-    background: #fdf8f2;
-    pointer-events: none;
-  }
-
-  .ob-finale__intro .ob-finale__hero-inner {
-    pointer-events: auto;
-    max-width: 24.5rem;
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    box-shadow: none;
-    border-radius: 0;
-  }
-
-  .ob-finale__ctas {
-    position: relative;
-    flex-direction: column;
-    align-items: stretch;
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    gap: 0.75rem;
-  }
-
-  .ob-finale__btn {
-    align-self: flex-start;
-  }
-
-  .ob-finale__link {
-    align-self: flex-start;
-    max-width: 100%;
-  }
-
   .ob-finale {
-    --obf-art-inset-left: 22%;
-  }
-
-  .ob-finale__art {
-    clip-path: inset(0 0 0 var(--obf-art-inset-left));
-  }
-
-  .ob-finale__lead {
-    margin-left: 0;
-    margin-right: 0;
+    --obf-art-position: 78% 89%;
+    --obf-hero-min-height: clamp(20rem, 34vw, 36rem);
   }
 }
 
 @media (min-width: 1600px) {
   .ob-finale {
-    --obf-art-position: 95% 92%;
-    --obf-art-inset-left: 14%;
+    --obf-art-position: 80% 88%;
+    --obf-hero-min-height: clamp(21rem, 32vw, 38rem);
   }
 }
 
 @media (max-width: 1280px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-ratio: 1440 / 500;
-    --obf-art-position: 93% 94%;
-    --obf-art-inset-left: 16%;
+    --obf-art-position: 76% 90%;
+    --obf-hero-min-height: clamp(19rem, 38vw, 33rem);
   }
 }
 
 @media (max-width: 1024px) and (min-width: 601px) {
   .ob-finale {
-    --obf-art-ratio: 1440 / 480;
-    --obf-art-position: 92% 95%;
-    --obf-art-inset-left: 18%;
+    --obf-art-position: 72% 91%;
+    --obf-hero-min-height: clamp(18rem, 40vw, 30rem);
   }
 
-  .ob-finale__intro {
-    width: min(25rem, 38vw);
-  }
 }
 
 @media (max-width: 600px) {
   .ob-finale {
-    --obf-art-ratio: 16 / 10;
-    --obf-art-position: 62% 88%;
-  }
-
-  .ob-finale__hero {
-    display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
+    --obf-art-position: 64% 86%;
+    --obf-hero-min-height: clamp(21rem, 118vw, 28rem);
   }
 
   .ob-finale__intro {
-    position: static;
-    width: auto;
-    padding: 1.125rem 1rem 0;
-    background: linear-gradient(180deg, #fdf8f2 0%, var(--obf-pearl) 100%);
-    pointer-events: auto;
+    padding: 1rem 0.75rem 1.125rem;
   }
 
-  .ob-finale__art {
-    margin: 0 1rem;
-    border-radius: 16px;
+  .ob-finale__hero::after {
+    background: radial-gradient(
+      ellipse 120% 90% at 50% 0%,
+      rgba(253, 248, 242, 0.72) 0%,
+      rgba(253, 248, 242, 0.42) 38%,
+      transparent 68%
+    );
   }
 
-  .ob-finale__ctas {
-    flex-direction: column;
-    align-items: stretch;
+  .ob-finale__hero-inner {
+    max-width: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 88%, transparent 100%);
   }
 
   .ob-finale__btn,
   .ob-finale__link {
     text-align: center;
+    align-self: stretch;
   }
 
   .ob-finale__wrap {
