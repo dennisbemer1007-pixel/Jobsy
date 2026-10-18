@@ -30,22 +30,19 @@
         @foreach (var station in Stations)
         {
             var state = StationState(station.Step);
-            <li class="ob-journey__grid-item ob-journey__grid-item--@state.Css">
-                <span class="ob-journey__badge ob-journey__badge--@station.Tone" aria-hidden="true">
+            <li class="ob-journey__item ob-journey__item--@state.Css">
+                <p class="ob-journey__name">
+                    <span class="ob-journey__name-text">@Culture[station.TitleKey]</span>
                     @if (state.Done)
                     {
-                        <span class="ob-journey__check">✓</span>
+                        <span class="ob-journey__tick" aria-hidden="true">✓</span>
                     }
-                    else
+                    else if (state.Next)
                     {
-                        <span>@station.Index</span>
+                        <span class="ob-journey__now">@Culture["Onboarding.Journey.Now"]</span>
                     }
-                </span>
-                <div class="ob-journey__grid-copy">
-                    <strong>@Culture[station.TitleKey]</strong>
-                    <span>@Culture[station.BenefitKey]</span>
-                    <small>@Culture[station.DurationKey]</small>
-                </div>
+                </p>
+                <p class="ob-journey__benefit">@Culture[station.BenefitKey]</p>
             </li>
         }
     </ol>
@@ -54,39 +51,36 @@
         @foreach (var station in Stations)
         {
             var state = StationState(station.Step);
-            <li class="ob-journey__mobile-row ob-journey__mobile-row--@state.Css">
-                <span class="ob-journey__badge ob-journey__badge--@station.Tone" aria-hidden="true">
+            <li class="ob-journey__item ob-journey__item--@state.Css">
+                <p class="ob-journey__name">
+                    <span class="ob-journey__name-text">@Culture[station.TitleKey]</span>
                     @if (state.Done)
                     {
-                        <span class="ob-journey__check">✓</span>
+                        <span class="ob-journey__tick" aria-hidden="true">✓</span>
                     }
-                    else
+                    else if (state.Next)
                     {
-                        <span>@station.Index</span>
+                        <span class="ob-journey__now">@Culture["Onboarding.Journey.Now"]</span>
                     }
-                </span>
-                <div class="ob-journey__mobile-copy">
-                    <strong>@Culture[station.TitleKey]</strong>
-                    <span>@Culture[station.BenefitKey]</span>
-                    <small>@Culture[station.DurationKey]</small>
-                </div>
+                </p>
+                <p class="ob-journey__benefit">@Culture[station.BenefitKey]</p>
             </li>
         }
     </ol>
 </section>
 
 @code {
-    public sealed record Station(int Index, int Step, string Tone, string TitleKey, string BenefitKey, string DurationKey);
+    public sealed record Station(int Step, string TitleKey, string BenefitKey);
 
     [Parameter, EditorRequired] public IReadOnlyList<int> CompletedSteps { get; set; } = [];
     [Parameter] public int NextStep { get; set; } = 7;
 
     private static readonly Station[] Stations =
     [
-        new(1, 7, "navy", "Onboarding.Test.Competency", "Onboarding.Journey.Benefit.Work", "Onboarding.Journey.Duration.One"),
-        new(2, 8, "coral", "Onboarding.Test.Career", "Onboarding.Journey.Benefit.Fun", "Onboarding.Journey.Duration.One"),
-        new(3, 9, "sand", "Onboarding.Test.Culture", "Onboarding.Journey.Benefit.Vibe", "Onboarding.Journey.Duration.One"),
-        new(4, 10, "green", "Onboarding.Test.Values", "Onboarding.Journey.Benefit.Values", "Onboarding.Journey.Duration.One")
+        new(7, "Onboarding.Test.Competency", "Onboarding.Journey.Benefit.Work"),
+        new(8, "Onboarding.Test.Career", "Onboarding.Journey.Benefit.Fun"),
+        new(9, "Onboarding.Test.Culture", "Onboarding.Journey.Benefit.Vibe"),
+        new(10, "Onboarding.Test.Values", "Onboarding.Journey.Benefit.Values")
     ];
 
     private (bool Done, bool Next, string Css) StationState(int step)

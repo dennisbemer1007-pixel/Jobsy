@@ -158,6 +158,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Journey.Benefit.Fun"] = english ? "Which careers energise you" : "Welke beroepen je energie geven";
         map["Onboarding.Journey.Benefit.Vibe"] = english ? "Where you feel at home" : "Waar je je thuis voelt";
         map["Onboarding.Journey.Benefit.Values"] = english ? "What matters to you" : "Wat je belangrijk vindt";
+        map["Onboarding.Journey.Now"] = english ? "Now" : "Nu";
         map["Onboarding.Journey.Duration.One"] = english ? "~1.5 min" : "~1,5 min";
         map["Onboarding.Journey.CtaStart"] = english ? "Start with test 1" : "Start met test 1";
         map["Onboarding.Journey.CtaContinue"] = english ? "Continue with test {0}" : "Ga verder met test {0}";

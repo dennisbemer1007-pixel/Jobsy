@@ -50,10 +50,11 @@ public class TestJourneyConsentStepBunitTests : BunitContext
 
         Assert.Contains("data-testid=\"test-journey-consent\"", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("In ±6 minuten ontdek je wat bij je past", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("ob-journey__mobile-row--done", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("ob-journey__mobile-row--next", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("ob-journey__item--done", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("ob-journey__item--next", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("ob-journey__stations--grid", cut.Markup, StringComparison.Ordinal);
-        Assert.DoesNotContain("ob-journey__stations--overlay", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("ob-journey__badge", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("~1,5 min", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]

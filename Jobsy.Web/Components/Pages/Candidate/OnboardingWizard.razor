@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-07" />
     @if (TestJourneyIllustration.Enabled)
     {
-        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-03" />
+        <link rel="stylesheet" href="css/features/onboarding-wizard-test-journey.css?v=20261018-04" />
     }
 </HeadContent>
 
@@ -362,7 +362,7 @@
                                     data-testid="onboarding-next"
                                     disabled="@_busy"
                                     @onclick="@(() => NextAsync())">@NextLabel</button>
-                            @if (ShowTestsLaterOffer)
+                            @if (ShowTestsLaterOffer && !ShowJourneyConsent)
                             {
                                 <button type="button"
                                         class="btn btn-secondary ob-wizard__footer-later"
