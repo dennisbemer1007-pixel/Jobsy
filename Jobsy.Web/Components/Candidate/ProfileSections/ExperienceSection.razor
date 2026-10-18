@@ -52,6 +52,7 @@
                                                 <label class="profile-employer-card__field profile-employer-card__field--end">
                                                     <span>@Culture["Profile.EmployerTo"]</span>
                                                     <MonthYearInput Value="@Editor.Employers[idx].EndMonth"
+                                                                    ReferenceMonth="@Editor.Employers[idx].StartMonth"
                                                                     ValueChanged="value => Editor.SetEmployerEndMonth(idx, value)" />
                                                 </label>
                                             }

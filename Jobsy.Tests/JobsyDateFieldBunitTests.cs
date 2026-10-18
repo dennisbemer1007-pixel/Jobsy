@@ -63,6 +63,37 @@ public sealed class JobsyDateFieldBunitTests : BunitContext
         Assert.NotNull(cut.Find(".jobsy-date-field__picker-btn"));
     }
 
+    [Fact]
+    public void Month_mode_masks_typed_digits_and_emits_yyyy_mm()
+    {
+        string? stored = null;
+        var cut = Render<JobsyDateField>(parameters => parameters
+            .Add(p => p.Kind, JobsyDatePickerKind.Month)
+            .Add(p => p.Constraint, JobsyDateConstraint.WorkHistoryMonth)
+            .Add(p => p.MonthValue, stored)
+            .Add(p => p.MonthValueChanged, EventCallback.Factory.Create<string?>(this, v => stored = v)));
+
+        var input = cut.Find(".jobsy-date-field__text");
+        input.Input("102022");
+        Assert.Equal("10-2022", input.GetAttribute("value"));
+        Assert.Equal("2022-10", stored);
+    }
+
+    [Fact]
+    public void Month_end_before_start_shows_validation_on_blur()
+    {
+        var cut = Render<JobsyDateField>(parameters => parameters
+            .Add(p => p.Kind, JobsyDatePickerKind.Month)
+            .Add(p => p.Constraint, JobsyDateConstraint.WorkHistoryMonth)
+            .Add(p => p.ReferenceMonth, "2022-06"));
+
+        var input = cut.Find(".jobsy-date-field__text");
+        input.Input("01-2022");
+        input.Blur();
+        var error = cut.Find(".jobsy-date-field__error");
+        Assert.Contains("startmaand", error.TextContent, StringComparison.OrdinalIgnoreCase);
+    }
+
     private sealed class FakeAuth(string role) : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()

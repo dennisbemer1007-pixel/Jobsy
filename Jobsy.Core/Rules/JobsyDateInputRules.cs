@@ -11,6 +11,10 @@ public static class JobsyDateInputRules
         @"^(?<y>\d{4})-(?<m>\d{1,2})-(?<d>\d{1,2})$",
         RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
+    private static readonly Regex IsoMonthRegex = new(
+        @"^(?<y>\d{4})-(?<m>\d{1,2})$",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
     public static DateOnly TodayUtc => DateOnly.FromDateTime(DateTime.UtcNow);
 
     public static string ToDateInputValue(DateOnly? date)
@@ -52,6 +56,11 @@ public static class JobsyDateInputRules
             return false;
         }
 
+        if (TryParseFlexibleMonth(raw, out yyyyMm))
+        {
+            return true;
+        }
+
         if (!DateOnly.TryParse(raw + "-01", CultureInfo.InvariantCulture, DateTimeStyles.None, out var first))
         {
             return false;
@@ -61,10 +70,187 @@ public static class JobsyDateInputRules
         return true;
     }
 
+    /// <summary>User-visible month (mm-yyyy).</summary>
+    public static string FormatDisplayMonth(string? yyyyMm, string? language)
+    {
+        _ = language;
+        if (!TryParseFlexibleMonth(yyyyMm, out var normalized) || normalized is null)
+        {
+            return yyyyMm ?? "";
+        }
+
+        var parts = normalized.Split('-', 2);
+        return $"{parts[1]}-{parts[0]}";
+    }
+
+    /// <summary>Mask typed digits to mm-yyyy while the user types.</summary>
+    public static string ApplyMonthMask(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return "";
+        }
+
+        var trimmed = raw.Trim();
+        if (IsoMonthRegex.IsMatch(trimmed) && TryParseFlexibleMonth(trimmed, out var iso))
+        {
+            return FormatDisplayMonth(iso, null);
+        }
+
+        var digits = new string(trimmed.Where(char.IsDigit).ToArray());
+        if (digits.Length == 0)
+        {
+            return "";
+        }
+
+        if (digits.Length > 6)
+        {
+            digits = digits[..6];
+        }
+
+        return digits.Length switch
+        {
+            <= 2 => digits,
+            _ => $"{digits[..2]}-{digits[2..]}"
+        };
+    }
+
+    public static bool IsCompleteDisplayMonth(string? text)
+        => !string.IsNullOrWhiteSpace(text) && text.Trim().Length is >= 6 and <= 7;
+
+    public static bool TryParseFlexibleMonth(string? raw, out string? yyyyMm)
+    {
+        yyyyMm = null;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        var text = raw.Trim();
+        var iso = IsoMonthRegex.Match(text);
+        if (iso.Success
+            && int.TryParse(iso.Groups["y"].Value, out var isoYear)
+            && int.TryParse(iso.Groups["m"].Value, out var isoMonth)
+            && TryCreateMonth(isoYear, isoMonth, out yyyyMm))
+        {
+            return true;
+        }
+
+        var normalized = text.Replace('/', '-').Replace('.', '-');
+        var parts = normalized.Split('-', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(parts[0], out var first) || !int.TryParse(parts[1], out var second))
+        {
+            return false;
+        }
+
+        int month;
+        int year;
+        if (first > 31)
+        {
+            year = first;
+            month = second;
+        }
+        else
+        {
+            month = first;
+            year = second;
+        }
+
+        if (year < 100)
+        {
+            year += year >= 50 ? 1900 : 2000;
+        }
+
+        return TryCreateMonth(year, month, out yyyyMm);
+    }
+
+    public static JobsyDateValidationCode ValidateMonth(
+        string? yyyyMm,
+        JobsyDateConstraint constraint,
+        string? referenceMonth = null)
+    {
+        if (!TryParseFlexibleMonth(yyyyMm, out var normalized) || normalized is null)
+        {
+            return JobsyDateValidationCode.InvalidMonth;
+        }
+
+        var today = TodayUtc;
+        var current = ToMonthInputValue($"{today.Year:0000}-{today.Month:00}");
+        if (constraint is JobsyDateConstraint.WorkHistoryMonth or JobsyDateConstraint.WorkHistoryEndAfterStart)
+        {
+            if (string.CompareOrdinal(normalized, current) > 0)
+            {
+                return JobsyDateValidationCode.NotFuture;
+            }
+
+            if (string.CompareOrdinal(normalized, "1950-01") < 0)
+            {
+                return JobsyDateValidationCode.BeforeMin;
+            }
+        }
+
+        if (constraint == JobsyDateConstraint.WorkHistoryEndAfterStart
+            && TryParseFlexibleMonth(referenceMonth, out var start)
+            && start is not null
+            && string.CompareOrdinal(normalized, start) < 0)
+        {
+            return JobsyDateValidationCode.MonthBeforeStart;
+        }
+
+        return JobsyDateValidationCode.None;
+    }
+
+    public static string MonthValidationMessage(JobsyDateValidationCode code, string? language)
+    {
+        if (code == JobsyDateValidationCode.Incomplete)
+        {
+            var en = string.Equals(language, "en", StringComparison.OrdinalIgnoreCase);
+            return en
+                ? "Enter the full month (mm-yyyy)."
+                : "Vul de volledige maand in (mm-jjjj).";
+        }
+
+        return ValidationMessage(code, language);
+    }
+
+    public static JobsyDateValidationCode ValidateMonthText(
+        string? text,
+        JobsyDateConstraint constraint,
+        string? referenceMonth = null,
+        bool required = false)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return required ? JobsyDateValidationCode.Incomplete : JobsyDateValidationCode.None;
+        }
+
+        if (!IsCompleteDisplayMonth(text) && !TryParseFlexibleMonth(text, out _))
+        {
+            return JobsyDateValidationCode.Incomplete;
+        }
+
+        if (!TryParseFlexibleMonth(text, out var yyyyMm))
+        {
+            return JobsyDateValidationCode.InvalidMonth;
+        }
+
+        return ValidateMonth(yyyyMm, constraint, referenceMonth);
+    }
+
     public static string Placeholder(string? language)
         => string.Equals(language, "en", StringComparison.OrdinalIgnoreCase)
             ? "dd-mm-yyyy"
             : "dd-mm-jjjj";
+
+    public static string MonthPlaceholder(string? language)
+        => string.Equals(language, "en", StringComparison.OrdinalIgnoreCase)
+            ? "mm-yyyy"
+            : "mm-jjjj";
 
     /// <summary>User-visible date (nl/en: dd-MM-yyyy, day-first).</summary>
     public static string FormatDisplayDate(DateOnly date, string? language)
@@ -234,6 +420,12 @@ public static class JobsyDateInputRules
             JobsyDateValidationCode.AfterMax => en
                 ? "The date is too late."
                 : "De datum is te laat.",
+            JobsyDateValidationCode.InvalidMonth => en
+                ? "This is not a valid month."
+                : "Dit is geen geldige maand.",
+            JobsyDateValidationCode.MonthBeforeStart => en
+                ? "End month must be the same as or after the start month."
+                : "Eindmaand moet gelijk zijn aan of na de startmaand liggen.",
             _ => ""
         };
     }
@@ -249,7 +441,7 @@ public static class JobsyDateInputRules
             JobsyDateConstraint.AvailabilityStart => (AvailabilityStartRules.MinDateInputValue, null),
             JobsyDateConstraint.NotFuture => (null, ToDateInputValue(today)),
             JobsyDateConstraint.NotPast => (ToDateInputValue(today), null),
-            JobsyDateConstraint.WorkHistoryMonth => (
+            JobsyDateConstraint.WorkHistoryMonth or JobsyDateConstraint.WorkHistoryEndAfterStart => (
                 "1950-01",
                 ToMonthInputValue($"{today.Year:0000}-{today.Month:00}")),
             JobsyDateConstraint.VacancyEndAfterStart when reference is { } start => (
@@ -281,6 +473,18 @@ public static class JobsyDateInputRules
         return JobsyDateValidationCode.None;
     }
 
+    private static bool TryCreateMonth(int year, int month, out string? yyyyMm)
+    {
+        yyyyMm = null;
+        if (year is < 1950 or > 2100 || month is < 1 or > 12)
+        {
+            return false;
+        }
+
+        yyyyMm = $"{year:0000}-{month:00}";
+        return true;
+    }
+
     private static bool TryCreateDate(int year, int month, int day, out DateOnly date)
     {
         date = default;
@@ -307,6 +511,7 @@ public enum JobsyDateConstraint
     CandidateBirthDate,
     AvailabilityStart,
     WorkHistoryMonth,
+    WorkHistoryEndAfterStart,
     NotFuture,
     NotPast,
     VacancyEndAfterStart

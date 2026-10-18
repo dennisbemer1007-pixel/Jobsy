@@ -11,5 +11,7 @@ public enum JobsyDateValidationCode
     NotFuture,
     NotPast,
     BeforeMin,
-    AfterMax
+    AfterMax,
+    InvalidMonth,
+    MonthBeforeStart
 }
