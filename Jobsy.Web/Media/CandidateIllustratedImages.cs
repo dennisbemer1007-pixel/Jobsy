@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261018-r14";
+    public const string Version = "20261018-r15";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -22,16 +22,14 @@ public static class CandidateIllustratedImages
     public const string StepBanen = $"{Base}/spots/banen.jpg?v={Version}";
     public const string EmpWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
 
-    /// <summary>Reference heroes — crème left, diverse trio on the right (dedicated crop).</summary>
-    public const string RefVerifRequest = $"{Base}/spots/ref-verif-hero.jpg?v={Version}";
+    /// <summary>Reference heroes — PR #737 ref-full (two women at table).</summary>
+    public const string RefVerifRequest = $"/images/candidate/ref-full.jpg?v={Version}";
 
-    public const string RefVerifPublic = $"{Base}/spots/ref-verif-hero.jpg?v={Version}";
+    public const string RefVerifPublic = $"/images/candidate/ref-full.jpg?v={Version}";
 
-    public const string RefVerifMobile = $"{Base}/spots/ref-verif-hero-mobile.jpg?v={Version}";
+    public const string RefVerifMobile = $"/images/candidate/ref-full-mobile.jpg?v={Version}";
 
-    /// <summary>Profession-band hero (Carrière #732): art rechts, crème links in asset.</summary>
-    public const string RefVerifHeroArtPosition = "right center";
+    public const string RefVerifHeroArtPosition = "right bottom";
 
-    /// <summary>Mobile overlay: figure crop anchored bottom-right.</summary>
     public const string RefVerifHeroMobilePosition = "right bottom";
 }

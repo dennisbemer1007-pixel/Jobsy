@@ -24,6 +24,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private const string EnvRunR13 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R13";
     private const string EnvRunMobhero = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_MOBHERO";
     private const string EnvRunR14 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R14";
+    private const string EnvRunR15 = "JOBSY_E2E_REF_VERIF_SCREENSHOTS_R15";
     private const string Password = "Jobsy123!";
     private const string Email = ReferenceVerificationDemoIds.Email;
 
@@ -58,6 +59,8 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
     private static string OutputDirMobhero => "/opt/cursor/artifacts/references-mobhero";
 
     private static string OutputDirR14 => "/opt/cursor/artifacts/references-r14";
+
+    private static string OutputDirR15 => "/opt/cursor/artifacts/references-r15";
 
     private static bool ShouldRun =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRun), "1", StringComparison.Ordinal);
@@ -97,6 +100,9 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static bool ShouldRunR14 =>
         string.Equals(Environment.GetEnvironmentVariable(EnvRunR14), "1", StringComparison.Ordinal);
+
+    private static bool ShouldRunR15 =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvRunR15), "1", StringComparison.Ordinal);
 
     [Fact]
     public async Task Capture_reference_verification_screenshots()
@@ -733,7 +739,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             var open = ReferenceVerificationDemoIds.OpenReferentToken;
             await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
-            await publicPage.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 10_000 });
+            await publicPage.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 10_000 });
             await Task.Delay(350);
             await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
                 publicPage,
@@ -804,7 +810,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             var open = ReferenceVerificationDemoIds.OpenReferentToken;
             await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
-            await publicPage.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 10_000 });
+            await publicPage.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 10_000 });
             await Task.Delay(350);
             await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
                 publicPage,
@@ -875,7 +881,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             var open = ReferenceVerificationDemoIds.OpenReferentToken;
             await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
-            await publicPage.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 10_000 });
+            await publicPage.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 10_000 });
             await Task.Delay(350);
             await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
                 publicPage,
@@ -948,7 +954,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
             var open = ReferenceVerificationDemoIds.OpenReferentToken;
             await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
             await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
-            await publicPage.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 10_000 });
+            await publicPage.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 10_000 });
             if (tag == "390")
             {
                 await AssertMobileInArtHeroAsync(publicPage);
@@ -963,6 +969,85 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         }
 
         var pngs = Directory.GetFiles(OutputDirR14, "*.png");
+        Assert.Equal(8, pngs.Length);
+    }
+
+    [Fact]
+    public async Task Capture_reference_verification_screenshots_r15()
+    {
+        if (!ShouldRunR15)
+        {
+            return;
+        }
+
+        var baseUrl = await KbE2e.TryReadyBaseUrlAsync();
+        if (baseUrl is null)
+        {
+            Assert.Fail("JOBSY_E2E_BASE_URL unreachable — start API :5200 and Web :5201 with seeded DB.");
+        }
+
+        Directory.CreateDirectory(OutputDirR15);
+        foreach (var stale in Directory.GetFiles(OutputDirR15))
+        {
+            File.Delete(stale);
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        foreach (var (width, height, tag) in Viewports)
+        {
+            await using var candidateContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(candidateContext);
+            var candidatePage = await candidateContext.NewPageAsync();
+            await LoginAsync(candidatePage, baseUrl, Email);
+
+            await candidatePage.GotoAsync($"{baseUrl}/candidate/paspoort", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await candidatePage.WaitForSelectorAsync("[data-testid='passport-employer-preview']", new() { Timeout = 15_000 });
+            await candidatePage.Locator("[data-testid='passport-employer-preview']").ScrollIntoViewIfNeededAsync();
+            await Task.Delay(350);
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
+                candidatePage,
+                Path.Combine(OutputDirR15, $"08-paspoort-endorsed-{tag}.png"));
+
+            await CaptureRequestFormAndConfirmAsync(candidatePage, baseUrl, tag, OutputDirR15, useRealisticDemoName: true);
+            if (tag == "390")
+            {
+                await AssertMobileInArtHeroAsync(candidatePage);
+            }
+
+            await candidateContext.CloseAsync();
+
+            await using var publicContext = await browser.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                IgnoreHTTPSErrors = true
+            });
+            await PlaywrightCookieConsent.AcceptAsync(publicContext);
+            var publicPage = await publicContext.NewPageAsync();
+            var open = ReferenceVerificationDemoIds.OpenReferentToken;
+            await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
+            await publicPage.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 10_000 });
+            if (tag == "390")
+            {
+                await AssertMobileInArtHeroAsync(publicPage);
+                await publicPage.WaitForSelectorAsync(".ref-verif-public__hero-more", new() { Timeout = 5_000 });
+            }
+
+            await Task.Delay(350);
+            await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
+                publicPage,
+                Path.Combine(OutputDirR15, $"04-referent-public-{tag}.png"));
+            await publicContext.CloseAsync();
+        }
+
+        var pngs = Directory.GetFiles(OutputDirR15, "*.png");
         Assert.Equal(8, pngs.Length);
     }
 
@@ -1025,7 +1110,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         var open = ReferenceVerificationDemoIds.OpenReferentToken;
         await publicPage.GotoAsync($"{baseUrl}/werk-referentie/{open}", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await publicPage.WaitForSelectorAsync("[data-testid='ref-verif-public-open']", new() { Timeout = 20_000 });
-        await publicPage.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 10_000 });
+        await publicPage.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 10_000 });
         await AssertMobileInArtHeroAsync(publicPage);
         await Task.Delay(350);
         await PlaywrightScreenshotSanitizer.CaptureFullPageAsync(
@@ -1039,19 +1124,19 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
 
     private static async Task AssertMobileInArtHeroAsync(IPage page)
     {
-        var hero = page.Locator(".cand-hero").First;
+        var hero = page.Locator(".ref-verif-gev-hero").First;
         await hero.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10_000 });
         var box = await hero.BoundingBoxAsync();
         Assert.NotNull(box);
         Assert.InRange(box!.Height, 80, 265);
 
-        var media = page.Locator(".cand-hero__media");
+        var media = page.Locator(".ref-verif-gev-hero__art");
         if (await media.CountAsync() > 0)
         {
             Assert.False(await media.IsVisibleAsync());
         }
 
-        var copy = page.Locator(".cand-hero__copy");
+        var copy = page.Locator(".ref-verif-gev-hero__copy");
         if (await copy.CountAsync() == 0 || !await copy.IsVisibleAsync())
         {
             return;
@@ -1137,7 +1222,7 @@ public sealed class ReferenceVerificationScreenshotsPlaywrightTests
         var entryAh = ReferenceVerificationDemoIds.WorkEntryAh;
         await page.GotoAsync($"{baseUrl}/candidate/paspoort/referentie/vraag/{entryAh:D}", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForSelectorAsync(".ref-verif-request-layout--ready", new() { Timeout = 20_000 });
-        await page.WaitForSelectorAsync(".cand-hero.ref-verif-cand-hero", new() { Timeout = 15_000 });
+        await page.WaitForSelectorAsync(".ref-verif-gev-hero", new() { Timeout = 15_000 });
         await page.WaitForSelectorAsync(".ref-verif-request__card .ref-verif-request__grid", new() { Timeout = 15_000 });
         await page.WaitForSelectorAsync(".ref-verif-request-aside", new() { Timeout = 10_000 });
         await Task.Delay(300);
