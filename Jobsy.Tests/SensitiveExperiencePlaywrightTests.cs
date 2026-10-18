@@ -46,6 +46,66 @@ public sealed class SensitiveExperiencePlaywrightTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_gevoelig_mobile_hero_390()
+    {
+        const string mobDir = "/opt/cursor/artifacts/gevoelig-mobhero";
+        Directory.CreateDirectory(mobDir);
+        using var web = new GevoeligWebFactory();
+        var baseUrl = web.EnsureServerAddress();
+        var signIn = baseUrl + "/__test/sign-in?return=" + Uri.EscapeDataString("/candidate/gevoelig-demo/werkervaring");
+        Assert.NotNull(_browser);
+
+        var screens = new (string Slug, string Path)[]
+        {
+            ("werkervaring", "/candidate/gevoelig-demo/werkervaring"),
+            ("neutrale-omschrijving", "/candidate/gevoelig-demo/edit"),
+            ("andere-periode", "/candidate/gevoelig-demo/timeline"),
+            ("referenties", "/candidate/gevoelig-demo/referenties"),
+            ("werkgeversweergave", "/candidate/gevoelig-demo/paspoort")
+        };
+
+        foreach (var (slug, path) in screens)
+        {
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new ViewportSize { Width = 390, Height = 844 }
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            await page.GotoAsync(signIn, new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await page.GotoAsync(baseUrl + path, new() { WaitUntil = WaitUntilState.NetworkIdle });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await page.EvaluateAsync("""
+                () => {
+                  document.documentElement.classList.add('gev-capture');
+                  document.querySelectorAll('.lobsy-assistant-tab, .lobsy-assistant').forEach(el => {
+                    el.style.display = 'none';
+                  });
+                }
+                """);
+            await page.Locator("[data-testid^='gevoelig-demo-']").WaitForAsync();
+            var hero = page.Locator(".gev-hero");
+            await hero.WaitForAsync();
+            var heroBox = await hero.BoundingBoxAsync();
+            Assert.NotNull(heroBox);
+            Assert.InRange(heroBox.Height, 240, 270);
+            var copyBox = await page.Locator(".gev-hero__copy").BoundingBoxAsync();
+            var artBox = await page.Locator(".gev-hero__art").BoundingBoxAsync();
+            Assert.NotNull(copyBox);
+            Assert.NotNull(artBox);
+            Assert.InRange(artBox.Height, heroBox.Height - 4, heroBox.Height + 4);
+            Assert.True(copyBox.Y >= heroBox.Y - 1 && copyBox.Y + copyBox.Height <= heroBox.Y + heroBox.Height + 1,
+                $"{slug}: copy must stay inside hero overlay, not in a separate band below");
+
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(mobDir, $"{slug}-390.png"),
+                FullPage = false
+            });
+        }
+    }
+
+    [Fact]
     public async Task Capture_gevoelig_mockup_screens()
     {
         using var web = new GevoeligWebFactory();
