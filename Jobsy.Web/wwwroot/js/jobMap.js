@@ -4223,64 +4223,53 @@ window.jobMap = (function () {
         }
     }
 
-    function kkFitPadding() {
-        var edge = 48;
-        var mobile = false;
-        try {
-            mobile = document.documentElement.classList.contains("vp-mobile");
-        } catch (e) { /* ignore */ }
-        if (mobile) {
-            return {
-                top: 32,
-                right: 36,
-                bottom: 32,
-                left: 36
-            };
-        }
-        return {
-            top: edge,
-            right: edge,
-            bottom: edge,
-            left: edge
-        };
-    }
+    var KK_FIT_PADDING = 40;
 
-    function kkBuildSymmetricFitBounds(areas, origin, travelKm) {
-        var areaCoords = [];
-        (areas || []).forEach(function (a) {
+    function kkUnionZoneBounds(areas) {
+        var bounds = new maplibregl.LngLatBounds();
+        var hasPoint = false;
+        (areas || []).forEach(function (a, idx) {
+            var ring = a.polygonRing || a.PolygonRing || [];
+            ring.forEach(function (p) {
+                if (!p || p.length < 2) {
+                    return;
+                }
+                var pair = kkNormalizeLngLatPair(Number(p[0]), Number(p[1]));
+                if (pair) {
+                    bounds.extend(pair);
+                    hasPoint = true;
+                }
+            });
             var lat = kkProp(a, "centerLat", "CenterLat");
             var lng = kkProp(a, "centerLng", "CenterLng");
             if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                areaCoords.push({ lat: lat, lng: lng });
+                bounds.extend([lng, lat]);
+                hasPoint = true;
+                var key = a.areaKey || a.AreaKey;
+                var off = KK_LABEL_OFFSETS[kkLabelOffsetIndex(key, idx)];
+                bounds.extend([lng + off[0] * 0.018, lat + off[1] * 0.018]);
             }
         });
-        if (!areaCoords.length) {
-            return null;
-        }
-        var cLat = 0;
-        var cLng = 0;
-        areaCoords.forEach(function (c) {
-            cLat += c.lat;
-            cLng += c.lng;
-        });
-        cLat /= areaCoords.length;
-        cLng /= areaCoords.length;
-        var halfLat = 0;
-        var halfLng = 0;
-        areaCoords.forEach(function (c) {
-            halfLat = Math.max(halfLat, Math.abs(c.lat - cLat));
-            halfLng = Math.max(halfLng, Math.abs(c.lng - cLng));
-        });
-        if (origin && Number.isFinite(origin.lat) && Number.isFinite(origin.lng)) {
-            halfLat = Math.max(halfLat, Math.abs(origin.lat - cLat));
-            halfLng = Math.max(halfLng, Math.abs(origin.lng - cLng));
-        }
-        var half = Math.max(halfLat, halfLng) * 1.16;
-        var lngHalf = half / Math.max(0.25, Math.cos(cLat * Math.PI / 180));
-        var bounds = new maplibregl.LngLatBounds();
-        bounds.extend([cLng - lngHalf, cLat - half]);
-        bounds.extend([cLng + lngHalf, cLat + half]);
-        return bounds;
+        return hasPoint ? bounds : null;
+    }
+
+    function syncKkMobileInviteChrome() {
+        try {
+            var nav = document.querySelector(".wg-bottom-nav");
+            var invite = document.querySelector(".kk-mobile-sheet__invite");
+            if (!nav || !invite) {
+                return;
+            }
+            var style = window.getComputedStyle(nav);
+            if (style.display === "none" || style.visibility === "hidden") {
+                return;
+            }
+            var h = Math.ceil(nav.getBoundingClientRect().height);
+            if (h > 0) {
+                document.documentElement.style.setProperty("--kk-wg-nav-offset", h + "px");
+                invite.style.bottom = h + "px";
+            }
+        } catch (eSync) { /* ignore */ }
     }
 
     function kkResizeMapAndFit(animate) {
@@ -4301,6 +4290,7 @@ window.jobMap = (function () {
             if (mapHasUsableSize()) {
                 fitKkView(animate);
             }
+            syncKkMobileInviteChrome();
         };
         if (typeof requestAnimationFrame === "function") {
             requestAnimationFrame(function () {
@@ -4315,9 +4305,11 @@ window.jobMap = (function () {
         if (!map || !kkMode) {
             return;
         }
+        syncKkMobileInviteChrome();
         [0, 80, 200, 450, 900].forEach(function (delay) {
             setTimeout(function () {
                 kkResizeMapAndFit(false);
+                syncKkMobileInviteChrome();
             }, delay);
         });
     }
@@ -4387,7 +4379,7 @@ window.jobMap = (function () {
             drawKkRadiusRing(lastOrigin.lat, lastOrigin.lng);
         }
         var travelKm = Number(travelOptions.radiusKm) || 25;
-        var bounds = kkBuildSymmetricFitBounds(kkAreasCache, lastOrigin, travelKm);
+        var bounds = kkUnionZoneBounds(kkAreasCache);
         if (!bounds || bounds.isEmpty()) {
             return;
         }
@@ -4405,7 +4397,7 @@ window.jobMap = (function () {
         runWithViewportNotifySuppressed(function () {
             try {
                 map.fitBounds(bounds, {
-                    padding: kkFitPadding(),
+                    padding: KK_FIT_PADDING,
                     maxZoom: 11.25,
                     animate: animate === true && !prefersReducedMotion(),
                     duration: animate === true && !prefersReducedMotion() ? 450 : 0
@@ -4415,7 +4407,7 @@ window.jobMap = (function () {
                     if (z < 9.75) {
                         try {
                             map.fitBounds(bounds, {
-                                padding: kkFitPadding(),
+                                padding: KK_FIT_PADDING,
                                 maxZoom: 11.25,
                                 animate: false,
                                 duration: 0
@@ -4595,6 +4587,11 @@ window.jobMap = (function () {
             kkResizeMapAndFit(false);
             kkScheduleLayoutPasses();
             kkInitialFitDone = true;
+            syncKkMobileInviteChrome();
+            if (typeof window !== "undefined" && !window._kkInviteNavResizeBound) {
+                window._kkInviteNavResizeBound = true;
+                window.addEventListener("resize", syncKkMobileInviteChrome, { passive: true });
+            }
         });
     }
 

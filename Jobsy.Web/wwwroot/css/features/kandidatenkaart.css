@@ -1,9 +1,7 @@
 .kk-page {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
+    width: 100%;
 }
 
 .kk-page.panel-page.insights-page {
@@ -13,60 +11,6 @@
 .kk-page > .insights-tabs {
     flex-shrink: 0;
     margin-block-end: 1rem;
-}
-
-@media (min-width: 1024px) {
-    .wg-shell:has(.kk-page) {
-        height: 100dvh;
-        max-height: 100dvh;
-        overflow: hidden;
-    }
-
-    .wg-shell__body:has(.kk-page) {
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    .wg-main:has(.kk-page) {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        min-height: 0;
-        overflow: hidden;
-    }
-
-    .wg-main:has(.kk-page) .kk-page {
-        flex: 1;
-        min-height: 0;
-        max-height: 100%;
-    }
-
-    .kk-page > .insights-tabs {
-        position: relative;
-        z-index: 2;
-        flex-shrink: 0;
-        overflow: visible;
-    }
-}
-
-html.vp-desktop .wg-shell:has(.kk-page) {
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-}
-
-html.vp-desktop .wg-shell__body:has(.kk-page) {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-}
-
-html.vp-desktop .kk-page > .insights-tabs {
-    position: relative;
-    z-index: 2;
-    flex-shrink: 0;
-    overflow: visible;
 }
 
 .kk-filters--desktop select.jobsy-form-value {
@@ -121,43 +65,6 @@ html.vp-desktop .kk-page > .insights-tabs {
 .kk-filters--desktop select.jobsy-form-value {
     width: 100%;
     max-width: 100%;
-}
-
-.wg-bottom-nav {
-    position: fixed;
-    inset-inline: 0;
-    bottom: 0;
-    display: none;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: var(--space-1) var(--space-2);
-    z-index: var(--z-sticky);
-}
-
-.wg-bottom-nav__list {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    gap: var(--space-1);
-}
-
-.wg-bottom-nav__link {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    min-height: 52px;
-    color: var(--muted);
-    text-decoration: none;
-    font-size: var(--text-xs);
-}
-
-.wg-bottom-nav__link.is-active {
-    color: var(--brand);
-    font-weight: 600;
 }
 
 /* —— Page chrome —— */
@@ -1235,16 +1142,6 @@ html.vp-mobile .wg-sidebar {
     display: none;
 }
 
-html.vp-mobile .wg-shell.wg-has-bottom-nav {
-    padding-bottom: 0;
-}
-
-html.vp-mobile .wg-shell:has(.kk-page) {
-    --wg-bottom-nav-block-h: calc(
-        52px + var(--space-1) + max(var(--space-1), env(safe-area-inset-bottom, 0px))
-    );
-}
-
 html.vp-mobile .wg-shell__body {
     flex: 1;
     min-height: 0;
@@ -1259,11 +1156,6 @@ html.vp-mobile .wg-main {
     flex-direction: column;
     flex: 1;
     min-height: 0;
-}
-
-html.vp-mobile .wg-bottom-nav {
-    display: block;
-    z-index: var(--z-sticky, 6);
 }
 
 html.vp-mobile .kk-page__chrome--desktop {
@@ -1732,12 +1624,11 @@ html.vp-mobile .kk-list-invite-bar {
 
 html.vp-mobile .kk-mobile-sheet__invite {
     --kk-invite-bar-block-h: calc(0.65rem + 0.75rem + 44px);
-    --kk-wg-nav-h: calc(52px + var(--space-1) + max(var(--space-1), env(safe-area-inset-bottom, 0px)));
     position: fixed;
     left: 0;
     right: 0;
-    bottom: var(--kk-wg-nav-h);
-    z-index: calc(var(--z-sticky, 6) + 1);
+    bottom: var(--kk-wg-nav-offset, var(--wg-bottom-nav-block-h, 3.625rem));
+    z-index: calc(var(--z-sticky, 6) - 1);
     flex-shrink: 0;
     padding: 0.65rem 1rem 0.75rem;
     border-top: 1px solid var(--border);
@@ -1746,16 +1637,13 @@ html.vp-mobile .kk-mobile-sheet__invite {
 }
 
 html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-mobile-sheet__body--list {
-    padding-bottom: calc(var(--kk-invite-bar-block-h, 3.75rem) + var(--kk-wg-nav-h, 3.625rem));
+    padding-bottom: calc(
+        var(--kk-invite-bar-block-h, 3.75rem) + var(--kk-wg-nav-offset, var(--wg-bottom-nav-block-h, 3.625rem))
+    );
 }
 
 html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-active-sell-collapse {
     display: none;
-}
-
-html.vp-mobile .wg-shell:has(.kk-page) {
-    max-height: 100dvh;
-    overflow: hidden;
 }
 
 .wg-shell:has(.kk-page) .lobsy-assistant-tab,
@@ -1820,22 +1708,8 @@ html.vp-mobile .wg-shell:has(.kk-page) {
   position: relative;
 }
 
-html.vp-desktop .wg-main:has(.kk-page) {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-}
-
-html.vp-desktop .wg-main:has(.kk-page) .kk-page {
-    flex: 1;
-    min-height: 0;
-    max-height: 100%;
-}
-
 html.vp-desktop .kk-page.panel-page {
-    min-height: 0;
+    min-height: min(72vh, calc(100dvh - 11rem));
 }
 
 .kk-seg button {

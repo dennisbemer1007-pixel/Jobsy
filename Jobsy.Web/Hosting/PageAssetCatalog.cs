@@ -76,7 +76,7 @@ public static class PageAssetCatalog
     public static readonly string[] KandidatenkaartCss =
     [
         "css/features/kandidaatinzichten.css?v=20261004-10",
-        "css/features/kandidatenkaart.css?v=20261018-16",
+        "css/features/kandidatenkaart.css?v=20261018-17",
     ];
 
     public static readonly string[] BeheerCss =

@@ -84,6 +84,14 @@ public sealed class KandidatenkaartEvidencePlaywrightTests
             });
             await page.WaitForTimeoutAsync(1500);
 
+            await page.GotoAsync($"{baseUrl.TrimEnd('/')}/werkgever/talentpool", new()
+            {
+                WaitUntil = WaitUntilState.DOMContentLoaded,
+                Timeout = 60_000
+            });
+            await page.WaitForTimeoutAsync(1200);
+            await ShotPageAsync(page, $"talentpool-ref-{suffix}.png");
+
             await GotoKandidatenkaartWhenReadyAsync(page, baseUrl);
             if (width < 640)
             {
