@@ -44,13 +44,54 @@ async function registerToWizard(page) {
   await page.waitForSelector('[data-testid=onboarding-step-1-illustrated]');
 }
 
+async function resolveHomeAddress(page, postcode = '2671GB') {
+  const address = page.locator('#onboarding-home-address, .ob-fields input[inputmode=text], .ob-fields input[autocomplete=postal-code]').first();
+  await address.click();
+  await address.fill('');
+  await address.pressSequentially(postcode, { delay: 40 });
+  await page.waitForTimeout(1200);
+  const suggestion = page.locator('button.address-suggestions__item, .address-suggestions__item, .kb-address__suggest button').first();
+  for (let attempt = 0; attempt < 45; attempt++) {
+    if (await suggestion.count()) {
+      await suggestion.click({ timeout: 15000 });
+      break;
+    }
+    const hintOk = await page.evaluate(() => {
+      const hint = document.querySelector('.ob-fields .ob-wizard__hint');
+      return !!(hint?.textContent?.includes('✓'));
+    });
+    if (hintOk) break;
+    if (await page.locator('[data-testid=onboarding-nearby-panel-desktop], [data-testid=onboarding-nearby-panel-mobile]').count()) {
+      break;
+    }
+    if (attempt === 5 && postcode.replace(/\s/g, '').length === 6) {
+      const spaced = `${postcode.replace(/\s/g, '').slice(0, 4)} ${postcode.replace(/\s/g, '').slice(4)}`;
+      await address.pressSequentially(spaced, { delay: 40 });
+    }
+    await page.waitForTimeout(1000);
+  }
+  await page.waitForTimeout(1200);
+}
+
+async function waitForNearbyCount(page) {
+  const countLoc = page.locator('.ob-nearby-panel--desktop .ob-nearby-panel__count');
+  try {
+    await countLoc.first.waitFor({ state: 'visible', timeout: 90000 });
+    await page.waitForFunction(() => {
+      const el = document.querySelector('.ob-nearby-panel--desktop .ob-nearby-panel__count');
+      const n = parseInt((el?.textContent ?? '').replace(/\D/g, ''), 10);
+      return Number.isFinite(n) && n > 0;
+    }, { timeout: 90000 });
+  } catch {
+    // Panel may stay at zero in empty env; still capture layout.
+  }
+  await page.waitForTimeout(400);
+}
+
 async function fillStep1(page) {
   await page.locator('.ob-fields input').first().fill('Sanne');
   await page.locator('.ob-fields input').nth(1).fill('Test');
-  await page.locator('#onboarding-home-address').fill('2671GB');
-  await page.waitForTimeout(800);
-  const sug = page.locator('.kb-address__suggest button, .address-suggestions button').first();
-  if (await sug.count()) await sug.click();
+  await resolveHomeAddress(page);
   const birth = page.locator('[data-testid=onboarding-birth-date] .jobsy-date-field__text').first();
   if (await birth.count()) {
     await birth.fill('15-06-2000');
@@ -58,6 +99,7 @@ async function fillStep1(page) {
     const date = page.locator('[data-testid=onboarding-birth-date] input[type=date]').first();
     if (await date.count()) await date.fill('2000-06-15');
   }
+  await waitForNearbyCount(page);
   await page.getByTestId('onboarding-next').click();
   await page.waitForSelector('[data-testid=onboarding-step-2-illustrated]');
 }
@@ -99,6 +141,9 @@ const slugs = ['kennismaken', 'beschikbaarheid', 'vervoer', 'werkervaring', 'opl
   await registerToWizard(page);
   for (let step = 1; step <= 6; step++) {
     await page.waitForSelector(`[data-testid=onboarding-step-${step}-illustrated]`);
+    if (step === 3) {
+      await waitForNearbyCount(page);
+    }
     await page.screenshot({
       path: path.join(outDir, `onboarding-step-${step}-${slugs[step - 1]}-1440.png`),
     });

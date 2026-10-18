@@ -123,6 +123,28 @@
     overflow-y: auto;
   }
 
+  .ob-nearby-panel__map-teaser {
+    margin-block-start: auto;
+    padding-block-start: 10px;
+    display: grid;
+    gap: 6px;
+  }
+
+  .ob-nearby-panel__map-svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    border-radius: var(--radius-sm);
+    border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  }
+
+  .ob-nearby-panel__map-caption {
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    color: var(--muted);
+    text-align: center;
+  }
+
   .ob-nearby-panel__footnote {
     margin: 10px 0 0;
     padding-block-start: 10px;

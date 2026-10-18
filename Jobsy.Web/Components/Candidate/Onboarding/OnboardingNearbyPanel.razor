@@ -15,6 +15,28 @@
             @ExamplesBlock(compact: false)
             @if (Signal!.Count > 0)
             {
+                <div class="ob-nearby-panel__map-teaser" aria-hidden="true">
+                    <svg class="ob-nearby-panel__map-svg" viewBox="0 0 240 120" preserveAspectRatio="xMidYMid slice">
+                        <defs>
+                            <linearGradient id="ob-nearby-map-bg" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0" stop-color="#F3EEE4"/>
+                                <stop offset="1" stop-color="#ECE5D7"/>
+                            </linearGradient>
+                            <radialGradient id="ob-nearby-map-ring" cx="50%" cy="55%" r="42%">
+                                <stop offset="0" stop-color="#2F7D5B" stop-opacity=".16"/>
+                                <stop offset="1" stop-color="#2F7D5B" stop-opacity=".02"/>
+                            </radialGradient>
+                        </defs>
+                        <rect width="240" height="120" fill="url(#ob-nearby-map-bg)" rx="8"/>
+                        <circle cx="120" cy="62" r="46" fill="url(#ob-nearby-map-ring)" stroke="#2F7D5B" stroke-opacity=".35" stroke-width="1" stroke-dasharray="4 5"/>
+                        <circle cx="120" cy="62" r="4" fill="#2F7D5B"/>
+                        <circle cx="92" cy="48" r="3" fill="#C45C26" opacity=".85"/>
+                        <circle cx="148" cy="54" r="3" fill="#C45C26" opacity=".85"/>
+                        <circle cx="108" cy="78" r="3" fill="#C45C26" opacity=".75"/>
+                        <circle cx="138" cy="72" r="3" fill="#C45C26" opacity=".75"/>
+                    </svg>
+                    <span class="ob-nearby-panel__map-caption">@Culture["Onboarding.Panel.Nearby.MapCaption"]</span>
+                </div>
                 <p class="ob-nearby-panel__footnote">@Culture["Onboarding.Panel.Nearby.Footnote"]</p>
             }
         </div>

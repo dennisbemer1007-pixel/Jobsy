@@ -233,7 +233,10 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Panel.Nearby.Footnote"] = english
             ? "Based on your home location, travel time and hours — examples only."
             : "Op basis van je adres, reistijd en uren — voorbeelden ter inspiratie.";
-        map["Onboarding.Panel.Nearby.RailAria"] = english ? "Jobs near you (informational)" : "Banen in de buurt (ter info)";
+        map["Onboarding.Panel.Nearby.MapCaption"] = english
+            ? "Your area on the job map"
+            : "Jouw buurt op de banenkaart";
+        map["Onboarding.Panel.Nearby.RailAria"] = english ? "Jobs nearby (informational)" : "Banen in de buurt (ter info)";
         map["Onboarding.Early.Insight.Badge"] = english ? "First insight" : "Eerste inzicht";
         map["Onboarding.Early.Insight.Title"] = english ? "Your strongest point so far" : "Je sterkste punt tot nu toe";
         map["Onboarding.Early.Insight.Lead"] = english ? "Based on your first short test. It gets sharper after the next three." : "Op basis van je eerste korte test. Het wordt scherper na de volgende drie.";
