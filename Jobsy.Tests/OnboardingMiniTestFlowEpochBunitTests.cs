@@ -34,12 +34,12 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
     }
 
     [Fact]
-    public void TestQuestionFlow_keeps_last_index_when_only_parameters_change()
+    public void TestQuestionFlow_resets_to_vraag_1_when_block_questions_change()
     {
         var comp = Enumerable.Range(1, 5)
             .Select(i => new TestQuestionFlow.FlowQuestion(i, $"Comp {i}"))
             .ToList();
-        var career = OnboardingWizardCatalog.CareerQuestionIds
+        var career = OnboardingWizardCatalogV2.CareerQuestionIds
             .Select(id => new TestQuestionFlow.FlowQuestion(id, $"Career {id}"))
             .ToList();
         var answers = new Dictionary<int, int>();
@@ -51,10 +51,14 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
             .Add(p => p.Target, TestDepthLevel.First)
             .Add(p => p.OnAnswer, (Action<(int Id, int Value)>)(pair => answers[pair.Id] = pair.Value)));
 
+        cut.WaitForElement(".test-likert__opt", TimeSpan.FromSeconds(15));
         for (var i = 0; i < 4; i++)
         {
             cut.FindAll(".test-likert__opt")[3].Click();
             cut.Find("button.test-flow__next").Click();
+            cut.WaitForAssertion(
+                () => Assert.Contains($"Vraag {i + 2} van 5", cut.Markup, StringComparison.Ordinal),
+                TimeSpan.FromSeconds(15));
         }
 
         cut.WaitForAssertion(
@@ -67,8 +71,55 @@ public sealed class OnboardingMiniTestFlowEpochBunitTests : BunitContext
             .Add(p => p.Answers, new Dictionary<int, int>())
             .Add(p => p.Target, TestDepthLevel.First));
 
-        Assert.Contains("Vraag 5 van 5", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("Vraag 1 van 5", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("Career", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Compact_mini_hides_depth_ticks_on_progress_bar()
+    {
+        var questions = Enumerable.Range(1, 5)
+            .Select(i => new TestQuestionFlow.FlowQuestion(i, $"Q{i}"))
+            .ToList();
+        var cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Career)
+            .Add(p => p.Questions, questions)
+            .Add(p => p.Answers, new Dictionary<int, int>())
+            .Add(p => p.Target, TestDepthLevel.First)
+            .Add(p => p.Compact, true));
+
+        Assert.DoesNotContain("test-flow__tick", cut.Markup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Wizard_scopes_server_answers_to_current_mini_question_ids()
+    {
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var wizard = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
+        Assert.Contains("questionIds.Contains(id)", wizard, StringComparison.Ordinal);
+        Assert.Contains("FilterMiniAnswers", wizard, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TestQuestionFlow_resumes_mid_block_at_first_unanswered()
+    {
+        var career = OnboardingWizardCatalogV2.CareerQuestionIds
+            .Select(id => new TestQuestionFlow.FlowQuestion(id, $"Career {id}"))
+            .ToList();
+        var partial = new Dictionary<int, int>
+        {
+            [career[0].Id] = 4,
+            [career[1].Id] = 3,
+        };
+
+        var cut = Render<TestQuestionFlow>(parameters => parameters
+            .Add(p => p.Kind, AssessmentKind.Career)
+            .Add(p => p.Questions, career)
+            .Add(p => p.Answers, partial)
+            .Add(p => p.Target, TestDepthLevel.First)
+            .Add(p => p.Compact, true));
+
+        Assert.Contains("Vraag 3 van 5", cut.Markup, StringComparison.Ordinal);
     }
 
     [Fact]
