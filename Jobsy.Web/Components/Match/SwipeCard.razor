@@ -3,6 +3,7 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.Localization
 @inject CultureState Culture
 
 @if (_visible && Model is not null)
@@ -134,7 +135,7 @@
                 <ul class="swipe-card__tags">
                     @foreach (var tag in Model.Tags.Take(isDialog ? 2 : 1))
                     {
-                        <li>@tag</li>
+                        <li>@UiLabels.VacancyHoursTag(Culture, tag)</li>
                     }
                 </ul>
             }

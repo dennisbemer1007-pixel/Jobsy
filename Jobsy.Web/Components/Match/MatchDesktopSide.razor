@@ -3,6 +3,7 @@
 @using Jobsy.Web.Models
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.Localization
 @inject CultureState Culture
 
 @if (Model is not null)
@@ -64,7 +65,7 @@
                 {
                     <div>
                         <dt>@Culture["Kb.Detail.WageFact"]</dt>
-                        <dd>@Model.SalaryPrimary</dd>
+                        <dd>@(Model.HourlyWage is > 0 ? $"€ {Model.SalaryPrimary}" : Model.SalaryPrimary)</dd>
                     </div>
                 }
                 <div>
@@ -81,8 +82,10 @@
         </section>
 
         <section class="match-side-card match-side-card--saved">
-            <p><strong>@Culture["Kb.Saved.Title"]</strong> · @Culture["Kb.Saved.Lead"]</p>
-            <a href="@KbRoutes.Saved">@Culture["Kb.Match.ViewSaved"]</a>
+            <div class="match-side-card--saved__copy">
+                <p><strong>@Culture["Kb.Saved.Title"]</strong> · @Culture["Kb.Saved.Lead"]</p>
+            </div>
+            <a class="match-side-card--saved__cta engagement-btn" href="@KbRoutes.Saved">@Culture["Kb.Match.ViewSaved"]</a>
         </section>
     </aside>
 }

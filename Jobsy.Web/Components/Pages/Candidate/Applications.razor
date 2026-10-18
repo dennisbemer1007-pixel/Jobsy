@@ -30,7 +30,7 @@
 
 <PageTitle>@Culture["Nav.MyApplications"] · Lobsy</PageTitle>
 
-<div class="panel-page apps-page kb-apps kb-apps--illustrated panel-page--cand-ill" @onkeydown="OnPageKeyDown">
+<div class="panel-page apps-page kb-apps" @class="@("kb-apps--illustrated panel-page--cand-ill")" @onkeydown="OnPageKeyDown">
     @{
         var appsLead = _readOnly
             ? Culture["Apps.LeadReadOnly"]

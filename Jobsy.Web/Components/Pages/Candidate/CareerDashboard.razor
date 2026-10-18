@@ -24,21 +24,22 @@
 
     @if (_plan.HasPlan)
     {
-        var stepTotal = Math.Max(_plan.Stones.Count, 1);
-        var stepCurrent = Math.Clamp(_plan.CurrentStoneIndex + 1, 1, stepTotal);
-        <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.EyebrowStep", stepCurrent, stepTotal)"
+        var heroArt = CandidateIllustratedArt.HeroLandscapeForDream(_plan.DreamTitle);
+        var stepTotal = Math.Max(_plan.TotalSteps, 1);
+        var stepCurrent = Math.Max(_plan.CurrentStepNumber, 1);
+        <CandidateIllustratedHero Eyebrow="@CareerIllustratedFormatting.ProgressEyebrow(Culture, stepCurrent, stepTotal, _plan.DreamTitle)"
                                   CoralEyebrow="true"
                                   Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
-                                  Lead="@Culture["Career.Overview.Lead"]"
-                                  ArtUrl="@CarriereBand"
-                                  ArtPosition="58% center" />
+                                  Lead="@Culture["Career.Overview.LeadShort"]"
+                                  ArtUrl="@heroArt.Url"
+                                  ArtPosition="@heroArt.BackgroundPosition" />
     }
     else if (!_bootstrapping)
     {
         <CandidateIllustratedHero Title="@Culture["Career.Empty.Title"]"
                                   Lead="@Culture["Career.Empty.Lead"]"
-                                  ArtUrl="@CarriereBand"
-                                  ArtPosition="58% center"
+                                  ArtUrl="@CandidateIllustratedArt.CareerEmptySpot"
+                                  ArtPosition="right center"
                                   CssClass="cand-hero--profession-band" />
     }
 
@@ -81,13 +82,13 @@
                      PlatesShed="2"
                      LobsterSizeDesktop="124"
                      LobsterSizeMobile="66"
-                     BubbleDesktop="@(_suggestions.Count > 0 ? Culture["Career.Say.Empty"] : Culture["Career.Say.EmptyShort"])"
-                     BubbleMobile="@Culture["Career.Say.EmptyShort"]">
-            <RailContent>
-                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
-            </RailContent>
+                     BubbleDesktop=""
+                     BubbleMobile="">
+            <RailContent></RailContent>
             <ChildContent>
-                <CareerEmptyCard Suggestions="@_suggestions"
+                <div class="career-ill-container career-ill-container--empty">
+                <CareerEmptyCard Illustrated="true"
+                                 Suggestions="@_suggestions"
                                  Scores="@_careerScores"
                                  Education="@_educationLabel"
                                  Busy="@_busy"
@@ -98,6 +99,7 @@
                                  OnChoice="SetChoice"
                                  OnSearch="SearchDreamsAsync"
                                  OnSubmit="GeneratePlanAsync" />
+                </div>
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
@@ -176,22 +178,45 @@
                      PlatesShed="@_plan.PlatesShed"
                      LobsterSizeDesktop="@_plan.LobsterSizeDesktop"
                      LobsterSizeMobile="@_plan.LobsterSizeMobile"
-                     BubbleDesktop="@BubbleDesktop"
-                     BubbleMobile="@BubbleMobile">
-            <RailContent>
-                <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
-            </RailContent>
+                     BubbleDesktop=""
+                     BubbleMobile="">
+            <RailContent></RailContent>
             <ChildContent>
-                <CareerOverviewCard Plan="@_plan"
-                                    Busy="@_busy"
-                                    EmployersOn="@_employersOn"
-                                    PassportOn="@_passportOn"
-                                    ShowCarriedOver="@_showCarriedOver"
-                                    ErrorText="@_error"
-                                    OnChangeDream="OpenDreamDialog"
-                                    OnClearDream="ClearDreamAsync"
-                                    OnDismissCarriedOver="DismissCarriedOver"
-                                    OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                <div class="career-ill-container">
+                <div class="career-ill-plan">
+                    <CareerIllustratedPath Plan="@_plan" NowLabel="@_nowLabel" />
+                    <div class="career-ill-plan__grid">
+                        <div class="career-ill-plan__main">
+                            <CareerIllustratedStepCards Plan="@_plan" EmployersOn="@_employersOn" />
+                            <CareerIllustratedStepLearning Courses="@_panelCourses" />
+                        </div>
+                        <div class="career-ill-plan__aside">
+                            <CareerIllustratedStepPanel Step="@IllustratedPanelStep"
+                                                         CourseSlots="@_panelCourses"
+                                                         Busy="@_busy"
+                                                         EmployersOn="@_employersOn"
+                                                         OnClearDream="ClearDreamAsync" />
+                            <p class="career-ill-source">
+                                @(_plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])
+                            </p>
+                        </div>
+                    </div>
+                    @if ((_showCarriedOver && _plan.CarriedOverCount > 0) || _plan.LanguageDiffers || !string.IsNullOrWhiteSpace(_error))
+                    {
+                        <CareerOverviewCard Illustrated="true"
+                                            Plan="@_plan"
+                                            Busy="@_busy"
+                                            EmployersOn="@_employersOn"
+                                            PassportOn="@_passportOn"
+                                            ShowCarriedOver="@_showCarriedOver"
+                                            ErrorText="@_error"
+                                            OnChangeDream="OpenDreamDialog"
+                                            OnClearDream="ClearDreamAsync"
+                                            OnDismissCarriedOver="DismissCarriedOver"
+                                            OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                    }
+                </div>
+                </div>
 
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
 
@@ -226,6 +251,7 @@
     private CareerStepDoneView _doneGained = new();
     private CareerStepVacancyFit _stepFit = CareerStepVacancyFit.None;
     private List<PassportCourseCard> _courseSlots = [];
+    private List<PassportCourseCard> _panelCourses = [];
     private string _stepContextId = "";
     private CareerPlanViewModel _plan = CareerPlanViewModel.Empty;
     private IReadOnlyList<CareerDreamOptionApiItem> _suggestions = [];
@@ -298,6 +324,19 @@
 
     private int DoneVacancyCount => _employersOn && _stepFit.ShowsCount ? _stepFit.GoodCount : 0;
 
+    private CareerStepDetailView? IllustratedPanelStep
+    {
+        get
+        {
+            if (!_plan.HasPlan || _step is not null || _done is not null || _plan.CurrentStep is not { } current)
+            {
+                return null;
+            }
+
+            return CareerPlanViewBuilder.BuildStep(_planApi, current.Order, _evidence, _experienceYears);
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Prerender paints the skeleton. Load only after the interactive circuit
@@ -352,6 +391,7 @@
         }
 
         await SyncStepAsync();
+        await LoadPanelCoursesAsync();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -363,6 +403,26 @@
         }
 
         await SyncStepAsync();
+        await LoadPanelCoursesAsync();
+    }
+
+    private async Task LoadPanelCoursesAsync()
+    {
+        _panelCourses = [];
+        var panel = IllustratedPanelStep;
+        if (panel is null || panel.CourseSearchKeys.Count == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            _panelCourses = await Api.GetPassportTrainingOffersAsync(string.Join(' ', panel.CourseSearchKeys));
+        }
+        catch (Exception)
+        {
+            _panelCourses = [];
+        }
     }
 
     /// <summary>Resolves <c>?stap=</c> to a step; an unknown or foreign order falls back to the overview.</summary>
@@ -455,6 +515,7 @@
             ApplyPlan(plan);
             _done = step;
             _step = null;
+            await LoadPanelCoursesAsync();
             _announcement = Culture.Format("Career.Done.Announce", step.Order);
         }
         catch (Exception ex)
@@ -490,6 +551,7 @@
             _done = null;
             _doneGained = new CareerStepDoneView();
             _step = CareerPlanViewBuilder.BuildStep(_planApi, target.Order, _evidence, _experienceYears);
+            await LoadPanelCoursesAsync();
             _announcement = Culture.Format("Career.Undo.Announce", target.Order);
         }
         catch (Exception ex)
@@ -769,6 +831,7 @@
     {
         _planApi = plan;
         _plan = CareerPlanViewBuilder.BuildPage(plan, Culture.Language, _nowLabel, _evidence, _experienceYears);
+        _ = LoadPanelCoursesAsync();
         if (!_plan.HasPlan && !string.IsNullOrWhiteSpace(_plan.DreamTitle))
         {
             var entry = CareerDreamCatalog.FindByTitleOrAlias(_plan.DreamTitle);
@@ -783,4 +846,22 @@
         => ex is CareerApiErrorException api
             ? CareerPathService.ErrorMessage(key => Culture[key], api)
             : Culture["Common.Error"];
+
+    private string TrainingMeta(PassportCourseCard card)
+    {
+        var parts = new List<string>(2);
+        if (!string.IsNullOrWhiteSpace(card.Delivery))
+        {
+            parts.Add(card.Delivery);
+        }
+
+        if (card.DurationValue is > 0 && !string.IsNullOrWhiteSpace(card.DurationUnit))
+        {
+            parts.Add($"{card.DurationValue} {card.DurationUnit}");
+        }
+
+        return parts.Count > 0
+            ? string.Join(" · ", parts)
+            : Culture["Career.Illustrated.CourseMetaFallback"];
+    }
 }

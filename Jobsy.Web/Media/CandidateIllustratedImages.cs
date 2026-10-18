@@ -10,6 +10,7 @@ public static class CandidateIllustratedImages
     public static string Spot(string file) => $"{Base}/spots/{file}?v={Version}";
 
     public const string FinaleHero = $"{Base}/finale-hero.jpg?v={Version}";
+    public const string VacancyDierenStockPhoto = "/images/vacancies/dierenpension-kennel.jpg";
     public const string LoginLeft = $"{Base}/spots/login-links.jpg?v={Version}";
     public const string LoginRight = $"{Base}/spots/login-rechts.jpg?v={Version}";
     public const string VervoerBlok = $"{Base}/spots/vervoer-blok.jpg?v={Version}";
@@ -69,7 +70,8 @@ public static class CandidateIllustratedImages
             return MobFiguresKompas;
         }
 
-        if (bandArtUrl.Contains("droombaan-profession-wide", StringComparison.OrdinalIgnoreCase))
+        if (bandArtUrl.Contains("droombaan-profession-wide", StringComparison.OrdinalIgnoreCase)
+            || bandArtUrl.Contains("finale-hero", StringComparison.OrdinalIgnoreCase))
         {
             return MobFiguresDroombaan;
         }

@@ -58,6 +58,12 @@ public static class UiStringsMatch
         Add("Match.DialogTitle",
             "Jouw top-matches", "Your top matches",
             "Twoje top dopasowania", "Top potrivirile tale", "أفضل مطابقاتك");
+        Add("Match.HeroLead",
+            "Swipe banen die bij je passen — je kunt niets fout doen.",
+            "Swipe jobs that fit you — you can't go wrong.",
+            "Przesuwaj oferty, które do Ciebie pasują — nic nie zepsujesz.",
+            "Glisează joburi care ți se potrivesc — nu poți greși.",
+            "اسحب الوظائف التي تناسبك — لا يمكنك أن تخطئ.");
         Add("Match.DialogProgress",
             "{0} van {1}", "{0} of {1}",
             "{0} z {1}", "{0} din {1}", "{0} من {1}");

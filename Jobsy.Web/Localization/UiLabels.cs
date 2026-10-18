@@ -5,6 +5,14 @@ namespace Jobsy.Web.Localization;
 /// <summary>Maps stored Dutch codes / enums to the active UI language.</summary>
 public static class UiLabels
 {
+    public static string VacancyHoursTag(CultureState culture, string tag) => tag switch
+    {
+        "PartTime" => culture["Vacancy.Tag.PartTime"],
+        "FullTime" => culture["Vacancy.Tag.FullTime"],
+        "SideJob" => culture["Vacancy.Tag.SideJob"],
+        _ => WorkType(culture, tag)
+    };
+
     public static string WorkType(CultureState culture, string label) => label switch
     {
         WorkTypeLabels.Horeca => culture["WorkType.Horeca"],

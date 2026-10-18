@@ -6,6 +6,12 @@
   background: var(--pearl);
 }
 
+/* Login illustrated art (no inline style on Login.razor — AuthCssGuard) */
+.pub-theme .au-stage--illustrated.au-stage--login-art {
+  --au-art-left: url("/images/candidate-illustrated/spots/login-links.jpg?v=20261018-89");
+  --au-art-right: url("/images/candidate-illustrated/spots/login-rechts.jpg?v=20261018-89");
+}
+
 .pub-theme .au-stage--illustrated .au-blob {
   display: none;
 }

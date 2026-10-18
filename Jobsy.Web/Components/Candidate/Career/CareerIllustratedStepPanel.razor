@@ -1,0 +1,98 @@
+@namespace Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Step is { } step)
+{
+    <aside class="career-ill-panel card" aria-labelledby="career-ill-panel-title">
+        <p class="career-ill-panel__kicker">@Culture["Career.Overview.NowEyebrow"]</p>
+        <h2 id="career-ill-panel-title" class="career-ill-panel__title">@step.ShortTitle</h2>
+        @if (!string.IsNullOrWhiteSpace(step.Lead))
+        {
+            <p class="career-ill-panel__lead">@step.Lead</p>
+        }
+
+        @if (step.Missing.Count > 0)
+        {
+            <div class="career-ill-panel__chips" aria-label="@Culture["CareerStep.Gaps.Title"]">
+                @foreach (var gap in step.Missing.Take(6))
+                {
+                    <span class="career-ill-panel__chip">@gap.Text</span>
+                }
+            </div>
+        }
+
+        @if (CourseCards.Count > 0)
+        {
+            <div class="career-ill-panel__courses">
+                @foreach (var course in CourseCards.Take(3))
+                {
+                    <div class="career-ill-panel__course">
+                        <b>@course.Title</b>
+                        <span>@course.Meta</span>
+                    </div>
+                }
+            </div>
+        }
+        else if (step.CourseNames.Count > 0)
+        {
+            <div class="career-ill-panel__courses">
+                @foreach (var name in step.CourseNames.Take(3))
+                {
+                    <div class="career-ill-panel__course">
+                        <b>@name</b>
+                        <span>@Culture["Career.Illustrated.CourseMetaFallback"]</span>
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="career-ill-panel__actions">
+            @if (EmployersOn)
+            {
+                <a class="btn btn-primary btn-block" href="@step.VacanciesHref">@Culture["Career.Illustrated.Vacancies"]</a>
+            }
+        </div>
+
+        @if (OnClearDream.HasDelegate)
+        {
+            <p class="career-ill-panel__foot">
+                <button type="button" class="career-ill-panel__clear" disabled="@Busy" @onclick="OnClearDream">
+                    @Culture["Career.ClearDream"]
+                </button>
+            </p>
+        }
+    </aside>
+}
+
+@code {
+    [Parameter] public CareerStepDetailView? Step { get; set; }
+    [Parameter] public IReadOnlyList<PassportCourseCard> CourseSlots { get; set; } = [];
+    [Parameter] public bool EmployersOn { get; set; } = true;
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnClearDream { get; set; }
+
+    private IReadOnlyList<(string Title, string Meta)> CourseCards =>
+        CourseSlots.Count > 0
+            ? CourseSlots.Select(c => (c.Title, CourseMeta(c))).ToList()
+            : [];
+
+    private string CourseMeta(PassportCourseCard card)
+    {
+        var parts = new List<string>(2);
+        if (!string.IsNullOrWhiteSpace(card.Delivery))
+        {
+            parts.Add(card.Delivery);
+        }
+
+        if (card.DurationValue is > 0 && !string.IsNullOrWhiteSpace(card.DurationUnit))
+        {
+            parts.Add($"{card.DurationValue} {card.DurationUnit}");
+        }
+
+        return parts.Count > 0
+            ? string.Join(" · ", parts)
+            : Culture["Career.Illustrated.CourseMetaFallback"];
+    }
+}

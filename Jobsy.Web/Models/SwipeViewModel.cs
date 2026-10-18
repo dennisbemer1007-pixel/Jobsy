@@ -63,7 +63,7 @@ public sealed class SwipeViewModel
         {
             if (HourlyWage is decimal hourly && hourly > 0 && WageVisible)
             {
-                return $"€ {FormatMoney(hourly)}";
+                return FormatHourly(hourly);
             }
 
             if (SalaryMin is null && SalaryMax is null)
@@ -183,6 +183,9 @@ public sealed class SwipeViewModel
         value % 1 == 0
             ? value.ToString("0", System.Globalization.CultureInfo.InvariantCulture)
             : value.ToString("0.##", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+
+    private static string FormatHourly(decimal value) =>
+        value.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
 
     private static string FormatHours(decimal value) =>
         value % 1 == 0

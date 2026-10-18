@@ -1,6 +1,6 @@
 /* Lobsy PWA service worker — development / always-on shell.
  * Caches static assets for instant loads and handles Web Push. */
-var CACHE_VERSION = "lobsy-shell-v20261016-06";
+var CACHE_VERSION = "lobsy-shell-v20261018-07";
 var SHELL_CACHE = CACHE_VERSION + "-shell";
 var IMAGE_CACHE = "lobsy-images-v2";
 

@@ -1,0 +1,69 @@
+@inject CultureState Culture
+
+<section class="kb-detail-readiness @(Compact ? "kb-detail-readiness--compact" : null)" data-testid="kb-detail-readiness">
+    <p class="kb-detail-readiness__title">@Culture["Apply.CompleteProfileTitle"]</p>
+    @if (!Compact)
+    {
+        <p class="kb-detail-readiness__lead">@Lead</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(Lead))
+    {
+        <p class="kb-detail-readiness__lead kb-detail-readiness__lead--compact">@Lead</p>
+    }
+    @if (OpenCount > 0)
+    {
+        @if (!Compact)
+        {
+            <p class="kb-detail-readiness__count">@Culture.Format("Kb.Detail.ApplyRemaining", OpenCount)</p>
+            <div class="kb-detail-readiness__bar" role="progressbar"
+                 aria-valuemin="0"
+                 aria-valuemax="@TotalCount"
+                 aria-valuenow="@DoneCount">
+                <span class="kb-detail-readiness__bar-fill" style="width:@ProgressPct%"></span>
+            </div>
+        }
+        <ul class="kb-detail-readiness__list">
+            @foreach (var item in Items.Where(i => !i.Done))
+            {
+                <li>
+                    @{
+                        var label = item.Literal ?? Culture[item.MessageKey];
+                    }
+                    @if (item.Href is not null)
+                    {
+                        <a href="@item.Href">@label</a>
+                    }
+                    else
+                    {
+                        @label
+                    }
+                </li>
+            }
+        </ul>
+    }
+    <div class="kb-detail-readiness__cta-row">
+        <a class="login-submit kb-detail-apply-btn kb-detail-readiness__cta" href="@ProfileHref">
+            @Culture[CtaKey]
+        </a>
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+    </div>
+</section>
+
+@code {
+    public sealed record ReadinessItem(string MessageKey, bool Done, string? Href = null, string? Literal = null);
+
+    [Parameter] public string Lead { get; set; } = "";
+    [Parameter] public IReadOnlyList<ReadinessItem> Items { get; set; } = [];
+    [Parameter] public string ProfileHref { get; set; } = "";
+    [Parameter] public bool Compact { get; set; }
+    [Parameter] public string CtaKey { get; set; } = "Apply.CompleteProfileCta";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private int TotalCount => Math.Max(Items.Count, 1);
+    private int DoneCount => Items.Count(i => i.Done);
+    private int OpenCount => Items.Count(i => !i.Done);
+    private int ProgressPct => (int)Math.Round(100.0 * DoneCount / TotalCount);
+}

@@ -484,9 +484,7 @@
         _displayName = string.IsNullOrWhiteSpace(_profile?.FullName)
             ? Culture["Passport.Title"]
             : _profile!.FullName;
-        _firstName = string.IsNullOrWhiteSpace(_profile?.FirstName)
-            ? _displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
-            : _profile!.FirstName;
+        _firstName = ResolveGreetingFirstName(_profile, _displayName);
         _initials = InitialsFrom(_profile);
         _memberNumber = PassportMemberNumber.Format(_profile?.Id ?? Guid.Empty);
         // Account creation month is not on MeProfile yet — hide stamp rather than invent.
@@ -709,6 +707,29 @@
         {
             _pdfBusy = false;
         }
+    }
+
+    private string? ResolveGreetingFirstName(MeProfile? profile, string displayName)
+    {
+        if (!string.IsNullOrWhiteSpace(profile?.FirstName))
+        {
+            return profile!.FirstName!.Trim();
+        }
+
+        var full = profile?.FullName?.Trim();
+        if (!string.IsNullOrWhiteSpace(full))
+        {
+            var word = full.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+            return string.IsNullOrWhiteSpace(word) ? null : word;
+        }
+
+        if (string.Equals(displayName, Culture["Passport.Title"], StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var fromDisplay = displayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        return string.IsNullOrWhiteSpace(fromDisplay) ? null : fromDisplay;
     }
 
     private static string InitialsFrom(MeProfile? profile)

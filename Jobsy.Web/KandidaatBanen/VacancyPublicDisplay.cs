@@ -13,6 +13,18 @@ public static class VacancyPublicDisplay
     public static string SanitizedDescriptionHtml(VacancyListItem? vacancy)
         => vacancy is null ? string.Empty : HtmlSanitize.ToVacancyDescriptionHtml(vacancy.Description);
 
+    public static bool HasDescriptionContent(VacancyListItem? vacancy)
+    {
+        if (vacancy is null || string.IsNullOrWhiteSpace(vacancy.Description))
+        {
+            return false;
+        }
+
+        var html = SanitizedDescriptionHtml(vacancy);
+        var text = System.Text.RegularExpressions.Regex.Replace(html, "<[^>]+>", " ").Trim();
+        return text.Length > 0;
+    }
+
     public static bool HasHoursInfo(VacancyListItem? vacancy)
         => vacancy is { MinHoursPerWeek: not null, MaxHoursPerWeek: not null };
 
