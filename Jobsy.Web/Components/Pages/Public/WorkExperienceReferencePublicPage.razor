@@ -17,32 +17,51 @@
 
 <PageTitle>@Culture["RefVerif.Public.PageTitle"] · Lobsy</PageTitle>
 
-<section class="pub-section ref-verif-public" aria-labelledby="ref-verif-public-title">
-    <div class="pub-card ref-verif-public__card ref-verif-lift-card @(_cardVisible ? "ref-verif-lift-card--visible" : null)">
-        <ReferenceVerificationIllustratedBand ImageUrl="@CandidateIllustratedImages.RefVerifPublic" CssClass="ref-verif-illustrated-band--public" />
-        <div class="ref-verif-public__inner">
-        <PublicLangMenu ReturnPath="@ReturnPath" />
-
-        @if (_thanks is not null)
+<section class="pub-section ref-verif-public ref-verif-public-layout" aria-labelledby="ref-verif-public-title">
+    @if (_thanks is not null)
+    {
+        <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                              CssClass="ref-verif-hero--public ref-verif-hero--public-compact"
+                                              ObjectPosition="center 38%"
+                                              AriaHidden="true" />
+        <div class="ref-verif-public__shell">
+            <div class="pub-card ref-verif-public__card ref-verif-lift-card ref-verif-lift-card--visible">
+                <div class="ref-verif-public__inner">
+                    <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
+                    <p role="status">@_thanks</p>
+                </div>
+            </div>
+        </div>
+    }
+    else if (_problem is not null)
+    {
+        <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                              CssClass="ref-verif-hero--public ref-verif-hero--public-compact"
+                                              ObjectPosition="center 38%"
+                                              AriaHidden="true" />
+        <div class="ref-verif-public__shell">
+            <div class="pub-card ref-verif-public__card ref-verif-lift-card ref-verif-lift-card--visible">
+                <div class="ref-verif-public__inner">
+                    <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
+                    <p role="alert">@_problem</p>
+                </div>
+            </div>
+        </div>
+    }
+    else if (_view is not null)
+    {
+        @if (_view.State == "open")
         {
-            <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
-            <p role="status">@_thanks</p>
-        }
-        else if (_problem is not null)
-        {
-            <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
-            <p role="alert">@_problem</p>
-        }
-        else if (_view is not null)
-        {
-            @if (_view.State == "open")
-            {
-                <header class="ref-verif-public__head">
-                    <h1 id="ref-verif-public-title">@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)</h1>
-                    <p class="ref-verif-public__lead">@Culture.Format("RefVerif.Public.IntroDetail", _view.CandidateName, _view.EmployerName, _view.RoleTitle)</p>
-                    <p class="ref-verif-public__privacy muted">@Culture["RefVerif.Public.PrivacyShort"]</p>
-                </header>
-
+            <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                                  CssClass="ref-verif-hero--public"
+                                                  ObjectPosition="center 38%">
+                <h1 id="ref-verif-public-title" class="ref-verif-hero__title">@Culture.Format("RefVerif.Public.Greeting", _view.ReferentName, _view.CandidateName)</h1>
+                <p class="ref-verif-hero__lead">@Culture.Format("RefVerif.Public.IntroDetail", _view.CandidateName, _view.EmployerName, _view.RoleTitle)</p>
+                <p class="ref-verif-hero__privacy">@Culture["RefVerif.Public.PrivacyShort"]</p>
+            </ReferenceVerificationIllustratedHero>
+            <div class="ref-verif-public__shell">
+            <div class="pub-card ref-verif-public__card ref-verif-lift-card @(_cardVisible ? "ref-verif-lift-card--visible" : null)">
+                <div class="ref-verif-public__inner">
                 <EditForm Model="_form" OnValidSubmit="SubmitAsync" class="ref-verif-public__form" data-testid="ref-verif-public-open">
                     <div class="ref-verif-public__section detail-card">
                         <h2 class="ref-verif-public__section-title">
@@ -162,20 +181,37 @@
                         <button type="submit" class="btn btn-primary ref-verif-public__submit" disabled="@_busy">@Culture["RefVerif.Public.Submit"]</button>
                     </footer>
                 </EditForm>
-            }
-            else
-            {
-                <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
-                <p role="status">@ProblemForState(_view.State)</p>
-            }
+                </div>
+            </div>
+            </div>
         }
         else
         {
-            <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
-            <p role="status">@Culture["Common.Loading"]</p>
+            <ReferenceVerificationIllustratedHero ImageUrl="@CandidateIllustratedImages.RefVerifPublic"
+                                                  CssClass="ref-verif-hero--public ref-verif-hero--public-compact"
+                                                  ObjectPosition="center 38%"
+                                                  AriaHidden="true" />
+            <div class="ref-verif-public__shell">
+                <div class="pub-card ref-verif-public__card ref-verif-lift-card @(_cardVisible ? "ref-verif-lift-card--visible" : null)">
+                    <div class="ref-verif-public__inner">
+                        <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
+                        <p role="status">@ProblemForState(_view.State)</p>
+                    </div>
+                </div>
+            </div>
         }
+    }
+    else
+    {
+        <div class="ref-verif-public__shell">
+            <div class="pub-card ref-verif-public__card">
+                <div class="ref-verif-public__inner">
+                    <h1 id="ref-verif-public-title">@Culture["RefVerif.Public.PageTitle"]</h1>
+                    <p role="status">@Culture["Common.Loading"]</p>
+                </div>
+            </div>
         </div>
-    </div>
+    }
 </section>
 
 @code {

@@ -123,6 +123,21 @@ internal static class UiStringsReferenceVerification
             "je referent", "your reference");
         Add("RefVerif.Request.Back",
             "Terug naar paspoort", "Back to passport");
+        Add("RefVerif.Request.NextTitle",
+            "Wat gebeurt er nu?",
+            "What happens next?");
+        Add("RefVerif.Request.NextStep1",
+            "Je referent krijgt een persoonlijke link per e-mail.",
+            "Your reference receives a personal link by email.");
+        Add("RefVerif.Request.NextStep2",
+            "Die link is 14 dagen geldig; we sturen één herinnering.",
+            "The link is valid for 14 days; we send one reminder.");
+        Add("RefVerif.Request.NextStep3",
+            "Bevestigde competenties krijgen een vinkje op je paspoort.",
+            "Confirmed competences get a check mark on your passport.");
+        Add("RefVerif.Request.NextStep4",
+            "De opmerking van je referent zie alleen jij.",
+            "Only you can see your reference’s comment.");
         Add("RefVerif.Request.NotFound",
             "Deze werkervaring is niet gevonden.", "This work experience was not found.");
         Add("RefVerif.Request.NotEligible",
