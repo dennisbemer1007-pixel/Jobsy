@@ -28,16 +28,16 @@
     {
         <CandidateIllustratedHero Title="@Culture["Tips.Page.Offer.Title"]"
                                   Lead="@Culture["Tips.Page.Offer.Lead"]"
-                                  ArtUrl="@SollicitatiesBand"
-                                  ArtPosition="right center"
-                                  CssClass="cand-hero--profession-band" />
+                                  ArtUrl="@TipsMomentHero"
+                                  ArtUrlDesktop="@TipsMomentHeroWide"
+                                  ArtUrlMobileFigures="@TipsMomentHeroMobileFigures"
+                                  ArtUrlMobileAtmosphere="@TipsMomentHeroMobileAtmosphere"
+                                  ArtPosition="68% center"
+                                  ArtPositionDesktop="right center"
+                                  CssClass="cand-hero--learn-grow" />
 
         <div class="ctips-app-layout">
-            <article class="detail-card">
-                <h2>@_app.VacancyTitle</h2>
-                <p class="muted">@_app.CompanyName</p>
-                <a class="btn btn-secondary" href="/candidate/applications">@Culture["Nav.MyApplications"]</a>
-            </article>
+            <OfferApplicationDetails Application="_app" />
             <aside aria-label="@Culture["Tips.Placement.Offer.Title"]">
                 <OfferTipsSidebar />
             </aside>

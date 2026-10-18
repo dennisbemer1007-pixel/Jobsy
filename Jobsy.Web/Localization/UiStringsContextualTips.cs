@@ -79,6 +79,13 @@ public static class UiStringsContextualTips
         Add("Tips.Page.Interview.Lead",
             "Hieronder lees je hoe je je rustig voorbereidt.",
             "Below you can read how to prepare calmly.");
+        Add("Tips.Page.Interview.WhenTitle", "Je gesprek", "Your interview");
+        Add("Tips.Page.Interview.WhenDemo", "Donderdag 9 oktober, 10:00", "Thursday 9 October, 10:00");
+        Add("Tips.Page.Interview.RouteCta", "Bekijk je route", "View your route");
+        Add("Tips.Page.Interview.BringTitle", "Neem mee", "What to bring");
+        Add("Tips.Page.Interview.Bring1", "Een kopie van je CV of paspoort op je telefoon", "A copy of your CV or passport on your phone");
+        Add("Tips.Page.Interview.Bring2", "Een pen en eventueel je agenda", "A pen and your diary if you use one");
+        Add("Tips.Page.Interview.Bring3", "Iets te drinken voor onderweg", "Something to drink for the journey");
 
         Add("Tips.Placement.Offer.Title", "Waar let je op?", "What should you check?");
         Add("Tips.Placement.Offer.ContractTitle", "Je contract", "Your contract");
@@ -107,6 +114,16 @@ public static class UiStringsContextualTips
         Add("Tips.Page.Offer.Lead",
             "Lees het rustig door. Je hoeft niet meteen te beslissen.",
             "Read it calmly. You do not have to decide right away.");
+        Add("Tips.Page.Offer.SummaryTitle", "Wat staat in je aanbod?", "What is in your offer?");
+        Add("Tips.Page.Offer.SummaryLead", "Controleer deze punten voordat je tekent.", "Check these points before you sign.");
+        Add("Tips.Page.Offer.Summary1", "Functie, uren per week en startdatum", "Role, hours per week and start date");
+        Add("Tips.Page.Offer.Summary2", "Bruto salaris per maand of per uur", "Gross pay per month or per hour");
+        Add("Tips.Page.Offer.Summary3", "Duur van het contract en proeftijd", "Contract length and probation");
+        Add("Tips.Page.Offer.Summary4", "Welke cao van toepassing is", "Which collective agreement applies");
+        Add("Tips.Page.Offer.NextTitle", "Twijfel je?", "Not sure yet?");
+        Add("Tips.Page.Offer.NextBody",
+            "Je mag om bedenktijd vragen. Lees ondertussen de tips over contract en salaris.",
+            "You may ask for time to think. Meanwhile read the tips about contract and pay.");
 
         Add("Tips.Placement.PassportEducation.Title", "Ook een cursus telt", "A course counts too");
         Add("Tips.Placement.PassportEducation.Body",

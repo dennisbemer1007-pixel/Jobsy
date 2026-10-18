@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Jobsy.Web.Models;
 using Jobsy.Web.Services;
+using Jobsy.Web.Services.ApiClient.Models;
 
 namespace Jobsy.Tests;
 
@@ -21,8 +22,19 @@ internal static class IllustratedPagesApiStub
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static string BuildJson(string path, bool emptyAppsAndLikes = false)
+    public static string BuildJson(string path, bool emptyAppsAndLikes = false, bool contextualTipsEnabled = true)
     {
+        if (path.Contains("/settings/platform-features", StringComparison.OrdinalIgnoreCase))
+        {
+            return Serialize(new PlatformFeatureItem
+            {
+                EmployersEnabled = true,
+                CandidatePassportEnabled = true,
+                ContextualTipsEnabled = contextualTipsEnabled,
+                UpdatedAtUtc = new DateTime(2026, 10, 18, 12, 0, 0, DateTimeKind.Utc)
+            });
+        }
+
         if (path.Contains("/kompas/dna", StringComparison.OrdinalIgnoreCase))
         {
             var k = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
@@ -433,7 +445,7 @@ internal static class IllustratedPagesApiStub
               "companyLogoUrl": null,
               "travelMinutes": 9,
               "matchGaps": ["Werken in het weekend"],
-              "descriptionHtml": "{{descriptionSections}}"
+              "description": "{{descriptionSections}}"
             }
             """;
     }

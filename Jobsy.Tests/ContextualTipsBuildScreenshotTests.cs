@@ -5,7 +5,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r1";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r2";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -46,13 +46,20 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         await CaptureAsync("05-alle-tips", "/candidate/tips", "[data-testid='contextual-tips-index']");
         await CaptureAsync("06-tip-detail", "/candidate/tips/je-eerste-gesprek", "[data-testid='contextual-tip-detail']");
 
-        await using var offWeb = new IllustratedPagesWebFactory(contextualTipsEnabled: false);
-        _ = offWeb.ServerAddress;
+        await CaptureAdminFunctiesAsync(_web!, contextualTipsEnabled: true, "admin-functies-flag-aan");
+        await using (var offWeb = new IllustratedPagesWebFactory(contextualTipsEnabled: false))
+        {
+            _ = offWeb.ServerAddress;
+            await CaptureAdminFunctiesAsync(offWeb, contextualTipsEnabled: false, "admin-functies-flag-uit");
+        }
+
+        await using var offWebCandidate = new IllustratedPagesWebFactory(contextualTipsEnabled: false);
+        _ = offWebCandidate.ServerAddress;
         await using var ctx = await _browser!.NewContextAsync(new() { ViewportSize = new() { Width = 1440, Height = 900 } });
         await PlaywrightCookieConsent.AcceptAsync(ctx);
         var page = await ctx.NewPageAsync();
-        await page.GotoAsync($"{offWeb.ServerAddress}/__test/sign-in?return=%2Fcandidate%2Ftips");
-        await page.GotoAsync($"{offWeb.ServerAddress}/candidate/tips", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.GotoAsync($"{offWebCandidate.ServerAddress}/__test/sign-in?return=%2Fcandidate%2Ftips");
+        await page.GotoAsync($"{offWebCandidate.ServerAddress}/candidate/tips", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForTimeoutAsync(800);
         var offFile = Path.Combine(ArtifactsDir, "flag-uit-1440.png");
         await page.ScreenshotAsync(new() { Path = offFile, FullPage = true });
@@ -66,6 +73,26 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         await onPage.WaitForSelectorAsync("[data-testid='contextual-tips-index']", new() { Timeout = 60_000 });
         var onFile = Path.Combine(ArtifactsDir, "flag-aan-1440.png");
         await onPage.ScreenshotAsync(new() { Path = onFile, FullPage = true });
+    }
+
+    private async Task CaptureAdminFunctiesAsync(IllustratedPagesWebFactory web, bool contextualTipsEnabled, string namePrefix)
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 1440, Height = 900 },
+            Locale = "nl-NL"
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await page.GotoAsync(
+            $"{web.ServerAddress}/__test/sign-in?role=admin&return=%2Fadmin%2Finstellingen",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync($"{web.ServerAddress}/admin/instellingen", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(1200);
+        var file = Path.Combine(ArtifactsDir, $"{namePrefix}-1440.png");
+        await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+        Assert.True(File.Exists(file));
     }
 
     private async Task CaptureAsync(string name, string path, string readySelector)

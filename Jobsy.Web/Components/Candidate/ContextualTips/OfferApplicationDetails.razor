@@ -1,0 +1,33 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<div class="ctips-app-main" data-testid="offer-app-details">
+    <article class="detail-card ctips-vacancy-card">
+        <h2>@Application.VacancyTitle</h2>
+        <p class="muted">@Application.CompanyName</p>
+        <a class="btn btn-secondary" href="/candidate/applications">@Culture["Nav.MyApplications"]</a>
+    </article>
+
+    <section class="detail-card ctips-detail-section" aria-labelledby="ctips-offer-summary">
+        <h3 id="ctips-offer-summary" class="ctips-detail-section__title">@Culture["Tips.Page.Offer.SummaryTitle"]</h3>
+        <p class="ctips-detail-section__lead">@Culture["Tips.Page.Offer.SummaryLead"]</p>
+        <ul class="ctips-checklist">
+            <li>@Culture["Tips.Page.Offer.Summary1"]</li>
+            <li>@Culture["Tips.Page.Offer.Summary2"]</li>
+            <li>@Culture["Tips.Page.Offer.Summary3"]</li>
+            <li>@Culture["Tips.Page.Offer.Summary4"]</li>
+        </ul>
+    </section>
+
+    <section class="detail-card ctips-detail-section" aria-labelledby="ctips-offer-next">
+        <h3 id="ctips-offer-next" class="ctips-detail-section__title">@Culture["Tips.Page.Offer.NextTitle"]</h3>
+        <p class="muted">@Culture["Tips.Page.Offer.NextBody"]</p>
+        <a class="btn btn-primary" href="/candidate/tips/contract">@Culture["Tips.Placement.Offer.AllTips"]</a>
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ApplicationItem Application { get; set; } = default!;
+}

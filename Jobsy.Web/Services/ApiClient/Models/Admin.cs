@@ -272,6 +272,8 @@ public sealed class PlatformFeatureItem
     public bool FreeCandidateTestsEnabled { get; set; } = true;
     /// <summary>Server has WhatsApp credentials. Never a secret.</summary>
     public bool WhatsAppRemindersConfigured { get; set; }
+    /// <summary>Tips op het juiste moment for candidates. Default off.</summary>
+    public bool ContextualTipsEnabled { get; set; }
 }
 
 /// <summary>Partial PUT body for platform features (null = keep).</summary>
@@ -315,6 +317,7 @@ public sealed class PlatformFeaturePatch
     public int? CandidateApplyPerMinuteLimit { get; set; }
     public int? CandidateApplyPerHourLimit { get; set; }
     public int? CandidateApplyPerDayLimit { get; set; }
+    public bool? ContextualTipsEnabled { get; set; }
     public string? Reason { get; set; }
 }
 

@@ -12,9 +12,36 @@
   margin-block-end: 1.25rem;
 }
 
-.ctips-search input {
+.ctips-search__field {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   inline-size: 100%;
-  max-inline-size: 28rem;
+  min-block-size: 3rem;
+  padding-inline: 0.85rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, var(--r-md));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 6%, transparent);
+}
+
+.ctips-search__icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.ctips-search__field input {
+  flex: 1;
+  inline-size: 100%;
+  min-inline-size: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text);
+}
+
+.ctips-search__field input:focus {
+  outline: none;
 }
 
 .ctips-cats {
@@ -145,6 +172,7 @@
 }
 
 .ctips-prep-steps__n {
+  flex-shrink: 0;
   inline-size: 1.75rem;
   block-size: 1.75rem;
   border-radius: 999px;
@@ -152,7 +180,8 @@
   place-items: center;
   font-weight: 700;
   font-size: 0.9rem;
-  background: var(--navy);
+  line-height: 1;
+  background: var(--coral);
   color: var(--surface);
 }
 
@@ -301,10 +330,91 @@
   gap: 1.25rem;
 }
 
+.ctips-app-main {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+}
+
+.ctips-detail-section__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.ctips-detail-section__lead {
+  margin: 0 0 0.35rem;
+  font-weight: 600;
+}
+
+.ctips-checklist {
+  margin: 0.35rem 0 0;
+  padding-inline-start: 1.15rem;
+}
+
+.ctips-checklist li {
+  margin-block: 0.25rem;
+}
+
+.ctips-practice-inline p {
+  margin: 0 0 0.65rem;
+}
+
+.ctips-route-link {
+  margin-block-start: 0.5rem;
+}
+
+.ctips-detail-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.ctips-detail-main {
+  min-inline-size: 0;
+}
+
+.ctips-detail-cat-art {
+  block-size: 7.5rem;
+  border-radius: var(--r-md);
+  background-size: cover;
+  background-position: center;
+  margin-block-end: 1rem;
+  border: 1px solid var(--border);
+}
+
+.ctips-detail-back {
+  margin-block-start: 1rem;
+}
+
+.ctips-aside-card {
+  padding: 1rem 1.1rem;
+}
+
+.ctips-aside-card__title {
+  margin: 0 0 0.65rem;
+  font-size: 1.05rem;
+}
+
+.ctips-related--aside {
+  margin-block-start: 0;
+}
+
+.ctips-related--aside ul {
+  margin-block-start: 0.35rem;
+}
+
 @media (min-width: 900px) {
   .ctips-app-layout {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
     align-items: start;
+  }
+
+  .ctips-detail-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    align-items: start;
+  }
+
+  .ctips-detail-cat-art {
+    display: none;
   }
 
   .career-tips-g2 {

@@ -17,19 +17,27 @@
     <CandidateIllustratedHero Eyebrow="@Culture["Tips.Hub.Eyebrow"]"
                               Title="@Culture["Tips.Hub.Title"]"
                               Lead="@Culture["Tips.Hub.Lead"]"
-                              ArtUrl="@TipInterview"
-                              ArtPosition="right center"
-                              CssClass="cand-hero--profession-band ctips-hero" />
+                              ArtUrl="@TipsMomentHero"
+                              ArtUrlDesktop="@TipsMomentHeroWide"
+                              ArtUrlMobileFigures="@TipsMomentHeroMobileFigures"
+                              ArtUrlMobileAtmosphere="@TipsMomentHeroMobileAtmosphere"
+                              ArtPosition="68% center"
+                              ArtPositionDesktop="right center"
+                              CssClass="cand-hero--learn-grow ctips-hero" />
 
     <div class="ctips-search">
-        <label class="visually-hidden" for="tips-search">@Culture["Tips.Hub.SearchPlaceholder"]</label>
-        <input id="tips-search"
-               type="search"
-               class="form-control"
-               data-testid="tips-search"
-               placeholder="@Culture["Tips.Hub.SearchPlaceholder"]"
-               @bind="_query"
-               @bind:event="oninput" />
+        <label class="ctips-search__field" for="tips-search">
+            <span class="visually-hidden">@Culture["Tips.Hub.SearchPlaceholder"]</span>
+            <svg class="ctips-search__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input id="tips-search"
+                   type="search"
+                   data-testid="tips-search"
+                   placeholder="@Culture["Tips.Hub.SearchPlaceholder"]"
+                   @bind="_query"
+                   @bind:event="oninput" />
+        </label>
     </div>
 
     <ul class="ctips-cats" aria-label="@Culture["Tips.Hub.Title"]">
