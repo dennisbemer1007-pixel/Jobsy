@@ -95,14 +95,48 @@ public class GratisDnaPlaywrightTests
                 await AnswerCurrentLikertAsync(page, 4);
             }
 
-            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-            await page.WaitForSelectorAsync(".gd-questions, .questionnaire-shell, .gd-hero, .gd-start", new() { Timeout = 30_000 });
-            var resumeOrQuestions = await page.Locator(".gd-questions, [data-testid=gd-questions], button:has-text('Verder waar je was')").CountAsync();
-            Assert.True(resumeOrQuestions > 0);
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  try {
+                    const raw = localStorage.getItem('jobsy.gratisDna.v1');
+                    if (!raw) return false;
+                    const o = JSON.parse(raw);
+                    const blocks = o.answers;
+                    if (!blocks || typeof blocks !== 'object') return false;
+                    let n = 0;
+                    for (const k of Object.keys(blocks)) {
+                      n += Object.keys(blocks[k] || {}).length;
+                    }
+                    return n >= 3;
+                  } catch { return false; }
+                }
+                """,
+                null,
+                new() { Timeout = 20_000 });
 
-            if (await page.Locator("button:has-text('Verder waar je was')").CountAsync() > 0)
+            await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await page.WaitForFunctionAsync(
+                """
+                () => {
+                  if (document.querySelector('[data-testid=gd-questions], .gd-questions, .questionnaire-shell')) {
+                    return true;
+                  }
+                  const raw = localStorage.getItem('jobsy.gratisDna.v1');
+                  if (!raw) return false;
+                  const resume = document.querySelector('button.gd-cta--ghost');
+                  if (resume && resume.getClientRects().length > 0) return true;
+                  return !!document.querySelector('.gd-start, [data-testid=gd-start]');
+                }
+                """,
+                null,
+                new() { Timeout = 45_000 });
+
+            var resumeBtn = page.Locator("button.gd-cta--ghost");
+            if (await page.Locator(".gd-questions, [data-testid=gd-questions]").CountAsync() == 0
+                && await resumeBtn.CountAsync() > 0)
             {
-                await page.Locator("button:has-text('Verder waar je was')").ClickAsync();
+                await resumeBtn.First.ClickAsync();
             }
 
             await page.WaitForSelectorAsync(".gd-questions, [data-testid=gd-questions], .questionnaire-shell", new() { Timeout = 30_000 });

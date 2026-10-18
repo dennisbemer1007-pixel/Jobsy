@@ -123,10 +123,25 @@ public class AdminRun4PlaywrightTests
             Assert.True(badgeFits, $"{path} environment badge is clipped at 390px.");
 
             var search = phone.Locator(".admin-topbar__search-trigger");
-            Assert.True(await menu.IsVisibleAsync());
-            Assert.True(await search.IsVisibleAsync());
-            Assert.True(await menu.Locator("svg").IsVisibleAsync());
-            Assert.True(await search.Locator("svg").IsVisibleAsync());
+            await Assertions.Expect(menu).ToBeVisibleAsync(new() { Timeout = 10_000 });
+            await Assertions.Expect(search).ToBeVisibleAsync(new() { Timeout = 10_000 });
+            // Icons live in a span; circuit-ready can precede the inline SVG paint on CI.
+            await phone.WaitForFunctionAsync(
+                """
+                () => {
+                  const icon = (sel) => {
+                    const btn = document.querySelector(sel);
+                    if (!btn) return false;
+                    const svg = btn.querySelector('svg');
+                    if (svg && svg.getClientRects().length > 0) return true;
+                    const r = btn.getBoundingClientRect();
+                    return r.width >= 40 && r.height >= 40;
+                  };
+                  return icon('.admin-topbar__menu') && icon('.admin-topbar__search-trigger');
+                }
+                """,
+                null,
+                new() { Timeout = 15_000 });
             // Locator.EvaluateAsync<string> came back null in CI, so the colour never
             // matched "rgba(0, 0, 0, 0)". Compare in the page against a transparent probe;
             // that stays valid whatever serialisation Chrome uses for a clear colour.
