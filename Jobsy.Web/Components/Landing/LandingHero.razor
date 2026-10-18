@@ -9,13 +9,20 @@
          style="@(Variant == LandingVariant.On ? $"--pub-hero-art:url('{CandidateIllustratedImages.FinaleHero}')" : null)">
     <div class="pub-landing__wrap @(Variant == LandingVariant.On ? null : $"pub-landing__hero-grid {HeroGridClass}")">
         <div class="pub-landing__hero-copy">
-            <span class="pub-pill pub-pill--green">@LandingText.For(HeroEyebrowKey, Variant)</span>
-            <h1 class="pub-landing__h1">
-                @((MarkupString)string.Format(
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    LandingText.For("Landing.Hero.Title", Variant),
-                    $"<em class=\"{AccentClass}\">{System.Net.WebUtility.HtmlEncode(LandingText.For("Landing.Hero.TitleAccent", Variant))}</em>"))
-            </h1>
+            <div class="pub-landing__hero-head">
+                <span class="pub-pill pub-pill--green">@LandingText.For(HeroEyebrowKey, Variant)</span>
+                <h1 class="pub-landing__h1">
+                    @((MarkupString)string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        LandingText.For("Landing.Hero.Title", Variant),
+                        $"<em class=\"{AccentClass}\">{System.Net.WebUtility.HtmlEncode(LandingText.For("Landing.Hero.TitleAccent", Variant))}</em>"))
+                </h1>
+            </div>
+            @if (Variant == LandingVariant.On)
+            {
+                <div class="pub-landing__hero-art-band" aria-hidden="true"></div>
+            }
+            <div class="pub-landing__hero-rest">
             <p class="pub-landing__lead">@LandingText.For(HeroSubKey, Variant)</p>
             <div class="pub-landing__ctas">
                 <a class="pub-btn pub-btn--primary pub-btn--lg"
@@ -68,6 +75,7 @@
                     </div>
                 </div>
             }
+            </div>
         </div>
         @if (Variant == LandingVariant.Zw)
         {
