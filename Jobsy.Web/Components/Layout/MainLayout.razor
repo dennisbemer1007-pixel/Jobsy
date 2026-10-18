@@ -19,7 +19,7 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @implements IDisposable
 
-<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
+<div class="app-shell @(_hasBottomNav ? "has-bottom-nav" : null) @(_isCandidate ? "app-shell--candidate" : null) @(_isMatchPage ? "app-shell--match" : null) @(_isQuestionnairePage ? "app-shell--questionnaire" : null) @(_banenkaartCandidateShell ? "app-shell--banenkaart-shell" : null) @(_pwaSheetOpen ? "pwa-sheet-open" : null)"
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
@@ -122,6 +122,8 @@
     private bool _isMatchPage;
     /// <summary>Public job map: hide app chrome for guests; logged-in candidates keep the normal shell.</summary>
     private bool _banenkaartImmersive;
+    /// <summary>Logged-in candidate on banenkaart: app header + bottom nav; suppress duplicate discovery chrome header.</summary>
+    private bool _banenkaartCandidateShell;
     private bool _isQuestionnairePage;
     private bool _hideCoachDock;
     private bool _isCandidate;
@@ -390,13 +392,21 @@
         var path = relative.Split('?', '#')[0].TrimStart('/');
         var onRoute = onBanenkaartRoute ?? IsBanenkaartPath(path);
         var immersive = onRoute && !_isCandidate;
-        if (_banenkaartImmersive == immersive)
+        var candidateShell = onRoute && _isCandidate;
+        var changed = false;
+        if (_banenkaartImmersive != immersive)
         {
-            return false;
+            _banenkaartImmersive = immersive;
+            changed = true;
         }
 
-        _banenkaartImmersive = immersive;
-        return true;
+        if (_banenkaartCandidateShell != candidateShell)
+        {
+            _banenkaartCandidateShell = candidateShell;
+            changed = true;
+        }
+
+        return changed;
     }
 
     public static bool IsBanenkaartPath(string path)

@@ -7,6 +7,65 @@ namespace Jobsy.Tests;
 public sealed class AcceptatieBlockerPlaywrightTests
 {
     [Fact]
+    public async Task Onboarding_first_competency_mini_answer_saves_without_niet_bewaard()
+    {
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        if (!await SmokeReachability.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            IsMobile = true,
+            HasTouch = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+
+        var email = $"mini.{Guid.NewGuid():N}@jobsy.local";
+        await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.Locator("input[type=email]").FillAsync(email);
+        await page.Locator("input[name=firstName]").FillAsync("Mini");
+        await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
+        await page.WaitForURLAsync("**/code**", new() { Timeout = 60_000 });
+        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
+        await page.Locator("input[name=code]").FillAsync(code!);
+        await page.Locator("button.login-submit").ClickAsync();
+        await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
+
+        await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await VroegResultaatPlaywrightTestsHelpers.EnsureWizardStartedAsync(page);
+        await VroegResultaatPlaywrightTestsHelpers.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
+        await VroegResultaatPlaywrightTestsHelpers.ClickNextAsync(page);
+        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
+        await VroegResultaatPlaywrightTestsHelpers.ClickNextAsync(page);
+        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
+        var consentBox = page.Locator(".ob-wizard__consent input[type=checkbox]");
+        if (await consentBox.CountAsync() > 0)
+        {
+            await consentBox.First.CheckAsync(new() { Force = true });
+            var akkoord = page.GetByRole(AriaRole.Button, new() { Name = "Akkoord" });
+            if (await akkoord.CountAsync() > 0)
+            {
+                await akkoord.ClickAsync(new() { Force = true });
+            }
+        }
+
+        await page.Locator(".test-likert").First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.Locator(".test-likert__opt").Nth(3).ClickAsync(new() { Force = true });
+        await page.WaitForTimeoutAsync(800);
+        Assert.DoesNotContain("Niet bewaard", await page.ContentAsync(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task Discovery_career_step8_save_shows_saved_rail_and_capture_when_requested()
     {
         var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');

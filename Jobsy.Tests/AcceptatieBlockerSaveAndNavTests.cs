@@ -60,7 +60,29 @@ public sealed class AcceptatieBlockerSaveAndNavTests
     {
         var layout = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/MainLayout.razor"));
         Assert.Contains("_banenkaartImmersive", layout, StringComparison.Ordinal);
+        Assert.Contains("_banenkaartCandidateShell", layout, StringComparison.Ordinal);
+        Assert.Contains("app-shell--banenkaart-shell", layout, StringComparison.Ordinal);
         Assert.Contains("UsesBanenkaartImmersiveChrome", layout, StringComparison.Ordinal);
         Assert.DoesNotContain("@if (!_isQuestionnairePage && !_isBanenkaartPage)", layout, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Onboarding_wizard_first_mini_test_uses_quick_scan_catalog_version()
+    {
+        var src = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Pages/Candidate/OnboardingWizard.razor"));
+        Assert.Contains("ResolveQuickScanVersion", src, StringComparison.Ordinal);
+        Assert.Contains("TestDepthRules.MiniIds(AssessmentKind.Competence, compVersion)", src, StringComparison.Ordinal);
+        Assert.Contains("AssessmentQuickScanCatalog.CompetenceQuestions(compVersion)", src, StringComparison.Ordinal);
+        Assert.DoesNotContain("OnboardingWizardCatalog.QuestionIdsUpTo", src, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Banenkaart_candidate_shell_hides_duplicate_discovery_header_in_css()
+    {
+        var critical = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/critical.css"));
+        var app = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/app.css"));
+        Assert.Contains(".app-shell--banenkaart-shell .jobsy-chrome__header", critical, StringComparison.Ordinal);
+        Assert.Contains(":not(.app-shell--banenkaart-shell) .app-header", critical, StringComparison.Ordinal);
+        Assert.Contains(".app-shell--banenkaart-shell .jobsy-chrome__header", app, StringComparison.Ordinal);
     }
 }
