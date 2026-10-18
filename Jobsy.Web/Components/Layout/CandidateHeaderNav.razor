@@ -1,9 +1,13 @@
+@using Jobsy.Core.Features
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager Navigation
 @inject CultureState Culture
 @inject RoleNavItemsState NavItems
+@inject AuthenticationStateProvider AuthState
+@inject IHttpContextAccessor HttpContextAccessor
 @implements IAsyncDisposable
 
 @if (_items.Count > 0)
@@ -28,17 +32,59 @@
 }
 
 @code {
-    private IReadOnlyList<NavItem> _items = RoleNavCatalog.Anonymous;
+    private IReadOnlyList<NavItem> _items = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
+
+    protected override void OnInitialized()
+    {
+        var httpUser = HttpContextAccessor.HttpContext?.User;
+        if (httpUser?.Identity?.IsAuthenticated == true)
+        {
+            var fromHttp = RoleNavCatalog.ForUser(httpUser, FeatureFlagSnapshot.Defaults);
+            if (fromHttp.Count > 0)
+            {
+                _items = fromHttp;
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        await NavItems.EnsureInitializedAsync();
-        _items = NavItems.Items;
+        var state = await AuthState.GetAuthenticationStateAsync();
+        _items = RoleNavCatalog.ForUser(state.User, FeatureFlagSnapshot.Defaults);
+        if (_items.Count == 0)
+        {
+            // Parent only renders this for candidates; auth claims can lag the first circuit tick.
+            _items = RoleNavCatalog.CandidateItems(FeatureFlagSnapshot.Defaults);
+        }
+
         NavItems.Changed += OnNavItemsChanged;
+        _ = SyncNavItemsInBackgroundAsync();
+    }
+
+    private async Task SyncNavItemsInBackgroundAsync()
+    {
+        try
+        {
+            await NavItems.EnsureInitializedAsync();
+            if (NavItems.Items.Count > 0)
+            {
+                _items = NavItems.Items;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch
+        {
+            // circuit dispose / auth races
+        }
     }
 
     private void OnNavItemsChanged()
     {
+        if (NavItems.Items.Count == 0)
+        {
+            return;
+        }
+
         _items = NavItems.Items;
         _ = InvokeAsync(StateHasChanged);
     }

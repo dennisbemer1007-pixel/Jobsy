@@ -12,6 +12,68 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         (Environment.GetEnvironmentVariable("JOBSY_BLOCKER_ARTIFACTS") ?? "/cursor/stores/self/blockers").Trim();
 
     [Fact]
+    public async Task Debug_desktop_nav_dom_when_requested()
+    {
+        if ((Environment.GetEnvironmentVariable("JOBSY_DEBUG_NAV") ?? "").Trim() != "1")
+        {
+            return;
+        }
+
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var ctx = await browser.NewContextAsync(new() { ViewportSize = new() { Width = 1440, Height = 900 }, Locale = "nl-NL" });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await RegisterAndSkipToBanenkaartAsync(page, baseUrl);
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+        await page.WaitForTimeoutAsync(3000);
+        var dump = await page.EvaluateAsync<string>(
+            """
+            () => JSON.stringify({
+              url: location.href,
+              shell: document.querySelector('.app-shell')?.className ?? null,
+              header: !!document.querySelector('.app-header'),
+              nav: document.querySelectorAll('[data-testid=candidate-header-nav]').length,
+              navClass: document.querySelectorAll('.candidate-header-nav').length,
+              links: document.querySelectorAll('[data-testid=candidate-header-nav] a').length,
+              bottomLinks: document.querySelectorAll('nav.bottom-nav a').length,
+              headerSnippet: (document.querySelector('.app-header')?.innerHTML ?? '').slice(0, 800),
+            }, null, 2)
+            """);
+        await File.WriteAllTextAsync("/tmp/nav-debug.json", dump);
+        Assert.Fail(dump);
+    }
+
+    [Fact]
+    public async Task Capture_merge_gate_header_and_mobile_banenkaart()
+    {
+        if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCKERS") ?? "").Trim() != "1")
+        {
+            return;
+        }
+
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        if (!await SmokeReachability.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(OutDir);
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        await CaptureSkipBanenkaartMobileOnlyAsync(browser, baseUrl);
+        await CaptureCandidateDesktopNavAsync(browser, baseUrl);
+    }
+
+    [Fact]
     public async Task Capture_blocker_evidence_when_requested()
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCKERS") ?? "").Trim() != "1")
@@ -37,10 +99,30 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await CaptureOnboardingFirstCompetencySaveAsync(browser, baseUrl);
     }
 
+    private static async Task CaptureSkipBanenkaartMobileOnlyAsync(IBrowser browser, string baseUrl)
+    {
+        await using var ctx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            DeviceScaleFactor = 2,
+            IsMobile = true,
+            HasTouch = true,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await RegisterAndSkipToBanenkaartAsync(page, baseUrl);
+        await AssertBanenkaartCandidateShellAsync(page, mobile: true);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "skip-banenkaart-mobile-390.png"),
+            FullPage = false,
+        });
+    }
+
     private static async Task CaptureCandidateDesktopNavAsync(IBrowser browser, string baseUrl)
     {
-        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
-        var email = $"navdesk.{Guid.NewGuid():N}@jobsy.local";
         await using var ctx = await browser.NewContextAsync(new()
         {
             ViewportSize = new() { Width = 1440, Height = 900 },
@@ -50,17 +132,29 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         var page = await ctx.NewPageAsync();
         page.SetDefaultTimeout(120_000);
 
-        await RegisterFreshCandidateAsync(page, baseUrl, email);
-        await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.Locator("[data-testid=candidate-header-nav]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await RegisterAndSkipToBanenkaartAsync(page, baseUrl);
+        await page.ReloadAsync(new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+        await page.Locator("[data-testid=candidate-header-nav] a").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        var activeCount = await page.Locator("[data-testid=candidate-header-nav] .is-active").CountAsync();
+        Assert.True(activeCount > 0, "Expected an active candidate header nav link on banenkaart.");
+        var accountToggle = page.Locator(".app-header .account-menu__toggle").First;
+        await accountToggle.ClickAsync();
+        await page.Locator(".app-header .account-menu__panel").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 15_000 });
+        await page.WaitForTimeoutAsync(600);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "candidate-header-nav-banenkaart-desktop-1440.png"), FullPage = false });
+        await page.Keyboard.PressAsync("Escape");
 
         await page.GotoAsync($"{baseUrl}/candidate/ontdekkingsreis", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await page.Locator("[data-testid=candidate-header-nav]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await WaitForCircuitReadyAsync(page);
+        await page.Locator("[data-testid=candidate-header-nav] a").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        Assert.True(await page.Locator("[data-testid=header-nav-discovery].is-active").CountAsync() > 0,
+            "Expected discovery link active on ontdekkingsreis.");
+        await page.WaitForTimeoutAsync(800);
         await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "candidate-header-nav-discovery-desktop-1440.png"), FullPage = false });
-
-        await page.SetViewportSizeAsync(390, 844);
-        await page.ScreenshotAsync(new() { Path = Path.Combine(OutDir, "candidate-mobile-nav-bottom-390.png"), FullPage = false });
     }
 
     private static async Task CaptureSkipBanenkaartShellAsync(IBrowser browser, string baseUrl)
@@ -159,6 +253,21 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         }
 
         Assert.True(await page.Locator("[data-testid=kb-view-toggle]").CountAsync() > 0, "Expected Kaart/Lijst toggle in DOM.");
+    }
+
+    private static async Task WaitForCircuitReadyAsync(IPage page)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+                null,
+                new() { Timeout = 90_000 });
+        }
+        catch (TimeoutException)
+        {
+            await page.WaitForTimeoutAsync(1200);
+        }
     }
 
     private static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl, string? email = null)

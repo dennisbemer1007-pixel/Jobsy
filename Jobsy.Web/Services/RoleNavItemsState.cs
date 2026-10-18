@@ -59,12 +59,35 @@ public sealed class RoleNavItemsState : IAsyncDisposable
         _navigation.LocationChanged += OnLocationChanged;
         _culture.Changed += OnCultureChanged;
         _navRefresh.RefreshRequested += OnNavRefreshRequestedAsync;
+        _authState.AuthenticationStateChanged += OnAuthenticationStateChanged;
         await RefreshFlagsAsync();
         await RefreshItemsAsync(forceRoleApis: true);
     }
 
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
+    {
+        try
+        {
+            _ = await authStateTask;
+            await RefreshFlagsAsync();
+            await RefreshItemsAsync(forceRoleApis: true);
+            Changed?.Invoke();
+        }
+        catch
+        {
+            // async void: swallow dispose/auth races.
+        }
+    }
+
     private void OnCultureChanged()
-        => Changed?.Invoke();
+    {
+        if (Items.Count == 0)
+        {
+            return;
+        }
+
+        Changed?.Invoke();
+    }
 
     private async Task OnNavRefreshRequestedAsync()
     {
@@ -109,6 +132,10 @@ public sealed class RoleNavItemsState : IAsyncDisposable
 
         var rolesChanged = !string.Equals(_lastRoleFingerprint, fingerprint, StringComparison.Ordinal);
         _lastRoleFingerprint = fingerprint;
+
+        // Render primary nav immediately; optional role API calls below may enrich the catalog.
+        Items = catalog;
+        Changed?.Invoke();
 
         if (RoleClaimMatching.HasRole(state.User, JobsyRoles.BranchManager)
             && !RoleClaimMatching.HasRole(state.User, JobsyRoles.Admin)
@@ -249,7 +276,8 @@ public sealed class RoleNavItemsState : IAsyncDisposable
     {
         try
         {
-            _maqqieHoursNav = await _api.GetMaqqieHoursActiveAsync();
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            _maqqieHoursNav = await _api.GetMaqqieHoursActiveAsync(cts.Token);
         }
         catch
         {
@@ -262,6 +290,7 @@ public sealed class RoleNavItemsState : IAsyncDisposable
         _navigation.LocationChanged -= OnLocationChanged;
         _culture.Changed -= OnCultureChanged;
         _navRefresh.RefreshRequested -= OnNavRefreshRequestedAsync;
+        _authState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
         return ValueTask.CompletedTask;
     }
 }

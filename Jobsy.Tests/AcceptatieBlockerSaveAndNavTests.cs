@@ -88,7 +88,7 @@ public sealed class AcceptatieBlockerSaveAndNavTests
         Assert.Contains("RoleNavItemsState", nav, StringComparison.Ordinal);
         Assert.Contains("RoleNavCatalog.IsActive", nav, StringComparison.Ordinal);
         Assert.Contains("AddScoped<Jobsy.Web.Services.RoleNavItemsState>", program, StringComparison.Ordinal);
-        Assert.Contains(".app-shell--candidate .candidate-header-nav", css, StringComparison.Ordinal);
+        Assert.Contains(".app-header:has(.candidate-header-nav) .candidate-header-nav", css, StringComparison.Ordinal);
     }
 
     [Fact]

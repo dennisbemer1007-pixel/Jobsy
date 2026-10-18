@@ -35,7 +35,7 @@
                     </span>
                 </a>
             </div>
-            @if (_isCandidate)
+            @if (_isCandidate || _banenkaartCandidateShell)
             {
                 <CandidateHeaderNav />
             }
@@ -151,6 +151,9 @@
             Culture.InitializeFromRequest(HttpContextAccessor.HttpContext);
         }
 
+        BootstrapCandidateFromHttpContext();
+        RefreshFocusedFlags();
+
         PwaSheet.Changed += OnPwaSheetChanged;
         _pwaSheetOpen = PwaSheet.IsOpen;
     }
@@ -161,6 +164,7 @@
         RegionHost.Changed += OnBrandingChanged;
         Branding.Changed += OnBrandingChanged;
         Navigation.LocationChanged += OnLocationChanged;
+        AuthState.AuthenticationStateChanged += OnAuthenticationStateChanged;
         RefreshFocusedFlags();
         await Culture.InitializeAsync();
         await Culture.SyncDocumentAsync();
@@ -178,11 +182,11 @@
             var wasCandidate = _isCandidate;
             _isCandidate = user.Identity?.IsAuthenticated == true
                 && RoleClaimMatching.HasRole(user, JobsyRoles.Candidate);
-            SyncBanenkaartImmersive();
+            var immersiveChanged = SyncBanenkaartImmersive();
             if (!_isCandidate)
             {
                 _homeHref = "/";
-                if (wasCandidate != _isCandidate)
+                if (wasCandidate != _isCandidate || immersiveChanged)
                 {
                     await InvokeAsync(StateHasChanged);
                 }
@@ -195,6 +199,12 @@
             {
                 // Flag OFF: logo stays on "/" (LandingRedirectMiddleware → banenkaart).
                 _homeHref = "/";
+                SyncBanenkaartImmersive();
+                if (wasCandidate != _isCandidate || immersiveChanged)
+                {
+                    await InvokeAsync(StateHasChanged);
+                }
+
                 return;
             }
 
@@ -202,6 +212,10 @@
                 user,
                 flags,
                 passportReady: AuthRedirects.PassportReadyFromClaims(user));
+            if (wasCandidate != _isCandidate || immersiveChanged)
+            {
+                await InvokeAsync(StateHasChanged);
+            }
         }
         catch
         {
@@ -329,9 +343,39 @@
             _isCandidate = false;
         }
 
-        if (SyncBanenkaartImmersive() || previous != _isCandidate)
+        SyncBanenkaartImmersive();
+        if (previous != _isCandidate)
         {
             await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void BootstrapCandidateFromHttpContext()
+    {
+        var user = HttpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return;
+        }
+
+        if (!RoleClaimMatching.HasRole(user, JobsyRoles.Candidate))
+        {
+            return;
+        }
+
+        _isCandidate = true;
+    }
+
+    private async void OnAuthenticationStateChanged(Task<AuthenticationState> authStateTask)
+    {
+        try
+        {
+            _ = await authStateTask;
+            await RefreshHomeHrefAsync();
+        }
+        catch
+        {
+            // async void: swallow dispose/auth races.
         }
     }
 
@@ -380,7 +424,8 @@
         }
 
         var hideCoach = IsDiscoveryQuestionCoachHidden(path, relative)
-                        || IsVacancyOrNotificationsCoachHidden(path);
+                        || IsVacancyOrNotificationsCoachHidden(path)
+                        || (_isCandidate && IsBanenkaartPath(path));
         if (_hideCoachDock != hideCoach)
         {
             _hideCoachDock = hideCoach;
@@ -638,5 +683,6 @@
         RegionHost.Changed -= OnBrandingChanged;
         Branding.Changed -= OnBrandingChanged;
         Navigation.LocationChanged -= OnLocationChanged;
+        AuthState.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 }

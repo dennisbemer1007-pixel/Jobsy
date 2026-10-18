@@ -45,6 +45,7 @@ html.cookie-consent-known .cookie-consent { display: none; }
     .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane { display: none !important; }
     .app-shell--banenkaart-shell .jobsy-discovery.show-list .map-pane { display: none !important; }
     .app-shell--banenkaart-shell .jobsy-discovery.show-list .kb-map-fab { display: none !important; }
+    .app-shell--banenkaart-shell .lobsy-coach-dock { display: none !important; }
     .map-pane, .map-stage, #job-map, .job-map { min-width: 0; }
     .jobsy-chrome__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 3.5rem; padding: 0.55rem 0.85rem 0.35rem; }
     .kb-filter-bar { padding: 0.35rem 0.75rem 0.5rem; background: var(--surface); border-bottom: 1px solid var(--border); contain: layout; }
