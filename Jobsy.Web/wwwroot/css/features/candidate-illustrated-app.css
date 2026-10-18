@@ -52,17 +52,16 @@
 
 .cand-hero--profession-band {
   background-size: auto 100%;
-  background-position: right top;
+  background-position: 100% -1.5rem;
+  background-origin: border-box;
+  background-clip: border-box;
 }
 
 @media (min-width: 640px) {
   .cand-hero--profession-band {
     min-height: clamp(11.25rem, 15.28vw, 13.75rem);
     height: clamp(11.25rem, 15.28vw, 13.75rem);
-  }
-
-  .passport-page--illustrated .cand-hero--profession-band {
-    background-position: 96% top;
+    margin-top: 0;
   }
 }
 

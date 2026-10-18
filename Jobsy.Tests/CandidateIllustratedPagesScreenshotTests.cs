@@ -36,6 +36,8 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     private const string ArtifactsDirR13 = "/opt/cursor/artifacts/kandidaat-728-r13";
     private const string ArtifactsDirR14 = "/opt/cursor/artifacts/kandidaat-728-r14";
     private const string ArtifactsDirR15 = "/opt/cursor/artifacts/kandidaat-728-r15";
+    private const string ArtifactsDirR16 = "/opt/cursor/artifacts/kandidaat-728-r16";
+    private static readonly Rgb24 PageCreamReference = new(245, 242, 238);
     private static readonly Rgb24 PearlReference = new(247, 244, 240);
     private static readonly Guid SampleVacancyId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -831,6 +833,79 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Console.WriteLine(pixelReports);
     }
 
+    [Fact]
+    public async Task Capture_kandidaat_728_r16_delivery_pngs()
+    {
+        Directory.CreateDirectory(ArtifactsDirR16);
+        if (Directory.Exists(ArtifactsDirR15))
+        {
+            Directory.Delete(ArtifactsDirR15, recursive: true);
+        }
+
+        var deliveryWeb = new IllustratedPagesWebFactory();
+        _ = deliveryWeb.ServerAddress;
+
+        var heroSizes = new[] { (1440, 900, "1440"), (1024, 768, "1024") };
+        var pixelReports = new StringBuilder();
+
+        await using (var emptyWeb = new IllustratedPagesWebFactory(emptyAppsAndLikes: true))
+        {
+            _ = emptyWeb.ServerAddress;
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR16,
+                emptyWeb.ServerAddress,
+                "/candidate/applications",
+                "sollicitaties-leeg",
+                auth: true,
+                sizes: heroSizes,
+                prepare: WaitForApplicationsEmptyAsync);
+
+            await CaptureIllustratedViewportAsync(
+                ArtifactsDirR16,
+                emptyWeb.ServerAddress,
+                "/candidate/liked",
+                "bewaard-leeg",
+                auth: true,
+                sizes: heroSizes,
+                prepare: WaitForSavedEmptyAsync);
+        }
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR16,
+            deliveryWeb.ServerAddress,
+            "/candidate/paspoort",
+            "kompas-tip",
+            auth: true,
+            sizes: heroSizes,
+            prepare: PrepareKompasTopScreenshotAsync);
+
+        await CaptureIllustratedViewportAsync(
+            ArtifactsDirR16,
+            deliveryWeb.ServerAddress,
+            "/candidate/settings?pane=mail",
+            "instellingen",
+            auth: true,
+            sizes: heroSizes,
+            prepare: WaitForSettingsMailPaneAsync);
+
+        foreach (var name in new[] { "sollicitaties-leeg", "bewaard-leeg", "kompas-tip", "instellingen" })
+        {
+            var pngPath = Path.Combine(ArtifactsDirR16, $"{name}-1440.png");
+            var report = ValidateViewportHeroPixels1440(await File.ReadAllBytesAsync(pngPath), name, gateR16: true);
+            pixelReports.AppendLine(report);
+            Assert.DoesNotContain("PASS=False", report, StringComparison.Ordinal);
+        }
+
+        await deliveryWeb.DisposeAsync();
+
+        var pngs = Directory.GetFiles(ArtifactsDirR16, "*.png");
+        Assert.Equal(8, pngs.Length);
+
+        var reportPath = Path.Combine(ArtifactsDirR16, "hero-pixel-gate-r16.txt");
+        await File.WriteAllTextAsync(reportPath, pixelReports.ToString());
+        Console.WriteLine(pixelReports);
+    }
+
     private async Task CaptureBanenkaartPopupsAsync(
         string artifactsDir = ArtifactsDirR2,
         string? serverAddress = null,
@@ -1037,11 +1112,12 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         Assert.True(report.MaxStepDelta <= 150, report.Log);
     }
 
-    private static string ValidateViewportHeroPixels1440(byte[] pngBytes, string label, bool gateR14 = false, bool gateR15 = false)
+    private static string ValidateViewportHeroPixels1440(byte[] pngBytes, string label, bool gateR14 = false, bool gateR15 = false, bool gateR16 = false)
     {
         using var img = Image.Load<Rgb24>(pngBytes);
         var sb = new StringBuilder();
-        var gateLabel = gateR15 ? "R15" : gateR14 ? "R14" : "R13";
+        var gateModern = gateR15 || gateR16;
+        var gateLabel = gateR16 ? "R16" : gateR15 ? "R15" : gateR14 ? "R14" : "R13";
         sb.AppendLine($"=== Hero pixel gate {gateLabel} (viewport 1440): {label} ({img.Width}x{img.Height}) ===");
 
         var ys = new[] { 330, 350, 370 };
@@ -1070,22 +1146,40 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             sb.AppendLine($"  transition y={y}: max 4px column step (x 860–980) = {maxStep}");
         }
 
-        const int topX = 1100;
-        var heroTopY = gateR15 ? 48 : 68;
+        const int heroTopY = 68;
         var pearlStripPx = 0;
-        for (var y = heroTopY; y < Math.Min(heroTopY + 48, img.Height); y++)
+        if (gateR16)
         {
-            if (IsExactPearl(img[topX, y]))
+            foreach (var topX in new[] { 1300, 1335, 1400 })
             {
-                pearlStripPx++;
-            }
-            else
-            {
-                break;
-            }
-        }
+                if (topX >= img.Width)
+                {
+                    continue;
+                }
 
-        sb.AppendLine($"  hero top y≈{heroTopY}, pearl strip at x={topX}: {pearlStripPx}px (max 4)");
+                var strip = CountTopCreamStripPx(img, topX, heroTopY);
+                pearlStripPx = Math.Max(pearlStripPx, strip);
+            }
+
+            sb.AppendLine($"  hero top y≈{heroTopY}, max cream strip (x 1300–1400): {pearlStripPx}px (max 4)");
+        }
+        else
+        {
+            const int topX = 1100;
+            for (var y = heroTopY; y < Math.Min(heroTopY + 48, img.Height); y++)
+            {
+                if (IsExactPearl(img[topX, y]))
+                {
+                    pearlStripPx++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            sb.AppendLine($"  hero top y≈{heroTopY}, pearl strip at x={topX}: {pearlStripPx}px (max 4)");
+        }
 
         const int scanY = 350;
         var fadeEndX = gateR14 ? (int)Math.Round(img.Width * 0.78) : 868;
@@ -1108,7 +1202,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         sb.AppendLine($"  fade end x≈{fadeEndX}, first figure edge x≈{firstFigureX}, gap={figureGap}px (min 60)");
 
         var ghostPixels = 0;
-        if (gateR14 || gateR15)
+        if (gateR14 || gateModern)
         {
             for (var y = 100; y <= 280; y++)
             {
@@ -1127,7 +1221,7 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         var maxHeroWidthStep = 0;
         var artWidthPx = 0;
         var rightEdgeCutoff = false;
-        if (gateR15)
+        if (gateModern)
         {
             foreach (var y in new[] { 160, 200, 240 })
             {
@@ -1185,15 +1279,48 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
             sb.AppendLine($"  right-edge figure cutoff{(label.Contains("kompas", StringComparison.OrdinalIgnoreCase) ? " (kompas)" : " (n/a)")}: {rightEdgeCutoff}");
         }
 
-        var useR14Gap = gateR14 && !gateR15;
+        var useR14Gap = gateR14 && !gateModern;
         var passed = maxStepOverall <= 40 && pearlStripPx <= 4
             && (!useR14Gap || (figureGap >= 60))
-            && (!(gateR14 || gateR15) || ghostPixels == 0)
-            && (!gateR15 || (maxHeroWidthStep <= 45 && artWidthPx >= img.Width * 0.40
+            && (!(gateR14 || gateModern) || ghostPixels == 0)
+            && (!gateModern || (maxHeroWidthStep <= 45 && artWidthPx >= img.Width * 0.40
                 && (!label.Contains("kompas", StringComparison.OrdinalIgnoreCase) || !rightEdgeCutoff)));
         sb.AppendLine($"  PASS={passed}");
         return sb.ToString();
     }
+
+    private static int CountTopCreamStripPx(Image<Rgb24> img, int x, int heroTopY)
+    {
+        var strip = 0;
+        for (var y = heroTopY; y < Math.Min(heroTopY + 40, img.Height); y++)
+        {
+            var px = img[x, y];
+            if (IsTopCreamStripPixel(px))
+            {
+                strip++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return strip;
+    }
+
+    private static bool IsTopCreamStripPixel(Rgb24 px)
+    {
+        if (IsHeroArtPeach(px))
+        {
+            return false;
+        }
+
+        return RgbStep(PageCreamReference, px) <= 14
+            || RgbStep(PearlReference, px) <= 10;
+    }
+
+    private static bool IsHeroArtPeach(Rgb24 px) =>
+        px.R >= 249 && px.G >= 235 && px.B >= 215 && px.R - px.B >= 18;
 
     private static bool IsGhostFadePixel(Rgb24 px)
     {
