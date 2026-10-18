@@ -25,6 +25,8 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
+    <link rel="stylesheet" href="css/features/onboarding-wizard-nearby-panel.css?v=20261018-01" />
+    <link rel="stylesheet" href="css/features/onboarding-work-history.css?v=20261018-01" />
 </HeadContent>
 
 <div class="ob-wizard ob-wizard--richting-a">
@@ -136,7 +138,7 @@
     else
     {
         var currentPhase = OnboardingWizardCatalog.PhaseForStep(_step);
-        <div class="ob-wizard__layout">
+        <div class="ob-wizard__layout @(ShowNearbyPanel ? "ob-wizard__layout--with-nearby" : null)">
             <aside class="ob-wizard__sidebar">
                 <div class="lobsy-logo">
                     <img class="lobsy-logo__img" src="/images/brand/lobsy-128.png" alt="" />
@@ -217,11 +219,7 @@
 
                     <p class="ob-wizard__step-pill">@MobileStepBadge</p>
 
-                    @if (_earlyMoment == EarlyRewardMoment.Nearby)
-                    {
-                        <EarlyRewardNearbyStep Signal="_nearbySignal" TransportLabel="@Draft.Transport" />
-                    }
-                    else if (_earlyMoment == EarlyRewardMoment.FirstInsight)
+                    @if (_earlyMoment == EarlyRewardMoment.FirstInsight)
                     {
                         <EarlyRewardFirstInsightStep TestTabs="MiniTestTabs"
                                                      CompletedTestStep="7"
@@ -320,6 +318,13 @@
                 {
                     <footer class="ob-wizard__footer @(ShowTestsLaterOffer ? "ob-wizard__footer--with-later" : null)"
                             data-sticky-footer="true">
+                        @if (ShowNearbyPanel)
+                        {
+                            <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Mobile"
+                                                   Signal="_nearbySignal"
+                                                   TransportLabel="@Draft.Transport"
+                                                   RefinedHeadline="NearbyRefinedHeadline" />
+                        }
                         @if (_step is 4 or 5)
                         {
                             <button type="button" class="ob-wizard__ghost ob-wizard__footer-extra" @onclick="SkipOptionalAsync">
@@ -341,7 +346,7 @@
                             <button type="button"
                                     class="btn btn-primary ob-wizard__cta"
                                     data-testid="onboarding-next"
-                                    disabled="@(_busy || _loadingNearby)"
+                                    disabled="@_busy"
                                     @onclick="@(() => NextAsync())">@NextLabel</button>
                             @if (ShowTestsLaterOffer)
                             {
@@ -357,13 +362,22 @@
                     </footer>
                 }
             </main>
+            @if (ShowNearbyPanel)
+            {
+                <aside class="ob-wizard__nearby-rail" aria-label="@Culture["Onboarding.Panel.Nearby.RailAria"]">
+                    <OnboardingNearbyPanel Layout="OnboardingNearbyPanel.NearbyPanelLayout.Desktop"
+                                           Signal="_nearbySignal"
+                                           TransportLabel="@Draft.Transport"
+                                           RefinedHeadline="NearbyRefinedHeadline" />
+                </aside>
+            }
         </div>
     }
 </div>
 
 @code {
     private enum WizardPhase { Wizard, Install }
-    private enum EarlyRewardMoment { None, Nearby, FirstInsight }
+    private enum EarlyRewardMoment { None, FirstInsight }
     private sealed record SidebarItem(int Number, int First, int Last, string Title, string Lead);
     private sealed record WelcomePhase(int Number, string Title, string Lead, string Time);
     
@@ -382,6 +396,7 @@
     private bool _showValidation;
     private bool _pendingStepScroll;
     private bool _loadingNearby;
+    private int _nearbyPeakCount;
     private EarlyRewardMoment _earlyMoment;
     private OnboardingNearbySignal? _nearbySignal;
     private OnboardingImpressionItem? _earlyStrength;
@@ -463,11 +478,6 @@
     {
         get
         {
-            if (_earlyMoment == EarlyRewardMoment.Nearby)
-            {
-                return Culture["Onboarding.Early.Nearby.Badge"];
-            }
-
             if (_earlyMoment == EarlyRewardMoment.FirstInsight)
             {
                 return Culture["Onboarding.Early.Insight.Badge"];
@@ -485,7 +495,6 @@
 
     private string MobileTopMeta => _earlyMoment switch
     {
-        EarlyRewardMoment.Nearby => Culture["Onboarding.Early.Nearby.Meta"],
         EarlyRewardMoment.FirstInsight => Culture["Onboarding.Early.Insight.Meta"],
         _ => Culture.Format("Onboarding.StepLine", _step, OnboardingWizardCatalog.RemainingMinutes(_step))
             .Replace(" van 10 ·", " ·", StringComparison.Ordinal)
@@ -494,9 +503,7 @@
             .Replace(" min left", " min", StringComparison.Ordinal)
     };
 
-    private string NextLabel => _earlyMoment == EarlyRewardMoment.Nearby
-        ? Culture["Onboarding.Early.Nearby.Cta"]
-        : _earlyMoment == EarlyRewardMoment.FirstInsight
+    private string NextLabel => _earlyMoment == EarlyRewardMoment.FirstInsight
             ? Culture["Onboarding.NextTest"]
             : _step == 7 && !Draft.HasConsent
         ? Culture["Onboarding.Consent.Cta"]
@@ -518,6 +525,23 @@
         || (_step is >= 7 and <= 10 && Draft.HasConsent && _earlyMoment == EarlyRewardMoment.None);
 
     private const string BanenkaartPath = KbRoutes.Map;
+
+    private bool NearbyPanelEligible =>
+        !_welcome
+        && !_finish
+        && _earlyMoment != EarlyRewardMoment.FirstInsight
+        && NearbyBasicsSaved();
+
+    private bool ShowNearbyPanel => NearbyPanelEligible && _nearbySignal is not null && !_loadingNearby;
+
+    private bool NearbyRefinedHeadline =>
+        _nearbySignal is { Count: > 0 and var count }
+        && _nearbyPeakCount > count;
+
+    private bool NearbyBasicsSaved() =>
+        OnboardingWizardValidation.HasResolvableLocation(
+            Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved);
+
     private void OnConsentChanged(bool value)
     {
         Draft.ConsentRequested = value;
@@ -657,6 +681,8 @@
                 await MarkStartedAsync();
                 await PrepareMiniAsync();
                 await TryAutoAdvanceEmptyMiniStepAsync();
+                await ApplyLegacyNearbyRedirectAsync();
+                await RefreshNearbySignalIfEligibleAsync();
                 RequestStepScrollReset();
             }
         }
@@ -752,15 +778,6 @@
             return;
         }
 
-        if (_earlyMoment == EarlyRewardMoment.Nearby)
-        {
-            _earlyMoment = EarlyRewardMoment.None;
-            _nearbySignal = null;
-            ClearStepValidation();
-            RequestStepScrollReset();
-            return;
-        }
-
         if (_step <= 1) return;
         await FlushAsync();
         ClearStepValidation();
@@ -810,19 +827,6 @@
         _miniArrivedViaBack = false;
         try
         {
-            if (_earlyMoment == EarlyRewardMoment.Nearby)
-            {
-                _earlyMoment = EarlyRewardMoment.None;
-                _nearbySignal = null;
-                _step++;
-                _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
-                FlashSaved();
-                await PrepareMiniAsync();
-                await TryAutoAdvanceEmptyMiniStepAsync();
-                RequestStepScrollReset();
-                return;
-            }
-
             if (_earlyMoment == EarlyRewardMoment.FirstInsight)
             {
                 _earlyMoment = EarlyRewardMoment.None;
@@ -850,15 +854,6 @@
                 _state = await Api.SaveMyOnboardingProgressAsync(10, stepCompleted: true, finishReached: true);
                 _finish = true;
                 _state = await Api.GetMyOnboardingAsync() ?? _state;
-                return;
-            }
-
-            if (_step == 3)
-            {
-                await FlushAsync();
-                await LoadNearbySignalAsync();
-                _earlyMoment = EarlyRewardMoment.Nearby;
-                RequestStepScrollReset();
                 return;
             }
 
@@ -1100,11 +1095,16 @@
 
     private void ShowCustomTravel() => Draft.CustomTravel = true;
 
-    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+    private void AddJob()
+    {
+        Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+        ScheduleProfileSave();
+    }
 
     private void RemoveJob(CandidateEmployerHistory job)
     {
         Draft.Jobs.Remove(job);
+        Draft.EnsureFirstJobSlot();
         ScheduleProfileSave();
     }
 
@@ -1503,6 +1503,7 @@
         {
             await Task.Delay(350, cancellationToken);
             await SaveProfileAsync(cancellationToken);
+            await RefreshNearbySignalIfEligibleAsync();
             FlashSaved();
         }
         catch (OperationCanceledException)
@@ -1524,6 +1525,7 @@
     {
         _saveCts?.Cancel();
         await SaveProfileAsync(CancellationToken.None);
+        await RefreshNearbySignalIfEligibleAsync();
     }
 
     private Task SaveProfileAsync(CancellationToken cancellationToken) => Api.UpdateMyProfileAsync(
@@ -1537,7 +1539,7 @@
             Availability = BuildAvailability(),
             AvailabilityPresets = Draft.Presets.ToList(),
             AvailabilityPresetsOverridden = Draft.PresetsOverridden,
-            Employers = Draft.Jobs,
+            Employers = Draft.JobsForSave(),
             NoWorkExperience = Draft.NoWork,
             Educations = string.IsNullOrWhiteSpace(Draft.Education)
                 ? []
@@ -1584,17 +1586,48 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task LoadNearbySignalAsync()
+    private async Task RefreshNearbySignalIfEligibleAsync()
     {
+        if (!NearbyPanelEligible)
+        {
+            return;
+        }
+
         _loadingNearby = true;
         try
         {
-            _nearbySignal = await Api.GetOnboardingNearbySignalAsync();
+            var signal = await Api.GetOnboardingNearbySignalAsync();
+            if (signal is not null)
+            {
+                _nearbyPeakCount = Math.Max(_nearbyPeakCount, signal.Count);
+                _nearbySignal = signal;
+            }
         }
         finally
         {
             _loadingNearby = false;
         }
+    }
+
+    private async Task ApplyLegacyNearbyRedirectAsync()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (!Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query)
+                .TryGetValue("from", out var fromValues)
+            || !string.Equals(fromValues.FirstOrDefault(), "nearby", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (_step != 3)
+        {
+            return;
+        }
+
+        _step = 4;
+        _state = await Api.SaveMyOnboardingProgressAsync(_step, stepCompleted: true);
+        FlashSaved();
+        await PrepareMiniAsync();
     }
 
     private async Task LoadEarlyStrengthAsync()

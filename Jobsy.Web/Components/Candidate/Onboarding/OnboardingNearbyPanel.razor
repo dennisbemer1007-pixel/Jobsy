@@ -1,0 +1,132 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+@if (Signal is not null && !Signal.EmployersFeatureOff)
+{
+    @if (Layout == NearbyPanelLayout.Desktop)
+    {
+        <div class="ob-nearby-panel ob-nearby-panel--desktop"
+             data-testid="onboarding-nearby-panel-desktop"
+             aria-live="polite">
+            <p class="ob-nearby-panel__headline">@HeadlineMarkup()</p>
+            @ExamplesBlock(compact: false)
+        </div>
+    }
+    else
+    {
+        <div class="ob-nearby-panel ob-nearby-panel--mobile" data-testid="onboarding-nearby-panel-mobile">
+            <button type="button"
+                    class="ob-nearby-panel__mobile-line"
+                    aria-expanded="@_mobileExpanded"
+                    aria-controls="@_mobileExamplesId"
+                    @onclick="ToggleMobile">
+                <span class="ob-nearby-panel__mobile-text">@MobileLineText()</span>
+                <span class="ob-nearby-panel__chevron" aria-hidden="true">@(_mobileExpanded ? "▾" : "›")</span>
+            </button>
+            @if (_mobileExpanded && Signal.Examples.Count > 0)
+            {
+                <div id="@_mobileExamplesId" class="ob-nearby-panel__mobile-sheet">
+                    @ExamplesBlock(compact: true)
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    public enum NearbyPanelLayout { Desktop, Mobile }
+
+    [Parameter] public NearbyPanelLayout Layout { get; set; }
+    [Parameter] public OnboardingNearbySignal? Signal { get; set; }
+    [Parameter] public string TransportLabel { get; set; } = "";
+    [Parameter] public bool RefinedHeadline { get; set; }
+
+    private bool _mobileExpanded;
+    private readonly string _mobileExamplesId = $"ob-nearby-examples-{Guid.NewGuid():N}";
+
+    private void ToggleMobile() => _mobileExpanded = !_mobileExpanded;
+
+    private MarkupString HeadlineMarkup()
+    {
+        var count = Signal!.Count;
+        if (count > 0)
+        {
+            var key = RefinedHeadline
+                ? "Onboarding.Panel.Nearby.TitleRefined"
+                : "Onboarding.Panel.Nearby.TitleInitial";
+            return (MarkupString)Culture.Format(key, count);
+        }
+
+        return (MarkupString)Culture["Onboarding.Panel.Nearby.TitleZero"];
+    }
+
+    private string MobileLineText()
+    {
+        if (Signal!.Count > 0)
+        {
+            return RefinedHeadline
+                ? Culture.Format("Onboarding.Panel.Nearby.MobileRefined", Signal.Count)
+                : Culture.Format("Onboarding.Panel.Nearby.MobileInitial", Signal.Count);
+        }
+
+        return Culture["Onboarding.Panel.Nearby.MobileZero"];
+    }
+
+    private RenderFragment ExamplesBlock(bool compact) => __builder =>
+    {
+        if (Signal!.Examples.Count == 0)
+        {
+            return;
+        }
+
+        __builder.OpenElement(0, "ul");
+        __builder.AddAttribute(1, "class", compact ? "ob-nearby-panel__list ob-nearby-panel__list--compact" : "ob-nearby-panel__list");
+        foreach (var job in Signal.Examples)
+        {
+            __builder.OpenElement(2, "li");
+            __builder.AddAttribute(3, "class", "ob-nearby-panel__item");
+            __builder.OpenElement(4, "span");
+            __builder.AddAttribute(5, "class", "ob-nearby-panel__title");
+            __builder.AddContent(6, job.Title);
+            __builder.CloseElement();
+            __builder.OpenElement(7, "span");
+            __builder.AddAttribute(8, "class", "ob-nearby-panel__meta");
+            __builder.AddContent(9, FormatJobMeta(job));
+            __builder.CloseElement();
+            __builder.CloseElement();
+        }
+
+        __builder.CloseElement();
+    };
+
+    private static string FormatKm(double km)
+        => km.ToString("0.0", System.Globalization.CultureInfo.GetCultureInfo("nl-NL")).Replace('.', ',') + " km";
+
+    private string FormatJobMeta(OnboardingNearbyVacancyCard job)
+    {
+        var parts = new List<string> { FormatKm(job.DistanceKm) };
+        if (job.TravelMinutes is > 0)
+        {
+            parts.Add(FormatTravel(job.TravelMinutes));
+        }
+
+        return string.Join(" · ", parts);
+    }
+
+    private string FormatTravel(int minutes)
+    {
+        var mode = TravelReach.Fastest(TransportLabels.ParseMany(TransportLabel));
+        var key = mode switch
+        {
+            TransportMode.Walking => "Onboarding.Early.Nearby.JobTravelWalk",
+            TransportMode.Car => "Onboarding.Early.Nearby.JobTravelCar",
+            TransportMode.PublicTransport => "Onboarding.Early.Nearby.JobTravelTransit",
+            TransportMode.Bike => "Onboarding.Early.Nearby.JobTravelBike",
+            _ => "Onboarding.Early.Nearby.JobTravelGeneric",
+        };
+        return Culture.Format(key, minutes);
+    }
+}

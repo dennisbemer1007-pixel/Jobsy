@@ -1023,7 +1023,20 @@ public sealed class CandidateProfileEditor : IDisposable
                             IsCurrent = e.IsCurrent,
                             EscoId = string.IsNullOrWhiteSpace(e.Role) || string.IsNullOrWhiteSpace(e.EscoId)
                                 ? null
-                                : e.EscoId.Trim()
+                                : e.EscoId.Trim(),
+                            Reference = e.Reference?.ConsentConfirmed == true
+                                && !string.IsNullOrWhiteSpace(e.Reference.ContactName)
+                                ? new CandidateEmployerJobReference
+                                {
+                                    ContactName = e.Reference.ContactName.Trim(),
+                                    Relationship = string.IsNullOrWhiteSpace(e.Reference.Relationship)
+                                        ? null
+                                        : e.Reference.Relationship.Trim(),
+                                    Email = string.IsNullOrWhiteSpace(e.Reference.Email) ? null : e.Reference.Email.Trim(),
+                                    Phone = string.IsNullOrWhiteSpace(e.Reference.Phone) ? null : e.Reference.Phone.Trim(),
+                                    ConsentConfirmed = true
+                                }
+                                : null
                         })
                         .ToList(),
                     Educations = SelectedEducations

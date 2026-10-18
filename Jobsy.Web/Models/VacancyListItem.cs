@@ -293,11 +293,22 @@ public sealed class CandidateEmployerHistory
     /// <summary>True after "Staat er niet bij". Not stored. A new role asks again.</summary>
     public bool OccupationDismissed { get; set; }
 
+    public CandidateEmployerJobReference? Reference { get; set; }
+
     public bool ShowsAsCurrent =>
         IsCurrent == true
         || (IsCurrent is null
             && !string.IsNullOrWhiteSpace(EmployerName)
             && string.IsNullOrWhiteSpace(EndMonth));
+}
+
+public sealed class CandidateEmployerJobReference
+{
+    public string? ContactName { get; set; }
+    public string? Relationship { get; set; }
+    public string? Email { get; set; }
+    public string? Phone { get; set; }
+    public bool ConsentConfirmed { get; set; }
 }
 
 public sealed class CandidateCertificate

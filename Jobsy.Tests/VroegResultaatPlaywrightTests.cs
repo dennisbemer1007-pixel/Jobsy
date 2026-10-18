@@ -59,8 +59,8 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page);
         await FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
-        await ClickNextAsync(page);
+        await page.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
+        Assert.Equal(0, await page.Locator("[data-testid=early-reward-nearby]").CountAsync());
         await NavigateToTestConsentWithoutStartingAsync(page);
         await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
         await page.WaitForTimeoutAsync(1500);
@@ -154,15 +154,14 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page);
         await FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
-        await AssertEarlyScreenChromeAsync(page);
+        await page.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
+        Assert.Equal(0, await page.Locator("[data-testid=early-reward-nearby]").CountAsync());
 
         if (capture)
         {
             await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-mobile-390.png") });
         }
 
-        await ClickNextAsync(page);
         await SkipOptionalStepsToConsentAsync(page);
         await FinishCompetencyMiniAsync(page);
         await page.Locator("[data-testid=early-reward-insight]").WaitForAsync(new() { Timeout = 90_000 });
@@ -190,7 +189,6 @@ public sealed class VroegResultaatPlaywrightTests
             await RegisterFreshCandidateAsync(bPage2x, baseUrl);
             await EnsureWizardStartedAsync(bPage2x);
             await FillStepsThroughTransportAsync(bPage2x, maxTravelMinutes: 30);
-            await ClickNextAsync(bPage2x);
             await ClickNextAsync(bPage2x);
             await SkipOptionalStepsToConsentAsync(bPage2x);
             await FinishCompetencyMiniAsync(bPage2x);
@@ -232,7 +230,7 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page);
         await FillStepsThroughTransportAsync(page, maxTravelMinutes: 5, postcode: "8899EH");
         await ClickNextAsync(page);
-        await page.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
+        await page.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
         await page.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-zero-mobile-390@2x.png") });
     }
 
@@ -258,10 +256,10 @@ public sealed class VroegResultaatPlaywrightTests
         await EnsureWizardStartedAsync(page2x);
         await FillStepsThroughTransportAsync(page2x, maxTravelMinutes: 30);
         await ClickNextAsync(page2x);
-        await page2x.Locator("[data-testid=early-reward-nearby]").WaitForAsync(new() { Timeout = 60_000 });
-        await page2x.Locator(".ob-vroeg__count").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await page2x.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 60_000 });
+        await page2x.Locator(".ob-nearby-panel__count, .ob-nearby-panel__mobile-text").First
+            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         await page2x.ScreenshotAsync(new() { Path = Path.Combine(afterDir, "A-nearby-mobile-390@2x.png") });
-        await ClickNextAsync(page2x);
         await NavigateToTestConsentWithoutStartingAsync(page2x);
         await page2x.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
         await page2x.WaitForTimeoutAsync(800);
@@ -483,7 +481,7 @@ combo.save(out)
         public double ScrollTop { get; set; }
     }
 
-    private static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl)
+    internal static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl)
     {
         var email = $"vroeg.{Guid.NewGuid():N}@jobsy.local";
         await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.NetworkIdle, Timeout = 90_000 });
@@ -499,7 +497,7 @@ combo.save(out)
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
     }
 
-    private static async Task EnsureWizardStartedAsync(IPage page)
+    internal static async Task EnsureWizardStartedAsync(IPage page)
     {
         await WaitForWizardShellAsync(page);
 
@@ -541,7 +539,7 @@ combo.save(out)
         }
     }
 
-    private static async Task FillStepsThroughTransportAsync(
+    internal static async Task FillStepsThroughTransportAsync(
         IPage page,
         int maxTravelMinutes,
         string postcode = "2671GB")
@@ -685,7 +683,7 @@ combo.save(out)
         }
     }
 
-    private static async Task ClickNextAsync(IPage page)
+    internal static async Task ClickNextAsync(IPage page)
     {
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
         await page.Locator("[data-testid=onboarding-next]").ClickAsync(new() { Force = true, Timeout = 20_000 });

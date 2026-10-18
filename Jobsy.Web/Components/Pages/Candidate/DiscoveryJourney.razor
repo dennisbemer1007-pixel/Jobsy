@@ -2590,11 +2590,16 @@
         ScheduleProfileSave();
     }
 
-    private void AddJob() => Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+    private void AddJob()
+    {
+        Draft.Jobs.Add(new CandidateEmployerHistory { IsCurrent = false });
+        ScheduleProfileSave();
+    }
 
     private void RemoveJob(CandidateEmployerHistory job)
     {
         Draft.Jobs.Remove(job);
+        Draft.EnsureFirstJobSlot();
         ScheduleProfileSave();
     }
 
@@ -2919,7 +2924,7 @@
                     AvailabilityPresetsOverridden = Draft.PresetsOverridden,
                     Availability = BuildAvailability(),
                     NoWorkExperience = Draft.NoWork,
-                    Employers = Draft.Jobs.ToList(),
+                    Employers = Draft.JobsForSave(),
                     Educations = string.IsNullOrWhiteSpace(Draft.Education)
                         ? []
                         : [OnboardingWizardCatalog.FormatEducationLine(Draft.Education, Draft.EducationDirection)],

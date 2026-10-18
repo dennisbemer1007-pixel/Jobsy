@@ -21,7 +21,7 @@ public static class OnboardingWizardCatalog
     public static readonly int[] RemainingMinutesByStep =
     [
         0, // unused (1-based)
-        12, 11, 10, 9, 8, 7, 6, 4, 3, 1
+        12, 11, 9, 8, 7, 6, 5, 4, 3, 1
     ];
 
     /// <summary>V3 remaining minutes by counted step (1-based), ≈12 min total.</summary>

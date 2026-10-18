@@ -1,6 +1,8 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Core.Careers
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Web.Components.Shared
 @inject CultureState Culture
 
 @if (ShowHeading)
@@ -11,7 +13,7 @@
 }
 <div class="ob-wizard__card">
 <label class="ob-wizard__check">
-    <input type="checkbox" @bind="Draft.NoWork" @bind:after="NotifyAsync" />
+    <input type="checkbox" checked="@Draft.NoWork" @onchange="OnNoWorkChangedAsync" />
     @Culture["Onboarding.NoWorkExperience"]
 </label>
 @if (!Draft.NoWork)
@@ -19,46 +21,131 @@
     @foreach (var job in Draft.Jobs)
     {
         var item = job;
-        <article class="ob-wizard__job">
-            <button type="button" class="icon-btn"
-                    aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role ?? "")"
-                    @onclick="() => RemoveJob.InvokeAsync(item)">×</button>
+        var canRemove = Draft.Jobs.Count > 1 || !item.IsBlank();
+        var dutyChips = OccupationDutySuggestions.ForRole(item.Role);
+        item.Reference ??= new CandidateEmployerJobReference();
+        var reference = item.Reference;
+        var referenceOpen = _referenceOpen.GetValueOrDefault(item, reference.HasAnyField());
+        <article class="ob-wizard__job ob-job-card" data-testid="onboarding-work-job">
+            @if (canRemove)
+            {
+                <button type="button" class="icon-btn"
+                        aria-label="@Culture.Format("Onboarding.DeleteJob", item.Role ?? "")"
+                        @onclick="() => RemoveJob.InvokeAsync(item)">×</button>
+            }
             <label>
                 @Culture["Profile.Role"]
-                <input @bind="item.Role" @bind:event="oninput" @bind:after="NotifyAsync" />
+                <input @bind="item.Role" @bind:event="oninput" @bind:after="OnRoleChangedAsync" />
             </label>
             <label>
                 @Culture["Profile.Employer"]
                 <input @bind="item.EmployerName" @bind:event="oninput" @bind:after="NotifyAsync" />
             </label>
-            <div class="ob-wizard__field-row">
-                <label>
+            <div class="ob-job-dates">
+                <label class="ob-job-dates__from">
                     @Culture["Profile.EmployerFrom"]
                     <MonthYearInput Value="@item.StartMonth"
                                     ValueChanged="value => SetJobStart.InvokeAsync((item, value))" />
                 </label>
-                <label class="ob-wizard__check">
-                    <input type="checkbox"
-                           checked="@item.ShowsAsCurrent"
-                           @onchange="e => SetCurrentJob(item, e.Value is true)" />
-                    @Culture["Profile.CurrentJob"]
-                </label>
-                @if (!item.ShowsAsCurrent)
+                @if (item.ShowsAsCurrent)
                 {
-                    <label>
+                    <p class="ob-job-dates__present" aria-hidden="true">@Culture["Profile.EmployerPresent"]</p>
+                }
+                else
+                {
+                    <label class="ob-job-dates__to">
                         @Culture["Profile.EmployerTo"]
                         <MonthYearInput Value="@item.EndMonth"
                                         ReferenceMonth="@item.StartMonth"
                                         ValueChanged="value => SetJobEnd.InvokeAsync((item, value))" />
                     </label>
                 }
+                <label class="ob-job-dates__current">
+                    <input type="checkbox"
+                           checked="@item.ShowsAsCurrent"
+                           @onchange="e => SetCurrentJob(item, e.Value is true)" />
+                    @Culture["Profile.CurrentJob"]
+                </label>
             </div>
+            <label class="ob-job-duties">
+                <span>@Culture["Onboarding.Work.DutiesLabel"] <small class="ob-job-duties__optional">@Culture["Onboarding.Optional"]</small></span>
+                <textarea rows="3"
+                          maxlength="1000"
+                          placeholder="@Culture["Onboarding.Work.DutiesPlaceholder"]"
+                          @bind="item.Description"
+                          @bind:event="oninput"
+                          @bind:after="NotifyAsync"></textarea>
+            </label>
+            @if (dutyChips.Count > 0)
+            {
+                <ChoiceTileGrid Class="ob-job-duty-chips" Wrap="true" DesktopThreeColumns="false" AriaLabel="@Culture["Onboarding.Work.DutyChipsAria"]">
+                    @foreach (var chip in dutyChips)
+                    {
+                        var text = chip;
+                        <ChoiceTile Label="@text"
+                                    Inline="true"
+                                    AlignIcons="false"
+                                    OnClick="@(() => AppendDuty(item, text))" />
+                    }
+                </ChoiceTileGrid>
+            }
+            @if (!string.IsNullOrWhiteSpace(item.EmployerName)
+                 && string.IsNullOrWhiteSpace(item.Description)
+                 && !Draft.NoWork)
+            {
+                <p class="ob-job-duties__hint">@Culture["Onboarding.Work.DutiesHint"]</p>
+            }
+            @if (!referenceOpen)
+            {
+                <button type="button"
+                        class="ob-job-ref-toggle"
+                        data-testid="onboarding-add-reference"
+                        @onclick="() => ToggleReference(item, open: true)">
+                    @Culture["Onboarding.Work.AddReference"]
+                </button>
+            }
+            else
+            {
+                <div class="ob-job-ref" data-testid="onboarding-reference-panel">
+                    <label>
+                        @Culture["Onboarding.Work.ReferenceName"]
+                        <input @bind="reference.ContactName" @bind:event="oninput" @bind:after="NotifyAsync" />
+                    </label>
+                    <label>
+                        @Culture["Onboarding.Work.ReferenceRelationship"]
+                        <input placeholder="@Culture["Onboarding.Work.ReferenceRelationshipPlaceholder"]"
+                               @bind="reference.Relationship"
+                               @bind:event="oninput"
+                               @bind:after="NotifyAsync" />
+                    </label>
+                    <div class="ob-wizard__field-row">
+                        <label>
+                            @Culture["Onboarding.Work.ReferenceEmail"]
+                            <input type="email" @bind="reference.Email" @bind:event="oninput" @bind:after="NotifyAsync" />
+                        </label>
+                        <label>
+                            @Culture["Onboarding.Work.ReferencePhone"]
+                            <input type="tel" @bind="reference.Phone" @bind:event="oninput" @bind:after="NotifyAsync" />
+                        </label>
+                    </div>
+                    <label class="ob-wizard__check ob-job-ref__consent">
+                        <input type="checkbox"
+                               checked="@reference.ConsentConfirmed"
+                               @onchange="e => SetReferenceConsent(reference, e.Value is true)" />
+                        @Culture["Onboarding.Work.ReferenceConsent"]
+                    </label>
+                    <p class="ob-job-ref__privacy">@Culture["Onboarding.Work.ReferencePrivacy"]</p>
+                </div>
+            }
         </article>
     }
-    @if (Draft.Jobs.Count < 3)
+    @if (ShowAddJobButton)
     {
-        <button type="button" class="ob-wizard__add-job" @onclick="AddJob">
-            @Culture["Onboarding.AddJob"]
+        <button type="button"
+                class="ob-wizard__add-job"
+                data-testid="onboarding-add-job"
+                @onclick="AddJob">
+            @AddJobLabel
         </button>
     }
 }
@@ -72,7 +159,43 @@
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobStart { get; set; }
     [Parameter] public EventCallback<(CandidateEmployerHistory Job, string? Value)> SetJobEnd { get; set; }
 
+    private readonly Dictionary<CandidateEmployerHistory, bool> _referenceOpen = new();
+
+    protected override void OnParametersSet()
+    {
+        Draft.EnsureFirstJobSlot();
+    }
+
+    private bool ShowAddJobButton =>
+        !Draft.NoWork
+        && Draft.Jobs.Count < 3
+        && Draft.HasEngagedJob();
+
+    private string AddJobLabel => Culture["Onboarding.AddAnotherJob"];
+
     private Task NotifyAsync() => Draft.NotifyChangedAsync();
+
+    private Task OnRoleChangedAsync()
+    {
+        StateHasChanged();
+        return NotifyAsync();
+    }
+
+    private async Task OnNoWorkChangedAsync(ChangeEventArgs args)
+    {
+        Draft.NoWork = args.Value is true;
+        if (Draft.NoWork)
+        {
+            Draft.Jobs.Clear();
+            _referenceOpen.Clear();
+        }
+        else
+        {
+            Draft.EnsureFirstJobSlot();
+        }
+
+        await NotifyAsync();
+    }
 
     private Task SetCurrentJob(CandidateEmployerHistory item, bool current)
     {
@@ -80,5 +203,29 @@
         return current
             ? SetJobEnd.InvokeAsync((item, null))
             : Draft.NotifyChangedAsync();
+    }
+
+    private async Task AppendDuty(CandidateEmployerHistory item, string chip)
+    {
+        var existing = item.Description?.Trim() ?? "";
+        if (existing.Contains(chip, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        item.Description = string.IsNullOrWhiteSpace(existing) ? chip : $"{existing.TrimEnd('.', ';')}; {chip}";
+        await NotifyAsync();
+    }
+
+    private void ToggleReference(CandidateEmployerHistory item, bool open)
+    {
+        _referenceOpen[item] = open;
+        item.Reference ??= new CandidateEmployerJobReference();
+    }
+
+    private Task SetReferenceConsent(CandidateEmployerJobReference reference, bool value)
+    {
+        reference.ConsentConfirmed = value;
+        return NotifyAsync();
     }
 }
