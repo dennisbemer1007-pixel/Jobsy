@@ -28,7 +28,7 @@ internal static class UiStringsReferenceVerification
             "Tip van Lobsy",
             "Tip from Lobsy");
         Add("RefVerif.Tip.Body",
-            "Wist je dat je een referent kunt vragen je werkervaring en competenties te bevestigen? Dan krijg je een geverifieerd vinkje.",
+            "Wist je dat je een referent kunt vragen je werkervaring en vaardigheden te bevestigen? Dan krijg je een geverifieerd vinkje.",
             "Did you know you can ask a reference to confirm your work experience and competencies? Then you get a verified checkmark.");
         Add("RefVerif.Tip.Ask",
             "Referent vragen", "Ask a reference");
@@ -71,7 +71,7 @@ internal static class UiStringsReferenceVerification
         Add("RefVerif.Col.Status",
             "Status", "Status");
         Add("RefVerif.Col.Endorsed",
-            "Competenties", "Competencies");
+            "Vaardigheden", "Competencies");
         Add("RefVerif.Status.confirmed",
             "Bevestigd", "Confirmed");
         Add("RefVerif.Status.sent",
@@ -133,7 +133,7 @@ internal static class UiStringsReferenceVerification
             "Die link is 14 dagen geldig; we sturen één herinnering.",
             "The link is valid for 14 days; we send one reminder.");
         Add("RefVerif.Request.NextStep3",
-            "Bevestigde competenties krijgen een vinkje op je paspoort.",
+            "Bevestigde vaardigheden krijgen een vinkje op je paspoort.",
             "Confirmed competences get a check mark on your passport.");
         Add("RefVerif.Request.NextStep4",
             "De opmerking van je referent zie alleen jij.",
@@ -156,12 +156,12 @@ internal static class UiStringsReferenceVerification
             "Deze werkervaring is al bevestigd.",
             "This work experience is already confirmed.");
         Add("RefVerif.VerifiedCompetences.Title",
-            "Bevestigde competenties", "Confirmed competencies");
+            "Bevestigde vaardigheden", "Confirmed competencies");
         Add("RefVerif.VerifiedCompetences.Disclaimer",
             "Lobsy certificeert zelf niets. Een referent bevestigt wat hij of zij van jouw werk weet.",
             "Lobsy does not certify anything itself. A reference confirms what they know from working with you.");
         Add("RefVerif.VerifiedCompetences.EmployerPreview",
-            "Zo ziet een werkgever bevestigde competenties", "How an employer sees confirmed competencies");
+            "Zo ziet een werkgever bevestigde vaardigheden", "How an employer sees confirmed competencies");
         Add("RefVerif.EmployerPreview.CompactTitle",
             "Zo ziet een werkgever het", "How an employer sees it");
         Add("RefVerif.UnverifiedCompetences.Title",
@@ -223,7 +223,7 @@ internal static class UiStringsReferenceVerification
         Add("RefVerif.Public.SectionFactsLead",
             "Alleen feiten over haar werk bij jullie.", "Only facts about their work with you.");
         Add("RefVerif.Public.SectionCompetences",
-            "Herken je deze competenties?", "Do you recognise these competencies?");
+            "Herken je deze vaardigheden?", "Do you recognise these competencies?");
         Add("RefVerif.Public.SectionCompetencesLead",
             "Deze komen uit de tests die {0} heeft gedaan. Vink alleen aan wat je in de praktijk hebt gezien.",
             "These come from tests {0} took. Only tick what you have seen in practice.");

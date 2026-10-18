@@ -14,7 +14,7 @@ public static class ReferenceVerificationRules
     public const string ConsentVersion = "2026-10-18";
 
     public const string CandidateConsentText =
-        "Ik vraag deze persoon om mijn werkervaring en competenties te bevestigen. Lobsy stuurt een mail met een persoonlijke link. Contactgegevens van mijn referent blijven privé.";
+        "Ik vraag deze persoon om mijn werkervaring en vaardigheden te bevestigen. Lobsy stuurt een mail met een persoonlijke link. Contactgegevens van mijn referent blijven privé.";
 
     public const string RefereePrivacyText =
         "Lobsy vraagt dit omdat deze persoon jou noemde als referent. Je antwoorden gaan naar die persoon. We bewaren je contactgegevens niet langer dan nodig. Je hoeft niet te antwoorden.";

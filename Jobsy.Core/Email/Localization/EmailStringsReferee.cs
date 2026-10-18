@@ -109,7 +109,26 @@ internal static class EmailStringsReferee
         ["Email.ReferenceConfirmed.PushTitle"] = "Twoja osoba odpowiedziała",
         ["Email.ReferenceConfirmed.PushBody"] = "{0} potwierdził twoją pracę. Odpowiedzi widzisz w paszporcie.",
         ["Email.ReferenceDeclined.PushTitle"] = "Twoja osoba nie bierze udziału",
-        ["Email.ReferenceDeclined.PushBody"] = "{0} nie chce odpowiedzieć na pytania."
+        ["Email.ReferenceDeclined.PushBody"] = "{0} nie chce odpowiedzieć na pytania.",
+        ["Email.WorkExpRefAsk.Subject"] = "{0} prosi o potwierdzenie doświadczenia zawodowego",
+        ["Email.WorkExpRefAsk.Preheader"] = "Krótkie pytania, bez konta",
+        ["Email.WorkExpRefAsk.Heading"] = "Czy to potwierdzisz?",
+        ["Email.WorkExpRefAsk.P1"] = "{0} prosi o potwierdzenie, że pracował w {1} jako {2}. Masz {3} dni. Konto nie jest potrzebne.",
+        ["Email.WorkExpRefAsk.Cta"] = "Otwórz pytania",
+        ["Email.WorkExpRefAsk.Eyebrow"] = "Referencja",
+        ["Email.WorkExpRefAsk.Note"] = "Wolisz nie? Na stronie możesz odmówić albo powiedzieć, że nie znasz tej osoby.",
+        ["Email.WorkExpRefAsk.Privacy"] = "Lobsy pyta, bo ta osoba cię wskazała. Twoje dane kontaktowe pozostają prywatne. Nie musisz odpowiadać.",
+        ["Email.WorkExpRefConfirmed.PushTitle"] = "Twoja referencja potwierdziła",
+        ["Email.WorkExpRefConfirmed.PushBody"] = "{0} potwierdził twoje doświadczenie zawodowe.",
+        ["Email.WorkExpRefDeclined.PushTitle"] = "Twoja referencja nie bierze udziału",
+        ["Email.WorkExpRefDeclined.PushBody"] = "{0} nie potwierdził.",
+        ["Email.WorkExpRefReminder.Subject"] = "Przypomnienie: {0} czeka na twoje potwierdzenie",
+        ["Email.WorkExpRefReminder.Preheader"] = "Jeszcze raz, bez konta",
+        ["Email.WorkExpRefReminder.Heading"] = "Przypomnienie",
+        ["Email.WorkExpRefReminder.P1"] = "{0} nadal czeka na twoje potwierdzenie pracy w {1}.",
+        ["Email.WorkExpRefReminder.Cta"] = "Otwórz pytania",
+        ["Email.WorkExpRefReminder.Eyebrow"] = "Referencja",
+        ["Email.WorkExpRefReminder.Note"] = "To co najwyżej jedno przypomnienie. Wolisz nie? Możesz odmówić na stronie."
     };
 
     private static readonly Dictionary<string, string> Ro = new(StringComparer.Ordinal)
@@ -126,7 +145,26 @@ internal static class EmailStringsReferee
         ["Email.ReferenceConfirmed.PushTitle"] = "Persoana ta a răspuns",
         ["Email.ReferenceConfirmed.PushBody"] = "{0} a confirmat munca ta. Vezi răspunsurile în pașaport.",
         ["Email.ReferenceDeclined.PushTitle"] = "Persoana ta nu participă",
-        ["Email.ReferenceDeclined.PushBody"] = "{0} nu vrea să răspundă la întrebări."
+        ["Email.ReferenceDeclined.PushBody"] = "{0} nu vrea să răspundă la întrebări.",
+        ["Email.WorkExpRefAsk.Subject"] = "{0} te roagă să confirmi experiența de lucru",
+        ["Email.WorkExpRefAsk.Preheader"] = "Întrebări scurte, fără cont",
+        ["Email.WorkExpRefAsk.Heading"] = "Confirmi asta?",
+        ["Email.WorkExpRefAsk.P1"] = "{0} te roagă să confirmi că a lucrat la {1} ca {2}. Ai {3} zile. Nu ai nevoie de cont.",
+        ["Email.WorkExpRefAsk.Cta"] = "Deschide întrebările",
+        ["Email.WorkExpRefAsk.Eyebrow"] = "Referință",
+        ["Email.WorkExpRefAsk.Note"] = "Mai bine nu? Pe pagină poți refuza sau spune că nu cunoști această persoană.",
+        ["Email.WorkExpRefAsk.Privacy"] = "Lobsy întreabă pentru că această persoană te-a numit. Datele tale de contact rămân private. Nu trebuie să răspunzi.",
+        ["Email.WorkExpRefConfirmed.PushTitle"] = "Referința ta a confirmat",
+        ["Email.WorkExpRefConfirmed.PushBody"] = "{0} ți-a confirmat experiența de lucru.",
+        ["Email.WorkExpRefDeclined.PushTitle"] = "Referința ta nu participă",
+        ["Email.WorkExpRefDeclined.PushBody"] = "{0} nu a confirmat.",
+        ["Email.WorkExpRefReminder.Subject"] = "Memento: {0} așteaptă confirmarea ta",
+        ["Email.WorkExpRefReminder.Preheader"] = "Încă o dată, fără cont",
+        ["Email.WorkExpRefReminder.Heading"] = "Memento",
+        ["Email.WorkExpRefReminder.P1"] = "{0} încă așteaptă confirmarea ta despre munca la {1}.",
+        ["Email.WorkExpRefReminder.Cta"] = "Deschide întrebările",
+        ["Email.WorkExpRefReminder.Eyebrow"] = "Referință",
+        ["Email.WorkExpRefReminder.Note"] = "Este cel mult un memento. Mai bine nu? Poți refuza pe pagină."
     };
 
     private static readonly Dictionary<string, string> Ar = new(StringComparer.Ordinal)
@@ -143,6 +181,25 @@ internal static class EmailStringsReferee
         ["Email.ReferenceConfirmed.PushTitle"] = "أجاب مرجِعك",
         ["Email.ReferenceConfirmed.PushBody"] = "{0} أكد عملك. ترى الإجابات في جوازك.",
         ["Email.ReferenceDeclined.PushTitle"] = "مرجِعك لا يشارك",
-        ["Email.ReferenceDeclined.PushBody"] = "{0} لا يريد الإجابة عن الأسئلة."
+        ["Email.ReferenceDeclined.PushBody"] = "{0} لا يريد الإجابة عن الأسئلة.",
+        ["Email.WorkExpRefAsk.Subject"] = "{0} يطلب منك تأكيد خبرة العمل",
+        ["Email.WorkExpRefAsk.Preheader"] = "أسئلة قصيرة، بلا حساب",
+        ["Email.WorkExpRefAsk.Heading"] = "هل تؤكد هذا؟",
+        ["Email.WorkExpRefAsk.P1"] = "{0} يطلب منك تأكيد أنه عمل لدى {1} بصفة {2}. لديك {3} يوماً. لا تحتاج إلى حساب.",
+        ["Email.WorkExpRefAsk.Cta"] = "افتح الأسئلة",
+        ["Email.WorkExpRefAsk.Eyebrow"] = "مرجع",
+        ["Email.WorkExpRefAsk.Note"] = "لا تريد؟ في الصفحة يمكنك الرفض أو أن تقول إنك لا تعرف هذا الشخص.",
+        ["Email.WorkExpRefAsk.Privacy"] = "يسأل لوبسي لأن هذا الشخص سمّاك. تبقى بيانات الاتصال خاصة. لست مضطراً للإجابة.",
+        ["Email.WorkExpRefConfirmed.PushTitle"] = "أكد مرجِعك",
+        ["Email.WorkExpRefConfirmed.PushBody"] = "{0} أكد خبرة عملك.",
+        ["Email.WorkExpRefDeclined.PushTitle"] = "مرجِعك لا يشارك",
+        ["Email.WorkExpRefDeclined.PushBody"] = "{0} لم يؤكد.",
+        ["Email.WorkExpRefReminder.Subject"] = "تذكير: {0} ينتظر تأكيدك",
+        ["Email.WorkExpRefReminder.Preheader"] = "مرة أخرى، بلا حساب",
+        ["Email.WorkExpRefReminder.Heading"] = "تذكير",
+        ["Email.WorkExpRefReminder.P1"] = "{0} ما زال ينتظر تأكيدك عن العمل لدى {1}.",
+        ["Email.WorkExpRefReminder.Cta"] = "افتح الأسئلة",
+        ["Email.WorkExpRefReminder.Eyebrow"] = "مرجع",
+        ["Email.WorkExpRefReminder.Note"] = "هذا تذكير واحد على الأكثر. لا تريد؟ يمكنك الرفض في الصفحة."
     };
 }

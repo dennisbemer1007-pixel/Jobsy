@@ -1624,6 +1624,23 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateReferences.RemoveRange(references);
         }
 
+        var workExpRefs = await _db.WorkExperienceReferenceRequests
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (workExpRefs.Count > 0)
+        {
+            var workExpRefIds = workExpRefs.Select(r => r.Id).ToList();
+            var workExpRefTokens = await _db.WorkExperienceReferenceTokens
+                .Where(t => workExpRefIds.Contains(t.RequestId))
+                .ToListAsync(cancellationToken);
+            if (workExpRefTokens.Count > 0)
+            {
+                _db.WorkExperienceReferenceTokens.RemoveRange(workExpRefTokens);
+            }
+
+            _db.WorkExperienceReferenceRequests.RemoveRange(workExpRefs);
+        }
+
         var competencies = await _db.CandidateCompetencies
             .Where(c => c.UserId == user.Id)
             .ToListAsync(cancellationToken);

@@ -18,7 +18,7 @@ public class AdminEmailPreviewSmokeTests
         Assert.Contains("/admin/content/emails/preview-frame", page);
         Assert.DoesNotContain("srcdoc=", page);
         Assert.Contains("GetEmailTemplatePreviewAsync", page);
-        Assert.Contains("ar (RTL)", page);
+        Assert.Contains("IsRightToLeft ? \" (RTL)\"", page);
         Assert.Contains("GetEmailTemplatePreviewAsync", client);
         Assert.Contains("StartSendAllEmailTemplatesAsync", client);
     }
