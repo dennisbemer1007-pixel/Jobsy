@@ -14,7 +14,7 @@ SLUGS = ("hoe-je-werkt", "leuk", "sfeer", "waarden")
 
 CROP_START = {
     "hoe-je-werkt": 0.52,
-    "leuk": 0.75,
+    "leuk": 0.70,
     "sfeer": 0.52,
     "waarden": 0.34,
 }
@@ -74,8 +74,10 @@ def crop_figure(slug: str) -> None:
     scale = target_h / out.height
     target_w = max(1, int(out.width * scale))
     out = out.resize((target_w, target_h), Image.Resampling.LANCZOS)
-    padded = Image.new("RGBA", (target_w + 8, target_h + 8), (0, 0, 0, 0))
-    padded.paste(out, (4, 4), out)
+    pad_left = 4
+    pad_right = 44 if slug == "leuk" else 4
+    padded = Image.new("RGBA", (target_w + pad_left + pad_right, target_h + 8), (0, 0, 0, 0))
+    padded.paste(out, (pad_left, 4), out)
     out = padded
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)

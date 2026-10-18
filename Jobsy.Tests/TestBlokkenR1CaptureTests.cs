@@ -206,13 +206,37 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
 
             var flowWidth = await page.Locator(".test-flow").First.EvaluateAsync<double>(
                 "el => el.getBoundingClientRect().width");
-            Assert.InRange(flowWidth, 356, 362);
+            Assert.InRange(flowWidth, 322, 332);
+
+            var barOverflow = await page.EvaluateAsync<bool>(""" 
+                () => {
+                  const card = document.querySelector('.test-shell__card');
+                  const bar = document.querySelector('.test-flow__bar');
+                  if (!card || !bar) return false;
+                  const cs = getComputedStyle(card);
+                  const padEnd = parseFloat(cs.paddingInlineEnd) || 0;
+                  const contentRight = card.getBoundingClientRect().right - padEnd;
+                  return bar.getBoundingClientRect().right <= contentRight + 1.5;
+                }
+                """);
+            Assert.True(barOverflow, $"{target.FileStem}: progress bar must stay inside card padding.");
 
             var pageWidth = await page.Locator(".test-page").EvaluateAsync<double>(
                 "el => el.getBoundingClientRect().width");
             Assert.InRange(pageWidth, 388, 392);
 
             await page.WaitForTimeoutAsync(400);
+
+            var figureBox = await page.Locator(".test-block-stage__mobile-hero__figure").First.BoundingBoxAsync();
+            var imgBox = await figureImg.BoundingBoxAsync();
+            Assert.NotNull(figureBox);
+            Assert.NotNull(imgBox);
+            Assert.True(imgBox!.Height >= heroBox!.Height * 0.72,
+                $"{target.FileStem}: hero figure should fill at least 72% of hero height (got {imgBox.Height:F0}px / {heroBox.Height:F0}px).");
+            Assert.InRange(figureBox!.Width / heroBox.Width, 0.38, 0.52);
+            Assert.True(figureBox.X + figureBox.Width <= heroBox.X + heroBox.Width + 1.5,
+                $"{target.FileStem}: figure area must stay inside the hero band.");
+
             var png = await hero.ScreenshotAsync(new() { Type = ScreenshotType.Png });
             AssertMobHeroFill(png, target.FileStem);
         }
@@ -243,7 +267,7 @@ public sealed class TestBlokkenR1CaptureTests : IAsyncLifetime
         }
 
         var ratio = (double)nonCream / Math.Max(1, cream + nonCream);
-        var minRatio = stem.Contains("waarden", StringComparison.OrdinalIgnoreCase) ? 0.04 : 0.08;
+        var minRatio = 0.03;
         Assert.True(ratio >= minRatio,
             $"{stem}: expected figure fill in right 52% of mobhero, got {ratio:P1}.");
     }

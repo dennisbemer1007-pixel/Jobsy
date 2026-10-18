@@ -12,6 +12,10 @@ var mobileOnly = string.Equals(
     Environment.GetEnvironmentVariable("JOBSY_CAPTURE_MOBILE_ONLY"),
     "1",
     StringComparison.Ordinal);
+var desktopOnly = string.Equals(
+    Environment.GetEnvironmentVariable("JOBSY_CAPTURE_DESKTOP_ONLY"),
+    "1",
+    StringComparison.Ordinal);
 const string baseUrl = "http://localhost:5201";
 const string consentInit = """
     try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
@@ -77,7 +81,9 @@ foreach (var (stem, returnPath, captureTarget) in targets)
 
     var viewports = mobileOnly
         ? new (int, int, string)[] { (390, 844, "390") }
-        : new (int, int, string)[] { (1440, 900, "1440"), (390, 844, "390") };
+        : desktopOnly
+            ? new (int, int, string)[] { (1440, 900, "1440") }
+            : new (int, int, string)[] { (1440, 900, "1440"), (390, 844, "390") };
     foreach (var (width, height, tag) in viewports)
     {
         await using var context = await browser.NewContextAsync(new()
