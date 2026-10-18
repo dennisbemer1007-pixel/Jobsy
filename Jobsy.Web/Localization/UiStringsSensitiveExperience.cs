@@ -73,7 +73,7 @@ public static class UiStringsSensitiveExperience
         d["Sensitive.Ref.Relationship"] = "Waar ken je diegene van?";
         d["Sensitive.Ref.EmployerPreviewTitle"] = "DIT ZIET EEN WERKGEVER";
         d["Sensitive.Ref.EmployerPreviewShort"] =
-            "Bevestigd door een begeleider bij de competenties die Fatima herkent. Geen naam, geen organisatie, geen traject.";
+            "Bevestigd door een begeleider bij de vaardigheden die Fatima herkent. Geen naam, geen organisatie, geen traject.";
         d["Sensitive.Ref.YourReferences"] = "Je referenties";
         d["Sensitive.Ref.StatusConfirmed"] = "Bevestigd";
         d["Sensitive.Ref.StatusPending"] = "Wacht op reactie";
@@ -101,7 +101,7 @@ public static class UiStringsSensitiveExperience
         d["Sensitive.Ref.RelationshipPrivate"] =
             "Alleen jij en {0} zien dit. Een werkgever niet.";
         d["Sensitive.Ref.EmployerPreview"] =
-            "Dit ziet een werkgever: 'Bevestigd door een begeleider' bij de competenties die Fatima herkent. Geen naam, geen organisatie, geen traject.";
+            "Dit ziet een werkgever: 'Bevestigd door een begeleider' bij de vaardigheden die Fatima herkent. Geen naam, geen organisatie, geen traject.";
         d["Sensitive.Ref.Type.Manager"] = "Leidinggevende";
         d["Sensitive.Ref.Type.Colleague"] = "Collega";
         d["Sensitive.Ref.Type.RegularClient"] = "Vaste klant of opdrachtgever";

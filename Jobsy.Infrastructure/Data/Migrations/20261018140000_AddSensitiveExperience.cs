@@ -1,10 +1,13 @@
+using Jobsy.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Jobsy.Infrastructure.Data.Migrations;
 
-/// <inheritdoc />
+[DbContext(typeof(JobsyDbContext))]
+[Migration("20261018140000_AddSensitiveExperience")]
 public partial class AddSensitiveExperience : Migration
 {
     /// <inheritdoc />
@@ -20,15 +23,13 @@ public partial class AddSensitiveExperience : Migration
         migrationBuilder.AddColumn<string>(
             name: "ReferenceType",
             table: "CandidateReferences",
-            type: "character varying(32)",
-            maxLength: 32,
+            type: "text",
             nullable: true);
 
         migrationBuilder.AddColumn<string>(
             name: "RelationshipContext",
             table: "CandidateReferences",
-            type: "character varying(200)",
-            maxLength: 200,
+            type: "text",
             nullable: true);
     }
 

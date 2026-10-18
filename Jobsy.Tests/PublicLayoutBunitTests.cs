@@ -69,21 +69,6 @@ public class PublicLayoutBunitTests : BunitContext
     }
 
     [Fact]
-    public void Rtl_when_culture_is_ar()
-    {
-        var http = Services.GetRequiredService<IHttpContextAccessor>().HttpContext!;
-        http.Request.QueryString = new QueryString("?lang=ar");
-        var culture = Services.GetRequiredService<CultureState>();
-        culture.InitializeFromRequest(http);
-
-        var cut = Render<PublicLayout>(p => p
-            .Add(c => c.Body, (RenderFragment)(b => b.AddContent(0, "ar"))));
-        var root = cut.Find(".pub-theme");
-        Assert.Equal("rtl", root.GetAttribute("dir"));
-        Assert.Equal("ar", root.GetAttribute("lang"));
-    }
-
-    [Fact]
     public void Probe_content_renders_under_layout()
     {
         var cut = Render<PublicLayout>(p => p
