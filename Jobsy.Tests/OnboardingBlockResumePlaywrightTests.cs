@@ -371,85 +371,85 @@ public sealed class OnboardingBlockResumePlaywrightTests
         switch (kind)
         {
             case AssessmentKind.Competence:
-            {
-                var row = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == user.Id);
-                if (row is null)
                 {
-                    row = new CandidateCompetency
+                    var row = await db.CandidateCompetencies.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
                     {
-                        Id = Guid.NewGuid(),
-                        UserId = user.Id,
-                        CreatedAtUtc = now
-                    };
-                    db.CandidateCompetencies.Add(row);
-                }
+                        row = new CandidateCompetency
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCompetencies.Add(row);
+                    }
 
-                row.AnswersJson = json;
-                row.QuickScanVersion = QuickScanVersion;
-                row.QuickScanHighestAnswered = ids.Length;
-                row.UpdatedAtUtc = now;
-                break;
-            }
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = QuickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
             case AssessmentKind.Career:
-            {
-                var row = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == user.Id);
-                if (row is null)
                 {
-                    row = new CandidateCareerInterest
+                    var row = await db.CandidateCareerInterests.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
                     {
-                        Id = Guid.NewGuid(),
-                        UserId = user.Id,
-                        CreatedAtUtc = now
-                    };
-                    db.CandidateCareerInterests.Add(row);
-                }
+                        row = new CandidateCareerInterest
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCareerInterests.Add(row);
+                    }
 
-                row.AnswersJson = json;
-                row.QuickScanVersion = QuickScanVersion;
-                row.QuickScanHighestAnswered = ids.Length;
-                row.UpdatedAtUtc = now;
-                break;
-            }
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = QuickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
             case AssessmentKind.Culture:
-            {
-                var row = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
-                if (row is null)
                 {
-                    row = new CandidateCulturePersonalityProfile
+                    var row = await db.CandidateCulturePersonalityProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
                     {
-                        Id = Guid.NewGuid(),
-                        UserId = user.Id,
-                        CreatedAtUtc = now
-                    };
-                    db.CandidateCulturePersonalityProfiles.Add(row);
-                }
+                        row = new CandidateCulturePersonalityProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateCulturePersonalityProfiles.Add(row);
+                    }
 
-                row.AnswersJson = json;
-                row.QuickScanVersion = QuickScanVersion;
-                row.QuickScanHighestAnswered = ids.Length;
-                row.UpdatedAtUtc = now;
-                break;
-            }
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = QuickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
             case AssessmentKind.Values:
-            {
-                var row = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
-                if (row is null)
                 {
-                    row = new CandidateValuesProfile
+                    var row = await db.CandidateValuesProfiles.FirstOrDefaultAsync(c => c.UserId == user.Id);
+                    if (row is null)
                     {
-                        Id = Guid.NewGuid(),
-                        UserId = user.Id,
-                        CreatedAtUtc = now
-                    };
-                    db.CandidateValuesProfiles.Add(row);
-                }
+                        row = new CandidateValuesProfile
+                        {
+                            Id = Guid.NewGuid(),
+                            UserId = user.Id,
+                            CreatedAtUtc = now
+                        };
+                        db.CandidateValuesProfiles.Add(row);
+                    }
 
-                row.AnswersJson = json;
-                row.QuickScanVersion = QuickScanVersion;
-                row.QuickScanHighestAnswered = ids.Length;
-                row.UpdatedAtUtc = now;
-                break;
-            }
+                    row.AnswersJson = json;
+                    row.QuickScanVersion = QuickScanVersion;
+                    row.QuickScanHighestAnswered = ids.Length;
+                    row.UpdatedAtUtc = now;
+                    break;
+                }
         }
 
         await db.SaveChangesAsync();
