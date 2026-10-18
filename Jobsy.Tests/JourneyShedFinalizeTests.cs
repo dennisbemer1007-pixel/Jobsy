@@ -39,6 +39,8 @@ public sealed class JourneyShedFinalizeTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(_handler) { BaseAddress = new Uri("http://localhost") }));
         Services.AddSingleton<GratisDnaStorage>();
         Services.AddSingleton<GratisDnaMergeService>();
+        Services.AddSingleton<MeGetCache>();
+        Services.AddSingleton<DiscoveryOverviewCache>();
     }
 
     [Fact]
@@ -102,6 +104,18 @@ public sealed class JourneyShedFinalizeTests : BunitContext
                 return new HttpResponseMessage(HttpStatusCode.NoContent);
             }
 
+            if (path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase))
+            {
+                return Json("""
+                    {"profileRevision":"test","competencyAnswered":25,"careerAnswered":0,"cultureAnswered":0,"valuesAnswered":0}
+                    """);
+            }
+
+            if (path.Contains("private-preferences", StringComparison.OrdinalIgnoreCase))
+            {
+                return Json("""{"dislikes":[],"customDislikes":[]}""");
+            }
+
             var responseBody = path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
                 ? """
                   {"currentStep":7,"isComplete":false,"wizardVersion":3,"shouldShow":true,"steps":[],"impression":{"strengths":[],"riasec":[],"matchCards":[]}}
@@ -114,11 +128,14 @@ public sealed class JourneyShedFinalizeTests : BunitContext
                         ? "{\"status\":\"Draft\",\"answers\":{" + string.Join(",", CompetencyAnswers.Select(pair => $"\"{pair.Key}\":{pair.Value}")) + "}}"
                         : "{\"status\":\"Draft\",\"answers\":{}}";
 
-            return new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent(responseBody, Encoding.UTF8, "application/json")
-            };
+            return Json(responseBody);
         }
+
+        private static HttpResponseMessage Json(string body)
+            => new(HttpStatusCode.OK)
+            {
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            };
     }
 
     private sealed class NoGeocoder : IGeocodingClient
