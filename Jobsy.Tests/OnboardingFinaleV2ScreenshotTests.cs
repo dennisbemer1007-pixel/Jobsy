@@ -54,6 +54,16 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
         _playwright?.Dispose();
     }
 
+    [Fact]
+    public async Task Capture_finale_v2_flags_off_1024()
+    {
+        using var web = new FinaleWebFactory(FinaleOptionalFlags.AllOff);
+        var baseUrl = web.EnsureServerAddress()
+                      + "/__test/sign-in?return="
+                      + Uri.EscapeDataString("/candidate/start");
+        await CaptureOneAsync(FinaleOptionalFlags.AllOff, "flags-off", 1024, 768, "1024", baseUrl);
+    }
+
     [Theory]
     [InlineData(FinaleOptionalFlags.AllOff, "flags-off")]
     [InlineData(FinaleOptionalFlags.OneOn, "flags-one-on")]
@@ -67,51 +77,85 @@ public sealed class OnboardingFinaleV2ScreenshotTests : IAsyncLifetime
 
         foreach (var (width, height, suffix) in new (int, int, string)[] { (1440, 900, "1440"), (390, 844, "390"), (360, 780, "360") })
         {
-            await using var context = await _browser!.NewContextAsync(new()
-            {
-                ViewportSize = new() { Width = width, Height = height },
-                Locale = "nl-NL",
-                IsMobile = width < 600,
-                HasTouch = width < 600
-            });
-            await PlaywrightCookieConsent.AcceptAsync(context);
-            var page = await context.NewPageAsync();
-            page.SetDefaultTimeout(90_000);
+            await CaptureOneAsync(flags, tag, width, height, suffix, baseUrl);
+        }
+    }
 
-            await page.RunAndWaitForWebSocketAsync(
-                async () => await page.GotoAsync(baseUrl, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 }),
-                new()
-                {
-                    Timeout = 60_000,
-                    Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
-                });
-            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-            await page.Locator("[data-testid=onboarding-finale-v2]").WaitForAsync(new()
+    private async Task CaptureOneAsync(
+        FinaleOptionalFlags flags,
+        string tag,
+        int width,
+        int height,
+        string suffix,
+        string? baseUrl = null)
+    {
+        baseUrl ??= new FinaleWebFactory(flags).EnsureServerAddress()
+                  + "/__test/sign-in?return="
+                  + Uri.EscapeDataString("/candidate/start");
+
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            Locale = "nl-NL",
+            IsMobile = width < 600,
+            HasTouch = width < 600
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(90_000);
+
+        await page.RunAndWaitForWebSocketAsync(
+            async () => await page.GotoAsync(baseUrl, new() { WaitUntil = WaitUntilState.Load, Timeout = 120_000 }),
+            new()
             {
-                State = WaitForSelectorState.Visible,
-                Timeout = 90_000
+                Timeout = 60_000,
+                Predicate = socket => (socket.Url ?? "").Contains("_blazor", StringComparison.OrdinalIgnoreCase)
             });
+        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+        await page.Locator("[data-testid=onboarding-finale-v2]").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000
+        });
             await page.Locator(".ob-finale__end").WaitForAsync(new()
             {
                 State = WaitForSelectorState.Visible,
                 Timeout = 30_000
             });
 
-            var scrollHeight = await page.EvaluateAsync<int>(
+            await page.WaitForFunctionAsync(
                 """
-                () => Math.max(
-                  document.documentElement.scrollHeight,
-                  document.body.scrollHeight,
-                  document.querySelector('.app-main')?.scrollHeight ?? 0,
-                  document.querySelector('.ob-finale')?.scrollHeight ?? 0)
-                """);
-            Assert.True(scrollHeight > height, $"Expected full-page content taller than viewport ({scrollHeight} vs {height}).");
+                () => {
+                  const el = document.querySelector('[data-testid=onboarding-finale-match-bar]');
+                  if (!el) return false;
+                  const bg = getComputedStyle(el).backgroundColor;
+                  return bg === 'rgb(15, 45, 92)';
+                }
+                """,
+                null,
+                new() { Timeout = 30_000 });
 
-            var file = $"finale-v2-{tag}-{suffix}.png";
-            var path = Path.Combine(StoreDir, file);
-            await page.ScreenshotAsync(new() { Path = path, FullPage = true });
-            Assert.True(File.Exists(path));
-        }
+            var matchBarBg = await page.Locator("[data-testid=onboarding-finale-match-bar]").EvaluateAsync<string>(
+                "el => getComputedStyle(el).backgroundColor");
+        Assert.True(
+            matchBarBg.Equals("rgb(15, 45, 92)", StringComparison.OrdinalIgnoreCase)
+            || matchBarBg.Equals("#0f2d5c", StringComparison.OrdinalIgnoreCase),
+            $"Match bar background expected navy, got {matchBarBg}.");
+
+        var scrollHeight = await page.EvaluateAsync<int>(
+            """
+            () => Math.max(
+              document.documentElement.scrollHeight,
+              document.body.scrollHeight,
+              document.querySelector('.app-main')?.scrollHeight ?? 0,
+              document.querySelector('.ob-finale')?.scrollHeight ?? 0)
+            """);
+        Assert.True(scrollHeight > height, $"Expected full-page content taller than viewport ({scrollHeight} vs {height}).");
+
+        var file = $"finale-v2-{tag}-{suffix}.png";
+        var path = Path.Combine(StoreDir, file);
+        await page.ScreenshotAsync(new() { Path = path, FullPage = true });
+        Assert.True(File.Exists(path));
     }
 
     private sealed class FinaleWebFactory(FinaleOptionalFlags flags) : WebApplicationFactory<Jobsy.Web.WebAssemblyMarker>

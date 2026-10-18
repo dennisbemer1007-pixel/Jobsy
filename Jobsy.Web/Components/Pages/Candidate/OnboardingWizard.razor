@@ -28,6 +28,10 @@
     <link rel="stylesheet" href="css/features/onboarding-wizard-mobile-bar.css?v=20261016-02" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-richting-a.css?v=20261017-01" />
     <link rel="stylesheet" href="css/features/onboarding-wizard-vroeg-resultaat.css?v=20261017-01" />
+    @if (OnboardingFinaleV2Gate.IsEnabled(Configuration))
+    {
+        <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-08" />
+    }
 </HeadContent>
 
 <div class="ob-wizard ob-wizard--richting-a">
@@ -68,9 +72,6 @@
     {
         if (_finaleV2)
         {
-            <HeadContent>
-                <link rel="stylesheet" href="css/features/onboarding-finale-v2.css?v=20261018-05" />
-            </HeadContent>
             <OnboardingFinaleV2 FirstName="@Draft.FirstName"
                                 Impression="_state?.Impression"
                                 MatchCount="@(_state?.Impression?.MatchingVacancyCount ?? 0)"
