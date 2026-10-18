@@ -166,7 +166,12 @@
                         </div>
                         <div class="ob-wizard__topbar-actions">
                             <p class="ob-wizard__topbar-meta">@MobileTopMeta</p>
-                            <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                            <div class="ob-wizard__topbar-links">
+                                <button type="button" class="ob-wizard__topbar-later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                                <a class="ob-wizard__topbar-privacy"
+                                   href="/privacy/data"
+                                   title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                            </div>
                         </div>
                     </div>
                     <div class="ob-wizard__progress-thin"
@@ -198,10 +203,12 @@
                                 </span>
                             }
                         </div>
-                        <a class="ob-wizard__later ob-wizard__privacy-link"
-                           href="/privacy/data"
-                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
-                        <button type="button" class="ob-wizard__later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                        <div class="ob-wizard__header-actions">
+                            <button type="button" class="ob-wizard__later" @onclick="LaterAsync">@Culture["Onboarding.Later"]</button>
+                            <a class="ob-wizard__later ob-wizard__privacy-link"
+                               href="/privacy/data"
+                               title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
+                        </div>
                     </div>
                     <div class="ob-wizard__status-row">
                         <span>
@@ -333,6 +340,9 @@
                                 @Culture["Onboarding.DreamUnknown"]
                             </button>
                         }
+                        <a class="ob-wizard__footer-privacy"
+                           href="/privacy/data"
+                           title="@Culture["Onboarding.AccountPrivacyLink"]">@Culture["Onboarding.AccountPrivacyLink"]</a>
                         <div class="ob-wizard__actionbar">
                             <button type="button"
                                     class="ob-wizard__back-footer"

@@ -101,6 +101,15 @@
     gap: 0.35rem;
   }
 
+  .ob-wizard--richting-a .ob-wizard__topbar-links {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 0.35rem 0.55rem;
+    min-inline-size: 0;
+  }
+
   .ob-wizard--richting-a .ob-wizard__topbar-later {
     border: 0;
     background: transparent;
@@ -110,6 +119,48 @@
     min-height: 44px;
     padding: 0 0.25rem;
     white-space: nowrap;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__topbar-privacy {
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font-weight: 600;
+    font-size: 0.625rem;
+    line-height: 1.2;
+    min-height: 44px;
+    padding: 0 0.15rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+    max-inline-size: 11.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__footer-privacy {
+    display: none;
+    align-self: center;
+    margin-block-end: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: 100%;
+  }
+
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .ob-wizard--richting-a .ob-wizard__progress-thin {
@@ -734,7 +785,22 @@
 @media (min-width: 1024px) {
   .ob-wizard--richting-a .ob-wizard__mobile-top,
   .ob-wizard--richting-a .ob-wizard__step-pill,
-  .ob-wizard--richting-a .ob-wizard__mascot-anchor {
+  .ob-wizard--richting-a .ob-wizard__mascot-anchor,
+  .ob-wizard--richting-a .ob-wizard__footer-privacy {
     display: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .ob-wizard--richting-a .ob-wizard__topbar-meta {
+    display: none;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__topbar-privacy {
+    display: none;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__footer-privacy {
+    display: block;
   }
 }
