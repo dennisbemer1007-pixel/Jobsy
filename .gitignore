@@ -63,3 +63,4 @@ __pycache__/
 Jobsy.Web/wwwroot/kennismaken-export/
 .dotnet/
 test-results/
+mockups/

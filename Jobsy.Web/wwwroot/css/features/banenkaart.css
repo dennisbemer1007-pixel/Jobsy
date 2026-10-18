@@ -388,8 +388,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(160deg, #0f2d5c 0%, #163a6b 55%, #0a2044 100%);
-    color: #fff;
+    background: color-mix(in srgb, var(--coral) 8%, var(--gold-soft));
+    color: var(--brand);
+}
+
+.map-popup--calm .map-popup__media--illustrated .map-popup__photo--illustrated {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    padding: 4px;
 }
 
 .map-cluster-card .map-popup__media--empty svg,

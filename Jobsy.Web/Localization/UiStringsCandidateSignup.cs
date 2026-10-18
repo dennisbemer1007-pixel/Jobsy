@@ -17,6 +17,8 @@ public static class UiStringsCandidateSignup
             ar[key] = arText ?? enText;
         }
 
+        Add("Signup.Eyebrow", "Account maken", "Create account",
+            "Tworzenie konta", "Creare cont", "إنشاء حساب");
         Add("Signup.Title", "Maak je gratis account", "Create your free account",
             "Utwórz darmowe konto", "Creează-ți contul gratuit", "أنشئ حسابك المجاني");
         Add("Signup.Lead", "Bewaar je resultaat en ga verder waar je was.",

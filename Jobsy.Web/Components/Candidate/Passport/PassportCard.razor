@@ -115,7 +115,7 @@
                 <span class="passport-card__fact-label">@Culture["Passport.Facts.Languages"]</span>
                 @if (string.IsNullOrWhiteSpace(LanguagesLabel))
                 {
-                    <span class="passport-card__fact-empty">— <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                    <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
                 }
                 else
                 {
@@ -126,7 +126,7 @@
                 <span class="passport-card__fact-label">@Culture["Passport.Facts.LookingFor"]</span>
                 @if (LookingFor.Count == 0)
                 {
-                    <span class="passport-card__fact-empty">— <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                    <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
                 }
                 else
                 {
@@ -194,7 +194,7 @@
             <span class="passport-card__fact-label">@Culture[labelKey]</span>
             @if (string.IsNullOrWhiteSpace(value))
             {
-                <span class="passport-card__fact-empty">— <button type="button" class="btn btn-ghost" @onclick="OnEdit">@Culture["Passport.Fill"]</button></span>
+                <button type="button" class="passport-card__fill-link" @onclick="OnEdit">@Culture["Passport.Fill"]</button>
             }
             else
             {
