@@ -151,6 +151,16 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Consent.More"] = english ? "More explanation" : "Meer uitleg"; map["Onboarding.Consent.MoreText"] = english ? "Your answers are only used for your personal Compass." : "Je antwoorden worden alleen gebruikt voor jouw persoonlijke Kompas.";
         map["Onboarding.Consent.Private"] = english ? "Employers cannot see your answers." : "Werkgevers zien je antwoorden niet.";
         map["Onboarding.Consent.Cta"] = english ? "Start the first test" : "Start de eerste test"; map["Onboarding.Consent.Failed"] = english ? "Consent could not be saved. Please try again." : "Toestemming opslaan lukt niet. Probeer het opnieuw.";
+        map["Onboarding.Journey.Headline"] = english ? "In ±6 minutes you discover what fits you" : "In ±6 minuten ontdek je wat bij je past";
+        map["Onboarding.Journey.Subline"] = english ? "That is how we find jobs that truly match you." : "Zo vinden we banen die écht bij jou passen.";
+        map["Onboarding.Journey.StationsAria"] = english ? "Four short tests on your journey" : "Vier korte tests op je reis";
+        map["Onboarding.Journey.Benefit.Work"] = english ? "How you work: where you are strong" : "Hoe je werkt: waar je sterk in bent";
+        map["Onboarding.Journey.Benefit.Fun"] = english ? "Fun: which careers energise you" : "Leuk: welke beroepen je energie geven";
+        map["Onboarding.Journey.Benefit.Vibe"] = english ? "Atmosphere: where you feel at home" : "Sfeer: waar je je thuis voelt";
+        map["Onboarding.Journey.Benefit.Values"] = english ? "Values: what matters to you" : "Waarden: wat je belangrijk vindt";
+        map["Onboarding.Journey.Duration.One"] = english ? "~1.5 min" : "~1,5 min";
+        map["Onboarding.Journey.CtaStart"] = english ? "Start with test 1" : "Start met test 1";
+        map["Onboarding.Journey.CtaContinue"] = english ? "Continue with test {0}" : "Ga verder met test {0}";
         map["Onboarding.Test.Lead"] = english ? "How well does each sentence fit you?" : "Hoe goed past elke zin bij jou?";
         map["Onboarding.Test.Competency"] = english ? "How you work" : "Hoe je werkt"; map["Onboarding.Test.Competency.Lead"] = english ? "Competencies such as collaborating" : "Bijvoorbeeld samenwerken";
         map["Onboarding.Test.Career"] = english ? "Fun" : "Leuk"; map["Onboarding.Test.Career.Lead"] = english ? "Careers that fit you" : "Beroepen die bij je passen";

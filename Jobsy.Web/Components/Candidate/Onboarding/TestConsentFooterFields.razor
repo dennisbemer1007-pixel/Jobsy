@@ -1,0 +1,30 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="ob-journey__consent-block" data-testid="test-journey-consent-fields">
+    <label class="ob-journey__consent-line" role="switch" aria-checked="@(Draft.ConsentRequested ? "true" : "false")">
+        <input type="checkbox" checked="@Draft.ConsentRequested" @onchange="OnConsentChanged" />
+        @Culture["Onboarding.Consent.Check"]
+    </label>
+    <details class="ob-journey__more">
+        <summary>@Culture["Onboarding.Consent.More"]</summary>
+        <p>@Culture["Onboarding.Consent.MoreText"]</p>
+    </details>
+    <p class="ob-journey__employer-hint">
+        <span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Lock)</span>
+        @Culture["Onboarding.Consent.Private"]
+    </p>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public EventCallback<bool> ConsentChanged { get; set; }
+
+    private async Task OnConsentChanged(ChangeEventArgs args)
+    {
+        var value = args.Value is bool flag && flag;
+        Draft.ConsentRequested = value;
+        await ConsentChanged.InvokeAsync(value);
+    }
+}

@@ -1,0 +1,97 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Components.Candidate.Passport
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="ob-journey" data-testid="test-journey-consent">
+    <p class="ob-journey__privacy">
+        <span class="ui-icon" aria-hidden="true">@((MarkupString)NavIcons.Shield)</span>
+        @Culture["Passport.PrivacyPromise"]
+    </p>
+
+    <div class="ob-journey__hero">
+        <picture>
+            <source srcset="/images/onboarding/wie-ben-jij-reis-lobsy.webp" type="image/webp" />
+            <img class="ob-journey__art"
+                 src="/images/onboarding/wie-ben-jij-reis-lobsy.jpg"
+                 alt=""
+                 width="1280"
+                 height="720"
+                 decoding="async" />
+        </picture>
+        <div class="ob-journey__promise">
+            <h1 tabindex="-1" class="ob-journey__title">@Culture["Onboarding.Journey.Headline"]</h1>
+            <p class="ob-journey__lead">@Culture["Onboarding.Journey.Subline"]</p>
+        </div>
+        <ol class="ob-journey__stations ob-journey__stations--overlay" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
+            @foreach (var station in Stations)
+            {
+                var state = StationState(station.Step);
+                <li class="ob-journey__station ob-journey__station--@state.Css @($"ob-journey__station--pos-{station.Index}")">
+                    <span class="ob-journey__station-marker" aria-hidden="true">
+                        @if (state.Done)
+                        {
+                            <span class="ob-journey__check">✓</span>
+                        }
+                        else
+                        {
+                            <span>@station.Index</span>
+                        }
+                    </span>
+                    <div class="ob-journey__station-copy">
+                        <strong>@Culture[station.TitleKey]</strong>
+                        <span>@Culture[station.BenefitKey]</span>
+                        <small>@Culture[station.DurationKey]</small>
+                    </div>
+                </li>
+            }
+        </ol>
+    </div>
+
+    <ol class="ob-journey__stations ob-journey__stations--mobile" aria-label="@Culture["Onboarding.Journey.StationsAria"]">
+        @foreach (var station in Stations)
+        {
+            var state = StationState(station.Step);
+            <li class="ob-journey__mobile-row ob-journey__mobile-row--@state.Css">
+                <span class="ob-journey__mobile-icon ob-journey__mobile-icon--@station.Tone" aria-hidden="true">
+                    @if (state.Done)
+                    {
+                        <span class="ob-journey__check">✓</span>
+                    }
+                    else
+                    {
+                        <span>@station.Index</span>
+                    }
+                </span>
+                <div class="ob-journey__mobile-copy">
+                    <strong>@Culture[station.TitleKey]</strong>
+                    <span>@Culture[station.BenefitKey]</span>
+                    <small>@Culture[station.DurationKey]</small>
+                </div>
+            </li>
+        }
+    </ol>
+</section>
+
+@code {
+    public sealed record Station(int Index, int Step, string Tone, string TitleKey, string BenefitKey, string DurationKey);
+
+    [Parameter, EditorRequired] public IReadOnlyList<int> CompletedSteps { get; set; } = [];
+    [Parameter] public int NextStep { get; set; } = 7;
+
+    private static readonly Station[] Stations =
+    [
+        new(1, 7, "navy", "Onboarding.Test.Competency", "Onboarding.Journey.Benefit.Work", "Onboarding.Journey.Duration.One"),
+        new(2, 8, "coral", "Onboarding.Test.Career", "Onboarding.Journey.Benefit.Fun", "Onboarding.Journey.Duration.One"),
+        new(3, 9, "sand", "Onboarding.Test.Culture", "Onboarding.Journey.Benefit.Vibe", "Onboarding.Journey.Duration.One"),
+        new(4, 10, "green", "Onboarding.Test.Values", "Onboarding.Journey.Benefit.Values", "Onboarding.Journey.Duration.One")
+    ];
+
+    private (bool Done, bool Next, string Css) StationState(int step)
+    {
+        var done = CompletedSteps.Contains(step);
+        var next = !done && step == NextStep;
+        var css = done ? "done" : next ? "next" : "todo";
+        return (done, next, css);
+    }
+}
