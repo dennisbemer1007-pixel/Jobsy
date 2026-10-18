@@ -43,8 +43,11 @@
             else if (_items.Count == 0)
             {
                 <div class="kb-saved__empty-layout">
-                    <CandidateIllustratedEmpty ArtUrl="@SpotKaart">
-                        <p class="state-message">@Culture["Saved.EmptyLikes"] <a href="@KbRoutes.Map">@Culture["Saved.Discover"]</a>.</p>
+                    <CandidateIllustratedEmpty ArtUrl="@SpotKaart"
+                                               CssClass="cand-empty--apps-prominent">
+                        <h2 class="cand-empty__title">@Culture["Kb.Saved.Title"]</h2>
+                        <p class="cand-empty__lead">@Culture["Saved.EmptyLikes"]</p>
+                        <a class="btn btn-primary cand-empty__cta" href="@KbRoutes.Map">@Culture["CandidateVacancies.BrowseMap"]</a>
                     </CandidateIllustratedEmpty>
                     <CandidateIllustratedApplyTip />
                 </div>

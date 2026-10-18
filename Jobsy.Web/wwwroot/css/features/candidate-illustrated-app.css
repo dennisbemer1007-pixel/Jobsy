@@ -67,20 +67,26 @@
 
 .cand-hero--profession-band .cand-hero__art-band {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 54%;
-  min-width: 22rem;
+  inset: 0 0 0 auto;
+  width: 52%;
+  min-width: 0;
+  max-width: none;
+  height: 100%;
+  margin: 0;
+  padding: 0 0 0 120px;
+  box-sizing: border-box;
+  border: none;
   z-index: 0;
   pointer-events: none;
   background-color: transparent;
   background-image: var(--cand-hero-art, none);
   background-repeat: no-repeat;
   background-size: auto 100%;
-  background-position: right center;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 140px);
-  mask-image: linear-gradient(to right, transparent 0, #000 140px);
+  background-position: right top;
+  background-origin: content-box;
+  background-clip: content-box;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 120px);
+  mask-image: linear-gradient(to right, transparent 0, #000 120px);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-size: 100% 100%;
@@ -200,7 +206,7 @@
 
   .cand-hero--profession-band .cand-hero__media--profession-fallback {
     display: block;
-    background-position: right center;
+    background-position: right top;
     background-size: auto 100%;
     background-color: var(--pearl);
     -webkit-mask-image: linear-gradient(to right, transparent 0, #000 140px);
@@ -1255,15 +1261,23 @@
 
 @media (min-width: 640px) {
   .cand-empty--apps-prominent {
-    grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+    grid-template-columns: minmax(11rem, 13.75rem) minmax(0, 1fr);
     gap: 1.5rem;
   }
 
   .cand-empty--apps-prominent .cand-empty__art {
+    width: 100%;
+    max-width: 13.75rem;
     height: 11rem;
     background-size: cover;
     background-position: center 35%;
   }
+}
+
+.kb-saved--illustrated .kb-saved__empty-layout .cand-empty--apps-prominent .cand-empty__art {
+  min-width: 11rem;
+  width: 13.75rem;
+  max-width: 13.75rem;
 }
 
 @media (min-width: 1024px) {

@@ -130,6 +130,7 @@ else
             _reminderEmails = dto.ReminderEmailsEnabled;
             _optional.Clear();
             _optional.AddRange(dto.Optional ?? []);
+            _optional.RemoveAll(item => item.Key is "VacancyEngagementReminder" or "CompanyReEngagement");
             _alwaysKeys.Clear();
             _alwaysKeys.Add("MailSettings.Always.Codes");
             if (_employersOn)
