@@ -1,4 +1,4 @@
-/* Reference verification hero — PR #737 ref-full art (gev-hero pattern) */
+/* Reference verification hero — PR #737 ref-full (gev-hero desktop + mobile figure lane) */
 
 .ref-verif-gev-hero {
   --ref-verif-hero-cream: #fbf5ec;
@@ -24,7 +24,7 @@
 
 .ref-verif-gev-hero__wrap {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   max-width: 1100px;
   margin: 0 auto;
   padding: 0.65rem 1.25rem;
@@ -46,7 +46,7 @@
   align-items: flex-start;
   text-align: left;
   min-width: 0;
-  max-width: min(34rem, 52vw);
+  max-width: min(34rem, 48vw);
   padding-right: 0.5rem;
 }
 
@@ -82,9 +82,11 @@
 .ref-verif-gev-hero__art {
   margin: 0;
   border: 0;
+  padding: 0;
 }
 
-@media (min-width: 640px) {
+/* Desktop — #737 referent hero (901px+): art in right ~50% lane, mask fade at cream edge only */
+@media (min-width: 901px) {
   .ref-verif-gev-hero__lead--mobile {
     display: none;
   }
@@ -92,48 +94,27 @@
   .ref-verif-gev-hero__art {
     position: absolute;
     z-index: 0;
-    inset: 0 0 0 34%;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: auto;
+    width: 50%;
+    height: 100%;
     pointer-events: none;
     overflow: hidden;
-    background-color: var(--ref-verif-hero-cream);
+    background-color: transparent;
     background-image: var(--ref-verif-hero-art, none);
     background-repeat: no-repeat;
     background-position: right bottom;
-    background-size: auto 100%;
-    -webkit-mask-image:
-      linear-gradient(to right, transparent 0, #000 160px),
-      linear-gradient(to top, transparent 0, #000 32px);
-    -webkit-mask-composite: source-in;
-    mask-image:
-      linear-gradient(to right, transparent 0, #000 160px),
-      linear-gradient(to top, transparent 0, #000 32px);
-    mask-composite: intersect;
+    background-size: cover;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 140px);
+    mask-image: linear-gradient(to right, transparent 0, #000 140px);
   }
 
-  .ref-verif-gev-hero__art::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto auto 0;
-    z-index: 2;
-    width: 100%;
-    height: 36px;
-    pointer-events: none;
-    background: linear-gradient(to bottom, var(--ref-verif-hero-cream) 0%, rgba(251, 245, 236, 0) 100%);
-  }
-
+  .ref-verif-gev-hero__art::before,
   .ref-verif-gev-hero__art::after {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    z-index: 1;
-    width: min(42%, 240px);
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      var(--ref-verif-hero-cream) 0%,
-      rgba(251, 245, 236, 0.96) 38%,
-      rgba(251, 245, 236, 0) 100%
-    );
+    content: none;
+    display: none;
   }
 }
 
@@ -155,7 +136,7 @@
   border-block-end: 0;
 }
 
-@media (max-width: 639px) {
+@media (max-width: 900px) {
   .ref-verif-gev-hero {
     --cand-hero-mobile-h: 16.25rem;
 
@@ -163,11 +144,7 @@
     min-height: 0;
     max-height: 16.25rem;
     height: var(--cand-hero-mobile-h);
-    background-color: var(--ref-verif-hero-cream);
-    background-image: var(--ref-verif-hero-art-mobile, var(--ref-verif-hero-art, none));
-    background-repeat: no-repeat;
-    background-position: right bottom;
-    background-size: auto 100%;
+    background: var(--ref-verif-hero-cream);
   }
 
   .ref-verif-gev-hero__lead--desktop {
@@ -177,7 +154,7 @@
   .ref-verif-gev-hero__wrap {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 3;
     max-width: none;
     margin: 0;
     padding: 0.7rem 0.85rem;
@@ -202,22 +179,47 @@
     font-size: clamp(0.8rem, 3.4vw, 0.88rem);
   }
 
+  /* Gradient strip between text and figures — never over figure pixels */
   .ref-verif-gev-hero::before {
     content: "";
     position: absolute;
-    inset: 0;
-    z-index: 1;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 58%;
+    z-index: 2;
     pointer-events: none;
     background: linear-gradient(
       90deg,
       var(--ref-verif-hero-cream) 0%,
-      var(--ref-verif-hero-cream) 54%,
-      rgba(251, 245, 236, 0.92) 58%,
-      rgba(251, 245, 236, 0) 62%
+      var(--ref-verif-hero-cream) 88%,
+      rgba(251, 245, 236, 0.85) 94%,
+      rgba(251, 245, 236, 0) 100%
     );
   }
 
   .ref-verif-gev-hero__art {
+    display: block;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    width: 45%;
+    height: 100%;
+    pointer-events: none;
+    overflow: hidden;
+    background-color: transparent;
+    background-image: var(--ref-verif-hero-art-mobile, var(--ref-verif-hero-art, none));
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    background-size: contain;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .ref-verif-gev-hero__art::before,
+  .ref-verif-gev-hero__art::after {
+    content: none;
     display: none;
   }
 
@@ -233,8 +235,3 @@
   }
 }
 
-@media (min-width: 640px) {
-  .ref-verif-gev-hero {
-    background-image: none;
-  }
-}
