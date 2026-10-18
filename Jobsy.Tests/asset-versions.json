@@ -314,5 +314,9 @@
   "service-worker.published.js": {
     "sha256": "2a618fda8eb01921e3ef4f3e6dd54181be243f7abd24dfe8b7266021c2b12b30",
     "v": "20261016-06"
+  },
+  "css/features/bedrijvenkaart.css": {
+    "v": "20261018-10",
+    "sha256": "cd6e44af11bbfa50a306939ea5a0daaa901cfc64c5f92b4a2faede8ad59e8452"
   }
 }

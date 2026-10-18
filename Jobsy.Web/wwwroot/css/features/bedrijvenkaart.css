@@ -1,12 +1,16 @@
 /* Bedrijvenkaart + Ik wil hier werken (candidate illustrated / employer business) */
 
-.bk-page {
+.bk-page,
+.app-shell .pub-theme.pub-section.pp-company {
   --bk-cream: #f6f0e8;
   --bk-orange: #e86c3a;
   --bk-navy: #1a2744;
   --bk-map-pane: #eef1f4;
   --bk-content-max: 76rem;
   --bk-gutter: clamp(1rem, 4.5vw, 1.25rem);
+}
+
+.bk-page {
   min-height: 100dvh;
   background: #fff;
   display: flex;
@@ -14,24 +18,50 @@
 }
 
 @media (min-width: 901px) {
-  .bk-page {
+  .bk-page,
+  .app-shell .pub-theme.pub-section.pp-company {
     --bk-gutter: clamp(1.5rem, 2.8vw, 2rem);
   }
 }
 
 .app-shell .pub-theme.pub-section.pp-company {
   box-sizing: border-box;
-  width: 100%;
+  width: min(100%, var(--bk-content-max));
+  max-width: var(--bk-content-max);
+  margin-inline: auto;
+  padding-inline: var(--bk-gutter) !important;
+  padding-block: 1rem 2.75rem;
+}
+
+.bk-page__frame {
+  box-sizing: border-box;
+  width: min(100%, var(--bk-content-max));
   max-width: var(--bk-content-max);
   margin-inline: auto;
   padding-inline: var(--bk-gutter);
-  padding-block: 1rem 2.75rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bk-page__frame .bk-info-banner,
+.bk-page__frame .bk-filters,
+.bk-page__frame .bk-result-meta {
+  margin-inline: calc(-1 * var(--bk-gutter));
+  padding-inline: var(--bk-gutter);
+}
+
+.bk-page__frame .bk-list {
+  padding-inline: 0;
 }
 
 .bk-hero {
   position: relative;
   background: var(--bk-cream);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .bk-hero__inner {
@@ -97,15 +127,13 @@
 }
 
 .bk-map-toggle {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
   display: inline-flex;
   border-radius: 999px;
   background: #fff;
   box-shadow: 0 2px 12px rgb(26 39 68 / 8%);
   padding: 0.2rem;
   z-index: 3;
+  flex-shrink: 0;
 }
 
 .bk-map-toggle a {
@@ -148,7 +176,7 @@
 .bk-filters__track {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.5rem;
   align-items: center;
 }
 
@@ -190,6 +218,9 @@
   cursor: pointer;
   font-family: inherit;
   line-height: 1.25;
+  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: none;
 }
 
 .bk-page .bk-filters .jobsy-action.is-active {
@@ -261,6 +292,8 @@
 
 .bk-card__title {
   font-weight: 600;
+  font-size: 1.125rem;
+  line-height: 1.25;
   margin: 0;
   color: var(--bk-navy);
 }
@@ -1329,16 +1362,45 @@ textarea.bk-wg-input {
   }
 
   .pub-theme .pp-company__list {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .pp-company__list .job-card__media {
+    max-height: 220px;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+  }
+
+  .pp-company__list .job-card__photo,
+  .pp-company__list .vacancy-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .pp-company__map-pane {
     display: none;
   }
 
+  .bk-map-toggle {
+    position: absolute;
+    top: 1rem;
+    right: max(var(--bk-gutter), calc((100vw - var(--bk-content-max)) / 2 + var(--bk-gutter)));
+    margin: 0;
+  }
+
+  .bk-hero {
+    position: relative;
+    display: block;
+  }
+
   .bk-shell {
     grid-template-columns: minmax(300px, min(420px, 36vw)) minmax(0, 1fr);
     min-height: calc(100dvh - 17.5rem);
+    border: 1px solid #e2e6eb;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
   .bk-list {
@@ -1480,6 +1542,13 @@ textarea.bk-wg-input {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .bk-map-toggle {
+    position: static;
+    order: -1;
+    align-self: flex-start;
+    margin: 0.65rem var(--bk-gutter) 0;
+  }
+
   .bk-hero__inner {
     grid-template-columns: 1fr;
     max-height: 260px;
@@ -1515,13 +1584,22 @@ textarea.bk-wg-input {
 
   .bk-filters__track {
     flex-wrap: nowrap;
+    gap: 0.5rem;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     padding-block: 0.15rem;
-    margin-inline: calc(-1 * var(--bk-gutter));
-    padding-inline: var(--bk-gutter);
+  }
+
+  .pp-company__list {
+    grid-template-columns: 1fr;
+  }
+
+  .pp-company__list .job-card__media {
+    max-height: 220px;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
   }
 
   .bk-filters__track::-webkit-scrollbar {

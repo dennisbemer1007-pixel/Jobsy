@@ -1,5 +1,3 @@
-# PR-only failures (PR run 39161113458 vs acceptatie 39155372982)
-# Generated 2026-10-18T20:15:42Z
-Jobsy.Tests.CompanyPageLayoutTests.The_page_renders_in_the_public_layout_and_not_in_the_map_chrome
-Jobsy.Tests.LocalizationParityReportTests.Identical_to_nl_counts_do_not_increase_vs_baseline
-Jobsy.Tests.PublicThemeCssGuardTests.Pub_classes_do_not_appear_in_MainLayout_pages
+# PR-only failures (PR run 39165278471 vs acceptatie PR-tests 39159428434)
+# acceptatie_ref=origin/acceptatie
+# Generated 2026-10-18T21:11:03Z

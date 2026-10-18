@@ -13,10 +13,6 @@
 
 <div class="bk-page">
     <header class="bk-hero">
-        <div class="bk-map-toggle" role="tablist" aria-label="@Culture["Kb.MapToggle.Jobs"]">
-            <a href="@KbRoutes.Map" role="tab">@Culture["Kb.MapToggle.Jobs"]</a>
-            <a href="@KbRoutes.CompanyMap" class="is-active" role="tab" aria-selected="true">@Culture["Kb.MapToggle.Companies"]</a>
-        </div>
         <div class="bk-hero__inner">
             <div class="bk-hero__copy">
                 <p class="bk-hero__eyebrow">@Culture["Kb.MapToggle.Companies"]</p>
@@ -32,8 +28,13 @@
             </div>
             <div class="bk-hero__art" aria-hidden="true"></div>
         </div>
+        <div class="bk-map-toggle" role="tablist" aria-label="@Culture["Kb.MapToggle.Jobs"]">
+            <a href="@KbRoutes.Map" role="tab">@Culture["Kb.MapToggle.Jobs"]</a>
+            <a href="@KbRoutes.CompanyMap" class="is-active" role="tab" aria-selected="true">@Culture["Kb.MapToggle.Companies"]</a>
+        </div>
     </header>
 
+    <div class="bk-page__frame">
     <p class="bk-info-banner">@Culture["Bk.InfoBanner"]</p>
 
     <div class="bk-filters">
@@ -106,6 +107,7 @@
                 <div>Uitzendbureau vestiging</div>
             </div>
         </div>
+    </div>
     </div>
 </div>
 

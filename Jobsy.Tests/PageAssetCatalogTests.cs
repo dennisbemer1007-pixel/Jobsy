@@ -101,6 +101,14 @@ public class PageAssetCatalogTests
         Assert.Equal(expected, Jobsy.Web.Hosting.PageAssetCatalog.IncludeSignupStaticCss(path));
     }
 
+    [Fact]
+    public void Bedrijvenkaart_stylesheet_version_matches_asset_manifest()
+    {
+        var catalog = File.ReadAllText(
+            Path.Combine(FindRepoRoot(), "Jobsy.Web", "Hosting", "PageAssetCatalog.cs"));
+        AssetVersions.AssertVersionedRefMatchesManifest(catalog, "css/features/bedrijvenkaart.css");
+    }
+
     private static string FindRepoRoot()
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

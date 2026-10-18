@@ -152,7 +152,14 @@ else
                     </section>
                 }
 
-                @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText) || (_initiative?.HubPhotoUrls.Count ?? 0) > 0)
+                @{
+                    var sfeerPhotos = (_initiative?.HubPhotoUrls ?? [])
+                        .Where(static u => !string.IsNullOrWhiteSpace(u))
+                        .ToList();
+                    var sfeerVideoUrl = _initiative?.HubVideoUrl;
+                    var hasSfeerMedia = sfeerPhotos.Count > 0 || !string.IsNullOrWhiteSpace(sfeerVideoUrl);
+                }
+                @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText) || hasSfeerMedia)
                 {
                     <section class="pub-card pp-company__sfeer" aria-labelledby="company-sfeer">
                         <h2 id="company-sfeer">@Culture["CompanyPage.Sfeer"]</h2>
@@ -160,25 +167,28 @@ else
                         {
                             <p>@_initiative!.HubCultureText</p>
                         }
-                        <div class="pp-sfeer-grid">
-                            @foreach (var photo in _initiative?.HubPhotoUrls ?? [])
-                            {
-                                <img src="@photo" alt="" loading="lazy" decoding="async" />
-                            }
-                            @if (!string.IsNullOrWhiteSpace(_initiative?.HubVideoUrl))
-                            {
-                                var videoPoster = (_initiative?.HubPhotoUrls.Count ?? 0) > 0
-                                    ? _initiative!.HubPhotoUrls[0]
-                                    : "/images/onboarding/finale-hero.jpg";
-                                <a class="pp-sfeer-video"
-                                   href="@_initiative!.HubVideoUrl"
-                                   target="_blank"
-                                   rel="noopener noreferrer">
-                                    <img src="@videoPoster" alt="" loading="lazy" decoding="async" />
-                                    <span class="pp-sfeer-video__play" aria-hidden="true"></span>
-                                </a>
-                            }
-                        </div>
+                        @if (hasSfeerMedia)
+                        {
+                            <div class="pp-sfeer-grid">
+                                @foreach (var photo in sfeerPhotos)
+                                {
+                                    <img src="@photo" alt="" loading="lazy" decoding="async" />
+                                }
+                                @if (!string.IsNullOrWhiteSpace(sfeerVideoUrl))
+                                {
+                                    var videoPoster = sfeerPhotos.Count > 0
+                                        ? sfeerPhotos[0]
+                                        : "/images/onboarding/finale-hero.jpg";
+                                    <a class="pp-sfeer-video"
+                                       href="@sfeerVideoUrl"
+                                       target="_blank"
+                                       rel="noopener noreferrer">
+                                        <img src="@videoPoster" alt="" loading="lazy" decoding="async" />
+                                        <span class="pp-sfeer-video__play" aria-hidden="true"></span>
+                                    </a>
+                                }
+                            </div>
+                        }
                     </section>
                 }
             </div>

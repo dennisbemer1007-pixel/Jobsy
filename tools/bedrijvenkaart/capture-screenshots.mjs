@@ -9,7 +9,7 @@ import { chromium } from "../screenshots/node_modules/playwright/index.mjs";
 const baseUrl = (process.argv[2] ?? "http://localhost:5201").replace(/\/$/, "");
 const apiUrl = (process.argv[3] ?? "http://127.0.0.1:5200").replace(/\/$/, "");
 const outDir =
-  process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r10/live";
+  process.env.BEDRIFJKART_CAPTURE_DIR ?? "/opt/cursor/artifacts/bedrijvenkaart-build-r11/live";
 const captureOnly = process.env.CAPTURE_ONLY ?? "";
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
@@ -170,7 +170,9 @@ for (const role of roles) {
   }
 
   for (const shot of roleShots) {
-    await page.setViewportSize({ width: shot.width, height: 900 });
+    const isMobileViewport = shot.width <= 420;
+    const viewportHeight = isMobileViewport ? 844 : 900;
+    await page.setViewportSize({ width: shot.width, height: viewportHeight });
     await page.goto(`${baseUrl}${shot.path}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
     await waitReady(page, shot.path);
     const text = await page.locator("body").innerText();
@@ -189,9 +191,42 @@ for (const role of roles) {
         `Capture gate failed for ${shot.file}: 404=${fail404} expect=${shot.expect} snippet=${text.slice(0, 120)}`,
       );
     }
+    if (shot.file.startsWith("01-bedrijvenkaart") || shot.file.startsWith("02-bedrijfspagina")) {
+      const gutterProbe = await page.evaluate(() => {
+        const root =
+          document.querySelector(".bk-page") ?? document.querySelector(".pub-theme.pp-company");
+        if (!root) {
+          return { ok: false, reason: "missing .bk-page / .pp-company" };
+        }
+        const styles = getComputedStyle(root);
+        const gutter = styles.getPropertyValue("--bk-gutter").trim();
+        const padL = parseFloat(styles.paddingLeft) || 0;
+        const padR = parseFloat(styles.paddingRight) || 0;
+        const frame = document.querySelector(".bk-page__frame");
+        const framePad = frame ? parseFloat(getComputedStyle(frame).paddingLeft) || 0 : padL;
+        const effective = Math.max(padL, framePad);
+        return {
+          ok: effective >= 12,
+          gutter,
+          padL,
+          padR,
+          framePad,
+          cssHref: [...document.querySelectorAll('link[rel="stylesheet"]')]
+            .map((l) => l.href)
+            .find((h) => h.includes("bedrijvenkaart.css")),
+        };
+      });
+      if (!gutterProbe.ok) {
+        throw new Error(
+          `Gutter check failed for ${shot.file}: ${JSON.stringify(gutterProbe)} (bedrijvenkaart.css must load with --bk-gutter)`,
+        );
+      }
+      manifest.push({ file: shot.file, path: shot.path, gutter: gutterProbe });
+    }
+
     const outPath = join(outDir, shot.file);
-    await page.screenshot({ path: outPath, fullPage: true });
-    manifest.push({ file: shot.file, path: shot.path, ok: true });
+    await page.screenshot({ path: outPath, fullPage: !isMobileViewport });
+    manifest.push({ file: shot.file, path: shot.path, ok: true, viewport: `${shot.width}x${viewportHeight}` });
     console.log("saved", shot.file);
   }
 

@@ -37,7 +37,7 @@ public static class PageAssetCatalog
     [
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/bedrijvenkaart.css?v=20261018-09",
+        "css/features/bedrijvenkaart.css?v=20261018-10",
         "css/features/candidate-illustrated-app.css?v=20261018-89",
         "css/features/kandidaat-banen.css?v=20261017-04",
         "css/features/match-desktop.css?v=20261018-02",
@@ -237,17 +237,17 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-09"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-10"];
         }
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-09"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-10"];
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-09"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-10"];
         }
 
         return [];
