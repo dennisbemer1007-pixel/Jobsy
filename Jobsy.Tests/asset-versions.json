@@ -1,11 +1,27 @@
 {
+  "brand/png/lobsy-apple-touch-icon-180.png": {
+    "sha256": "fbfbe90467ca5887879d642a0dc5fa6b48d4080b716b7b09c1ad198077dfa758",
+    "v": "20261018-23"
+  },
+  "brand/png/lobsy-favicon-16.png": {
+    "sha256": "0e24c4f8a8c96309f04ddd715f5c78d077155daf3d7b0d5fc525128b10104089",
+    "v": "20261018-23"
+  },
+  "brand/png/lobsy-favicon-32.png": {
+    "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
+    "v": "20261018-23"
+  },
+  "brand/png/lobsy-favicon-48.png": {
+    "sha256": "b4d98dfff0413e1c28dcda8dd3f5502658e9071eb78e9da4f484bf3daf6ad32b",
+    "v": "20261018-23"
+  },
   "css/app.min.css": {
-    "sha256": "af47c15b1d6a61e01002cc48768ac2bef332ceffd83af8c0eccb659f1ab21faf",
-    "v": "20261018-02"
+    "sha256": "bb4aae9547e7608e4f0faa5cb9f047554b1300251a778e6e8969cd01d0b27739",
+    "v": "20261018-24"
   },
   "css/critical.css": {
-    "sha256": "fd8c6e689cf0638894fa8655e4008e268284d160fd631deb767b560ad99fc2b8",
-    "v": "20261004-13"
+    "sha256": "64cbe72b150901710db5fa228468cbf99dc7d0364469b010b5c38bdc9ba75c5a",
+    "v": "20261018-23"
   },
   "css/features/account-mfa.css": {
     "sha256": "77ffff1997179f77bc2086c352bb23b7cea454b05c0fc555a8bcf4e6371f3df3",
@@ -208,15 +224,15 @@
     "v": "20261018-06"
   },
   "favicon.ico": {
-    "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
-    "v": "20261004-13"
+    "sha256": "b8f4025ded7aa6a6eb5ff0f8e82e1c5fcac343705e2d62883d00472b03029239",
+    "v": "20261018-23"
   },
   "favicon.png": {
-    "sha256": "71d7450b21a8326241ce974f03b8e1aea59cceb2c493b163d731c5e8f875d278",
+    "sha256": "9d5de8bb8f24d41af6fbd94159900365257c3002e1afdccacafcd6e5a2f47f1f",
     "v": "20261004-13"
   },
   "icons/apple-touch-icon.png": {
-    "sha256": "226498db3c36a03789a4d3d80af373c11fcdd52635bab0327a9e8004930aff4c",
+    "sha256": "fbfbe90467ca5887879d642a0dc5fa6b48d4080b716b7b09c1ad198077dfa758",
     "v": "20261004-13"
   },
   "images/brand/mascot-128.png": {
@@ -260,7 +276,7 @@
     "v": "20261002-ch10"
   },
   "js/gratis-dna.js": {
-    "sha256": "84b403bf4604d5e5c6aca3c309bc298ff8a5075fb6052bb2a20e1ab090b018a2",
+    "sha256": "2cc0b16f3618167ffb562906e1e46ff66eea2a5a815a07e40a5ca916ada64d70",
     "v": "20261004-13"
   },
   "js/jobMap.min.js": {
@@ -300,19 +316,19 @@
     "v": "20261015-03"
   },
   "js/vacancyDetailMap.min.js": {
-    "sha256": "a4cf52ee4b1ecf0658692206cb15d175c77075253cef7bc6afab2a174edf24ef",
+    "sha256": "a27bfba641d379c14e28f13587e4264ea449a99a2dacaf6fd5aaf038d41199fd",
     "v": "20261004-13"
   },
   "manifest.webmanifest": {
-    "sha256": "fe76719e490f6c2dc046d7049216f82dd5422e5ba529ff1aec1f1bfa517d682b",
+    "sha256": "544284248f300ebea2efedac2ae97582f5fd7841e904a5f5a83c49801aac230d",
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "6dbe7ecc4917fe4d07f2a1b783cecf370d98f1c80ee99ac5c840dd0afd25b977",
+    "sha256": "8a6886701eba941732970aa3c808d720865e70e3b6bd54514b900d49952e3d3a",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "2a618fda8eb01921e3ef4f3e6dd54181be243f7abd24dfe8b7266021c2b12b30",
+    "sha256": "76649cde3c22a5487625a439b28bb5d6f614c21b310aebb5f052d6b9aae5b5f5",
     "v": "20261016-06"
   }
 }
