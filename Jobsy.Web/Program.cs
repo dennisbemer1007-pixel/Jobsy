@@ -137,6 +137,7 @@ builder.Services.AddHttpClient(Jobsy.Web.Auth.AuthApiClient.HttpClientName, clie
 builder.Services.AddSingleton<Jobsy.Web.Auth.AuthApiClient>();
 builder.Services.AddSingleton<Jobsy.Web.Security.ISessionTimeoutProvider, Jobsy.Web.Security.SessionTimeoutProvider>();
 builder.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags, Jobsy.Web.Features.WebFeatureFlags>();
+builder.Services.AddSingleton<Jobsy.Web.Features.IReferenceVerificationFeatureGate, Jobsy.Web.Features.ReferenceVerificationFeatureGate>();
 builder.Services.AddSingleton<Jobsy.Web.Features.ITestJourneyIllustrationGate, Jobsy.Web.Features.TestJourneyIllustrationGate>();
 builder.Services.AddSingleton<Jobsy.Core.Scholen.QuestionSets.IPupilQuestionSetRegistry,
     Jobsy.Core.Scholen.QuestionSets.PupilQuestionSetRegistry>();
