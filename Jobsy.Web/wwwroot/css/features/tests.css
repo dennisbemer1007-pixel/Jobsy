@@ -620,6 +620,8 @@
 
   .test-block-stage .test-shell__card {
     margin-inline: 0.85rem;
+    box-shadow: none;
+    border: 0;
   }
 
   .test-shell__heading--desktop {
@@ -656,13 +658,13 @@
     align-self: end;
     justify-self: end;
     inline-size: 100%;
-    block-size: 82%;
-    min-block-size: 5.5rem;
+    block-size: 86%;
+    min-block-size: 6rem;
     max-block-size: 90%;
     background-image: var(--test-block-band-image);
     background-repeat: no-repeat;
     background-position: 100% 100%;
-    background-size: contain;
+    background-size: auto min(100%, 10.25rem);
     opacity: 1;
     pointer-events: none;
   }
