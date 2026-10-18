@@ -1,7 +1,7 @@
 {
   "css/app.min.css": {
-    "sha256": "af47c15b1d6a61e01002cc48768ac2bef332ceffd83af8c0eccb659f1ab21faf",
-    "v": "20261018-02"
+    "sha256": "8298134ad2e328606eb1df17673da63ececec80c16ee2281f0d69f53a4090c44",
+    "v": "20261018-30"
   },
   "css/critical.css": {
     "sha256": "fd8c6e689cf0638894fa8655e4008e268284d160fd631deb767b560ad99fc2b8",
@@ -184,8 +184,8 @@
     "v": "20261004-10"
   },
   "css/features/tests.css": {
-    "sha256": "0849b213796647efa639bfcc6975cbe4891360a8c40aaeab5fdf9f4723e2ba9e",
-    "v": "20261012-06"
+    "sha256": "d7b342fb0126ebdafa7acb95a771774e7c18c623737c3196cc6cbe813971ee3c",
+    "v": "20261018-30"
   },
   "css/features/vacancy-wizard.css": {
     "sha256": "e30800f27463baab1fd709cee74232477f5ce8521d079649c7e28cb887b724e0",
@@ -304,11 +304,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "6dbe7ecc4917fe4d07f2a1b783cecf370d98f1c80ee99ac5c840dd0afd25b977",
+    "sha256": "05dc24dddde426ed937d5e5bf1783c1f12cd3c8ec8cbcaeb6abf5ac9cac0547b",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "2a618fda8eb01921e3ef4f3e6dd54181be243f7abd24dfe8b7266021c2b12b30",
+    "sha256": "45c9c5f8b6ada5d6c398aa1da4afc19c8efe20465a43abe4c28182c48c0b3ead",
     "v": "20261016-06"
   }
 }

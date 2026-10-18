@@ -15,6 +15,8 @@ public static class LineIcons
     public const string Lock = $"<svg {A}><rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8 11V8a4 4 0 0 1 8 0v3\"/></svg>";
     public const string Target = $"<svg {A}><circle cx=\"12\" cy=\"12\" r=\"8\"/><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M2 12h2M20 12h2\"/></svg>";
     public const string ClockPending = $"<svg {A}><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>";
+    public const string Volume = $"<svg {A}><path d=\"M11 5 6 9H3v6h3l5 4V5Z\"/><path d=\"M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14\"/></svg>";
+    public const string SquareStop = $"<svg {A}><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"1.5\"/></svg>";
 
     public static string? Resolve(string? name) => name?.Trim().ToLowerInvariant() switch
     {
@@ -26,6 +28,8 @@ public static class LineIcons
         "lock" => Lock,
         "target" => Target,
         "clock" or "pending" => ClockPending,
+        "volume" or "speaker" => Volume,
+        "stop" or "square" => SquareStop,
         _ => null
     };
 }
