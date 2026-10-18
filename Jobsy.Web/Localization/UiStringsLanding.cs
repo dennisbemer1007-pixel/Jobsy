@@ -167,7 +167,20 @@ public static class UiStringsLanding
         Add("Landing.Stats.QuestionsShort", "vragen", "questions", "pytań", "întrebări", "أسئلة");
         Add("Landing.Stats.Questions", "en 3 minuten voor de gratis test", "and 3 minutes for the free test", "i 3 minuty na darmowy test", "și 3 minute pentru testul gratuit", "و3 دقائق للاختبار المجاني");
         Add("Landing.Stats.LangsShort", "talen", "languages", "języki", "limbi", "لغات");
-        Add("Landing.Stats.Langs", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR", "NL, EN, PL, RO, AR");
+        Add("Landing.Stats.LangsShortDisplay", "NL en EN", "NL and EN", "NL i EN", "NL și EN", "NL و EN");
+        Add("Landing.Stats.Langs", "NL en EN", "NL and EN", "NL i EN", "NL și EN", "NL و EN");
+        Add("Landing.Steps.Eyebrow", "In drie stappen", "In three steps", "W trzech krokach", "În trei pași", "في ثلاث خطوات");
+        Add("Landing.Steps.Title", "In drie stappen van jou naar werk", "Three steps from you to work", "Trzy kroki od Ciebie do pracy", "Trei pași de la tine la job", "ثلاث خطوات منك إلى العمل");
+        Add("Landing.Steps.Sub", "Eerst jij, dan de baan.", "You first, then the job.", "Najpierw Ty, potem praca.", "Mai întâi tu, apoi jobul.", "أنت أولًا، ثم الوظيفة.");
+        Add("Landing.Steps.S1Title", "20 korte vragen", "20 short questions", "20 krótkich pytań", "20 întrebări scurte", "20 سؤالًا قصيرًا");
+        Add("Landing.Steps.S1Body", "Geen goed of fout. In 3 minuten klaar, zonder account.", "No right or wrong. Done in 3 minutes, no account needed.", "Bez dobrych czy złych odpowiedzi. 3 minuty, bez konta.", "Fără bine sau rău. Gata în 3 minute, fără cont.", "بدون صح أو خطأ. 3 دقائق، بدون حساب.");
+        Add("Landing.Steps.S2Title", "Jouw werk-DNA", "Your work DNA", "Twoje DNA pracy", "ADN-ul tău de lucru", "حمض عملك");
+        Add("Landing.Steps.S2Body", "Hoe jij werkt en wat je belangrijk vindt, in gewone woorden.", "How you work and what matters to you, in plain language.", "Jak pracujesz i co jest ważne, prostym językiem.", "Cum lucrezi și ce contează, în cuvinte simple.", "كيف تعمل وما يهمك، بلغة بسيطة.");
+        Add("Landing.Steps.S3Title", "Banen die passen", "Jobs that fit", "Oferty, które pasują", "Joburi care se potrivesc", "وظائف تناسبك");
+        Add("Landing.Steps.S3Body", "Op de kaart, met je reistijd per fiets, OV of auto.", "On the map, with travel time by bike, transit or car.", "Na mapie, z czasem dojazdu rowerem, komunikacją lub autem.", "Pe hartă, cu timp de drum cu bicicleta, transport sau mașină.", "على الخريطة، مع وقت الرحلة.");
+        Add("Landing.Map.Eyebrow", "De banenkaart", "The job map", "Mapa ofert", "Harta joburilor", "خريطة الوظائف");
+        Add("Landing.Map.IllustratedTitle", "Ruim {0} vacatures, met jouw reistijd", "About {0} jobs, with your travel time", "Około {0} ofert z czasem dojazdu", "Aproximativ {0} joburi, cu timpul tău de drum", "نحو {0} وظيفة مع وقت رحلتك");
+        Add("Landing.Map.IllustratedLead", "Zie welke banen je echt kunt halen — per fiets, OV of auto.", "See which jobs you can reach — by bike, transit or car.", "Zobacz oferty w zasięgu — rowerem, komunikacją lub autem.", "Vezi joburi la care poți ajunge — cu bicicleta, transport sau mașină.", "وظائف في متناولك — بالدراجة أو المواصلات أو السيارة.");
         Add("Landing.Stats.FreeLabel", "Gratis", "Free", "Za darmo", "Gratuit", "مجاني");
         Add("Landing.Stats.FreeBody", "test, account, paspoort en banenkaart", "test, account, passport and job map", "test, konto, paszport i mapa", "test, cont, pașaport și hartă", "اختبار وحساب وجواز وخريطة");
 
@@ -426,11 +439,11 @@ public static class UiStringsLanding
         Add("Landing.Hero.ChipHelp", "Mensen helpen", "Helping people", "Pomaganie ludziom", "Ajutor oameni", "مساعدة الناس");
         Add("Landing.Hero.ChipWarm", "Warm team", "A warm team", "Ciepły zespół", "Echipă caldă", "فريق دافئ");
         Add("Landing.Hero.FitFloatTitle", "Past dit beroep bij mij?", "Does this occupation suit me?", "Czy ten zawód do mnie pasuje?", "Mi se potrivește ocupația?", "هل تناسبني هذه المهنة؟");
-        Add("Landing.Hero.FitFloatMeta", "Verpleegkundige · 82% fit", "Nurse · 82% fit", "Pielęgniarka · 82% dopasowania", "Asistent medical · 82% potrivire", "ممرض · تناسب ٨٢٪");
+        Add("Landing.Hero.FitFloatMeta", "Verpleegkundige · sterke fit", "Nurse · strong fit", "Pielęgniarka · mocne dopasowanie", "Asistent medical · potrivire bună", "ممرض · تناسب قوي");
         Add("Landing.Hero.JourneyFloatTitle", "Ontdekkingsreis", "Discovery journey", "Podróż odkrywcza", "Călătoria de descoperire", "رحلة الاكتشاف");
         Add("Landing.Hero.JourneyFloatMeta", "Stap 3 van 6 · Hier voel je je thuis", "Step 3 of 6 · Where you feel at home", "Krok 3 z 6 · Tu czujesz się jak w domu", "Pasul 3 din 6 · Aici te simți acasă", "الخطوة ٣ من ٦ · هنا تشعر أنك في بيتك");
         Add("Landing.Hero.FitFloatMobile", "Verpleegkundige", "Nurse", "Pielęgniarka", "Asistent medical", "ممرض");
-        Add("Landing.Hero.FitFloatMobileMeta", "82% fit met jou", "82% fit with you", "82% dopasowania do Ciebie", "82% potrivire cu tine", "تناسب ٨٢٪ معك");
+        Add("Landing.Hero.FitFloatMobileMeta", "Sterke fit met jou", "Strong fit with you", "Mocne dopasowanie do Ciebie", "Potrivire bună cu tine", "تناسب قوي معك");
 
         Add("Landing.WhatIs.S2Body.Zw",
             "Welke beroepen passen bij jou? En wat heb je nog nodig voor je droombaan?",

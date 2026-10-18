@@ -291,8 +291,9 @@ window.jobsyGeo = (function () {
                 function (pos) {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
+                    const accuracyMeters = typeof pos.coords.accuracy === "number" ? pos.coords.accuracy : null;
                     setStoredOrigin(lat, lng);
-                    resolve({ lat: lat, lng: lng });
+                    resolve({ lat: lat, lng: lng, accuracyMeters: accuracyMeters, Lat: lat, Lng: lng, AccuracyMeters: accuracyMeters });
                 },
                 function (err) {
                     let message = "Locatie geweigerd.";
@@ -304,9 +305,23 @@ window.jobsyGeo = (function () {
                     }
                     reject(new Error(message));
                 },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         });
+    }
+
+    function focusElement(id) {
+        const el = document.getElementById(id);
+        if (el && typeof el.focus === "function") {
+            el.focus();
+            if (typeof el.select === "function") {
+                try {
+                    el.select();
+                } catch {
+                    // read-only inputs
+                }
+            }
+        }
     }
 
     /**
@@ -441,6 +456,7 @@ window.jobsyGeo = (function () {
         tryClaimClick,
         tryClaimSiteVisit,
         requestLocation,
+        focusElement,
         scrollToId,
         openShare,
         copyText,
@@ -669,7 +685,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261018-12"
+        "/js/jobMap.min.js?v=20261018-20"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"

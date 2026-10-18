@@ -22,6 +22,7 @@ internal static class UiStringsOnboardingV2
         PatchWorkStatusPl(pl);
         PatchWorkStatusRo(ro);
         PatchWorkStatusAr(ar);
+        PatchFinaleV2(nl, en);
 
         nl["Onboarding.Age.TooYoung"] = "Je moet minstens {0} jaar zijn om Lobsy te gebruiken.";
         en["Onboarding.Age.TooYoung"] = "You must be at least {0} to use Lobsy.";
@@ -47,6 +48,7 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Resume.Lead"] = resumeLead;
         map["Onboarding.Resume.Cta"] = resumeCta;
         var english = language != "nl";
+        map["Onboarding.AccountPrivacyLink"] = english ? "My data & account" : "Mijn gegevens & account";
         map["Onboarding.Step1.Title"] = english ? "Let’s get acquainted" : "Even kennismaken";
         map["Onboarding.Step1.Lead"] = english ? "Is this correct? We copied your name from your account." : "Klopt dit? We hebben je naam overgenomen van je account.";
         map["Onboarding.UseMyLocation"] = english ? "Use my location" : "Gebruik mijn locatie";
@@ -56,6 +58,13 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.LocationFailed"] = english
             ? "We couldn’t determine your postcode. Try entering it manually."
             : "We konden je postcode niet bepalen. Vul hem handmatig in.";
+        map["Onboarding.Geolocation.ApproximateHint"] = english
+            ? "We know your location only roughly (± {0} m). Is this wrong? Type your street or postcode."
+            : "We weten je locatie maar ongeveer (± {0} m). Klopt dit niet? Typ je straat of postcode.";
+        map["Onboarding.Geolocation.ConfirmPrecise"] = english
+            ? "We filled in your address from your location. Does this look right?"
+            : "We vulden je adres in via je locatie. Klopt dit?";
+        map["Onboarding.Geolocation.ConfirmCta"] = english ? "Yes, this address is correct" : "Ja, dit adres klopt";
         map["Onboarding.Step2.Title"] = english ? "When can you work?" : "Wanneer kun je werken?";
         map["Onboarding.Step2.Lead"] = english ? "Pick one or more options. We fill in the hours and days for you." : "Kies één of meer opties. Wij zetten uren en dagen voor je klaar.";
         map["Onboarding.AvailabilityPresetsLegend"] = english ? "1. Choose what suits you" : "1. Kies wat bij je past";
@@ -267,6 +276,89 @@ internal static class UiStringsOnboardingV2
         AddPresets(map, english);
         AddWorkStatuses(map, english);
         AddDreamJobs(map, language);
+    }
+
+    private static void PatchFinaleV2(Dictionary<string, string> nl, Dictionary<string, string> en)
+    {
+        nl["Onboarding.FinaleV2.Badge"] = "Onboarding en tests afgerond";
+        en["Onboarding.FinaleV2.Badge"] = "Onboarding and tests completed";
+        nl["Onboarding.FinaleV2.Lead"] = "Je gaat nu de kracht van Lobsy meemaken. Dit is wat je vanaf nu kunt verwachten.";
+        en["Onboarding.FinaleV2.Lead"] = "You are about to experience what Lobsy can do. Here is what to expect from now on.";
+        nl["Onboarding.FinaleV2.FullTests"] = "Doe de volledige tests voor meer precisie";
+        en["Onboarding.FinaleV2.FullTests"] = "Take the full tests for more precision";
+        nl["Onboarding.FinaleV2.Highlight.Title"] = "{0} vacatures passen al bij je";
+        en["Onboarding.FinaleV2.Highlight.Title"] = "{0} jobs already fit you";
+        nl["Onboarding.FinaleV2.Highlight.Sub"] = "Allemaal binnen {0} minuten reizen vanaf {1}";
+        en["Onboarding.FinaleV2.Highlight.Sub"] = "All within {0} minutes travel from {1}";
+        nl["Onboarding.FinaleV2.Highlight.Link"] = "Bekijk ze";
+        en["Onboarding.FinaleV2.Highlight.Link"] = "View them";
+        nl["Onboarding.FinaleV2.Insights.Title"] = "Dit valt ons nu al op";
+        en["Onboarding.FinaleV2.Insights.Title"] = "This already stands out";
+        nl["Onboarding.FinaleV2.Insights.Lead"] = "Een eerste indruk uit je Quick-Scan. Met de verdieping wordt dit scherper.";
+        en["Onboarding.FinaleV2.Insights.Lead"] = "A first impression from your Quick Scan. The deepening makes this sharper.";
+        nl["Onboarding.FinaleV2.Do.Title"] = "Wat Lobsy nu voor je doet";
+        en["Onboarding.FinaleV2.Do.Title"] = "What Lobsy does for you now";
+        nl["Onboarding.FinaleV2.Do.Lead"] = "Vanaf nu werken we met jouw Kompas. Dit merk je ervan:";
+        en["Onboarding.FinaleV2.Do.Lead"] = "From now on we work with your Compass. You will notice:";
+        nl["Onboarding.FinaleV2.Soon.Title"] = "Binnenkort ook";
+        en["Onboarding.FinaleV2.Soon.Title"] = "Coming soon";
+        nl["Onboarding.FinaleV2.Soon.Tag"] = "binnenkort";
+        en["Onboarding.FinaleV2.Soon.Tag"] = "coming soon";
+        nl["Onboarding.FinaleV2.Timeline.Title"] = "Wat je kunt verwachten";
+        en["Onboarding.FinaleV2.Timeline.Title"] = "What you can expect";
+        nl["Onboarding.FinaleV2.Timeline.Lead"] = "Zo ziet je eerste tijd met Lobsy eruit.";
+        en["Onboarding.FinaleV2.Timeline.Lead"] = "This is what your first time with Lobsy looks like.";
+        nl["Onboarding.FinaleV2.Timeline.Today"] = "Vandaag";
+        en["Onboarding.FinaleV2.Timeline.Today"] = "Today";
+        nl["Onboarding.FinaleV2.Timeline.TodayBody"] = "Bekijk je Kompas en je eerste {0} passende vacatures.";
+        en["Onboarding.FinaleV2.Timeline.TodayBody"] = "View your Compass and your first {0} matching jobs.";
+        nl["Onboarding.FinaleV2.Timeline.Week"] = "Deze week";
+        en["Onboarding.FinaleV2.Timeline.Week"] = "This week";
+        nl["Onboarding.FinaleV2.Timeline.WeekBody"] = "Doe de gratis verdieping (± 10 min) en vul je paspoort aan.";
+        en["Onboarding.FinaleV2.Timeline.WeekBody"] = "Do the free deepening (± 10 min) and complete your passport.";
+        nl["Onboarding.FinaleV2.Timeline.Ongoing"] = "Doorlopend";
+        en["Onboarding.FinaleV2.Timeline.Ongoing"] = "Ongoing";
+        nl["Onboarding.FinaleV2.Timeline.OngoingBody"] = "Elke keer dat je terugkomt staan de nieuwste passende banen klaar en groeit je route mee.";
+        en["Onboarding.FinaleV2.Timeline.OngoingBody"] = "Every time you return, the latest matching jobs are ready and your route grows with you.";
+        nl["Onboarding.FinaleV2.Timeline.OngoingBody.Proactive"] = "Elke keer dat je terugkomt staan de nieuwste passende banen klaar, krijg je een seintje bij nieuwe matches en groeit je route mee.";
+        en["Onboarding.FinaleV2.Timeline.OngoingBody.Proactive"] = "Every time you return, the latest matching jobs are ready, you get a nudge when new matches appear, and your route grows with you.";
+        nl["Onboarding.FinaleV2.End.Title"] = "Klaar om te kijken?";
+        en["Onboarding.FinaleV2.End.Title"] = "Ready to take a look?";
+        nl["Onboarding.FinaleV2.End.Lead"] = "Je Kompas en je matches staan voor je klaar.";
+        en["Onboarding.FinaleV2.End.Lead"] = "Your Compass and your matches are ready for you.";
+
+        void Do(string key, string nlText, string enText)
+        {
+            nl[key] = nlText;
+            en[key] = enText;
+        }
+
+        Do("Onboarding.FinaleV2.Do.Match.Title", "Banen die echt bij je passen", "Jobs that really fit you");
+        Do("Onboarding.FinaleV2.Do.Match.Body", "We matchen op wie je bent en wat je wilt, niet alleen op je cv.", "We match on who you are and what you want, not just your CV.");
+        Do("Onboarding.FinaleV2.Do.Map.Title", "Banenkaart met reistijd", "Job map with travel time");
+        Do("Onboarding.FinaleV2.Do.Map.Body", "Zie per vacature hoe lang je onderweg bent vanaf {0}.", "See how long each job takes to reach from {0}.");
+        Do("Onboarding.FinaleV2.Do.Compass.Title", "Je Kompas, in woorden", "Your Compass, in words");
+        Do("Onboarding.FinaleV2.Do.Compass.Body", "Je sterke punten, wat je leuk vindt en wat je nodig hebt, helder uitgelegd.", "Your strengths, what you enjoy and what you need, explained clearly.");
+        Do("Onboarding.FinaleV2.Do.Route.Title", "Je route naar {0}", "Your route to {0}");
+        Do("Onboarding.FinaleV2.Do.Route.Body", "In Carrière zie je welke opleidingen en stappen je daar brengen.", "In Career you see which courses and steps get you there.");
+        Do("Onboarding.FinaleV2.Do.RouteGeneric.Title", "Je route naar je droombaan", "Your route to your dream job");
+        Do("Onboarding.FinaleV2.Do.RouteGeneric.Body", "In Carrière zie je welke stappen je verder helpen.", "In Career you see which steps help you forward.");
+        Do("Onboarding.FinaleV2.Do.Passport.Title", "Je paspoort in plaats van een cv", "Your passport instead of a CV");
+        Do("Onboarding.FinaleV2.Do.Passport.Body", "Jij bepaalt wat een werkgever van je te zien krijgt.", "You decide what an employer gets to see.");
+        Do("Onboarding.FinaleV2.Do.Deeper.Title", "Steeds scherper", "Sharper over time");
+        Do("Onboarding.FinaleV2.Do.Deeper.Body", "Met de gratis verdieping worden je Kompas en je matches nauwkeuriger.", "The free deepening makes your Compass and matches more accurate.");
+        Do("Onboarding.FinaleV2.Do.References.Title", "Geverifieerde referenties", "Verified references");
+        Do("Onboarding.FinaleV2.Do.References.Body", "Oud-collega's of je stagebegeleider bevestigen wat je kunt.", "Former colleagues or your supervisor confirm what you can do.");
+        Do("Onboarding.FinaleV2.Do.Notifications.Title", "Meldingen bij nieuwe matches", "Notifications for new matches");
+        Do("Onboarding.FinaleV2.Do.Notifications.Body", "Een seintje zodra er een baan bijkomt die bij je past.", "A nudge when a job appears that fits you.");
+        Do("Onboarding.FinaleV2.Do.Employers.Title", "Werkgevers vinden jou", "Employers find you");
+        Do("Onboarding.FinaleV2.Do.Employers.Body", "Werkgevers zien je profiel anoniem en nodigen je zelf uit.", "Employers see your profile anonymously and invite you.");
+        Do("Onboarding.FinaleV2.Soon.References.Title", "Geverifieerde referenties", "Verified references");
+        Do("Onboarding.FinaleV2.Soon.References.Body", "Oud-collega's of je stagebegeleider bevestigen wat je kunt.", "Former colleagues or your supervisor confirm what you can do.");
+        Do("Onboarding.FinaleV2.Soon.Notifications.Title", "Meldingen bij nieuwe matches", "Notifications for new matches");
+        Do("Onboarding.FinaleV2.Soon.Notifications.Body", "Een seintje zodra er een baan bijkomt die bij je past.", "A nudge when a job appears that fits you.");
+        Do("Onboarding.FinaleV2.Soon.Employers.Title", "Werkgevers vinden jou", "Employers find you");
+        Do("Onboarding.FinaleV2.Soon.Employers.Body", "Werkgevers zien je profiel anoniem en nodigen je zelf uit.", "Employers see your profile anonymously and invite you.");
     }
 
     private static void AddWorkStatuses(Dictionary<string, string> map, bool english)

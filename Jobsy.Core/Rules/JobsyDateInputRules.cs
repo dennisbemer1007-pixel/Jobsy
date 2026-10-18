@@ -328,7 +328,6 @@ public static class JobsyDateInputRules
 
     public static bool TryParseVacancyCsvDate(string? raw, out DateOnly date)
     {
-        date = default;
         if (TryParseFlexibleDate(raw, out date))
         {
             return true;
@@ -336,12 +335,14 @@ public static class JobsyDateInputRules
 
         if (!TryParseFlexibleMonth(raw, out var yyyyMm) || yyyyMm is null)
         {
+            date = default;
             return false;
         }
 
         var parts = yyyyMm.Split('-', 2);
         if (!int.TryParse(parts[0], out var year) || !int.TryParse(parts[1], out var month))
         {
+            date = default;
             return false;
         }
 

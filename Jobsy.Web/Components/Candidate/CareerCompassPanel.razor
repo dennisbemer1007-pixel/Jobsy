@@ -2,6 +2,7 @@
 @using Jobsy.Core.Careers
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
@@ -183,12 +184,12 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
             @if (explain is not null)
             {
                 <FitPercentInfo Model="explain" Language="@Culture.Language">
-                    @OccupationDetails(item, showPercent: false)
+                    @OccupationDetails(item, showBand: false)
                 </FitPercentInfo>
             }
             else
             {
-                @OccupationDetails(item, showPercent: true)
+                @OccupationDetails(item, showBand: true)
             }
         </li>
     };
@@ -203,7 +204,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
         return FitPercentExplanation.Build(item.Title, scores, EducationLabel);
     }
 
-    private RenderFragment OccupationDetails(CareerOccupationMatchModel item, bool showPercent) => __builder =>
+    private RenderFragment OccupationDetails(CareerOccupationMatchModel item, bool showBand) => __builder =>
     {
         <details class="kompas-occupation__details">
             <summary>
@@ -217,7 +218,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                 {
                     <span class="muted">@Culture["Kompas.EducationAbove"]</span>
                 }
-                @if (showPercent)
+                @if (showBand)
                 {
                     @if (item.NoScore)
                     {
@@ -225,7 +226,7 @@ else if (VisibleNotes.Count > 0 || !_employersOn)
                     }
                     else
                     {
-                        <span class="kompas-occupation__pct">@CareerCompassBuilder.FormatPercent(item.Percent, Culture.Language)%</span>
+                        <span class="kompas-occupation__pct">@CandidateMatchDisplay.OccupationFitLabel((int)Math.Round(item.Percent))</span>
                     }
                 }
             </summary>

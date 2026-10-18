@@ -223,7 +223,11 @@ public sealed class CultureState
 
     private void Apply(string language)
     {
-        Language = JobsyLanguages.ResolveActive(language, _http?.HttpContext?.Request.Headers.AcceptLanguage.ToString());
+        // Bunit and other unit tests construct CultureState without IHttpContextAccessor; pin the
+        // requested catalog code instead of launch EnabledCultures (typically nl,en only).
+        Language = _http is null
+            ? JobsyLanguages.Normalize(language)
+            : JobsyLanguages.ResolveActive(language, _http.HttpContext?.Request.Headers.AcceptLanguage.ToString());
         JobsyCultures.ApplyToCurrentThread(Language);
     }
 

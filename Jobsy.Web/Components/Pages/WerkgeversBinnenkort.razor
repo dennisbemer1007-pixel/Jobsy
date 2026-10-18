@@ -17,11 +17,31 @@
 
 @if (!_sendToCandidateShell)
 {
-<section class="pub-section" aria-labelledby="wg-soon-title">
+<section class="pub-section wg-soon" aria-labelledby="wg-soon-title">
     <header class="pp-doc__hero">
         <h1 id="wg-soon-title" class="pp-doc__title">@Culture[_forCandidate ? "WgSoon.CandidateTitle" : "WgSoon.Title"]</h1>
         <p class="pp-doc__lead">@Culture[_forCandidate ? "WgSoon.CandidateLead" : "WgSoon.Lead"]</p>
     </header>
+    @if (!_forCandidate)
+    {
+        <div class="wg-soon__grid" role="list">
+            <article class="wg-soon__card" role="listitem">
+                <h2>@Culture["WgSoon.EmployerCard1Title"]</h2>
+                <p>@Culture["WgSoon.EmployerCard1Lead"]</p>
+                <a href="/login?return=%2Fwerkgever%2Fvacatures">@Culture["WgSoon.EmployerCard1Cta"]</a>
+            </article>
+            <article class="wg-soon__card" role="listitem">
+                <h2>@Culture["WgSoon.EmployerCard2Title"]</h2>
+                <p>@Culture["WgSoon.EmployerCard2Lead"]</p>
+                <a href="/how-lobsy-works/werkgever">@Culture["WgSoon.EmployerCard2Cta"]</a>
+            </article>
+            <article class="wg-soon__card" role="listitem">
+                <h2>@Culture["WgSoon.EmployerCard3Title"]</h2>
+                <p>@Culture["WgSoon.EmployerCard3Lead"]</p>
+                <a href="/contact">@Culture["WgSoon.EmployerCard3Cta"]</a>
+            </article>
+        </div>
+    }
     <p class="inline-actions">
         <a class="pub-btn pub-btn--primary" href="/">@Culture["WgSoon.CtaHome"]</a>
     </p>

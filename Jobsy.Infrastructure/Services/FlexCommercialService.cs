@@ -12,6 +12,7 @@ public sealed class FlexCommercialService : IFlexCommercialService
     public static readonly Guid SettingsSingletonId = Guid.Parse("f1e20001-0000-4000-8000-000000000001");
     public static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(10);
     private const string CacheKey = "flex-commercial-settings";
+    private static readonly SemaphoreSlim SettingsSeedLock = new(1, 1);
 
     private readonly JobsyDbContext _db;
     private readonly IMemoryCache _cache;
@@ -220,27 +221,44 @@ public sealed class FlexCommercialService : IFlexCommercialService
             return settings;
         }
 
-        settings = new FlexCommercialSettings
+        await SettingsSeedLock.WaitAsync(cancellationToken);
+        try
         {
-            Id = SettingsSingletonId,
-            MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
-            BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
-            DeepTestPriceCompetenceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
-            DeepTestPriceCareerEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
-            DeepTestPriceValuesEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
-            DeepTestPriceCultureEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
-            AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
-            ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
-            AcceptCandidatePilotCostTokens = FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
-            AcceptCandidateStandardCostTokens = FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
-            FirstEmployerAcceptanceFreeEnabled = true,
-            UpdatedAtUtc = DateTime.UtcNow
-        };
-        _db.FlexCommercialSettings.Add(settings);
-        await _db.SaveChangesAsync(cancellationToken);
-        await SyncAcceptCandidateSpendCostAsync(settings, cancellationToken);
-        await _db.SaveChangesAsync(cancellationToken);
-        return settings;
+            settings = await _db.FlexCommercialSettings
+                .OrderBy(s => s.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (settings is not null)
+            {
+                EnsurePerKindDefaults(settings);
+                return settings;
+            }
+
+            settings = new FlexCommercialSettings
+            {
+                Id = SettingsSingletonId,
+                MarginPerHourEuro = FlexCommercialSettings.DefaultMarginPerHourEuro,
+                BackofficePartnerName = FlexCommercialSettings.DefaultBackofficePartnerName,
+                DeepTestPriceCompetenceEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCareerEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceValuesEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                DeepTestPriceCultureEuro = FlexCommercialSettings.DefaultDeepAnalysisPriceEuro,
+                AgencyAnnualPriceEuro = FlexCommercialSettings.DefaultAgencyAnnualPriceEuro,
+                ContactUnlockCostTokens = FlexCommercialSettings.DefaultContactUnlockCostTokens,
+                AcceptCandidatePilotCostTokens = FlexCommercialSettings.DefaultAcceptCandidatePilotCostTokens,
+                AcceptCandidateStandardCostTokens = FlexCommercialSettings.DefaultAcceptCandidateStandardCostTokens,
+                FirstEmployerAcceptanceFreeEnabled = true,
+                UpdatedAtUtc = DateTime.UtcNow
+            };
+            _db.FlexCommercialSettings.Add(settings);
+            await _db.SaveChangesAsync(cancellationToken);
+            await SyncAcceptCandidateSpendCostAsync(settings, cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken);
+            return settings;
+        }
+        finally
+        {
+            SettingsSeedLock.Release();
+        }
     }
 
     private static void EnsurePerKindDefaults(FlexCommercialSettings settings)

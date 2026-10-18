@@ -6,6 +6,7 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Media
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject CandidateProfileEditor Editor
@@ -53,7 +54,8 @@
         </section>
 
         <div class="passport-proof__grid">
-            <article class="detail-card passport-proof__card">
+            <article class="detail-card passport-proof__card kompas-card--illustrated">
+                <CandidateIllustratedCardSpot ImageUrl="@CandidateIllustratedImages.SpotOpleiding" Position="80% 25%" />
                 <h3 class="passport-proof__card-title">@Culture["Passport.Proof.Experience"]</h3>
                 @if (!Editor.Employers.Any(e => !string.IsNullOrWhiteSpace(e.EmployerName) || !string.IsNullOrWhiteSpace(e.Role)))
                 {

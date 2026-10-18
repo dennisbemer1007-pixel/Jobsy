@@ -44,6 +44,9 @@ window.jobMap = (function () {
     let detailCache = {};
     let pinsUrl = null;
     let pinsBaseUrl = null;
+    let illustratedPopup = false;
+    let illustratedTravelSpot = "";
+    let illustratedVacancySpots = {};
     let pinsFetchGen = 0;
     let viewportPinsBound = false;
     let viewportListDotNet = null;
@@ -74,7 +77,10 @@ window.jobMap = (function () {
         travelFromHome: "{minutes} min {mode} van huis",
         save: "Bewaar",
         saved: "Bewaard",
-        fitPercent: "{percent}% past bij jou",
+        fitStrong: "Sterke match",
+        fitGood: "Goede match",
+        fitSome: "Enige match",
+        fitPastWhy: "Past bij je: {reason}",
         fitGate: "Maak je paspoort af",
         hoursSingle: "{hours} uur",
         hoursRange: "{min}–{max} uur",
@@ -224,7 +230,7 @@ window.jobMap = (function () {
         const style = color
             ? " style=\"--map-pin:" + color + ";--map-pin-deep:" + color + ";--map-pin-glow:" + color + "66\""
             : "";
-        const match = matchPercent != null && matchPercent !== ""
+        const match = !illustratedPopup && matchPercent != null && matchPercent !== ""
             ? "<span class=\"job-marker__match job-marker__match--" + escapeHtml(String(matchBand || "orange")) +
               "\">" + escapeHtml(String(matchPercent)) + "%</span>"
             : "";
@@ -241,6 +247,92 @@ window.jobMap = (function () {
         return Array.isArray(v.workTypes) && v.workTypes.length
             ? v.workTypes[0]
             : (v.workType || "");
+    }
+
+    function workTypeFallbackPhoto(v) {
+        const wt = String(workTypeOf(v) || "").toLowerCase();
+        if (wt.indexOf("logist") >= 0) {
+            return "/images/vacancies/logistiek.webp";
+        }
+        if (wt.indexOf("zorg") >= 0 || wt.indexOf("care") >= 0) {
+            return "/images/vacancies/zorg.webp";
+        }
+        if (wt.indexOf("horeca") >= 0) {
+            return "/images/vacancies/horeca.webp";
+        }
+        if (wt.indexOf("winkel") >= 0 || wt.indexOf("retail") >= 0) {
+            return "/images/vacancies/winkel.webp";
+        }
+        if (wt.indexOf("bouw") >= 0) {
+            return "/images/vacancies/bouw.webp";
+        }
+        if (wt.indexOf("tuin") >= 0) {
+            return "/images/vacancies/tuinbouw.webp";
+        }
+        if (wt.indexOf("kantoor") >= 0 || wt.indexOf("office") >= 0) {
+            return "/images/vacancies/kantoor.webp";
+        }
+        if (wt.indexOf("product") >= 0) {
+            return "/images/vacancies/productie.webp";
+        }
+        if (wt.indexOf("schoon") >= 0) {
+            return "/images/vacancies/schoonmaak.webp";
+        }
+        return "/images/vacancies/flex.webp";
+    }
+
+    function illustratedSpotForVacancy(v) {
+        const spots = illustratedVacancySpots || {};
+        const pick = function (key) {
+            const k = String(key || "").toLowerCase();
+            if (spots[k]) {
+                return String(spots[k]);
+            }
+            return spots.default ? String(spots.default) : "";
+        };
+        const title = String(v && v.title ? v.title : "").toLowerCase();
+        const company = String(v && v.company ? v.company : "").toLowerCase();
+        const wt = String(workTypeOf(v) || "").toLowerCase();
+        const hay = title + " " + company + " " + wt;
+        if (hay.indexOf("schoon") >= 0) {
+            return pick("schoonmaak");
+        }
+        if (hay.indexOf("zorg") >= 0 || hay.indexOf("care") >= 0) {
+            return pick("zorg");
+        }
+        if (hay.indexOf("order") >= 0 || hay.indexOf("magaz") >= 0 || hay.indexOf("logist") >= 0 || hay.indexOf("pakhuis") >= 0) {
+            return pick("logistiek");
+        }
+        if (hay.indexOf("horeca") >= 0 || hay.indexOf("brasserie") >= 0 || hay.indexOf("chef") >= 0) {
+            return pick("horeca");
+        }
+        if (hay.indexOf("winkel") >= 0 || hay.indexOf("retail") >= 0 || hay.indexOf("mode") >= 0) {
+            return pick("retail");
+        }
+        if (hay.indexOf("bouw") >= 0 || hay.indexOf("tuin") >= 0 || hay.indexOf("groen") >= 0) {
+            return pick("bouw");
+        }
+        if (hay.indexOf("kantoor") >= 0 || hay.indexOf("office") >= 0) {
+            return pick("kantoor");
+        }
+        if (hay.indexOf("dier") >= 0) {
+            return pick("dieren");
+        }
+        if (hay.indexOf("techn") >= 0 || hay.indexOf("monteur") >= 0) {
+            return pick("techniek");
+        }
+        return pick("default");
+    }
+
+    function popupRootClass(extra) {
+        let cls = "map-popup map-popup--calm";
+        if (illustratedPopup) {
+            cls += " map-popup--illustrated";
+        }
+        if (extra) {
+            cls += " " + extra;
+        }
+        return cls;
     }
 
     function formatWage(wage) {
@@ -619,7 +711,8 @@ window.jobMap = (function () {
         if (!parts.length) {
             return "";
         }
-        return "<div class=\"map-popup__meta\">" + parts.join("") + "</div>";
+        const inner = parts.join("");
+        return "<div class=\"map-popup__meta\">" + inner + "</div>";
     }
 
     function agencyPopupLineHtml(v) {
@@ -666,15 +759,27 @@ window.jobMap = (function () {
         );
     }
 
+    function fitWhyReason(v) {
+        return v.fitWhyLine ? String(v.fitWhyLine).trim() : "";
+    }
+
     function whyLineHtml(v) {
-        if (!v.fitWhyLine) {
+        const why = fitWhyReason(v);
+        if (!why) {
+            return "";
+        }
+        if (illustratedPopup) {
             return "";
         }
         const prefix = uiLabels.whyPrefix || "Waarom:";
+        const pastLabel = labelFormat(uiLabels.fitPastWhy || "Past bij je: {reason}", { reason: why });
+        if (why === pastLabel || pastLabel.endsWith(why)) {
+            return "";
+        }
         return (
             "<p class=\"map-popup__why\">" +
                 sparkIconHtml() +
-                "<span>" + escapeHtml(prefix) + " " + escapeHtml(String(v.fitWhyLine)) + "</span>" +
+                "<span>" + escapeHtml(prefix) + " " + escapeHtml(why) + "</span>" +
             "</p>"
         );
     }
@@ -714,18 +819,22 @@ window.jobMap = (function () {
                 "<img class=\"map-popup__media-logo\" src=\"" + escapeAttr(logoSrc) + "\" alt=\"" +
                 escapeAttr(v.company) + " logo\" width=\"88\" height=\"88\" loading=\"lazy\" decoding=\"async\" data-logo-fallback=\"photo\" />";
         } else {
-            mediaClassFinal = "map-popup__media map-popup__media--empty";
+            const fallbackPhoto = workTypeFallbackPhoto(v);
+            const useIllustrated = illustratedPopup;
+            const illustratedFallback = illustratedSpotForVacancy(v);
+            const src = useIllustrated && illustratedFallback ? illustratedFallback : fallbackPhoto;
+            mediaClassFinal = "map-popup__media map-popup__media--figure map-popup__media--illustrated";
             mediaInner =
-                "<span class=\"map-popup__media-empty\" aria-hidden=\"true\">" +
-                    "<svg viewBox=\"0 0 24 24\" focusable=\"false\"><path fill=\"currentColor\" d=\"M12 1a5 5 0 0 0-5 5v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-1V6a5 5 0 0 0-5-5zm-3 7V6a3 3 0 1 1 6 0v2H9zm3 5a1.75 1.75 0 1 1 0 3.5A1.75 1.75 0 0 1 12 13z\"/></svg>" +
-                "</span>";
+                "<img class=\"map-popup__photo map-popup__photo--figure map-popup__photo--illustrated\" src=\"" +
+                escapeAttr(src) +
+                "\" alt=\"\" width=\"400\" height=\"267\" loading=\"lazy\" decoding=\"async\" />";
         }
 
         const detailHref = "/vacancies/" + encodeURIComponent(v.id);
         const viewLabel = escapeHtml(uiLabels.viewJob || "Bekijk deze baan");
 
         return (
-            "<div class=\"map-popup map-popup--calm\">" +
+            "<div class=\"" + popupRootClass("") + "\">" +
                 "<div class=\"map-popup__main\">" +
                     "<a class=\"" + mediaClassFinal + "\" href=\"" + detailHref + "\" data-job-id=\"" + escapeAttr(v.id) + "\">" +
                         mediaInner +
@@ -750,6 +859,17 @@ window.jobMap = (function () {
         );
     }
 
+    function fitBandLabel(band) {
+        const b = String(band || "good").toLowerCase();
+        if (b === "strong" || b === "green") {
+            return String(uiLabels.fitStrong || "Sterke match");
+        }
+        if (b === "some" || b === "orange" || b === "red") {
+            return String(uiLabels.fitSome || "Enige match");
+        }
+        return String(uiLabels.fitGood || "Goede match");
+    }
+
     function matchLineHtml(v) {
         if (v.fitGate === "closed") {
             const href = String(uiLabels.passportHref || "/profiel");
@@ -762,16 +882,18 @@ window.jobMap = (function () {
                 "</p>"
             );
         }
-        if (v.matchPercent == null || v.matchPercent === "") {
+        const why = v.fitWhyLine ? String(v.fitWhyLine).trim() : "";
+        const hasFit = why || v.matchPercent != null && v.matchPercent !== "";
+        if (!hasFit) {
             return "";
         }
-        const band = String(v.matchColorBand || "orange");
-        const text = labelFormat(uiLabels.fitPercent || "{percent}% past bij jou", {
-            percent: String(v.matchPercent)
-        });
+        const band = String(v.matchColorBand || "good");
+        const text = why
+            ? labelFormat(uiLabels.fitPastWhy || "Past bij je: {reason}", { reason: why })
+            : fitBandLabel(band);
         return (
             "<p class=\"map-popup__match match-score--" + escapeHtml(band) + "\">" +
-                "<span class=\"map-popup__fit-pill match-score--" + escapeHtml(band) + "\">" +
+                "<span class=\"map-popup__fit-pill kb-fit kb-fit--calm match-score--" + escapeHtml(band) + "\">" +
                     escapeHtml(text) +
                 "</span>" +
             "</p>"
@@ -1988,7 +2110,7 @@ window.jobMap = (function () {
     function skeletonPopupHtml(pin) {
         // Same structure as buildPopupHtml so the sheet does not jump when filled.
         return (
-            "<div class=\"map-popup map-popup--calm map-popup--loading map-popup--skeleton\" aria-busy=\"true\">" +
+            "<div class=\"" + popupRootClass("map-popup--loading map-popup--skeleton") + "\" aria-busy=\"true\">" +
                 "<div class=\"map-popup__main\">" +
                     "<div class=\"map-popup__media map-popup__media--logo-only map-popup__shimmer\" aria-hidden=\"true\"></div>" +
                     "<div class=\"map-popup__body\">" +
@@ -4667,6 +4789,13 @@ window.jobMap = (function () {
             pinsBaseUrl = stripViewportParams(nextPinsUrl);
             pinsUrl = pinsBaseUrl + viewportQueryString();
         }
+        illustratedPopup = !!(options && options.illustratedPopup);
+        illustratedTravelSpot = options && options.illustratedTravelSpot
+            ? String(options.illustratedTravelSpot)
+            : "";
+        illustratedVacancySpots = options && options.illustratedVacancySpots
+            ? options.illustratedVacancySpots
+            : {};
 
         bindMapRuntime();
         if (!live || !viewportPinsBound) {
@@ -5293,6 +5422,13 @@ window.jobMap = (function () {
         notifyFilterDrawerToggle,
         isAlive,
         /** @internal Playwright / diagnostics */
+        __testOpenVacancyById: function (id) {
+            const key = id != null ? String(id) : "";
+            const rec = key ? markersById[key] : null;
+            if (rec) {
+                openVacancyPopup(rec);
+            }
+        },
         __testGetMap: function () { return map; },
         __testGetPinCount: function () { return Object.keys(markersById).length; },
         __testGetAgencyAreaCount: function () {

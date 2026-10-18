@@ -101,6 +101,15 @@
     gap: 0.35rem;
   }
 
+  .ob-wizard--richting-a .ob-wizard__topbar-links {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 0.35rem 0.55rem;
+    min-inline-size: 0;
+  }
+
   .ob-wizard--richting-a .ob-wizard__topbar-later {
     border: 0;
     background: transparent;
@@ -110,6 +119,56 @@
     min-height: 44px;
     padding: 0 0.25rem;
     white-space: nowrap;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__topbar-privacy {
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font-weight: 600;
+    font-size: 0.625rem;
+    line-height: 1.2;
+    min-height: 44px;
+    padding: 0 0.15rem;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-inline-size: 0;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__mobile-privacy {
+    display: flex;
+    justify-content: center;
+    padding: 0.15rem 1rem 0.35rem;
+    text-align: center;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__mobile-privacy a {
+    font-size: 0.6875rem;
+    line-height: 1.25;
+    max-inline-size: 100%;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__footer-privacy {
+    display: block;
+    align-self: center;
+    margin-block-end: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .ob-wizard--richting-a .ob-wizard__progress-thin {
@@ -518,30 +577,58 @@
     gap: 0.4rem;
   }
 
+  .ob-wizard--richting-a .ob-fields__address .kb-panel-head__address.kb-address {
+    overflow: visible;
+  }
+
   .ob-wizard--richting-a .ob-fields__address .kb-address__field {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.5rem;
-    align-items: stretch;
+    position: relative;
+    display: block;
+  }
+
+  .ob-wizard--richting-a .ob-fields__address .kb-address__field input {
+    width: 100%;
+    min-height: 48px;
+    padding-inline-end: 48px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .ob-wizard--richting-a .ob-fields__address .kb-address--with-clear .kb-address__field input {
+    padding-inline-end: calc(48px + 8px + 40px);
+  }
+
+  .ob-wizard--richting-a .ob-fields__address .kb-address__geo,
+  .ob-wizard--richting-a .ob-fields__address .kb-address__clear {
+    position: absolute;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+  }
+
+  .ob-wizard--richting-a .ob-fields__address .kb-address__clear {
+    inset-inline-end: 0;
   }
 
   .ob-wizard--richting-a .ob-fields__address .kb-address__geo {
-    min-height: 48px;
-    padding: 0 0.85rem;
-    border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--border));
-    border-radius: var(--radius-sm);
+    inset-inline-end: 0;
     background: var(--accent-soft);
     color: var(--brand);
-    font-size: 0.875rem;
-    font-weight: 600;
+  }
+
+  .ob-wizard--richting-a .ob-fields__address .kb-address--with-clear .kb-address__geo {
+    inset-inline-end: 48px;
   }
 
   .ob-wizard--richting-a .ob-fields__address .kb-address__geo-icon svg {
-    display: none;
-  }
-
-  .ob-wizard--richting-a .ob-fields__address .kb-address__geo::after {
-    content: "GPS";
+    display: inline;
   }
 
   .ob-wizard--richting-a .ob-wizard__test-tabs {
@@ -734,7 +821,24 @@
 @media (min-width: 1024px) {
   .ob-wizard--richting-a .ob-wizard__mobile-top,
   .ob-wizard--richting-a .ob-wizard__step-pill,
-  .ob-wizard--richting-a .ob-wizard__mascot-anchor {
+  .ob-wizard--richting-a .ob-wizard__mascot-anchor,
+  .ob-wizard--richting-a .ob-wizard__footer-privacy {
     display: none !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .ob-wizard--richting-a .ob-wizard__topbar-meta {
+    display: none;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__topbar-privacy {
+    display: none;
+  }
+}
+
+@media (min-width: 421px) and (max-width: 1023px) {
+  .ob-wizard--richting-a .ob-wizard__mobile-privacy {
+    display: none;
   }
 }
