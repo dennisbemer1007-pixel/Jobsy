@@ -178,6 +178,7 @@
                                         <td><input class="csv-inline-input" @bind="row.Data.StartDate" /></td>
                                         <td>
                                             <JobsyDateField CssClass="csv-inline-input"
+                                                            Constraint="JobsyDateConstraint.VacancyCsvDate"
                                                             TextValue="@row.Data.EndDate"
                                                             TextValueChanged="v => row.Data.EndDate = v ?? string.Empty"
                                                             TestId="csv-vacancy-end-date" />

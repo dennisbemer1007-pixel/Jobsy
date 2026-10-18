@@ -122,4 +122,34 @@ public sealed class JobsyDateInputRulesTests
         var msg = JobsyDateInputRules.ValidationMessage(code, lang);
         Assert.Contains(fragment, msg, StringComparison.OrdinalIgnoreCase);
     }
+
+    [Theory]
+    [InlineData("102026", "10-2026")]
+    [InlineData("10-2026", "10-2026")]
+    [InlineData("31122026", "31-12-2026")]
+    [InlineData("31-12-2026", "31-12-2026")]
+    public void Vacancy_csv_mask_supports_month_and_full_date(string input, string expectedDisplay)
+    {
+        Assert.Equal(expectedDisplay, JobsyDateInputRules.ApplyVacancyCsvDateMask(input));
+    }
+
+    [Fact]
+    public void Vacancy_csv_mask_does_not_mangle_month_style_input()
+    {
+        Assert.NotEqual("10-20-26", JobsyDateInputRules.ApplyVacancyCsvDateMask("10-2026"));
+    }
+
+    [Fact]
+    public void Vacancy_csv_parses_month_as_last_day_of_month()
+    {
+        Assert.True(JobsyDateInputRules.TryParseVacancyCsvDate("10-2026", out var end));
+        Assert.Equal(new DateOnly(2026, 10, 31), end);
+    }
+
+    [Fact]
+    public void Vacancy_csv_parses_full_date()
+    {
+        Assert.True(JobsyDateInputRules.TryParseVacancyCsvDate("31-12-2026", out var end));
+        Assert.Equal(new DateOnly(2026, 12, 31), end);
+    }
 }

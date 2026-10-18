@@ -265,6 +265,122 @@ public static class JobsyDateInputRules
         return AvailabilityStartRules.FormatDisplayDate(date, language);
     }
 
+    /// <summary>Mask vacancy CSV einddatum: mm-yyyy (≤6 digits) or dd-mm-yyyy (7+ digits).</summary>
+    public static string ApplyVacancyCsvDateMask(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return "";
+        }
+
+        var trimmed = raw.Trim();
+        if (IsoDateRegex.IsMatch(trimmed) && TryParseFlexibleDate(trimmed, out var isoDay))
+        {
+            return FormatDisplayDate(isoDay, null);
+        }
+
+        if (TryParseFlexibleMonth(trimmed, out var isoMonth) && isoMonth is not null)
+        {
+            return FormatDisplayMonth(isoMonth, null);
+        }
+
+        var digits = new string(trimmed.Where(char.IsDigit).ToArray());
+        if (digits.Length == 0)
+        {
+            return "";
+        }
+
+        var normalized = trimmed.Replace('/', '-').Replace('.', '-');
+        var parts = normalized.Split('-', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length >= 3 || digits.Length > 6)
+        {
+            return ApplyDateMask(raw);
+        }
+
+        if (parts.Length == 2 && parts[1].Length is >= 1 and <= 2)
+        {
+            return ApplyDateMask(raw);
+        }
+
+        var monthMasked = ApplyMonthMask(raw);
+        if (digits.Length == 6 && TryParseFlexibleMonth(monthMasked, out _))
+        {
+            return monthMasked;
+        }
+
+        if (digits.Length < 6)
+        {
+            return monthMasked;
+        }
+
+        return ApplyDateMask(raw);
+    }
+
+    public static bool IsCompleteVacancyCsvDate(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        return IsCompleteDisplayDate(text) || IsCompleteDisplayMonth(text);
+    }
+
+    public static bool TryParseVacancyCsvDate(string? raw, out DateOnly date)
+    {
+        date = default;
+        if (TryParseFlexibleDate(raw, out date))
+        {
+            return true;
+        }
+
+        if (!TryParseFlexibleMonth(raw, out var yyyyMm) || yyyyMm is null)
+        {
+            return false;
+        }
+
+        var parts = yyyyMm.Split('-', 2);
+        if (!int.TryParse(parts[0], out var year) || !int.TryParse(parts[1], out var month))
+        {
+            return false;
+        }
+
+        date = new DateOnly(year, month, DateTime.DaysInMonth(year, month));
+        return true;
+    }
+
+    public static JobsyDateValidationCode ValidateVacancyCsvDateText(
+        string? text,
+        bool required = false)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return required ? JobsyDateValidationCode.Incomplete : JobsyDateValidationCode.None;
+        }
+
+        if (TryParseVacancyCsvDate(text, out _))
+        {
+            return JobsyDateValidationCode.None;
+        }
+
+        if (!IsCompleteVacancyCsvDate(text))
+        {
+            if (IsCompleteDisplayMonth(text))
+            {
+                return JobsyDateValidationCode.InvalidMonth;
+            }
+
+            return JobsyDateValidationCode.Incomplete;
+        }
+
+        return JobsyDateValidationCode.InvalidDate;
+    }
+
+    public static string VacancyCsvDatePlaceholder(string? language)
+        => string.Equals(language, "en", StringComparison.OrdinalIgnoreCase)
+            ? "dd-mm-yyyy or mm-yyyy"
+            : "dd-mm-jjjj of mm-jjjj";
+
     /// <summary>Mask typed digits/separators to dd-MM-yyyy while the user types.</summary>
     public static string ApplyDateMask(string? raw)
     {
@@ -514,5 +630,6 @@ public enum JobsyDateConstraint
     WorkHistoryEndAfterStart,
     NotFuture,
     NotPast,
-    VacancyEndAfterStart
+    VacancyEndAfterStart,
+    VacancyCsvDate
 }
