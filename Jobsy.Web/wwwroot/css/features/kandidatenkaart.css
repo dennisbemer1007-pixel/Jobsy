@@ -366,8 +366,6 @@
 
 /* —— Layout A: map + side panel —— */
 .kk-layout-a {
-    flex: 1;
-    min-height: 0;
     display: grid;
     grid-template-columns: 1fr minmax(260px, 300px);
     gap: var(--space-3);
@@ -388,8 +386,6 @@
 
 /* —— Layout B: list + map —— */
 .kk-layout-b {
-    flex: 1;
-    min-height: 0;
     display: grid;
     grid-template-columns: minmax(260px, 340px) 1fr;
     gap: var(--space-4);
@@ -1231,6 +1227,10 @@ html.vp-mobile .kk-layout-b {
     flex-direction: column;
 }
 
+html.vp-mobile .wg-main:has(.kk-page) {
+    overflow: visible;
+}
+
 html.vp-mobile .kk-layout-a__aside,
 html.vp-mobile .kk-layout-b__list {
     display: none !important;
@@ -1468,25 +1468,14 @@ html.vp-desktop .kk-mobile-sheet {
     display: none !important;
 }
 
-html.vp-desktop .kk-layout-a,
-html.vp-desktop .kk-layout-b {
-    flex: 1;
-    min-height: 0;
-}
-
 html.vp-desktop .kk-layout-a__map,
 html.vp-desktop .kk-layout-b__map,
 html.vp-desktop .map-pane {
-    min-height: 0;
-    height: 100%;
+    min-height: 420px;
 }
 
 html.vp-desktop .kk-layout-a__aside,
 html.vp-desktop .kk-layout-b__list {
-    min-height: 0;
-    max-height: 100%;
-    overflow-y: auto;
-    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
@@ -1628,7 +1617,8 @@ html.vp-mobile .kk-mobile-sheet__invite {
     left: 0;
     right: 0;
     bottom: var(--kk-wg-nav-offset, var(--wg-bottom-nav-block-h, 3.625rem));
-    z-index: calc(var(--z-sticky, 6) - 1);
+    z-index: calc(var(--z-sticky, 6) - 2);
+    pointer-events: auto;
     flex-shrink: 0;
     padding: 0.65rem 1rem 0.75rem;
     border-top: 1px solid var(--border);
@@ -1706,10 +1696,6 @@ html.vp-mobile .kk-page:has(.kk-mobile-sheet__invite) .kk-active-sell-collapse {
 
 .kk-layout-b__map {
   position: relative;
-}
-
-html.vp-desktop .kk-page.panel-page {
-    min-height: min(72vh, calc(100dvh - 11rem));
 }
 
 .kk-seg button {
