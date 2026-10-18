@@ -74,6 +74,7 @@ public sealed record WerkgeverNavContext(
     bool HasSalesReferral = false,
     bool CandidateInsightsEnabled = true,
     bool KandidatenkaartEnabled = false,
+    bool CompanyMapInitiativeEnabled = true,
     bool InsightsLocked = false,
     bool HasCandidateApplications = false,
     bool HasMultipleBranches = false,
@@ -151,6 +152,9 @@ public static class WerkgeverNav
                 {
                     [EmployerRole.Vestigingsmanager] = "WgNav.BranchProfile"
                 }),
+            new("open-initiative", "WgNav.OpenForInitiative", "/werkgever/open-voor-initiatief", NavIcons.Applications,
+                [], BmVm,
+                AvailabilityKey: "company-map-initiative"),
             new("salary", "WgNav.SalaryTables", "/werkgever/organisatie/salaristabellen", NavIcons.Wages,
                 ["/employer/salary-tables"], BmVmSalary),
         ],
@@ -426,6 +430,7 @@ public static class WerkgeverNav
             "partner" => ctx.HasSalesReferral,
             "insights" => ctx.CandidateInsightsEnabled,
             "kandidatenkaart" => ctx.KandidatenkaartEnabled,
+            "company-map-initiative" => ctx.CompanyMapInitiativeEnabled,
             "my-applications" => ctx.HasCandidateApplications,
             "regions-tab" => ctx.HasMultipleBranches,
             "maqqie-hours" => ctx.HasMaqqieHours,

@@ -27,10 +27,14 @@ public sealed class WebFeatureFlagsMappingTests
             ProactiveMatchingEnabled: false,
             TestsV2Enabled: false,
             EmployerFitQuestionnairesEnabled: false,
-            KandidatenkaartEnabled: true);
+            KandidatenkaartEnabled: true,
+            CompanyMapInitiativeEnabled: true);
 
         Assert.True(snap.KandidatenkaartEnabled);
         Assert.True(snap.IsEnabled(PlatformFeature.Kandidatenkaart));
+        Assert.True(snap.CompanyMapInitiativeEnabled);
+        var employersOn = snap with { EmployersEnabled = true };
+        Assert.True(employersOn.IsEnabled(PlatformFeature.CompanyMapInitiative));
         Assert.False(snap.EmployerFitQuestionnairesEnabled);
     }
 }

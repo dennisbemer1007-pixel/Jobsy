@@ -2571,6 +2571,18 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("HasReceivedWelcomeToken")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("HubAboutText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HubCultureText")
+                        .HasColumnType("text");
+
+                    b.Property<string>("HubVideoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("InitiativeAvgResponseDays")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsTestData")
                         .HasColumnType("boolean");
 
@@ -3012,6 +3024,49 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasIndex("CreatedAtUtc");
 
                     b.ToTable("CompanyEngagementReports", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CompanyInitiativeSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<string>("ContactEmailConfirmationCodeHash")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ContactEmailConfirmationExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ContactEmailConfirmationFailedAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ContactEmailConfirmedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxPerWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RootCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RootCompanyId")
+                        .IsUnique();
+
+                    b.ToTable("CompanyInitiativeSettings", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CompanyManualVerificationRequest", b =>
@@ -4226,6 +4281,66 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FlexCommercialSettings", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.InitiativeTeam", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BranchCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContactEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<string>("ContactEmailConfirmationCodeHash")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ContactEmailConfirmationExpiresAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ContactEmailConfirmationFailedAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ContactEmailConfirmedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(140)
+                        .HasColumnType("character varying(140)");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("MaxPerWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<Guid>("RootCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchCompanyId");
+
+                    b.HasIndex("RootCompanyId", "Name");
+
+                    b.ToTable("InitiativeTeams", (string)null);
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.IntegrationCredential", b =>
@@ -5487,6 +5602,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("CompanyMapInitiativeEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("EmployerFitQuestionnairesEnabled")
                         .HasColumnType("boolean");
@@ -9446,6 +9564,139 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("WebPushSubscriptions", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiative", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BranchCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CandidateDisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CandidateEmail")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)");
+
+                    b.Property<Guid>("CandidateUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("CountsTowardWeeklyLimit")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EmployerViewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InitiativeTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("MatchLabel")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Motivation")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("RespondedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ResponseDeadlineUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RootCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SnapshotAboutMe")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SnapshotAttachedDocument")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SnapshotAvailabilitySummary")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SnapshotExperienceSummary")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("SnapshotHoursPerWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SnapshotRegionLabel")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SnapshotRoleTitle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SnapshotWorkDnaSummary")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchCompanyId");
+
+                    b.HasIndex("InitiativeTeamId");
+
+                    b.HasIndex("CandidateUserId", "CreatedAtUtc");
+
+                    b.HasIndex("RootCompanyId", "Status", "CreatedAtUtc");
+
+                    b.ToTable("WorkInitiatives", (string)null);
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiativeDraft", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BranchCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CandidateUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("InitiativeTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Motivation")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid>("RootCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RootCompanyId");
+
+                    b.HasIndex("CandidateUserId", "RootCompanyId", "InitiativeTeamId");
+
+                    b.ToTable("WorkInitiativeDrafts", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.AgencyAnnualSubscription", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.Company", "Company")
@@ -10126,6 +10377,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("Claim");
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CompanyInitiativeSettings", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "RootCompany")
+                        .WithMany()
+                        .HasForeignKey("RootCompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RootCompany");
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CompanyManualVerificationRequest", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.Company", "Company")
@@ -10396,6 +10658,24 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("ExclusivitySetting");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.InitiativeTeam", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
+                        .WithMany()
+                        .HasForeignKey("BranchCompanyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "RootCompany")
+                        .WithMany()
+                        .HasForeignKey("RootCompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BranchCompany");
+
+                    b.Navigation("RootCompany");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.KandidatenkaartInviteCampaign", b =>
@@ -11493,6 +11773,58 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Navigation("DeviceSession");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiative", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.Company", "BranchCompany")
+                        .WithMany()
+                        .HasForeignKey("BranchCompanyId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.User", "CandidateUser")
+                        .WithMany()
+                        .HasForeignKey("CandidateUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.InitiativeTeam", "InitiativeTeam")
+                        .WithMany()
+                        .HasForeignKey("InitiativeTeamId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "RootCompany")
+                        .WithMany()
+                        .HasForeignKey("RootCompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BranchCompany");
+
+                    b.Navigation("CandidateUser");
+
+                    b.Navigation("InitiativeTeam");
+
+                    b.Navigation("RootCompany");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.WorkInitiativeDraft", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "CandidateUser")
+                        .WithMany()
+                        .HasForeignKey("CandidateUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Jobsy.Core.Entities.Company", "RootCompany")
+                        .WithMany()
+                        .HasForeignKey("RootCompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CandidateUser");
+
+                    b.Navigation("RootCompany");
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.Application", b =>

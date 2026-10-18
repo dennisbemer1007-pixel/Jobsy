@@ -69,5 +69,11 @@ public enum PlatformFeature
     Kandidatenkaart,
 
     /// <summary>Geverifieerde referenties on the candidate passport. Default false.</summary>
-    ReferenceVerification
+    ReferenceVerification,
+
+    /// <summary>
+    /// Bedrijvenkaart and "Ik wil hier werken" (candidate + employer). Default true on acceptatie.
+    /// Requires <see cref="Employers"/> when enabled.
+    /// </summary>
+    CompanyMapInitiative
 }

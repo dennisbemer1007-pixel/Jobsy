@@ -229,6 +229,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
+        if (update.CompanyMapInitiativeEnabled is bool companyMapInitiativeEnabled)
+        {
+            row.CompanyMapInitiativeEnabled = companyMapInitiativeEnabled;
+        }
+
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
         {
             row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
@@ -360,6 +365,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute;
         row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour;
         row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay;
+        row.CompanyMapInitiativeEnabled = true;
     }
 
     private bool IsAllowedPublicOrigin(string origin)
@@ -470,6 +476,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
+            row?.CompanyMapInitiativeEnabled ?? true,
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),
             CandidateApplyRateLimitRules.ResolvePerDay(row?.CandidateApplyPerDayLimit));

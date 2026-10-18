@@ -1,0 +1,35 @@
+@page "/preview/bedrijvenkaart/{Screen}"
+@attribute [AllowAnonymous]
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@inject CultureState Culture
+@using Jobsy.Web.Components.Bedrijvenkaart
+
+@if (string.IsNullOrWhiteSpace(Screen) || Screen is "01-desktop")
+{
+    <CompanyMapDiscovery />
+}
+else if (Screen is "01-mobiel")
+{
+    <div class="bk-preview-mobile">
+        <CompanyMapDiscovery />
+    </div>
+}
+else
+{
+    <div class="bk-page" style="padding:2rem">
+        <h1>Preview: @Screen</h1>
+        <p>Mockup-aligned shell for @Screen (werkgever/candidate modals render in dedicated flows).</p>
+        @if (Screen.StartsWith("05"))
+        {
+            <iframe src="/werkgever/open-voor-initiatief" style="width:100%;height:800px;border:1px solid #ddd" title="Werkgever"></iframe>
+        }
+    </div>
+}
+
+<style>
+    .bk-preview-mobile { max-width: 390px; margin: 0 auto; border: 1px solid #ccc; }
+</style>
+
+@code {
+    [Parameter] public string? Screen { get; set; }
+}

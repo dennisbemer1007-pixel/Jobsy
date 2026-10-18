@@ -1,0 +1,141 @@
+@page "/werkgever/open-voor-initiatief"
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Models
+@using Jobsy.Web.Werkgever
+@attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject EmployerScopeState Scope
+
+<PageTitle>@Culture["WgNav.OpenForInitiative"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.OpenForInitiative"]">
+    @if (_loading)
+    {
+        <p>@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <div class="bk-wg-page">
+            <div class="bk-wg-switch">
+                <div>
+                    <strong>Open voor initiatief</strong>
+                    <p class="login-lead">Kandidaten kunnen zonder vacature kloppen. Je reageert binnen 5 werkdagen.</p>
+                </div>
+                <input type="checkbox" @bind="_editor.IsEnabled" aria-label="Hoofdschakelaar" />
+            </div>
+
+            <section class="pub-card" style="margin-top:1rem;padding:1rem">
+                <h2>Algemene ingang</h2>
+                <label>E-mailadres contactpersoon
+                    <input type="email" @bind="_editor.ContactEmail" class="form-control" required />
+                </label>
+                @if (!_editor.ContactEmailConfirmed)
+                {
+                    <p class="state-message">Bevestig dit adres via de mail.</p>
+                }
+                <label>Max per week
+                    <input type="number" min="1" max="50" @bind="_editor.MaxPerWeek" />
+                </label>
+            </section>
+
+            <section style="margin-top:1.5rem">
+                <h2>Teams</h2>
+                @foreach (var team in _editor.Teams)
+                {
+                    <article class="pub-card" style="margin:.75rem 0;padding:1rem">
+                        <h3>@team.Name</h3>
+                        <p>@team.Description</p>
+                        <label>Open <input type="checkbox" @bind="team.IsOpen" disabled="@(!team.EmailConfirmed)" /></label>
+                        @if (!team.EmailConfirmed)
+                        {
+                            <p class="state-message error">Bevestig het team-e-mailadres voordat je dit team opent.</p>
+                        }
+                    </article>
+                }
+                <button type="button" class="btn--primary" @onclick="AddTeam">Team toevoegen</button>
+            </section>
+
+            <button type="button" class="btn--primary" style="margin-top:1.5rem" @onclick="Save">Opslaan</button>
+        </div>
+    }
+</WgPageShell>
+
+@code {
+    private bool _loading = true;
+    private InitiativeSettingsEditorModel _editor = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var root = Scope.CompanyIds.FirstOrDefault();
+        if (root != Guid.Empty)
+        {
+            var dto = await Api.GetInitiativeSettingsAsync(root);
+            if (dto is not null)
+            {
+                _editor = FromDto(dto);
+            }
+        }
+
+        _loading = false;
+    }
+
+    private async Task Save()
+    {
+        var root = Scope.CompanyIds.FirstOrDefault();
+        if (root != Guid.Empty)
+        {
+            var saved = await Api.SaveInitiativeSettingsAsync(root, ToDto(_editor));
+            if (saved is not null)
+            {
+                _editor = FromDto(saved);
+            }
+        }
+    }
+
+    private void AddTeam()
+    {
+        _editor.Teams.Add(new InitiativeTeamEditorModel { Name = "Nieuw team" });
+    }
+
+    private static InitiativeSettingsEditorModel FromDto(CompanyInitiativeSettingsDto dto)
+        => new()
+        {
+            IsEnabled = dto.IsEnabled,
+            ContactEmail = dto.ContactEmail,
+            ContactEmailConfirmed = dto.ContactEmailConfirmed,
+            MaxPerWeek = dto.MaxPerWeek,
+            Teams = dto.Teams.Select(t => new InitiativeTeamEditorModel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description,
+                BranchCompanyId = t.BranchCompanyId,
+                ContactEmail = t.ContactEmail,
+                EmailConfirmed = t.EmailConfirmed,
+                MaxPerWeek = t.MaxPerWeek,
+                IsOpen = t.IsOpen
+            }).ToList()
+        };
+
+    private static CompanyInitiativeSettingsDto ToDto(InitiativeSettingsEditorModel m)
+        => new(
+            m.IsEnabled,
+            m.ContactEmail,
+            m.ContactEmailConfirmed,
+            m.MaxPerWeek,
+            m.Teams.Select(t => new InitiativeTeamDto(
+                t.Id,
+                t.Name,
+                t.Description,
+                t.BranchCompanyId,
+                null,
+                t.ContactEmail,
+                t.EmailConfirmed,
+                t.MaxPerWeek,
+                t.IsOpen)).ToList());
+}

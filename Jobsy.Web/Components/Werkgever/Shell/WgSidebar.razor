@@ -71,12 +71,14 @@
     private bool _meerOpen;
     private bool _bootstrapped;
     private bool _kandidatenkaartEnabled;
+    private bool _companyMapInitiativeEnabled = true;
 
     private EmployerRole Role => Scope.Role ?? EmployerRole.Bedrijfsmanager;
     private WerkgeverNavContext Ctx => new(
         HasTakeovers: true,
         CandidateInsightsEnabled: true,
         KandidatenkaartEnabled: _kandidatenkaartEnabled,
+        CompanyMapInitiativeEnabled: _companyMapInitiativeEnabled,
         InsightsLocked: Scope.InsightsLocked,
         HasMaqqieHours: Counts.MaqqieHoursNavVisible,
         Counts: Counts.Counts);
@@ -101,6 +103,7 @@
         await Counts.RefreshIfStaleAsync();
         var flags = await FeatureFlags.GetAsync();
         _kandidatenkaartEnabled = flags.IsEnabled(PlatformFeature.Kandidatenkaart);
+        _companyMapInitiativeEnabled = flags.IsEnabled(PlatformFeature.CompanyMapInitiative);
         StateHasChanged();
     }
 
