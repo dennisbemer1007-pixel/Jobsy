@@ -30,7 +30,9 @@
 .ndm .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
 .ndm .mclient{background:#fff;border:1px solid #e3ddd3;border-radius:var(--rL);overflow:hidden}
 .ndm .mhead{padding:12px 18px;border-bottom:1px solid #eee7dc;font-size:.85rem}
-.ndm .mail{padding:22px 24px 26px}
+.ndm .mail{padding:22px 24px 26px;min-height:220px;display:flex;flex-direction:column;justify-content:flex-end}
+.ndm .card.side{display:flex;flex-direction:column;min-height:min(420px,52vh)}
+.ndm .card.side .thread{flex:1 1 auto;min-height:200px}
 .ndm .mail h2{font-size:1.35rem;margin:18px 0 6px}
 .ndm .mbox{background:#fbf6ef;border-radius:var(--rM);padding:14px 16px;margin:14px 0}
 .ndm .phone{background:#1b2533;border-radius:34px;padding:11px;max-width:320px}

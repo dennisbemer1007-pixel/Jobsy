@@ -2,7 +2,7 @@
 # Build Release Web + Tests, restart CI stack, capture Na de match screenshots (r6+).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-OUT="${JOBSY_NADMATCH_ARTIFACTS:-/opt/cursor/artifacts/nadematch-r7}"
+OUT="${JOBSY_NADMATCH_ARTIFACTS:-/opt/cursor/artifacts/nadematch-r8}"
 export JOBSY_NADMATCH_ARTIFACTS="$OUT"
 export JOBSY_NADMATCH_SCREENSHOTS=1
 export JOBSY_E2E_BASE_URL="${JOBSY_E2E_BASE_URL:-http://127.0.0.1:5201}"
