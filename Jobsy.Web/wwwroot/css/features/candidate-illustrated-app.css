@@ -2,11 +2,19 @@
 
 .panel-page--cand-ill {
   background: var(--pearl);
-  overflow-x: clip;
+  overflow-x: visible;
 }
 
-.career-page--illustrated.panel-page--cand-ill {
+.career-page--illustrated.panel-page--cand-ill,
+.panel-page--cand-ill.kb-apps,
+.panel-page--cand-ill.kb-saved,
+.passport-page--illustrated {
   padding-inline: 0;
+}
+
+.app-shell:has(.panel-page--cand-ill) .app-main,
+.app-shell:has(.passport-page--illustrated) .app-main {
+  overflow-x: visible;
 }
 
 .cand-hero {
@@ -43,18 +51,13 @@
 }
 
 .cand-hero--profession-band {
-  background-image: none;
+  background-size: auto 100%;
+  background-position: right center;
 }
 
 .cand-hero--profession-band::after {
-  content: "";
-  position: absolute;
-  inset: 0 0 0 52%;
-  z-index: 0;
-  background-image: var(--cand-hero-art, none);
-  background-repeat: no-repeat;
-  background-size: 220% auto;
-  background-position: 100% bottom;
+  content: none;
+  display: none;
 }
 
 .cand-hero--profession-band::before {
@@ -62,9 +65,10 @@
   background: linear-gradient(
     90deg,
     var(--pearl) 0%,
-    var(--pearl) 50%,
-    color-mix(in srgb, var(--pearl) 70%, transparent) 54%,
-    transparent 62%
+    var(--pearl) 62%,
+    color-mix(in srgb, var(--pearl) 96%, transparent) 68%,
+    color-mix(in srgb, var(--pearl) 35%, transparent) 74%,
+    transparent 82%
   );
 }
 
@@ -118,6 +122,21 @@
   max-width: 36rem;
   font-size: 0.95rem;
   line-height: 1.45;
+}
+
+@media (min-width: 640px) {
+  .cand-hero--profession-band .cand-hero__copy {
+    width: 100%;
+    max-width: 1100px;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+    box-sizing: border-box;
+  }
+
+  .cand-hero--profession-band .cand-hero__copy h1,
+  .cand-hero--profession-band .cand-hero__copy .cand-hero__lead {
+    max-width: 32rem;
+  }
 }
 
 @media (max-width: 639px) {
@@ -198,6 +217,15 @@
 .panel-page--cand-ill.kb-apps,
 .panel-page--cand-ill.kb-saved {
   padding-bottom: 2rem;
+}
+
+.panel-page--cand-ill.kb-apps > :not(.cand-hero),
+.panel-page--cand-ill.kb-saved > :not(.cand-hero) {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 1100px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
 }
 
 .cand-settings__whatsapp-phone {
@@ -319,9 +347,13 @@
 }
 
 .panel-page--cand-ill.candidate-hub {
-  max-width: 1100px;
+  max-width: none;
   width: 100%;
-  margin-inline: auto;
+  margin-inline: 0;
+  padding-inline: 0;
+}
+
+.panel-page--cand-ill.candidate-hub .cand-settings {
   padding-inline: 1.25rem;
 }
 

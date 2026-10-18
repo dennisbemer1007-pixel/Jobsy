@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261018-03";
+    public const string Version = "20261018-05";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -26,10 +26,12 @@ public static class CandidateIllustratedImages
     public const string StepBanen = $"{Base}/spots/banen.jpg?v={Version}";
     public const string EmpWerkgever = $"{Base}/spots/werkgever.jpg?v={Version}";
 
-    public const string SollicitatiesBand = $"{Base}/werkervaring.jpg?v={Version}";
-    public const string BewaardBand = $"{Base}/vervoer.jpg?v={Version}";
+    public const string SollicitatiesBand = $"{Base}/werkervaring-profession-wide.jpg?v={Version}";
+    public const string BewaardBand = $"{Base}/vervoer-profession-wide.jpg?v={Version}";
     public const string CarriereBand = $"{Base}/opleiding.jpg?v={Version}";
-    public const string InstellingenBand = $"{Base}/beschikbaarheid.jpg?v={Version}";
+    public const string InstellingenBand = $"{Base}/beschikbaarheid-profession-wide.jpg?v={Version}";
+    public const string KompasHeroWide = $"{Base}/wie-ben-jij-profession-wide.jpg?v={Version}";
+    public const string DroombaanProfessionWide = $"{Base}/droombaan-profession-wide.jpg?v={Version}";
     public const string DroombaanBand = $"{Base}/droombaan.jpg?v={Version}";
     public const string AccountMobileArt = $"{Base}/kennismaken.jpg?v={Version}";
 
@@ -50,6 +52,7 @@ public static class CandidateIllustratedImages
     public const string SpotJobRetail = $"{Base}/spots/job-retail.jpg?v={Version}";
     public const string SpotJobDieren = $"{Base}/spots/job-dieren.jpg?v={Version}";
     public const string SpotJobFlex = $"{Base}/spots/job-flex.jpg?v={Version}";
+    public const string SpotJobSchoonmaak = $"{Base}/spots/job-schoonmaak.jpg?v={Version}";
     public const string SpotInclusiefZorgLogistiek = $"{Base}/spots/job-inclusief-zorg-logistiek.jpg?v={Version}";
     public const string SpotInclusiefKantoor = $"{Base}/spots/job-inclusief-kantoor.jpg?v={Version}";
 
@@ -65,7 +68,7 @@ public static class CandidateIllustratedImages
             ["bouw"] = SpotJobLogistiek,
             ["techniek"] = SpotJobLogistiek,
             ["kantoor"] = SpotInclusiefKantoor,
-            ["schoonmaak"] = SpotInclusiefZorgLogistiek,
+            ["schoonmaak"] = SpotJobSchoonmaak,
             ["tuin"] = SpotJobDieren,
             ["dieren"] = SpotJobDieren,
             ["default"] = SpotInclusiefKantoor

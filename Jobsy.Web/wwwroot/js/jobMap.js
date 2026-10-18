@@ -294,6 +294,9 @@ window.jobMap = (function () {
         const company = String(v && v.company ? v.company : "").toLowerCase();
         const wt = String(workTypeOf(v) || "").toLowerCase();
         const hay = title + " " + company + " " + wt;
+        if (hay.indexOf("schoon") >= 0) {
+            return pick("schoonmaak");
+        }
         if (hay.indexOf("zorg") >= 0 || hay.indexOf("care") >= 0) {
             return pick("zorg");
         }
@@ -311,9 +314,6 @@ window.jobMap = (function () {
         }
         if (hay.indexOf("kantoor") >= 0 || hay.indexOf("office") >= 0) {
             return pick("kantoor");
-        }
-        if (hay.indexOf("schoon") >= 0) {
-            return pick("schoonmaak");
         }
         if (hay.indexOf("dier") >= 0) {
             return pick("dieren");
