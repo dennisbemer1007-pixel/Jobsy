@@ -32,6 +32,24 @@ public class MeReferenceVerificationController : ControllerBase
         return Ok(new { eligible = await _verification.IsEligibleAsync(user.Id, cancellationToken) });
     }
 
+    [HttpGet("reference-verification/{requestId:guid}")]
+    public async Task<ActionResult> Detail(Guid requestId, CancellationToken cancellationToken)
+    {
+        var user = await _users.FindByPrincipalAsync(User, cancellationToken);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        if (!await _verification.IsFeatureEnabledAsync(cancellationToken))
+        {
+            return NotFound();
+        }
+
+        var detail = await _verification.GetDetailForCandidateAsync(user.Id, requestId, cancellationToken);
+        return detail is null ? NotFound() : Ok(detail);
+    }
+
     [HttpGet("reference-verification")]
     public async Task<ActionResult> List(CancellationToken cancellationToken)
     {

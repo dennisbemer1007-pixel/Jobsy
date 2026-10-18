@@ -18,6 +18,22 @@ public sealed partial class JobsyApiClient
         }
     }
 
+    public async Task<ReferenceVerificationDetailItem?> GetReferenceVerificationDetailAsync(
+        Guid requestId,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await GetApiJsonAsync<ReferenceVerificationDetailItem>(
+                $"api/me/reference-verification/{requestId:D}",
+                ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<IReadOnlyList<ReferenceVerificationListItem>> GetReferenceVerificationListAsync(
         CancellationToken ct = default)
     {
@@ -101,6 +117,25 @@ public sealed partial class JobsyApiClient
         [JsonPropertyName("eligible")]
         public bool Eligible { get; set; }
     }
+
+    public sealed record ReferenceVerificationDetailItem(
+        Guid Id,
+        string ReferentName,
+        string Relation,
+        string EmployerName,
+        string RoleTitle,
+        string? StartMonth,
+        string? EndMonth,
+        bool IsCurrent,
+        bool? ConfirmedEmployer,
+        bool? ConfirmedPeriod,
+        bool? ConfirmedRole,
+        bool? ConfirmedDuties,
+        IReadOnlyList<ReferenceVerificationCompetenceOffer> EndorsedCompetences,
+        string? ReferentComment,
+        string RecognitionLine,
+        DateTime? CompletedAtUtc,
+        bool Active);
 
     public sealed record ReferenceVerificationListItem(
         Guid Id,

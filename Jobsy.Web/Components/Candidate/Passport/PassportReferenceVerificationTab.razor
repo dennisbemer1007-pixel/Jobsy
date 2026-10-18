@@ -130,7 +130,7 @@
         {
             builder.OpenElement(0, "a");
             builder.AddAttribute(1, "class", "btn btn-ghost");
-            builder.AddAttribute(2, "href", "/candidate/paspoort?tab=dna");
+            builder.AddAttribute(2, "href", $"/candidate/paspoort/referenties/{row.Id:D}");
             builder.AddContent(3, Culture["RefVerif.Action.View"]);
             builder.CloseElement();
             return;

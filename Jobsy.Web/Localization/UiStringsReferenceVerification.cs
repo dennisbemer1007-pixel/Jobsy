@@ -137,6 +137,32 @@ internal static class UiStringsReferenceVerification
             "From your profile, not yet confirmed");
         Add("RefVerif.VerifiedExperience.Title",
             "Bevestigde werkervaring", "Confirmed work experience");
+        Add("RefVerif.Detail.Title",
+            "Bevestigde referentie", "Confirmed reference");
+        Add("RefVerif.Detail.Intro",
+            "{0} bevestigde op {1}.", "{0} confirmed on {1}.");
+        Add("RefVerif.Detail.NotFound",
+            "Deze referentie is niet gevonden.", "This reference was not found.");
+        Add("RefVerif.Detail.Back",
+            "Terug naar referenties", "Back to references");
+        Add("RefVerif.Detail.FactsTitle",
+            "Wat is bevestigd?", "What was confirmed?");
+        Add("RefVerif.Detail.FactEmployer",
+            "Werk bij {0}", "Worked at {0}");
+        Add("RefVerif.Detail.FactPeriod",
+            "Periode klopt", "Period is correct");
+        Add("RefVerif.Detail.FactRole",
+            "Functie {0}", "Role {0}");
+        Add("RefVerif.Detail.FactYes",
+            "Ja", "Yes");
+        Add("RefVerif.Detail.FactNo",
+            "Nee", "No");
+        Add("RefVerif.Detail.CommentTitle",
+            "Opmerking van je referent", "Comment from your reference");
+        Add("RefVerif.Detail.CommentPrivate",
+            "Alleen jij ziet dit.", "Only you see this.");
+        Add("RefVerif.Detail.CommentEmpty",
+            "Geen opmerking gegeven.", "No comment provided.");
         Add("RefVerif.Public.PageTitle",
             "Werkreferentie", "Work reference");
         Add("RefVerif.Public.Intro",

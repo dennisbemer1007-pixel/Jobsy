@@ -32,6 +32,17 @@ public class ReferenceVerificationBunitTests : BunitContext
         Assert.Contains("Referent vragen", cut.Markup, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Tip_hidden_when_not_eligible()
+    {
+        var cut = Render<ReferenceVerificationTipCard>(p => p
+            .Add(x => x.ScreenKey, "paspoort-home")
+            .Add(x => x.Eligible, false)
+            .Add(x => x.UserId, "aaaaaaaa-1111-1111-1111-111111111111"));
+        Assert.DoesNotContain("Tip van Lobsy", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("ref-verification-tip", cut.Markup, StringComparison.Ordinal);
+    }
+
     private sealed class FakeAuth : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()

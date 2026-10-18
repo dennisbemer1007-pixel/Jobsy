@@ -124,6 +124,17 @@ internal static class DemoUsersSeeder
             },
             password: "Lobsy123!");
 
+        added += await EnsureUserAsync(db, new User
+        {
+            Id = ReferenceVerificationDemoIds.UserId,
+            Email = ReferenceVerificationDemoIds.Email,
+            FirstName = "Sanne",
+            FullName = "Sanne de Vries",
+            Role = UserRole.Candidate,
+            OpenForWork = true,
+            IsActive = true
+        });
+
         // Named test candidate Valentine (Acceptatie login).
         added += await EnsureUserAsync(db, new User
         {

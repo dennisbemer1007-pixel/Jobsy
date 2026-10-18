@@ -29,8 +29,18 @@ public class ReferenceVerificationTests
         var token = TokenFrom(mail);
 
         Assert.Equal("open", (await sut.OpenAsync(token))!.State);
-        Assert.Equal("ok", await sut.SubmitAsync(token, true, true, true, null, ["samenwerken"], null));
+        Assert.Equal("ok", await sut.SubmitAsync(token, true, true, true, null, [CompetencyTestCatalog.Samenwerken], null));
         Assert.Equal("used", (await sut.OpenAsync(token))!.State);
+
+        var requestId = await db.WorkExperienceReferenceRequests
+            .Where(r => r.UserId == user.Id && r.Status == WorkExperienceReferenceStatus.Confirmed)
+            .Select(r => r.Id)
+            .FirstAsync();
+        var detail = await sut.GetDetailForCandidateAsync(user.Id, requestId);
+        Assert.NotNull(detail);
+        Assert.Equal("Mark Peters", detail!.ReferentName);
+        Assert.True(detail.ConfirmedEmployer);
+        Assert.Contains(detail.EndorsedCompetences, c => !string.IsNullOrWhiteSpace(c.Label));
 
         var expired = await IssueExpiredAsync(db, sut, user.Id, entryId, mail);
         Assert.Equal("expired", await sut.SubmitAsync(expired, true, true, true, null, [], null));

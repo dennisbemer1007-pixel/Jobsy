@@ -69,8 +69,66 @@ public sealed class ReferenceVerificationService(
             .GroupBy(t => t.RequestId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(t => t.CreatedAtUtc).First());
 
-        return rows.Select(r =>
+        return rows.Select(r => ToListRow(r, latestTokenByRequest, now)).ToList();
+    }
+
+    public async Task<ReferenceVerificationDetailRow?> GetDetailForCandidateAsync(
+        Guid userId,
+        Guid requestId,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await db.WorkExperienceReferenceRequests.AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == requestId && r.UserId == userId, cancellationToken);
+        if (request is null
+            || request.RemovedByCandidate
+            || request.Status != WorkExperienceReferenceStatus.Confirmed
+            || !ReferenceVerificationRules.IsActiveVerification(request))
         {
+            return null;
+        }
+
+        var user = await db.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => u.PreferencesJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        var language = JobsyLanguages.Normalize(ParsePreferences(user).Language);
+        var endorsed = ReferenceVerificationRules.ParseEndorsedCodes(request.EndorsedCompetenceCodesJson)
+            .Select(code => new ReferenceVerificationCompetenceOffer(
+                code,
+                DimensionLabels.For(code, language),
+                ReferenceVerificationCompetenceCopy.Description(code, language)))
+            .Where(c => !string.IsNullOrWhiteSpace(c.Label))
+            .ToList();
+
+        return new ReferenceVerificationDetailRow(
+            request.Id,
+            request.ReferentName,
+            request.Relation,
+            request.EmployerName,
+            request.RoleTitle,
+            request.StartMonth,
+            request.EndMonth,
+            request.IsCurrent,
+            request.ConfirmedEmployer,
+            request.ConfirmedPeriod,
+            request.ConfirmedRole,
+            request.ConfirmedDuties,
+            endorsed,
+            request.ReferentComment,
+            ReferenceVerificationRules.EndorsementLine(
+                language,
+                request.ReferentName,
+                request.Relation,
+                request.EmployerName),
+            request.CompletedAtUtc,
+            ReferenceVerificationRules.IsActiveVerification(request));
+    }
+
+    private static ReferenceVerificationListRow ToListRow(
+        WorkExperienceReferenceRequest r,
+        Dictionary<Guid, WorkExperienceReferenceToken> latestTokenByRequest,
+        DateTime now)
+    {
             latestTokenByRequest.TryGetValue(r.Id, out var token);
             var display = ReferenceVerificationRules.DisplayStatus(r);
             DateTime? sentAt = token?.CreatedAtUtc;
@@ -100,7 +158,6 @@ public sealed class ReferenceVerificationService(
                 daysLeft,
                 ReferenceVerificationRules.IsActiveVerification(r),
                 ReferenceVerificationRules.ParseEndorsedCodes(r.EndorsedCompetenceCodesJson).Count);
-        }).ToList();
     }
 
     public async Task<(bool Ok, string? Error)> RequestAsync(
@@ -651,6 +708,25 @@ public sealed class ReferenceVerificationService(
         return "open";
     }
 }
+
+public sealed record ReferenceVerificationDetailRow(
+    Guid Id,
+    string ReferentName,
+    string Relation,
+    string EmployerName,
+    string RoleTitle,
+    string? StartMonth,
+    string? EndMonth,
+    bool IsCurrent,
+    bool? ConfirmedEmployer,
+    bool? ConfirmedPeriod,
+    bool? ConfirmedRole,
+    bool? ConfirmedDuties,
+    IReadOnlyList<ReferenceVerificationCompetenceOffer> EndorsedCompetences,
+    string? ReferentComment,
+    string RecognitionLine,
+    DateTime? CompletedAtUtc,
+    bool Active);
 
 public sealed record ReferenceVerificationListRow(
     Guid Id,
