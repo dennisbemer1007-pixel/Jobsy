@@ -157,7 +157,10 @@ foreach (var (stem, returnPath, captureTarget) in targets)
 
         if (width < 640)
         {
-            if (mobileOnly)
+            var scrollHeroTop = mobileOnly
+                || voorbeeldenOnly
+                || stem.StartsWith("voorbeeld-", StringComparison.OrdinalIgnoreCase);
+            if (scrollHeroTop)
             {
                 await page.EvaluateAsync("""
                     () => {

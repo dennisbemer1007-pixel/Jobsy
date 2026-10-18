@@ -23,6 +23,12 @@ public static class CaptureModeExtensions
 
     internal static CaptureTarget ActiveTarget { get; private set; } = CaptureTarget.Default;
 
+    private static string CaptureDisplayName()
+    {
+        var fromEnv = Environment.GetEnvironmentVariable("JOBSY_CAPTURE_PROFILE_NAME");
+        return string.IsNullOrWhiteSpace(fromEnv) ? "Capture Mode" : fromEnv.Trim();
+    }
+
     public static WebApplication UseCaptureMode(this WebApplication app)
     {
         if (!app.Environment.IsDevelopment() || !IsEnabled(app.Configuration))
@@ -52,11 +58,12 @@ public static class CaptureModeExtensions
                 return;
             }
 
+            var displayName = CaptureDisplayName();
             var identity = new ClaimsIdentity(
             [
                 new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Role, "Candidate"),
-                new Claim(ClaimTypes.Name, "Capture Mode")
+                new Claim(ClaimTypes.Name, displayName)
             ],
             CookieAuthenticationDefaults.AuthenticationScheme);
             await ctx.SignInAsync(
@@ -173,13 +180,18 @@ public static class CaptureModeExtensions
         }
 
         private static MeProfile BuildProfile()
-            => new()
+        {
+            var fullName = CaptureDisplayName();
+            var first = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? fullName;
+            return new()
             {
-                FullName = "Capture Mode",
+                FullName = fullName,
+                FirstName = first,
                 DateOfBirth = DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-25)),
                 TestAiConsentAt = DateTime.UtcNow.AddDays(-1),
                 TestAiConsentVersion = PrivacyConstants.CandidateProfilingConsentVersion
             };
+        }
 
         private static object BuildQuickScan(AssessmentKind kind)
         {
