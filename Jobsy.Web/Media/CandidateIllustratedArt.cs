@@ -16,7 +16,7 @@ public static class CandidateIllustratedArt
 
         if (ContainsAny(t, "dieren", "paraveter", "dierenarts", "veter"))
         {
-            return new HeroArt(CandidateIllustratedImages.CarriereBand, "55% 40%");
+            return new HeroArt(CandidateIllustratedImages.DroombaanBand, "28% 52%");
         }
 
         if (ContainsAny(t, "zorg", "verpleeg", "helpende", "begeleid", "dagbested"))

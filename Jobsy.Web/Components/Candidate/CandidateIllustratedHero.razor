@@ -1,7 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate
 
 <header class="cand-hero" style="@StyleValue">
-    <div class="cand-hero__scrim" aria-hidden="true"></div>
     <div class="cand-hero__copy">
         @if (!string.IsNullOrWhiteSpace(Eyebrow))
         {
@@ -17,6 +16,10 @@
         }
         @ChildContent
     </div>
+    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    {
+        <div class="cand-hero__media" style="--cand-hero-art:url('@ArtUrl');--cand-hero-pos:@ArtPosition" aria-hidden="true"></div>
+    }
 </header>
 
 @code {

@@ -27,7 +27,7 @@
         var heroArt = CandidateIllustratedArt.HeroLandscapeForDream(_plan.DreamTitle);
         var stepTotal = Math.Max(_plan.TotalSteps, 1);
         var stepCurrent = Math.Max(_plan.CurrentStepNumber, 1);
-        <CandidateIllustratedHero Eyebrow="@Culture.Format("Career.Illustrated.Progress", stepCurrent, stepTotal)"
+        <CandidateIllustratedHero Eyebrow="@CareerIllustratedFormatting.ProgressEyebrow(Culture, stepCurrent, stepTotal, _plan.DreamTitle)"
                                   CoralEyebrow="true"
                                   Title="@Culture.Format("Career.Overview.Title", _plan.DreamTitle)"
                                   Lead="@Culture["Career.Overview.LeadShort"]"
@@ -84,6 +84,7 @@
                      BubbleMobile="">
             <RailContent></RailContent>
             <ChildContent>
+                <div class="career-ill-container career-ill-container--empty">
                 <CareerEmptyCard Illustrated="true"
                                  Suggestions="@_suggestions"
                                  Scores="@_careerScores"
@@ -96,6 +97,7 @@
                                  OnChoice="SetChoice"
                                  OnSearch="SearchDreamsAsync"
                                  OnSubmit="GeneratePlanAsync" />
+                </div>
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
             </ChildContent>
         </CareerStage>
@@ -178,27 +180,37 @@
                      BubbleMobile="">
             <RailContent></RailContent>
             <ChildContent>
+                <div class="career-ill-container">
                 <div class="career-ill-plan">
                     <CareerIllustratedPath Plan="@_plan" NowLabel="@_nowLabel" />
                     <div class="career-ill-plan__grid">
                         <CareerIllustratedStepCards Plan="@_plan" EmployersOn="@_employersOn" />
-                        <CareerIllustratedStepPanel Step="@IllustratedPanelStep"
-                                                     CourseSlots="@_panelCourses"
-                                                     Busy="@_busy"
-                                                     EmployersOn="@_employersOn"
-                                                     OnClearDream="ClearDreamAsync" />
+                        <div class="career-ill-plan__aside">
+                            <CareerIllustratedStepPanel Step="@IllustratedPanelStep"
+                                                         CourseSlots="@_panelCourses"
+                                                         Busy="@_busy"
+                                                         EmployersOn="@_employersOn"
+                                                         OnClearDream="ClearDreamAsync" />
+                            <p class="career-ill-source">
+                                @(_plan.FromAi ? Culture["Career.Source.Ai"] : Culture["Career.Source.Local"])
+                            </p>
+                        </div>
                     </div>
-                    <CareerOverviewCard Illustrated="true"
-                                        Plan="@_plan"
-                                        Busy="@_busy"
-                                        EmployersOn="@_employersOn"
-                                        PassportOn="@_passportOn"
-                                        ShowCarriedOver="@_showCarriedOver"
-                                        ErrorText="@_error"
-                                        OnChangeDream="OpenDreamDialog"
-                                        OnClearDream="ClearDreamAsync"
-                                        OnDismissCarriedOver="DismissCarriedOver"
-                                        OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                    @if ((_showCarriedOver && _plan.CarriedOverCount > 0) || _plan.LanguageDiffers || !string.IsNullOrWhiteSpace(_error))
+                    {
+                        <CareerOverviewCard Illustrated="true"
+                                            Plan="@_plan"
+                                            Busy="@_busy"
+                                            EmployersOn="@_employersOn"
+                                            PassportOn="@_passportOn"
+                                            ShowCarriedOver="@_showCarriedOver"
+                                            ErrorText="@_error"
+                                            OnChangeDream="OpenDreamDialog"
+                                            OnClearDream="ClearDreamAsync"
+                                            OnDismissCarriedOver="DismissCarriedOver"
+                                            OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                    }
+                </div>
                 </div>
 
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />

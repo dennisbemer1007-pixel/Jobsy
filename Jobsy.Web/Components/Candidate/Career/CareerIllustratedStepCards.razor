@@ -47,17 +47,17 @@
     {
         if (step.CourseCount > 0 && step.GapCount > 0)
         {
-            return Culture.Format("Career.Illustrated.ActionBoth", step.GapCount, step.CourseCount);
+            return CareerIllustratedFormatting.BothHint(Culture, step.GapCount, step.CourseCount);
         }
 
         if (step.CourseCount > 0)
         {
-            return Culture.Format("Career.Illustrated.ActionCourses", step.CourseCount);
+            return CareerIllustratedFormatting.CoursesHint(Culture, step.CourseCount);
         }
 
         if (step.GapCount > 0)
         {
-            return Culture.Format("Career.Illustrated.ActionSkills", step.GapCount);
+            return CareerIllustratedFormatting.SkillsHint(Culture, step.GapCount);
         }
 
         return Culture["Career.Illustrated.ActionExperience"];

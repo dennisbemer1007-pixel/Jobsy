@@ -29,6 +29,10 @@
 
     <CareerDreamPicker Id="career-empty-dream"
                        Illustrated="@Illustrated"
+                       IllustratedCta="@(Illustrated ? Culture["Career.Illustrated.ChooseDreamCta"] : null)"
+                       HasChoice="@HasChoice"
+                       Busy="@Busy"
+                       OnSubmit="@OnSubmit"
                        Suggestions="@Suggestions"
                        Scores="@Scores"
                        Education="@Education"
@@ -43,15 +47,18 @@
         </p>
     }
 
-    <div class="career-card__actions career-card__actions--sticky">
-        <button type="button"
-                class="btn btn-primary"
-                disabled="@(Busy || !HasChoice)"
-                aria-busy="@(Busy ? "true" : "false")"
-                @onclick="OnSubmit">
-            @(Illustrated ? Culture["Career.Illustrated.ChooseDreamCta"] : Culture["Career.Empty.Cta"])
-        </button>
-    </div>
+    @if (!Illustrated)
+    {
+        <div class="career-card__actions career-card__actions--sticky">
+            <button type="button"
+                    class="btn btn-primary"
+                    disabled="@(Busy || !HasChoice)"
+                    aria-busy="@(Busy ? "true" : "false")"
+                    @onclick="OnSubmit">
+                @Culture["Career.Empty.Cta"]
+            </button>
+        </div>
+    }
 </section>
 
 @code {

@@ -254,12 +254,42 @@ public static class UiStringsCareer
             "Kursy",
             "Cursuri",
             "الدورات");
-        Add("Career.Illustrated.Progress",
-            "Je zit bij stap {0} van {1}",
-            "You are on step {0} of {1}",
-            "Jesteś na kroku {0} z {1}",
-            "Ești la pasul {0} din {1}",
-            "أنت في الخطوة {0} من {1}");
+        Add("Career.Illustrated.ProgressDream",
+            "Stap {0} van {1} naar {2}",
+            "Step {0} of {1} toward {2}",
+            "Krok {0} z {1} w kierunku {2}",
+            "Pasul {0} din {1} spre {2}",
+            "الخطوة {0} من {1} نحو {2}");
+        Add("Career.Illustrated.OneCourse",
+            "1 cursus",
+            "1 course",
+            "1 kurs",
+            "1 curs",
+            "دورة واحدة");
+        Add("Career.Illustrated.ManyCourses",
+            "{0} cursussen",
+            "{0} courses",
+            "{0} kursów",
+            "{0} cursuri",
+            "{0} دورات");
+        Add("Career.Illustrated.OneSkill",
+            "1 skill of ervaring",
+            "1 skill or experience item",
+            "1 umiejętność lub doświadczenie",
+            "1 competență sau experiență",
+            "مهارة أو خبرة واحدة");
+        Add("Career.Illustrated.ManySkills",
+            "{0} skills of ervaring",
+            "{0} skills or experience items",
+            "{0} umiejętności lub doświadczeń",
+            "{0} competențe sau experiențe",
+            "{0} مهارات أو خبرات");
+        Add("Career.Illustrated.ActionBothFixed",
+            "Nog {0} · {1}",
+            "Still {0} · {1}",
+            "Jeszcze {0} · {1}",
+            "Încă {0} · {1}",
+            "متبقٍ {0} · {1}");
         Add("Career.Illustrated.CourseMetaFallback",
             "Online · flexibel tempo",
             "Online · flexible pace",

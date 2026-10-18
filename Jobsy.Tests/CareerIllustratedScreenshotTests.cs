@@ -20,14 +20,19 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/carriere-r3";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/carriere-r4";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
     public async ValueTask InitializeAsync()
     {
-        foreach (var legacy in new[] { "/opt/cursor/artifacts/kandidaat-rol-r2", "/opt/cursor/artifacts/kandidaat-rol-r1" })
+        foreach (var legacy in new[]
+                 {
+                     "/opt/cursor/artifacts/kandidaat-rol-r2",
+                     "/opt/cursor/artifacts/kandidaat-rol-r1",
+                     "/opt/cursor/artifacts/carriere-r3"
+                 })
         {
             if (Directory.Exists(legacy))
             {
@@ -56,7 +61,7 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_carriere_r3_review_shots()
+    public async Task Capture_carriere_r4_review_shots()
     {
         Directory.CreateDirectory(ArtifactsDir);
         await CapturePageAsync("/carriere", "carriere-met-droombaan", careerEmpty: false);
@@ -87,7 +92,15 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
             {
                 Content = """
                     .pub-header, .jobsy-chrome__header { position: static !important; }
-                    .bottom-nav, .candidate-bottom-nav { position: fixed !important; left: 0; right: 0; bottom: 0; }
+                    .app-main, main.app-main { padding-bottom: 5.5rem !important; min-height: auto !important; }
+                    .bottom-nav, .candidate-bottom-nav, nav.bottom-nav {
+                      position: fixed !important;
+                      left: 0 !important;
+                      right: 0 !important;
+                      bottom: 0 !important;
+                      top: auto !important;
+                      z-index: 50 !important;
+                    }
                     """
             });
             await page.WaitForTimeoutAsync(800);
@@ -231,9 +244,9 @@ public sealed class CareerIllustratedScreenshotTests : IAsyncLifetime
             var json = path.Contains("/career-path/dream-options", StringComparison.OrdinalIgnoreCase)
                 ? """
                   {"suggestions":[
-                    {"catalogKey":"dierenarts","title":"Dierenarts","description":"Past bij je zorgzaamheid"},
-                    {"catalogKey":"zorg","title":"Zorgmedewerker","description":"Sluit aan op je paspoort"},
-                    {"catalogKey":"logistiek","title":"Teamleider logistiek","description":"Gebruik je organiseren-talent"}],
+                    {"catalogKey":"dierenarts","title":"Dierenarts","description":"Past bij je zorgzaamheid","noScore":true},
+                    {"catalogKey":"zorg","title":"Zorgmedewerker","description":"Sluit aan op je paspoort","noScore":true},
+                    {"catalogKey":"logistiek","title":"Teamleider logistiek","description":"Gebruik je organiseren-talent","noScore":true}],
                   "results":[]}
                   """
                 : path.Contains("/career-path/archived", StringComparison.OrdinalIgnoreCase)

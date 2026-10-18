@@ -5,42 +5,39 @@
 
 @{
     var nodes = BuildNodes();
-    var pathD = BuildPath(nodes.Count);
+    var segments = BuildSegments(nodes);
 }
 
 <nav class="career-path-svg" aria-label="@Culture["Career.Illustrated.PathAria"]">
-    <svg class="career-path-svg__curve" viewBox="0 0 1000 140" preserveAspectRatio="none" aria-hidden="true">
-        <path class="career-path-svg__track" d="@pathD" pathLength="100" />
-        <path class="career-path-svg__track career-path-svg__track--done" d="@pathD" pathLength="100"
-              style="stroke-dasharray: @DoneDash; stroke-dashoffset: 0" />
-    </svg>
-    <ol class="career-path-svg__nodes">
+    <div class="career-path-svg__lane">
+        <svg class="career-path-svg__svg" viewBox="0 0 1000 56" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            @foreach (var seg in segments)
+            {
+                <path class="career-path-svg__seg career-path-svg__seg--@seg.State"
+                      d="@seg.Path"
+                      pathLength="100"
+                      vector-effect="non-scaling-stroke" />
+            }
+        </svg>
+        <ol class="career-path-svg__pins">
+            @for (var i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                var left = NodeLeftPercent(i, nodes.Count);
+                <li class="career-path-svg__pin-wrap career-path-svg__pin-wrap--@node.State"
+                    style="--node-x:@(left.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">
+                    <span class="career-path-svg__pin" aria-hidden="true">
+                        @PinContent(node)
+                    </span>
+                </li>
+            }
+        </ol>
+    </div>
+    <ol class="career-path-svg__captions" style="--path-n: @nodes.Count">
         @for (var i = 0; i < nodes.Count; i++)
         {
             var node = nodes[i];
-            var left = NodeLeftPercent(i, nodes.Count);
-            <li class="career-path-svg__node career-path-svg__node--@node.State"
-                style="--node-x:@(left.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%">
-                <span class="career-path-svg__pin" aria-hidden="true">
-                    @if (node.Kind == NodeKind.Dream)
-                    {
-                        <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
-                            <path d="M8 1.5l1.9 4 4.4.6-3.2 3.1.8 4.3L8 11.5l-3.9 2 .8-4.3L1.7 6.1l4.4-.6z" />
-                        </svg>
-                    }
-                    else if (node.Kind == NodeKind.Now)
-                    {
-                        <span class="career-path-svg__dot"></span>
-                    }
-                    else if (node.State == "done")
-                    {
-                        <span aria-hidden="true">✓</span>
-                    }
-                    else
-                    {
-                        <span>@node.Order</span>
-                    }
-                </span>
+            <li class="career-path-svg__caption career-path-svg__caption--@node.State">
                 <span class="career-path-svg__label">@node.Label</span>
                 @if (!string.IsNullOrWhiteSpace(node.Sub))
                 {
@@ -59,27 +56,29 @@
 
     private sealed record PathNode(NodeKind Kind, string State, string Label, string Sub, int Order);
 
-    private string DoneDash
+    private sealed record PathSegment(string Path, string State);
+
+    private RenderFragment PinContent(PathNode node) => __builder =>
     {
-        get
+        if (node.Kind == NodeKind.Dream)
         {
-            var nodes = BuildNodes();
-            if (nodes.Count <= 1)
-            {
-                return "0 100";
-            }
-
-            var currentIndex = nodes.FindIndex(n => n.State == "current");
-            if (currentIndex < 0)
-            {
-                var allDone = nodes.All(n => n.State is "done" or "dream" && Plan.GoalReached);
-                return allDone ? "100 100" : "0 100";
-            }
-
-            var pct = (currentIndex / (double)(nodes.Count - 1)) * 100;
-            return $"{pct.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} 100";
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true">
+                <path d="M8 1.5l1.9 4 4.4.6-3.2 3.1.8 4.3L8 11.5l-3.9 2 .8-4.3L1.7 6.1l4.4-.6z" />
+            </svg>
         }
-    }
+        else if (node.Kind == NodeKind.Now)
+        {
+            <span class="career-path-svg__dot"></span>
+        }
+        else if (node.State == "done")
+        {
+            <span aria-hidden="true">✓</span>
+        }
+        else
+        {
+            <span>@node.Order</span>
+        }
+    };
 
     private List<PathNode> BuildNodes()
     {
@@ -114,6 +113,45 @@
         return list;
     }
 
+    private List<PathSegment> BuildSegments(IReadOnlyList<PathNode> nodes)
+    {
+        var segments = new List<PathSegment>();
+        if (nodes.Count < 2)
+        {
+            return segments;
+        }
+
+        for (var i = 0; i < nodes.Count - 1; i++)
+        {
+            var x1 = XCoord(i, nodes.Count);
+            var x2 = XCoord(i + 1, nodes.Count);
+            var y1 = PinY(i);
+            var y2 = PinY(i + 1);
+            var cx = (x1 + x2) / 2;
+            var path = $"M {x1:0.#} {y1:0.#} Q {cx:0.#} {(y1 + y2) / 2 - 6:0.#} {x2:0.#} {y2:0.#}";
+            var state = SegmentState(nodes[i + 1]);
+            segments.Add(new(path, state));
+        }
+
+        return segments;
+    }
+
+    private static string SegmentState(PathNode endNode)
+        => endNode.State is "done" or "current" ? "done" : "todo";
+
+    private static double XCoord(int index, int count)
+    {
+        const double pad = 56;
+        if (count <= 1)
+        {
+            return 500;
+        }
+
+        return pad + (1000 - pad * 2) * index / (count - 1);
+    }
+
+    private static double PinY(int index) => index % 2 == 0 ? 30 : 22;
+
     private static double NodeLeftPercent(int index, int count)
     {
         if (count <= 1)
@@ -123,23 +161,5 @@
 
         const double pad = 6;
         return pad + (100 - pad * 2) * index / (count - 1);
-    }
-
-    private static string BuildPath(int count)
-    {
-        if (count <= 1)
-        {
-            return "M 50 90 L 950 90";
-        }
-
-        var parts = new List<string> { "M 40 95" };
-        for (var i = 1; i < count; i++)
-        {
-            var x = 40 + (920.0 * i / (count - 1));
-            var y = 95 - (i % 2 == 0 ? 28 : 12) - (i == count - 1 ? 8 : 0);
-            parts.Add($"L {x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)} {y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}");
-        }
-
-        return string.Join(' ', parts);
     }
 }

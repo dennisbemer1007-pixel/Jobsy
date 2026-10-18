@@ -4,6 +4,7 @@
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
+@using Jobsy.Web.Navigation
 @implements IDisposable
 @inject CultureState Culture
 
@@ -17,7 +18,7 @@
                 @foreach (var item in Suggestions.Take(3))
                 {
                     var key = SuggestionId(item);
-                    var explain = Explain(item.Title);
+                    var explain = Illustrated ? null : Explain(item.Title);
                     @if (explain is null)
                     {
                         @SuggestButton(item, key)
@@ -68,7 +69,7 @@
                     role="option"
                     aria-selected="@(IsSelected(key) ? "true" : "false")">
                     @{
-                        var explain = item.NoScore ? null : Explain(item.Title);
+                        var explain = Illustrated || item.NoScore ? null : Explain(item.Title);
                     }
                     @if (explain is null)
                     {
@@ -113,6 +114,19 @@
             </div>
         }
     </div>
+
+    @if (Illustrated && !string.IsNullOrWhiteSpace(IllustratedCta))
+    {
+        <div class="career-picker__cta">
+            <button type="button"
+                    class="btn btn-primary btn-block"
+                    disabled="@(Disabled || !HasChoice)"
+                    aria-busy="@(Busy ? "true" : "false")"
+                    @onclick="OnSubmit">
+                @IllustratedCta
+            </button>
+        </div>
+    }
 </div>
 
 @code {
@@ -127,6 +141,10 @@
     private int _activeIndex = -1;
 
     [Parameter] public bool Illustrated { get; set; }
+    [Parameter] public string? IllustratedCta { get; set; }
+    [Parameter] public bool HasChoice { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback OnSubmit { get; set; }
     [Parameter] public string Id { get; set; } = "career-dream";
     [Parameter] public IReadOnlyList<CareerDreamOptionApiItem> Suggestions { get; set; } = [];
     [Parameter] public RiasecScores? Scores { get; set; }
@@ -142,30 +160,30 @@
     private static string SuggestionId(CareerDreamOptionApiItem item)
         => string.IsNullOrWhiteSpace(item.CatalogKey) ? $"title:{item.Title}" : $"key:{item.CatalogKey}";
 
-    private static string TileIcon(CareerDreamOptionApiItem item)
+    private static string TileIconSvg(CareerDreamOptionApiItem item)
     {
         var key = (item.CatalogKey ?? item.Title).ToLowerInvariant();
         if (key.Contains("zorg", StringComparison.Ordinal))
         {
-            return "🩺";
+            return NavIcons.Users;
         }
 
         if (key.Contains("dieren", StringComparison.Ordinal) || key.Contains("veter", StringComparison.Ordinal))
         {
-            return "🐾";
+            return NavIcons.Liked;
         }
 
         if (key.Contains("logist", StringComparison.Ordinal) || key.Contains("magaz", StringComparison.Ordinal))
         {
-            return "📦";
+            return NavIcons.Map;
         }
 
         if (key.Contains("kok", StringComparison.Ordinal) || key.Contains("horeca", StringComparison.Ordinal))
         {
-            return "🍳";
+            return NavIcons.Branches;
         }
 
-        return "✨";
+        return NavIcons.Career;
     }
 
     private bool IsSelected(string key) => string.Equals(_selectedKey, key, StringComparison.Ordinal);
@@ -185,7 +203,7 @@
                 @onclick="() => PickSuggestion(item)">
             @if (Illustrated)
             {
-                <span class="career-option__icon" aria-hidden="true">@TileIcon(item)</span>
+                <span class="career-option__icon" aria-hidden="true">@((MarkupString)TileIconSvg(item))</span>
             }
             <b class="career-option__title">@item.Title</b>
             @if (!string.IsNullOrWhiteSpace(item.ReasonKey))
