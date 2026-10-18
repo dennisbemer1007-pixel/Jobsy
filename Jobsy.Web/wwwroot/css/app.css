@@ -15048,8 +15048,12 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         font-size: 1.5rem;
     }}.app-shell .engagement-btn,
 .app-shell .login-submit,
-.app-shell .career-btn:not(.career-btn--text),
 .app-shell .btn-primary {
+    border-radius:var(--radius-pill);
+}.app-shell .career-btn:not(.career-btn--text) {
+    border-radius:var(--radius-pill);
+}.app-shell .btn-secondary,
+.app-shell .career-btn--secondary {
     border-radius:var(--r-md);
 }.mail-settings {
     max-width: 40rem;
@@ -15112,7 +15116,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     gap: 0.4rem;
     min-height: 44px;
     padding: 0.55rem 1rem;
-    border-radius:var(--r-md);
+    border-radius:var(--radius-pill);
     border: 1px solid var(--brand);
     background:var(--brand);
     color: #fff;

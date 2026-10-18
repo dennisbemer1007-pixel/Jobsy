@@ -16,6 +16,8 @@
   --pub-radius-card: var(--r-lg);
   --pub-radius-scene: var(--r-lg);
   --pub-radius-pill: 999px;
+  --radius-pill: var(--pub-radius-pill);
+  --radius-circle: 50%;
   --pub-text-hero: 3.25rem;
   --pub-text-h2: 2.25rem;
   --pub-text-result: 3rem;

@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process';
 
 const beforeBase = (process.env.BEFORE_BASE || '').replace(/\/$/, '');
 const afterBase = (process.env.AFTER_BASE || process.env.BASE || 'http://127.0.0.1:5201').replace(/\/$/, '');
-const outRoot = process.env.OUT || '/opt/cursor/artifacts/stijl-A-r2';
+const outRoot = process.env.OUT || '/opt/cursor/artifacts/stijl-A-r3';
 const pairPy = path.join(path.dirname(new URL(import.meta.url).pathname), 'stijl-a-pair.py');
 
 const creds = {
@@ -22,17 +22,12 @@ const creds = {
 
 /** @type {[string, string, number, number, 'anon'|'candidate'|'employer'|'admin'][]} */
 const shots = [
-  ['start', '/', 1440, 900, 'anon'],
   ['start', '/', 390, 844, 'anon'],
-  ['login', '/login', 1440, 900, 'anon'],
-  ['login', '/login', 390, 844, 'anon'],
   ['carriere', '/carriere', 1440, 900, 'candidate'],
   ['carriere', '/carriere', 390, 844, 'candidate'],
-  ['paspoort', '/candidate/paspoort', 1440, 900, 'candidate'],
+  ['werkgever-binnenkort', '/werkgevers/binnenkort', 1440, 900, 'employer'],
+  ['werkgever-vacature', '/werkgever/vacatures/nieuw', 390, 844, 'employer'],
   ['paspoort', '/candidate/paspoort', 390, 844, 'candidate'],
-  ['test-competence', '/profiel/tests/competence', 390, 844, 'candidate'],
-  ['werkgever-sollicitaties', '/werkgever/sollicitaties', 1440, 900, 'employer'],
-  ['admin', '/admin/te-doen', 1440, 900, 'admin'],
 ];
 
 const consentInitScript = `

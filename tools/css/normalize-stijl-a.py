@@ -23,7 +23,13 @@ SHADOW_KEYWORDS = re.compile(
 
 GRADIENT_ALLOW = re.compile(
     r"hero|finale|gold-gradient|map|ontdek|journey-hero|carriere-hero|"
-    r"passport-hero|ob-finale|pub-|wl-hero",
+    r"career-scene|passport-hero|ob-finale|pub-|wl-hero|err-blob|illustration",
+    re.I,
+)
+
+# Never flatten radii on illustrated / organic surfaces (warm humanistisch).
+RADIUS_SKIP = re.compile(
+    r"career-scene|err-blob|au-blob|pub-landing__blob|illustration|mascot",
     re.I,
 )
 
@@ -79,16 +85,9 @@ def replace_legacy_radius_vars(text: str) -> str:
         text,
         flags=re.I,
     )
-    text = re.sub(
-        r"border-radius\s*:\s*[\d.]+%\s+[\d.]+%\s+[\d.]+%\s+[\d.]+%\s*/\s*[\d.]+%\s+[\d.]+%\s+[\d.]+%\s+[\d.]+%",
-        "border-radius:var(--radius-pill)",
-        text,
-        flags=re.I,
-    )
     text = re.sub(r"border-radius\s*:\s*99px\b", "border-radius:var(--radius-pill)", text, flags=re.I)
     text = re.sub(r"border-radius\s*:\s*28px\b", "border-radius:var(--r-lg)", text, flags=re.I)
     text = re.sub(r"border-radius\s*:\s*1\.75rem\b", "border-radius:var(--r-lg)", text, flags=re.I)
-    text = re.sub(r"border-radius\s*:\s*inherit\b", "border-radius:var(--r-md)", text, flags=re.I)
     text = re.sub(
         r"--pub-radius-card\s*:\s*[^;]+;",
         "--pub-radius-card: var(--r-lg);",
@@ -258,10 +257,11 @@ def remove_linear_gradients_from_value(value: str) -> str:
 
 
 def process_declarations(decls: str, selector: str) -> str:
-    def br_repl(m: re.Match[str]) -> str:
-        return "border-radius:" + normalize_border_radius_value(m.group(1))
+    if not RADIUS_SKIP.search(selector):
+        def br_repl(m: re.Match[str]) -> str:
+            return "border-radius:" + normalize_border_radius_value(m.group(1))
 
-    decls = RE_BORDER_RADIUS.sub(br_repl, decls)
+        decls = RE_BORDER_RADIUS.sub(br_repl, decls)
 
     pop = bool(SHADOW_KEYWORDS.search(selector))
 

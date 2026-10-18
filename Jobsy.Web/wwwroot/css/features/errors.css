@@ -93,8 +93,8 @@
   inline-size: 14rem;
   block-size: 14rem;
   translate: -50% -50%;
-  border-radius:var(--radius-pill);
-  background:var(--err-blob);
+  border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+  background: var(--err-blob);
 }.err-mascot {
   position: relative;
   animation: err-bob 4s ease-in-out infinite;

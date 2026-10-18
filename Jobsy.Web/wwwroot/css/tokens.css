@@ -76,6 +76,8 @@
   --r-sm: 6px;
   --r-md: 12px;
   --r-lg: 20px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
 
   /* Spacing scale (px) */
   --space-1: 4px;

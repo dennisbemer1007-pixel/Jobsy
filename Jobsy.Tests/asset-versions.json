@@ -1,6 +1,6 @@
 {
   "css/app.min.css": {
-    "sha256": "52c2b69d6356bfab0c1a6d21b0d945a283c08365b9d467673b230505741e1398",
+    "sha256": "af47c15b1d6a61e01002cc48768ac2bef332ceffd83af8c0eccb659f1ab21faf",
     "v": "20261017-03"
   },
   "css/critical.css": {
@@ -32,7 +32,7 @@
     "v": "20261012-01"
   },
   "css/features/carriere.css": {
-    "sha256": "0270c56f125b6ff58f4bbb906f2c040c2001b19f1aad5d6559d58cd3d62c4008",
+    "sha256": "0dc04c1ece7e0937f1e166fe309120e2d26e00b8504f462129eceacc8b0cd957",
     "v": "20261011-01"
   },
   "css/features/choice-tiles.css": {
@@ -48,7 +48,7 @@
     "v": "20261004-10"
   },
   "css/features/errors.css": {
-    "sha256": "98c52153341f09a872fd80d150fd535e4e62d557f025a25a26462d735345e23a",
+    "sha256": "f7747fb354a7ef7b211fb82aa974237d1f9a6268d850faac4c214b527e29d004",
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
@@ -196,8 +196,8 @@
     "v": "20261017-19"
   },
   "css/tokens.css": {
-    "sha256": "47caf563d4bcf6870b008e1cabf43a9134a5e3a87a0d4d552e2ed3eb42ca9365",
-    "v": "20261018-01"
+    "sha256": "5ce0929c96b169830a30fc10283d80c6f8805715068cfcec698d571a9e07826e",
+    "v": "20261018-06"
   },
   "favicon.ico": {
     "sha256": "4caaf6b625a82dc74bcb765c9fd6080651f27b824bf4039682140f794738e13a",
