@@ -118,11 +118,70 @@
 
 .bk-filters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.65rem;
   padding: 0.75rem 1.25rem;
   border-bottom: 1px solid #e2e6eb;
+}
+
+.bk-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   align-items: center;
+}
+
+.bk-filters__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.bk-filters__row--chips {
+  gap: 0.45rem;
+}
+
+.bk-page .bk-filters .jobsy-action {
+  margin: 0;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid #d0d5dd;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text, #122033);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.25;
+}
+
+.bk-page .bk-filters .jobsy-action.is-active {
+  background: var(--brand, #0f2d5c);
+  border-color: var(--brand, #0f2d5c);
+  color: #fff;
+}
+
+.bk-decline-toggle {
+  margin-top: 0.75rem;
+}
+
+.bk-modal__footer--compact {
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 0.65rem;
+}
+
+@media (max-width: 900px) {
+  .bk-modal__footer.bk-modal__footer--compact {
+    flex-direction: column-reverse;
+  }
+
+  .bk-modal__footer.bk-modal__footer--compact .btn--primary,
+  .bk-modal__footer.bk-modal__footer--compact .btn--secondary {
+    width: 100%;
+  }
 }
 
 .bk-list {

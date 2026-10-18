@@ -41,3 +41,34 @@ public enum TrainingDeliveryMode
     OnSite = 1,
     Blended = 2
 }
+
+/// <summary>How a partner publishes offers into Lobsy.</summary>
+public enum TrainingPartnerFeedKind
+{
+    None = 0,
+    Json = 1,
+    Csv = 2,
+    Api = 3
+}
+
+public enum TrainingOfferSection
+{
+    NextStep = 0,
+    Growth = 1,
+    General = 2
+}
+
+public enum TrainingEnrollmentStatus
+{
+    Saved = 0,
+    InProgress = 1,
+    Completed = 2,
+    Verified = 3
+}
+
+public enum TrainingCertificateVerificationSource
+{
+    PartnerWebhook = 0,
+    AdminReview = 1,
+    CandidateUpload = 2
+}

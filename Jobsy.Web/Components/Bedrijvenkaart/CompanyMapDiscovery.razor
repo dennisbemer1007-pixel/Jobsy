@@ -37,27 +37,25 @@
     <p class="bk-info-banner">@Culture["Bk.InfoBanner"]</p>
 
     <div class="bk-filters">
-        <label>
-            <span class="visually-hidden">Sector</span>
-            <select @bind="_sector">
-                <option value="">Alle sectoren</option>
-            </select>
-        </label>
-        <label>
-            <span class="visually-hidden">Vakgebied</span>
-            <select @bind="_team">
-                <option value="">Alle vakgebieden</option>
-            </select>
-        </label>
-        <div role="group" aria-label="Afstand">
-            @foreach (var km in new[] { 10, 25, 40 })
-            {
-                <button type="button" class="jobsy-action @(_radiusKm == km ? "is-active" : null)" @onclick="() => _radiusKm = km">@km km</button>
-            }
+        <div class="bk-filters__row">
+            <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllSectors"]">
+                <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllSectors"]</button>
+            </div>
+            <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllFields"]">
+                <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllFields"]</button>
+            </div>
+            <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.Distance"]">
+                @foreach (var km in new[] { 10, 25, 40 })
+                {
+                    <button type="button" class="jobsy-action @(_radiusKm == km ? "is-active" : null)" aria-pressed="@(_radiusKm == km)" @onclick="() => SetRadius(km)">@km km</button>
+                }
+            </div>
         </div>
-        <label><input type="checkbox" @bind="_openOnly" /> @Culture["Bk.Filter.OpenOnly"]</label>
-        <label><input type="checkbox" @bind="_agencies" /> @Culture["Bk.Filter.Agencies"]</label>
-        <label><input type="checkbox" @bind="_respondsFast" /> @Culture["Bk.Filter.RespondsFast"]</label>
+        <div class="bk-filters__row bk-filters__row--chips">
+            <button type="button" class="jobsy-action @(_openOnly ? "is-active" : null)" aria-pressed="@_openOnly" @onclick="ToggleOpenOnly">@Culture["Bk.Filter.OpenOnly"]</button>
+            <button type="button" class="jobsy-action @(_agencies ? "is-active" : null)" aria-pressed="@_agencies" @onclick="ToggleAgencies">@Culture["Bk.Filter.Agencies"]</button>
+            <button type="button" class="jobsy-action @(_respondsFast ? "is-active" : null)" aria-pressed="@_respondsFast" @onclick="ToggleRespondsFast">@Culture["Bk.Filter.RespondsFast"]</button>
+        </div>
     </div>
 
     <p class="bk-result-meta" style="padding:0 1.25rem;font-size:.875rem;color:#5c6470">
@@ -113,8 +111,6 @@
     private IReadOnlyList<CompanyMapPinDto> _pins = BedrijvenkaartDemoPins.All;
     private CompanyMapPinDto? _selected;
     private int _radiusKm = 25;
-    private string _sector = "";
-    private string _team = "";
     private bool _openOnly;
     private bool _agencies = true;
     private bool _respondsFast;
@@ -132,6 +128,30 @@
             .Where(p => !_respondsFast || p.AvgResponseDays is <= 3)
             .ToList();
         _openCount = _filteredList.Count(p => p.OpenForInitiative);
+    }
+
+    private void SetRadius(int km)
+    {
+        _radiusKm = km;
+        RefreshFiltered();
+    }
+
+    private void ToggleOpenOnly()
+    {
+        _openOnly = !_openOnly;
+        RefreshFiltered();
+    }
+
+    private void ToggleAgencies()
+    {
+        _agencies = !_agencies;
+        RefreshFiltered();
+    }
+
+    private void ToggleRespondsFast()
+    {
+        _respondsFast = !_respondsFast;
+        RefreshFiltered();
     }
 
     protected override async Task OnInitializedAsync()

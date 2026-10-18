@@ -75,5 +75,8 @@ public enum PlatformFeature
     /// Bedrijvenkaart and "Ik wil hier werken" (candidate + employer). Default true on acceptatie.
     /// Requires <see cref="Employers"/> when enabled.
     /// </summary>
-    CompanyMapInitiative
+    CompanyMapInitiative,
+
+    /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
+    TrainingPartners
 }

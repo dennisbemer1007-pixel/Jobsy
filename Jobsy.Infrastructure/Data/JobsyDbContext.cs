@@ -74,6 +74,7 @@ public class JobsyDbContext : DbContext
     public DbSet<VacancyTranslation> VacancyTranslations => Set<VacancyTranslation>();
     public DbSet<TrainingProvider> TrainingProviders => Set<TrainingProvider>();
     public DbSet<TrainingOffer> TrainingOffers => Set<TrainingOffer>();
+    public DbSet<TrainingEnrollment> TrainingEnrollments => Set<TrainingEnrollment>();
     public DbSet<TrainingClick> TrainingClicks => Set<TrainingClick>();
     public DbSet<TrainingConversion> TrainingConversions => Set<TrainingConversion>();
     public DbSet<CandidateDeepAnalysis> CandidateDeepAnalyses => Set<CandidateDeepAnalysis>();
@@ -2928,6 +2929,9 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.StartFeeEuro).HasPrecision(10, 2);
             entity.HasIndex(e => e.Kind);
             entity.HasIndex(e => e.IsActive);
+            entity.Property(e => e.FeedUrl).HasMaxLength(1024);
+            entity.Property(e => e.FeedMappingJson).HasMaxLength(4000);
+            entity.Property(e => e.FeedApiSecretName).HasMaxLength(120);
         });
 
         modelBuilder.Entity<TrainingOffer>(entity =>
@@ -2943,11 +2947,35 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.ShowInPassport).HasDefaultValue(false);
             entity.Property(e => e.IsFree).HasDefaultValue(false);
             entity.Property(e => e.IsPartner).HasDefaultValue(false);
+            entity.Property(e => e.PartnerExternalId).HasMaxLength(120);
+            entity.Property(e => e.PriceLabel).HasMaxLength(80);
+            entity.Property(e => e.CompetenciesCsv).HasMaxLength(200).HasDefaultValue("");
+            entity.Property(e => e.CareerStepsCsv).HasMaxLength(400).HasDefaultValue("");
+            entity.Property(e => e.ReasonNl).HasMaxLength(400);
+            entity.Property(e => e.ReasonEn).HasMaxLength(400);
+            entity.Property(e => e.PriceEuro).HasPrecision(10, 2);
             entity.HasIndex(e => e.ProviderId);
             entity.HasIndex(e => e.ShowInPassport);
+            entity.HasIndex(e => new { e.ProviderId, e.PartnerExternalId }).IsUnique();
             entity.HasOne(e => e.Provider)
                 .WithMany(p => p.Offers)
                 .HasForeignKey(e => e.ProviderId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TrainingEnrollment>(entity =>
+        {
+            entity.ToTable("TrainingEnrollments");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CertificateTitle).HasMaxLength(200);
+            entity.HasIndex(e => new { e.UserId, e.OfferId }).IsUnique();
+            entity.HasOne(e => e.Offer)
+                .WithMany()
+                .HasForeignKey(e => e.OfferId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

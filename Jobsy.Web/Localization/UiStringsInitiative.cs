@@ -25,6 +25,9 @@ public static class UiStringsInitiative
         Add("Bk.WeekDots", "{0} van {1} deze week over", "{0} of {1} left this week");
         Add("Bk.InfoBanner", "Alle bedrijven op Lobsy. Bedrijven met het label Staat open voor jou nemen ook een bericht zonder vacature aan en reageren altijd binnen 5 werkdagen.", "All companies on Lobsy. Companies labelled Open for you also accept a message without a vacancy and always respond within 5 business days.");
         Add("Bk.OpenLabel", "Staat open voor jou", "Open for you");
+        Add("Bk.Filter.AllSectors", "Alle sectoren", "All sectors");
+        Add("Bk.Filter.AllFields", "Alle vakgebieden", "All fields");
+        Add("Bk.Filter.Distance", "Afstand", "Distance");
         Add("Bk.Filter.OpenOnly", "Bedrijf open voor initiatief", "Company open for initiative");
         Add("Bk.Filter.Agencies", "Uitzendbureaus en detacheerders", "Agencies and staffing firms");
         Add("Bk.Filter.RespondsFast", "Reageert snel (≤ 3 dagen)", "Responds fast (≤ 3 days)");
@@ -87,6 +90,8 @@ public static class UiStringsInitiative
         Add("Initiative.Employer.Accept", "Accepteren", "Accept");
         Add("Initiative.Employer.AcceptWithToken", "Accepteren · {0} token", "Accept · {0} token");
         Add("Initiative.Employer.Decline", "Nu niet", "Not now");
+        Add("Initiative.Employer.DeclineLead", "Je geeft aan dat je deze kandidaat nu niet verder wilt. Het initiatief kan open blijven.", "You are passing on this candidate for now. The initiative can stay open.");
+        Add("Initiative.Employer.DeclineKeepOpen", "Open houden voor andere kandidaten", "Keep open for other candidates");
         Add("Initiative.Settings.TeamsEmpty", "Nog geen teams toegevoegd.", "No teams added yet.");
         Add("Initiative.Settings.Lead", "Kandidaten kunnen zonder vacature kloppen. Je reageert binnen 5 werkdagen.", "Candidates can reach out without a vacancy. You respond within 5 business days.");
         Add("Initiative.Settings.GeneralEntry", "Algemene ingang", "General entry");

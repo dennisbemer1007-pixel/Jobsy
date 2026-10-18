@@ -37,7 +37,7 @@ public static class PageAssetCatalog
     [
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/bedrijvenkaart.css?v=20261018-05",
+        "css/features/bedrijvenkaart.css?v=20261018-06",
         "css/features/candidate-illustrated-app.css?v=20261018-89",
         "css/features/kandidaat-banen.css?v=20261017-04",
         "css/features/match-desktop.css?v=20261018-02",
@@ -62,7 +62,9 @@ public static class PageAssetCatalog
         "css/features/kompas-illustrated.css?v=20261018-05",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261018-04",
+        "css/features/candidate-illustrated-app.css?v=20261018-19",
         "css/features/carriere.css?v=20261018-03",
+        "css/features/opleidingen.css?v=20261018-r12",
         "css/features/occupation-day.css?v=20261005-23",
         "css/features/honest-advice.css?v=20261005-07",
         "css/features/future-jobs.css?v=20261006-02",
@@ -235,17 +237,17 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-05"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-06"];
         }
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-05"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-06"];
         }
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261018-05"];
+            return ["css/features/bedrijvenkaart.css?v=20261018-06"];
         }
 
         return [];

@@ -55,6 +55,7 @@ internal static class DemoUsersSeeder
             Id = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111"),
             Email = "sanne@jobsy.local",
             FullName = "Sanne de Vries",
+            FirstName = "Sanne",
             Role = UserRole.Candidate,
             CompanyId = null,
             DateOfBirth = new DateOnly(1998, 4, 12),

@@ -29,7 +29,8 @@ public sealed record FeatureFlagSnapshot(
     bool TestsV2Enabled = false,
     bool EmployerFitQuestionnairesEnabled = false,
     bool KandidatenkaartEnabled = false,
-    bool CompanyMapInitiativeEnabled = true)
+    bool CompanyMapInitiativeEnabled = true,
+    bool TrainingPartnersEnabled = false)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(
         EmployersEnabled: false,
@@ -58,6 +59,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.Kandidatenkaart => KandidatenkaartEnabled,
         PlatformFeature.CompanyMapInitiative => EmployersEnabled && CompanyMapInitiativeEnabled,
         PlatformFeature.ReferenceVerification => false,
+        PlatformFeature.TrainingPartners => TrainingPartnersEnabled,
         _ => false
     };
 }

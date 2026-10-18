@@ -72,7 +72,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestsV2Enabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
-                dto?.CompanyMapInitiativeEnabled ?? true);
+                dto?.CompanyMapInitiativeEnabled ?? true,
+                dto?.TrainingPartnersEnabled ?? false);
             flags = ApplyLocalOverrides(flags);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
@@ -163,5 +164,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
         [JsonPropertyName("companyMapInitiativeEnabled")]
         public bool CompanyMapInitiativeEnabled { get; set; } = true;
 
+        [JsonPropertyName("trainingPartnersEnabled")]
+        public bool TrainingPartnersEnabled { get; set; }
     }
 }

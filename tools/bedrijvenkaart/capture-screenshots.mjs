@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Bedrijvenkaart R8 captures: requires API+Web with Seed:Enabled (see run-r8-capture.sh).
+ * Bedrijvenkaart R9 captures: requires API+Web with Seed:Enabled (see run-r9-capture.sh).
  */
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -8,7 +8,7 @@ import { chromium } from "../screenshots/node_modules/playwright/index.mjs";
 
 const baseUrl = (process.argv[2] ?? "http://localhost:5201").replace(/\/$/, "");
 const apiUrl = (process.argv[3] ?? "http://127.0.0.1:5200").replace(/\/$/, "");
-const outDir = "/opt/cursor/artifacts/bedrijvenkaart-build-r8/live";
+const outDir = "/opt/cursor/artifacts/bedrijvenkaart-build-r9/live";
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
 const employerEmail = "enterprise@jobsy.local";
