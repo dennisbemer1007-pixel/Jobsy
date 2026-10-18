@@ -1,6 +1,7 @@
 using Jobsy.Core.Rules;
 using Jobsy.Web.Components.Candidate.Onboarding;
 using Jobsy.Web.Models;
+using static Jobsy.Core.Rules.GeolocationAddressPrefill;
 
 namespace Jobsy.Web.Services;
 
@@ -28,7 +29,10 @@ public static class CandidateHomeAddressLookup
     public static string BuildHomeAddressForSave(OnboardingProfileDraft draft)
     {
         var query = (draft.AddressQuery ?? string.Empty).Trim();
-        if (!string.IsNullOrWhiteSpace(query) && draft.HomeLat is not null && draft.HomeLng is not null)
+        if (!draft.GeolocationPendingConfirm
+            && !string.IsNullOrWhiteSpace(query)
+            && draft.HomeLat is not null
+            && draft.HomeLng is not null)
         {
             return query;
         }
@@ -93,6 +97,7 @@ public static class CandidateHomeAddressLookup
         draft.Postcode = PostcodeMatch.Normalize(draft.Postcode);
         draft.PostcodeResolved = true;
         draft.PostcodeMissing = false;
+        draft.GeolocationPendingConfirm = false;
     }
 
     public static void ClearDraftLocation(OnboardingProfileDraft draft)
@@ -104,6 +109,9 @@ public static class CandidateHomeAddressLookup
         draft.HomeLng = null;
         draft.PostcodeResolved = false;
         draft.PostcodeMissing = false;
+        draft.GeolocationPendingConfirm = false;
+        draft.GeolocationPrefillMode = null;
+        draft.GeolocationApproximateAccuracyMeters = null;
         draft.ShowCity = false;
         draft.Suggestions.Clear();
     }
@@ -114,6 +122,76 @@ public static class CandidateHomeAddressLookup
         draft.HomeLng = null;
         draft.PostcodeResolved = false;
         draft.PostcodeMissing = false;
+        draft.GeolocationPendingConfirm = false;
+        draft.GeolocationPrefillMode = null;
+        draft.GeolocationApproximateAccuracyMeters = null;
+    }
+
+    public static void ConfirmGeolocationPrefill(OnboardingProfileDraft draft)
+    {
+        if (draft.HomeLat is null || draft.HomeLng is null)
+        {
+            return;
+        }
+
+        draft.GeolocationPendingConfirm = false;
+        draft.GeolocationPrefillMode = null;
+        draft.GeolocationApproximateAccuracyMeters = null;
+        draft.PostcodeResolved = true;
+        draft.PostcodeMissing = false;
+    }
+
+    /// <summary>Apply browser geolocation + reverse-geocode label to draft (accuracy-aware).</summary>
+    public static GeolocationAddressPrefillResult? ApplyGeolocationPrefill(
+        OnboardingProfileDraft draft,
+        double lat,
+        double lng,
+        double? accuracyMeters,
+        string? reverseGeocodeLabel)
+    {
+        var prefill = FromReverseGeocodeLabel(reverseGeocodeLabel, accuracyMeters);
+        if (prefill is null)
+        {
+            return null;
+        }
+
+        draft.PostcodeResolved = false;
+        draft.PostcodeMissing = false;
+        draft.GeolocationPendingConfirm = true;
+        draft.GeolocationPrefillMode = prefill.Mode;
+        draft.GeolocationApproximateAccuracyMeters = prefill.Mode == GeolocationPrefillMode.Approximate
+            ? prefill.AccuracyMeters
+            : null;
+        draft.Suggestions.Clear();
+
+        if (prefill.ApplyCoordinates)
+        {
+            draft.HomeLat = lat;
+            draft.HomeLng = lng;
+        }
+        else
+        {
+            draft.HomeLat = null;
+            draft.HomeLng = null;
+        }
+
+        draft.AddressQuery = prefill.AddressQuery ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(prefill.Postcode))
+        {
+            draft.Postcode = prefill.Postcode;
+        }
+
+        if (!string.IsNullOrWhiteSpace(prefill.City))
+        {
+            draft.City = prefill.City;
+            draft.ShowCity = false;
+        }
+        else
+        {
+            draft.ShowCity = true;
+        }
+
+        return prefill;
     }
 
     public static async Task<bool> TryResolvePostcodeAsync(

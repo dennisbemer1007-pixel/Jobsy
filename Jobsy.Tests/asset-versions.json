@@ -120,7 +120,7 @@
     "v": "20261018-01"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "c833351e69fa5ae234ed2046fa4696599b365b91eb7cde4b5b631c2b2d95caf4",
+    "sha256": "a35e24d5ecb4a39d45fac0288211dd4dc2fee11b97b2c71fcd2db36f0532ee2a",
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -132,7 +132,7 @@
     "v": "20261017-01"
   },
   "css/features/onboarding-wizard.css": {
-    "sha256": "ec8f326fdaa3f87b5d49ad17e958da5df61f5b764a19838d513845feb1496748",
+    "sha256": "d94ce51e3bb8cde64fcb90b6d9f3eb13278450f667e4285b8ccd8b0e8bd27e47",
     "v": "20261015-06"
   },
   "css/features/onboarding-work-history.css": {
@@ -212,7 +212,7 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "73f485fbdb0dfe336ec0f1892c78cebe0c5ad02b0e01e212ee0bebffcaec7567",
+    "sha256": "9289435f270a8cbadb25bbcaa3c3e2ac1a408d588079a017d2996e8a45694712",
     "v": "20261018-07"
   },
   "js/app-extras.js": {
