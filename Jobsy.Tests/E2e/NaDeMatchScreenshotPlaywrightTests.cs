@@ -17,7 +17,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS"))
-            ? "/opt/cursor/artifacts/nadematch-r2"
+            ? "/opt/cursor/artifacts/nadematch-r3"
             : Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS")!;
 
     private static string MockupRoot =>
@@ -45,7 +45,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
     ];
 
     [Fact]
-    public async Task Capture_na_de_match_live_routes_desktop_and_mobile()
+    public async Task Capture_na_de_match_live_routes_per_role_viewport()
     {
         if (!ShouldRun)
         {
@@ -64,36 +64,47 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
-        foreach (var (width, height, tag) in new[] { (1440, 900, "desktop"), (390, 844, "mobiel") })
+        foreach (var route in Routes)
         {
-            foreach (var role in new[] { "kandidaat", "werkgever" })
+            var (width, height, tag) = route.Role == "werkgever"
+                ? (1440, 900, "desktop")
+                : (390, 844, "mobiel");
+            var email = route.Role == "werkgever" ? EmployerEmail : CandidateEmail;
+
+            await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(60_000);
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, Password));
+
+            await page.GotoAsync($"{baseUrl.TrimEnd('/')}{route.Path}", new()
             {
-                await using var context = await browser.NewContextAsync(KbE2e.ContextFor(width, height));
-                var page = await context.NewPageAsync();
-                page.SetDefaultTimeout(60_000);
-                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                WaitUntil = WaitUntilState.NetworkIdle,
+            });
+            await page.Locator("[data-testid=ndm-candidate-live], [data-testid=ndm-werkgever-live]").WaitForAsync(new() { Timeout = 90_000 });
+            await AssertCapturePageHealthyAsync(page, route.Id, route.Role);
 
-                var email = role == "werkgever" ? EmployerEmail : CandidateEmail;
-                Assert.True(await KbE2e.TryLoginAsync(page, baseUrl, email, Password));
-
-                foreach (var route in Routes.Where(r => r.Role == role))
-                {
-                    await page.GotoAsync($"{baseUrl.TrimEnd('/')}{route.Path}", new()
-                    {
-                        WaitUntil = WaitUntilState.DOMContentLoaded,
-                    });
-                    await page.Locator("[data-testid=ndm-candidate-live], [data-testid=ndm-werkgever-live]").WaitForAsync(new() { Timeout = 45_000 });
-                    var loginVisible = await page.GetByText("Inloggen", new() { Exact = true }).IsVisibleAsync();
-                    Assert.False(loginVisible, $"Screen {route.Id} still shows login for {role}");
-                    await page.WaitForTimeoutAsync(400);
-                    var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
-                    await page.ScreenshotAsync(new() { Path = file, FullPage = true });
-                    CopyMockupSideBySide(route.Id, tag, file, compareDir);
-                }
-            }
+            await page.WaitForTimeoutAsync(400);
+            var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
+            await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+            CopyMockupSideBySide(route.Id, tag, file, compareDir);
         }
 
-        Assert.True(Directory.GetFiles(OutDir, "*-capture-*.png").Length >= Routes.Length * 2);
+        Assert.Equal(Routes.Length, Directory.GetFiles(OutDir, "*-capture-*.png").Length);
+    }
+
+    private static async Task AssertCapturePageHealthyAsync(IPage page, string screenId, string role)
+    {
+        var body = await page.Locator("body").InnerTextAsync();
+        Assert.DoesNotContain("404", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("Pagina niet gevonden", body, StringComparison.OrdinalIgnoreCase);
+        var loginVisible = await page.GetByText("Inloggen", new() { Exact = true }).IsVisibleAsync();
+        Assert.False(loginVisible, $"Screen {screenId} still shows login for {role}");
+        var cookieBanner = page.Locator("[data-testid=cookie-consent-banner]");
+        if (await cookieBanner.CountAsync() > 0)
+        {
+            Assert.False(await cookieBanner.IsVisibleAsync(), $"Screen {screenId} still shows cookie banner");
+        }
     }
 
     private static void CopyMockupSideBySide(string screenId, string tag, string capturePath, string compareDir)

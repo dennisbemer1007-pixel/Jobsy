@@ -62,3 +62,4 @@ __pycache__/
 # Screenshot export HTML (generated locally)
 Jobsy.Web/wwwroot/kennismaken-export/
 mockups/
+test-results/

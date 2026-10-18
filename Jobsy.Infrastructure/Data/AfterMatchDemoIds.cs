@@ -18,5 +18,17 @@ public static class AfterMatchDemoIds
     /// <summary>13 kandidaat nu niet.</summary>
     public static readonly Guid NotNowApp = Guid.Parse("77777771-0005-4000-8000-000000000005");
 
+    /// <summary>Legacy single-vacancy id; prefer <see cref="VacancyForApplication"/>.</summary>
     public static readonly Guid DemoVacancyId = Guid.Parse("77777771-00aa-4000-8000-0000000000aa");
+
+    public static Guid VacancyForApplication(Guid applicationId) =>
+        applicationId switch
+        {
+            _ when applicationId == WaitApp => Guid.Parse("77777771-00a1-4000-8000-0000000000a1"),
+            _ when applicationId == PickSlotsApp => Guid.Parse("77777771-00a2-4000-8000-0000000000a2"),
+            _ when applicationId == ScheduledApp => Guid.Parse("77777771-00a3-4000-8000-0000000000a3"),
+            _ when applicationId == RescheduleApp => Guid.Parse("77777771-00a4-4000-8000-0000000000a4"),
+            _ when applicationId == NotNowApp => Guid.Parse("77777771-00a5-4000-8000-0000000000a5"),
+            _ => DemoVacancyId
+        };
 }
