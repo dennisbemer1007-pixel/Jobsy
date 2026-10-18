@@ -56,6 +56,13 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.LocationFailed"] = english
             ? "We couldn’t determine your postcode. Try entering it manually."
             : "We konden je postcode niet bepalen. Vul hem handmatig in.";
+        map["Onboarding.Geolocation.ApproximateHint"] = english
+            ? "We know your location only roughly (± {0} m). Is this wrong? Type your street or postcode."
+            : "We weten je locatie maar ongeveer (± {0} m). Klopt dit niet? Typ je straat of postcode.";
+        map["Onboarding.Geolocation.ConfirmPrecise"] = english
+            ? "We filled in your address from your location. Does this look right?"
+            : "We vulden je adres in via je locatie. Klopt dit?";
+        map["Onboarding.Geolocation.ConfirmCta"] = english ? "Yes, this address is correct" : "Ja, dit adres klopt";
         map["Onboarding.Step2.Title"] = english ? "When can you work?" : "Wanneer kun je werken?";
         map["Onboarding.Step2.Lead"] = english ? "Pick one or more options. We fill in the hours and days for you." : "Kies één of meer opties. Wij zetten uren en dagen voor je klaar.";
         map["Onboarding.AvailabilityPresetsLegend"] = english ? "1. Choose what suits you" : "1. Kies wat bij je past";

@@ -540,7 +540,8 @@
                 Draft.HomeLng,
                 Draft.Postcode,
                 Draft.PostcodeResolved,
-                today),
+                today,
+                Draft.GeolocationPendingConfirm),
             2 => OnboardingWizardValidation.ValidateAvailability(
                 Draft.MinHours,
                 Draft.MaxHours,
@@ -945,7 +946,7 @@
     private async Task EnsureAddressResolvedAsync()
     {
         if (OnboardingWizardValidation.HasResolvableLocation(
-                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved))
+                Draft.City, Draft.HomeLat, Draft.HomeLng, Draft.Postcode, Draft.PostcodeResolved, Draft.GeolocationPendingConfirm))
         {
             return;
         }

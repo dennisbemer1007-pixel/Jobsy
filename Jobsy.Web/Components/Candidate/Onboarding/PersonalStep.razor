@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Core.Privacy
 @using Jobsy.Core.Rules
+@using GeolocationPrefillMode = Jobsy.Core.Rules.GeolocationPrefillMode
 @using static Jobsy.Core.Rules.OnboardingWizardValidation
 @using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Components.Shared
@@ -63,7 +64,18 @@
 {
     <p class="error" role="status">@_locationError</p>
 }
-@if (Draft.PostcodeResolved && !string.IsNullOrWhiteSpace(LocationHint))
+@if (Draft.GeolocationPrefillMode == GeolocationPrefillMode.Approximate && Draft.GeolocationApproximateAccuracyMeters is int approxMeters)
+{
+    <p class="ob-wizard__hint ob-wizard__hint--geo" role="status">@Culture.Format("Onboarding.Geolocation.ApproximateHint", DisplayAccuracyMeters(approxMeters))</p>
+}
+@if (Draft.GeolocationPendingConfirm && Draft.GeolocationPrefillMode == GeolocationPrefillMode.Precise)
+{
+    <p class="ob-wizard__hint ob-wizard__hint--geo" role="status">@Culture["Onboarding.Geolocation.ConfirmPrecise"]</p>
+    <button type="button" class="ob-wizard__inline-link" data-testid="geolocation-confirm-address" @onclick="ConfirmGeolocationAsync">
+        @Culture["Onboarding.Geolocation.ConfirmCta"]
+    </button>
+}
+@if (Draft.PostcodeResolved && !Draft.GeolocationPendingConfirm && !string.IsNullOrWhiteSpace(LocationHint))
 {
     <p class="ob-wizard__hint">✓ @LocationHint</p>
 }
@@ -141,7 +153,8 @@
         Draft.HomeLat,
         Draft.HomeLng,
         Draft.Postcode,
-        Draft.PostcodeResolved);
+        Draft.PostcodeResolved,
+        Draft.GeolocationPendingConfirm);
 
     private bool _locating;
     private bool _suggesting;
@@ -275,6 +288,15 @@
         await AddressChanged.InvokeAsync();
     }
 
+    private async Task ConfirmGeolocationAsync()
+    {
+        CandidateHomeAddressLookup.ConfirmGeolocationPrefill(Draft);
+        await AddressChanged.InvokeAsync();
+    }
+
+    private static int DisplayAccuracyMeters(int meters)
+        => meters >= 1_000_000 ? GeolocationAddressPrefill.PreciseAccuracyThresholdMeters + 1 : meters;
+
     private async Task UseMyLocationAsync()
     {
         if (!ShowGeolocation)
@@ -287,36 +309,20 @@
         _showSuggestions = false;
         try
         {
-            var dict = await Js.InvokeAsync<Dictionary<string, double>>("jobsyGeo.requestLocation");
-            var lat = dict["lat"];
-            var lng = dict["lng"];
-            Draft.HomeLat = lat;
-            Draft.HomeLng = lng;
-            Draft.PostcodeResolved = true;
-            Draft.PostcodeMissing = false;
-            var label = await CandidateHomeAddressLookup.ReverseGeocodeLabelAsync(Geocoder, lat, lng);
-            if (!string.IsNullOrWhiteSpace(label))
-            {
-                Draft.AddressQuery = label;
-                var (postcode, city) = PostcodeMatch.SplitHomeAddress(label);
-                if (!string.IsNullOrWhiteSpace(postcode))
-                {
-                    Draft.Postcode = postcode;
-                }
+            var position = await Js.InvokeAsync<GeolocationPositionDto>("jobsyGeo.requestLocation");
+            var lat = position.lat;
+            var lng = position.lng;
+            var accuracy = position.accuracyMeters;
 
-                if (!string.IsNullOrWhiteSpace(city))
-                {
-                    Draft.City = city;
-                    Draft.ShowCity = false;
-                }
-                else
-                {
-                    Draft.ShowCity = true;
-                }
-            }
-            else
+            var label = await CandidateHomeAddressLookup.ReverseGeocodeLabelAsync(Geocoder, lat, lng);
+            var prefill = CandidateHomeAddressLookup.ApplyGeolocationPrefill(Draft, lat, lng, accuracy, label);
+            if (prefill is null)
             {
                 _locationError = Culture["Onboarding.LocationFailed"];
+            }
+            else if (prefill.Mode == GeolocationPrefillMode.Approximate)
+            {
+                await Js.InvokeVoidAsync("jobsyGeo.focusElement", "onboarding-home-address");
             }
 
             await AddressChanged.InvokeAsync();
