@@ -15,17 +15,18 @@ public class CandidateRun6GuardTests
         var assistant = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/LobsyAssistantChat.razor"));
 
         Assert.Contains("id=\"lobsy-coach-btn\"", coach, StringComparison.Ordinal);
-        Assert.Contains("/images/brand/mascot-coach.webp", coach, StringComparison.Ordinal);
+        Assert.Contains("lobsy-coach-dock__btn--warm", coach, StringComparison.Ordinal);
+        Assert.Contains("BrandImages.MarkSvg", coach, StringComparison.Ordinal);
         Assert.Contains("alt=\"\"", coach, StringComparison.Ordinal);
         Assert.Contains("<LobsyCoach", layout, StringComparison.Ordinal);
         Assert.Contains("HideEdgeTab=\"true\"", layout, StringComparison.Ordinal);
-        Assert.Contains("Coach.Feedback", assistant, StringComparison.Ordinal);
+        Assert.Contains("Assistant.HumanLink", assistant, StringComparison.Ordinal);
         Assert.Contains("OpenFromCoachAsync", assistant, StringComparison.Ordinal);
         Assert.Contains("StateHasChanged()", assistant, StringComparison.Ordinal);
         Assert.Contains("inset-inline-end: 24px;", css, StringComparison.Ordinal);
         Assert.Contains("bottom: calc(12px + env(safe-area-inset-bottom, 0px));", css, StringComparison.Ordinal);
         Assert.Contains("width: 64px;", css, StringComparison.Ordinal);
-        Assert.Contains("width: 56px;", css, StringComparison.Ordinal);
+        Assert.Contains("lobsy-coach-dock__medallion", css, StringComparison.Ordinal);
         Assert.Contains("--bottom-nav-h", css, StringComparison.Ordinal);
         Assert.Contains("--cookie-bar-h", css, StringComparison.Ordinal);
         Assert.Contains("--sticky-footer-h", css, StringComparison.Ordinal);

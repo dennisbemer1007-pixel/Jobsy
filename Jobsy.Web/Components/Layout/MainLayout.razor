@@ -93,7 +93,7 @@
     @if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && _isCandidate && !_hideCoachDock)
     {
         <LobsyCoach Compact="_isQuestionnairePage" AskLabel="@Culture["Coach.Ask"]" CloseLabel="@Culture["Coach.CloseTip"]" />
-        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
+        <LobsyAssistantChat HideEdgeTab="true" HasBottomNav="_hasBottomNav" UiVariant="AssistantChatUiVariant.Warm" />
         <FeedbackWidget HideEdgeTab="true" HasBottomNav="_hasBottomNav" />
     }
     else if (RendererInfo.IsInteractive && !_isMatchPage && !_banenkaartImmersive && !_isQuestionnairePage)

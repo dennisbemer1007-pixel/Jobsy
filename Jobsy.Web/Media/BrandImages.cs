@@ -10,6 +10,8 @@ public static class BrandImages
 
     public const string MarkSvg = $"/{BrandRoot}/svg/lobsy-merkteken.svg?v={Version}";
     public const string MarkDarkSvg = $"/{BrandRoot}/svg/lobsy-merkteken-donker.svg?v={Version}";
+    /// <summary>Cream lobster silhouette on employer/admin chat launcher (direction C).</summary>
+    public const string ChatSilhouetteSvg = $"/{BrandRoot}/svg/lobsy-monochroom-wit.svg?v={Version}";
     public const string HorizontalSvg = $"/{BrandRoot}/svg/lobsy-logo-horizontaal.svg?v={Version}";
     public const string HorizontalDarkSvg = $"/{BrandRoot}/svg/lobsy-logo-horizontaal-donker.svg?v={Version}";
     public const string StackedSvg = $"/{BrandRoot}/svg/lobsy-logo-gestapeld.svg?v={Version}";

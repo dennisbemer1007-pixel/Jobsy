@@ -140,6 +140,7 @@
 
 .app-shell:has(.notifications-page) .lobsy-coach-dock,
 .app-shell:has(.notifications-page) .lobsy-coach-cta,
-.app-shell:has(.notifications-page) .lobsy-assistant-tab--edge {
+.app-shell:has(.notifications-page) .lobsy-assistant-tab--edge,
+.app-shell:has(.notifications-page) .lobsy-assistant-launcher {
   display: none !important;
 }

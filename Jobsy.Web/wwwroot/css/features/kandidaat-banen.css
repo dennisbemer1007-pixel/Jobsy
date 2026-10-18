@@ -2856,7 +2856,8 @@ ol.apply-steps.apply-steps--three {
 /* Vacancy detail: no floating coach / mock-interview CTA overlapping sticky apply (E2E review). */
 .app-shell:has(.kb-detail) .lobsy-coach-dock,
 .app-shell:has(.kb-detail) .lobsy-coach-cta,
-.app-shell:has(.kb-detail) .lobsy-assistant-tab--edge {
+.app-shell:has(.kb-detail) .lobsy-assistant-tab--edge,
+.app-shell:has(.kb-detail) .lobsy-assistant-launcher {
   display: none !important;
 }
 
