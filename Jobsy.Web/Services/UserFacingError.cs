@@ -49,7 +49,14 @@ public sealed class UserFacingError
     public string Describe(Exception ex)
     {
         var message = From(ex);
-        return message.ApiUserMessage ?? _culture[message.MessageKey];
+        var text = message.ApiUserMessage ?? _culture[message.MessageKey];
+        if (!string.IsNullOrWhiteSpace(message.SupportCode)
+            && !string.Equals(message.MessageKey, "Common.Error.Network", StringComparison.Ordinal))
+        {
+            return _culture.Format("Common.ErrorWithReference", text, message.SupportCode);
+        }
+
+        return text;
     }
 
     /// <summary>
@@ -60,8 +67,20 @@ public sealed class UserFacingError
     public static string MessageKeyFor(Exception ex) => ex switch
     {
         ApiErrorException api => KeyForCode(api.Code),
-        HttpRequestException => "Common.Error.Network",
+        HttpRequestException http when http.StatusCode is null => "Common.Error.Network",
+        HttpRequestException http when http.StatusCode is { } status => KeyForHttpStatus(status),
         TaskCanceledException or TimeoutException => "Common.Error.Network",
+        _ => "Common.Error.TryAgain"
+    };
+
+    private static string KeyForHttpStatus(System.Net.HttpStatusCode status) => (int)status switch
+    {
+        (int)System.Net.HttpStatusCode.BadRequest or 422 => "Common.Error.Validation",
+        (int)System.Net.HttpStatusCode.NotFound or (int)System.Net.HttpStatusCode.Gone => "Common.Error.NotFound",
+        (int)System.Net.HttpStatusCode.Forbidden or (int)System.Net.HttpStatusCode.Unauthorized => "Common.Error.Forbidden",
+        429 => "Common.Error.RateLimited",
+        (int)System.Net.HttpStatusCode.ServiceUnavailable => "Status.Maintenance.Short",
+        >= 500 => "Common.Error.TryAgain",
         _ => "Common.Error.TryAgain"
     };
 

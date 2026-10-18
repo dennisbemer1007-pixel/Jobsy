@@ -108,7 +108,7 @@
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync();
-                _error = ExtractMessage(body) ?? Culture["Common.ErrorGeneric"];
+                _error = FormatError(body) ?? Culture["Common.ErrorGeneric"];
                 return;
             }
 
@@ -140,15 +140,34 @@
         await OnClose.InvokeAsync();
     }
 
-    private static string? ExtractMessage(string json)
+    private string? FormatError(string json)
     {
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(json);
+            string? message = null;
+            string? referenceCode = null;
             if (doc.RootElement.TryGetProperty("message", out var msg))
             {
-                return msg.GetString();
+                message = msg.GetString();
             }
+
+            if (doc.RootElement.TryGetProperty("referenceCode", out var refProp))
+            {
+                referenceCode = refProp.GetString();
+            }
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                return null;
+            }
+
+            if (string.IsNullOrWhiteSpace(referenceCode))
+            {
+                return message;
+            }
+
+            return Culture.Format("Common.ErrorWithReference", message, referenceCode);
         }
         catch (System.Text.Json.JsonException)
         {
