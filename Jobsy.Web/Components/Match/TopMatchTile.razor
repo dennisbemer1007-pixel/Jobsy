@@ -1,16 +1,18 @@
 @namespace Jobsy.Web.Components.Match
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Models
 @inject CultureState Culture
 
 @if (Model is not null && Model.MatchPercentage is int pct)
 {
+    var bandLabel = CandidateMatchDisplay.FitBandLabel(Culture, pct);
     <button type="button"
             @ref="_button"
             class="highlight-carousel__card highlight-carousel__card--top-match @(IsOpen ? "is-open" : null)"
             role="listitem"
             aria-haspopup="dialog"
             aria-expanded="@(IsOpen ? "true" : "false")"
-            aria-label="@Culture.Format("Match.TopMatchAria", pct, Model.JobTitle, Model.CompanyName)"
+            aria-label="@Culture.Format("Match.TopMatchAria", bandLabel, Model.JobTitle, Model.CompanyName)"
             @onclick="OnOpen">
         <span class="highlight-carousel__media-wrap">
             <VacancyPhoto Src="@Model.ImageUrl"
@@ -21,7 +23,7 @@
                           Width="160"
                           Height="107"
                           Sizes="56px" />
-            <span class="highlight-carousel__match-badge">@pct%</span>
+            <span class="highlight-carousel__match-badge">@bandLabel</span>
         </span>
         <span class="highlight-carousel__body">
             <span class="highlight-carousel__eyebrow">

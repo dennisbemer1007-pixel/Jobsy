@@ -1,6 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate
 @using Jobsy.Core.Careers
 @using Jobsy.Core.Rules
+@using Jobsy.Web.KandidaatBanen
 @implements IDisposable
 
 <div class="fit-host">
@@ -8,7 +9,7 @@
         @ChildContent
     </div>
     <div class="fit-pct__row">
-        <span class="fit-pct__value">@CareerCompassBuilder.FormatPercent(Model.Percent, Language)%</span>
+        <span class="fit-pct__value">@CandidateMatchDisplay.OccupationFitLabel((int)Math.Round(Model.Percent))</span>
         <button type="button"
                 class="fit-pct__help"
                 @ref="_toggle"
