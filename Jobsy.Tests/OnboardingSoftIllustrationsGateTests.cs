@@ -65,7 +65,7 @@ public sealed class OnboardingSoftIllustrationsGateTests
     {
         Assert.True(File.Exists(Path.Combine(RepoRoot, "tools/images/preprocess-onboarding-hero-seam.py")));
         var assets = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Onboarding/OnboardingIllustrationAssets.cs"));
-        Assert.Contains("20261018-r9", assets, StringComparison.Ordinal);
+        Assert.Contains("20261018-r10", assets, StringComparison.Ordinal);
     }
 
     [Fact]

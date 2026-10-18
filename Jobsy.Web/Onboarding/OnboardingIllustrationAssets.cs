@@ -3,7 +3,7 @@ namespace Jobsy.Web.Onboarding;
 /// <summary>Shared onboarding illustration paths (WebP + JPG fallback).</summary>
 public static class OnboardingIllustrationAssets
 {
-    public const string Version = "20261018-r9";
+    public const string Version = "20261018-r10";
 
     public const string KennismakenWebp = $"/images/onboarding/kennismaken.webp?v={Version}";
     public const string KennismakenJpg = $"/images/onboarding/kennismaken.jpg?v={Version}";
