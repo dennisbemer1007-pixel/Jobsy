@@ -27,14 +27,14 @@ const shots = [
   { file: "02-bedrijfspagina-mobiel.png", path: "/12345678", width: 390, role: "candidate", expect: "Korenaar" },
   { file: "02b-bedrijfspagina-zonder-vacatures-desktop.png", path: "/12345678/0003", width: 1440, role: "anonymous", expect: "Korenaar" },
   { file: "02b-bedrijfspagina-zonder-vacatures-mobiel.png", path: "/12345678/0003", width: 390, role: "anonymous", expect: "Korenaar" },
-  { file: "03-bericht-versturen-popup-desktop.png", path: "/12345678?demoKnock=1", width: 1440, role: "candidate", expect: "Ik wil hier werken" },
-  { file: "03-bericht-versturen-popup-mobiel.png", path: "/12345678?demoKnock=1", width: 390, role: "candidate", expect: "Ik wil hier werken" },
+  { file: "03-bericht-versturen-popup-desktop.png", path: "/12345678?demoKnock=1", width: 1440, role: "candidate", expect: "Klop aan" },
+  { file: "03-bericht-versturen-popup-mobiel.png", path: "/12345678?demoKnock=1", width: 390, role: "candidate", expect: "Klop aan" },
   { file: "03b-verstuurd-modal-desktop.png", path: "/12345678?demoSent=1", width: 1440, role: "candidate", expect: "Verstuurd" },
   { file: "03b-verstuurd-modal-mobiel.png", path: "/12345678?demoSent=1", width: 390, role: "candidate", expect: "Verstuurd" },
   { file: "03c-weeklimiet-modal-desktop.png", path: "/12345678?demoWeekLimit=1", width: 1440, role: "candidate", expect: "week" },
   { file: "03c-weeklimiet-modal-mobiel.png", path: "/12345678?demoWeekLimit=1", width: 390, role: "candidate", expect: "week" },
-  { file: "04-sollicitaties-initiatieven-desktop.png", path: "/candidate/applications/initiatieven", width: 1440, role: "candidate", expect: "Initiatief" },
-  { file: "04-sollicitaties-initiatieven-mobiel.png", path: "/candidate/applications/initiatieven", width: 390, role: "candidate", expect: "Initiatief" },
+  { file: "04-sollicitaties-initiatieven-desktop.png", path: "/candidate/applications/initiatieven", width: 1440, role: "candidate", expect: "Bakkerij" },
+  { file: "04-sollicitaties-initiatieven-mobiel.png", path: "/candidate/applications/initiatieven", width: 390, role: "candidate", expect: "Bakkerij" },
   { file: "04b-automatisch-nu-niet-desktop.png", path: "/candidate/applications/initiatieven/automatisch-nu-niet", width: 1440, role: "candidate", expect: "Automatisch" },
   { file: "04b-automatisch-nu-niet-mobiel.png", path: "/candidate/applications/initiatieven/automatisch-nu-niet", width: 390, role: "candidate", expect: "Automatisch" },
   { file: "05-w-instellingen-desktop.png", path: "/werkgever/open-voor-initiatief", width: 1440, role: "employer", expect: "Open voor initiatief" },
@@ -114,13 +114,26 @@ async function login(page, email, returnPath = "/home") {
 
 async function waitReady(page, path) {
   await page.waitForLoadState("networkidle", { timeout: 90_000 }).catch(() => {});
-  if (path.includes("bedrijvenkaart") || path.includes("12345678")) {
-    await page.waitForSelector(".bk-page, .pp-company, .pub-theme", { timeout: 90_000 });
+  if (path.includes("bedrijvenkaart")) {
+    await page.waitForSelector(".bk-page, .bk-shell", { timeout: 90_000 });
+  } else if (path.includes("12345678")) {
+    await page.waitForSelector(".pp-company, .pub-theme", { timeout: 90_000 });
+  }
+  if (path.includes("demoKnock")) {
+    await page.waitForSelector(".bk-side-panel[role='dialog']", { timeout: 90_000 });
+  }
+  if (path.includes("demoSent")) {
+    await page.waitForSelector(".bk-modal[role='dialog'], .bk-side-panel[role='dialog']", { timeout: 90_000 });
+  }
+  if (path.includes("demoWeekLimit")) {
+    await page.waitForSelector(".bk-modal[role='dialog']", { timeout: 90_000 });
   }
   if (path.includes("werkgever/sollicitaties/initiatieven")) {
     await page.waitForSelector(".bk-wg-apps__split", { timeout: 90_000 });
   }
-  if (path.includes("/candidate/applications")) {
+  if (path.includes("/candidate/applications/initiatieven")) {
+    await page.waitForSelector(".kb-apps__initiative-card, .kb-apps__layout--initiative", { timeout: 90_000 });
+  } else if (path.includes("/candidate/applications")) {
     await page.waitForSelector(".kb-apps", { timeout: 90_000 });
   }
   await page.waitForTimeout(path.includes("demo") ? 1500 : 900);

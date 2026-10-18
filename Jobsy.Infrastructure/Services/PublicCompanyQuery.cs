@@ -66,7 +66,6 @@ public sealed class PublicCompanyQuery : IPublicCompanyQuery
                         && c.KvkVerificationStatus == KvkVerificationStatus.Verified
                         // A "Verwijderen" decision on a content report takes the page offline (06).
                         && c.PublicPageBlockedAtUtc == null)
-            .Where(c => publicByCompany.Keys.Contains(c.Id))
             .Select(c => new
             {
                 c.Id,

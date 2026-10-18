@@ -532,6 +532,16 @@
         return Task.CompletedTask;
     }
 
+    protected override void OnParametersSet()
+    {
+        ApplyRouteDefaults();
+        if (!_loading && _sourceFilter == "initiative")
+        {
+            ApplyFilter();
+            EnsureInitiativeSelection();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthState.GetAuthenticationStateAsync();
@@ -556,11 +566,13 @@
             ApplyCaptureQuery();
             EnsureInitiativeSelection();
         }
-        catch
+        catch (Exception ex)
         {
-            _items = [];
-            _filtered = [];
+            _message = UserFacing.Describe(ex);
+            _filtered = _items;
             RefreshCounts();
+            ApplyRouteDefaults();
+            ApplyFilter();
         }
         finally { _loading = false; }
     }
