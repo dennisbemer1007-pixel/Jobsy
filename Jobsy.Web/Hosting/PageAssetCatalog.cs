@@ -46,10 +46,10 @@ public static class PageAssetCatalog
     [
         "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
-        "css/features/onboarding-wizard.css?v=20261018-01",
+        "css/features/onboarding-wizard.css?v=20261018-02",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
-        "css/features/onboarding-wizard-richting-a.css?v=20261017-01",
-        "css/features/onboarding-work-history.css?v=20261018-01",
+        "css/features/onboarding-wizard-richting-a.css?v=20261018-02",
+        "css/features/onboarding-work-history.css?v=20261018-07",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",

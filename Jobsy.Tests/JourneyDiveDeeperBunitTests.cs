@@ -117,6 +117,13 @@ public sealed class JourneyDiveDeeperBunitTests : BunitContext
                 return Task.FromResult(Json("""{"dislikes":[],"customDislikes":[]}"""));
             }
 
+            if (path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase))
+            {
+                var answered = CompetencyAnswers.Count(static kv => kv.Value is >= 1 and <= 5);
+                return Task.FromResult(Json(
+                    $$"""{"profileRevision":"test","competencyAnswered":{{answered}},"careerAnswered":0,"cultureAnswered":0,"valuesAnswered":0}"""));
+            }
+
             var body = path.Contains("/onboarding", StringComparison.OrdinalIgnoreCase)
                 && !path.Contains("discovery-overview", StringComparison.OrdinalIgnoreCase)
                 ? """
