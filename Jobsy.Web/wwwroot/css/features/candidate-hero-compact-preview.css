@@ -368,13 +368,105 @@
   }
 
   .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero {
-    --cand-hero-mobile-h: 6.25rem;
-    max-height: 6.25rem;
+    --cand-hero-mobile-h: 7.25rem;
+    --cand-compact-c-img-mask: none;
+    position: relative;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-block-end: 0.65rem;
+    block-size: min(7.25rem, 116px);
+    min-block-size: min(7.25rem, 116px);
+    max-block-size: min(7.25rem, 116px);
     min-height: 0 !important;
-    display: block;
-    grid-template-columns: unset;
+    height: min(7.25rem, 116px) !important;
+    max-height: min(7.25rem, 116px) !important;
+    overflow: hidden;
     background-color: var(--cand-compact-hero-band) !important;
     background-image: none !important;
+  }
+
+  .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero::before {
+    content: "";
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-hero-band) 0%,
+      var(--cand-compact-hero-band) 46%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 82%, transparent) 54%,
+      transparent 72%
+    );
+  }
+
+  .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero .cand-hero__copy {
+    grid-area: 1 / 1;
+    position: relative !important;
+    inset: auto !important;
+    z-index: 2;
+    box-sizing: border-box;
+    width: 58% !important;
+    max-width: 58% !important;
+    margin: 0 !important;
+    padding: 0.55rem 0.65rem 0.5rem !important;
+    overflow: visible !important;
+    background: transparent !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero .cand-hero__copy h1 {
+    font-size: clamp(0.88rem, 3.6vw, 0.98rem);
+    line-height: 1.14;
+    overflow-wrap: normal !important;
+    word-break: keep-all !important;
+    hyphens: none !important;
+    white-space: nowrap !important;
+    text-wrap: nowrap !important;
+  }
+
+  .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero .cand-hero__copy .cand-hero__lead {
+    font-size: 0.78rem;
+    line-height: 1.32;
+    margin-top: 0.22rem;
+    overflow: visible;
+  }
+
+  .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero .cand-hero__compact-c-art {
+    grid-area: 1 / 1;
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    z-index: 0;
+    display: block;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero .cand-hero__compact-c-art img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    min-inline-size: 100%;
+    min-block-size: 100%;
+    object-fit: cover;
+    object-position: right center;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 20%, #000 92%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 10%, #000 88%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   .career-page--compact-preview-c > header.cand-hero--compact-preview-c.cand-compact-hero {
@@ -405,8 +497,8 @@
     inset: auto !important;
     z-index: 2;
     box-sizing: border-box;
-    width: 60% !important;
-    max-width: 60% !important;
+    width: 58% !important;
+    max-width: 58% !important;
     padding-block: 0.55rem 0.5rem;
     padding-inline: 0.65rem 0.35rem !important;
     background: transparent !important;
@@ -432,21 +524,27 @@
 
   .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__compact-c-art {
     position: absolute !important;
-    inset: 0 0 0 auto !important;
-    top: 0 !important;
-    bottom: 0 !important;
-    right: 0 !important;
-    left: auto !important;
-    width: 38% !important;
-    max-width: 9.5rem;
-    opacity: 0.9;
-    z-index: 1;
+    inset: 0 !important;
+    left: 58% !important;
+    width: 42% !important;
+    max-width: none !important;
+    opacity: 1;
+    z-index: 0;
     pointer-events: none;
+    display: block;
+    overflow: hidden;
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__compact-c-art img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    min-inline-size: 100%;
+    min-block-size: 100%;
     object-fit: cover;
-    object-position: 78% center;
+    object-position: right center;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .career-page--compact-preview-c:has(> header.cand-compact-hero--onboarding) .career-stage__card {
@@ -543,5 +641,19 @@
       color-mix(in srgb, var(--cand-compact-hero-band) 82%, transparent) 54%,
       transparent 72%
     );
+  }
+
+  /* Onboarding mobile topbar: match standard app header logo size (Dennis). */
+  .ob-wizard--compact-preview-c.ob-wizard--richting-a .ob-wizard__topbar-brand .lobsy-logo--horizontal {
+    height: 40px;
+    max-width: min(140px, 44vw);
+  }
+
+  .ob-wizard--compact-preview-c.ob-wizard--richting-a .ob-wizard__topbar-brand .lobsy-logo--horizontal .lobsy-logo__img,
+  .ob-wizard--compact-preview-c.ob-wizard--richting-a .ob-wizard__topbar-brand img {
+    width: auto !important;
+    height: 100% !important;
+    max-height: 40px;
+    object-fit: contain;
   }
 }

@@ -62,7 +62,7 @@ public static class PageAssetCatalog
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
         "css/features/mijn-paspoort.css?v=20261018-06",
-        "css/features/kompas-illustrated.css?v=20261018-05",
+        "css/features/kompas-illustrated.css?v=20261019-01",
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
@@ -275,7 +275,7 @@ public static class PageAssetCatalog
             || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
             || path == PassportRedirects.PassportPath)
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261019-35"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261019-37"];
         }
 
         return [];

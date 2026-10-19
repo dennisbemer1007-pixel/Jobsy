@@ -136,21 +136,65 @@
   scroll-margin-top: calc(var(--app-header-height, 4.25rem) + 3.75rem);
 }
 
-.passport-page--illustrated .passport-tabs {
+.passport-page--illustrated .passport-layout {
+  --passport-layout-pad: 1.25rem;
+}
+
+.passport-page--illustrated .passport-tabs-shell {
   position: sticky;
   inset-block-start: var(--app-header-height, 4.25rem);
-  z-index: calc(var(--z-sticky, 20) + 1);
+  z-index: calc(var(--z-sticky, 20) + 2);
+  margin-block: var(--space-3);
+  margin-inline: calc(-1 * var(--passport-layout-pad, 1.25rem));
+  padding-block: var(--space-2);
+  padding-inline: max(var(--passport-layout-pad, 1.25rem), env(safe-area-inset-left, 0px))
+    max(var(--passport-layout-pad, 1.25rem), env(safe-area-inset-right, 0px));
+  isolation: isolate;
+  background: transparent;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--border) 85%, transparent),
+    0 12px 18px -12px color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.passport-page--illustrated .passport-tabs-shell::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset-block: 0;
+  inset-inline-start: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: var(--bg);
+  box-shadow: 0 10px 20px -14px color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+.passport-page--illustrated .passport-tabs-shell::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset-block: var(--space-2) var(--space-2);
+  inset-inline-end: max(var(--passport-layout-pad, 1.25rem), env(safe-area-inset-right, 0px));
+  width: 2.25rem;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--bg) 72%);
+}
+
+.passport-page--illustrated .passport-tabs {
+  position: static;
+  inset-block-start: auto;
+  z-index: auto;
   flex-wrap: nowrap;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  margin-block: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 3px;
   gap: 3px;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--bg) 88%, transparent);
+  box-shadow: none;
 }
 
 .passport-page--illustrated .passport-tabs::-webkit-scrollbar {
@@ -179,7 +223,6 @@
 
 @media (min-width: 1024px) {
   .passport-page--illustrated .passport-tabs {
-    inset-block-start: var(--app-header-height, 4.25rem);
     flex-wrap: nowrap;
     overflow-x: auto;
   }
