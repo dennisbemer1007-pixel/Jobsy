@@ -1699,6 +1699,22 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateTestReflections.RemoveRange(testReflections);
         }
 
+        var uwvToolkit = await _db.CandidateUwvToolkitStates
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (uwvToolkit.Count > 0)
+        {
+            _db.CandidateUwvToolkitStates.RemoveRange(uwvToolkit);
+        }
+
+        var uwvShares = await _db.CandidateUwvAdviseurShares
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (uwvShares.Count > 0)
+        {
+            _db.CandidateUwvAdviseurShares.RemoveRange(uwvShares);
+        }
+
         var privatePrefs = await _db.CandidatePrivatePreferences
             .Where(p => p.UserId == user.Id)
             .ToListAsync(cancellationToken);

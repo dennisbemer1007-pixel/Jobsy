@@ -13,6 +13,7 @@
 | TestJourneyIllustrationEnabled | Web (via API flags) | env → admin override | ja (nieuw) |
 | OnboardingFinaleV2Enabled | Web (via API flags) | env → admin override | ja (nieuw) |
 | OccupationDayInLifeEnabled | API + Web | env → admin override | ja (nieuw) |
+| UwvFeaturesEnabled | beide | DB / `Features:UwvFeatures` | ja (kansberoepen, ondernemerstest, drijfveren, adviseur-deel) |
 | TestsV2Enabled | beide | DB / JobsyFeatures | ja |
 | ProactiveMatchingEnabled | beide | DB | ja |
 | EmployerPhase2Enabled | beide | DB | ja |

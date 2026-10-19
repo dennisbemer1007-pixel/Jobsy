@@ -95,19 +95,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
             new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
 
-        var firstName = page.Locator("input[autocomplete=given-name]").First;
-        if (await firstName.CountAsync() > 0)
-        {
-            await firstName.FillAsync("Func");
-            var lastName = page.Locator("input[autocomplete=family-name]").First;
-            if (await lastName.CountAsync() > 0)
-            {
-                await lastName.FillAsync("Test");
-            }
-
-            await page.WaitForTimeoutAsync(300);
-        }
-
         var viewport = page.ViewportSize;
         var mobile = viewport is not null && viewport.Width < 600;
         var selected = false;
@@ -137,6 +124,13 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 {
                     await chip.ClickAsync(new() { Timeout = 15_000, Force = true });
                 }
+
+                await page.WaitForFunctionAsync(
+                    """
+                    () => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'
+                    """,
+                    null,
+                    new() { Timeout = 15_000 });
 
                 selected = await WaitForWorkStatusSelectedAsync(page, 25_000);
                 if (selected)
@@ -360,17 +354,19 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         try
         {
-            await page.WaitForURLAsync(
-                u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-                new() { Timeout = 180_000, WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.Locator(".jobsy-discovery, [data-testid=uwv-kansberoepen-toggle]").First.WaitForAsync(
+                new() { State = WaitForSelectorState.Attached, Timeout = 240_000 });
         }
         catch (TimeoutException)
         {
-            var saveError = page.Locator(".ob-wizard .error[role=alert], .ob-wizard .error[role=status]").First;
-            if (await saveError.CountAsync() > 0 && await saveError.IsVisibleAsync())
+            if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
             {
-                var text = await saveError.InnerTextAsync();
-                throw new InvalidOperationException($"Onboarding skip-later failed in UI: {text.Trim()}");
+                var saveError = page.Locator(".ob-wizard .error[role=alert], .ob-wizard .error[role=status]").First;
+                if (await saveError.CountAsync() > 0 && await saveError.IsVisibleAsync())
+                {
+                    var text = await saveError.InnerTextAsync();
+                    throw new InvalidOperationException($"Onboarding skip-later failed in UI: {text.Trim()}");
+                }
             }
 
             throw;

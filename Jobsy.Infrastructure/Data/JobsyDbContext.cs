@@ -60,6 +60,8 @@ public class JobsyDbContext : DbContext
     public DbSet<LenderRegistration> LenderRegistrations => Set<LenderRegistration>();
     public DbSet<CandidateWhoAmIProfile> CandidateWhoAmIProfiles => Set<CandidateWhoAmIProfile>();
     public DbSet<CandidateTestReflection> CandidateTestReflections => Set<CandidateTestReflection>();
+    public DbSet<CandidateUwvToolkitState> CandidateUwvToolkitStates => Set<CandidateUwvToolkitState>();
+    public DbSet<CandidateUwvAdviseurShare> CandidateUwvAdviseurShares => Set<CandidateUwvAdviseurShare>();
     public DbSet<CandidatePrivatePreferences> CandidatePrivatePreferences => Set<CandidatePrivatePreferences>();
     public DbSet<CandidateCareerPlan> CandidateCareerPlans => Set<CandidateCareerPlan>();
     public DbSet<CandidateCareerStepProgress> CandidateCareerStepProgress => Set<CandidateCareerStepProgress>();
@@ -1071,6 +1073,26 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.SourceHash).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Feedback).HasMaxLength(32);
             entity.HasIndex(e => new { e.UserId, e.Kind, e.Level, e.Language }).IsUnique();
+        });
+
+        modelBuilder.Entity<CandidateUwvToolkitState>(entity =>
+        {
+            entity.ToTable("CandidateUwvToolkitStates");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.OndernemerAnswersJson).HasColumnType("text");
+            entity.Property(e => e.OndernemerOutcomeKey).HasMaxLength(32);
+            entity.Property(e => e.DrijfverenDriverKeysJson).HasMaxLength(512);
+        });
+
+        modelBuilder.Entity<CandidateUwvAdviseurShare>(entity =>
+        {
+            entity.ToTable("CandidateUwvAdviseurShares");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenHash).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.SectionsJson).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Language).HasMaxLength(8).IsRequired();
+            entity.HasIndex(e => e.TokenHash);
+            entity.HasIndex(e => new { e.UserId, e.CreatedAtUtc });
         });
 
         modelBuilder.Entity<CandidatePrivatePreferences>(entity =>

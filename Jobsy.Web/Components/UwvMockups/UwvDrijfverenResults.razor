@@ -1,0 +1,56 @@
+@using Jobsy.Core.Uwv
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Services
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject JobsyApiClient Api
+
+<section class="detail-card career-card uwv-block uwv-drijfveren" aria-labelledby="@_titleId">
+    <p class="uwv-block__eyebrow">
+        <i class="uwv-block__dot" aria-hidden="true"></i>
+        @UwvMockupCopy.Drijfveren.SectionTitle(Lang)
+    </p>
+    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Drijfveren.CardTitle(Lang)</h2>
+    <p class="uwv-block__lead">@UwvMockupCopy.Drijfveren.CardLead(Lang)</p>
+
+    <ul class="uwv-drijfveren__chips">
+        @foreach (var d in DriverChips)
+        {
+            <li class="uwv-drijfveren__chip">
+                <strong>@(UwvMockupCopy.IsEnglish(Lang) ? d.LabelEn : d.LabelNl)</strong>
+                <p>@(UwvMockupCopy.IsEnglish(Lang) ? d.ExplainEn : d.ExplainNl)</p>
+            </li>
+        }
+    </ul>
+
+    <p class="uwv-drijfveren__adviseur">
+        <a class="uwv-inline-link" href="/candidate/adviseur-werk">@UwvMockupCopy.Drijfveren.AdviseurLink(Lang)</a>
+    </p>
+</section>
+
+@code {
+    private string Lang => Culture.Language;
+    private readonly string _titleId = "uwv-drijfveren-" + Guid.NewGuid().ToString("N")[..8];
+    private IReadOnlyList<UwvDriverChip> DriverChips { get; set; } = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await Api.GetUwvToolkitAsync();
+        var keys = state?.DrijfverenDriverKeys?.Where(UwvDriverKeys.IsValid).ToList();
+        if (keys is null || keys.Count == 0)
+        {
+            keys = UwvDriverKeys.All.Take(3).ToList();
+            await Api.SaveUwvDrijfverenAsync(keys.ToArray());
+        }
+
+        DriverChips = keys
+            .Select((key, _) =>
+            {
+                var idx = UwvDriverKeys.All.ToList().IndexOf(key);
+                return idx >= 0 && idx < UwvMockupData.Drivers.Count ? UwvMockupData.Drivers[idx] : null;
+            })
+            .Where(d => d is not null)
+            .Select(d => d!)
+            .ToList();
+    }
+}

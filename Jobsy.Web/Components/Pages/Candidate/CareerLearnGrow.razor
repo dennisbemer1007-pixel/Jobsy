@@ -8,18 +8,21 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Models
+@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.UwvFeatures
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
+@inject IUwvFeaturesGate UwvGate
 
 <PageTitle>@Culture["Training.LearnGrow.NavLearn"] · Lobsy</PageTitle>
 
-@if (!_enabled)
+@if (!_enabled && !_uwvOn)
 {
     return;
 }
 
-<div class="opl-page panel-page--cand-ill">
+<div class="opl-page panel-page--cand-ill @(_uwvOn ? "uwv-carriere-leren-mock" : null)">
     <CandidateIllustratedHero Eyebrow="@Culture["Training.LearnGrow.NavLearn"]"
                               CoralEyebrow="true"
                               Title="@Culture["Training.LearnGrow.Title"]"
@@ -65,11 +68,11 @@
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
         }
-        else if (_page is null)
+        else if (_page is null && !_uwvOn)
         {
             <p class="state-message">@Culture["Common.Error"]</p>
         }
-        else
+        else if (_page is not null)
         {
             <div class="opl-layout">
                 <div class="opl-main">
@@ -162,6 +165,14 @@
                 </div>
             </div>
         }
+
+        @if (_uwvOn)
+        {
+            <div class="uwv-carriere-leren-mock__blocks" data-testid="uwv-carriere-leren-sections">
+                <UwvOmscholenBlock />
+                <UwvWorkshopsPartnersBlock />
+            </div>
+        }
     </main>
 </div>
 
@@ -169,6 +180,7 @@
     private const int SectionPreviewCount = 3;
 
     private bool _enabled;
+    private bool _uwvOn;
     private bool _loading = true;
     private bool _busy;
     private string _search = "";
@@ -207,9 +219,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners);
+        _uwvOn = await UwvGate.IsEnabledAsync();
+        _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners)
+                   || _uwvOn;
         if (!_enabled)
         {
+            return;
+        }
+
+        if (_uwvOn && !await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners))
+        {
+            _loading = false;
             return;
         }
 

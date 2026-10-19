@@ -82,7 +82,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.OccupationDayInLifeEnabled ?? true,
                 dto?.TestEditModeEnabled ?? false,
                 dto?.SamplePdfEnabled ?? false,
-                dto?.TestDepthValueMockupEnabled ?? true);
+                dto?.TestDepthValueMockupEnabled ?? true,
+                dto?.UwvFeaturesEnabled ?? true);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -197,5 +198,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("testDepthValueMockupEnabled")]
         public bool TestDepthValueMockupEnabled { get; set; } = true;
+
+        [JsonPropertyName("uwvFeaturesEnabled")]
+        public bool UwvFeaturesEnabled { get; set; } = true;
     }
 }

@@ -266,6 +266,7 @@ public sealed class PlatformFeatureItem
     public bool AfterMatchEnabled { get; set; }
     public bool SensitiveExperienceEnabled { get; set; }
     public bool TrainingPartnersEnabled { get; set; }
+    public bool UwvFeaturesEnabled { get; set; }
     public bool ReferenceVerificationEnabled { get; set; }
     public bool TestJourneyIllustrationEnabled { get; set; }
     public bool OnboardingFinaleV2Enabled { get; set; }
@@ -327,6 +328,7 @@ public sealed class PlatformFeaturePatch
     public bool? AfterMatchEnabled { get; set; }
     public bool? SensitiveExperienceEnabled { get; set; }
     public bool? TrainingPartnersEnabled { get; set; }
+    public bool? UwvFeaturesEnabled { get; set; }
     public bool? ReferenceVerificationEnabled { get; set; }
     public bool? TestJourneyIllustrationEnabled { get; set; }
     public bool? OnboardingFinaleV2Enabled { get; set; }

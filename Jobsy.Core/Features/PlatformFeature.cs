@@ -87,7 +87,10 @@ public enum PlatformFeature
     TrainingPartners,
 
     /// <summary>
-    /// Mockup UX: mini-spiegel at 5/10, unlock cards, words-only deep report. Default false.
+    /// Mockup UX: mini-spiegel at 5/10, unlock cards, words-only deep report. Default on (admin can disable).
     /// </summary>
-    TestDepthValueMockup
+    TestDepthValueMockup,
+
+    /// <summary>UWV werkmap: kansberoepen, ondernemerstest, drijfveren, adviseur-deel. Default on (admin can disable).</summary>
+    UwvFeatures
 }

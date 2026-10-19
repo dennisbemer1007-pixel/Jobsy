@@ -1,0 +1,46 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+<nav class="app-header__nav candidate-header-nav" aria-label="@Culture["Nav.Main"]" data-testid="candidate-header-nav">
+    @foreach (var item in UwvMockupNav.Items)
+    {
+        var title = Culture[item.TitleKey];
+        var shortTitle = !string.IsNullOrWhiteSpace(item.ShortTitleKey)
+            ? Culture[item.ShortTitleKey!]
+            : title;
+        var active = RoleNavCatalog.IsActive(item, ActiveHref, UwvMockupNav.Items);
+        <a class="candidate-header-nav__link @(active ? "is-active" : null)"
+           href="@UwvMockupNav.PreviewHref(item.Href, Lang)"
+           title="@title"
+           aria-current="@(active ? "page" : null)"
+           data-testid="@HeaderNavTestId(item)">
+            @shortTitle
+        </a>
+    }
+</nav>
+
+@code {
+    [Parameter] public string ActiveHref { get; set; } = "/carriere";
+    [Parameter] public string Lang { get; set; } = "nl";
+
+    private static string? HeaderNavTestId(NavItem item)
+    {
+        if (string.Equals(item.Href, RoleNavCatalog.HoursItem.Href, StringComparison.OrdinalIgnoreCase))
+        {
+            return "nav-maqqie-uren";
+        }
+
+        if (string.Equals(item.Href, RoleNavCatalog.DiscoveryItem.Href, StringComparison.OrdinalIgnoreCase))
+        {
+            return "header-nav-discovery";
+        }
+
+        if (string.Equals(item.Href, RoleNavCatalog.SearchItem.Href, StringComparison.OrdinalIgnoreCase))
+        {
+            return "header-nav-search";
+        }
+
+        return null;
+    }
+}
