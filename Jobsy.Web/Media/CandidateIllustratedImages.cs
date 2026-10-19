@@ -36,6 +36,7 @@ public static class CandidateIllustratedImages
     public const string InstellingenBand = $"{Base}/beschikbaarheid-profession-wide.jpg?v={Version}";
     public const string KompasHeroWide = $"{Base}/kompas-hero-wide.jpg?v={Version}";
     public const string BedrijvenkaartHeroMobile = $"{Base}/bedrijvenkaart-hero-mobile.jpg?v={Version}";
+    public const string BedrijvenkaartHeroDesktop = $"{Base}/bedrijvenkaart-hero-desktop.jpg?v={Version}";
 
     private const string MobFiguresBase = $"{Base}/mob-figures";
 

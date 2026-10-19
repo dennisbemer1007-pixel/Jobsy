@@ -223,11 +223,22 @@ internal static class DemoCompanyMapInitiativeSeeder
             var title = titles[i % titles.Length];
             vacancies[i].Title = title;
             vacancies[i].WorkTypes = WorkType.Winkel | WorkType.Horeca;
-            var bakeryLike = title.Contains("bakker", StringComparison.OrdinalIgnoreCase)
-                             || title.Contains("vitrine", StringComparison.OrdinalIgnoreCase);
-            vacancies[i].ImageUrl = VacancyImageUrls.Placeholder(
-                vacancies[i].Id,
-                bakeryLike ? WorkType.Horeca : WorkType.Winkel);
+            var workType = WorkType.Winkel;
+            if (title.Contains("bakker", StringComparison.OrdinalIgnoreCase)
+                && !title.Contains("vitrine", StringComparison.OrdinalIgnoreCase))
+            {
+                workType = WorkType.Horeca;
+            }
+            else if (title.Contains("vitrine", StringComparison.OrdinalIgnoreCase))
+            {
+                workType = WorkType.Winkel;
+            }
+            else if (title.Contains("lunchroom", StringComparison.OrdinalIgnoreCase))
+            {
+                workType = WorkType.Winkel;
+            }
+
+            vacancies[i].ImageUrl = VacancyImageUrls.Placeholder(vacancies[i].Id, workType);
         }
 
         var cafeVacancies = await db.Vacancies.Where(v => v.CompanyId == CafeId).ToListAsync(cancellationToken);

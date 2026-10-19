@@ -18,6 +18,14 @@ const r14Files = new Set([
   "02-bedrijfspagina-desktop.png",
   "02-bedrijfspagina-mobiel-top.png",
 ]);
+const r15Files = new Set([
+  "01-bedrijvenkaart-desktop.png",
+  "01-bedrijvenkaart-mobiel-top.png",
+  "01-bedrijvenkaart-mobiel-scroll.png",
+  "02-bedrijfspagina-desktop.png",
+  "02-bedrijfspagina-mobiel-top.png",
+  "02-bedrijfspagina-mobiel-scroll.png",
+]);
 const password = "Jobsy123!";
 const candidateEmail = "sanne@jobsy.local";
 const employerEmail = "enterprise@jobsy.local";
@@ -85,7 +93,9 @@ const shots = captureOnly
   ? allShots.filter((s) => s.file === captureOnly)
   : captureSet === "r14"
     ? allShots.filter((s) => r14Files.has(s.file))
-    : allShots;
+    : captureSet === "r15"
+      ? allShots.filter((s) => r15Files.has(s.file))
+      : allShots;
 
 if (shots.length === 0) {
   throw new Error(`CAPTURE_ONLY=${captureOnly} matched no shots`);
@@ -247,6 +257,33 @@ for (const role of roles) {
 
   await context.close();
   await new Promise((r) => setTimeout(r, 1200));
+}
+
+async function captureHeroZooms(browserInstance) {
+  for (const spec of [
+    { file: "01-hero-bedrijvenkaart-desktop-2x.png", path: "/bedrijvenkaart", width: 1440, selector: ".bk-page .bk-cand-hero" },
+    { file: "01-hero-bedrijvenkaart-mobiel-2x.png", path: "/bedrijvenkaart", width: 390, selector: ".bk-page .bk-cand-hero" },
+  ]) {
+    const context = await browserInstance.newContext({
+      viewport: { width: spec.width, height: spec.width <= 420 ? 844 : 900 },
+      deviceScaleFactor: 2,
+    });
+    await acceptCookies(context);
+    const page = await context.newPage();
+    await login(page, candidateEmail, spec.path);
+    await page.goto(`${baseUrl}${spec.path}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+    await waitReady(page, spec.path);
+    const hero = page.locator(spec.selector).first();
+    await hero.waitFor({ state: "visible", timeout: 45_000 });
+    await hero.screenshot({ path: join(outDir, spec.file) });
+    manifest.push({ file: spec.file, path: spec.path, ok: true, zoom: "2x" });
+    console.log("saved", spec.file);
+    await context.close();
+  }
+}
+
+if (captureSet === "r15") {
+  await captureHeroZooms(browser);
 }
 
 await browser.close();

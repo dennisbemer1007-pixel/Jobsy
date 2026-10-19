@@ -1090,31 +1090,44 @@ textarea.bk-wg-input {
     max-height: 280px;
   }
 
+  .bk-page .bk-cand-hero.cand-hero--bk-single {
+    background-color: var(--pearl, #f7f4f0);
+  }
+
   .bk-page .cand-hero--bk-single.cand-hero--profession-band::before {
-    z-index: 2;
+    z-index: 1;
     background: linear-gradient(
       90deg,
       var(--pearl, #f7f4f0) 0%,
-      var(--pearl, #f7f4f0) 48%,
-      transparent 50%
+      var(--pearl, #f7f4f0) 58%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 96%, transparent) 66%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 40%, transparent) 74%,
+      transparent 84%
     );
   }
 
   .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
+    inset: 0;
     background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
-    background-size: auto 102%;
-    background-position: 92% top;
-    left: 50%;
-    right: 0;
-    width: auto;
-    clip-path: inset(0 0 0 0);
+    background-size: cover;
+    background-position: var(--cand-hero-pos-desktop, center top);
     opacity: 1;
     z-index: 0;
   }
 
   .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy {
-    z-index: 3;
-    max-width: min(40%, 34rem);
+    z-index: 2;
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding: clamp(1.35rem, 3vw, 2rem) var(--bk-gutter, clamp(1.5rem, 2.8vw, 2rem));
+    box-sizing: border-box;
+    background: transparent;
+  }
+
+  .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy h1,
+  .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy .cand-hero__lead {
+    max-width: 32rem;
   }
 }
 
@@ -1154,9 +1167,11 @@ textarea.bk-wg-input {
     background: linear-gradient(
       90deg,
       var(--pearl, #f7f4f0) 0%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 92%, transparent) 38%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 45%, transparent) 52%,
-      transparent 68%
+      var(--pearl, #f7f4f0) 34%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 92%, transparent) 44%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 55%, transparent) 54%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 18%, transparent) 64%,
+      transparent 76%
     );
   }
 
