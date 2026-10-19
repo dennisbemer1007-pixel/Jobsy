@@ -131,7 +131,7 @@ public static class CaptureModeExtensions
     {
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
             => ValueTask.FromResult(new FeatureFlagSnapshot(
-                EmployersEnabled: false,
+                EmployersEnabled: true,
                 CandidatePassportEnabled: true,
                 TestsV2Enabled: true,
                 TestItemExamplesEnabled: true,

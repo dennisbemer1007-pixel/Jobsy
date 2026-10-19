@@ -1426,7 +1426,6 @@
 
 /* Compact full-width test header (variant C, ~130px) — illustration in cream band, no side card. */
 .test-block-stage:has(.test-shell--block-compact) {
-  --test-block-hero-cream: var(--pearl);
   background: var(--bg);
   border-radius: 0;
   overflow: visible;
@@ -1455,34 +1454,41 @@
 }
 
 .cand-hero--test-compact {
+  --cand-hero-mobile-h: 8.125rem;
+
   min-height: 8.125rem;
   height: 8.125rem;
   max-height: 8.125rem;
   margin-bottom: 0.5rem;
+  border-block-end: none;
   background-color: var(--test-block-hero-cream, var(--pearl)) !important;
-  background-image: none !important;
+  background-image: var(--test-block-band-image, var(--cand-hero-art, none)) !important;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: var(--cand-hero-pos-desktop, var(--cand-hero-pos, 72% center));
 }
 
 .cand-hero--test-compact::before {
   z-index: 2;
   background:
-    linear-gradient(180deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 22%),
-    linear-gradient(0deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 28%),
-    linear-gradient(90deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 42%);
+    linear-gradient(180deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 30%),
+    linear-gradient(0deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 34%),
+    linear-gradient(90deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 55%),
+    linear-gradient(270deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 42%);
 }
 
 .cand-hero--test-compact::after {
-  z-index: 1;
-  background-size: auto 88%;
-  background-position: 88% center;
-  opacity: 1;
-  mask-image: radial-gradient(ellipse 78% 88% at 78% 52%, #000 42%, transparent 78%);
+  display: none !important;
+  content: none !important;
 }
 
 .cand-hero--test-compact .cand-hero__copy {
   z-index: 3;
+  max-width: min(56%, 38rem);
   padding-block: 0.85rem;
-  max-width: 52%;
+  padding-inline: max(1rem, env(safe-area-inset-inline-start, 0px))
+    max(1rem, env(safe-area-inset-inline-end, 0px));
+  background: transparent !important;
 }
 
 .cand-hero--test-compact .cand-hero__copy h1 {
@@ -1491,22 +1497,34 @@
   margin: 0;
 }
 
-@media (max-width: 767px) {
-  .cand-hero--test-compact.cand-hero--with-art {
-    max-height: 8.125rem;
-    min-height: 8.125rem;
-    height: 8.125rem;
-    grid-template-columns: 58% 42%;
+@media (max-width: 639px) {
+  .cand-hero--test-compact {
+    display: block;
+    height: var(--cand-hero-mobile-h);
+    max-height: var(--cand-hero-mobile-h);
+    min-height: var(--cand-hero-mobile-h);
+    background-image: var(--test-block-band-image, var(--cand-hero-art, none)) !important;
+    background-size: cover;
+    background-position: var(--cand-hero-pos, 78% center);
+  }
+
+  .cand-hero--test-compact::before {
+    background:
+      linear-gradient(180deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 32%),
+      linear-gradient(0deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 36%),
+      linear-gradient(118deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 58%),
+      linear-gradient(270deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 36%);
   }
 
   .cand-hero--test-compact .cand-hero__copy {
-    max-width: none;
-    padding: 0.65rem 0.75rem;
-  }
-
-  .cand-hero--test-compact .cand-hero__mob-figures {
-    max-width: min(100%, 7.5rem);
-    max-height: 7rem;
+    position: relative;
+    inset: auto;
+    width: min(58%, 14.5rem);
+    max-width: min(58%, 14.5rem);
+    height: auto;
+    min-height: 0;
+    padding: 0.65rem max(1rem, env(safe-area-inset-inline-start, 0px)) 0.55rem
+      max(1rem, env(safe-area-inset-inline-end, 0px));
   }
 }
 

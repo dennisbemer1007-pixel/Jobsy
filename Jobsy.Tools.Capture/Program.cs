@@ -30,6 +30,27 @@ const string baseUrl = "http://localhost:5201";
 const string consentInit = """
     try { localStorage.setItem('Jobsy.CookieConsent', 'necessary'); } catch (e) {}
     """;
+const string readAloudStub = """
+    (() => {
+      if (!window.speechSynthesis) {
+        window.speechSynthesis = {
+          speak: () => {},
+          cancel: () => {},
+          getVoices: () => [{ lang: 'nl-NL', localService: true, name: 'capture-stub' }],
+          addEventListener: () => {},
+          removeEventListener: () => {}
+        };
+      }
+      if (typeof SpeechSynthesisUtterance === 'undefined') {
+        window.SpeechSynthesisUtterance = function (text) {
+          this.text = text;
+          this.lang = '';
+          this.onend = null;
+          this.onerror = null;
+        };
+      }
+    })();
+    """;
 
 var targets = voorbeeldenOnly
     ? new (string Stem, string ReturnPath, string CaptureTarget)[]
@@ -82,6 +103,7 @@ foreach (var (stem, returnPath, captureTarget) in targets)
 
     await using var authContext = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
     await authContext.AddInitScriptAsync(consentInit);
+    await authContext.AddInitScriptAsync(readAloudStub);
     await SignInAsync(authContext, baseUrl, returnPath);
     var authCookies = (await authContext.CookiesAsync())
         .Select(c => new Microsoft.Playwright.Cookie
@@ -112,6 +134,7 @@ foreach (var (stem, returnPath, captureTarget) in targets)
             IgnoreHTTPSErrors = true
         });
         await context.AddInitScriptAsync(consentInit);
+        await context.AddInitScriptAsync(readAloudStub);
         await context.AddCookiesAsync(authCookies);
         var cultureCookie = new Microsoft.Playwright.Cookie
         {
@@ -153,6 +176,7 @@ foreach (var (stem, returnPath, captureTarget) in targets)
             || stem.StartsWith("voorbeeld-", StringComparison.OrdinalIgnoreCase))
         {
             await page.Locator("[data-testid=test-item-example]").WaitForAsync(new() { Timeout = 60_000 });
+            await page.Locator("[data-read-aloud]").WaitForAsync(new() { Timeout = 60_000 });
         }
 
         if (width < 640)
