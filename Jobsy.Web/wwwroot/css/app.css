@@ -21906,9 +21906,7 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
     .app-shell:has(.kb-ext) .app-main {
         padding-bottom: calc(
-            var(--bottom-nav-h, 0px)
-            + 48px
-            + var(--cookie-bar-h, 0px)
+            var(--cookie-bar-h, 0px)
             + var(--pwa-banner-bottom-h, 0px)
             + env(safe-area-inset-bottom, 0px)
         );

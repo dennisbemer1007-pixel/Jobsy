@@ -9,7 +9,11 @@
     width: 100%;
     margin-inline: 0;
     padding-inline: 1rem;
-    padding-block-end: calc(1rem + var(--lobsy-coach-fab-size, 56px) + 12px);
+    padding-block-end: calc(
+      var(--bottom-nav-h, 4.75rem)
+      + 24px
+      + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .app-shell:has([data-lobsy-coach]) main .kb-ext :is(a, button).kb-ext__btn {
@@ -25,13 +29,20 @@
     box-sizing: border-box;
   }
 
-  }
-
   .app-shell:has(.kb-ext) .lobsy-coach-dock--suppressed {
     visibility: hidden;
     opacity: 0;
     pointer-events: none;
     transform: scale(0.92);
+  }
+
+  .kb-ext__match,
+  .kb-ext__actions {
+    scroll-margin-bottom: calc(
+      var(--cookie-bar-h, 0px)
+      + var(--bottom-nav-h, 4.75rem)
+      + 24px
+    );
   }}.kb-ext__match,
 .kb-ext__actions {
   scroll-margin-bottom: calc(

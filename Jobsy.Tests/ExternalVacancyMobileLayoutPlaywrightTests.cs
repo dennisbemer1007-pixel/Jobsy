@@ -287,7 +287,7 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
 
               const nav = document.querySelector('.bottom-nav');
               const navH = nav ? nav.getBoundingClientRect().height : 64;
-              const maxSlack = navH + 48;
+              const maxSlack = navH + 24;
 
               const lastRect = last.getBoundingClientRect();
               const rootTop = root.getBoundingClientRect().top;
