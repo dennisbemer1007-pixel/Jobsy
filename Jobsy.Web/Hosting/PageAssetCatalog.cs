@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261019-12",
+        "css/app.min.css?v=20261019-13",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/candidate-illustrated-decorative-layers.css?v=20261019-03",
@@ -48,7 +48,7 @@ public static class PageAssetCatalog
 
     private static readonly string[] UwvMockupRouteCss =
     [
-        "css/features/uwv-mockups.css?v=20261019-r4",
+        "css/features/uwv-mockups.css?v=20261019-r5b",
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
     ];

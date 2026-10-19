@@ -25,7 +25,6 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
     private static readonly string[] PartialCapturePrefixes =
     [
-        "02-banenkaart-kanslaag-",
         "04-ondernemer-result-",
     ];
 
@@ -157,11 +156,71 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
             }
 
             await Task.Delay(1500);
+
+            if (cap.Path.Contains("ondernemerscheck", StringComparison.OrdinalIgnoreCase)
+                && cap.Path.Contains("result", StringComparison.OrdinalIgnoreCase))
+            {
+                await AssertOndernemerResultLayoutAsync(page, cap.Width);
+            }
+
             var path = Path.Combine(OutDir, cap.FileSlug + ".png");
             await page.ScreenshotAsync(new() { Path = path, FullPage = cap.FullPage });
         }
 
         await BuildPerScreenContactSheetsAsync(OutDir);
+    }
+
+    private static async Task AssertOndernemerResultLayoutAsync(IPage page, int width)
+    {
+        var layout = await page.EvaluateAsync<CoachOverlapDto>("""
+            () => {
+              const done = document.querySelector('.uwv-ondernemer-result__done');
+              const coach = document.querySelector('#lobsy-coach-btn');
+              const scene = document.querySelector('.uwv-ondernemer-result__scene');
+              const sceneImg = scene?.querySelector('img');
+              if (!done || !coach) {
+                return { ok: false, reason: 'missing nodes' };
+              }
+              const dr = done.getBoundingClientRect();
+              const cr = coach.getBoundingClientRect();
+              const overlap = !(dr.right <= cr.left + 2 || dr.left >= cr.right - 2 || dr.bottom <= cr.top + 2 || dr.top >= cr.bottom - 2);
+              let sceneHiddenMobile = true;
+              if (scene && sceneImg) {
+                const sr = scene.getBoundingClientRect();
+                const style = getComputedStyle(scene);
+                sceneHiddenMobile = style.display === 'none' || sr.width < 8 || sr.height < 8;
+              }
+              return {
+                ok: !overlap,
+                overlap,
+                doneBottom: dr.bottom,
+                coachTop: cr.top,
+                sceneHidden: sceneHiddenMobile,
+                viewportWidth: window.innerWidth
+              };
+            }
+            """);
+
+        Assert.True(layout.Ok, layout.Reason ?? $"coach overlaps done line (overlap={layout.Overlap}, doneBottom={layout.DoneBottom}, coachTop={layout.CoachTop})");
+
+        if (width >= 640)
+        {
+            Assert.False(layout.SceneHidden, "result scene should be visible from 640px up");
+        }
+        else
+        {
+            Assert.True(layout.SceneHidden, "result scene should be hidden below 640px");
+        }
+    }
+
+    private sealed class CoachOverlapDto
+    {
+        public bool Ok { get; set; }
+        public string? Reason { get; set; }
+        public bool Overlap { get; set; }
+        public double DoneBottom { get; set; }
+        public double CoachTop { get; set; }
+        public bool SceneHidden { get; set; }
     }
 
     private static async Task BuildPerScreenContactSheetsAsync(string dir)
