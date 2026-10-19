@@ -194,8 +194,14 @@
     protected override async Task OnParametersSetAsync()
     {
         _loading = true;
-        _detail = await Api.GetExternalVacancyAsync(Id);
-        _loading = false;
+        try
+        {
+            _detail = await Api.GetExternalVacancyAsync(Id);
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private IEnumerable<(string Label, string Value, bool Unknown)> FactRows(ExternalVacancyDetailDto detail)
