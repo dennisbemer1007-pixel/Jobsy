@@ -194,6 +194,57 @@ public static class CandidateHomeAddressLookup
         return prefill;
     }
 
+    /// <summary>
+    /// Resolve coords/postcode/city from typed text when the user did not pick a suggestion (Volgende must not block).
+    /// </summary>
+    public static async Task<bool> TryResolveTypedAddressAsync(
+        OnboardingProfileDraft draft,
+        IGeocodingClient geocoder,
+        CancellationToken cancellationToken = default)
+    {
+        if (draft.GeolocationPendingConfirm)
+        {
+            return false;
+        }
+
+        if (draft.HomeLat is not null && draft.HomeLng is not null)
+        {
+            return true;
+        }
+
+        var query = (draft.AddressQuery ?? string.Empty).Trim();
+        if (query.Length < 3)
+        {
+            return false;
+        }
+
+        try
+        {
+            var results = await geocoder.SuggestAsync(query, cancellationToken);
+            if (results.Count == 0)
+            {
+                return false;
+            }
+
+            var best = PdokGeocodingClient.PickBestMatch(query, results);
+            if (best is null)
+            {
+                return false;
+            }
+
+            ApplySuggestionToDraft(draft, best);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     public static async Task<bool> TryResolvePostcodeAsync(
         OnboardingProfileDraft draft,
         IGeocodingClient geocoder,
