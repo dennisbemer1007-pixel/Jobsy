@@ -294,7 +294,8 @@ public class CandidateRun12Tests
         ]);
         Assert.NotEmpty(jobs);
         Assert.DoesNotContain(jobs, job => job.Reason.Contains("hoofd koel", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains("50%", jobs[0].Reason, StringComparison.Ordinal);
+        Assert.DoesNotContain('%', jobs[0].Reason);
+        Assert.Contains("Kalm blijven", jobs[0].Reason, StringComparison.Ordinal);
     }
 
     [Fact]
