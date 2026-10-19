@@ -57,6 +57,12 @@
     pointer-events: none;
   }
 
+  .ob-wizard--richting-a [data-testid="onboarding-next"],
+  .ob-wizard--richting-a [data-testid="onboarding-back"] {
+    scroll-margin-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 8px);
+    touch-action: manipulation;
+  }
+
   .ob-wizard--richting-a.ob-wizard,
   .ob-wizard--richting-a .ob-wizard__layout,
   .ob-wizard--richting-a .ob-wizard__main {

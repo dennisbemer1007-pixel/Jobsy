@@ -573,21 +573,22 @@ combo.save(out)
     {
         await page.Locator(".ob-fields input").First.FillAsync("Vroeg");
         await page.Locator(".ob-fields input").Nth(1).FillAsync("Test");
-        await ResolveOnboardingHomeAddressAsync(page, postcode);
+        await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, postcode);
         await FillOnboardingBirthDateIfPresentAsync(page);
-
-        var workChip = page.Locator(".work-status-chips .lobsy-choice-tile, .work-status-chips .work-status-chip").First;
-        if (await workChip.CountAsync() > 0)
-        {
-            await workChip.ScrollIntoViewIfNeededAsync();
-            await workChip.ClickAsync(new() { Force = true, Timeout = 15_000 });
-            await page.WaitForTimeoutAsync(600);
-            if (await page.Locator(".work-status-chips .is-selected, .work-status-chips [aria-pressed=\"true\"]").CountAsync() == 0)
-            {
-                await workChip.EvaluateAsync("el => el instanceof HTMLElement && el.click()");
-                await page.WaitForTimeoutAsync(600);
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const birthErr = document.querySelector('[data-testid=onboarding-birth-date] .jobsy-date-field__error');
+              if (birthErr?.textContent?.trim()) return false;
+              const locErr = document.querySelector('[data-testid=onboarding-location-error]');
+              if (locErr?.textContent?.trim()) return false;
+              return true;
             }
-        }
+            """,
+            null,
+            new() { Timeout = 30_000 });
+
+        await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
         await ClickNextAsync(page);
         await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
@@ -752,7 +753,26 @@ combo.save(out)
     internal static async Task ClickNextAsync(IPage page)
     {
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-        await page.Locator("[data-testid=onboarding-next]").ClickAsync(new() { Force = true, Timeout = 20_000 });
+        var next = page.Locator("[data-testid=onboarding-next]").First;
+        await next.ScrollIntoViewIfNeededAsync();
+        await page.WaitForTimeoutAsync(150);
+        var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+        try
+        {
+            if (mobile)
+            {
+                await next.TapAsync(new() { Timeout = 20_000 });
+            }
+            else
+            {
+                await next.ClickAsync(new() { Timeout = 20_000 });
+            }
+        }
+        catch (PlaywrightException)
+        {
+            await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
+        }
+
         await page.WaitForTimeoutAsync(500);
     }
 }

@@ -1205,6 +1205,12 @@ window.jobsyDom = {
         window.jobsyDom.scrollToTop();
         window.jobsyDom.focusWizardStepHeading();
     },
+    readInputValue: function (el) {
+        if (!el || typeof el.value === "undefined" || el.value === null) {
+            return "";
+        }
+        return String(el.value);
+    },
     matchesMedia: function (query) {
         try {
             return !!(window.matchMedia && window.matchMedia(query).matches);

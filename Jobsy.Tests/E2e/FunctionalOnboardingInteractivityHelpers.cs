@@ -38,6 +38,53 @@ internal static class FunctionalOnboardingInteractivityHelpers
         Assert.True(audit.Ok, $"{label}: {audit.Reason}");
     }
 
+    internal static async Task SelectAnyWorkStatusChipAsync(IPage page)
+    {
+        var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
+        if (await chips.CountAsync() == 0)
+        {
+            return;
+        }
+
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
+
+        var mobile = page.ViewportSize is { Width: < 600 };
+        for (var i = 0; i < await chips.CountAsync(); i++)
+        {
+            var chip = chips.Nth(i);
+            await chip.ScrollIntoViewIfNeededAsync();
+            try
+            {
+                if (mobile)
+                {
+                    await chip.TapAsync(new() { Timeout = 10_000 });
+                }
+                else
+                {
+                    await chip.ClickAsync(new() { Timeout = 10_000 });
+                }
+            }
+            catch (PlaywrightException)
+            {
+                await chip.ClickAsync(new() { Force = true, Timeout = 10_000 });
+            }
+
+            if (await WaitForWorkStatusSelectedAsync(page, 8_000))
+            {
+                return;
+            }
+        }
+
+        var audits = await DescribeHitAuditsAsync(page, [
+            (".work-status-chips .lobsy-choice-tile", "werkstatus-chip"),
+            ("[data-testid=onboarding-next]", "volgende"),
+        ]);
+        throw new InvalidOperationException($"Could not select a work-status chip. Hit audits: {audits}");
+    }
+
     internal static async Task AssertWorkStatusChipTogglesAsync(IPage page)
     {
         var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
@@ -110,7 +157,46 @@ internal static class FunctionalOnboardingInteractivityHelpers
             }
         }
 
-        Assert.True(selected, "werkstatus chip did not select after trying all chips");
+        if (!selected)
+        {
+            var audits = await DescribeHitAuditsAsync(page, [
+                (".work-status-chips .lobsy-choice-tile", "werkstatus-chip"),
+                ("[data-testid=onboarding-next]", "volgende"),
+            ]);
+            Assert.True(selected, $"werkstatus chip did not select after trying all chips. Hit audits: {audits}");
+        }
+    }
+
+    internal static async Task<string> DescribeHitAuditsAsync(IPage page, (string Selector, string Label)[] targets)
+    {
+        var parts = new List<string>();
+        foreach (var (selector, label) in targets)
+        {
+            var audit = await page.EvaluateAsync<string>(
+                """
+                ({ selector, label }) => {
+                  const el = document.querySelector(selector);
+                  if (!el) return `${label}:missing`;
+                  el.scrollIntoView({ block: 'center', inline: 'nearest' });
+                  const r = el.getBoundingClientRect();
+                  const x = Math.min(window.innerWidth - 1, Math.max(1, r.left + r.width / 2));
+                  const y = Math.min(window.innerHeight - 1, Math.max(1, r.top + r.height / 2));
+                  const hit = document.elementFromPoint(x, y);
+                  if (!hit) return `${label}:no-hit@(${Math.round(x)},${Math.round(y)})`;
+                  const ok = hit === el || el.contains(hit);
+                  const tag = hit.tagName.toLowerCase();
+                  const cls = hit.className ? '.' + String(hit.className).trim().split(/\\s+/)[0] : '';
+                  const testId = hit.getAttribute?.('data-testid');
+                  const id = hit.id ? '#' + hit.id : '';
+                  const desc = testId ? `[data-testid=${testId}]` : `${tag}${id}${cls}`;
+                  return `${label}:${ok ? 'ok' : 'blocked-by-' + desc}@(${Math.round(x)},${Math.round(y)}) circuit=${document.documentElement.getAttribute('data-lobsy-circuit')}`;
+                }
+                """,
+                new { selector, label });
+            parts.Add(audit);
+        }
+
+        return string.Join("; ", parts);
     }
 
     internal static async Task AssertGeolocateButtonRespondsAsync(IPage page)
