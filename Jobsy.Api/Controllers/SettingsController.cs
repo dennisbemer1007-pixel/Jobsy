@@ -507,6 +507,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     AfterMatchEnabled: request.AfterMatchEnabled,
                     SensitiveExperienceEnabled: request.SensitiveExperienceEnabled,
                     TrainingPartnersEnabled: request.TrainingPartnersEnabled,
+                    UwvFeaturesEnabled: request.UwvFeaturesEnabled,
                     ReferenceVerificationEnabled: request.ReferenceVerificationEnabled,
                     TestJourneyIllustrationEnabled: request.TestJourneyIllustrationEnabled,
                     OnboardingFinaleV2Enabled: request.OnboardingFinaleV2Enabled,
@@ -620,6 +621,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("AfterMatchEnabled", before.AfterMatchEnabled.ToString(), after.AfterMatchEnabled.ToString());
         Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
         Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
+        Add("UwvFeaturesEnabled", before.UwvFeaturesEnabled.ToString(), after.UwvFeaturesEnabled.ToString());
         Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
         Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
         Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
@@ -629,6 +631,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
         Add("EmployerFitQuestionnairesEnabled", before.EmployerFitQuestionnairesEnabled.ToString(), after.EmployerFitQuestionnairesEnabled.ToString());
+        Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
+        Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
         Add("CandidateApplyPerMinuteLimit", before.CandidateApplyPerMinuteLimit.ToString(), after.CandidateApplyPerMinuteLimit.ToString());
         Add("CandidateApplyPerHourLimit", before.CandidateApplyPerHourLimit.ToString(), after.CandidateApplyPerHourLimit.ToString());
         Add("CandidateApplyPerDayLimit", before.CandidateApplyPerDayLimit.ToString(), after.CandidateApplyPerDayLimit.ToString());
@@ -668,6 +672,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             referenceVerificationEnabled = snap.ReferenceVerificationEnabled,
             sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,
             trainingPartnersEnabled = snap.TrainingPartnersEnabled,
+            uwvFeaturesEnabled = snap.UwvFeaturesEnabled,
             pupilPassportV2Enabled = snap.PupilPassportV2Enabled,
             studentPassportEnabled = snap.StudentPassportEnabled,
             testJourneyIllustrationEnabled = snap.TestJourneyIllustrationEnabled,
@@ -999,6 +1004,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.KandidatenkaartEnabled,
             snap.SensitiveExperienceEnabled,
             snap.TrainingPartnersEnabled,
+            snap.UwvFeaturesEnabled,
             snap.ReferenceVerificationEnabled,
             snap.TestJourneyIllustrationEnabled,
             snap.OnboardingFinaleV2Enabled,

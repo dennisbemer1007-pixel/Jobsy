@@ -53,7 +53,7 @@ public static class RoleNavCatalog
         new("Nav.Applications", "/candidate/applications", NavIcons.Applications);
 
     public static readonly NavItem CareerItem =
-        new("Nav.CareerPath", "/carriere", NavIcons.Career);
+        new("Nav.CareerPath", "/carriere", NavIcons.Career, ["/carriere/leren"]);
 
     public static readonly NavItem HoursItem =
         new("Nav.Hours", "/candidate/uren", NavIcons.Clock, ShortTitleKey: "Nav.Hours.Short");
@@ -63,13 +63,17 @@ public static class RoleNavCatalog
 
     public static readonly NavItem PassportItem =
         new("Nav.Passport", "/candidate/paspoort", NavIcons.Profile,
-            ["/candidate/profile", "/profiel", "/home"],
+            ["/candidate/profile", "/profiel", "/home", "/candidate/adviseur-werk"],
             ShortTitleKey: "Nav.Passport.Short");
 
     /// <summary>De ontdekkingsreis — filled in file 08 (§N Discovery slot).</summary>
     public static readonly NavItem DiscoveryItem =
         new("Nav.Discovery", "/candidate/ontdekkingsreis", NavIcons.Compass,
-            ["/candidate/start"],
+            [
+                "/candidate/start",
+                "/candidate/ondernemerscheck",
+                "/candidate/wat-drijft-jou",
+            ],
             ShortTitleKey: "Nav.Discovery.Short");
 
     /// <summary>Sollicitaties with Bewaard URLs as active aliases (passport-ON order).</summary>

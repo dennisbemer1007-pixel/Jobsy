@@ -787,11 +787,11 @@ public static class UiStringsKandidaatBanen
             "Reistijd ongeveer (cirkel)", "Travel time approximate (circle)",
             "Czas orientacyjny (okrąg)", "Timp aproximativ (cerc)", "وقت تقريبي (دائرة)");
         Add("Kb.Legend.TravelApproxHint",
-            "Ongeveer — echte OV-routes volgen we nog niet.",
-            "Approximate — we do not follow real transit routes yet.",
-            "Orientacyjnie — nie śledzimy jeszcze tras komunikacji.",
-            "Aproximativ — încă nu urmărim rutele de transport.",
-            "تقريبي — لا نتبع مسارات المواصلات بعد.");
+            "Ongeveer. Echte OV-routes volgen we nog niet.",
+            "Approximate. We do not follow real transit routes yet.",
+            "Orientacyjnie. Nie śledzimy jeszcze tras komunikacji.",
+            "Aproximativ. Încă nu urmărim rutele de transport.",
+            "تقريبي. لا نتبع مسارات المواصلات بعد.");
         Add("Kb.Legend.RingMinutes",
             "{0} min", "{0} mins",
             "{0} minut", "{0} min.", "{0} د");
@@ -887,11 +887,11 @@ public static class UiStringsKandidaatBanen
             "În {0} min {1} de acasă. Schimbă cu butonul '{2}'.",
             "خلال {0} د {1} من المنزل. عدّله بزر '{2}'.");
         Add("Kb.List.RailTravel.Approx",
-            "Ongeveer — echte OV-routes volgen we nog niet.",
-            "Approximate — we do not follow real transit routes yet.",
-            "Orientacyjnie — nie śledzimy jeszcze tras komunikacji.",
-            "Aproximativ — încă nu urmărim rutele de transport.",
-            "تقريبي — لا نتبع مسارات المواصلات بعد.");
+            "Ongeveer. Echte OV-routes volgen we nog niet.",
+            "Approximate. We do not follow real transit routes yet.",
+            "Orientacyjnie. Nie śledzimy jeszcze tras komunikacji.",
+            "Aproximativ. Încă nu urmărim rutele de transport.",
+            "تقريبي. لا نتبع مسارات المواصلات بعد.");
 
         // Vacancy detail (06)
         Add("Kb.Detail.TravelTitle",

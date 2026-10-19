@@ -331,6 +331,35 @@ internal static class IllustratedPagesApiStub
                 """;
         }
 
+        if (path.Contains("/me/reference-verification/verified-competences", StringComparison.OrdinalIgnoreCase))
+        {
+            return """
+                [
+                  {
+                    "code": "plan",
+                    "label": "Plannen en organiseren",
+                    "recognitionLine": "Bevestigd door referent",
+                    "completedAtUtc": "2026-09-01T10:00:00Z"
+                  }
+                ]
+                """;
+        }
+
+        if (path.Contains("/me/uwv", StringComparison.OrdinalIgnoreCase))
+        {
+            if (path.Contains("adviseur-share", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"token":"uwv-share-demo-token","expiresAtUtc":"2026-12-31T00:00:00Z"}""";
+            }
+
+            return """
+                {
+                  "ondernemerOutcomeKey": "explore",
+                  "drijfverenDriverKeys": ["security", "connection", "growth"]
+                }
+                """;
+        }
+
         return "{}";
     }
 

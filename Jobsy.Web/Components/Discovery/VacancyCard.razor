@@ -16,30 +16,53 @@
        @onclick="HandleOpen"
        @onclick:stopPropagation="true"></a>
     <a class="job-card__media" href="@($"/vacancies/{Vacancy.Id}")" @onclick="HandleOpen" @onclick:stopPropagation="true">
-        <VacancyPhoto Src="@Vacancy.ImageUrl"
-                      FallbackSrc="@Vacancy.CompanyLogoUrl"
-                      VacancyId="Vacancy.Id"
-                      WorkType="@(Vacancy.WorkTypes.FirstOrDefault())"
-                      Class="job-card__photo"
-                      Width="400"
-                      Height="267"
-                      Eager="Eager"
-                      Sizes="(max-width: 700px) 50vw, 360px" />
-        @if (IsHighlighted)
+        @if (UwvKansberoepBadge && !string.IsNullOrWhiteSpace(Vacancy.ImageUrl))
+        {
+            <img class="job-card__photo"
+                 src="@Vacancy.ImageUrl"
+                 alt=""
+                 width="400"
+                 height="267"
+                 loading="@(Eager ? "eager" : "lazy")"
+                 decoding="async"
+                 draggable="false"
+                 style="@PhotoObjectPositionStyle" />
+        }
+        else
+        {
+            <VacancyPhoto Src="@Vacancy.ImageUrl"
+                          FallbackSrc="@Vacancy.CompanyLogoUrl"
+                          VacancyId="Vacancy.Id"
+                          WorkType="@(Vacancy.WorkTypes.FirstOrDefault())"
+                          Class="job-card__photo"
+                          Width="400"
+                          Height="267"
+                          Eager="Eager"
+                          Sizes="(max-width: 700px) 50vw, 360px" />
+        }
+        @if (UwvKansberoepBadge)
+        {
+            <span class="job-card__badge job-card__badge--soft uwv-badge--kans">@(UwvKansberoepBadgeEnglish ? "Opportunity job" : "Kansberoep")</span>
+        }
+        @if (UwvBaangarantieBadge)
+        {
+            <span class="job-card__badge uwv-badge--guarantee">@(UwvKansberoepBadgeEnglish ? "Job guarantee" : "Baangarantie")</span>
+        }
+        @if (IsHighlighted && !UwvKansberoepBadge && !UwvBaangarantieBadge)
         {
             <span class="job-card__badge">@Culture["Discovery.Featured"]</span>
         }
-        else if (!string.IsNullOrWhiteSpace(Vacancy.ExclusivityName)
+        else if (!UwvKansberoepBadge && !UwvBaangarantieBadge && !string.IsNullOrWhiteSpace(Vacancy.ExclusivityName)
                  && string.Equals(Vacancy.Kind, "Internship", StringComparison.OrdinalIgnoreCase)
                  && !Vacancy.ExclusivityIsOpen)
         {
             <span class="job-card__badge job-card__badge--soft">@Vacancy.ExclusivityName</span>
         }
-        else if (ShowsSuitableFor65Plus)
+        else if (!UwvKansberoepBadge && !UwvBaangarantieBadge && ShowsSuitableFor65Plus)
         {
             <span class="job-card__badge job-card__badge--senior65">@VacancyCategoryDefaults.SuitableFor65PlusLabel</span>
         }
-        else if (Vacancy.WorkTypes.Length > 0)
+        else if (!UwvKansberoepBadge && !UwvBaangarantieBadge && Vacancy.WorkTypes.Length > 0)
         {
             <span class="job-card__badge job-card__badge--soft">@UiLabels.WorkType(Culture, Vacancy.WorkTypes[0])</span>
         }
@@ -104,6 +127,13 @@
     [Parameter] public EventCallback<Guid> OnSelect { get; set; }
     [Parameter] public EventCallback<Guid> OnOpen { get; set; }
     [Parameter] public EventCallback<VacancyListItem> OnExplainMatch { get; set; }
+    [Parameter] public bool UwvKansberoepBadge { get; set; }
+    [Parameter] public bool UwvBaangarantieBadge { get; set; }
+    [Parameter] public bool UwvKansberoepBadgeEnglish { get; set; }
+    [Parameter] public string? PhotoObjectPosition { get; set; }
+
+    private string? PhotoObjectPositionStyle =>
+        string.IsNullOrWhiteSpace(PhotoObjectPosition) ? null : $"object-position:{PhotoObjectPosition}";
 
     private Guid _renderVacancyId;
     private bool _renderHighlighted;

@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (283 routes)
+## Table (289 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -135,6 +135,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/bronnen` | `Pages/Legal/Bronnen.razor` | anonymous |
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
+| `/candidate/adviseur-werk` | `Pages/Candidate/AdviseurWerk.razor` | Candidate |
 | `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
 | `/candidate/applications/{ApplicationId:guid}/after-match` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
 | `/candidate/applications/{ApplicationId:guid}/after-match/bevestiging` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
@@ -158,6 +159,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/kandidatenkaart-instellingen` | `Pages/Candidate/CandidateKandidatenkaartSettings.razor` | Candidate |
 | `/candidate/liked` | `Pages/Candidate/Liked.razor` | anonymous |
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
+| `/candidate/ondernemerscheck` | `Pages/Candidate/OndernemersCheck.razor` | Candidate |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
 | `/candidate/paspoort/referentie/vraag/{EntryId:guid}` | `Pages/Candidate/ReferenceVerificationRequestPage.razor` | Candidate |
@@ -176,9 +178,11 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/uren` | `Pages/Candidate/MaqqieHours.razor` | Candidate |
 | `/candidate/vacancies` | `Pages/Candidate/Vacancies.razor` | Candidate |
 | `/candidate/values` | `Pages/Candidate/ValuesScan.razor` | Candidate |
+| `/candidate/wat-drijft-jou` | `Pages/Candidate/WatDrijftJou.razor` | Candidate |
 | `/carriere` | `Pages/Candidate/CareerDashboard.razor` | Candidate |
 | `/carriere/leren` | `Pages/Candidate/CareerLearnGrow.razor` | Candidate |
 | `/contact` | `Pages/Legal/Contact.razor` | anonymous |
+| `/deel/uwv-adviseur/{Token}` | `Pages/Public/UwvAdviseurDeel.razor` | anonymous |
 | `/dev/na-de-match/{ScreenId}` | `Pages/Dev/NaDeMatchPreview.razor` | any (no Authorize attribute) |
 | `/dna` | `Pages/Public/GratisDna.razor` | anonymous |
 | `/employer/branches` | `Pages/Werkgever/WerkgeverLegacyRedirect.razor` | authenticated |
@@ -234,6 +238,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | any (no Authorize attribute) |
 | `/preview/bedrijvenkaart/{Screen}` | `Pages/__Preview/BedrijvenkaartScreens.razor` | anonymous |
+| `/preview/uwv-mockups` | `Pages/__Preview/UwvMockupScreens.razor` | anonymous |
+| `/preview/uwv-mockups/{Screen}` | `Pages/__Preview/UwvMockupScreens.razor` | anonymous |
 | `/privacy` | `Pages/Legal/Privacy.razor` | anonymous |
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
