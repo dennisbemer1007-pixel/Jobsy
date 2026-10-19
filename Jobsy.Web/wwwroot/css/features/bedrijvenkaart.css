@@ -1070,15 +1070,15 @@ textarea.bk-wg-input {
   font-size: 0.8rem;
 }
 
-/* Desktop/tablet: same mobile hero art + cream→wall blend (no separate ::after layer). */
+/* Desktop/tablet: pre-faded PNG on plain pearl (no ::before band). */
 @media (min-width: 640px) {
   .bk-page .bk-cand-hero.cand-hero--bk-single {
     position: relative;
     background-color: var(--pearl, #f7f4f0) !important;
-    background-image: var(--cand-hero-art) !important;
+    background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
     background-repeat: no-repeat;
     background-size: auto 100%;
-    background-position: right 16px bottom;
+    background-position: right bottom;
     overflow: hidden;
   }
 
@@ -1090,25 +1090,9 @@ textarea.bk-wg-input {
   }
 
   .bk-page .bk-cand-hero.cand-hero--bk-single::before {
-    display: block !important;
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      #f7f4f0 0%,
-      #f7f4f0 28%,
-      #f5efe8 36%,
-      #f0e6dc 42%,
-      #efe3d6 46%,
-      #efdfd2 50%,
-      #efe0d4 54%,
-      #efe0d4 58%,
-      rgb(239 224 212 / 55%) 64%,
-      rgb(239 224 212 / 0%) 72%
-    );
+    display: none !important;
+    content: none !important;
+    background: none !important;
   }
 
   .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy {
