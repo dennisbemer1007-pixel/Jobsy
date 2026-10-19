@@ -20,6 +20,7 @@
 @inject Jobsy.Web.Features.ITestJourneyIllustrationGate TestJourneyIllustration
 @inject Jobsy.Web.Features.IOnboardingFinaleV2Gate OnboardingFinaleV2
 @inject UserFacingError UserFacing
+@inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Features
 @using Jobsy.Web.KandidaatBanen
@@ -301,6 +302,7 @@
                                                        Eyebrow="@MobileStepBadge"
                                                        HeroTitle="@Culture["Onboarding.Step1.Title"]"
                                                        HeroLead="@Culture["Onboarding.Step1.Lead"]"
+                                                       CompactPreviewClass="@HeroCompactPreview.OnboardingStepCssClass"
                                                        TestId="onboarding-step-1-illustrated">
                                 <HeadContent>
                                     <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
@@ -970,8 +972,11 @@
     private void ApplyProfile(MeProfile? profile)
     {
         if (profile is null) return;
-        Draft.FirstName = profile.FirstName ?? "";
-        Draft.LastName = profile.LastName ?? "";
+        (Draft.FirstName, Draft.LastName) = CandidateNameRules.ResolveOnboardingPrefill(
+            profile.FirstName,
+            profile.LastName,
+            profile.FullName,
+            profile.Email);
         Draft.Phone = profile.PhoneNumber ?? "";
         Draft.BirthDate = profile.DateOfBirth;
         if (Draft.BirthDate is { } date)

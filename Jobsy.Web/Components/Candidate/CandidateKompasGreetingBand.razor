@@ -2,12 +2,13 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @inject CultureState Loc
+@inject Jobsy.Web.Features.ICandidateHeroCompactPreviewGate HeroCompactPreview
 
 <CandidateIllustratedHero Title="@Greeting"
                         Lead="@Loc["Kompas.Greeting.Lead"]"
                         ArtUrl="@CandidateIllustratedImages.KompasHeroWide"
                         ArtPosition="right center"
-                        CssClass="cand-hero--profession-band cand-hero--kompas-band" />
+                        CssClass="@($"{("cand-hero--profession-band cand-hero--kompas-band")} {HeroCompactPreview.CandHeroCssClass}".Trim())" />
 
 @code {
     [Parameter] public string? FirstName { get; set; }

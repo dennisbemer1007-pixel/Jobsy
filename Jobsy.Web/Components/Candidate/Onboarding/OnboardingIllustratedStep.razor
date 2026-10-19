@@ -1,7 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Onboarding
 
-<section class="ob-illustrated-step @MobileCoverModifier" data-testid="@TestId">
+<section class="ob-illustrated-step @MobileCoverModifier @CompactPreviewClass" data-testid="@TestId">
     <div class="ob-illustrated-step__mobile-cover" data-testid="onboarding-mobile-hero">
         <picture class="ob-illustrated-step__mobile-cover-art" aria-hidden="true">
             <source type="image/webp" srcset="@MobileHeroWebp" />
@@ -81,6 +81,7 @@
     [Parameter] public string? TestId { get; set; }
     [Parameter] public RenderFragment? HeadContent { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? CompactPreviewClass { get; set; }
 
     private string MobileCoverModifier => $"ob-illustrated-step--mobile-{MobileHeroSlug}";
 }
