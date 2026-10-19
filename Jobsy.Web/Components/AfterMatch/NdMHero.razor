@@ -1,39 +1,24 @@
-@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-@if (ShowArt)
-{
-    <CandidateIllustratedHero Eyebrow="@EffectiveEyebrow"
-                              CoralEyebrow="true"
-                              Title="@Title"
-                              Lead="@Lead"
-                              ArtUrl="/img/spots/gesprek.jpg"
-                              ArtPosition="right bottom"
-                              CssClass="ndm-cand-hero cand-hero--profession-band">
+<section class="band ndm-hero @(ShowArt ? "ndm-hero--gesprek" : "ndm-hero--no-art")">
+    <div class="bt">
+        <span class="eyb">@EffectiveEyebrow</span>
+        <h1>@Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p>@Lead</p>
+        }
         @if (ChildContent is not null)
         {
             <div class="bact">@ChildContent</div>
         }
-    </CandidateIllustratedHero>
-}
-else
-{
-    <section class="band ndm-hero ndm-hero--no-art">
-        <div class="bt">
-            <span class="eyb">@EffectiveEyebrow</span>
-            <h1>@Title</h1>
-            @if (!string.IsNullOrWhiteSpace(Lead))
-            {
-                <p>@Lead</p>
-            }
-            @if (ChildContent is not null)
-            {
-                <div class="bact">@ChildContent</div>
-            }
-        </div>
-    </section>
-}
+    </div>
+    @if (ShowArt)
+    {
+        <div class="art ndm-hero__art" aria-hidden="true"></div>
+    }
+</section>
 
 @code {
     [Parameter] public string Title { get; set; } = "";

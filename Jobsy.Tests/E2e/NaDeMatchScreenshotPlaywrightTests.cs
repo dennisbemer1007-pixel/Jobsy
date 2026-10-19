@@ -17,7 +17,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS"))
-            ? "/opt/cursor/artifacts/nadematch-r9"
+            ? "/opt/cursor/artifacts/nadematch-r10"
             : Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS")!;
 
     private static string MockupRoot =>
