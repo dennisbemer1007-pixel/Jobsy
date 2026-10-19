@@ -48,21 +48,25 @@ internal static class FunctionalOnboardingInteractivityHelpers
             new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
 
+        var firstName = page.Locator("input[autocomplete=given-name]").First;
+        if (await firstName.CountAsync() > 0)
+        {
+            await firstName.FillAsync("Func");
+            var lastName = page.Locator("input[autocomplete=family-name]").First;
+            if (await lastName.CountAsync() > 0)
+            {
+                await lastName.FillAsync("Test");
+            }
+
+            await page.WaitForTimeoutAsync(300);
+        }
+
         var viewport = page.ViewportSize;
         var mobile = viewport is not null && viewport.Width < 600;
         var selected = false;
 
         for (var round = 0; round < 2 && !selected; round++)
         {
-            if (round == 1)
-            {
-                var firstName = page.Locator("input[autocomplete=given-name]").First;
-                if (await firstName.CountAsync() > 0 && string.IsNullOrWhiteSpace(await firstName.InputValueAsync()))
-                {
-                    await firstName.FillAsync("Func");
-                    await page.WaitForTimeoutAsync(300);
-                }
-            }
 
             var count = await chips.CountAsync();
             for (var i = 0; i < count && !selected; i++)
@@ -221,28 +225,52 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
 
         await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
-        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 90_000 });
-        await page.WaitForTimeoutAsync(1500);
+        await SkipTestsLaterAndWaitForBanenkaartAsync(page);
+        await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+    }
+
+    internal static async Task SkipTestsLaterAndWaitForBanenkaartAsync(IPage page)
+    {
+        if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
 
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
             null,
             new() { Timeout = 90_000 });
-        await page.WaitForFunctionAsync(
-            """
-            () => {
-              const btn = document.querySelector('.ob-wizard__footer [data-testid=onboarding-tests-later]');
-              return btn instanceof HTMLButtonElement && !btn.disabled;
-            }
-            """,
-            null,
-            new() { Timeout = 90_000 });
 
-        var later = page.Locator(".ob-wizard__footer [data-testid=onboarding-tests-later]:visible").First;
-        await later.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-        await later.ScrollIntoViewIfNeededAsync();
-        await Assertions.Expect(later).ToBeEnabledAsync(new() { Timeout = 30_000 });
-        await later.ClickAsync(new() { Timeout = 30_000 });
+        var heading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
+        var footerLater = page.Locator(".ob-wizard__footer [data-testid=onboarding-tests-later]:visible").First;
+        var flowLater = page.Locator(".test-flow [data-testid=onboarding-tests-later]:visible, .test-flow__later:visible").First;
+
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            if (await heading.IsVisibleAsync() && await footerLater.CountAsync() > 0)
+            {
+                await page.WaitForTimeoutAsync(500);
+                await footerLater.ScrollIntoViewIfNeededAsync();
+                await Assertions.Expect(footerLater).ToBeEnabledAsync(new() { Timeout = 30_000 });
+                await footerLater.ClickAsync(new() { Timeout = 30_000 });
+                break;
+            }
+
+            if (await flowLater.CountAsync() > 0)
+            {
+                await flowLater.ScrollIntoViewIfNeededAsync();
+                await flowLater.ClickAsync(new() { Force = true, Timeout = 30_000 });
+                break;
+            }
+
+            await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+            await page.WaitForTimeoutAsync(800);
+        }
 
         try
         {
@@ -261,7 +289,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
             throw;
         }
-        await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
     }
 
     internal static async Task ResolveHomeAddressAsync(IPage page, string query)

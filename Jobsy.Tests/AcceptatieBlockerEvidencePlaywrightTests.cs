@@ -649,7 +649,12 @@ internal static class VroegResultaatPlaywrightTestsHelpers
 
             if (await page.Locator(".test-likert").CountAsync() > 0)
             {
-                return;
+                var laterOnTest = page.Locator(".test-flow [data-testid=onboarding-tests-later]:visible, .test-flow__later:visible").First;
+                if (await laterOnTest.CountAsync() > 0)
+                {
+                    await laterOnTest.ClickAsync(new() { Force = true, Timeout = 15_000 });
+                    return;
+                }
             }
 
             var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Overslaan", RegexOptions.IgnoreCase) });
