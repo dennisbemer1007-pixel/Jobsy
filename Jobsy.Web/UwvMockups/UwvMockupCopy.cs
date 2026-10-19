@@ -48,8 +48,8 @@ public static class UwvMockupCopy
             "Occupations similar to your current role",
             lang);
         public static string Lead(string? lang) => T(
-            "Rustige switches op basis van je competenties en huidige beroep (voorbeelddata).",
-            "Gentle options based on your competencies and current occupation (sample data).",
+            "Beroepen waar je met je huidige ervaring makkelijk naartoe kunt (voorbeelddata).",
+            "Roles you can move into fairly easily from your current experience (sample data).",
             lang);
         public static string RoutesToggle(string? lang) => T("Bekijk opleidingsroutes", "View training routes", lang);
         public static string RoutesHint(string? lang) => T(

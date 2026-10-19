@@ -382,15 +382,18 @@
                             if (_uwvMockup && _uwvKansLayerOn)
                             {
                                 var kansMeta = UwvKansMetaFor(vacancy);
-                                <UwvBanenkaartKansCard @key="vacancy.Id"
-                                                       Title="@vacancy.Title"
-                                                       Company="@vacancy.CompanyName"
-                                                       Location="@vacancy.CompanyAddress"
-                                                       Prospect="@kansMeta.Prospect"
-                                                       Travel="@FormatCardTravel(vacancy)"
-                                                       ImageUrl="@(vacancy.ImageUrl ?? CandidateIllustratedImages.SpotJobLogistiek)"
-                                                       Baangarantie="@kansMeta.Baangarantie"
-                                                       English="@UwvMockupCopy.IsEnglish(Culture.Language)" />
+                                <VacancyCard @key="vacancy.Id"
+                                             Vacancy="vacancy"
+                                             IsPressed="_pressedVacancyId == vacancy.Id"
+                                             Eager="cardIndex == 0"
+                                             WageText="@FormatWage(vacancy)"
+                                             TravelText="@FormatCardTravel(vacancy)"
+                                             UwvKansberoepBadge="true"
+                                             UwvBaangarantieBadge="@kansMeta.Baangarantie"
+                                             UwvKansberoepBadgeEnglish="@UwvMockupCopy.IsEnglish(Culture.Language)"
+                                             OnSelect="OnSelect"
+                                             OnOpen="OnOpenVacancy"
+                                             OnExplainMatch="OpenMatchExplain" />
                             }
                             else
                             {
@@ -426,15 +429,18 @@
                             if (_uwvMockup && _uwvKansLayerOn)
                             {
                                 var kansMeta = UwvKansMetaFor(vacancy);
-                                <UwvBanenkaartKansCard @key="vacancy.Id"
-                                                       Title="@vacancy.Title"
-                                                       Company="@vacancy.CompanyName"
-                                                       Location="@vacancy.CompanyAddress"
-                                                       Prospect="@kansMeta.Prospect"
-                                                       Travel="@FormatCardTravel(vacancy)"
-                                                       ImageUrl="@(vacancy.ImageUrl ?? CandidateIllustratedImages.SpotJobLogistiek)"
-                                                       Baangarantie="@kansMeta.Baangarantie"
-                                                       English="@UwvMockupCopy.IsEnglish(Culture.Language)" />
+                                <VacancyCard @key="vacancy.Id"
+                                             Vacancy="vacancy"
+                                             IsPressed="_pressedVacancyId == vacancy.Id"
+                                             Eager="rowIndex == 0"
+                                             WageText="@FormatWage(vacancy)"
+                                             TravelText="@FormatCardTravel(vacancy)"
+                                             UwvKansberoepBadge="true"
+                                             UwvBaangarantieBadge="@kansMeta.Baangarantie"
+                                             UwvKansberoepBadgeEnglish="@UwvMockupCopy.IsEnglish(Culture.Language)"
+                                             OnSelect="OnSelect"
+                                             OnOpen="OnOpenVacancy"
+                                             OnExplainMatch="OpenMatchExplain" />
                             }
                             else
                             {

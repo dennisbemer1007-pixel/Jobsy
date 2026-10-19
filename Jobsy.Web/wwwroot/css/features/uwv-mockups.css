@@ -157,19 +157,21 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 3rem;
+  height: 3rem;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--coral-soft) 45%, var(--gold-soft));
+  background: var(--gold-soft);
   color: var(--brand);
+  border: 1px solid color-mix(in srgb, var(--gold-ink) 22%, transparent);
   flex: none;
 }
 
 .uwv-sector-icon svg,
 .uwv-kans__icon svg {
-  width: 1.65rem;
-  height: 1.65rem;
+  width: 24px;
+  height: 24px;
   stroke: currentColor;
+  stroke-width: 2.25;
   fill: none;
 }
 
@@ -394,23 +396,83 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   max-width: 36rem;
 }
 
-/* Ondernemer intro — business scene, no ghost figures */
-.uwv-ondernemer-hero.cand-hero--with-art::before {
-  opacity: 1;
-  mask-image: radial-gradient(ellipse 92% 88% at 78% 48%, #000 58%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 92% 88% at 78% 48%, #000 58%, transparent 100%);
+/* Ondernemer intro — copy + card beside soft-faded wide scene */
+.uwv-ondernemer-intro-layout {
+  display: grid;
+  gap: 1rem 1.5rem;
+  padding: 0.75rem 0 1.5rem;
+  max-width: min(1120px, 100%);
+  margin: 0 auto;
+  align-items: start;
 }
 
-.uwv-ondernemer-hero .cand-hero__mob-figures-wrap,
-.uwv-ondernemer-hero .cand-hero__mob-figures {
-  display: none !important;
+.uwv-ondernemer-intro-layout__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand);
 }
 
-.uwv-ondernemer-intro-card {
-  display: flex;
-  justify-content: center;
-  margin-top: -0.25rem;
-  padding-bottom: 1.5rem;
+.uwv-ondernemer-intro-layout__title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+}
+
+.uwv-ondernemer-intro-layout__lead {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.uwv-ondernemer-intro-layout__art {
+  margin: 0;
+  order: -1;
+}
+
+.uwv-ondernemer-intro-layout__art img {
+  display: block;
+  width: 100%;
+  max-height: min(220px, 38vh);
+  object-fit: cover;
+  object-position: center 42%;
+  border-radius: var(--radius-lg);
+  mask-image: radial-gradient(ellipse 96% 90% at 50% 48%, #000 55%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 96% 90% at 50% 48%, #000 55%, transparent 100%);
+}
+
+.uwv-ondernemer-intro-layout__card {
+  max-width: none;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .uwv-ondernemer-intro-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 44%);
+    grid-template-rows: auto auto;
+    gap: 1.25rem 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .uwv-ondernemer-intro-layout__head {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .uwv-ondernemer-intro-layout__card {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .uwv-ondernemer-intro-layout__art {
+    order: 0;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+
+  .uwv-ondernemer-intro-layout__art img {
+    max-height: min(480px, 72vh);
+  }
 }
 
 .uwv-ondernemer-intro-card__inner {
@@ -455,34 +517,16 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   max-width: 100%;
 }
 
-.uwv-kans-vacancy-card__media {
-  position: relative;
-  min-height: 7.5rem;
-  background-size: cover;
-  background-position: center;
-  border-radius: var(--radius) var(--radius) 0 0;
-  mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
-}
-
-.uwv-kans-vacancy-card__kans {
-  position: absolute;
-  bottom: 0.45rem;
-  left: 0.45rem;
+.job-card .uwv-badge--kans {
   background: var(--gold-soft);
   color: var(--gold-ink);
   font-weight: 700;
 }
 
-.uwv-kans-vacancy-card__body {
-  padding: 0.75rem 0.85rem 0.85rem;
-}
-
-.uwv-kans-vacancy-card__prospect {
-  margin: 0.35rem 0 0;
-  font-size: var(--text-sm);
-  font-weight: 600;
+.job-card .uwv-badge--guarantee {
+  background: color-mix(in srgb, var(--success) 18%, var(--surface));
   color: var(--success);
+  font-weight: 700;
 }
 
 /* Adviseur full page + A4 preview */
@@ -709,15 +753,8 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 
 /* Ondernemer test — illustrated intro + wide question/result shell */
 .uwv-ondernemer-intro-page {
-  padding-bottom: 2rem;
-}
-
-.uwv-ondernemer-intro-card {
-  margin-top: -0.5rem;
-}
-
-.uwv-ondernemer-intro-card .detail-card {
-  max-width: 40rem;
+  padding-bottom: 1rem;
+  min-height: 0;
 }
 
 .uwv-ondernemer-test__shell {

@@ -107,7 +107,7 @@ public static class UwvMockupData
             "Learning company West · recognised",
             "Den Haag · Laak",
             "The Hague · Laak",
-            CandidateIllustratedImages.SpotJobLogistiek,
+            CandidateIllustratedImages.SpotInclusiefZorgLogistiek,
             Kansberoep: true,
             Baangarantie: true),
         new(
