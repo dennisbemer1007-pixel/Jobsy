@@ -131,7 +131,7 @@ public static class UwvMockupData
             "Care organisation Central",
             "Zoetermeer",
             "Zoetermeer",
-            CandidateIllustratedImages.SpotJobZorg,
+            CandidateIllustratedImages.SpotInclusiefZorgLogistiek,
             Kansberoep: true,
             Baangarantie: true),
     ];

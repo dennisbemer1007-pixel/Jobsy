@@ -16,15 +16,29 @@
        @onclick="HandleOpen"
        @onclick:stopPropagation="true"></a>
     <a class="job-card__media" href="@($"/vacancies/{Vacancy.Id}")" @onclick="HandleOpen" @onclick:stopPropagation="true">
-        <VacancyPhoto Src="@Vacancy.ImageUrl"
-                      FallbackSrc="@Vacancy.CompanyLogoUrl"
-                      VacancyId="Vacancy.Id"
-                      WorkType="@(Vacancy.WorkTypes.FirstOrDefault())"
-                      Class="job-card__photo"
-                      Width="400"
-                      Height="267"
-                      Eager="Eager"
-                      Sizes="(max-width: 700px) 50vw, 360px" />
+        @if (UwvKansberoepBadge && !string.IsNullOrWhiteSpace(Vacancy.ImageUrl))
+        {
+            <img class="job-card__photo"
+                 src="@Vacancy.ImageUrl"
+                 alt=""
+                 width="400"
+                 height="267"
+                 loading="@(Eager ? "eager" : "lazy")"
+                 decoding="async"
+                 draggable="false" />
+        }
+        else
+        {
+            <VacancyPhoto Src="@Vacancy.ImageUrl"
+                          FallbackSrc="@Vacancy.CompanyLogoUrl"
+                          VacancyId="Vacancy.Id"
+                          WorkType="@(Vacancy.WorkTypes.FirstOrDefault())"
+                          Class="job-card__photo"
+                          Width="400"
+                          Height="267"
+                          Eager="Eager"
+                          Sizes="(max-width: 700px) 50vw, 360px" />
+        }
         @if (UwvKansberoepBadge)
         {
             <span class="job-card__badge job-card__badge--soft uwv-badge--kans">@(UwvKansberoepBadgeEnglish ? "Opportunity job" : "Kansberoep")</span>

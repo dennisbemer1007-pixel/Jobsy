@@ -170,9 +170,14 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 .uwv-kans__icon svg {
   width: 24px;
   height: 24px;
-  stroke: currentColor;
-  stroke-width: 2.25;
+  stroke: var(--brand);
+  stroke-width: 2.5;
   fill: none;
+  opacity: 1;
+}
+
+.uwv-kans__item--rich .uwv-kans__icon {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold-ink) 18%, transparent);
 }
 
 .uwv-kans__head {
@@ -432,12 +437,12 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 .uwv-ondernemer-intro-layout__art img {
   display: block;
   width: 100%;
-  max-height: min(220px, 38vh);
+  max-height: min(200px, 34vh);
   object-fit: cover;
-  object-position: center 42%;
+  object-position: 72% 50%;
   border-radius: var(--radius-lg);
-  mask-image: radial-gradient(ellipse 96% 90% at 50% 48%, #000 55%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 96% 90% at 50% 48%, #000 55%, transparent 100%);
+  mask-image: radial-gradient(ellipse 94% 88% at 58% 50%, #000 58%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 94% 88% at 58% 50%, #000 58%, transparent 100%);
 }
 
 .uwv-ondernemer-intro-layout__card {
@@ -471,7 +476,16 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   }
 
   .uwv-ondernemer-intro-layout__art img {
-    max-height: min(480px, 72vh);
+    max-height: min(420px, 58vh);
+    object-position: 68% 48%;
+  }
+
+  .uwv-ondernemer-intro-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100dvh - 7.5rem);
+    padding-bottom: 0.5rem;
   }
 }
 

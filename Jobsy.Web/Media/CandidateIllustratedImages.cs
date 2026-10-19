@@ -32,8 +32,8 @@ public static class CandidateIllustratedImages
     public const string LearnGrowHero = $"{Base}/leren-groeien-hero.jpg?v={Version}";
     public const string LearnGrowHeroWide = $"{Base}/leren-groeien-hero-wide.jpg?v={Version}";
 
-    /// <summary>UWV ondernemer intro: wide workspace scene (no portrait crop).</summary>
-    public const string OndernemerIntroHero = LearnGrowHeroWide;
+    /// <summary>UWV ondernemer intro: home / small-business scene (no portrait crop).</summary>
+    public const string OndernemerIntroHero = AccountMobileArt;
     public const string LearnGrowHeroFiguresMobile = $"{Base}/leren-groeien-hero-figures-mobile.png?v={Version}";
     public const string LearnGrowHeroMobileAtmosphere = $"{Base}/leren-groeien-hero-mobile-atmosphere.png?v={Version}";
     public const string InstellingenBand = $"{Base}/beschikbaarheid-profession-wide.jpg?v={Version}";
