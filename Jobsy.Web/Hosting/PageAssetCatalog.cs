@@ -73,6 +73,10 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
+    ];
+
+    public static readonly string[] ContextualTipsCss =
+    [
         "css/features/contextual-tips.css?v=20261019-r10",
     ];
 
@@ -243,6 +247,11 @@ public static class PageAssetCatalog
             ];
         }
 
+        if (IsContextualTipsRoute(path))
+        {
+            return ContextualTipsCss;
+        }
+
         return [];
     }
 
@@ -285,6 +294,12 @@ public static class PageAssetCatalog
         var path = PageSeoCatalog.Normalize(rawPath);
         return path.StartsWith("/werkgever/vacatures", StringComparison.Ordinal);
     }
+
+    private static bool IsContextualTipsRoute(string path) =>
+        path.StartsWith("/candidate/tips", StringComparison.OrdinalIgnoreCase)
+        || (path.StartsWith("/candidate/applications/", StringComparison.Ordinal)
+            && (path.EndsWith("/gesprek", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith("/aanbod", StringComparison.OrdinalIgnoreCase)));
 
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
     {
