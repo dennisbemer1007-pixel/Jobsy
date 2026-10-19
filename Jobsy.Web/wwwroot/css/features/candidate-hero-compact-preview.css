@@ -362,11 +362,12 @@
     );
   }
 
-  .ob-illustrated-step--compact-preview-c .cand-compact-hero--onboarding {
-    display: none;
+  /* Onboarding mobile: mobile-cover only (desktop compact hero stays in DOM for ≥768). */
+  .ob-illustrated-step--compact-preview-c > header.cand-compact-hero--onboarding {
+    display: none !important;
   }
 
-  .cand-hero--compact-preview-c.cand-compact-hero {
+  .passport-page--illustrated .cand-hero--compact-preview-c.cand-compact-hero {
     --cand-hero-mobile-h: 6.25rem;
     max-height: 6.25rem;
     min-height: 0 !important;
@@ -378,10 +379,15 @@
 
   .career-page--compact-preview-c > header.cand-hero--compact-preview-c.cand-compact-hero {
     --cand-hero-mobile-h: 10.625rem;
+    --cand-compact-c-img-mask: linear-gradient(to right, transparent 0, #000 22%, #000 88%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 10%, #000 90%, transparent 100%);
+    display: block !important;
     height: min(10.625rem, 170px) !important;
     max-height: min(10.625rem, 170px) !important;
     min-height: 0 !important;
     overflow: hidden;
+    background-color: var(--cand-compact-hero-band) !important;
+    background-image: none !important;
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--onboarding::before {
@@ -395,12 +401,22 @@
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__copy {
-    max-width: none;
-    width: 100%;
+    position: relative !important;
+    inset: auto !important;
+    z-index: 2;
+    box-sizing: border-box;
+    width: 60% !important;
+    max-width: 60% !important;
     padding-block: 0.55rem 0.5rem;
     padding-inline: 0.65rem 0.35rem !important;
     background: transparent !important;
     box-shadow: none;
+    overflow: visible !important;
+  }
+
+  .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__copy .cand-hero__lead {
+    max-width: 100%;
+    overflow: visible;
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__copy h1 {
@@ -415,14 +431,22 @@
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__compact-c-art {
-    width: 38%;
-    max-width: 9rem;
-    opacity: 0.88;
+    position: absolute !important;
+    inset: 0 0 0 auto !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    width: 38% !important;
+    max-width: 9.5rem;
+    opacity: 0.9;
+    z-index: 1;
+    pointer-events: none;
   }
 
   .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-hero__compact-c-art img {
     object-fit: cover;
-    object-position: 72% center;
+    object-position: 78% center;
   }
 
   .career-page--compact-preview-c:has(> header.cand-compact-hero--onboarding) .career-stage__card {
@@ -437,7 +461,8 @@
     background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-hero-page) 100%);
   }
 
-  .cand-hero--compact-preview-c .cand-hero__compact-c-art {
+  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art,
+  .passport-page--illustrated .cand-hero--compact-preview-c .cand-hero__compact-c-art {
     position: absolute;
     top: 0;
     bottom: 0;
@@ -461,25 +486,53 @@
     mask-composite: intersect;
   }
 
-  .cand-hero--compact-preview-c .cand-hero__copy {
+  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding) .cand-hero__copy,
+  .passport-page--illustrated .cand-hero--compact-preview-c .cand-hero__copy {
     max-width: min(48%, 14.5rem);
   }
 
+  .ob-wizard--compact-preview-c .ob-wizard__content.ob-wizard__content--illustrated {
+    padding-inline: 0;
+  }
+
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover {
-    --ob-compact-mobile-cover-h: 6.25rem;
+    --ob-compact-mobile-cover-h: 10rem;
+    display: grid;
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin: 0 calc(50% - 50vw) 0.65rem;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
     block-size: var(--ob-compact-mobile-cover-h);
+    min-block-size: var(--ob-compact-mobile-cover-h);
     max-block-size: var(--ob-compact-mobile-cover-h);
     aspect-ratio: unset;
     background-color: var(--cand-compact-hero-band);
-    border-color: color-mix(in srgb, var(--gold) 18%, var(--border));
+    overflow: hidden;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover-copy {
+    padding: 0.65rem 0.75rem 0.55rem;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover-copy h1,
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-lead {
+    max-inline-size: 58%;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover-art {
+    justify-self: stretch;
+    align-self: stretch;
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover-art img {
-    object-fit: contain;
+    object-fit: cover;
     object-position: right center;
-    inline-size: 115%;
+    inline-size: 100%;
+    block-size: 100%;
     max-inline-size: none;
-    margin-inline-start: -15%;
+    margin-inline-start: 0;
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover::before {
