@@ -51,6 +51,50 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_home_logo_and_illustration_fades_r10()
+    {
+        Directory.CreateDirectory(OutDir);
+
+        foreach (var (w, h, slug, mobile) in new (int W, int H, string Slug, bool Mobile)[]
+                 {
+                     (1920, 900, "1920", false),
+                     (1440, 900, "1440", false),
+                     (1024, 768, "1024", false),
+                     (390, 844, "390", true),
+                 })
+        {
+            await CaptureFullPageAsync(w, h, $"full-{slug}-r10", mobile);
+            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r10", mobile);
+            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r10", mobile);
+            for (var i = 0; i < 3; i++)
+            {
+                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r10", mobile, scroll: true);
+            }
+
+            if (!mobile)
+            {
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "left", "r10");
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "right", "r10");
+                await CaptureHeroBottomZoomAsync(w, h, slug, "r10");
+                if (slug is "1920" or "1440")
+                {
+                    await AssertHeroSideSeamColorDeltaAsync(w, h, slug);
+                }
+
+                await AssertHeroCreamColumnsSmoothOnFullPageAsync(w, h, slug);
+            }
+
+            await AssertHeroCtasReceiveClicksAsync(w, h, mobile);
+        }
+
+        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r10", mobile: true);
+        await AssertStep2DnaCirclesMarginAsync(390, 844);
+
+        var logoHeight = await MeasureLogoHeightAsync(1024, 768);
+        Assert.InRange(logoHeight, 34, 42);
+    }
+
+    [Fact]
     public async Task Capture_home_logo_and_illustration_fades_r9()
     {
         Directory.CreateDirectory(OutDir);
@@ -537,14 +581,21 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
 
         Assert.True(leftQuarterBlue >= 24, $"Leftmost circle not fully in frame (hits={leftQuarterBlue}).");
 
-        AssertStep2NoHardVerticalLeftEdge(image);
+        AssertStep2SideBandQuality(image);
     }
 
-    private static void AssertStep2NoHardVerticalLeftEdge(Image<Rgb24> image)
+    private static void AssertStep2SideBandQuality(Image<Rgb24> image)
     {
         var y0 = (int)(image.Height * 0.06);
         var y1 = (int)(image.Height * 0.58);
-        for (var x = 4; x <= Math.Min(28, image.Width / 4); x++)
+        AssertNoHardVerticalEdgesInBand(image, 2, Math.Min(30, image.Width / 3), y0, y1, "left");
+        AssertNoHardVerticalEdgesInBand(image, Math.Max(2, image.Width - 31), image.Width - 2, y0, y1, "right");
+        AssertNoDuplicateBlueCirclesInLeftBand(image, Math.Min(30, image.Width / 3), y0, y1);
+    }
+
+    private static void AssertNoHardVerticalEdgesInBand(Image<Rgb24> image, int xStart, int xEnd, int y0, int y1, string side)
+    {
+        for (var x = xStart + 1; x <= xEnd; x++)
         {
             var (lr, lg, lb) = MeanColumnRgb(image, x - 1, y0, y1);
             var (rr, rg, rb) = MeanColumnRgb(image, x, y0, y1);
@@ -554,8 +605,45 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
             }
 
             var maxStep = Math.Max(Math.Abs(lr - rr), Math.Max(Math.Abs(lg - rg), Math.Abs(lb - rb)));
-            Assert.True(maxStep < 22, $"Hard vertical edge at x≈{x} (Δ={maxStep}, L=({lr},{lg},{lb}) R=({rr},{rg},{rb})).");
+            Assert.True(maxStep < 22, $"Hard vertical edge on {side} at x≈{x} (Δ={maxStep}).");
         }
+    }
+
+    private static void AssertNoDuplicateBlueCirclesInLeftBand(Image<Rgb24> image, int xEnd, int y0, int y1)
+    {
+        var strongColumns = new List<int>();
+        for (var x = 0; x <= xEnd; x++)
+        {
+            var span = 0;
+            for (var y = y0; y < y1; y++)
+            {
+                if (IsDnaCirclePixel(image[x, y]))
+                {
+                    span++;
+                }
+            }
+
+            if (span >= 16)
+            {
+                strongColumns.Add(x);
+            }
+        }
+
+        if (strongColumns.Count < 2)
+        {
+            return;
+        }
+
+        var groups = 1;
+        for (var i = 1; i < strongColumns.Count; i++)
+        {
+            if (strongColumns[i] - strongColumns[i - 1] > 6)
+            {
+                groups++;
+            }
+        }
+
+        Assert.True(groups < 2, $"Mirrored duplicate blue circles in left band (columns: {string.Join(",", strongColumns)}).");
     }
 
     private static (byte R, byte G, byte B) MeanColumnRgb(Image<Rgb24> image, int x, int y0, int y1)
