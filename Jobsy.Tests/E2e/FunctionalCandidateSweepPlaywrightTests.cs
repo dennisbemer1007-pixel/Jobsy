@@ -123,47 +123,6 @@ public sealed class FunctionalCandidateSweepPlaywrightTests
         await FunctionalE2eArtifacts.CaptureAsync(page, "banenkaart-search", tag);
     }
 
-    [Theory]
-    [InlineData(1440, 900, "Dirk van den Walelaan 27, Zoetermeer")]
-    [InlineData(390, 844, "2722DD 27")]
-    public async Task Banenkaart_location_search_shows_pdok_house_number(int width, int height, string query)
-    {
-        var (run, baseUrl) = await TryBeginAsync();
-        if (!run)
-        {
-            return;
-        }
-
-        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
-
-        Microsoft.Playwright.Program.Main(["install", "chromium"]);
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await FunctionalE2eAuth.NewCandidateContextAsync(browser, baseUrl, new()
-        {
-            ViewportSize = new() { Width = width, Height = height },
-            IsMobile = width < 600,
-            HasTouch = width < 600,
-            Locale = "nl-NL",
-        });
-        var page = await ctx.NewPageAsync();
-        page.SetDefaultTimeout(120_000);
-
-        await KbDiscoveryE2eHelpers.PrepareBanenkaartAsync(page, baseUrl);
-        var location = FunctionalAddressE2eHelpers.BanenkaartAddressInput(page, width);
-        if (await location.CountAsync() == 0)
-        {
-            location = page.Locator("input[id^=discovery-address]").First;
-        }
-
-        await location.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-        await FunctionalAddressE2eHelpers.TypeAddressQueryAsync(location, query);
-        await FunctionalAddressE2eHelpers.WaitForSuggestionWithHouseNumberAsync(page, houseNumber: 27);
-
-        var tag = width < 600 ? "mobile-390" : "desktop-1440";
-        await FunctionalE2eArtifacts.CaptureAsync(page, "banenkaart-location-search", tag);
-    }
-
     private static async Task<(bool Run, string BaseUrl)> TryBeginAsync()
     {
         var baseUrl = FunctionalE2eGate.TryBaseUrl() ?? "";

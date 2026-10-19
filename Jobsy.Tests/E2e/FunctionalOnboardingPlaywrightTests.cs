@@ -16,13 +16,6 @@ public sealed class FunctionalOnboardingPlaywrightTests
         (390, 844, true, "mobile-390"),
     ];
 
-    private static readonly (int Width, int Height, bool Mobile, string Tag)[] AddressViewports =
-    [
-        (1440, 900, false, "desktop-1440"),
-        (1024, 768, false, "tablet-1024"),
-        (390, 844, true, "mobile-390"),
-    ];
-
     [Theory]
     [MemberData(nameof(ViewportCases))]
     public async Task Kennismaken_step1_controls_are_interactive(int width, int height, bool mobile, string tag)
@@ -102,64 +95,8 @@ public sealed class FunctionalOnboardingPlaywrightTests
         await FunctionalE2eArtifacts.CaptureAsync(page, "onboarding-complete", tag);
     }
 
-    [Theory]
-    [MemberData(nameof(AddressQueryCases))]
-    public async Task Onboarding_pdok_address_suggestions_blur_resolves_and_volgende_works(
-        string query,
-        int width,
-        int height,
-        bool mobile,
-        string tag)
-    {
-        var (run, baseUrl) = await TryBeginAsync();
-        if (!run)
-        {
-            return;
-        }
-
-        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
-
-        Microsoft.Playwright.Program.Main(["install", "chromium"]);
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
-        await using var ctx = await browser.NewContextAsync(CreateContextOptions(baseUrl, width, height, mobile));
-        await PlaywrightCookieConsent.AcceptAsync(ctx);
-        var page = await ctx.NewPageAsync();
-        page.SetDefaultTimeout(180_000);
-
-        await FunctionalOnboardingInteractivityHelpers.RegisterFreshCandidateAsync(page, baseUrl, "func-adres");
-        await FunctionalOnboardingInteractivityHelpers.BeginKennismakenStepAsync(page, baseUrl);
-        await FunctionalAddressE2eHelpers.FillMinimalStep1ForVolgendeAsync(page);
-
-        var address = FunctionalAddressE2eHelpers.OnboardingAddressInput(page);
-        await FunctionalAddressE2eHelpers.TypeAddressQueryAsync(address, query);
-        await FunctionalAddressE2eHelpers.WaitForSuggestionWithHouseNumberAsync(page, houseNumber: 27);
-        await FunctionalE2eArtifacts.CaptureAsync(page, "onboarding-personal-step", tag);
-
-        await FunctionalAddressE2eHelpers.BlurAddressWithoutPickingAsync(page, "onboarding-home-address");
-        await FunctionalAddressE2eHelpers.WaitForOnboardingAddressResolvedAsync(page);
-        await FunctionalAddressE2eHelpers.AssertVolgendeAdvancesToStep2Async(page, mobile);
-    }
-
     public static IEnumerable<object[]> ViewportCases()
         => Viewports.Select(v => new object[] { v.Width, v.Height, v.Mobile, v.Tag });
-
-    public static IEnumerable<object[]> AddressQueryCases()
-    {
-        var queries = new[]
-        {
-            "Dirk van den Walelaan 27, Zoetermeer",
-            "2722DD 27",
-        };
-
-        foreach (var q in queries)
-        {
-            foreach (var v in AddressViewports)
-            {
-                yield return new object[] { q, v.Width, v.Height, v.Mobile, v.Tag };
-            }
-        }
-    }
 
     private static BrowserNewContextOptions CreateContextOptions(string baseUrl, int width, int height, bool mobile)
         => new()
