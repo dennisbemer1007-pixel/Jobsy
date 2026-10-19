@@ -22,7 +22,7 @@
     private RenderFragment StepCard(string num, string image, string titleKey, string bodyKey) => __builder =>
     {
         <article class="pub-landing__step-card pub-landing__card-calm">
-            <div class="pub-landing__step-art" style="@($"background-image:url('{image}')")"></div>
+            <div class="pub-landing__step-art pub-landing__step-art--@num" style="@($"background-image:url('{image}')")" aria-hidden="true"></div>
             <div class="pub-landing__step-body">
                 <span class="pub-landing__step-num" aria-hidden="true">@num</span>
                 <h3>@LandingText.For(titleKey, Variant)</h3>

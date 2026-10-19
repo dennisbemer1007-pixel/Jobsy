@@ -51,9 +51,13 @@
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
-  "css/features/candidate-illustrated-public.css": {
-    "sha256": "2bffdec8875105728fff5be4228974e33b0b9e274c838d87219a21d5dc793319",
+  "css/features/candidate-illustrated-decorative-layers.css": {
+    "sha256": "b5e7b923a56dbdd994477135363c5439f140c612ee29de387b4e8921fc574a2d",
     "v": "20261019-01"
+  },
+  "css/features/candidate-illustrated-public.css": {
+    "sha256": "cd102cf568eec169137f03df266f6b35f25fb1a07312783440a5dc124cf11db6",
+    "v": "20261019-02"
   },
   "css/features/carriere.css": {
     "sha256": "c23b39281dc74f87a13714960bc33cb89fe4a285101ef4b1d74581c2a63b18a4",

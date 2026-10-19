@@ -1,0 +1,19 @@
+/*
+ * Decorative landing hero layers (complements PR #752 central guard).
+ * Illustration pseudo-elements must not intercept clicks; copy/CTAs stay above.
+ */
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before,
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after,
+.pub-theme .pub-landing__hero-art-band,
+.pub-theme .pub-landing__step-art,
+.pub-theme .pub-landing__emp-art,
+.pub-theme .pub-landing__kaart-ill-art img {
+  pointer-events: none;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-copy,
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__ctas,
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__ctas a {
+  pointer-events: auto;
+}

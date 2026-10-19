@@ -152,6 +152,12 @@
   padding: 3rem 2rem 2.5rem;
 }
 
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-copy,
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__ctas {
+  position: relative;
+  z-index: 2;
+}
+
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-copy {
   max-width: 660px;
 }
@@ -194,16 +200,29 @@
 }
 
 .pub-theme .pub-landing__step-art {
-  height: 170px;
+  height: clamp(190px, 21vw, 215px);
   background-size: cover;
-  background-position: center 60%;
+  background-repeat: no-repeat;
+  background-position: center top;
   background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 72%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 16%, #000 72%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
+}
+
+.pub-theme .pub-landing__step-art--1,
+.pub-theme .pub-landing__step-art--3 {
+  background-size: auto 100%;
+  background-position: center top;
+}
+
+.pub-theme .pub-landing__step-art--2 {
+  background-size: cover;
+  background-position: center 38%;
 }
 
 .pub-theme .pub-landing__step-body {
@@ -315,10 +334,20 @@
   padding: 1.25rem 1.5rem 1.25rem 0;
 }
 
+.pub-theme .pub-landing__kaart-ill-art {
+  min-height: clamp(190px, 24vw, 240px);
+  display: flex;
+  align-items: flex-end;
+}
+
 .pub-theme .pub-landing__kaart-ill-art img {
   display: block;
   width: 100%;
+  max-height: clamp(190px, 24vw, 240px);
   height: auto;
+  object-fit: cover;
+  object-position: center top;
+  pointer-events: none;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 94%, transparent 100%),
     linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 94%, transparent 100%),
@@ -343,14 +372,16 @@
 
 .pub-theme .pub-landing__emp-art {
   flex: 1;
-  min-height: 170px;
+  min-height: clamp(190px, 22vw, 215px);
   background-size: cover;
-  background-position: center 35%;
+  background-repeat: no-repeat;
+  background-position: center top;
   background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 74%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 74%, transparent 100%),
-    linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
@@ -505,6 +536,7 @@
     margin-inline: calc(50% - 50vw);
     height: clamp(200px, 54vw, 260px);
     flex-shrink: 0;
+    pointer-events: none;
     background: var(--pub-hero-art) no-repeat right 42% / auto min(260px, 112%);
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 84%, transparent 100%),
       linear-gradient(to right, transparent 0%, #000 10%, #000 92%, transparent 100%),
