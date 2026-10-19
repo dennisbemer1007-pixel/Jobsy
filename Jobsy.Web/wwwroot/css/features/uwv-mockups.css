@@ -435,13 +435,24 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 /* Banenkaart kans layer cards + filter bar */
 .jobsy-discovery:has([data-testid='uwv-kansberoepen-toggle']) .kb-filter-search--bar,
 .jobsy-discovery:has([data-testid='uwv-kansberoepen-toggle']) .kb-panel-head__search {
-  flex: 1 1 12rem;
-  min-width: 0;
+  flex: 1 1 10rem;
+  min-width: 8.5rem;
+}
+
+.jobsy-discovery:has([data-testid='uwv-kansberoepen-toggle']) .kb-panel-head__search-row {
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .jobsy-discovery:has([data-testid='uwv-kansberoepen-toggle']) .kb-filter-search--bar input,
 .jobsy-discovery:has([data-testid='uwv-kansberoepen-toggle']) .kb-panel-head__search input {
-  min-width: 6.5rem;
+  min-width: 7.5rem;
+  width: 100%;
+}
+
+.jobsy-discovery:has([data-testid='uwv-kansberoepen-toggle']) .uwv-kans-map-toggle {
+  flex: 0 1 auto;
+  max-width: 100%;
 }
 
 .uwv-kans-vacancy-card__media {

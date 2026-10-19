@@ -2471,7 +2471,10 @@
         try
         {
             // Start pins HTTP immediately (no MapLibre required) so first pins beat the circuit.
-            await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
+            if (!(_uwvMockup && _uwvKansLayerOn))
+            {
+                await Js.InvokeVoidAsync("jobsyMaps.prefetchPins", BuildPinsApiUrl());
+            }
         }
         catch (JSException)
         {
@@ -2603,7 +2606,7 @@
                 ["travel"] = TravelMapOptions(),
                 ["highlightSeed"] = _highlightShuffleSeed,
                 ["preferFilledLocation"] = preferFilledLocation,
-                ["pinsUrl"] = BuildPinsApiUrl(),
+                ["pinsUrl"] = _uwvMockup && _uwvKansLayerOn ? "" : BuildPinsApiUrl(),
                 ["syncViewportList"] = true,
                 ["labels"] = MapUiLabels(),
                 ["illustratedPopup"] = true,
@@ -2830,7 +2833,14 @@
             {
                 if (reloadMapPins)
                 {
-                    await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
+                    if (_uwvMockup && _uwvKansLayerOn)
+                    {
+                        await ApplyUwvKansPinsAsync();
+                    }
+                    else
+                    {
+                        await Js.InvokeVoidAsync("jobMap.reloadPins", BuildPinsApiUrl());
+                    }
                 }
 
                 var travelKey = BuildMapTravelSyncKey();

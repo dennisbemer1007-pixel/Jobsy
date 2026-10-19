@@ -48,7 +48,7 @@ public static class PageAssetCatalog
 
     private static readonly string[] UwvMockupRouteCss =
     [
-        "css/features/uwv-mockups.css?v=20261019-06",
+        "css/features/uwv-mockups.css?v=20261019-07",
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
     ];

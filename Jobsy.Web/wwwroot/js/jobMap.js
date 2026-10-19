@@ -2104,10 +2104,12 @@ window.jobMap = (function () {
         const matchColorBand = raw.matchColorBand || raw.MatchColorBand || null;
         const openForInitiative = raw.openForInitiative === true || raw.OpenForInitiative === true;
         const isIntermediary = raw.isIntermediary === true || raw.IsIntermediary === true;
+        const kansberoep = raw.kansberoep === true || raw.kansberoep === 1 || raw.Kansberoep === true;
         return Object.assign({}, raw, {
             id: id,
             lat: lat,
             lng: lng,
+            kansberoep: kansberoep,
             categoryColor: colour,
             colour: colour,
             publicMapRadiusKm: radiusKm > 0 ? radiusKm : null,
