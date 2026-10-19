@@ -11,7 +11,7 @@ public sealed class FunctionalIllustratedHeroSweepPlaywrightTests
 {
     private static readonly (string Path, string ControlSelector, string Label)[] Pages =
     [
-        ("/banenkaart", "input[type=search], .filter-bar__search, [data-testid=kb-search]", "banenkaart search"),
+        ("/banenkaart", "[data-testid=kb-keyword-search-desktop], [data-testid=kb-keyword-search]", "banenkaart search"),
         ("/carriere", "a, button, input", "carrière"),
         ("/carriere/leren", "input, button, a", "leren & groeien"),
         ("/candidate/paspoort", "button, a, input", "paspoort"),
@@ -72,7 +72,17 @@ public sealed class FunctionalIllustratedHeroSweepPlaywrightTests
                     new() { Timeout = 90_000 }).ContinueWith(_ => { }, TaskContinuationOptions.OnlyOnFaulted);
             }
 
-            var control = page.Locator(controlSelector).Filter(new() { HasNot = page.Locator("[aria-hidden=true]") }).First;
+            if (path == "/banenkaart" && mobile)
+            {
+                var filters = page.Locator("[data-testid=kb-filters-button], .kb-filters-button").First;
+                if (await filters.CountAsync() > 0 && await filters.IsVisibleAsync())
+                {
+                    await filters.ClickAsync(new() { Force = true });
+                    await page.WaitForTimeoutAsync(400);
+                }
+            }
+
+            var control = page.Locator(controlSelector).First;
             if (await control.CountAsync() == 0)
             {
                 continue;
