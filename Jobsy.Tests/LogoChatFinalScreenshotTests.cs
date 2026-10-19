@@ -6,7 +6,8 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r9";
+    private const string OutDirR9 = "/opt/cursor/artifacts/logo-chat-final-r9";
+    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r10";
     private static readonly Guid SampleVacancyId = IllustratedPagesApiStub.SampleVacancyId;
 
     private const string LongOpeningReply =
@@ -44,11 +45,53 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
     [Fact]
     public async Task Render_logo_chat_final_r9_viewport_captures()
     {
+        Directory.CreateDirectory(OutDirR9);
+        var vacancyPath = $"/vacancies/{SampleVacancyId:D}?encouragePreview=wist-cv-vs-passport";
+
+        await CaptureApplySentPanelAsync(
+            OutDirR9,
+            vacancyPath,
+            "vacancy-apply-sent-1440",
+            width: 1440,
+            height: 900,
+            maxLines: 3,
+            fullPageViewport: false);
+
+        await CaptureApplySentPanelAsync(
+            OutDirR9,
+            vacancyPath,
+            "vacancy-apply-sent-390",
+            width: 390,
+            height: 844,
+            mobile: true,
+            maxLines: 4,
+            fullPageViewport: false);
+    }
+
+    [Fact]
+    public async Task Render_logo_chat_final_r10_viewport_captures()
+    {
         Directory.CreateDirectory(OutDir);
         var vacancyPath = $"/vacancies/{SampleVacancyId:D}?encouragePreview=wist-cv-vs-passport";
 
-        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-1440", width: 1440, height: 900, maxLines: 3);
-        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-390", width: 390, height: 844, mobile: true, maxLines: 4);
+        await CaptureApplySentPanelAsync(
+            OutDir,
+            vacancyPath,
+            "vacancy-apply-sent-1440",
+            width: 1440,
+            height: 900,
+            maxLines: 3,
+            fullPageViewport: true);
+
+        await CaptureApplySentPanelAsync(
+            OutDir,
+            vacancyPath,
+            "vacancy-apply-sent-390",
+            width: 390,
+            height: 844,
+            mobile: true,
+            maxLines: 4,
+            fullPageViewport: true);
 
         IllustratedPagesApiStub.MockInterviewReplyOverride = LongOpeningReply;
         try
@@ -93,36 +136,33 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
     }
 
     private async Task CaptureApplySentPanelAsync(
+        string outDir,
         string path,
         string name,
         int width,
         int height,
         bool mobile = false,
-        int maxLines = 4)
+        int maxLines = 4,
+        bool fullPageViewport = false)
     {
         await using var context = await NewCandidateContextAsync(width, height, mobile);
         var page = await OpenVacancyAsync(context, path + "#apply");
         await page.Locator(".apply-panel--success").WaitForAsync(new() { Timeout = 60_000 });
-        var copy = page.Locator(".apply-panel--success .profile-encourage__copy");
-        await copy.WaitForAsync(new() { Timeout = 30_000 });
-        var layout = await page.EvaluateAsync<double[]>(
+        var nudge = page.Locator(".apply-panel--success .profile-encourage");
+        await nudge.WaitForAsync(new() { Timeout = 30_000 });
+
+        var mascotClear = await page.EvaluateAsync<bool>(
             """
             () => {
-              const panel = document.querySelector('.apply-panel--success');
-              const root = document.querySelector('.apply-panel--success .profile-encourage');
-              const bubble = document.querySelector('.apply-panel--success .profile-encourage__copy');
-              if (!panel || !root || !bubble) return [0, 0, 0, 0, 0];
-              const p = panel.getBoundingClientRect();
-              const r = root.getBoundingClientRect();
-              const b = bubble.getBoundingClientRect();
-              const cardRatio = r.width > 0 ? b.width / r.width : 0;
-              const panelRatio = p.width > 0 ? r.width / p.width : 0;
-              return [p.width, r.width, b.width, cardRatio, panelRatio];
+              const mascot = document.querySelector('.apply-panel--success .profile-encourage__mascot');
+              const text = document.querySelector('.apply-panel--success .profile-encourage__text');
+              if (!mascot || !text) return false;
+              const m = mascot.getBoundingClientRect();
+              const t = text.getBoundingClientRect();
+              return m.right <= t.left + 1;
             }
             """);
-        Assert.True(layout[0] > 0 && layout[1] > 0 && layout[2] > 0);
-        Assert.True(layout[3] >= 0.75,
-            $"White speech bubble (.profile-encourage__copy) must fill the grey card (panel={layout[0]:F1} card={layout[1]:F1} bubble={layout[2]:F1} cardRatio={layout[3]:P0}).");
+        Assert.True(mascotClear, "Mascot column must not overlap nudge text.");
 
         var lineCount = await page.EvaluateAsync<int>(
             """
@@ -160,9 +200,28 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         var mark = page.Locator(".apply-panel--success .profile-encourage__mascot");
         var src = await mark.GetAttributeAsync("src") ?? "";
         Assert.Contains("lobsy-merkteken", src, StringComparison.OrdinalIgnoreCase);
-        await page.Locator(".apply-panel--success .profile-encourage").ScreenshotAsync(new()
+
+        await page.EvaluateAsync(
+            """
+            () => {
+              document.querySelector('#apply')?.scrollIntoView({ block: 'start', inline: 'nearest' });
+            }
+            """);
+        await page.WaitForTimeoutAsync(200);
+
+        if (fullPageViewport)
         {
-            Path = Path.Combine(OutDir, name + ".png"),
+            await page.ScreenshotAsync(new()
+            {
+                Path = Path.Combine(outDir, name + "-viewport.png"),
+                FullPage = false,
+                Animations = ScreenshotAnimations.Disabled,
+            });
+        }
+
+        await nudge.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(outDir, name + "-nudge.png"),
         });
     }
 

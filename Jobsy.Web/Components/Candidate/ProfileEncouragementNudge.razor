@@ -16,14 +16,14 @@
                 class="profile-encourage__close"
                 aria-label="@Culture["Encourage.Dismiss"]"
                 @onclick="DismissAsync">×</button>
-        <img class="profile-encourage__mascot"
-             src="@BrandImages.MarkSvg"
-             alt=""
-             width="56"
-             height="56"
-             decoding="async" />
         <div class="profile-encourage__row">
-            <div class="profile-encourage__copy">
+            <img class="profile-encourage__mascot"
+                 src="@BrandImages.MarkSvg"
+                 alt=""
+                 width="48"
+                 height="48"
+                 decoding="async" />
+            <div class="profile-encourage__body">
                 <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
                 @if (!string.IsNullOrWhiteSpace(_tip.Href))
                 {
