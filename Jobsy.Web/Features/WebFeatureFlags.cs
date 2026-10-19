@@ -81,7 +81,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.OnboardingFinaleV2Enabled ?? false,
                 dto?.OccupationDayInLifeEnabled ?? true,
                 dto?.TestEditModeEnabled ?? false,
-                dto?.SamplePdfEnabled ?? false);
+                dto?.SamplePdfEnabled ?? false,
+                dto?.UwvFeaturesEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -193,5 +194,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("samplePdfEnabled")]
         public bool SamplePdfEnabled { get; set; }
+
+        [JsonPropertyName("uwvFeaturesEnabled")]
+        public bool UwvFeaturesEnabled { get; set; }
     }
 }

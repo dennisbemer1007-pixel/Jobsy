@@ -293,7 +293,8 @@ public static class PageAssetCatalog
             || path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/ondernemerscheck", StringComparison.OrdinalIgnoreCase)
             || path.StartsWith("/candidate/wat-drijft-jou", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith("/candidate/adviseur-werk", StringComparison.OrdinalIgnoreCase))
+            || path.StartsWith("/candidate/adviseur-werk", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/deel/uwv-adviseur/", StringComparison.OrdinalIgnoreCase))
         {
             return UwvMockupRouteCss;
         }

@@ -8,7 +8,7 @@
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject MatchVacancyService MatchVacancies
 @inject CandidateMatchProfileService MatchProfile
-@inject IUwvFeaturesMockupGate UwvFeaturesMockupGate
+@inject IUwvFeaturesGate UwvGate
 @implements IAsyncDisposable
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
@@ -1713,7 +1713,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _uwvMockup = UwvFeaturesMockupGate.IsEnabled;
+        _uwvMockup = await UwvGate.IsEnabledAsync();
         if (_uwvMockup)
         {
             RebuildUwvKansVacancies();

@@ -6,11 +6,20 @@
 @using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
-@inject IUwvFeaturesMockupGate UwvGate
+@inject IUwvFeaturesGate UwvGate
 
 <PageTitle>@UwvMockupCopy.Adviseur.Title(Culture.Language) · Lobsy</PageTitle>
 
-@if (!UwvGate.IsEnabled)
+@code {
+    private bool _uwvOn;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _uwvOn = await UwvGate.IsEnabledAsync();
+    }
+}
+
+@if (!_uwvOn)
 {
     <div class="panel-page"><p class="state-message">@Culture["Common.Error"]</p></div>
 }

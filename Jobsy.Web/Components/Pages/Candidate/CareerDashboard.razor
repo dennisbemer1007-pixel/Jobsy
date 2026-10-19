@@ -17,7 +17,7 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
-@inject IUwvFeaturesMockupGate UwvFeaturesMockupGate
+@inject IUwvFeaturesGate UwvGate
 @inject ICareerStepVacancyFit VacancyFit
 @inject NavigationManager Navigation
 
@@ -273,6 +273,7 @@
     private bool _proactiveMatchingOn;
     private bool _uwvBlocks;
     private bool _uwvShowcase;
+    private bool _uwvFlagLoaded;
 
     private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
 
@@ -325,17 +326,33 @@
 
     protected override void OnParametersSet()
     {
-        _uwvBlocks = UwvFeaturesMockupGate.IsEnabled;
-        _uwvShowcase = _uwvBlocks && string.Equals(Uwv, "1", StringComparison.OrdinalIgnoreCase);
-        if (_uwvShowcase)
+        if (_uwvFlagLoaded)
         {
-            _bootstrapping = false;
-            _planLoadStarted = true;
+            _uwvShowcase = _uwvBlocks;
+            if (_uwvShowcase)
+            {
+                _bootstrapping = false;
+                _planLoadStarted = true;
+            }
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender && RendererInfo.IsInteractive && !_uwvFlagLoaded)
+        {
+            _uwvFlagLoaded = true;
+            _uwvBlocks = await UwvGate.IsEnabledAsync();
+            _uwvShowcase = _uwvBlocks;
+            if (_uwvShowcase)
+            {
+                _bootstrapping = false;
+                _planLoadStarted = true;
+                StateHasChanged();
+                return;
+            }
+        }
+
         // Prerender paints the skeleton. Load only after the interactive circuit
         // so the first HTML is not blank while the API responds.
         if (_uwvShowcase || !firstRender || _planLoadStarted || !RendererInfo.IsInteractive)

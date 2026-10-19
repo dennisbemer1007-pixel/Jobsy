@@ -1,10 +1,14 @@
-@using Jobsy.Web.Components
+@using Jobsy.Core.Uwv
+@using Jobsy.Web.Components.UwvMockups
 @using Jobsy.Web.Localization
-@using Jobsy.Web.Media
+@using Jobsy.Web.Services
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
 
-<section class="uwv-adviseur uwv-adviseur--full opl-wrap" aria-labelledby="@_titleId">
+<section class="uwv-adviseur uwv-adviseur--full opl-wrap" aria-labelledby="@_titleId" data-testid="uwv-adviseur-share">
     <div class="uwv-adviseur__intro">
         <h1 id="@_titleId" class="uwv-block__title uwv-adviseur__h1">@UwvMockupCopy.Adviseur.Title(Lang)</h1>
         <p class="uwv-block__lead">@UwvMockupCopy.Adviseur.Lead(Lang)</p>
@@ -15,14 +19,12 @@
 
     <fieldset class="uwv-adviseur__pick">
         <legend>@(UwvMockupCopy.IsEnglish(Lang) ? "Include in printout" : "Opnemen in printout")</legend>
-        @foreach (var (nl, en) in UwvMockupData.AdviseurSections)
+        @foreach (var section in UwvAdviseurSectionCatalog.All)
         {
-            var label = UwvMockupCopy.IsEnglish(Lang) ? en : nl;
-            var isPassport = label.Contains("competenc", StringComparison.OrdinalIgnoreCase)
-                             || label.Contains("competent", StringComparison.OrdinalIgnoreCase);
-            var on = isPassport || label.Contains("Drijf") || label.Contains("Driver") || label.Contains("Carri") || label.Contains("Career");
+            var label = UwvMockupCopy.IsEnglish(Lang) ? section.LabelEn : section.LabelNl;
+            var on = _selectedSections.Contains(section.Key);
             <label class="uwv-toggle">
-                <input type="checkbox" checked="@on" />
+                <input type="checkbox" checked="@on" @onchange="e => ToggleSection(section.Key, e)" />
                 <span class="uwv-toggle__track" aria-hidden="true"></span>
                 <span class="uwv-toggle__label">@label</span>
             </label>
@@ -31,35 +33,27 @@
 
     <div class="uwv-adviseur__preview-wrap">
         <p class="uwv-adviseur__preview-label">@UwvMockupCopy.Adviseur.PreviewTitle(Lang)</p>
-        <article class="uwv-a4-preview" aria-label="@UwvMockupCopy.Adviseur.PreviewTitle(Lang)">
-            <header class="uwv-a4-preview__head">
-                <LobsyLogo Class="uwv-a4-preview__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Mark" />
-                <div class="uwv-a4-preview__head-copy">
-                    <p class="uwv-a4-preview__eyebrow">@(UwvMockupCopy.IsEnglish(Lang) ? "Summary for your adviser" : "Samenvatting voor je adviseur")</p>
-                    <h2>@UwvMockupCopy.SampleCandidateName(Lang)</h2>
-                </div>
-            </header>
-            <div class="uwv-a4-preview__body">
-                <h3>@UwvMockupCopy.Drijfveren.ResultsTitle(Lang)</h3>
-                <p>@(UwvMockupCopy.IsEnglish(Lang) ? UwvMockupData.Drivers[0].ExplainEn : UwvMockupData.Drivers[0].ExplainNl)</p>
-                <h3>@(UwvMockupCopy.IsEnglish(Lang) ? "Competencies" : "Competenties")</h3>
-                <ul class="uwv-a4-preview__skills">
-                    <li>
-                        <span class="uwv-verified" aria-hidden="true">✓</span>
-                        @(UwvMockupCopy.IsEnglish(Lang) ? "Planning and organising" : "Plannen en organiseren")
-                    </li>
-                    <li>
-                        <span class="uwv-verified" aria-hidden="true">✓</span>
-                        @(UwvMockupCopy.IsEnglish(Lang) ? "Customer-oriented communication" : "Klantgericht communiceren")
-                    </li>
-                </ul>
-                <p class="uwv-a4-preview__note muted">@UwvMockupCopy.Adviseur.VerifiedNote(Lang)</p>
-            </div>
-        </article>
+        <UwvAdviseurShareDocument Lang="@Lang"
+                                  CandidateDisplayName="@_candidateName"
+                                  Sections="@PreviewSections"
+                                  OndernemerOutcomeKey="@_toolkit?.OndernemerOutcomeKey"
+                                  DrijfverenDriverKeys="@(_toolkit?.DrijfverenDriverKeys ?? [])"
+                                  VerifiedCompetences="@_verifiedCompetences" />
         <div class="uwv-adviseur__actions uwv-adviseur__actions--under-preview">
-            <button type="button" class="btn btn-primary">@UwvMockupCopy.Adviseur.Print(Lang)</button>
-            <button type="button" class="btn btn-ghost">@UwvMockupCopy.Adviseur.ShareLink(Lang)</button>
+            <button type="button" class="btn btn-primary" @onclick="PrintAsync">@UwvMockupCopy.Adviseur.Print(Lang)</button>
+            <button type="button" class="btn btn-ghost" disabled="@_shareBusy" @onclick="CreateShareAsync">@UwvMockupCopy.Adviseur.ShareLink(Lang)</button>
         </div>
+        @if (!string.IsNullOrWhiteSpace(_shareUrl))
+        {
+            <div class="uwv-adviseur__share-url">
+                <label class="muted" for="uwv-share-url">@(UwvMockupCopy.IsEnglish(Lang) ? "Share link (48h)" : "Deellink (48 uur)")</label>
+                <input id="uwv-share-url" class="uwv-adviseur__share-input" readonly value="@_shareUrl" @onclick="SelectShareUrl" />
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(_shareError))
+        {
+            <p class="state-message" role="alert">@_shareError</p>
+        }
         <p class="uwv-adviseur__tip muted">@UwvMockupCopy.Adviseur.MeetingTip(Lang)</p>
     </div>
 </section>
@@ -67,4 +61,104 @@
 @code {
     private string Lang => Culture.Language;
     private readonly string _titleId = "uwv-adviseur-" + Guid.NewGuid().ToString("N")[..8];
+
+    private readonly HashSet<string> _selectedSections = new(StringComparer.Ordinal)
+    {
+        UwvAdviseurSectionKeys.Career,
+        UwvAdviseurSectionKeys.Drijfveren,
+        UwvAdviseurSectionKeys.Competences
+    };
+
+    private UwvToolkitStateDto? _toolkit;
+    private List<JobsyApiClient.VerifiedCompetenceItem> _verifiedCompetences = [];
+    private string _candidateName = "";
+    private string? _shareUrl;
+    private string? _shareError;
+    private bool _shareBusy;
+
+    private IReadOnlyList<string> PreviewSections =>
+        UwvAdviseurSectionKeys.All.Where(_selectedSections.Contains).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var profile = await Api.GetMyProfileAsync();
+        _candidateName = profile?.FullName?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(_candidateName))
+        {
+            _candidateName = UwvMockupCopy.SampleCandidateName(Lang);
+        }
+
+        _toolkit = await Api.GetUwvToolkitAsync();
+        _verifiedCompetences = (await Api.GetVerifiedCompetencesAsync()).ToList();
+    }
+
+    private void ToggleSection(string key, ChangeEventArgs e)
+    {
+        if (e.Value is bool on)
+        {
+            if (on)
+            {
+                _selectedSections.Add(key);
+            }
+            else
+            {
+                _selectedSections.Remove(key);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private Task PrintAsync() => Js.InvokeVoidAsync("print").AsTask();
+
+    private async Task CreateShareAsync()
+    {
+        _shareError = null;
+        if (_selectedSections.Count == 0)
+        {
+            _shareError = UwvMockupCopy.IsEnglish(Lang)
+                ? "Select at least one section."
+                : "Kies minimaal één onderdeel.";
+            return;
+        }
+
+        _shareBusy = true;
+        try
+        {
+            var lang = UwvMockupCopy.IsEnglish(Lang) ? "en" : "nl";
+            var created = await Api.CreateUwvAdviseurShareAsync(_selectedSections.ToArray(), lang);
+            if (created is null || string.IsNullOrWhiteSpace(created.Token))
+            {
+                _shareError = Culture["Common.Error"];
+                return;
+            }
+
+            _shareUrl = Navigation.ToAbsoluteUri($"/deel/uwv-adviseur/{created.Token}").ToString();
+        }
+        catch (Exception ex)
+        {
+            _shareError = ex.Message;
+        }
+        finally
+        {
+            _shareBusy = false;
+        }
+    }
+
+    private async Task SelectShareUrl()
+    {
+        if (string.IsNullOrWhiteSpace(_shareUrl))
+        {
+            return;
+        }
+
+        try
+        {
+            await Js.InvokeVoidAsync("navigator.clipboard.writeText", _shareUrl);
+        }
+        catch
+        {
+            // selection on click is enough for manual copy
+        }
+    }
 }

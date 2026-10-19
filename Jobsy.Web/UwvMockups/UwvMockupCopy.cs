@@ -134,6 +134,46 @@ public static class UwvMockupCopy
             "You like to plan your own work and start small. Self-employment can fit if you have room to learn and grow your network. Discuss this with your adviser.",
             lang);
         public static string HowItWorksTitle(string? lang) => T("Zo werkt het", "How it works", lang);
+        public static IReadOnlyList<string> Questions(string? lang) => IsEnglish(lang)
+            ?
+            [
+                "I like trying a small idea before committing to a big step.",
+                "I feel comfortable when I can plan my own week.",
+                "Uncertainty motivates me to learn quickly.",
+                "I prefer building something of my own over following fixed procedures.",
+                "I can ask for help from my network when I start something new.",
+                "I am willing to invest time before income becomes steady."
+            ]
+            :
+            [
+                "Ik probeer liever eerst een klein idee uit voordat ik een grote stap zet.",
+                "Ik voel me op mijn gemak als ik mijn week zelf kan plannen.",
+                "Onzekerheid zet me aan om snel nieuwe dingen te leren.",
+                "Ik bouw liever iets van mezelf op dan vaste procedures te volgen.",
+                "Ik durf hulp te vragen aan mijn netwerk als ik iets nieuws begin.",
+                "Ik ben bereid tijd te investeren voordat het inkomen stabiel wordt."
+            ];
+
+        public static (string Title, string Lead) ResultCopy(string? outcomeKey, string? lang)
+        {
+            return outcomeKey switch
+            {
+                "ready" => (
+                    T("Je bent het meest klaar om te ondernemen", "You look most ready to start on your own", lang),
+                    T(
+                        "Je plant graag zelf, durft klein te beginnen en zoekt ruimte om te groeien. Bespreek concrete vervolgstappen met je adviseur.",
+                        "You like to plan your own work, start small, and create room to grow. Discuss concrete next steps with your adviser.",
+                        lang)),
+                "cautious" => (
+                    T("Neem de tijd — ondernemen vraagt voorbereiding", "Take your time — self-employment needs preparation", lang),
+                    T(
+                        "Zelfstandig ondernemen vraagt veel van je. Verken eerst andere routes of versterk je netwerk; je adviseur kan helpen kiezen.",
+                        "Self-employment asks a lot of you. Explore other routes or strengthen your network first; your adviser can help you choose.",
+                        lang)),
+                _ => (ResultTitle(lang), ResultLead(lang))
+            };
+        }
+
         public static IReadOnlyList<string> HowItWorksSteps(string? lang) => IsEnglish(lang)
             ?
             [

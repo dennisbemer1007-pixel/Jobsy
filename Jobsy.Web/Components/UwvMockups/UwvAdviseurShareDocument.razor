@@ -1,0 +1,130 @@
+@using Jobsy.Core.Uwv
+@using Jobsy.Web.Components
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Services
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
+
+<article class="uwv-a4-preview uwv-adviseur-print" aria-label="@UwvMockupCopy.Adviseur.PreviewTitle(Lang)">
+    <header class="uwv-a4-preview__head">
+        <LobsyLogo Class="uwv-a4-preview__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Mark" />
+        <div class="uwv-a4-preview__head-copy">
+            <p class="uwv-a4-preview__eyebrow">@(UwvMockupCopy.IsEnglish(Lang) ? "Summary for your adviser" : "Samenvatting voor je adviseur")</p>
+            <h2>@CandidateDisplayName</h2>
+        </div>
+    </header>
+    <div class="uwv-a4-preview__body">
+        @if (Sections.Contains(UwvAdviseurSectionKeys.Career, StringComparer.Ordinal))
+        {
+            <h3>@(UwvMockupCopy.IsEnglish(Lang) ? "Self-employment check" : "Ondernemerscheck")</h3>
+            var (title, lead) = UwvMockupCopy.Ondernemer.ResultCopy(OndernemerOutcomeKey, Lang);
+            <p><strong>@title</strong></p>
+            <p>@lead</p>
+        }
+        @if (Sections.Contains(UwvAdviseurSectionKeys.Kansberoepen, StringComparer.Ordinal))
+        {
+            <h3>@(UwvMockupCopy.IsEnglish(Lang) ? "Opportunity occupations" : "Kansberoepen")</h3>
+            <ul class="uwv-a4-preview__skills">
+                @foreach (var entry in Kansberoepen.Take(3))
+                {
+                    <li>@(UwvMockupCopy.IsEnglish(Lang) ? entry.TitleEn : entry.TitleNl)</li>
+                }
+            </ul>
+            <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? KansberoepenCatalog.GetDefault().SourceLineEn : KansberoepenCatalog.GetDefault().SourceLineNl)</p>
+        }
+        @if (Sections.Contains(UwvAdviseurSectionKeys.Drijfveren, StringComparer.Ordinal))
+        {
+            <h3>@UwvMockupCopy.Drijfveren.ResultsTitle(Lang)</h3>
+            @foreach (var driver in DriverChips)
+            {
+                <p>@(UwvMockupCopy.IsEnglish(Lang) ? driver.ExplainEn : driver.ExplainNl)</p>
+            }
+            @if (DriverChips.Count == 0)
+            {
+                <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? "No drivers saved yet." : "Nog geen drijfveren opgeslagen.")</p>
+            }
+        }
+        @if (Sections.Contains(UwvAdviseurSectionKeys.Competences, StringComparer.Ordinal))
+        {
+            <h3>@(UwvMockupCopy.IsEnglish(Lang) ? "Competencies" : "Competenties")</h3>
+            @if (CompetenceLabels.Count > 0)
+            {
+                <ul class="uwv-a4-preview__skills">
+                    @foreach (var label in CompetenceLabels)
+                    {
+                        <li>
+                            <span class="uwv-verified" aria-hidden="true">✓</span>
+                            @label
+                        </li>
+                    }
+                </ul>
+                <p class="uwv-a4-preview__note muted">@UwvMockupCopy.Adviseur.VerifiedNote(Lang)</p>
+            }
+            else
+            {
+                <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? "No verified competencies yet." : "Nog geen bevestigde competenties.")</p>
+            }
+        }
+        @if (Sections.Contains(UwvAdviseurSectionKeys.Banenkaart, StringComparer.Ordinal))
+        {
+            <h3>@(UwvMockupCopy.IsEnglish(Lang) ? "Jobs on the map" : "Banen op de kaart")</h3>
+            <p>@(UwvMockupCopy.IsEnglish(Lang)
+                ? "Selection of saved and matching vacancies on your banenkaart (sample)."
+                : "Selectie van opgeslagen en passende vacatures op je banenkaart (voorbeeld).")</p>
+        }
+    </div>
+</article>
+
+@code {
+    [Parameter] public string Lang { get; set; } = "nl";
+    [Parameter] public string CandidateDisplayName { get; set; } = "";
+    [Parameter] public IReadOnlyList<string> Sections { get; set; } = [];
+    [Parameter] public string? OndernemerOutcomeKey { get; set; }
+    [Parameter] public IReadOnlyList<string> DrijfverenDriverKeys { get; set; } = [];
+    [Parameter] public IReadOnlyList<JobsyApiClient.VerifiedCompetenceItem> VerifiedCompetences { get; set; } = [];
+    [Parameter] public IReadOnlyList<UwvAdviseurEndorsedCompetenceDto> EndorsedCompetences { get; set; } = [];
+    [Inject] private IUwvKansberoepenCatalog KansberoepenCatalog { get; set; } = default!;
+
+    private IReadOnlyList<UwvKansberoepEntry> Kansberoepen => KansberoepenCatalog.GetDefault().Entries;
+
+    private IReadOnlyList<string> CompetenceLabels
+    {
+        get
+        {
+            if (EndorsedCompetences.Count > 0)
+            {
+                return EndorsedCompetences.Select(c => c.Label).ToList();
+            }
+
+            return VerifiedCompetences.Select(c => c.Label).ToList();
+        }
+    }
+
+    private IReadOnlyList<UwvDriverChip> DriverChips
+    {
+        get
+        {
+            var list = new List<UwvDriverChip>();
+            foreach (var key in DrijfverenDriverKeys)
+            {
+                var idx = -1;
+                for (var i = 0; i < UwvDriverKeys.All.Count; i++)
+                {
+                    if (string.Equals(UwvDriverKeys.All[i], key, StringComparison.Ordinal))
+                    {
+                        idx = i;
+                        break;
+                    }
+                }
+
+                if (idx >= 0 && idx < UwvMockupData.Drivers.Count)
+                {
+                    list.Add(UwvMockupData.Drivers[idx]);
+                }
+            }
+
+            return list;
+        }
+    }
+}

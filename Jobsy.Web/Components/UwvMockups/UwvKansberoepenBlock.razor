@@ -1,7 +1,9 @@
 @using Jobsy.Web.Components.UwvFeatures
 @using Jobsy.Web.Localization
+@using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
+@inject IUwvKansberoepenCatalog KansCatalog
 
 <section class="detail-card career-card uwv-block uwv-kans" aria-labelledby="@_titleId">
     <p class="uwv-block__eyebrow">
@@ -11,12 +13,12 @@
     <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Kansberoepen.Title(Lang)</h2>
     <p class="uwv-block__lead">@UwvMockupCopy.Kansberoepen.Lead(Lang)</p>
     <p class="uwv-block__meta">
-        <span class="uwv-kans__region">@UwvMockupCopy.Kansberoepen.Region(Lang)</span>
-        <span class="uwv-block__source">@UwvMockupCopy.Kansberoepen.Source(Lang)</span>
+        <span class="uwv-kans__region">@(_dataset is null ? UwvMockupCopy.Kansberoepen.Region(Lang) : (UwvMockupCopy.IsEnglish(Lang) ? _dataset.RegionKeyEn : _dataset.RegionKeyNl))</span>
+        <span class="uwv-block__source">@(_dataset is null ? UwvMockupCopy.Kansberoepen.Source(Lang) : (UwvMockupCopy.IsEnglish(Lang) ? _dataset.SourceLineEn : _dataset.SourceLineNl))</span>
     </p>
 
     <ul class="uwv-kans__list">
-        @foreach (var job in UwvMockupData.Kansberoepen)
+        @foreach (var job in _entries)
         {
             <li class="uwv-kans__item uwv-kans__item--rich">
                 <UwvSectorIcon Kind="@job.SectorIcon" CssClass="uwv-kans__icon" />
@@ -40,4 +42,12 @@
 @code {
     private string Lang => Culture.Language;
     private readonly string _titleId = "uwv-kans-title-" + Guid.NewGuid().ToString("N")[..8];
+    private Jobsy.Core.Uwv.UwvKansberoepenDataset? _dataset;
+    private IReadOnlyList<Jobsy.Core.Uwv.UwvKansberoepEntry> _entries = [];
+
+    protected override void OnInitialized()
+    {
+        _dataset = KansCatalog.GetDefault();
+        _entries = _dataset.Entries;
+    }
 }

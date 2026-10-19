@@ -36,28 +36,25 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         builder.UseEnvironment("Development");
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            var uwvMock = string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP"), "1", StringComparison.Ordinal);
+            var uwvOn = string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES"), "1", StringComparison.Ordinal)
+                        || string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP"), "1", StringComparison.Ordinal);
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ApiBaseUrl"] = "http://api.test/",
                 ["Landing:ForceVariant"] = "on",
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
-                ["Features:UwvFeaturesMockup"] = uwvMock ? "true" : "false"
+                ["Features:UwvFeatures"] = uwvOn ? "true" : "false"
             });
         });
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IHostedService>();
-            services.RemoveAll<IUwvFeaturesMockupGate>();
-            services.AddSingleton<IUwvFeaturesMockupGate>(sp =>
-            {
-                var cfg = sp.GetRequiredService<IConfiguration>();
-                return new UwvFeaturesMockupGate(cfg);
-            });
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
-            services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
+            var uwvOn = string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES"), "1", StringComparison.Ordinal)
+                        || string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP"), "1", StringComparison.Ordinal);
+            services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
@@ -95,18 +92,19 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         base.Dispose(disposing);
     }
 
-    private sealed class PassportOnFlags : IFeatureFlags
+    private sealed class PassportOnFlags(bool uwvFeaturesEnabled) : IFeatureFlags
     {
-        private static readonly FeatureFlagSnapshot Snap = new(
+        private readonly FeatureFlagSnapshot _snap = new(
             EmployersEnabled: true,
             CandidatePassportEnabled: true,
-            ProactiveMatchingEnabled: false);
+            ProactiveMatchingEnabled: false,
+            UwvFeaturesEnabled: uwvFeaturesEnabled);
 
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap);
+            => ValueTask.FromResult(_snap);
 
         public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap.IsEnabled(feature));
+            => ValueTask.FromResult(_snap.IsEnabled(feature));
 
         public void Invalidate()
         {

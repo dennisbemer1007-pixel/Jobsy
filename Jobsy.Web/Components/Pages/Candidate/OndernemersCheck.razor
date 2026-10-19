@@ -7,15 +7,17 @@
 @using Jobsy.Web.Components.Candidate.Tests
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
+@using Jobsy.Web.Services
 @using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.UwvMockups
 @inject CultureState Culture
-@inject IUwvFeaturesMockupGate UwvGate
+@inject IUwvFeaturesGate UwvGate
+@inject JobsyApiClient Api
 @inject NavigationManager Navigation
 
 <PageTitle>@UwvMockupCopy.Ondernemer.TestName(Culture.Language) · Lobsy</PageTitle>
 
-@if (!UwvGate.IsEnabled)
+@if (!_uwvOn)
 {
     <div class="test-page journey-page"><p class="state-message">@Culture["Common.Error"]</p></div>
 }
@@ -72,20 +74,19 @@ else if (_phase == "question")
                            H1="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
                            TestName="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
                            LevelName="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")"
-                           Answered="2"
+                           Answered="@(_questionIndex + 1)"
                            TargetCount="6"
                            QuickScanVersion="1"
                            ActiveDepth="TestDepthLevel.First"
                            ShowDepthSegments="false"
                            BubbleText="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Take your time" : "Neem je tijd")">
                 <ChildContent>
-                    <p class="uwv-test-q">@(UwvMockupCopy.IsEnglish(Culture.Language)
-                        ? "I like trying a small idea before committing to a big step."
-                        : "Ik probeer liever eerst een klein idee uit voordat ik een grote stap zet.")</p>
+                    <p class="uwv-test-q">@CurrentQuestion</p>
                     <div class="uwv-test-scale" role="group" aria-label="Likert">
-                        @foreach (var label in ScaleLabels)
+                        @for (var score = 1; score <= 5; score++)
                         {
-                            <button type="button" class="uwv-test-scale__btn" @onclick="ShowResult">@label</button>
+                            var s = score;
+                            <button type="button" class="uwv-test-scale__btn" disabled="@_saving" @onclick="() => AnswerAsync(s)">@ScaleLabels.ElementAt(score - 1)</button>
                         }
                     </div>
                 </ChildContent>
@@ -95,12 +96,13 @@ else if (_phase == "question")
 }
 else
 {
+    var (resultTitle, resultLead) = UwvMockupCopy.Ondernemer.ResultCopy(_outcomeKey, Culture.Language);
     <div class="journey-page uwv-ondernemer-test uwv-ondernemer-test--result">
         <div class="uwv-ondernemer-test__shell">
             <TestPageShell Kind="AssessmentKind.Career"
                            Mode="TestPageShell.ShellMode.Done"
-                           H1="@UwvMockupCopy.Ondernemer.ResultTitle(Culture.Language)"
-                           Lead="@UwvMockupCopy.Ondernemer.ResultLead(Culture.Language)"
+                           H1="@resultTitle"
+                           Lead="@resultLead"
                            TestName="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
                            LevelName="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")"
                            Answered="6"
@@ -121,8 +123,24 @@ else
 
 @code {
     [SupplyParameterFromQuery(Name = "stap")] public string? Stap { get; set; }
-
     private string _phase = "intro";
+    private bool _uwvOn;
+    private int _questionIndex;
+    private readonly List<int> _answers = [];
+    private string? _outcomeKey;
+    private bool _saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _uwvOn = await UwvGate.IsEnabledAsync();
+        if (!_uwvOn)
+        {
+            return;
+        }
+
+        var state = await Api.GetUwvToolkitAsync();
+        _outcomeKey = state?.OndernemerOutcomeKey;
+    }
 
     protected override void OnParametersSet()
     {
@@ -132,6 +150,7 @@ else
             "result" or "done" => "result",
             _ => "intro"
         };
+
     }
 
     private string IntroLead =>
@@ -141,6 +160,46 @@ else
         ? ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]
         : ["Helemaal niet", "Niet", "Neutraal", "Wel", "Helemaal wel"];
 
-    private void StartQuestions() => Navigation.NavigateTo("/candidate/ondernemerscheck?stap=question");
-    private void ShowResult() => Navigation.NavigateTo("/candidate/ondernemerscheck?stap=result");
+    private string CurrentQuestion =>
+        UwvMockupCopy.Ondernemer.Questions(Culture.Language).ElementAt(_questionIndex);
+
+    private void StartQuestions()
+    {
+        _answers.Clear();
+        _questionIndex = 0;
+        Navigation.NavigateTo("/candidate/ondernemerscheck?stap=question");
+    }
+
+    private async Task AnswerAsync(int score)
+    {
+        if (_saving)
+        {
+            return;
+        }
+
+        _answers.Add(score);
+
+        if (_answers.Count < 6)
+        {
+            _questionIndex++;
+            StateHasChanged();
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            var saved = await Api.SaveUwvOndernemerAsync(_answers.Take(6).ToArray());
+            _outcomeKey = saved?.OndernemerOutcomeKey;
+            Navigation.NavigateTo("/candidate/ondernemerscheck?stap=result");
+        }
+        catch
+        {
+            Navigation.NavigateTo("/candidate/ondernemerscheck?stap=result");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
 }

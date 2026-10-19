@@ -13,16 +13,16 @@
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
-@inject IUwvFeaturesMockupGate UwvFeaturesMockupGate
+@inject IUwvFeaturesGate UwvGate
 
 <PageTitle>@Culture["Training.LearnGrow.NavLearn"] · Lobsy</PageTitle>
 
-@if (!_enabled && !UwvFeaturesMockupGate.IsEnabled)
+@if (!_enabled && !_uwvOn)
 {
     return;
 }
 
-<div class="opl-page panel-page--cand-ill @(UwvFeaturesMockupGate.IsEnabled ? "uwv-carriere-leren-mock" : null)">
+<div class="opl-page panel-page--cand-ill @(_uwvOn ? "uwv-carriere-leren-mock" : null)">
     <CandidateIllustratedHero Eyebrow="@Culture["Training.LearnGrow.NavLearn"]"
                               CoralEyebrow="true"
                               Title="@Culture["Training.LearnGrow.Title"]"
@@ -68,7 +68,7 @@
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
         }
-        else if (_page is null && !UwvFeaturesMockupGate.IsEnabled)
+        else if (_page is null && !_uwvOn)
         {
             <p class="state-message">@Culture["Common.Error"]</p>
         }
@@ -166,7 +166,7 @@
             </div>
         }
 
-        @if (UwvFeaturesMockupGate.IsEnabled)
+        @if (_uwvOn)
         {
             <div class="uwv-carriere-leren-mock__blocks" data-testid="uwv-carriere-leren-sections">
                 <UwvOmscholenBlock />
@@ -180,6 +180,7 @@
     private const int SectionPreviewCount = 3;
 
     private bool _enabled;
+    private bool _uwvOn;
     private bool _loading = true;
     private bool _busy;
     private string _search = "";
@@ -218,14 +219,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _uwvOn = await UwvGate.IsEnabledAsync();
         _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners)
-                   || UwvFeaturesMockupGate.IsEnabled;
+                   || _uwvOn;
         if (!_enabled)
         {
             return;
         }
 
-        if (UwvFeaturesMockupGate.IsEnabled && !await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners))
+        if (_uwvOn && !await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners))
         {
             _loading = false;
             return;

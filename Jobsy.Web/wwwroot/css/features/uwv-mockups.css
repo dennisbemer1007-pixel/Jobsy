@@ -1156,3 +1156,64 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
     padding-right: 1.5rem;
   }
 }
+
+.uwv-adviseur__share-url {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.uwv-adviseur__share-input {
+  width: 100%;
+  font-size: var(--text-sm);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.uwv-adviseur-deel-page .pub-card {
+  max-width: 52rem;
+}
+
+.uwv-adviseur-deel__actions {
+  margin-bottom: 1rem;
+}
+
+@media print {
+  .no-print,
+  .app-header,
+  .app-footer,
+  .bottom-nav,
+  .cookie-consent,
+  .pub-header,
+  .pub-footer,
+  .uwv-adviseur__intro,
+  .uwv-adviseur__pick,
+  .uwv-adviseur__actions,
+  .uwv-adviseur__tip,
+  .uwv-adviseur__preview-label,
+  .uwv-adviseur__share-url,
+  .uwv-adviseur-deel__actions,
+  .public-lang-menu {
+    display: none !important;
+  }
+
+  .uwv-adviseur-print,
+  .uwv-adviseur-print * {
+    visibility: visible;
+  }
+
+  .uwv-adviseur-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+  }
+
+  body {
+    background: #fff;
+  }
+}

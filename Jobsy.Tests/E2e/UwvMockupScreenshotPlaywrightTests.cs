@@ -3,7 +3,7 @@ using Microsoft.Playwright;
 namespace Jobsy.Tests.E2e;
 
 /// <summary>
-/// Captures UWV werkmap blocks on real candidate routes (flag <c>Features:UwvFeaturesMockup</c>).
+/// Captures UWV werkmap blocks on real candidate routes (flag <c>Features:UwvFeatures</c>).
 /// </summary>
 [Collection("PlaywrightSmoke")]
 public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
@@ -38,12 +38,12 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
     private static readonly (string FileSlug, string Path, int Width, int Height, bool FullPage)[] Captures =
     [
-        ("01-carriere-kansberoepen-nl-1440", "/carriere?uwv=1", 1440, 900, true),
-        ("01-carriere-kansberoepen-nl-1920", "/carriere?uwv=1", 1920, 1080, true),
-        ("01-carriere-kansberoepen-nl-390", "/carriere?uwv=1", 390, 844, true),
-        ("01-carriere-kansberoepen-en-1440", "/carriere?uwv=1", 1440, 900, true),
-        ("01-carriere-kansberoepen-en-1920", "/carriere?uwv=1", 1920, 1080, true),
-        ("01-carriere-kansberoepen-en-390", "/carriere?uwv=1", 390, 844, true),
+        ("01-carriere-kansberoepen-nl-1440", "/carriere", 1440, 900, true),
+        ("01-carriere-kansberoepen-nl-1920", "/carriere", 1920, 1080, true),
+        ("01-carriere-kansberoepen-nl-390", "/carriere", 390, 844, true),
+        ("01-carriere-kansberoepen-en-1440", "/carriere", 1440, 900, true),
+        ("01-carriere-kansberoepen-en-1920", "/carriere", 1920, 1080, true),
+        ("01-carriere-kansberoepen-en-390", "/carriere", 390, 844, true),
         ("02-banenkaart-kanslaag-nl-1440", "/banenkaart", 1440, 900, false),
         ("02-banenkaart-kanslaag-nl-390", "/banenkaart", 390, 844, false),
         ("02-banenkaart-kanslaag-en-1440", "/banenkaart", 1440, 900, false),
@@ -84,7 +84,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         _playwright = await Playwright.CreateAsync();
         _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
-        Environment.SetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP", "1");
+        Environment.SetEnvironmentVariable("JOBSY_UWV_FEATURES", "1");
         _web = new IllustratedPagesWebFactory();
         _ = _web.ServerAddress;
         _baseUrl = _web.ServerAddress;
