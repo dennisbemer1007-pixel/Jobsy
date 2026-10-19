@@ -25,6 +25,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
     private static readonly string[] PartialCapturePrefixes =
     [
+        "01-carriere-kansberoepen-",
         "02-banenkaart-kanslaag-",
         "03-workshops-omscholen-",
         "04-ondernemer-intro-",
@@ -41,6 +42,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
         ("01-carriere-kansberoepen-nl-1920", "/carriere?uwv=1", 1920, 1080, true),
         ("01-carriere-kansberoepen-nl-390", "/carriere?uwv=1", 390, 844, true),
         ("01-carriere-kansberoepen-en-1440", "/carriere?uwv=1", 1440, 900, true),
+        ("01-carriere-kansberoepen-en-1920", "/carriere?uwv=1", 1920, 1080, true),
         ("01-carriere-kansberoepen-en-390", "/carriere?uwv=1", 390, 844, true),
         ("02-banenkaart-kanslaag-nl-1440", "/banenkaart", 1440, 900, false),
         ("02-banenkaart-kanslaag-nl-390", "/banenkaart", 390, 844, false),

@@ -458,10 +458,28 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   -webkit-mask-image: radial-gradient(ellipse 105% 95% at 50% 48%, #000 55%, transparent 98%);
 }
 
+/* Align hero copy with .opl-wrap content (72rem + horizontal padding). */
 .uwv-carriere-showcase-hero .cand-hero__copy {
   position: relative;
   z-index: 2;
-  max-width: 36rem;
+}
+
+@media (min-width: 640px) {
+  .uwv-carriere-showcase-hero.cand-hero--profession-band .cand-hero__copy {
+    width: auto;
+    max-width: min(38rem, 52%);
+    margin-inline: 0;
+    padding-block: clamp(1.35rem, 3vw, 2rem);
+    padding-inline-start: calc((100vw - min(100vw, 72rem)) / 2 + var(--space-4));
+    padding-inline-end: clamp(1.25rem, 4vw, 2.5rem);
+  }
+}
+
+@media (max-width: 639px) {
+  .uwv-carriere-showcase-hero.cand-hero--with-art .cand-hero__copy {
+    padding-inline-start: var(--space-4);
+    padding-inline-end: 0.75rem;
+  }
 }
 
 .uwv-drijfveren-hero.cand-hero--with-art::before {
