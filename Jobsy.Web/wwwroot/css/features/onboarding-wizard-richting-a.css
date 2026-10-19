@@ -377,8 +377,31 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__birth-date,
-  .ob-wizard--richting-a .jobsy-date-field--localized {
+  .ob-wizard--richting-a .jobsy-date-field--localized,
+  .ob-wizard--richting-a .jobsy-date-field--typed {
     margin-block: 0 !important;
+  }
+
+  .ob-wizard--richting-a .ob-fields .jobsy-date-field__control {
+    min-block-size: 48px;
+  }
+
+  .ob-wizard--richting-a .ob-fields .jobsy-date-field__picker-btn {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  .ob-wizard--richting-a .ob-fields .jobsy-date-field__input--native {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .ob-wizard--richting-a fieldset small:not(.ob-wizard__hint) {

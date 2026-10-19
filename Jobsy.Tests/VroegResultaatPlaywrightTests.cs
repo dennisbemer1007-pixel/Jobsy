@@ -639,6 +639,15 @@ combo.save(out)
 
     internal static async Task FillOnboardingBirthDateIfPresentAsync(IPage page)
     {
+        var birthText = page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__text").First;
+        if (await birthText.CountAsync() > 0)
+        {
+            await birthText.ClickAsync();
+            await birthText.FillAsync("15-06-2000");
+            await birthText.EvaluateAsync("el => el.dispatchEvent(new Event('blur', { bubbles: true }))");
+            return;
+        }
+
         var birth = page.Locator("[data-testid=onboarding-birth-date] input[type=date]").First;
         if (await birth.CountAsync() > 0)
         {

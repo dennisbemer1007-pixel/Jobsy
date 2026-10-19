@@ -61,6 +61,30 @@ dotnet test Jobsy.Tests/Jobsy.Tests.csproj
 dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter "FullyQualifiedName~CoreFunctionalFlow"
 ```
 
+### Playwright functional gate (`e2e-functional`)
+
+Required status check for PRs targeting **`acceptatie`**. Post-deploy smoke runs on every push to **`acceptatie`**
+(read-only against `acceptatie.lobsy.nl` when `JOBSY_E2E_BASE_URL` is configured in GitHub secrets).
+
+**Local (stack on :5201):**
+
+```bash
+chmod +x .github/scripts/start-ci-stack.sh
+export ConnectionStrings__JobsyDb='Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres'
+export VerificationCodes__Pepper='ci-verification-otp-pepper-32chars!!'
+.github/scripts/start-ci-stack.sh
+
+export JOBSY_E2E_FUNCTIONAL_GATE=1
+export JOBSY_E2E_BASE_URL=http://127.0.0.1:5201
+export JOBSY_E2E_CAPTURE=1
+export JOBSY_E2E_ARTIFACTS_ROOT=/opt/cursor/artifacts/functional-sweep
+pwsh Jobsy.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+dotnet test Jobsy.Tests/Jobsy.Tests.csproj -c Release --filter "Suite=FunctionalE2e"
+```
+
+Uses throwaway `@jobsy.local` registrations (OTP capture via `JOBSY_E2E_CAPTURE_EMAIL_CODES=1` on the API).
+Candidate sweep tests reuse `kandidaat@jobsy.local` / `Jobsy123!` on seeded CI, or Acc secrets when set.
+
 **Env:** meeste tests gebruiken EF InMemory / TestServer. Live Mollie wordt gemockt; `LiveApiSmokeTests` kan een draaiende API vereisen.
 
 ## 5. Testaccounts op acceptatie

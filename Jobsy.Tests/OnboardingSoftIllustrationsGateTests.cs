@@ -93,6 +93,16 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
+    public void Illustrated_form_layer_keeps_pointer_events_for_interactive_fields()
+    {
+        var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
+        Assert.Contains(".ob-illustrated-step__body", css, StringComparison.Ordinal);
+        Assert.Matches(@"(?s)\.ob-illustrated-step__body\s*\{[^}]*pointer-events:\s*auto", css);
+        Assert.Matches(@"(?s)\.ob-illustrated-step__hero-band\s*\{[^}]*pointer-events:\s*none", css);
+        Assert.Matches(@"(?s)\.ob-illustrated-step__mobile-cover\s*\{[^}]*pointer-events:\s*none", css);
+    }
+
+    [Fact]
     public void Hero_band_css_uses_desktop_seam_art_and_full_bleed_mobile_cover_below_768()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
