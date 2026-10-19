@@ -1,6 +1,7 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Media
 @using Jobsy.Web.UwvMockups
 
 <div class="test-page journey-page uwv-ondernemer-test uwv-ondernemer-test--@Phase">
@@ -32,13 +33,28 @@ else if (Phase == "question")
                    H1="@UwvMockupCopy.Ondernemer.TestName(Lang)"
                    TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
                    LevelName="@(UwvMockupCopy.IsEnglish(Lang) ? "Short" : "Kort")"
-                   Answered="2"
+                   Answered="1"
                    TargetCount="6"
                    QuickScanVersion="1"
                    ActiveDepth="TestDepthLevel.First"
                    ShowDepthSegments="false"
                    BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Take your time" : "Neem je tijd")">
         <ChildContent>
+            <div class="test-flow test-flow--compact uwv-ondernemer-test__flow">
+                <div class="test-flow__progress-head">
+                    <p class="test-flow__counter">@(UwvMockupCopy.IsEnglish(Lang) ? "Question 1 of 6" : "Vraag 1 van 6")</p>
+                </div>
+                <div class="test-flow__bar uwv-ondernemer-test__bar" role="group" aria-label="@(UwvMockupCopy.IsEnglish(Lang) ? "Question 1 of 6" : "Vraag 1 van 6")">
+                    @for (var seg = 0; seg < 6; seg++)
+                    {
+                        var cls = seg == 0 ? "is-current" : "is-todo";
+                        <span class="test-flow__seg @cls" aria-hidden="true"></span>
+                    }
+                </div>
+            </div>
+            <p class="uwv-ondernemer-test__back">
+                <a href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Back" : "Terug")</a>
+            </p>
             <p class="uwv-test-q">@(UwvMockupCopy.IsEnglish(Lang)
                 ? "I like trying a small idea before committing to a big step."
                 : "Ik probeer liever eerst een klein idee uit voordat ik een grote stap zet.")</p>
@@ -53,24 +69,29 @@ else if (Phase == "question")
 }
 else
 {
-    <TestPageShell Kind="AssessmentKind.Career"
-                   Mode="TestPageShell.ShellMode.Done"
-                   H1="@UwvMockupCopy.Ondernemer.ResultTitle(Lang)"
-                   Lead="@UwvMockupCopy.Ondernemer.ResultLead(Lang)"
-                   TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
-                   LevelName="@(UwvMockupCopy.IsEnglish(Lang) ? "Short" : "Kort")"
-                   Answered="6"
-                   TargetCount="6"
-                   QuickScanVersion="1"
-                   ActiveDepth="TestDepthLevel.First"
-                   ShowDepthSegments="false"
-                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Well done" : "Klaar")">
-        <ChildContent>
-            <footer class="test-shell__footer">
-                <a class="btn btn-primary" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Back to discovery" : "Terug naar ontdekken")</a>
+    var (resultTitle, resultLead) = UwvMockupCopy.Ondernemer.ResultCopy("explore", Lang);
+    <div class="uwv-ondernemer-test__shell uwv-ondernemer-result">
+        <article class="detail-card career-card uwv-ondernemer-result__card">
+            <p class="uwv-ondernemer-result__eyebrow">@(UwvMockupCopy.IsEnglish(Lang) ? "Self-employment check · Short" : "Past ondernemen bij mij? · Kort")</p>
+            <figure class="uwv-ondernemer-result__art" aria-hidden="true">
+                <img src="@CandidateIllustratedImages.OndernemerIntroHero" alt="" width="640" height="360" decoding="async" loading="lazy" />
+            </figure>
+            <h1 class="uwv-ondernemer-result__title">@resultTitle</h1>
+            <p class="uwv-ondernemer-result__lead">@resultLead</p>
+            <h2 class="uwv-ondernemer-result__steps-title">@UwvMockupCopy.Ondernemer.ResultNextStepsTitle(Lang)</h2>
+            <ol class="uwv-ondernemer-result__steps">
+                @foreach (var step in UwvMockupCopy.Ondernemer.ResultNextSteps(Lang))
+                {
+                    <li><a href="@step.Href">@step.Label</a></li>
+                }
+            </ol>
+            <footer class="test-shell__footer uwv-ondernemer-result__footer">
+                <a class="btn btn-ghost" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Back to discovery" : "Terug naar ontdekken")</a>
+                <a class="btn btn-primary" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Take to your work adviser" : "Neem mee naar je adviseur")</a>
             </footer>
-        </ChildContent>
-    </TestPageShell>
+            <p class="uwv-ondernemer-result__done muted">@UwvMockupCopy.Ondernemer.ResultDoneLine(Lang)</p>
+        </article>
+    </div>
 }
 </div>
 
@@ -79,7 +100,7 @@ else
     [Parameter] public string? Lang { get; set; }
 
     private string IntroLead =>
-        $"{UwvMockupCopy.Ondernemer.IntroBenefit(Lang)} · {UwvMockupCopy.Ondernemer.IntroDuration(Lang)} · {UwvMockupCopy.Ondernemer.IntroLead(Lang)}";
+        $"{UwvMockupCopy.Ondernemer.IntroBenefit(Lang)} · {UwvMockupCopy.Ondernemer.IntroDuration(Lang)}";
 
     private IEnumerable<string> ScaleLabels => UwvMockupCopy.IsEnglish(Lang)
         ? ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]

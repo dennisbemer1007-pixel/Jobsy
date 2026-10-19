@@ -67,6 +67,7 @@ else if (_phase == "intro")
 }
 else if (_phase == "question")
 {
+    var qNum = _questionIndex + 1;
     <div class="journey-page uwv-ondernemer-test uwv-ondernemer-test--question">
         <div class="uwv-ondernemer-test__shell">
             <TestPageShell Kind="AssessmentKind.Career"
@@ -74,13 +75,44 @@ else if (_phase == "question")
                            H1="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
                            TestName="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
                            LevelName="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")"
-                           Answered="@(_questionIndex + 1)"
+                           Answered="@qNum"
                            TargetCount="6"
                            QuickScanVersion="1"
                            ActiveDepth="TestDepthLevel.First"
                            ShowDepthSegments="false"
                            BubbleText="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Take your time" : "Neem je tijd")">
                 <ChildContent>
+                    <div class="test-flow test-flow--compact uwv-ondernemer-test__flow">
+                        <div class="test-flow__progress-head">
+                            <p class="test-flow__counter">@Culture.Format("TestFlow.QuestionOf", qNum, 6)</p>
+                        </div>
+                        <div class="test-flow__bar uwv-ondernemer-test__bar" role="group" aria-label="@Culture.Format("TestFlow.QuestionOf", qNum, 6)">
+                            @for (var seg = 0; seg < 6; seg++)
+                            {
+                                var segIndex = seg;
+                                var cls = segIndex < _questionIndex
+                                    ? "is-done"
+                                    : segIndex == _questionIndex
+                                        ? "is-current"
+                                        : "is-todo";
+                                <span class="test-flow__seg @cls" aria-hidden="true"></span>
+                            }
+                        </div>
+                    </div>
+                    @if (_questionIndex > 0)
+                    {
+                        <p class="uwv-ondernemer-test__back">
+                            <button type="button" class="btn btn-link" @onclick="PreviousQuestion">
+                                @(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back" : "Vorige")
+                            </button>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="uwv-ondernemer-test__back">
+                            <a href="/candidate/ondernemerscheck?stap=intro">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back" : "Terug")</a>
+                        </p>
+                    }
                     <p class="uwv-test-q">@CurrentQuestion</p>
                     <div class="uwv-test-scale" role="group" aria-label="Likert">
                         @for (var score = 1; score <= 5; score++)
@@ -96,27 +128,39 @@ else if (_phase == "question")
 }
 else
 {
-    var (resultTitle, resultLead) = UwvMockupCopy.Ondernemer.ResultCopy(_outcomeKey, Culture.Language);
+    var outcomeKey = _outcomeKey ?? "explore";
+    var (resultTitle, resultLead) = UwvMockupCopy.Ondernemer.ResultCopy(outcomeKey, Culture.Language);
     <div class="journey-page uwv-ondernemer-test uwv-ondernemer-test--result">
-        <div class="uwv-ondernemer-test__shell">
-            <TestPageShell Kind="AssessmentKind.Career"
-                           Mode="TestPageShell.ShellMode.Done"
-                           H1="@resultTitle"
-                           Lead="@resultLead"
-                           TestName="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
-                           LevelName="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")"
-                           Answered="6"
-                           TargetCount="6"
-                           QuickScanVersion="1"
-                           ActiveDepth="TestDepthLevel.First"
-                           ShowDepthSegments="false"
-                           BubbleText="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Well done" : "Klaar")">
-                <ChildContent>
-                    <footer class="test-shell__footer">
-                        <a class="btn btn-primary" href="/candidate/ontdekkingsreis">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back to discovery" : "Terug naar ontdekken")</a>
-                    </footer>
-                </ChildContent>
-            </TestPageShell>
+        <div class="uwv-ondernemer-test__shell uwv-ondernemer-result">
+            <article class="detail-card career-card uwv-ondernemer-result__card">
+                <p class="uwv-ondernemer-result__eyebrow">@Culture.Format("TestDone.Eyebrow", UwvMockupCopy.Ondernemer.TestName(Culture.Language), UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")</p>
+                <figure class="uwv-ondernemer-result__art" aria-hidden="true">
+                    <img src="@CandidateIllustratedImages.OndernemerIntroHero" alt="" width="640" height="360" decoding="async" loading="lazy" />
+                </figure>
+                <h1 class="uwv-ondernemer-result__title" tabindex="-1">@resultTitle</h1>
+                <p class="uwv-ondernemer-result__lead">@resultLead</p>
+                <h2 class="uwv-ondernemer-result__steps-title">@UwvMockupCopy.Ondernemer.ResultNextStepsTitle(Culture.Language)</h2>
+                <ol class="uwv-ondernemer-result__steps">
+                    @foreach (var step in UwvMockupCopy.Ondernemer.ResultNextSteps(Culture.Language))
+                    {
+                        <li>
+                            @if (step.External)
+                            {
+                                <a href="@step.Href" target="_blank" rel="noopener noreferrer">@step.Label</a>
+                            }
+                            else
+                            {
+                                <a href="@step.Href">@step.Label</a>
+                            }
+                        </li>
+                    }
+                </ol>
+                <footer class="test-shell__footer uwv-ondernemer-result__footer">
+                    <a class="btn btn-ghost" href="/candidate/ontdekkingsreis">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back to discovery" : "Terug naar ontdekken")</a>
+                    <a class="btn btn-primary" href="/candidate/adviseur-werk">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Take to your work adviser" : "Neem mee naar je adviseur")</a>
+                </footer>
+                <p class="uwv-ondernemer-result__done muted">@UwvMockupCopy.Ondernemer.ResultDoneLine(Culture.Language)</p>
+            </article>
         </div>
     </div>
 }
@@ -168,6 +212,17 @@ else
         _answers.Clear();
         _questionIndex = 0;
         Navigation.NavigateTo("/candidate/ondernemerscheck?stap=question");
+    }
+
+    private void PreviousQuestion()
+    {
+        if (_questionIndex <= 0 || _answers.Count == 0)
+        {
+            return;
+        }
+
+        _answers.RemoveAt(_answers.Count - 1);
+        _questionIndex--;
     }
 
     private async Task AnswerAsync(int score)

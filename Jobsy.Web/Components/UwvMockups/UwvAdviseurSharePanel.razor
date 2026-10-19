@@ -9,27 +9,29 @@
 @inject IJSRuntime Js
 
 <section class="uwv-adviseur uwv-adviseur--full opl-wrap" aria-labelledby="@_titleId" data-testid="uwv-adviseur-share">
-    <div class="uwv-adviseur__intro">
-        <h1 id="@_titleId" class="uwv-block__title uwv-adviseur__h1">@UwvMockupCopy.Adviseur.Title(Lang)</h1>
-        <p class="uwv-block__lead">@UwvMockupCopy.Adviseur.Lead(Lang)</p>
-        <p class="uwv-adviseur__benefit muted">
-            @(UwvMockupCopy.IsEnglish(Lang) ? "± 2 minutes · pick sections for your meeting" : "± 2 minuten · kies wat je meeneemt naar het gesprek")
-        </p>
-    </div>
+    <div class="uwv-adviseur__main">
+        <div class="uwv-adviseur__intro">
+            <h1 id="@_titleId" class="uwv-block__title uwv-adviseur__h1">@UwvMockupCopy.Adviseur.Title(Lang)</h1>
+            <p class="uwv-block__lead">@UwvMockupCopy.Adviseur.Lead(Lang)</p>
+            <p class="uwv-adviseur__benefit muted">
+                @(UwvMockupCopy.IsEnglish(Lang) ? "± 2 minutes · pick sections for your meeting" : "± 2 minuten · kies wat je meeneemt naar het gesprek")
+            </p>
+        </div>
 
-    <fieldset class="uwv-adviseur__pick">
-        <legend>@(UwvMockupCopy.IsEnglish(Lang) ? "Include in printout" : "Opnemen in printout")</legend>
-        @foreach (var section in UwvAdviseurSectionCatalog.All)
-        {
-            var label = UwvMockupCopy.IsEnglish(Lang) ? section.LabelEn : section.LabelNl;
-            var on = _selectedSections.Contains(section.Key);
-            <label class="uwv-toggle">
-                <input type="checkbox" checked="@on" @onchange="e => ToggleSection(section.Key, e)" />
-                <span class="uwv-toggle__track" aria-hidden="true"></span>
-                <span class="uwv-toggle__label">@label</span>
-            </label>
-        }
-    </fieldset>
+        <fieldset class="uwv-adviseur__pick">
+            <legend>@(UwvMockupCopy.IsEnglish(Lang) ? "Include in printout" : "Opnemen in printout")</legend>
+            @foreach (var section in UwvAdviseurSectionCatalog.All)
+            {
+                var label = UwvMockupCopy.IsEnglish(Lang) ? section.LabelEn : section.LabelNl;
+                var on = _selectedSections.Contains(section.Key);
+                <label class="uwv-toggle">
+                    <input type="checkbox" checked="@on" @onchange="e => ToggleSection(section.Key, e)" />
+                    <span class="uwv-toggle__track" aria-hidden="true"></span>
+                    <span class="uwv-toggle__label">@label</span>
+                </label>
+            }
+        </fieldset>
+    </div>
 
     <div class="uwv-adviseur__preview-wrap">
         <p class="uwv-adviseur__preview-label">@UwvMockupCopy.Adviseur.PreviewTitle(Lang)</p>

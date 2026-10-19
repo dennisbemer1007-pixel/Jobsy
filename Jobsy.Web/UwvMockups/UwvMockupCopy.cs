@@ -161,18 +161,39 @@ public static class UwvMockupCopy
                 "ready" => (
                     T("Je bent het meest klaar om te ondernemen", "You look most ready to start on your own", lang),
                     T(
-                        "Je plant graag zelf, durft klein te beginnen en zoekt ruimte om te groeien. Bespreek concrete vervolgstappen met je adviseur.",
-                        "You like to plan your own work, start small, and create room to grow. Discuss concrete next steps with your adviser.",
+                        "Je plant graag zelf, durft klein te beginnen en zoekt ruimte om te groeien. Ondernemen kan passen als je concrete stappen wilt zetten. Bespreek wat realistisch is met je adviseur werk.",
+                        "You like to plan your own work, start small, and create room to grow. Self-employment can fit if you want concrete next steps. Discuss what is realistic with your work adviser.",
                         lang)),
                 "cautious" => (
                     T("Neem de tijd: ondernemen vraagt voorbereiding", "Take your time: self-employment needs preparation", lang),
                     T(
-                        "Zelfstandig ondernemen vraagt veel van je. Verken eerst andere routes of versterk je netwerk; je adviseur kan helpen kiezen.",
-                        "Self-employment asks a lot of you. Explore other routes or strengthen your network first; your adviser can help you choose.",
+                        "Zelfstandig ondernemen vraagt veel van je. Verken eerst andere routes of versterk je netwerk. Je adviseur kan helpen kiezen wat nu het beste past.",
+                        "Self-employment asks a lot of you. Explore other routes or strengthen your network first. Your adviser can help you choose what fits best right now.",
                         lang)),
                 _ => (ResultTitle(lang), ResultLead(lang))
             };
         }
+
+        public static string ResultDoneLine(string? lang) => T(
+            "Weer een laag eraf. Je ondernemerscheck is klaar.",
+            "Another layer off. Your self-employment check is done.",
+            lang);
+
+        public static string ResultNextStepsTitle(string? lang) => T("Wat je nu kunt doen", "What you can do next", lang);
+
+        public static IReadOnlyList<(string Label, string Href, bool External)> ResultNextSteps(string? lang) => IsEnglish(lang)
+            ?
+            [
+                ("Discuss this with your work adviser", "/candidate/adviseur-werk", false),
+                ("KVK starters information (kvk.nl)", "https://www.kvk.nl/english/starting-a-business-in-the-netherlands/", true),
+                ("Browse entrepreneur workshops", "/carriere/leren", false),
+            ]
+            :
+            [
+                ("Bespreek dit met je adviseur werk", "/candidate/adviseur-werk", false),
+                ("Startersinformatie op kvk.nl", "https://www.kvk.nl/starten/", true),
+                ("Bekijk ondernemers-workshops", "/carriere/leren", false),
+            ];
 
         public static IReadOnlyList<string> HowItWorksSteps(string? lang) => IsEnglish(lang)
             ?
