@@ -15,7 +15,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS"))
-            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r4"))
+            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r5"))
             : Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS")!;
 
     private IllustratedPagesWebFactory? _web;

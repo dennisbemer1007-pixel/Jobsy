@@ -9,6 +9,10 @@ public static class UwvMockupCopy
     public static string T(string nl, string en, string? lang) =>
         IsEnglish(lang) ? en : nl;
 
+    /// <summary>Consistent demo candidate name (matches test sign-in).</summary>
+    public static string SampleCandidateName(string? lang) =>
+        T("Sanne de Vries", "Sanne de Vries", lang);
+
     public static class Career
     {
         public static string Eyebrow(string? lang) => T("Carrière", "Career", lang);
@@ -86,6 +90,11 @@ public static class UwvMockupCopy
 
     public static class Banenkaart
     {
+        public static string KeywordPlaceholder(string? lang) => T("Soort werk", "Type of work", lang);
+        public static string KansResultCount(string? lang, int count) => T(
+            $"{count} kansberoepen bij jou in de buurt (voorbeeld)",
+            $"{count} opportunity occupations near you (sample)",
+            lang);
         public static string LayerLabel(string? lang) => T("Kansberoepen bij jou in de buurt", "Opportunity occupations near you", lang);
         public static string LayerHint(string? lang) => T(
             "Laag toont voorbeeld-kansberoepen met vacatures op de kaart (voorbeelddata).",
@@ -105,6 +114,20 @@ public static class UwvMockupCopy
             "Korte verdieping na je andere tests. Geen cijfers, wel een rustig beeld in woorden.",
             "A short follow-up after your other tests. No numbers, just a calm picture in words.",
             lang);
+        public static string IntroDiscoverTitle(string? lang) => T("Wat je ontdekt", "What you find out", lang);
+        public static IReadOnlyList<string> IntroDiscoverItems(string? lang) => IsEnglish(lang)
+            ?
+            [
+                "Whether you like trying ideas on a small scale first",
+                "How you feel about uncertainty and your own planning",
+                "What to discuss with your work adviser next"
+            ]
+            :
+            [
+                "Of je kleine ideeën eerst wilt uitproberen",
+                "Hoe je omgaat met onzekerheid en zelf plannen",
+                "Wat je met je adviseur kunt bespreken"
+            ];
         public static string ResultTitle(string? lang) => T("Je bent het meest een verkenner", "You lean most toward exploring", lang);
         public static string ResultLead(string? lang) => T(
             "Je wilt graag zelf plannen en klein beginnen. Ondernemen kan passen als je ruimte hebt om te leren en je netwerk kunt uitbreiden. Bespreek dit gerust met je adviseur.",
@@ -136,5 +159,9 @@ public static class UwvMockupCopy
         public static string Print(string? lang) => T("Print / PDF", "Print / PDF", lang);
         public static string ShareLink(string? lang) => T("Deellink (48 uur)", "Share link (48 hours)", lang);
         public static string PreviewTitle(string? lang) => T("Voorbeeld print", "Sample printout", lang);
+        public static string MeetingTip(string? lang) => T(
+            "Zo gebruik je dit in je gesprek: kies wat past, print of deel de link, en loop samen door drijfveren en kansen.",
+            "Use this in your meeting: pick what fits, print or share the link, and review drivers and opportunities together.",
+            lang);
     }
 }

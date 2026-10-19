@@ -63,7 +63,7 @@ public static class RoleNavCatalog
 
     public static readonly NavItem PassportItem =
         new("Nav.Passport", "/candidate/paspoort", NavIcons.Profile,
-            ["/candidate/profile", "/profiel", "/home"],
+            ["/candidate/profile", "/profiel", "/home", "/candidate/adviseur-werk"],
             ShortTitleKey: "Nav.Passport.Short");
 
     /// <summary>De ontdekkingsreis — filled in file 08 (§N Discovery slot).</summary>

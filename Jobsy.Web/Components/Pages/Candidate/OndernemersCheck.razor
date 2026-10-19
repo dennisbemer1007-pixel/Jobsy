@@ -25,17 +25,20 @@ else if (_phase == "intro")
         <CandidateIllustratedHero Eyebrow="@(Culture.Format("TestFlow.Eyebrow.Intro", UwvMockupCopy.Ondernemer.TestName(Culture.Language)))"
                                   Title="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
                                   Lead="@IntroLead"
-                                  ArtUrl="@CandidateIllustratedImages.LearnGrowHeroWide"
-                                  ArtUrlMobileFigures="@CandidateIllustratedImages.LearnGrowHeroFiguresMobile"
-                                  ArtUrlMobileAtmosphere="@CandidateIllustratedImages.LearnGrowHeroMobileAtmosphere"
-                                  ArtPosition="68% center"
+                                  ArtUrl="@CandidateIllustratedImages.SpotJobRetail"
+                                  ArtPosition="center center"
                                   ArtPositionDesktop="right center"
-                                  CssClass="cand-hero--learn-grow cand-hero--with-art" />
+                                  CssClass="cand-hero--profession-band uwv-ondernemer-hero" />
         <div class="opl-wrap uwv-ondernemer-intro-card">
-            <section class="detail-card career-card">
-                <p class="muted">@UwvMockupCopy.Ondernemer.IntroBenefit(Culture.Language)</p>
-                <p class="muted">@UwvMockupCopy.Ondernemer.IntroDuration(Culture.Language)</p>
+            <section class="detail-card career-card uwv-ondernemer-intro-card__inner">
                 <p>@UwvMockupCopy.Ondernemer.IntroLead(Culture.Language)</p>
+                <h2 class="uwv-ondernemer-intro-card__sub">@UwvMockupCopy.Ondernemer.IntroDiscoverTitle(Culture.Language)</h2>
+                <ul class="uwv-ondernemer-intro-card__list">
+                    @foreach (var item in UwvMockupCopy.Ondernemer.IntroDiscoverItems(Culture.Language))
+                    {
+                        <li>@item</li>
+                    }
+                </ul>
                 <footer class="test-shell__footer">
                     <button type="button" class="btn btn-primary" @onclick="StartQuestions">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Start" : "Begin")</button>
                 </footer>

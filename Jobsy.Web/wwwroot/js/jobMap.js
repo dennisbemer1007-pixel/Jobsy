@@ -3534,6 +3534,7 @@ window.jobMap = (function () {
                 const v = record.options.jobData || {};
                 const agency = (isAgencyPin(v) || (companyMapMode && v.isIntermediary === true)) ? 1 : 0;
                 const openInit = companyMapMode && v.openForInitiative === true;
+                const kansberoep = v.kansberoep === true || v.kansberoep === 1 ? 1 : 0;
                 let outside = 0;
                 if (origin && outerM > 0) {
                     const d = haversineMeters(origin.lat, origin.lng, record.lat, record.lng);
@@ -3547,12 +3548,13 @@ window.jobMap = (function () {
                     geometry: { type: "Point", coordinates: [record.lng, record.lat] },
                     properties: {
                         id: String(id),
-                        featured: isFeaturedVacancy(v) ? 1 : 0,
+                        featured: (kansberoep || isFeaturedVacancy(v)) ? 1 : 0,
+                        kansberoep: kansberoep,
                         agency: agency,
                         radiusKm: agency ? agencyRadiusKm(v) : 0,
                         workType: workTypeOf(v) || "",
-                        glyph: agency ? "◆" : workTypeGlyph(workTypeOf(v)),
-                        colour: openInit ? COMPANY_OPEN_PIN_COLOR : (agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || "")),
+                        glyph: kansberoep ? "★" : (agency ? "◆" : workTypeGlyph(workTypeOf(v))),
+                        colour: kansberoep ? "#c9a227" : (openInit ? COMPANY_OPEN_PIN_COLOR : (agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""))),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
                         outside: outside
@@ -3795,6 +3797,7 @@ window.jobMap = (function () {
                     "circle-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["get", "kansberoep"], 1], "#c9a227",
                         ["==", ["get", "agency"], 1], AGENCY_PIN_COLOR,
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [

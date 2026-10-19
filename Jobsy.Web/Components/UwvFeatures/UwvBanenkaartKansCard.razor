@@ -1,0 +1,36 @@
+@using Jobsy.Web.Localization
+@using Jobsy.Web.UwvMockups
+@namespace Jobsy.Web.Components.UwvFeatures
+
+<article class="job-card uwv-kans-vacancy-card" data-testid="uwv-kans-vacancy-card">
+    <div class="job-card__media uwv-kans-vacancy-card__media" style="@($"background-image:url('{ImageUrl}')")">
+        <span class="job-card__badge uwv-kans-vacancy-card__kans">@(English ? "Opportunity job" : "Kansberoep")</span>
+        @if (Baangarantie)
+        {
+            <span class="job-card__badge job-card__badge--soft uwv-badge--guarantee">@(English ? "Job guarantee" : "Baangarantie")</span>
+        }
+    </div>
+    <div class="job-card__body uwv-kans-vacancy-card__body">
+        <h2 class="job-card__title">@Title</h2>
+        <p class="muted job-card__company">@Company · @Location</p>
+        @if (!string.IsNullOrWhiteSpace(Prospect))
+        {
+            <p class="uwv-kans-vacancy-card__prospect">@Prospect</p>
+        }
+        <p class="job-card__travel">
+            <span aria-hidden="true">🚲</span>
+            <span>@Travel</span>
+        </p>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter, EditorRequired] public string Company { get; set; } = "";
+    [Parameter, EditorRequired] public string Location { get; set; } = "";
+    [Parameter] public string? Prospect { get; set; }
+    [Parameter] public string Travel { get; set; } = "";
+    [Parameter] public string ImageUrl { get; set; } = "";
+    [Parameter] public bool Baangarantie { get; set; }
+    [Parameter] public bool English { get; set; }
+}
