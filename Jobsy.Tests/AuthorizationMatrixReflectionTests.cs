@@ -70,14 +70,13 @@ public class AuthorizationMatrixReflectionTests : IClassFixture<RoleFunctionalWe
         ("VacancyEngagementController", "Like", "Own like"),
         ("VacancyEngagementController", "Unlike", "Own unlike"),
         ("VacancyEngagementController", "Share", "Own share signal"),
-        ("CompanyMapInitiativeController", "SaveSettings", "Employer initiative settings in regional scope"),
-        ("CompanyMapInitiativeController", "SaveTeam", "Employer initiative team in regional scope"),
-        ("CompanyMapInitiativeController", "ResendTeamEmail", "Employer initiative team e-mail in regional scope"),
-        ("CompanyMapInitiativeController", "ConfirmGeneralEmail", "Employer initiative settings in regional scope"),
-        ("CompanyMapInitiativeController", "ConfirmTeamEmail", "Employer initiative team in regional scope"),
-        ("CompanyMapInitiativeController", "Accept", "Employer initiative inbox in regional scope"),
-        ("CompanyMapInitiativeController", "Decline", "Employer initiative inbox in regional scope"),
-        ("CompanyMapInitiativeController", "MarkViewed", "Employer initiative inbox in regional scope"),
+        ("AfterMatchController", "ProposeEmployerSlots", "Employer after-match (company scoped in service)"),
+        ("AfterMatchController", "RecordOutcome", "Employer after-match outcome (company scoped in service)"),
+        ("AfterMatchController", "SelectSlot", "After-match slot selection (role checked in service)"),
+        ("AfterMatchController", "Reschedule", "After-match reschedule (role checked in service)"),
+        ("AfterMatchController", "Cancel", "After-match cancel (role checked in service)"),
+        ("AfterMatchController", "PreviewMessage", "After-match message preview (role checked in service)"),
+        ("AfterMatchController", "SendMessage", "After-match messaging (role checked in service)"),
     ];
 
     [Fact]

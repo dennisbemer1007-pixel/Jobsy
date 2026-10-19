@@ -1,10 +1,10 @@
 @namespace Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
-@inject CultureState Culture
+@inject CultureState Loc
 
 <CandidateIllustratedHero Title="@Greeting"
-                        Lead="@Culture["Kompas.Greeting.Lead"]"
+                        Lead="@Loc["Kompas.Greeting.Lead"]"
                         ArtUrl="@CandidateIllustratedImages.KompasHeroWide"
                         ArtPosition="right center"
                         CssClass="cand-hero--profession-band cand-hero--kompas-band" />
@@ -12,38 +12,41 @@
 @code {
     [Parameter] public string? FirstName { get; set; }
 
-    private string Greeting
+    private string Greeting => BuildGreeting();
+
+    private string BuildGreeting()
     {
-        get
+        var name = string.IsNullOrWhiteSpace(FirstName) ? "" : FirstName.Trim();
+        var hour = DateTime.Now.Hour;
+        if (string.IsNullOrEmpty(name))
         {
-            var name = string.IsNullOrWhiteSpace(FirstName) ? "" : FirstName.Trim();
-            var hour = DateTime.Now.Hour;
-            if (string.IsNullOrEmpty(name))
-            {
-                if (hour < 12)
-                {
-                    return Culture["Kompas.Greeting.PlainMorning"];
-                }
-
-                if (hour < 18)
-                {
-                    return Culture["Kompas.Greeting.PlainAfternoon"];
-                }
-
-                return Culture["Kompas.Greeting.PlainEvening"];
-            }
-
             if (hour < 12)
             {
-                return Culture.Format("Kompas.Greeting.Morning", name);
+                return Loc["Kompas.Greeting.PlainMorning"];
             }
 
             if (hour < 18)
             {
-                return Culture.Format("Kompas.Greeting.Afternoon", name);
+                return Loc["Kompas.Greeting.PlainAfternoon"];
             }
 
-            return Culture.Format("Kompas.Greeting.Evening", name);
+            return Loc["Kompas.Greeting.PlainEvening"];
         }
+
+        string key;
+        if (hour < 12)
+        {
+            key = "Kompas.Greeting.Morning";
+        }
+        else if (hour < 18)
+        {
+            key = "Kompas.Greeting.Afternoon";
+        }
+        else
+        {
+            key = "Kompas.Greeting.Evening";
+        }
+
+        return Loc.Format(key, name);
     }
 }

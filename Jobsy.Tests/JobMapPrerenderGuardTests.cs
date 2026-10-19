@@ -343,10 +343,29 @@ public class JobMapPrerenderGuardTests
     public void Vacancy_detail_map_is_a_square_block_centered_on_the_vacancy()
     {
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "app.css"));
-        var wrapStart = css.IndexOf("\n.vacancy-location__map-wrap {", StringComparison.Ordinal);
+        var wrapStart = -1;
+        for (var searchFrom = 0; ;)
+        {
+            var hit = css.IndexOf(".vacancy-location__map-wrap {", searchFrom, StringComparison.Ordinal);
+            if (hit < 0)
+            {
+                break;
+            }
+
+            var wrapEnd = css.IndexOf('}', hit);
+            var candidate = css[hit..wrapEnd];
+            if (candidate.Contains("aspect-ratio: 1 / 1", StringComparison.Ordinal))
+            {
+                wrapStart = hit;
+                break;
+            }
+
+            searchFrom = hit + 1;
+        }
+
         Assert.True(wrapStart > 0);
-        var wrapEnd = css.IndexOf("}", wrapStart, StringComparison.Ordinal);
-        var wrap = css[wrapStart..wrapEnd];
+        var wrapEndFinal = css.IndexOf('}', wrapStart);
+        var wrap = css[wrapStart..wrapEndFinal];
         Assert.Contains("aspect-ratio: 1 / 1", wrap);
         Assert.Contains("min(100%, 16.5rem)", wrap);
         Assert.DoesNotContain("height: 240px", wrap);

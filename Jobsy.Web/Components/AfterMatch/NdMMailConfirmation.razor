@@ -1,0 +1,119 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Components
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="mgrid">
+    <div>
+        <span class="lbl">@Culture["AfterMatch.Screen06.CandidateMail"]</span>
+        <div class="mclient">
+            <div class="mhead">
+                <b>Lobsy</b> &lt;gesprek@lobsy.nl&gt;<br />
+                <span class="muted">@Culture["AfterMatch.Mail.CandidateSubject"]</span>
+            </div>
+            <div class="mail">
+                <div class="mtop">
+                    <span class="ndm-mail-logo"><LobsyMark /></span>
+                    <span class="xs muted">@Culture["AfterMatch.Mail.PlannedTag"]</span>
+                </div>
+                <h2>@string.Format(Culture["AfterMatch.Mail.CandidateTitle"], CandidateFirstName)</h2>
+                <p class="small">@Culture["AfterMatch.Mail.CandidateLead"]</p>
+                <div class="mbox">
+                    <div class="r"><span>@Culture["AfterMatch.Mail.When"]</span><b>@WhenLabel</b></div>
+                    <div class="r"><span>@Culture["AfterMatch.Mail.Where"]</span><b>@Thread.LocationOrLink</b></div>
+                    <div class="r"><span>@Culture["AfterMatch.Mail.With"]</span><b>@Thread.WithWhom</b></div>
+                    @if (!string.IsNullOrWhiteSpace(Thread.TravelLabel))
+                    {
+                        <div class="r"><span>@Culture["AfterMatch.Mail.Travel"]</span><b>@Thread.TravelLabel</b></div>
+                    }
+                </div>
+                <div class="addc">
+                    <span class="btn sm">@Culture["AfterMatch.Screen05.Calendar"]</span>
+                    <span class="btn line sm">Outlook</span>
+                    <span class="btn line sm">Google</span>
+                    <span class="btn line sm">Apple (.ics)</span>
+                </div>
+            </div>
+        </div>
+        <span class="lbl" style="margin-top:18px">@Culture["AfterMatch.Screen06.After.Title"]</span>
+        <NdMWhatHappensNext />
+        <div class="note" style="margin-top:14px">
+            <span>@((MarkupString)NdMIcons.Shield)</span>
+            <span>@Culture["AfterMatch.Screen10.Privacy"]</span>
+        </div>
+    </div>
+    <div>
+        <span class="lbl">@Culture["AfterMatch.Screen06.EmployerMail"]</span>
+        <div class="mclient">
+            <div class="mhead">
+                <b>Lobsy</b> &lt;gesprek@lobsy.nl&gt;<br />
+                <span class="muted">@string.Format(Culture["AfterMatch.Mail.EmployerSubject"], Thread.CandidateName)</span>
+            </div>
+            <div class="mail">
+                <div class="mtop">
+                    <span class="ndm-mail-logo"><LobsyMark /></span>
+                    <span class="xs muted">@Culture["AfterMatch.Mail.PlannedTag"]</span>
+                </div>
+                <h2>@Culture["AfterMatch.Mail.EmployerTitle"]</h2>
+                <p class="small">@Culture["AfterMatch.Mail.EmployerLead"]</p>
+                <div class="mbox">
+                    <div class="r"><span>@Culture["AfterMatch.Mail.When"]</span><b>@WhenLabel</b></div>
+                    <div class="r"><span>@Culture["AfterMatch.Mail.Candidate"]</span><b>@Thread.CandidateName, @Thread.VacancyTitle</b></div>
+                    <div class="r"><span>@Culture["AfterMatch.Mail.Where"]</span><b>@Thread.LocationOrLink</b></div>
+                    <div class="r"><span>@Culture["AfterMatch.Mail.After"]</span><b>@Culture["AfterMatch.Mail.AfterBody"]</b></div>
+                </div>
+            </div>
+        </div>
+        <span class="lbl" style="margin-top:18px">@Culture["AfterMatch.Mail.OutlookTitle"]</span>
+        <div class="olk">
+            <div class="bar"><span>Outlook</span><span style="opacity:.8">Agenda</span></div>
+            <div class="tb">
+                <span>@Culture["AfterMatch.Mail.OutlookSave"]</span>
+                <span>@Culture["AfterMatch.Mail.OutlookDelete"]</span>
+                <span>@Culture["AfterMatch.Mail.OutlookBusy"]</span>
+            </div>
+            <div class="bd">
+                <div class="t">@string.Format(Culture["AfterMatch.Mail.OutlookEventTitle"], Thread.CompanyName)</div>
+                <div class="f">
+                    <span>@Culture["AfterMatch.Mail.OutlookStart"]</span><span>@OutlookStart</span>
+                    <span>@Culture["AfterMatch.Mail.OutlookEnd"]</span><span>@OutlookEnd</span>
+                    <span>@Culture["AfterMatch.Mail.Where"]</span><span>@Thread.LocationOrLink</span>
+                    <span>@Culture["AfterMatch.Mail.OutlookReminder"]</span><span>@Culture["AfterMatch.Mail.OutlookReminderVal"]</span>
+                </div>
+                <div style="margin-top:10px;border-top:1px solid #e1e5ea;padding-top:10px">
+                    @string.Format(Culture["AfterMatch.Mail.OutlookBody"], Thread.VacancyTitle, Thread.WithWhom)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public AfterMatchThreadDto Thread { get; set; } = default!;
+
+    private string CandidateFirstName =>
+        Thread.CandidateName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? Thread.CandidateName;
+
+    private string? WhenLabel
+    {
+        get
+        {
+            if (Thread.ScheduledStartUtc is not DateTime start || Thread.ScheduledEndUtc is not DateTime end)
+            {
+                return "Donderdag 22 oktober, 10:30 tot 11:00";
+            }
+
+            var s = start.ToLocalTime();
+            var e = end.ToLocalTime();
+            return $"{s:dddd d MMMM, HH:mm} tot {e:HH:mm}";
+        }
+    }
+
+    private string OutlookStart =>
+        Thread.ScheduledStartUtc?.ToLocalTime().ToString("ddd dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+        ?? "do 22-10-2026 10:30";
+
+    private string OutlookEnd =>
+        Thread.ScheduledEndUtc?.ToLocalTime().ToString("ddd dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+        ?? "do 22-10-2026 11:00";
+}

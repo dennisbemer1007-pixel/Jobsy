@@ -178,7 +178,7 @@ public class KompasDnaLandingTests
         Assert.Contains(".dna-highlights__grid", css);
 
         var kompas = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Candidate/CandidateKompas.razor"));
-        Assert.Contains("Kompas.CompletenessLine", kompas);
+        Assert.Contains("CandidateMatchDisplay.CompletenessLineKey", kompas);
         Assert.Contains("ShouldShowSide", kompas);
         Assert.Contains("jobsyViewport.isKompasWide", kompas);
     }

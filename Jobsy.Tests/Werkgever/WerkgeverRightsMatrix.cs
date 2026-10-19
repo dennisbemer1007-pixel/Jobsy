@@ -17,11 +17,13 @@ public static class WerkgeverRightsMatrix
     [
         new("/werkgever", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
         new("/werkgever/te-doen", "BranchManager,RegionalManager,EnterpriseManager", true, true, true),
+        new("/werkgever/meldingen", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
         new("/werkgever/vacatures", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/vacatures/nieuw", "BranchManager,EnterpriseManager,Intermediary", true, false, true),
         new("/werkgever/vacatures/{VacancyId:guid}/proactieve-shortlist", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/sollicitaties", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/sollicitaties/{ApplicationId:guid}", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
+        new("/werkgever/sollicitaties/{ApplicationId:guid}/after-match", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/uren", "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin", true, true, true),
         new("/werkgever/talentpool", "BranchManager,RegionalManager,EnterpriseManager,Intermediary", true, true, true),
         new("/werkgever/kandidaatinzichten", "BranchManager,RegionalManager,EnterpriseManager", true, true, true),

@@ -88,7 +88,9 @@ public class UserFacingErrorTests
         var helper = Create();
         var error = new ApiErrorException(ApiErrorException.Validation, 400, userMessage: "Vul je postcode in.");
 
-        Assert.Equal("Vul je postcode in.", helper.Describe(error));
+        var text = helper.Describe(error);
+        Assert.StartsWith("Vul je postcode in.", text, StringComparison.Ordinal);
+        Assert.Contains("Referentie:", text, StringComparison.Ordinal);
     }
 
     [Fact]

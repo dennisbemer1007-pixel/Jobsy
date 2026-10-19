@@ -1,0 +1,16 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="co">
+    <span class="lg">@Initials</span>
+    <div>
+        <h3 style="font-size:1.2rem">@Title</h3>
+        <p class="small muted">@Subtitle</p>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Initials { get; set; } = "DK";
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Subtitle { get; set; } = "";
+}

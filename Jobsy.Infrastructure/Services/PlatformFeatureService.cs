@@ -223,7 +223,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
-        ApplyAdminBoolUpdate(row, "CompanyMapInitiativeEnabled", update.CompanyMapInitiativeEnabled, v => row.CompanyMapInitiativeEnabled = v);
+        ApplyAdminBoolUpdate(row, "AfterMatchEnabled", update.AfterMatchEnabled, v => row.AfterMatchEnabled = v);
         ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
         ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
         ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
@@ -356,9 +356,6 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private bool ResolveTrainingPartnersEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "TrainingPartnersEnabled", row?.TrainingPartnersEnabled ?? false, false, "Jobsy:TrainingPartnersEnabled");
 
-    private bool ResolveCompanyMapInitiativeEnabled(PlatformFeatureSettings? row)
-        => ResolveAdminBool(row, "CompanyMapInitiativeEnabled", row?.CompanyMapInitiativeEnabled ?? true, true, configurationKey: null);
-
     private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
     {
         var baseline = row?.ReferenceVerificationEnabled ?? false;
@@ -437,7 +434,6 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute;
         row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour;
         row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay;
-        row.CompanyMapInitiativeEnabled = true;
     }
 
     private bool IsAllowedPublicOrigin(string origin)
@@ -548,7 +544,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
-            ResolveCompanyMapInitiativeEnabled(row),
+            row?.AfterMatchEnabled ?? _options.NaDeMatchEnabled,
             ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),

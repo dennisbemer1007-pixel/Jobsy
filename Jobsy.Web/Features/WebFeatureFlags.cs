@@ -72,16 +72,15 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestsV2Enabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
-                CompanyMapInitiativeEnabled: dto?.CompanyMapInitiativeEnabled ?? true,
-                ReferenceVerificationEnabled: dto?.ReferenceVerificationEnabled ?? false,
-                SensitiveExperienceEnabled: dto?.SensitiveExperienceEnabled ?? false,
-                TrainingPartnersEnabled: dto?.TrainingPartnersEnabled ?? false,
-                TestJourneyIllustrationEnabled: dto?.TestJourneyIllustrationEnabled ?? false,
-                OnboardingFinaleV2Enabled: dto?.OnboardingFinaleV2Enabled ?? false,
-                OccupationDayInLifeEnabled: dto?.OccupationDayInLifeEnabled ?? true,
-                TestEditModeEnabled: dto?.TestEditModeEnabled ?? false,
-                SamplePdfEnabled: dto?.SamplePdfEnabled ?? false);
-            flags = ApplyLocalOverrides(flags);
+                dto?.AfterMatchEnabled ?? false,
+                dto?.ReferenceVerificationEnabled ?? false,
+                dto?.SensitiveExperienceEnabled ?? false,
+                dto?.TrainingPartnersEnabled ?? false,
+                dto?.TestJourneyIllustrationEnabled ?? false,
+                dto?.OnboardingFinaleV2Enabled ?? false,
+                dto?.OccupationDayInLifeEnabled ?? true,
+                dto?.TestEditModeEnabled ?? false,
+                dto?.SamplePdfEnabled ?? false);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
@@ -89,20 +88,10 @@ public sealed class WebFeatureFlags : IFeatureFlags
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to load feature flags from API; using last known or defaults.");
-            var fallback = ApplyLocalOverrides(_lastKnown ?? FeatureFlagSnapshot.Defaults);
+            var fallback = _lastKnown ?? FeatureFlagSnapshot.Defaults;
             _cache.Set(CacheKey, fallback, TimeSpan.FromSeconds(10));
             return fallback;
         }
-    }
-
-    private FeatureFlagSnapshot ApplyLocalOverrides(FeatureFlagSnapshot flags)
-    {
-        if (bool.TryParse(_configuration["Jobsy:TestEmployersEnabled"], out var testEmployers) && testEmployers)
-        {
-            return flags with { EmployersEnabled = true };
-        }
-
-        return flags;
     }
 
     public async ValueTask<bool> IsEnabledAsync(
@@ -168,8 +157,8 @@ public sealed class WebFeatureFlags : IFeatureFlags
         [JsonPropertyName("kandidatenkaartEnabled")]
         public bool KandidatenkaartEnabled { get; set; }
 
-        [JsonPropertyName("companyMapInitiativeEnabled")]
-        public bool CompanyMapInitiativeEnabled { get; set; } = true;
+        [JsonPropertyName("afterMatchEnabled")]
+        public bool AfterMatchEnabled { get; set; }
 
         [JsonPropertyName("referenceVerificationEnabled")]
         public bool ReferenceVerificationEnabled { get; set; }

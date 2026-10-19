@@ -107,9 +107,9 @@ public class KbFilterBarBunitTests
         var root = FindRepoRoot();
         var discovery = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "VacancyDiscovery.razor"));
         Assert.Contains("kb-filter-bar", discovery, StringComparison.Ordinal);
-        Assert.Contains("kb-filter-chips--desktop", discovery, StringComparison.Ordinal);
+        Assert.Contains("kb-filter-search--bar", discovery, StringComparison.Ordinal);
         Assert.Contains("Kb.Filter.KeywordPlaceholder", discovery, StringComparison.Ordinal);
-        Assert.Contains("kb-filter-search--desktop", discovery, StringComparison.Ordinal);
+        Assert.Contains("kb-panel-head__search-row", discovery, StringComparison.Ordinal);
         Assert.Contains("KbAddressField", discovery, StringComparison.Ordinal);
         Assert.Contains("kb-start-prompt", discovery, StringComparison.Ordinal);
         Assert.Contains("KbMapStart.DefaultMaxTravelMinutes", discovery, StringComparison.Ordinal);
