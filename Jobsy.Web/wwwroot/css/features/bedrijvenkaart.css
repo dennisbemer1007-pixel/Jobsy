@@ -1095,19 +1095,19 @@ textarea.bk-wg-input {
     background: linear-gradient(
       90deg,
       var(--pearl, #f7f4f0) 0%,
-      var(--pearl, #f7f4f0) 42%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 88%, transparent) 46%,
-      transparent 52%
+      var(--pearl, #f7f4f0) 48%,
+      transparent 50%
     );
   }
 
   .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
     background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
-    background-size: auto 100%;
-    background-position: right top;
-    left: 36%;
+    background-size: auto 102%;
+    background-position: 92% top;
+    left: 50%;
     right: 0;
     width: auto;
+    clip-path: inset(0 0 0 0);
     opacity: 1;
     z-index: 0;
   }
