@@ -247,7 +247,7 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 
 | Keuze | Reden |
 |-------|--------|
-| `plan: starter` op api + web | Always-on; geen 15-min spin-down. Eén web-instance = geen sticky sessions voor Blazor/SignalR |
+| `plan: starter` op api + web | Always-on; geen 15-min spin-down. **Eén** web-instance (geen autoscaling in `render.yaml`) = geen sticky sessions nodig. Bij **>1 instance** is session affinity verplicht: Blazor-circuits zitten alleen in het geheugen van de pod die de WebSocket opende; reconnect op een andere pod → `components-reconnect-rejected` terwijl de login-cookie nog geldig is. |
 | `plan: basic-256mb` op DB | Blijvende Postgres (geen free 30-dagen expiry) |
 | Alles `frankfurt` | Zelfde private network voor Postgres |
 | `RENDER_EXTERNAL_URL` | Stabiele cross-service HTTP (ook op free bruikbaar) |
