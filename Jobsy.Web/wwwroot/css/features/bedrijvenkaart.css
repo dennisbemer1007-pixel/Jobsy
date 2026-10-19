@@ -20,6 +20,7 @@
 .bk-page--compact-preview-c {
   overflow-x: clip;
   overflow-y: visible;
+  overflow-anchor: none;
 }
 
 .bk-page--compact-preview-c .bk-page__hero-band {

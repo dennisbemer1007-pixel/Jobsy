@@ -265,6 +265,7 @@
             await Js.InvokeVoidAsync("jobMap.invalidate");
             await Task.Delay(120);
             await Js.InvokeVoidAsync("jobMap.invalidate");
+            await Js.InvokeVoidAsync("jobsyDom.scrollToTop");
         }
         catch
         {

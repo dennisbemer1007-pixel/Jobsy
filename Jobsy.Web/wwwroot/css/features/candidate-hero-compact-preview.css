@@ -746,6 +746,20 @@
     clip: rect(0, 0, 0, 0);
   }
 
+  .journey.journey--compact-preview-c .journey-overview__list {
+    max-width: none !important;
+    width: 100%;
+  }
+
+  .journey.journey--compact-preview-c .journey-overview__row {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .journey.journey--compact-preview-c .journey-q {
+    width: 100%;
+  }
+
   .ob-wizard--compact-preview-c.ob-wizard--richting-a .work-status-chips .lobsy-choice-tile {
     --lobsy-choice-tile-h: auto;
     min-height: unset !important;
