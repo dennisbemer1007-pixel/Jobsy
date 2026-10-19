@@ -169,6 +169,15 @@ public static class JobsyDbSeeder
             // Users first so salesmanager demo account exists even if later seeders fail.
             await DemoUsersSeeder.SeedUsersAsync(db, logger);
 
+            try
+            {
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Bakkerij De Korenaar demo branding ensure failed; continuing.");
+            }
+
             // Hierarchy / salary-table demo fixes before wage sync.
             try
             {
