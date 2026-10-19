@@ -278,7 +278,7 @@ public static class PageAssetCatalog
             var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-04" };
             if (RouteUsesCompactHeroCss(path))
             {
-                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-51");
+                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-52");
             }
 
             return appsCss;
@@ -300,7 +300,7 @@ public static class PageAssetCatalog
 
         if (RouteUsesCompactHeroCss(path))
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261019-51"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261019-52"];
         }
 
         return [];

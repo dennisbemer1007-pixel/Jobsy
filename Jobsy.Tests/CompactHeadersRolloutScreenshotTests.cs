@@ -122,7 +122,7 @@ public sealed class CompactHeadersRolloutScreenshotTests : IAsyncLifetime
             JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
     }
 
-    private enum HeroKind
+    internal enum HeroKind
     {
         CompactBand,
         Onboarding,

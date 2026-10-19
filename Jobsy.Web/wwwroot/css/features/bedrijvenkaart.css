@@ -1096,7 +1096,7 @@ textarea.bk-wg-input {
     background: none !important;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single::before {
+  .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero)::before {
     display: none !important;
     content: none !important;
     background: none !important;
@@ -1121,6 +1121,13 @@ textarea.bk-wg-input {
     right: var(--bk-gutter);
     z-index: 6;
     margin: 0;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-stack .bk-map-toggle {
+    position: static !important;
+    top: auto;
+    right: auto;
+    margin: 0.65rem auto 0.5rem;
   }
 
   .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {
@@ -1939,6 +1946,22 @@ textarea.bk-wg-input {
 
 .bk-map-toggle--banen {
   margin: 0.75rem 1.25rem 0;
+}
+
+/* Banenkaart discovery chrome: keep toggle labels readable on cream/pearl backgrounds. */
+.jobsy-discovery .bk-map-toggle--banen {
+  background: #fff;
+  box-shadow: 0 2px 12px rgb(26 39 68 / 10%);
+}
+
+.jobsy-discovery .bk-map-toggle--banen a {
+  color: var(--bk-navy, #1a2744);
+  font-weight: 600;
+}
+
+.jobsy-discovery .bk-map-toggle--banen a.is-active {
+  background: var(--bk-navy, #1a2744);
+  color: #fff !important;
 }
 
 .kb-apps__initiative-row {

@@ -28,13 +28,16 @@
                                   ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
                                   ArtPosition="84% bottom"
                                   CssClass="cand-hero--bk-single bk-cand-hero" />
-        <div class="bk-week-dots" aria-live="polite">
-            @for (var i = 0; i < _weekMax; i++)
-            {
-                <span aria-hidden="true" style="@(i < _weekUsed ? "" : "opacity:.25")"></span>
-            }
-            <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
-        </div>
+        @if (_weekMax > 0)
+        {
+            <div class="bk-week-dots" aria-live="polite">
+                @for (var i = 0; i < _weekMax; i++)
+                {
+                    <span aria-hidden="true" style="@(i < _weekUsed ? "" : "opacity:.25")"></span>
+                }
+                <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
+            </div>
+        }
     </div>
 
     <div class="bk-page__frame">
