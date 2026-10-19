@@ -13,6 +13,12 @@ public class HonestAdviceTests
 {
     private const string CloudId = "781a6350-e686-45b9-b075-e4c8d5a05ff7";
 
+    public HonestAdviceTests()
+    {
+        Jobsy.Core.Localization.JobsyLanguages.ResetEnabledForTests();
+        HonestAdviceService.ResetSharedForTests();
+    }
+
     [Fact]
     public void Flag_defaults_off_and_admin_copy_exists()
     {
@@ -70,7 +76,9 @@ public class HonestAdviceTests
             var dutchHash = HonestAdviceFacts.Hash(entry.Text);
             foreach (var lang in new[] { "en", "pl", "ro", "ar" })
             {
-                Assert.True(entry.Translations.ContainsKey(lang));
+                Assert.True(
+                    entry.Translations.ContainsKey(lang),
+                    $"Missing translation '{lang}' for occupation {id}.");
                 var locale = entry.Translations[lang];
                 Assert.Equal(dutchHash, locale.SourceHash);
                 Assert.Null(HonestAdviceValidator.RejectionReason(locale.Text, facts, lang));
