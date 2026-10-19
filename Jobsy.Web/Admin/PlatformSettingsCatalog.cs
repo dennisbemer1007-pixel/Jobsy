@@ -478,19 +478,6 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
-        if (FieldExists("SensitiveExperienceEnabled"))
-        {
-            list.Add(new PlatformSettingDescriptor(
-                Key: "SensitiveExperienceEnabled",
-                Group: GroupVacancies,
-                TitleKey: "AdminSettings.SensitiveExperience.Enabled.Title",
-                DescriptionKey: "AdminSettings.SensitiveExperience.Enabled.Desc",
-                Kind: PlatformSettingKind.Bool,
-                Read: s => s.SensitiveExperienceEnabled,
-                Write: v => new PlatformFeatureUpdate(SensitiveExperienceEnabled: ToBool(v)),
-                ShowOnDashboard: false));
-        }
-
         if (FieldExists("TrainingPartnersEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(

@@ -45,7 +45,7 @@ public class MobileSaasUxTests
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
         Assert.Contains(".applicants-filters__btn.is-active", css);
         Assert.Contains("border-color: var(--accent)", css);
-        Assert.Contains("background:var(--accent)", css);
+        Assert.Contains("background: var(--accent)", css);
         Assert.Contains("color: #fff", css);
         Assert.Contains("min-height: 40px", css);
         Assert.Contains(".pill-scroller", css);
