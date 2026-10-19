@@ -1105,11 +1105,11 @@ textarea.bk-wg-input {
   .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
     display: block !important;
     content: "" !important;
-    inset: 0 0 0 50%;
+    inset: 0 0 0 55%;
     background-image: var(--cand-hero-art) !important;
     background-repeat: no-repeat;
-    background-size: auto 100%;
-    background-position: right bottom;
+    background-size: cover;
+    background-position: var(--cand-hero-pos, 84% bottom);
     opacity: 1 !important;
     filter: none !important;
     mix-blend-mode: normal !important;
@@ -1117,14 +1117,18 @@ textarea.bk-wg-input {
   }
 
   .bk-page .cand-hero--bk-single.cand-hero--profession-band::before {
-    inset: 0 0 0 50%;
+    display: block !important;
+    inset: 0 0 0 55%;
     z-index: 1;
+    pointer-events: none;
     background: linear-gradient(
       90deg,
       #f7f4f0 0%,
-      #f3ebe2 10%,
-      #efdfd2 18%,
-      rgb(239 223 210 / 0%) 32%
+      #f3ebe2 8%,
+      #efe3d6 14%,
+      #efdfd2 20%,
+      rgb(239 223 210 / 45%) 26%,
+      rgb(239 223 210 / 0%) 38%
     );
   }
 
@@ -1180,12 +1184,15 @@ textarea.bk-wg-input {
     background: linear-gradient(
       90deg,
       #f7f4f0 0%,
-      #f7f4f0 24%,
-      #f3ebe2 34%,
-      #efe3d6 42%,
-      #efdfd2 48%,
-      #fdf0e0 54%,
-      rgb(253 240 224 / 0%) 62%
+      #f7f4f0 28%,
+      #f5efe8 36%,
+      #f0e6dc 42%,
+      #efe3d6 46%,
+      #efdfd2 50%,
+      #efe0d4 54%,
+      #efe0d4 58%,
+      rgb(239 224 212 / 55%) 64%,
+      rgb(239 224 212 / 0%) 72%
     );
   }
 
