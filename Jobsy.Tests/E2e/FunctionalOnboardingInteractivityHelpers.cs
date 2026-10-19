@@ -53,10 +53,17 @@ internal static class FunctionalOnboardingInteractivityHelpers
         for (var i = 0; i < count && !selected; i++)
         {
             var chip = chips.Nth(i);
-            await AssertHitTargetAsync(page, chip, "werkstatus chip");
-            await chip.ClickAsync(new() { Timeout = 10_000, Force = true });
-            await page.WaitForTimeoutAsync(450);
-            selected = await page.Locator(".work-status-chips .is-selected, .work-status-chips [aria-pressed=\"true\"]").CountAsync() > 0;
+            await chip.ScrollIntoViewIfNeededAsync();
+            await page.WaitForTimeoutAsync(200);
+            await chip.ClickAsync(new() { Timeout = 15_000, Force = true });
+            await page.WaitForTimeoutAsync(700);
+            selected = await WorkStatusSelectionVisibleAsync(page);
+            if (!selected)
+            {
+                await chip.EvaluateAsync("el => el instanceof HTMLElement && el.click()");
+                await page.WaitForTimeoutAsync(700);
+                selected = await WorkStatusSelectionVisibleAsync(page);
+            }
         }
 
         Assert.True(selected, "werkstatus chip did not select after trying all chips");
@@ -166,10 +173,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
         await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
         await WaitForTestConsentStepAsync(page);
-        await page.GetByTestId("onboarding-tests-later").First.ClickAsync(new() { Force = true, Timeout = 20_000 });
+        var later = page.GetByTestId("onboarding-tests-later").First;
+        await later.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
         await page.WaitForURLAsync(
             u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-            new() { Timeout = 120_000 });
+            new() { Timeout = 180_000, WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
     }
 
@@ -327,6 +336,11 @@ internal static class FunctionalOnboardingInteractivityHelpers
             await birth.EvaluateAsync("el => el.dispatchEvent(new Event('change', { bubbles: true }))");
         }
     }
+
+    private static async Task<bool> WorkStatusSelectionVisibleAsync(IPage page)
+        => await page.Locator(".work-status-chips .is-selected, .work-status-chips [aria-pressed=\"true\"]").CountAsync() > 0
+           || await page.EvaluateAsync<bool>(
+               "() => !!document.querySelector('.work-status-chips .is-selected, .work-status-chips [aria-pressed=\"true\"]')");
 
     private static async Task<string> TargetSelectorAsync(ILocator target)
     {

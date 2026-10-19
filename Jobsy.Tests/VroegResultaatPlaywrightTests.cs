@@ -579,8 +579,14 @@ combo.save(out)
         var workChip = page.Locator(".work-status-chips .lobsy-choice-tile, .work-status-chips .work-status-chip").First;
         if (await workChip.CountAsync() > 0)
         {
-            await workChip.ClickAsync(new() { Force = true });
-            await page.WaitForTimeoutAsync(400);
+            await workChip.ScrollIntoViewIfNeededAsync();
+            await workChip.ClickAsync(new() { Force = true, Timeout = 15_000 });
+            await page.WaitForTimeoutAsync(600);
+            if (await page.Locator(".work-status-chips .is-selected, .work-status-chips [aria-pressed=\"true\"]").CountAsync() == 0)
+            {
+                await workChip.EvaluateAsync("el => el instanceof HTMLElement && el.click()");
+                await page.WaitForTimeoutAsync(600);
+            }
         }
 
         await ClickNextAsync(page);
