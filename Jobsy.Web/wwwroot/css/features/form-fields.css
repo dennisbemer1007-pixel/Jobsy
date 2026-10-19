@@ -35,9 +35,9 @@ input.filter-bar__search::placeholder {
     color: var(--form-placeholder-color);
     font-weight: 400;
     opacity: 1;
-}.jobsy-date-field__input,
-input.jobsy-date-field__input[type="date"],
-input.jobsy-date-field__input[type="month"] {
+}.jobsy-date-field__input:not(.jobsy-date-field__input--native),
+input.jobsy-date-field__input:not(.jobsy-date-field__input--native)[type="date"],
+input.jobsy-date-field__input:not(.jobsy-date-field__input--native)[type="month"] {
     box-sizing: border-box;
     inline-size: 100%;
     min-block-size: var(--form-input-min-h);

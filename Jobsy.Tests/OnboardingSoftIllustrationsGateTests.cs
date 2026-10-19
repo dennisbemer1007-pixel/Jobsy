@@ -93,13 +93,33 @@ public sealed class OnboardingSoftIllustrationsGateTests
     }
 
     [Fact]
-    public void Illustrated_form_layer_keeps_pointer_events_for_interactive_fields()
+    public void Illustrated_hero_layers_do_not_intercept_pointer_events()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/onboarding-illustrated-step.css"));
+        Assert.Contains(".ob-illustrated-step__art *", css, StringComparison.Ordinal);
         Assert.Contains(".ob-illustrated-step__body", css, StringComparison.Ordinal);
+        Assert.Matches(@"(?s)\.ob-illustrated-step__body\s*\{[^}]*z-index:\s*3", css);
         Assert.Matches(@"(?s)\.ob-illustrated-step__body\s*\{[^}]*pointer-events:\s*auto", css);
         Assert.Matches(@"(?s)\.ob-illustrated-step__hero-band\s*\{[^}]*pointer-events:\s*none", css);
         Assert.Matches(@"(?s)\.ob-illustrated-step__mobile-cover\s*\{[^}]*pointer-events:\s*none", css);
+    }
+
+    [Fact]
+    public void Central_decorative_hero_layers_css_disables_pointer_events_on_descendants()
+    {
+        var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/candidate-illustrated-decorative-layers.css"));
+        Assert.Contains(".cand-hero [aria-hidden] *", css, StringComparison.Ordinal);
+        Assert.Contains(".ob-illustrated-step__art *", css, StringComparison.Ordinal);
+        Assert.Contains(".pp-company__hero-art *", css, StringComparison.Ordinal);
+        Assert.Contains(".test-mirror__hero-art *", css, StringComparison.Ordinal);
+        Assert.Matches(@"(?s)pointer-events:\s*none", css);
+    }
+
+    [Fact]
+    public void Blazor_core_css_includes_decorative_layers_guard_sheet()
+    {
+        var catalog = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Hosting/PageAssetCatalog.cs"));
+        Assert.Contains("candidate-illustrated-decorative-layers.css", catalog, StringComparison.Ordinal);
     }
 
     [Fact]

@@ -1,0 +1,24 @@
+/* Decorative hero/illustration layers must not intercept clicks (descendants default to pointer-events: auto). */
+
+.cand-hero [aria-hidden] *,
+.cand-hero__media,
+.cand-hero__media *,
+.cand-hero__mob-figures-wrap,
+.cand-hero__mob-figures-wrap *,
+.hero-art,
+.hero-art *,
+.pp-company__hero-art,
+.pp-company__hero-art *,
+.test-mirror__hero-art,
+.test-mirror__hero-art *,
+.ob-illustrated-step__art,
+.ob-illustrated-step__art *,
+.ob-illustrated-step__mobile-cover-art,
+.ob-illustrated-step__mobile-cover-art *,
+.pub-theme .pub-landing__hero-art-band,
+.ndm-hero__art,
+.ndm-hero__art *,
+.kb-nearby-banner__art,
+.kb-nearby-banner__art * {
+  pointer-events: none;
+}
