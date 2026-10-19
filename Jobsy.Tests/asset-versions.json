@@ -261,7 +261,7 @@
   },
   "js/app-core.js": {
     "sha256": "895c1ae37324823fa08ca803ee7ecbcf8d39d352bf08f8e322293e51db7e6717",
-    "v": "20261019-14"
+    "v": "20261019-15"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -344,11 +344,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "8856f2565691b8a2796f54e3d9342084930104db9e4e858a8ce344f3d2a208f9",
+    "sha256": "14bb5ab766bdf092dfc6678c71ec6b168551fa1eafc61ad262cb8fd0e9293979",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "f81e52c0a1344bd939df5e1a008b95cc2c6a735d8bee54b95a22b7dff89c2636",
+    "sha256": "26504bc27d48828d17aed6795673600986d2abc2615e19d114484ea6ac0cc082",
     "v": "20261016-06"
   }
 }
