@@ -10,53 +10,65 @@ public static class TestDepthValueIllustratedArt
         var code = domainCode.Trim().ToUpperInvariant();
         if (code == CompetencyTestCatalog.Stressbestendigheid.ToUpperInvariant())
         {
-            return (CandidateIllustratedImages.SpotJobZorg, "72% 38%");
+            return (CandidateIllustratedImages.MobFiguresOpleiding, "center bottom");
         }
 
         if (code == CompetencyTestCatalog.Samenwerken.ToUpperInvariant())
         {
-            return (CandidateIllustratedImages.SpotInclusiefZorgLogistiek, "68% 42%");
+            return (CandidateIllustratedImages.MobFiguresKompas, "center bottom");
         }
 
         if (code == CompetencyTestCatalog.Extraversie.ToUpperInvariant())
         {
-            return (CandidateIllustratedImages.StepBanen, "58% 40%");
+            return (CandidateIllustratedImages.MobFiguresDroombaan, "center bottom");
         }
 
         if (code == CompetencyTestCatalog.Innovatie.ToUpperInvariant())
         {
-            return (CandidateIllustratedImages.StepDna, "60% 44%");
+            return (CandidateIllustratedImages.MobFiguresKompas, "center bottom");
         }
 
         if (code == CompetencyTestCatalog.Resultaatgerichtheid.ToUpperInvariant())
         {
-            return (CandidateIllustratedImages.SpotJobLogistiek, "65% 36%");
+            return (CandidateIllustratedImages.MobFiguresSollicitaties, "center bottom");
         }
 
-        return (CandidateIllustratedImages.SpotVragen, "62% 38%");
+        return (CandidateIllustratedImages.MobFiguresOpleiding, "center bottom");
     }
 
-    public static (string Url, string Position) ForMiniMirrorHero()
-        => (CandidateIllustratedImages.StepVragen, "78% 42%");
+    public static (string Url, string Position) ForUnlockNow(TestDepthLevel reached)
+        => reached switch
+        {
+            TestDepthLevel.First => (CandidateIllustratedImages.MobFiguresOpleiding, "center bottom"),
+            TestDepthLevel.Deeper => (CandidateIllustratedImages.MobFiguresKompas, "center bottom"),
+            TestDepthLevel.Full => (CandidateIllustratedImages.MobFiguresDroombaan, "center bottom"),
+            _ => (CandidateIllustratedImages.StepVragen, "center bottom")
+        };
+
+    public static bool ShowUnlockNextFigure(TestDepthLevel? next)
+        => next is TestDepthLevel.Deeper or TestDepthLevel.Full or TestDepthLevel.Bottom;
 
     public static (string Url, string Position) ForUnlockNextPreview(string previewVariant)
         => previewVariant switch
         {
-            "10" => (CandidateIllustratedImages.StepDna, "70% 40%"),
-            "25" => (CandidateIllustratedImages.MobFiguresKompas, "88% 55%"),
-            "150" => (CandidateIllustratedImages.DroombaanProfessionWide, "75% 45%"),
-            _ => (CandidateIllustratedImages.TipVragen, "72% 38%")
+            "10" => (CandidateIllustratedImages.MobFiguresKompas, "center bottom"),
+            "25" => (CandidateIllustratedImages.MobFiguresDroombaan, "center bottom"),
+            "150" => (CandidateIllustratedImages.MobFiguresOpleiding, "center bottom"),
+            _ => (CandidateIllustratedImages.MobFiguresOpleiding, "center bottom")
         };
 
     public static (string Url, string Position) DeepReportWork()
-        => (CandidateIllustratedImages.SpotWerkervaring, "70% 35%");
+        => (CandidateIllustratedImages.MobFiguresSollicitaties, "center bottom");
 
     public static (string Url, string Position) DeepReportOccupations()
-        => (CandidateIllustratedImages.SpotJobLogistiek, "68% 40%");
+        => (CandidateIllustratedImages.MobFiguresDroombaan, "center bottom");
 
     public static (string Url, string Position) DeepReportActionPlan()
-        => (CandidateIllustratedImages.SpotOpleiding, "72% 38%");
+        => (CandidateIllustratedImages.MobFiguresOpleiding, "center bottom");
 
     public static string InlineBackground(string url, string position)
         => $"background-image:url('{url}');background-position:{position};";
+
+    public static string InlineFigure(string url, string position)
+        => $"background-image:url('{url}');background-position:{position};background-size:contain;background-repeat:no-repeat;";
 }

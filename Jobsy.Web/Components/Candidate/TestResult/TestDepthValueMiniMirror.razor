@@ -10,7 +10,6 @@
         <span class="test-depth-mini-mirror__badge">@Culture["TestDepthValue.MiniMirror.Badge"]</span>
         <h2 class="test-depth-mini-mirror__title">@Culture["TestDepthValue.MiniMirror.Title"]</h2>
         <p class="test-depth-mini-mirror__lead">@Culture["TestDepthValue.MiniMirror.Lead"]</p>
-        <div class="test-depth-mini-mirror__hero-art test-depth-spot-art test-depth-spot-art--band" style="@_heroArtStyle" aria-hidden="true"></div>
     </div>
     @if (_themes.Count > 0)
     {
@@ -18,16 +17,18 @@
             @foreach (var theme in _themes)
             {
                 <article class="test-depth-mini-mirror__theme">
-                    <div class="test-depth-mini-mirror__theme-art test-depth-spot-art test-depth-spot-art--card" style="@theme.ArtStyle" aria-hidden="true"></div>
-                    <small>@Culture["TestReflection.ThemeLabel"]</small>
-                    <h3>@theme.Label</h3>
-                    <p>@theme.Meaning @theme.Example</p>
-                    @if (Rich && theme.Energy is not null)
-                    {
-                        <p class="test-depth-mini-mirror__energy">
-                            <strong>@Culture["TestDepthValue.MiniMirror.EnergyLabel"]</strong> @theme.Energy
-                        </p>
-                    }
+                    <div class="test-depth-mini-mirror__theme-figure test-depth-figure-art test-depth-figure-art--card" style="@theme.ArtStyle" aria-hidden="true"></div>
+                    <div class="test-depth-mini-mirror__theme-copy">
+                        <small>@Culture["TestReflection.ThemeLabel"]</small>
+                        <h3>@theme.Label</h3>
+                        <p>@theme.Meaning @theme.Example</p>
+                        @if (Rich && theme.Energy is not null)
+                        {
+                            <p class="test-depth-mini-mirror__energy">
+                                <strong>@Culture["TestDepthValue.MiniMirror.EnergyLabel"]</strong> @theme.Energy
+                            </p>
+                        }
+                    </div>
                 </article>
             }
         </div>
@@ -40,21 +41,16 @@
 
     private sealed record ThemeLine(string Label, string Meaning, string Example, string? Energy, string ArtStyle);
 
-    private string _heroArtStyle = "";
-
     private IReadOnlyList<ThemeLine> _themes = [];
 
     protected override void OnParametersSet()
     {
-        var (heroUrl, heroPos) = TestDepthValueIllustratedArt.ForMiniMirrorHero();
-        _heroArtStyle = TestDepthValueIllustratedArt.InlineBackground(heroUrl, heroPos);
-
         _themes = DomainCodes
             .Select(code =>
             {
                 var label = DimensionLabels.For(code, Culture.Language);
                 var (url, pos) = TestDepthValueIllustratedArt.ForCompetencyDomain(code);
-                var artStyle = TestDepthValueIllustratedArt.InlineBackground(url, pos);
+                var artStyle = TestDepthValueIllustratedArt.InlineFigure(url, pos);
                 var copy = TestDepthValueMiniThemeCopy.TryGet(code, Culture.Language);
                 if (copy is null)
                 {

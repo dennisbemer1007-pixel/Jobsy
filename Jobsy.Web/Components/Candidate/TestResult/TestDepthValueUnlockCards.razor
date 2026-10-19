@@ -8,7 +8,7 @@
 
 @if (_reached is not null)
 {
-    <section class="test-depth-unlock" aria-label="@Culture["TestDepthValue.Unlock.Aria"]">
+    <section class="test-depth-unlock @(_soloNow ? "test-depth-unlock--solo-now" : null)" aria-label="@Culture["TestDepthValue.Unlock.Aria"]">
         <article class="test-depth-unlock__card test-depth-unlock__card--now">
             <h2>@Culture["TestDepthValue.Unlock.NowTitle"]</h2>
             <p>@Culture[_nowBodyKey]</p>
@@ -18,12 +18,19 @@
                     <li>@line</li>
                 }
             </ul>
+            @if (!string.IsNullOrWhiteSpace(_nowArtStyle))
+            {
+                <div class="test-depth-unlock__now-figure test-depth-figure-art test-depth-figure-art--inline" style="@_nowArtStyle" aria-hidden="true"></div>
+            }
         </article>
         @if (_next is not null && _preview is not null)
         {
             <article class="test-depth-unlock__card test-depth-unlock__card--next">
-                <div class="test-depth-unlock__next-art test-depth-spot-art test-depth-spot-art--card" style="@_nextArtStyle" aria-hidden="true"></div>
                 <h2>@Culture["TestDepthValue.Unlock.NextTitle"]</h2>
+                @if (!string.IsNullOrWhiteSpace(_nextArtStyle))
+                {
+                    <div class="test-depth-unlock__next-figure test-depth-figure-art test-depth-figure-art--inline" style="@_nextArtStyle" aria-hidden="true"></div>
+                }
                 <p class="test-depth-unlock__promise">@_previewPromise</p>
                 <div class="test-depth-unlock__preview" aria-hidden="true">
                     <div class="test-depth-unlock__preview-inner test-depth-unlock__preview-inner--@PreviewVariant">
@@ -56,6 +63,8 @@
     private string _previewBadgeKey = "TestDepthValue.MiniMirror.Badge";
     private IReadOnlyList<PreviewTheme> _previewThemes = [];
     private string _nextArtStyle = "";
+    private string _nowArtStyle = "";
+    private bool _soloNow;
 
     private sealed record PreviewTheme(string Title, string Body);
 
@@ -71,6 +80,7 @@
     {
         _reached = TestDepthRules.Reached(Kind, AnsweredCount, QuickScanVersion);
         _next = TestDepthRules.Next(Kind, AnsweredCount, QuickScanVersion);
+        _soloNow = _next is null;
         _nowBodyKey = _reached switch
         {
             TestDepthLevel.First => "TestDepthValue.Unlock.NowBody.First",
@@ -100,6 +110,16 @@
             _ => [Culture["TestDepthValue.Unlock.NowLine.First1"]]
         };
 
+        if (_reached is { } reachedNow)
+        {
+            var (nowUrl, nowPos) = TestDepthValueIllustratedArt.ForUnlockNow(reachedNow);
+            _nowArtStyle = TestDepthValueIllustratedArt.InlineFigure(nowUrl, nowPos);
+        }
+        else
+        {
+            _nowArtStyle = "";
+        }
+
         _preview = TestDepthValuePreviewCopy.NextPreview(_next, QuickScanVersion);
         if (_preview is null)
         {
@@ -110,7 +130,9 @@
         }
 
         var (nextUrl, nextPos) = TestDepthValueIllustratedArt.ForUnlockNextPreview(PreviewVariant);
-        _nextArtStyle = TestDepthValueIllustratedArt.InlineBackground(nextUrl, nextPos);
+        _nextArtStyle = TestDepthValueIllustratedArt.ShowUnlockNextFigure(_next)
+            ? TestDepthValueIllustratedArt.InlineFigure(nextUrl, nextPos)
+            : "";
 
         var nl = Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase);
         _previewPromise = nl ? _preview.PromiseNl : _preview.PromiseEn;

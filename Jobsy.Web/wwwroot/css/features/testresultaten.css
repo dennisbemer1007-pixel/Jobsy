@@ -557,8 +557,12 @@
 
 .test-mirror__themes {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
     gap: 0.85rem;
+}
+
+.test-mirror__theme:only-child {
+    grid-column: 1 / -1;
 }
 
 .test-mirror__theme {
@@ -1227,16 +1231,25 @@
     position: relative;
     margin: 0 0 1.75rem;
     border-radius: 1.25rem;
-    overflow: hidden;
+    overflow: clip;
     border: 1px solid rgba(210, 180, 150, 0.35);
-    background: linear-gradient(135deg, #fff9f2 0%, #fffcfa 48%, #fff5eb 100%);
+    background: linear-gradient(135deg, #fff3e6 0%, #fffcfa 52%, #fff8f0 100%);
+}
+
+.test-depth-reward__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: stretch;
+    gap: 0.25rem 0.5rem;
+    min-height: 11.25rem;
+    padding-bottom: 1rem;
 }
 
 .test-depth-reward__inner {
     position: relative;
     z-index: 1;
-    padding: 2rem 1.5rem 1.75rem;
-    max-width: 36rem;
+    padding: 2rem 1.25rem 1.75rem 1.5rem;
+    max-width: none;
 }
 
 .test-depth-reward__kicker {
@@ -1270,56 +1283,49 @@
     color: #3d4e63;
 }
 
-.test-depth-reward__art {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-}
-
-/* Stijl A: photo melts into cream — no hard box edges */
-.test-depth-spot-art {
-    background-size: cover;
+/* Stijl A figures: full colour, contain, soft feather into cream (no ghosts behind text) */
+.test-depth-figure-art {
     background-repeat: no-repeat;
+    background-size: contain;
     pointer-events: none;
 }
 
-.test-depth-spot-art--hero {
-    opacity: 0.4;
-    mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.72) 100%);
-    -webkit-mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.72) 100%);
+.test-depth-reward__figure {
+    align-self: end;
+    min-height: 9.75rem;
+    max-height: 11.25rem;
+    margin: 0.5rem 0.85rem 0.85rem 0;
+    padding-bottom: 0.35rem;
+    background-position: center 94% !important;
+    mask-image:
+        linear-gradient(to left, #000 72%, transparent 100%),
+        linear-gradient(to top, #000 88%, transparent 100%);
+    mask-composite: intersect;
+    -webkit-mask-image:
+        linear-gradient(to left, #000 72%, transparent 100%),
+        linear-gradient(to top, #000 88%, transparent 100%);
+    -webkit-mask-composite: source-in;
 }
 
-.test-depth-reward--light .test-depth-spot-art--hero {
-    opacity: 0.28;
-    mask-image: linear-gradient(100deg, transparent 0%, rgba(0, 0, 0, 0.06) 50%, rgba(0, 0, 0, 0.48) 100%);
-    -webkit-mask-image: linear-gradient(100deg, transparent 0%, rgba(0, 0, 0, 0.06) 50%, rgba(0, 0, 0, 0.48) 100%);
+.test-depth-figure-art--card {
+    width: 100%;
+    height: 6.25rem;
+    margin: 0 0 0.65rem;
+    mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
 }
 
-.test-depth-spot-art--band {
-    opacity: 0.32;
-    mask-image: linear-gradient(95deg, transparent 0%, rgba(0, 0, 0, 0.08) 38%, rgba(0, 0, 0, 0.55) 100%);
-    -webkit-mask-image: linear-gradient(95deg, transparent 0%, rgba(0, 0, 0, 0.08) 38%, rgba(0, 0, 0, 0.55) 100%);
-}
-
-.test-depth-spot-art--card {
-    opacity: 0.38;
-    mask-image: radial-gradient(ellipse 130% 120% at 88% 42%, #000 0%, transparent 68%);
-    -webkit-mask-image: radial-gradient(ellipse 130% 120% at 88% 42%, #000 0%, transparent 68%);
-}
-
-.test-depth-spot-art--section {
-    opacity: 0.34;
-    mask-image: radial-gradient(ellipse 115% 100% at 92% 50%, #000 0%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse 115% 100% at 92% 50%, #000 0%, transparent 70%);
+.test-depth-figure-art--inline {
+    width: 100%;
+    max-width: 13.5rem;
+    height: 4.75rem;
+    margin: 0.85rem auto 0;
+    mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent 100%);
 }
 
 .test-depth-reward--150 .test-depth-reward__inner {
-    max-width: 40rem;
-}
-
-.test-depth-reward--150 .test-depth-reward__art {
-    opacity: 0.38;
+    padding-right: 1rem;
 }
 
 .test-depth-reward__status {
@@ -1349,11 +1355,12 @@
 
 @media (min-width: 768px) {
     .test-depth-reward__inner {
-        padding: 2.35rem 2rem 2rem;
+        padding: 2.35rem 1.5rem 2rem 2rem;
     }
 
-    .test-depth-reward__art {
-        opacity: 0.48;
+    .test-depth-reward__figure {
+        min-height: 11rem;
+        margin-inline-end: 1rem;
     }
 }
 
@@ -1366,19 +1373,7 @@
 }
 
 .test-depth-mini-mirror__hero {
-    position: relative;
     padding: 1.25rem 1.35rem 1rem;
-}
-
-.test-depth-mini-mirror__hero > :not(.test-depth-mini-mirror__hero-art) {
-    position: relative;
-    z-index: 1;
-}
-
-.test-depth-mini-mirror__hero-art {
-    position: absolute;
-    inset: 0 0 0 35%;
-    z-index: 0;
 }
 
 .test-depth-mini-mirror__badge {
@@ -1413,26 +1408,15 @@
 }
 
 .test-depth-mini-mirror__theme {
-    position: relative;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     background: #f7f2ea;
     border-radius: 0.75rem;
-    padding: 0.85rem 1rem 0.85rem 0.95rem;
+    padding: 0.75rem 1rem 0.95rem;
 }
 
-.test-depth-mini-mirror__theme-art {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 46%;
-    height: 100%;
-    min-height: 4.5rem;
-}
-
-.test-depth-mini-mirror__theme > :not(.test-depth-mini-mirror__theme-art) {
-    position: relative;
-    z-index: 1;
-    max-width: 92%;
+.test-depth-mini-mirror__theme-copy {
+    flex: 1 1 auto;
 }
 
 .test-depth-mini-mirror__theme small {
@@ -1469,11 +1453,21 @@
     display: grid;
     gap: 1rem;
     margin: 1.25rem 0;
+    align-items: start;
 }
 
 @media (min-width: 720px) {
     .test-depth-unlock {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .test-depth-unlock--solo-now {
+        grid-template-columns: 1fr;
+    }
+
+    .test-depth-unlock--solo-now .test-depth-unlock__now-figure {
+        max-width: 16rem;
+        height: 5.5rem;
     }
 }
 
@@ -1490,18 +1484,13 @@
     background: linear-gradient(135deg, #fff9f2 0%, var(--surface, #fffcfa) 55%);
 }
 
-.test-depth-unlock__next-art {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 42%;
-    height: 5.5rem;
-    max-height: 55%;
+.test-depth-unlock__now-figure {
+    max-width: 100%;
 }
 
-.test-depth-unlock__card--next > :not(.test-depth-unlock__next-art) {
-    position: relative;
-    z-index: 1;
+.test-depth-unlock__next-figure {
+    max-width: 14rem;
+    margin: 0.35rem 0 0.5rem;
 }
 
 .test-depth-unlock__card h2 {
@@ -1566,58 +1555,59 @@
     min-height: 2.6rem;
 }
 
-.competence-report--illustrated .competence-report__section-head {
-    position: relative;
+.competence-report__section-head--split {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem 1rem;
     margin-bottom: 0.75rem;
-    padding-right: 0;
-    min-height: 2.75rem;
 }
 
-.competence-report--illustrated .competence-report__section-head .test-detail__section-title {
+.competence-report__section-head--split .test-detail__section-title {
+    flex: 1 1 12rem;
     margin: 0;
-    max-width: 68%;
+    max-width: none;
 }
 
-.competence-report__section-art {
-    position: absolute;
-    top: -0.35rem;
-    right: 0;
-    width: 38%;
-    height: 4.25rem;
-    max-width: 9.5rem;
+.competence-report__section-figure {
+    flex: 0 0 7.25rem;
+    width: 7.25rem;
+    height: 5.25rem;
+    margin-inline-end: 0.15rem;
+    mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
 }
 
 @media (max-width: 480px) {
-    .test-depth-spot-art--hero {
-        opacity: 0.24;
+    .test-depth-reward__layout {
+        grid-template-columns: 1fr;
+        min-height: 0;
     }
 
-    .test-depth-reward--light .test-depth-spot-art--hero {
-        opacity: 0.2;
+    .test-depth-reward__figure {
+        order: -1;
+        min-height: 7.5rem;
+        max-height: 8.5rem;
+        margin: 0.65rem 1rem 0;
     }
 
-    .test-depth-mini-mirror__theme-art {
-        width: 40%;
-        opacity: 0.32;
+    .test-depth-reward__inner {
+        padding-top: 0.5rem;
     }
 
-    .test-depth-mini-mirror__theme > :not(.test-depth-mini-mirror__theme-art) {
-        max-width: 88%;
+    .test-depth-mini-mirror__theme-figure {
+        height: 4.75rem;
     }
 
-    .test-depth-unlock__next-art {
-        width: 36%;
+    .test-depth-unlock__next-figure {
+        max-width: 11rem;
         height: 4.25rem;
     }
 
-    .competence-report__section-art {
-        width: 34%;
-        height: 3.5rem;
-        max-width: 7.5rem;
-    }
-
-    .competence-report--illustrated .competence-report__section-head .test-detail__section-title {
-        max-width: 62%;
-        font-size: 1.05rem;
+    .competence-report__section-figure {
+        flex-basis: 4.75rem;
+        width: 4.75rem;
+        height: 3.75rem;
     }
 }

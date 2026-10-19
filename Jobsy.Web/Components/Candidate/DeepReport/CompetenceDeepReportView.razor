@@ -150,9 +150,9 @@
             <section class="competence-report__section">
                 @if (CandidateWordsOnly)
                 {
-                    <div class="competence-report__section-head">
-                        <div class="competence-report__section-art test-depth-spot-art test-depth-spot-art--section" style="@_workArtStyle" aria-hidden="true"></div>
+                    <div class="competence-report__section-head competence-report__section-head--split">
                         <h2 class="test-detail__section-title">@Culture["Deep.Competence.WorkTitle"]</h2>
+                        <div class="competence-report__section-figure test-depth-figure-art" style="@_workArtStyle" aria-hidden="true"></div>
                     </div>
                 }
                 else
@@ -181,9 +181,9 @@
             <section class="competence-report__section">
                 @if (CandidateWordsOnly)
                 {
-                    <div class="competence-report__section-head">
-                        <div class="competence-report__section-art test-depth-spot-art test-depth-spot-art--section" style="@_occupationsArtStyle" aria-hidden="true"></div>
+                    <div class="competence-report__section-head competence-report__section-head--split">
                         <h2 class="test-detail__section-title">@Culture["Deep.Competence.OccupationsTitle"]</h2>
+                        <div class="competence-report__section-figure test-depth-figure-art" style="@_occupationsArtStyle" aria-hidden="true"></div>
                     </div>
                 }
                 else
@@ -213,9 +213,9 @@
             <section class="competence-report__section">
                 @if (CandidateWordsOnly)
                 {
-                    <div class="competence-report__section-head">
-                        <div class="competence-report__section-art test-depth-spot-art test-depth-spot-art--section" style="@_actionArtStyle" aria-hidden="true"></div>
+                    <div class="competence-report__section-head competence-report__section-head--split">
                         <h2 class="test-detail__section-title">@Culture["Deep.Competence.ActionPlanTitle"]</h2>
+                        <div class="competence-report__section-figure test-depth-figure-art" style="@_actionArtStyle" aria-hidden="true"></div>
                     </div>
                 }
                 else
@@ -322,11 +322,11 @@
         if (CandidateWordsOnly)
         {
             var (workUrl, workPos) = TestDepthValueIllustratedArt.DeepReportWork();
-            _workArtStyle = TestDepthValueIllustratedArt.InlineBackground(workUrl, workPos);
+            _workArtStyle = TestDepthValueIllustratedArt.InlineFigure(workUrl, workPos);
             var (occUrl, occPos) = TestDepthValueIllustratedArt.DeepReportOccupations();
-            _occupationsArtStyle = TestDepthValueIllustratedArt.InlineBackground(occUrl, occPos);
+            _occupationsArtStyle = TestDepthValueIllustratedArt.InlineFigure(occUrl, occPos);
             var (actUrl, actPos) = TestDepthValueIllustratedArt.DeepReportActionPlan();
-            _actionArtStyle = TestDepthValueIllustratedArt.InlineBackground(actUrl, actPos);
+            _actionArtStyle = TestDepthValueIllustratedArt.InlineFigure(actUrl, actPos);
         }
         else
         {
