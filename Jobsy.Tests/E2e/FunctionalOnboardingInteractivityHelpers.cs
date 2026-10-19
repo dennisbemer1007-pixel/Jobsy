@@ -95,22 +95,22 @@ internal static class FunctionalOnboardingInteractivityHelpers
             new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
 
-        var firstName = page.Locator("input[autocomplete=given-name]").First;
-        if (await firstName.CountAsync() > 0)
-        {
-            await firstName.FillAsync("Func");
-            var lastName = page.Locator("input[autocomplete=family-name]").First;
-            if (await lastName.CountAsync() > 0)
-            {
-                await lastName.FillAsync("Test");
-            }
-
-            await page.WaitForTimeoutAsync(300);
-        }
-
         var viewport = page.ViewportSize;
         var mobile = viewport is not null && viewport.Width < 600;
-        var selected = false;
+        var selected = await WaitForWorkStatusSelectedAsync(page, 1_500);
+
+        if (!selected && mobile)
+        {
+            try
+            {
+                await SelectAnyWorkStatusChipAsync(page);
+                selected = await WaitForWorkStatusSelectedAsync(page, 5_000);
+            }
+            catch (InvalidOperationException)
+            {
+                // fall through to the generic chip loop below
+            }
+        }
 
         for (var round = 0; round < 2 && !selected; round++)
         {
@@ -164,6 +164,19 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 ("[data-testid=onboarding-next]", "volgende"),
             ]);
             Assert.True(selected, $"werkstatus chip did not select after trying all chips. Hit audits: {audits}");
+        }
+
+        var firstName = page.Locator("input[autocomplete=given-name]").First;
+        if (await firstName.CountAsync() > 0)
+        {
+            await firstName.FillAsync("Func");
+            var lastName = page.Locator("input[autocomplete=family-name]").First;
+            if (await lastName.CountAsync() > 0)
+            {
+                await lastName.FillAsync("Test");
+            }
+
+            await page.WaitForTimeoutAsync(300);
         }
     }
 
@@ -511,7 +524,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
             await page.WaitForFunctionAsync(
                 """
                 () => !!document.querySelector(
-                  '.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed="true"]')
+                  '.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed="true"], .work-status-chips [aria-checked="true"]')
                 """,
                 null,
                 new() { Timeout = timeoutMs });
