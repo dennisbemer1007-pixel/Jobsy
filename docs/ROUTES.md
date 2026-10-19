@@ -238,11 +238,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/partner/{TrackingCode?}` | `Pages/Partner/PartnerSales.razor` | anonymous |
 | `/pilot/{Code}` | `Pages/Public/PilotTest.razor` | any (no Authorize attribute) |
 | `/preview/bedrijvenkaart/{Screen}` | `Pages/__Preview/BedrijvenkaartScreens.razor` | anonymous |
-<<<<<<< HEAD
-=======
 | `/preview/uwv-mockups` | `Pages/__Preview/UwvMockupScreens.razor` | anonymous |
 | `/preview/uwv-mockups/{Screen}` | `Pages/__Preview/UwvMockupScreens.razor` | anonymous |
->>>>>>> 7e91fa992 (Fix PR CI: routes doc, privacy catalog, admin audit, ex.Message baseline.)
 | `/privacy` | `Pages/Legal/Privacy.razor` | anonymous |
 | `/privacy/data` | `Pages/Legal/PrivacyData.razor` | authenticated |
 | `/profiel` | `Pages/Candidate/CandidateProfile.razor` | Candidate |
