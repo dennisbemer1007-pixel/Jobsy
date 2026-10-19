@@ -1222,6 +1222,108 @@
     margin: 0 0 0.75rem;
 }
 
+/* Calm celebration hero (test-depth mockup, competence milestones) */
+.test-depth-reward {
+    position: relative;
+    margin: 0 0 1.75rem;
+    border-radius: 1.25rem;
+    overflow: hidden;
+    border: 1px solid rgba(210, 180, 150, 0.35);
+    background: linear-gradient(135deg, #fff9f2 0%, #fffcfa 48%, #fff5eb 100%);
+}
+
+.test-depth-reward__inner {
+    position: relative;
+    z-index: 1;
+    padding: 2rem 1.5rem 1.75rem;
+    max-width: 36rem;
+}
+
+.test-depth-reward__kicker {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--brand);
+}
+
+.test-depth-reward__title {
+    margin: 0 0 0.65rem;
+    font-size: clamp(1.45rem, 4vw, 1.85rem);
+    line-height: 1.25;
+    font-weight: 700;
+    color: #2a3544;
+}
+
+.test-depth-reward__well-done {
+    margin: 0 0 0.75rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--brand);
+}
+
+.test-depth-reward__lead {
+    margin: 0;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    color: #3d4e63;
+}
+
+.test-depth-reward__art {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 0.42;
+    mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.15) 35%, rgba(0, 0, 0, 0.85) 100%);
+    -webkit-mask-image: linear-gradient(105deg, transparent 0%, rgba(0, 0, 0, 0.15) 35%, rgba(0, 0, 0, 0.85) 100%);
+    pointer-events: none;
+}
+
+.test-depth-reward--150 .test-depth-reward__inner {
+    max-width: 40rem;
+}
+
+.test-depth-reward--150 .test-depth-reward__art {
+    opacity: 0.38;
+}
+
+.test-depth-reward__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin: -0.75rem 0 1.25rem;
+    font-size: 0.875rem;
+}
+
+.test-detail-page--depth-reward .test-result-header--depth-reward .test-result-header__main h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.test-detail-page--depth-reward .test-result-header--depth-reward .test-result-header__main {
+    padding-top: 0;
+}
+
+@media (min-width: 768px) {
+    .test-depth-reward__inner {
+        padding: 2.35rem 2rem 2rem;
+    }
+
+    .test-depth-reward__art {
+        opacity: 0.48;
+    }
+}
+
 .test-depth-mini-mirror {
     margin: 1.25rem 0;
     border: 1px solid var(--border);

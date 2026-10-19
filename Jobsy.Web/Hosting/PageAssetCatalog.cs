@@ -60,7 +60,7 @@ public static class PageAssetCatalog
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
-        "css/features/testresultaten.css?v=20261004-10",
+        "css/features/testresultaten.css?v=20261019-reward",
         "css/features/mijn-paspoort.css?v=20261018-06",
         "css/features/kompas-illustrated.css?v=20261018-05",
         "css/features/reference-verification-hero.css?v=20261018-16",

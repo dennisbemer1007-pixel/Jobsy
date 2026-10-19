@@ -123,7 +123,18 @@ internal static class UiStringsTestResults
         ["TestDepthValue.Unlock.NowLine.Full1"] = "Volledige Jouw spiegel",
         ["TestDepthValue.Unlock.NowLine.Full2"] = "Praktijkvoorbeelden en energie-balans",
         ["TestDepthValue.Unlock.NowLine.Full3"] = "Gratis na 25 vragen, de basis voor solliciteren",
-        ["TestDepthValue.Unlock.PreviewMirrorBadge"] = "Jouw spiegel"
+        ["TestDepthValue.Unlock.PreviewMirrorBadge"] = "Jouw spiegel",
+        ["TestDepthValue.Reward.Kicker"] = "Jouw moment",
+        ["TestDepthValue.Reward.TitleNamed"] = "{0}, dit is al van jou",
+        ["TestDepthValue.Reward.TitleAnonymous"] = "Dit is al van jou",
+        ["TestDepthValue.Reward.WellDone.First"] = "Mooi begin. Bedankt voor je eerlijkheid.",
+        ["TestDepthValue.Reward.WellDone.Deeper"] = "Goed doorgezet. Je spiegel wordt steeds duidelijker.",
+        ["TestDepthValue.Reward.WellDone.Full"] = "Je gratis spiegel staat klaar. Dat heb je verdiend.",
+        ["TestDepthValue.Reward.WellDone.Bottom"] = "Alles af. Neem even de tijd om je volledige verslag te lezen.",
+        ["TestDepthValue.Reward.Lead.First"] = "Na een paar antwoorden zie je al een eerste thema. Ga verder wanneer het uitkomt.",
+        ["TestDepthValue.Reward.Lead.Deeper"] = "Meerdere thema's laten zien hoe jij werkt en waar je energie van krijgt.",
+        ["TestDepthValue.Reward.Lead.Full"] = "Jouw spiegel vat samen wat je antwoorden laten zien: in woorden, persoonlijk en bruikbaar.",
+        ["TestDepthValue.Reward.Lead.Bottom"] = "Je uitgebreide verslag legt alles rustig uit. Herkenning, geen cijfers."
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -224,7 +235,18 @@ internal static class UiStringsTestResults
         ["TestDepthValue.Unlock.NowLine.Full1"] = "Full Jouw spiegel",
         ["TestDepthValue.Unlock.NowLine.Full2"] = "Practical examples and energy balance",
         ["TestDepthValue.Unlock.NowLine.Full3"] = "Free after 25 questions, your base for applying",
-        ["TestDepthValue.Unlock.PreviewMirrorBadge"] = "Your mirror"
+        ["TestDepthValue.Unlock.PreviewMirrorBadge"] = "Your mirror",
+        ["TestDepthValue.Reward.Kicker"] = "Your moment",
+        ["TestDepthValue.Reward.TitleNamed"] = "{0}, this is already yours",
+        ["TestDepthValue.Reward.TitleAnonymous"] = "This is already yours",
+        ["TestDepthValue.Reward.WellDone.First"] = "A lovely start. Thank you for answering honestly.",
+        ["TestDepthValue.Reward.WellDone.Deeper"] = "Well done keeping going. Your mirror is getting clearer.",
+        ["TestDepthValue.Reward.WellDone.Full"] = "Your free mirror is ready. You earned this.",
+        ["TestDepthValue.Reward.WellDone.Bottom"] = "All done. Take a moment to read your full report.",
+        ["TestDepthValue.Reward.Lead.First"] = "After a few answers you already see a first theme. Continue when it suits you.",
+        ["TestDepthValue.Reward.Lead.Deeper"] = "Several themes show how you work and what gives you energy.",
+        ["TestDepthValue.Reward.Lead.Full"] = "Your mirror sums up what your answers show: in words, personal and practical.",
+        ["TestDepthValue.Reward.Lead.Bottom"] = "Your extended report explains everything calmly. Recognition, not numbers."
     };
 
     private static Dictionary<string, string> Pl()

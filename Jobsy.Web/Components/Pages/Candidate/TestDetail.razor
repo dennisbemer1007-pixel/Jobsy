@@ -31,7 +31,7 @@
 
 <PageTitle>@(_def is null ? Culture["Kompas.TabTests"] : Culture[_def.TitleKey]) · Lobsy</PageTitle>
 
-<div class="panel-page profile-page profile-page--candidate test-detail-page pb-28 @(_mirror?.Mirror is not null ? "test-detail-page--mirror" : null)">
+<div class="panel-page profile-page profile-page--candidate test-detail-page pb-28 @(_mirror?.Mirror is not null ? "test-detail-page--mirror" : null) @(_depthRewardVisible ? "test-detail-page--depth-reward" : null)">
     <p class="test-detail__back">
         <a href="/candidate/profile?tab=tests" class="btn btn-ghost">← @Culture["Tests.BackToOverview"]</a>
     </p>
@@ -47,16 +47,32 @@
     }
     else if (_partialInsightPage)
     {
-        <header class="test-detail__header">
-            <h1>@Culture[_def!.TitleKey]</h1>
-            <p class="test-detail__status-row">
+        @if (_depthRewardVisible)
+        {
+            <TestDepthValueRewardHero FirstName="_candidateFirstName"
+                                      AnsweredCount="_competencyAnswered"
+                                      QuickScanVersion="_competencyQuickScanVersion" />
+            <p class="test-depth-reward__status muted">
                 <span class="test-status-badge test-status-badge--pending">
                     <span aria-hidden="true">◐</span>
                     @Culture["Test.Status.InProgress"]
                 </span>
-                <span class="muted">@Culture.Format("Tests.MetaFree", _def!.FreeQuestionCount, _def!.FreeMinutesApprox)</span>
+                · @Culture.Format("Tests.MetaFree", _def!.FreeQuestionCount, _def!.FreeMinutesApprox)
             </p>
-        </header>
+        }
+        else
+        {
+            <header class="test-detail__header">
+                <h1>@Culture[_def!.TitleKey]</h1>
+                <p class="test-detail__status-row">
+                    <span class="test-status-badge test-status-badge--pending">
+                        <span aria-hidden="true">◐</span>
+                        @Culture["Test.Status.InProgress"]
+                    </span>
+                    <span class="muted">@Culture.Format("Tests.MetaFree", _def!.FreeQuestionCount, _def!.FreeMinutesApprox)</span>
+                </p>
+            </header>
+        }
 
         <TestDepthValueUnlockCards Kind="_def!.Kind"
                                    AnsweredCount="_competencyAnswered"
@@ -82,14 +98,18 @@
             </div>
         }
 
+        @if (_depthRewardVisible)
+        {
+            <TestDepthValueRewardHero FirstName="_candidateFirstName"
+                                      AnsweredCount="_competencyAnswered"
+                                      QuickScanVersion="_competencyQuickScanVersion"
+                                      DeepCompleted="_deepCompleted" />
+        }
+
         @if (_mirror?.Mirror is not null)
         {
             <div class="test-mirror-page-shell">
-                @if (_depthMockupEnabled && _freeDone && !_deepCompleted)
-                {
-                    <p class="test-depth-value__free-label">@Culture["TestDepthValue.FreeMirrorLabel"]</p>
-                }
-                <TestResultDoneHeader CssClass="test-result-header--mirror-desktop"
+                <TestResultDoneHeader CssClass="@MirrorDoneHeaderCssClass"
                                       TitleKey="@_def.TitleKey"
                                       DeepCompleted="_deepCompleted"
                                       CompletedMeta="@_completedMeta"
@@ -143,7 +163,8 @@
         }
         else
         {
-            <TestResultDoneHeader TitleKey="@_def.TitleKey"
+            <TestResultDoneHeader CssClass="@(_depthRewardVisible ? "test-result-header--depth-reward" : null)"
+                                  TitleKey="@_def.TitleKey"
                                   DeepCompleted="_deepCompleted"
                                   CompletedMeta="@_completedMeta"
                                   ThemeCount="_scoreBars.Count"
@@ -508,6 +529,17 @@
     private IReadOnlyList<string> _miniMirrorDomains = [];
     private bool _miniMirrorRich;
     private bool _partialInsightPage;
+    private string? _candidateFirstName;
+
+    private bool _depthRewardVisible =>
+        _depthMockupEnabled
+        && _def?.Kind == AssessmentKind.Competence
+        && (_partialInsightPage || _freeDone || _deepCompleted);
+
+    private string MirrorDoneHeaderCssClass =>
+        _depthRewardVisible
+            ? "test-result-header--mirror-desktop test-result-header--depth-reward"
+            : "test-result-header--mirror-desktop";
 
     protected override void OnInitialized()
     {
@@ -665,6 +697,19 @@
                                       _competencyAnswered,
                                       _freeDone,
                                       _competencyQuickScanVersion);
+            if (_depthMockupEnabled && _def.Kind == AssessmentKind.Competence)
+            {
+                try
+                {
+                    var profile = await Api.GetMyProfileAsync();
+                    _candidateFirstName = profile?.FirstName;
+                }
+                catch
+                {
+                    _candidateFirstName = null;
+                }
+            }
+
             if (_partialInsightPage)
             {
                 var themeCount = TestDepthValueInsight.MiniThemeCount(_competencyAnswered, _competencyQuickScanVersion);
