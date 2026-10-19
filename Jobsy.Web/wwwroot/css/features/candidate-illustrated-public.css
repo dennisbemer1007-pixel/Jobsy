@@ -121,13 +121,17 @@
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: 50%;
   z-index: 0;
+  width: 100vw;
+  margin-left: -50vw;
   pointer-events: none;
   background: var(--pub-hero-art) no-repeat 56% top / cover;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%),
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%),
     linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%),
+  mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%),
     linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
@@ -486,12 +490,12 @@
 
 @media (max-width: 900px) {
   .pub-theme .pub-landing__step-art--2 {
-    height: clamp(175px, 50vw, 210px);
-    background-size: contain;
+    height: clamp(190px, 54vw, 228px);
+    background-size: 86% auto;
     background-position: center center;
     background-origin: content-box;
     background-clip: content-box;
-    padding-inline: 0.75rem;
+    padding-inline: 1.1rem;
     box-sizing: border-box;
   }
 
