@@ -197,7 +197,7 @@ public sealed class CompactHeadersRolloutR6ScreenshotTests : IAsyncLifetime
         return new { Path = path, Width = width, Slug = slug };
     }
 
-    private static async Task WaitForBedrijvenkaartMapReadyAsync(IPage page)
+    internal static async Task WaitForBedrijvenkaartMapReadyAsync(IPage page)
     {
         await page.WaitForSelectorAsync("#bedrijvenkaart-map canvas, #bedrijvenkaart-map .maplibregl-canvas", new() { Timeout = 120_000 });
         await page.WaitForFunctionAsync(

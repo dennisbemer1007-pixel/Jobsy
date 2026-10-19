@@ -44,12 +44,12 @@
     "v": "20261019-01"
   },
   "css/features/bedrijvenkaart.css": {
-    "sha256": "8d8c1a708f6179843497a0eb4990f0538faad2ea06a44b956d481eee56f5e749",
-    "v": "20261019-08"
+    "sha256": "ff8bc5104d1cdc398be90e455dd5ba5c989a9b7dce95cc83976caef44192f971",
+    "v": "20261019-09"
   },
   "css/features/candidate-hero-compact-preview.css": {
-    "sha256": "c5208731c107f3fb2235188175478ceb7072c14c0eeecd0e2d0849236e164dac",
-    "v": "20261019-67"
+    "sha256": "e69ccb5df20bb0cdda37f57966a16a7b5ec89aa818da52caa41863af183bba4b",
+    "v": "20261019-68"
   },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",

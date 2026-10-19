@@ -22,6 +22,10 @@
   overflow-y: visible;
 }
 
+.bk-page--compact-preview-c .bk-page__hero-band {
+  scroll-margin-top: var(--app-header-height, 4.25rem);
+}
+
 @media (min-width: 901px) {
   .bk-page--compact-preview-c .bk-shell {
     min-height: max(420px, calc(100dvh - 20rem));
