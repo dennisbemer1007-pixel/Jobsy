@@ -24,9 +24,9 @@ public class PassportTabsMobileLayoutPlaywrightTests
 
         await page.EvaluateAsync("""
             () => {
-              const main = document.querySelector('.app-main') || document.scrollingElement;
-              if (main && 'scrollTop' in main) main.scrollTop = 420;
-              else window.scrollTo(0, 420);
+              const root = document.scrollingElement || document.documentElement;
+              root.scrollTop = 420;
+              window.scrollTo(0, 420);
             }
             """);
         await page.WaitForTimeoutAsync(200);
@@ -76,7 +76,21 @@ public class PassportTabsMobileLayoutPlaywrightTests
                 return { ok: false, reason: 'shell-not-sticky' };
               }
 
-              const bg = getComputedStyle(shell).backgroundColor;
+              if (scrollMain) {
+                const header = document.querySelector('.app-header');
+                if (header) {
+                  const h = header.getBoundingClientRect();
+                  if (h.bottom <= 4) {
+                    return { ok: false, reason: 'header-scrolled-away' };
+                  }
+                  if (Math.abs(shellBox.top - h.bottom) > 4) {
+                    return { ok: false, reason: 'tabs-not-below-header' };
+                  }
+                }
+              }
+
+              const backdrop = getComputedStyle(shell, '::before').backgroundColor;
+              const bg = backdrop && backdrop !== 'rgba(0, 0, 0, 0)' ? backdrop : getComputedStyle(shell).backgroundColor;
               if (!bg || bg === 'rgba(0, 0, 0, 0)' || bg === 'transparent') {
                 return { ok: false, reason: 'shell-bg-transparent' };
               }
@@ -103,9 +117,9 @@ public class PassportTabsMobileLayoutPlaywrightTests
             {{passportCss}}
             {{kompasCss}}
             </style></head><body>
-            <header style="position:fixed;top:0;left:0;right:0;height:var(--app-header-height);background:#0f2d5c;z-index:50"></header>
-            <div class="app-shell has-bottom-nav" style="padding-top:var(--app-header-height)">
-            <main class="app-main" style="min-height:120vh;overflow:auto;padding:1rem">
+            <div class="app-shell has-bottom-nav">
+            <header class="app-header" style="min-height:var(--app-header-height);background:#0f2d5c;z-index:50"></header>
+            <main class="app-main" style="min-height:120vh;padding:1rem">
             <div class="panel-page passport-page passport-page--illustrated">
             <div class="passport-layout"><div class="passport-layout__main">
             <section class="passport-overview" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1rem">

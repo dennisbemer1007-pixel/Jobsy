@@ -1,13 +1,14 @@
 .kb-ext {
-  --kb-ext-coach-gutter: 0px;
   padding: 1rem;
   padding-block-end: 1rem;
   max-width: 640px;
   margin: 0 auto;
   box-sizing: border-box;
 }@media (max-width: 639px) {.kb-ext {
-    --kb-ext-coach-gutter: calc(56px + 12px);
-    padding-inline-end: calc(1rem + var(--kb-ext-coach-gutter));
+    max-width: none;
+    width: 100%;
+    margin-inline: 0;
+    padding-inline: 1rem;
   }}.kb-ext__match,
 .kb-ext__actions {
   scroll-margin-bottom: calc(

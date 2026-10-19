@@ -49,6 +49,46 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
     }
 
     [Fact]
+    public async Task Mobile_390_external_vacancy_uses_equal_16px_gutters()
+    {
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+        });
+        var page = await context.NewPageAsync();
+        await page.SetContentAsync(BuildShellHtml("kb-ext"), new() { WaitUntil = WaitUntilState.Load });
+
+        var audit = await page.EvaluateAsync<JsonElement>("""
+            () => {
+              const row = document.querySelector('.kb-ext__header-row');
+              const card = document.querySelector('.kb-ext__card');
+              const header = document.querySelector('.app-header');
+              const probe = row || card;
+              if (!probe || !header) return { ok: false, reason: 'missing-content-or-header' };
+              const p = probe.getBoundingClientRect();
+              const h = header.getBoundingClientRect();
+              const gutter = 16;
+              const leftOk = Math.abs(p.left - gutter) <= 3;
+              const rightOk = Math.abs(window.innerWidth - p.right - gutter) <= 3;
+              const ok = leftOk && rightOk;
+              return {
+                ok,
+                reason: ok ? 'ok' : `content-left-${Math.round(p.left)}-right-${Math.round(window.innerWidth - p.right)}`,
+                headerLeft: Math.round(h.left),
+                headerRight: Math.round(window.innerWidth - h.right),
+              };
+            }
+            """);
+
+        Assert.True(audit.GetProperty("ok").GetBoolean(), audit.GetProperty("reason").GetString());
+    }
+
+    [Fact]
     public async Task Mobile_390_external_vacancy_coach_does_not_overlap_facts_text()
     {
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -190,6 +230,7 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
             {{candCss}}
             </style></head><body>
             <div class="app-shell has-bottom-nav" data-lobsy-coach style="--bottom-nav-h:64px">
+            <header class="app-header" style="min-height:var(--app-header-height);background:var(--pearl-shine);border-bottom:1px solid var(--border);padding:0 1rem;display:flex;align-items:center">Lobsy</header>
             <main class="app-main"><div class="app-main__content">{{body}}</div></main>
             <nav class="bottom-nav" aria-label="Nav" style="position:fixed;bottom:0;left:0;right:0;height:var(--bottom-nav-h);background:#fff;border-top:1px solid var(--border);z-index:40"></nav>
             <div class="lobsy-coach-dock" data-lobsy-coach>
@@ -202,7 +243,7 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
 
     private static string BuildExternalVacancyBody() => """
         <div class="kb-ext" data-testid="kb-ext-detail">
-        <div class="kb-ext__header-row"><div class="kb-ext__header-copy"><h1 class="kb-ext__title">Bedrijfsleider</h1><p class="muted">Intertoys · Den Haag</p></div></div>
+        <div class="kb-ext__header-row"><div class="kb-ext__header-copy"><h1 class="kb-ext__title">Bedrijfsleider</h1><p class="muted">Intertoys · Den Haag</p></div><button type="button" class="read-aloud read-aloud--icon" aria-label="Lees voor"><span class="read-aloud__icon" aria-hidden="true">▶</span></button></div>
         <section class="kb-ext__card"><h2 class="kb-ext__method-title">Wat ze vragen</h2><ul class="kb-ext__bullets"><li>MBO</li></ul></section>
         <p class="kb-ext__travel kb-ext__travel--hint muted" data-testid="kb-ext-travel-hint">Vul je adres in om reistijd te zien.</p>
         <section class="kb-ext__card"><h2 class="kb-ext__method-title">Feiten</h2>
