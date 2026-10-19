@@ -46,6 +46,9 @@ public class BlazorReconnectAndHealthzTests
         Assert.Contains("Blazor.reconnect", boot, StringComparison.Ordinal);
         Assert.Contains("visibilitychange", boot, StringComparison.Ordinal);
         Assert.Contains("Blazor is not defined", boot, StringComparison.Ordinal);
+        Assert.Contains("/account/session-activity", boot, StringComparison.Ordinal);
+        Assert.Contains("reconnect-toast--session-expired", boot, StringComparison.Ordinal);
+        Assert.Contains("data-lobsy-reconnect-active", boot, StringComparison.Ordinal);
         Assert.DoesNotContain("onRejectedAutoReload", boot, StringComparison.Ordinal);
         Assert.DoesNotContain("location.reload()", boot, StringComparison.Ordinal);
 

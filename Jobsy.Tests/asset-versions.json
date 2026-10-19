@@ -200,8 +200,8 @@
     "v": "20261004-10"
   },
   "css/features/reconnect.css": {
-    "sha256": "2cb9fa41cad047d76ad7702f97e7b8f1f49cb938437abd55b2c9b8c4a4ef0ac1",
-    "v": "20261015-02"
+    "sha256": "b22d8098dfcf18ea60729ee8097fe243aad5502f73619d53fc76b2e484adae98",
+    "v": "20261019-01"
   },
   "css/features/sales.css": {
     "sha256": "1f17cd2984d474f41d5b5c5e752db44482ed32d27e9fe639393193cbaa0c4784",
@@ -272,8 +272,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "c55af54b6bdd40dd5e677a90aa334e4338a567e355fad730b0a716f7a327b8d2",
-    "v": "20261017-01"
+    "sha256": "60e4bd83c02f35c71abb53e7317d2956a4e0bb42269f5f47928284df73057c02",
+    "v": "20261019-01"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",

@@ -74,6 +74,7 @@ public class BlazorCircuitGuardTests
         Assert.Contains("Status.Reconnect.Trying", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.Failed", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.Rejected", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.SessionExpired", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.Reload", app, StringComparison.Ordinal);
         Assert.DoesNotContain(">Verbinding herstellen", app, StringComparison.Ordinal);
         Assert.Equal(
@@ -97,7 +98,8 @@ public class BlazorCircuitGuardTests
         Assert.Contains(".reconnect-toast", css);
         Assert.Contains("display: none", css);
         Assert.Contains("position: fixed", css);
-        Assert.Contains("bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains("--bottom-nav-clearance", css, StringComparison.Ordinal);
+        Assert.Contains("data-lobsy-reconnect-active", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast.components-reconnect-retrying", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast.components-reconnect-paused", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast__msg", css, StringComparison.Ordinal);

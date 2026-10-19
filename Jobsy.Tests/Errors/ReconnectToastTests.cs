@@ -14,6 +14,7 @@ public class ReconnectToastTests
         "Status.Reconnect.Trying",
         "Status.Reconnect.Failed",
         "Status.Reconnect.Rejected",
+        "Status.Reconnect.SessionExpired",
         "Status.Reconnect.Reload"
     ];
 
