@@ -614,7 +614,7 @@
 }
 
 .test-block-stage--hoe-je-werkt {
-  --test-block-tint: #e6eef7;
+  --test-block-tint: color-mix(in srgb, var(--pearl-cool, var(--pearl)) 72%, var(--bg));
   --test-block-hero-cream: color-mix(in srgb, var(--bg) 62%, var(--pearl-cool, var(--pearl)));
   --test-block-band-image: url("/images/tests/bg-hoe-je-werkt.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/hoe-je-werkt-hero.png");
@@ -622,15 +622,15 @@
 }
 
 .test-block-stage--leuk {
-  --test-block-tint: color-mix(in srgb, var(--coral-soft, #ffe8e0) 38%, var(--surface));
-  --test-block-hero-cream: color-mix(in srgb, var(--bg) 58%, var(--coral-soft, #ffe8e0));
+  --test-block-tint: color-mix(in srgb, var(--coral-soft) 38%, var(--surface));
+  --test-block-hero-cream: color-mix(in srgb, var(--bg) 58%, var(--coral-soft));
   --test-block-band-image: url("/images/tests/bg-leuk.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/leuk-hero.png");
   --test-block-mobile-hero-image: url("/images/tests/figures/leuk-mobhero.png");
 }
 
 .test-block-stage--sfeer {
-  --test-block-tint: #f3ebe2;
+  --test-block-tint: color-mix(in srgb, var(--pearl-mid, var(--pearl)) 85%, var(--surface));
   --test-block-hero-cream: color-mix(in srgb, var(--bg) 55%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-sfeer.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/sfeer-hero.png");
@@ -638,7 +638,7 @@
 }
 
 .test-block-stage--waarden {
-  --test-block-tint: color-mix(in srgb, #d8e8dc 42%, var(--surface));
+  --test-block-tint: color-mix(in srgb, var(--success-soft) 55%, var(--surface));
   --test-block-hero-cream: color-mix(in srgb, var(--bg) 58%, var(--pearl));
   --test-block-band-image: url("/images/tests/bg-waarden.jpg");
   --test-block-hero-figure-image: url("/images/tests/figures/waarden-hero.png");
@@ -1001,7 +1001,7 @@
 .test-depth-segments__btn.is-current,
 .test-depth-segments__pill.is-current {
   background: var(--brand);
-  color: #fff;
+  color: var(--surface);
 }
 
 .test-depth-segments__btn.is-done,
@@ -1050,7 +1050,7 @@
 }
 
 .test-depth-segments .is-current .test-depth-segments__meta {
-  color: color-mix(in srgb, #fff 92%, var(--muted));
+  color: color-mix(in srgb, var(--surface) 92%, var(--muted));
 }
 
 .test-depth-segments .is-done .test-depth-segments__meta {
@@ -1451,81 +1451,6 @@
 .test-shell--block-compact .test-shell__head,
 .test-shell--block-compact .test-shell__lead {
   display: none;
-}
-
-.cand-hero--test-compact {
-  --cand-hero-mobile-h: 8.125rem;
-
-  min-height: 8.125rem;
-  height: 8.125rem;
-  max-height: 8.125rem;
-  margin-bottom: 0.5rem;
-  border-block-end: none;
-  background-color: var(--test-block-hero-cream, var(--pearl)) !important;
-  background-image: var(--test-block-band-image, var(--cand-hero-art, none)) !important;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: var(--cand-hero-pos-desktop, var(--cand-hero-pos, 72% center));
-}
-
-.cand-hero--test-compact::before {
-  z-index: 2;
-  background:
-    linear-gradient(180deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 30%),
-    linear-gradient(0deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 34%),
-    linear-gradient(90deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 55%),
-    linear-gradient(270deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 42%);
-}
-
-.cand-hero--test-compact::after {
-  display: none !important;
-  content: none !important;
-}
-
-.cand-hero--test-compact .cand-hero__copy {
-  z-index: 3;
-  max-width: min(56%, 38rem);
-  padding-block: 0.85rem;
-  padding-inline: max(1rem, env(safe-area-inset-inline-start, 0px))
-    max(1rem, env(safe-area-inset-inline-end, 0px));
-  background: transparent !important;
-}
-
-.cand-hero--test-compact .cand-hero__copy h1 {
-  font-size: clamp(1.15rem, 3.8vw, 1.45rem);
-  line-height: 1.15;
-  margin: 0;
-}
-
-@media (max-width: 639px) {
-  .cand-hero--test-compact {
-    display: block;
-    height: var(--cand-hero-mobile-h);
-    max-height: var(--cand-hero-mobile-h);
-    min-height: var(--cand-hero-mobile-h);
-    background-image: var(--test-block-band-image, var(--cand-hero-art, none)) !important;
-    background-size: cover;
-    background-position: var(--cand-hero-pos, 78% center);
-  }
-
-  .cand-hero--test-compact::before {
-    background:
-      linear-gradient(180deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 32%),
-      linear-gradient(0deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 36%),
-      linear-gradient(118deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 58%),
-      linear-gradient(270deg, var(--test-block-hero-cream, var(--pearl)) 0%, transparent 36%);
-  }
-
-  .cand-hero--test-compact .cand-hero__copy {
-    position: relative;
-    inset: auto;
-    width: min(58%, 14.5rem);
-    max-width: min(58%, 14.5rem);
-    height: auto;
-    min-height: 0;
-    padding: 0.65rem max(1rem, env(safe-area-inset-inline-start, 0px)) 0.55rem
-      max(1rem, env(safe-area-inset-inline-end, 0px));
-  }
 }
 
 .test-shell__insight {

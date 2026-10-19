@@ -3,11 +3,10 @@
 @using Jobsy.Web.Components.Candidate
 
 <CandidateIllustratedHero Title="@Title"
-                          ArtUrl="@TestBlockArt.ImagePathForSlug(Slug)"
-                          ArtUrlDesktop="@TestBlockArt.ImagePathForSlug(Slug)"
-                          ArtPosition="68% center"
-                          ArtPositionDesktop="72% center"
-                          CssClass="cand-hero--test-compact" />
+                          ArtUrl="@TestBlockArt.HeroFigurePathForSlug(Slug)"
+                          ArtPosition="right center"
+                          CssClass="cand-hero--profession-band"
+                          CompactHeroLayout="page" />
 
 @code {
     [Parameter] public string Title { get; set; } = "";

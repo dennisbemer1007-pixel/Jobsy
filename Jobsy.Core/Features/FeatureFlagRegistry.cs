@@ -35,7 +35,6 @@ public static class FeatureFlagRegistry
     /// </summary>
     public static IReadOnlySet<string> PendingAdminCatalogKeys { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
-        "TestProgressInsightEnabled", // PR #733
         "DreamJobIllustrationEnabled", // PR #724
     };
 
@@ -87,6 +86,8 @@ public static class FeatureFlagRegistry
             Def("TestEditModeEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:TestEditMode"),
             Def("SamplePdfEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:SamplePdf"),
             Def("TestDepthValueMockupEnabled", FeatureFlagAdminGroup.Tests, PlatformFeature.TestDepthValueMockup, pub, true, "TestDepthValueMockupEnabled"),
+            Def("TestItemExamplesEnabled", FeatureFlagAdminGroup.Tests, PlatformFeature.TestItemExamples, pub, false),
+            Def("TestProgressInsightEnabled", FeatureFlagAdminGroup.Tests, PlatformFeature.TestProgressInsight, pub, false),
 
             Def("PassportPartnersEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.PassportPartners, pub, false),
             Def("AmbassadorsEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.Ambassadors, pub, false),

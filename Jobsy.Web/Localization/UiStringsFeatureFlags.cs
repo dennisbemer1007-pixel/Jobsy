@@ -202,7 +202,19 @@ public static class UiStringsFeatureFlags
             "Przykłady przy pytaniach testu",
             "Exemple per întrebare de test",
             "أمثلة لكل سؤال اختبار");
+        Add("AdminSettings.TestItemExamplesEnabled.Title",
+            "Voorbeelden per testvraag",
+            "Examples per test item",
+            "Przykłady przy pytaniach testu",
+            "Exemple per întrebare de test",
+            "أمثلة لكل سؤال اختبار");
         Add("AdminSettings.TestItemExamples.Enabled.Desc",
+            "Aan = Quick-Scan toont een vast praktijkvoorbeeld per vraag (NL/EN). Diepte-analyse gebruikt dezelfde catalogus.",
+            "On = Quick-Scan shows a fixed practice example per item (NL/EN). Deep analysis uses the same catalog.",
+            "Wł. = Quick-Scan pokazuje stały przykład praktyczny (NL/EN). Analiza głęboka używa tej samej katalogu.",
+            "Pornit = Quick-Scan arată un exemplu fix (NL/EN). Analiza profundă folosește același catalog.",
+            "تشغيل = يعرض Quick-Scan مثالاً ثابتاً لكل سؤال (NL/EN). التحليل العميق يستخدم نفس الكatalog.");
+        Add("AdminSettings.TestItemExamplesEnabled.Desc",
             "Aan = Quick-Scan toont een vast praktijkvoorbeeld per vraag (NL/EN). Diepte-analyse gebruikt dezelfde catalogus.",
             "On = Quick-Scan shows a fixed practice example per item (NL/EN). Deep analysis uses the same catalog.",
             "Wł. = Quick-Scan pokazuje stały przykład praktyczny (NL/EN). Analiza głęboka używa tej samej katalogu.",
@@ -214,7 +226,19 @@ public static class UiStringsFeatureFlags
             "Wgląd w postęp (Quick-Scan)",
             "Imagine progres (Quick-Scan)",
             "لمحة التقدم (Quick-Scan)");
+        Add("AdminSettings.TestProgressInsightEnabled.Title",
+            "Voortgang & beeld (Quick-Scan)",
+            "Progress insight (Quick-Scan)",
+            "Wgląd w postęp (Quick-Scan)",
+            "Imagine progres (Quick-Scan)",
+            "لمحة التقدم (Quick-Scan)");
         Add("AdminSettings.TestProgressInsight.Enabled.Desc",
+            "Aan = motivatie per blok van 5 vragen plus kaart “Jouw beeld tot nu toe”.",
+            "On = motivation every 5 items plus a “Your picture so far” card.",
+            "Wł. = motywacja co 5 pytań i karta „Twój obraz dotąd”.",
+            "Pornit = motivație la fiecare 5 întrebări și card „Imaginea ta până acum”.",
+            "تشغيل = تحفيز كل 5 أسئلة وبطاقة «صورتك حتى الآن».");
+        Add("AdminSettings.TestProgressInsightEnabled.Desc",
             "Aan = motivatie per blok van 5 vragen plus kaart “Jouw beeld tot nu toe”.",
             "On = motivation every 5 items plus a “Your picture so far” card.",
             "Wł. = motywacja co 5 pytań i karta „Twój obraz dotąd”.",
