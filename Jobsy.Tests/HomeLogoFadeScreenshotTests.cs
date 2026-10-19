@@ -1,5 +1,7 @@
 using System.Text;
 using Jobsy.Core.Features;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using Jobsy.Web.Features;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -49,7 +51,7 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_home_logo_and_illustration_fades_r5()
+    public async Task Capture_home_logo_and_illustration_fades_r6()
     {
         Directory.CreateDirectory(OutDir);
 
@@ -61,30 +63,169 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
                      (390, 844, "390", true),
                  })
         {
-            await CaptureFullPageAsync(w, h, $"full-{slug}-r5", mobile);
-            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r5", mobile);
-            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r5", mobile);
+            await CaptureFullPageAsync(w, h, $"full-{slug}-r6", mobile);
+            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r6", mobile);
+            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r6", mobile);
             for (var i = 0; i < 3; i++)
             {
-                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r5", mobile, scroll: true);
+                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r6", mobile, scroll: true);
             }
 
             if (!mobile)
             {
-                await CaptureHeroEdgeZoomAsync(w, h, slug, "left", "r5");
-                await CaptureHeroEdgeZoomAsync(w, h, slug, "right", "r5");
-                await CaptureHeroBottomZoomAsync(w, h, slug, "r5");
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "left", "r6");
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "right", "r6");
+                await CaptureHeroBottomZoomAsync(w, h, slug, "r6");
+                if (slug is "1920" or "1440")
+                {
+                    await AssertHeroSideSeamColorDeltaAsync(w, h, slug);
+                }
             }
 
             await AssertHeroCtasReceiveClicksAsync(w, h, mobile);
         }
 
-        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r5", scroll: true);
-        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r5", scroll: true);
-        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r5", mobile: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r6", scroll: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r6", scroll: true);
+        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r6", mobile: true);
+        await AssertStep2LeftCircleVisibleAsync(390, 844);
 
         var logoHeight = await MeasureLogoHeightAsync(1024, 768);
         Assert.InRange(logoHeight, 34, 42);
+    }
+
+    private async Task AssertHeroSideSeamColorDeltaAsync(int w, int h, string slug)
+    {
+        await using var context = await NewContextAsync(w, h);
+        var page = await OpenHomeAsync(context);
+        var bounds = await page.EvaluateAsync<HeroArtBounds>(
+            """
+            () => {
+              const hero = document.querySelector('.pub-landing__hero--illustrated');
+              if (!hero) return null;
+              const heroR = hero.getBoundingClientRect();
+              const vw = window.innerWidth;
+              const artH = parseFloat(getComputedStyle(hero).getPropertyValue('--pub-hero-art-h').trim()) || 680;
+              const iw = 2048;
+              const ih = 720;
+              const scale = Math.min(vw / iw, artH / ih);
+              const rw = iw * scale;
+              const bandLeft = heroR.left + heroR.width / 2 - vw / 2;
+              const imgLeft = bandLeft + (vw - rw) / 2;
+              const imgRight = imgLeft + rw;
+              return { imgLeft, imgRight, imgTop: heroR.bottom - ih * scale, scale };
+            }
+            """);
+        Assert.NotNull(bounds);
+
+        var hero = page.Locator("#top.pub-landing__hero").First;
+        var box = await hero.BoundingBoxAsync();
+        Assert.NotNull(box);
+        var bytes = await hero.ScreenshotAsync(new() { Type = ScreenshotType.Png });
+        using var image = Image.Load<Rgb24>(bytes);
+
+        AssertSideStripDelta(image, box, bounds!.ImgLeft, left: true, slug);
+        AssertSideStripDelta(image, box, bounds.ImgRight, left: false, slug);
+    }
+
+    private static void AssertSideStripDelta(Image<Rgb24> image, LocatorBoundingBoxResult box, double seamViewportX, bool left, string slug)
+    {
+        const int strip = 20;
+        var seamX = (int)Math.Round(seamViewportX - box.X);
+        seamX = Math.Clamp(seamX, 0, image.Width - strip);
+        int xOutsideStart;
+        int xInsideStart;
+        if (left)
+        {
+            if (seamX <= 0)
+            {
+                xOutsideStart = 0;
+                xInsideStart = strip;
+            }
+            else
+            {
+                xOutsideStart = seamX - strip;
+                xInsideStart = seamX;
+            }
+        }
+        else if (seamX >= image.Width - 1)
+        {
+            xOutsideStart = image.Width - (2 * strip);
+            xInsideStart = image.Width - strip;
+        }
+        else
+        {
+            xOutsideStart = seamX;
+            xInsideStart = seamX + strip;
+        }
+        var y0 = (int)(image.Height * 0.58);
+        var y1 = (int)(image.Height * 0.94);
+        var (or, og, ob) = MeanRgb(image, xOutsideStart, y0, strip, y1 - y0);
+        var (ir, ig, ib) = MeanRgb(image, xInsideStart, y0, strip, y1 - y0);
+        var edge = left ? "left" : "right";
+        Assert.True(Math.Abs(or - ir) < 3, $"{slug} {edge} R delta {Math.Abs(or - ir)} (outside {or}, inside {ir}).");
+        Assert.True(Math.Abs(og - ig) < 3, $"{slug} {edge} G delta {Math.Abs(og - ig)} (outside {og}, inside {ig}).");
+        Assert.True(Math.Abs(ob - ib) < 3, $"{slug} {edge} B delta {Math.Abs(ob - ib)} (outside {ob}, inside {ib}).");
+    }
+
+    private static (byte R, byte G, byte B) MeanRgb(Image<Rgb24> image, int x0, int y0, int w, int h)
+    {
+        long r = 0, g = 0, b = 0, n = 0;
+        var xStart = Math.Clamp(x0, 0, Math.Max(0, image.Width - 1));
+        var x1 = Math.Clamp(x0 + w, xStart, image.Width);
+        var yStart = Math.Clamp(y0, 0, Math.Max(0, image.Height - 1));
+        var y1 = Math.Clamp(y0 + h, yStart, image.Height);
+        for (var y = yStart; y < y1; y++)
+        {
+            for (var x = xStart; x < x1; x++)
+            {
+                var p = image[x, y];
+                r += p.R;
+                g += p.G;
+                b += p.B;
+                n++;
+            }
+        }
+
+        Assert.True(n > 0);
+        return ((byte)(r / n), (byte)(g / n), (byte)(b / n));
+    }
+
+    private async Task AssertStep2LeftCircleVisibleAsync(int w, int h)
+    {
+        await using var context = await NewContextAsync(w, h, mobile: true);
+        var page = await OpenHomeAsync(context);
+        var loc = page.Locator(".pub-landing__step-art--2").First;
+        await loc.ScrollIntoViewIfNeededAsync();
+        await page.WaitForTimeoutAsync(600);
+        var bytes = await loc.ScreenshotAsync(new() { Type = ScreenshotType.Png });
+        using var image = Image.Load<Rgb24>(bytes);
+        var x1 = Math.Max(4, image.Width / 12);
+        var blueHits = 0;
+        var samples = 0;
+        for (var y = (int)(image.Height * 0.08); y < (int)(image.Height * 0.55); y++)
+        {
+            for (var x = 2; x < x1; x++)
+            {
+                var p = image[x, y];
+                samples++;
+                if (p.B > p.R + 18 && p.B > p.G + 8 && p.B > 120)
+                {
+                    blueHits++;
+                }
+            }
+        }
+
+        Assert.True(samples > 0);
+        Assert.True(blueHits >= 12, $"Expected left DNA circle pixels on step 2 @390, got {blueHits} blue hits in {samples} samples.");
+    }
+
+    private sealed class HeroArtBounds
+    {
+        public double ImgLeft { get; set; }
+        public double ImgRight { get; set; }
+        public double ImgTop { get; set; }
+        public double Scale { get; set; }
     }
 
     private async Task CaptureHeroEdgeZoomAsync(int w, int h, string slug, string edge, string rev)
