@@ -12,23 +12,25 @@
            data-testid="@($"profile-encourage-{ScreenKey}")"
            data-encourage-tip="@_tip.Id"
            role="note">
-        <img class="profile-encourage__mascot"
-             src="@BrandImages.MarkSvg"
-             alt=""
-             width="56"
-             height="56"
-             decoding="async" />
-        <div class="profile-encourage__copy">
-            <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
-            @if (!string.IsNullOrWhiteSpace(_tip.Href))
-            {
-                <a class="profile-encourage__link" href="@_tip.Href">@Culture[_tip.LinkKey]</a>
-            }
-        </div>
         <button type="button"
                 class="profile-encourage__close"
                 aria-label="@Culture["Encourage.Dismiss"]"
                 @onclick="DismissAsync">×</button>
+        <div class="profile-encourage__row">
+            <img class="profile-encourage__mascot"
+                 src="@BrandImages.MarkSvg"
+                 alt=""
+                 width="56"
+                 height="56"
+                 decoding="async" />
+            <div class="profile-encourage__copy">
+                <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
+                @if (!string.IsNullOrWhiteSpace(_tip.Href))
+                {
+                    <a class="profile-encourage__link" href="@_tip.Href">@Culture[_tip.LinkKey]</a>
+                }
+            </div>
+        </div>
     </aside>
 }
 

@@ -6950,15 +6950,12 @@ a.engagement-btn {
     }
 }
 
-/* Inline encouragement (vacancy apply, paspoort) — grid + speech bubble in app.min (always loaded) */
+/* Inline encouragement (vacancy apply, paspoort) — grid on __row only; close outside grid (app.min) */
 .profile-encourage {
     position: relative;
-    display: grid;
-    grid-template-columns: 52px minmax(0, 1fr);
-    align-items: start;
-    gap: 0.65rem 0.75rem;
+    display: block;
     margin: 1rem 0 1.25rem;
-    padding: 0.75rem 2.75rem 0.75rem 0.75rem;
+    padding: 0.75rem 2.85rem 0.75rem 0.75rem;
     border-radius: 12px;
     background: color-mix(in srgb, var(--brand) 6%, var(--surface));
     border: 1px solid color-mix(in srgb, var(--brand) 14%, transparent);
@@ -6972,20 +6969,32 @@ a.engagement-btn {
     max-width: none;
 }
 
+.profile-encourage__row {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    align-items: start;
+    gap: 0.65rem 0.75rem;
+    width: 100%;
+    min-width: 0;
+}
+
 .profile-encourage__mascot {
     grid-column: 1;
     grid-row: 1;
-    width: 52px;
-    height: 52px;
+    width: 56px;
+    height: 56px;
     flex-shrink: 0;
 }
 
 .profile-encourage__copy {
     grid-column: 2;
     grid-row: 1;
+    justify-self: stretch;
+    align-self: start;
     min-width: 0;
-    width: auto;
+    width: 100%;
     max-width: none;
+    flex: 1 1 auto;
     padding: 0.45rem 0.7rem 0.55rem;
     border-radius: var(--radius-sm);
     background: var(--surface);
@@ -6995,6 +7004,7 @@ a.engagement-btn {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+    box-sizing: border-box;
 }
 
 .profile-encourage__copy::before {
@@ -7049,14 +7059,13 @@ a.engagement-btn {
 }
 
 .profile-encourage__close {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    justify-self: end;
-    align-self: start;
     position: absolute;
-    inset: 0.45rem 0.45rem auto auto;
-    z-index: 1;
+    top: 0.75rem;
+    right: 0.45rem;
+    z-index: 2;
     margin: 0;
+    width: 2rem;
+    height: 2rem;
     border: none;
     background: color-mix(in srgb, var(--muted) 12%, transparent);
     font-size: 1.125rem;
@@ -7341,6 +7350,49 @@ a.engagement-btn {
     }
 }
 
+@media (max-width: 360px) {
+    .mock-interview-modal__header {
+        padding: 0.4rem 0.65rem;
+    }
+
+    .mock-interview-modal__header h2 {
+        font-size: 0.88rem;
+    }
+
+    .mock-interview-modal__vacancy {
+        font-size: 0.65rem;
+        line-height: 1.2;
+    }
+
+    .mock-interview-modal__disclaimer {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.65rem;
+        line-height: 1.2;
+        padding: 0.28rem 0.4rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .mock-interview-modal__disclaimer-lead {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mock-interview-modal__disclaimer-link {
+        flex: 0 0 auto;
+    }
+
+    .mock-interview-progress {
+        margin-bottom: 0.25rem;
+        font-size: 0.72rem;
+    }
+}
+
 .mock-interview-modal--warm {
     background: #fffaf5;
     border-color: #ecd9c8;
@@ -7409,6 +7461,14 @@ a.engagement-btn {
     color: var(--muted);
     font-size: 0.8rem;
     line-height: 1.4;
+}
+
+.mock-interview-modal__disclaimer-lead {
+    display: inline;
+}
+
+.mock-interview-modal__disclaimer-link {
+    white-space: nowrap;
 }
 
 .mock-interview-progress {
