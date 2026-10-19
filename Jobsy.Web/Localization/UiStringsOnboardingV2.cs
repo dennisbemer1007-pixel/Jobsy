@@ -58,6 +58,15 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.LocationFailed"] = english
             ? "We couldn’t determine your postcode. Try entering it manually."
             : "We konden je postcode niet bepalen. Vul hem handmatig in.";
+        map["Onboarding.LocationTimeout"] = english
+            ? "Finding your location took too long. Try again or enter your address manually."
+            : "Locatie ophalen duurde te lang. Probeer opnieuw of vul je adres handmatig in.";
+        map["Onboarding.LocationUnavailable"] = english
+            ? "We couldn’t determine your location. Enter your address manually."
+            : "We konden je locatie niet bepalen. Vul je adres handmatig in.";
+        map["Onboarding.LocationRequiresHttps"] = english
+            ? "Sharing your location requires a secure connection (HTTPS)."
+            : "Locatie delen vereist een beveiligde verbinding (HTTPS).";
         map["Onboarding.Geolocation.ApproximateHint"] = english
             ? "We know your location only roughly (± {0} m). Is this wrong? Type your street or postcode."
             : "We weten je locatie maar ongeveer (± {0} m). Klopt dit niet? Typ je straat of postcode.";

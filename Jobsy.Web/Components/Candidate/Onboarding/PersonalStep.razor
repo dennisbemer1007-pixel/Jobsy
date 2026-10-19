@@ -57,16 +57,17 @@
                     Locating="_locating"
                     OnLocate="UseMyLocationAsync"
                     OnClear="ClearLocationAsync"
-                    OnSelect="SelectSuggestionAsync" />
+                    OnSelect="SelectSuggestionAsync"
+                    OnBlurComplete="OnAddressBlurResolveAsync" />
     @if (ShowValidation && !LocationValid)
     {
         <span class="error" role="alert">@Culture["Onboarding.Validation.Location"]</span>
     }
+    @if (!string.IsNullOrWhiteSpace(_locationError))
+    {
+        <p class="ob-fields__location-error error" role="status" data-testid="onboarding-location-error">@_locationError</p>
+    }
 </div>
-@if (!string.IsNullOrWhiteSpace(_locationError))
-{
-    <p class="error" role="status">@_locationError</p>
-}
 @if (Draft.GeolocationPrefillMode == GeolocationPrefillMode.Approximate && Draft.GeolocationApproximateAccuracyMeters is int approxMeters)
 {
     <p class="ob-wizard__hint ob-wizard__hint--geo" role="status">@Culture.Format("Onboarding.Geolocation.ApproximateHint", DisplayAccuracyMeters(approxMeters))</p>
@@ -236,6 +237,20 @@
         await Task.CompletedTask;
     }
 
+    private async Task OnAddressBlurResolveAsync()
+    {
+        if (Draft.GeolocationPendingConfirm || Draft.HomeLat is not null && Draft.HomeLng is not null)
+        {
+            return;
+        }
+
+        if (await CandidateHomeAddressLookup.TryResolveTypedAddressAsync(Draft, Geocoder))
+        {
+            await AddressChanged.InvokeAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
     private async Task OnAddressInputAsync(string value)
     {
         _addressSuggestFromUser = true;
@@ -315,7 +330,8 @@
         _showSuggestions = false;
         try
         {
-            var position = await Js.InvokeAsync<GeolocationPositionDto>("jobsyGeo.requestLocation");
+            await Js.InvokeVoidAsync("jobsyGeo.blurElement", "onboarding-home-address");
+            var position = await GeolocationInterop.RequestLocationAsync(Js);
             var lat = position.lat;
             var lng = position.lng;
             var accuracy = position.accuracyMeters;
@@ -335,9 +351,7 @@
         }
         catch (Exception ex)
         {
-            _locationError = string.IsNullOrWhiteSpace(ex.Message)
-                ? Culture["Onboarding.LocationDenied"]
-                : ex.Message;
+            _locationError = GeolocationInterop.MapGeolocationError(Culture, ex);
         }
         finally
         {

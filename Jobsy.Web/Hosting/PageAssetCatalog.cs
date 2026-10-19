@@ -29,7 +29,7 @@ public static class PageAssetCatalog
         "css/tokens.css?v=20261018-06",
         "css/app.min.css?v=20261019-10",
         "css/features/stijl-a.css?v=20261018-03",
-        "css/features/form-fields.css?v=20261015-04",
+        "css/features/form-fields.css?v=20261019-01",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
 
@@ -50,10 +50,10 @@ public static class PageAssetCatalog
         "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
         "css/features/onboarding-wizard.css?v=20261018-02",
-        "css/features/onboarding-illustrated-step.css?v=20261018-r20",
+        "css/features/onboarding-illustrated-step.css?v=20261019-r21",
         "css/features/onboarding-test-blocks.css?v=20261018-r2",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
-        "css/features/onboarding-wizard-richting-a.css?v=20261018-02",
+        "css/features/onboarding-wizard-richting-a.css?v=20261019-01",
         "css/features/onboarding-work-history.css?v=20261018-08",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",

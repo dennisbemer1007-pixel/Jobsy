@@ -256,6 +256,12 @@
     display: none !important;
   }
 
+  .app-shell:has(.ob-wizard--richting-a) .lobsy-assistant,
+  .app-shell:has(.ob-wizard--richting-a) .lobsy-assistant-launcher,
+  .app-shell:has(.ob-wizard--richting-a) .lobsy-assistant-tab {
+    display: none !important;
+  }
+
   .ob-wizard--richting-a .ob-wizard__content h1 {
     margin: 0;
     font-size: 1.5rem;
@@ -593,6 +599,21 @@
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .ob-wizard--richting-a .ob-fields__location-error {
+    margin-block: 0.35rem 0;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__birth-date .jobsy-date-field__control {
+    position: relative;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__birth-date .jobsy-date-field__picker-btn {
+    inset-block-start: 50%;
+    translate: 0 -50%;
   }
 
   .ob-wizard--richting-a .ob-fields__address .kb-address--with-clear .kb-address__field input {

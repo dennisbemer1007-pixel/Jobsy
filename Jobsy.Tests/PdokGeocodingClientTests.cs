@@ -219,6 +219,110 @@ public class PdokGeocodingClientTests
         Assert.Equal(city, split.City);
     }
 
+    [Fact]
+    public void Parse_detects_postcode_and_house_number()
+    {
+        var plan = PdokAddressQuery.Parse("2722DD 27");
+        Assert.Equal("2722DD", plan.PostcodeCompact);
+        Assert.Equal(27, plan.HouseNumber);
+        Assert.Equal("postcode:2722DD AND huisnummer:27", plan.BuildPdokQueryString());
+        Assert.Equal("type:adres", plan.BuildFilterQuery());
+    }
+
+    [Fact]
+    public void Parse_detects_street_and_house_number_with_city()
+    {
+        var plan = PdokAddressQuery.Parse("Dirk van den Walelaan 27, Zoetermeer");
+        Assert.Equal("Dirk van den Walelaan", plan.StreetHint);
+        Assert.Equal(27, plan.HouseNumber);
+        Assert.Equal("Zoetermeer", plan.CityHint);
+        Assert.Equal("type:adres", plan.BuildFilterQuery());
+    }
+
+    [Fact]
+    public async Task SuggestAsync_uses_adres_fq_for_street_with_house_number()
+    {
+        Uri? seen = null;
+        using var handler = new StubHandler(req =>
+        {
+            seen = req.RequestUri;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                    {"response":{"docs":[{"weergavenaam":"Dirk van den Walelaan 27, 2553MN 's-Gravenhage","type":"adres","centroide_ll":"POINT(4.21 52.03)","score":20,"postcode":"2553MN","straatnaam":"Dirk van den Walelaan","huisnummer":27,"woonplaatsnaam":"'s-Gravenhage"}]}}
+                    """, Encoding.UTF8, "application/json")
+            };
+        });
+        using var http = new HttpClient(handler);
+        var client = new PdokGeocodingClient(http);
+        var results = await client.SuggestAsync("Dirk van den Walelaan 27, Zoetermeer");
+        Assert.NotNull(seen);
+        Assert.Contains("type%3Aadres", seen.Query, StringComparison.Ordinal);
+        Assert.Contains("Walelaan", results[0].Label, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("27", results[0].Label, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SuggestAsync_postcode_huisnummer_uses_structured_pdok_query()
+    {
+        Uri? seen = null;
+        using var handler = new StubHandler(req =>
+        {
+            seen = req.RequestUri;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                    {"response":{"docs":[{"weergavenaam":"Dirk van den Doortogestraat 27, 2722DD Zoetermeer","type":"adres","centroide_ll":"POINT(4.50 52.05)","score":9,"postcode":"2722DD","huisnummer":27,"woonplaatsnaam":"Zoetermeer"}]}}
+                    """, Encoding.UTF8, "application/json")
+            };
+        });
+        using var http = new HttpClient(handler);
+        var client = new PdokGeocodingClient(http);
+        var results = await client.SuggestAsync("2722DD 27");
+        Assert.NotNull(seen);
+        Assert.Contains("postcode%3A2722DD", seen.Query, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("huisnummer%3A27", seen.Query, StringComparison.Ordinal);
+        Assert.Contains("2722DD", results[0].Label, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("27", results[0].Label, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task SuggestAsync_street_without_number_allows_weg_or_adres()
+    {
+        Uri? seen = null;
+        using var handler = new StubHandler(req =>
+        {
+            seen = req.RequestUri;
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""
+                    {"response":{"docs":[
+                      {"weergavenaam":"Dirk van den Walelaan, 's-Gravenhage","type":"weg","centroide_ll":"POINT(4.21 52.03)","score":15},
+                      {"weergavenaam":"Dirk van den Walelaan 3, 2553MN 's-Gravenhage","type":"adres","centroide_ll":"POINT(4.21 52.03)","score":12,"huisnummer":3}
+                    ]}}
+                    """, Encoding.UTF8, "application/json")
+            };
+        });
+        using var http = new HttpClient(handler);
+        var client = new PdokGeocodingClient(http);
+        _ = await client.SuggestAsync("Dirk van den Walelaan");
+        Assert.NotNull(seen);
+        Assert.Contains("type%3A%28adres", seen.Query, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PickBestMatch_prefers_street_and_house_number()
+    {
+        var list = new List<AddressSuggestion>
+        {
+            new("Dirk van den Doortogestraat 27, 2722DD Zoetermeer", 52.05, 4.5),
+            new("Dirk van den Walelaan 27, 2553MN 's-Gravenhage", 52.03, 4.21),
+        };
+        var picked = PdokGeocodingClient.PickBestMatch("Dirk van den Walelaan 27, Zoetermeer", list);
+        Assert.NotNull(picked);
+        Assert.Contains("Walelaan", picked!.Label, StringComparison.OrdinalIgnoreCase);
+    }
+
     private sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(
