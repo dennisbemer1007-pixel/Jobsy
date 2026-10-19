@@ -1,8 +1,8 @@
 /* Owner preview only (?heroPreview=a|b|c) — three pages, not global rollout. */
 
-/* Variant C (r5): sampled cream, ~120px art fade-in, form column aligned, no hero/body shift. */
+/* Variant C (r6): band fill = art left-edge sample; ~120px img fade; form aligned. */
 .ob-illustrated-step--compact-preview-c {
-  --cand-compact-c-cream: #dcd2bf;
+  --cand-compact-c-cream: #bfbaaf;
   --cand-compact-c-art-share: 52%;
   --cand-compact-c-copy-max: 44%;
   --cand-compact-c-page-cream: var(--bg, #f5f2ee);
@@ -326,7 +326,7 @@
     display: flex;
     justify-content: flex-end;
     align-items: stretch;
-    background: var(--cand-compact-c-cream);
+    background: transparent;
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art picture,
@@ -349,12 +349,10 @@
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art img,
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art-img-wrap img {
     display: block;
-    height: 100%;
+    block-size: 100%;
     inline-size: auto;
-    max-width: none;
-    min-width: calc(100% + 120px) !important;
-    max-inline-size: none !important;
-    margin-inline-start: -120px;
+    max-inline-size: 100%;
+    margin-inline-start: 0;
     object-fit: contain;
     object-position: right center;
     -webkit-mask-image: var(--cand-compact-c-img-mask);
@@ -376,22 +374,31 @@
     right: 12px;
     width: var(--cand-compact-c-art-share);
     z-index: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-block: 4px;
+    box-sizing: border-box;
+    background: transparent;
   }
 
   .career-page--illustrated .cand-hero--compact-preview-c .cand-hero__compact-c-art img {
-    inline-size: 100%;
-    block-size: 100%;
-    min-inline-size: 100%;
-    max-block-size: none;
-    margin-inline-start: 0;
-    object-fit: cover;
-    object-position: 72% center;
+    display: block;
+    block-size: calc(100% - 8px);
+    inline-size: auto;
+    min-inline-size: 0 !important;
+    min-width: 0 !important;
+    max-inline-size: 100%;
+    max-block-size: calc(100% - 8px);
+    margin-inline-start: 0 !important;
+    object-fit: contain;
+    object-position: right center;
     opacity: 1;
     filter: none;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 72px, #000 72px),
-      linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, transparent 72px, #000 72px),
-      linear-gradient(to bottom, transparent 0, #000 8px, #000 calc(100% - 8px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 80px, #000 80px),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 6px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, transparent 80px, #000 80px),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 6px), transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
   }
@@ -517,8 +524,9 @@
     .ob-wizard--compact-preview-c .ob-wizard__layout--with-nearby .ob-wizard__nearby-rail {
       background: linear-gradient(
         180deg,
-        color-mix(in srgb, var(--cand-compact-c-cream) 38%, var(--bg)) 0,
-        var(--bg) 140px
+        var(--cand-compact-c-cream) 0,
+        var(--cand-compact-c-cream) clamp(5.25rem, 9.03vw, 8.125rem),
+        var(--bg) clamp(5.25rem, 9.03vw, 8.125rem)
       );
     }
   }

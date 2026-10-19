@@ -6,7 +6,7 @@ namespace Jobsy.Web.Media;
 /// </summary>
 public static class CompactHeroPreviewCream
 {
-    public const string OnboardingFinaleHero = "#DCD2BF";
+    public const string OnboardingFinaleHero = "#BFBAAF";
     public const string CarriereLearnGrowWide = "#F7F4EF";
     public const string PaspoortKompasWide = "#FAEBDB";
     public const string PageCreamFallback = "#F5F2EE";

@@ -9,7 +9,7 @@ public sealed class CompactHeroPreviewCreamTests
     {
         Assert.Equal(
             CompactHeroPreviewCream.OnboardingFinaleHero,
-            CompactHeroPreviewCreamSampler.MedianLeftEdgeHex(Abs(CompactHeroPreviewArt.OnboardingKennismakenDesktop)));
+            CompactHeroPreviewCreamSampler.AverageLeftColumnsHex(Abs(CompactHeroPreviewArt.OnboardingKennismakenDesktop), 4));
         Assert.Equal(
             CompactHeroPreviewCream.CarriereLearnGrowWide,
             CompactHeroPreviewCreamSampler.MedianLeftEdgeHex(Abs(CandidateIllustratedImages.LearnGrowHeroWide)));
