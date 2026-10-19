@@ -33,6 +33,7 @@ public sealed record FeatureFlagSnapshot(
     bool ReferenceVerificationEnabled = false,
     bool SensitiveExperienceEnabled = false,
     bool TrainingPartnersEnabled = false,
+    bool ContextualTipsEnabled = false,
     bool TestJourneyIllustrationEnabled = false,
     bool OnboardingFinaleV2Enabled = false,
     bool OccupationDayInLifeEnabled = true,
@@ -65,6 +66,7 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.AfterMatch => AfterMatchEnabled,
         PlatformFeature.SensitiveExperience => SensitiveExperienceEnabled,
         PlatformFeature.TrainingPartners => TrainingPartnersEnabled,
+        PlatformFeature.ContextualTips => ContextualTipsEnabled,
         _ => false
     };
 }

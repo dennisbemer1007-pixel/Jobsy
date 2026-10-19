@@ -23,10 +23,12 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
     public string ServerAddress { get; private set; } = "";
     private IHost? _kestrel;
     private readonly bool _emptyAppsAndLikes;
+    private readonly bool _contextualTipsEnabled;
 
-    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false)
+    public IllustratedPagesWebFactory(bool emptyAppsAndLikes = false, bool contextualTipsEnabled = true)
     {
         _emptyAppsAndLikes = emptyAppsAndLikes;
+        _contextualTipsEnabled = contextualTipsEnabled;
         _ = CreateClient();
     }
 
@@ -48,12 +50,12 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.RemoveAll<IHostedService>();
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
-            services.AddSingleton<IFeatureFlags>(new PassportOnFlags());
+            services.AddSingleton<IFeatureFlags>(new PassportOnFlags(_contextualTipsEnabled));
             services.RemoveAll<IHttpClientFactory>();
-            services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes));
+            services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes, _contextualTipsEnabled));
             services.RemoveAll<Jobsy.Web.Services.JobsyApiClient>();
             services.AddScoped(_ => new Jobsy.Web.Services.JobsyApiClient(
-                new HttpClient(new StubApiHandler(_emptyAppsAndLikes), disposeHandler: false)
+                new HttpClient(new StubApiHandler(_emptyAppsAndLikes, _contextualTipsEnabled), disposeHandler: false)
                 {
                     BaseAddress = new Uri("http://api.test/")
                 }));
@@ -86,39 +88,40 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         base.Dispose(disposing);
     }
 
-    private sealed class PassportOnFlags : IFeatureFlags
+    private sealed class PassportOnFlags(bool contextualTipsEnabled) : IFeatureFlags
     {
-        private static readonly FeatureFlagSnapshot Snap = new(
+        private readonly FeatureFlagSnapshot _snap = new(
             EmployersEnabled: true,
             CandidatePassportEnabled: true,
-            ProactiveMatchingEnabled: false);
+            ProactiveMatchingEnabled: false,
+            ContextualTipsEnabled: contextualTipsEnabled);
 
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap);
+            => ValueTask.FromResult(_snap);
 
         public ValueTask<bool> IsEnabledAsync(PlatformFeature feature, CancellationToken cancellationToken = default)
-            => ValueTask.FromResult(Snap.IsEnabled(feature));
+            => ValueTask.FromResult(_snap.IsEnabled(feature));
 
         public void Invalidate()
         {
         }
     }
 
-    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes) : IHttpClientFactory
+    private sealed class StubHttpClientFactory(bool emptyAppsAndLikes, bool contextualTipsEnabled) : IHttpClientFactory
     {
         public HttpClient CreateClient(string name)
-            => new(new StubApiHandler(emptyAppsAndLikes), disposeHandler: true)
+            => new(new StubApiHandler(emptyAppsAndLikes, contextualTipsEnabled), disposeHandler: true)
             {
                 BaseAddress = new Uri("http://api.test/")
             };
     }
 
-    private sealed class StubApiHandler(bool emptyAppsAndLikes) : HttpMessageHandler
+    private sealed class StubApiHandler(bool emptyAppsAndLikes, bool contextualTipsEnabled) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var path = request.RequestUri?.AbsolutePath ?? "";
-            var json = IllustratedPagesApiStub.BuildJson(path, emptyAppsAndLikes);
+            var json = IllustratedPagesApiStub.BuildJson(path, emptyAppsAndLikes, contextualTipsEnabled);
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")

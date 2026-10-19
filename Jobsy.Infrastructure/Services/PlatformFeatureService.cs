@@ -245,6 +245,11 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.AdminFlagOverridesJson = json;
         }
 
+        if (update.ContextualTipsEnabled is bool contextualTipsEnabled)
+        {
+            row.ContextualTipsEnabled = contextualTipsEnabled;
+        }
+
         if (update.CandidateApplyPerMinuteLimit is int perMinute)
         {
             row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.ClampPerMinute(perMinute);
@@ -422,6 +427,16 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.AdminFlagOverridesJson = PlatformFeatureFlagOverrides.AddKey(row.AdminFlagOverridesJson, key);
     }
 
+    private bool ResolveContextualTipsEnabled(PlatformFeatureSettings? row)
+    {
+        if (bool.TryParse(_configuration["Jobsy:ContextualTipsEnabled"], out var configured))
+        {
+            return configured;
+        }
+
+        return row?.ContextualTipsEnabled ?? false;
+    }
+
     private void ApplyDefaultsForInsert(PlatformFeatureSettings row)
     {
         row.VacancyContentModerationEnabled = _options.VacancyContentModerationEnabled;
@@ -548,6 +563,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),
+            ResolveContextualTipsEnabled(row),
             ResolveTestJourneyIllustrationEnabled(row),
             ResolveOnboardingFinaleV2Enabled(row),
             ResolveOccupationDayInLifeEnabled(row),

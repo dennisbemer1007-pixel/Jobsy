@@ -1,0 +1,102 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Core.ContextualTips
+@using Jobsy.Core.Features
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.ContextualTips
+@inject IFeatureFlags FeatureFlags
+@inject JobsyApiClient Api
+
+@if (_platformOn && ChildContent is not null)
+{
+    <CascadingValue Value="_ctx" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public string? TipId { get; set; }
+
+    [Parameter] public bool RequireMomentTips { get; set; }
+
+    [Parameter] public bool RequireVisibleTip { get; set; }
+
+    private bool _platformOn;
+    private ContextualTipsUiContext _ctx = new() { PlatformEnabled = false };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var snap = await FeatureFlags.GetAsync();
+        _platformOn = snap.IsEnabled(PlatformFeature.ContextualTips);
+        if (!_platformOn)
+        {
+            return;
+        }
+
+        var state = await Api.GetContextualTipsStateAsync();
+        _ctx = BuildContext(state);
+        if (RequireMomentTips && state?.MomentTipsEnabled != true)
+        {
+            _platformOn = false;
+            return;
+        }
+
+        if (RequireVisibleTip && !string.IsNullOrWhiteSpace(TipId) && !_ctx.IsTipVisible(TipId))
+        {
+            _platformOn = false;
+        }
+    }
+
+    private ContextualTipsUiContext BuildContext(ContextualTipsStateDto? state)
+    {
+        bool Visible(string id)
+        {
+            if (state?.MomentTipsEnabled != true)
+            {
+                return false;
+            }
+
+            return state.HiddenTipIds.All(h => !string.Equals(h, id, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return new ContextualTipsUiContext
+        {
+            PlatformEnabled = true,
+            State = state,
+            IsTipVisible = Visible,
+            RefreshAsync = RefreshAsync,
+            HideTipAsync = HideAsync,
+            RestoreHiddenAsync = RestoreAsync,
+            UpdateSettingsAsync = UpdateAsync
+        };
+    }
+
+    private async Task RefreshAsync()
+    {
+        var state = await Api.GetContextualTipsStateAsync();
+        _ctx = BuildContext(state);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HideAsync(string tipId)
+    {
+        var state = await Api.HideContextualTipAsync(tipId);
+        _ctx = BuildContext(state);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RestoreAsync()
+    {
+        var state = await Api.RestoreHiddenContextualTipsAsync();
+        _ctx = BuildContext(state);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task UpdateAsync(UpdateContextualTipsSettingsRequest body)
+    {
+        var state = await Api.UpdateContextualTipsSettingsAsync(body);
+        _ctx = BuildContext(state);
+        await InvokeAsync(StateHasChanged);
+    }
+}

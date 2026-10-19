@@ -59,7 +59,7 @@ public static class PageAssetCatalog
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261018-06",
+        "css/features/mijn-paspoort.css?v=20261018-07",
         "css/features/kompas-illustrated.css?v=20261018-05",
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
@@ -74,6 +74,11 @@ public static class PageAssetCatalog
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
         "css/features/na-de-match.css?v=20261019-12",
+    ];
+
+    public static readonly string[] ContextualTipsCss =
+    [
+        "css/features/contextual-tips.css?v=20261019-r13c",
     ];
 
     public static readonly string[] WerkgeverCss =
@@ -249,6 +254,11 @@ public static class PageAssetCatalog
             ];
         }
 
+        if (IsContextualTipsRoute(path))
+        {
+            return ContextualTipsCss;
+        }
+
         return [];
     }
 
@@ -291,6 +301,12 @@ public static class PageAssetCatalog
         var path = PageSeoCatalog.Normalize(rawPath);
         return path.StartsWith("/werkgever/vacatures", StringComparison.Ordinal);
     }
+
+    private static bool IsContextualTipsRoute(string path) =>
+        path.StartsWith("/candidate/tips", StringComparison.OrdinalIgnoreCase)
+        || (path.StartsWith("/candidate/applications/", StringComparison.Ordinal)
+            && (path.EndsWith("/gesprek", StringComparison.OrdinalIgnoreCase)
+                || path.EndsWith("/aanbod", StringComparison.OrdinalIgnoreCase)));
 
     private static void AppendUnique(List<string> list, Area areas, Area flag, string[] urls)
     {

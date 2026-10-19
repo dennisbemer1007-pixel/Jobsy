@@ -1,0 +1,116 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Core.Interfaces
+@using Jobsy.Web.ContextualTips
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="ctips-settings" data-testid="tips-settings-card" aria-labelledby="@_titleId">
+    <h2 id="@_titleId" class="ctips-settings__title">@Culture["Tips.Hub.SettingsTitle"]</h2>
+    <p class="muted">@Culture.Format("Tips.Hub.SettingsLead", _hiddenCount)</p>
+
+    <label class="ctips-settings__row">
+        <input type="checkbox"
+               checked="@_momentOn"
+               disabled="@_busy"
+               data-testid="tips-moment-toggle"
+               @onchange="OnMomentChangedAsync" />
+        <span>
+            @Culture["Tips.Settings.MomentTitle"]
+            <span class="ctips-settings__hint">@Culture["Tips.Settings.MomentHint"]</span>
+        </span>
+    </label>
+
+    <label class="ctips-settings__row">
+        <input type="checkbox"
+               checked="@_reminderOn"
+               disabled="@(_busy || !_momentOn)"
+               data-testid="tips-reminder-toggle"
+               @onchange="OnReminderChangedAsync" />
+        <span>
+            @Culture["Tips.Settings.ReminderTitle"]
+            <span class="ctips-settings__hint">@Culture["Tips.Settings.ReminderHint"]</span>
+        </span>
+    </label>
+
+    @if (_hiddenCount > 0)
+    {
+        <button type="button"
+                class="btn btn-secondary"
+                data-testid="tips-restore-hidden"
+                disabled="@_busy"
+                @onclick="RestoreAsync">
+            @Culture["Tips.Hub.RestoreHidden"]
+        </button>
+    }
+</section>
+
+@code {
+    [CascadingParameter] private ContextualTipsUiContext? _ctx { get; set; }
+
+    private bool _momentOn = true;
+    private bool _reminderOn;
+    private int _hiddenCount;
+    private bool _busy;
+
+    private readonly string _titleId = "tips-settings-" + Guid.NewGuid().ToString("N")[..8];
+
+    protected override void OnParametersSet()
+    {
+        if (_ctx?.State is { } s)
+        {
+            _momentOn = s.MomentTipsEnabled;
+            _reminderOn = s.InterviewPrepReminderEnabled;
+            _hiddenCount = s.HiddenCount;
+        }
+    }
+
+    private async Task OnMomentChangedAsync(ChangeEventArgs e)
+    {
+        _momentOn = e.Value is true;
+        await SaveAsync(new UpdateContextualTipsSettingsRequest(MomentTipsEnabled: _momentOn));
+    }
+
+    private async Task OnReminderChangedAsync(ChangeEventArgs e)
+    {
+        _reminderOn = e.Value is true;
+        await SaveAsync(new UpdateContextualTipsSettingsRequest(InterviewPrepReminderEnabled: _reminderOn));
+    }
+
+    private async Task RestoreAsync()
+    {
+        if (_ctx?.RestoreHiddenAsync is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await _ctx.RestoreHiddenAsync();
+            OnParametersSet();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task SaveAsync(UpdateContextualTipsSettingsRequest body)
+    {
+        if (_ctx?.UpdateSettingsAsync is null)
+        {
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            await _ctx.UpdateSettingsAsync(body);
+            OnParametersSet();
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

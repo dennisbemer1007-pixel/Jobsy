@@ -3830,6 +3830,7 @@ public static class UiStrings
         UiStringsFeatureFlags.MergeAll(nl, en, pl, ro, ar);
         UiStringsSensitiveExperience.MergeAll(nl, en, pl, ro, ar);
         UiStringsTrainingPartners.MergeAll(nl, en, pl, ro, ar);
+        UiStringsContextualTips.MergeAll(nl, en, pl, ro, ar);
         UiStringsEmployerFit.MergeAll(nl, en, pl, ro, ar);
         UiStringsPassport.MergeAll(nl, en, pl, ro, ar);
         UiStringsDiplomaEvaluation.MergeAll(nl, en, pl, ro, ar);

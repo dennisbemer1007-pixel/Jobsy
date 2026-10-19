@@ -1,0 +1,170 @@
+@page "/candidate/tips/{Slug}"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.ContextualTips)]
+@using Jobsy.Core.ContextualTips
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<PageTitle>@_pageTitle · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--cand-ill ctips-page" data-testid="contextual-tip-detail">
+    @if (_category is not null && _tip is null)
+    {
+        <p class="journey-step__eyebrow">@Culture["Tips.Hub.Eyebrow"]</p>
+        <h1>@Culture[_category.TitleKey]</h1>
+        <p class="journey-step__lead">@Culture[_category.LeadKey]</p>
+        <h2 class="visually-hidden">@Culture["Tips.Category.AllTips"]</h2>
+        <ul class="ctips-hub-list" data-testid="tips-category-list">
+            @foreach (var item in _categoryTips)
+            {
+                <li>
+                    <a href="@($"/candidate/tips/{item.Slug}")">
+                        <strong>@Culture[item.TitleKey]</strong>
+                        <span class="muted"> · @Culture[item.SummaryKey]</span>
+                    </a>
+                </li>
+            }
+        </ul>
+        <p><a href="/candidate/tips">@Culture["Tips.Detail.Back"]</a></p>
+    }
+    else if (_tip is null)
+    {
+        <p class="state-message" role="status">@Culture["Tips.Detail.NotFound"]</p>
+        <a class="btn btn-secondary" href="/candidate/tips">@Culture["Tips.Detail.Back"]</a>
+    }
+    else
+    {
+        <ContextualTipsHero Eyebrow="@Culture["Tips.Eyebrow"]"
+                            Title="@Culture[_tip.TitleKey]"
+                            Lead="@Culture[_tip.SummaryKey]"
+                            ExtraCssClass="ctips-detail-hero" />
+
+        <div class="ctips-detail-layout">
+            <div class="ctips-detail-main">
+                <ContextualTipsGate TipId="@_tip.Id">
+                    <ContextualTipShell TipId="@_tip.Id"
+                                        Title=""
+                                        ShowHide="true"
+                                        ReadAloudText="@ReadAloudForTip(_tip)"
+                                        SpeechKey="@($"tip-{_tip.Slug}")">
+                        @if (_tip.Blocks.Count > 0)
+                        {
+                            <div class="ctips-detail-blocks">
+                                @foreach (var block in _tip.Blocks)
+                                {
+                                    var body = Culture[block.BodyKey];
+                                    <article class="ctips-detail-block" data-testid="tip-detail-block">
+                                        <div class="ctips-detail-block__head">
+                                            <h3>@Culture[block.TitleKey]</h3>
+                                            <ReadAloudButton Text="@body" SpeechKey="@($"tip-block-{block.TitleKey}")" IconOnly="true" />
+                                        </div>
+                                        <p>@body</p>
+                                    </article>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p>@Culture[_tip.SummaryKey]</p>
+                        }
+
+                        <div class="ctips-feedback" data-testid="tip-feedback">
+                            <span>@Culture["Tips.Detail.FeedbackPrompt"]</span>
+                            <button type="button" class="btn btn-secondary" @onclick="() => _feedback = true">@Culture["Tips.Detail.FeedbackYes"]</button>
+                            <button type="button" class="btn btn-ghost" @onclick="() => _feedback = true">@Culture["Tips.Detail.FeedbackNo"]</button>
+                            @if (_feedback)
+                            {
+                                <span role="status">@Culture["Tips.FeedbackThanks"]</span>
+                            }
+                        </div>
+                    </ContextualTipShell>
+                </ContextualTipsGate>
+
+                <p class="ctips-detail-back"><a href="/candidate/tips">@Culture["Tips.Detail.Back"]</a></p>
+            </div>
+
+            <aside class="ctips-detail-aside" aria-label="@Culture["Tips.Detail.RelatedTitle"]">
+                @if (string.Equals(_tip.Id, "first-interview", StringComparison.OrdinalIgnoreCase))
+                {
+                    <section class="detail-card ctips-aside-card" data-testid="tip-practice-aside">
+                        <h2 class="ctips-aside-card__title">@Culture["Tips.Detail.PracticeTitle"]</h2>
+                        <p><strong>@Culture["Tips.Detail.PracticeLead"]</strong></p>
+                        <p class="muted">@Culture["Tips.Detail.PracticeBody"]</p>
+                        <a class="btn btn-primary" href="/candidate/applications" data-testid="tip-practice-cta">
+                            @Culture["Tips.Detail.PracticeCta"]
+                        </a>
+                    </section>
+                }
+
+                @if (_related.Count > 0)
+                {
+                    <section class="detail-card ctips-aside-card ctips-related ctips-related--aside" aria-labelledby="tips-related-title">
+                        <h2 id="tips-related-title" class="ctips-aside-card__title">@Culture["Tips.Detail.RelatedTitle"]</h2>
+                        <ul>
+                            @foreach (var rel in _related)
+                            {
+                                <li><a href="@($"/candidate/tips/{rel.Slug}")">@Culture[rel.TitleKey]</a></li>
+                            }
+                        </ul>
+                    </section>
+                }
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private ContextualTipDefinition? _tip;
+    private ContextualTipCategory? _category;
+    private IReadOnlyList<ContextualTipDefinition> _categoryTips = [];
+    private IReadOnlyList<ContextualTipDefinition> _related = [];
+    private string _pageTitle = "Tips";
+    private bool _feedback;
+
+    protected override void OnParametersSet()
+    {
+        _feedback = false;
+        _tip = ContextualTipsCatalog.FindBySlug(Slug);
+        _category = null;
+        _categoryTips = [];
+        _related = [];
+
+        if (_tip is not null)
+        {
+            _pageTitle = Culture[_tip.TitleKey];
+            _related = ContextualTipsCatalog.Tips
+                .Where(t => t.Category == _tip.Category && !string.Equals(t.Id, _tip.Id, StringComparison.OrdinalIgnoreCase))
+                .Take(4)
+                .ToList();
+            if (!string.IsNullOrWhiteSpace(_tip.RelatedTipId)
+                && ContextualTipsCatalog.FindById(_tip.RelatedTipId) is { } explicitRel)
+            {
+                _related = [explicitRel, .. _related.Where(r => r.Id != explicitRel.Id).Take(3)];
+            }
+
+            return;
+        }
+
+        _category = ContextualTipsCatalog.FindCategoryBySlug(Slug);
+        if (_category is not null)
+        {
+            _pageTitle = Culture[_category.TitleKey];
+            _categoryTips = ContextualTipsCatalog.ForCategory(_category.Id);
+        }
+    }
+
+    private string ReadAloudForTip(ContextualTipDefinition tip)
+    {
+        if (tip.Blocks.Count == 0)
+        {
+            return Culture[tip.SummaryKey];
+        }
+
+        return string.Join(" ", tip.Blocks.Select(b => Culture[b.BodyKey]));
+    }
+}

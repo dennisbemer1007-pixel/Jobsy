@@ -78,5 +78,8 @@ public enum PlatformFeature
     SensitiveExperience,
 
     /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
-    TrainingPartners
+    TrainingPartners,
+
+    /// <summary>Tips op het juiste moment for candidates (contextual tips + Alle tips hub). Default false.</summary>
+    ContextualTips
 }

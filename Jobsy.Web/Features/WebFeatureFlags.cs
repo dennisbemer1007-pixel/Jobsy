@@ -76,6 +76,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.ReferenceVerificationEnabled ?? false,
                 dto?.SensitiveExperienceEnabled ?? false,
                 dto?.TrainingPartnersEnabled ?? false,
+                dto?.ContextualTipsEnabled ?? false,
                 dto?.TestJourneyIllustrationEnabled ?? false,
                 dto?.OnboardingFinaleV2Enabled ?? false,
                 dto?.OccupationDayInLifeEnabled ?? true,
@@ -168,6 +169,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("trainingPartnersEnabled")]
         public bool TrainingPartnersEnabled { get; set; }
+
+        [JsonPropertyName("contextualTipsEnabled")]
+        public bool ContextualTipsEnabled { get; set; }
 
         [JsonPropertyName("pupilPassportV2Enabled")]
         public bool PupilPassportV2Enabled { get; set; }

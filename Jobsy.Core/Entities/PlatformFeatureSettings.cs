@@ -181,6 +181,9 @@ public class PlatformFeatureSettings
     /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
     public bool TrainingPartnersEnabled { get; set; }
 
+    /// <summary>Contextual tips for candidates (gesprek, aanbod, paspoort, carrière, Alle tips). Default false.</summary>
+    public bool ContextualTipsEnabled { get; set; }
+
     /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
     public bool TestJourneyIllustrationEnabled { get; set; }
 

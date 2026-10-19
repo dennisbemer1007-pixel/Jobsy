@@ -70,6 +70,7 @@ public class JobsyDbContext : DbContext
     public DbSet<OccupationDayInLife> OccupationDayInLives => Set<OccupationDayInLife>();
     public DbSet<CandidateMatchSnapshot> CandidateMatchSnapshots => Set<CandidateMatchSnapshot>();
     public DbSet<CandidateProactiveMatchingSettings> CandidateProactiveMatchingSettings => Set<CandidateProactiveMatchingSettings>();
+    public DbSet<CandidateContextualTipsSettings> CandidateContextualTipsSettings => Set<CandidateContextualTipsSettings>();
     public DbSet<CandidateKandidatenkaartSettings> CandidateKandidatenkaartSettings => Set<CandidateKandidatenkaartSettings>();
     public DbSet<KandidatenkaartInviteCampaign> KandidatenkaartInviteCampaigns => Set<KandidatenkaartInviteCampaign>();
     public DbSet<KandidatenkaartInviteDelivery> KandidatenkaartInviteDeliveries => Set<KandidatenkaartInviteDelivery>();
@@ -1212,6 +1213,17 @@ public class JobsyDbContext : DbContext
             entity.Property(e => e.InputFingerprint).HasMaxLength(64).IsRequired();
             entity.Property(e => e.Status).HasMaxLength(16).IsRequired();
             entity.HasIndex(e => e.UserId).IsUnique();
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CandidateContextualTipsSettings>(entity =>
+        {
+            entity.ToTable("CandidateContextualTipsSettings");
+            entity.HasKey(e => e.UserId);
+            entity.Property(e => e.HiddenTipIdsJson).HasMaxLength(8000);
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)

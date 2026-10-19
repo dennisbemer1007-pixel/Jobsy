@@ -3,6 +3,7 @@
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.ProfileSections
+@using Jobsy.Web.Components.Candidate.ContextualTips
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
@@ -179,6 +180,11 @@
                 }
             </article>
 
+            @if (_contextualTipsOn && IsEducationSectionEmpty)
+            {
+                <PassportEducationTipCard />
+            }
+
             <article class="detail-card passport-proof__card">
                 <h3 class="passport-proof__card-title">@Culture["Passport.Proof.Reviews"]</h3>
                 @if (Editor.References.Count == 0)
@@ -306,6 +312,7 @@
 
     private bool _dnaPassport;
     private bool _refVerificationEnabled;
+    private bool _contextualTipsOn;
     private bool _refVerificationEligible;
     private List<JobsyApiClient.ReferenceVerificationListItem> _refRows = [];
     private bool _flagsLoaded;
@@ -339,6 +346,7 @@
             var flags = await FeatureFlags.GetAsync();
             _dnaPassport = flags.PassportPdfV2Enabled;
             _refVerificationEnabled = flags.ReferenceVerificationEnabled;
+            _contextualTipsOn = flags.IsEnabled(PlatformFeature.ContextualTips);
             _flagsLoaded = true;
         }
 
@@ -395,6 +403,12 @@
         RefreshStrength();
         _ = InvokeAsync(StateHasChanged);
     }
+
+    private bool IsEducationSectionEmpty =>
+        !Editor.SelectedEducations.Any(e => !string.Equals(e, EducationLevelLabels.None, StringComparison.OrdinalIgnoreCase))
+        && string.IsNullOrWhiteSpace(Editor.EducationDirection)
+        && Editor.DiplomaEvaluations.Count == 0
+        && !Editor.Certificates.Any(c => !string.IsNullOrWhiteSpace(c.Name));
 
     private Task RetryLoadAsync() => LoadAsync();
 

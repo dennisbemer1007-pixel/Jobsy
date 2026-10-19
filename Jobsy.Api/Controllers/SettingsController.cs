@@ -617,6 +617,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("AfterMatchEnabled", before.AfterMatchEnabled.ToString(), after.AfterMatchEnabled.ToString());
         Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
         Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
+        Add("ContextualTipsEnabled", before.ContextualTipsEnabled.ToString(), after.ContextualTipsEnabled.ToString());
         Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
         Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
         Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
@@ -662,6 +663,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             referenceVerificationEnabled = snap.ReferenceVerificationEnabled,
             sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,
             trainingPartnersEnabled = snap.TrainingPartnersEnabled,
+            contextualTipsEnabled = snap.ContextualTipsEnabled,
             pupilPassportV2Enabled = snap.PupilPassportV2Enabled,
             studentPassportEnabled = snap.StudentPassportEnabled,
             testJourneyIllustrationEnabled = snap.TestJourneyIllustrationEnabled,

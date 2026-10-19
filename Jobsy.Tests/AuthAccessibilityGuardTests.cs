@@ -58,7 +58,7 @@ public sealed class AuthAccessibilityGuardTests
         }
 
         if (html.Contains("error=invalid", StringComparison.Ordinal)
-            || html.Contains("au-alert--danger", StringComparison.Ordinal))
+            || Regex.IsMatch(html, @"class\s*=\s*""[^""]*\bau-alert--danger\b", RegexOptions.IgnoreCase))
         {
             Assert.Contains("role=\"alert\"", html, StringComparison.Ordinal);
         }

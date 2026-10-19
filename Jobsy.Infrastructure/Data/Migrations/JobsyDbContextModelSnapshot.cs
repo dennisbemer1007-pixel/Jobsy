@@ -1548,6 +1548,30 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.ToTable("CandidateCompetencies", (string)null);
                 });
 
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateContextualTipsSettings", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("HiddenTipIdsJson")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<bool>("InterviewPrepReminderEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("MomentTipsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("CandidateContextualTipsSettings", (string)null);
+                });
+
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCulturePersonalityProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5789,6 +5813,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
+
+                    b.Property<bool>("ContextualTipsEnabled")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("EmployerFitQuestionnairesEnabled")
                         .HasColumnType("boolean");
@@ -10318,6 +10345,17 @@ namespace Jobsy.Infrastructure.Data.Migrations
                 });
 
             modelBuilder.Entity("Jobsy.Core.Entities.CandidateCompetency", b =>
+                {
+                    b.HasOne("Jobsy.Core.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Jobsy.Core.Entities.CandidateContextualTipsSettings", b =>
                 {
                     b.HasOne("Jobsy.Core.Entities.User", "User")
                         .WithMany()

@@ -27,10 +27,13 @@ public sealed class WebFeatureFlagsMappingTests
             ProactiveMatchingEnabled: false,
             TestsV2Enabled: false,
             EmployerFitQuestionnairesEnabled: false,
-            KandidatenkaartEnabled: true);
+            KandidatenkaartEnabled: true,
+            ContextualTipsEnabled: true);
 
         Assert.True(snap.KandidatenkaartEnabled);
         Assert.True(snap.IsEnabled(PlatformFeature.Kandidatenkaart));
         Assert.False(snap.EmployerFitQuestionnairesEnabled);
+        Assert.True(snap.ContextualTipsEnabled);
+        Assert.True(snap.IsEnabled(PlatformFeature.ContextualTips));
     }
 }

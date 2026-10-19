@@ -5,6 +5,7 @@
 @using Jobsy.Core.Features
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Career
+@using Jobsy.Web.Components.Candidate.ContextualTips
 @using Jobsy.Web.Media
 @using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Jobsy.Web.Components.Candidate.Journey
@@ -182,16 +183,22 @@
                 <CareerRail Plan="@_plan" NowLabel="@_nowLabel" />
             </RailContent>
             <ChildContent>
-                <CareerOverviewCard Plan="@_plan"
-                                    Busy="@_busy"
-                                    EmployersOn="@_employersOn"
-                                    PassportOn="@_passportOn"
-                                    ShowCarriedOver="@_showCarriedOver"
-                                    ErrorText="@_error"
-                                    OnChangeDream="OpenDreamDialog"
-                                    OnClearDream="ClearDreamAsync"
-                                    OnDismissCarriedOver="DismissCarriedOver"
-                                    OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                <div class="@(_contextualTipsOn ? "career-tips-g2" : null)">
+                    <CareerOverviewCard Plan="@_plan"
+                                        Busy="@_busy"
+                                        EmployersOn="@_employersOn"
+                                        PassportOn="@_passportOn"
+                                        ShowCarriedOver="@_showCarriedOver"
+                                        ErrorText="@_error"
+                                        OnChangeDream="OpenDreamDialog"
+                                        OnClearDream="ClearDreamAsync"
+                                        OnDismissCarriedOver="DismissCarriedOver"
+                                        OnRegenerateLanguage="RegenerateForLanguageAsync" />
+                    @if (_contextualTipsOn)
+                    {
+                        <CareerDevelopmentTipCard />
+                    }
+                </div>
 
                 <FutureJobsBlock OnCheck="OpenFutureJobCheck" From="career" />
 
@@ -248,6 +255,7 @@
     private bool _employersOn = true;
     private bool _passportOn;
     private bool _proactiveMatchingOn;
+    private bool _contextualTipsOn;
 
     private string DiscoveryHref => _passportOn ? "/candidate/ontdekkingsreis" : "/candidate/profile";
 
@@ -314,6 +322,7 @@
             _employersOn = flags.EmployersEnabled;
             _passportOn = flags.CandidatePassportEnabled;
             _proactiveMatchingOn = flags.ProactiveMatchingEnabled;
+            _contextualTipsOn = flags.IsEnabled(PlatformFeature.ContextualTips);
         }
         catch (Exception)
         {

@@ -1,0 +1,65 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject CultureState Culture
+
+<div class="ctips-app-main" data-testid="interview-app-details">
+    <article class="detail-card ctips-vacancy-card">
+        <h2>@Application.VacancyTitle</h2>
+        <p class="muted">@Application.CompanyName</p>
+        <a class="btn btn-secondary" href="/candidate/applications">@Culture["Discovery.BackToSearch"]</a>
+    </article>
+
+    <section class="detail-card ctips-detail-section" aria-labelledby="ctips-interview-when">
+        <h3 id="ctips-interview-when" class="ctips-detail-section__title">@Culture["Tips.Page.Interview.WhenTitle"]</h3>
+        <p class="ctips-detail-section__lead">@WhenLabel</p>
+        @if (!string.IsNullOrWhiteSpace(Application.LocationLabel))
+        {
+            <p class="muted">@Application.LocationLabel</p>
+        }
+        <a class="btn btn-ghost ctips-route-link" href="@RouteHref" target="_blank" rel="noopener noreferrer">
+            @Culture["Tips.Page.Interview.RouteCta"]
+        </a>
+    </section>
+
+    <section class="detail-card ctips-detail-section" aria-labelledby="ctips-interview-bring">
+        <h3 id="ctips-interview-bring" class="ctips-detail-section__title">@Culture["Tips.Page.Interview.BringTitle"]</h3>
+        <ul class="ctips-checklist">
+            <li>@Culture["Tips.Page.Interview.Bring1"]</li>
+            <li>@Culture["Tips.Page.Interview.Bring2"]</li>
+            <li>@Culture["Tips.Page.Interview.Bring3"]</li>
+        </ul>
+    </section>
+
+    <section class="detail-card ctips-practice-inline" aria-labelledby="ctips-interview-practice">
+        <h3 id="ctips-interview-practice" class="ctips-detail-section__title">@Culture["Tips.Detail.PracticeTitle"]</h3>
+        <p><strong>@Culture["Tips.Detail.PracticeLead"]</strong></p>
+        <p class="muted">@Culture["Tips.Detail.PracticeBody"]</p>
+        @if (OnPractice.HasDelegate)
+        {
+            <button type="button" class="btn btn-primary" data-testid="interview-inline-practice" @onclick="OnPractice">
+                @Culture["Tips.Placement.InterviewPrep.Practice"]
+            </button>
+        }
+        else
+        {
+            <a class="btn btn-primary" href="/candidate/tips/je-eerste-gesprek">@Culture["Tips.Placement.InterviewPrep.Practice"]</a>
+        }
+    </section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ApplicationItem Application { get; set; } = default!;
+    [Parameter] public EventCallback OnPractice { get; set; }
+
+    private string WhenLabel => Culture["Tips.Page.Interview.WhenDemo"];
+
+    private string RouteHref
+    {
+        get
+        {
+            var dest = Uri.EscapeDataString(Application.LocationLabel ?? Application.CompanyName);
+            return $"https://www.google.com/maps/dir/?api=1&destination={dest}";
+        }
+    }
+}

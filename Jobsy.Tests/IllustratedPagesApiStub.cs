@@ -12,6 +12,7 @@ internal static class IllustratedPagesApiStub
     public static readonly Guid PhotoVacancyId = Guid.Parse("22222222-2222-2222-2222-222222222222");
     public static readonly Guid SampleCompanyId = Guid.Parse("a1000000-0000-0000-0000-000000000001");
     public static readonly Guid SampleApplicationId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    public static readonly Guid SampleOfferApplicationId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     public static readonly Guid SampleEmployerApplicationId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
     /// <summary>When set, returned as mock-interview coach reply (screenshot tests).</summary>
@@ -23,8 +24,19 @@ internal static class IllustratedPagesApiStub
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    public static string BuildJson(string path, bool emptyAppsAndLikes = false)
+    public static string BuildJson(string path, bool emptyAppsAndLikes = false, bool contextualTipsEnabled = true)
     {
+        if (path.Contains("/settings/platform-features", StringComparison.OrdinalIgnoreCase))
+        {
+            return Serialize(new PlatformFeatureItem
+            {
+                EmployersEnabled = true,
+                CandidatePassportEnabled = true,
+                ContextualTipsEnabled = contextualTipsEnabled,
+                UpdatedAtUtc = new DateTime(2026, 10, 18, 12, 0, 0, DateTimeKind.Utc)
+            });
+        }
+
         if (path.Contains("/kompas/dna", StringComparison.OrdinalIgnoreCase))
         {
             var k = PassportDeepOnboardingScreenshotTests.BuildKompas(completed: true);
@@ -88,6 +100,18 @@ internal static class IllustratedPagesApiStub
         if (path.Contains("/me/email-preferences", StringComparison.OrdinalIgnoreCase))
         {
             return """{"reminderEmailsEnabled":true,"optional":[{"key":"PushBom","enabled":true},{"key":"VacancyEngagementReminder","enabled":true}]}""";
+        }
+
+        if (path.Contains("/me/contextual-tips", StringComparison.OrdinalIgnoreCase))
+        {
+            return """
+                {
+                  "momentTipsEnabled": true,
+                  "interviewPrepReminderEnabled": false,
+                  "hiddenTipIds": [],
+                  "hiddenCount": 0
+                }
+                """;
         }
 
         if (path.Contains("/me/reminder-whatsapp", StringComparison.OrdinalIgnoreCase))
@@ -446,6 +470,41 @@ internal static class IllustratedPagesApiStub
     private static List<ApplicationItem> CandidateApplications()
         =>
         [
+            new ApplicationItem
+            {
+                Id = SampleOfferApplicationId,
+                VacancyId = SampleVacancyId,
+                VacancyTitle = "Medewerker bakkerij",
+                CompanyName = "Bakkerij De Korenaar",
+                LocationLabel = "Den Haag",
+                Status = "Accepted",
+                CreatedAt = new DateTime(2026, 10, 12, 10, 0, 0, DateTimeKind.Utc),
+                PictureUrl = "/images/candidate-illustrated/finale-hero.jpg",
+                PictureKind = "Illustrated",
+                Timeline =
+                [
+                    new ApplicationTimelineStepItem
+                    {
+                        Key = "Sent", LabelKey = "Kb.Timeline.Sent", State = "Done",
+                        OccurredAtUtc = new DateTime(2026, 10, 12, 10, 0, 0, DateTimeKind.Utc)
+                    },
+                    new ApplicationTimelineStepItem
+                    {
+                        Key = "Seen", LabelKey = "Kb.Timeline.Seen", State = "Done",
+                        OccurredAtUtc = new DateTime(2026, 10, 13, 10, 0, 0, DateTimeKind.Utc)
+                    },
+                    new ApplicationTimelineStepItem
+                    {
+                        Key = "Interview", LabelKey = "Kb.Timeline.Interview", State = "Done",
+                        OccurredAtUtc = new DateTime(2026, 10, 15, 10, 0, 0, DateTimeKind.Utc)
+                    },
+                    new ApplicationTimelineStepItem
+                    {
+                        Key = "Outcome", LabelKey = "Kb.Timeline.Outcome", State = "Current"
+                    }
+                ],
+                NextStepKey = "Kb.Next.Accepted"
+            },
             new ApplicationItem
             {
                 Id = SampleApplicationId,

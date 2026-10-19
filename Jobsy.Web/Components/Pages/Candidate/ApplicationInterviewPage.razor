@@ -1,0 +1,74 @@
+@page "/candidate/applications/{ApplicationId:guid}/gesprek"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.ContextualTips)]
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Models
+@inject JobsyApiClient Api
+@inject CultureState Culture
+<PageTitle>@Culture["Tips.Page.Interview.Title"] · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--cand-ill ctips-page" data-testid="application-interview-page">
+    @if (_loading)
+    {
+        <p class="state-message" aria-busy="true">@Culture["Common.Loading"]</p>
+    }
+    else if (_app is null)
+    {
+        <p class="state-message">@Culture["Tips.Detail.NotFound"]</p>
+        <a href="/candidate/applications">@Culture["Nav.MyApplications"]</a>
+    }
+    else
+    {
+        <ContextualTipsHero Title="@Culture["Tips.Page.Interview.Title"]"
+                            Lead="@Culture["Tips.Page.Interview.Lead"]" />
+
+        <div class="ctips-app-layout">
+            <InterviewApplicationDetails Application="_app" OnPractice="OpenMockInterview" />
+            <aside aria-label="@Culture["Tips.Placement.InterviewPrep.Title"]">
+                <InterviewPrepTipCard OnPractice="OpenMockInterview" />
+            </aside>
+        </div>
+    }
+</div>
+
+@if (_mockVacancy is not null)
+{
+    <MockInterviewModal IsOpen="true" Vacancy="_mockVacancy" OnClose="CloseMockInterview" />
+}
+
+@code {
+    [Parameter] public Guid ApplicationId { get; set; }
+
+    private ApplicationItem? _app;
+    private VacancyListItem? _mockVacancy;
+    private bool _loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        var apps = await Api.GetMyApplicationsAsync();
+        _app = apps.FirstOrDefault(a => a.Id == ApplicationId);
+        _loading = false;
+    }
+
+    private async Task OpenMockInterview()
+    {
+        if (_app is null)
+        {
+            return;
+        }
+
+        _mockVacancy = new VacancyListItem
+        {
+            Id = _app.VacancyId,
+            Title = _app.VacancyTitle,
+            CompanyName = _app.CompanyName
+        };
+    }
+
+    private void CloseMockInterview() => _mockVacancy = null;
+}

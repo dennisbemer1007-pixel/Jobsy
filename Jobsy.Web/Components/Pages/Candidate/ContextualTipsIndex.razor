@@ -1,0 +1,89 @@
+@page "/candidate/tips"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@attribute [RequiresFeature(PlatformFeature.ContextualTips)]
+@using Jobsy.Core.ContextualTips
+@using Jobsy.Core.Features
+@using Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.ContextualTips
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+<PageTitle>@Culture["Nav.Tips"] · Lobsy</PageTitle>
+
+<div class="panel-page panel-page--cand-ill ctips-page" data-testid="contextual-tips-index">
+    <ContextualTipsHero Eyebrow="@Culture["Tips.Hub.Eyebrow"]"
+                        Title="@Culture["Tips.Hub.Title"]"
+                        Lead="@Culture["Tips.Hub.Lead"]"
+                        ExtraCssClass="ctips-hero" />
+
+    <div class="ctips-search">
+        <label class="ctips-search__field" for="tips-search">
+            <span class="visually-hidden">@Culture["Tips.Hub.SearchPlaceholder"]</span>
+            <svg class="ctips-search__icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            <input id="tips-search"
+                   type="search"
+                   data-testid="tips-search"
+                   placeholder="@Culture["Tips.Hub.SearchPlaceholder"]"
+                   @bind="_query"
+                   @bind:event="oninput" />
+        </label>
+    </div>
+
+    <ul class="ctips-cats" aria-label="@Culture["Tips.Hub.Title"]">
+        @foreach (var cat in ContextualTipsCatalog.Categories)
+        {
+            var tipsInCat = FilteredTips.Where(t => t.Category == cat.Id).ToList();
+            if (tipsInCat.Count == 0 && !string.IsNullOrWhiteSpace(_query))
+            {
+                continue;
+            }
+
+            <li>
+                <a class="ctips-cat" href="@($"/candidate/tips/{cat.Slug}")" data-testid="@($"tips-cat-{cat.Slug}")">
+                    <span class="ctips-cat__art" style="@($"background-image:url('{ContextualTipsImages.UrlForKey(cat.ImageKey)}')")" aria-hidden="true"></span>
+                    <h2 class="ctips-cat__title">@Culture[cat.TitleKey]</h2>
+                    <p class="ctips-cat__lead">@Culture[cat.LeadKey]</p>
+                    <span class="ctips-cat__count">@Culture.Format("Tips.Hub.TipCount", cat.TipCount)</span>
+                </a>
+            </li>
+        }
+    </ul>
+
+    @if (!string.IsNullOrWhiteSpace(_query))
+    {
+        <h2 class="visually-hidden">@Culture["Discovery.Search"]</h2>
+        <ul class="ctips-hub-list" data-testid="tips-search-results">
+            @foreach (var tip in FilteredTips)
+            {
+                <li>
+                    <a href="@($"/candidate/tips/{tip.Slug}")">
+                        <strong>@Culture[tip.TitleKey]</strong>
+                        <span class="muted"> · @Culture[tip.SummaryKey]</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+
+    <section class="ctips-now" data-testid="tips-now-for-you" aria-labelledby="tips-now-title">
+        <p class="journey-step__eyebrow">@Culture["Tips.Hub.NowEyebrow"]</p>
+        <h2 id="tips-now-title">@Culture["Tips.Hub.NowTitle"]</h2>
+        <p>@Culture["Tips.Hub.NowLead"]</p>
+        <a class="btn btn-primary" href="/candidate/tips/je-eerste-gesprek">@Culture["Tips.Hub.NowCta"]</a>
+    </section>
+
+    <ContextualTipsGate>
+        <TipsSettingsCard />
+    </ContextualTipsGate>
+</div>
+
+@code {
+    private string? _query;
+
+    private IReadOnlyList<ContextualTipDefinition> FilteredTips =>
+        string.IsNullOrWhiteSpace(_query)
+            ? ContextualTipsCatalog.Tips
+            : ContextualTipsCatalog.Search(_query);
+}

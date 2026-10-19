@@ -350,6 +350,20 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("ContextualTipsEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ContextualTipsEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.ContextualTips.Enabled.Title",
+                DescriptionKey: "AdminSettings.ContextualTips.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ContextualTipsEnabled,
+                Write: v => new PlatformFeatureUpdate(ContextualTipsEnabled: ToBool(v)),
+                ImpactLevel: PlatformSettingImpactLevel.None,
+                ShowOnDashboard: false));
+        }
+
         // --- Vacatures ---
         list.Add(new PlatformSettingDescriptor(
             Key: "VacancyContentModerationEnabled",
@@ -848,6 +862,7 @@ public static class PlatformSettingsCatalog
         bool? afterMatchEnabled = null;
         bool? sensitiveExperienceEnabled = null;
         bool? trainingPartnersEnabled = null;
+        bool? contextualTipsEnabled = null;
         bool? testJourneyIllustrationEnabled = null;
         bool? onboardingFinaleV2Enabled = null;
         bool? occupationDayInLifeEnabled = null;
@@ -935,6 +950,11 @@ public static class PlatformSettingsCatalog
             if (p.TrainingPartnersEnabled is not null)
             {
                 trainingPartnersEnabled = p.TrainingPartnersEnabled;
+            }
+
+            if (p.ContextualTipsEnabled is not null)
+            {
+                contextualTipsEnabled = p.ContextualTipsEnabled;
             }
 
             if (p.SensitiveExperienceEnabled is not null)
@@ -1033,6 +1053,7 @@ public static class PlatformSettingsCatalog
             AfterMatchEnabled: afterMatchEnabled,
             SensitiveExperienceEnabled: sensitiveExperienceEnabled,
             TrainingPartnersEnabled: trainingPartnersEnabled,
+            ContextualTipsEnabled: contextualTipsEnabled,
             TestJourneyIllustrationEnabled: testJourneyIllustrationEnabled,
             OnboardingFinaleV2Enabled: onboardingFinaleV2Enabled,
             OccupationDayInLifeEnabled: occupationDayInLifeEnabled,

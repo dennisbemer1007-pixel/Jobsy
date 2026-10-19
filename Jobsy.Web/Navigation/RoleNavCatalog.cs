@@ -69,7 +69,7 @@ public static class RoleNavCatalog
     /// <summary>De ontdekkingsreis — filled in file 08 (§N Discovery slot).</summary>
     public static readonly NavItem DiscoveryItem =
         new("Nav.Discovery", "/candidate/ontdekkingsreis", NavIcons.Compass,
-            ["/candidate/start"],
+            ["/candidate/start", "/candidate/tips"],
             ShortTitleKey: "Nav.Discovery.Short");
 
     /// <summary>Sollicitaties with Bewaard URLs as active aliases (passport-ON order).</summary>

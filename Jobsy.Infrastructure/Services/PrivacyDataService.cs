@@ -1755,6 +1755,14 @@ public sealed class PrivacyDataService : IPrivacyDataService
             _db.CandidateProactiveMatchingSettings.RemoveRange(proactiveSettings);
         }
 
+        var contextualTipsSettings = await _db.CandidateContextualTipsSettings
+            .Where(s => s.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (contextualTipsSettings.Count > 0)
+        {
+            _db.CandidateContextualTipsSettings.RemoveRange(contextualTipsSettings);
+        }
+
         var kkSettings = await _db.CandidateKandidatenkaartSettings
             .Where(s => s.UserId == user.Id)
             .ToListAsync(cancellationToken);

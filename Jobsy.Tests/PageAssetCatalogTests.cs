@@ -5,7 +5,7 @@ public class PageAssetCatalogTests
     // Keep in sync with PageAssetCatalog bundle arrays (Stijl A: tokens + stijl-a in core; illustrated public bundles).
     private const int CoreCss = 5;
     private const int PublicCss = 7;
-    private const int AppCss = 21;
+    private const int AppCss = 20;
     private const int WerkgeverCss = 6;
     private const int BeheerCss = 2;
     private const int SalesCss = 1;

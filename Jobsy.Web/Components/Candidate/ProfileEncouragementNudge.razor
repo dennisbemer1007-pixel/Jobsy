@@ -2,7 +2,6 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
-@using Jobsy.Web.Components
 @inject CultureState Culture
 @inject IJSRuntime Js
 
@@ -106,7 +105,7 @@
         }
         catch
         {
-            // UI already hidden.
+            // ignore
         }
     }
 }

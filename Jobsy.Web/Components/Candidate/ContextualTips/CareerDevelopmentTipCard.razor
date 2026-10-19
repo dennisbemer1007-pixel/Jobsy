@@ -1,0 +1,33 @@
+@namespace Jobsy.Web.Components.Candidate.ContextualTips
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+<ContextualTipsGate TipId="career-dev-conversation" RequireMomentTips="true" RequireVisibleTip="true">
+    <ContextualTipShell TipId="career-dev-conversation"
+                        Eyebrow="@Culture["Tips.Career.Eyebrow"]"
+                        Title="@Culture["Tips.Placement.CareerDev.Title"]"
+                        ReadAloudText="@ReadAloudText"
+                        SpeechKey="tip-career-dev">
+        <div class="ctips-career-card" data-testid="career-dev-tip">
+            <div class="ctips-career-card__art"
+                 style="@($"background-image:url('{CandidateIllustratedImages.TipBooks}')")"
+                 aria-hidden="true"></div>
+            <p>@Culture["Tips.Placement.CareerDev.Body"]</p>
+            <ul class="ctips-career-checks">
+                <li>@Culture["Tips.Placement.CareerDev.Check1"]</li>
+                <li>@Culture["Tips.Placement.CareerDev.Check2"]</li>
+                <li>@Culture["Tips.Placement.CareerDev.Check3"]</li>
+            </ul>
+            <div class="ctips-prep-cta">
+                <a class="btn btn-secondary" href="/carriere">@Culture["Tips.Placement.CareerDev.Plan"]</a>
+                <a class="btn btn-ghost" href="/candidate/tips/ontwikkeling">@Culture["Tips.Placement.CareerDev.More"]</a>
+            </div>
+        </div>
+    </ContextualTipShell>
+</ContextualTipsGate>
+
+@code {
+    private string ReadAloudText =>
+        Culture["Tips.Placement.CareerDev.Title"] + ". " + Culture["Tips.Placement.CareerDev.Body"];
+}

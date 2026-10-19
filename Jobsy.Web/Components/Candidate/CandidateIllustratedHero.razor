@@ -1,4 +1,5 @@
 @namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Media
 
 <header class="@HeaderClass" style="@StyleValue">
     <div class="cand-hero__copy">
@@ -16,17 +17,21 @@
         }
         @ChildContent
     </div>
-    @if (!string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
+    @if (ShowMobileFiguresImage)
     {
         <div class="cand-hero__mob-figures-wrap" aria-hidden="true">
             <img class="cand-hero__mob-figures"
-                 src="@ArtUrlMobileFigures"
+                 src="@ResolvedMobileFigures"
                  alt=""
                  loading="eager"
                  decoding="async" />
         </div>
     }
-    @if (!string.IsNullOrWhiteSpace(ArtUrl))
+    @if (ShowTipsGesprekMobileArt)
+    {
+        <div class="cand-hero__tips-gesprek-art" aria-hidden="true"></div>
+    }
+    @if (ShowMediaLayer)
     {
         <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
     }
@@ -39,6 +44,7 @@
     [Parameter] public string? Lead { get; set; }
     [Parameter] public string? ArtUrl { get; set; }
     [Parameter] public string? ArtUrlDesktop { get; set; }
+    [Parameter] public string? ArtUrlMobile { get; set; }
     [Parameter] public string? ArtUrlMobileFigures { get; set; }
     [Parameter] public string? ArtUrlMobileAtmosphere { get; set; }
     [Parameter] public string ArtPosition { get; set; } = "58% center";
@@ -46,6 +52,29 @@
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public int TitleTabIndex { get; set; } = -1;
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? ResolvedMobileFigures =>
+        !string.IsNullOrWhiteSpace(ArtUrlMobileFigures)
+            ? ArtUrlMobileFigures
+            : CandidateIllustratedImages.MobileFigureUrl(ArtUrl);
+
+    private bool UsesCompositeMobileHero =>
+        CssClass?.Contains("learn-grow", StringComparison.OrdinalIgnoreCase) == true;
+
+    private bool UsesSingleMobileHeroArt =>
+        !string.IsNullOrWhiteSpace(ArtUrlMobile) && !ShowTipsGesprekMobileArt;
+
+    private bool ShowTipsGesprekMobileArt =>
+        CssClass?.Contains("cand-hero--tips-moment", StringComparison.Ordinal) == true;
+
+    private bool ShowMobileFiguresImage =>
+        !UsesCompositeMobileHero
+        && !UsesSingleMobileHeroArt
+        && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
+
+    private bool ShowMediaLayer =>
+        (UsesCompositeMobileHero && !string.IsNullOrWhiteSpace(ResolvedMobileFigures))
+        || (!UsesSingleMobileHeroArt && !string.IsNullOrWhiteSpace(ArtUrl));
 
     private string HeaderClass
     {
@@ -57,7 +86,7 @@
                 parts.Add(CssClass);
             }
 
-            if (!string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
+            if (ShowMobileFiguresImage)
             {
                 parts.Add("cand-hero--with-art");
             }
@@ -70,16 +99,21 @@
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(ArtUrl))
+            if (string.IsNullOrWhiteSpace(ArtUrl)
+                && string.IsNullOrWhiteSpace(ArtUrlDesktop)
+                && string.IsNullOrWhiteSpace(ArtUrlMobileAtmosphere)
+                && string.IsNullOrWhiteSpace(ArtUrlMobile))
             {
                 return null;
             }
 
-            var parts = new List<string>
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(ArtUrl))
             {
-                $"--cand-hero-art:url('{ArtUrl}')",
-                $"--cand-hero-pos:{ArtPosition}",
-            };
+                parts.Add($"--cand-hero-art:url('{ArtUrl}')");
+                parts.Add($"--cand-hero-pos:{ArtPosition}");
+            }
+
             if (!string.IsNullOrWhiteSpace(ArtUrlDesktop))
             {
                 parts.Add($"--cand-hero-art-desktop:url('{ArtUrlDesktop}')");
@@ -91,7 +125,12 @@
                 parts.Add($"--cand-hero-mobile-atmosphere:url('{ArtUrlMobileAtmosphere}')");
             }
 
-            return string.Join(';', parts) + ";";
+            if (!string.IsNullOrWhiteSpace(ArtUrlMobile))
+            {
+                parts.Add($"--cand-hero-art-mobile:url('{ArtUrlMobile}')");
+            }
+
+            return parts.Count == 0 ? null : string.Join(';', parts) + ";";
         }
     }
 
@@ -111,9 +150,9 @@
                 parts.Add($"--cand-hero-pos:{ArtPosition}");
             }
 
-            if (!string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
+            if (!string.IsNullOrWhiteSpace(ResolvedMobileFigures))
             {
-                parts.Add($"--cand-hero-figures:url('{ArtUrlMobileFigures}')");
+                parts.Add($"--cand-hero-figures:url('{ResolvedMobileFigures}')");
             }
 
             return parts.Count == 0 ? null : string.Join(';', parts) + ";";
