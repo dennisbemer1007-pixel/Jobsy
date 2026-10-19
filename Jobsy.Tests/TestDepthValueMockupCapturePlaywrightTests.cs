@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Jobsy.Core.Entities;
 using Jobsy.Core.Enums;
 using Jobsy.Core.Interfaces;
@@ -23,7 +24,7 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
 {
     private const string BaseUrl = "http://127.0.0.1:5201";
     private const string Password = DemoUsersSeeder.DemoPassword;
-    private const string OutputDir = "/cursor/stores/self/artifacts/test-levels-mockup-r1";
+    private const string OutputDir = "/cursor/stores/self/artifacts/test-levels-mockup-r2";
 
     private static readonly (int N, string Email, string Name)[] Levels =
     [
@@ -61,6 +62,8 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
+        var htmlChecks = new List<(int N, string File, string Text)>();
+
         foreach (var level in Levels)
         {
             if (level.N != 150)
@@ -69,7 +72,21 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
                 await SeedCompetenceAnswersAsync(conn, level.Email, level.N, level.N >= 25);
             }
 
-            await CaptureLevelAsync(browser, level.N, level.Email, waitMirror: level.N >= 25);
+            await CaptureLevelAsync(browser, level.N, level.Email, waitMirror: level.N >= 25, htmlChecks);
+        }
+
+        AssertNoScoreOrPercentInCandidateText(htmlChecks);
+    }
+
+    private static void AssertNoScoreOrPercentInCandidateText(IReadOnlyList<(int N, string File, string Text)> checks)
+    {
+        var scorePattern = new Regex(@"\bscore\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        foreach (var (n, file, text) in checks)
+        {
+            Assert.False(text.Contains('%', StringComparison.Ordinal),
+                $"Level n{n} HTML ({file}) must not contain '%' in candidate text.");
+            Assert.False(scorePattern.IsMatch(text),
+                $"Level n{n} HTML ({file}) must not contain the word 'score' in candidate text.");
         }
     }
 
@@ -91,20 +108,29 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
         await db.SaveChangesAsync();
     }
 
-    private static async Task CaptureLevelAsync(IBrowser browser, int n, string email, bool waitMirror)
+    private static async Task CaptureLevelAsync(
+        IBrowser browser,
+        int n,
+        string email,
+        bool waitMirror,
+        List<(int N, string File, string Text)> htmlChecks)
     {
         await CandidateJourneyE2e.EnsureTestAiConsentForE2eAsync(email);
 
         foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
         {
-            await CaptureUrlAsync(browser, email, width, height, isMobile: width < 900,
-                $"{BaseUrl}/profiel/tests/competence", $"n{n}-result-{tag}.png", fullPage: true, waitMirror);
+            var isMobile = width < 900;
+            await CaptureUrlAsync(browser, email, width, height, isMobile,
+                $"{BaseUrl}/profiel/tests/competence", $"n{n}-result-{tag}.png",
+                fullPage: !isMobile, waitMirror, htmlChecks, n);
 
-            await CaptureUrlAsync(browser, email, width, height, isMobile: width < 900,
-                $"{BaseUrl}/candidate/paspoort", $"n{n}-paspoort-dna-{tag}.png", fullPage: true, waitMirror: false);
+            await CaptureUrlAsync(browser, email, width, height, isMobile,
+                $"{BaseUrl}/candidate/paspoort", $"n{n}-paspoort-dna-{tag}.png",
+                fullPage: !isMobile, waitMirror: false, htmlChecks, n);
 
-            await CaptureUrlAsync(browser, email, width, height, isMobile: width < 900,
-                $"{BaseUrl}/candidate/profile?tab=tests", $"n{n}-mijn-tests-{tag}.png", fullPage: true, waitMirror: false);
+            await CaptureUrlAsync(browser, email, width, height, isMobile,
+                $"{BaseUrl}/candidate/profile?tab=tests", $"n{n}-mijn-tests-{tag}.png",
+                fullPage: !isMobile, waitMirror: false, htmlChecks, n);
         }
     }
 
@@ -117,7 +143,9 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
         string url,
         string fileName,
         bool fullPage,
-        bool waitMirror)
+        bool waitMirror,
+        List<(int N, string File, string Text)> htmlChecks,
+        int levelN)
     {
         await using var ctx = await browser.NewContextAsync(new BrowserNewContextOptions
         {
@@ -143,6 +171,17 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
             catch (TimeoutException)
             {
             }
+
+            try
+            {
+                await page.WaitForFunctionAsync(
+                    "() => !document.body.innerText.toLowerCase().includes('met een score van')",
+                    null,
+                    new() { Timeout = 120_000 });
+            }
+            catch (TimeoutException)
+            {
+            }
         }
         else if (url.Contains("/profiel/tests/competence", StringComparison.Ordinal))
         {
@@ -162,8 +201,50 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
         await page.EvaluateAsync("() => document.fonts.ready");
         await page.WaitForTimeoutAsync(1200);
 
+        if (isMobile)
+        {
+            await page.EvaluateAsync("""
+                () => {
+                  window.scrollTo(0, 0);
+                  document.querySelectorAll('.lobsy-coach-dock, [data-lobsy-coach]').forEach(el => el.remove());
+                }
+                """);
+            await page.AddStyleTagAsync(new()
+            {
+                Content = ".lobsy-coach-dock, [data-lobsy-coach] { display: none !important; }"
+            });
+        }
+        else if (fullPage)
+        {
+            await PlaywrightScreenshotSanitizer.PreparePageAsync(page);
+        }
+
         var path = Path.Combine(OutputDir, fileName);
         await page.ScreenshotAsync(new() { Path = path, FullPage = fullPage });
+
+        if (url.Contains("/profiel/tests/competence", StringComparison.Ordinal))
+        {
+            var candidateText = await page.EvaluateAsync<string>("""
+                () => {
+                  const parts = [];
+                  const mini = document.querySelector('.test-depth-mini-mirror');
+                  const unlock = document.querySelector('.test-depth-unlock');
+                  const mirror = document.querySelector('.test-mirror-page-shell');
+                  const report = document.querySelector('.competence-report');
+                  for (const el of [mini, unlock, mirror, report]) {
+                    if (el) parts.push(el.innerText);
+                  }
+                  if (parts.length === 0) {
+                    const main = document.querySelector('.test-detail-page') || document.querySelector('main');
+                    return main ? main.innerText : document.body.innerText;
+                  }
+                  return parts.join('\n');
+                }
+                """);
+            htmlChecks.Add((levelN, fileName, candidateText));
+            var htmlPath = Path.Combine(OutputDir, Path.ChangeExtension(fileName, ".html"));
+            await File.WriteAllTextAsync(htmlPath, await page.ContentAsync());
+        }
     }
 
     private static async Task EnsureExampleUsersAsync(string conn)
@@ -345,7 +426,12 @@ public sealed class TestDepthValueMockupCapturePlaywrightTests
             db.CandidateDeepAnalyses.RemoveRange(deepRows);
         }
 
-        var deepAnswers = Enumerable.Range(1, 150).ToDictionary(i => i, i => ((i * 3) % 5) + 1);
+        var deepAnswers = Enumerable.Range(1, 150).ToDictionary(i => i, i =>
+        {
+            var band = (i - 1) / 30;
+            var bias = band switch { 0 => 4, 1 => 2, 2 => 5, 3 => 1, _ => 3 };
+            return ((i * 11 + bias * 17) % 5) + 1;
+        });
         var completedAt = DateTime.UtcNow.AddHours(-2);
         var report = CompetenceDeepReportBuilder.Build(
             deepAnswers,

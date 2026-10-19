@@ -19,7 +19,13 @@
                 <article class="test-depth-mini-mirror__theme">
                     <small>@Culture["TestReflection.ThemeLabel"]</small>
                     <h3>@theme.Label</h3>
-                    <p>@theme.Body</p>
+                    <p>@theme.Meaning @theme.Example</p>
+                    @if (Rich && theme.Energy is not null)
+                    {
+                        <p class="test-depth-mini-mirror__energy">
+                            <strong>@Culture["TestDepthValue.MiniMirror.EnergyLabel"]</strong> @theme.Energy
+                        </p>
+                    }
                 </article>
             }
         </div>
@@ -30,7 +36,7 @@
     [Parameter, EditorRequired] public IReadOnlyList<string> DomainCodes { get; set; } = [];
     [Parameter] public bool Rich { get; set; }
 
-    private sealed record ThemeLine(string Label, string Body);
+    private sealed record ThemeLine(string Label, string Meaning, string Example, string? Energy);
 
     private IReadOnlyList<ThemeLine> _themes = [];
 
@@ -40,7 +46,17 @@
             .Select(code =>
             {
                 var label = DimensionLabels.For(code, Culture.Language);
-                return new ThemeLine(label, Culture.Format("TestDepthValue.ThemeBody", label));
+                var copy = TestDepthValueMiniThemeCopy.TryGet(code, Culture.Language);
+                if (copy is null)
+                {
+                    return new ThemeLine(
+                        label,
+                        Culture.Format("TestDepthValue.ThemeBody", label),
+                        "",
+                        null);
+                }
+
+                return new ThemeLine(label, copy.Meaning, copy.Example, copy.Energy);
             })
             .ToList();
     }

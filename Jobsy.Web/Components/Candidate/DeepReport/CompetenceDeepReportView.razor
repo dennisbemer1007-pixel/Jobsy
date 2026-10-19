@@ -2,6 +2,7 @@
 @* Full paid Competence deep report (150-item Big Five test). *@
 @using System.Globalization
 @using Jobsy.Core.Careers
+@using Jobsy.Core.Reports.Competence
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
@@ -21,7 +22,7 @@
 
         <section class="competence-report__section">
             <h2 class="test-detail__section-title">@Culture["Deep.Competence.SummaryTitle"]</h2>
-            <p class="competence-report__summary">@Report.Summary</p>
+            <p class="competence-report__summary">@DisplaySummary</p>
         </section>
 
         <section class="competence-report__section">
@@ -179,7 +180,7 @@
                                     <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", CareerCompassBuilder.FormatPercent(occupation.MatchPercent, Culture.Language))</span>
                                 }
                             </div>
-                            <p class="muted">@occupation.Reason</p>
+                            <p class="muted">@OccupationReason(occupation)</p>
                         </li>
                     }
                 </ul>
@@ -229,6 +230,32 @@
 
     private CompetenceDeepTraitReport? SelectedTrait =>
         Report?.Traits.FirstOrDefault(t => t.Domain == _selectedDomain) ?? Report?.Traits.FirstOrDefault();
+
+    private string DisplaySummary =>
+        CandidateWordsOnly && Report is not null
+            ? CompetenceDeepReportTexts.TemplateSummaryWordsOnly(Report.Traits)
+            : Report?.Summary ?? "";
+
+    private string OccupationReason(CompetenceDeepOccupation occupation)
+    {
+        if (!CandidateWordsOnly || Report is null)
+        {
+            return occupation.Reason;
+        }
+
+        foreach (var trait in Report.Traits)
+        {
+            foreach (var pick in CompetenceDeepReportTexts.OccupationsFor(trait.Domain))
+            {
+                if (string.Equals(pick.Title, occupation.Title, StringComparison.Ordinal))
+                {
+                    return CompetenceDeepReportTexts.OccupationReasonWordsOnly(trait.LabelNl, pick.Reason);
+                }
+            }
+        }
+
+        return occupation.Reason;
+    }
 
     private string FormattedDate =>
         CompletedAtUtc is DateTime dt

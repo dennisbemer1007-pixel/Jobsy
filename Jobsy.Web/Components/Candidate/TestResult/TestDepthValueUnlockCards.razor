@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate.TestResult
 @using Jobsy.Core.Enums
+@using Jobsy.Core.Reports.Competence
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Localization
 @inject CultureState Culture
@@ -17,18 +18,21 @@
                 }
             </ul>
         </article>
-        @if (_next is not null)
+        @if (_next is not null && _preview is not null)
         {
             <article class="test-depth-unlock__card test-depth-unlock__card--next">
                 <h2>@Culture["TestDepthValue.Unlock.NextTitle"]</h2>
-                <p class="muted">@Culture.Format("TestDepthValue.Unlock.NextHint", Culture[TestDepthRules.NameKey(_next.Value)])</p>
+                <p class="test-depth-unlock__promise">@_previewPromise</p>
                 <div class="test-depth-unlock__preview" aria-hidden="true">
                     <div class="test-depth-unlock__preview-inner test-depth-unlock__preview-inner--@PreviewVariant">
                         <span class="test-depth-unlock__preview-badge">@Culture["TestDepthValue.MiniMirror.Badge"]</span>
-                        <span class="test-depth-unlock__preview-line"></span>
-                        <span class="test-depth-unlock__preview-line test-depth-unlock__preview-line--short"></span>
-                        <span class="test-depth-unlock__preview-block"></span>
-                        <span class="test-depth-unlock__preview-block"></span>
+                        @foreach (var theme in _previewThemes)
+                        {
+                            <div class="test-depth-unlock__preview-theme">
+                                <p class="test-depth-unlock__preview-theme-title">@theme.Title</p>
+                                <p class="test-depth-unlock__preview-theme-body">@theme.Body</p>
+                            </div>
+                        }
                     </div>
                 </div>
             </article>
@@ -45,6 +49,12 @@
     private TestDepthLevel? _next;
     private string _nowBodyKey = "TestDepthValue.Unlock.NowBody.First";
     private IReadOnlyList<string> _nowLines = [];
+    private TestDepthValuePreviewCopy.PreviewModel? _preview;
+    private string _previewPromise = "";
+    private IReadOnlyList<PreviewTheme> _previewThemes = [];
+
+    private sealed record PreviewTheme(string Title, string Body);
+
     private string PreviewVariant => _next switch
     {
         TestDepthLevel.Deeper => "10",
@@ -85,5 +95,44 @@
             ],
             _ => [Culture["TestDepthValue.Unlock.NowLine.First1"]]
         };
+
+        _preview = TestDepthValuePreviewCopy.NextPreview(_next, QuickScanVersion);
+        if (_preview is null)
+        {
+            _previewPromise = "";
+            _previewThemes = [];
+            return;
+        }
+
+        var nl = Culture.Language.StartsWith("nl", StringComparison.OrdinalIgnoreCase);
+        _previewPromise = nl ? _preview.PromiseNl : _preview.PromiseEn;
+        _previewThemes = _preview.ThemeTitleKeys
+            .Select(key => BuildPreviewTheme(key, nl))
+            .ToList();
+    }
+
+    private PreviewTheme BuildPreviewTheme(string domainKey, bool nl)
+    {
+        if (_next == TestDepthLevel.Bottom)
+        {
+            var title = CompetenceDeepReportTexts.LabelNl(domainKey);
+            var sample = CompetenceDeepReportTexts.For(domainKey, CompetenceDeepReportLevels.Gemiddeld);
+            var body = sample?.Meaning ?? (nl
+                ? "Meer uitleg over hoe deze kant op de werkvloer uitpakt."
+                : "More on how this side shows up at work.");
+            return new PreviewTheme(title, body);
+        }
+
+        var label = DimensionLabels.For(domainKey, Culture.Language);
+        var copy = TestDepthValueMiniThemeCopy.TryGet(domainKey, Culture.Language);
+        var text = copy is not null
+            ? $"{copy.Meaning} {copy.Example}"
+            : Culture.Format("TestDepthValue.ThemeBody", label);
+        if (_next == TestDepthLevel.Deeper && copy is not null)
+        {
+            text += $" {copy.Energy}";
+        }
+
+        return new PreviewTheme(label, text);
     }
 }

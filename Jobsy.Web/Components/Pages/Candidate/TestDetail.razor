@@ -566,6 +566,10 @@
         }
 
         _def = AssessmentTestCatalog.TryGetByKey(TestKey);
+        var flagSnap = await FeatureFlags.GetAsync();
+        _depthMockupEnabled = flagSnap.TestDepthValueMockupEnabled;
+        _editModeEnabled = flagSnap.TestEditModeEnabled;
+        _samplePdfEnabled = flagSnap.SamplePdfEnabled;
         _paymentMode = await Api.GetDeepAnalysisPaymentModeAsync();
         if (string.Equals(Buy, "1", StringComparison.Ordinal))
         {
@@ -604,14 +608,13 @@
             _deepCompleted = deep?.IsCompleted == true;
             _priceEuro = deep?.PriceEuro > 0 ? deep.PriceEuro : 2.99m;
             _competenceReport = deep?.CompetenceReport;
+            if (_depthMockupEnabled && _competenceReport is not null)
+            {
+                CompetenceDeepReportTexts.ApplyCandidateWordsOnly(_competenceReport);
+            }
             _careerReport = deep?.CareerReport;
             _cultureReport = deep?.CultureReport;
             _valuesReport = deep?.ValuesReport;
-            var flagSnap = await FeatureFlags.GetAsync();
-            _editModeEnabled = flagSnap.TestEditModeEnabled;
-            _samplePdfEnabled = flagSnap.SamplePdfEnabled;
-            _depthMockupEnabled = flagSnap.TestDepthValueMockupEnabled;
-
             var variant = _deepCompleted ? "deep" : "quick";
             _adjustments = await Api.GetAssessmentAdjustmentsAsync(_def.Key, variant)
                            ?? new AssessmentAdjustmentState
