@@ -21,13 +21,11 @@ public static class GeolocationInterop
 
     public static string MapGeolocationError(CultureState culture, Exception ex)
     {
-        var message = ex.Message?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(message))
+        var lower = (ex.ToString() ?? string.Empty).ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(lower))
         {
             return culture["Onboarding.LocationDenied"];
         }
-
-        var lower = message.ToLowerInvariant();
         if (lower.Contains("denied", StringComparison.Ordinal)
             || lower.Contains("geweigerd", StringComparison.Ordinal)
             || lower.Contains("permission", StringComparison.Ordinal)
@@ -64,6 +62,6 @@ public static class GeolocationInterop
             return culture["Onboarding.LocationUnavailable"];
         }
 
-        return message;
+        return culture["Onboarding.LocationUnavailable"];
     }
 }
