@@ -4,7 +4,10 @@ on:
   pull_request:
     branches: [acceptatie]
   push:
-    branches: [acceptatie]
+    branches:
+      - acceptatie
+      # PR #755: cloud-agent pushes were not always emitting pull_request synchronize.
+      - cursor/replace-old-lobster-logo-e-bb18
 
 concurrency:
   group: e2e-functional-${{ github.workflow }}-${{ github.ref }}
