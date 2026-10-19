@@ -60,7 +60,7 @@ public sealed class HonestAdviceService
             {
                 var code = Jobsy.Core.Localization.JobsyLanguages.Normalize(locale.Key);
                 if (code == Jobsy.Core.Localization.JobsyLanguages.Default
-                    || !Jobsy.Core.Localization.JobsyLanguages.IsSupported(locale.Key))
+                    || !Jobsy.Core.Localization.JobsyLanguages.IsCatalogLanguage(locale.Key))
                 {
                     continue;
                 }
