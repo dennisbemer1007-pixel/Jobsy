@@ -1,20 +1,35 @@
 /* Owner preview only (?heroPreview=a|b) — three pages, not global rollout. */
 
+/* Soft vignette: art fills band height; edges dissolve into pearl/cream (no hard rectangle). */
+.cand-hero--compact-preview-a,
+.cand-hero--compact-preview-b {
+  --cand-compact-art-mask: linear-gradient(to bottom, transparent 0%, #000 14%, #000 86%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 22%, #000 96%, transparent 100%);
+}
+
 @media (min-width: 768px) {
   .cand-hero--compact-preview-a {
     --cand-hero-preview-h: clamp(6.25rem, 11.8vw, 10.625rem);
     min-height: var(--cand-hero-preview-h);
     height: var(--cand-hero-preview-h);
-    background-size: auto 88%;
-    background-position: var(--cand-hero-pos, 62% center);
   }
 
   .cand-hero--compact-preview-b {
     --cand-hero-preview-h: clamp(5.25rem, 9.03vw, 8.125rem);
     min-height: var(--cand-hero-preview-h);
     height: var(--cand-hero-preview-h);
-    background-size: auto 78%;
+  }
+
+  /* Carrière (cover band): fill height like default — do not shrink background art. */
+  .cand-hero--compact-preview-a:not(.cand-hero--profession-band),
+  .cand-hero--compact-preview-b:not(.cand-hero--profession-band) {
+    background-size: cover;
     background-position: var(--cand-hero-pos, 62% center);
+  }
+
+  .career-page--illustrated .cand-hero--compact-preview-a:not(.cand-hero--profession-band),
+  .career-page--illustrated .cand-hero--compact-preview-b:not(.cand-hero--profession-band) {
+    background-position: right center;
   }
 
   .cand-hero--compact-preview-a .cand-hero__copy,
@@ -35,13 +50,27 @@
     line-height: 1.35;
   }
 
-  .cand-hero--compact-preview-a.cand-hero--profession-band,
-  .cand-hero--compact-preview-b.cand-hero--profession-band {
-    background-size: auto 88%;
+  /* Paspoort / empty Carrière: right-anchored profession-band art, full band height + edge mask. */
+  .cand-hero--compact-preview-a.cand-hero--profession-band::after,
+  .cand-hero--compact-preview-b.cand-hero--profession-band::after {
+    background-size: auto 100%;
+    background-position: 100% center;
+    -webkit-mask-image: var(--cand-compact-art-mask);
+    mask-image: var(--cand-compact-art-mask);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
-  .cand-hero--compact-preview-b.cand-hero--profession-band {
-    background-size: auto 78%;
+  .cand-hero--compact-preview-a.cand-hero--profession-band::before,
+  .cand-hero--compact-preview-b.cand-hero--profession-band::before {
+    background: linear-gradient(
+      90deg,
+      var(--pearl) 0%,
+      var(--pearl) 58%,
+      color-mix(in srgb, var(--pearl) 94%, transparent) 66%,
+      color-mix(in srgb, var(--pearl) 42%, transparent) 74%,
+      transparent 84%
+    );
   }
 
   .ob-illustrated-step--compact-preview-a .ob-illustrated-step__hero-band,
@@ -61,14 +90,24 @@
     padding-block: 10px;
   }
 
-  .ob-illustrated-step--compact-preview-a .ob-illustrated-step__art img,
-  .ob-illustrated-step--compact-preview-b .ob-illustrated-step__art img {
-    block-size: 92%;
-    margin-block: auto;
+  .ob-illustrated-step--compact-preview-a .ob-illustrated-step__art-img-wrap,
+  .ob-illustrated-step--compact-preview-b .ob-illustrated-step__art-img-wrap {
+    justify-content: flex-end;
+    align-items: stretch;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 18%, #000 94%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 18%, #000 94%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
-  .ob-illustrated-step--compact-preview-b .ob-illustrated-step__art img {
-    block-size: 82%;
+  .ob-illustrated-step--compact-preview-a .ob-illustrated-step__art-img-wrap img,
+  .ob-illustrated-step--compact-preview-b .ob-illustrated-step__art-img-wrap img {
+    block-size: 100%;
+    inline-size: auto;
+    object-fit: contain;
+    object-position: right center;
   }
 }
 
@@ -76,13 +115,13 @@
   .cand-hero--compact-preview-a {
     --cand-hero-mobile-h: 7.5rem;
     max-height: 7.5rem;
-    background-size: auto 92%;
+    background-size: cover;
   }
 
   .cand-hero--compact-preview-b {
     --cand-hero-mobile-h: 6.25rem;
     max-height: 6.25rem;
-    background-size: auto 84%;
+    background-size: cover;
   }
 
   .cand-hero--compact-preview-a .cand-hero__copy,
@@ -90,19 +129,36 @@
     padding: 0.45rem 0.65rem 0.4rem;
   }
 
-  .ob-illustrated-step--compact-preview-a .ob-illustrated-step__mobile-cover {
-    aspect-ratio: 390 / 180;
-    max-block-size: 7.5rem;
+  .ob-illustrated-step--compact-preview-a .ob-illustrated-step__mobile-cover,
+  .ob-illustrated-step--compact-preview-b .ob-illustrated-step__mobile-cover {
+    aspect-ratio: unset;
+    block-size: var(--ob-compact-mobile-cover-h, 7.5rem);
+    max-block-size: var(--ob-compact-mobile-cover-h, 7.5rem);
   }
 
-  .ob-illustrated-step--compact-preview-b .ob-illustrated-step__mobile-cover {
-    aspect-ratio: 390 / 150;
-    max-block-size: 6.25rem;
+  .ob-illustrated-step--compact-preview-a {
+    --ob-compact-mobile-cover-h: 7.5rem;
+  }
+
+  .ob-illustrated-step--compact-preview-b {
+    --ob-compact-mobile-cover-h: 6.25rem;
   }
 
   .ob-illustrated-step--compact-preview-a .ob-illustrated-step__mobile-cover-art img,
   .ob-illustrated-step--compact-preview-b .ob-illustrated-step__mobile-cover-art img {
-    object-fit: contain;
+    object-fit: cover;
     object-position: var(--ob-mobile-hero-pos, 72% 52%);
+  }
+
+  .ob-illustrated-step--compact-preview-a .ob-illustrated-step__mobile-cover::before,
+  .ob-illustrated-step--compact-preview-b .ob-illustrated-step__mobile-cover::before {
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--pearl) 98%, transparent) 0%,
+      color-mix(in srgb, var(--pearl) 90%, transparent) 32%,
+      color-mix(in srgb, var(--pearl) 50%, transparent) 52%,
+      color-mix(in srgb, var(--pearl) 15%, transparent) 62%,
+      transparent 78%
+    );
   }
 }
