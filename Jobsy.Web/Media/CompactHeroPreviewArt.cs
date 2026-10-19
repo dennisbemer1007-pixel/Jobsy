@@ -11,9 +11,9 @@ public static class CompactHeroPreviewArt
         }
 
         if (artUrl.Contains("opleiding.jpg", StringComparison.OrdinalIgnoreCase)
-            || artUrl.Contains("leren-groeien-hero-wide", StringComparison.OrdinalIgnoreCase))
+            || artUrl.Contains("leren-groeien-hero", StringComparison.OrdinalIgnoreCase))
         {
-            return CandidateIllustratedImages.LearnGrowHeroWide;
+            return CandidateIllustratedImages.LearnGrowHeroFiguresMobile;
         }
 
         if (artUrl.Contains("kompas-hero-wide", StringComparison.OrdinalIgnoreCase))

@@ -3,47 +3,53 @@
 @using Jobsy.Web.Media
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 
-<header class="@HeaderClass" style="@StyleValue">
-    <div class="cand-hero__copy">
-        @if (!string.IsNullOrWhiteSpace(Eyebrow))
-        {
-            <span class="cand-hero__eyebrow @(CoralEyebrow ? "cand-hero__eyebrow--coral" : null)">@Eyebrow</span>
-        }
-        @if (!string.IsNullOrWhiteSpace(Title))
-        {
-            <h1 tabindex="@TitleTabIndex">@Title</h1>
-        }
-        @if (!string.IsNullOrWhiteSpace(Lead))
-        {
-            <p class="cand-hero__lead">@Lead</p>
-        }
+@if (UseUnifiedCompactHero)
+{
+    <CandidateCompactHero Eyebrow="@Eyebrow"
+                          CoralEyebrow="@CoralEyebrow"
+                          Title="@Title"
+                          Lead="@Lead"
+                          ArtUrl="@CompactCArtUrl"
+                          TitleTabIndex="@TitleTabIndex"
+                          Layout="@CompactHeroLayout"
+                          CssClass="@CompactHeroExtraClass">
         @ChildContent
-    </div>
-    @if (!string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
-    {
-        <div class="cand-hero__mob-figures-wrap" aria-hidden="true">
-            <img class="cand-hero__mob-figures"
-                 src="@ArtUrlMobileFigures"
-                 alt=""
-                 loading="eager"
-                 decoding="async" />
+    </CandidateCompactHero>
+}
+else
+{
+    <header class="@HeaderClass" style="@StyleValue">
+        <div class="cand-hero__copy">
+            @if (!string.IsNullOrWhiteSpace(Eyebrow))
+            {
+                <span class="cand-hero__eyebrow @(CoralEyebrow ? "cand-hero__eyebrow--coral" : null)">@Eyebrow</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <h1 tabindex="@TitleTabIndex">@Title</h1>
+            }
+            @if (!string.IsNullOrWhiteSpace(Lead))
+            {
+                <p class="cand-hero__lead">@Lead</p>
+            }
+            @ChildContent
         </div>
-    }
-    @if (ShowCompactCArt)
-    {
-        <div class="cand-hero__compact-c-art" aria-hidden="true">
-            <img src="@CompactCArtUrl"
-                 alt=""
-                 loading="eager"
-                 fetchpriority="high"
-                 decoding="async" />
-        </div>
-    }
-    @if (!string.IsNullOrWhiteSpace(ArtUrl))
-    {
-        <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
-    }
-</header>
+        @if (!string.IsNullOrWhiteSpace(ArtUrlMobileFigures))
+        {
+            <div class="cand-hero__mob-figures-wrap" aria-hidden="true">
+                <img class="cand-hero__mob-figures"
+                     src="@ArtUrlMobileFigures"
+                     alt=""
+                     loading="eager"
+                     decoding="async" />
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(ArtUrl))
+        {
+            <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
+        }
+    </header>
+}
 
 @code {
     [Parameter] public string? Eyebrow { get; set; }
@@ -57,15 +63,30 @@
     [Parameter] public string ArtPosition { get; set; } = "58% center";
     [Parameter] public string ArtPositionDesktop { get; set; } = "right center";
     [Parameter] public string? CssClass { get; set; }
+    [Parameter] public string CompactHeroLayout { get; set; } = "page";
     [Parameter] public int TitleTabIndex { get; set; } = -1;
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private bool ShowCompactCArt
+    private bool UseUnifiedCompactHero
         => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
            && !string.IsNullOrWhiteSpace(CompactCArtUrl);
 
     private string? CompactCArtUrl
         => string.IsNullOrWhiteSpace(ArtUrl) ? null : CompactHeroPreviewArt.CandHeroArtForVariantC(ArtUrl);
+
+    private string? CompactHeroExtraClass
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(CssClass))
+            {
+                return null;
+            }
+
+            var parts = CssClass.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return string.Join(' ', parts.Where(p => !p.Equals("cand-hero--compact-preview-c", StringComparison.Ordinal)));
+        }
+    }
 
     private string HeaderClass
     {

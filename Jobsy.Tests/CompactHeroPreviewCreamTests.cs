@@ -19,9 +19,8 @@ public sealed class CompactHeroPreviewCreamTests
         var css = File.ReadAllText(Path.Combine(
             RepoRoot,
             "Jobsy.Web/wwwroot/css/features/candidate-hero-compact-preview.css"));
-        Assert.Contains(CompactHeroPreviewCream.OnboardingFinaleHero, css, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(CompactHeroPreviewCream.CarriereLearnGrowWide, css, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains(CompactHeroPreviewCream.PaspoortKompasWide, css, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(CompactHeroPreviewBand.Token, css, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("--cand-compact-hero-band", css, StringComparison.Ordinal);
     }
 
     private static string Abs(string webPath)
