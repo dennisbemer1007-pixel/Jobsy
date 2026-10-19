@@ -49,6 +49,17 @@ else if (_phase == "intro")
                     <button type="button" class="btn btn-primary" @onclick="StartQuestions">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Start" : "Begin")</button>
                 </footer>
             </section>
+            <section class="uwv-ondernemer-intro-layout__steps" aria-labelledby="uwv-ondernemer-how">
+                <h2 id="uwv-ondernemer-how" class="uwv-ondernemer-intro-layout__steps-title">@UwvMockupCopy.Ondernemer.HowItWorksTitle(Culture.Language)</h2>
+                <ol class="uwv-ondernemer-intro-layout__steps-list">
+                    @{ var step = 1; }
+                    @foreach (var item in UwvMockupCopy.Ondernemer.HowItWorksSteps(Culture.Language))
+                    {
+                        <li><span class="uwv-ondernemer-intro-layout__step-num" aria-hidden="true">@step</span>@item</li>
+                        step++;
+                    }
+                </ol>
+            </section>
         </div>
     </div>
 }

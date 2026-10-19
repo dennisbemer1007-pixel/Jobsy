@@ -22,7 +22,7 @@
     return;
 }
 
-<div class="opl-page panel-page--cand-ill">
+<div class="opl-page panel-page--cand-ill @(UwvFeaturesMockupGate.IsEnabled ? "uwv-carriere-leren-mock" : null)">
     <CandidateIllustratedHero Eyebrow="@Culture["Training.LearnGrow.NavLearn"]"
                               CoralEyebrow="true"
                               Title="@Culture["Training.LearnGrow.Title"]"
@@ -168,7 +168,10 @@
 
         @if (UwvFeaturesMockupGate.IsEnabled)
         {
-            <UwvWorkshopsPartnersBlock />
+            <div class="uwv-carriere-leren-mock__blocks" data-testid="uwv-carriere-leren-sections">
+                <UwvOmscholenBlock />
+                <UwvWorkshopsPartnersBlock />
+            </div>
         }
     </main>
 </div>

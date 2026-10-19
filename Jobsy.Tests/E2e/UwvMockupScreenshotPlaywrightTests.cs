@@ -15,7 +15,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS"))
-            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r6"))
+            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r7"))
             : Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS")!;
 
     private IllustratedPagesWebFactory? _web;
@@ -131,7 +131,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
             }
             else if (cap.Path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase))
             {
-                await page.WaitForSelectorAsync(".uwv-partners, .opl-page", new() { Timeout = 60_000 });
+                await page.WaitForSelectorAsync("[data-testid='uwv-carriere-leren-sections'], .uwv-partners, .opl-page", new() { Timeout = 60_000 });
             }
             else
             {

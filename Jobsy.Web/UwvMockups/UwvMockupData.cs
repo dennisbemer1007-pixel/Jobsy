@@ -51,8 +51,10 @@ public sealed record UwvKansCard(
 public sealed record UwvPartnerLink(
     string TitleNl,
     string TitleEn,
+    string DescNl,
+    string DescEn,
     string Url,
-    string Provider);
+    string IconKind);
 
 public sealed record UwvDriverChip(
     string LabelNl,
@@ -131,7 +133,7 @@ public static class UwvMockupData
             "Care organisation Central",
             "Zoetermeer",
             "Zoetermeer",
-            CandidateIllustratedImages.SpotInclusiefZorgLogistiek,
+            CandidateIllustratedImages.SpotJobZorg,
             Kansberoep: true,
             Baangarantie: true),
     ];
@@ -176,13 +178,13 @@ public static class UwvMockupData
             "Logistics apprenticeship (sample)",
             "Leerbedrijf · gekoppeld aan kaartvacature",
             "Learning company · linked to map vacancy",
-            "/preview/uwv-mockups/banenkaart"),
+            "/banenkaart"),
         new(
             "BBL techniek (voorbeeld)",
             "Technical apprenticeship (sample)",
             "Erkend leerbedrijf regio Haaglanden",
             "Recognised learning company Haaglanden",
-            "/preview/uwv-mockups/banenkaart"),
+            "/banenkaart"),
     ];
 
     public static IReadOnlyList<UwvPartnerLink> UwvPartners { get; } =
@@ -190,13 +192,17 @@ public static class UwvMockupData
         new(
             "Online training Competenties",
             "Online training Competencies",
+            "Korte modules over solliciteren en beroepskeuzes.",
+            "Short modules on applying and career choices.",
             "https://onlinetrainingen.uwv.nl/",
-            "UWV"),
+            "compass"),
         new(
             "Webinar: Overstappen naar een ander beroep",
             "Webinar: Moving to another occupation",
+            "Praktische tips en voorbeelden van omscholers.",
+            "Practical tips and stories from people who retrained.",
             "https://www.uwv.nl/",
-            "UWV"),
+            "career"),
     ];
 
     public static IReadOnlyList<UwvDriverChip> Drivers { get; } =

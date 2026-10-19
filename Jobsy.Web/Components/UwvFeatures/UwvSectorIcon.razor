@@ -4,10 +4,10 @@
 <span class="uwv-sector-icon @CssClass" aria-hidden="true">
     @((MarkupString)(Kind switch
     {
-        "logistiek" or "techniek" or "bouw" => NavIcons.Career,
+        "logistiek" or "techniek" or "bouw" or "career" => NavIcons.Career,
         "zorg" => NavIcons.Profile,
         "it" or "kantoor" => NavIcons.Search,
-        "onderwijs" => NavIcons.Compass,
+        "onderwijs" or "compass" => NavIcons.Compass,
         _ => NavIcons.Career
     }))
 </span>

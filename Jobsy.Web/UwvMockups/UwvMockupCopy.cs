@@ -133,6 +133,20 @@ public static class UwvMockupCopy
             "Je wilt graag zelf plannen en klein beginnen. Ondernemen kan passen als je ruimte hebt om te leren en je netwerk kunt uitbreiden. Bespreek dit gerust met je adviseur.",
             "You like to plan your own work and start small. Self-employment can fit if you have room to learn and grow your network. Discuss this with your adviser.",
             lang);
+        public static string HowItWorksTitle(string? lang) => T("Zo werkt het", "How it works", lang);
+        public static IReadOnlyList<string> HowItWorksSteps(string? lang) => IsEnglish(lang)
+            ?
+            [
+                "Answer six short statements at your own pace",
+                "Get a calm picture in words, no scores",
+                "Discuss the outcome with your work adviser"
+            ]
+            :
+            [
+                "Beantwoord zes korte stellingen, in je eigen tempo",
+                "Je krijgt een rustig beeld in woorden, zonder cijfers",
+                "Bespreek het resultaat met je adviseur werk"
+            ];
     }
 
     public static class Drijfveren
@@ -142,6 +156,18 @@ public static class UwvMockupCopy
         public static string Lead(string? lang) => T(
             "Uit je waarden- en drijfverentest (voorbeeldresultaat, geen scores).",
             "From your values and drivers test (sample result, no scores).",
+            lang);
+        public static string CardTitle(string? lang) => T(
+            "Dit vind je belangrijk in werk",
+            "What matters to you at work",
+            lang);
+        public static string CardLead(string? lang) => T(
+            "Drie drijfveren uit je test, in gewone taal.",
+            "Three drivers from your test, in plain language.",
+            lang);
+        public static string AdviseurLink(string? lang) => T(
+            "Bespreek dit met je adviseur werk",
+            "Discuss this with your work adviser",
             lang);
     }
 

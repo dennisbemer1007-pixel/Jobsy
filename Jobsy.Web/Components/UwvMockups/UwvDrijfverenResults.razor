@@ -7,8 +7,8 @@
         <i class="uwv-block__dot" aria-hidden="true"></i>
         @UwvMockupCopy.Drijfveren.SectionTitle(Lang)
     </p>
-    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Drijfveren.ResultsTitle(Lang)</h2>
-    <p class="uwv-block__lead">@UwvMockupCopy.Drijfveren.Lead(Lang)</p>
+    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Drijfveren.CardTitle(Lang)</h2>
+    <p class="uwv-block__lead">@UwvMockupCopy.Drijfveren.CardLead(Lang)</p>
 
     <ul class="uwv-drijfveren__chips">
         @foreach (var d in UwvMockupData.Drivers)
@@ -19,6 +19,10 @@
             </li>
         }
     </ul>
+
+    <p class="uwv-drijfveren__adviseur">
+        <a class="uwv-inline-link" href="/candidate/adviseur-werk">@UwvMockupCopy.Drijfveren.AdviseurLink(Lang)</a>
+    </p>
 </section>
 
 @code {
