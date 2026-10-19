@@ -18,6 +18,11 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
     private static bool PartialCapturesOnly =>
         string.Equals(Environment.GetEnvironmentVariable(EnvPartial), "1", StringComparison.Ordinal);
 
+    private const string EnvFinalDesktop = "JOBSY_UWV_MOCKUP_FINAL";
+
+    private static bool FinalDesktop1440Only =>
+        string.Equals(Environment.GetEnvironmentVariable(EnvFinalDesktop), "1", StringComparison.Ordinal);
+
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS"))
             ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-build"))
@@ -113,9 +118,11 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 
         Directory.CreateDirectory(OutDir);
 
-        var captures = PartialCapturesOnly
-            ? Captures.Where(c => PartialCapturePrefixes.Any(p => c.FileSlug.StartsWith(p, StringComparison.Ordinal))).ToArray()
-            : Captures;
+        var captures = FinalDesktop1440Only
+            ? Captures.Where(c => c.Width == 1440).ToArray()
+            : PartialCapturesOnly
+                ? Captures.Where(c => PartialCapturePrefixes.Any(p => c.FileSlug.StartsWith(p, StringComparison.Ordinal))).ToArray()
+                : Captures;
 
         foreach (var cap in captures)
         {
