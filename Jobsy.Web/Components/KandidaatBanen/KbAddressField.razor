@@ -108,6 +108,7 @@
     [Parameter] public EventCallback OnClear { get; set; }
     [Parameter] public EventCallback<AddressSuggestion> OnSelect { get; set; }
     [Parameter] public EventCallback<string> OnQueryInput { get; set; }
+    [Parameter] public EventCallback OnBlurComplete { get; set; }
 
     private string _query = string.Empty;
     private bool _showSuggestions;
@@ -180,6 +181,7 @@
         _showSuggestions = false;
         _activeIndex = -1;
         await ShowSuggestionsChanged.InvokeAsync(false);
+        await OnBlurComplete.InvokeAsync();
     }
 
     private Task LocateAsync() => OnLocate.InvokeAsync();

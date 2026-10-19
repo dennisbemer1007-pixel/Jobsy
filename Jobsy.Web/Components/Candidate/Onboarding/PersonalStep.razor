@@ -57,7 +57,8 @@
                     Locating="_locating"
                     OnLocate="UseMyLocationAsync"
                     OnClear="ClearLocationAsync"
-                    OnSelect="SelectSuggestionAsync" />
+                    OnSelect="SelectSuggestionAsync"
+                    OnBlurComplete="OnAddressBlurResolveAsync" />
     @if (ShowValidation && !LocationValid)
     {
         <span class="error" role="alert">@Culture["Onboarding.Validation.Location"]</span>
@@ -234,6 +235,20 @@
     {
         Draft.AddressQuery = value ?? string.Empty;
         await Task.CompletedTask;
+    }
+
+    private async Task OnAddressBlurResolveAsync()
+    {
+        if (Draft.GeolocationPendingConfirm || Draft.HomeLat is not null && Draft.HomeLng is not null)
+        {
+            return;
+        }
+
+        if (await CandidateHomeAddressLookup.TryResolveTypedAddressAsync(Draft, Geocoder))
+        {
+            await AddressChanged.InvokeAsync();
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task OnAddressInputAsync(string value)
