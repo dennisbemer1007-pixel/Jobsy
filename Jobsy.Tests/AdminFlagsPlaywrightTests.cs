@@ -25,7 +25,9 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/admin-flags-r5";
+    private static readonly string OutDir =
+        Environment.GetEnvironmentVariable("ADMIN_FLAGS_OUT_DIR")
+        ?? "/opt/cursor/artifacts/admin-flags-r5";
     private IPlaywright? _playwright;
     private IBrowser? _browser;
 
@@ -89,6 +91,32 @@ public sealed class AdminFlagsPlaywrightTests : IAsyncLifetime
         await page.ScreenshotAsync(new()
         {
             Path = Path.Combine(OutDir, "flag-after-sensitive-on-1440.png"),
+            FullPage = true
+        });
+
+        var companyMapRow = page.Locator(".admin-toggle-row").Filter(new()
+        {
+            HasText = "Bedrijvenkaart (kandidaat)"
+        }).First;
+        await companyMapRow.ScrollIntoViewIfNeededAsync();
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "flag-before-company-map-1440.png"),
+            FullPage = true
+        });
+        var companyMapToggle = companyMapRow.Locator("button.admin-switch").First;
+        await companyMapToggle.ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "flag-after-company-map-off-1440.png"),
+            FullPage = true
+        });
+        await companyMapToggle.ClickAsync();
+        await page.WaitForTimeoutAsync(400);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, "flag-after-company-map-on-1440.png"),
             FullPage = true
         });
 

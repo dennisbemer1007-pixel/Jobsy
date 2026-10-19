@@ -251,6 +251,27 @@ internal static class CandidateOwnedDataCleanup
             db.TrainingEnrollments.Where(e => e.UserId == user.Id),
             cancellationToken);
 
+        var initiativeIds = await db.WorkInitiatives
+            .Where(i => i.CandidateUserId == user.Id)
+            .Select(i => i.Id)
+            .ToListAsync(cancellationToken);
+        if (initiativeIds.Count > 0)
+        {
+            await RemoveRangeAsync(
+                db,
+                db.WorkInitiativeAcceptances.Where(a => initiativeIds.Contains(a.InitiativeId)),
+                cancellationToken);
+            await RemoveRangeAsync(
+                db,
+                db.WorkInitiatives.Where(i => i.CandidateUserId == user.Id),
+                cancellationToken);
+        }
+
+        await RemoveRangeAsync(
+            db,
+            db.WorkInitiativeDrafts.Where(d => d.CandidateUserId == user.Id),
+            cancellationToken);
+
         var consumerInvoices = await db.ConsumerPurchaseInvoices
             .Where(i => i.UserId == user.Id)
             .ToListAsync(cancellationToken);

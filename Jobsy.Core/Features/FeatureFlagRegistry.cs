@@ -37,7 +37,6 @@ public static class FeatureFlagRegistry
     {
         "TestProgressInsightEnabled", // PR #733
         "DreamJobIllustrationEnabled", // PR #724
-        "BedrijvenkaartEnabled", // PR #738 (separate from EmployersEnabled)
     };
 
     public static IReadOnlyList<FeatureFlagDefinition> All { get; } = Build();
@@ -69,6 +68,7 @@ public static class FeatureFlagRegistry
             Def("EmployersEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.Employers, pub, false),
             Def("EmployerPhase2Enabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.EmployerPhase2, pub, false),
             Def("KandidatenkaartEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.Kandidatenkaart, pub, false),
+            Def("CompanyMapInitiativeEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.CompanyMapInitiative, pub, true),
             Def("EmployerFitQuestionnairesEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.EmployerFitQuestionnaires, pub, false),
             Def("MatchCalibrationV1Enabled", FeatureFlagAdminGroup.Werkgever, null, exposedOnPublicEndpoint: false, defaultValue: false),
             Def("TrainingPartnersEnabled", FeatureFlagAdminGroup.Werkgever, PlatformFeature.TrainingPartners, pub, false, "Jobsy:TrainingPartnersEnabled"),

@@ -1,0 +1,54 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@inject CultureState Culture
+
+<aside class="pp-company__initiative" aria-labelledby="initiative-title">
+    <div class="pp-initiative-card">
+        <div class="pp-initiative-card__head">
+            <h2 id="initiative-title">@Culture["Initiative.Panel.Title"]</h2>
+            @if (Profile?.OpenForInitiative == true || (Profile?.OpenTeamCount ?? 0) > 0)
+            {
+                <span class="bk-chip bk-chip--open">@Culture["Bk.OpenLabel"]</span>
+            }
+        </div>
+        <p class="pp-initiative-card__lead">@Culture["Initiative.Panel.RespondDays"]</p>
+
+        @if (Profile?.Teams.Count > 0)
+        {
+            <fieldset class="pp-initiative-teams">
+                <legend class="visually-hidden">@Culture["Initiative.Panel.Team"]</legend>
+                @foreach (var team in Profile.Teams)
+                {
+                    <label class="pp-initiative-team @(team.Id == SelectedTeamId ? "is-selected" : null)">
+                        <input type="radio" name="initiative-team" checked="@(team.Id == SelectedTeamId)" @onchange="() => SelectedTeamIdChanged.InvokeAsync(team.Id)" />
+                        <span class="pp-initiative-team__name">@team.Name</span>
+                        <span class="pp-initiative-team__desc">@team.Description</span>
+                        @if (team.MatchLabel is InitiativeMatchLabel ml)
+                        {
+                            <span class="bk-chip bk-chip--match-good">@Culture[InitiativeMatchWordingRules.ResourceKey(ml)]</span>
+                        }
+                    </label>
+                }
+            </fieldset>
+        }
+
+        <button type="button" class="btn--primary pp-initiative-card__cta" @onclick="() => OnKnock.InvokeAsync()">
+            @Culture["Initiative.Panel.Title"]
+        </button>
+
+        @if (Profile?.Week is { } week)
+        {
+            <p class="pp-initiative-card__week">@Culture.Format("Bk.WeekDots", Math.Max(0, week.Max - week.Used), week.Max)</p>
+        }
+
+        <p class="pp-initiative-card__privacy">@Culture["Initiative.Panel.PrivacyHint"]</p>
+    </div>
+</aside>
+
+@code {
+    [Parameter] public PublicCompanyInitiativeViewDto? Profile { get; set; }
+    [Parameter] public Guid? SelectedTeamId { get; set; }
+    [Parameter] public EventCallback<Guid?> SelectedTeamIdChanged { get; set; }
+    [Parameter] public EventCallback OnKnock { get; set; }
+}

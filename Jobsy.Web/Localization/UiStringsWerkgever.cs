@@ -505,6 +505,7 @@ public static class UiStringsWerkgever
         Add("WgTeam.Active.Never", "Nog niet ingelogd", "Not logged in yet", "Jeszcze nie zalogowany", "Niciodată autentificat", "لم يسجّل الدخول بعد");
         Add("WgTeam.Active.Minutes", "{0} min geleden", "{0} min ago", "{0} min temu", "acum {0} min", "منذ {0} د");
         Add("WgTeam.Active.Hours", "{0} uur geleden", "{0} h ago", "{0} godz. temu", "acum {0} h", "منذ {0} س");
+        Add("WgTeam.Active.DaysOne", "{0} dag geleden", "{0} day ago", "{0} dzień temu", "acum {0} zi", "منذ {0} يوم");
         Add("WgTeam.Active.Days", "{0} dagen geleden", "{0} days ago", "{0} dni temu", "acum {0} zile", "منذ {0} يوم");
         Add("WgTeam.Action.EditRoleScope", "Rol of bereik wijzigen", "Change role or scope", "Zmień rolę lub zakres", "Schimbă rolul sau domeniul", "تغيير الدور أو النطاق");
         Add("WgTeam.Action.Deactivate", "Deactiveren", "Deactivate", "Dezaktywuj", "Dezactivează", "تعطيل");

@@ -477,7 +477,15 @@
     {
         path = path.TrimStart('/');
         return path.Equals("banenkaart", StringComparison.OrdinalIgnoreCase)
-               || path.Equals("banen", StringComparison.OrdinalIgnoreCase);
+               || path.Equals("banen", StringComparison.OrdinalIgnoreCase)
+               || path.Equals("bedrijvenkaart", StringComparison.OrdinalIgnoreCase)
+               || IsCompanyKvkPath(path);
+    }
+
+    private static bool IsCompanyKvkPath(string path)
+    {
+        var segment = path.Split('/')[0];
+        return segment.Length == 8 && segment.All(char.IsDigit);
     }
 
     /// <summary>True when the job map should render without app header / bottom nav (anonymous visitors).</summary>

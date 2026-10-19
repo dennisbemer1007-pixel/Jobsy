@@ -2,7 +2,7 @@
 @page "/{KvkNumber:regex(^\\d{{8}}$)}/{Vestigingsnummer:regex(^\\d{{1,12}}$)}"
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [AllowAnonymous]
-@layout PublicLayout
+@layout MainLayout
 @using Jobsy.Core.Features
 @attribute [RequiresFeature(PlatformFeature.Employers, FallbackPath = "/")]
 @inject JobsyApiClient Api
@@ -14,9 +14,13 @@
 @inject ILogger<CompanyPublicPage> Logger
 @using Jobsy.Core.Media
 @using Jobsy.Core.Rules
+@using Jobsy.Core.Contracts
+@using Jobsy.Web.Components.Bedrijvenkaart
+@using Jobsy.Web.Components.Layout
 @using Jobsy.Web.Components.Discovery
 @using Jobsy.Web.Components.Engagement
 @using Jobsy.Web.Components.Status
+@using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Seo
 @using Microsoft.AspNetCore.Http
@@ -43,45 +47,54 @@
 }
 else
 {
-    <section class="pub-section pp-company" aria-labelledby="company-title">
+    <section class="pub-theme pub-section pp-company" aria-labelledby="company-title">
         <nav class="pp-company__crumbs" aria-label="@Culture["CompanyPage.Breadcrumb.Label"]">
-            <a href="@PublicRoutes.Banenkaart">@Culture["CompanyPage.Breadcrumb.Map"]</a>
+            <a href="@KbRoutes.Map">@Culture["Kb.MapToggle.Jobs"]</a>
+            <span class="pp-company__crumb-sep" aria-hidden="true">›</span>
+            <a href="@KbRoutes.CompanyMap">@Culture["Kb.MapToggle.Companies"]</a>
             <span class="pp-company__crumb-sep" aria-hidden="true">›</span>
             <span aria-current="page">@_page.Name</span>
         </nav>
 
-        <header class="pub-card pp-company__header">
-            @if (HasUploadedLogo)
-            {
-                <img class="pp-company__logo"
-                     src="@_page.LogoUrl"
-                     alt=""
-                     width="56"
-                     height="56"
-                     decoding="async"
-                     data-logo-fallback="1" />
-            }
-            else
-            {
-                <span class="pp-company__tile" aria-hidden="true">@CategoryGlyph</span>
-            }
-            <div class="pp-company__identity">
-                <h1 id="company-title" class="pp-doc__title">@_page.Name</h1>
-                <p class="pp-company__meta">
-                    @if (!string.IsNullOrWhiteSpace(_page.City))
-                    {
-                        <span>@_page.City</span>
-                        <span class="pp-company__meta-sep" aria-hidden="true">·</span>
-                    }
-                    <span>@VacancyCountText</span>
-                    <span class="pub-chip pp-company__kvk">@Culture["CompanyPage.KvkVerified"]</span>
-                </p>
-                @if (_engagement.Count > 0)
+        <div class="pp-company__hero">
+            <header class="pub-card pp-company__header">
+                @if (HasUploadedLogo)
                 {
-                    <EngagementBadges Items="@_engagement" />
+                    <img class="pp-company__logo"
+                         src="@_page.LogoUrl"
+                         alt=""
+                         width="56"
+                         height="56"
+                         decoding="async"
+                         data-logo-fallback="1" />
                 }
-            </div>
-        </header>
+                else
+                {
+                    <span class="pp-company__tile" aria-hidden="true">@CategoryGlyph</span>
+                }
+                <div class="pp-company__identity">
+                    <h1 id="company-title" class="pp-doc__title">@_page.Name</h1>
+                    <p class="pp-company__meta">
+                        @if (!string.IsNullOrWhiteSpace(_page.City))
+                        {
+                            <span>@_page.City</span>
+                            <span class="pp-company__meta-sep" aria-hidden="true">·</span>
+                        }
+                        <span>@VacancyCountText</span>
+                        <span class="pub-chip pp-company__kvk">@Culture["CompanyPage.KvkVerified"]</span>
+                        @if (_initiative?.OpenForInitiative == true)
+                        {
+                            <span class="bk-chip bk-chip--open">@Culture["Bk.OpenLabel"]</span>
+                        }
+                    </p>
+                    @if (_engagement.Count > 0)
+                    {
+                        <EngagementBadges Items="@_engagement" />
+                    }
+                </div>
+            </header>
+            <div class="pp-company__hero-art" aria-hidden="true"></div>
+        </div>
 
         @if (BranchTabs.Count > 0)
         {
@@ -104,26 +117,81 @@ else
             </nav>
         }
 
-        <div class="pp-company__body">
-            <div class="pp-company__list" aria-label="@Culture["CompanyPage.Vacancies.Label"]">
-                @{ var cardIndex = 0; }
-                @foreach (var vacancy in _vacancies)
+        <div class="pp-company__layout">
+            <div class="pp-company__main">
+                <div class="pp-company__list" aria-label="@Culture["CompanyPage.Vacancies.Label"]">
+                    @if (_vacancies.Count == 0)
+                    {
+                        <div class="pub-card" style="padding:1rem">
+                            <p>@Culture["Initiative.NoVacancies.Notify"]</p>
+                        </div>
+                    }
+                    else
+                    {
+                        var cardIndex = 0;
+                        @foreach (var vacancy in _vacancies)
+                        {
+                            <VacancyCard @key="vacancy.Id"
+                                         Vacancy="vacancy"
+                                         IsHighlighted="vacancy.IsHighlighted"
+                                         IsPressed="_hoveredId == vacancy.Id"
+                                         Eager="cardIndex == 0"
+                                         TravelText="@CardMeta(vacancy)"
+                                         OnSelect="OnSelect"
+                                         OnOpen="OnOpenVacancy" />
+                            cardIndex++;
+                        }
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_initiative?.HubAboutText))
                 {
-                    <VacancyCard @key="vacancy.Id"
-                                 Vacancy="vacancy"
-                                 IsHighlighted="vacancy.IsHighlighted"
-                                 IsPressed="_hoveredId == vacancy.Id"
-                                 Eager="cardIndex == 0"
-                                 TravelText="@CardMeta(vacancy)"
-                                 OnSelect="OnSelect"
-                                 OnOpen="OnOpenVacancy" />
-                    cardIndex++;
+                    <section class="pub-card pp-company__about" aria-labelledby="company-about">
+                        <h2 id="company-about">@Culture["CompanyPage.About"]</h2>
+                        <p>@_initiative.HubAboutText</p>
+                    </section>
+                }
+
+                @{
+                    var sfeerPhotos = (_initiative?.HubPhotoUrls ?? [])
+                        .Where(static u => IsHubSfeerPhoto(u))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+                @if (sfeerPhotos.Count > 0)
+                {
+                    <section class="pub-card pp-company__sfeer pp-company__sfeer--has-media" aria-labelledby="company-sfeer">
+                        <div class="pp-company__sfeer-inner">
+                            <div class="pp-company__sfeer-copy">
+                                <h2 id="company-sfeer">@Culture["CompanyPage.Sfeer"]</h2>
+                                @if (!string.IsNullOrWhiteSpace(_initiative?.HubCultureText))
+                                {
+                                    <p>@_initiative!.HubCultureText</p>
+                                }
+                            </div>
+                            <div class="pp-sfeer-grid pp-sfeer-grid--@Math.Min(sfeerPhotos.Count, 3)">
+                                @foreach (var photo in sfeerPhotos)
+                                {
+                                    <img src="@photo" alt="" loading="lazy" decoding="async" />
+                                }
+                            </div>
+                        </div>
+                    </section>
                 }
             </div>
 
-            <aside class="pp-company__map-pane" aria-label="@Culture["CompanyPage.Map.Label"]">
-                <div @ref="_mapElement" id="branch-job-map" class="pp-company__map job-map"></div>
-            </aside>
+            <div class="pp-company__aside">
+                @if (_initiative is not null)
+                {
+                    <CompanyInitiativeSidebar Profile="_initiative"
+                                              SelectedTeamId="_selectedTeamId"
+                                              SelectedTeamIdChanged="OnTeamChanged"
+                                              OnKnock="OpenKnockPanel" />
+                }
+                <aside class="pp-company__map-pane" aria-label="@Culture["CompanyPage.MapVacancies"]">
+                    <div @ref="_mapElement" id="branch-job-map" class="pp-company__map job-map"></div>
+                </aside>
+            </div>
         </div>
 
         <p class="pp-company__report">
@@ -131,6 +199,16 @@ else
             <a href="@ReportHref">@Culture["Report.Company.PromptCta"]</a>
         </p>
     </section>
+
+    <InitiativeKnockPanel IsOpen="_knockOpen"
+                          IsOpenChanged="v => _knockOpen = v"
+                          CompanyName="@_page.Name"
+                          RootCompanyId="@(_initiative?.RootCompanyId ?? Guid.Empty)"
+                          Teams="@(_initiative?.Teams ?? [])"
+                          SelectedTeamId="_selectedTeamId"
+                          OnSent="OnInitiativeSent" />
+    <InitiativeSentDialog IsOpen="_sentOpen" IsOpenChanged="v => _sentOpen = v" />
+    <InitiativeWeekLimitDialog IsOpen="_weekLimitOpen" IsOpenChanged="v => _weekLimitOpen = v" />
 }
 
 @code {
@@ -184,7 +262,12 @@ else
 
     private ElementReference _mapElement;
     private PublicCompanyPage? _page;
+    private PublicCompanyInitiativeViewDto? _initiative;
     private List<VacancyListItem> _vacancies = [];
+    private Guid? _selectedTeamId;
+    private bool _knockOpen;
+    private bool _sentOpen;
+    private bool _weekLimitOpen;
     private List<EngagementBadges.EngageBadgeItem> _engagement = [];
     private Guid _engagementCompanyId;
     private bool _loading = true;
@@ -230,13 +313,25 @@ else
                 kvk,
                 string.IsNullOrWhiteSpace(Vestigingsnummer) ? null : Vestigingsnummer)).ToList();
 
-            if (_vacancies.Count == 0)
+            try
+            {
+                _initiative = await Api.GetPublicInitiativeProfileAsync(kvk);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Initiative profile optional load failed for {Kvk}", kvk);
+                _initiative = null;
+            }
+
+            if (_vacancies.Count == 0 && _initiative is null)
             {
                 MarkNotFound();
                 return;
             }
 
-            _engagementCompanyId = _vacancies[0].CompanyId;
+            _selectedTeamId = _initiative?.Teams.FirstOrDefault()?.Id;
+            ApplyCaptureQueryFlags();
+            _engagementCompanyId = _vacancies.FirstOrDefault()?.CompanyId ?? _initiative?.RootCompanyId ?? Guid.Empty;
             var badges = await Api.GetPublicEngagementAsync(_engagementCompanyId);
             _engagement = badges
                 .Select(b => new EngagementBadges.EngageBadgeItem(
@@ -310,6 +405,49 @@ else
         }
 
         return $"{(min ?? max)!.Value:0.#} {unit}";
+    }
+
+    private void ApplyCaptureQueryFlags()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (q.ContainsKey("demoKnock"))
+        {
+            _knockOpen = true;
+        }
+
+        if (q.ContainsKey("demoSent"))
+        {
+            _sentOpen = true;
+        }
+
+        if (q.ContainsKey("demoWeekLimit"))
+        {
+            _weekLimitOpen = true;
+        }
+    }
+
+    private void OpenKnockPanel() => _knockOpen = true;
+
+    private Task OnTeamChanged(Guid? id)
+    {
+        _selectedTeamId = id;
+        return Task.CompletedTask;
+    }
+
+    private Task OnInitiativeSent(SendWorkInitiativeResult result)
+    {
+        _knockOpen = false;
+        if (result.SavedAsDraft)
+        {
+            _weekLimitOpen = true;
+        }
+        else if (result.Sent)
+        {
+            _sentOpen = true;
+        }
+
+        return Task.CompletedTask;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -445,6 +583,29 @@ else
 
     [JSInvokable]
     public Task OnMapLocateClicked() => Task.CompletedTask;
+
+    private static bool IsHubSfeerPhoto(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return false;
+        }
+
+        if (url.Contains("/onboarding/", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("/candidate-illustrated/", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("/images/vacancies/", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("finale-hero", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("wie-ben-jij", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("unsplash", StringComparison.OrdinalIgnoreCase)
+            || url.Contains("picsum", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return url.Contains("/uploads/", StringComparison.OrdinalIgnoreCase)
+               || url.Contains("/images/media/", StringComparison.OrdinalIgnoreCase)
+               || url.Contains("/images/demo/", StringComparison.OrdinalIgnoreCase);
+    }
 
     private static bool ShowsSuitableFor65Plus(VacancyListItem vacancy)
         => VacancyCategoryDefaults.MatchesSuitableFor65PlusFilter(vacancy.CategoryId, vacancy.SuitableFor65Plus);

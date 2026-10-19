@@ -503,6 +503,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     MatchCalibrationV1Enabled: request.MatchCalibrationV1Enabled,
                     EmployerFitQuestionnairesEnabled: request.EmployerFitQuestionnairesEnabled,
                     KandidatenkaartEnabled: request.KandidatenkaartEnabled,
+                    CompanyMapInitiativeEnabled: request.CompanyMapInitiativeEnabled,
+                    AfterMatchEnabled: request.AfterMatchEnabled,
                     SensitiveExperienceEnabled: request.SensitiveExperienceEnabled,
                     TrainingPartnersEnabled: request.TrainingPartnersEnabled,
                     ReferenceVerificationEnabled: request.ReferenceVerificationEnabled,
@@ -614,6 +616,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("CandidateExternalVacanciesEnabled", before.CandidateExternalVacanciesEnabled.ToString(), after.CandidateExternalVacanciesEnabled.ToString());
         Add("ProactiveMatchingEnabled", before.ProactiveMatchingEnabled.ToString(), after.ProactiveMatchingEnabled.ToString());
         Add("KandidatenkaartEnabled", before.KandidatenkaartEnabled.ToString(), after.KandidatenkaartEnabled.ToString());
+        Add("CompanyMapInitiativeEnabled", before.CompanyMapInitiativeEnabled.ToString(), after.CompanyMapInitiativeEnabled.ToString());
         Add("AfterMatchEnabled", before.AfterMatchEnabled.ToString(), after.AfterMatchEnabled.ToString());
         Add("SensitiveExperienceEnabled", before.SensitiveExperienceEnabled.ToString(), after.SensitiveExperienceEnabled.ToString());
         Add("TrainingPartnersEnabled", before.TrainingPartnersEnabled.ToString(), after.TrainingPartnersEnabled.ToString());
@@ -658,6 +661,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             testsV2Enabled = snap.TestsV2Enabled,
             employerFitQuestionnairesEnabled = snap.EmployerFitQuestionnairesEnabled,
             kandidatenkaartEnabled = snap.KandidatenkaartEnabled,
+            companyMapInitiativeEnabled = snap.CompanyMapInitiativeEnabled,
             afterMatchEnabled = snap.AfterMatchEnabled,
             referenceVerificationEnabled = snap.ReferenceVerificationEnabled,
             sensitiveExperienceEnabled = snap.SensitiveExperienceEnabled,

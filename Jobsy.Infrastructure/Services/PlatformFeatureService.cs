@@ -223,6 +223,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
+        ApplyAdminBoolUpdate(row, "CompanyMapInitiativeEnabled", update.CompanyMapInitiativeEnabled, v => row.CompanyMapInitiativeEnabled = v);
         ApplyAdminBoolUpdate(row, "AfterMatchEnabled", update.AfterMatchEnabled, v => row.AfterMatchEnabled = v);
         ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
         ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
@@ -544,6 +545,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
+            row?.CompanyMapInitiativeEnabled ?? true,
             row?.AfterMatchEnabled ?? _options.NaDeMatchEnabled,
             ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),

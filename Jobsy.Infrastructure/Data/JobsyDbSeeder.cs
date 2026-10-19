@@ -3,6 +3,7 @@ using Jobsy.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Jobsy.Infrastructure.Data;
@@ -135,6 +136,24 @@ public static class JobsyDbSeeder
         {
             logger.LogWarning(ex, "Company verification backfill PlatformLog failed; continuing.");
         }
+
+        try
+        {
+            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+            var environment = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+            var allowBedrijvenkaartDemo = environment.IsDevelopment()
+                                          || configuration.GetValue("Seed:Enabled", false);
+            if (allowBedrijvenkaartDemo && await db.Companies.AnyAsync())
+            {
+                await DemoUsersSeeder.SeedUsersAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Bedrijvenkaart demo ensure after migrate failed; continuing.");
+        }
     }
 
     public static async Task SeedDataAsync(IServiceProvider services)
@@ -149,6 +168,15 @@ public static class JobsyDbSeeder
         {
             // Users first so salesmanager demo account exists even if later seeders fail.
             await DemoUsersSeeder.SeedUsersAsync(db, logger);
+
+            try
+            {
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Bakkerij De Korenaar demo branding ensure failed; continuing.");
+            }
 
             // Hierarchy / salary-table demo fixes before wage sync.
             try
@@ -189,6 +217,8 @@ public static class JobsyDbSeeder
                 await ApplicationsAndWagesSeeder.EnsureDemoCandidateApplicationCardsAsync(db, logger);
                 await AfterMatchDemoSeeder.EnsureAsync(db, logger);
                 await BanenkaartPerfVacanciesSeeder.SeedAsync(db, logger, perfCount);
+                await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+                await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
             }
             catch (Exception ex)
             {
@@ -200,6 +230,8 @@ public static class JobsyDbSeeder
 
         await DemoCompaniesSeeder.SeedCompaniesAsync(db, logger);
         await DemoUsersSeeder.SeedUsersAsync(db, logger);
+        await DemoCompanyMapInitiativeSeeder.EnsureBakkerijBrandingAsync(db, logger);
+        await DemoCompanyMapInitiativeSeeder.SeedAsync(db, logger);
         try
         {
             await ReferenceVerificationDemoSeeder.EnsureAsync(db, logger);

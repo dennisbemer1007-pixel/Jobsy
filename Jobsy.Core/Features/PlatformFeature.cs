@@ -68,11 +68,17 @@ public enum PlatformFeature
     /// </summary>
     Kandidatenkaart,
 
-    /// <summary>Geverifieerde referenties on the candidate passport. Default false.</summary>
-    ReferenceVerification,
+    /// <summary>
+    /// Bedrijvenkaart and "Ik wil hier werken" (candidate + employer). Default true on acceptatie.
+    /// Requires <see cref="Employers"/> when enabled.
+    /// </summary>
+    CompanyMapInitiative,
 
     /// <summary>Na de match: gesprek plannen, berichten en uitkomst. Default false.</summary>
     AfterMatch,
+
+    /// <summary>Geverifieerde referenties on the candidate passport. Default false.</summary>
+    ReferenceVerification,
 
     /// <summary>Privacy controls for sensitive work history. Default false.</summary>
     SensitiveExperience,

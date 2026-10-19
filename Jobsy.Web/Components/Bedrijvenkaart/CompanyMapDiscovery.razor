@@ -1,0 +1,266 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Bedrijvenkaart
+@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Services
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Media
+@inject CultureState Culture
+@inject JobsyApiClient Api
+@inject NavigationManager Navigation
+@inject IJSRuntime Js
+@using Jobsy.Web.Hosting
+@implements IAsyncDisposable
+
+<div class="bk-page">
+    <div class="bk-page__hero-stack">
+        <div class="bk-map-toggle" role="tablist" aria-label="@Culture["Kb.MapToggle.Jobs"]">
+            <a href="@KbRoutes.Map" role="tab">@Culture["Kb.MapToggle.Jobs"]</a>
+            <a href="@KbRoutes.CompanyMap" class="is-active" role="tab" aria-selected="true">@Culture["Kb.MapToggle.Companies"]</a>
+        </div>
+        <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
+                                  Title="@Culture["Bk.Title"]"
+                                  Lead="@Culture["Bk.Lead"]"
+                                  ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
+                                  ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
+                                  ArtPosition="84% bottom"
+                                  CssClass="cand-hero--bk-single bk-cand-hero">
+            <div class="bk-week-dots" aria-live="polite">
+                @for (var i = 0; i < _weekMax; i++)
+                {
+                    <span aria-hidden="true" style="@(i < _weekUsed ? "" : "opacity:.25")"></span>
+                }
+                <text>@Culture.Format("Bk.WeekDots", Math.Max(0, _weekMax - _weekUsed), _weekMax)</text>
+            </div>
+        </CandidateIllustratedHero>
+    </div>
+
+    <div class="bk-page__frame">
+    <p class="bk-info-banner">@Culture["Bk.InfoBanner"]</p>
+
+    <div class="bk-filters">
+        <div class="bk-filters__track">
+            <div class="bk-filters__row">
+                <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllSectors"]">
+                    <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllSectors"]</button>
+                </div>
+                <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.AllFields"]">
+                    <button type="button" class="jobsy-action is-active" aria-pressed="true">@Culture["Bk.Filter.AllFields"]</button>
+                </div>
+                <div class="bk-filters__group" role="group" aria-label="@Culture["Bk.Filter.Distance"]">
+                    @foreach (var km in new[] { 10, 25, 40 })
+                    {
+                        <button type="button" class="jobsy-action @(_radiusKm == km ? "is-active" : null)" aria-pressed="@(_radiusKm == km)" @onclick="() => SetRadius(km)">@km km</button>
+                    }
+                </div>
+            </div>
+            <div class="bk-filters__row bk-filters__row--chips">
+                <button type="button" class="jobsy-action @(_openOnly ? "is-active" : null)" aria-pressed="@_openOnly" @onclick="ToggleOpenOnly">@Culture["Bk.Filter.OpenOnly"]</button>
+                <button type="button" class="jobsy-action @(_agencies ? "is-active" : null)" aria-pressed="@_agencies" @onclick="ToggleAgencies">@Culture["Bk.Filter.Agencies"]</button>
+                <button type="button" class="jobsy-action @(_respondsFast ? "is-active" : null)" aria-pressed="@_respondsFast" @onclick="ToggleRespondsFast">@Culture["Bk.Filter.RespondsFast"]</button>
+            </div>
+        </div>
+    </div>
+
+    <p class="bk-result-meta">
+        @_filteredList.Count bedrijven binnen @_radiusKm km • @_openCount staan open voor jou
+    </p>
+
+    <div class="bk-shell">
+        <div class="bk-list" role="list">
+            @foreach (var pin in _filteredList)
+            {
+                var selected = _selected?.CompanyId == pin.CompanyId;
+                <article class="bk-card @(selected ? "is-selected" : null)" role="listitem" @onclick="() => SelectPin(pin)">
+                    <div class="bk-card__row">
+                        <div class="bk-card__avatar">@Initials(pin.Name)</div>
+                        <div>
+                            <h2 class="bk-card__title">@pin.Name</h2>
+                            <p class="bk-card__meta">@(pin.SectorLabel ?? "Bedrijf") • @(pin.City ?? "Nederland")</p>
+                            @if (pin.OpenForInitiative)
+                            {
+                                <span class="bk-chip bk-chip--open">@Culture["Bk.OpenLabel"]</span>
+                            }
+                            @if (pin.VacancyCount > 0)
+                            {
+                                <span class="bk-chip">@pin.VacancyCount vacatures</span>
+                            }
+                            else
+                            {
+                                <span class="bk-chip">Geen vacatures</span>
+                            }
+                            @if (pin.MatchLabel is InitiativeMatchLabel ml)
+                            {
+                                <span class="bk-chip @(ml == InitiativeMatchLabel.Strong ? "bk-chip--match-strong" : "bk-chip--match-good")">
+                                    @Culture[InitiativeMatchWordingRules.ResourceKey(ml)]
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+        <div class="bk-map-pane">
+            <div id="bedrijvenkaart-map" class="job-map" aria-label="Kaart"></div>
+            <div class="bk-map-legend">
+                <div><span class="bk-chip bk-chip--open">@Culture["Bk.OpenLabel"]</span></div>
+                <div>Alle bedrijven op Lobsy</div>
+                <div>Uitzendbureau vestiging</div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+@code {
+    private IReadOnlyList<CompanyMapPinDto> _pins = BedrijvenkaartDemoPins.All;
+    private CompanyMapPinDto? _selected;
+    private int _radiusKm = 25;
+    private bool _openOnly;
+    private bool _agencies = true;
+    private bool _respondsFast;
+    private int _weekUsed = 3;
+    private int _weekMax = 3;
+
+    private List<CompanyMapPinDto> _filteredList = [];
+    private int _openCount;
+
+    private void RefreshFiltered()
+    {
+        _filteredList = _pins
+            .Where(p => !_openOnly || p.OpenForInitiative)
+            .Where(p => _agencies || !p.IsIntermediary)
+            .Where(p => !_respondsFast || p.AvgResponseDays is <= 3)
+            .ToList();
+        _openCount = _filteredList.Count(p => p.OpenForInitiative);
+    }
+
+    private void SetRadius(int km)
+    {
+        _radiusKm = km;
+        RefreshFiltered();
+    }
+
+    private void ToggleOpenOnly()
+    {
+        _openOnly = !_openOnly;
+        RefreshFiltered();
+    }
+
+    private void ToggleAgencies()
+    {
+        _agencies = !_agencies;
+        RefreshFiltered();
+    }
+
+    private void ToggleRespondsFast()
+    {
+        _respondsFast = !_respondsFast;
+        RefreshFiltered();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var week = await Api.GetInitiativeWeekAsync();
+            if (week is not null)
+            {
+                _weekUsed = week.Used;
+                _weekMax = week.Max;
+            }
+
+            var live = await Api.GetCompanyMapPinsAsync(null, null, _radiusKm);
+            if (live.Count > 0)
+            {
+                _pins = live;
+            }
+        }
+        catch
+        {
+            // Demo pins for local preview / offline UI.
+        }
+
+        RefreshFiltered();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _mapReady)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!RendererInfo.IsInteractive)
+            {
+                return;
+            }
+
+            await MapScripts.EnsureDiscoveryAsync(Js);
+            var markers = _filteredList.Select(p => new Dictionary<string, object?>
+            {
+                ["id"] = p.CompanyId.ToString("D"),
+                ["companyId"] = p.CompanyId.ToString("D"),
+                ["title"] = p.Name,
+                ["company"] = p.Name,
+                ["lat"] = p.Latitude,
+                ["lng"] = p.Longitude,
+                ["openForInitiative"] = p.OpenForInitiative,
+                ["isIntermediary"] = p.IsIntermediary,
+                ["publicMapRadiusKm"] = p.IsIntermediary ? 5 : null,
+                ["companyHref"] = p.PublicPath
+            }).ToList();
+
+            var options = new Dictionary<string, object?>
+            {
+                ["pinsUrl"] = $"api/company-map-initiative/pins?radiusKm={_radiusKm}",
+                ["mapMode"] = "companies",
+                ["preferFilledLocation"] = false
+            };
+            await Js.InvokeVoidAsync("jobMap.init", "bedrijvenkaart-map", markers, options);
+            _mapReady = true;
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+        }
+        catch
+        {
+            // Map stays as static pane in demo/offline mode.
+        }
+    }
+
+    private bool _mapReady;
+
+    private void SelectPin(CompanyMapPinDto pin)
+    {
+        _selected = pin;
+        if (!string.IsNullOrWhiteSpace(pin.PublicPath))
+        {
+            Navigation.NavigateTo(pin.PublicPath);
+        }
+    }
+
+    private static string Initials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant()
+            : name.Length >= 2 ? name[..2].ToUpperInvariant() : name.ToUpperInvariant();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_mapReady)
+        {
+            try
+            {
+                await Js.InvokeVoidAsync("jobMap.dispose");
+            }
+            catch
+            {
+                // circuit gone
+            }
+        }
+    }
+}

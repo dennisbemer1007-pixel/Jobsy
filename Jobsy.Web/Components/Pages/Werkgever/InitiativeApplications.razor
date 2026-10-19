@@ -1,0 +1,83 @@
+@page "/werkgever/sollicitaties/initiatieven"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin")]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.Employers)]
+@attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
+@using Jobsy.Web.Components.Bedrijvenkaart
+@using Jobsy.Web.Components.Werkgever.Shell
+@using Jobsy.Web.Werkgever
+@inject CultureState Culture
+@inject EmployerScopeState Scope
+@inject EmployerScopeBootstrap ScopeBootstrap
+
+<PageTitle>@Culture["WgNav.Applications"] · @Culture["Bk.Apps.FilterInitiatives"] · Lobsy</PageTitle>
+
+<WgPageShell Title="@Culture["WgNav.Applications"]"
+             Lead="@Culture["Bk.EmployerApps.InitiativeLead"]">
+    @if (_loading)
+    {
+        <p>@Culture["Common.Loading"]</p>
+    }
+    else
+    {
+        <InitiativeEmployerSollicitatiesPanel BillingCompanyId="@BillingCompanyId"
+                                              Source="@_source"
+                                              SourceChanged="OnSourceChanged"
+                                              SelectedInitiativeId="_selectedId"
+                                              DemoAcceptOpen="_demoAccept"
+                                              DemoDeclineOpen="_demoDecline" />
+    }
+</WgPageShell>
+
+@code {
+    [SupplyParameterFromQuery(Name = "initiative")]
+    public string? InitiativeQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "demoAccept")]
+    public string? DemoAcceptQuery { get; set; }
+
+    [SupplyParameterFromQuery(Name = "demoDecline")]
+    public string? DemoDeclineQuery { get; set; }
+
+    private bool _loading = true;
+    private string _source = "open";
+    private Guid? _selectedId;
+    private bool _demoAccept;
+    private bool _demoDecline;
+
+    private static readonly Guid KorenaarRootId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
+    private Guid BillingCompanyId =>
+        Scope.CompanyIds.FirstOrDefault(id => id == KorenaarRootId) is Guid match && match != Guid.Empty
+            ? match
+            : Scope.CompanyIds.FirstOrDefault() is Guid any && any != Guid.Empty
+                ? any
+                : KorenaarRootId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ApplyQuery();
+        await ScopeBootstrap.EnsureLoadedAsync();
+        _loading = false;
+    }
+
+    protected override void OnParametersSet() => ApplyQuery();
+
+    private void ApplyQuery()
+    {
+        if (!string.IsNullOrWhiteSpace(InitiativeQuery) && Guid.TryParse(InitiativeQuery, out var id))
+        {
+            _selectedId = id;
+        }
+
+        _demoAccept = !string.IsNullOrWhiteSpace(DemoAcceptQuery);
+        _demoDecline = !string.IsNullOrWhiteSpace(DemoDeclineQuery);
+    }
+
+    private Task OnSourceChanged(string source)
+    {
+        _source = source;
+        return Task.CompletedTask;
+    }
+}

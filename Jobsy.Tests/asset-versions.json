@@ -43,6 +43,10 @@
     "sha256": "0b77b38c48253751260a0b6f1797f81a555ab1aa95a8333fb28bc343352eeeeb",
     "v": "20261016-02"
   },
+  "css/features/bedrijvenkaart.css": {
+    "sha256": "793e319e5588e212a9d56279b0d30448566c1eb12e8bd80f6b27d09306115f88",
+    "v": "20261019-03"
+  },
   "css/features/candidate-hub.css": {
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"

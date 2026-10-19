@@ -689,6 +689,8 @@ public static class DependencyInjection
         services.AddScoped<KandidatenkaartCandidateAggregator>();
         services.AddScoped<KandidatenkaartMailService>();
         services.AddScoped<IKandidatenkaartService, KandidatenkaartService>();
+        services.AddScoped<ICompanyMapInitiativeService, CompanyMapInitiativeService>();
+        services.AddHostedService<WorkInitiativeAutoDeclineHostedService>();
         services.AddHostedService<KandidatenkaartHostedService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<IEmployerPhase2Service, Jobsy.Infrastructure.Services.EmployerPhase2.EmployerPhase2Service>();

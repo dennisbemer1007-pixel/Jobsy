@@ -8,6 +8,7 @@ public static class KbRoutes
 {
     // Landing 04+: canonical map route (see Banenkaart.razor).
     public const string Map = "/banenkaart";
+    public const string CompanyMap = "/bedrijvenkaart";
 
     public const string Applications = "/candidate/applications";
     public const string Saved = "/candidate/liked";

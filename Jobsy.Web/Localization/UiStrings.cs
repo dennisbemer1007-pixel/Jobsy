@@ -479,6 +479,7 @@ public static class UiStrings
             ["WorkType.Schoonmaak"] = "Schoonmaak",
             ["WorkType.Productie"] = "Productie",
             ["Common.Close"] = "Sluiten",
+            ["Common.Change"] = "Wijzigen",
             ["Discovery.Top"] = "Uitgelicht",
             ["Discovery.Featured"] = "Uitgelicht",
             ["Discovery.TravelModeMinutes"] = "{0} min {1}",
@@ -1232,6 +1233,7 @@ public static class UiStrings
             ["WorkType.Schoonmaak"] = "Cleaning",
             ["WorkType.Productie"] = "Production",
             ["Common.Close"] = "Close",
+            ["Common.Change"] = "Change",
             ["Discovery.Top"] = "Featured",
             ["Discovery.Featured"] = "Featured",
             ["Discovery.TravelModeMinutes"] = "{0} min {1}",
@@ -3809,6 +3811,7 @@ public static class UiStrings
         UiStringsGratisDna.MergeAll(nl, en, pl, ro, ar);
         UiStringsCandidateInsights.MergeAll(nl, en, pl, ro, ar);
         UiStringsKandidatenkaart.MergeAll(nl, en, pl, ro, ar);
+        UiStringsInitiative.MergeAll(nl, en, pl, ro, ar);
         UiStringsMatch.MergeAll(nl, en, pl, ro, ar);
         UiStringsMfa.MergeAll(nl, en, pl, ro, ar);
         UiStringsAdmin.MergeAll(nl, en, pl, ro, ar);
