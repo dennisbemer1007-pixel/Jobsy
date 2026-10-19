@@ -642,11 +642,6 @@ internal static class VroegResultaatPlaywrightTestsHelpers
                 return;
             }
 
-            if (await page.GetByTestId("onboarding-tests-later").CountAsync() > 0)
-            {
-                return;
-            }
-
             if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
             {
                 return;

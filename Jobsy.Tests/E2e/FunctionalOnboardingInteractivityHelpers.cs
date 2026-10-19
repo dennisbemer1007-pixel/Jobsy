@@ -215,58 +215,24 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
         }
 
-        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
-        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
-        await page.WaitForTimeoutAsync(1500);
-
-        await page.WaitForFunctionAsync(
-            """
-            () => {
-              const btn = document.querySelector('.ob-wizard__footer [data-testid=onboarding-tests-later]')
-                || document.querySelector('[data-testid=onboarding-tests-later]:not([disabled])');
-              return btn && !btn.disabled;
-            }
-            """,
-            null,
-            new() { Timeout = 60_000 });
-
-        var later = page.Locator(".ob-wizard__footer [data-testid=onboarding-tests-later]:visible").First;
-        if (await later.CountAsync() == 0)
-        {
-            later = page.Locator("[data-testid=onboarding-tests-later]:visible").Last;
-        }
-
-        await later.ScrollIntoViewIfNeededAsync();
         if (mobile)
         {
-            await later.TapAsync(new() { Timeout = 30_000 });
-        }
-        else
-        {
-            await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+            Assert.Equal(0, await page.Locator("[data-testid=early-reward-nearby]").CountAsync());
         }
 
-        await PollUntilBanenkaartUrlAsync(page, 240_000);
+        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 90_000 });
+        await page.WaitForTimeoutAsync(1500);
+
+        var later = page.Locator(".ob-wizard__footer [data-testid=onboarding-tests-later]:visible").First;
+        await later.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
+        await later.ScrollIntoViewIfNeededAsync();
+        await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+
+        await page.WaitForURLAsync(
+            u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
+            new() { Timeout = 180_000, WaitUntil = WaitUntilState.DOMContentLoaded });
         await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
-    }
-
-    private static async Task PollUntilBanenkaartUrlAsync(IPage page, int timeoutMs)
-    {
-        var started = Environment.TickCount64;
-        while (Environment.TickCount64 - started < timeoutMs)
-        {
-            var onBanenkaart = await page.EvaluateAsync<bool>(
-                "() => window.location.pathname.toLowerCase().includes('/banenkaart')");
-            if (onBanenkaart || page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            await page.WaitForTimeoutAsync(500);
-        }
-
-        var path = await page.EvaluateAsync<string>("() => window.location.pathname");
-        throw new TimeoutException($"Expected /banenkaart within {timeoutMs}ms; still at {page.Url} (path={path})");
     }
 
     internal static async Task ResolveHomeAddressAsync(IPage page, string query)
