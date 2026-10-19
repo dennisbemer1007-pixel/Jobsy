@@ -30,7 +30,7 @@ public static class PageAssetCatalog
         "css/app.min.css?v=20261019-10",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
-        "css/features/candidate-illustrated-decorative-layers.css?v=20261019-01",
+        "css/features/candidate-illustrated-decorative-layers.css?v=20261019-02",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
 

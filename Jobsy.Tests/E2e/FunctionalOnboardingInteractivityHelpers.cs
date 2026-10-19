@@ -6,10 +6,13 @@ internal static class FunctionalOnboardingInteractivityHelpers
 {
     internal static async Task AssertHitTargetAsync(IPage page, ILocator target, string label)
     {
+        await target.ScrollIntoViewIfNeededAsync();
         var box = await target.BoundingBoxAsync();
         Assert.NotNull(box);
-        var cx = box!.X + box.Width / 2;
+        Assert.True(box!.Width > 0 && box.Height > 0, $"{label}: target has zero size");
+        var cx = box.X + box.Width / 2;
         var cy = box.Y + box.Height / 2;
+        Assert.True(double.IsFinite(cx) && double.IsFinite(cy), $"{label}: non-finite hit coordinates");
         var audit = await page.EvaluateAsync<HitAudit>(
             """
             ({ x, y, selector }) => {
@@ -33,6 +36,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
     {
         var chip = page.Locator(".work-status-chips .lobsy-choice-tile, .work-status-chips .work-status-chip").First;
         await chip.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await page.WaitForTimeoutAsync(300);
         await AssertHitTargetAsync(page, chip, "werkstatus chip");
         var before = await chip.GetAttributeAsync("class") ?? "";
         await chip.ClickAsync(new() { Timeout = 10_000 });
@@ -103,9 +107,12 @@ internal static class FunctionalOnboardingInteractivityHelpers
     internal static async Task BeginKennismakenStepAsync(IPage page, string baseUrl)
     {
         await page.GotoAsync($"{baseUrl}/candidate/start", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await page.WaitForFunctionAsync(
+            "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
+            null,
+            new() { Timeout = 90_000 });
         await VroegResultaatPlaywrightTestsHelpers.EnsureWizardStartedAsync(page);
-        await page.Locator("[data-testid=onboarding-step-1-illustrated], #onboarding-field-firstname input").First
-            .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        await page.Locator("[data-testid=onboarding-step-1-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
     }
 
     internal static async Task FillKennismakenRequiredFieldsAsync(IPage page)

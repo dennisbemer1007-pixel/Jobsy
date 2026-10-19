@@ -108,7 +108,8 @@ public sealed class OnboardingSoftIllustrationsGateTests
     public void Central_decorative_hero_layers_css_disables_pointer_events_on_descendants()
     {
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/features/candidate-illustrated-decorative-layers.css"));
-        Assert.Contains(".cand-hero [aria-hidden] *", css, StringComparison.Ordinal);
+        Assert.Contains("[aria-hidden=\"true\"]", css, StringComparison.Ordinal);
+        Assert.Contains("[class*=\"__art\"]", css, StringComparison.Ordinal);
         Assert.Contains(".ob-illustrated-step__art *", css, StringComparison.Ordinal);
         Assert.Contains(".pp-company__hero-art *", css, StringComparison.Ordinal);
         Assert.Contains(".test-mirror__hero-art *", css, StringComparison.Ordinal);

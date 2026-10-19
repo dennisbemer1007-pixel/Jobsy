@@ -41,6 +41,7 @@ public sealed class OnboardingStep1InteractivityPlaywrightTests
 
         var chip = page.Locator(".work-status-chips .lobsy-choice-tile").First;
         await chip.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+        await chip.ScrollIntoViewIfNeededAsync();
 
         var hit = await page.EvaluateAsync<string>(
             """
