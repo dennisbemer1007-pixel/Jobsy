@@ -101,7 +101,7 @@ else if (_phase == "question")
                     </div>
                     @if (_questionIndex > 0)
                     {
-                        <p class="uwv-ondernemer-test__back">
+                        <p class="test-flow__back">
                             <button type="button" class="btn btn-link" @onclick="PreviousQuestion">
                                 @(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back" : "Vorige")
                             </button>
@@ -109,7 +109,7 @@ else if (_phase == "question")
                     }
                     else
                     {
-                        <p class="uwv-ondernemer-test__back">
+                        <p class="test-flow__back">
                             <a href="/candidate/ondernemerscheck?stap=intro">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back" : "Terug")</a>
                         </p>
                     }
