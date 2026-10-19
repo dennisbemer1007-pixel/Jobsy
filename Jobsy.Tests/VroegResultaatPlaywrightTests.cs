@@ -671,42 +671,7 @@ combo.save(out)
 
     private static async Task NavigateToTestConsentWithoutStartingAsync(IPage page)
     {
-        for (var step = 0; step < 6; step++)
-        {
-            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
-            {
-                return;
-            }
-
-            if (await page.Locator(".test-likert").CountAsync() > 0)
-            {
-                return;
-            }
-
-            var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Overslaan", RegexOptions.IgnoreCase) });
-            if (await skip.CountAsync() > 0)
-            {
-                await skip.First.ClickAsync(new() { Timeout = 8_000 });
-                await page.WaitForTimeoutAsync(450);
-                continue;
-            }
-
-            var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Weet ik nog niet", RegexOptions.IgnoreCase) });
-            if (await unknown.CountAsync() > 0)
-            {
-                await unknown.First.ClickAsync(new() { Timeout = 8_000 });
-                await page.WaitForTimeoutAsync(450);
-                continue;
-            }
-
-            if (await page.Locator("[data-testid=onboarding-next]").CountAsync() > 0)
-            {
-                await ClickNextAsync(page);
-                continue;
-            }
-
-            break;
-        }
+        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
     }
 
     private static async Task SkipOptionalStepsToConsentAsync(IPage page)

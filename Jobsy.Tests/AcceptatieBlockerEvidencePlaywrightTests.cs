@@ -635,8 +635,18 @@ internal static class VroegResultaatPlaywrightTestsHelpers
 
     public static async Task NavigateToTestConsentWithoutStartingAsync(IPage page)
     {
-        for (var step = 0; step < 6; step++)
+        for (var step = 0; step < 12; step++)
         {
+            if (await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).CountAsync() > 0)
+            {
+                return;
+            }
+
+            if (await page.GetByTestId("onboarding-tests-later").CountAsync() > 0)
+            {
+                return;
+            }
+
             if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
             {
                 return;
@@ -650,7 +660,7 @@ internal static class VroegResultaatPlaywrightTestsHelpers
             var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Overslaan", RegexOptions.IgnoreCase) });
             if (await skip.CountAsync() > 0)
             {
-                await skip.First.ClickAsync(new() { Timeout = 8_000 });
+                await skip.First.ClickAsync(new() { Timeout = 8_000, Force = true });
                 await page.WaitForTimeoutAsync(450);
                 continue;
             }
@@ -658,7 +668,7 @@ internal static class VroegResultaatPlaywrightTestsHelpers
             var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Weet ik nog niet", RegexOptions.IgnoreCase) });
             if (await unknown.CountAsync() > 0)
             {
-                await unknown.First.ClickAsync(new() { Timeout = 8_000 });
+                await unknown.First.ClickAsync(new() { Timeout = 8_000, Force = true });
                 await page.WaitForTimeoutAsync(450);
                 continue;
             }

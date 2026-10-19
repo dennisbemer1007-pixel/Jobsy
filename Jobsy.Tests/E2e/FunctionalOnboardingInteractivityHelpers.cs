@@ -158,13 +158,47 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
         await page.Locator("[data-testid=onboarding-nearby-panel-mobile], [data-testid=onboarding-nearby-panel-desktop], [data-testid=early-reward-nearby]").First
             .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+        if (await page.Locator("[data-testid=early-reward-nearby]").CountAsync() > 0)
+        {
+            await VroegResultaatPlaywrightTests.ClickNextAsync(page);
+            await page.WaitForTimeoutAsync(800);
+        }
+
         await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
-        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 120_000 });
+        await WaitForTestConsentStepAsync(page);
         await page.GetByTestId("onboarding-tests-later").First.ClickAsync(new() { Force = true, Timeout = 20_000 });
         await page.WaitForURLAsync(
             u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
             new() { Timeout = 120_000 });
         await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
+    }
+
+    private static async Task WaitForTestConsentStepAsync(IPage page)
+    {
+        var heading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
+        var later = page.GetByTestId("onboarding-tests-later");
+        for (var attempt = 0; attempt < 90; attempt++)
+        {
+            if (await heading.CountAsync() > 0 && await heading.First.IsVisibleAsync())
+            {
+                return;
+            }
+
+            if (await later.CountAsync() > 0 && await later.First.IsVisibleAsync())
+            {
+                return;
+            }
+
+            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
+            {
+                return;
+            }
+
+            await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
+            await page.WaitForTimeoutAsync(1000);
+        }
+
+        await heading.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
     }
 
     internal static async Task ResolveHomeAddressAsync(IPage page, string query)
