@@ -255,19 +255,34 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task RegisterFreshCandidateAsync(IPage page, string baseUrl, string emailPrefix)
     {
-        var email = $"{emailPrefix}.{Guid.NewGuid():N}@jobsy.local";
-        await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
-        await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
-        await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-        await page.Locator("input[type=email]").FillAsync(email);
-        await page.Locator("input[name=firstName]").FillAsync("Func");
-        await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
-        await page.WaitForURLAsync("**/code**", new() { Timeout = 120_000 });
-        var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
-        Assert.False(string.IsNullOrWhiteSpace(code), "Expected OTP from E2E mail capture.");
-        await page.Locator("input[name=code]").FillAsync(code!);
-        await page.Locator("button.login-submit").ClickAsync();
-        await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
+        Exception? last = null;
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            var email = $"{emailPrefix}.{Guid.NewGuid():N}@jobsy.local";
+            try
+            {
+                await CandidateJourneyE2e.ClearCapturedEmailCodesAsync(baseUrl);
+                await page.GotoAsync($"{baseUrl}/account-maken", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+                await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+                await page.Locator("input[type=email]").FillAsync(email);
+                await page.Locator("input[name=firstName]").FillAsync("Func");
+                await page.Locator("button.login-submit, button.au-submit[type=submit]").First.ClickAsync();
+                await page.WaitForURLAsync("**/code**", new() { Timeout = 120_000 });
+                var code = await CandidateJourneyE2e.FetchEmailCodeAsync(baseUrl, email);
+                Assert.False(string.IsNullOrWhiteSpace(code), "Expected OTP from E2E mail capture.");
+                await page.Locator("input[name=code]").FillAsync(code!);
+                await page.Locator("button.login-submit").ClickAsync();
+                await page.WaitForURLAsync(u => !u.ToString().Contains("/code", StringComparison.Ordinal), new() { Timeout = 90_000 });
+                return;
+            }
+            catch (Exception ex) when (attempt < 2 && ex is TimeoutException or PlaywrightException)
+            {
+                last = ex;
+                await page.WaitForTimeoutAsync(1_500);
+            }
+        }
+
+        throw new InvalidOperationException($"RegisterFreshCandidate failed after 3 attempts for prefix {emailPrefix}.", last);
     }
 
     internal static async Task BeginKennismakenStepAsync(IPage page, string baseUrl)
