@@ -114,27 +114,20 @@
   --pub-hero-img-rh: min(calc(100vw * 720 / 2048), var(--pub-hero-art-h));
   --pub-hero-shell-l: 238, 230, 218;
   --pub-hero-shell-r: 238, 230, 218;
-  --pub-hero-shell-top: 255, 248, 231;
+  --pub-hero-shell-top: 251, 242, 227;
+  --pub-hero-art-top-fade: min(180px, calc(var(--pub-hero-img-rh) * 0.28));
   --pub-hero-shell-bottom: 218, 210, 205;
   position: relative;
   min-height: max(640px, var(--pub-hero-art-h));
   padding: 0;
   overflow: hidden;
-  background:
-    linear-gradient(
-      180deg,
-      rgb(var(--pub-hero-shell-top)) 0%,
-      var(--pearl) 32%,
-      var(--pearl) 68%,
-      rgb(var(--pub-hero-shell-bottom)) 100%
-    ),
-    linear-gradient(
-      90deg,
-      rgb(var(--pub-hero-shell-l)) 0%,
-      var(--pearl) 20%,
-      var(--pearl) 80%,
-      rgb(var(--pub-hero-shell-r)) 100%
-    );
+  background: linear-gradient(
+    90deg,
+    rgb(var(--pub-hero-shell-l)) 0%,
+    rgb(var(--pub-hero-shell-top)) 18%,
+    rgb(var(--pub-hero-shell-top)) 82%,
+    rgb(var(--pub-hero-shell-r)) 100%
+  );
   isolation: isolate;
 }
 
@@ -145,48 +138,24 @@
   left: 50%;
   z-index: 0;
   width: 100vw;
-  height: var(--pub-hero-art-h);
+  height: var(--pub-hero-img-rh);
   pointer-events: none;
   transform: translateX(-50%);
-  background: var(--pub-hero-art) no-repeat center bottom / contain;
+  background-color: rgb(var(--pub-hero-shell-top));
+  background-image: var(--pub-hero-art);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: contain;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 20%, #000 80%, transparent 100%),
-    linear-gradient(
-      180deg,
-      transparent 0%,
-      transparent max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))),
-      #000 calc(max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))) + 140px),
-      #000 98%,
-      transparent 100%
-    );
+    linear-gradient(to bottom, transparent 0, #000 var(--pub-hero-art-top-fade), #000 98%, transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0%, #000 20%, #000 80%, transparent 100%),
-    linear-gradient(
-      180deg,
-      transparent 0%,
-      transparent max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))),
-      #000 calc(max(0px, calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh))) + 140px),
-      #000 98%,
-      transparent 100%
-    );
+    linear-gradient(to bottom, transparent 0, #000 var(--pub-hero-art-top-fade), #000 98%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: calc(var(--pub-hero-art-h) - var(--pub-hero-img-rh));
-  z-index: 0;
-  width: 100vw;
-  height: min(180px, calc(var(--pub-hero-img-rh) * 0.42));
-  pointer-events: none;
-  transform: translateX(-50%);
-  background: linear-gradient(
-    180deg,
-    rgb(var(--pub-hero-shell-top)) 0%,
-    color-mix(in srgb, rgb(var(--pub-hero-shell-top)) 78%, transparent) 48%,
-    transparent 100%
-  );
+  display: none;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
@@ -537,13 +506,11 @@
 @media (max-width: 900px) {
   .pub-theme .pub-landing__step-art--2 {
     height: clamp(200px, 58vw, 240px);
-    padding: 0 8px;
-    box-sizing: border-box;
+    padding: 0;
     background-color: var(--surface);
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center top;
-    background-origin: content-box;
     -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
     mask-image: linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
   }

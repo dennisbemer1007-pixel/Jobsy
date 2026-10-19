@@ -51,6 +51,52 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_home_logo_and_illustration_fades_r8()
+    {
+        Directory.CreateDirectory(OutDir);
+
+        foreach (var (w, h, slug, mobile) in new (int W, int H, string Slug, bool Mobile)[]
+                 {
+                     (1920, 900, "1920", false),
+                     (1440, 900, "1440", false),
+                     (1024, 768, "1024", false),
+                     (390, 844, "390", true),
+                 })
+        {
+            await CaptureFullPageAsync(w, h, $"full-{slug}-r8", mobile);
+            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r8", mobile);
+            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r8", mobile);
+            for (var i = 0; i < 3; i++)
+            {
+                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r8", mobile, scroll: true);
+            }
+
+            if (!mobile)
+            {
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "left", "r8");
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "right", "r8");
+                await CaptureHeroBottomZoomAsync(w, h, slug, "r8");
+                if (slug is "1920" or "1440")
+                {
+                    await AssertHeroSideSeamColorDeltaAsync(w, h, slug);
+                }
+
+                await AssertHeroCreamColumnsSmoothOnFullPageAsync(w, h, slug);
+            }
+
+            await AssertHeroCtasReceiveClicksAsync(w, h, mobile);
+        }
+
+        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r8", scroll: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r8", scroll: true);
+        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r8", mobile: true);
+        await AssertStep2DnaCirclesMarginAsync(390, 844);
+
+        var logoHeight = await MeasureLogoHeightAsync(1024, 768);
+        Assert.InRange(logoHeight, 34, 42);
+    }
+
+    [Fact]
     public async Task Capture_home_logo_and_illustration_fades_r7()
     {
         Directory.CreateDirectory(OutDir);
@@ -237,6 +283,88 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
         return ((byte)(r / n), (byte)(g / n), (byte)(b / n));
     }
 
+    private async Task AssertHeroCreamColumnsSmoothOnFullPageAsync(int w, int h, string slug)
+    {
+        await using var context = await NewContextAsync(w, h);
+        var page = await OpenHomeAsync(context);
+        var layout = await page.EvaluateAsync<HeroPageLayout>(
+            """
+            () => {
+              const hero = document.querySelector('.pub-landing__hero--illustrated');
+              if (!hero) return null;
+              const heroR = hero.getBoundingClientRect();
+              const vw = window.innerWidth;
+              const artH = parseFloat(getComputedStyle(hero).getPropertyValue('--pub-hero-art-h').trim()) || 680;
+              const iw = 2048;
+              const ih = 720;
+              const scale = Math.min(vw / iw, artH / ih);
+              const rh = ih * scale;
+              const scrollY = window.scrollY || window.pageYOffset || 0;
+              return {
+                heroTop: heroR.top + scrollY,
+                artBottom: heroR.bottom + scrollY,
+                imgTop: heroR.bottom + scrollY - rh
+              };
+            }
+            """);
+        Assert.NotNull(layout);
+
+        await page.WaitForTimeoutAsync(600);
+        var bytes = await page.ScreenshotAsync(new() { Type = ScreenshotType.Png, FullPage = true });
+        using var image = Image.Load<Rgb24>(bytes);
+
+        var y0 = Math.Max(0, (int)Math.Floor(layout!.HeroTop));
+        var y1 = Math.Min(image.Height - 2, (int)Math.Ceiling(layout.ArtBottom));
+        var artHeight = layout.ArtBottom - layout.ImgTop;
+        var yOpaqueStart = (int)Math.Floor(layout.ImgTop + 130);
+        var yOpaqueEnd = (int)Math.Floor(layout.ImgTop + artHeight * 0.88);
+        var yHeroCreamEnd = (int)Math.Floor(layout.ImgTop + artHeight * 0.96);
+        foreach (var viewportX in new[] { 200, 700, 1100, 1300 })
+        {
+            var x = Math.Clamp(viewportX, 1, image.Width - 2);
+            AssertCreamColumnSmooth(image, x, y0, y1, yOpaqueStart, yOpaqueEnd, yHeroCreamEnd, slug, viewportX);
+        }
+    }
+
+    private static void AssertCreamColumnSmooth(Image<Rgb24> image, int x, int y0, int y1, int yOpaqueStart, int yOpaqueEnd, int yHeroCreamEnd, string slug, int viewportX)
+    {
+        for (var y = y0; y < y1; y++)
+        {
+            if (y >= yOpaqueStart && y < yOpaqueEnd)
+            {
+                continue;
+            }
+
+            if (y >= yHeroCreamEnd)
+            {
+                continue;
+            }
+
+            var a = image[x, y];
+            var b = image[x, y + 1];
+            if (!IsHeroCreamLike(a) || !IsHeroCreamLike(b))
+            {
+                continue;
+            }
+
+            const int maxRowStep = 2;
+            Assert.True(Math.Abs(a.R - b.R) <= maxRowStep, $"{slug} full-page x={viewportX} row {y}→{y + 1} R step {Math.Abs(a.R - b.R)}.");
+            Assert.True(Math.Abs(a.G - b.G) <= maxRowStep, $"{slug} full-page x={viewportX} row {y}→{y + 1} G step {Math.Abs(a.G - b.G)}.");
+            Assert.True(Math.Abs(a.B - b.B) <= maxRowStep, $"{slug} full-page x={viewportX} row {y}→{y + 1} B step {Math.Abs(a.B - b.B)}.");
+        }
+    }
+
+    private static bool IsHeroCreamLike(Rgb24 p) =>
+        p.R >= 248 && p.G >= 242 && p.B >= 226
+        && p.R - p.G <= 10 && p.G - p.B <= 18;
+
+    private sealed class HeroPageLayout
+    {
+        public double HeroTop { get; set; }
+        public double ArtBottom { get; set; }
+        public double ImgTop { get; set; }
+    }
+
     private async Task AssertHeroTopBandSmoothnessAsync(int w, int h, string slug)
     {
         await using var context = await NewContextAsync(w, h);
@@ -333,6 +461,17 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
         Assert.True(blueRows >= 80, $"Expected DNA circle pixels on step 2 @390, got {blueRows}.");
         Assert.True(minBlueX >= 8, $"Left DNA circle margin {minBlueX}px is below 8px.");
         Assert.True(maxBlueX <= image.Width - 9, $"Right DNA circle margin {image.Width - maxBlueX}px is below 8px.");
+
+        var leftEdgeBlueSpan = 0;
+        for (var y = 0; y < image.Height; y++)
+        {
+            if (IsDnaCirclePixel(image[minBlueX, y]))
+            {
+                leftEdgeBlueSpan++;
+            }
+        }
+
+        Assert.True(leftEdgeBlueSpan >= 18, $"Left circle outline too thin ({leftEdgeBlueSpan}px at x={minBlueX}).");
 
         var leftQuarterBlue = 0;
         for (var y = (int)(image.Height * 0.12); y < (int)(image.Height * 0.5); y++)
