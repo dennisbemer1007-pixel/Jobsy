@@ -52,8 +52,8 @@
     "v": "20261012-01"
   },
   "css/features/candidate-illustrated-decorative-layers.css": {
-    "sha256": "fe835695a519b93b27e7e0225139810df3e54559308fc2fe9180bfb71b0cf132",
-    "v": "20261019-02"
+    "sha256": "43ca69ac848dfe48455ebdd47906dc848c5099bb46dd5962f45d93ec2a8ba92e",
+    "v": "20261019-03"
   },
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
@@ -145,7 +145,7 @@
   },
   "css/features/onboarding-illustrated-step.css": {
     "sha256": "3dd725e6f8d1efd345f1dc738fee6ec689ec2c53f233ae92b99c6c579c3d0fba",
-    "v": "20261019-r23"
+    "v": "20261019-r24"
   },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
@@ -160,8 +160,8 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "f5be594c8fd83965f85bb3938c0aad4df070de03cda95ed454ae1086f3d5a3c0",
-    "v": "20261019-r22"
+    "sha256": "8c385ebf8ac87b74d73175a2cd8fb4a2f0ec7f83851980f63b70a618186d96de",
+    "v": "20261019-r25"
   },
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
@@ -260,8 +260,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "d9903cfb67247844317e5a0e5cb6317f3c967d165d0af333420fb0480d38b5c4",
-    "v": "20261019-01"
+    "sha256": "0e3225c4ff1258438725f2600381ee65b3d9deedf742bd1b3ca7582ca814c0c5",
+    "v": "20261019-02"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -344,11 +344,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "037343a543c392df6d75afccfbc47c1cd1f1498bce57a6d1f3cdb20ce4477d0c",
+    "sha256": "6a4d52a06adb4542e252c74c504e858eb460b687552453a480c4169e850ce410",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "0b8e6dacb9d28948d473ecb5a0cfce57f113f80006b8192ba5bc3742c54fba8d",
+    "sha256": "b8b4486260f20bb222cb623cfdabdcce8f80bbc04cfebf2e4d1d397e02670b04",
     "v": "20261016-06"
   }
 }
