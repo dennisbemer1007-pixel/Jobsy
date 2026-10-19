@@ -95,19 +95,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
             new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
 
-        var firstName = page.Locator("input[autocomplete=given-name]").First;
-        if (await firstName.CountAsync() > 0)
-        {
-            await firstName.FillAsync("Func");
-            var lastName = page.Locator("input[autocomplete=family-name]").First;
-            if (await lastName.CountAsync() > 0)
-            {
-                await lastName.FillAsync("Test");
-            }
-
-            await page.WaitForTimeoutAsync(300);
-        }
-
         var viewport = page.ViewportSize;
         var mobile = viewport is not null && viewport.Width < 600;
         var selected = false;
@@ -137,6 +124,13 @@ internal static class FunctionalOnboardingInteractivityHelpers
                 {
                     await chip.ClickAsync(new() { Timeout = 15_000, Force = true });
                 }
+
+                await page.WaitForFunctionAsync(
+                    """
+                    () => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'
+                    """,
+                    null,
+                    new() { Timeout = 15_000 });
 
                 selected = await WaitForWorkStatusSelectedAsync(page, 25_000);
                 if (selected)
