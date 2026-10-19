@@ -1,3 +1,4 @@
+using Jobsy.Web.Media;
 using Microsoft.Playwright;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -74,13 +75,46 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
         }
     }
 
+    [Fact]
+    public async Task Capture_compact_header_preview_r2_variant_c_seamless()
+    {
+        Directory.CreateDirectory(ArtifactsDir);
+        var pages = new (string Slug, string Server, string Path, bool Onboarding, Rgb24 Cream)[]
+        {
+            ("onboarding-kennismaken", _onboardingWeb!.ServerAddress, "/candidate/start", true, ParseHex(CompactHeroPreviewCream.OnboardingKennismaken)),
+            ("carriere", _web!.ServerAddress, "/carriere", false, ParseHex(CompactHeroPreviewCream.CarriereOpleiding)),
+            ("paspoort", _web.ServerAddress, "/candidate/paspoort", false, ParseHex(CompactHeroPreviewCream.PaspoortKompas)),
+        };
+
+        foreach (var page in pages)
+        {
+            foreach (var width in new[] { 1440, 1920, 390 })
+            {
+                var png = await CaptureAsync(
+                    (page.Slug, page.Server, page.Path, page.Onboarding),
+                    "c",
+                    "?heroPreview=c",
+                    width);
+                if (width >= 768)
+                {
+                    AssertNoHardVerticalArtEdge(png, page.Slug, "c");
+                }
+
+                if (width == 1440)
+                {
+                    AssertSeamlessBandToArt(png, page.Slug, page.Cream, width);
+                }
+            }
+        }
+    }
+
     private async Task<byte[]> CaptureAsync(
         (string Slug, string Server, string Path, bool Onboarding) page,
         string variant,
         string query,
         int width)
     {
-        var height = width <= 390 ? 844 : 900;
+        var height = width <= 390 ? 844 : width >= 1920 ? 1080 : 900;
         await using var context = await _browser!.NewContextAsync(new()
         {
             ViewportSize = new() { Width = width, Height = height },
@@ -142,7 +176,7 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
     {
         using var img = Image.Load<Rgb24>(pngBytes);
         var heroTop = slug == "onboarding-kennismaken" ? 105 : 64;
-        var heroBottom = heroTop + (variant == "b" ? 132 : 172);
+        var heroBottom = heroTop + (variant is "b" or "c" ? 132 : 172);
         heroBottom = Math.Min(heroBottom, img.Height - 2);
         var scanXStart = (int)(img.Width * 0.42);
         var scanXEnd = (int)(img.Width * 0.72);
@@ -196,6 +230,82 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
 
         return max;
     }
+
+    private static void AssertSeamlessBandToArt(byte[] pngBytes, string slug, Rgb24 cream, int width)
+    {
+        using var img = Image.Load<Rgb24>(pngBytes);
+        var heroTop = slug == "onboarding-kennismaken" ? 105 : 64;
+        var heroBottom = Math.Min(heroTop + 132, img.Height - 2);
+        var yMid = (heroTop + heroBottom) / 2;
+
+        long lr = 0, lg = 0, lb = 0;
+        var ln = 0;
+        var xLeft0 = (int)(img.Width * 0.04);
+        var xLeft1 = (int)(img.Width * 0.22);
+        for (var x = xLeft0; x < xLeft1; x++)
+        {
+            for (var y = heroTop + 8; y < heroBottom - 8; y++)
+            {
+                var p = img[x, y];
+                lr += p.R;
+                lg += p.G;
+                lb += p.B;
+                ln++;
+            }
+        }
+
+        var leftAvg = new Rgb24((byte)(lr / ln), (byte)(lg / ln), (byte)(lb / ln));
+        var leftDrift = ColorDrift(leftAvg, cream);
+        Assert.True(leftDrift < 68, $"{slug} c@{width}: left band drift from cream {leftDrift} (avg rgb {leftAvg.R},{leftAvg.G},{leftAvg.B}).");
+
+        var maxColJump = 0;
+        var jumpX = 0;
+        var xStart = (int)(img.Width * 0.38);
+        var xEnd = (int)(img.Width * 0.58);
+        Rgb24? prev = null;
+        for (var x = xStart; x <= xEnd; x++)
+        {
+            long r = 0, g = 0, b = 0;
+            var n = 0;
+            for (var y = heroTop + 10; y < heroBottom - 10; y++)
+            {
+                var p = img[x, y];
+                r += p.R;
+                g += p.G;
+                b += p.B;
+                n++;
+            }
+
+            var avg = new Rgb24((byte)(r / n), (byte)(g / n), (byte)(b / n));
+            if (prev is { } p0)
+            {
+                var jump = ColorDrift(avg, p0);
+                if (jump > maxColJump)
+                {
+                    maxColJump = jump;
+                    jumpX = x;
+                }
+            }
+
+            prev = avg;
+        }
+
+        Assert.True(
+            maxColJump < 66,
+            $"{slug} c@{width}: colour step between band and art at x≈{jumpX} (jump={maxColJump}).");
+    }
+
+    private static Rgb24 ParseHex(string hex)
+    {
+        hex = hex.TrimStart('#');
+        return new Rgb24(
+            Convert.ToByte(hex[..2], 16),
+            Convert.ToByte(hex[2..4], 16),
+            Convert.ToByte(hex[4..6], 16));
+    }
+
+    private static int ColorDrift(Rgb24 a, Rgb24 b)
+        => Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B);
 
     private static async Task BuildContactSheetAsync(string slug)
     {

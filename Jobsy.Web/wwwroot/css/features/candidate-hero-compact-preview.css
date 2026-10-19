@@ -1,4 +1,26 @@
-/* Owner preview only (?heroPreview=a|b) — three pages, not global rollout. */
+/* Owner preview only (?heroPreview=a|b|c) — three pages, not global rollout. */
+
+/* Variant C: B band height, illustration-matched cream, wide right art (~50% band). */
+.ob-illustrated-step--compact-preview-c {
+  --cand-compact-c-cream: #e4ddce;
+  --cand-compact-c-art-share: 52%;
+  --cand-compact-c-copy-max: 46%;
+}
+
+.career-page--illustrated .cand-hero--compact-preview-c {
+  --cand-compact-c-cream: #f9e7d2;
+}
+
+.passport-page--illustrated .cand-hero--compact-preview-c {
+  --cand-compact-c-cream: #f5e7d5;
+}
+
+.cand-hero--compact-preview-c {
+  --cand-compact-c-art-share: 52%;
+  --cand-compact-c-copy-max: 46%;
+  --cand-compact-c-art-mask: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 14%, #000 100%);
+}
 
 /* Soft vignette: art fills band height; edges dissolve into pearl/cream (no hard rectangle). */
 .cand-hero--compact-preview-a,
@@ -109,6 +131,152 @@
     object-fit: contain;
     object-position: right center;
   }
+
+  /* —— Variant C (owner pick: B height, seamless wide art) —— */
+  .cand-hero--compact-preview-c {
+    --cand-hero-preview-h: clamp(5.25rem, 9.03vw, 8.125rem);
+    min-height: var(--cand-hero-preview-h);
+    height: var(--cand-hero-preview-h);
+    background-color: var(--cand-compact-c-cream) !important;
+    background-image: none !important;
+    border-block-end-color: color-mix(in srgb, var(--gold) 22%, var(--border));
+  }
+
+  .cand-hero--compact-preview-c::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: var(--cand-compact-c-art-share);
+    z-index: 0;
+    pointer-events: none;
+    background-image: var(--cand-hero-art, none);
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    background-position: 100% center;
+    -webkit-mask-image: var(--cand-compact-c-art-mask);
+    mask-image: var(--cand-compact-c-art-mask);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .cand-hero--compact-preview-c::before {
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-c-cream) 0%,
+      var(--cand-compact-c-cream) calc(100% - var(--cand-compact-c-art-share) - 2%),
+      color-mix(in srgb, var(--cand-compact-c-cream) 88%, transparent)
+        calc(100% - var(--cand-compact-c-art-share) + 4%),
+      transparent calc(100% - var(--cand-compact-c-art-share) + 14%)
+    );
+  }
+
+  .cand-hero--compact-preview-c .cand-hero__copy {
+    position: relative;
+    z-index: 2;
+    max-width: min(var(--cand-compact-c-copy-max), 36rem);
+    padding-block: clamp(0.55rem, 1.4vw, 0.85rem);
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+    background: transparent;
+  }
+
+  .cand-hero--compact-preview-c h1 {
+    font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+  }
+
+  .cand-hero--compact-preview-c .cand-hero__lead {
+    margin-top: 0.28rem;
+    font-size: 0.86rem;
+    line-height: 1.34;
+  }
+
+  .cand-hero--compact-preview-c.cand-hero--profession-band::after {
+    inset: auto;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: auto;
+    width: var(--cand-compact-c-art-share);
+  }
+
+  .cand-hero--compact-preview-c.cand-hero--profession-band::before {
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-c-cream) 0%,
+      var(--cand-compact-c-cream) calc(100% - var(--cand-compact-c-art-share) - 2%),
+      color-mix(in srgb, var(--cand-compact-c-cream) 88%, transparent)
+        calc(100% - var(--cand-compact-c-art-share) + 4%),
+      transparent calc(100% - var(--cand-compact-c-art-share) + 16%)
+    );
+  }
+
+  .cand-hero--compact-preview-c.cand-hero--profession-band .cand-hero__copy {
+    background: transparent;
+  }
+
+  @media (min-width: 640px) {
+    .cand-hero--compact-preview-c.cand-hero--profession-band .cand-hero__copy {
+      background: transparent;
+    }
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__hero-band {
+    background: var(--cand-compact-c-cream) !important;
+    min-block-size: clamp(5.25rem, 9.03vw, 8.125rem);
+    max-block-size: clamp(5.25rem, 9.03vw, 8.125rem);
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__head {
+    min-block-size: clamp(5.25rem, 9.03vw, 8.125rem);
+    max-block-size: clamp(5.25rem, 9.03vw, 8.125rem);
+    max-inline-size: min(var(--cand-compact-c-copy-max), 520px);
+    padding-block: 8px;
+    z-index: 3;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art {
+    inset-inline-start: calc(100% - var(--cand-compact-c-art-share));
+    inset-inline-end: 0;
+    inline-size: var(--cand-compact-c-art-share);
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art-img-wrap {
+    inset: 0;
+    justify-content: flex-end;
+    align-items: stretch;
+    -webkit-mask-image: var(--cand-compact-c-art-mask);
+    mask-image: var(--cand-compact-c-art-mask);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art-img-wrap img {
+    block-size: 100%;
+    inline-size: auto;
+    max-inline-size: none;
+    min-inline-size: 100%;
+    object-fit: contain;
+    object-position: right center;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__hero-band::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-c-cream) 0%,
+      var(--cand-compact-c-cream) calc(100% - var(--cand-compact-c-art-share) - 2%),
+      color-mix(in srgb, var(--cand-compact-c-cream) 90%, transparent)
+        calc(100% - var(--cand-compact-c-art-share) + 5%),
+      transparent calc(100% - var(--cand-compact-c-art-share) + 16%)
+    );
+  }
 }
 
 @media (max-width: 767px) {
@@ -159,6 +327,50 @@
       color-mix(in srgb, var(--pearl) 50%, transparent) 52%,
       color-mix(in srgb, var(--pearl) 15%, transparent) 62%,
       transparent 78%
+    );
+  }
+
+  .cand-hero--compact-preview-c {
+    --cand-hero-mobile-h: 6.25rem;
+    max-height: 6.25rem;
+    background-color: var(--cand-compact-c-cream) !important;
+    background-image: none !important;
+  }
+
+  .cand-hero--compact-preview-c::after {
+    width: 52%;
+    background-size: auto 100%;
+    background-position: 100% center;
+  }
+
+  .cand-hero--compact-preview-c .cand-hero__copy {
+    max-width: min(48%, 14.5rem);
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover {
+    --ob-compact-mobile-cover-h: 6.25rem;
+    block-size: var(--ob-compact-mobile-cover-h);
+    max-block-size: var(--ob-compact-mobile-cover-h);
+    aspect-ratio: unset;
+    background-color: var(--cand-compact-c-cream);
+    border-color: color-mix(in srgb, var(--gold) 18%, var(--border));
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover-art img {
+    object-fit: contain;
+    object-position: right center;
+    inline-size: 115%;
+    max-inline-size: none;
+    margin-inline-start: -15%;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__mobile-cover::before {
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-c-cream) 0%,
+      var(--cand-compact-c-cream) 46%,
+      color-mix(in srgb, var(--cand-compact-c-cream) 82%, transparent) 54%,
+      transparent 72%
     );
   }
 }
