@@ -46,6 +46,9 @@ public static class UiStringsAfterMatch
         Add("AfterMatch.Screen01.Hero.Lead",
             "Mooi, Sanne. Zo gaat het verder. Je ziet steeds waar je staat en wat je kunt verwachten.",
             "Nice, Sanne. This is what happens next. You always see where you are and what to expect.");
+        Add("AfterMatch.Screen01.Hero.LeadCompact",
+            "Mooi, Sanne. Zo gaat het verder.",
+            "Nice, Sanne. This is what happens next.");
         Add("AfterMatch.Screen01.Wait.Title", "Wacht op momenten van Linda", "Waiting for times from Linda");
         Add("AfterMatch.Screen01.Wait.Body",
             "Je krijgt een melding zodra ze er zijn. Meestal binnen twee werkdagen.",

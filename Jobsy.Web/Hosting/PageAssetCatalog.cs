@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261018-24",
+        "css/app.min.css?v=20261019-10",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
@@ -38,7 +38,7 @@ public static class PageAssetCatalog
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
-        "css/features/kandidaat-banen.css?v=20261017-04",
+        "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
@@ -49,9 +49,11 @@ public static class PageAssetCatalog
         "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
         "css/features/onboarding-wizard.css?v=20261018-02",
+        "css/features/onboarding-illustrated-step.css?v=20261018-r20",
+        "css/features/onboarding-test-blocks.css?v=20261018-r2",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
         "css/features/onboarding-wizard-richting-a.css?v=20261018-02",
-        "css/features/onboarding-work-history.css?v=20261018-07",
+        "css/features/onboarding-work-history.css?v=20261018-08",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",
@@ -71,7 +73,7 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
-        "css/features/na-de-match.css?v=20261019-09",
+        "css/features/na-de-match.css?v=20261019-10",
     ];
 
     public static readonly string[] WerkgeverCss =
@@ -82,7 +84,7 @@ public static class PageAssetCatalog
         "css/features/vacancy-wizard.css?v=20261017-02",
         "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",
-        "css/features/na-de-match.css?v=20261019-09",
+        "css/features/na-de-match.css?v=20261019-10",
     ];
 
     public static readonly string[] KandidatenkaartCss =

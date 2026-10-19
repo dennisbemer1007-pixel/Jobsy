@@ -7,7 +7,11 @@
         <h1>@Title</h1>
         @if (!string.IsNullOrWhiteSpace(Lead))
         {
-            <p>@Lead</p>
+            <p class="ndm-hero-lead ndm-hero-lead--full">@Lead</p>
+            @if (!string.IsNullOrWhiteSpace(LeadCompact))
+            {
+                <p class="ndm-hero-lead ndm-hero-lead--compact">@LeadCompact</p>
+            }
         }
         @if (ChildContent is not null)
         {
@@ -23,6 +27,8 @@
 @code {
     [Parameter] public string Title { get; set; } = "";
     [Parameter] public string? Lead { get; set; }
+    /// <summary>Shorter lead on viewports &lt;400px when the full lead would clip.</summary>
+    [Parameter] public string? LeadCompact { get; set; }
     [Parameter] public string? Eyebrow { get; set; }
     [Parameter] public bool ShowArt { get; set; } = true;
     [Parameter] public RenderFragment? ChildContent { get; set; }

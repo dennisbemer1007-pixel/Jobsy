@@ -449,12 +449,12 @@ public class MobileSaasUxTests
     {
         var assistant = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/LobsyAssistantChat.razor"));
         Assert.DoesNotContain("lobsy-assistant__fab", assistant);
-        Assert.Contains("lobsy-assistant-tab", assistant);
-        Assert.Contains("lobsy-assistant-tab__btn", assistant);
+        Assert.Contains("lobsy-assistant-launcher--business", assistant);
         Assert.Contains("AssistantChatHost", assistant);
         Assert.Contains("ChatHost.ToggleRequested", assistant);
-        Assert.Contains("UseMascot=\"true\"", assistant);
-        Assert.Contains("aria-expanded=\"@(_open ? \"true\" : \"false\")\"", assistant);
+        Assert.Contains("BrandImages.MarkSvg", assistant);
+        var coach = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/Components/LobsyCoach.razor"));
+        Assert.Contains("aria-expanded=\"@(ChatHost.IsOpen ? \"true\" : \"false\")\"", coach);
         Assert.Contains("jobsyComposeEnter", assistant);
         Assert.Contains("OnDraftKeyDown", assistant);
         Assert.DoesNotContain("aria-expanded=\"@_open\"", assistant);
@@ -480,21 +480,15 @@ public class MobileSaasUxTests
         Assert.DoesNotContain("Feedback.CaptureFailed", feedback);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".lobsy-assistant-tab", css);
-        Assert.Contains("position: fixed", css);
-        Assert.Contains(".lobsy-assistant-tab__btn", css);
-        Assert.Contains("writing-mode: vertical-rl", css);
-        Assert.Contains(".feedback-widget", css);
-        Assert.Contains("top: calc(50% - 7rem)", css);
+        Assert.Contains(".lobsy-coach-dock {\n    position: fixed;\n    z-index: 45;\n    inset-inline-end: 24px;", css);
+        Assert.Contains(".lobsy-coach-dock__btn {\n    flex: none;\n    width: 56px;\n    height: 56px;", css);
+        Assert.Contains(".feedback-widget {\n    position: fixed;\n    top: calc(50% - 7rem);\n    right: 0;", css);
         Assert.Contains("pointer-events: none;", css);
-        Assert.Contains(".feedback-widget__btn", css);
-        Assert.Contains("pointer-events: auto", css);
-        Assert.Contains(".feedback-widget__tab", css);
-        Assert.Contains("@media (max-width: 639px)", css);
-        Assert.Contains(".lobsy-assistant-tab.has-bottom-nav", css);
-        Assert.Contains("bottom: calc(var(--bottom-nav-h, 4.75rem)", css);
-        Assert.Contains(".feedback-widget__tab--edge", css);
-        Assert.Contains("display: none !important", css);
+        Assert.Contains(".feedback-widget__btn {\n    pointer-events: auto;", css);
+        Assert.Contains(".feedback-widget__tab {\n    writing-mode: vertical-rl;", css);
+        Assert.Contains(".app-shell.has-bottom-nav .lobsy-coach-dock,\n.app-shell:has(.bottom-nav) .lobsy-coach-dock {\n    bottom: calc(var(--bottom-nav-h, 64px) + var(--sticky-footer-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));", css);
+        Assert.Contains(".feedback-widget__tab--edge {\n        display: none !important;", css);
+        Assert.DoesNotContain(".lobsy-assistant-tab--edge,\n    .feedback-widget__tab--edge {\n        display: none !important;", css);
         Assert.Contains("button.bottom-nav__item {", css);
         Assert.DoesNotContain(".bottom-nav__item--assistant {", css);
         Assert.Contains(".pb-28 { padding-bottom: 7rem; }", css);

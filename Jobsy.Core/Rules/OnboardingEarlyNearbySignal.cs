@@ -31,7 +31,7 @@ public static class OnboardingEarlyNearbySignal
         CandidatePreferencesDto prefs,
         IEnumerable<VacancyDiscoveryRecord> vacancies,
         int? candidateAgeYears,
-        int exampleLimit = 3)
+        int exampleLimit = 6)
     {
         if (homeLat is not double lat || homeLng is not double lng)
         {

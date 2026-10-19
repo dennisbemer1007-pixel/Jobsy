@@ -106,7 +106,7 @@ else
             else
             {
                 <div class="ndm-flow-hero">
-                    <NdMHero Title="@_heroTitle" Lead="@_heroLead" />
+                    <NdMHero Title="@_heroTitle" Lead="@_heroLead" LeadCompact="@_heroLeadCompact" />
                 </div>
                 <div class="ndm-mob-timeline ndm-flow-timeline card">
                     <NdMTimeline CurrentStep="@CurrentTimelineStep()" YesDate="@YesDateLabel" InterviewHint="@CurrentTimelineHint()" />
@@ -227,6 +227,7 @@ else
     private string? _error;
     private string _heroTitle = "";
     private string _heroLead = "";
+    private string? _heroLeadCompact;
     private string _pageTitle = "";
     private string _panel = "";
     private ViewKind _view = ViewKind.Main;
@@ -297,6 +298,8 @@ else
             return;
         }
 
+        _heroLeadCompact = null;
+
         if (_panel == "messages")
         {
             _heroTitle = Culture["AfterMatch.Screen10.Hero.Title"];
@@ -328,6 +331,7 @@ else
         {
             _heroTitle = $"{thread.CompanyName} zei ja";
             _heroLead = Culture["AfterMatch.Screen01.Hero.Lead"];
+            _heroLeadCompact = Culture["AfterMatch.Screen01.Hero.LeadCompact"];
         }
 
         _pageTitle = _heroTitle;
