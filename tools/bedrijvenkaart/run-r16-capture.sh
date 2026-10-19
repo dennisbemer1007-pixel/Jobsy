@@ -29,17 +29,17 @@ wait_http "$WEB_URL/bedrijvenkaart"
 
 css_v="$(curl -sf "$WEB_URL/bedrijvenkaart" | grep -o 'bedrijvenkaart.css?v=[^"]*' | head -1)"
 echo "Loaded stylesheet: ${css_v:-MISSING}"
-test "$css_v" = "bedrijvenkaart.css?v=20261018-18"
+test "$css_v" = "bedrijvenkaart.css?v=20261018-19"
 
 profile=""
 for _ in $(seq 1 60); do
   profile="$(curl -sf "http://127.0.0.1:5200/api/company-map-initiative/public/12345678/profile" 2>/dev/null || true)"
-  if echo "$profile" | grep -q 'sfeer-vitrine'; then
+  if echo "$profile" | grep -q 'bakkerij-korenaar/sfeer-bakkerij'; then
     break
   fi
   sleep 3
 done
-echo "$profile" | grep -q 'sfeer-vitrine' || { echo "Missing demo sfeer URLs in API profile"; echo "$profile"; exit 1; }
+echo "$profile" | grep -q 'bakkerij-korenaar/sfeer-bakkerij' || { echo "Missing demo sfeer URLs in API profile"; echo "$profile"; exit 1; }
 
 node "$ROOT/tools/bedrijvenkaart/capture-screenshots.mjs" "$WEB_URL"
 node "$ROOT/tools/bedrijvenkaart/verify-captures.mjs" "$BEDRIFJKART_CAPTURE_DIR"

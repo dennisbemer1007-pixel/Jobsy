@@ -251,6 +251,20 @@ internal static class DemoCompanyMapInitiativeSeeder
         }
 
         await db.SaveChangesAsync(cancellationToken);
+
+        await db.Vacancies
+            .Where(v => v.CompanyId == WestlandId || v.CompanyId == SupermarketId)
+            .Where(v => v.Title.Contains("vitrine"))
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(v => v.ImageUrl, VacancyImageVitrine),
+                cancellationToken);
+        await db.Vacancies
+            .Where(v => v.CompanyId == WestlandId || v.CompanyId == SupermarketId)
+            .Where(v => !v.Title.Contains("vitrine"))
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(v => v.ImageUrl, VacancyImageBakkerij),
+                cancellationToken);
+
         logger.LogInformation("Bakkerij De Korenaar demo branding applied (KVK 12345678).");
     }
 }
