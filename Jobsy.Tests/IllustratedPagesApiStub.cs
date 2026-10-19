@@ -15,6 +15,9 @@ internal static class IllustratedPagesApiStub
     public static readonly Guid SampleOfferApplicationId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     public static readonly Guid SampleEmployerApplicationId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
+    /// <summary>When set, returned as mock-interview coach reply (screenshot tests).</summary>
+    public static string? MockInterviewReplyOverride { get; set; }
+
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -337,6 +340,19 @@ internal static class IllustratedPagesApiStub
         if (path.Contains("/employer/onboarding", StringComparison.OrdinalIgnoreCase))
         {
             return """{"completed":true,"dismissedSuggestions":[]}""";
+        }
+
+        if (path.Contains("/mock-interview", StringComparison.OrdinalIgnoreCase))
+        {
+            var reply = MockInterviewReplyOverride
+                        ?? "Vraag: Vertel kort waarom je solliciteert als medewerker dierenpension bij De Kooger Dierenopvang. Wat spreekt je aan in de vacature?";
+            return $$"""
+                {
+                  "reply": {{JsonSerializer.Serialize(reply, Json)}},
+                  "usedAi": false,
+                  "disclaimer": ""
+                }
+                """;
         }
 
         return "{}";

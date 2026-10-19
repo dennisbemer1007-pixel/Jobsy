@@ -61,14 +61,17 @@ public class EmailAssetTests
     }
 
     [Fact]
-    public void Chatbots_keep_the_illustrated_mascot()
+    public void Assistant_chat_uses_brand_marks_not_the_3d_mascot()
     {
         var root = FindRepoRoot();
         var assistant = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyAssistantChat.razor"));
-        Assert.Contains("UseMascot=\"true\"", assistant);
-        var coach = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyCoachAvatar.razor"));
-        Assert.Contains("BrandImages.MascotWebp128", coach);
-        Assert.True(File.Exists(Path.Combine(root, "Jobsy.Web", "wwwroot", "images", "brand", "mascot-128.png")));
+        Assert.DoesNotContain("UseMascot=\"true\"", assistant);
+        Assert.Contains("BrandImages.MarkSvg", assistant);
+        var coach = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyCoach.razor"));
+        Assert.Contains("BrandImages.MarkSvg", coach);
+        Assert.DoesNotContain("mascot-coach.webp", coach);
+        var coachAvatar = File.ReadAllText(Path.Combine(root, "Jobsy.Web", "Components", "LobsyCoachAvatar.razor"));
+        Assert.Contains("BrandImages.MascotWebp128", coachAvatar);
     }
 
     private static string FindRepoRoot()

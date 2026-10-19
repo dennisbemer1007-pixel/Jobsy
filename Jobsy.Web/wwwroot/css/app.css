@@ -6950,55 +6950,125 @@ a.engagement-btn {
     }
 }
 
-/* Inline mascot encouragement (vacancy apply, paspoort) — never floating over content */
+/* Inline encouragement (vacancy apply, paspoort) — warm cream card, mascot column + body */
 .profile-encourage {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
+    position: relative;
+    display: block;
     margin: 1rem 0 1.25rem;
-    padding: 0.85rem 1rem;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
-    border: 1px solid color-mix(in srgb, var(--brand) 12%, transparent);
+    padding: 0.85rem 2.5rem 0.85rem 0.85rem;
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--pearl-shine) 88%, var(--pearl-mid));
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
     max-width: 36rem;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.kb-detail .profile-encourage,
+.apply-panel .profile-encourage {
+    max-width: none;
+    width: 100%;
+    align-self: stretch;
+}
+
+.apply-panel--success > .profile-encourage {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.profile-encourage__row {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: start;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 .profile-encourage__mascot {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     flex-shrink: 0;
+    display: block;
 }
 
-.profile-encourage__copy {
-    flex: 1;
+.profile-encourage__body {
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.45rem;
 }
 
 .profile-encourage__text {
-    margin: 0 0 0.35rem;
+    margin: 0;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
     font-size: 0.9375rem;
-    line-height: 1.45;
+    line-height: 1.4;
     color: var(--text);
 }
 
+@media (max-width: 768px) {
+    .profile-encourage__text {
+        font-size: 0.9rem;
+        line-height: 1.38;
+    }
+}
+
+@media (min-width: 769px) {
+    .apply-panel .profile-encourage__text {
+        font-size: 0.875rem;
+        line-height: 1.35;
+    }
+}
+
 .profile-encourage__link {
+    display: inline-flex;
+    margin-top: 0;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0.35rem 0.85rem;
+    white-space: nowrap;
     font-size: 0.875rem;
     font-weight: 600;
-    color: var(--brand);
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    color: var(--brand-contrast, #fff);
+    background: var(--brand);
+    border-radius: 999px;
+    text-decoration: none;
+}
+
+.profile-encourage__link:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
 }
 
 .profile-encourage__close {
-    flex-shrink: 0;
+    position: absolute;
+    top: 0.75rem;
+    right: 0.45rem;
+    z-index: 2;
+    margin: 0;
+    width: 2rem;
+    height: 2rem;
     border: none;
-    background: transparent;
-    font-size: 1.25rem;
+    background: color-mix(in srgb, var(--muted) 12%, transparent);
+    font-size: 1.125rem;
     line-height: 1;
-    padding: 0.15rem 0.35rem;
+    padding: 0;
     cursor: pointer;
     color: var(--muted);
-    border-radius: 6px;
+    border-radius: 999px;
+}
+
+.profile-encourage__close:hover {
+    color: var(--text);
+    background: color-mix(in srgb, var(--muted) 18%, transparent);
 }
 
 .profile-encourage__close:focus-visible {
@@ -7011,6 +7081,57 @@ a.engagement-btn {
     margin: 1.25rem 0 0.5rem;
     display: flex;
     justify-content: flex-start;
+}
+
+.lobsy-coach-cta__btn--warm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5625rem;
+    min-height: 48px;
+    padding: 0.45rem 1rem 0.45rem 0.65rem;
+    border: 0;
+    border-radius: 999px;
+    background: #ffc9a8;
+    color: var(--brand-deep, #0a2044);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 18%, transparent);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 650;
+    line-height: 1.2;
+    text-align: start;
+    max-width: 100%;
+}
+
+.lobsy-coach-cta__btn--warm:hover,
+.lobsy-coach-cta__btn--warm:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 22%, transparent);
+}
+
+.lobsy-coach-cta__btn--warm:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand) 55%, white);
+    outline-offset: 2px;
+}
+
+.lobsy-coach-cta__medallion {
+    position: static;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    transform: none;
+    filter: drop-shadow(0 2px 6px color-mix(in srgb, var(--brand) 18%, transparent));
+}
+
+.lobsy-coach-cta__medallion img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.lobsy-coach-cta__label {
+    white-space: normal;
 }
 
 .lobsy-coach-cta__btn {
@@ -7149,6 +7270,7 @@ a.engagement-btn {
     max-height: min(88vh, 720px);
     display: flex;
     flex-direction: column;
+    min-height: 0;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 14px;
@@ -7171,16 +7293,93 @@ a.engagement-btn {
         transform: none;
         width: 100%;
         max-width: none;
+        height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 0.35rem));
         max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0px) - 0.35rem));
         border-radius: 18px 18px 0 0;
         border-bottom: 0;
         box-shadow: 0 -12px 40px color-mix(in srgb, var(--brand) 22%, transparent);
+        padding-bottom: 0;
     }
 
-    .mock-interview-modal .mock-interview-chat {
-        flex: 1;
-        min-height: 12rem;
-        max-height: min(52dvh, 28rem);
+    .mock-interview-modal__header {
+        padding: 0.55rem 0.85rem;
+    }
+
+    .mock-interview-modal__header h2 {
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .mock-interview-modal__lead {
+        display: none;
+    }
+
+    .mock-interview-modal__vacancy {
+        font-size: 0.72rem;
+        margin-top: 0.05rem;
+    }
+
+    .mock-interview-modal__disclaimer {
+        font-size: 0.72rem;
+        line-height: 1.35;
+        padding: 0.45rem 0.55rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .mock-interview-modal .mock-interview-compose {
+        flex-shrink: 0;
+        margin-top: 0;
+        padding-top: 0.55rem;
+        padding-bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
+        background: #fffaf5;
+        border-top: 1px solid #ecd9c8;
+    }
+
+    .mock-interview-compose textarea {
+        min-height: 2.65rem;
+    }
+}
+
+@media (max-width: 360px) {
+    .mock-interview-modal__header {
+        padding: 0.4rem 0.65rem;
+    }
+
+    .mock-interview-modal__header h2 {
+        font-size: 0.88rem;
+    }
+
+    .mock-interview-modal__vacancy {
+        font-size: 0.65rem;
+        line-height: 1.2;
+    }
+
+    .mock-interview-modal__disclaimer {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.65rem;
+        line-height: 1.2;
+        padding: 0.28rem 0.4rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .mock-interview-modal__disclaimer-lead {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mock-interview-modal__disclaimer-link {
+        flex: 0 0 auto;
+    }
+
+    .mock-interview-progress {
+        margin-bottom: 0.25rem;
+        font-size: 0.72rem;
     }
 }
 
@@ -7224,6 +7423,26 @@ a.engagement-btn {
     cursor: pointer;
 }
 
+.mock-interview-modal__scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-modal__disclaimer,
+.mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-progress,
+.mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-hint,
+.mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-chat,
+.mock-interview-modal--warm > .mock-interview-modal__scroll > .state-message,
+.mock-interview-modal--warm > .mock-interview-compose {
+    margin-left: 1rem;
+    margin-right: 1rem;
+}
+
 .mock-interview-modal__disclaimer {
     margin: 0 0 0.55rem;
     padding: 0.55rem 0.7rem;
@@ -7232,6 +7451,14 @@ a.engagement-btn {
     color: var(--muted);
     font-size: 0.8rem;
     line-height: 1.4;
+}
+
+.mock-interview-modal__disclaimer-lead {
+    display: inline;
+}
+
+.mock-interview-modal__disclaimer-link {
+    white-space: nowrap;
 }
 
 .mock-interview-progress {
@@ -7253,16 +7480,16 @@ a.engagement-btn {
 }
 
 .mock-interview-chat {
-    flex: 1;
-    min-height: 220px;
-    max-height: 42vh;
-    overflow-y: auto;
+    flex: 0 0 auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
     padding: 0.35rem 0.15rem 0.65rem;
     border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 0;
 }
 
 .mock-interview-chat__empty {
@@ -7390,7 +7617,8 @@ a.engagement-btn {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
-    margin-top: 0.75rem;
+    margin-top: 0.35rem;
+    flex-shrink: 0;
 }
 
 .mock-interview-compose textarea {
@@ -7415,6 +7643,126 @@ a.engagement-btn {
     justify-content: flex-end;
     gap: 0.5rem;
     flex-wrap: wrap;
+}
+
+.mock-interview__chips {
+    margin: 0.15rem 0 0;
+    flex-shrink: 0;
+}
+
+.mock-interview__chip {
+    display: block;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, #fff6db 75%, var(--surface));
+    border: 1px solid color-mix(in srgb, #e2c36a 40%, var(--border));
+    color: var(--brand);
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.mock-interview-compose__row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.55rem;
+}
+
+.mock-interview-compose__row textarea {
+    flex: 1;
+    min-width: 0;
+}
+
+.mock-interview-compose__send {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.85rem;
+    height: 2.85rem;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: #ffc9a8;
+    color: var(--brand-deep, #0a2044);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--brand) 16%, transparent);
+    cursor: pointer;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.mock-interview-compose__send:hover:not(:disabled),
+.mock-interview-compose__send:focus-visible:not(:disabled) {
+    background: #ffb88f;
+}
+
+.mock-interview-compose__send:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand) 45%, transparent);
+    outline-offset: 2px;
+}
+
+.mock-interview-compose__send:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.mock-interview-compose__foot {
+    display: flex;
+    justify-content: flex-start;
+    margin-top: 0.15rem;
+}
+
+.mock-interview-compose__restart {
+    border: 0;
+    background: transparent;
+    padding: 0.35rem 0.15rem;
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.mock-interview-compose__restart:hover:not(:disabled),
+.mock-interview-compose__restart:focus-visible:not(:disabled) {
+    color: var(--brand);
+}
+
+.mock-interview-compose__restart:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--brand) 35%, transparent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.mock-interview-compose__restart:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 1023px) {
+    .mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-modal__disclaimer,
+    .mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-progress,
+    .mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-hint,
+    .mock-interview-modal--warm > .mock-interview-modal__scroll > .mock-interview-chat,
+    .mock-interview-modal--warm > .mock-interview-modal__scroll > .state-message,
+    .mock-interview-modal--warm > .mock-interview-compose {
+        margin-left: 1.125rem;
+        margin-right: 1.125rem;
+    }
+
+    .mock-interview-compose__row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mock-interview-compose__send {
+        align-self: flex-end;
+        width: 3rem;
+        height: 3rem;
+    }
 }
 
 .moderation-modal {
@@ -13107,6 +13455,7 @@ button.linkish:hover {
 .apply-panel {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
     gap: 0.85rem;
     padding: 1rem;
     border: 1px solid var(--border);
@@ -21458,7 +21807,6 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 /* Vacancy detail + notifications: inline tips only — no floating coach tab overlapping sticky UI. */
 .app-shell:has(.kb-detail) .lobsy-coach-dock,
 .app-shell:has(.notifications-page) .lobsy-coach-dock,
-.app-shell:has(.kb-detail) .lobsy-coach-cta,
 .app-shell:has(.notifications-page) .lobsy-coach-cta,
 .app-shell:has(.kb-detail) .lobsy-assistant-tab--edge,
 .app-shell:has(.notifications-page) .lobsy-assistant-tab--edge {

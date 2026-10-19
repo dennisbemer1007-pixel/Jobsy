@@ -459,6 +459,8 @@ projects:
                 value: "true"
               - key: TestJourneyIllustrationEnabled
                 value: "true"
+              - key: ChatContextGreetingEnabled
+                value: "true"
               - key: TestAccounts__Enabled
                 sync: false
               # Same provider and key presence as the API, so the privacy page drops Resend when Lettermint sends.
