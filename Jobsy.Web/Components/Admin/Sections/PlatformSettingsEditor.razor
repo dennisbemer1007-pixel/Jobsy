@@ -361,7 +361,7 @@ else if (_snapshot is not null)
         catch (Exception ex)
         {
             _messageIsError = true;
-            _message = string.Format(Culture["AdminSettings.SaveFailed"], ex.Message);
+            _message = UserFacingErrorMessage(ex);
         }
         finally
         {
@@ -586,15 +586,18 @@ else if (_snapshot is not null)
         catch (Exception ex)
         {
             _messageIsError = true;
-            _message = string.Format(
-                Culture["AdminSettings.SaveFailed"],
-                string.IsNullOrWhiteSpace(ex.Message) ? "onbekende fout" : ex.Message);
+            _message = UserFacingErrorMessage(ex);
         }
         finally
         {
             _busy = false;
         }
     }
+
+    private string UserFacingErrorMessage(Exception ex)
+        => UserFacingError.MessageKeyFor(ex) is { } key
+            ? Culture[key]
+            : Culture["Common.Error.TryAgain"];
 
     private void VerifySavedValues(IReadOnlyDictionary<string, object?> pending, PlatformFeatureSnapshot saved)
     {

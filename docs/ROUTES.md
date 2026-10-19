@@ -35,7 +35,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | role list | `[Authorize(Roles="…")]` (Jobsy role claim names) |
 | `any (no Authorize attribute)` | No attribute — Web has no FallbackPolicy |
 
-## Table (276 routes)
+## Table (283 routes)
 
 | Route | Component | Access |
 |-------|-----------|--------|
@@ -135,9 +135,11 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/actions/set-unavailable` | `Pages/Candidate/SetUnavailableAction.razor` | any (no Authorize attribute) |
 | `/candidate/actions/withdraw-others` | `Pages/Candidate/WithdrawOthersAction.razor` | any (no Authorize attribute) |
 | `/candidate/applications` | `Pages/Candidate/Applications.razor` | Candidate, BranchManager, RegionalManager, EnterpriseManager, Intermediary, Admin |
+| `/candidate/applications/{ApplicationId:guid}/aanbod` | `Pages/Candidate/ApplicationOfferPage.razor` | Candidate |
 | `/candidate/applications/{ApplicationId:guid}/after-match` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
 | `/candidate/applications/{ApplicationId:guid}/after-match/bevestiging` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
 | `/candidate/applications/{ApplicationId:guid}/after-match/herinneringen` | `Pages/Candidate/CandidateAfterMatch.razor` | Candidate |
+| `/candidate/applications/{ApplicationId:guid}/gesprek` | `Pages/Candidate/ApplicationInterviewPage.razor` | Candidate |
 | `/candidate/beroep/{EscoId:guid}/dag` | `Pages/Candidate/OccupationDayPage.razor` | Candidate |
 | `/candidate/binnenkort` | `Pages/Candidate/CandidateBinnenkort.razor` | Candidate |
 | `/candidate/career` | `Pages/Candidate/CareerTest.razor` | Candidate |
@@ -159,6 +161,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/match` | `Pages/Candidate/MatchPage.razor` | anonymous |
 | `/candidate/ontdekkingsreis` | `Pages/Candidate/DiscoveryJourney.razor` | Candidate |
 | `/candidate/paspoort` | `Pages/Candidate/Passport.razor` | Candidate |
+| `/candidate/paspoort/referentie/vraag/{EntryId:guid}` | `Pages/Candidate/ReferenceVerificationRequestPage.razor` | Candidate |
+| `/candidate/paspoort/referenties/{RequestId:guid}` | `Pages/Candidate/ReferenceVerificationDetailPage.razor` | Candidate |
 | `/candidate/privacy` | `Pages/Candidate/CandidatePrivacy.razor` | Candidate |
 | `/candidate/proactive-matching` | `Pages/Candidate/ProactiveMatching.razor` | Candidate |
 | `/candidate/profile` | `Pages/Candidate/Profile.razor` | Candidate |
@@ -170,6 +174,8 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/candidate/start/nearby` | `Pages/Candidate/OnboardingStartNearbyRedirect.razor` | any (no Authorize attribute) |
 | `/candidate/talent-contacts` | `Pages/Candidate/CandidateTalentContacts.razor` | Candidate |
 | `/candidate/tests` | `Pages/Candidate/TestsIndexRedirect.razor` | Candidate |
+| `/candidate/tips` | `Pages/Candidate/ContextualTipsIndex.razor` | Candidate |
+| `/candidate/tips/{Slug}` | `Pages/Candidate/ContextualTipDetail.razor` | Candidate |
 | `/candidate/uren` | `Pages/Candidate/MaqqieHours.razor` | Candidate |
 | `/candidate/vacancies` | `Pages/Candidate/Vacancies.razor` | Candidate |
 | `/candidate/values` | `Pages/Candidate/ValuesScan.razor` | Candidate |
@@ -281,6 +287,7 @@ Authorization intent: [`security/roles-matrix.md`](security/roles-matrix.md).
 | `/vacancies/{Id:guid}` | `Pages/VacancyDetail.razor` | anonymous |
 | `/vestiging/{CompanyId:guid}` | `Pages/VestigingLanding.razor` | anonymous |
 | `/wachtwoord-vergeten` | `Pages/Account/ForgotPassword.razor` | anonymous |
+| `/werk-referentie/{Token}` | `Pages/Public/WorkExperienceReferencePublicPage.razor` | anonymous |
 | `/werkgever` | `Pages/Werkgever/WerkgeverDashboard.razor` | BranchManager, RegionalManager, EnterpriseManager, Intermediary |
 | `/werkgever/kandidaatinzichten` | `Pages/Werkgever/CandidateInsights.razor` | BranchManager, RegionalManager, EnterpriseManager |
 | `/werkgever/kandidatenkaart` | `Pages/Werkgever/Kandidatenkaart.razor` | BranchManager, RegionalManager, EnterpriseManager |

@@ -45,6 +45,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             sp.GetRequiredService<JobsyApiClient>(),
             sp.GetRequiredService<ILogger<GratisDnaMergeService>>()));
         Services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate());
+        Services.AddSingleton<IOnboardingFinaleV2Gate>(new StubOnboardingFinaleGate());
     }
 
     [Fact]
@@ -138,6 +139,12 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
     private sealed class FixedTestJourneyGate : ITestJourneyIllustrationGate
     {
         public bool Enabled => false;
+    }
+
+    private sealed class StubOnboardingFinaleGate : IOnboardingFinaleV2Gate
+    {
+        public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
     }
 
     private sealed class FixedFlags : IFeatureFlags
