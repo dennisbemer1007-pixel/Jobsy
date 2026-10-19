@@ -6113,6 +6113,9 @@ namespace Jobsy.Infrastructure.Data.Migrations
                     b.Property<bool>("SupportAccessNotifySubject")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("TestDepthValueMockupEnabled")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("TestEditModeEnabled")
                         .HasColumnType("boolean");
 

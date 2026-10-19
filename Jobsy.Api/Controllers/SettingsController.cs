@@ -515,6 +515,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     ResearchConsentEnabled: request.ResearchConsentEnabled,
                     TestEditModeEnabled: request.TestEditModeEnabled,
                     SamplePdfEnabled: request.SamplePdfEnabled,
+                    TestDepthValueMockupEnabled: request.TestDepthValueMockupEnabled,
                     ClearAdminFlagOverrideKeys: request.ClearAdminFlagOverrideKeys,
                     CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
                     CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
@@ -627,6 +628,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
         Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
         Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
+        Add("TestDepthValueMockupEnabled", before.TestDepthValueMockupEnabled.ToString(), after.TestDepthValueMockupEnabled.ToString());
         Add("OccupationDayInLifeEnabled", before.OccupationDayInLifeEnabled.ToString(), after.OccupationDayInLifeEnabled.ToString());
         Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());
@@ -679,7 +681,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             onboardingFinaleV2Enabled = snap.OnboardingFinaleV2Enabled,
             occupationDayInLifeEnabled = snap.OccupationDayInLifeEnabled,
             testEditModeEnabled = snap.TestEditModeEnabled,
-            samplePdfEnabled = snap.SamplePdfEnabled
+            samplePdfEnabled = snap.SamplePdfEnabled,
+            testDepthValueMockupEnabled = snap.TestDepthValueMockupEnabled
         });
     }
 
@@ -1012,6 +1015,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.ResearchConsentEnabled,
             snap.TestEditModeEnabled,
             snap.SamplePdfEnabled,
+            snap.TestDepthValueMockupEnabled,
             snap.AdminOverriddenFlagKeys,
             snap.CandidateApplyPerMinuteLimit,
             snap.CandidateApplyPerHourLimit,

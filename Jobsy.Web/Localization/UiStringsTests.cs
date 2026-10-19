@@ -105,16 +105,16 @@ public static class UiStringsTests
         Add("TestDone.Title", "Weer een laag eraf", "Another layer off", "Kolejna warstwa spadła", "Încă un strat a căzut", "طبقة أخرى سقطت");
         Add("TestDone.Eyebrow", "In de diepte · {0} · {1} klaar", "Diving · {0} · {1} done", "Nurkowanie · {0} · {1} done", "Scufundare · {0} · {1} done", "غوص · {0} · {1} done");
         Add("TestDone.LeadFull",
-            "{0} is helemaal klaar. Je scores staan in je paspoort; je persoonlijke spiegel blijft privé.",
-            "{0} is fully done. Your scores are in your passport; your personal mirror stays private.",
+            "{0} is helemaal klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
             "{0} is fully done. Your scores are in tyr passport; your personal mirror stays private.",
-            "{0} is fully done. Your scores are in your passport; your personal mirror stays private.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
             "‏{0} is fully done. Your scores are in your passport; your personal mirror stays private.");
         Add("TestDone.LeadLevel",
-            "{0}: {1} is klaar. Je scores staan in je paspoort; je persoonlijke spiegel blijft privé.",
-            "{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.",
+            "{0}: {1} is klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
             "{0}: {1} is done. Your scores are in tyr passport; your personal mirror stays private.",
-            "{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
             "‏{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.");
         Add("TestDone.Live", "Weer een laag eraf. {0} {1} is klaar.", "Another layer off. {0} {1} is done.", "Another warstwa off. {0} {1} is done.", "Another layer off. {0} {1} is done.", "‏Another layer off. {0} {1} is done.");
         Add("TestDone.Back", "Terug naar Mijn tests", "Back to My tests", "Wstecz to Moje testy", "Înapoi to Testele mele", "رجوع to اختباراتي");

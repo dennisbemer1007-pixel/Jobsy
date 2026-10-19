@@ -71,6 +71,7 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.OccupationDayInLifeEnabled,
                 snap.TestEditModeEnabled,
                 snap.SamplePdfEnabled,
+                snap.TestDepthValueMockupEnabled,
                 snap.UwvFeaturesEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
