@@ -151,7 +151,7 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__footer-privacy {
-    display: block;
+    display: none;
     align-self: center;
     margin-block-end: 6px;
     padding: 0;
