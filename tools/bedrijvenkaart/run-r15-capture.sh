@@ -31,7 +31,14 @@ css_v="$(curl -sf "$WEB_URL/bedrijvenkaart" | grep -o 'bedrijvenkaart.css?v=[^"]
 echo "Loaded stylesheet: ${css_v:-MISSING}"
 test "$css_v" = "bedrijvenkaart.css?v=20261018-17"
 
-profile="$(curl -sf "$WEB_URL/../5200/api/company-map-initiative/public/12345678/profile" 2>/dev/null || curl -sf "http://127.0.0.1:5200/api/company-map-initiative/public/12345678/profile")"
+profile=""
+for _ in $(seq 1 60); do
+  profile="$(curl -sf "http://127.0.0.1:5200/api/company-map-initiative/public/12345678/profile" 2>/dev/null || true)"
+  if echo "$profile" | grep -q 'bakkerij-korenaar'; then
+    break
+  fi
+  sleep 3
+done
 echo "$profile" | grep -q 'bakkerij-korenaar' || { echo "Missing demo sfeer URLs in API profile"; echo "$profile"; exit 1; }
 
 node "$ROOT/tools/bedrijvenkaart/capture-screenshots.mjs" "$WEB_URL"

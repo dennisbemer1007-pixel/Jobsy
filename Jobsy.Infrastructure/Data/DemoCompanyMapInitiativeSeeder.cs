@@ -173,6 +173,19 @@ internal static class DemoCompanyMapInitiativeSeeder
         ILogger logger,
         CancellationToken cancellationToken = default)
     {
+        var hubPhotoJson = JsonSerializer.Serialize(HubPhotos);
+        var hubRows = await db.Companies
+            .Where(c => c.Id == SupermarketId)
+            .ExecuteUpdateAsync(
+                s => s
+                    .SetProperty(c => c.HubPhotoUrlsJson, hubPhotoJson)
+                    .SetProperty(c => c.HubVideoUrl, (string?)null),
+                cancellationToken);
+        if (hubRows == 0)
+        {
+            return;
+        }
+
         var root = await db.Companies.FirstOrDefaultAsync(c => c.Id == SupermarketId, cancellationToken);
         if (root is null)
         {
@@ -187,7 +200,7 @@ internal static class DemoCompanyMapInitiativeSeeder
         root.HubCultureText =
             "Klein team, korte lijnen, veel vakmanschap en ruimte om te groeien.";
         root.HubVideoUrl = null;
-        root.HubPhotoUrlsJson = JsonSerializer.Serialize(HubPhotos);
+        root.HubPhotoUrlsJson = hubPhotoJson;
         root.InitiativeAvgResponseDays = 2;
 
         var westland = await db.Companies.FirstOrDefaultAsync(c => c.Id == WestlandId, cancellationToken);
