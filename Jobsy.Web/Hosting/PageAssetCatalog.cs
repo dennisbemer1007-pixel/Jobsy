@@ -73,7 +73,7 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
-        "css/features/na-de-match.css?v=20261019-10",
+        "css/features/na-de-match.css?v=20261019-11",
     ];
 
     public static readonly string[] WerkgeverCss =
@@ -84,7 +84,7 @@ public static class PageAssetCatalog
         "css/features/vacancy-wizard.css?v=20261017-02",
         "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",
-        "css/features/na-de-match.css?v=20261019-10",
+        "css/features/na-de-match.css?v=20261019-11",
     ];
 
     public static readonly string[] KandidatenkaartCss =
