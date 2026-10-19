@@ -33,6 +33,10 @@
     {
         <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r2.css?v=20261019-r2" />
     }
+    @if (_compactLayout == "c")
+    {
+        <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r3.css?v=20261019-r3" />
+    }
     <h1 class="visually-hidden">@Culture["Passport.Title"]</h1>
 
     @if (_loading)
@@ -50,7 +54,14 @@
             <CandidateKompasGreetingBand FirstName="@_firstName" />
         }
 
-        <div class="passport-layout @(_compactLayout == "c" ? "passport-layout--wide-mock" : null)">
+        <div class="@(_compactLayout == "c" ? "passport-wide-canvas" : null)">
+            @if (_compactLayout == "c")
+            {
+                <div class="passport-margin-decor passport-margin-decor--left"
+                     style="@LeftMarginDecorStyle"
+                     aria-hidden="true"></div>
+            }
+            <div class="passport-layout @(_compactLayout == "c" ? "passport-layout--wide-mock" : null)">
             <div class="passport-layout__sidebar passport-layout__card passport-layout__card--desktop">
                 <PassportCard Compact="false"
                               ShowHeaderGreeting="@(_compactLayout is "b" or "c")"
@@ -97,7 +108,7 @@
                                   OnDownloadCv="DownloadLobsyCvAsync" />
                 </div>
 
-                <div class="passport-home-stack @(_compactLayout == "c" ? "passport-home-stack--inline-nudge" : null)">
+                <div class="passport-home-stack @(_compactLayout == "c" ? "passport-home-stack--anchored-nudge" : null)">
                     <PassportOverview CompetenceProgress="@Arc(AssessmentKind.Competence)"
                                       CareerProgress="@Arc(AssessmentKind.Career)"
                                       CultureProgress="@Arc(AssessmentKind.Culture)"
@@ -288,10 +299,11 @@
                     </article>
                 </div>
             </div>
+            </div>
             @if (_compactLayout == "c")
             {
-                <div class="passport-layout__margin-art"
-                     style="@MarginArtStyle"
+                <div class="passport-margin-decor passport-margin-decor--right"
+                     style="@RightMarginDecorStyle"
                      aria-hidden="true"></div>
             }
         </div>
@@ -365,8 +377,11 @@
     private List<CandidateEmployerHistory> _employers = [];
     private PersistingComponentStateSubscription _persistSubscription;
 
-    private string MarginArtStyle =>
+    private string RightMarginDecorStyle =>
         $"--passport-margin-art:url('{CandidateIllustratedImages.KompasHeroWide}');";
+
+    private string LeftMarginDecorStyle =>
+        $"--passport-margin-lobster:url('{BrandImages.MascotWebp256}');";
 
     protected override void OnInitialized()
     {

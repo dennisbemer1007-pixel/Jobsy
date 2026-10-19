@@ -65,6 +65,23 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_real_paspoort_compact_variant_c_r3()
+    {
+        Directory.CreateDirectory(ArtifactsDir);
+        var tableRows = new List<string>();
+        foreach (var (width, height, tag) in Viewports())
+        {
+            tableRows.Add(await CaptureAsync("c", width, height, tag, revision: "r3"));
+        }
+
+        var md = BuildMarkdown(tableRows, revision: "r3", title: "Paspoort compact mockup variant C (r3, PO choice)");
+        await File.WriteAllTextAsync(Path.Combine(ArtifactsDir, "above-the-fold-coverage-r3.md"), md);
+        await File.WriteAllTextAsync(
+            Path.Combine(FindRepoRoot(), "tools", "paspoort-compact-mockups", "above-the-fold-coverage-r3.md"),
+            md);
+    }
+
+    [Fact]
     public async Task Capture_real_paspoort_compact_layout_variants_r2()
     {
         Directory.CreateDirectory(ArtifactsDir);
@@ -73,11 +90,11 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
         {
             foreach (var (width, height, tag) in Viewports())
             {
-                tableRows.Add(await CaptureAsync(layout, width, height, tag));
+                tableRows.Add(await CaptureAsync(layout, width, height, tag, revision: "r2"));
             }
         }
 
-        var md = BuildMarkdown(tableRows);
+        var md = BuildMarkdown(tableRows, revision: "r2", title: "Paspoort compact mockups r2 (real Blazor, NL)");
         await File.WriteAllTextAsync(Path.Combine(ArtifactsDir, "above-the-fold-coverage-r2.md"), md);
         await File.WriteAllTextAsync(
             Path.Combine(FindRepoRoot(), "tools", "paspoort-compact-mockups", "above-the-fold-coverage-r2.md"),
@@ -92,7 +109,7 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
         yield return (390, 844, "390-mobile");
     }
 
-    private async Task<string> CaptureAsync(string layout, int width, int height, string tag)
+    private async Task<string> CaptureAsync(string layout, int width, int height, string tag, string revision = "r2")
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
@@ -115,7 +132,7 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
         await Assertions.Expect(page.Locator(".passport-overview__title")).ToHaveTextAsync("Dit ben jij");
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        var fileName = $"variant-{layout}-{tag}-r2.png";
+        var fileName = $"variant-{layout}-{tag}-{revision}.png";
         await page.ScreenshotAsync(new() { Path = Path.Combine(ArtifactsDir, fileName), FullPage = false });
 
         var foldJson = await page.EvaluateAsync<string>(
@@ -174,15 +191,15 @@ public sealed class PassportCompactMockupR2ScreenshotTests : IAsyncLifetime
         return $"| {variant} | {viewport} | {Cell("passport-card")} | {Cell("overview")} | {Cell("nudge")} | {Cell("tabs")} | {Cell("tab-content")} | {fold.Lowest}px | {fold.Spare}px | `{file}` |";
     }
 
-    private static string BuildMarkdown(List<string> rows)
+    private static string BuildMarkdown(List<string> rows, string revision, string title)
     {
         var header =
             "| Variant | Viewport | Passport | Dit ben jij | Wist je dat… nudge | Tabs | Tab content | Lowest bottom | Spare px | File |\n" +
             "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n";
-        return """
-            # Paspoort compact mockups r2 (real Blazor, NL)
+        return $"""
+            # {title}
 
-            Fake candidate **Alex Demo**. Viewport height = fold line (browser chrome excluded). Components: real header, `PassportCard`, `PassportOverview`, `ProfileEncouragementNudge` (wist-tests-match).
+            Fake candidate **Alex Demo**. Viewport height = fold line (browser chrome excluded). Components: real header, `PassportCard`, `PassportOverview`, `ProfileEncouragementNudge` (wist-tests-match). Revision **{revision}**.
 
             """ + header + string.Join('\n', rows) + "\n";
     }
