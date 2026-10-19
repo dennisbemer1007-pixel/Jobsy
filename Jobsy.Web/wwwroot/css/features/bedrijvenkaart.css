@@ -1070,10 +1070,51 @@ textarea.bk-wg-input {
   font-size: 0.8rem;
 }
 
+/* Desktop/tablet: same mobile hero art + cream→wall blend (no separate ::after layer). */
 @media (min-width: 640px) {
-  .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy {
+  .bk-page .bk-cand-hero.cand-hero--bk-single {
+    position: relative;
+    background-color: var(--pearl, #f7f4f0) !important;
+    background-image: var(--cand-hero-art) !important;
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    background-position: right 16px bottom;
+    overflow: hidden;
+  }
+
+  .bk-page .bk-cand-hero.cand-hero--bk-single::after,
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__media {
+    display: none !important;
+    content: none !important;
+    background: none !important;
+  }
+
+  .bk-page .bk-cand-hero.cand-hero--bk-single::before {
+    display: block !important;
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      90deg,
+      #f7f4f0 0%,
+      #f7f4f0 28%,
+      #f5efe8 36%,
+      #f0e6dc 42%,
+      #efe3d6 46%,
+      #efdfd2 50%,
+      #efe0d4 54%,
+      #efe0d4 58%,
+      rgb(239 224 212 / 55%) 64%,
+      rgb(239 224 212 / 0%) 72%
+    );
+  }
+
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy {
+    position: relative;
+    z-index: 2;
     background: transparent !important;
-    margin-inline: 0;
   }
 }
 
@@ -1097,56 +1138,16 @@ textarea.bk-wg-input {
     max-height: 280px;
   }
 
-  .bk-page .bk-cand-hero.cand-hero--bk-single {
-    background-color: var(--pearl, #f7f4f0);
-    background-image: linear-gradient(
-      90deg,
-      #f7f4f0 0%,
-      #f7f4f0 36%,
-      #f5efe8 46%,
-      #efe3d6 54%,
-      #efe0d4 62%,
-      #efe0d4 100%
-    ) !important;
-  }
-
-  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__media {
-    display: none !important;
-  }
-
-  .bk-page .cand-hero--bk-single.cand-hero--profession-band::before {
-    display: none !important;
-    content: none !important;
-    background: none !important;
-  }
-
-  .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
-    display: block !important;
-    content: "" !important;
-    inset: 0;
-    background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
-    background-repeat: no-repeat;
-    /* Fit full scene by band height — nothing clipped at the top (Dennis rule). */
-    background-size: auto 100%;
-    background-position: right bottom;
-    opacity: 1 !important;
-    filter: none !important;
-    mix-blend-mode: normal !important;
-    z-index: 0;
-  }
-
-  .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy {
-    z-index: 2;
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy {
     width: auto;
     max-width: min(52%, 36rem);
     margin-inline: 0;
     padding: clamp(1.35rem, 3vw, 2rem) var(--bk-gutter, clamp(1.5rem, 2.8vw, 2rem));
     box-sizing: border-box;
-    background: transparent !important;
   }
 
-  .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy h1,
-  .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy .cand-hero__lead {
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy h1,
+  .bk-page .bk-cand-hero.cand-hero--bk-single .cand-hero__copy .cand-hero__lead {
     max-width: 32rem;
   }
 }
