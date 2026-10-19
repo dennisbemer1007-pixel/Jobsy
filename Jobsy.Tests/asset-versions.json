@@ -131,16 +131,24 @@
     "sha256": "aaf49ede60c7b87d6140b779b9dfd71a8e7ce6889218cc3902958a6256c925e8",
     "v": "20261018-15"
   },
+  "css/features/onboarding-illustrated-step.css": {
+    "sha256": "58cd1fbe02599b9becf0831c8f82d226dc29f9b0b6b87c06a177a3bf533adb78",
+    "v": "20261018-r20"
+  },
+  "css/features/onboarding-test-blocks.css": {
+    "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
+    "v": "20261018-r2"
+  },
   "css/features/onboarding-wizard-mobile-bar.css": {
     "sha256": "1c4b22aad845040d1f4db7321feafc0adae2cd3e23dfe301b2675f449f9af249",
     "v": "20261016-02"
   },
   "css/features/onboarding-wizard-nearby-panel.css": {
-    "sha256": "8aae78bee606dbae5f48cdbd1d6000cf34f7ace20790576c48092c694e832e87",
-    "v": "20261018-01"
+    "sha256": "0f602a345b1c2004158d7b2504704f77c03830d4d8c1d357110bf74abc6a0c30",
+    "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "956bc0a958b342bd3a06db57f3a37e2efa8132ccd603f7e68dd141b23d222afe",
+    "sha256": "db7be7e17fb9597e4b56f41806231b65cbd2e9bec53511c8ab9cc716063b3132",
     "v": "20261018-02"
   },
   "css/features/onboarding-wizard-test-journey.css": {
@@ -156,8 +164,8 @@
     "v": "20261015-06"
   },
   "css/features/onboarding-work-history.css": {
-    "sha256": "a5d776e7def491d5008493389b28004e0f8d2a93a6fe653bd61a85aa0c3942a4",
-    "v": "20261018-07"
+    "sha256": "cb9184ab0069f6073b89d8ca6d05ed305caaf92c4b61466c1016235c80873f2c",
+    "v": "20261018-08"
   },
   "css/features/ontdekkingsreis.css": {
     "sha256": "88887ede1d1036cfe353a4347dd608eb9d53113d299049519defbb3b2f2f58f7",
