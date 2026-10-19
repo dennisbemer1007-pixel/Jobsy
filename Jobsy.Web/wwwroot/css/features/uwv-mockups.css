@@ -1,0 +1,418 @@
+/* UWV werkmap mockups — preview routes only */
+
+.uwv-mockup-shell .lobsy-assistant,
+.uwv-mockup-shell .feedback-widget,
+.uwv-mockup-shell .lobsy-coach {
+  display: none !important;
+}
+
+.uwv-mockup-shell__user {
+  font-size: var(--text-sm);
+  padding: 0 0.5rem;
+}
+
+.uwv-mockup-page {
+  min-height: calc(100vh - 120px);
+  background: var(--bg);
+}
+
+.uwv-mockup-page--wide .uwv-mockup-stack {
+  max-width: 1200px;
+}
+
+.uwv-mockup-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 1rem 2.5rem;
+}
+
+.uwv-mockup-stack--narrow {
+  max-width: 720px;
+  padding-top: 1.5rem;
+}
+
+.uwv-block__eyebrow {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--gold-ink);
+}
+
+.uwv-block__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--gold);
+  flex: none;
+}
+
+.uwv-block__title {
+  margin: 8px 0 6px;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.uwv-adviseur__h1 {
+  font-size: 1.5rem;
+}
+
+.uwv-block__lead {
+  margin: 0 0 14px;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.uwv-block__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.uwv-block__source {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.uwv-kans__region {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--brand);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.uwv-kans__list,
+.uwv-similar__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.uwv-kans__item,
+.uwv-similar__item {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--surface) 92%, var(--accent-soft));
+  border: 1px solid var(--border);
+}
+
+.uwv-kans__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.uwv-kans__head h3,
+.uwv-similar__item h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--brand);
+}
+
+.uwv-kans__prospect {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--success);
+}
+
+.uwv-kans__route {
+  margin: 8px 0 0;
+  font-size: var(--text-sm);
+}
+
+.uwv-kans__route-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.uwv-inline-link {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.uwv-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  margin-left: 6px;
+}
+
+.uwv-badge--guarantee {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.uwv-omscholen__sectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.uwv-omscholen__sector {
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.uwv-omscholen__sector h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.uwv-omscholen__sector p {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.uwv-omscholen__sub {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.uwv-omscholen__leerbanen ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.uwv-omscholen__aside {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent-soft) 40%, var(--surface));
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.uwv-omscholen__ww {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+.uwv-partners__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.uwv-partners__list a {
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.uwv-drijfveren__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.uwv-drijfveren__chip {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.uwv-drijfveren__chip p {
+  margin: 6px 0 0;
+  font-size: var(--text-sm);
+}
+
+.uwv-adviseur__pick {
+  border: 0;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.uwv-adviseur__check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  font-size: var(--text-sm);
+}
+
+.uwv-adviseur__print {
+  padding: 18px;
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+  background: var(--surface);
+  margin-bottom: 16px;
+}
+
+.uwv-adviseur__brand {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.uwv-adviseur__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.uwv-banenkaart {
+  min-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+}
+
+.uwv-banenkaart__chrome {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.uwv-banenkaart__layer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.uwv-banenkaart__hint {
+  margin: 6px 0 0;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.uwv-banenkaart__map {
+  position: relative;
+  flex: 1;
+  min-height: 520px;
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+}
+
+.uwv-banenkaart__fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg) 15%, transparent) 0%,
+    color-mix(in srgb, var(--bg) 55%, transparent) 70%,
+    var(--bg) 100%
+  );
+  pointer-events: none;
+}
+
+.uwv-banenkaart__pin {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--surface);
+  background: var(--map-pin, var(--success));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 25%, transparent);
+}
+
+.uwv-banenkaart__pin-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--brand);
+  box-shadow: var(--shadow);
+}
+
+.uwv-banenkaart__popup {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.uwv-test-q {
+  font-size: 1.05rem;
+  line-height: 1.45;
+  margin: 0 0 16px;
+}
+
+.uwv-test-scale {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.uwv-test-scale__btn {
+  flex: 1 1 120px;
+  min-height: 44px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand);
+}
+
+@media (min-width: 1024px) {
+  .uwv-mockup-stack {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .uwv-banenkaart__popup {
+    left: auto;
+    right: 24px;
+    margin: 0;
+  }
+}
+
+@media (max-width: 639px) {
+  .uwv-banenkaart__map {
+    min-height: 420px;
+  }
+}

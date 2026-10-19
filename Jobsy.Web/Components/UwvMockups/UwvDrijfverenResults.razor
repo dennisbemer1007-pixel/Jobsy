@@ -1,0 +1,25 @@
+@using Jobsy.Web.UwvMockups
+
+<section class="detail-card uwv-block uwv-drijfveren" aria-labelledby="@_titleId">
+    <p class="uwv-block__eyebrow">
+        <i class="uwv-block__dot" aria-hidden="true"></i>
+        @UwvMockupCopy.Drijfveren.SectionTitle(Lang)
+    </p>
+    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Drijfveren.ResultsTitle(Lang)</h2>
+    <p class="uwv-block__lead">@UwvMockupCopy.Drijfveren.Lead(Lang)</p>
+
+    <ul class="uwv-drijfveren__chips">
+        @foreach (var d in UwvMockupData.Drivers)
+        {
+            <li class="uwv-drijfveren__chip">
+                <strong>@(UwvMockupCopy.IsEnglish(Lang) ? d.LabelEn : d.LabelNl)</strong>
+                <p>@(UwvMockupCopy.IsEnglish(Lang) ? d.ExplainEn : d.ExplainNl)</p>
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    [Parameter] public string? Lang { get; set; }
+    private readonly string _titleId = "uwv-drijfveren-" + Guid.NewGuid().ToString("N")[..8];
+}

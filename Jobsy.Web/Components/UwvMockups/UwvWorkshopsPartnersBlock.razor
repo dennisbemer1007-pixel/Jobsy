@@ -1,0 +1,21 @@
+@using Jobsy.Web.UwvMockups
+
+<section class="detail-card uwv-block uwv-partners" aria-labelledby="@_titleId">
+    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Workshops.PartnersTitle(Lang)</h2>
+    <ul class="uwv-partners__list">
+        @foreach (var link in UwvMockupData.UwvPartners)
+        {
+            <li>
+                <a href="@link.Url" rel="noopener noreferrer" target="_blank">
+                    @(UwvMockupCopy.IsEnglish(Lang) ? link.TitleEn : link.TitleNl)
+                </a>
+                <span class="muted">@link.Provider</span>
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    [Parameter] public string? Lang { get; set; }
+    private readonly string _titleId = "uwv-partners-" + Guid.NewGuid().ToString("N")[..8];
+}

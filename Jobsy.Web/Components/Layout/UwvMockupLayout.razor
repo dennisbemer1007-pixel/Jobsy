@@ -1,0 +1,82 @@
+@inherits LayoutComponentBase
+@using Jobsy.Core.Features
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Navigation
+@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div class="app-shell app-shell--candidate has-bottom-nav uwv-mockup-shell" dir="@(Culture.IsRightToLeft ? "rtl" : null)">
+    <PageSeoHead />
+    <header class="app-header">
+        <div class="app-header__brand">
+            <a class="brand" href="/preview/uwv-mockups/carriere?lang=@_lang" aria-label="Lobsy">
+                <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
+                <span class="brand__text">
+                    <span class="brand-tagline">@Culture["Brand.Tagline"]</span>
+                </span>
+            </a>
+        </div>
+        <UwvMockupHeaderNav ActiveHref="@_activeNav" Lang="@_lang" />
+        <div class="app-header__actions">
+            <PageHelp />
+            <LanguageSelector />
+            <span class="uwv-mockup-shell__user muted">@_demoUser</span>
+        </div>
+    </header>
+
+    <main class="app-main">
+        <div class="app-main__content">
+            @Body
+        </div>
+        <AppFooter />
+    </main>
+
+    <UwvMockupBottomNav ActiveHref="@_activeNav" Lang="@_lang" />
+</div>
+
+@code {
+    private string _lang = "nl";
+    private string _activeNav = "/carriere";
+    private string _demoUser = "Sam (voorbeeld)";
+
+    protected override void OnInitialized()
+    {
+        var http = HttpContextAccessor.HttpContext;
+        if (CultureRequest.HasExplicitChoice(http))
+        {
+            Culture.InitializeFromRequest(http);
+        }
+        else if (http?.Request.Query.TryGetValue("lang", out var q) == true && !string.IsNullOrWhiteSpace(q))
+        {
+            Culture.InitializeFromLanguage(q.ToString());
+        }
+
+        _lang = Culture.Language;
+        _demoUser = UwvMockupCopy.IsEnglish(_lang) ? "Sam (sample)" : "Sam (voorbeeld)";
+
+        var path = http?.Request.Path.Value ?? "";
+        if (path.Contains("banenkaart", StringComparison.OrdinalIgnoreCase))
+        {
+            _activeNav = PublicRoutes.Banenkaart;
+        }
+        else if (path.Contains("workshops", StringComparison.OrdinalIgnoreCase))
+        {
+            _activeNav = "/carriere/leren";
+        }
+        else if (path.Contains("drijfveren", StringComparison.OrdinalIgnoreCase)
+                 || path.Contains("ondernemer", StringComparison.OrdinalIgnoreCase))
+        {
+            _activeNav = "/ontdek";
+        }
+        else if (path.Contains("adviseur", StringComparison.OrdinalIgnoreCase))
+        {
+            _activeNav = "/profiel";
+        }
+        else
+        {
+            _activeNav = "/carriere";
+        }
+    }
+}

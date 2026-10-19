@@ -1,0 +1,26 @@
+@using Jobsy.Web.UwvMockups
+
+<section class="detail-card uwv-block uwv-similar" aria-labelledby="@_titleId">
+    <p class="uwv-block__eyebrow">
+        <i class="uwv-block__dot" aria-hidden="true"></i>
+        @(UwvMockupCopy.IsEnglish(Lang) ? "Soft switch" : "Zachte switch")
+    </p>
+    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Similar.Title(Lang)</h2>
+    <p class="uwv-block__lead">@UwvMockupCopy.Similar.Lead(Lang)</p>
+
+    <ul class="uwv-similar__list">
+        @foreach (var job in UwvMockupData.SimilarJobs)
+        {
+            <li class="uwv-similar__item">
+                <h3>@(UwvMockupCopy.IsEnglish(Lang) ? job.TitleEn : job.TitleNl)</h3>
+                <p>@(UwvMockupCopy.IsEnglish(Lang) ? job.WhyEn : job.WhyNl)</p>
+                <a class="uwv-inline-link" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "See training routes inline" : "Bekijk opleidingsroutes inline")</a>
+            </li>
+        }
+    </ul>
+</section>
+
+@code {
+    [Parameter] public string? Lang { get; set; }
+    private readonly string _titleId = "uwv-similar-" + Guid.NewGuid().ToString("N")[..8];
+}

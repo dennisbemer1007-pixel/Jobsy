@@ -181,6 +181,11 @@ public static class PageAssetCatalog
             return Area.CandidatePublic | Area.CandidateApp | Area.Werkgever;
         }
 
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.CandidatePublic | Area.CandidateApp;
+        }
+
         if (path.StartsWith("/candidate/", StringComparison.Ordinal)
             || path.StartsWith("/vacancies/", StringComparison.Ordinal)
             || path is "/home" or "/ontdek" or "/candidate/match")
@@ -268,6 +273,16 @@ public static class PageAssetCatalog
             [
                 "css/features/reference-verification-hero.css?v=20261018-16",
                 "css/features/reference-verification.css?v=20261018-16"
+            ];
+        }
+
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                "css/features/uwv-mockups.css?v=20261019-01",
+                "css/features/banenkaart.css?v=20261018-02",
+                "css/features/banenkaart-illustrated.css?v=20261018-14",
             ];
         }
 

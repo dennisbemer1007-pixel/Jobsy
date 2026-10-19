@@ -1,0 +1,49 @@
+@using Jobsy.Web.Media
+@using Jobsy.Web.UwvMockups
+
+<div class="jobsy-discovery uwv-banenkaart" data-testid="uwv-banenkaart-mock">
+    <div class="uwv-banenkaart__chrome">
+        <div class="uwv-banenkaart__search">
+            <span>@(UwvMockupCopy.IsEnglish(Lang) ? "Search near you (sample)" : "Zoek in de buurt (voorbeeld)")</span>
+        </div>
+        <label class="uwv-banenkaart__layer">
+            <input type="checkbox" checked="checked" disabled="disabled" />
+            <span>@UwvMockupCopy.Banenkaart.LayerLabel(Lang)</span>
+        </label>
+        <p class="uwv-banenkaart__hint">@UwvMockupCopy.Banenkaart.LayerHint(Lang)</p>
+    </div>
+
+    <div class="uwv-banenkaart__map" style="@($"background-image:url('{CandidateIllustratedImages.BanenkaartCyclists}')")">
+        <div class="uwv-banenkaart__fade" aria-hidden="true"></div>
+        @foreach (var (left, top, title) in Pins)
+        {
+            <button type="button" class="uwv-banenkaart__pin" style="@($"left:{left}%;top:{top}%")" disabled="disabled">
+                <span class="uwv-banenkaart__pin-label">@title</span>
+            </button>
+        }
+        <div class="uwv-banenkaart__popup detail-card">
+            <p class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</p>
+            <h3>@(UwvMockupCopy.IsEnglish(Lang) ? "Logistics associate (sample)" : "Logistiek medewerker (voorbeeld)")</h3>
+            <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? "Recognised learning company · linked to BBL route" : "Erkend leerbedrijf · gekoppeld aan BBL-route")</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Lang { get; set; }
+
+    private IEnumerable<(int left, int top, string title)> Pins =>
+        UwvMockupCopy.IsEnglish(Lang)
+            ?
+            [
+                (22, 38, "Logistics"),
+                (48, 52, "Care"),
+                (68, 34, "Tech"),
+            ]
+            :
+            [
+                (22, 38, "Logistiek"),
+                (48, 52, "Zorg"),
+                (68, 34, "Techniek"),
+            ];
+}

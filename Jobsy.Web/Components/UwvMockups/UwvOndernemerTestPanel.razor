@@ -1,0 +1,83 @@
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.UwvMockups
+
+@if (Phase == "intro")
+{
+    <TestPageShell Kind="AssessmentKind.Career"
+                   Mode="TestPageShell.ShellMode.Intro"
+                   H1="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   Lead="@UwvMockupCopy.Ondernemer.IntroLead(Lang)"
+                   TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   Answered="0"
+                   TargetCount="6"
+                   QuickScanVersion="1"
+                   ActiveDepth="TestDepthLevel.First"
+                   DepthInteractive="false"
+                   ShowDepthSegments="false"
+                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Short deepening" : "Korte verdieping")">
+        <ChildContent>
+            <footer class="test-shell__footer">
+                <button type="button" class="btn btn-primary">@(UwvMockupCopy.IsEnglish(Lang) ? "Start" : "Begin")</button>
+            </footer>
+        </ChildContent>
+    </TestPageShell>
+}
+else if (Phase == "question")
+{
+    <TestPageShell Kind="AssessmentKind.Career"
+                   Mode="TestPageShell.ShellMode.Question"
+                   H1="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   LevelName="@(UwvMockupCopy.IsEnglish(Lang) ? "Short" : "Kort")"
+                   Answered="2"
+                   TargetCount="6"
+                   QuickScanVersion="1"
+                   ActiveDepth="TestDepthLevel.First"
+                   ShowDepthSegments="false"
+                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Take your time" : "Neem je tijd")">
+        <ChildContent>
+            <p class="uwv-test-q">@(UwvMockupCopy.IsEnglish(Lang)
+                ? "I like trying a small idea before committing to a big step."
+                : "Ik probeer liever eerst een klein idee uit voordat ik een grote stap zet.")</p>
+            <div class="uwv-test-scale" role="group" aria-label="Likert">
+                @foreach (var label in ScaleLabels)
+                {
+                    <button type="button" class="uwv-test-scale__btn">@label</button>
+                }
+            </div>
+        </ChildContent>
+    </TestPageShell>
+}
+else
+{
+    <TestPageShell Kind="AssessmentKind.Career"
+                   Mode="TestPageShell.ShellMode.Done"
+                   H1="@UwvMockupCopy.Ondernemer.ResultTitle(Lang)"
+                   Lead="@UwvMockupCopy.Ondernemer.ResultLead(Lang)"
+                   TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
+                   LevelName="@(UwvMockupCopy.IsEnglish(Lang) ? "Short" : "Kort")"
+                   Answered="6"
+                   TargetCount="6"
+                   QuickScanVersion="1"
+                   ActiveDepth="TestDepthLevel.First"
+                   ShowDepthSegments="false"
+                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Well done" : "Klaar")">
+        <ChildContent>
+            <p class="test-shell__lead">@UwvMockupCopy.Ondernemer.ResultLead(Lang)</p>
+            <footer class="test-shell__footer">
+                <a class="btn btn-primary" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Back to discovery" : "Terug naar ontdekken")</a>
+            </footer>
+        </ChildContent>
+    </TestPageShell>
+}
+
+@code {
+    [Parameter] public string Phase { get; set; } = "intro";
+    [Parameter] public string? Lang { get; set; }
+
+    private IEnumerable<string> ScaleLabels => UwvMockupCopy.IsEnglish(Lang)
+        ? ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]
+        : ["Helemaal niet", "Niet", "Neutraal", "Wel", "Helemaal wel"];
+}

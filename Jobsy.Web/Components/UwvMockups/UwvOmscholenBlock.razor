@@ -1,0 +1,55 @@
+@using Jobsy.Web.UwvMockups
+
+<section class="detail-card uwv-block uwv-omscholen" aria-labelledby="@_titleId">
+    <p class="uwv-block__eyebrow">
+        <i class="uwv-block__dot" aria-hidden="true"></i>
+        @UwvMockupCopy.Omscholen.Title(Lang)
+    </p>
+    <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Omscholen.Title(Lang)</h2>
+    <p class="uwv-block__lead">@UwvMockupCopy.Omscholen.Lead(Lang)</p>
+
+    <div class="uwv-omscholen__sectors">
+        @foreach (var sector in UwvMockupData.OmscholenSectors)
+        {
+            <article class="uwv-omscholen__sector">
+                <h3>@(UwvMockupCopy.IsEnglish(Lang) ? sector.NameEn : sector.NameNl)</h3>
+                <p>@(UwvMockupCopy.IsEnglish(Lang) ? sector.DetailEn : sector.DetailNl)</p>
+                @if (sector.HasBaangarantie)
+                {
+                    <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
+                }
+            </article>
+        }
+    </div>
+
+    <div class="uwv-omscholen__leerbanen">
+        <h3 class="uwv-omscholen__sub">@(UwvMockupCopy.IsEnglish(Lang) ? "Apprenticeships (BBL)" : "Leerbanen (BBL)")</h3>
+        <ul>
+            @foreach (var lb in UwvMockupData.Leerbanen)
+            {
+                <li>
+                    <strong>@(UwvMockupCopy.IsEnglish(Lang) ? lb.TitleEn : lb.TitleNl)</strong>
+                    <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
+                    <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? lb.CompanyEn : lb.CompanyNl)</p>
+                    <a class="uwv-inline-link" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Open on job map" : "Open op banenkaart")</a>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <aside class="uwv-omscholen__aside">
+        <p>
+            @UwvMockupCopy.Omscholen.Werkcentrum(Lang)
+            <a href="https://www.werkcentrum.nl/" rel="noopener noreferrer">@UwvMockupCopy.Omscholen.WerkcentrumLink(Lang)</a>
+        </p>
+        <p class="uwv-omscholen__ww">
+            @UwvMockupCopy.Omscholen.WwNote(Lang)
+            <a href="https://www.uwv.nl/" rel="noopener noreferrer">@UwvMockupCopy.Omscholen.WwLink(Lang)</a>
+        </p>
+    </aside>
+</section>
+
+@code {
+    [Parameter] public string? Lang { get; set; }
+    private readonly string _titleId = "uwv-omscholen-" + Guid.NewGuid().ToString("N")[..8];
+}

@@ -1,0 +1,42 @@
+@using Jobsy.Web.UwvMockups
+
+<section class="detail-card uwv-block uwv-adviseur" aria-labelledby="@_titleId">
+    <h1 id="@_titleId" class="uwv-block__title uwv-adviseur__h1">@UwvMockupCopy.Adviseur.Title(Lang)</h1>
+    <p class="uwv-block__lead">@UwvMockupCopy.Adviseur.Lead(Lang)</p>
+
+    <fieldset class="uwv-adviseur__pick">
+        <legend>@(UwvMockupCopy.IsEnglish(Lang) ? "Include in printout" : "Opnemen in printout")</legend>
+        @foreach (var (nl, en) in UwvMockupData.AdviseurSections)
+        {
+            var label = UwvMockupCopy.IsEnglish(Lang) ? en : nl;
+            var isPassport = label.Contains("competenc", StringComparison.OrdinalIgnoreCase)
+                             || label.Contains("competent", StringComparison.OrdinalIgnoreCase);
+            <label class="uwv-adviseur__check">
+                <input type="checkbox" checked="@(isPassport || label.Contains("Drijf") || label.Contains("Driver"))" />
+                <span>@label</span>
+            </label>
+        }
+    </fieldset>
+
+    <div class="uwv-adviseur__preview uwv-adviseur__print">
+        <p class="uwv-adviseur__brand">Lobsy · @(UwvMockupCopy.IsEnglish(Lang) ? "Sample summary" : "Voorbeeldsamenvatting")</p>
+        <h2>@(UwvMockupCopy.IsEnglish(Lang) ? "Sam (sample)" : "Sam (voorbeeld)")</h2>
+        <h3>@UwvMockupCopy.Drijfveren.ResultsTitle(Lang)</h3>
+        <p>@(UwvMockupCopy.IsEnglish(Lang) ? UwvMockupData.Drivers[0].ExplainEn : UwvMockupData.Drivers[0].ExplainNl)</p>
+        <h3>@(UwvMockupCopy.IsEnglish(Lang) ? "Endorsed competencies only" : "Alleen onderschreven competenties")</h3>
+        <ul>
+            <li>@(UwvMockupCopy.IsEnglish(Lang) ? "Planning and organising (endorsed)" : "Plannen en organiseren (onderschreven)")</li>
+            <li>@(UwvMockupCopy.IsEnglish(Lang) ? "Customer-oriented communication (endorsed)" : "Klantgericht communiceren (onderschreven)")</li>
+        </ul>
+    </div>
+
+    <div class="uwv-adviseur__actions">
+        <button type="button" class="btn btn-primary">@UwvMockupCopy.Adviseur.Print(Lang)</button>
+        <button type="button" class="btn btn-ghost">@UwvMockupCopy.Adviseur.ShareLink(Lang)</button>
+    </div>
+</section>
+
+@code {
+    [Parameter] public string? Lang { get; set; }
+    private readonly string _titleId = "uwv-adviseur-" + Guid.NewGuid().ToString("N")[..8];
+}
