@@ -13,8 +13,11 @@ internal static class DemoCompanyMapInitiativeSeeder
     private static readonly string[] HubPhotos =
     [
         "/images/demo/bakkerij-korenaar/sfeer-bakkerij.webp",
-        "/images/demo/bakkerij-korenaar/sfeer-winkel.webp"
+        "/images/demo/bakkerij-korenaar/sfeer-vitrine.webp"
     ];
+
+    private const string VacancyImageBakkerij = "/images/demo/bakkerij-korenaar/vacancy-bakkerij.webp";
+    private const string VacancyImageVitrine = "/images/demo/bakkerij-korenaar/vacancy-vitrine.webp";
 
     private static readonly Guid SupermarketId = Guid.Parse("33333333-3333-3333-3333-333333333333");
     private static readonly Guid WestlandId = Guid.Parse("11111111-1111-1111-1111-111111111111");
@@ -236,22 +239,9 @@ internal static class DemoCompanyMapInitiativeSeeder
             var title = titles[i % titles.Length];
             vacancies[i].Title = title;
             vacancies[i].WorkTypes = WorkType.Winkel | WorkType.Horeca;
-            var workType = WorkType.Winkel;
-            if (title.Contains("bakker", StringComparison.OrdinalIgnoreCase)
-                && !title.Contains("vitrine", StringComparison.OrdinalIgnoreCase))
-            {
-                workType = WorkType.Horeca;
-            }
-            else if (title.Contains("vitrine", StringComparison.OrdinalIgnoreCase))
-            {
-                workType = WorkType.Winkel;
-            }
-            else if (title.Contains("lunchroom", StringComparison.OrdinalIgnoreCase))
-            {
-                workType = WorkType.Winkel;
-            }
-
-            vacancies[i].ImageUrl = VacancyImageUrls.Placeholder(vacancies[i].Id, workType);
+            vacancies[i].ImageUrl = title.Contains("vitrine", StringComparison.OrdinalIgnoreCase)
+                ? VacancyImageVitrine
+                : VacancyImageBakkerij;
         }
 
         var cafeVacancies = await db.Vacancies.Where(v => v.CompanyId == CafeId).ToListAsync(cancellationToken);

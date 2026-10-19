@@ -1092,37 +1092,48 @@ textarea.bk-wg-input {
 
   .bk-page .bk-cand-hero.cand-hero--bk-single {
     background-color: var(--pearl, #f7f4f0);
+    background-image: none !important;
+  }
+
+  .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
+    display: block !important;
+    content: "" !important;
+    left: 52%;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-image: var(--cand-hero-art) !important;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: right bottom;
+    opacity: 1 !important;
+    filter: none !important;
+    z-index: 0;
   }
 
   .bk-page .cand-hero--bk-single.cand-hero--profession-band::before {
+    left: 52%;
+    right: 0;
+    top: 0;
+    bottom: 0;
     z-index: 1;
     background: linear-gradient(
       90deg,
       var(--pearl, #f7f4f0) 0%,
-      var(--pearl, #f7f4f0) 58%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 96%, transparent) 66%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 40%, transparent) 74%,
-      transparent 84%
+      color-mix(in srgb, var(--pearl, #f7f4f0) 35%, #efdfd2) 12%,
+      color-mix(in srgb, var(--pearl, #f7f4f0) 8%, #fdf0e0) 22%,
+      transparent 38%
     );
-  }
-
-  .bk-page .cand-hero--bk-single.cand-hero--profession-band::after {
-    inset: 0;
-    background-image: var(--cand-hero-art-desktop, var(--cand-hero-art)) !important;
-    background-size: cover;
-    background-position: var(--cand-hero-pos-desktop, center top);
-    opacity: 1;
-    z-index: 0;
   }
 
   .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy {
     z-index: 2;
-    width: 100%;
-    max-width: none;
+    width: auto;
+    max-width: min(52%, 36rem);
     margin-inline: 0;
     padding: clamp(1.35rem, 3vw, 2rem) var(--bk-gutter, clamp(1.5rem, 2.8vw, 2rem));
     box-sizing: border-box;
-    background: transparent;
+    background: transparent !important;
   }
 
   .bk-page .cand-hero--bk-single.cand-hero--profession-band .cand-hero__copy h1,
@@ -1166,12 +1177,13 @@ textarea.bk-wg-input {
     pointer-events: none;
     background: linear-gradient(
       90deg,
-      var(--pearl, #f7f4f0) 0%,
-      var(--pearl, #f7f4f0) 34%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 92%, transparent) 44%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 55%, transparent) 54%,
-      color-mix(in srgb, var(--pearl, #f7f4f0) 18%, transparent) 64%,
-      transparent 76%
+      #f7f4f0 0%,
+      #f7f4f0 24%,
+      #f3ebe2 34%,
+      #efe3d6 42%,
+      #efdfd2 48%,
+      #fdf0e0 54%,
+      rgb(253 240 224 / 0%) 62%
     );
   }
 

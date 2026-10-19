@@ -18,6 +18,14 @@ const r14Files = new Set([
   "02-bedrijfspagina-desktop.png",
   "02-bedrijfspagina-mobiel-top.png",
 ]);
+const r16Files = new Set([
+  "01-bedrijvenkaart-desktop.png",
+  "01-bedrijvenkaart-mobiel-top.png",
+  "01-bedrijvenkaart-mobiel-scroll.png",
+  "02-bedrijfspagina-desktop.png",
+  "02-bedrijfspagina-mobiel-top.png",
+  "02-bedrijfspagina-mobiel-scroll.png",
+]);
 const r15Files = new Set([
   "01-bedrijvenkaart-desktop.png",
   "01-bedrijvenkaart-mobiel-top.png",
@@ -95,7 +103,9 @@ const shots = captureOnly
     ? allShots.filter((s) => r14Files.has(s.file))
     : captureSet === "r15"
       ? allShots.filter((s) => r15Files.has(s.file))
-      : allShots;
+      : captureSet === "r16"
+        ? allShots.filter((s) => r16Files.has(s.file))
+        : allShots;
 
 if (shots.length === 0) {
   throw new Error(`CAPTURE_ONLY=${captureOnly} matched no shots`);
@@ -282,7 +292,7 @@ async function captureHeroZooms(browserInstance) {
   }
 }
 
-if (captureSet === "r15") {
+if (captureSet === "r15" || captureSet === "r16") {
   await captureHeroZooms(browser);
 }
 
