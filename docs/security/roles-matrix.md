@@ -84,6 +84,8 @@ Legend: ● full · ◐ read-only · ◯ own scope · — hidden/403.
 | `/werkgever/sollicitaties` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/{ApplicationId:guid}` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/sollicitaties/{ApplicationId:guid}/after-match` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/sollicitaties/initiatieven` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
+| `/werkgever/open-voor-initiatief` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/uren` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary,Admin` |
 | `/werkgever/talentpool` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager,Intermediary` |
 | `/werkgever/kandidaatinzichten` | ● | ◐ | ◯ | `BranchManager,RegionalManager,EnterpriseManager` |

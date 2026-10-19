@@ -134,7 +134,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPut("employer/{rootCompanyId:guid}/settings")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<ActionResult<CompanyInitiativeSettingsDto>> SaveSettings(
         Guid rootCompanyId,
@@ -145,7 +145,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPut("employer/{rootCompanyId:guid}/teams")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<ActionResult<InitiativeTeamDto>> SaveTeam(
         Guid rootCompanyId,
@@ -163,7 +163,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPost("employer/{rootCompanyId:guid}/teams/{teamId:guid}/resend-email")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<IActionResult> ResendTeamEmail(Guid rootCompanyId, Guid teamId, CancellationToken cancellationToken)
     {
@@ -172,7 +172,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPost("employer/{rootCompanyId:guid}/confirm-email")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<IActionResult> ConfirmGeneralEmail(
         Guid rootCompanyId,
@@ -191,7 +191,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPost("employer/teams/{teamId:guid}/confirm-email")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<IActionResult> ConfirmTeamEmail(
         Guid teamId,
@@ -210,7 +210,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPost("employer/{id:guid}/accept")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<IActionResult> Accept(
         Guid id,
@@ -228,7 +228,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPost("employer/{id:guid}/decline")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<IActionResult> Decline(
         Guid id,
@@ -247,7 +247,7 @@ public sealed class CompanyMapInitiativeController : ControllerBase
     }
 
     [HttpPost("employer/{id:guid}/viewed")]
-    [Authorize(Policy = JobsyPolicies.RequireEmployer)]
+    [Authorize(Roles = JobsyRoles.EmployerMutateRoles)]
     [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
     public async Task<IActionResult> MarkViewed(Guid id, CancellationToken cancellationToken)
     {
