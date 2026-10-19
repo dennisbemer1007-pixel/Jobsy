@@ -152,7 +152,7 @@ public static class WerkgeverNav
                     [EmployerRole.Vestigingsmanager] = "WgNav.BranchProfile"
                 }),
             new("open-initiative", "WgNav.OpenForInitiative", "/werkgever/open-voor-initiatief", NavIcons.Applications,
-                [], BmVm,
+                [], BmRmVm,
                 AvailabilityKey: "company-map-initiative"),
             new("salary", "WgNav.SalaryTables", "/werkgever/organisatie/salaristabellen", NavIcons.Wages,
                 ["/employer/salary-tables"], BmVmSalary),
