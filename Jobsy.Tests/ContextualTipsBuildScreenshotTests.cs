@@ -8,7 +8,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r8";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r9";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -43,7 +43,8 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         var offerId = IllustratedPagesApiStub.SampleOfferApplicationId;
 
         await CaptureReferencePageAsync("ref-instellingen-390", "/candidate/settings");
-        await CaptureReferencePageAsync("ref-bewaard-390", "/candidate/liked");
+        await CaptureReferenceHeroAsync("ref-bewaard", "/candidate/liked", 390);
+        await CaptureReferenceHeroAsync("ref-bewaard", "/candidate/liked", 360);
         await CaptureAsync("01-gesprek-gepland", $"/candidate/applications/{appId:D}/gesprek", "[data-testid='application-interview-page']");
         await CaptureAsync("02-aanbod-ontvangen", $"/candidate/applications/{offerId:D}/aanbod", "[data-testid='application-offer-page']");
         await CaptureAsync("03-paspoort-cv-tip", "/candidate/paspoort?tab=proof", "[data-testid='passport-education-tip']");
@@ -119,6 +120,30 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         await page.WaitForTimeoutAsync(600);
         var file = Path.Combine(ArtifactsDir, $"{name}.png");
         await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+        Assert.True(File.Exists(file));
+    }
+
+    private async Task CaptureReferenceHeroAsync(string namePrefix, string path, int width)
+    {
+        await using var context = await _browser!.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = width < 500 ? 844 : 900 },
+            Locale = "nl-NL",
+            IsMobile = width < 500,
+            HasTouch = width < 500
+        });
+        await PlaywrightCookieConsent.AcceptAsync(context);
+        var page = await context.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await page.GotoAsync(
+            $"{_web!.ServerAddress}/__test/sign-in?return={Uri.EscapeDataString(path)}",
+            new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+        await page.GotoAsync($"{_web.ServerAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.WaitForTimeoutAsync(600);
+        var hero = page.Locator(".cand-hero").First;
+        await hero.WaitForAsync(new() { Timeout = 60_000 });
+        var file = Path.Combine(ArtifactsDir, $"{namePrefix}-{width}-hero-zoom.png");
+        await hero.ScreenshotAsync(new() { Path = file });
         Assert.True(File.Exists(file));
     }
 

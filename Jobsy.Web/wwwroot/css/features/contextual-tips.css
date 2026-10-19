@@ -454,20 +454,24 @@
 @media (max-width: 639px) {
   .ctips-page .cand-hero.cand-hero--tips-moment.cand-hero--with-art {
     background-image: none !important;
+    overflow: visible;
   }
 
   .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures-wrap {
-    padding: 0.35rem 0.65rem 0.35rem 0.15rem;
+    padding: 0.25rem 0.5rem 0.5rem 0;
+    overflow: visible;
   }
 
   .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures {
-    max-width: min(100%, 15.5rem);
-    max-height: 99%;
-    transform: translateX(-6px);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 28%, #000 100%),
-      linear-gradient(to top, transparent 0%, #000 18%, #000 100%);
-    mask-image: linear-gradient(to right, transparent 0%, #000 28%, #000 100%),
-      linear-gradient(to top, transparent 0%, #000 18%, #000 100%);
+    width: auto;
+    height: 88%;
+    max-height: 88%;
+    max-width: none;
+    transform: translateX(-12px);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 32%, #000 100%),
+      linear-gradient(to top, transparent 0%, #000 8%, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 32%, #000 100%),
+      linear-gradient(to top, transparent 0%, #000 8%, #000 100%);
   }
 }
 
