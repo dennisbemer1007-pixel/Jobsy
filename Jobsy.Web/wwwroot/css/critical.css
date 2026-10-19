@@ -42,18 +42,14 @@ html.cookie-consent-known .cookie-consent { display: none; }
 .job-map-placeholder { position: absolute; inset: 0; background: var(--map-land); pointer-events: none; }
 .map-stage.is-live .job-map-placeholder { opacity: 0; visibility: hidden; transition: none; }
 @media (max-width: 768px) {
-    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-header,
-    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-footer { display: none; }
     .jobsy-discovery { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-    .jobsy-discovery .jobsy-chrome { display: block; min-height: 10rem; }
-    .app-shell--banenkaart-shell .jobsy-chrome__header { display: none !important; }
+    .jobsy-discovery .jobsy-chrome { display: block; min-height: 0; }
     .app-shell--banenkaart-shell .jobsy-chrome { min-height: 0; }
     .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane { display: none !important; }
     .app-shell--banenkaart-shell .jobsy-discovery.show-list .map-pane { display: none !important; }
     .app-shell--banenkaart-shell .jobsy-discovery.show-list .kb-map-fab { display: none !important; }
     .app-shell--banenkaart-shell .lobsy-coach-dock { display: none !important; }
     .map-pane, .map-stage, #job-map, .job-map { min-width: 0; }
-    .jobsy-chrome__header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-height: 3.5rem; padding: 0.55rem 0.85rem 0.35rem; }
     .kb-filter-bar { padding: 0.35rem 0.75rem 0.5rem; background: var(--surface); border-bottom: 1px solid var(--border); contain: layout; }
     .kb-filter-search input { width: 100%; min-height: 2.75rem; font-size: 1rem; border: 1px solid var(--border); border-radius: 12px; padding: 0.5rem 0.75rem; box-sizing: border-box; background: var(--surface); color: var(--text); }
     .jobsy-chrome .lobsy-logo--horizontal { height: 40px; max-width: min(140px, 38vw); }

@@ -5369,15 +5369,6 @@ a.map-popup__apply.map-popup__cta:visited {
         display: none;
     }
 
-    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-header,
-    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-footer {
-        display: none;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-chrome__header {
-        display: none !important;
-    }
-
     .app-shell--banenkaart-shell .jobsy-chrome {
         min-height: 0;
         border-bottom: none;
