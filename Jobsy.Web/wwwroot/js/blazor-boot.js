@@ -257,6 +257,18 @@
     bindReconnectUi();
     watchReconnectModal();
 
+    document.addEventListener("components-reconnect-state-changed", function (ev) {
+        var state = ev && ev.detail ? ev.detail.state : "";
+        if (state === "rejected") {
+            handleRejectedState();
+            scheduleSilentRetry();
+            tryReconnect("state-rejected");
+        } else if (state === "failed" || state === "resume-failed") {
+            scheduleSilentRetry();
+            tryReconnect("state-failed");
+        }
+    });
+
     if (!window.Blazor || typeof Blazor.start !== "function") {
         try {
             console.error("[lobsy] Blazor is not defined — blazor-boot.js ran before blazor.web.js?");

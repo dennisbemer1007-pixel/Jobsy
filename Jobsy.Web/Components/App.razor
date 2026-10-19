@@ -291,9 +291,30 @@
         }
     @if (LoadBlazorRuntime)
     {
+        @* Block unprompted full reloads before Blazor.start (framework refresh/rejected paths call location.reload). *@
+        <script nonce="@Nonce">
+            (function () {
+                try {
+                    if (window.__lobsyReloadGuardInstalled) return;
+                    window.__lobsyReloadGuardInstalled = true;
+                    window.lobsyAllowDocumentReload = function () { window.__lobsyAllowDocumentReload = true; };
+                    var proto = window.Location && window.Location.prototype;
+                    if (!proto || !proto.reload) return;
+                    var nativeReload = proto.reload;
+                    proto.reload = function () {
+                        if (!window.__lobsyAllowDocumentReload) {
+                            try { console.warn("[lobsy] blocked automatic document.reload()"); } catch (e) { }
+                            return;
+                        }
+                        window.__lobsyAllowDocumentReload = false;
+                        return nativeReload.apply(this, arguments);
+                    };
+                } catch (e) { }
+            })();
+        </script>
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261019-02" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261019-03" nonce="@Nonce" defer></script>
     }
 </body>
 

@@ -272,8 +272,8 @@
     "v": "20261016-04"
   },
   "js/blazor-boot.js": {
-    "sha256": "7b2f6d8f0896181cd9170fe7f1ea849123aa2d66bcb1b15bc794e0d1ec2d6ca8",
-    "v": "20261019-02"
+    "sha256": "fda947426087584f5177e2f09de69848a46c586dfb7f3b3f7d3c373fd0cc7307",
+    "v": "20261019-03"
   },
   "js/discoveryHover.js": {
     "sha256": "9acfe11620f3a2cdb3d9d732e26f6979f97f82b9292ffcaaa2c646061a2c4747",
