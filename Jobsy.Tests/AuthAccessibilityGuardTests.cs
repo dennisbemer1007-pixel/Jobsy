@@ -2,13 +2,17 @@ using System.Net;
 using System.Text.RegularExpressions;
 using Jobsy.Core.Localization;
 using Microsoft.AspNetCore.Hosting;
+using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
 
+[Collection("JobsyLanguagesState")]
 public sealed class AuthAccessibilityGuardTests
 {
     [Theory]
@@ -23,6 +27,7 @@ public sealed class AuthAccessibilityGuardTests
         {
             await using var factory = new AuthA11yWebFactory();
             var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
             using var response = await client.GetAsync(path);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var html = await response.Content.ReadAsStringAsync();
@@ -108,6 +113,23 @@ file sealed class AuthA11yWebFactory : WebWebApplicationFactory
                 JobsyLanguages.ConfigureEnabledCultures(enabled);
             }
         });
-        builder.ConfigureTestServices(_ => { });
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IStartupFilter>(new PinEnabledCulturesStartupFilter());
+        });
+    }
+
+    private sealed class PinEnabledCulturesStartupFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+            => app =>
+            {
+                app.Use(async (context, nextMiddleware) =>
+                {
+                    JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+                    await nextMiddleware(context);
+                });
+                next(app);
+            };
     }
 }
