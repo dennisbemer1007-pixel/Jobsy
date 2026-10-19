@@ -8,7 +8,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r7";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r8";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -124,7 +124,7 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 
     private async Task CaptureAsync(string name, string path, string readySelector)
     {
-        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390"), (360, 800, "360") })
         {
             await using var context = await _browser!.NewContextAsync(new()
             {
@@ -150,9 +150,9 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
             var auditPath = Path.Combine(ArtifactsDir, $"{name}-{tag}-hero-audit.txt");
             await File.WriteAllTextAsync(auditPath, auditLines, Encoding.UTF8);
 
-            if (width == 390 && name is "01-gesprek-gepland" or "02-aanbod-ontvangen" or "05-alle-tips" or "06-tip-detail")
+            if (width is 390 or 360 && name is "01-gesprek-gepland" or "02-aanbod-ontvangen" or "05-alle-tips" or "06-tip-detail")
             {
-                var heroZoom = Path.Combine(ArtifactsDir, $"{name}-390-hero-zoom.png");
+                var heroZoom = Path.Combine(ArtifactsDir, $"{name}-{tag}-hero-zoom.png");
                 var hero = page.Locator(".cand-hero").First;
                 var box = await hero.BoundingBoxAsync();
                 if (box is { Height: > 40, Width: > 40 })
