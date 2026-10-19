@@ -43,7 +43,7 @@ public static class PageAssetCatalog
         "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
-        "css/features/kb-external-vacancy.css?v=20261011-03",
+        "css/features/kb-external-vacancy.css?v=20261019-extvac1",
     ];
 
     public static readonly string[] CandidateAppCss =

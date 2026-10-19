@@ -142,8 +142,8 @@ public class CandidateRun11Tests
     {
         var root = RepoRoot.Find();
         var css = File.ReadAllText(Path.Combine(root, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains("56px + 88px + 16px", css, StringComparison.Ordinal);
-        Assert.Contains(".lobsy-coach-dock__tip {\n        display: none;", css, StringComparison.Ordinal);
+        Assert.Contains("--lobsy-coach-scroll-pad", css, StringComparison.Ordinal);
+        Assert.Contains(".lobsy-coach-dock__label {\n        display: none;", css, StringComparison.Ordinal);
         Assert.DoesNotContain(".lobsy-coach-dock {\n        visibility: hidden;", css, StringComparison.Ordinal);
         var chat = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/LobsyAssistantChat.razor"));
         Assert.Contains("Assistant.NewChat", chat, StringComparison.Ordinal);

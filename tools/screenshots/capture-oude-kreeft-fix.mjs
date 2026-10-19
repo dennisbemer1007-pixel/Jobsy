@@ -9,6 +9,7 @@ fs.mkdirSync(outDir, { recursive: true });
 const appCss = fs.readFileSync(path.join(root, 'Jobsy.Web/wwwroot/css/app.css'), 'utf8');
 const passportCss = fs.readFileSync(path.join(root, 'Jobsy.Web/wwwroot/css/features/mijn-paspoort.css'), 'utf8');
 const kompasCss = fs.readFileSync(path.join(root, 'Jobsy.Web/wwwroot/css/features/kompas-illustrated.css'), 'utf8');
+const extCss = fs.readFileSync(path.join(root, 'Jobsy.Web/wwwroot/css/features/kb-external-vacancy.css'), 'utf8');
 
 function html() {
   return `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
@@ -45,13 +46,34 @@ ${kompasCss}
 }
 
 const browser = await chromium.launch({ headless: true });
-for (const [name, w, h] of [
-  ['paspoort-tabs-390-after', 390, 844],
-  ['paspoort-tabs-1440-after', 1440, 900],
-  ['paspoort-dna-ring-after', 390, 844],
+function extVacHtml() {
+  return `<!DOCTYPE html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+:root { --app-header-height: 56px; --bg: #f5f2ee; --surface: #fffcfa; --border: #ddd5cc; --brand: #0f2d5c; --bottom-nav-h: 64px; --lobsy-coach-fab-size: 56px; --lobsy-coach-scroll-pad: calc(var(--lobsy-coach-fab-size) + 12px + 16px); }
+body { margin: 0; background: var(--bg); font-family: system-ui, sans-serif; }
+.app-main { overflow: auto; max-height: 100vh; padding-top: var(--app-header-height); }
+${appCss}
+${extCss}
+</style></head><body>
+<header style="position:fixed;top:0;left:0;right:0;height:var(--app-header-height);background:#0f2d5c;z-index:50"></header>
+<div class="app-shell has-bottom-nav" data-lobsy-coach style="--bottom-nav-h:64px">
+<main class="app-main"><div class="app-main__content">
+<div class="kb-ext"><div class="kb-ext__header-row"><div class="kb-ext__header-copy"><span class="kb-ext__badge">Bewaard</span><h1 class="kb-ext__title">Bedrijfsleider</h1><p class="muted">Intertoys · Den Haag</p></div></div>
+<section class="kb-ext__card"><h2 class="kb-ext__method-title">Feiten</h2><table class="kb-ext__facts"><tbody><tr><th>Start</th><td class="is-unknown">Dat weet ik niet</td></tr></tbody></table></section>
+<div class="kb-ext__actions" data-testid="kb-ext-detail-actions"><a class="kb-ext__btn" href="#">Ik wil solliciteren</a></div>
+</div></div></main>
+<nav class="bottom-nav" style="position:fixed;bottom:0;left:0;right:0;height:var(--bottom-nav-h);background:#fff;border-top:1px solid var(--border)"></nav>
+<div class="lobsy-coach-dock" data-lobsy-coach style="position:fixed;right:12px;bottom:calc(var(--bottom-nav-h) + 12px)"><button type="button" id="lobsy-coach-btn" class="lobsy-coach-dock__btn lobsy-coach-dock__btn--warm" aria-label="Coach"><span class="lobsy-coach-dock__medallion"><img src="/images/brand/lobsy-128.webp" width="56" height="56" alt=""></span><span class="lobsy-coach-dock__label">Vraag</span></button></div>
+</div></body></html>`;
+}
+
+for (const [name, w, h, htmlFn] of [
+  ['paspoort-tabs-390-after', 390, 844, html],
+  ['paspoort-tabs-1440-after', 1440, 900, html],
+  ['paspoort-dna-ring-after', 390, 844, html],
+  ['external-vacancy-390-after', 390, 844, extVacHtml],
 ]) {
   const page = await browser.newPage({ viewport: { width: w, height: h } });
-  await page.setContent(html(), { waitUntil: 'load' });
+  await page.setContent(htmlFn(), { waitUntil: 'load' });
   if (name.includes('1440')) {
     await page.evaluate(() => window.scrollTo(0, 280));
   }

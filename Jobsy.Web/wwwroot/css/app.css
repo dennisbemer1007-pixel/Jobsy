@@ -46,6 +46,9 @@
     --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
     /* Room for the sticky bottom-nav (pb-28). */
     --bottom-nav-clearance: 7rem;
+    /* Floating coach FAB + gap; scroll padding uses this (icon-only on mobile). */
+    --lobsy-coach-fab-size: 56px;
+    --lobsy-coach-scroll-pad: calc(var(--lobsy-coach-fab-size) + 12px + 16px);
     --cookie-bar-h: 0px;
     --app-header-height: 4.25rem;
     /* Spacing / type / z-index tokens (design system; admin + enterprise denser layout). */
@@ -8403,8 +8406,13 @@ button.bottom-nav__item {
         padding: 0.4rem 0.15rem;
     }
 
-    .app-shell.has-bottom-nav .app-main,
-    .app-shell:has(.bottom-nav) .app-main {
+    .app-shell.has-bottom-nav:not(:has(.jobsy-discovery)) .app-main,
+    .app-shell:has(.bottom-nav):not(:has(.jobsy-discovery)) .app-main {
+        padding-bottom: calc(var(--bottom-nav-h, 4.75rem) + 48px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell.has-bottom-nav:has(.jobsy-discovery) .app-main,
+    .app-shell:has(.bottom-nav):has(.jobsy-discovery) .app-main {
         padding-bottom: calc(var(--bottom-nav-clearance) + env(safe-area-inset-bottom, 0px));
     }
 
@@ -21763,6 +21771,35 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
     background: transparent;
 }
 
+.lobsy-coach-dock__btn--warm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.lobsy-coach-dock__medallion {
+    display: block;
+    width: var(--lobsy-coach-fab-size);
+    height: var(--lobsy-coach-fab-size);
+    flex: none;
+    filter: drop-shadow(0 2px 8px color-mix(in srgb, var(--brand) 16%, transparent));
+}
+
+.lobsy-coach-dock__medallion img {
+    border-radius: 50%;
+}
+
+.lobsy-coach-dock__label {
+    font-size: 0.72rem;
+    font-weight: 650;
+    line-height: 1.15;
+    color: var(--brand-deep, #0a2044);
+    max-width: 5.5rem;
+    text-align: center;
+}
+
 .lobsy-coach-dock--compact .lobsy-coach-dock__btn {
     flex: none;
     width: 56px;
@@ -21830,12 +21867,66 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 
 @media (max-width: 639px) {
     .app-shell:has([data-lobsy-coach]) .app-main {
-        padding-bottom: calc(56px + 88px + 16px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(
+            var(--bottom-nav-h, 0px)
+            + 48px
+            + var(--sticky-footer-h, 0px)
+            + var(--cookie-bar-h, 0px)
+            + var(--pwa-banner-bottom-h, 0px)
+            + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
+    .app-shell:has([data-lobsy-coach]) .app-main__content {
+        flex-grow: 0;
+        padding-bottom: 0;
+    }
+
+    .app-shell.has-bottom-nav .app-main__content {
+        flex-grow: 0;
+    }
+
+    .app-shell.has-bottom-nav {
+        min-height: auto;
+    }
+
+    html:has(.app-shell.has-bottom-nav),
+    body:has(.app-shell.has-bottom-nav) {
+        min-height: auto;
+    }
+
+    .app-shell.has-bottom-nav:not(:has(.jobsy-discovery)):not(.app-shell--match):not(.app-shell--questionnaire) .app-main {
+        flex: 0 0 auto;
     }
 
     .app-shell:has(.kb-detail) .app-main,
     .app-shell:has(.notifications-page) .app-main {
         padding-bottom: calc(var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + 16px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .app-shell:has(.kb-ext) .app-main {
+        padding-bottom: calc(
+            var(--bottom-nav-h, 0px)
+            + 48px
+            + var(--cookie-bar-h, 0px)
+            + var(--pwa-banner-bottom-h, 0px)
+            + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
+    .app-shell:has(.passport-page--illustrated) .app-main,
+    .app-shell:has(.panel-page--cand-ill) .app-main {
+        padding-bottom: calc(
+            var(--bottom-nav-h, 0px)
+            + 48px
+            + var(--cookie-bar-h, 0px)
+            + var(--pwa-banner-bottom-h, 0px)
+            + env(safe-area-inset-bottom, 0px)
+        );
+    }
+
+    .lobsy-coach-dock__label {
+        display: none;
     }
 
     .lobsy-coach-dock {
@@ -21881,10 +21972,6 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
 }
 
 @media (max-width: 480px) {
-    .app-shell:has([data-lobsy-coach]) .app-main {
-        padding-bottom: calc(56px + 88px + 16px + 96px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + var(--pwa-banner-bottom-h, 0px) + env(safe-area-inset-bottom, 0px));
-    }
-
     .lobsy-coach-dock__tip {
         position: fixed;
         inset-inline: 0;
@@ -22182,10 +22269,6 @@ html[data-header-menu="account"] .account-menu > .account-menu__panel {
         [role="tab"]
     ) {
         max-inline-size: calc(100% - 68px);
-    }
-
-    .app-shell:has([data-lobsy-coach]) .app-main__content {
-        padding-bottom: calc(56px + 88px + 16px + 96px + var(--bottom-nav-h, 0px) + var(--sticky-footer-h, 0px) + var(--cookie-bar-h, 0px) + env(safe-area-inset-bottom, 0px));
     }
 
     .app-shell:has([data-lobsy-coach]) :is(
