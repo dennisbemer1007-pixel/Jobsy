@@ -114,7 +114,7 @@
   min-height: 680px;
   padding: 0;
   overflow: hidden;
-  background: var(--pub-bg);
+  background: var(--pearl);
   isolation: isolate;
 }
 
@@ -126,12 +126,13 @@
   left: 50%;
   z-index: 0;
   width: 100vw;
-  margin-left: -50vw;
   pointer-events: none;
+  transform: translateX(-50%) scale(1.05);
+  transform-origin: 56% top;
   background: var(--pub-hero-art) no-repeat 56% top / cover;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%),
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 11%, #000 89%, transparent 100%),
     linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%),
+  mask-image: linear-gradient(90deg, transparent 0%, #000 11%, #000 89%, transparent 100%),
     linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
