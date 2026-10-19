@@ -271,7 +271,9 @@ public static class PageAssetCatalog
             ];
         }
 
-        if (path is "/candidate/start" or "/carriere" or "/candidate/paspoort")
+        if (path == OnboardingRoutes.ClassicStartPath
+            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path == PassportRedirects.PassportPath)
         {
             return ["css/features/candidate-hero-compact-preview.css?v=20261019-13"];
         }
