@@ -78,6 +78,43 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
     }
 
     [Fact]
+    public async Task Capture_navbar_uniform_matrix_when_requested()
+    {
+        if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_NAVBAR_UNIFORM") ?? "").Trim() != "1")
+        {
+            return;
+        }
+
+        const string uniformDir = "/opt/cursor/artifacts/navbar-uniform";
+        Directory.CreateDirectory(uniformDir);
+
+        var baseUrl = (Environment.GetEnvironmentVariable("JOBSY_E2E_BASE_URL") ?? "http://127.0.0.1:5201").Trim().TrimEnd('/');
+        if (!await SmokeReachability.IsReachableAsync(baseUrl))
+        {
+            return;
+        }
+
+        await CandidateJourneyE2e.EnableLiveFeatureFlagsAsync(baseUrl);
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+
+        var routes = new (string slug, string path)[]
+        {
+            ("banenkaart", "/banenkaart"),
+            ("bedrijvenkaart", "/bedrijvenkaart"),
+            ("paspoort", "/candidate/paspoort"),
+            ("reis", "/candidate/ontdekkingsreis"),
+        };
+
+        foreach (var (slug, path) in routes)
+        {
+            await CaptureUniformHeaderAsync(browser, baseUrl, path, slug, uniformDir, 1440, 900, mobile: false);
+            await CaptureUniformHeaderAsync(browser, baseUrl, path, slug, uniformDir, 390, 844, mobile: true);
+        }
+    }
+
+    [Fact]
     public async Task Capture_banenkaart_header_for_merge()
     {
         if ((Environment.GetEnvironmentVariable("JOBSY_CAPTURE_BLOCKERS") ?? "").Trim() != "1")
@@ -401,14 +438,62 @@ public sealed class AcceptatieBlockerEvidencePlaywrightTests
         await page.WaitForTimeoutAsync(2500);
     }
 
+    private static async Task CaptureUniformHeaderAsync(
+        IBrowser browser,
+        string baseUrl,
+        string path,
+        string slug,
+        string outDir,
+        int width,
+        int height,
+        bool mobile)
+    {
+        await using var ctx = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = width, Height = height },
+            DeviceScaleFactor = mobile ? 2 : 1,
+            IsMobile = mobile,
+            HasTouch = mobile,
+            Locale = "nl-NL",
+        });
+        await PlaywrightCookieConsent.AcceptAsync(ctx);
+        var page = await ctx.NewPageAsync();
+        page.SetDefaultTimeout(120_000);
+        await RegisterAndSkipToBanenkaartAsync(page, baseUrl);
+        await page.GotoAsync($"{baseUrl}{path}", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+        await WaitForCircuitReadyAsync(page);
+        await page.Locator("[data-testid=app-shell-header]").WaitForAsync(new()
+        {
+            State = WaitForSelectorState.Visible,
+            Timeout = 90_000,
+        });
+        if (!mobile)
+        {
+            await page.Locator("[data-testid=candidate-header-nav]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 60_000,
+            });
+        }
+
+        var suffix = width >= 1024 ? "1440" : "390";
+        await page.Locator("[data-testid=app-shell-header]").First.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(outDir, $"after-{slug}-{suffix}.png"),
+        });
+    }
+
     private static async Task AssertBanenkaartCandidateShellAsync(IPage page, bool mobile)
     {
         await page.Locator(".app-header").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
         if (mobile)
         {
             await page.Locator("nav.bottom-nav").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-            Assert.Equal(0, await page.Locator(".jobsy-chrome__header:visible").CountAsync());
+            Assert.Equal(0, await page.Locator(".jobsy-chrome__header").CountAsync());
         }
+
+        Assert.True(await page.Locator("[data-testid=app-shell-header] .page-help__btn").CountAsync() > 0,
+            "Expected shared app header info button on banenkaart.");
 
         Assert.True(await page.Locator("[data-testid=kb-view-toggle]").CountAsync() > 0, "Expected Kaart/Lijst toggle in DOM.");
     }

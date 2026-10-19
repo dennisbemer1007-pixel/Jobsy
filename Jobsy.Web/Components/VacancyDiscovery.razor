@@ -31,18 +31,7 @@
 </HeadContent>
 <div class="jobsy-discovery @(showMapOnMobile ? "show-map" : "show-list") @(_filtersOpen ? "filters-open" : null) @(_desktopListMode && _wideViewport ? "jobsy-discovery--list" : null) @(_showStartPrompt ? "kb-start-prompt-open" : null)">
     <div class="jobsy-chrome">
-        <header class="jobsy-chrome__header">
-            <a class="jobsy-logo" href="/" aria-label="Lobsy">
-                <LobsyLogo Class="jobsy-logo__img" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
-            </a>
-            <h1 class="visually-hidden">@Culture["Seo.HomeHeading"]</h1>
-            <div class="jobsy-chrome__header-actions">
-                <PageHelp />
-                <NotificationBell />
-                <LanguageSelector />
-                <AuthHeader />
-            </div>
-        </header>
+        <h1 class="visually-hidden">@Culture["Seo.HomeHeading"]</h1>
 
         @* Address lives in the start prompt (mobile) / desktop toolbar — not in the filter bar. *@
         <div class="jobsy-chrome__search kb-chrome-search kb-chrome-search--address" hidden>

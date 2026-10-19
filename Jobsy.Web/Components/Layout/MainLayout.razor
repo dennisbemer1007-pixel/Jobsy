@@ -24,41 +24,11 @@
      dir="@(Culture.IsRightToLeft ? "rtl" : null)">
     <PageSeoHead />
     <Jobsy.Web.Components.Errors.MaintenanceAdminBanner />
-    @if (!_isMatchPage && !_isQuestionnairePage && !_banenkaartImmersive)
+    @if (!_isMatchPage && !_isQuestionnairePage)
     {
-        <header class="app-header">
-            <div class="app-header__brand">
-                <a class="brand" href="@_homeHref" aria-label="Lobsy">
-                    <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
-                    <span class="brand__text">
-                        <span class="brand-tagline">@HeaderTagline</span>
-                    </span>
-                </a>
-            </div>
-            <AuthorizeView Roles="@JobsyRoles.Candidate">
-                <Authorized>
-                    <CandidateHeaderNav />
-                </Authorized>
-            </AuthorizeView>
-            <div class="app-header__actions">
-                @if (_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)
-                {
-                    <AuthorizeView Roles="@JobsyRoles.Candidate">
-                        <Authorized>
-                            <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallEntry />
-                        </Authorized>
-                    </AuthorizeView>
-                }
-                <PageHelp />
-                <NotificationBell />
-                <FeatureVisible Feature="PlatformFeature.Employers">
-                    <TokenWalletChip />
-                    <SalesWalletChipV2 />
-                </FeatureVisible>
-                <LanguageSelector />
-                <AuthHeader />
-            </div>
-        </header>
+        <AppShellHeader HomeHref="@_homeHref"
+                        HeaderTagline="@HeaderTagline"
+                        ShowCandidatePwaInstall="@(_isCandidate && RendererInfo.IsInteractive && !_suppressPwaInstallEntry)" />
     }
 
     <main class="app-main">
