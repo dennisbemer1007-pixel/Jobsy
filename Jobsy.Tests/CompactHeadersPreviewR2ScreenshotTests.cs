@@ -81,9 +81,9 @@ public sealed class CompactHeadersPreviewR2ScreenshotTests : IAsyncLifetime
         Directory.CreateDirectory(ArtifactsDir);
         var pages = new (string Slug, string Server, string Path, bool Onboarding, Rgb24 Cream)[]
         {
-            ("onboarding-kennismaken", _onboardingWeb!.ServerAddress, "/candidate/start", true, ParseHex(CompactHeroPreviewCream.OnboardingKennismaken)),
-            ("carriere", _web!.ServerAddress, "/carriere", false, ParseHex(CompactHeroPreviewCream.CarriereOpleiding)),
-            ("paspoort", _web.ServerAddress, "/candidate/paspoort", false, ParseHex(CompactHeroPreviewCream.PaspoortKompas)),
+            ("onboarding-kennismaken", _onboardingWeb!.ServerAddress, "/candidate/start", true, ParseHex(CompactHeroPreviewCream.OnboardingFinaleHero)),
+            ("carriere", _web!.ServerAddress, "/carriere", false, ParseHex(CompactHeroPreviewCream.CarriereLearnGrowWide)),
+            ("paspoort", _web.ServerAddress, "/candidate/paspoort", false, ParseHex(CompactHeroPreviewCream.PaspoortKompasWide)),
         };
 
         foreach (var page in pages)

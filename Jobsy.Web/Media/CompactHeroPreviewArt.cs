@@ -1,0 +1,38 @@
+namespace Jobsy.Web.Media;
+
+/// <summary>Preview-only wide art URLs for ?heroPreview=c (not production rollout).</summary>
+public static class CompactHeroPreviewArt
+{
+    public static string CandHeroArtForVariantC(string artUrl)
+    {
+        if (string.IsNullOrWhiteSpace(artUrl))
+        {
+            return artUrl;
+        }
+
+        if (artUrl.Contains("opleiding.jpg", StringComparison.OrdinalIgnoreCase)
+            || artUrl.Contains("leren-groeien-hero-wide", StringComparison.OrdinalIgnoreCase))
+        {
+            return CandidateIllustratedImages.LearnGrowHeroWide;
+        }
+
+        if (artUrl.Contains("kompas-hero-wide", StringComparison.OrdinalIgnoreCase))
+        {
+            return artUrl;
+        }
+
+        if (artUrl.Contains("kennismaken", StringComparison.OrdinalIgnoreCase)
+            || artUrl.Contains("wie-ben-jij-profession-wide", StringComparison.OrdinalIgnoreCase)
+            || artUrl.Contains("finale-hero", StringComparison.OrdinalIgnoreCase))
+        {
+            return OnboardingKennismakenDesktop;
+        }
+
+        return artUrl;
+    }
+
+    public const string OnboardingKennismakenDesktop =
+        "/images/candidate-illustrated/wie-ben-jij-profession-wide.jpg";
+
+    public const string OnboardingKennismakenMobile = "/images/onboarding/kennismaken-mobile-hero.jpg";
+}

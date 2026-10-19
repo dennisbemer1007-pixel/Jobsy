@@ -23,8 +23,9 @@
 @inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @using Jobsy.Web.Components.Candidate.Onboarding
 @using Jobsy.Web.Features
-@using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.Media
 @using Jobsy.Web.Onboarding
+@using Jobsy.Web.KandidaatBanen
 @implements IAsyncDisposable
 
 <PageTitle>@Culture["Onboarding.PageTitle"] · Lobsy</PageTitle>
@@ -294,10 +295,10 @@
                     @switch (_step)
                     {
                         case 1:
-                            <OnboardingIllustratedStep WebpSrc="@OnboardingIllustrationAssets.KennismakenWebp"
-                                                       JpgSrc="@OnboardingIllustrationAssets.KennismakenJpg"
-                                                       MobileHeroWebp="@OnboardingIllustrationAssets.MobileHeroWebp("kennismaken")"
-                                                       MobileHeroJpg="@OnboardingIllustrationAssets.MobileHeroJpg("kennismaken")"
+                            <OnboardingIllustratedStep WebpSrc="@Step1HeroWebp"
+                                                       JpgSrc="@Step1HeroJpg"
+                                                       MobileHeroWebp="@Step1MobileHeroWebp"
+                                                       MobileHeroJpg="@Step1MobileHeroJpg"
                                                        MobileHeroSlug="kennismaken"
                                                        Eyebrow="@MobileStepBadge"
                                                        HeroTitle="@Culture["Onboarding.Step1.Title"]"
@@ -606,6 +607,22 @@
     private OnboardingImpressionItem? _earlyStrength;
     private int _step = 1;
     private bool SoftIllustratedStep => _earlyMoment == EarlyRewardMoment.None && _step is >= 1 and <= 6;
+
+    private string Step1HeroJpg => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
+        ? CompactHeroPreviewArt.OnboardingKennismakenDesktop
+        : OnboardingIllustrationAssets.KennismakenJpg;
+
+    private string Step1HeroWebp => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
+        ? CompactHeroPreviewArt.OnboardingKennismakenDesktop
+        : OnboardingIllustrationAssets.KennismakenWebp;
+
+    private string Step1MobileHeroJpg => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
+        ? CompactHeroPreviewArt.OnboardingKennismakenMobile
+        : OnboardingIllustrationAssets.MobileHeroJpg("kennismaken");
+
+    private string Step1MobileHeroWebp => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
+        ? CompactHeroPreviewArt.OnboardingKennismakenMobile
+        : OnboardingIllustrationAssets.MobileHeroWebp("kennismaken");
 
     private string? IllustratedSidebarNote => _step switch
     {

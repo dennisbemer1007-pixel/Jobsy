@@ -7,15 +7,27 @@ public sealed class CompactHeroPreviewCreamTests
     [Fact]
     public void Sampled_cream_hex_matches_css_sources()
     {
-        Assert.Equal("#E4DDCE", CompactHeroPreviewCream.OnboardingKennismaken);
-        Assert.Equal("#F9E7D2", CompactHeroPreviewCream.CarriereOpleiding);
-        Assert.Equal("#F5E7D5", CompactHeroPreviewCream.PaspoortKompas);
+        Assert.Equal(
+            CompactHeroPreviewCream.OnboardingFinaleHero,
+            CompactHeroPreviewCreamSampler.MedianLeftEdgeHex(Abs(CompactHeroPreviewArt.OnboardingKennismakenDesktop)));
+        Assert.Equal(
+            CompactHeroPreviewCream.CarriereLearnGrowWide,
+            CompactHeroPreviewCreamSampler.MedianLeftEdgeHex(Abs(CandidateIllustratedImages.LearnGrowHeroWide)));
+        Assert.Equal(
+            CompactHeroPreviewCream.PaspoortKompasWide,
+            CompactHeroPreviewCreamSampler.MedianLeftEdgeHex(Abs(CandidateIllustratedImages.KompasHeroWide)));
         var css = File.ReadAllText(Path.Combine(
             RepoRoot,
             "Jobsy.Web/wwwroot/css/features/candidate-hero-compact-preview.css"));
-        Assert.Contains("#e4ddce", css, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("#f9e7d2", css, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("#f5e7d5", css, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(CompactHeroPreviewCream.OnboardingFinaleHero, css, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(CompactHeroPreviewCream.CarriereLearnGrowWide, css, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(CompactHeroPreviewCream.PaspoortKompasWide, css, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string Abs(string webPath)
+    {
+        var rel = webPath.Split('?', 2)[0].TrimStart('/');
+        return Path.GetFullPath(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot", rel));
     }
 
     private static string RepoRoot

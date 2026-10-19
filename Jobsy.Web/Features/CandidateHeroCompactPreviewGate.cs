@@ -27,7 +27,7 @@ public interface ICandidateHeroCompactPreviewGate
 
 public sealed class CandidateHeroCompactPreviewGate(NavigationManager navigation) : ICandidateHeroCompactPreviewGate
 {
-    public CandidateHeroCompactPreviewVariant Variant { get; } = Parse(navigation.Uri);
+    public CandidateHeroCompactPreviewVariant Variant => Parse(navigation.Uri);
 
     public string? CandHeroCssClass => Variant switch
     {

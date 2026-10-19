@@ -1,25 +1,36 @@
 /* Owner preview only (?heroPreview=a|b|c) — three pages, not global rollout. */
 
-/* Variant C: B band height, illustration-matched cream, wide right art (~50% band). */
+/* Variant C (r3): B height, left-edge sampled cream, ~50% art column, mask on img. */
 .ob-illustrated-step--compact-preview-c {
-  --cand-compact-c-cream: #e4ddce;
-  --cand-compact-c-art-share: 52%;
-  --cand-compact-c-copy-max: 46%;
+  --cand-compact-c-cream: #dcd2bf;
+  --cand-compact-c-art-share: 50%;
+  --cand-compact-c-copy-max: 48%;
+  --cand-compact-c-page-cream: var(--bg, #f5f2ee);
+  --cand-compact-c-img-mask: linear-gradient(to right, transparent 0%, #000 38%),
+    linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
 }
 
 .career-page--illustrated .cand-hero--compact-preview-c {
-  --cand-compact-c-cream: #f9e7d2;
+  --cand-compact-c-cream: #f7f4ef;
 }
 
 .passport-page--illustrated .cand-hero--compact-preview-c {
-  --cand-compact-c-cream: #f5e7d5;
+  --cand-compact-c-cream: #faebdb;
 }
 
 .cand-hero--compact-preview-c {
-  --cand-compact-c-art-share: 52%;
-  --cand-compact-c-copy-max: 46%;
-  --cand-compact-c-art-mask: linear-gradient(to bottom, transparent 0%, #000 5%, #000 95%, transparent 100%),
-    linear-gradient(to right, transparent 0%, #000 14%, #000 100%);
+  --cand-compact-c-art-share: 50%;
+  --cand-compact-c-copy-max: 48%;
+  --cand-compact-c-page-cream: var(--bg, #f5f2ee);
+  --cand-compact-c-img-mask: linear-gradient(to right, transparent 0%, #000 38%),
+    linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+}
+
+@media (min-width: 1800px) {
+  .ob-illustrated-step--compact-preview-c,
+  .cand-hero--compact-preview-c {
+    --cand-compact-c-art-share: 55%;
+  }
 }
 
 /* Soft vignette: art fills band height; edges dissolve into pearl/cream (no hard rectangle). */
@@ -132,46 +143,77 @@
     object-position: right center;
   }
 
-  /* —— Variant C (owner pick: B height, seamless wide art) —— */
+  /* —— Variant C r3 —— */
   .cand-hero--compact-preview-c {
     --cand-hero-preview-h: clamp(5.25rem, 9.03vw, 8.125rem);
     min-height: var(--cand-hero-preview-h);
     height: var(--cand-hero-preview-h);
+    position: relative;
     background-color: var(--cand-compact-c-cream) !important;
     background-image: none !important;
-    border-block-end-color: color-mix(in srgb, var(--gold) 22%, var(--border));
+    border-block-end: none;
+    overflow: hidden;
+  }
+
+  .cand-hero--compact-preview-c::before {
+    display: none;
   }
 
   .cand-hero--compact-preview-c::after {
     content: "";
     position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    height: 16px;
+    z-index: 4;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-c-page-cream) 100%);
+    mask-image: none;
+    -webkit-mask-image: none;
+    background-image: none;
+  }
+
+  .cand-hero--compact-preview-c.cand-hero--profession-band::after {
+    inset: auto 0 0 0;
+    width: 100%;
+    height: 16px;
+    background-image: none !important;
+    background-repeat: no-repeat;
+    background-size: auto;
+    background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-c-page-cream) 100%);
+  }
+
+  .cand-hero--compact-preview-c .cand-hero__compact-c-art {
+    position: absolute;
     top: 0;
     bottom: 0;
-    right: 0;
+    right: 16px;
     width: var(--cand-compact-c-art-share);
     z-index: 0;
     pointer-events: none;
-    background-image: var(--cand-hero-art, none);
-    background-repeat: no-repeat;
-    background-size: auto 100%;
-    background-position: 100% center;
-    -webkit-mask-image: var(--cand-compact-c-art-mask);
-    mask-image: var(--cand-compact-c-art-mask);
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    overflow: hidden;
+    background: var(--cand-compact-c-cream);
   }
 
-  .cand-hero--compact-preview-c::before {
-    z-index: 1;
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      var(--cand-compact-c-cream) 0%,
-      var(--cand-compact-c-cream) calc(100% - var(--cand-compact-c-art-share) - 2%),
-      color-mix(in srgb, var(--cand-compact-c-cream) 88%, transparent)
-        calc(100% - var(--cand-compact-c-art-share) + 4%),
-      transparent calc(100% - var(--cand-compact-c-art-share) + 14%)
-    );
+  .cand-hero--compact-preview-c .cand-hero__compact-c-art img {
+    display: block;
+    height: 100%;
+    width: calc(100% + 20px);
+    max-width: none;
+    min-width: calc(100% + 20px);
+    margin-inline-start: -20px;
+    object-fit: cover;
+    object-position: right center;
+    -webkit-mask-image: var(--cand-compact-c-img-mask);
+    mask-image: var(--cand-compact-c-img-mask);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   .cand-hero--compact-preview-c .cand-hero__copy {
@@ -193,40 +235,28 @@
     line-height: 1.34;
   }
 
-  .cand-hero--compact-preview-c.cand-hero--profession-band::after {
-    inset: auto;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: auto;
-    width: var(--cand-compact-c-art-share);
-  }
-
-  .cand-hero--compact-preview-c.cand-hero--profession-band::before {
-    background: linear-gradient(
-      90deg,
-      var(--cand-compact-c-cream) 0%,
-      var(--cand-compact-c-cream) calc(100% - var(--cand-compact-c-art-share) - 2%),
-      color-mix(in srgb, var(--cand-compact-c-cream) 88%, transparent)
-        calc(100% - var(--cand-compact-c-art-share) + 4%),
-      transparent calc(100% - var(--cand-compact-c-art-share) + 16%)
-    );
-  }
-
   .cand-hero--compact-preview-c.cand-hero--profession-band .cand-hero__copy {
     background: transparent;
-  }
-
-  @media (min-width: 640px) {
-    .cand-hero--compact-preview-c.cand-hero--profession-band .cand-hero__copy {
-      background: transparent;
-    }
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__hero-band {
     background: var(--cand-compact-c-cream) !important;
     min-block-size: clamp(5.25rem, 9.03vw, 8.125rem);
     max-block-size: clamp(5.25rem, 9.03vw, 8.125rem);
+    border-block-end: none;
+    overflow: hidden;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__hero-band::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 16px;
+    z-index: 4;
+    pointer-events: none;
+    background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-c-page-cream) 100%);
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__head {
@@ -238,44 +268,46 @@
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art {
-    inset-inline-start: calc(100% - var(--cand-compact-c-art-share));
-    inset-inline-end: 0;
+    inset: 0 16px 0 auto;
     inline-size: var(--cand-compact-c-art-share);
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    background: var(--cand-compact-c-cream);
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art picture,
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art-img-wrap picture {
+    display: block;
+    block-size: 100%;
+    inline-size: 100%;
+    max-inline-size: none;
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art-img-wrap {
+    position: absolute;
     inset: 0;
     justify-content: flex-end;
     align-items: stretch;
-    -webkit-mask-image: var(--cand-compact-c-art-mask);
-    mask-image: var(--cand-compact-c-art-mask);
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art img,
+  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art-img-wrap img {
+    display: block;
+    height: 100%;
+    inline-size: calc(100% + 20px);
+    max-width: none;
+    min-width: calc(100% + 20px) !important;
+    max-inline-size: none !important;
+    margin-inline-start: -20px;
+    object-fit: cover;
+    object-position: right center;
+    -webkit-mask-image: var(--cand-compact-c-img-mask);
+    mask-image: var(--cand-compact-c-img-mask);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
-  }
-
-  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__art-img-wrap img {
-    block-size: 100%;
-    inline-size: auto;
-    max-inline-size: none;
-    min-inline-size: 100%;
-    object-fit: contain;
-    object-position: right center;
-  }
-
-  .ob-illustrated-step--compact-preview-c .ob-illustrated-step__hero-band::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background: linear-gradient(
-      90deg,
-      var(--cand-compact-c-cream) 0%,
-      var(--cand-compact-c-cream) calc(100% - var(--cand-compact-c-art-share) - 2%),
-      color-mix(in srgb, var(--cand-compact-c-cream) 90%, transparent)
-        calc(100% - var(--cand-compact-c-art-share) + 5%),
-      transparent calc(100% - var(--cand-compact-c-art-share) + 16%)
-    );
   }
 }
 
@@ -338,9 +370,35 @@
   }
 
   .cand-hero--compact-preview-c::after {
+    inset: auto 0 0 0;
+    width: 100%;
+    height: 12px;
+    background-image: none !important;
+    background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-c-page-cream) 100%);
+  }
+
+  .cand-hero--compact-preview-c .cand-hero__compact-c-art {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 8px;
     width: 52%;
-    background-size: auto 100%;
-    background-position: 100% center;
+    z-index: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    overflow: hidden;
+  }
+
+  .cand-hero--compact-preview-c .cand-hero__compact-c-art img {
+    height: 100%;
+    min-width: 100%;
+    object-fit: cover;
+    object-position: right center;
+    -webkit-mask-image: var(--cand-compact-c-img-mask);
+    mask-image: var(--cand-compact-c-img-mask);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   .cand-hero--compact-preview-c .cand-hero__copy {

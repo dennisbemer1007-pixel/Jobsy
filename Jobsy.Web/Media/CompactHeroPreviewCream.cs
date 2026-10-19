@@ -1,12 +1,13 @@
 namespace Jobsy.Web.Media;
 
 /// <summary>
-/// Corner-sampled background cream from hero illustration assets (variant C seamless band).
-/// Keep in sync with candidate-hero-compact-preview.css custom properties.
+/// Left-edge median cream per hero asset (see CompactHeroPreviewCreamSampler).
+/// Regenerate via CompactHeroPreviewCreamSamplerTests when art files change.
 /// </summary>
 public static class CompactHeroPreviewCream
 {
-    public const string OnboardingKennismaken = "#E4DDCE";
-    public const string CarriereOpleiding = "#F9E7D2";
-    public const string PaspoortKompas = "#F5E7D5";
+    public const string OnboardingFinaleHero = "#DCD2BF";
+    public const string CarriereLearnGrowWide = "#F7F4EF";
+    public const string PaspoortKompasWide = "#FAEBDB";
+    public const string PageCreamFallback = "#F5F2EE";
 }

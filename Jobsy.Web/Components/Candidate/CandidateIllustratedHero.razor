@@ -1,4 +1,7 @@
 @namespace Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Features
+@using Jobsy.Web.Media
+@inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 
 <header class="@HeaderClass" style="@StyleValue">
     <div class="cand-hero__copy">
@@ -26,6 +29,16 @@
                  decoding="async" />
         </div>
     }
+    @if (ShowCompactCArt)
+    {
+        <div class="cand-hero__compact-c-art" aria-hidden="true">
+            <img src="@CompactCArtUrl"
+                 alt=""
+                 loading="eager"
+                 fetchpriority="high"
+                 decoding="async" />
+        </div>
+    }
     @if (!string.IsNullOrWhiteSpace(ArtUrl))
     {
         <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
@@ -46,6 +59,13 @@
     [Parameter] public string? CssClass { get; set; }
     [Parameter] public int TitleTabIndex { get; set; } = -1;
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool ShowCompactCArt
+        => HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C
+           && !string.IsNullOrWhiteSpace(CompactCArtUrl);
+
+    private string? CompactCArtUrl
+        => string.IsNullOrWhiteSpace(ArtUrl) ? null : CompactHeroPreviewArt.CandHeroArtForVariantC(ArtUrl);
 
     private string HeaderClass
     {
