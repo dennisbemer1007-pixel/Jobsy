@@ -16,8 +16,8 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "45cf9269caa2252fe7282c70d47f2dc804c9abec858df7b09b226ca495fd340d",
-    "v": "20261019-11"
+    "sha256": "67085da0aa55aeab10a0835110c10c0f056805d7cd505629d12e5b1cee2b31dd",
+    "v": "20261019-12"
   },
   "css/critical.css": {
     "sha256": "4b1e66308e9c4511e08c3f219aafc92961c860b2be639d0c4107d22a245680d4",
@@ -51,6 +51,10 @@
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
+  "css/features/candidate-illustrated-decorative-layers.css": {
+    "sha256": "fe835695a519b93b27e7e0225139810df3e54559308fc2fe9180bfb71b0cf132",
+    "v": "20261019-02"
+  },
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
     "v": "20261018-02"
@@ -76,7 +80,7 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "2661a034e722352d458380109b5748fd2b83976dc7f8e2a2e0968d7ff894b0c7",
+    "sha256": "dee90194df3ce52e43bc9c9bd5c9aca798d30e6cbc498f217b7355e5d5ac75d1",
     "v": "20261015-04"
   },
   "css/features/future-jobs.css": {
@@ -140,15 +144,15 @@
     "v": "20261018-15"
   },
   "css/features/onboarding-illustrated-step.css": {
-    "sha256": "58cd1fbe02599b9becf0831c8f82d226dc29f9b0b6b87c06a177a3bf533adb78",
-    "v": "20261018-r20"
+    "sha256": "a81945f7ffd823f4b74cadb72527d722d9039b43a7c55cfac5dca8027c88a777",
+    "v": "20261019-r22"
   },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
     "v": "20261018-r2"
   },
   "css/features/onboarding-wizard-mobile-bar.css": {
-    "sha256": "1c4b22aad845040d1f4db7321feafc0adae2cd3e23dfe301b2675f449f9af249",
+    "sha256": "f8b74a7eecc03112f2bbca9135c41b84a15f570b11143b3e454f39b29f40cae4",
     "v": "20261016-02"
   },
   "css/features/onboarding-wizard-nearby-panel.css": {
@@ -156,8 +160,8 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "db7be7e17fb9597e4b56f41806231b65cbd2e9bec53511c8ab9cc716063b3132",
-    "v": "20261018-02"
+    "sha256": "f5be594c8fd83965f85bb3938c0aad4df070de03cda95ed454ae1086f3d5a3c0",
+    "v": "20261019-r22"
   },
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
@@ -340,11 +344,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "8f703250f2abaa3552214244eb144e645580f3e8212cb7b9d2ad68d162e1aa68",
+    "sha256": "6b2fc6128108f3ff6647f2e090885a3f196bbf91b5c5f6f84b22845a19d714fb",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "d447ccb709c4a63c1bad9a154038abd2cee887643ade7607c169c66deadeb418",
+    "sha256": "389d688110794db351db882e2f139eb7f36485b54d7866d1c228e94ee4c59dd4",
     "v": "20261016-06"
   }
 }

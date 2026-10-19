@@ -566,13 +566,15 @@ internal static class VroegResultaatPlaywrightTestsHelpers
                   if (loading) return false;
                   return document.querySelector('.ob-wizard__welcome')
                     || document.querySelector('.ob-fields')
+                    || document.querySelector('#onboarding-field-firstname input')
+                    || document.querySelector('[data-testid=onboarding-step-1-illustrated]')
                     || document.querySelector('.ob-wizard__finish');
                 }
                 """,
                 null,
                 new() { Timeout = 90_000 });
 
-            if (await page.Locator(".ob-fields input").CountAsync() > 0
+            if (await page.Locator(".ob-fields input, #onboarding-field-firstname input, [data-testid=onboarding-step-1-illustrated]").CountAsync() > 0
                 || await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
             {
                 if (await page.Locator(".ob-wizard__welcome").CountAsync() > 0)
@@ -582,7 +584,8 @@ internal static class VroegResultaatPlaywrightTestsHelpers
                     await page.WaitForTimeoutAsync(500);
                 }
 
-                await page.Locator(".ob-fields input").First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+                await page.Locator("#onboarding-field-firstname input, .ob-fields input").First
+                    .WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
                 return;
             }
 

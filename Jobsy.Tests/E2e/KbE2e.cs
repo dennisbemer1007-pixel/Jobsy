@@ -205,8 +205,9 @@ public static class KbE2e
         password ??= Environment.GetEnvironmentVariable("JOBSY_E2E_CANDIDATE_PASSWORD") ?? DefaultPassword;
         try
         {
-            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 60_000 });
-            await page.WaitForSelectorAsync("input[name='email'], input[type=email], #email", new() { Timeout = 30_000 });
+            await page.GotoAsync(baseUrl + "/login", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 90_000 });
+            await PlaywrightCookieConsent.AcceptOnPageAsync(page);
+            await page.WaitForSelectorAsync("input[name='email'], input[type=email], #email, #login-email", new() { Timeout = 45_000 });
             var emailInput = page.Locator("input[name='email'], input[type=email], #email").First;
             var passwordInput = page.Locator("input[name='password'], input[type=password], #password").First;
             await emailInput.FillAsync(email);

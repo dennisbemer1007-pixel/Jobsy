@@ -547,6 +547,8 @@ combo.save(out)
                   if (loading) return false;
                   return document.querySelector('.ob-wizard__welcome')
                     || document.querySelector('.ob-fields')
+                    || document.querySelector('#onboarding-field-firstname input')
+                    || document.querySelector('[data-testid=onboarding-step-1-illustrated]')
                     || document.querySelector('.ob-wizard__finish');
                 }
                 """,
@@ -574,8 +576,18 @@ combo.save(out)
         await ResolveOnboardingHomeAddressAsync(page, postcode);
         await FillOnboardingBirthDateIfPresentAsync(page);
 
+        var workChip = page.Locator(".work-status-chips .lobsy-choice-tile, .work-status-chips .work-status-chip").First;
+        if (await workChip.CountAsync() > 0)
+        {
+            await workChip.ClickAsync(new() { Force = true });
+            await page.WaitForTimeoutAsync(400);
+        }
+
         await ClickNextAsync(page);
-        await page.Locator(".ob-wizard__presets button").First.ClickAsync();
+        await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        var preset = page.Locator(".ob-wizard__presets button, .ob-wizard__presets .lobsy-choice-tile, [data-testid=onboarding-step-2-illustrated] .lobsy-choice-tile").First;
+        await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await preset.ClickAsync(new() { Force = true });
         await ClickNextAsync(page);
         await page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First.ClickAsync();
         var travel = page.Locator(".ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button")
@@ -642,7 +654,8 @@ combo.save(out)
         var birthText = page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__text").First;
         if (await birthText.CountAsync() > 0)
         {
-            await birthText.ClickAsync();
+            await birthText.ScrollIntoViewIfNeededAsync();
+            await birthText.ClickAsync(new() { Force = true });
             await birthText.FillAsync("15-06-2000");
             await birthText.EvaluateAsync("el => el.dispatchEvent(new Event('blur', { bubbles: true }))");
             return;

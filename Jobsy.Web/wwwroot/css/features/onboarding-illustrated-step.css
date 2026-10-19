@@ -237,6 +237,13 @@
   pointer-events: auto;
 }
 
+.ob-illustrated-step__form .work-status-chips .lobsy-choice-tile {
+  position: relative;
+  z-index: 4;
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
 .ob-illustrated-step__form.ob-fields label,
 .ob-illustrated-step__form .ob-wizard__card--illustrated label {
   margin-block: 10px;

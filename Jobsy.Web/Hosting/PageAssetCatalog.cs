@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261019-11",
+        "css/app.min.css?v=20261019-12",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/candidate-illustrated-decorative-layers.css?v=20261019-02",
@@ -51,7 +51,7 @@ public static class PageAssetCatalog
         "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
         "css/features/onboarding-wizard.css?v=20261018-02",
-        "css/features/onboarding-illustrated-step.css?v=20261019-r22",
+        "css/features/onboarding-illustrated-step.css?v=20261019-r23",
         "css/features/onboarding-test-blocks.css?v=20261018-r2",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
         "css/features/onboarding-wizard-richting-a.css?v=20261018-02",

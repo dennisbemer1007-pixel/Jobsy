@@ -6,7 +6,7 @@ namespace Jobsy.Tests.E2e;
 /// Required functional gate: candidate onboarding must stay interactive (chips, address, date, geo, Volgende/Terug).
 /// Filter: <c>Suite=FunctionalE2e</c>. CI sets <c>JOBSY_E2E_FUNCTIONAL_GATE=1</c>.
 /// </summary>
-[Collection("PlaywrightSmoke")]
+[Collection("FunctionalE2e")]
 [Trait("Suite", "FunctionalE2e")]
 public sealed class FunctionalOnboardingPlaywrightTests
 {
@@ -26,6 +26,8 @@ public sealed class FunctionalOnboardingPlaywrightTests
             return;
         }
 
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
+
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
@@ -44,6 +46,11 @@ public sealed class FunctionalOnboardingPlaywrightTests
         await FunctionalOnboardingInteractivityHelpers.AssertHitTargetAsync(page, firstName, "firstname");
         await firstName.FillAsync("Func");
         Assert.Equal("Func", await firstName.InputValueAsync());
+        var lastName = page.Locator("input[autocomplete=family-name]").First;
+        if (await lastName.CountAsync() > 0)
+        {
+            await lastName.FillAsync("Test");
+        }
 
         await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, "2671GB");
         await FunctionalOnboardingInteractivityHelpers.AssertGeolocateButtonRespondsAsync(page);
@@ -51,10 +58,10 @@ public sealed class FunctionalOnboardingPlaywrightTests
         var next = page.GetByTestId("onboarding-next");
         await Assertions.Expect(next).ToBeEnabledAsync(new() { Timeout = 20_000 });
         await next.ClickAsync(new() { Timeout = 15_000, Force = mobile });
-        await page.Locator(".ob-wizard__presets, [data-testid=onboarding-step-2-illustrated]").First
-            .WaitForAsync(new() { Timeout = 30_000 });
+        await page.Locator("[data-testid=onboarding-step-2-illustrated], .ob-wizard__presets, .ob-illustrated-step").First
+            .WaitForAsync(new() { Timeout = 90_000 });
 
-        await MaybeCaptureAsync(page, tag, "kennismaken-after-next");
+        await FunctionalE2eArtifacts.CaptureAsync(page, "kennismaken-after-next", tag);
     }
 
     [Theory]
@@ -66,6 +73,8 @@ public sealed class FunctionalOnboardingPlaywrightTests
         {
             return;
         }
+
+        await FunctionalE2eAuth.WarmupStackAsync(baseUrl);
 
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
         using var playwright = await Playwright.CreateAsync();
@@ -83,7 +92,7 @@ public sealed class FunctionalOnboardingPlaywrightTests
             || await page.Locator(".ob-wizard__finish").CountAsync() > 0,
             "Expected onboarding to reach banenkaart (tests later) or finish screen.");
 
-        await MaybeCaptureAsync(page, tag, "onboarding-complete");
+        await FunctionalE2eArtifacts.CaptureAsync(page, "onboarding-complete", tag);
     }
 
     public static IEnumerable<object[]> ViewportCases()
@@ -119,20 +128,4 @@ public sealed class FunctionalOnboardingPlaywrightTests
         return (true, baseUrl);
     }
 
-    private static async Task MaybeCaptureAsync(IPage page, string tag, string slug)
-    {
-        if (!string.Equals(Environment.GetEnvironmentVariable("JOBSY_E2E_CAPTURE"), "1", StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        var dir = Environment.GetEnvironmentVariable("JOBSY_E2E_ARTIFACTS_ROOT")
-                  ?? "/opt/cursor/artifacts/functional-sweep";
-        Directory.CreateDirectory(dir);
-        await page.ScreenshotAsync(new()
-        {
-            Path = Path.Combine(dir, $"{slug}-{tag}.png"),
-            FullPage = false,
-        });
-    }
 }

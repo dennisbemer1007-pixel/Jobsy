@@ -10,7 +10,8 @@
         @foreach (var code in WorkStatusCatalog.AllCodes)
         {
             var selected = Selected.Contains(code);
-            <ChoiceTile Class="work-status-chip"
+            <ChoiceTile @key="code"
+                        Class="work-status-chip"
                         Label="@Culture[WorkStatusCatalog.LabelKey(code)]"
                         Icon="@ChoiceTileIcons.ForWorkStatus(code)"
                         Selected="selected"
