@@ -49,34 +49,63 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_home_logo_and_illustration_fades_r3()
+    public async Task Capture_home_logo_and_illustration_fades_r4()
     {
         Directory.CreateDirectory(OutDir);
 
         foreach (var (w, h, slug, mobile) in new (int W, int H, string Slug, bool Mobile)[]
                  {
+                     (1920, 900, "1920", false),
                      (1440, 900, "1440", false),
                      (1024, 768, "1024", false),
                      (390, 844, "390", true),
                  })
         {
-            await CaptureFullPageAsync(w, h, $"full-{slug}-r3", mobile);
-            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r3", mobile);
-            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r3", mobile);
+            await CaptureFullPageAsync(w, h, $"full-{slug}-r4", mobile);
+            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r4", mobile);
+            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r4", mobile);
             for (var i = 0; i < 3; i++)
             {
-                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r3", mobile, scroll: true);
+                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r4", mobile, scroll: true);
+            }
+
+            if (!mobile)
+            {
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "left");
+                await CaptureHeroEdgeZoomAsync(w, h, slug, "right");
             }
 
             await AssertHeroCtasReceiveClicksAsync(w, h, mobile);
         }
 
-        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r3", scroll: true);
-        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r3", scroll: true);
-        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r3", mobile: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r4", scroll: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r4", scroll: true);
+        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r4", mobile: true);
 
         var logoHeight = await MeasureLogoHeightAsync(1024, 768);
         Assert.InRange(logoHeight, 34, 42);
+    }
+
+    private async Task CaptureHeroEdgeZoomAsync(int w, int h, string slug, string edge)
+    {
+        await using var context = await NewContextAsync(w, h);
+        var page = await OpenHomeAsync(context);
+        var hero = page.Locator("#top.pub-landing__hero").First;
+        await hero.WaitForAsync(new() { Timeout = 60_000 });
+        var box = await hero.BoundingBoxAsync();
+        Assert.NotNull(box);
+        const float clipWidth = 140f;
+        var clipHeight = (float)Math.Min(420, Math.Max(280, box.Height - 140));
+        var clipY = (float)(box.Y + 100);
+        var clipX = edge == "left"
+            ? (float)box.X
+            : (float)(box.X + box.Width - clipWidth);
+        await page.WaitForTimeoutAsync(600);
+        await page.ScreenshotAsync(new()
+        {
+            Path = Path.Combine(OutDir, $"crop-hero-edge-{edge}-{slug}-r4.png"),
+            Clip = new() { X = clipX, Y = clipY, Width = clipWidth, Height = clipHeight },
+        });
     }
 
     private async Task AssertHeroCtasReceiveClicksAsync(int w, int h, bool mobile)

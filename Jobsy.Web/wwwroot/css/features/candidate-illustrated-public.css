@@ -114,7 +114,7 @@
   min-height: 680px;
   padding: 0;
   overflow: hidden;
-  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+  background: var(--pub-bg);
   isolation: isolate;
 }
 
@@ -124,10 +124,10 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: var(--pub-hero-art) no-repeat 60% top / auto 680px;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%),
+  background: var(--pub-hero-art) no-repeat 56% top / cover;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%),
     linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 10%),
+  mask-image: linear-gradient(90deg, transparent 0%, #000 9%, #000 91%, transparent 100%),
     linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
@@ -422,8 +422,8 @@
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
-    background-size: auto 600px;
-    background-position: 58% top;
+    background-size: cover;
+    background-position: 56% top;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__trust .pub-landing__tgrid {
@@ -441,8 +441,8 @@
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
-    background-size: auto 540px;
-    background-position: 58% top;
+    background-size: cover;
+    background-position: 55% top;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
@@ -474,7 +474,27 @@
   }
 }
 
+@media (min-width: 1441px) {
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
+    min-height: 700px;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
+    background-position: 54% top;
+  }
+}
+
 @media (max-width: 900px) {
+  .pub-theme .pub-landing__step-art--2 {
+    height: clamp(175px, 50vw, 210px);
+    background-size: contain;
+    background-position: center center;
+    background-origin: content-box;
+    background-clip: content-box;
+    padding-inline: 0.75rem;
+    box-sizing: border-box;
+  }
+
   .pub-theme .pub-landing__steps-grid {
     grid-template-columns: 1fr;
   }
