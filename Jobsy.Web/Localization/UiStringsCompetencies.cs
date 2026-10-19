@@ -2275,6 +2275,7 @@ internal static class UiStringsCompetencies
         ["Test.Status.FreeDone"] = "‏Free completed",
         ["Test.Status.Extended"] = "موسّع",
         ["Test.Status.NotDone"] = "‏Not yet done",
+        ["Test.Status.InProgress"] = "‏In progress",
         ["Tests.OverviewTitle"] = "‏My tests",
         ["Tests.Progress"] = "‏{0} of {1} done",
         ["Tests.MetaFree"] = "‏{0} statements · approx. {1} min",

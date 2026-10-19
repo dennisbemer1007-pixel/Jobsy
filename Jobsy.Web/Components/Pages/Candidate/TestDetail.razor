@@ -49,7 +49,7 @@
     {
         @if (_depthRewardVisible)
         {
-            <TestDepthValueRewardHero FirstName="_candidateFirstName"
+            <TestDepthValueRewardHero FirstName="@_candidateFirstName"
                                       AnsweredCount="_competencyAnswered"
                                       QuickScanVersion="_competencyQuickScanVersion" />
             <p class="test-depth-reward__status muted">
@@ -100,7 +100,7 @@
 
         @if (_depthRewardVisible)
         {
-            <TestDepthValueRewardHero FirstName="_candidateFirstName"
+            <TestDepthValueRewardHero FirstName="@_candidateFirstName"
                                       AnsweredCount="_competencyAnswered"
                                       QuickScanVersion="_competencyQuickScanVersion"
                                       DeepCompleted="_deepCompleted" />

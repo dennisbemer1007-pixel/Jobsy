@@ -130,9 +130,7 @@ public static class CompetenceDeepReportBuilder
                 continue;
             }
 
-            var reason = string.Equals(trait.Level, CompetenceDeepReportLevels.Hoog, StringComparison.Ordinal)
-                ? pick.Reason
-                : $"Dit sluit aan bij je score op {trait.LabelNl} ({trait.Score}%).";
+            var reason = CompetenceDeepReportTexts.OccupationReasonWordsOnly(trait.LabelNl, pick.Reason);
             result.Add(new CompetenceDeepOccupation
             {
                 Title = pick.Title,
