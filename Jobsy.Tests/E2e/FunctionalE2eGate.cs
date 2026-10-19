@@ -25,12 +25,17 @@ public static class FunctionalE2eGate
             throw new InvalidOperationException("JOBSY_E2E_BASE_URL is required for the functional E2E gate.");
         }
 
-        if (!await SmokeReachability.IsReachableAsync(url))
+        for (var attempt = 0; attempt < 60; attempt++)
         {
-            throw new InvalidOperationException($"JOBSY_E2E_BASE_URL is not reachable: {url}");
+            if (await SmokeReachability.IsReachableAsync(url))
+            {
+                return url;
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(2));
         }
 
-        return url;
+        throw new InvalidOperationException($"JOBSY_E2E_BASE_URL is not reachable: {url}");
     }
 
     public static void SkipUnlessGateOrReachable(string? baseUrl)

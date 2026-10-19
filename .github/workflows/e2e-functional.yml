@@ -49,10 +49,10 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "push" ] && [ -n "${{ secrets.JOBSY_E2E_BASE_URL }}" ]; then
             echo "base_url=${{ secrets.JOBSY_E2E_BASE_URL }}" >> "$GITHUB_OUTPUT"
-            echo "mode=acceptatie-live"
+            echo "mode=acceptatie-live" >> "$GITHUB_OUTPUT"
           else
             echo "base_url=http://127.0.0.1:5201" >> "$GITHUB_OUTPUT"
-            echo "mode=ci-stack"
+            echo "mode=ci-stack" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install Playwright Chromium
