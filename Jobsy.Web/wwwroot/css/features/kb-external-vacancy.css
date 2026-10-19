@@ -25,9 +25,13 @@
     box-sizing: border-box;
   }
 
-  .kb-ext__actions-row {
-    padding-inline-end: calc(var(--lobsy-coach-fab-size, 56px) + 12px);
-    box-sizing: border-box;
+  }
+
+  .app-shell:has(.kb-ext) .lobsy-coach-dock--suppressed {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.92);
   }}.kb-ext__match,
 .kb-ext__actions {
   scroll-margin-bottom: calc(

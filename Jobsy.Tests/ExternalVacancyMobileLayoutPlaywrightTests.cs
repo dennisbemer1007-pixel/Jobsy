@@ -123,6 +123,86 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
     }
 
     [Fact]
+    public async Task Mobile_390_external_vacancy_coach_never_overlaps_main_while_scrolling()
+    {
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        using var playwright = await Playwright.CreateAsync();
+        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
+        await using var context = await browser.NewContextAsync(new()
+        {
+            ViewportSize = new() { Width = 390, Height = 844 },
+            HasTouch = true,
+            IsMobile = true,
+        });
+        var page = await context.NewPageAsync();
+        await page.SetContentAsync(BuildShellHtml("kb-ext"), new() { WaitUntil = WaitUntilState.Load });
+        await LoadCoachGuardScriptAsync(page);
+
+        var audit = await page.EvaluateAsync<JsonElement>("""
+            async () => {
+              const root = document.scrollingElement || document.documentElement;
+              const maxY = Math.max(0, root.scrollHeight - window.innerHeight);
+              const step = 40;
+
+              function auditStep(scrollY) {
+                const dock = document.querySelector('.lobsy-coach-dock');
+                const coach = document.querySelector('#lobsy-coach-btn');
+                if (!coach || !dock) return { ok: true, reason: 'no-coach' };
+                const dockStyle = getComputedStyle(dock);
+                if (
+                  dock.classList.contains('lobsy-coach-dock--suppressed')
+                  || dockStyle.visibility === 'hidden'
+                  || parseFloat(dockStyle.opacity || '1') < 0.05
+                ) {
+                  return { ok: true, reason: 'coach-suppressed' };
+                }
+                const c = coach.getBoundingClientRect();
+                if (c.width < 8 || c.height < 8) return { ok: true, reason: 'coach-collapsed' };
+
+                function intersects(a, b) {
+                  return a.left < b.right - 1 && a.right > b.left + 1 && a.top < b.bottom - 1 && a.bottom > b.top + 1;
+                }
+
+                const nodes = document.querySelectorAll(
+                  'main a, main button, main p, main td, main th, main h1, main h2, main h3, main li, main .kb-ext__title',
+                );
+                for (const node of nodes) {
+                  if (!node || dock.contains(node)) continue;
+                  const style = getComputedStyle(node);
+                  if (style.display === 'none' || style.visibility === 'hidden') continue;
+                  const box = node.getBoundingClientRect();
+                  if (box.width < 4 || box.height < 4) continue;
+                  if (box.bottom <= 0 || box.top >= window.innerHeight) continue;
+                  if (intersects(c, box)) {
+                    return {
+                      ok: false,
+                      reason: `overlap-y${Math.round(scrollY)}-${(node.textContent || '').trim().slice(0, 20)}`,
+                    };
+                  }
+                }
+                return { ok: true, reason: 'ok' };
+              }
+
+              for (let y = 0; y <= maxY + step; y += step) {
+                root.scrollTop = y;
+                window.scrollTo(0, y);
+                if (window.jobsyCoachDock?.bindKbExtCoachGuard) {
+                  window.jobsyCoachDock.bindKbExtCoachGuard();
+                }
+                await new Promise((r) => setTimeout(r, 30));
+                const stepAudit = auditStep(y);
+                if (!stepAudit.ok) {
+                  return { ok: false, reason: stepAudit.reason, scrollY: y, maxY };
+                }
+              }
+              return { ok: true, reason: 'ok', maxY };
+            }
+            """);
+
+        Assert.True(audit.GetProperty("ok").GetBoolean(), audit.GetProperty("reason").GetString());
+    }
+
+    [Fact]
     public async Task Mobile_390_external_vacancy_coach_does_not_overlap_facts_text()
     {
         Microsoft.Playwright.Program.Main(["install", "chromium"]);
@@ -136,6 +216,7 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
         });
         var page = await context.NewPageAsync();
         await page.SetContentAsync(BuildShellHtml("kb-ext"), new() { WaitUntil = WaitUntilState.Load });
+        await LoadCoachGuardScriptAsync(page);
         await page.EvaluateAsync("""
             () => {
               const dock = document.querySelector('.lobsy-coach-dock');
@@ -166,8 +247,13 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
         var audit = await AuditCoachTextOverlapAsync(page);
         Assert.True(audit.Ok, audit.Reason ?? "coach overlap audit failed");
 
-        var actionAudit = await AuditCoachActionsClearanceAsync(page);
-        Assert.True(actionAudit.Ok, actionAudit.Reason ?? "coach actions clearance failed");
+        var suppressed = await page.EvaluateAsync<bool>("""
+            () => {
+              const dock = document.querySelector('.lobsy-coach-dock');
+              return !!dock?.classList.contains('lobsy-coach-dock--suppressed');
+            }
+            """);
+        Assert.True(suppressed, "coach should hide while action buttons are in view");
 
         Assert.False(await page.Locator(".lobsy-coach-dock__label").IsVisibleAsync());
 
@@ -218,30 +304,34 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
         return (json.GetProperty("ok").GetBoolean(), json.GetProperty("reason").GetString());
     }
 
-    private static async Task<(bool Ok, string? Reason)> AuditCoachActionsClearanceAsync(IPage page)
+    private static async Task LoadCoachGuardScriptAsync(IPage page)
     {
-        var json = await page.EvaluateAsync<JsonElement>("""
+        var root = FindRepoRoot();
+        await page.AddScriptTagAsync(new() { Path = Path.Combine(root, "Jobsy.Web/wwwroot/js/app-core.js") });
+        await page.EvaluateAsync("""
             () => {
-              const coach = document.querySelector('#lobsy-coach-btn') || document.querySelector('.lobsy-coach-dock__btn');
-              const notInterested = document.querySelector('[data-testid="kb-ext-not-interested"]');
-              if (!coach || !notInterested) return { ok: true, reason: 'no-coach-or-actions' };
-              const c = coach.getBoundingClientRect();
-              const b = notInterested.getBoundingClientRect();
-              if (c.width < 8) return { ok: false, reason: 'coach-not-laid-out' };
-              const gap = c.left - b.right;
-              const ok = gap >= 11;
-              return { ok, reason: ok ? 'ok' : `coach-gap-${Math.round(gap)}` };
+              if (window.jobsyCoachDock?.bindKbExtCoachGuard) {
+                window.jobsyCoachDock.bindKbExtCoachGuard();
+              }
             }
             """);
-        return (json.GetProperty("ok").GetBoolean(), json.GetProperty("reason").GetString());
     }
 
     private static async Task<(bool Ok, string? Reason)> AuditCoachTextOverlapAsync(IPage page)
     {
         var json = await page.EvaluateAsync<JsonElement>("""
             () => {
+              const dock = document.querySelector('.lobsy-coach-dock');
               const coach = document.querySelector('#lobsy-coach-btn') || document.querySelector('.lobsy-coach-dock__btn');
-              if (!coach) return { ok: true, reason: 'no-coach' };
+              if (!coach || !dock) return { ok: true, reason: 'no-coach' };
+              const dockStyle = getComputedStyle(dock);
+              if (
+                dock.classList.contains('lobsy-coach-dock--suppressed')
+                || dockStyle.visibility === 'hidden'
+                || parseFloat(dockStyle.opacity || '1') < 0.05
+              ) {
+                return { ok: true, reason: 'coach-suppressed' };
+              }
               const c = coach.getBoundingClientRect();
               if (c.width < 8) return { ok: false, reason: 'coach-not-laid-out' };
 
@@ -315,7 +405,9 @@ public class ExternalVacancyMobileLayoutPlaywrightTests
         <tr><th scope="row">Opleiding</th><td class="is-unknown">Dat weet ik niet</td></tr>
         </tbody></table></section>
         <section class="kb-ext__card"><h2 class="kb-ext__method-title">Match</h2><ul class="kb-ext__bullets"><li>Sterkte</li><li>Uitdaging</li></ul></section>
-        <section class="kb-ext__card"><p class="kb-ext__privacy">Privacy</p></section>
+        <section class="kb-ext__card"><h2 class="kb-ext__method-title">Match</h2><ul class="kb-ext__bullets"><li>Leidinggeven</li><li>Retail</li><li>Klantcontact</li></ul></section>
+        <section class="kb-ext__card"><p class="kb-ext__privacy">Privacy — alleen jij ziet deze match-analyse.</p></section>
+        <p class="muted">Bron: intertoys.nl</p>
         <div class="kb-ext__actions" data-testid="kb-ext-detail-actions">
         <a class="kb-ext__btn" href="#" data-testid="kb-ext-apply-cta">Ik wil solliciteren</a>
         <div class="kb-ext__actions-row"><button type="button" class="kb-ext__btn kb-ext__btn--secondary" data-testid="kb-ext-save-toggle">Uit Bewaard</button><button type="button" class="kb-ext__btn kb-ext__btn--secondary" data-testid="kb-ext-not-interested">Niet interessant</button></div>
