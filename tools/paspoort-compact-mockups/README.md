@@ -1,39 +1,28 @@
-# Paspoort compact layout mockups (Step 1)
+# Paspoort compact layout mockups
 
-Static HTML/CSS explorations for a shorter `/candidate/paspoort` desktop fold. **Fake user only:** Alex Janssen (`#A-20481`). No product code changes.
+Step 1: layout directions for a shorter desktop fold on `/candidate/paspoort`.
 
-## Variants
+## r2 (current): real Blazor UI
 
-| ID | Idea |
+Mockups render the **actual** paspoort page with stubbed API data (fake user **Alex Demo**, NL UI). Layout variants via query string when `Jobsy:PassportCompactMockups:Enabled=true` (screenshot test host only).
+
+| Query | Direction |
 | --- | --- |
-| **A** | Slim greeting bar (~84px) with illustration strip on the right; classic ~1100px column. |
-| **B** | No top hero on desktop; greeting lives in the passport card header area. |
-| **C** | Uses wide screens (~1680px): sticky passport column, wider main, **illustration in the right margin**; nudge inline beside “Dit ben jij”. |
+| `compactLayout=a` | Slim ~84px greeting band |
+| `compactLayout=b` | Greeting in passport card, no top hero |
+| `compactLayout=c` | Wide canvas, greeting in card, margin illustration, inline nudge |
 
-## View locally
-
-```bash
-cd tools/paspoort-compact-mockups
-npm install
-node scripts/generate-html.mjs
-npx --yes serve -p 5199 .
-# open http://127.0.0.1:5199/variant-a-slim-bar.html
-```
-
-Images are loaded via symlink `www-images` → `Jobsy.Web/wwwroot/images`.
-
-## Regenerate PNG captures
+Regenerate PNGs and coverage table:
 
 ```bash
-cd tools/paspoort-compact-mockups
-npm install
-node scripts/generate-html.mjs
-node scripts/capture.mjs
+dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter FullyQualifiedName~PassportCompactMockupR2ScreenshotTests
 ```
 
 Outputs:
 
-- PNGs: `/opt/cursor/artifacts/paspoort-compact-mockups/variant-{a,b,c}-{1440x900,1366x768,1920x1080,390-mobile}.png`
-- Coverage table: `above-the-fold-coverage.md` (same folder + copy in this directory)
+- `/opt/cursor/artifacts/paspoort-compact-mockups/variant-{a,b,c}-{viewport}-r2.png`
+- `above-the-fold-coverage-r2.md`
 
-Desktop fold line = full viewport height (browser chrome excluded). Mobile 390px is a stacked scroll layout by design.
+## r1 (deprecated)
+
+Static HTML under this folder (`variant-a-slim-bar.html`, etc.) — mixed EN copy and simplified chrome. Kept for history only; do **not** send to PO.

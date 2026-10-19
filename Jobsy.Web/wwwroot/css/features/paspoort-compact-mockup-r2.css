@@ -1,0 +1,185 @@
+/* Paspoort compact layout mockups (r2) — only active with ?compactLayout=a|b|c when Jobsy:PassportCompactMockups:Enabled */
+
+.app-shell:has(.passport-page--compact-a, .passport-page--compact-b, .passport-page--compact-c) .app-footer {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .app-shell:has(.passport-page--compact-a, .passport-page--compact-b, .passport-page--compact-c) .bottom-nav {
+    display: none;
+  }
+}
+
+.passport-page--compact-a .passport-overview,
+.passport-page--compact-b .passport-overview,
+.passport-page--compact-c .passport-overview {
+  padding: 0.65rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.passport-page--compact-a .passport-tabs,
+.passport-page--compact-b .passport-tabs,
+.passport-page--compact-c .passport-tabs {
+  margin-block: 0.35rem 0.45rem;
+}
+
+.passport-page--compact-a .passport-panel,
+.passport-page--compact-b .passport-panel,
+.passport-page--compact-c .passport-panel {
+  padding-top: 0.35rem;
+}
+
+.passport-card__greeting {
+  padding: 0.85rem 1rem 0.75rem;
+  background: color-mix(in srgb, var(--gold) 7%, var(--surface));
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.passport-card__greeting-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.passport-card__greeting-lead {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+/* A — slim greeting band */
+.passport-page--compact-a .cand-hero--kompas-band {
+  min-height: 84px;
+  height: 84px;
+  margin-bottom: 0.65rem;
+}
+
+.passport-page--compact-a .cand-hero--kompas-band .cand-hero__copy {
+  padding-block: 0.65rem;
+  max-width: min(58%, 34rem);
+}
+
+.passport-page--compact-a .cand-hero--kompas-band .cand-hero__copy h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.passport-page--compact-a .cand-hero--kompas-band .cand-hero__lead {
+  font-size: 0.8125rem;
+  margin-top: 0.2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.passport-page--compact-a .cand-hero--profession-band::after {
+  background-size: auto 100%;
+  background-position: 100% center;
+}
+
+@media (max-width: 767px) {
+  .passport-page--compact-a .cand-hero--kompas-band {
+    min-height: 200px;
+    height: auto;
+    max-height: 220px;
+  }
+
+  .passport-page--compact-a .cand-hero--kompas-band .cand-hero__copy {
+    max-width: 72%;
+  }
+}
+
+/* B — greeting inside passport card (hero hidden in markup) */
+.passport-page--compact-b.passport-page--illustrated .passport-layout {
+  margin-top: 0.15rem;
+}
+
+/* C — full width + margin illustration + inline nudge */
+.passport-page--compact-c.passport-page--illustrated .passport-layout {
+  width: min(1680px, calc(100vw - 2rem));
+  max-width: min(1680px, calc(100vw - 2rem));
+  padding-inline: 0.5rem;
+}
+
+.passport-page--compact-c .passport-layout--wide-mock {
+  display: grid;
+  grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
+  gap: var(--space-4, 1rem);
+  align-items: start;
+}
+
+.passport-page--compact-c .passport-layout__margin-art {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .passport-page--compact-c .passport-layout--wide-mock {
+    grid-template-columns: minmax(280px, 300px) minmax(0, 1fr) minmax(160px, 200px);
+  }
+
+  .passport-page--compact-c .passport-layout__margin-art {
+    display: block;
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: calc(var(--app-header-height, 4.25rem) + 0.5rem);
+    height: 11.5rem;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--gold) 28%, var(--border));
+    background-color: var(--pearl);
+    background-image: var(--passport-margin-art);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: 62% 42%;
+    mask-image: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
+    -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
+  }
+}
+
+.passport-home-stack--inline-nudge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+@media (min-width: 1024px) {
+  .passport-page--compact-c .passport-home-stack--inline-nudge {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .passport-page--compact-c .passport-home-stack--inline-nudge .passport-overview {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .passport-page--compact-c .passport-home-stack--inline-nudge .profile-encourage {
+    flex: 0 1 22rem;
+    max-width: 22rem;
+    margin: 0;
+    align-self: center;
+    padding: 0.55rem 2.25rem 0.55rem 0.65rem;
+  }
+
+  .passport-page--compact-c .passport-home-stack--inline-nudge .profile-encourage__text {
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .passport-page--compact-c .passport-home-stack--inline-nudge .profile-encourage__link {
+    min-height: 2rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+}
