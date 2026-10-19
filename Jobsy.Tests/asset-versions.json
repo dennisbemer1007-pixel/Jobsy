@@ -52,8 +52,8 @@
     "v": "20261012-01"
   },
   "css/features/candidate-illustrated-public.css": {
-    "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
-    "v": "20261018-02"
+    "sha256": "2bffdec8875105728fff5be4228974e33b0b9e274c838d87219a21d5dc793319",
+    "v": "20261019-01"
   },
   "css/features/carriere.css": {
     "sha256": "c23b39281dc74f87a13714960bc33cb89fe4a285101ef4b1d74581c2a63b18a4",
@@ -188,8 +188,8 @@
     "v": "20261016-01"
   },
   "css/features/public-theme.css": {
-    "sha256": "3ab3156159a9fc514e898e22eb1ceba6d7487f7e4089944b9b014249c7de9455",
-    "v": "20261018-09"
+    "sha256": "19a0e037d77ded94da4479a76d100acb8d9de6f31bf536ea1646020978613fb6",
+    "v": "20261019-01"
   },
   "css/features/questionnaire.css": {
     "sha256": "098b16767133630bd1c2c4f4ffd17b7f321c9c5c718fbb5e83a6469c8def706f",
