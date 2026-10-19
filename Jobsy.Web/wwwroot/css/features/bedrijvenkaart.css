@@ -1132,7 +1132,10 @@ textarea.bk-wg-input {
     position: static !important;
     top: auto;
     right: auto;
-    margin: 0.65rem auto 0.5rem;
+    margin: 0.65rem 0 0.5rem;
+    width: auto;
+    max-width: none;
+    align-self: flex-start;
   }
 
   .bk-page .bk-cand-hero.cand-hero--bk-single:not(.cand-compact-hero) {

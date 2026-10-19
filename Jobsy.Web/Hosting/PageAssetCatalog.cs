@@ -36,9 +36,9 @@ public static class PageAssetCatalog
 
     public static readonly string[] CandidatePublicCss =
     [
-        "css/features/banenkaart.css?v=20261018-02",
+        "css/features/banenkaart.css?v=20261019-01",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/bedrijvenkaart.css?v=20261019-06",
+        "css/features/bedrijvenkaart.css?v=20261019-07",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
@@ -269,15 +269,15 @@ public static class PageAssetCatalog
 
         if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-06"];
+            return ["css/features/bedrijvenkaart.css?v=20261019-07"];
         }
 
         if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
         {
-            var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-06" };
+            var appsCss = new List<string> { "css/features/bedrijvenkaart.css?v=20261019-07" };
             if (RouteUsesCompactHeroCss(path))
             {
-                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-55");
+                appsCss.Add("css/features/candidate-hero-compact-preview.css?v=20261019-56");
             }
 
             return appsCss;
@@ -285,7 +285,7 @@ public static class PageAssetCatalog
 
         if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
         {
-            return ["css/features/bedrijvenkaart.css?v=20261019-06"];
+            return ["css/features/bedrijvenkaart.css?v=20261019-07"];
         }
 
         if (path.StartsWith("/werk-referentie/", StringComparison.OrdinalIgnoreCase))
@@ -299,7 +299,7 @@ public static class PageAssetCatalog
 
         if (RouteUsesCompactHeroCss(path))
         {
-            return ["css/features/candidate-hero-compact-preview.css?v=20261019-55"];
+            return ["css/features/candidate-hero-compact-preview.css?v=20261019-56"];
         }
 
         return [];
