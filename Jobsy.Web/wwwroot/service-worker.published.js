@@ -12,11 +12,7 @@ var PRECACHE = [
     "/css/critical.css?v=20261019-12",
     "/css/app.min.css?v=20261019-12",
     "/css/features/stijl-a.css?v=20261018-03",
-<<<<<<< HEAD
     "/js/app-core.js?v=20261019-02",
-=======
-    "/js/app-core.js?v=20261019-01",
->>>>>>> bb1ddb4a9 (Stop unprompted mobile reloads on Blazor circuit loss.)
     "/icons/icon-192.png?v=20261018-23",
     "/icons/icon-512.png?v=20261018-23",
     "/favicon.ico?v=20261018-23",
