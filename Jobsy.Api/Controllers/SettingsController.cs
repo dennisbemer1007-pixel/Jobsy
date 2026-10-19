@@ -623,6 +623,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
         Add("ReferenceVerificationEnabled", before.ReferenceVerificationEnabled.ToString(), after.ReferenceVerificationEnabled.ToString());
         Add("TestJourneyIllustrationEnabled", before.TestJourneyIllustrationEnabled.ToString(), after.TestJourneyIllustrationEnabled.ToString());
         Add("OnboardingFinaleV2Enabled", before.OnboardingFinaleV2Enabled.ToString(), after.OnboardingFinaleV2Enabled.ToString());
+        Add("TestEditModeEnabled", before.TestEditModeEnabled.ToString(), after.TestEditModeEnabled.ToString());
+        Add("SamplePdfEnabled", before.SamplePdfEnabled.ToString(), after.SamplePdfEnabled.ToString());
         Add("OccupationDayInLifeEnabled", before.OccupationDayInLifeEnabled.ToString(), after.OccupationDayInLifeEnabled.ToString());
         Add("ResearchConsentEnabled", before.ResearchConsentEnabled.ToString(), after.ResearchConsentEnabled.ToString());
         Add("MatchCalibrationV1Enabled", before.MatchCalibrationV1Enabled.ToString(), after.MatchCalibrationV1Enabled.ToString());

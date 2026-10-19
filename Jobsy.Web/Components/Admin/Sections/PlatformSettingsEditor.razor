@@ -15,6 +15,7 @@
 @inject DeploymentEnvironmentLabel Env
 @inject IFeatureFlags FeatureFlags
 @inject BottomNavRefreshService NavRefresh
+@inject UserFacingError UserFacing
 @implements IDisposable
 
 @if (_loading)
@@ -361,7 +362,7 @@ else if (_snapshot is not null)
         catch (Exception ex)
         {
             _messageIsError = true;
-            _message = string.Format(Culture["AdminSettings.SaveFailed"], ex.Message);
+            _message = string.Format(Culture["AdminSettings.SaveFailed"], UserFacing.Describe(ex));
         }
         finally
         {
@@ -388,7 +389,7 @@ else if (_snapshot is not null)
         }
         catch (Exception ex)
         {
-            _error = ex.Message;
+            _error = UserFacing.Describe(ex);
         }
         finally
         {
@@ -586,9 +587,7 @@ else if (_snapshot is not null)
         catch (Exception ex)
         {
             _messageIsError = true;
-            _message = string.Format(
-                Culture["AdminSettings.SaveFailed"],
-                string.IsNullOrWhiteSpace(ex.Message) ? "onbekende fout" : ex.Message);
+            _message = string.Format(Culture["AdminSettings.SaveFailed"], UserFacing.Describe(ex));
         }
         finally
         {

@@ -34,6 +34,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<IFeatureFlags>(new FixedFlags());
         Services.AddSingleton<ITestJourneyIllustrationGate>(new FixedTestJourneyGate());
+        Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddSingleton<IGeocodingClient>(new NoGeocoder());
         Services.AddSingleton<UserFacingError>();
         Services.AddSingleton<GratisDnaStorage>();
@@ -138,6 +139,12 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
     private sealed class FixedTestJourneyGate : ITestJourneyIllustrationGate
     {
         public bool Enabled => false;
+    }
+
+    private sealed class FixedFinaleGate : IOnboardingFinaleV2Gate
+    {
+        public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
     }
 
     private sealed class FixedFlags : IFeatureFlags

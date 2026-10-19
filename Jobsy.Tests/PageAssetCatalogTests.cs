@@ -3,7 +3,7 @@ namespace Jobsy.Tests;
 public class PageAssetCatalogTests
 {
     // Keep in sync with PageAssetCatalog bundle arrays (Stijl A: tokens + stijl-a in core; illustrated public bundles).
-    private const int CoreCss = 5;
+    private const int CoreCss = 6;
     private const int PublicCss = 7;
     private const int AppCss = 21;
     private const int WerkgeverCss = 6;
@@ -29,7 +29,7 @@ public class PageAssetCatalogTests
         var areas = Jobsy.Web.Hosting.PageAssetCatalog.ResolveAreas(path);
         var sheets = Jobsy.Web.Hosting.PageAssetCatalog.StylesheetsFor(areas);
         Assert.True(sheets.Count >= expectedMinLinks, $"Expected at least {expectedMinLinks} sheets for {path}, got {sheets.Count}");
-        var maxSheets = path is "/candidate/paspoort" ? 40 : 32;
+        var maxSheets = path is "/candidate/paspoort" ? 41 : 32;
         Assert.True(sheets.Count <= maxSheets, $"Too many stylesheets ({sheets.Count}) for {path}");
         Assert.Equal(1, sheets.Count(s => s.StartsWith("css/app.min.css", StringComparison.Ordinal)));
         Assert.DoesNotContain("css/features/admin.css", sheets, StringComparer.Ordinal);

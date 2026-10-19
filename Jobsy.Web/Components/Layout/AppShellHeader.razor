@@ -1,0 +1,50 @@
+@using Jobsy.Core.Authorization
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.Pwa
+@using Microsoft.AspNetCore.Components.Authorization
+
+<header class="app-header" data-testid="app-shell-header">
+    <div class="app-header__brand">
+        <a class="brand" href="@HomeHref" aria-label="Lobsy">
+            <LobsyLogo Class="brand__logo" Alt="Lobsy" Variant="LobsyLogoVariant.Horizontal" />
+            <span class="brand__text">
+                <span class="brand-tagline">@HeaderTagline</span>
+            </span>
+        </a>
+    </div>
+    <AuthorizeView Roles="@JobsyRoles.Candidate">
+        <Authorized>
+            <CandidateHeaderNav />
+        </Authorized>
+    </AuthorizeView>
+    <div class="app-header__actions">
+        @if (ShowCandidatePwaInstall)
+        {
+            <AuthorizeView Roles="@JobsyRoles.Candidate">
+                <Authorized>
+                    <Jobsy.Web.Components.Candidate.Pwa.CandidatePwaInstallEntry />
+                </Authorized>
+            </AuthorizeView>
+        }
+        <PageHelp />
+        <NotificationBell />
+        <FeatureVisible Feature="PlatformFeature.Employers">
+            <TokenWalletChip />
+            <SalesWalletChipV2 />
+        </FeatureVisible>
+        <LanguageSelector />
+        <AuthHeader />
+    </div>
+</header>
+
+@code {
+    [Parameter, EditorRequired]
+    public string HomeHref { get; set; } = "/";
+
+    [Parameter, EditorRequired]
+    public string HeaderTagline { get; set; } = "";
+
+    [Parameter]
+    public bool ShowCandidatePwaInstall { get; set; }
+}

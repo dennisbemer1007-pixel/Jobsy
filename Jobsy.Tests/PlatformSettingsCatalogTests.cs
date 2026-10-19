@@ -21,10 +21,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 
 namespace Jobsy.Tests;
+
+internal static class AdminEditorBunitServices
+{
+    internal static void AddUserFacingError(IServiceCollection services)
+        => services.AddSingleton(sp => new UserFacingError(
+            NullLogger<UserFacingError>.Instance,
+            sp.GetRequiredService<CultureState>()));
+}
 
 public class PlatformSettingsCatalogTests
 {
@@ -204,6 +213,7 @@ public class PlatformSettingsEditorBunitTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(http));
         Services.AddSingleton(new Jobsy.Web.Navigation.BottomNavRefreshService());
         Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags>(new EditorTestFeatureFlags());
+        AdminEditorBunitServices.AddUserFacingError(Services);
     }
 
     private sealed class EditorTestFeatureFlags : Jobsy.Core.Features.IFeatureFlags
@@ -426,6 +436,7 @@ public class PlatformSettingsEditorBunitTests : BunitContext
         ctx.Services.AddSingleton(new JobsyApiClient(new HttpClient(handler) { BaseAddress = new Uri("http://localhost") }));
         ctx.Services.AddSingleton(new Jobsy.Web.Navigation.BottomNavRefreshService());
         ctx.Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags>(new EditorTestFeatureFlags());
+        AdminEditorBunitServices.AddUserFacingError(ctx.Services);
 
         var cut = ctx.Render<PlatformSettingsEditor>(p => p
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));

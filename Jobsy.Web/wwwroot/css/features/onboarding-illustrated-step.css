@@ -28,6 +28,7 @@
 .ob-illustrated-step__mobile-cover {
   display: none;
   position: relative;
+  pointer-events: none;
   inline-size: calc(100% - 24px);
   max-inline-size: calc(100% - 24px);
   margin: 0 12px 0.75rem;
@@ -40,6 +41,7 @@
   box-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 80%, transparent);
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
+  pointer-events: none;
 }
 
 .ob-illustrated-step__mobile-cover-art {
@@ -136,6 +138,7 @@
   overflow: hidden;
   background: var(--bg);
   border-block-end: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  pointer-events: none;
 }
 
 .ob-illustrated-step__art {
@@ -145,6 +148,14 @@
   pointer-events: none;
   user-select: none;
   line-height: 0;
+}
+
+/* pointer-events on parent does not block descendants — keep decorative art inert. */
+.ob-illustrated-step__art *,
+.ob-illustrated-step__mobile-cover-art,
+.ob-illustrated-step__mobile-cover-art *,
+.ob-illustrated-step__mobile-cover::before {
+  pointer-events: none;
 }
 
 .ob-illustrated-step__art picture {
@@ -207,16 +218,30 @@
 }
 
 .ob-illustrated-step__body {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
   background: var(--bg);
   padding: 12px clamp(16px, 4vw, 32px) 8px;
+  pointer-events: auto;
 }
 
 .ob-illustrated-step__form {
+  position: relative;
+  z-index: 1;
   inline-size: min(100%, 600px);
   margin-inline: auto;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  pointer-events: auto;
+}
+
+.ob-illustrated-step__form .work-status-chips .lobsy-choice-tile {
+  position: relative;
+  z-index: 4;
+  pointer-events: auto;
+  touch-action: manipulation;
 }
 
 .ob-illustrated-step__form.ob-fields label,
@@ -392,8 +417,26 @@
     justify-content: flex-end;
     align-items: flex-end;
     padding: 0;
-    -webkit-mask-image: none;
-    mask-image: none;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--bg) 35%, transparent) 8%,
+      #000 22%,
+      #000 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--bg) 35%, transparent) 8%,
+      #000 22%,
+      #000 100%
+    );
+  }
+
+  .ob-illustrated-step__art-img-wrap picture,
+  .ob-illustrated-step__art-img-wrap img {
+    pointer-events: none;
   }
 
   .ob-illustrated-step__art-img-wrap picture {

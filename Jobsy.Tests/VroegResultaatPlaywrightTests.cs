@@ -547,6 +547,8 @@ combo.save(out)
                   if (loading) return false;
                   return document.querySelector('.ob-wizard__welcome')
                     || document.querySelector('.ob-fields')
+                    || document.querySelector('#onboarding-field-firstname input')
+                    || document.querySelector('[data-testid=onboarding-step-1-illustrated]')
                     || document.querySelector('.ob-wizard__finish');
                 }
                 """,
@@ -571,11 +573,28 @@ combo.save(out)
     {
         await page.Locator(".ob-fields input").First.FillAsync("Vroeg");
         await page.Locator(".ob-fields input").Nth(1).FillAsync("Test");
-        await ResolveOnboardingHomeAddressAsync(page, postcode);
+        await FunctionalOnboardingInteractivityHelpers.ResolveHomeAddressAsync(page, postcode);
         await FillOnboardingBirthDateIfPresentAsync(page);
+        await page.WaitForFunctionAsync(
+            """
+            () => {
+              const birthErr = document.querySelector('[data-testid=onboarding-birth-date] .jobsy-date-field__error');
+              if (birthErr?.textContent?.trim()) return false;
+              const locErr = document.querySelector('[data-testid=onboarding-location-error]');
+              if (locErr?.textContent?.trim()) return false;
+              return true;
+            }
+            """,
+            null,
+            new() { Timeout = 30_000 });
+
+        await FunctionalOnboardingInteractivityHelpers.SelectAnyWorkStatusChipAsync(page);
 
         await ClickNextAsync(page);
-        await page.Locator(".ob-wizard__presets button").First.ClickAsync();
+        await page.Locator("[data-testid=onboarding-step-2-illustrated]").WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 90_000 });
+        var preset = page.Locator(".ob-wizard__presets button, .ob-wizard__presets .lobsy-choice-tile, [data-testid=onboarding-step-2-illustrated] .lobsy-choice-tile").First;
+        await preset.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        await preset.ClickAsync(new() { Force = true });
         await ClickNextAsync(page);
         await page.Locator("#onboarding-field-transport .lobsy-choice-tile, #onboarding-field-transport button").First.ClickAsync();
         var travel = page.Locator(".ob-wizard__transport .lobsy-choice-tile, .ob-wizard__transport button")
@@ -639,6 +658,16 @@ combo.save(out)
 
     internal static async Task FillOnboardingBirthDateIfPresentAsync(IPage page)
     {
+        var birthText = page.Locator("[data-testid=onboarding-birth-date] .jobsy-date-field__text").First;
+        if (await birthText.CountAsync() > 0)
+        {
+            await birthText.ScrollIntoViewIfNeededAsync();
+            await birthText.ClickAsync(new() { Force = true });
+            await birthText.FillAsync("15-06-2000");
+            await birthText.EvaluateAsync("el => el.dispatchEvent(new Event('blur', { bubbles: true }))");
+            return;
+        }
+
         var birth = page.Locator("[data-testid=onboarding-birth-date] input[type=date]").First;
         if (await birth.CountAsync() > 0)
         {
@@ -649,42 +678,7 @@ combo.save(out)
 
     private static async Task NavigateToTestConsentWithoutStartingAsync(IPage page)
     {
-        for (var step = 0; step < 6; step++)
-        {
-            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
-            {
-                return;
-            }
-
-            if (await page.Locator(".test-likert").CountAsync() > 0)
-            {
-                return;
-            }
-
-            var skip = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Overslaan", RegexOptions.IgnoreCase) });
-            if (await skip.CountAsync() > 0)
-            {
-                await skip.First.ClickAsync(new() { Timeout = 8_000 });
-                await page.WaitForTimeoutAsync(450);
-                continue;
-            }
-
-            var unknown = page.Locator("button.ob-wizard__ghost").Filter(new() { HasTextRegex = new Regex("Weet ik nog niet", RegexOptions.IgnoreCase) });
-            if (await unknown.CountAsync() > 0)
-            {
-                await unknown.First.ClickAsync(new() { Timeout = 8_000 });
-                await page.WaitForTimeoutAsync(450);
-                continue;
-            }
-
-            if (await page.Locator("[data-testid=onboarding-next]").CountAsync() > 0)
-            {
-                await ClickNextAsync(page);
-                continue;
-            }
-
-            break;
-        }
+        await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
     }
 
     private static async Task SkipOptionalStepsToConsentAsync(IPage page)
@@ -759,7 +753,26 @@ combo.save(out)
     internal static async Task ClickNextAsync(IPage page)
     {
         await CandidateJourneyE2e.DismissAssistantOverlayAsync(page);
-        await page.Locator("[data-testid=onboarding-next]").ClickAsync(new() { Force = true, Timeout = 20_000 });
+        var next = page.Locator("[data-testid=onboarding-next]").First;
+        await next.ScrollIntoViewIfNeededAsync();
+        await page.WaitForTimeoutAsync(150);
+        var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+        try
+        {
+            if (mobile)
+            {
+                await next.TapAsync(new() { Timeout = 20_000 });
+            }
+            else
+            {
+                await next.ClickAsync(new() { Timeout = 20_000 });
+            }
+        }
+        catch (PlaywrightException)
+        {
+            await next.ClickAsync(new() { Force = true, Timeout = 20_000 });
+        }
+
         await page.WaitForTimeoutAsync(500);
     }
 }

@@ -16,12 +16,12 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "4117be396379f11b305b36cf376178715e3561ef4daa3c0f6659ed0ddde33840",
-    "v": "20261019-10"
+    "sha256": "67085da0aa55aeab10a0835110c10c0f056805d7cd505629d12e5b1cee2b31dd",
+    "v": "20261019-12"
   },
   "css/critical.css": {
-    "sha256": "64cbe72b150901710db5fa228468cbf99dc7d0364469b010b5c38bdc9ba75c5a",
-    "v": "20261018-23"
+    "sha256": "8deaeb75ee0cd6f71b031c184212319ca55579ce3a76cba4b618c3a4d3e72443",
+    "v": "20261019-12"
   },
   "css/features/account-mfa.css": {
     "sha256": "77ffff1997179f77bc2086c352bb23b7cea454b05c0fc555a8bcf4e6371f3df3",
@@ -51,6 +51,10 @@
     "sha256": "e867993f1a9ae362c276cc233fa7c141b0c57b489336925b773dbfb9743a2d72",
     "v": "20261012-01"
   },
+  "css/features/candidate-illustrated-decorative-layers.css": {
+    "sha256": "43ca69ac848dfe48455ebdd47906dc848c5099bb46dd5962f45d93ec2a8ba92e",
+    "v": "20261019-03"
+  },
   "css/features/candidate-illustrated-public.css": {
     "sha256": "2eac556bfa8053200e94b1ae104465867085e4349d416498ecc306ea8e52257e",
     "v": "20261018-02"
@@ -76,7 +80,7 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "2661a034e722352d458380109b5748fd2b83976dc7f8e2a2e0968d7ff894b0c7",
+    "sha256": "dee90194df3ce52e43bc9c9bd5c9aca798d30e6cbc498f217b7355e5d5ac75d1",
     "v": "20261015-04"
   },
   "css/features/future-jobs.css": {
@@ -140,15 +144,15 @@
     "v": "20261018-15"
   },
   "css/features/onboarding-illustrated-step.css": {
-    "sha256": "58cd1fbe02599b9becf0831c8f82d226dc29f9b0b6b87c06a177a3bf533adb78",
-    "v": "20261018-r20"
+    "sha256": "3dd725e6f8d1efd345f1dc738fee6ec689ec2c53f233ae92b99c6c579c3d0fba",
+    "v": "20261019-r24"
   },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
     "v": "20261018-r2"
   },
   "css/features/onboarding-wizard-mobile-bar.css": {
-    "sha256": "1c4b22aad845040d1f4db7321feafc0adae2cd3e23dfe301b2675f449f9af249",
+    "sha256": "f8b74a7eecc03112f2bbca9135c41b84a15f570b11143b3e454f39b29f40cae4",
     "v": "20261016-02"
   },
   "css/features/onboarding-wizard-nearby-panel.css": {
@@ -156,8 +160,8 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "db7be7e17fb9597e4b56f41806231b65cbd2e9bec53511c8ab9cc716063b3132",
-    "v": "20261018-02"
+    "sha256": "8c385ebf8ac87b74d73175a2cd8fb4a2f0ec7f83851980f63b70a618186d96de",
+    "v": "20261019-r25"
   },
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
@@ -256,8 +260,8 @@
     "v": "20261004-13"
   },
   "js/app-core.js": {
-    "sha256": "8738ee899f6b445b4a0d7e681bb8bb3f949e699c84681fde664c7859fc03dd8b",
-    "v": "20261017-04"
+    "sha256": "0e3225c4ff1258438725f2600381ee65b3d9deedf742bd1b3ca7582ca814c0c5",
+    "v": "20261019-02"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -340,11 +344,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "a08bc82ffc5551a29a6838f1170a0d5e8e824e59503c2f8446dbc6ff923c2f37",
+    "sha256": "6a4d52a06adb4542e252c74c504e858eb460b687552453a480c4169e850ce410",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "71b4c4d0930fa598a4fb34135d5a810117b7e27f83d9e306a12f7aa40eac1dd7",
+    "sha256": "b8b4486260f20bb222cb623cfdabdcce8f80bbc04cfebf2e4d1d397e02670b04",
     "v": "20261016-06"
   }
 }

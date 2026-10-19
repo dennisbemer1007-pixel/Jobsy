@@ -5369,24 +5369,39 @@ a.map-popup__apply.map-popup__cta:visited {
         display: none;
     }
 
-    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-header,
-    .app-shell:has(.jobsy-discovery):not(.app-shell--banenkaart-shell) .app-footer {
-        display: none;
-    }
-
-    .app-shell--banenkaart-shell .jobsy-chrome__header {
-        display: none !important;
-    }
-
     .app-shell--banenkaart-shell .jobsy-chrome {
         min-height: 0;
         border-bottom: none;
     }
 
-    .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane {
-        display: none !important;
-        visibility: hidden !important;
-        pointer-events: none !important;
+    @media (max-width: 899px) {
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+    }
+
+    @media (min-width: 900px) {
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane {
+            display: flex !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            height: auto;
+            max-height: none;
+            overflow: visible;
+            grid-column: 1 / -1;
+            z-index: 12;
+        }
+
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .kb-nearby-banner,
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .results-meta,
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .vacancy-list,
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .kb-list-layout,
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .state-message,
+        .app-shell--banenkaart-shell .jobsy-discovery.show-map .vacancy-pane .highlight-carousel--list {
+            display: none !important;
+        }
     }
 
     .app-shell--banenkaart-shell .jobsy-discovery.show-list .map-pane {
