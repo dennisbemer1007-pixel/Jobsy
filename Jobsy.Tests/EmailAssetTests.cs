@@ -10,7 +10,7 @@ public class EmailAssetTests
     public void Email_png_assets_exist_are_valid_and_small()
     {
         var root = FindRepoRoot();
-        foreach (var name in new[] { "lobsy-mark-72.png", "mascot-celebrating-128.png" })
+        foreach (var name in new[] { "lobsy-mark-72.png", "lobsy-mark-128.png" })
         {
             var path = Path.Combine(root, "Jobsy.Web", "wwwroot", "images", "email", name);
             Assert.True(File.Exists(path), path);
@@ -43,7 +43,7 @@ public class EmailAssetTests
         Assert.Contains("width=\"36\"", html);
         Assert.Contains("height=\"36\"", html);
         Assert.Contains("alt=\"Lobsy\"", html);
-        Assert.Contains("mascot-celebrating-128.png?v=testv", html);
+        Assert.Contains("lobsy-mark-128.png?v=testv", html);
         Assert.Contains("width=\"64\"", html);
         Assert.Contains("alt=\"\"", html);
         Assert.DoesNotContain("cid:", html, StringComparison.OrdinalIgnoreCase);

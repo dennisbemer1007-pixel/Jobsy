@@ -255,6 +255,15 @@ internal static class DemoUsersSeeder
         {
             logger.LogInformation("Ensured {Count} demo role user(s) (candidates, managers, intermediary, admin).", added);
         }
+
+        try
+        {
+            await ExternalVacancyDemoSeeder.EnsureAsync(db, logger);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "External vacancy demo seed failed; continuing.");
+        }
     }
 
     private static Task<int> EnsureUserAsync(JobsyDbContext db, User template)

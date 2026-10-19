@@ -55,7 +55,7 @@ public sealed record EmailBrand(
         return new EmailBrand(
             PublicWebBaseUrl: baseUrl,
             LogoUrl: $"{baseUrl}/images/email/lobsy-mark-72.png?v={version}",
-            MascotUrl: $"{baseUrl}/images/email/mascot-celebrating-128.png?v={version}",
+            MascotUrl: $"{baseUrl}/images/email/lobsy-mark-128.png?v={version}",
             SupportAddress: support,
             LegalName: legalName,
             LegalAddress: options.LegalAddress?.Trim() ?? string.Empty,

@@ -64,7 +64,7 @@ public class PupilPagesNoCandidateChromeTests : BunitContext
             .Add(p => p.PlatesShed, 2)
             .Add(p => p.Size, 80));
         Assert.Contains("ll-lob", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("lobsy-64", cut.Markup, StringComparison.Ordinal);
+        Assert.Contains("lobsy-256.webp", cut.Markup, StringComparison.Ordinal);
     }
 
     private sealed class FakeAuth : AuthenticationStateProvider
