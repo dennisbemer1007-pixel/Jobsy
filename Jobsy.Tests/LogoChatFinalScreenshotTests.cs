@@ -8,6 +8,7 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
 {
     private const string OutDirR9 = "/opt/cursor/artifacts/logo-chat-final-r9";
     private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r10";
+    private const string OutDirR11 = "/opt/cursor/artifacts/logo-chat-final-r11";
     private static readonly Guid SampleVacancyId = IllustratedPagesApiStub.SampleVacancyId;
 
     private const string LongOpeningReply =
@@ -66,6 +67,33 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
             mobile: true,
             maxLines: 4,
             fullPageViewport: false);
+    }
+
+    [Fact]
+    public async Task Render_logo_chat_final_r11_nudge_crops()
+    {
+        Directory.CreateDirectory(OutDirR11);
+        var vacancyPath = $"/vacancies/{SampleVacancyId:D}?encouragePreview=wist-cv-vs-passport";
+
+        await CaptureApplySentPanelAsync(
+            OutDirR11,
+            vacancyPath,
+            "vacancy-apply-sent-390",
+            width: 390,
+            height: 844,
+            mobile: true,
+            maxLines: 4,
+            assertCtaSingleLine: true);
+
+        await CaptureApplySentPanelAsync(
+            OutDirR11,
+            vacancyPath,
+            "vacancy-apply-sent-360",
+            width: 360,
+            height: 740,
+            mobile: true,
+            maxLines: 4,
+            assertCtaSingleLine: true);
     }
 
     [Fact]
@@ -143,7 +171,8 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         int height,
         bool mobile = false,
         int maxLines = 4,
-        bool fullPageViewport = false)
+        bool fullPageViewport = false,
+        bool assertCtaSingleLine = false)
     {
         await using var context = await NewCandidateContextAsync(width, height, mobile);
         var page = await OpenVacancyAsync(context, path + "#apply");
@@ -196,6 +225,22 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
             }
             """);
         Assert.True(noOverlap, "Close control must sit in the card corner without overlapping nudge text.");
+
+        if (assertCtaSingleLine)
+        {
+            var ctaOneLine = await page.EvaluateAsync<bool>(
+                """
+                () => {
+                  const link = document.querySelector('.apply-panel--success .profile-encourage__link');
+                  if (!link) return false;
+                  const style = getComputedStyle(link);
+                  if (style.whiteSpace !== 'nowrap') return false;
+                  const rects = [...link.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+                  return rects.length <= 1;
+                }
+                """);
+            Assert.True(ctaOneLine, "Profiel aanvullen CTA must stay on one line at this viewport.");
+        }
 
         var mark = page.Locator(".apply-panel--success .profile-encourage__mascot");
         var src = await mark.GetAttributeAsync("src") ?? "";
