@@ -1041,7 +1041,7 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 }
 
 @media (min-width: 640px) {
-  .uwv-ondernemer-result__panel {
+  .detail-card.uwv-ondernemer-result__panel {
     grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     min-height: 19rem;
     padding: 1.35rem 1.45rem 1.15rem;
@@ -1049,8 +1049,8 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
     background: linear-gradient(
       90deg,
       var(--surface) 0%,
-      var(--surface) 52%,
-      var(--bg) 52%,
+      var(--surface) calc(50% - 3.75rem),
+      var(--bg) calc(50% + 3.75rem),
       var(--bg) 100%
     );
   }
@@ -1070,8 +1070,7 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
     min-height: 100%;
     padding: 0.75rem;
     box-sizing: border-box;
-    background: var(--bg);
-    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    background: transparent;
   }
 
   .uwv-ondernemer-result__scene img {

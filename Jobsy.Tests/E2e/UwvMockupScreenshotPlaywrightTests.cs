@@ -219,9 +219,12 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
                 canvas.width = w + pad * 2;
                 canvas.height = h + pad * 2;
                 const ctx = canvas.getContext('2d');
-                const bgMatch = getComputedStyle(scene).backgroundColor.match(/[\\d.]+/g);
-                const bg = bgMatch ? bgMatch.map(Number) : [245, 242, 238];
-                ctx.fillStyle = `rgb(${bg[0]},${bg[1]},${bg[2]})`;
+                const bgProbe = document.createElement('span');
+                bgProbe.style.cssText = 'position:absolute;visibility:hidden;background:var(--bg)';
+                document.body.appendChild(bgProbe);
+                const bgColor = getComputedStyle(bgProbe).backgroundColor;
+                bgProbe.remove();
+                ctx.fillStyle = bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, pad, pad, w, h);
                 const sample = (x, y) => ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
@@ -235,11 +238,62 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
                 ];
                 edgeOk = edgeDiffs.every((d) => d < 6);
               }
+              let contrastOk = true;
+              let contrast = {};
+              if (window.innerWidth >= 640) {
+                const sampleCssColor = (cssColor) => {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = 1;
+                  canvas.height = 1;
+                  const ctx = canvas.getContext('2d');
+                  ctx.fillStyle = cssColor;
+                  ctx.fillRect(0, 0, 1, 1);
+                  return ctx.getImageData(0, 0, 1, 1).data;
+                };
+                const lumFromData = (d) => {
+                  const ch = [d[0], d[1], d[2]].map((v) => {
+                    v /= 255;
+                    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+                  });
+                  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+                };
+                const ratio = (fgCss, bgCss) => {
+                  const l1 = lumFromData(sampleCssColor(fgCss));
+                  const l2 = lumFromData(sampleCssColor(bgCss));
+                  const lighter = Math.max(l1, l2);
+                  const darker = Math.min(l1, l2);
+                  return (lighter + 0.05) / (darker + 0.05);
+                };
+                const probe = document.createElement('span');
+                probe.style.cssText = 'position:absolute;visibility:hidden;background:var(--surface)';
+                document.body.appendChild(probe);
+                const surface = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                const title = document.querySelector('.uwv-ondernemer-result__title');
+                const lead = document.querySelector('.uwv-ondernemer-result__lead');
+                const eyebrow = document.querySelector('.uwv-ondernemer-result__eyebrow');
+                const link = document.querySelector('.uwv-ondernemer-result__step-link');
+                contrast = {
+                  title: title ? ratio(getComputedStyle(title).color, surface) : 99,
+                  lead: lead ? ratio(getComputedStyle(lead).color, surface) : 99,
+                  eyebrow: eyebrow ? ratio(getComputedStyle(eyebrow).color, surface) : 99,
+                  link: link ? ratio(getComputedStyle(link).color, surface) : 99,
+                  done: done ? ratio(getComputedStyle(done).color, surface) : 99
+                };
+                contrastOk =
+                  contrast.title >= 3 &&
+                  contrast.lead >= 4.5 &&
+                  contrast.eyebrow >= 4.5 &&
+                  contrast.link >= 4.5 &&
+                  contrast.done >= 4.5;
+              }
               return {
-                ok: !overlap && insetOk && edgeOk,
+                ok: !overlap && insetOk && edgeOk && contrastOk,
                 overlap,
                 insetOk,
                 edgeOk,
+                contrastOk,
+                contrast: JSON.stringify(contrast),
                 edgeDiffs,
                 inset,
                 doneBottom: dr.bottom,
@@ -257,6 +311,7 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
             Assert.False(layout.SceneHidden, "result scene should be visible from 640px up");
             Assert.True(layout.InsetOk, $"vignette img must sit >=16px inside card (inset L{layout.Inset?.Left} R{layout.Inset?.Right} T{layout.Inset?.Top} B{layout.Inset?.Bottom})");
             Assert.True(layout.EdgeOk, $"vignette edge feather failed (diffs={string.Join(',', layout.EdgeDiffs ?? [])})");
+            Assert.True(layout.ContrastOk, $"text contrast below AA on cream/surface (ratios={layout.Contrast})");
         }
         else
         {
@@ -276,7 +331,12 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
             return $"vignette inset too tight (L{layout.Inset?.Left} R{layout.Inset?.Right} T{layout.Inset?.Top} B{layout.Inset?.Bottom})";
         }
 
-        return $"vignette edge feather failed (diffs={string.Join(',', layout.EdgeDiffs ?? [])})";
+        if (!layout.EdgeOk)
+        {
+            return $"vignette edge feather failed (diffs={string.Join(',', layout.EdgeDiffs ?? [])})";
+        }
+
+        return $"text contrast below AA (ratios={layout.Contrast})";
     }
 
     private sealed class CoachOverlapDto
@@ -286,6 +346,8 @@ public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
         public bool Overlap { get; set; }
         public bool InsetOk { get; set; }
         public bool EdgeOk { get; set; }
+        public bool ContrastOk { get; set; }
+        public string? Contrast { get; set; }
         public double[]? EdgeDiffs { get; set; }
         public InsetDto? Inset { get; set; }
         public double DoneBottom { get; set; }
