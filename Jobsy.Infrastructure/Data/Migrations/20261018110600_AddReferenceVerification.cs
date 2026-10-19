@@ -11,12 +11,10 @@ namespace Jobsy.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "ReferenceVerificationEnabled",
-                table: "PlatformFeatureSettings",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            migrationBuilder.Sql(
+                """
+                ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "ReferenceVerificationEnabled" boolean NOT NULL DEFAULT false;
+                """);
 
             migrationBuilder.CreateTable(
                 name: "WorkExperienceReferenceRequests",

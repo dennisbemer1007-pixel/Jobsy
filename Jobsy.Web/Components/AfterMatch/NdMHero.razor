@@ -1,0 +1,38 @@
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="band ndm-hero @(ShowArt ? "ndm-hero--gesprek" : "ndm-hero--no-art")">
+    <div class="bt">
+        <span class="eyb">@EffectiveEyebrow</span>
+        <h1>@Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Lead))
+        {
+            <p class="ndm-hero-lead ndm-hero-lead--full">@Lead</p>
+            @if (!string.IsNullOrWhiteSpace(LeadCompact))
+            {
+                <p class="ndm-hero-lead ndm-hero-lead--compact">@LeadCompact</p>
+            }
+        }
+        @if (ChildContent is not null)
+        {
+            <div class="bact">@ChildContent</div>
+        }
+    </div>
+    @if (ShowArt)
+    {
+        <div class="art ndm-hero__art" aria-hidden="true"></div>
+    }
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string? Lead { get; set; }
+    /// <summary>Shorter lead on viewports &lt;400px when the full lead would clip.</summary>
+    [Parameter] public string? LeadCompact { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public bool ShowArt { get; set; } = true;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string EffectiveEyebrow =>
+        string.IsNullOrWhiteSpace(Eyebrow) ? Culture["AfterMatch.Nav.Eyebrow"] : Eyebrow;
+}

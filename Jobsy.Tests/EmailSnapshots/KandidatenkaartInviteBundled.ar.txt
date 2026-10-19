@@ -1,6 +1,6 @@
 KEY: KandidatenkaartInviteBundled
 SUBJECT: Invitation to apply: ⁨Weekendhulp verkoop⁩
-PREHEADER: Match 82% — view the vacancy
+PREHEADER: Match 82% - view the vacancy
 KIND: Optional
 --- TEXT ---
 مرحبًا ⁨Alex⁩،

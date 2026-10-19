@@ -594,6 +594,7 @@ public class AccountUnsubscribeTests
         // explicitly reviewed and added to PrivacyDataService.AnonymizeUserAsync.
         var anonymizeCoverage = new[]
         {
+            typeof(AfterMatchReminderPreference),
             typeof(AmbassadeurProfile),
             typeof(Application),
             typeof(AssessmentResearchAttempt),
@@ -632,6 +633,7 @@ public class AccountUnsubscribeTests
             typeof(CandidatePrivatePreferences),
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
+            typeof(InterviewReminder),
             typeof(LocalAuthCredential),
             typeof(MfaTrustedDevice),
             typeof(OneTimeLink),

@@ -258,7 +258,7 @@ public class ProfessionalismTests : IClassFixture<RoleFunctionalWebAppFactory>
         Assert.Contains("Deze pagina bestaat niet", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/\"", html, StringComparison.Ordinal);
         Assert.Contains("href=\"/ontdek\"", html, StringComparison.Ordinal);
-        Assert.Contains("href=\"/melden\"", html, StringComparison.Ordinal);
+        Assert.Contains("href=\"/contact\"", html, StringComparison.Ordinal);
         Assert.Contains("noindex", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotMatch(Placeholder, html);
     }

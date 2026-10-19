@@ -1,0 +1,60 @@
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<div class="wc stack">
+    <b>@Culture["AfterMatch.Screen12.Hero.Title"]</b>
+    <p class="small muted">@Culture["AfterMatch.Screen12.Hero.Lead"]</p>
+    <div class="outc">
+        <button type="button" class="@BtnClass(AfterMatchOutcomeKind.Offer)" @onclick="() => Select(AfterMatchOutcomeKind.Offer)">
+            <b>@Culture["AfterMatch.Screen12.Offer"]</b>
+        </button>
+        <button type="button" class="@BtnClass(AfterMatchOutcomeKind.NextRound)" @onclick="() => Select(AfterMatchOutcomeKind.NextRound)">
+            <b>@Culture["AfterMatch.Screen12.NextRound"]</b>
+        </button>
+        <button type="button" class="@BtnClass(AfterMatchOutcomeKind.NotNow)" @onclick="() => Select(AfterMatchOutcomeKind.NotNow)">
+            <b>@Culture["AfterMatch.Screen12.NotNow"]</b>
+        </button>
+    </div>
+    @if (_selected == AfterMatchOutcomeKind.NotNow)
+    {
+        <label class="lbl">@Culture["AfterMatch.Screen12.Reason"]</label>
+        <textarea class="inp area" style="width:100%" @bind="_reason"></textarea>
+    }
+    <button type="button" class="btn" disabled="@(Busy || _selected is null || (_selected == AfterMatchOutcomeKind.NotNow && string.IsNullOrWhiteSpace(_reason)))"
+            @onclick="SubmitAsync">
+        @Culture["AfterMatch.Screen12.Submit"]
+    </button>
+    <aside class="card" style="margin-top:8px;background:#fbf6ef">
+        <b style="color:var(--brand)">@Culture["AfterMatch.Employer.Outcome.PreviewTitle"]</b>
+        <p class="small" style="margin-top:6px">@Culture["AfterMatch.Employer.Outcome.PreviewLead"]</p>
+        @if (!string.IsNullOrWhiteSpace(_reason))
+        {
+            <p class="small" style="margin-top:6px;font-style:italic">"@_reason"</p>
+        }
+    </aside>
+</div>
+
+@code {
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public AfterMatchOutcomeKind? Current { get; set; }
+    [Parameter] public EventCallback<(AfterMatchOutcomeKind Outcome, string Reason)> OnSubmit { get; set; }
+
+    private AfterMatchOutcomeKind? _selected;
+    private string _reason = "";
+
+    protected override void OnParametersSet() => _selected = Current;
+
+    private string BtnClass(AfterMatchOutcomeKind kind) =>
+        _selected == kind ? "on" : "";
+
+    private void Select(AfterMatchOutcomeKind kind) => _selected = kind;
+
+    private async Task SubmitAsync()
+    {
+        if (_selected is AfterMatchOutcomeKind outcome)
+        {
+            await OnSubmit.InvokeAsync((outcome, _reason.Trim()));
+        }
+    }
+}

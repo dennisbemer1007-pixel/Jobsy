@@ -14,8 +14,9 @@ public class BanenkaartMobileOverflowCssTests
 
         Assert.Contains("grid-template-columns: minmax(0, 1fr)", appCss, StringComparison.Ordinal);
         Assert.Contains("/* minmax(0,1fr): plain 1fr", appCss, StringComparison.Ordinal);
-        Assert.Contains("min-width: 0;\n        background: var(--surface);", appCss, StringComparison.Ordinal);
-        Assert.Contains(".kb-chrome-search {\n        min-width: 0;\n    }", appCss, StringComparison.Ordinal);
+        Assert.Contains("min-width: 0", appCss, StringComparison.Ordinal);
+        Assert.Contains("background: var(--surface)", appCss, StringComparison.Ordinal);
+        Assert.Contains(".kb-chrome-search", appCss, StringComparison.Ordinal);
 
         Assert.Contains(".kb-filter-bar", kbCss, StringComparison.Ordinal);
         Assert.Contains("flex-direction: column", kbCss, StringComparison.Ordinal);

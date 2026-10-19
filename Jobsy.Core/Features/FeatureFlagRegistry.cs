@@ -35,7 +35,6 @@ public static class FeatureFlagRegistry
     /// </summary>
     public static IReadOnlySet<string> PendingAdminCatalogKeys { get; } = new HashSet<string>(StringComparer.Ordinal)
     {
-        "NaDeMatchEnabled", // PR #742
         "TestProgressInsightEnabled", // PR #733
         "DreamJobIllustrationEnabled", // PR #724
         "BedrijvenkaartEnabled", // PR #738 (separate from EmployersEnabled)
@@ -64,6 +63,7 @@ public static class FeatureFlagRegistry
             Def("WhatsAppRemindersEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.WhatsAppReminders, pub, false),
             Def("ReferenceVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ReferenceVerification, pub, false),
             Def("ContextualTipsEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ContextualTips, pub, false),
+            Def("AfterMatchEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.AfterMatch, pub, false),
             Def("TestJourneyIllustrationEnabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false, "TestJourneyIllustrationEnabled"),
             Def("OnboardingFinaleV2Enabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false, "Onboarding:FinaleV2Enabled"),
 

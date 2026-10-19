@@ -10,19 +10,11 @@ namespace Jobsy.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "TestEditModeEnabled",
-                table: "PlatformFeatureSettings",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
-
-            migrationBuilder.AddColumn<bool>(
-                name: "SamplePdfEnabled",
-                table: "PlatformFeatureSettings",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            migrationBuilder.Sql(
+                """
+                ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "TestEditModeEnabled" boolean NOT NULL DEFAULT false;
+                ALTER TABLE "PlatformFeatureSettings" ADD COLUMN IF NOT EXISTS "SamplePdfEnabled" boolean NOT NULL DEFAULT false;
+                """);
 
             migrationBuilder.AlterColumn<bool>(
                 name: "OccupationDayInLifeEnabled",

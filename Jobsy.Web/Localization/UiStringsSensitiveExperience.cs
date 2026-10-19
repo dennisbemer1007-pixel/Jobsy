@@ -24,6 +24,8 @@ public static class UiStringsSensitiveExperience
             "Prefer not to share something with employers? You can. It still counts for your matches.",
             "Prefer not to share something with employers? You can. It still counts for your matches.",
             "Prefer not to share something with employers? You can. It still counts for your matches.");
+        Add("AdminSettings.SensitiveExperience.Enabled.Title", "Gevoelige werkervaring", "Sensitive work history", "Wrażliwe doświadczenie zawodowe", "Experiență de lucru sensibilă", "خبرة عمل حساسة");
+        Add("AdminSettings.SensitiveExperience.Enabled.Desc", "Privacy voor gevoelige werkervaring: alleen voor mij, neutrale titels en aparte periodes.", "Privacy for sensitive work history: only for me, neutral titles and separate periods.", "Prywatność wrażliwego doświadczenia: tylko dla mnie, neutralne tytuły i osobne okresy.", "Confidențialitate pentru experiență sensibilă: doar pentru mine, titluri neutre și perioade separate.", "خصوصية خبرة العمل الحساسة: لي فقط، عناوين محايدة وفترات منفصلة.");
         Add("Sensitive.Work.OnlyForMe", "Alleen voor mij", "Only for me", "Only for me", "Only for me", "Only for me");
         Add("Sensitive.Work.OnlyForMeOn",
             "Verborgen voor werkgevers. Telt wel mee voor je matches.",

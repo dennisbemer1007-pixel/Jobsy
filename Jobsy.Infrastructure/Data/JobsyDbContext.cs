@@ -34,6 +34,13 @@ public class JobsyDbContext : DbContext
     public DbSet<ApplicationPlacement> ApplicationPlacements => Set<ApplicationPlacement>();
     public DbSet<MaqqieHoursWeek> MaqqieHoursWeeks => Set<MaqqieHoursWeek>();
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistories => Set<ApplicationStatusHistory>();
+    public DbSet<Interview> Interviews => Set<Interview>();
+    public DbSet<InterviewSlot> InterviewSlots => Set<InterviewSlot>();
+    public DbSet<InterviewChange> InterviewChanges => Set<InterviewChange>();
+    public DbSet<InterviewReminder> InterviewReminders => Set<InterviewReminder>();
+    public DbSet<ApplicationMessage> ApplicationMessages => Set<ApplicationMessage>();
+    public DbSet<ApplicationOutcome> ApplicationOutcomes => Set<ApplicationOutcome>();
+    public DbSet<AfterMatchReminderPreference> AfterMatchReminderPreferences => Set<AfterMatchReminderPreference>();
     public DbSet<CandidateUploadedCv> CandidateUploadedCvs => Set<CandidateUploadedCv>();
     public DbSet<CandidateDiplomaEvaluation> CandidateDiplomaEvaluations => Set<CandidateDiplomaEvaluation>();
     public DbSet<CandidateReference> CandidateReferences => Set<CandidateReference>();
@@ -623,6 +630,93 @@ public class JobsyDbContext : DbContext
             entity.HasMany(e => e.StatusHistory)
                 .WithOne(h => h.Application)
                 .HasForeignKey(h => h.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Interview>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CalendarUid).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.LocationOrLink).HasMaxLength(512);
+            entity.Property(e => e.WithWhom).HasMaxLength(256);
+            entity.Property(e => e.Note).HasMaxLength(2000);
+            entity.HasIndex(e => e.ApplicationId).IsUnique();
+            entity.HasOne(e => e.Application)
+                .WithMany()
+                .HasForeignKey(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.ChosenSlot)
+                .WithMany()
+                .HasForeignKey(e => e.ChosenSlotId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<InterviewSlot>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Reason).HasMaxLength(500);
+            entity.HasOne(e => e.Interview)
+                .WithMany(i => i.Slots)
+                .HasForeignKey(e => e.InterviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InterviewChange>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ActorRole).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Reason).HasMaxLength(500).IsRequired();
+            entity.HasOne(e => e.Interview)
+                .WithMany(i => i.Changes)
+                .HasForeignKey(e => e.InterviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<InterviewReminder>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.InterviewId, e.UserId, e.Moment, e.Channel }).IsUnique();
+            entity.HasOne(e => e.Interview)
+                .WithMany(i => i.Reminders)
+                .HasForeignKey(e => e.InterviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationMessage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Body).HasMaxLength(4000).IsRequired();
+            entity.HasIndex(e => new { e.ApplicationId, e.CreatedAtUtc });
+            entity.HasOne(e => e.Application)
+                .WithMany()
+                .HasForeignKey(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(e => e.SenderUser)
+                .WithMany()
+                .HasForeignKey(e => e.SenderUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationOutcome>(entity =>
+        {
+            entity.HasKey(e => e.ApplicationId);
+            entity.Property(e => e.Reason).HasMaxLength(2000).IsRequired();
+            entity.HasOne(e => e.Application)
+                .WithOne()
+                .HasForeignKey<ApplicationOutcome>(e => e.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AfterMatchReminderPreference>(entity =>
+        {
+            entity.HasKey(e => e.UserId);
+            entity.HasOne(e => e.User)
+                .WithOne()
+                .HasForeignKey<AfterMatchReminderPreference>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

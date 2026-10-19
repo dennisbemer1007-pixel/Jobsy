@@ -223,6 +223,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row.KandidatenkaartEnabled = kandidatenkaartEnabled;
         }
 
+        ApplyAdminBoolUpdate(row, "AfterMatchEnabled", update.AfterMatchEnabled, v => row.AfterMatchEnabled = v);
         ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
         ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
         ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
@@ -558,6 +559,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             row?.MatchCalibrationV1Enabled ?? false,
             row?.EmployerFitQuestionnairesEnabled ?? false,
             row?.KandidatenkaartEnabled ?? false,
+            row?.AfterMatchEnabled ?? _options.NaDeMatchEnabled,
             ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),

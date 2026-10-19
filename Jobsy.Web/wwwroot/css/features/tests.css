@@ -331,7 +331,7 @@
 }.test-depth-segments__btn.is-current,
 .test-depth-segments__pill.is-current {
   background:var(--brand);
-  color: #fff;
+  color: var(--surface);
 }.test-depth-segments__btn.is-done,
 .test-depth-segments__pill.is-done {
   color: var(--brand);
@@ -366,7 +366,7 @@
   font-weight: 600;
   color: color-mix(in srgb, var(--ink) 55%, var(--muted));
 }.test-depth-segments .is-current .test-depth-segments__meta {
-  color: color-mix(in srgb, #fff 92%, var(--muted));
+  color: color-mix(in srgb, var(--surface) 92%, var(--muted));
 }.test-depth-segments .is-done .test-depth-segments__meta {
   color: color-mix(in srgb, var(--brand) 75%, var(--ink));
 }.test-depth-segments__check {
