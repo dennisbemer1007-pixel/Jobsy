@@ -43,7 +43,7 @@ public static class PageAssetCatalog
         "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
-        "css/features/kb-external-vacancy.css?v=20261019-extvac5",
+        "css/features/kb-external-vacancy.css?v=20261011-03",
     ];
 
     private static readonly string[] UwvMockupRouteCss =
@@ -68,8 +68,8 @@ public static class PageAssetCatalog
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
         "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261019-lobster1",
-        "css/features/kompas-illustrated.css?v=20261019-passport-tabs2",
+        "css/features/mijn-paspoort.css?v=20261015-09",
+        "css/features/kompas-illustrated.css?v=20261018-05",
         "css/features/reference-verification-hero.css?v=20261018-16",
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",

@@ -20,6 +20,8 @@ export JOBSY_E2E_CAPTURE_EMAIL_CODES=1
 export Errors__ForceHandler=true
 export Errors__EnableTestThrow=true
 export VerificationCodes__Pepper="${VerificationCodes__Pepper:-ci-verification-otp-pepper-32chars}"
+# Playwright suites set /taal/{pl,ro,ar} and Jobsy.Culture cookies; production launch keeps nl,en only.
+export Localization__EnabledCultures="${Localization__EnabledCultures:-nl,en,pl,ro,ar}"
 # Playwright public-pages suites POST /melden after many GETs; keep DSA limits from blocking CI.
 export RateLimiting__ReportHourlyPermitLimit=100
 export RateLimiting__ReportDailyPermitLimit=200
