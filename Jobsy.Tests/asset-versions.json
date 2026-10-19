@@ -76,8 +76,8 @@
     "v": "20261004-10"
   },
   "css/features/form-fields.css": {
-    "sha256": "2661a034e722352d458380109b5748fd2b83976dc7f8e2a2e0968d7ff894b0c7",
-    "v": "20261015-04"
+    "sha256": "dee90194df3ce52e43bc9c9bd5c9aca798d30e6cbc498f217b7355e5d5ac75d1",
+    "v": "20261019-01"
   },
   "css/features/future-jobs.css": {
     "sha256": "a4bb8e12f1e3bc07fc2d3cbe8a7686e26968aff22b1efe16e7c0c30f5defd863",
@@ -140,8 +140,8 @@
     "v": "20261018-15"
   },
   "css/features/onboarding-illustrated-step.css": {
-    "sha256": "58cd1fbe02599b9becf0831c8f82d226dc29f9b0b6b87c06a177a3bf533adb78",
-    "v": "20261018-r20"
+    "sha256": "ee74905be73bfc43d63821677056d487424c61d8e4636e3dd5c061d2234b50e3",
+    "v": "20261019-r21"
   },
   "css/features/onboarding-test-blocks.css": {
     "sha256": "62ae49303ea8724e32220af70d185afdd0565aa3aff363c535f37a012bf47e32",
@@ -156,8 +156,8 @@
     "v": "20261018-r4"
   },
   "css/features/onboarding-wizard-richting-a.css": {
-    "sha256": "db7be7e17fb9597e4b56f41806231b65cbd2e9bec53511c8ab9cc716063b3132",
-    "v": "20261018-02"
+    "sha256": "701567279baaadae6fe4de5382caf2ead0d4573b712a41641f80a6dcaa3b7bec",
+    "v": "20261019-01"
   },
   "css/features/onboarding-wizard-test-journey.css": {
     "sha256": "2b7ec945ec3265ba6da25d41fb233301c7eb6799706b2c1c06aa37c28ef09c2e",
@@ -340,11 +340,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "a08bc82ffc5551a29a6838f1170a0d5e8e824e59503c2f8446dbc6ff923c2f37",
+    "sha256": "ea6b9da67478666045b74e6f7fdda63b17f352402b8db1b75ee9c69034ceb157",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "71b4c4d0930fa598a4fb34135d5a810117b7e27f83d9e306a12f7aa40eac1dd7",
+    "sha256": "a6b76a8d3a168c7395a9627b0f3ac6c8c607b627953de236ea34453f32a0b4b5",
     "v": "20261016-06"
   }
 }
