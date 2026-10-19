@@ -67,9 +67,17 @@
   text-decoration: none;
   color: var(--text);
   flex-shrink: 0;
-}.pub-theme .pub-header__logo {
-  width: 2.5rem;
-  height: 2.5rem;
+}.pub-theme .pub-header__logo.lobsy-logo--horizontal {
+  width: auto;
+  height: 2.375rem;
+  max-width: min(10.75rem, 44vw);
+}.pub-theme .pub-header__logo.lobsy-logo--mark {
+  width: 2.375rem;
+  height: 2.375rem;
+}@media (max-width: 640px) {.pub-theme .pub-header__logo.lobsy-logo--horizontal {
+    height: 2.25rem;
+    max-width: min(10rem, 52vw);
+  }
 }.pub-theme .pub-header__name {
   font-weight: 700;
   font-size: 1.15rem;
@@ -375,7 +383,11 @@
   text-decoration: none;
   color: var(--text);
   font-weight: 700;
-}.pub-theme .pub-footer__logo {
+}.pub-theme .pub-footer__logo.lobsy-logo--horizontal {
+  width: auto;
+  height: 2rem;
+  max-width: min(9.5rem, 40vw);
+}.pub-theme .pub-footer__logo.lobsy-logo--mark {
   width: 2rem;
   height: 2rem;
 }.pub-theme .pub-footer__tagline {

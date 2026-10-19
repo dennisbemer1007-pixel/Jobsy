@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json;
 using Jobsy.Core.Careers;
 using Jobsy.Core.Features;
+using Jobsy.Core.Localization;
 using Jobsy.Core.Interfaces;
 using Jobsy.Core.Rules;
 using Jobsy.Web.Admin;
@@ -12,6 +13,12 @@ namespace Jobsy.Tests;
 public class HonestAdviceTests
 {
     private const string CloudId = "781a6350-e686-45b9-b075-e4c8d5a05ff7";
+
+    public HonestAdviceTests()
+    {
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        HonestAdviceService.ResetSharedForTests();
+    }
 
     [Fact]
     public void Flag_defaults_off_and_admin_copy_exists()
@@ -70,7 +77,9 @@ public class HonestAdviceTests
             var dutchHash = HonestAdviceFacts.Hash(entry.Text);
             foreach (var lang in new[] { "en", "pl", "ro", "ar" })
             {
-                Assert.True(entry.Translations.ContainsKey(lang));
+                Assert.True(
+                    entry.Translations.ContainsKey(lang),
+                    $"Occupation {id} is missing translation '{lang}' (have: {string.Join(", ", entry.Translations.Keys)}).");
                 var locale = entry.Translations[lang];
                 Assert.Equal(dutchHash, locale.SourceHash);
                 Assert.Null(HonestAdviceValidator.RejectionReason(locale.Text, facts, lang));

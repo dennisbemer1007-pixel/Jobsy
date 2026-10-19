@@ -110,26 +110,64 @@
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
+  --pub-hero-art-h: 680px;
+  --pub-hero-img-rh: min(calc(100vw * 720 / 2048), var(--pub-hero-art-h));
+  --pub-hero-shell-l: 238, 230, 218;
+  --pub-hero-shell-r: 238, 230, 218;
+  --pub-hero-shell-top: 251, 242, 227;
+  --pub-hero-art-top-fade: min(180px, calc(var(--pub-hero-img-rh) * 0.28));
+  --pub-hero-shell-bottom: 218, 210, 205;
   position: relative;
-  min-height: 520px;
+  min-height: max(640px, var(--pub-hero-art-h));
   padding: 0;
-  background: color-mix(in srgb, var(--gold) 8%, var(--surface)) var(--pub-hero-art) no-repeat center top / min(1440px, 100%) auto;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--pub-hero-shell-l)) 0%,
+    rgb(var(--pub-hero-shell-top)) 18%,
+    rgb(var(--pub-hero-shell-top)) 82%,
+    rgb(var(--pub-hero-shell-r)) 100%
+  );
+  isolation: isolate;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  z-index: 0;
+  width: 100vw;
+  height: var(--pub-hero-img-rh);
+  pointer-events: none;
+  transform: translateX(-50%);
+  background-color: rgb(var(--pub-hero-shell-top));
+  background-image: var(--pub-hero-art);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: contain;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 20%, #000 80%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--pub-hero-art-top-fade), #000 98%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 20%, #000 80%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 var(--pub-hero-art-top-fade), #000 98%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 90px;
-  background: linear-gradient(transparent, var(--pearl));
-  pointer-events: none;
+  display: none;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
   position: relative;
   z-index: 1;
   padding: 3rem 2rem 2.5rem;
+}
+
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-copy,
+.pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__ctas {
+  position: relative;
+  z-index: 2;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-copy {
@@ -169,15 +207,39 @@
 .pub-theme .pub-landing__step-card {
   border: 1px solid var(--border);
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
   background: var(--surface);
 }
 
 .pub-theme .pub-landing__step-art {
-  height: 170px;
+  border-radius: 18px 18px 0 0;
+  overflow: hidden;
+  height: clamp(190px, 21vw, 215px);
   background-size: cover;
-  background-position: center 60%;
+  background-repeat: no-repeat;
+  background-position: center top;
   background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+.pub-theme .pub-landing__step-art--1,
+.pub-theme .pub-landing__step-art--3 {
+  background-size: auto 100%;
+  background-position: center top;
+}
+
+.pub-theme .pub-landing__step-art--2 {
+  height: clamp(200px, 22vw, 225px);
+  background-size: 100% auto;
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
 }
 
 .pub-theme .pub-landing__step-body {
@@ -289,10 +351,26 @@
   padding: 1.25rem 1.5rem 1.25rem 0;
 }
 
+.pub-theme .pub-landing__kaart-ill-art {
+  min-height: clamp(190px, 24vw, 240px);
+  display: flex;
+  align-items: flex-end;
+}
+
 .pub-theme .pub-landing__kaart-ill-art img {
   display: block;
   width: 100%;
+  max-height: clamp(190px, 24vw, 240px);
   height: auto;
+  object-fit: cover;
+  object-position: center top;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 94%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 94%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__stat-grid {
@@ -311,10 +389,18 @@
 
 .pub-theme .pub-landing__emp-art {
   flex: 1;
-  min-height: 170px;
+  min-height: clamp(190px, 22vw, 215px);
   background-size: cover;
-  background-position: center 35%;
+  background-repeat: no-repeat;
+  background-position: center top;
   background-color: color-mix(in srgb, var(--gold) 10%, var(--surface));
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(180deg, #000 0%, #000 68%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__faq-card {
@@ -353,9 +439,11 @@
 
 @media (max-width: 1280px) {
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
-    min-height: 480px;
-    background-size: cover;
-    background-position: center top;
+    --pub-hero-art-h: 640px;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
+    background-position: 49% bottom;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__trust .pub-landing__tgrid {
@@ -369,7 +457,11 @@
 
 @media (max-width: 1024px) {
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
-    min-height: 440px;
+    --pub-hero-art-h: 580px;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
+    background-position: 48% bottom;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
@@ -401,7 +493,32 @@
   }
 }
 
+@media (min-width: 1441px) {
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
+    --pub-hero-art-h: 720px;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
+    background-position: 49% bottom;
+  }
+}
+
 @media (max-width: 900px) {
+  .pub-theme .pub-landing__step-art--2 {
+    height: clamp(200px, 58vw, 240px);
+    padding: 0;
+    background-color: var(--surface);
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: 66% top;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, transparent 10%, #000 32%, #000 78%, transparent 100%),
+      linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, transparent 10%, #000 32%, #000 78%, transparent 100%),
+      linear-gradient(180deg, #000 0%, #000 86%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
   .pub-theme .pub-landing__steps-grid {
     grid-template-columns: 1fr;
   }
@@ -453,28 +570,27 @@
     padding-bottom: 0.35rem;
   }
 
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
+    display: none;
+  }
+
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-art-band {
     display: block;
     width: 100vw;
     max-width: none;
     margin-inline: calc(50% - 50vw);
-    height: clamp(180px, 54vw, 220px);
+    height: clamp(200px, 54vw, 260px);
     flex-shrink: 0;
-    background: var(--pub-hero-art) no-repeat center 38% / auto 108%;
-    -webkit-mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      #000 14%,
-      #000 86%,
-      transparent 100%
-    );
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      #000 14%,
-      #000 86%,
-      transparent 100%
-    );
+    pointer-events: none;
+    background: var(--pub-hero-art) no-repeat right 42% / auto min(260px, 112%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 84%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 10%, #000 92%, transparent 100%),
+      linear-gradient(135deg, transparent 0%, #000 28%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 84%, transparent 100%),
+      linear-gradient(to right, transparent 0%, #000 10%, #000 92%, transparent 100%),
+      linear-gradient(135deg, transparent 0%, #000 28%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__hero-rest {

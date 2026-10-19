@@ -28,6 +28,9 @@ public sealed class HonestAdviceService
 
     public static HonestAdviceService Shared => _shared ??= LoadEmbedded();
 
+    /// <summary>Test hook: reload after <see cref="JobsyLanguages.ConfigureEnabledCultures"/> changes.</summary>
+    internal static void ResetSharedForTests() => _shared = null;
+
     public static HonestAdviceService LoadEmbedded()
     {
         using var stream = Open(FileName);

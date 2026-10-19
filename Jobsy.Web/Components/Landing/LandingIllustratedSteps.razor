@@ -10,7 +10,7 @@
         <p class="pub-landing__lead pub-landing__lead--narrow">@LandingText.For("Landing.Steps.Sub", Variant)</p>
         <div class="pub-landing__steps-grid">
             @StepCard("1", CandidateIllustratedImages.StepVragen, "Landing.Steps.S1Title", "Landing.Steps.S1Body")
-            @StepCard("2", CandidateIllustratedImages.StepDna, "Landing.Steps.S2Title", "Landing.Steps.S2Body")
+            @StepCard("2", CandidateIllustratedImages.StepDnaLanding, "Landing.Steps.S2Title", "Landing.Steps.S2Body")
             @StepCard("3", CandidateIllustratedImages.StepBanen, "Landing.Steps.S3Title", "Landing.Steps.S3Body")
         </div>
     </div>
@@ -22,7 +22,7 @@
     private RenderFragment StepCard(string num, string image, string titleKey, string bodyKey) => __builder =>
     {
         <article class="pub-landing__step-card pub-landing__card-calm">
-            <div class="pub-landing__step-art" style="@($"background-image:url('{image}')")"></div>
+            <div class="pub-landing__step-art pub-landing__step-art--@num" style="@($"background-image:url('{image}')")" aria-hidden="true"></div>
             <div class="pub-landing__step-body">
                 <span class="pub-landing__step-num" aria-hidden="true">@num</span>
                 <h3>@LandingText.For(titleKey, Variant)</h3>
