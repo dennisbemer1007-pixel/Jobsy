@@ -535,6 +535,12 @@ public static class VacancyImageUrls
             path = path[..hash];
         }
 
+        var query = path.IndexOf('?', StringComparison.Ordinal);
+        if (query >= 0)
+        {
+            path = path[..query];
+        }
+
         return IsSafeSameOriginPath(path) ? path : null;
     }
 

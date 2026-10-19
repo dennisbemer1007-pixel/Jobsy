@@ -22,6 +22,7 @@ using Jobsy.Infrastructure.Sales;
 using Jobsy.Infrastructure.Scholen;
 using Jobsy.Infrastructure.Security;
 using Jobsy.Infrastructure.Services;
+using Jobsy.Infrastructure.Services.AfterMatch;
 using Jobsy.Infrastructure.Services.LenderRegistration;
 using Jobsy.Infrastructure.Services.OpenAi;
 using Microsoft.AspNetCore.Authorization;
@@ -678,6 +679,8 @@ public static class DependencyInjection
         services.AddScoped<ISampleAssessmentReportPdfService, SampleAssessmentReportPdfService>();
         services.AddHostedService<AssessmentNormSnapshotHostedService>();
         services.AddScoped<ITalentPoolService, TalentPoolService>();
+        services.AddScoped<AfterMatchMailer>();
+        services.AddScoped<IAfterMatchService, AfterMatchService>();
         services.Configure<Jobsy.Core.Options.ProactiveMatchingOptions>(
             configuration.GetSection(Jobsy.Core.Options.ProactiveMatchingOptions.SectionName));
         services.AddScoped<IProactiveMatchingService, ProactiveMatchingService>();
@@ -686,6 +689,8 @@ public static class DependencyInjection
         services.AddScoped<KandidatenkaartCandidateAggregator>();
         services.AddScoped<KandidatenkaartMailService>();
         services.AddScoped<IKandidatenkaartService, KandidatenkaartService>();
+        services.AddScoped<ICompanyMapInitiativeService, CompanyMapInitiativeService>();
+        services.AddHostedService<WorkInitiativeAutoDeclineHostedService>();
         services.AddHostedService<KandidatenkaartHostedService>();
         services.AddScoped<IFlexCommercialService, FlexCommercialService>();
         services.AddScoped<IEmployerPhase2Service, Jobsy.Infrastructure.Services.EmployerPhase2.EmployerPhase2Service>();
@@ -744,6 +749,8 @@ public static class DependencyInjection
         services.AddScoped<IExclusivitySettingService, ExclusivitySettingService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
         services.AddScoped<ReferenceConfirmationService>();
+        services.AddScoped<ReferenceVerificationService>();
+        services.AddScoped<UwvCandidateToolkitService>();
         services.AddScoped<ICandidateActionTokenService, CandidateActionTokenService>();
         services.AddScoped<ICursorCloudAgentClient, CursorCloudAgentClient>();
         services.AddScoped<IFeedbackService, FeedbackService>();
@@ -779,6 +786,7 @@ public static class DependencyInjection
         services.AddHostedService<CompanyReengagementHostedService>();
         services.AddHostedService<VacancyEngagementReminderHostedService>();
         services.AddHostedService<Jobs.ExternalVacancyReminderHostedService>();
+        services.AddHostedService<Jobs.ReferenceVerificationReminderHostedService>();
         services.AddHostedService<Jobs.ProactiveMatchingHostedService>();
         services.AddHostedService<ComebackReminderHostedService>();
         services.AddHostedService<VatBufferTransferHostedService>();

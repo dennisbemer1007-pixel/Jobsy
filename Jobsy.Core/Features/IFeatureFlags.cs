@@ -31,9 +31,25 @@ public sealed record FeatureFlagSnapshot(
     bool TestProgressInsightEnabled = false,
     bool EmployerFitQuestionnairesEnabled = false,
     bool KandidatenkaartEnabled = false,
-    bool TrainingPartnersEnabled = false)
+    bool CompanyMapInitiativeEnabled = true,
+    bool AfterMatchEnabled = false,
+    bool ReferenceVerificationEnabled = false,
+    bool SensitiveExperienceEnabled = false,
+    bool TrainingPartnersEnabled = false,
+    bool TestJourneyIllustrationEnabled = false,
+    bool OnboardingFinaleV2Enabled = false,
+    bool OccupationDayInLifeEnabled = true,
+    bool TestEditModeEnabled = false,
+    bool SamplePdfEnabled = false,
+    bool TestDepthValueMockupEnabled = true,
+    bool UwvFeaturesEnabled = true)
 {
-    public static FeatureFlagSnapshot Defaults { get; } = new(EmployersEnabled: false, CandidatePassportEnabled: true);
+    public static FeatureFlagSnapshot Defaults { get; } = new(
+        EmployersEnabled: false,
+        CandidatePassportEnabled: true,
+        CompanyMapInitiativeEnabled: true,
+        TestDepthValueMockupEnabled: true,
+        UwvFeaturesEnabled: true);
 
     public bool IsEnabled(PlatformFeature feature) => feature switch
     {
@@ -57,8 +73,13 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.TestProgressInsight => TestProgressInsightEnabled,
         PlatformFeature.EmployerFitQuestionnaires => EmployerFitQuestionnairesEnabled,
         PlatformFeature.Kandidatenkaart => KandidatenkaartEnabled,
-        PlatformFeature.ReferenceVerification => false,
+        PlatformFeature.CompanyMapInitiative => EmployersEnabled && CompanyMapInitiativeEnabled,
+        PlatformFeature.AfterMatch => AfterMatchEnabled,
+        PlatformFeature.ReferenceVerification => ReferenceVerificationEnabled,
+        PlatformFeature.SensitiveExperience => SensitiveExperienceEnabled,
         PlatformFeature.TrainingPartners => TrainingPartnersEnabled,
+        PlatformFeature.TestDepthValueMockup => TestDepthValueMockupEnabled,
+        PlatformFeature.UwvFeatures => UwvFeaturesEnabled,
         _ => false
     };
 }

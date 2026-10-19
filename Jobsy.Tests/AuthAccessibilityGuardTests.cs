@@ -1,13 +1,18 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Jobsy.Core.Localization;
 using Microsoft.AspNetCore.Hosting;
+using Xunit;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Jobsy.Tests;
 
+[Collection("JobsyLanguagesState")]
 public sealed class AuthAccessibilityGuardTests
 {
     [Theory]
@@ -17,50 +22,59 @@ public sealed class AuthAccessibilityGuardTests
     [InlineData("/wachtwoord-vergeten?lang=ar")]
     public async Task Public_auth_pages_have_landmarks_labels_and_dir(string path)
     {
-        await using var factory = new AuthA11yWebFactory();
-        var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
-        using var response = await client.GetAsync(path);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var html = await response.Content.ReadAsStringAsync();
-
-        Assert.Single(Regex.Matches(html, @"<main\b", RegexOptions.IgnoreCase));
-        Assert.Single(Regex.Matches(html, @"<h1\b", RegexOptions.IgnoreCase));
-
-        var isAr = path.Contains("lang=ar", StringComparison.Ordinal);
-        if (isAr)
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        try
         {
-            Assert.Matches(@"dir\s*=\s*""rtl""", html);
-            Assert.Contains("lang=\"ar\"", html, StringComparison.OrdinalIgnoreCase);
-        }
+            await using var factory = new AuthA11yWebFactory();
+            var client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+            JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+            using var response = await client.GetAsync(path);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var html = await response.Content.ReadAsStringAsync();
 
-        foreach (Match m in Regex.Matches(html, @"<input\b[^>]*>", RegexOptions.IgnoreCase))
-        {
-            var tag = m.Value;
-            if (Regex.IsMatch(tag, @"type\s*=\s*""hidden""", RegexOptions.IgnoreCase)
-                || Regex.IsMatch(tag, @"type\s*=\s*""checkbox""", RegexOptions.IgnoreCase))
+            Assert.Single(Regex.Matches(html, @"<main\b", RegexOptions.IgnoreCase));
+            Assert.Single(Regex.Matches(html, @"<h1\b", RegexOptions.IgnoreCase));
+
+            var isAr = path.Contains("lang=ar", StringComparison.Ordinal);
+            if (isAr)
             {
-                continue;
+                Assert.Matches(@"dir\s*=\s*""rtl""", html);
+                Assert.Contains("lang=\"ar\"", html, StringComparison.OrdinalIgnoreCase);
             }
 
-            var idMatch = Regex.Match(tag, @"\bid\s*=\s*""([^""]+)""", RegexOptions.IgnoreCase);
-            Assert.True(idMatch.Success, "Visible input missing id: " + tag);
-            var id = idMatch.Groups[1].Value;
-            Assert.Contains($"for=\"{id}\"", html, StringComparison.Ordinal);
-
-            if (Regex.IsMatch(tag, @"type\s*=\s*""(email|password|text)""", RegexOptions.IgnoreCase)
-                || tag.Contains("autocomplete=\"username\"", StringComparison.OrdinalIgnoreCase)
-                || tag.Contains("autocomplete=\"current-password\"", StringComparison.OrdinalIgnoreCase)
-                || tag.Contains("autocomplete=\"new-password\"", StringComparison.OrdinalIgnoreCase)
-                || tag.Contains("autocomplete=\"one-time-code\"", StringComparison.OrdinalIgnoreCase))
+            foreach (Match m in Regex.Matches(html, @"<input\b[^>]*>", RegexOptions.IgnoreCase))
             {
-                Assert.Contains("dir=\"ltr\"", tag, StringComparison.OrdinalIgnoreCase);
+                var tag = m.Value;
+                if (Regex.IsMatch(tag, @"type\s*=\s*""hidden""", RegexOptions.IgnoreCase)
+                    || Regex.IsMatch(tag, @"type\s*=\s*""checkbox""", RegexOptions.IgnoreCase))
+                {
+                    continue;
+                }
+
+                var idMatch = Regex.Match(tag, @"\bid\s*=\s*""([^""]+)""", RegexOptions.IgnoreCase);
+                Assert.True(idMatch.Success, "Visible input missing id: " + tag);
+                var id = idMatch.Groups[1].Value;
+                Assert.Contains($"for=\"{id}\"", html, StringComparison.Ordinal);
+
+                if (Regex.IsMatch(tag, @"type\s*=\s*""(email|password|text)""", RegexOptions.IgnoreCase)
+                    || tag.Contains("autocomplete=\"username\"", StringComparison.OrdinalIgnoreCase)
+                    || tag.Contains("autocomplete=\"current-password\"", StringComparison.OrdinalIgnoreCase)
+                    || tag.Contains("autocomplete=\"new-password\"", StringComparison.OrdinalIgnoreCase)
+                    || tag.Contains("autocomplete=\"one-time-code\"", StringComparison.OrdinalIgnoreCase))
+                {
+                    Assert.Contains("dir=\"ltr\"", tag, StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            if (html.Contains("error=invalid", StringComparison.Ordinal)
+                || html.Contains("au-alert--danger", StringComparison.Ordinal))
+            {
+                Assert.Contains("role=\"alert\"", html, StringComparison.Ordinal);
             }
         }
-
-        if (html.Contains("error=invalid", StringComparison.Ordinal)
-            || html.Contains("au-alert--danger", StringComparison.Ordinal))
+        finally
         {
-            Assert.Contains("role=\"alert\"", html, StringComparison.Ordinal);
+            JobsyLanguages.ResetEnabledForTests();
         }
     }
 
@@ -87,9 +101,35 @@ file sealed class AuthA11yWebFactory : WebWebApplicationFactory
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["JobsyAuth:AllowDevelopmentAuth"] = "true",
-                ["PublicWebBaseUrl"] = "http://localhost"
+                ["PublicWebBaseUrl"] = "http://localhost",
+                ["Localization:EnabledCultures"] = "nl,en,pl,ro,ar"
             });
         });
-        builder.ConfigureTestServices(_ => { });
+        builder.ConfigureServices((context, _) =>
+        {
+            var enabled = context.Configuration["Localization:EnabledCultures"];
+            if (!string.IsNullOrWhiteSpace(enabled))
+            {
+                JobsyLanguages.ConfigureEnabledCultures(enabled);
+            }
+        });
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IStartupFilter>(new PinEnabledCulturesStartupFilter());
+        });
+    }
+
+    private sealed class PinEnabledCulturesStartupFilter : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next)
+            => app =>
+            {
+                app.Use(async (context, nextMiddleware) =>
+                {
+                    JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+                    await nextMiddleware(context);
+                });
+                next(app);
+            };
     }
 }

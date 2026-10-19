@@ -1,0 +1,12 @@
+@page "/bedrijvenkaart"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@using Jobsy.Core.Features
+@attribute [RequiresFeature(PlatformFeature.CompanyMapInitiative)]
+@using Jobsy.Web.Components.Bedrijvenkaart
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+
+<PageTitle>@Culture["Kb.MapToggle.Companies"] · Lobsy</PageTitle>
+
+@inject CultureState Culture
+
+<CompanyMapDiscovery />

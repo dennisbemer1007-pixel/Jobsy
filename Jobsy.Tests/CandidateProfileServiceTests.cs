@@ -74,7 +74,7 @@ public class CandidateProfileServiceTests
         Assert.Contains("Kompas.TabTests", kompas);
         Assert.Contains("TestsOverviewPanel", kompas);
         Assert.Contains("DnaPanel", kompas);
-        Assert.Contains("Kompas.CompletenessLine", kompas);
+        Assert.Contains("CandidateMatchDisplay.CompletenessLineKey", kompas);
 
         var detail = File.ReadAllText(Path.Combine(root, "Jobsy.Web/Components/Pages/Candidate/TestDetail.razor"));
         Assert.Contains("/profiel/tests/{TestKey}", detail);

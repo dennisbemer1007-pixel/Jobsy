@@ -56,6 +56,7 @@ public class CompanyJsonLdTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(new HttpClient(
             new CompanyPageLayoutTests.CompanyHandler(
                 () => HttpStatusCode.OK,
+                () => HttpStatusCode.NotFound,
                 () => CompanyJson,
                 () => VacanciesJson))
         {

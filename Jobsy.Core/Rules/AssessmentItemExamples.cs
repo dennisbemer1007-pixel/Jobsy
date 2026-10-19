@@ -49,7 +49,7 @@ public static class AssessmentItemExamples
         var map = new Dictionary<(AssessmentKind, int, string), string>();
         var usedNl = new Dictionary<AssessmentKind, HashSet<string>>();
 
-        void Add(AssessmentKind kind, int id, string domain, bool reverse, bool skipIfExists = false)
+        void Add(AssessmentKind kind, int id, string domain, bool _, bool skipIfExists = false)
         {
             if (skipIfExists && map.ContainsKey((kind, id, "nl")))
             {
@@ -79,8 +79,8 @@ public static class AssessmentItemExamples
             for (var attempt = 0; attempt < stemsNl.Length; attempt++)
             {
                 var idx = ((id - 1) + attempt) % stemsNl.Length;
-                nl = Trim(stemsNl[idx] + Angle(reverse, "nl"));
-                en = Trim(stemsEn[idx % stemsEn.Length] + Angle(reverse, "en"));
+                nl = Trim(stemsNl[idx]);
+                en = Trim(stemsEn[idx % stemsEn.Length]);
                 if (seen.Add(nl))
                 {
                     break;
@@ -123,9 +123,17 @@ public static class AssessmentItemExamples
     }
 
     private static string Trim(string text)
-        => text.Length <= MaxLength ? text : text[..MaxLength].TrimEnd();
+    {
+        var t = text.Length <= MaxLength ? text : text[..MaxLength].TrimEnd();
+        if (t.Length > 0 && !t.EndsWith('.') && !t.EndsWith('?'))
+        {
+            t += ".";
+        }
 
-    private static string ComposeFallback(string domain, bool reverse, int id, string lang)
+        return t;
+    }
+
+    private static string ComposeFallback(string domain, bool _, int id, string lang)
     {
         var stems = StemsFor(domain, lang);
         if (stems.Length == 0)
@@ -134,18 +142,8 @@ public static class AssessmentItemExamples
         }
 
         var stem = stems[Math.Abs(id - 1) % stems.Length];
-        var angle = Angle(reverse, lang);
-        return stem + angle;
+        return Trim(stem);
     }
-
-    private static string Angle(bool reverse, string lang)
-        => reverse
-            ? lang == "en"
-                ? " About sticking to what you know, or not."
-                : " Dit gaat over vasthouden aan het bekende, of juist niet."
-            : lang == "en"
-                ? " This is how you usually react when it counts."
-                : " Zo reageer jij meestal als het erop aankomt.";
 
     private static string[] StemsFor(string domain, string lang)
         => lang == "en" ? EnStemsFor(domain) : NlStemsFor(domain);
@@ -187,7 +185,7 @@ public static class AssessmentItemExamples
         ],
         DeepAnalysisCompetenceItems.Vriendelijkheid or CompetencyTestCatalog.Samenwerken =>
         [
-            "Voorbeeld: een collega heeft een zware dag. Jij biedt aan iets over te nemen.",
+            "Voorbeeld: jullie tillen samen zware dozen tot de klus klaar is.",
             "Voorbeeld: er is discussie. Jij zoekt een oplossing waar iedereen mee verder kan.",
             "Voorbeeld: een klant is boos. Jij blijft beleefd en luistert eerst.",
             "Voorbeeld: iemand maakt een fout. Jij helpt herstellen zonder te blame.",
@@ -383,6 +381,17 @@ public static class AssessmentItemExamples
             "Voorbeeld: je neemt tijd voor onboarding.",
             "Voorbeeld: je viert mensen, niet alleen cijfers."
         ],
+        CulturePersonalityCatalogV2.Curiosity or "Curiosity" =>
+        [
+            "Voorbeeld: je stelt vragen tot je snapt waarom iets zo loopt.",
+            "Voorbeeld: een collega doet het anders. Jij wilt de reden horen.",
+            "Voorbeeld: je leest kort de uitleg bij een nieuwe werkwijze.",
+            "Voorbeeld: je vraagt door als een stappenplan onduidelijk is.",
+            "Voorbeeld: je zoekt een voorbeeld voordat je zelf start.",
+            "Voorbeeld: je noteert wat je leert voor de volgende shift.",
+            "Voorbeeld: je kijkt mee om te zien hoe een taak in elkaar zit.",
+            "Voorbeeld: je deelt een link die het team helpt."
+        ],
         CulturePersonalityCatalog.Openness =>
         [
             "Voorbeeld: er komt een nieuwe tool. Jij wilt weten hoe die werkt.",
@@ -478,7 +487,7 @@ public static class AssessmentItemExamples
         ],
         DeepAnalysisCompetenceItems.Vriendelijkheid or CompetencyTestCatalog.Samenwerken =>
         [
-            "Example: a colleague has a rough day. You offer to take a task.",
+            "Example: you lift heavy boxes together until the job is done.",
             "Example: there is tension. You look for a solution everyone can live with.",
             "Example: a customer is upset. You stay polite and listen first.",
             "Example: someone slips up. You help fix it without blame.",
@@ -673,6 +682,17 @@ public static class AssessmentItemExamples
             "Example: you ask how someone really is.",
             "Example: you take time for onboarding.",
             "Example: you celebrate people, not only numbers."
+        ],
+        CulturePersonalityCatalogV2.Curiosity or "Curiosity" =>
+        [
+            "Example: you ask questions until you see why something works that way.",
+            "Example: a colleague does it differently. You want to hear why.",
+            "Example: you skim the notes for a new workflow.",
+            "Example: you ask again when a checklist step is unclear.",
+            "Example: you look for a sample before you start yourself.",
+            "Example: you jot down what you learn for the next shift.",
+            "Example: you watch how a task is done before trying it.",
+            "Example: you share a link that helps the team."
         ],
         CulturePersonalityCatalog.Openness =>
         [

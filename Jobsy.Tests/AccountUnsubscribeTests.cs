@@ -594,6 +594,7 @@ public class AccountUnsubscribeTests
         // explicitly reviewed and added to PrivacyDataService.AnonymizeUserAsync.
         var anonymizeCoverage = new[]
         {
+            typeof(AfterMatchReminderPreference),
             typeof(AmbassadeurProfile),
             typeof(Application),
             typeof(AssessmentResearchAttempt),
@@ -616,12 +617,15 @@ public class AccountUnsubscribeTests
             typeof(KandidatenkaartInviteDelivery),
             typeof(CandidateReference),
             typeof(CandidateReminderPreference),
+            typeof(WorkExperienceReferenceRequest),
             typeof(ReferenceConfirmation),
             typeof(ReferenceConfirmationConsentLog),
             typeof(ReferenceMisuseReport),
             typeof(CandidateRoleFitCheck),
             typeof(CandidateTestReflection),
             typeof(CandidateUploadedCv),
+            typeof(CandidateUwvAdviseurShare),
+            typeof(CandidateUwvToolkitState),
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
             typeof(CandidateWhoAmIProfile),
@@ -630,6 +634,7 @@ public class AccountUnsubscribeTests
             typeof(CandidatePrivatePreferences),
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
+            typeof(InterviewReminder),
             typeof(LocalAuthCredential),
             typeof(MfaTrustedDevice),
             typeof(OneTimeLink),
@@ -654,7 +659,9 @@ public class AccountUnsubscribeTests
             typeof(VacancyLike),
             typeof(VacancySearchImpression),
             typeof(VacancyShare),
-            typeof(WebPushSubscription)
+            typeof(WebPushSubscription),
+            typeof(WorkInitiative),
+            typeof(WorkInitiativeDraft)
         }
         .OrderBy(type => type.Name)
         .ToArray();

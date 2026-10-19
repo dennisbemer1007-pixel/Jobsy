@@ -174,10 +174,11 @@
   }
 }
 
-@media (max-width: 639px) {
+@media (max-width: 767px) {
   .panel-page--cand-ill .cand-hero,
   .passport-page--illustrated .cand-hero,
-  .career-page--illustrated .cand-hero {
+  .career-page--illustrated .cand-hero,
+  .ob-illustrated-step__mobile-cand-hero .cand-hero {
     min-height: 0 !important;
     height: auto !important;
   }
@@ -1163,7 +1164,8 @@
 }
 
 .app-shell:has(.panel-page--cand-ill) .lobsy-coach-dock,
-.app-shell:has(.panel-page--cand-ill) .lobsy-coach-cta {
+.app-shell:has(.panel-page--cand-ill) .lobsy-assistant-launcher,
+.app-shell:has(.panel-page--cand-ill) .lobsy-assistant-tab--edge {
   display: none !important;
 }
 

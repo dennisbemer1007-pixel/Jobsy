@@ -254,6 +254,8 @@ projects:
                 value: "true"
               - key: Jobsy__StudentPassportEnabled
                 value: "true"
+              - key: Jobsy__SensitiveExperienceEnabled
+                value: "true"
               - key: JobsyAuth__DevelopmentAuthSecret
                 generateValue: true
               - key: JobsyAuth__LocalSessionSigningKey
@@ -294,6 +296,8 @@ projects:
               - key: Training__SeedDemoProviders
                 value: "true"
               - key: Jobsy__TrainingPartnersEnabled
+                value: "true"
+              - key: Jobsy__ReferenceVerificationEnabled
                 value: "true"
               # Dennis sets true in Dashboard after passwords are configured.
               - key: TestAccounts__Enabled
@@ -444,6 +448,8 @@ projects:
                   property: connectionString
               - key: Lobsy__DeploymentEnvironment
                 value: Acceptatie
+              - key: Jobsy__ReferenceVerificationEnabled
+                value: "true"
               - key: PublicWebBaseUrl
                 value: "https://acceptatie.lobsy.nl"
               # Combo homepage (On) at / for acceptatie preview; production has no override.
@@ -452,6 +458,8 @@ projects:
               - key: Onboarding__FinaleV2Enabled
                 value: "true"
               - key: TestJourneyIllustrationEnabled
+                value: "true"
+              - key: ChatContextGreetingEnabled
                 value: "true"
               - key: TestAccounts__Enabled
                 sync: false

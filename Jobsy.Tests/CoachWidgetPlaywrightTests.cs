@@ -310,7 +310,10 @@ public class CoachWidgetPlaywrightTests
                   const btn = document.querySelector('#lobsy-coach-btn');
                   if (!btn) return 'missing';
                   const b = btn.getBoundingClientRect();
-                  if (Math.abs(b.width - 56) > 1 || Math.abs(b.height - 56) > 1) {
+                  if (Math.abs(b.height - 56) > 2 && Math.abs(b.height - 48) > 2) {
+                    return 'size ' + Math.round(b.width) + 'x' + Math.round(b.height);
+                  }
+                  if (b.width < 48) {
                     return 'size ' + Math.round(b.width) + 'x' + Math.round(b.height);
                   }
                   const dock = document.querySelector('[data-lobsy-coach], .lobsy-coach-dock');

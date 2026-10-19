@@ -54,13 +54,25 @@ public class MaintenanceMiddlewareTests
     [Fact]
     public async Task Page_is_in_the_cookie_language()
     {
-        await using var factory = new MaintenanceWebFactory { MaintenanceEnabled = true };
-        using var client = factory.CreateHtmlClient("pl");
+        Jobsy.Core.Localization.JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
+        try
+        {
+            await using var factory = new MaintenanceWebFactory
+            {
+                MaintenanceEnabled = true,
+                EnabledCultures = "nl,en,pl,ro,ar"
+            };
+            using var client = factory.CreateHtmlClient("pl");
 
-        var html = await (await client.GetAsync("/")).Content.ReadAsStringAsync();
+            var html = await (await client.GetAsync("/")).Content.ReadAsStringAsync();
 
-        Assert.Contains("Chwilowo majsterkujemy", html, StringComparison.Ordinal);
-        Assert.DoesNotContain("We zijn even aan het klussen", html, StringComparison.Ordinal);
+            Assert.Contains("Chwilowo majsterkujemy", html, StringComparison.Ordinal);
+            Assert.DoesNotContain("We zijn even aan het klussen", html, StringComparison.Ordinal);
+        }
+        finally
+        {
+            Jobsy.Core.Localization.JobsyLanguages.ResetEnabledForTests();
+        }
     }
 
     [Fact]

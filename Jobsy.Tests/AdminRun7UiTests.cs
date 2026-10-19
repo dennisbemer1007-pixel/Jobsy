@@ -94,7 +94,8 @@ public class AdminRun7UiTests : BunitContext
         cut.WaitForAssertion(() =>
         {
             var alert = cut.Find(".admin-user-drawer__reset [role='alert']");
-            Assert.Equal("Geef een reden van 5 tot 500 tekens.", alert.TextContent.Trim());
+            Assert.StartsWith("Geef een reden van 5 tot 500 tekens.", alert.TextContent.Trim(), StringComparison.Ordinal);
+            Assert.Contains("Referentie:", alert.TextContent, StringComparison.Ordinal);
         });
         Assert.DoesNotContain("API call failed", cut.Find(".admin-user-drawer__reset").TextContent, StringComparison.Ordinal);
     }

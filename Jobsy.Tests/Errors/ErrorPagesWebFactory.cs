@@ -64,7 +64,7 @@ public sealed class ErrorPagesWebFactory : WebWebApplicationFactory
                 [ErrorPagesExtensions.ForceHandlerConfigKey] = "true",
                 ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
                 ["Seo:NoIndex"] = NoIndex ? "true" : "false",
-                ["Localization:EnabledCultures"] = EnabledCultures ?? "nl,en"
+                ["Localization:EnabledCultures"] = EnabledCultures ?? "nl,en,pl,ro,ar"
             });
         });
 

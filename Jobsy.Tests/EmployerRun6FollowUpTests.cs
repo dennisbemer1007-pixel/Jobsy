@@ -53,10 +53,10 @@ public class EmployerRun6FollowUpTests
     }
 
     [Theory]
-    [InlineData(true, false, false, false, false, "/candidate/profile?")]
+    [InlineData(true, false, false, false, false, "section=availability")]
     [InlineData(false, true, false, false, false, "tab=proof")]
     [InlineData(false, false, true, false, false, "item=education")]
-    [InlineData(false, false, false, true, false, "/candidate/profile?")]
+    [InlineData(false, false, false, true, false, "/candidate/start?")]
     [InlineData(false, false, false, false, true, "item=references")]
     public void Profiel_aanvullen_follows_the_first_missing_item(
         bool missingAvailability,

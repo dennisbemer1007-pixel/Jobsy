@@ -324,6 +324,36 @@ window.jobsyGeo = (function () {
         }
     }
 
+    function blurElement(id) {
+        const el = document.getElementById(id);
+        if (el && typeof el.blur === "function") {
+            el.blur();
+        }
+    }
+
+    /** Resolves when jobsyGeo.requestLocation is callable (app-core loaded). */
+    function whenReady(timeoutMs) {
+        var limit = typeof timeoutMs === "number" && timeoutMs > 0 ? timeoutMs : 8000;
+        return new Promise(function (resolve, reject) {
+            if (typeof requestLocation === "function") {
+                resolve(true);
+                return;
+            }
+            var started = Date.now();
+            var timer = setInterval(function () {
+                if (typeof requestLocation === "function") {
+                    clearInterval(timer);
+                    resolve(true);
+                    return;
+                }
+                if (Date.now() - started >= limit) {
+                    clearInterval(timer);
+                    reject(new Error("Locatie is nog niet beschikbaar. Probeer het zo opnieuw."));
+                }
+            }, 40);
+        });
+    }
+
     /**
      * Returns stored origin only. Geolocation requires an explicit "Mijn locatie" tap.
      */
@@ -457,6 +487,8 @@ window.jobsyGeo = (function () {
         tryClaimSiteVisit,
         requestLocation,
         focusElement,
+        blurElement,
+        whenReady,
         scrollToId,
         openShare,
         copyText,
@@ -685,7 +717,7 @@ window.jobsyMaps = (function () {
         "/js/jobsyMapLibre.min.js?v=20261002-ch01"
     ];
     var discoveryScripts = [
-        "/js/jobMap.min.js?v=20261018-20"
+        "/js/jobMap.min.js?v=20261019-uwv5"
     ];
     var detailScripts = [
         "/js/vacancyDetailMap.min.js?v=20261004-13"
@@ -1172,6 +1204,12 @@ window.jobsyDom = {
     resetWizardStepScroll: function () {
         window.jobsyDom.scrollToTop();
         window.jobsyDom.focusWizardStepHeading();
+    },
+    readInputValue: function (el) {
+        if (!el || typeof el.value === "undefined" || el.value === null) {
+            return "";
+        }
+        return String(el.value);
     },
     matchesMedia: function (query) {
         try {
@@ -2046,6 +2084,15 @@ window.jobsyProfileEncourage = window.jobsyProfileEncourage || {
   },
   dismiss: function (key) {
     try { localStorage.setItem("lobsy-encourage:" + key, "1"); } catch (e) { }
+  }
+};
+
+window.jobsyRefVerificationTip = window.jobsyRefVerificationTip || {
+  isDismissed: function (key) {
+    try { return localStorage.getItem("lobsy-ref-verification:" + key) === "1"; } catch (e) { return false; }
+  },
+  dismiss: function (key) {
+    try { localStorage.setItem("lobsy-ref-verification:" + key, "1"); } catch (e) { }
   }
 };
 

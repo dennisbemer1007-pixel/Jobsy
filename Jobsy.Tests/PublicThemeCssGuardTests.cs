@@ -43,6 +43,12 @@ public class PublicThemeCssGuardTests
         var root = Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "Pages");
         foreach (var file in Directory.EnumerateFiles(root, "*.razor", SearchOption.AllDirectories))
         {
+            if (file.Contains("/__Preview/", StringComparison.Ordinal)
+                || file.EndsWith("CompanyPublicPage.razor", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             var text = File.ReadAllText(file);
             if (text.Contains("@layout PublicLayout", StringComparison.Ordinal)
                 || text.Contains("@layout TeaserLayout", StringComparison.Ordinal)

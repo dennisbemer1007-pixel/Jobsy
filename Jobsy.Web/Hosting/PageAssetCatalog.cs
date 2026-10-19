@@ -27,9 +27,10 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261018-30",
+        "css/app.min.css?v=20261019-13",
         "css/features/stijl-a.css?v=20261018-03",
-        "css/features/form-fields.css?v=20261015-04",
+        "css/features/form-fields.css?v=20261019-01",
+        "css/features/candidate-illustrated-decorative-layers.css?v=20261019-03",
         "css/features/nav-feedback.css?v=20261017-01",
     ];
 
@@ -37,11 +38,19 @@ public static class PageAssetCatalog
     [
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/candidate-illustrated-app.css?v=20261018-89",
-        "css/features/kandidaat-banen.css?v=20261017-04",
+        "css/features/bedrijvenkaart.css?v=20261019-04",
+        "css/features/candidate-illustrated-app.css?v=20261018-91",
+        "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",
+    ];
+
+    private static readonly string[] UwvMockupRouteCss =
+    [
+        "css/features/uwv-mockups.css?v=20261019-r8",
+        "css/features/banenkaart.css?v=20261018-02",
+        "css/features/banenkaart-illustrated.css?v=20261018-14",
     ];
 
     public static readonly string[] CandidateAppCss =
@@ -49,19 +58,23 @@ public static class PageAssetCatalog
         "css/features/notifications.css?v=20261017-14",
         "css/features/choice-tiles.css?v=20261015-06",
         "css/features/onboarding-wizard.css?v=20261018-02",
+        "css/features/onboarding-illustrated-step.css?v=20261019-r24",
+        "css/features/onboarding-test-blocks.css?v=20261018-r2",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
-        "css/features/onboarding-wizard-richting-a.css?v=20261018-02",
-        "css/features/onboarding-work-history.css?v=20261018-07",
+        "css/features/onboarding-wizard-richting-a.css?v=20261019-r25",
+        "css/features/onboarding-work-history.css?v=20261018-08",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
         "css/features/gratis-dna.css?v=20261004-10",
         "css/features/kandidaatinzichten.css?v=20261004-10",
-        "css/features/testresultaten.css?v=20261004-10",
-        "css/features/mijn-paspoort.css?v=20261018-01",
+        "css/features/testresultaten.css?v=20261019-r5billus",
+        "css/features/mijn-paspoort.css?v=20261018-06",
         "css/features/kompas-illustrated.css?v=20261018-05",
+        "css/features/reference-verification-hero.css?v=20261018-16",
+        "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
-        "css/features/tests.css?v=20261018-30",
-        "css/features/candidate-illustrated-app.css?v=20261018-19",
+        "css/features/tests.css?v=20261019-01",
+        "css/features/candidate-illustrated-app.css?v=20261018-91",
         "css/features/carriere.css?v=20261018-03",
         "css/features/opleidingen.css?v=20261018-r12",
         "css/features/occupation-day.css?v=20261005-23",
@@ -69,6 +82,7 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
+        "css/features/na-de-match.css?v=20261019-12",
     ];
 
     public static readonly string[] WerkgeverCss =
@@ -79,6 +93,7 @@ public static class PageAssetCatalog
         "css/features/vacancy-wizard.css?v=20261017-02",
         "css/features/werkgever-aanmelding.css?v=20261016-06",
         "css/features/enterprise-ui.css?v=20261004-10",
+        "css/features/na-de-match.css?v=20261019-12",
     ];
 
     public static readonly string[] KandidatenkaartCss =
@@ -89,7 +104,7 @@ public static class PageAssetCatalog
 
     public static readonly string[] BeheerCss =
     [
-        "css/features/admin.css?v=20261013-02",
+        "css/features/admin.css?v=20261018-11",
         "css/features/enterprise-ui.css?v=20261004-10",
     ];
 
@@ -148,7 +163,12 @@ public static class PageAssetCatalog
             return Area.GratisDna;
         }
 
-        if (path is "/banenkaart" or "/banen")
+        if (path is "/banenkaart" or "/banen" or "/bedrijvenkaart")
+        {
+            return Area.CandidatePublic;
+        }
+
+        if (path.Length == 8 && path.All(char.IsDigit))
         {
             return Area.CandidatePublic;
         }
@@ -161,6 +181,16 @@ public static class PageAssetCatalog
         if (path.StartsWith("/account/", StringComparison.Ordinal))
         {
             return Area.Account;
+        }
+
+        if (path.StartsWith("/dev/na-de-match", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.CandidatePublic | Area.CandidateApp | Area.Werkgever;
+        }
+
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return Area.CandidatePublic | Area.CandidateApp;
         }
 
         if (path.StartsWith("/candidate/", StringComparison.Ordinal)
@@ -229,13 +259,54 @@ public static class PageAssetCatalog
             return KandidatenkaartCss;
         }
 
+        if (path.StartsWith("/werkgever/", StringComparison.OrdinalIgnoreCase))
+        {
+            return ["css/features/bedrijvenkaart.css?v=20261019-04"];
+        }
+
+        if (path.StartsWith("/candidate/applications", StringComparison.OrdinalIgnoreCase))
+        {
+            return ["css/features/bedrijvenkaart.css?v=20261019-04"];
+        }
+
+        if (path.Length is >= 8 and <= 13 && path.Trim('/').All(c => char.IsDigit(c) || c == '/'))
+        {
+            return ["css/features/bedrijvenkaart.css?v=20261019-04"];
+        }
+
+        if (path.StartsWith("/werk-referentie/", StringComparison.OrdinalIgnoreCase))
+        {
+            return
+            [
+                "css/features/reference-verification-hero.css?v=20261018-16",
+                "css/features/reference-verification.css?v=20261018-16"
+            ];
+        }
+
+        if (path.StartsWith("/preview/uwv-mockups", StringComparison.OrdinalIgnoreCase))
+        {
+            return UwvMockupRouteCss;
+        }
+
+        if (path.Equals("/banenkaart", StringComparison.OrdinalIgnoreCase)
+            || path.Equals("/carriere", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/ondernemerscheck", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/wat-drijft-jou", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/candidate/adviseur-werk", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/deel/uwv-adviseur/", StringComparison.OrdinalIgnoreCase))
+        {
+            return UwvMockupRouteCss;
+        }
+
         return [];
     }
 
     public static bool IncludeMapPreconnect(string? rawPath)
     {
         var path = PageSeoCatalog.Normalize(rawPath);
-        return path is "/banenkaart" or "/banen" or "/werkgever/kandidatenkaart";
+        return path is "/banenkaart" or "/banen" or "/bedrijvenkaart" or "/werkgever/kandidatenkaart"
+               || (path.Length == 8 && path.All(char.IsDigit));
     }
 
     public static bool IncludeLandingScript(string? rawPath)

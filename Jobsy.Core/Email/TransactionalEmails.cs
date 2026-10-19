@@ -246,6 +246,12 @@ public static partial class TransactionalEmails
                 ctx.PublicWebBaseUrl, ctx.RecipientName, ctx.CompanyName, c),
             "referenceconfirmation" => ReferenceConfirmationRequest(
                 ctx.PublicWebBaseUrl, "Jan de Vries", ctx.RecipientName, ctx.CompanyName, "vakkenvuller", links.ReferenceConfirmation("voorbeeld"), c),
+            "workexperiencereference" => WorkExperienceReferenceRequest(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, "Jan de Vries", ctx.CompanyName, "vakkenvuller",
+                links.WorkExperienceReference("voorbeeld"), c),
+            "workexperiencereferencereminder" => WorkExperienceReferenceReminder(
+                ctx.PublicWebBaseUrl, ctx.RecipientName, "Jan de Vries", ctx.CompanyName,
+                links.WorkExperienceReference("voorbeeld"), c),
             "contentremoved" => ContentRemoved(
                 ctx.PublicWebBaseUrl, ctx.CompanyName, ctx.VacancyTitle, "Weggehaald",
                 "De tekst vraagt om gegevens die niet mogen.", new DateTime(2026, 10, 1, 12, 0, 0, DateTimeKind.Utc), c),

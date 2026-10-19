@@ -172,6 +172,18 @@ public static class UiStringsFeatureFlags
             "Wył. = bez bloków DNA, “Jak lubię pracować” i “Jak wydobyć z … to, co najlepsze” w PDF.",
             "Oprit = fără “ADN-ul meu în 4 straturi”, “Cum îmi place să lucrez” și “Cum scoți ce e mai bun din …” în PDF.",
             "إيقاف = بدون “DNA في 4 طبقات” و“كيف أحب العمل” و“كيف تستخرج الأفضل من …” في PDF.");
+        Add("AdminSettings.ReferenceVerification.Enabled.Title",
+            "Referentieverificatie (werkervaring)",
+            "Work experience reference verification",
+            "Weryfikacja referencji (doświadczenie)",
+            "Verificare referințe (experiență)",
+            "التحقق من مراجع الخبرة");
+        Add("AdminSettings.ReferenceVerification.Enabled.Desc",
+            "Uit = kandidaten zien geen tip, referentieverzoeken of bevestigde competenties. Acceptatie kan Lobsy:ReferenceVerificationEnabled gebruiken.",
+            "Off = candidates do not see the tip, reference requests or confirmed competencies. Acceptatie may use Lobsy:ReferenceVerificationEnabled.",
+            "Wył. = kandydaci nie widzą tipu, próśb o referencje ani potwierdzonych kompetencji.",
+            "Oprit = candidații nu văd sfatul, cererile de referință sau competențele confirmate.",
+            "إيقاف = لا يرى المرشحون النصيحة أو طلبات المراجع أو الكفاءات المؤكدة.");
         Add("AdminSettings.TestsV2.Enabled.Title",
             "Quick-Scan v2 (TestsV2)",
             "Quick-Scan v2 (TestsV2)",
@@ -244,6 +256,18 @@ public static class UiStringsFeatureFlags
             "Wł. = przy zawodzie widać krótką zapisaną radę. Wył. = ten blok zostaje ukryty. Nic nie jest wymyślane na żywo.",
             "Pornit = la o meserie apare un sfat scurt salvat. Oprit = blocul rămâne ascuns. Nu se inventează nimic pe loc.",
             "تشغيل = تظهر نصيحة قصيرة محفوظة عند المهنة. إيقاف = يبقى هذا الجزء مخفياً. لا يُختلق شيء مباشرة.");
+        Add("AdminSettings.UwvFeatures.Enabled.Title",
+            "UWV werkmap",
+            "UWV toolkit",
+            "UWV toolkit",
+            "UWV toolkit",
+            "UWV toolkit");
+        Add("AdminSettings.UwvFeatures.Enabled.Desc",
+            "Aan = kansberoepen, ondernemerstest, drijfveren en adviseur-deel op echte kandidatenroutes. Uit = alles verborgen.",
+            "On = opportunity occupations, entrepreneur check, drivers and adviser share on live candidate routes. Off = hidden.",
+            "Wł. = katalog szans, test przedsiębiorcy, motywatory i udostępnianie doradcy na trasach kandydata. Wył. = ukryte.",
+            "Pornit = ocupații cu șanse, test antreprenor, motivatori și partajare consilier pe rutele candidatului. Oprit = ascuns.",
+            "تشغيل = فرص العمل واختبار ريادة الأعمال والدوافع ومشاركة المستشار على مسارات المرشح. إيقاف = مخفي.");
         Add("AdminSettings.CompactTestPdf.Enabled.Desc",
             "Aan = het uitgebreide persoonlijke testrapport is ongeveer 4 pagina's met grafieken. Uit = de langere rapporten van nu.",
             "On = the extended personal test report is about 4 pages with charts. Off = today's longer reports.",

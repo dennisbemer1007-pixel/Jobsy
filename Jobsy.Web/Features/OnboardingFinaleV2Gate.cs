@@ -1,10 +1,15 @@
+using Jobsy.Core.Features;
+
 namespace Jobsy.Web.Features;
 
-/// <summary>Config <c>Onboarding:FinaleV2Enabled</c> (default false). Acceptatie enables via host env.</summary>
-public static class OnboardingFinaleV2Gate
+/// <summary>Onboarding finale v2 cards. Resolved via platform feature flags (admin overrides env).</summary>
+public interface IOnboardingFinaleV2Gate
 {
-    public const string ConfigKey = "Onboarding:FinaleV2Enabled";
+    ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default);
+}
 
-    public static bool IsEnabled(IConfiguration configuration)
-        => configuration.GetValue(ConfigKey, false);
+public sealed class OnboardingFinaleV2Gate(IFeatureFlags featureFlags) : IOnboardingFinaleV2Gate
+{
+    public async ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+        => (await featureFlags.GetAsync(cancellationToken)).OnboardingFinaleV2Enabled;
 }

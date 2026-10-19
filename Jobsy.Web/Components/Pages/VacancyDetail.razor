@@ -22,13 +22,13 @@
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.KandidaatBanen
 @using Jobsy.Web.Components.Engagement
+@using Jobsy.Web.Media
 @using Jobsy.Web.Components.Errors
 @using Jobsy.Web.Components.KandidaatBanen
 @using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Components.Candidate.Pwa
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Seo
-@using Jobsy.Web.Media
 @using static Jobsy.Web.Media.CandidateIllustratedImages
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Http
@@ -152,6 +152,12 @@
                         <div class="kb-detail__hero-accent" aria-hidden="true"></div>
                     </div>
 
+                    <AuthorizeView Roles="Candidate">
+                        <Authorized>
+                            <VacancyMockInterviewCta Placement="mobile" OnOpen="OpenMockInterview" />
+                        </Authorized>
+                    </AuthorizeView>
+
                     @* Travel card lives in the rail (one map instance); CSS places the rail after facts on mobile. *@
                 </div>@* kb-detail__main-top *@
 
@@ -180,6 +186,11 @@
                         </div>
                         <p class="kb-detail__passport-hint">@(PassportHintText)</p>
                     </div>
+                    <AuthorizeView Roles="Candidate">
+                        <Authorized>
+                            <VacancyMockInterviewCta Placement="rail" OnOpen="OpenMockInterview" />
+                        </Authorized>
+                    </AuthorizeView>
                 </aside>
 
                 <div class="kb-detail__main-bottom">
@@ -216,9 +227,12 @@
                         </p>
                     }
 
-            <section class="kb-detail__section kb-detail__section--copy">
-                <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
-            </section>
+            @if (VacancyPublicDisplay.HasDescriptionContent(_vacancy))
+            {
+                <section class="kb-detail__section kb-detail__section--copy">
+                    <div class="detail-card__body vacancy-description-html">@((MarkupString)VacancyPublicDisplay.SanitizedDescriptionHtml(_vacancy))</div>
+                </section>
+            }
             <p class="travel-hint">
                 @Culture["Vacancy.StartDate"]: @_vacancy.StartDate.ToString("dd-MM-yyyy")
                 @if (_vacancy.WorkTypes.Length > 0)
@@ -371,19 +385,16 @@
                 </div>
             }
 
-            <AuthorizeView Roles="Candidate">
-                <Authorized>
-                    <div class="lobsy-coach-cta">
-                        <button type="button"
-                                class="lobsy-coach-cta__btn"
-                                @onclick="OpenMockInterview"
-                                aria-label="@Culture["MockInterview.CtaAria"]">
-                            <LobsyCoachAvatar Class="lobsy-coach-cta__mascot" Language="@Culture.Language" Alt="" />
-                            <span class="lobsy-coach-cta__bubble">@Culture["MockInterview.CtaBubble"]</span>
-                        </button>
-                    </div>
-                </Authorized>
-            </AuthorizeView>
+            @if (_vacancy?.OpenForWorkRequired != true)
+            {
+                <AuthorizeView Roles="Candidate">
+                    <Authorized>
+                        <p class="login-lead">
+                            <a class="engagement-btn" href="@($"/candidate/profile?tab=fit&vacancyId={Id}")">@Culture["Fit.CheckVacancy"]</a>
+                        </p>
+                    </Authorized>
+                </AuthorizeView>
+            }
 
             <div id="apply"
                  class="apply-flow"

@@ -210,6 +210,21 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: true));
         }
 
+        if (FieldExists("SensitiveExperienceEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "SensitiveExperienceEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.SensitiveExperience.Enabled.Title",
+                DescriptionKey: "AdminSettings.SensitiveExperience.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.SensitiveExperienceEnabled,
+                Write: v => new PlatformFeatureUpdate(SensitiveExperienceEnabled: ToBool(v)),
+                ImpactKey: "AdminSettings.SensitiveExperience.Enabled.ImpactOff",
+                ImpactLevel: PlatformSettingImpactLevel.None,
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("PassportPdfDnaBlocksEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -220,6 +235,19 @@ public static class PlatformSettingsCatalog
                 Kind: PlatformSettingKind.Bool,
                 Read: s => s.PassportPdfDnaBlocksEnabled,
                 Write: v => new PlatformFeatureUpdate(PassportPdfDnaBlocksEnabled: ToBool(v)),
+                ShowOnDashboard: true));
+        }
+
+        if (FieldExists("ReferenceVerificationEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ReferenceVerificationEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.ReferenceVerification.Enabled.Title",
+                DescriptionKey: "AdminSettings.ReferenceVerification.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ReferenceVerificationEnabled,
+                Write: v => new PlatformFeatureUpdate(ReferenceVerificationEnabled: ToBool(v)),
                 ShowOnDashboard: true));
         }
 
@@ -315,6 +343,19 @@ public static class PlatformSettingsCatalog
                 Kind: PlatformSettingKind.Bool,
                 Read: s => s.HonestAdviceEnabled,
                 Write: v => new PlatformFeatureUpdate(HonestAdviceEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("UwvFeaturesEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "UwvFeaturesEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.UwvFeatures.Enabled.Title",
+                DescriptionKey: "AdminSettings.UwvFeatures.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.UwvFeaturesEnabled,
+                Write: v => new PlatformFeatureUpdate(UwvFeaturesEnabled: ToBool(v)),
                 ShowOnDashboard: false));
         }
 
@@ -463,6 +504,34 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("CompanyMapInitiativeEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CompanyMapInitiativeEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.CompanyMapInitiative.Enabled.Title",
+                DescriptionKey: "AdminSettings.CompanyMapInitiative.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.CompanyMapInitiativeEnabled,
+                Write: v => new PlatformFeatureUpdate(CompanyMapInitiativeEnabled: ToBool(v)),
+                ImpactKey: "AdminSettings.CompanyMapInitiative.Enabled.ImpactOff",
+                ImpactLevel: PlatformSettingImpactLevel.Warn,
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("AfterMatchEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "AfterMatchEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.AfterMatch.Enabled.Title",
+                DescriptionKey: "AdminSettings.AfterMatch.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.AfterMatchEnabled,
+                Write: v => new PlatformFeatureUpdate(AfterMatchEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("TrainingPartnersEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -533,6 +602,32 @@ public static class PlatformSettingsCatalog
             Write: v => new PlatformFeatureUpdate(CandidateInsightsUnlockPerBranch: ToBool(v))));
 
         // --- Scholen ---
+        if (FieldExists("PupilPassportV2Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "PupilPassportV2Enabled",
+                Group: GroupScholen,
+                TitleKey: "AdminSettings.PupilPassportV2.Enabled.Title",
+                DescriptionKey: "AdminSettings.PupilPassportV2.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.PupilPassportV2Enabled,
+                Write: v => new PlatformFeatureUpdate(PupilPassportV2Enabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("StudentPassportEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "StudentPassportEnabled",
+                Group: GroupScholen,
+                TitleKey: "AdminSettings.StudentPassport.Enabled.Title",
+                DescriptionKey: "AdminSettings.StudentPassport.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.StudentPassportEnabled,
+                Write: v => new PlatformFeatureUpdate(StudentPassportEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "SchoolsEnabled",
             Group: GroupScholen,
@@ -635,6 +730,97 @@ public static class PlatformSettingsCatalog
             Write: v => new PlatformFeatureUpdate(SupportAccessNotifySubject: ToBool(v))));
 
         // --- Demo & test ---
+        if (FieldExists("TestJourneyIllustrationEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestJourneyIllustrationEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.TestJourneyIllustration.Enabled.Title",
+                DescriptionKey: "AdminSettings.TestJourneyIllustration.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestJourneyIllustrationEnabled,
+                Write: v => new PlatformFeatureUpdate(TestJourneyIllustrationEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("OnboardingFinaleV2Enabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "OnboardingFinaleV2Enabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.OnboardingFinaleV2.Enabled.Title",
+                DescriptionKey: "AdminSettings.OnboardingFinaleV2.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.OnboardingFinaleV2Enabled,
+                Write: v => new PlatformFeatureUpdate(OnboardingFinaleV2Enabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("OccupationDayInLifeEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "OccupationDayInLifeEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.OccupationDayInLife.Enabled.Title",
+                DescriptionKey: "AdminSettings.OccupationDayInLife.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.OccupationDayInLifeEnabled,
+                Write: v => new PlatformFeatureUpdate(OccupationDayInLifeEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("ResearchConsentEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "ResearchConsentEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.ResearchConsentEnabled.Title",
+                DescriptionKey: "AdminSettings.ResearchConsentEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.ResearchConsentEnabled,
+                Write: v => new PlatformFeatureUpdate(ResearchConsentEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("TestEditModeEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestEditModeEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.TestEditModeEnabled.Title",
+                DescriptionKey: "AdminSettings.TestEditModeEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestEditModeEnabled,
+                Write: v => new PlatformFeatureUpdate(TestEditModeEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("SamplePdfEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "SamplePdfEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.SamplePdfEnabled.Title",
+                DescriptionKey: "AdminSettings.SamplePdfEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.SamplePdfEnabled,
+                Write: v => new PlatformFeatureUpdate(SamplePdfEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
+        if (FieldExists("TestDepthValueMockupEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestDepthValueMockupEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.TestDepthValueMockupEnabled.Title",
+                DescriptionKey: "AdminSettings.TestDepthValueMockupEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestDepthValueMockupEnabled,
+                Write: v => new PlatformFeatureUpdate(TestDepthValueMockupEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "AuthenticatorEnabled",
             Group: GroupDemo,
@@ -713,6 +899,7 @@ public static class PlatformSettingsCatalog
         bool? passportPartnersEnabled = null;
         bool? passportPdfV2Enabled = null;
         bool? passportPdfDnaBlocksEnabled = null;
+        bool? referenceVerificationEnabled = null;
         bool? testsV2Enabled = null;
         bool? testItemExamplesEnabled = null;
         bool? testProgressInsightEnabled = null;
@@ -727,7 +914,19 @@ public static class PlatformSettingsCatalog
         bool? matchCalibrationV1Enabled = null;
         bool? employerFitQuestionnairesEnabled = null;
         bool? kandidatenkaartEnabled = null;
+        bool? companyMapInitiativeEnabled = null;
+        bool? afterMatchEnabled = null;
+        bool? sensitiveExperienceEnabled = null;
         bool? trainingPartnersEnabled = null;
+        bool? uwvFeaturesEnabled = null;
+        bool? testJourneyIllustrationEnabled = null;
+        bool? onboardingFinaleV2Enabled = null;
+        bool? occupationDayInLifeEnabled = null;
+        bool? researchConsentEnabled = null;
+        bool? testEditModeEnabled = null;
+        bool? samplePdfEnabled = null;
+        bool? testDepthValueMockupEnabled = null;
+        IReadOnlyList<string>? clearAdminFlagOverrideKeys = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
         int? candidateApplyPerHour = null;
@@ -766,6 +965,7 @@ public static class PlatformSettingsCatalog
             if (p.PassportPartnersEnabled is not null) passportPartnersEnabled = p.PassportPartnersEnabled;
             if (p.PassportPdfV2Enabled is not null) passportPdfV2Enabled = p.PassportPdfV2Enabled;
             if (p.PassportPdfDnaBlocksEnabled is not null) passportPdfDnaBlocksEnabled = p.PassportPdfDnaBlocksEnabled;
+            if (p.ReferenceVerificationEnabled is not null) referenceVerificationEnabled = p.ReferenceVerificationEnabled;
             if (p.TestsV2Enabled is not null) testsV2Enabled = p.TestsV2Enabled;
             if (p.TestItemExamplesEnabled is not null) testItemExamplesEnabled = p.TestItemExamplesEnabled;
             if (p.TestProgressInsightEnabled is not null) testProgressInsightEnabled = p.TestProgressInsightEnabled;
@@ -801,9 +1001,69 @@ public static class PlatformSettingsCatalog
                 kandidatenkaartEnabled = p.KandidatenkaartEnabled;
             }
 
+            if (p.CompanyMapInitiativeEnabled is not null)
+            {
+                companyMapInitiativeEnabled = p.CompanyMapInitiativeEnabled;
+            }
+
+            if (p.AfterMatchEnabled is not null)
+            {
+                afterMatchEnabled = p.AfterMatchEnabled;
+            }
+
             if (p.TrainingPartnersEnabled is not null)
             {
                 trainingPartnersEnabled = p.TrainingPartnersEnabled;
+            }
+
+            if (p.UwvFeaturesEnabled is not null)
+            {
+                uwvFeaturesEnabled = p.UwvFeaturesEnabled;
+            }
+
+            if (p.SensitiveExperienceEnabled is not null)
+            {
+                sensitiveExperienceEnabled = p.SensitiveExperienceEnabled;
+            }
+
+            if (p.TestJourneyIllustrationEnabled is not null)
+            {
+                testJourneyIllustrationEnabled = p.TestJourneyIllustrationEnabled;
+            }
+
+            if (p.OnboardingFinaleV2Enabled is not null)
+            {
+                onboardingFinaleV2Enabled = p.OnboardingFinaleV2Enabled;
+            }
+
+            if (p.OccupationDayInLifeEnabled is not null)
+            {
+                occupationDayInLifeEnabled = p.OccupationDayInLifeEnabled;
+            }
+
+            if (p.ResearchConsentEnabled is not null)
+            {
+                researchConsentEnabled = p.ResearchConsentEnabled;
+            }
+
+            if (p.TestEditModeEnabled is not null)
+            {
+                testEditModeEnabled = p.TestEditModeEnabled;
+            }
+
+            if (p.SamplePdfEnabled is not null)
+            {
+                samplePdfEnabled = p.SamplePdfEnabled;
+            }
+
+            if (p.TestDepthValueMockupEnabled is not null)
+            {
+                testDepthValueMockupEnabled = p.TestDepthValueMockupEnabled;
+            }
+
+            if (p.ClearAdminFlagOverrideKeys is not null)
+            {
+                clearAdminFlagOverrideKeys = p.ClearAdminFlagOverrideKeys;
             }
 
             if (p.CandidateApplyPerMinuteLimit is not null)
@@ -845,6 +1105,7 @@ public static class PlatformSettingsCatalog
             PassportPartnersEnabled: passportPartnersEnabled,
             PassportPdfV2Enabled: passportPdfV2Enabled,
             PassportPdfDnaBlocksEnabled: passportPdfDnaBlocksEnabled,
+            ReferenceVerificationEnabled: referenceVerificationEnabled,
             TestsV2Enabled: testsV2Enabled,
             TestItemExamplesEnabled: testItemExamplesEnabled,
             TestProgressInsightEnabled: testProgressInsightEnabled,
@@ -860,7 +1121,19 @@ public static class PlatformSettingsCatalog
             MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled: employerFitQuestionnairesEnabled,
             KandidatenkaartEnabled: kandidatenkaartEnabled,
+            CompanyMapInitiativeEnabled: companyMapInitiativeEnabled,
+            AfterMatchEnabled: afterMatchEnabled,
+            SensitiveExperienceEnabled: sensitiveExperienceEnabled,
             TrainingPartnersEnabled: trainingPartnersEnabled,
+            UwvFeaturesEnabled: uwvFeaturesEnabled,
+            TestJourneyIllustrationEnabled: testJourneyIllustrationEnabled,
+            OnboardingFinaleV2Enabled: onboardingFinaleV2Enabled,
+            OccupationDayInLifeEnabled: occupationDayInLifeEnabled,
+            ResearchConsentEnabled: researchConsentEnabled,
+            TestEditModeEnabled: testEditModeEnabled,
+            SamplePdfEnabled: samplePdfEnabled,
+            TestDepthValueMockupEnabled: testDepthValueMockupEnabled,
+            ClearAdminFlagOverrideKeys: clearAdminFlagOverrideKeys,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,
             CandidateApplyPerDayLimit: candidateApplyPerDay);

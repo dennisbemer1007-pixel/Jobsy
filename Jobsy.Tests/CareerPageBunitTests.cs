@@ -15,6 +15,17 @@ namespace Jobsy.Tests;
 
 public class CareerPageBunitTests : BunitContext
 {
+    private readonly AmbientCultureScope _cultureScope = new();
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _cultureScope.Dispose();
+        }
+    }
+
     public CareerPageBunitTests()
     {
         JSInterop.Mode = JSRuntimeMode.Loose;

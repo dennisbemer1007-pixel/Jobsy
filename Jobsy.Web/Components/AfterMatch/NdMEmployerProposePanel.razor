@@ -1,0 +1,133 @@
+@using Jobsy.Core.Contracts
+@using Jobsy.Core.Enums
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<aside class="wc side pop stack">
+    <div class="shd">
+        <span class="ico navy">@((MarkupString)NdMIcons.Calendar)</span>
+        <div>
+            <h2>@Culture["AfterMatch.Employer.Propose.Title"]</h2>
+            <p class="muted small">@Culture["AfterMatch.Employer.Propose.Lead"]</p>
+        </div>
+    </div>
+    <div class="row wrapflex" style="gap:6px">
+        <button type="button" class="chip @(_manual ? "on" : "")" @onclick="() => _manual = true">
+            @Culture["AfterMatch.Employer.Propose.Manual"]
+        </button>
+        <button type="button" class="chip @(!_manual ? "on" : "")" @onclick="() => _manual = false">
+            @Culture["AfterMatch.Employer.Propose.ShareAgenda"]
+        </button>
+    </div>
+    @if (_manual)
+    {
+        <NdMWeekCalendar SelectedStarts="_picked" OnToggle="ToggleSlot" />
+        @foreach (var start in _picked.OrderBy(d => d))
+        {
+            <div class="slot on">
+                <span class="ico navy">@((MarkupString)NdMIcons.Calendar)</span>
+                <div class="sp">
+                    <b>@FormatDay(start)</b>
+                    <span class="small muted">@FormatTimeRange(start)</span>
+                </div>
+                <button type="button" class="xbtn" aria-label="Verwijderen" @onclick="() => _picked.Remove(start)">
+                    @((MarkupString)NdMIcons.Close)
+                </button>
+            </div>
+        }
+        @if (_picked.Count < 3)
+        {
+            <p class="small muted">@Culture["AfterMatch.Employer.Propose.PickHint"]</p>
+        }
+    }
+    else
+    {
+        <div class="note warm">
+            <span>@((MarkupString)NdMIcons.Info)</span>
+            <span>@Culture["AfterMatch.Employer.Propose.AgendaSoon"]</span>
+        </div>
+        <NdMWeekCalendar SelectedStarts="_picked" OnToggle="ToggleSlot" />
+    }
+    <div>
+        <span class="lbl">@Culture["AfterMatch.Screen03.Format.OnSite"]</span>
+        <div class="row wrapflex" style="gap:6px">
+            @foreach (var fmt in new[] { InterviewFormat.OnSite, InterviewFormat.Online, InterviewFormat.Phone })
+            {
+                <button type="button" class="chip @(_format == fmt ? "on" : "")" @onclick="() => _format = fmt">
+                    @FormatLabel(fmt)
+                </button>
+            }
+        </div>
+        <input class="inp" style="margin-top:8px;width:100%" placeholder="@Culture["AfterMatch.Employer.Propose.Where"]" @bind="_location" />
+    </div>
+    <div>
+        <span class="lbl">@Culture["AfterMatch.Employer.Propose.WithWhom"]</span>
+        <input class="inp" style="width:100%" @bind="_withWhom" />
+    </div>
+    <div>
+        <span class="lbl">@Culture["AfterMatch.Employer.Propose.Note"]</span>
+        <textarea class="inp area" style="width:100%" @bind="_note"></textarea>
+    </div>
+    <div class="row wrapflex">
+        <button type="button" class="btn" disabled="@(Busy || _picked.Count is < 2 or > 3)" @onclick="SubmitAsync">
+            @Culture["AfterMatch.Screen03.Submit"]
+        </button>
+        <a class="lk" href="@CancelHref">@Culture["Common.Cancel"]</a>
+    </div>
+</aside>
+
+@code {
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public string CancelHref { get; set; } = "";
+    [Parameter] public EventCallback<ProposeEmployerSlotsRequest> OnPropose { get; set; }
+
+    private bool _manual = true;
+    private InterviewFormat _format = InterviewFormat.OnSite;
+    private string? _location = "Loosduinseweg 120, Den Haag · ingang naast de winkel";
+    private string? _withWhom = "Linda de Wit, eigenaar";
+    private string? _note = "Je hoeft niets voor te bereiden. Kom gerust in je gewone kleren.";
+    private readonly HashSet<DateTime> _picked = [];
+
+    protected override void OnInitialized()
+    {
+        _picked.Add(new DateTime(2026, 10, 22, 8, 30, 0, DateTimeKind.Utc));
+        _picked.Add(new DateTime(2026, 10, 23, 7, 0, 0, DateTimeKind.Utc));
+    }
+
+    private void ToggleSlot(DateTime startUtc)
+    {
+        if (_picked.Contains(startUtc))
+        {
+            _picked.Remove(startUtc);
+        }
+        else if (_picked.Count < 3)
+        {
+            _picked.Add(startUtc);
+        }
+    }
+
+    private async Task SubmitAsync()
+    {
+        var slots = _picked.OrderBy(d => d)
+            .Select(s => new ProposedSlotRequest(s, s.AddMinutes(30)))
+            .ToList();
+        await OnPropose.InvokeAsync(new ProposeEmployerSlotsRequest(
+            _format, _location, _withWhom, _note, slots));
+    }
+
+    private string FormatLabel(InterviewFormat fmt) => fmt switch
+    {
+        InterviewFormat.Online => Culture["AfterMatch.Screen03.Format.Online"],
+        InterviewFormat.Phone => Culture["AfterMatch.Screen03.Format.Phone"],
+        _ => Culture["AfterMatch.Screen03.Format.OnSite"]
+    };
+
+    private static string FormatDay(DateTime utc) =>
+        utc.ToLocalTime().ToString("dddd d MMMM", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"));
+
+    private static string FormatTimeRange(DateTime utc)
+    {
+        var start = utc.ToLocalTime();
+        return $"{start:HH:mm} tot {start.AddMinutes(30):HH:mm}";
+    }
+}

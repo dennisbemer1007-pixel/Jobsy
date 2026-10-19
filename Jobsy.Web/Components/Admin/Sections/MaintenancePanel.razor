@@ -5,6 +5,7 @@
 @using Jobsy.Web.Services
 @inject JobsyApiClient Api
 @inject CultureState Culture
+@inject IJSRuntime Js
 
 @*
   The maintenance switch (errors 05 §05.5). Lives in "Platforminstellingen → Functies" next to the
@@ -45,11 +46,36 @@
         <div class="admin-maintenance__fields">
             <label class="admin-maintenance__field">
                 <span>@Culture["Admin.Maintenance.ExpectedEnd"]</span>
-                <input type="datetime-local"
-                       class="admin-settings-input"
-                       value="@_expectedEndLocal"
-                       disabled="@_busy"
-                       @onchange="OnExpectedEndChanged" />
+                <div class="jobsy-date-field jobsy-date-field--typed admin-maintenance__datetime">
+                    <div class="jobsy-date-field__control">
+                        <input type="text"
+                               class="admin-settings-input admin-settings-input--datetime jobsy-date-field__text"
+                               inputmode="numeric"
+                               autocomplete="off"
+                               lang="@_htmlLang"
+                               placeholder="@_expectedEndPlaceholder"
+                               value="@_expectedEndDisplay"
+                               disabled="@_busy"
+                               @onchange="OnExpectedEndDisplayChanged" />
+                        <button type="button"
+                                class="jobsy-date-field__picker-btn"
+                                tabindex="-1"
+                                disabled="@_busy"
+                                aria-label="@_pickerLabel"
+                                @onclick="OpenExpectedEndPickerAsync">
+                            <span class="jobsy-date-field__calendar-icon" aria-hidden="true"></span>
+                        </button>
+                        <input @ref="_expectedEndNative"
+                               type="datetime-local"
+                               class="jobsy-date-field__input jobsy-date-field__input--native admin-maintenance__datetime-native"
+                               lang="@_htmlLang"
+                               value="@_expectedEndLocal"
+                               tabindex="-1"
+                               aria-hidden="true"
+                               disabled="@_busy"
+                               @onchange="OnExpectedEndNativeChanged" />
+                    </div>
+                </div>
                 <span class="admin-maintenance__hint">@Culture["Admin.Maintenance.ExpectedEndHint"]</span>
             </label>
             <label class="admin-maintenance__field">
@@ -91,6 +117,11 @@
     private bool _confirmOpen;
     private bool _enabled;
     private string _expectedEndLocal = "";
+    private string _expectedEndDisplay = "";
+    private string _htmlLang = "nl-NL";
+    private string _expectedEndPlaceholder = "dd-mm-jjjj uu:mm";
+    private string _pickerLabel = "Kalender openen";
+    private ElementReference _expectedEndNative;
     private string _note = "";
     private DateTime? _updatedAtUtc;
     private string? _message;
@@ -111,6 +142,28 @@
                 AmsterdamTime.FormatDateTime(since),
                 Culture["Admin.Maintenance.UnknownAdmin"]);
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        _htmlLang = Culture.Language switch
+        {
+            "en" => "en-GB",
+            "pl" => "pl-PL",
+            "ro" => "ro-RO",
+            "ar" => "ar",
+            _ => "nl-NL"
+        };
+        _expectedEndPlaceholder = Culture.Language switch
+        {
+            "en" => "dd-mm-yyyy hh:mm",
+            _ => "dd-mm-jjjj uu:mm"
+        };
+        _pickerLabel = Culture.Language switch
+        {
+            "en" => "Open date and time picker",
+            _ => "Datum en tijd kiezen"
+        };
     }
 
     protected override async Task OnInitializedAsync()
@@ -149,8 +202,44 @@
         return Task.CompletedTask;
     }
 
-    private void OnExpectedEndChanged(ChangeEventArgs e)
-        => _expectedEndLocal = e.Value?.ToString() ?? "";
+    private void OnExpectedEndDisplayChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        _expectedEndDisplay = raw;
+        if (TryParseExpectedEndLocal(raw, Culture.Language, out var local))
+        {
+            SyncExpectedEndFromLocal(local);
+        }
+        else if (string.IsNullOrWhiteSpace(raw))
+        {
+            _expectedEndLocal = "";
+        }
+    }
+
+    private void OnExpectedEndNativeChanged(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        _expectedEndLocal = raw;
+        if (TryParseInvariantDateTimeLocal(raw, out var local))
+        {
+            _expectedEndDisplay = FormatExpectedEndDisplay(local, Culture.Language);
+        }
+        else if (string.IsNullOrWhiteSpace(raw))
+        {
+            _expectedEndDisplay = "";
+        }
+    }
+
+    private async Task OpenExpectedEndPickerAsync()
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        await Js.InvokeVoidAsync("jobsyExtras.ensure");
+        await Js.InvokeVoidAsync("jobsyExtras.openDatePicker", _expectedEndNative);
+    }
 
     private void OnNoteChanged(ChangeEventArgs e)
         => _note = e.Value?.ToString() ?? "";
@@ -185,25 +274,95 @@
         _enabled = item?.Enabled ?? false;
         _note = item?.Note ?? "";
         _updatedAtUtc = item?.UpdatedAtUtc;
-        _expectedEndLocal = item?.ExpectedEndUtc is DateTime end
-            ? AmsterdamTime.ToLocal(end).ToString("yyyy-MM-dd\\THH:mm", System.Globalization.CultureInfo.InvariantCulture)
-            : "";
+        if (item?.ExpectedEndUtc is DateTime end)
+        {
+            var local = AmsterdamTime.ToLocal(end);
+            SyncExpectedEndFromLocal(local);
+        }
+        else
+        {
+            _expectedEndLocal = "";
+            _expectedEndDisplay = "";
+        }
+    }
+
+    private void SyncExpectedEndFromLocal(DateTime local)
+    {
+        _expectedEndLocal = local.ToString("yyyy-MM-dd\\THH:mm", System.Globalization.CultureInfo.InvariantCulture);
+        _expectedEndDisplay = FormatExpectedEndDisplay(local, Culture.Language);
+    }
+
+    internal static string FormatExpectedEndDisplay(DateTime localAmsterdam, string? language)
+        => language switch
+        {
+            "en" => localAmsterdam.ToString("dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("en-GB")),
+            _ => localAmsterdam.ToString("dd-MM-yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("nl-NL"))
+        };
+
+    internal static bool TryParseExpectedEndLocal(string? text, string? language, out DateTime local)
+    {
+        local = default;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return false;
+        }
+
+        var trimmed = text.Trim();
+        if (TryParseInvariantDateTimeLocal(trimmed, out local))
+        {
+            return true;
+        }
+
+        var culture = language switch
+        {
+            "en" => System.Globalization.CultureInfo.GetCultureInfo("en-GB"),
+            _ => System.Globalization.CultureInfo.GetCultureInfo("nl-NL")
+        };
+        var formats = new[]
+        {
+            "dd-MM-yyyy HH:mm",
+            "dd-MM-yyyy H:mm",
+            "d-M-yyyy HH:mm",
+            "d-M-yyyy H:mm"
+        };
+        return DateTime.TryParseExact(
+            trimmed,
+            formats,
+            culture,
+            System.Globalization.DateTimeStyles.None,
+            out local);
+    }
+
+    internal static bool TryParseInvariantDateTimeLocal(string? value, out DateTime local)
+    {
+        local = default;
+        return !string.IsNullOrWhiteSpace(value)
+               && DateTime.TryParse(
+                   value,
+                   System.Globalization.CultureInfo.InvariantCulture,
+                   System.Globalization.DateTimeStyles.None,
+                   out local);
     }
 
     /// <summary>The admin types Amsterdam time; the API stores UTC.</summary>
     internal static DateTime? ParseExpectedEndUtc(string? localValue)
     {
-        if (string.IsNullOrWhiteSpace(localValue)
-            || !DateTime.TryParse(
-                localValue,
-                System.Globalization.CultureInfo.InvariantCulture,
-                System.Globalization.DateTimeStyles.None,
-                out var local))
+        if (string.IsNullOrWhiteSpace(localValue))
         {
             return null;
         }
 
-        return AmsterdamTime.ToUtc(local);
+        if (TryParseInvariantDateTimeLocal(localValue, out var fromNative))
+        {
+            return AmsterdamTime.ToUtc(fromNative);
+        }
+
+        if (TryParseExpectedEndLocal(localValue, null, out var fromDisplay))
+        {
+            return AmsterdamTime.ToUtc(fromDisplay);
+        }
+
+        return null;
     }
 
     /// <summary>Test hooks for the bUnit panel test.</summary>

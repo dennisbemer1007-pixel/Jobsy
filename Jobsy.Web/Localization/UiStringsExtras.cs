@@ -33,6 +33,7 @@ internal static class UiStringsExtras
     private static Dictionary<string, string> Nl() => new(StringComparer.OrdinalIgnoreCase)
     {
         ["Common.Cancel"] = "Annuleren",
+        ["Common.Change"] = "Wijzigen",
         ["Common.Back"] = "Terug",
         ["Common.Next"] = "Verder",
         ["Common.Confirm"] = "Bevestigen",
@@ -526,6 +527,7 @@ internal static class UiStringsExtras
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
     {
         ["Common.Cancel"] = "Cancel",
+        ["Common.Change"] = "Change",
         ["Common.Back"] = "Back",
         ["Common.Next"] = "Next",
         ["Common.Confirm"] = "Confirm",

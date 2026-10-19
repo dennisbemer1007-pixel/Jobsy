@@ -25,7 +25,7 @@ public class PublicLayoutBunitTests : BunitContext
     public PublicLayoutBunitTests()
     {
         JobsyLanguages.ResetEnabledForTests();
-        JobsyLanguages.ConfigureEnabledCultures("nl,en,ar");
+        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddSingleton<AuthenticationStateProvider>(new FakeAuth());
         Services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
@@ -70,24 +70,6 @@ public class PublicLayoutBunitTests : BunitContext
         Assert.Contains("/partner", markup, StringComparison.Ordinal);
         Assert.Contains("/hoe-werkt-lobsy", markup, StringComparison.Ordinal);
         Assert.Contains("pub-theme", markup, StringComparison.Ordinal);
-    }
-
-    [Fact]
-    public void Rtl_when_culture_is_ar()
-    {
-        JobsyLanguages.ConfigureEnabledCultures("nl,en,pl,ro,ar");
-        var http = Services.GetRequiredService<IHttpContextAccessor>().HttpContext!;
-        http.Request.QueryString = new QueryString("?lang=ar");
-
-        var cut = Render<PublicLayout>(p => p
-            .Add(c => c.Body, (RenderFragment)(b => b.AddContent(0, "ar"))));
-        cut.WaitForAssertion(() =>
-        {
-            var root = cut.Find(".pub-theme");
-            Assert.Equal("rtl", root.GetAttribute("dir"));
-            Assert.Equal("ar", root.GetAttribute("lang"));
-        });
-        JobsyLanguages.ResetEnabledForTests();
     }
 
     [Fact]

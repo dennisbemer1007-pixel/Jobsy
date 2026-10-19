@@ -84,6 +84,17 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_navbar_uniform_after_fix()
+    {
+        const string dir = "/opt/cursor/artifacts/navbar-uniform";
+        Directory.CreateDirectory(dir);
+        await CaptureCandidateHeaderOnlyAsync(dir, "/banenkaart", "banenkaart");
+        await CaptureCandidateHeaderOnlyAsync(dir, "/bedrijvenkaart", "bedrijvenkaart");
+        await CaptureCandidateHeaderOnlyAsync(dir, "/candidate/paspoort", "paspoort");
+        await CaptureCandidateHeaderOnlyAsync(dir, "/candidate/ontdekkingsreis", "reis");
+    }
+
+    [Fact]
     public async Task Capture_eight_candidate_pages_at_1440_390_and_1024()
     {
         Directory.CreateDirectory(ArtifactsDirRole);
@@ -2595,6 +2606,51 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
         await page.Locator(".cand-settings").WaitForAsync(new() { Timeout = 60_000 });
     }
 
+    private async Task CaptureCandidateHeaderOnlyAsync(string artifactsDir, string path, string name)
+    {
+        foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (390, 844, "390") })
+        {
+            await using var context = await _browser!.NewContextAsync(new()
+            {
+                ViewportSize = new() { Width = width, Height = height },
+                Locale = "nl-NL",
+                IsMobile = width < 500,
+                HasTouch = width < 500
+            });
+            await PlaywrightCookieConsent.AcceptAsync(context);
+            var page = await context.NewPageAsync();
+            page.SetDefaultTimeout(120_000);
+            await page.GotoAsync(
+                $"{_web!.ServerAddress}/__test/sign-in?return={Uri.EscapeDataString(path)}",
+                new() { WaitUntil = WaitUntilState.DOMContentLoaded });
+            await page.GotoAsync($"{_web!.ServerAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
+            if (name == "banenkaart")
+            {
+                await WaitForBanenkaartReadyAsync(page, preferListForCards: false);
+            }
+
+            await page.Locator("[data-testid=app-shell-header]").WaitForAsync(new()
+            {
+                State = WaitForSelectorState.Visible,
+                Timeout = 90_000,
+            });
+            if (width >= 1024)
+            {
+                await page.Locator("[data-testid=candidate-header-nav]").WaitForAsync(new()
+                {
+                    State = WaitForSelectorState.Visible,
+                    Timeout = 30_000,
+                });
+                Assert.True(await page.Locator("[data-testid=app-shell-header] .page-help__btn").CountAsync() > 0,
+                    $"Expected info button in shared header on {name}.");
+            }
+
+            var file = Path.Combine(artifactsDir, $"after-{name}-{tag}.png");
+            await page.Locator("[data-testid=app-shell-header]").First.ScreenshotAsync(new() { Path = file });
+            Assert.True(File.Exists(file));
+        }
+    }
+
     private async Task CapturePageAsync(string artifactsDir, string path, string name, bool auth)
     {
         foreach (var (width, height, tag) in new[] { (1440, 900, "1440"), (1024, 900, "1024"), (390, 844, "390") })
@@ -2878,10 +2934,10 @@ public sealed class CandidateIllustratedPagesScreenshotTests : IAsyncLifetime
                 "<h2>Wat vragen we?</h2><p>Je bent zorgvuldig en vindt het fijn om met dieren te werken.</p>" +
                 "<h2>Wat bieden we?</h2><p>Een warm team, vaste uren en begeleiding.</p>";
             var sampleVacancy = $$"""
-                {"id":"{{SampleVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":null,"companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"descriptionHtml":"{{descriptionSections}}"}
+                {"id":"{{SampleVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":null,"companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"description":"{{descriptionSections}}"}
                 """;
             var photoVacancy = $$"""
-                {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"/images/candidate-illustrated/finale-hero.jpg","companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"descriptionHtml":"{{descriptionSections}}"}
+                {"id":"{{PhotoVacancyId}}","title":"Medewerker dierenpension","companyName":"De Kooger Dierenopvang","companyAddress":"Kooger Dorpsweg 12, Koog aan de Zaan","status":"Active","openForWorkRequired":false,"fitPercent":81,"fitBand":"Strong","fitGate":"Open","fitDimensions":{"culture":84,"values":null,"competencies":76,"interests":90},"fitWhyKinds":["culture","interest","competency"],"wageVisible":true,"hourlyWage":13.9,"minHoursPerWeek":16,"maxHoursPerWeek":24,"flexibleTimes":false,"latitude":52.44,"longitude":4.83,"workTypes":["PartTime"],"startDate":"2026-01-01","endDate":"2026-12-31","kind":"Job","imageUrl":"/images/candidate-illustrated/finale-hero.jpg","companyLogoUrl":null,"travelMinutes":9,"matchGaps":["Werken in het weekend"],"description":"{{descriptionSections}}"}
                 """;
             const string sampleApplication =
                 """[{"id":"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa","vacancyId":"11111111-1111-1111-1111-111111111111","vacancyTitle":"Zorgmedewerker dagbesteding","companyName":"Kasteelhof Zorg","locationLabel":"Zaandam","status":"EmployerContacting","createdAt":"2026-10-02T10:00:00Z","timeline":[{"key":"Sent","labelKey":"Kb.Timeline.Sent","state":"Done","occurredAtUtc":"2026-10-02T10:00:00Z"},{"key":"Seen","labelKey":"Kb.Timeline.Seen","state":"Done","occurredAtUtc":"2026-10-04T10:00:00Z"},{"key":"Interview","labelKey":"Kb.Timeline.Interview","state":"Current","occurredAtUtc":"2026-10-09T10:00:00Z"},{"key":"Outcome","labelKey":"Kb.Timeline.Outcome","state":"Pending","occurredAtUtc":null}],"nextStepKey":"Kb.Next.Practice"}]""";

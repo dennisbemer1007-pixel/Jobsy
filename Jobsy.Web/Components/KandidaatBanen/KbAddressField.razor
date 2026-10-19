@@ -108,10 +108,12 @@
     [Parameter] public EventCallback OnClear { get; set; }
     [Parameter] public EventCallback<AddressSuggestion> OnSelect { get; set; }
     [Parameter] public EventCallback<string> OnQueryInput { get; set; }
+    [Parameter] public EventCallback OnBlurComplete { get; set; }
 
     private string _query = string.Empty;
     private bool _showSuggestions;
     private bool _originSet;
+    private bool _wasLocating;
     private int _activeIndex = -1;
     private bool _focused;
     private bool _suppressBlurClose;
@@ -123,12 +125,19 @@
 
     protected override void OnParametersSet()
     {
-        // Input is source of truth while focused — ignore stale parent Query.
-        if (!_focused && !string.Equals(_query, Query, StringComparison.Ordinal))
+        var parentQuery = Query ?? string.Empty;
+        // Input is source of truth while focused — except after geolocation finished (Locating true → false).
+        if (!_focused && !string.Equals(_query, parentQuery, StringComparison.Ordinal))
         {
-            _query = Query ?? string.Empty;
+            _query = parentQuery;
+        }
+        else if (_wasLocating && !Locating && !string.Equals(_query, parentQuery, StringComparison.Ordinal))
+        {
+            _query = parentQuery;
+            _focused = false;
         }
 
+        _wasLocating = Locating;
         _showSuggestions = ShowSuggestions;
         _originSet = OriginSet;
         if (_activeIndex >= Suggestions.Count)
@@ -172,6 +181,7 @@
         _showSuggestions = false;
         _activeIndex = -1;
         await ShowSuggestionsChanged.InvokeAsync(false);
+        await OnBlurComplete.InvokeAsync();
     }
 
     private Task LocateAsync() => OnLocate.InvokeAsync();

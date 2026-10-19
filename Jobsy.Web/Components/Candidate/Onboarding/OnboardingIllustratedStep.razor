@@ -1,0 +1,86 @@
+@namespace Jobsy.Web.Components.Candidate.Onboarding
+@using Jobsy.Web.Onboarding
+
+<section class="ob-illustrated-step @MobileCoverModifier" data-testid="@TestId">
+    <div class="ob-illustrated-step__mobile-cover" data-testid="onboarding-mobile-hero">
+        <picture class="ob-illustrated-step__mobile-cover-art" aria-hidden="true">
+            <source type="image/webp" srcset="@MobileHeroWebp" />
+            <img src="@MobileHeroJpg"
+                 alt=""
+                 width="780"
+                 height="520"
+                 loading="eager"
+                 fetchpriority="high"
+                 decoding="async"
+                 data-testid="onboarding-mobile-hero-img" />
+        </picture>
+        <div class="ob-illustrated-step__mobile-cover-copy">
+            @if (!string.IsNullOrWhiteSpace(Eyebrow))
+            {
+                <span class="ob-illustrated-step__mobile-eyebrow">@Eyebrow</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(HeroTitle))
+            {
+                <h1 tabindex="-1">@HeroTitle</h1>
+            }
+            @if (!string.IsNullOrWhiteSpace(HeroLead))
+            {
+                <p class="ob-illustrated-step__mobile-lead">@HeroLead</p>
+            }
+            @if (HeroExtra is not null)
+            {
+                @HeroExtra
+            }
+        </div>
+    </div>
+
+    <div class="ob-illustrated-step__hero-band">
+        <div class="ob-illustrated-step__art" aria-hidden="true" data-testid="onboarding-illustration-art">
+            <span class="ob-illustrated-step__art-img-wrap" aria-hidden="true">
+                <picture>
+                    <source media="(min-width: 1024px)" type="image/webp" srcset="@WebpSrc" />
+                    <source media="(min-width: 768px)" type="image/webp" srcset="@WebpSrc" />
+                    <source media="(min-width: 1024px)" srcset="@JpgSrc" />
+                    <source media="(min-width: 768px)" srcset="@JpgSrc" />
+                    <img src="@JpgSrc"
+                         alt=""
+                         width="@ImageWidth"
+                         height="@ImageHeight"
+                         loading="eager"
+                         fetchpriority="high"
+                         decoding="async"
+                         tabindex="-1"
+                         data-testid="onboarding-illustration-img" />
+                </picture>
+            </span>
+        </div>
+        @if (HeadContent is not null)
+        {
+            <div class="ob-illustrated-step__head">
+                @HeadContent
+            </div>
+        }
+    </div>
+    <div class="ob-illustrated-step__body">
+        @ChildContent
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string WebpSrc { get; set; } = default!;
+    [Parameter, EditorRequired] public string JpgSrc { get; set; } = default!;
+    [Parameter, EditorRequired] public string MobileHeroWebp { get; set; } = default!;
+    [Parameter, EditorRequired] public string MobileHeroJpg { get; set; } = default!;
+    [Parameter] public string MobileHeroSlug { get; set; } = "kennismaken";
+    [Parameter, EditorRequired] public string? HeroTitle { get; set; }
+    [Parameter] public string? HeroLead { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public RenderFragment? HeroExtra { get; set; }
+    [Parameter] public int ImageWidth { get; set; } = 1280;
+    [Parameter] public int ImageHeight { get; set; } = 720;
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public RenderFragment? HeadContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string MobileCoverModifier => $"ob-illustrated-step--mobile-{MobileHeroSlug}";
+}

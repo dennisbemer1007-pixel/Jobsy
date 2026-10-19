@@ -288,6 +288,8 @@ public sealed class PassportPdfService : IPassportPdfService
             ExperiencePapers(col, model, lang);
         }
 
+        EndorsedCompetencesSection(col, model, lang);
+
         if (model.StudentLayout)
         {
             if (model.Direction.Count > 0)
@@ -887,6 +889,40 @@ public sealed class PassportPdfService : IPassportPdfService
                         }
                     });
                 }
+            });
+        });
+    }
+
+    private static void EndorsedCompetencesSection(ColumnDescriptor col, PassportPdfModel model, string lang)
+    {
+        if (model.EndorsedCompetences is not { Count: > 0 })
+        {
+            return;
+        }
+
+        col.Item().PaddingTop(6).Column(block =>
+        {
+            SectionTitle(block, PassportPdfStrings.T(lang, "EndorsedCompetencesTitle"));
+            block.Item().PaddingTop(3).Column(list =>
+            {
+                foreach (var item in model.EndorsedCompetences)
+                {
+                    list.Item().PaddingBottom(4).Background(White).Border(1).BorderColor(Line).Padding(8).Column(card =>
+                    {
+                        card.Item().Row(line =>
+                        {
+                            line.ConstantItem(12).Text("✓").FontSize(9).Bold().FontColor(Green);
+                            line.RelativeItem().Text(item.Label).FontSize(9.5f).Bold().FontColor(Ink);
+                        });
+                        if (!string.IsNullOrWhiteSpace(item.RecognitionLine))
+                        {
+                            card.Item().PaddingTop(2).Text(item.RecognitionLine).FontSize(8.5f).FontColor(Muted).LineHeight(1.25f);
+                        }
+                    });
+                }
+
+                list.Item().Text(PassportPdfStrings.T(lang, "EndorsedCompetencesDisclaimer"))
+                    .FontSize(7.5f).FontColor(Muted).LineHeight(1.25f);
             });
         });
     }

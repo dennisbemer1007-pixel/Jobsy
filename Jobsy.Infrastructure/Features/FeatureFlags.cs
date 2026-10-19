@@ -63,7 +63,18 @@ public sealed class FeatureFlags : IFeatureFlags
                 TestProgressInsightEnabled: snap.TestProgressInsightEnabled,
                 snap.EmployerFitQuestionnairesEnabled,
                 snap.KandidatenkaartEnabled,
-                snap.TrainingPartnersEnabled);
+                snap.CompanyMapInitiativeEnabled,
+                snap.AfterMatchEnabled,
+                snap.ReferenceVerificationEnabled,
+                snap.SensitiveExperienceEnabled,
+                snap.TrainingPartnersEnabled,
+                snap.TestJourneyIllustrationEnabled,
+                snap.OnboardingFinaleV2Enabled,
+                snap.OccupationDayInLifeEnabled,
+                snap.TestEditModeEnabled,
+                snap.SamplePdfEnabled,
+                snap.TestDepthValueMockupEnabled,
+                snap.UwvFeaturesEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

@@ -1,0 +1,135 @@
+name: e2e-functional
+
+on:
+  pull_request:
+    branches: [acceptatie]
+  push:
+    branches: [acceptatie]
+
+concurrency:
+  group: e2e-functional-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-functional:
+    name: e2e-functional
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      JOBSY_E2E_FUNCTIONAL_GATE: "1"
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: JobsyCi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj', '**/Directory.Packages.props', '**/packages.lock.json') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('**/playwright.ps1', 'Directory.Packages.props') }}
+          restore-keys: |
+            playwright-chromium-${{ runner.os }}-
+
+      - name: Restore + build
+        run: |
+          dotnet restore Jobsy.sln
+          dotnet build Jobsy.sln -c Release --no-restore
+
+      - name: Resolve target base URL
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ -n "${{ secrets.JOBSY_E2E_BASE_URL }}" ]; then
+            echo "base_url=${{ secrets.JOBSY_E2E_BASE_URL }}" >> "$GITHUB_OUTPUT"
+            echo "mode=acceptatie-live" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_url=http://127.0.0.1:5201" >> "$GITHUB_OUTPUT"
+            echo "mode=ci-stack" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Playwright Chromium
+        run: pwsh Jobsy.Tests/bin/Release/net10.0/playwright.ps1 install --with-deps chromium
+
+      - name: Start API + Web (PR / local stack)
+        if: steps.target.outputs.mode == 'ci-stack'
+        env:
+          ConnectionStrings__JobsyDb: Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres
+          VerificationCodes__Pepper: ci-verification-otp-pepper-32chars!!
+        run: |
+          chmod +x .github/scripts/start-ci-stack.sh
+          .github/scripts/start-ci-stack.sh
+
+      - name: Wait for Acceptatie (post-deploy)
+        if: steps.target.outputs.mode == 'acceptatie-live'
+        env:
+          JOBSY_E2E_BASE_URL: ${{ steps.target.outputs.base_url }}
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$JOBSY_E2E_BASE_URL/" || true)
+            if echo "$code" | grep -Eq '200|301|302'; then
+              echo "Acceptatie reachable ($code)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Acceptatie not reachable"
+          exit 1
+
+      - name: Run functional Playwright gate
+        env:
+          JOBSY_E2E_BASE_URL: ${{ steps.target.outputs.base_url }}
+          JOBSY_CI_WEB_URL: ${{ steps.target.outputs.base_url }}
+          ConnectionStrings__JobsyDb: Host=127.0.0.1;Port=5432;Database=JobsyCi;Username=postgres;Password=postgres
+          JOBSY_E2E_CANDIDATE_EMAIL: ${{ secrets.JOBSY_E2E_CANDIDATE_EMAIL }}
+          JOBSY_E2E_CANDIDATE_PASSWORD: ${{ secrets.JOBSY_E2E_CANDIDATE_PASSWORD }}
+          JOBSY_E2E_CAPTURE: "1"
+          JOBSY_E2E_ARTIFACTS_ROOT: artifacts/functional-sweep
+        run: |
+          mkdir -p artifacts/functional-sweep test-results
+          dotnet test --project Jobsy.Tests/Jobsy.Tests.csproj -c Release --no-build \
+            --results-directory test-results \
+            --report-trx \
+            --timeout 18m \
+            --filter "Suite=FunctionalE2e"
+
+      - name: Upload functional sweep artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-sweep
+          path: |
+            artifacts/functional-sweep/**
+            test-results/*.trx
+          if-no-files-found: ignore
+
+      - name: Upload stack logs on failure (CI stack)
+        if: failure() && steps.target.outputs.mode == 'ci-stack'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-functional-stack-logs
+          path: /tmp/jobsy-ci-logs/**
+          if-no-files-found: ignore

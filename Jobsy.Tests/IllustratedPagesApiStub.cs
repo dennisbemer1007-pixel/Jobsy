@@ -14,6 +14,9 @@ internal static class IllustratedPagesApiStub
     public static readonly Guid SampleApplicationId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     public static readonly Guid SampleEmployerApplicationId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
+    /// <summary>When set, returned as mock-interview coach reply (screenshot tests).</summary>
+    public static string? MockInterviewReplyOverride { get; set; }
+
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -315,6 +318,48 @@ internal static class IllustratedPagesApiStub
             return """{"completed":true,"dismissedSuggestions":[]}""";
         }
 
+        if (path.Contains("/mock-interview", StringComparison.OrdinalIgnoreCase))
+        {
+            var reply = MockInterviewReplyOverride
+                        ?? "Vraag: Vertel kort waarom je solliciteert als medewerker dierenpension bij De Kooger Dierenopvang. Wat spreekt je aan in de vacature?";
+            return $$"""
+                {
+                  "reply": {{JsonSerializer.Serialize(reply, Json)}},
+                  "usedAi": false,
+                  "disclaimer": ""
+                }
+                """;
+        }
+
+        if (path.Contains("/me/reference-verification/verified-competences", StringComparison.OrdinalIgnoreCase))
+        {
+            return """
+                [
+                  {
+                    "code": "plan",
+                    "label": "Plannen en organiseren",
+                    "recognitionLine": "Bevestigd door referent",
+                    "completedAtUtc": "2026-09-01T10:00:00Z"
+                  }
+                ]
+                """;
+        }
+
+        if (path.Contains("/me/uwv", StringComparison.OrdinalIgnoreCase))
+        {
+            if (path.Contains("adviseur-share", StringComparison.OrdinalIgnoreCase))
+            {
+                return """{"token":"uwv-share-demo-token","expiresAtUtc":"2026-12-31T00:00:00Z"}""";
+            }
+
+            return """
+                {
+                  "ondernemerOutcomeKey": "explore",
+                  "drijfverenDriverKeys": ["security", "connection", "growth"]
+                }
+                """;
+        }
+
         return "{}";
     }
 
@@ -420,7 +465,7 @@ internal static class IllustratedPagesApiStub
               "companyLogoUrl": null,
               "travelMinutes": 9,
               "matchGaps": ["Werken in het weekend"],
-              "descriptionHtml": "{{descriptionSections}}"
+              "description": "{{descriptionSections}}"
             }
             """;
     }

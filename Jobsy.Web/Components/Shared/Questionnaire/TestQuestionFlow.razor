@@ -20,16 +20,12 @@
     var blocks = targetCount > 50 ? 25 : targetCount;
 }
 
-<div class="test-flow @(Compact ? "test-flow--compact" : null) @(Target == TestDepthLevel.Bottom ? "test-flow--deep" : null)" data-test-flow="@Kind">
+@{
+    var flowCompact = Compact || TestBlockStageActive;
+}
+<div class="test-flow @(flowCompact ? "test-flow--compact" : null) @(Target == TestDepthLevel.Bottom ? "test-flow--deep" : null)" data-test-flow="@Kind">
     @if (question is not null)
     {
-        @if (TestBlockStageActive && Compact && !string.IsNullOrWhiteSpace(QuestionTitle))
-        {
-            <TestBlockMobileHero CssClass="test-block-stage__mobile-hero--compact">
-                <h2 class="test-block-stage__mobile-hero-title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
-            </TestBlockMobileHero>
-        }
-
         @if (Target != TestDepthLevel.Bottom)
         {
             <div class="test-flow__progress-head" id="@($"tf-counter-{Kind}")">
@@ -71,7 +67,7 @@
                     <span class="test-flow__seg @cls" aria-hidden="@(segCurrent ? null : "true")"></span>
                 }
             }
-            @if (!Compact)
+            @if (!flowCompact)
             {
                 @foreach (var band in TestDepthRules.Levels(Kind))
                 {
@@ -83,7 +79,7 @@
                 }
             }
         </div>
-        @if (!Compact && Target != TestDepthLevel.Bottom)
+        @if (!flowCompact && Target != TestDepthLevel.Bottom)
         {
             <p class="test-flow__level">
                 @if (reached is TestDepthLevel r)
@@ -108,13 +104,13 @@
             ? $"{spokenQuestion} {question.Example}"
             : spokenQuestion;
         <div class="test-flow__speak">
-            @if (Compact && !string.IsNullOrWhiteSpace(QuestionTitle) && !TestBlockStageActive)
+            @if (flowCompact && !string.IsNullOrWhiteSpace(QuestionTitle) && !TestBlockStageActive)
             {
                 <div class="test-flow__question-head">
                     <h2 class="test-flow__title" id="@($"tf-title-{question.Id}")">@QuestionTitle</h2>
                 </div>
             }
-            @if (Compact && !string.IsNullOrWhiteSpace(QuestionLead))
+            @if (flowCompact && !string.IsNullOrWhiteSpace(QuestionLead))
             {
                 <p class="test-flow__lead">@QuestionLead</p>
             }
@@ -146,7 +142,7 @@
             @AfterLikert
         }
 
-        @if (!Compact)
+        @if (!flowCompact)
         {
             var answeredEarlier = RecentAnswered().ToList();
             @if (answeredEarlier.Count > 0)
@@ -192,7 +188,7 @@
                     @onclick="GoBackAsync">
                 @Culture["TestFlow.Back"]
             </button>
-            @if (!Compact && OnLater.HasDelegate)
+            @if (!flowCompact && OnLater.HasDelegate)
             {
                 <button type="button" class="test-flow__later" data-testid="onboarding-tests-later" @onclick="LaterAsync">
                     @(LaterLabel ?? Culture["TestFlow.Later"])

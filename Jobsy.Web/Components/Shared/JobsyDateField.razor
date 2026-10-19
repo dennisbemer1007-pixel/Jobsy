@@ -242,6 +242,7 @@
     private async Task OnTextBlurAsync()
     {
         _touched = true;
+        await SyncTextFromDomAsync();
         if (IsMonth)
         {
             if (JobsyDateInputRules.TryParseFlexibleMonth(_text, out var month))
@@ -261,6 +262,26 @@
         }
 
         RefreshValidation(forceMessage: true);
+    }
+
+    private async Task SyncTextFromDomAsync()
+    {
+        try
+        {
+            var domText = await Js.InvokeAsync<string?>("jobsyDom.readInputValue", _textInput);
+            if (string.IsNullOrWhiteSpace(domText))
+            {
+                return;
+            }
+
+            _text = IsVacancyCsvDate
+                ? JobsyDateInputRules.ApplyVacancyCsvDateMask(domText)
+                : JobsyDateInputRules.ApplyDateMask(domText);
+        }
+        catch (JSException)
+        {
+            // optional when JS is not loaded yet
+        }
     }
 
     private async Task OnNativeChangedAsync(ChangeEventArgs e)

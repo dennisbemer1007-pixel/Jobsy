@@ -12,6 +12,7 @@ using System.Security.Claims;
 
 namespace Jobsy.Tests;
 
+[Collection("JobsyLanguagesState")]
 public sealed class TestQuestionFlowBackNavigationBunitTests : BunitContext
 {
     public TestQuestionFlowBackNavigationBunitTests()
@@ -105,7 +106,7 @@ public sealed class TestQuestionFlowBackNavigationBunitTests : BunitContext
             .Add(p => p.Questions, questions)
             .Add(p => p.Answers, answers)
             .Add(p => p.Depth, TestDepthLevel.First)
-            .Add(p => p.ExpandQuestion, (Action<int>)(i => currentIndex = i))
+            .Add(p => p.ExpandQuestion, EventCallback.Factory.Create<int>(this, i => currentIndex = i))
             .Add(p => p.ResolveQuestionText, (Func<OnboardingMiniTest.MiniQuestion, string>)(q => q.TextKey))
             .Add(p => p.OnFinished, EventCallback.Factory.Create(this, () => { })));
 

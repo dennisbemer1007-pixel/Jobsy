@@ -80,11 +80,13 @@ public sealed class AcceptatieBlockerSaveAndNavTests
     public void Desktop_candidate_header_shows_primary_nav_links()
     {
         var layout = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/MainLayout.razor"));
+        var shellHeader = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/AppShellHeader.razor"));
         var nav = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/CandidateHeaderNav.razor"));
         var program = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Program.cs"));
         var css = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/app.css"));
 
-        Assert.Contains("CandidateHeaderNav", layout, StringComparison.Ordinal);
+        Assert.Contains("AppShellHeader", layout, StringComparison.Ordinal);
+        Assert.Contains("CandidateHeaderNav", shellHeader, StringComparison.Ordinal);
         Assert.Contains("RoleNavItemsState", nav, StringComparison.Ordinal);
         Assert.Contains("RoleNavCatalog.IsActive", nav, StringComparison.Ordinal);
         Assert.Contains("AddScoped<Jobsy.Web.Services.RoleNavItemsState>", program, StringComparison.Ordinal);
@@ -102,12 +104,11 @@ public sealed class AcceptatieBlockerSaveAndNavTests
     }
 
     [Fact]
-    public void Banenkaart_candidate_shell_hides_duplicate_discovery_header_in_css()
+    public void Banenkaart_uses_shared_app_header_not_duplicate_discovery_chrome()
     {
-        var critical = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/critical.css"));
-        var app = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/wwwroot/css/app.css"));
-        Assert.Contains(".app-shell--banenkaart-shell .jobsy-chrome__header", critical, StringComparison.Ordinal);
-        Assert.Contains(":not(.app-shell--banenkaart-shell) .app-header", critical, StringComparison.Ordinal);
-        Assert.Contains(".app-shell--banenkaart-shell .jobsy-chrome__header", app, StringComparison.Ordinal);
+        var discovery = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/VacancyDiscovery.razor"));
+        var header = File.ReadAllText(Path.Combine(RepoRoot, "Jobsy.Web/Components/Layout/AppShellHeader.razor"));
+        Assert.DoesNotContain("jobsy-chrome__header", discovery, StringComparison.Ordinal);
+        Assert.Contains("CandidateHeaderNav", header, StringComparison.Ordinal);
     }
 }

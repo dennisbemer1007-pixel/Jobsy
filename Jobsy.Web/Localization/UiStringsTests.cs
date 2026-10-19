@@ -52,7 +52,7 @@ public static class UiStringsTests
         Add("DeepPay.PaidTitle", "Betaald. Je kunt beginnen", "Paid. You can start", "Opłacone. Możesz zacząć", "Plătit. Poți începe", "تم الدفع. يمكنك البدء");
         Add("DeepPay.OpenedTitle", "Klaar om te beginnen", "Ready to start", "Możesz zaczynać", "Gata de început", "جاهز للبدء");
         Add("DeepPay.PriceFree", "Prijs: gratis (testaccount)", "Price: free (test account)", "Cena: za darmo (konto testowe)", "Preț: gratuit (cont de test)", "السعر: مجاناً (حساب تجريبي)");
-        Add("Coach.Ask", "Lobsy, je coach: stel een vraag", "Lobsy, your coach: ask a question", "Lobsy, twój coach: zadaj pytanie", "Lobsy, antrenorul tău: pune o întrebare", "لوبسي، مدربك: اطرح سؤالاً");
+        Add("Coach.Ask", "Vraag het Lobsy", "Ask Lobsy", "Ask Lobsy", "Ask Lobsy", "Ask Lobsy");
         Add("Coach.CloseTip", "Tip sluiten", "Close tip", "Zamknij podpowiedź", "Închide sfatul", "إغلاق النصيحة");
         Add("Coach.Feedback", "Feedback geven", "Give feedback", "Przekaż opinię", "Trimite feedback", "أرسل ملاحظات");
         Add("DeepPay.PaidMail", "Je krijgt de factuur ook per e-mail.", "You’ll also get the invoice by email.", "You’ll also get the faktura by email.", "You’ll also get the factură by email.", "You’ll also get the فاتورة by email.");
@@ -106,16 +106,16 @@ public static class UiStringsTests
         Add("TestDone.Title", "Weer een laag eraf", "Another layer off", "Kolejna warstwa spadła", "Încă un strat a căzut", "طبقة أخرى سقطت");
         Add("TestDone.Eyebrow", "In de diepte · {0} · {1} klaar", "Diving · {0} · {1} done", "Nurkowanie · {0} · {1} done", "Scufundare · {0} · {1} done", "غوص · {0} · {1} done");
         Add("TestDone.LeadFull",
-            "{0} is helemaal klaar. Je scores staan in je paspoort; je persoonlijke spiegel blijft privé.",
-            "{0} is fully done. Your scores are in your passport; your personal mirror stays private.",
+            "{0} is helemaal klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
             "{0} is fully done. Your scores are in tyr passport; your personal mirror stays private.",
-            "{0} is fully done. Your scores are in your passport; your personal mirror stays private.",
+            "{0} is fully done. Your insights are in your passport; your personal mirror stays private.",
             "‏{0} is fully done. Your scores are in your passport; your personal mirror stays private.");
         Add("TestDone.LeadLevel",
-            "{0}: {1} is klaar. Je scores staan in je paspoort; je persoonlijke spiegel blijft privé.",
-            "{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.",
+            "{0}: {1} is klaar. Je inzichten staan in je paspoort; je persoonlijke spiegel blijft privé.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
             "{0}: {1} is done. Your scores are in tyr passport; your personal mirror stays private.",
-            "{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.",
+            "{0}: {1} is done. Your insights are in your passport; your personal mirror stays private.",
             "‏{0}: {1} is done. Your scores are in your passport; your personal mirror stays private.");
         Add("TestDone.Live", "Weer een laag eraf. {0} {1} is klaar.", "Another layer off. {0} {1} is done.", "Another warstwa off. {0} {1} is done.", "Another layer off. {0} {1} is done.", "‏Another layer off. {0} {1} is done.");
         Add("TestDone.Back", "Terug naar Mijn tests", "Back to My tests", "Wstecz to Moje testy", "Înapoi to Testele mele", "رجوع to اختباراتي");

@@ -29,6 +29,8 @@ window.jobMap = (function () {
     let ringRedrawTries = 0;
     let deferMapReveal = false;
     let kkMode = false;
+    let companyMapMode = false;
+    const COMPANY_OPEN_PIN_COLOR = "#E87722";
     let kkSelectCallback = null;
     const KK_SOURCE = "jobsy-kk-areas";
     const KK_FILL = "jobsy-kk-areas-fill";
@@ -987,6 +989,16 @@ window.jobMap = (function () {
 
     function clusterTitleText(total, place) {
         const n = Math.max(0, Number(total) || 0);
+        if (companyMapMode) {
+            if (n === 1) {
+                return place
+                    ? labelFormat(uiLabels.vacancyAtPlaceWithPlace || "1 bedrijf in {place}", { place: place })
+                    : (uiLabels.vacancyAtPlace || "1 bedrijf");
+            }
+            return place
+                ? labelFormat(uiLabels.vacanciesAtPlaceWithPlace || "{count} bedrijven in {place}", { count: n, place: place })
+                : labelFormat(uiLabels.vacanciesAtPlace || "{count} bedrijven", { count: n });
+        }
         if (n === 1) {
             return place
                 ? labelFormat(uiLabels.vacancyAtPlaceWithPlace || "1 baan in {place}", { place: place })
@@ -2090,10 +2102,14 @@ window.jobMap = (function () {
         const highlightRank = raw.highlightRank != null ? raw.highlightRank
             : (raw.HighlightRank != null ? raw.HighlightRank : undefined);
         const matchColorBand = raw.matchColorBand || raw.MatchColorBand || null;
+        const openForInitiative = raw.openForInitiative === true || raw.OpenForInitiative === true;
+        const isIntermediary = raw.isIntermediary === true || raw.IsIntermediary === true;
+        const kansberoep = raw.kansberoep === true || raw.kansberoep === 1 || raw.Kansberoep === true;
         return Object.assign({}, raw, {
             id: id,
             lat: lat,
             lng: lng,
+            kansberoep: kansberoep,
             categoryColor: colour,
             colour: colour,
             publicMapRadiusKm: radiusKm > 0 ? radiusKm : null,
@@ -2103,7 +2119,9 @@ window.jobMap = (function () {
             workTypes: workTypes || (workType ? [workType] : []),
             highlighted: highlighted,
             highlightRank: highlightRank,
-            matchColorBand: matchColorBand
+            matchColorBand: matchColorBand,
+            openForInitiative: openForInitiative,
+            isIntermediary: isIntermediary
         });
     }
 
@@ -3516,7 +3534,9 @@ window.jobMap = (function () {
             features: Object.keys(markersById).map(function (id) {
                 const record = markersById[id];
                 const v = record.options.jobData || {};
-                const agency = isAgencyPin(v) ? 1 : 0;
+                const agency = (isAgencyPin(v) || (companyMapMode && v.isIntermediary === true)) ? 1 : 0;
+                const openInit = companyMapMode && v.openForInitiative === true;
+                const kansberoep = v.kansberoep === true || v.kansberoep === 1 ? 1 : 0;
                 let outside = 0;
                 if (origin && outerM > 0) {
                     const d = haversineMeters(origin.lat, origin.lng, record.lat, record.lng);
@@ -3530,12 +3550,13 @@ window.jobMap = (function () {
                     geometry: { type: "Point", coordinates: [record.lng, record.lat] },
                     properties: {
                         id: String(id),
-                        featured: isFeaturedVacancy(v) ? 1 : 0,
+                        featured: (kansberoep || isFeaturedVacancy(v)) ? 1 : 0,
+                        kansberoep: kansberoep,
                         agency: agency,
                         radiusKm: agency ? agencyRadiusKm(v) : 0,
                         workType: workTypeOf(v) || "",
-                        glyph: agency ? "◆" : workTypeGlyph(workTypeOf(v)),
-                        colour: agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""),
+                        glyph: kansberoep ? "★" : (agency ? "◆" : workTypeGlyph(workTypeOf(v))),
+                        colour: kansberoep ? "#c9a227" : (openInit ? COMPANY_OPEN_PIN_COLOR : (agency ? AGENCY_PIN_COLOR : (v.categoryColor || v.colour || ""))),
                         matchPercent: v.matchPercent == null ? -1 : Number(v.matchPercent),
                         matchBand: v.matchColorBand || "orange",
                         outside: outside
@@ -3778,6 +3799,7 @@ window.jobMap = (function () {
                     "circle-color": [
                         "case",
                         ["==", ["feature-state", "selected"], true], "#f54a1b",
+                        ["==", ["get", "kansberoep"], 1], "#c9a227",
                         ["==", ["get", "agency"], 1], AGENCY_PIN_COLOR,
                         ["==", ["get", "featured"], 1], "#c9a227",
                         [
@@ -4772,6 +4794,18 @@ window.jobMap = (function () {
             }
         }
 
+        companyMapMode = !!(options && options.mapMode === "companies");
+        if (companyMapMode) {
+            uiLabels = Object.assign({}, uiLabels, {
+                vacanciesAtPlace: "{count} bedrijven",
+                vacancyAtPlace: "1 bedrijf",
+                vacanciesAtPlaceWithPlace: "{count} bedrijven in {place}",
+                vacancyAtPlaceWithPlace: "1 bedrijf in {place}",
+                vacanciesInView: "{count} bedrijven in beeld",
+                viewJob: "Bekijk bedrijf",
+                apply: "Ik wil hier werken"
+            });
+        }
         openCallback = options && options.dotNetRef ? options.dotNetRef : null;
         viewportListDotNet = options && options.syncViewportList && options.dotNetRef
             ? options.dotNetRef

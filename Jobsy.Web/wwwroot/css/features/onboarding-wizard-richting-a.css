@@ -11,6 +11,7 @@
     min-height: 0 !important;
     flex: 1 1 auto !important;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
   .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .app-main > * {
@@ -40,6 +41,26 @@
     overflow-y: auto !important;
     display: block !important;
     min-height: 0 !important;
+    scroll-padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  .ob-wizard--richting-a .ob-wizard__main {
+    padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .ob-wizard--richting-a .ob-wizard__content.ob-wizard__content--illustrated {
+    scroll-padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-nearby-panel--mobile,
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-nearby-panel__mobile-static {
+    pointer-events: none;
+  }
+
+  .ob-wizard--richting-a [data-testid="onboarding-next"],
+  .ob-wizard--richting-a [data-testid="onboarding-back"] {
+    scroll-margin-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 8px);
+    touch-action: manipulation;
   }
 
   .ob-wizard--richting-a.ob-wizard,
@@ -151,7 +172,7 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__footer-privacy {
-    display: block;
+    display: none;
     align-self: center;
     margin-block-end: 6px;
     padding: 0;
@@ -253,6 +274,12 @@
   }
 
   .app-shell:has(.ob-wizard--richting-a) .lobsy-coach-dock {
+    display: none !important;
+  }
+
+  .app-shell:has(.ob-wizard--richting-a) .lobsy-assistant,
+  .app-shell:has(.ob-wizard--richting-a) .lobsy-assistant-launcher,
+  .app-shell:has(.ob-wizard--richting-a) .lobsy-assistant-tab {
     display: none !important;
   }
 
@@ -377,8 +404,31 @@
   }
 
   .ob-wizard--richting-a .ob-wizard__birth-date,
-  .ob-wizard--richting-a .jobsy-date-field--localized {
+  .ob-wizard--richting-a .jobsy-date-field--localized,
+  .ob-wizard--richting-a .jobsy-date-field--typed {
     margin-block: 0 !important;
+  }
+
+  .ob-wizard--richting-a .ob-fields .jobsy-date-field__control {
+    min-block-size: 48px;
+  }
+
+  .ob-wizard--richting-a .ob-fields .jobsy-date-field__picker-btn {
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+  }
+
+  .ob-wizard--richting-a .ob-fields .jobsy-date-field__input--native {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .ob-wizard--richting-a fieldset small:not(.ob-wizard__hint) {
@@ -445,6 +495,10 @@
 
   .ob-wizard--richting-a .work-status-field .lobsy-choice-tile,
   .ob-wizard--richting-a .work-status-chips .lobsy-choice-tile {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+    touch-action: manipulation;
     min-height: 48px;
     padding: 0.35rem 0.75rem;
     border-radius: 999px;
@@ -593,6 +647,21 @@
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .ob-wizard--richting-a .ob-fields__location-error {
+    margin-block: 0.35rem 0;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__birth-date .jobsy-date-field__control {
+    position: relative;
+  }
+
+  .ob-wizard--richting-a .ob-wizard__birth-date .jobsy-date-field__picker-btn {
+    inset-block-start: 50%;
+    translate: 0 -50%;
   }
 
   .ob-wizard--richting-a .ob-fields__address .kb-address--with-clear .kb-address__field input {

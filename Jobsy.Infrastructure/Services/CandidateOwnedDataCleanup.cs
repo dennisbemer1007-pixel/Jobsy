@@ -172,12 +172,31 @@ internal static class CandidateOwnedDataCleanup
             db.ReferenceConfirmations.RemoveRange(confirmations);
         }
 
+        var workExpRefs = await db.WorkExperienceReferenceRequests
+            .Where(r => r.UserId == user.Id)
+            .ToListAsync(cancellationToken);
+        if (workExpRefs.Count > 0)
+        {
+            var refIds = workExpRefs.Select(r => r.Id).ToList();
+            var refTokens = await db.WorkExperienceReferenceTokens
+                .Where(t => refIds.Contains(t.RequestId))
+                .ToListAsync(cancellationToken);
+            if (refTokens.Count > 0)
+            {
+                db.WorkExperienceReferenceTokens.RemoveRange(refTokens);
+            }
+
+            db.WorkExperienceReferenceRequests.RemoveRange(workExpRefs);
+        }
+
         await RemoveRangeAsync(db, db.CandidateReferences.Where(r => r.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCompetencies.Where(c => c.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCulturePersonalityProfiles.Where(c => c.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateValuesProfiles.Where(v => v.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateWhoAmIProfiles.Where(c => c.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateTestReflections.Where(r => r.UserId == user.Id), cancellationToken);
+        await RemoveRangeAsync(db, db.CandidateUwvToolkitStates.Where(r => r.UserId == user.Id), cancellationToken);
+        await RemoveRangeAsync(db, db.CandidateUwvAdviseurShares.Where(r => r.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidatePrivatePreferences.Where(p => p.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCareerInterests.Where(c => c.UserId == user.Id), cancellationToken);
         await RemoveRangeAsync(db, db.CandidateCareerStepProgress.Where(p => p.UserId == user.Id), cancellationToken);
@@ -234,6 +253,27 @@ internal static class CandidateOwnedDataCleanup
             db.TrainingEnrollments.Where(e => e.UserId == user.Id),
             cancellationToken);
 
+        var initiativeIds = await db.WorkInitiatives
+            .Where(i => i.CandidateUserId == user.Id)
+            .Select(i => i.Id)
+            .ToListAsync(cancellationToken);
+        if (initiativeIds.Count > 0)
+        {
+            await RemoveRangeAsync(
+                db,
+                db.WorkInitiativeAcceptances.Where(a => initiativeIds.Contains(a.InitiativeId)),
+                cancellationToken);
+            await RemoveRangeAsync(
+                db,
+                db.WorkInitiatives.Where(i => i.CandidateUserId == user.Id),
+                cancellationToken);
+        }
+
+        await RemoveRangeAsync(
+            db,
+            db.WorkInitiativeDrafts.Where(d => d.CandidateUserId == user.Id),
+            cancellationToken);
+
         var consumerInvoices = await db.ConsumerPurchaseInvoices
             .Where(i => i.UserId == user.Id)
             .ToListAsync(cancellationToken);
@@ -265,6 +305,16 @@ internal static class CandidateOwnedDataCleanup
         {
             db.CandidateReminderPreferences.Remove(reminderPreference);
         }
+
+        var afterMatchReminder = await db.AfterMatchReminderPreferences
+            .FirstOrDefaultAsync(p => p.UserId == user.Id, cancellationToken);
+        if (afterMatchReminder is not null)
+        {
+            db.AfterMatchReminderPreferences.Remove(afterMatchReminder);
+        }
+
+        db.InterviewReminders.RemoveRange(
+            await db.InterviewReminders.Where(r => r.UserId == user.Id).ToListAsync(cancellationToken));
 
         var reminderLogs = await db.ComebackReminderLogs
             .Where(l => l.UserId == user.Id)

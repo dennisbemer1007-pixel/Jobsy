@@ -13,10 +13,13 @@
 @inject IGeocodingClient Geocoder
 @implements IAsyncDisposable
 
-<div class="ob-fields">
+<div class="ob-fields @(Illustrated ? "ob-fields--illustrated" : null)">
+@if (!Illustrated)
+{
 <h1 tabindex="-1">@Culture["Onboarding.Step1.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step1.Lead"]</p>
-<div class="ob-wizard__card">
+}
+<div class="ob-wizard__card @(Illustrated ? "ob-wizard__card--illustrated" : null)">
 <div class="ob-wizard__field-row">
     <label id="onboarding-field-firstname">
         @Culture["Profile.FirstName"]
@@ -54,16 +57,17 @@
                     Locating="_locating"
                     OnLocate="UseMyLocationAsync"
                     OnClear="ClearLocationAsync"
-                    OnSelect="SelectSuggestionAsync" />
+                    OnSelect="SelectSuggestionAsync"
+                    OnBlurComplete="OnAddressBlurResolveAsync" />
     @if (ShowValidation && !LocationValid)
     {
         <span class="error" role="alert">@Culture["Onboarding.Validation.Location"]</span>
     }
+    @if (!string.IsNullOrWhiteSpace(_locationError))
+    {
+        <p class="ob-fields__location-error error" role="status" data-testid="onboarding-location-error">@_locationError</p>
+    }
 </div>
-@if (!string.IsNullOrWhiteSpace(_locationError))
-{
-    <p class="error" role="status">@_locationError</p>
-}
 @if (Draft.GeolocationPrefillMode == GeolocationPrefillMode.Approximate && Draft.GeolocationApproximateAccuracyMeters is int approxMeters)
 {
     <p class="ob-wizard__hint ob-wizard__hint--geo" role="status">@Culture.Format("Onboarding.Geolocation.ApproximateHint", DisplayAccuracyMeters(approxMeters))</p>
@@ -140,6 +144,7 @@
 
 @code {
     [Parameter, EditorRequired] public OnboardingProfileDraft Draft { get; set; } = default!;
+    [Parameter] public bool Illustrated { get; set; }
     [Parameter] public EventCallback AddressChanged { get; set; }
     [Parameter] public EventCallback BirthDateChanged { get; set; }
     [Parameter] public EventCallback ShowCity { get; set; }
@@ -224,12 +229,27 @@
         }
 
         await NotifyAsync();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnAddressQueryChangedAsync(string value)
     {
         Draft.AddressQuery = value ?? string.Empty;
         await Task.CompletedTask;
+    }
+
+    private async Task OnAddressBlurResolveAsync()
+    {
+        if (Draft.GeolocationPendingConfirm || Draft.HomeLat is not null && Draft.HomeLng is not null)
+        {
+            return;
+        }
+
+        if (await CandidateHomeAddressLookup.TryResolveTypedAddressAsync(Draft, Geocoder))
+        {
+            await AddressChanged.InvokeAsync();
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task OnAddressInputAsync(string value)
@@ -311,7 +331,8 @@
         _showSuggestions = false;
         try
         {
-            var position = await Js.InvokeAsync<GeolocationPositionDto>("jobsyGeo.requestLocation");
+            await Js.InvokeVoidAsync("jobsyGeo.blurElement", "onboarding-home-address");
+            var position = await GeolocationInterop.RequestLocationAsync(Js);
             var lat = position.lat;
             var lng = position.lng;
             var accuracy = position.accuracyMeters;
@@ -331,9 +352,7 @@
         }
         catch (Exception ex)
         {
-            _locationError = string.IsNullOrWhiteSpace(ex.Message)
-                ? Culture["Onboarding.LocationDenied"]
-                : ex.Message;
+            _locationError = GeolocationInterop.MapGeolocationError(Culture, ex);
         }
         finally
         {

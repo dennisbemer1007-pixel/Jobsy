@@ -34,6 +34,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             sp.GetRequiredService<AuthenticationStateProvider>()));
         Services.AddSingleton<IFeatureFlags>(new FixedFlags());
         Services.AddSingleton<ITestJourneyIllustrationGate>(new FixedTestJourneyGate());
+        Services.AddSingleton<IOnboardingFinaleV2Gate>(new FixedFinaleGate());
         Services.AddSingleton<IGeocodingClient>(new NoGeocoder());
         Services.AddSingleton<UserFacingError>();
         Services.AddSingleton<GratisDnaStorage>();
@@ -44,6 +45,7 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
             sp.GetRequiredService<GratisDnaStorage>(),
             sp.GetRequiredService<JobsyApiClient>(),
             sp.GetRequiredService<ILogger<GratisDnaMergeService>>()));
+        Services.AddSingleton<IReferenceVerificationFeatureGate>(new StubReferenceGate());
     }
 
     [Fact]
@@ -139,6 +141,12 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
         public bool Enabled => false;
     }
 
+    private sealed class FixedFinaleGate : IOnboardingFinaleV2Gate
+    {
+        public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
+    }
+
     private sealed class FixedFlags : IFeatureFlags
     {
         public ValueTask<FeatureFlagSnapshot> GetAsync(CancellationToken cancellationToken = default)
@@ -159,5 +167,11 @@ public sealed class OnboardingWizardDreamValidationBunitTests : BunitContext
         public string ContentRootPath { get; set; } = "/";
         public Microsoft.Extensions.FileProviders.IFileProvider ContentRootFileProvider { get; set; }
             = new Microsoft.Extensions.FileProviders.NullFileProvider();
+    }
+
+    private sealed class StubReferenceGate : IReferenceVerificationFeatureGate
+    {
+        public ValueTask<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
+            => ValueTask.FromResult(false);
     }
 }

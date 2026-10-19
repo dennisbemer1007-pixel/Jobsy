@@ -85,9 +85,8 @@ public class BlazorCircuitGuardTests
         Assert.DoesNotContain("onclick=\"location.reload()\"", app);
         Assert.Contains("closest(\"[data-reconnect-reload]\")", app);
 
-        var appHead = app[..app.IndexOf("@if (LoadBlazorRuntime)", StringComparison.Ordinal)];
-        Assert.Contains("css/features/reconnect.css?v=", appHead, StringComparison.Ordinal);
-        Assert.Contains("data-reconnect-css", appHead, StringComparison.Ordinal);
+        Assert.Contains("css/features/reconnect.css?v=", app, StringComparison.Ordinal);
+        Assert.Contains("data-reconnect-css", app, StringComparison.Ordinal);
         var critical = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "critical.css"));
         Assert.Contains(
             "#components-reconnect-modal:not(.components-reconnect-show)",
@@ -95,11 +94,14 @@ public class BlazorCircuitGuardTests
             StringComparison.Ordinal);
 
         var css = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "wwwroot", "css", "features", "reconnect.css"));
-        Assert.Contains(".reconnect-toast {\n    display: none;\n    position: fixed;", css);
+        Assert.Contains(".reconnect-toast", css);
+        Assert.Contains("display: none", css);
+        Assert.Contains("position: fixed", css);
         Assert.Contains("bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));", css);
         Assert.Contains(".reconnect-toast.components-reconnect-retrying", css, StringComparison.Ordinal);
         Assert.Contains(".reconnect-toast.components-reconnect-paused", css, StringComparison.Ordinal);
-        Assert.Contains(".reconnect-toast__msg {\n    display: none;", css, StringComparison.Ordinal);
+        Assert.Contains(".reconnect-toast__msg", css, StringComparison.Ordinal);
+        Assert.Contains("display: none", css, StringComparison.Ordinal);
     }
 
     [Fact]

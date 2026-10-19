@@ -31,7 +31,8 @@ public sealed class B1WordListTests
         ["WhoAmI.StepCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens.",
         ["WhoAmI.OpenCompetency"] = "Unused who-am-I step label; not rendered on the passport or test screens.",
         ["Discovery.Intro.Lobsy"] = "Discovery intro; competenties is intentional product vocabulary on that screen.",
-        ["Profile.Reset.Dialog.Lead"] = "Reset dialog lists data categories; matchscore is a user-facing label in that list."
+        ["Profile.Reset.Dialog.Lead"] = "Reset dialog lists data categories; matchscore is a user-facing label in that list.",
+        ["AfterMatch.Employer.Share.Passport"] = "Employer after-match share panel; passport is intentional product vocabulary."
     };
 
     [Fact]

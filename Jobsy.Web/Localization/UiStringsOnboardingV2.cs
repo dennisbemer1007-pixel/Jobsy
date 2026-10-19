@@ -22,7 +22,7 @@ internal static class UiStringsOnboardingV2
         PatchWorkStatusPl(pl);
         PatchWorkStatusRo(ro);
         PatchWorkStatusAr(ar);
-        PatchFinaleV2(nl, en);
+        PatchFinaleV2(nl, en, pl, ro, ar);
 
         nl["Onboarding.Age.TooYoung"] = "Je moet minstens {0} jaar zijn om Lobsy te gebruiken.";
         en["Onboarding.Age.TooYoung"] = "You must be at least {0} to use Lobsy.";
@@ -58,6 +58,15 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.LocationFailed"] = english
             ? "We couldn’t determine your postcode. Try entering it manually."
             : "We konden je postcode niet bepalen. Vul hem handmatig in.";
+        map["Onboarding.LocationTimeout"] = english
+            ? "Finding your location took too long. Try again or enter your address manually."
+            : "Locatie ophalen duurde te lang. Probeer opnieuw of vul je adres handmatig in.";
+        map["Onboarding.LocationUnavailable"] = english
+            ? "We couldn’t determine your location. Enter your address manually."
+            : "We konden je locatie niet bepalen. Vul je adres handmatig in.";
+        map["Onboarding.LocationRequiresHttps"] = english
+            ? "Sharing your location requires a secure connection (HTTPS)."
+            : "Locatie delen vereist een beveiligde verbinding (HTTPS).";
         map["Onboarding.Geolocation.ApproximateHint"] = english
             ? "We know your location only roughly (± {0} m). Is this wrong? Type your street or postcode."
             : "We weten je locatie maar ongeveer (± {0} m). Klopt dit niet? Typ je straat of postcode.";
@@ -210,16 +219,16 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Early.Nearby.JobHours"] = english ? "{0} h/week" : "{0} uur";
         map["Onboarding.Early.Nearby.FallbackCtaLead"] = english
             ? "Explore the map — your basics are already saved."
-            : "Verken de banenkaart — je basisgegevens zijn al bewaard.";
+            : "Verken de banenkaart. Je basisgegevens zijn al bewaard.";
         map["Onboarding.Early.Nearby.Lead"] = english ? "Based on your address, hours and {1} (max. {0} min). More detail follows in your Compass." : "Op basis van je adres, uren en {1} (max. {0} min). Meer detail volgt in je Kompas.";
         map["Onboarding.Early.Nearby.LeadNoLocation"] = english ? "Share your location so we can count reachable jobs." : "Deel je locatie zodat we bereikbare banen kunnen tellen.";
         map["Onboarding.Early.Nearby.LeadEmployersOff"] = english ? "Job matching is not available in this environment yet." : "Banenmatching is in deze omgeving nog niet beschikbaar.";
         map["Onboarding.Early.Nearby.TimeBanner"] = english ? "About <strong>2 minutes</strong> until your first personal result after the short tests." : "Nog <strong>±2 minuten</strong> tot je eerste persoonlijke resultaat na de korte tests.";
         map["Onboarding.Early.Nearby.Examples"] = english ? "{0} examples nearby" : "{0} voorbeelden dichtbij";
-        map["Onboarding.Early.Nearby.Fineprint"] = english ? "Teaser on location and hours — no personality score. Full match after the tests." : "Teaser op locatie en uren — geen persoonlijkheidsscore. Volledige match na de tests.";
-        map["Onboarding.Early.Nearby.FallbackZero"] = english ? "Nothing within your travel time yet — that can change quickly as new jobs go live." : "Nog niets binnen je reistijd — dat kan snel veranderen als er nieuwe vacatures live gaan.";
+        map["Onboarding.Early.Nearby.Fineprint"] = english ? "Teaser on location and hours — no personality score. Full match after the tests." : "Teaser op locatie en uren. Geen persoonlijkheidsscore. Volledige match na de tests.";
+        map["Onboarding.Early.Nearby.FallbackZero"] = english ? "Nothing within your travel time yet — that can change quickly as new jobs go live." : "Nog niets binnen je reistijd. Dat kan snel veranderen als er nieuwe vacatures live gaan.";
         map["Onboarding.Early.Nearby.FallbackNoLocation"] = english ? "We need your postcode or city to show nearby jobs." : "Vul je postcode of woonplaats in om banen in de buurt te tonen.";
-        map["Onboarding.Early.Nearby.FallbackEmployersOff"] = english ? "You can explore the job map while we finish matching here." : "Verken intussen de banenkaart — matching komt hier zo snel mogelijk.";
+        map["Onboarding.Early.Nearby.FallbackEmployersOff"] = english ? "You can explore the job map while we finish matching here." : "Verken intussen de banenkaart. Matching komt hier zo snel mogelijk.";
         map["Onboarding.Early.Nearby.WiderHint"] = english ? "With a slightly wider radius there are already {0} jobs." : "Met iets ruimere reistijd zijn er al {0} banen.";
         map["Onboarding.Early.Nearby.Banenkaart"] = english ? "Open the job map" : "Naar de banenkaart";
         map["Onboarding.Early.Nearby.Cta"] = english ? "Continue profile" : "Verder met profiel";
@@ -239,7 +248,13 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Panel.Nearby.MobileInitial"] = english ? "{0} jobs nearby" : "{0} banen in de buurt";
         map["Onboarding.Panel.Nearby.MobileRefined"] = english ? "Now {0} fitting jobs nearby" : "Nu {0} passende banen in de buurt";
         map["Onboarding.Panel.Nearby.MobileZero"] = english ? "Jobs nearby" : "Banen in de buurt";
-        map["Onboarding.Panel.Nearby.RailAria"] = english ? "Jobs near you (informational)" : "Banen in de buurt (ter info)";
+        map["Onboarding.Panel.Nearby.Footnote"] = english
+            ? "Based on your home location, travel time and hours — examples only."
+            : "Op basis van je adres, reistijd en uren. Voorbeelden ter inspiratie.";
+        map["Onboarding.Panel.Nearby.MapCaption"] = english
+            ? "Your area on the job map"
+            : "Jouw buurt op de banenkaart";
+        map["Onboarding.Panel.Nearby.RailAria"] = english ? "Jobs nearby (informational)" : "Banen in de buurt (ter info)";
         map["Onboarding.Early.Insight.Badge"] = english ? "First insight" : "Eerste inzicht";
         map["Onboarding.Early.Insight.Title"] = english ? "Your strongest point so far" : "Je sterkste punt tot nu toe";
         map["Onboarding.Early.Insight.Lead"] = english ? "Based on your first short test. It gets sharper after the next three." : "Op basis van je eerste korte test. Het wordt scherper na de volgende drie.";
@@ -253,6 +268,18 @@ internal static class UiStringsOnboardingV2
         map["Onboarding.Welcome.Title"] = english ? "Hi {0}, nice to have you here" : "Hoi {0}, fijn dat je er bent"; map["Onboarding.Welcome.Lead"] = english ? "In about 12 minutes we make your start profile together. Then your Compass shows who you are and which work fits you." : "In ongeveer 12 minuten maken we samen je startprofiel. Daarna zie je in je Kompas wie je bent en welk werk bij je past.";
         map["Onboarding.Welcome.Hint"] = english ? "Everything is saved right away. You can stop and continue later." : "Alles wordt meteen bewaard. Stoppen mag, je gaat later verder waar je was."; map["Onboarding.Welcome.Cta"] = english ? "Start" : "Beginnen";
         map["Onboarding.Welcome.OverJou"] = english ? "Where you live and when you can work" : "Waar je woont en wanneer je kunt"; map["Onboarding.Welcome.Background"] = english ? "Your background" : "Je achtergrond"; map["Onboarding.Welcome.BackgroundLead"] = english ? "Work and education, you can skip it" : "Werk en opleiding, mag je overslaan"; map["Onboarding.Welcome.Dream"] = english ? "Your dream job" : "Je droombaan"; map["Onboarding.Welcome.DreamLead"] = english ? "Where do you want to go?" : "Waar wil je naartoe?"; map["Onboarding.Welcome.TestsLead"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Welcome.Time2"] = "2 min"; map["Onboarding.Welcome.Time1"] = "1 min"; map["Onboarding.Welcome.TimeHalf"] = "½ min";
+        map["Onboarding.IllustratedSidebarTitle"] = english ? "Tip for this step" : "Tip bij deze stap";
+        map["Onboarding.IllustratedSidebar.SubstepsAria"] = english ? "Steps in this onboarding flow" : "Stappen in deze onboarding";
+        map["Onboarding.IllustratedSidebar.Step1"] = english ? "We only use your address for travel time. Employers never see your home address." : "Je adres gebruiken we alleen voor reistijd. Werkgevers zien je woonadres niet.";
+        map["Onboarding.IllustratedSidebar.Step2"] = english ? "Pick what fits now. You can fine-tune days and hours later." : "Kies wat nu bij je past. Dagen en uren kun je later nog finetunen.";
+        map["Onboarding.IllustratedSidebar.Step3"] = english ? "We match jobs you can actually reach with how you travel." : "We tonen banen die passen bij hoe jij reist en hoe ver je wilt.";
+        map["Onboarding.IllustratedSidebar.Step4"] = english ? "Side jobs, volunteering and internships count too. Skip if you prefer." : "Bijbaan, vrijwilligerswerk en stage tellen ook. Overslaan mag.";
+        map["Onboarding.IllustratedSidebar.Step5"] = english ? "Your highest finished level is enough. Direction is optional." : "Je hoogste afgeronde niveau is genoeg. Richting is optioneel.";
+        map["Onboarding.IllustratedSidebar.Step6"] = english ? "Dream big. In Career we shape a route, even if you are not sure yet." : "Denk groot. In Carrière maken we er een route naartoe, ook als je het nog niet weet.";
+        map["Onboarding.Step6.Suggest.FitTitle"] = english ? "Fits you" : "Past bij jou";
+        map["Onboarding.Step6.Suggest.RegionalTitle"] = english ? "Popular near you" : "Populair in de buurt";
+        map["Onboarding.Step6.Suggest.ReasonProfile"] = english ? "Based on your background so far" : "Op basis van wat je tot nu toe invulde";
+        map["Onboarding.Step6.Suggest.ReasonPopular"] = english ? "Often chosen in the region" : "Vaak gekozen in de regio";
         map["Onboarding.Phase.OverJou"] = english ? "About you" : "Over jou"; map["Onboarding.Phase.Achtergrond"] = english ? "Background" : "Achtergrond"; map["Onboarding.Phase.Droom"] = english ? "Dream" : "Droom"; map["Onboarding.Phase.WieBenJij"] = english ? "Who are you" : "Wie ben jij";
         map["Onboarding.Side.OverJou"] = english ? "3 steps" : "3 stappen"; map["Onboarding.Side.Achtergrond"] = english ? "optional" : "optioneel"; map["Onboarding.Side.Droom"] = english ? "1 step" : "1 stap"; map["Onboarding.Side.WieBenJij"] = english ? "4 short tests" : "4 korte tests"; map["Onboarding.Side.Kompas"] = english ? "Your Compass" : "Jouw Kompas"; map["Onboarding.Side.KompasLead"] = english ? "ready soon" : "bijna klaar";
         AddPresets(map, english);
@@ -260,7 +287,12 @@ internal static class UiStringsOnboardingV2
         AddDreamJobs(map, language);
     }
 
-    private static void PatchFinaleV2(Dictionary<string, string> nl, Dictionary<string, string> en)
+    private static void PatchFinaleV2(
+        Dictionary<string, string> nl,
+        Dictionary<string, string> en,
+        Dictionary<string, string> pl,
+        Dictionary<string, string> ro,
+        Dictionary<string, string> ar)
     {
         nl["Onboarding.FinaleV2.Badge"] = "Onboarding en tests afgerond";
         en["Onboarding.FinaleV2.Badge"] = "Onboarding and tests completed";
@@ -341,6 +373,14 @@ internal static class UiStringsOnboardingV2
         Do("Onboarding.FinaleV2.Soon.Notifications.Body", "Een seintje zodra er een baan bijkomt die bij je past.", "A nudge when a job appears that fits you.");
         Do("Onboarding.FinaleV2.Soon.Employers.Title", "Werkgevers vinden jou", "Employers find you");
         Do("Onboarding.FinaleV2.Soon.Employers.Body", "Werkgevers zien je profiel anoniem en nodigen je zelf uit.", "Employers see your profile anonymously and invite you.");
+
+        foreach (var key in en.Keys.Where(k => k.StartsWith("Onboarding.FinaleV2.", StringComparison.Ordinal)))
+        {
+            var enText = en[key];
+            pl.TryAdd(key, enText);
+            ro.TryAdd(key, enText);
+            ar.TryAdd(key, enText);
+        }
     }
 
     private static void AddWorkStatuses(Dictionary<string, string> map, bool english)

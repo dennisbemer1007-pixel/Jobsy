@@ -174,6 +174,7 @@ public class CandidateProfileResetTests
 
         var resetCoverage = new[]
         {
+            typeof(AfterMatchReminderPreference),
             typeof(AmbassadeurProfile),
             typeof(Application),
             typeof(AssessmentResearchAttempt),
@@ -199,9 +200,12 @@ public class CandidateProfileResetTests
             typeof(ReferenceConfirmation),
             typeof(ReferenceConfirmationConsentLog),
             typeof(ReferenceMisuseReport),
+            typeof(WorkExperienceReferenceRequest),
             typeof(CandidateRoleFitCheck),
             typeof(CandidateTestReflection),
             typeof(CandidateUploadedCv),
+            typeof(CandidateUwvAdviseurShare),
+            typeof(CandidateUwvToolkitState),
             typeof(CandidateVacancyCultureFit),
             typeof(CandidateValuesProfile),
             typeof(CandidateWhoAmIProfile),
@@ -210,6 +214,7 @@ public class CandidateProfileResetTests
             typeof(CandidatePrivatePreferences),
             typeof(DeepAnalysisCheckout),
             typeof(DeviceLoginHandoff),
+            typeof(InterviewReminder),
             typeof(LocalAuthCredential),
             typeof(MfaTrustedDevice),
             typeof(OneTimeLink),
@@ -234,7 +239,9 @@ public class CandidateProfileResetTests
             typeof(VacancyLike),
             typeof(VacancySearchImpression),
             typeof(VacancyShare),
-            typeof(WebPushSubscription)
+            typeof(WebPushSubscription),
+            typeof(WorkInitiative),
+            typeof(WorkInitiativeDraft)
         }
         .OrderBy(type => type.Name)
         .ToArray();

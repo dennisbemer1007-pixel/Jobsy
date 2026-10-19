@@ -1,0 +1,16 @@
+@namespace Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+
+<CandidateIllustratedHero Title="@Title"
+                          ArtUrl="@TestBlockArt.HeroFigurePathForSlug(Slug)"
+                          ArtUrlDesktop="@TestBlockArt.HeroFigurePathForSlug(Slug)"
+                          ArtUrlMobileFigures="@TestBlockArt.HeroMobileCompositePathForSlug(Slug)"
+                          ArtPosition="72% center"
+                          ArtPositionDesktop="88% center"
+                          CssClass="cand-hero--test-compact cand-hero--profession-band cand-hero--with-art" />
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Slug { get; set; } = TestBlockArt.SlugForFamily(TestBlockFamily.HoeJeWerkt);
+}

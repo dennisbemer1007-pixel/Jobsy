@@ -175,8 +175,44 @@ public class PlatformFeatureSettings
     /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
     public bool KandidatenkaartEnabled { get; set; }
 
+    /// <summary>Bedrijvenkaart and open-application initiative flows. Default true.</summary>
+    public bool CompanyMapInitiativeEnabled { get; set; } = true;
+
+    /// <summary>Na de match: gesprek plannen en berichten. Default false.</summary>
+    public bool AfterMatchEnabled { get; set; }
+
+    /// <summary>Work-experience reference verification for candidates. Default false.</summary>
+    public bool ReferenceVerificationEnabled { get; set; }
+
+    /// <summary>Gevoelige werkervaring: Alleen voor mij, neutrale titels, andere periode. Default false.</summary>
+    public bool SensitiveExperienceEnabled { get; set; }
+
     /// <summary>Partner workshops/opleidingen (Carrière leren, Paspoort groeien). Default false.</summary>
     public bool TrainingPartnersEnabled { get; set; }
+
+    /// <summary>UWV werkmap flows for candidates. Default false.</summary>
+    public bool UwvFeaturesEnabled { get; set; }
+
+    /// <summary>Illustrated consent step in onboarding test journey. Default false.</summary>
+    public bool TestJourneyIllustrationEnabled { get; set; }
+
+    /// <summary>Onboarding finale v2 cards layout. Default false.</summary>
+    public bool OnboardingFinaleV2Enabled { get; set; }
+
+    /// <summary>Dag-in-het-leven links on occupation detail. Default true.</summary>
+    public bool OccupationDayInLifeEnabled { get; set; } = true;
+
+    /// <summary>Antwoorden wijzigen on completed tests. Default false.</summary>
+    public bool TestEditModeEnabled { get; set; }
+
+    /// <summary>Voorbeeld-PDF on test result pages. Default false.</summary>
+    public bool SamplePdfEnabled { get; set; }
+
+    /// <summary>Progressive test depth mockup (mini-spiegel, unlock cards). Default true.</summary>
+    public bool TestDepthValueMockupEnabled { get; set; } = true;
+
+    /// <summary>JSON array of flag keys explicitly overridden by admin (over env default).</summary>
+    public string AdminFlagOverridesJson { get; set; } = "[]";
 
     /// <summary>Max authenticated apply POSTs per candidate per minute (anti-bot). Default 5.</summary>
     public int CandidateApplyPerMinuteLimit { get; set; } = CandidateApplyRateLimitRules.DefaultPerMinute;

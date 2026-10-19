@@ -218,7 +218,7 @@ public class AdminRun4UiTests : BunitContext
     public void Mobile_topbar_css_stays_transparent_and_hides_the_label_under_480()
     {
         var css = File.ReadAllText(Path.Combine(FindRoot(), "Jobsy.Web/wwwroot/css/features/admin.css"));
-        var marker = css.IndexOf(".admin-topbar__menu,\n    .admin-topbar__search-trigger {\n        display: inline-flex;\n        flex-shrink: 0;\n        background: transparent;", StringComparison.Ordinal);
+        var marker = css.IndexOf(".admin-topbar__menu,\n    .admin-topbar__search-trigger {\n        display: inline-flex;\n        flex-shrink: 0;\n        background:transparent;", StringComparison.Ordinal);
         Assert.True(marker > 0, "Mobile menu button is not transparent.");
         var block = css[marker..css.IndexOf("@media (min-width: 480px)", marker, StringComparison.Ordinal)];
         Assert.Contains("display: none;", block, StringComparison.Ordinal);

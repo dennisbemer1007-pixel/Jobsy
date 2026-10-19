@@ -56,6 +56,7 @@ public class CompanyPageLayoutTests : BunitContext
     private readonly DefaultHttpContext _http = new();
     private readonly AmbientCultureScope _culture = new();
     private HttpStatusCode _companyStatus = HttpStatusCode.OK;
+    private HttpStatusCode _initiativeStatus = HttpStatusCode.NotFound;
 
     public CompanyPageLayoutTests()
     {
@@ -65,6 +66,7 @@ public class CompanyPageLayoutTests : BunitContext
         Services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = _http });
         Services.AddSingleton(new JobsyApiClient(new HttpClient(new CompanyHandler(
             () => _companyStatus,
+            () => _initiativeStatus,
             () => _companyJson,
             () => _vacanciesJson))
         {
@@ -112,7 +114,7 @@ public class CompanyPageLayoutTests : BunitContext
     {
         var source = PageSource;
 
-        Assert.Contains("@layout PublicLayout", source, StringComparison.Ordinal);
+        Assert.Contains("@layout MainLayout", source, StringComparison.Ordinal);
         Assert.DoesNotContain("jobsy-chrome", source, StringComparison.Ordinal);
         Assert.DoesNotContain("<LanguageSelector", source, StringComparison.Ordinal);
         Assert.DoesNotContain("<AuthHeader", source, StringComparison.Ordinal);
@@ -254,6 +256,18 @@ public class CompanyPageLayoutTests : BunitContext
         Assert.False(Services.GetRequiredService<PageSeoContext>().Current?.Indexable);
     }
 
+    [Fact]
+    public void A_logged_in_candidate_still_sees_the_company_when_initiative_profile_is_missing()
+    {
+        _initiativeStatus = HttpStatusCode.NotFound;
+        Services.AddSingleton<AuthenticationStateProvider>(new CandidateAuth());
+        var cut = Render();
+
+        Assert.Equal((int)HttpStatusCode.OK, _http.Response.StatusCode);
+        Assert.Contains("Bakkerij De Gouden Korrel", cut.Markup, StringComparison.Ordinal);
+        Assert.DoesNotContain("StatusPageContent", cut.Markup, StringComparison.Ordinal);
+    }
+
     private sealed class AnonymousAuth : AuthenticationStateProvider
     {
         public override Task<AuthenticationState> GetAuthenticationStateAsync()
@@ -261,8 +275,23 @@ public class CompanyPageLayoutTests : BunitContext
                 new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity())));
     }
 
+    private sealed class CandidateAuth : AuthenticationStateProvider
+    {
+        public override Task<AuthenticationState> GetAuthenticationStateAsync()
+        {
+            var id = new System.Security.Claims.ClaimsIdentity(
+                [
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Candidate")
+                ],
+                "test");
+            return Task.FromResult(new AuthenticationState(new System.Security.Claims.ClaimsPrincipal(id)));
+        }
+    }
+
     internal sealed class CompanyHandler(
         Func<HttpStatusCode> companyStatus,
+        Func<HttpStatusCode> initiativeStatus,
         Func<string> companyJson,
         Func<string> vacanciesJson) : HttpMessageHandler
     {
@@ -278,6 +307,14 @@ public class CompanyPageLayoutTests : BunitContext
             if (path.Contains("/engagement", StringComparison.Ordinal))
             {
                 return Task.FromResult(Json("[]"));
+            }
+
+            if (path.Contains("/company-map-initiative/", StringComparison.Ordinal))
+            {
+                var initiativeCode = initiativeStatus();
+                return Task.FromResult(initiativeCode == HttpStatusCode.OK
+                    ? Json("{}")
+                    : new HttpResponseMessage(initiativeCode) { Content = new StringContent("") });
             }
 
             var status = companyStatus();

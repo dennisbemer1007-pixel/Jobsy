@@ -6,7 +6,10 @@
    HTTP — first pins do not wait on the Blazor circuit. *@
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @inherits CultureAwareComponentBase
+@using Jobsy.Web.Components.Bedrijvenkaart
 
 <PageTitle>@Culture["Page.JobMapTitle"]</PageTitle>
+
+<BanenkaartCompanyMapToggle />
 
 <VacancyDiscovery />

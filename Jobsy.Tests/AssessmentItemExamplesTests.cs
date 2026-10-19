@@ -21,6 +21,10 @@ public sealed class AssessmentItemExamplesTests
             Assert.True(en.Length <= AssessmentItemExamples.MaxLength, $"en {kind}#{id} length {en.Length}");
             Assert.Contains("Voorbeeld", nl, StringComparison.OrdinalIgnoreCase);
             Assert.Contains("Example", en, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("Zo reageer jij meestal", nl, StringComparison.Ordinal);
+            Assert.DoesNotContain("how you usually react when it counts", en, StringComparison.OrdinalIgnoreCase);
+            Assert.True(nl.TrimEnd().EndsWith('.') || nl.TrimEnd().EndsWith('?'), $"nl {kind}#{id}: {nl}");
+            Assert.True(en.TrimEnd().EndsWith('.') || en.TrimEnd().EndsWith('?'), $"en {kind}#{id}: {en}");
         }
     }
 

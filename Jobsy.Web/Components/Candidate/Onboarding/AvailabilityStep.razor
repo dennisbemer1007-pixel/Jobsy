@@ -4,10 +4,13 @@
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
+@if (!Illustrated)
+{
 <h1 tabindex="-1">@Culture["Onboarding.Step2.Title"]</h1>
 <p class="ob-wizard__lead">@Culture["Onboarding.Step2.Lead"]</p>
+}
 
-<div class="ob-wizard__card">
+<div class="ob-wizard__card @(Illustrated ? "ob-wizard__card--illustrated" : null)">
 <section class="ob-wizard__section" id="onboarding-field-availability-presets" aria-labelledby="ob-avail-presets">
     <h2 id="ob-avail-presets" class="ob-wizard__section-title">@Culture["Onboarding.AvailabilityPresetsLegend"]</h2>
     <p class="ob-wizard__hint ob-wizard__section-hint">@Culture["Onboarding.AvailabilityPresetsHint"]</p>
@@ -136,6 +139,7 @@
     [Parameter] public EventCallback<string> ToggleAvailability { get; set; }
     [Parameter] public EventCallback ResetPresets { get; set; }
     [Parameter] public bool ShowValidation { get; set; }
+    [Parameter] public bool Illustrated { get; set; }
 
     private bool CustomMode => Draft.Presets.Contains(AvailabilityPresetRules.Custom);
     private bool ShowMatrix => CustomMode || Draft.FineTune;

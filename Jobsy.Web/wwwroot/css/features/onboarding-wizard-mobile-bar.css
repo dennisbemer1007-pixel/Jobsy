@@ -80,3 +80,16 @@
     justify-content: center;
     box-sizing: border-box;
   }}
+
+/* Sticky wizard footer must not swallow clicks on the scrollable form above it. */
+footer.ob-wizard__footer[data-sticky-footer],
+footer.test-flow__footer[data-sticky-footer] {
+  pointer-events: none;
+}
+
+footer.ob-wizard__footer[data-sticky-footer] a,
+footer.ob-wizard__footer[data-sticky-footer] button,
+footer.test-flow__footer[data-sticky-footer] a,
+footer.test-flow__footer[data-sticky-footer] button {
+  pointer-events: auto;
+}

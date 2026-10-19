@@ -230,7 +230,7 @@ public static class PupilPassportCopy
         d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Sub"] = "techniek · kort kijken";
         d["LeerlingPassport.Vo.SideJob.techniek-werkplaats.Why"] = "Om te zien hoe monteurs of makers werken — vaak met begeleiding.";
         d["LeerlingPassport.Vo.SideJob.horeca-help.Title"] = "Hulp in de horeca";
-        d["LeerlingPassport.Vo.SideJob.horeca-help.Sub"] = "avond · vanaf 16 jaar";
+        d["LeerlingPassport.Vo.SideJob.horeca-help.Sub"] = "avond · vanaf 16 jaar (13–15: niet 's avonds)";
         d["LeerlingPassport.Vo.SideJob.horeca-help.Why"] = "Past bij koken en contact — vaak in de avond, let op schooltijden.";
         d["LeerlingPassport.Vo.SideJob.zorg-thuis.Title"] = "Hulp bij thuiszorg (indirect)";
         d["LeerlingPassport.Vo.SideJob.zorg-thuis.Sub"] = "zorg · 16+";

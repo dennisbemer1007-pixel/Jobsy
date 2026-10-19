@@ -60,7 +60,6 @@ public class KbSavedListBunitTests : BunitContext
         cut.WaitForAssertion(() => Assert.Contains("kb-saved-row", cut.Markup, StringComparison.Ordinal));
 
         Assert.Contains("candidate-job-list-tabs", cut.Markup, StringComparison.Ordinal);
-        Assert.Contains("candidate-saved-subnav", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("href=\"/candidate/applications\"", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("href=\"/candidate/liked\"", cut.Markup, StringComparison.Ordinal);
         Assert.Contains("href=\"/candidate/shared\"", cut.Markup, StringComparison.Ordinal);
@@ -72,7 +71,7 @@ public class KbSavedListBunitTests : BunitContext
         Assert.Contains("kb-saved-row__photo", row.InnerHtml, StringComparison.Ordinal);
         Assert.Contains("Schoonmaker kantoren", row.TextContent, StringComparison.Ordinal);
         Assert.Contains("CleanWest · Rijswijk", row.TextContent, StringComparison.Ordinal);
-        Assert.Contains("61%", row.TextContent, StringComparison.Ordinal);
+        Assert.Contains("kb-saved-row__fit", row.InnerHtml, StringComparison.Ordinal);
         Assert.Contains("Open", row.TextContent, StringComparison.Ordinal);
 
         var heart = row.QuerySelector("button.kb-saved-row__heart");

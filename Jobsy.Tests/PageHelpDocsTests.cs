@@ -8,12 +8,22 @@ public class PageHelpDocsTests
     [InlineData("/")]
     [InlineData("/banen")]
     [InlineData("/banen/")]
-    [InlineData("/banenkaart")]
-    [InlineData("/banenkaart/")]
-    public void Banenkaart_paths_are_excluded(string path)
+    public void Marketing_map_entry_paths_are_excluded(string path)
     {
         Assert.True(PageHelpDocs.IsExcludedPath(path));
         Assert.Null(PageHelpDocs.TryGet(path));
+    }
+
+    [Theory]
+    [InlineData("/banenkaart", "Banenkaart")]
+    [InlineData("/banenkaart/", "Banenkaart")]
+    [InlineData("/bedrijvenkaart", "Bedrijvenkaart")]
+    public void Map_paths_have_page_help(string path, string title)
+    {
+        Assert.False(PageHelpDocs.IsExcludedPath(path));
+        var doc = PageHelpDocs.TryGet(path);
+        Assert.NotNull(doc);
+        Assert.Equal(title, doc!.Title);
     }
 
     [Theory]

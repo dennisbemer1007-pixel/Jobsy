@@ -8,8 +8,12 @@
 @inject CultureState Culture
 
 <TestBlockBackground Slug="@EffectiveBlockSlug" Enabled="@ShowBlockStage">
-    <div class="test-shell @(Deep ? "test-shell--deep" : null)" data-mode="@Mode">
-        <div class="test-shell__layout">
+    @if (ShowBlockStage && Mode == ShellMode.Question)
+    {
+        <TestQuestionCompactHeader Title="@H1" Slug="@EffectiveBlockSlug" />
+    }
+    <div class="test-shell @(Deep ? "test-shell--deep" : null) @(ShowBlockStage && Mode == ShellMode.Question ? "test-shell--block-compact" : null)" data-mode="@Mode">
+        <div class="test-shell__layout @(HasInsightSidePanel ? "test-shell__layout--insight" : null)">
             <div class="test-shell__main">
                 @if (ShowDepthSegments)
                 {
@@ -26,19 +30,6 @@
                         @RailContent
                     </aside>
                 }
-                @if (ShowBlockStage && Mode == ShellMode.Question)
-                {
-                    <TestBlockMobileHero>
-                        @if (EffectiveBlockSlug == "hoe-je-werkt")
-                        {
-                            <h1 tabindex="-1">@((MarkupString)Culture["Discovery.Test.Competency.MobileTitle"])</h1>
-                        }
-                        else
-                        {
-                            <h1 tabindex="-1">@H1</h1>
-                        }
-                    </TestBlockMobileHero>
-                }
                 <div class="test-shell__card">
                     <div class="test-shell__head">
                         <p class="test-shell__eyebrow">@EyebrowText</p>
@@ -51,11 +42,7 @@
                     {
                         <div class="test-done__shard" aria-hidden="true"></div>
                     }
-                    @if (ShowBlockStage && Mode == ShellMode.Question)
-                    {
-                        <h1 class="test-shell__heading test-shell__heading--desktop" tabindex="-1">@H1</h1>
-                    }
-                    else
+                    @if (!ShowBlockStage || Mode != ShellMode.Question)
                     {
                         <h1 tabindex="-1">@H1</h1>
                     }
@@ -70,30 +57,25 @@
                     }
                 </div>
             </div>
-            @if (ShowScene)
+            @if (HasInsightSidePanel)
             {
-                <div class="test-shell__scene @(HasInsightSidePanel ? "test-shell__scene--panel" : null)" aria-hidden="@(HasInsightSidePanel ? null : "true")">
-                    @if (HasInsightSidePanel)
-                    {
-                        @SidePanel
-                        @if (ShowBlockStage)
-                        {
-                            <div class="test-block-stage__scene-band" aria-hidden="true"></div>
-                        }
-                    }
-                    else
-                    {
-                        <TestDiveScene Kind="Kind"
-                                       Answered="Answered"
-                                       Target="TargetCount"
-                                       Deep="Deep"
-                                       Mobile="false"
-                                       Celebrate="@(Mode == ShellMode.Done)"
-                                       FallingShard="@(Mode == ShellMode.Done)"
-                                       PlatesShed="PlatesShed"
-                                       NewShell="NewShell"
-                                       BubbleText="@BubbleText" />
-                    }
+                <aside class="test-shell__insight" aria-label="@Culture["TestFlow.Rail.Aria"]">
+                    @SidePanel
+                </aside>
+            }
+            else if (ShowLegacyScene)
+            {
+                <div class="test-shell__scene" aria-hidden="true">
+                    <TestDiveScene Kind="Kind"
+                                   Answered="Answered"
+                                   Target="TargetCount"
+                                   Deep="Deep"
+                                   Mobile="false"
+                                   Celebrate="@(Mode == ShellMode.Done)"
+                                   FallingShard="@(Mode == ShellMode.Done)"
+                                   PlatesShed="PlatesShed"
+                                   NewShell="NewShell"
+                                   BubbleText="@BubbleText" />
                 </div>
             }
         </div>
@@ -137,9 +119,9 @@
         ? TestBlockArt.SlugForAssessment(Kind)
         : BlockArtSlug;
 
-    private bool ShowScene => Mode switch
+    private bool ShowLegacyScene => !ShowBlockStage && Mode switch
     {
-        ShellMode.Question => Deep || HasInsightSidePanel,
+        ShellMode.Question => Deep,
         ShellMode.Intro or ShellMode.Done or ShellMode.Offer or ShellMode.Pause or ShellMode.Checkout => true,
         _ => false
     };

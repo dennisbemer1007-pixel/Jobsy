@@ -1,26 +1,34 @@
 @namespace Jobsy.Web.Components
 @using Jobsy.Core.Localization
+@using Jobsy.Web.Media
 @inherits CultureAwareComponentBase
 @inject JobsyApiClient Api
 
 @if (IsOpen && Vacancy is not null)
 {
     <div class="share-modal-backdrop lobsy-dialog-backdrop" @onclick="Close"></div>
-    <div class="mock-interview-modal lobsy-dialog" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
-        <div class="share-modal__header">
+    <div class="mock-interview-modal mock-interview-modal--warm lobsy-dialog" role="dialog" aria-modal="true" aria-labelledby="mock-interview-title" tabindex="-1" @onkeydown="OnModalKeyDown">
+        <header class="mock-interview-modal__header">
             <div class="mock-interview-modal__brand">
-                <LobsyCoachAvatar Class="mock-interview-modal__avatar" Language="@Culture.Language" Alt="De vrolijke kreeft van Lobsy" />
+                <img class="mock-interview-modal__avatar"
+                     src="@BrandImages.MarkSvg"
+                     alt=""
+                     width="40"
+                     height="40"
+                     decoding="async" />
                 <div>
                     <h2 id="mock-interview-title">@Culture["MockInterview.Title"]</h2>
-                    <p class="share-modal__lead lobsy-dialog__lead">@Vacancy.Title · @Vacancy.CompanyName</p>
+                    <p class="mock-interview-modal__lead">@Culture["Assistant.SubtitleWarm"]</p>
+                    <p class="mock-interview-modal__vacancy">@Vacancy.Title · @Vacancy.CompanyName</p>
                 </div>
             </div>
-            <button type="button" class="share-modal__close" @onclick="Close" aria-label="@Culture["MockInterview.Close"]">×</button>
-        </div>
+            <button type="button" class="mock-interview-modal__close" @onclick="Close" aria-label="@Culture["MockInterview.Close"]">×</button>
+        </header>
 
+        <div class="mock-interview-modal__scroll">
         <p class="mock-interview-modal__disclaimer">
-            @Culture["MockInterview.Disclaimer"]
-            <a class="auth-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["MockInterview.DisclaimerLink"]</a>
+            <span class="mock-interview-modal__disclaimer-lead">@Culture["MockInterview.Disclaimer"]</span>
+            <a class="auth-link mock-interview-modal__disclaimer-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["MockInterview.DisclaimerLink"]</a>
         </p>
 
         @if (_started && !_busy)
@@ -40,18 +48,31 @@
                     @if (msg.Role == "assistant")
                     {
                         <div class="mock-interview-bubble__head">
-                            <LobsyCoachAvatar Class="mock-interview-bubble__avatar" Language="@Culture.Language" Alt="" Animate="false" />
-                            <span class="mock-interview-bubble__role">@Culture["MockInterview.Coach"]</span>
+                            <img class="mock-interview-bubble__avatar" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
+                            <span class="mock-interview-bubble__role">@Culture["Assistant.BotName"]</span>
                         </div>
-                        @foreach (var block in ParseCoachBlocks(msg.Content))
+                        var coachBlocks = ParseCoachBlocks(msg.Content)
+                            .Where(b => !string.IsNullOrWhiteSpace(b.Text))
+                            .ToList();
+                        if (coachBlocks.Count == 0)
                         {
-                            <div class="mock-interview-block mock-interview-block--@block.Kind">
-                                @if (!string.IsNullOrEmpty(block.Label))
-                                {
-                                    <span class="mock-interview-block__label">@block.Label</span>
-                                }
-                                <p>@block.Text</p>
+                            <div class="mock-interview-block mock-interview-block--question">
+                                <span class="mock-interview-block__label">@Culture["MockInterview.LabelQuestion"]</span>
+                                <p>@(string.IsNullOrWhiteSpace(msg.Content) ? Culture["MockInterview.Empty"] : msg.Content.Trim())</p>
                             </div>
+                        }
+                        else
+                        {
+                            foreach (var block in coachBlocks)
+                            {
+                                <div class="mock-interview-block mock-interview-block--@block.Kind">
+                                    @if (!string.IsNullOrEmpty(block.Label))
+                                    {
+                                        <span class="mock-interview-block__label">@block.Label</span>
+                                    }
+                                    <p>@block.Text</p>
+                                </div>
+                            }
                         }
                         <ReadAloudButton Text="@SpeakableCoachText(msg.Content)" SpeechKey="@($"coach-{i}")" />
                     }
@@ -66,10 +87,16 @@
             {
                 <div class="mock-interview-bubble mock-interview-bubble--assistant mock-interview-bubble--typing">
                     <div class="mock-interview-bubble__head">
-                        <LobsyCoachAvatar Class="mock-interview-bubble__avatar" Language="@Culture.Language" Alt="" Animate="false" />
-                        <span class="mock-interview-bubble__role">@Culture["MockInterview.Coach"]</span>
+                        <img class="mock-interview-bubble__avatar" src="@BrandImages.MarkSvg" alt="" width="32" height="32" decoding="async" />
+                        <span class="mock-interview-bubble__role">@Culture["Assistant.BotName"]</span>
                     </div>
                     <p>@Culture["MockInterview.Typing"]</p>
+                </div>
+            }
+            @if (_started && !_busy)
+            {
+                <div class="mock-interview__chips">
+                    <span class="mock-interview__chip" role="note">@CurrentHint</span>
                 </div>
             }
         </div>
@@ -78,26 +105,24 @@
         {
             <p class="state-message error">@_error</p>
         }
-
-        @if (_started && !_busy)
-        {
-            <p class="mock-interview-hint">@CurrentHint</p>
-        }
+        </div>
 
         <form class="mock-interview-compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
             <label class="visually-hidden" for="mock-interview-input">@Culture["MockInterview.InputLabel"]</label>
-            <textarea id="mock-interview-input"
-                      rows="3"
-                      maxlength="2000"
-                      placeholder="@Culture["MockInterview.Placeholder"]"
-                      disabled="@(_busy || !_started)"
-                      @bind="_draft"
-                      @bind:event="oninput"></textarea>
-            <div class="mock-interview-compose__actions">
-                <button type="button" class="engagement-btn" disabled="@_busy" @onclick="RestartAsync">@Culture["MockInterview.Restart"]</button>
-                <button type="submit" class="login-submit" disabled="@(_busy || !_started || string.IsNullOrWhiteSpace(_draft))">
-                    @Culture["MockInterview.Send"]
+            <div class="mock-interview-compose__row">
+                <textarea id="mock-interview-input"
+                          rows="3"
+                          maxlength="2000"
+                          placeholder="@Culture["MockInterview.PlaceholderWarm"]"
+                          disabled="@(_busy || !_started)"
+                          @bind="_draft"
+                          @bind:event="oninput"></textarea>
+                <button type="submit" class="mock-interview-compose__send" disabled="@(_busy || !_started || string.IsNullOrWhiteSpace(_draft))" aria-label="@Culture["MockInterview.Send"]">
+                    <span aria-hidden="true">→</span>
                 </button>
+            </div>
+            <div class="mock-interview-compose__foot">
+                <button type="button" class="mock-interview-compose__restart" disabled="@_busy" @onclick="RestartAsync">@Culture["MockInterview.Restart"]</button>
             </div>
         </form>
     </div>
@@ -209,7 +234,8 @@
         try
         {
             var reply = await Api.ContinueMockInterviewAsync(Vacancy.Id, []);
-            _messages.Add(new MockInterviewChatMessage("assistant", reply.Reply));
+            var opening = string.IsNullOrWhiteSpace(reply.Reply) ? Culture["MockInterview.Empty"] : reply.Reply.Trim();
+            _messages.Add(new MockInterviewChatMessage("assistant", opening));
             _started = true;
         }
         catch (Exception ex)
