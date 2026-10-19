@@ -29,10 +29,13 @@
             <ScoreRadarChart AriaLabel="@Culture["Deep.Competence.RadarLabel"]"
                              Labels="@_traitLabels"
                              Values="@_traitScores"
-                             NormValues="@_traitNorms"
-                             NormLegendLabel="@Culture["Deep.Competence.AverageLegend"]" />
+                             NormValues="@(CandidateWordsOnly ? null : _traitNorms)"
+                             NormLegendLabel="@Culture["Deep.Competence.AverageLegend"]"
+                             HideNumericScores="CandidateWordsOnly" />
         </section>
 
+        @if (!CandidateWordsOnly)
+        {
         <section class="competence-report__section">
             <h2 class="test-detail__section-title">@Culture["Deep.Competence.CompareTitle"]</h2>
             <ul class="competence-norm-bars" aria-label="@Culture["Deep.Competence.CompareTitle"]">
@@ -74,6 +77,7 @@
                 <p class="competence-norm-source muted">@Report.NormSourceLine</p>
             }
         </section>
+        }
 
         <section class="competence-report__section">
             <h2 class="test-detail__section-title">@Culture["Deep.Competence.DeeperTitle"]</h2>
@@ -93,6 +97,8 @@
             @if (SelectedTrait is { } selected)
             {
                 <div class="competence-trait-detail">
+                    @if (!CandidateWordsOnly)
+                    {
                     <ul class="competence-facet-bars" aria-label="@Culture.Format("Deep.Competence.FacetsLabel", selected.LabelNl)">
                         @foreach (var facet in selected.Facets)
                         {
@@ -111,6 +117,7 @@
                             </li>
                         }
                     </ul>
+                    }
 
                     <div class="competence-text-block">
                         <h3>@Culture["Deep.Competence.MeaningLabel"]</h3>
@@ -167,7 +174,7 @@
                         <li class="competence-occupation">
                             <div class="competence-occupation__row">
                                 <span class="competence-occupation__title">@occupation.Title</span>
-                                @if (ShowsMatch(occupation.Title))
+                                @if (!CandidateWordsOnly && ShowsMatch(occupation.Title))
                                 {
                                     <span class="competence-occupation__match">@Culture.Format("Deep.Competence.MatchPercent", CareerCompassBuilder.FormatPercent(occupation.MatchPercent, Culture.Language))</span>
                                 }
@@ -209,6 +216,7 @@
     [Parameter] public DateTime? CompletedAtUtc { get; set; }
     [Parameter] public int QuestionCount { get; set; } = 150;
     [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool CandidateWordsOnly { get; set; }
     [Parameter] public EventCallback OnDownloadPdf { get; set; }
 
     private static bool ShowsMatch(string? title)

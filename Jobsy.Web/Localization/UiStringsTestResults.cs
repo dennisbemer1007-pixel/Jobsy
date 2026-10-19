@@ -99,7 +99,28 @@ internal static class UiStringsTestResults
         ["TestResult.Sample.LabelB"] = "Eigenschap B",
         ["TestResult.Sample.LabelC"] = "Eigenschap C",
         ["TestResult.Edit.FlagOff"] = "Antwoorden wijzigen volgt zodra de vragenlijst-fix op Acceptatie staat.",
-        ["TestResult.Limit.Dialog"] = "Je hebt het maximum van 3 aanpassingen bereikt. Wijzigen en opnieuw doen kan niet meer."
+        ["TestResult.Limit.Dialog"] = "Je hebt het maximum van 3 aanpassingen bereikt. Wijzigen en opnieuw doen kan niet meer.",
+        ["TestDepthValue.MiniMirror.Aria"] = "Eerste spiegel op basis van je antwoorden",
+        ["TestDepthValue.MiniMirror.Badge"] = "Mini-spiegel",
+        ["TestDepthValue.MiniMirror.Title"] = "Wat je antwoorden al laten zien",
+        ["TestDepthValue.MiniMirror.Lead"] = "In woorden, zonder cijfers. Hoe meer je antwoordt, hoe rijker dit wordt.",
+        ["TestDepthValue.ThemeBody"] = "Je {0}-kant komt al naar voren in je antwoorden.",
+        ["TestDepthValue.FreeMirrorLabel"] = "Gratis spiegel (25 vragen)",
+        ["TestDepthValue.Unlock.Aria"] = "Wat je nu hebt en wat de volgende stap oplevert",
+        ["TestDepthValue.Unlock.NowTitle"] = "Dit heb je nu",
+        ["TestDepthValue.Unlock.NextTitle"] = "Dit krijg je bij de volgende stap",
+        ["TestDepthValue.Unlock.NextHint"] = "Voorbeeld na {0}",
+        ["TestDepthValue.Unlock.NowBody.First"] = "Na een paar antwoorden zie je al een eerste thema in je mini-spiegel.",
+        ["TestDepthValue.Unlock.NowBody.Deeper"] = "Meerdere thema's en korte uitleg, rijker dan na vijf vragen.",
+        ["TestDepthValue.Unlock.NowBody.Full"] = "Je volledige Jouw spiegel met praktische voorbeelden.",
+        ["TestDepthValue.Unlock.NowLine.First1"] = "Eén thema in je mini-spiegel",
+        ["TestDepthValue.Unlock.NowLine.First2"] = "Status Bezig op je resultaatpagina",
+        ["TestDepthValue.Unlock.NowLine.Deeper1"] = "Twee tot drie thema's",
+        ["TestDepthValue.Unlock.NowLine.Deeper2"] = "Meer context per thema",
+        ["TestDepthValue.Unlock.NowLine.Deeper3"] = "Zichtbaar rijker dan na vijf vragen",
+        ["TestDepthValue.Unlock.NowLine.Full1"] = "Volledige Jouw spiegel",
+        ["TestDepthValue.Unlock.NowLine.Full2"] = "Praktijkvoorbeelden en energie-balans",
+        ["TestDepthValue.Unlock.NowLine.Full3"] = "Gratis na 25 vragen"
     };
 
     private static Dictionary<string, string> En() => new(StringComparer.OrdinalIgnoreCase)
@@ -176,7 +197,28 @@ internal static class UiStringsTestResults
         ["TestResult.Sample.LabelB"] = "Trait B",
         ["TestResult.Sample.LabelC"] = "Trait C",
         ["TestResult.Edit.FlagOff"] = "Edit answers will unlock once the questionnaire fix is on Acceptatie.",
-        ["TestResult.Limit.Dialog"] = "You've reached the maximum of 3 adjustments. Editing and retaking are no longer possible."
+        ["TestResult.Limit.Dialog"] = "You've reached the maximum of 3 adjustments. Editing and retaking are no longer possible.",
+        ["TestDepthValue.MiniMirror.Aria"] = "First mirror based on your answers",
+        ["TestDepthValue.MiniMirror.Badge"] = "Mini mirror",
+        ["TestDepthValue.MiniMirror.Title"] = "What your answers already show",
+        ["TestDepthValue.MiniMirror.Lead"] = "In words, no numbers. The more you answer, the richer this gets.",
+        ["TestDepthValue.ThemeBody"] = "Your {0} side already shows in your answers.",
+        ["TestDepthValue.FreeMirrorLabel"] = "Free mirror (25 questions)",
+        ["TestDepthValue.Unlock.Aria"] = "What you have now and what the next step unlocks",
+        ["TestDepthValue.Unlock.NowTitle"] = "What you have now",
+        ["TestDepthValue.Unlock.NextTitle"] = "What you get at the next step",
+        ["TestDepthValue.Unlock.NextHint"] = "Preview after {0}",
+        ["TestDepthValue.Unlock.NowBody.First"] = "After a few answers you already see one theme in your mini mirror.",
+        ["TestDepthValue.Unlock.NowBody.Deeper"] = "Multiple themes with short explanations, richer than after five questions.",
+        ["TestDepthValue.Unlock.NowBody.Full"] = "Your full Jouw spiegel with practical examples.",
+        ["TestDepthValue.Unlock.NowLine.First1"] = "One theme in your mini mirror",
+        ["TestDepthValue.Unlock.NowLine.First2"] = "In progress status on your result page",
+        ["TestDepthValue.Unlock.NowLine.Deeper1"] = "Two to three themes",
+        ["TestDepthValue.Unlock.NowLine.Deeper2"] = "More context per theme",
+        ["TestDepthValue.Unlock.NowLine.Deeper3"] = "Visibly richer than after five questions",
+        ["TestDepthValue.Unlock.NowLine.Full1"] = "Full Jouw spiegel",
+        ["TestDepthValue.Unlock.NowLine.Full2"] = "Practical examples and energy balance",
+        ["TestDepthValue.Unlock.NowLine.Full3"] = "Free after 25 questions"
     };
 
     private static Dictionary<string, string> Pl()

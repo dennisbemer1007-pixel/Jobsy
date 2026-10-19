@@ -45,6 +45,33 @@
         <p class="state-message">@Culture["Tests.Unknown"]</p>
         <a class="btn btn-primary" href="/candidate/profile?tab=tests">@Culture["Tests.BackToOverview"]</a>
     }
+    else if (_partialInsightPage)
+    {
+        <header class="test-detail__header">
+            <h1>@Culture[_def!.TitleKey]</h1>
+            <p class="test-detail__status-row">
+                <span class="test-status-badge test-status-badge--pending">
+                    <span aria-hidden="true">◐</span>
+                    @Culture["Test.Status.InProgress"]
+                </span>
+                <span class="muted">@Culture.Format("Tests.MetaFree", _def!.FreeQuestionCount, _def!.FreeMinutesApprox)</span>
+            </p>
+        </header>
+
+        <TestDepthValueUnlockCards Kind="_def!.Kind"
+                                   AnsweredCount="_competencyAnswered"
+                                   QuickScanVersion="_competencyQuickScanVersion" />
+
+        <TestDepthValueMiniMirror DomainCodes="_miniMirrorDomains"
+                                  Rich="_miniMirrorRich" />
+
+        <div class="test-detail__choices">
+            <a class="btn btn-primary" href="@_def!.FreeStartHref">
+                @Culture.Format("TestFlow.ContinueAt", Math.Max(1, _competencyAnswered + 1))
+            </a>
+            <a class="btn btn-ghost" href="/candidate/profile?tab=tests">@Culture["Tests.BackToOverview"]</a>
+        </div>
+    }
     else if (_freeDone || _deepCompleted)
     {
         @if (!string.IsNullOrWhiteSpace(_payError))
@@ -58,6 +85,10 @@
         @if (_mirror?.Mirror is not null)
         {
             <div class="test-mirror-page-shell">
+                @if (_depthMockupEnabled && _freeDone && !_deepCompleted)
+                {
+                    <p class="test-depth-value__free-label">@Culture["TestDepthValue.FreeMirrorLabel"]</p>
+                }
                 <TestResultDoneHeader CssClass="test-result-header--mirror-desktop"
                                       TitleKey="@_def.TitleKey"
                                       DeepCompleted="_deepCompleted"
@@ -90,6 +121,13 @@
                                                   OnRetake="@(() => _redoOpen = true)" />
                     </MetaAfterFeedback>
                 </TestMirrorReflection>
+
+                @if (_depthMockupEnabled && _competencyAnswered >= TestDepthRules.FirstCount)
+                {
+                    <TestDepthValueUnlockCards Kind="_def.Kind"
+                                               AnsweredCount="_competencyAnswered"
+                                               QuickScanVersion="_competencyQuickScanVersion" />
+                }
 
                 @if (!_deepCompleted)
                 {
@@ -130,7 +168,7 @@
             </article>
         }
 
-        @if (_scoreBars.Count > 0)
+        @if (!_depthMockupEnabled && _scoreBars.Count > 0)
         {
             @if (_mirror?.Mirror is not null)
             {
@@ -174,7 +212,7 @@
             }
         }
 
-        @if (_personalityBars.Count > 0)
+        @if (!_depthMockupEnabled && _personalityBars.Count > 0)
         {
             <h2 class="test-detail__section-title">@Culture["Tests.PersonalityScores"]</h2>
             <ul class="test-score-bars" aria-label="@Culture["Tests.PersonalityScores"]">
@@ -228,6 +266,7 @@
                                           CompletedAtUtc="@_deepState?.CompletedAtUtc"
                                           QuestionCount="@(_deepState?.QuestionCount ?? 150)"
                                           Busy="_busy"
+                                          CandidateWordsOnly="_depthMockupEnabled"
                                           OnDownloadPdf="DownloadPdfAsync" />
             }
             else if (_def.Kind == AssessmentKind.Career && _careerReport is not null)
@@ -254,7 +293,7 @@
                 </button>
             }
         }
-        else
+        else if (!(_depthMockupEnabled && _deepCompleted && _def.Kind == AssessmentKind.Competence))
         {
             @if (_deepUnlocked && !_deepCompleted && (_deepState?.AnsweredCount ?? 0) > 0)
             {
@@ -463,6 +502,12 @@
     private int _samplePdfTotalPages;
     private IReadOnlyList<string> _samplePdfPages = Array.Empty<string>();
     private TestReflectionState? _mirror;
+    private bool _depthMockupEnabled;
+    private int _competencyAnswered;
+    private int _competencyQuickScanVersion = AssessmentTestVersions.V1;
+    private IReadOnlyList<string> _miniMirrorDomains = [];
+    private bool _miniMirrorRich;
+    private bool _partialInsightPage;
 
     protected override void OnInitialized()
     {
@@ -565,6 +610,7 @@
             var flagSnap = await FeatureFlags.GetAsync();
             _editModeEnabled = flagSnap.TestEditModeEnabled;
             _samplePdfEnabled = flagSnap.SamplePdfEnabled;
+            _depthMockupEnabled = flagSnap.TestDepthValueMockupEnabled;
 
             var variant = _deepCompleted ? "deep" : "quick";
             _adjustments = await Api.GetAssessmentAdjustmentsAsync(_def.Key, variant)
@@ -608,6 +654,33 @@
             {
                 _mirror = null;
             }
+
+            _partialInsightPage = _def.Kind == AssessmentKind.Competence
+                                  && TestDepthValueInsight.ShowsPartialResultPage(
+                                      _depthMockupEnabled,
+                                      _def.Kind,
+                                      _competencyAnswered,
+                                      _freeDone,
+                                      _competencyQuickScanVersion);
+            if (_partialInsightPage)
+            {
+                var themeCount = TestDepthValueInsight.MiniThemeCount(_competencyAnswered, _competencyQuickScanVersion);
+                _miniMirrorRich = themeCount >= 3;
+                var scores = await Api.GetMyCompetenciesAsync();
+                var set = scores?.Scores ?? scores?.PreviewScores;
+                if (set is not null)
+                {
+                    _miniMirrorDomains = TestDepthValueInsight.TopCompetenceDomains(
+                        [
+                            (CompetencyTestCatalog.Samenwerken, set.Samenwerken),
+                            (CompetencyTestCatalog.Resultaatgerichtheid, set.Resultaatgerichtheid),
+                            (CompetencyTestCatalog.Stressbestendigheid, set.Stressbestendigheid),
+                            (CompetencyTestCatalog.Innovatie, set.Innovatie),
+                            (CompetencyTestCatalog.Extraversie, set.Extraversie)
+                        ],
+                        themeCount);
+                }
+            }
         }
         catch (Exception)
         {
@@ -636,8 +709,10 @@
     private async Task LoadCompetenceAsync()
     {
         var state = await Api.GetMyCompetenciesAsync();
+        _competencyAnswered = state?.AnsweredCount ?? 0;
+        _competencyQuickScanVersion = state?.QuickScanVersion ?? AssessmentTestVersions.V1;
         _freeDone = IsCompleted(state?.Status);
-        var scores = state?.Scores;
+        var scores = state?.Scores ?? state?.PreviewScores;
         if (scores is null)
         {
             return;

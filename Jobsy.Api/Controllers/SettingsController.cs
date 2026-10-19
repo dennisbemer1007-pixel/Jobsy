@@ -514,6 +514,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
                     ResearchConsentEnabled: request.ResearchConsentEnabled,
                     TestEditModeEnabled: request.TestEditModeEnabled,
                     SamplePdfEnabled: request.SamplePdfEnabled,
+                    TestDepthValueMockupEnabled: request.TestDepthValueMockupEnabled,
                     ClearAdminFlagOverrideKeys: request.ClearAdminFlagOverrideKeys,
                     CandidateApplyPerMinuteLimit: request.CandidateApplyPerMinuteLimit,
                     CandidateApplyPerHourLimit: request.CandidateApplyPerHourLimit,
@@ -674,7 +675,8 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             onboardingFinaleV2Enabled = snap.OnboardingFinaleV2Enabled,
             occupationDayInLifeEnabled = snap.OccupationDayInLifeEnabled,
             testEditModeEnabled = snap.TestEditModeEnabled,
-            samplePdfEnabled = snap.SamplePdfEnabled
+            samplePdfEnabled = snap.SamplePdfEnabled,
+            testDepthValueMockupEnabled = snap.TestDepthValueMockupEnabled
         });
     }
 
@@ -1006,6 +1008,7 @@ CandidateInsightsEnabled: request.CandidateInsightsEnabled,
             snap.ResearchConsentEnabled,
             snap.TestEditModeEnabled,
             snap.SamplePdfEnabled,
+            snap.TestDepthValueMockupEnabled,
             snap.AdminOverriddenFlagKeys,
             snap.CandidateApplyPerMinuteLimit,
             snap.CandidateApplyPerHourLimit,

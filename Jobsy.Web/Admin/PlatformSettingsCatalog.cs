@@ -769,6 +769,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("TestDepthValueMockupEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestDepthValueMockupEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.TestDepthValueMockupEnabled.Title",
+                DescriptionKey: "AdminSettings.TestDepthValueMockupEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestDepthValueMockupEnabled,
+                Write: v => new PlatformFeatureUpdate(TestDepthValueMockupEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "AuthenticatorEnabled",
             Group: GroupDemo,
@@ -870,6 +883,7 @@ public static class PlatformSettingsCatalog
         bool? researchConsentEnabled = null;
         bool? testEditModeEnabled = null;
         bool? samplePdfEnabled = null;
+        bool? testDepthValueMockupEnabled = null;
         IReadOnlyList<string>? clearAdminFlagOverrideKeys = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
@@ -993,6 +1007,11 @@ public static class PlatformSettingsCatalog
                 samplePdfEnabled = p.SamplePdfEnabled;
             }
 
+            if (p.TestDepthValueMockupEnabled is not null)
+            {
+                testDepthValueMockupEnabled = p.TestDepthValueMockupEnabled;
+            }
+
             if (p.ClearAdminFlagOverrideKeys is not null)
             {
                 clearAdminFlagOverrideKeys = p.ClearAdminFlagOverrideKeys;
@@ -1061,6 +1080,7 @@ public static class PlatformSettingsCatalog
             ResearchConsentEnabled: researchConsentEnabled,
             TestEditModeEnabled: testEditModeEnabled,
             SamplePdfEnabled: samplePdfEnabled,
+            TestDepthValueMockupEnabled: testDepthValueMockupEnabled,
             ClearAdminFlagOverrideKeys: clearAdminFlagOverrideKeys,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,

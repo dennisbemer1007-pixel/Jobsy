@@ -85,6 +85,7 @@ public static class FeatureFlagRegistry
             Def("FreeCandidateTestsEnabled", FeatureFlagAdminGroup.Tests, null, exposedOnPublicEndpoint: false, defaultValue: true),
             Def("TestEditModeEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:TestEditMode"),
             Def("SamplePdfEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:SamplePdf"),
+            Def("TestDepthValueMockupEnabled", FeatureFlagAdminGroup.Tests, PlatformFeature.TestDepthValueMockup, pub, false),
 
             Def("PassportPartnersEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.PassportPartners, pub, false),
             Def("AmbassadorsEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.Ambassadors, pub, false),

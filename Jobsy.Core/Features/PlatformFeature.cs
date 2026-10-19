@@ -84,5 +84,10 @@ public enum PlatformFeature
     SensitiveExperience,
 
     /// <summary>Partner workshops/opleidingen feed, Carrière leren &amp; Paspoort groeien. Default false.</summary>
-    TrainingPartners
+    TrainingPartners,
+
+    /// <summary>
+    /// Mockup UX: mini-spiegel at 5/10, unlock cards, words-only deep report. Default false.
+    /// </summary>
+    TestDepthValueMockup
 }

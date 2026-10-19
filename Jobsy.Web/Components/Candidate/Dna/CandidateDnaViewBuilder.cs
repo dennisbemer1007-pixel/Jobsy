@@ -608,7 +608,7 @@ public static class CandidateDnaViewBuilder
     public static int NearestUnfinishedRemaining(IReadOnlyList<DnaCard> cards)
     {
         var unfinished = cards
-            .Where(c => !c.Completed)
+            .Where(c => !c.Completed && c.Answered < c.QuestionCount)
             .OrderBy(c => c.Remaining)
             .ThenBy(c => c.Kind)
             .FirstOrDefault();

@@ -5,11 +5,22 @@
 <div class="score-radar" role="img" aria-label="@AriaLabel">
     <svg class="score-radar__svg" viewBox="0 0 320 320" focusable="false">
         <g transform="translate(160,160)">
-            @for (var ring = 1; ring <= 4; ring++)
+            @if (!HideNumericScores)
             {
-                var pct = ring * 25;
-                <polygon class="score-radar__grid" points="@RingPoints(pct)" />
-                @((MarkupString)ScoreRadarSvg.Text("score-radar__ring-label", 0, -Radius * pct / 100.0 - 4, "middle", $"{pct}%"))
+                @for (var ring = 1; ring <= 4; ring++)
+                {
+                    var pct = ring * 25;
+                    <polygon class="score-radar__grid" points="@RingPoints(pct)" />
+                    @((MarkupString)ScoreRadarSvg.Text("score-radar__ring-label", 0, -Radius * pct / 100.0 - 4, "middle", $"{pct}%"))
+                }
+            }
+            else
+            {
+                @for (var ring = 1; ring <= 4; ring++)
+                {
+                    var pct = ring * 25;
+                    <polygon class="score-radar__grid" points="@RingPoints(pct)" />
+                }
             }
             @for (var i = 0; i < AxisCount; i++)
             {
@@ -23,7 +34,7 @@
                         cx="@ScoreRadarSvg.Fmt(valuePt.X)"
                         cy="@ScoreRadarSvg.Fmt(valuePt.Y)"
                         r="3.5">
-                    <title>@Labels[i]: @Values[i]%</title>
+                    <title>@(HideNumericScores ? Labels[i] : $"{Labels[i]}: {Values[i]}%")</title>
                 </circle>
                 @((MarkupString)ScoreRadarSvg.Text(
                     "score-radar__label",
@@ -31,7 +42,7 @@
                     label.Y,
                     LabelAnchor(i),
                     Labels[i],
-                    $"{Labels[i]}: {Values[i]}%"))
+                    HideNumericScores ? Labels[i] : $"{Labels[i]}: {Values[i]}%"))
             }
             @if (HasNorms)
             {
@@ -50,7 +61,10 @@
             <li>
                 <span class="score-radar__legend-swatch"></span>
                 <span class="score-radar__legend-name">@Labels[i]</span>
-                <span class="score-radar__legend-value">@Values[i]%</span>
+                @if (!HideNumericScores)
+                {
+                    <span class="score-radar__legend-value">@Values[i]%</span>
+                }
             </li>
         }
         @if (HasNorms)
@@ -73,6 +87,7 @@
     [Parameter] public string AriaLabel { get; set; } = "Scores";
     [Parameter] public IReadOnlyList<int>? NormValues { get; set; }
     [Parameter] public string NormLegendLabel { get; set; } = "Gemiddelde";
+    [Parameter] public bool HideNumericScores { get; set; }
 
     private int AxisCount => Math.Min(Labels.Count, Values.Count);
     private bool HasNorms => NormValues is { Count: > 0 } norms && norms.Count >= AxisCount;

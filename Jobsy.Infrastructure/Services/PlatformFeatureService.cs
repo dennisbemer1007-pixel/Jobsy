@@ -234,6 +234,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         ApplyAdminBoolUpdate(row, "ResearchConsentEnabled", update.ResearchConsentEnabled, v => row.ResearchConsentEnabled = v);
         ApplyAdminBoolUpdate(row, "TestEditModeEnabled", update.TestEditModeEnabled, v => row.TestEditModeEnabled = v);
         ApplyAdminBoolUpdate(row, "SamplePdfEnabled", update.SamplePdfEnabled, v => row.SamplePdfEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestDepthValueMockupEnabled", update.TestDepthValueMockupEnabled, v => row.TestDepthValueMockupEnabled = v);
 
         if (update.ClearAdminFlagOverrideKeys is { Count: > 0 } clearKeys)
         {
@@ -556,6 +557,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveResearchConsentEnabled(row),
             ResolveTestEditModeEnabled(row),
             ResolveSamplePdfEnabled(row),
+            row?.TestDepthValueMockupEnabled ?? false,
             AdminOverriddenFlagKeys: PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson).OrderBy(k => k, StringComparer.Ordinal).ToList(),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),

@@ -1,0 +1,47 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@inject CultureState Culture
+
+<section class="test-depth-mini-mirror @(Rich ? "test-depth-mini-mirror--rich" : null)"
+         aria-label="@Culture["TestDepthValue.MiniMirror.Aria"]">
+    <div class="test-depth-mini-mirror__hero">
+        <span class="test-depth-mini-mirror__badge">@Culture["TestDepthValue.MiniMirror.Badge"]</span>
+        <h2 class="test-depth-mini-mirror__title">@Culture["TestDepthValue.MiniMirror.Title"]</h2>
+        <p class="test-depth-mini-mirror__lead">@Culture["TestDepthValue.MiniMirror.Lead"]</p>
+        <div class="test-depth-mini-mirror__hero-art" aria-hidden="true"></div>
+    </div>
+    @if (_themes.Count > 0)
+    {
+        <div class="test-depth-mini-mirror__themes">
+            @foreach (var theme in _themes)
+            {
+                <article class="test-depth-mini-mirror__theme">
+                    <small>@Culture["TestReflection.ThemeLabel"]</small>
+                    <h3>@theme.Label</h3>
+                    <p>@theme.Body</p>
+                </article>
+            }
+        </div>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<string> DomainCodes { get; set; } = [];
+    [Parameter] public bool Rich { get; set; }
+
+    private sealed record ThemeLine(string Label, string Body);
+
+    private IReadOnlyList<ThemeLine> _themes = [];
+
+    protected override void OnParametersSet()
+    {
+        _themes = DomainCodes
+            .Select(code =>
+            {
+                var label = DimensionLabels.For(code, Culture.Language);
+                return new ThemeLine(label, Culture.Format("TestDepthValue.ThemeBody", label));
+            })
+            .ToList();
+    }
+}
