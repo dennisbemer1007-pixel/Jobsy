@@ -21,11 +21,12 @@
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject IFeatureFlags FeatureFlags
+@inject ICandidateHeroCompactPreviewGate HeroCompactPreview
 @implements IDisposable
 
 <PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page passport-page passport-page--illustrated">
+<div class="panel-page passport-page passport-page--illustrated @(HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C ? "passport-page--compact-preview-c" : null)">
     <h1 class="visually-hidden">@Culture["Passport.Title"]</h1>
 
     @if (_loading)

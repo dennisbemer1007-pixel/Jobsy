@@ -237,8 +237,8 @@
     mask-composite: intersect;
   }
 
-  .cand-compact-hero--passport,
-  .passport-page--illustrated .cand-compact-hero {
+  .cand-compact-hero--passport:not(.cand-compact-hero--onboarding),
+  .passport-page--illustrated .cand-compact-hero:not(.cand-compact-hero--onboarding) {
     max-width: var(--cand-compact-hero-max);
     margin-inline: auto;
     padding-inline: var(--cand-compact-hero-gutter);
@@ -251,12 +251,42 @@
   }
 
   .ob-illustrated-step--compact-preview-c .cand-compact-hero--onboarding,
-  .career-page--compact-preview-c > header.cand-compact-hero--onboarding {
+  .career-page--compact-preview-c > header.cand-compact-hero--onboarding,
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding {
     max-width: none;
     width: 100%;
     margin-inline: 0;
     padding-inline: clamp(16px, 3vw, 28px);
     box-sizing: border-box;
+  }
+
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding {
+    --cand-compact-hero-page: var(--bg);
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    margin-inline: calc(50% - 50vw);
+    padding-inline-start: max(
+      var(--cand-compact-hero-gutter),
+      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
+    );
+    padding-inline-end: max(
+      var(--cand-compact-hero-gutter),
+      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
+    );
+  }
+
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding::before {
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-hero-page) 0%,
+      color-mix(in srgb, var(--cand-compact-hero-page) 65%, transparent) 10%,
+      transparent 42%,
+      transparent 100%
+    );
+  }
+
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding::after {
+    background: linear-gradient(to bottom, transparent 0%, var(--cand-compact-hero-page) 100%);
   }
 
   .ob-illustrated-step--compact-preview-c .ob-illustrated-step__body {
@@ -270,13 +300,24 @@
   }
 
   .ob-illustrated-step--compact-preview-c .cand-compact-hero--onboarding .cand-compact-hero__art,
-  .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art {
+  .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art,
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art {
     margin-inline-end: calc(-1 * clamp(16px, 3vw, 28px));
     width: calc(100% + clamp(16px, 3vw, 28px)) !important;
   }
 
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art {
+    margin-inline-end: calc(
+      -1 * max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
+    );
+    width: calc(
+      100% + max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
+    ) !important;
+  }
+
   .ob-illustrated-step--compact-preview-c .cand-compact-hero--onboarding .cand-compact-hero__art img,
-  .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img {
+  .career-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img,
+  .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art img {
     width: 112%;
     max-width: none;
     min-height: max(8.125rem, 130px);

@@ -226,6 +226,16 @@
     flex-wrap: nowrap;
     overflow-x: auto;
   }
+
+  .passport-page--illustrated .passport-tabs-shell {
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .passport-page--illustrated .passport-tabs-shell::before,
+  .passport-page--illustrated .passport-tabs-shell::after {
+    display: none;
+  }
 }
 
 .passport-page--illustrated .passport-card__fill-link {
