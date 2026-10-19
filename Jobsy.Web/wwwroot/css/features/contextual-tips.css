@@ -450,51 +450,81 @@
   border-color: var(--coral);
 }
 
-/* Tips mobile hero: fade only on text column; scene fully opaque, no img mask */
+.cand-hero__tips-gesprek-art {
+  display: none;
+}
+
+/* Tips mobile hero: Na de match gesprek scene (#742) — 48% copy / 52% art, shared cream, no masks */
 @media (max-width: 639px) {
-  .ctips-page .cand-hero.cand-hero--tips-moment.cand-hero--with-art {
-    grid-template-columns: 45% 55%;
+  .ctips-page .cand-hero.cand-hero--tips-moment {
+    --cand-hero-mobile-h: auto;
+
+    display: flex !important;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: space-between;
+    position: relative;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    margin-inline: 0;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 10.5rem;
+    overflow: visible !important;
+    background-color: var(--cream, #fdf0e0) !important;
     background-image: none !important;
-    overflow: hidden;
+    border-block-end: 1px solid color-mix(in srgb, var(--gold) 22%, var(--border));
   }
 
-  .ctips-page .cand-hero--tips-moment.cand-hero--with-art::before {
+  .ctips-page .cand-hero--tips-moment::before {
     display: none !important;
     content: none !important;
   }
 
-  .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__copy {
-    position: relative;
-    z-index: 2;
-    background: var(--pearl);
-  }
-
-  .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures-wrap {
-    grid-column: 2;
-    grid-row: 1;
-    z-index: 1;
-    box-sizing: border-box;
+  .ctips-page .cand-hero--tips-moment .cand-hero__tips-gesprek-art {
+    display: block !important;
+    flex: 1 1 52%;
     min-width: 0;
-    padding: 0.35rem 0.45rem 0.35rem 0.2rem;
-    align-items: flex-end;
-    justify-content: center;
-    overflow: visible;
+    max-width: 52%;
+    width: auto;
+    min-height: 10.5rem;
+    margin-top: auto;
+    align-self: stretch;
+    margin-bottom: 0;
     pointer-events: none;
+    background-color: transparent;
+    background-image: url(/img/spots/gesprek-hero-mob.jpg);
+    background-repeat: no-repeat;
+    background-position: right bottom;
+    background-size: 100% auto;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
-  .ctips-page .cand-hero--tips-moment.cand-hero--with-art .cand-hero__mob-figures {
-    display: block;
+  .ctips-page .cand-hero--tips-moment .cand-hero__copy {
+    position: relative !important;
+    inset: auto !important;
+    flex: 0 0 48%;
+    max-width: 48%;
+    width: auto !important;
+    height: auto;
+    min-height: 0;
+    z-index: 1;
+    align-self: flex-start;
     box-sizing: border-box;
-    width: auto;
-    height: 85%;
-    max-height: 85%;
-    max-width: 100%;
-    margin: 0;
-    transform: none;
-    object-fit: contain;
-    object-position: center bottom;
-    mask: none !important;
-    -webkit-mask: none !important;
+    padding: 1.125rem 0.625rem 1.125rem 1.125rem;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .ctips-page .cand-hero--tips-moment h1,
+  .ctips-page .cand-hero--tips-moment .cand-hero__lead {
+    overflow: visible;
+  }
+
+  .ctips-page .cand-hero--tips-moment .cand-hero__mob-figures-wrap {
+    display: none !important;
   }
 }
 

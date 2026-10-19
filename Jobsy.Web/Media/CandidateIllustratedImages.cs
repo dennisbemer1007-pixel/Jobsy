@@ -3,7 +3,7 @@ namespace Jobsy.Web.Media;
 /// <summary>Versioned URLs for candidate-facing illustrated pages (login, start, kompas, banenkaart).</summary>
 public static class CandidateIllustratedImages
 {
-    public const string Version = "20261019-r12";
+    public const string Version = "20261019-r13";
     private const string Base = $"/images/candidate-illustrated";
 
     public static string Url(string file) => $"{Base}/{file}?v={Version}";
@@ -139,9 +139,9 @@ public static class CandidateIllustratedImages
 
     public const string RefVerifHeroMobilePosition = "right bottom";
 
-    /// <summary>Tips pages: desktop instellingen band; mobile desk scene PNG (Bewaard-style slot).</summary>
+    /// <summary>Tips pages: desktop instellingen band; mobile gesprek scene (same asset as Na de match #742).</summary>
     public const string TipsMomentHeroWide = InstellingenBand;
-    public const string TipsMomentVignetteMobile = $"{MobFiguresBase}/tips-moment-vignette-mobile.png?v={Version}";
+    public const string TipsMomentHeroMobileGesprek = "/img/spots/gesprek-hero-mob.jpg?v=20261019-r13";
 
     /// <summary>Contextual tips category art (gesprek, contract, cv, ontwikkeling).</summary>
     public const string TipInterview = AccountMobileArt;

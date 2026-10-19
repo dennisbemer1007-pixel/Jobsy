@@ -27,6 +27,10 @@
                  decoding="async" />
         </div>
     }
+    @if (ShowTipsGesprekMobileArt)
+    {
+        <div class="cand-hero__tips-gesprek-art" aria-hidden="true"></div>
+    }
     @if (ShowMediaLayer)
     {
         <div class="cand-hero__media" style="@MediaStyleValue" aria-hidden="true"></div>
@@ -57,7 +61,11 @@
     private bool UsesCompositeMobileHero =>
         CssClass?.Contains("learn-grow", StringComparison.OrdinalIgnoreCase) == true;
 
-    private bool UsesSingleMobileHeroArt => !string.IsNullOrWhiteSpace(ArtUrlMobile);
+    private bool UsesSingleMobileHeroArt =>
+        !string.IsNullOrWhiteSpace(ArtUrlMobile) && !ShowTipsGesprekMobileArt;
+
+    private bool ShowTipsGesprekMobileArt =>
+        CssClass?.Contains("cand-hero--tips-moment", StringComparison.Ordinal) == true;
 
     private bool ShowMobileFiguresImage =>
         !UsesCompositeMobileHero
