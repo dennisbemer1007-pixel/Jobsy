@@ -49,6 +49,7 @@ public class BlazorReconnectAndHealthzTests
         Assert.Contains("/account/session-activity", boot, StringComparison.Ordinal);
         Assert.Contains("reconnect-toast--session-expired", boot, StringComparison.Ordinal);
         Assert.Contains("data-lobsy-reconnect-active", boot, StringComparison.Ordinal);
+        Assert.Contains("__lobsyReloadGuardInstalled", boot, StringComparison.Ordinal);
         Assert.DoesNotContain("onRejectedAutoReload", boot, StringComparison.Ordinal);
         Assert.DoesNotContain("location.reload()", boot, StringComparison.Ordinal);
 

@@ -4,8 +4,41 @@
     try {
         performance.mark("jobsy-blazor-boot-start");
     } catch (e) { }
+
     var reconnectAttempts = 0;
     var rejectedAuthCheck = null;
+    var silentRetryTimer = null;
+
+    function allowDocumentReload() {
+        window.__lobsyAllowDocumentReload = true;
+    }
+
+    function installReloadGuard() {
+        if (window.__lobsyReloadGuardInstalled) {
+            return;
+        }
+        window.__lobsyReloadGuardInstalled = true;
+        window.lobsyAllowDocumentReload = allowDocumentReload;
+        try {
+            var proto = window.Location && window.Location.prototype;
+            if (!proto || !proto.reload) {
+                return;
+            }
+            var nativeReload = proto.reload;
+            proto.reload = function () {
+                if (!window.__lobsyAllowDocumentReload) {
+                    try {
+                        console.warn("[lobsy] blocked automatic document.reload()");
+                    } catch (e) { }
+                    return;
+                }
+                window.__lobsyAllowDocumentReload = false;
+                return nativeReload.apply(this, arguments);
+            };
+        } catch (e) { }
+    }
+
+    installReloadGuard();
 
     function modal() {
         return document.getElementById("components-reconnect-modal");
@@ -44,7 +77,6 @@
             }
             return r.ok;
         }).catch(function () {
-            // Transient network blip during reconnect — do not claim session expiry.
             return true;
         });
     }
@@ -84,12 +116,58 @@
             if (sessionOk) {
                 demoteRejectedToFailed(current);
                 syncReconnectReserve();
+                scheduleSilentRetry();
                 tryReconnect("rejected-circuit");
                 return;
             }
             markSessionExpiredUi(current);
             syncReconnectReserve();
         });
+    }
+
+    function modalShowsReconnect() {
+        var m = modal();
+        if (!m || !m.classList) return false;
+        return m.classList.contains("components-reconnect-failed");
+    }
+
+    async function tryReconnect(reason) {
+        if (!modalShowsReconnect()) return false;
+        if (!window.Blazor || typeof Blazor.reconnect !== "function") return false;
+        reconnectAttempts += 1;
+        try {
+            console.info("[lobsy] Blazor.reconnect #" + reconnectAttempts + " (" + reason + ")");
+        } catch (e) { }
+        try {
+            var ok = await Blazor.reconnect();
+            if (ok === true) {
+                stopSilentRetry();
+                syncReconnectReserve();
+                return true;
+            }
+        } catch (e) { /* silent */ }
+        return false;
+    }
+
+    function scheduleSilentRetry() {
+        if (silentRetryTimer) {
+            return;
+        }
+        silentRetryTimer = window.setInterval(function () {
+            var m = modal();
+            if (!m || !m.classList.contains("components-reconnect-failed")) {
+                stopSilentRetry();
+                return;
+            }
+            tryReconnect("silent-interval");
+        }, 5000);
+    }
+
+    function stopSilentRetry() {
+        if (silentRetryTimer) {
+            window.clearInterval(silentRetryTimer);
+            silentRetryTimer = null;
+        }
     }
 
     function watchReconnectModal() {
@@ -106,41 +184,77 @@
             syncReconnectReserve();
             if (m.classList.contains("components-reconnect-rejected")) {
                 handleRejectedState();
+            } else if (m.classList.contains("components-reconnect-failed")) {
+                scheduleSilentRetry();
             } else {
                 m.classList.remove("reconnect-toast--auth-pending");
                 m.classList.remove("reconnect-toast--session-expired");
+                stopSilentRetry();
             }
         });
         obs.observe(m, { attributes: true, attributeFilter: ["class"] });
     }
 
-    // Only intervene after Blazor's built-in loop has ended (failed), or after rejected is demoted to failed.
-    // Never call Blazor.reconnect() while "components-reconnect-show" is set —
-    // Blazor already retries immediately on visibilitychange, and a parallel
-    // reconnect() would dispose the loop and leave a false "failed" toast.
-    function modalShowsReconnect() {
+    function onResume() {
+        if (document.visibilityState !== "visible") {
+            return;
+        }
+        tryReconnect("visibility");
         var m = modal();
-        if (!m || !m.classList) return false;
-        return m.classList.contains("components-reconnect-failed");
+        if (m && m.classList.contains("components-reconnect-rejected")) {
+            handleRejectedState();
+        }
     }
 
-    async function tryReconnect(reason) {
-        if (!modalShowsReconnect()) return;
-        if (!window.Blazor || typeof Blazor.reconnect !== "function") return;
-        reconnectAttempts += 1;
+    async function manualReconnect() {
+        var ok = await tryReconnect("manual");
+        if (ok) {
+            return;
+        }
+        if (window.Blazor && typeof Blazor.reconnect === "function") {
+            await tryReconnect("manual-retry");
+        }
+    }
+
+    function goLoginAfterSessionExpired() {
+        var path = "";
         try {
-            console.info("[lobsy] Blazor.reconnect #" + reconnectAttempts + " (" + reason + ")");
+            path = window.location.pathname + window.location.search;
         } catch (e) { }
-        try {
-            var ok = await Blazor.reconnect();
-            if (ok === true) {
-                syncReconnectReserve();
+        var target = "/login?error=session-expired";
+        if (path && path !== "/login") {
+            target += "&returnUrl=" + encodeURIComponent(path);
+        }
+        window.location.assign(target);
+    }
+
+    function bindReconnectUi() {
+        if (document.__lobsyReconnectUiBound) {
+            return;
+        }
+        document.__lobsyReconnectUiBound = true;
+        document.addEventListener("click", function (ev) {
+            var t = ev.target;
+            if (!t || !t.closest) return;
+            if (t.closest("[data-reconnect-try]")) {
+                ev.preventDefault();
+                manualReconnect();
                 return;
             }
-            // Circuit gone — never auto-reload during use; user uses the toast button.
-        } catch (e) { /* silent */ }
+            if (t.closest("[data-reconnect-login]")) {
+                ev.preventDefault();
+                goLoginAfterSessionExpired();
+            }
+        });
     }
 
+    window.lobsyReconnect = {
+        tryReconnect: tryReconnect,
+        manualReconnect: manualReconnect,
+        allowDocumentReload: allowDocumentReload
+    };
+
+    bindReconnectUi();
     watchReconnectModal();
 
     if (!window.Blazor || typeof Blazor.start !== "function") {
@@ -166,12 +280,9 @@
         } catch (e) { }
         document.documentElement.setAttribute("data-lobsy-circuit", "ready");
         watchReconnectModal();
-        document.addEventListener("visibilitychange", function () {
-            if (document.visibilityState !== "visible") return;
-            tryReconnect("visibility");
-        });
+        document.addEventListener("visibilitychange", onResume);
         window.addEventListener("online", function () {
-            tryReconnect("online");
+            onResume();
         });
 
     }).catch(function (err) {

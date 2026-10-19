@@ -255,6 +255,17 @@ dan is `ConnectionStrings__JobsyDb` leeg of geen echte Postgres-string — mockd
 | `JobsyAuth__AllowDevelopmentAuth` | Altijd `false` op Render (demo-login is sowieso 404 in Production) |
 | `lobsy-acc-*` namen | Render vereist unieke servicenamen over de hele workspace |
 
+## Blazor reconnect op Acceptatie (ops)
+
+`components-reconnect-rejected` betekent: de server kent het circuit-id niet meer (geheugen weg), **niet** automatisch dat `Jobsy.Auth` verlopen is. Typische oorzaken:
+
+1. **Deploy / pod restart** — `autoDeployTrigger: commit` op `lobsy-acc-web` (`branch: acceptatie`). Vergelijk tijdstip met `git log origin/acceptatie` en Render **Events** (Deploy live / Instance failed).
+2. **Health check restart** — `render.yaml` zet `healthCheckPath: /healthz` (lichtgewicht). Als het Dashboard nog `/` gebruikt (zware prerender + API), kunnen trage checks restarts geven tot Blueprint sync.
+3. **Tweede instance zonder sticky sessions** — zie tabel hierboven; reconnect landt op een andere pod → rejected terwijl cookies geldig blijven.
+4. **Mobiel** — korte WebSocket-drop hoort binnen `DisconnectedCircuitRetentionPeriod` (15 min) te herstellen; rejected binnen ~1 min na login wijst meestal op (1)–(3), niet op idle logout.
+
+Web tuning staat in `Jobsy.Web/Program.cs`: hub keep-alive 15 s, client timeout 90 s, retention 15 min, `blazor-boot.js` reconnect backoff (max 60 retries). Logs: `CircuitExceptionLogger` (connection down/up) + Render deploy times.
+
 ## Database backups (productie)
 
 Render **Basic Postgres** (`jobsy-db`) maakt dagelijkse automatische backups (zie Dashboard → `jobsy-db` → **Backups**). Voor echte productie:

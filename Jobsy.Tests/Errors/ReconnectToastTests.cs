@@ -9,12 +9,19 @@ namespace Jobsy.Tests.Errors;
 /// </summary>
 public class ReconnectToastTests
 {
-    private static readonly string[] Keys =
+    private static readonly string[] ShellKeys =
     [
         "Status.Reconnect.Trying",
         "Status.Reconnect.Failed",
         "Status.Reconnect.Rejected",
         "Status.Reconnect.SessionExpired",
+        "Status.Reconnect.ReconnectButton",
+        "Status.Reconnect.SignInAgain"
+    ];
+
+    private static readonly string[] CatalogKeys =
+    [
+        ..ShellKeys,
         "Status.Reconnect.Reload"
     ];
 
@@ -29,7 +36,7 @@ public class ReconnectToastTests
             await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync());
 
         Assert.Contains("id=\"components-reconnect-modal\"", html, StringComparison.Ordinal);
-        foreach (var key in Keys)
+        foreach (var key in ShellKeys)
         {
             Assert.Contains(UiStrings.Get(key, "nl"), html, StringComparison.Ordinal);
         }
@@ -54,7 +61,7 @@ public class ReconnectToastTests
                 await (await client.GetAsync("/status/404")).Content.ReadAsStringAsync());
 
             Assert.Contains("dir=\"rtl\"", html, StringComparison.Ordinal);
-            foreach (var key in Keys)
+            foreach (var key in ShellKeys)
             {
                 Assert.Contains(UiStrings.Get(key, "ar"), html, StringComparison.Ordinal);
                 Assert.DoesNotContain(UiStrings.Get(key, "nl"), html, StringComparison.Ordinal);
@@ -89,7 +96,7 @@ public class ReconnectToastTests
         Assert.DoesNotContain("Verbinding herstellen", app, StringComparison.Ordinal);
         Assert.DoesNotContain("Verbinding verbroken", app, StringComparison.Ordinal);
         Assert.DoesNotContain("Sessie verlopen", app, StringComparison.Ordinal);
-        foreach (var key in Keys)
+        foreach (var key in ShellKeys)
         {
             Assert.Contains(key, app, StringComparison.Ordinal);
         }
@@ -98,7 +105,7 @@ public class ReconnectToastTests
     [Fact]
     public void The_toast_keys_exist_in_all_five_languages()
     {
-        foreach (var key in Keys)
+        foreach (var key in CatalogKeys)
         {
             foreach (var language in new[] { "nl", "en", "pl", "ro", "ar" })
             {

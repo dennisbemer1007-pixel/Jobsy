@@ -490,6 +490,18 @@ public static class UiStringsStatus
             "Twoja sesja wygasła.",
             "Sesiunea ta a expirat.",
             "انتهت صلاحية جلستك.");
+        Add("Status.Reconnect.ReconnectButton",
+            "Opnieuw verbinden",
+            "Reconnect",
+            "Połącz ponownie",
+            "Reconectează",
+            "إعادة الاتصال");
+        Add("Status.Reconnect.SignInAgain",
+            "Opnieuw inloggen",
+            "Sign in again",
+            "Zaloguj się ponownie",
+            "Autentifică-te din nou",
+            "سجّل الدخول مرة أخرى");
         Add("Status.Reconnect.Reload",
             "Opnieuw laden",
             "Reload",

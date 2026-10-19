@@ -249,28 +249,18 @@
             <p class="reconnect-toast__msg reconnect-toast__msg--show">@Text("Status.Reconnect.Trying")</p>
             <p class="reconnect-toast__msg reconnect-toast__msg--failed">
                 @Text("Status.Reconnect.Failed")
-                <button type="button" class="reconnect-toast__action" data-reconnect-reload>@Text("Status.Reconnect.Reload")</button>
+                <button type="button" class="reconnect-toast__action" data-reconnect-try>@Text("Status.Reconnect.ReconnectButton")</button>
             </p>
             <p class="reconnect-toast__msg reconnect-toast__msg--rejected">
                 @Text("Status.Reconnect.Rejected")
-                <button type="button" class="reconnect-toast__action" data-reconnect-reload>@Text("Status.Reconnect.Reload")</button>
+                <button type="button" class="reconnect-toast__action" data-reconnect-try>@Text("Status.Reconnect.ReconnectButton")</button>
             </p>
             <p class="reconnect-toast__msg reconnect-toast__msg--session-expired">
                 @Text("Status.Reconnect.SessionExpired")
-                <button type="button" class="reconnect-toast__action" data-reconnect-reload>@Text("Status.Reconnect.Reload")</button>
+                <button type="button" class="reconnect-toast__action" data-reconnect-login>@Text("Status.Reconnect.SignInAgain")</button>
             </p>
         </div>
     </div>
-    <script nonce="@Nonce">
-        document.addEventListener("click", function (ev) {
-            var t = ev.target;
-            if (!t || !t.closest) return;
-            if (t.closest("[data-reconnect-reload]")) {
-                ev.preventDefault();
-                location.reload();
-            }
-        });
-    </script>
         @if (LoadBlazorRuntime)
         {
             <script src="js/app-core.js?v=20261019-02" nonce="@Nonce" defer></script>
@@ -303,7 +293,7 @@
     {
         @* defer scripts run in document order — blazor-boot.js must follow blazor.web.js *@
         <script src="_framework/blazor.web.js?v=20260820-r164" autostart="false" nonce="@Nonce" defer></script>
-        <script src="js/blazor-boot.js?v=20261019-01" nonce="@Nonce" defer></script>
+        <script src="js/blazor-boot.js?v=20261019-02" nonce="@Nonce" defer></script>
     }
 </body>
 

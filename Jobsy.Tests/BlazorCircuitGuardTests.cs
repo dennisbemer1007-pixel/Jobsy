@@ -69,13 +69,15 @@ public class BlazorCircuitGuardTests
         var app = File.ReadAllText(Path.Combine(FindRepoRoot(), "Jobsy.Web", "Components", "App.razor"));
         Assert.Contains("id=\"components-reconnect-modal\"", app);
         Assert.Contains("reconnect-toast", app);
-        Assert.Contains("data-reconnect-reload", app);
+        Assert.Contains("data-reconnect-try", app);
+        Assert.Contains("data-reconnect-login", app);
         // errors 04 §04.3: the toast reads the catalog, so assert the key, not a Dutch literal.
         Assert.Contains("Status.Reconnect.Trying", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.Failed", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.Rejected", app, StringComparison.Ordinal);
         Assert.Contains("Status.Reconnect.SessionExpired", app, StringComparison.Ordinal);
-        Assert.Contains("Status.Reconnect.Reload", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.ReconnectButton", app, StringComparison.Ordinal);
+        Assert.Contains("Status.Reconnect.SignInAgain", app, StringComparison.Ordinal);
         Assert.DoesNotContain(">Verbinding herstellen", app, StringComparison.Ordinal);
         Assert.Equal(
             "Verbinding herstellen…",
@@ -84,7 +86,7 @@ public class BlazorCircuitGuardTests
             Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "nl"),
             Jobsy.Web.Localization.UiStrings.Get("Status.Reconnect.Trying", "ar"));
         Assert.DoesNotContain("onclick=\"location.reload()\"", app);
-        Assert.Contains("closest(\"[data-reconnect-reload]\")", app);
+        Assert.DoesNotContain("data-reconnect-reload", app, StringComparison.Ordinal);
 
         Assert.Contains("css/features/reconnect.css?v=", app, StringComparison.Ordinal);
         Assert.Contains("data-reconnect-css", app, StringComparison.Ordinal);
