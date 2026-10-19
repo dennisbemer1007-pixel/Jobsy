@@ -16,13 +16,8 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-<<<<<<< HEAD
     "sha256": "67085da0aa55aeab10a0835110c10c0f056805d7cd505629d12e5b1cee2b31dd",
     "v": "20261019-12"
-=======
-    "sha256": "f1dfb87fa9d7885656e0455e0162af0b365f7c877026a5b361d8e97f4dad0036",
-    "v": "20261019-10"
->>>>>>> fb091f5d6 (Add live PR755 captures, logo-E on public mascot and email, fix CI assets.)
   },
   "css/critical.css": {
     "sha256": "8deaeb75ee0cd6f71b031c184212319ca55579ce3a76cba4b618c3a4d3e72443",

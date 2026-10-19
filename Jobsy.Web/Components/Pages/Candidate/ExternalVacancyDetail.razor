@@ -115,9 +115,13 @@
             <p class="kb-ext__privacy">@Culture["ExtVac.Detail.Privacy"]</p>
         </section>
 
-        <p class="muted">
-            <a href="@_detail.SourceUrl" rel="noopener noreferrer" target="_blank">@Culture["ExtVac.Detail.Source"]</a>
-        </p>
+        @if (!string.IsNullOrWhiteSpace(_detail.SourceUrl))
+        {
+            <p class="muted kb-ext__source" data-testid="kb-ext-source">
+                @Culture["ExtVac.Detail.Source"]:
+                <a href="@_detail.SourceUrl" rel="noopener noreferrer" target="_blank">@SourceLinkLabel(_detail.SourceUrl)</a>
+            </p>
+        }
 
         <div class="kb-ext__actions" data-testid="kb-ext-detail-actions">
             @if (_detail.CanApply)
@@ -170,6 +174,22 @@
     private string ReadAloudText => _detail is null
         ? ""
         : $"{_detail.Title}. {_detail.CompanyName}. {_detail.Place}.";
+
+    private static string SourceLinkLabel(string sourceUrl)
+    {
+        if (Uri.TryCreate(sourceUrl, UriKind.Absolute, out var uri))
+        {
+            var host = uri.Host;
+            if (host.StartsWith("www.", StringComparison.OrdinalIgnoreCase))
+            {
+                host = host[4..];
+            }
+
+            return host;
+        }
+
+        return sourceUrl.Trim();
+    }
 
     protected override async Task OnParametersSetAsync()
     {

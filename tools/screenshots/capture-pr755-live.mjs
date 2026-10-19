@@ -112,14 +112,28 @@ async function main() {
 
       if (name === 'paspoort' && vp.tag === '390') {
         await page.evaluate(() => {
-          const main = document.querySelector('.app-main') || document.scrollingElement;
-          if (main) main.scrollTop = 380;
+          const shell = document.querySelector('.passport-tabs-shell');
+          const headerH = document.querySelector('.app-header')?.getBoundingClientRect().height ?? 56;
+          const overview = document.querySelector('.passport-overview');
+          const root = document.scrollingElement || document.documentElement;
+          const anchor = overview ?? shell;
+          if (!anchor) return;
+          const y = Math.max(
+            0,
+            Math.min(
+              window.scrollY + anchor.getBoundingClientRect().bottom - headerH - 12,
+              root.scrollHeight - window.innerHeight,
+            ),
+          );
+          root.scrollTop = y;
+          window.scrollTo(0, y);
         });
         await page.waitForTimeout(500);
         await snap(page, path.join(outDir, `paspoort-tabs-stuck-${vp.tag}.png`));
         await page.evaluate(() => {
-          const main = document.querySelector('.app-main') || document.scrollingElement;
-          if (main) main.scrollTop = 0;
+          const root = document.scrollingElement || document.documentElement;
+          root.scrollTop = 0;
+          window.scrollTo(0, 0);
         });
         await page.waitForTimeout(300);
         await snap(page, path.join(outDir, `paspoort-tabs-unstuck-${vp.tag}.png`));
