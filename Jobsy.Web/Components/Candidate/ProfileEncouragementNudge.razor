@@ -8,21 +8,21 @@
 
 @if (_visible && _tip is not null)
 {
-    <aside class="profile-encourage"
-           data-testid="@($"profile-encourage-{ScreenKey}")"
-           data-encourage-tip="@_tip.Id"
-           role="note">
+    <div class="profile-encourage"
+         data-testid="@($"profile-encourage-{ScreenKey}")"
+         data-encourage-tip="@_tip.Id"
+         role="note">
         <button type="button"
                 class="profile-encourage__close"
                 aria-label="@Culture["Encourage.Dismiss"]"
                 @onclick="DismissAsync">×</button>
+        <img class="profile-encourage__mascot"
+             src="@BrandImages.MarkSvg"
+             alt=""
+             width="56"
+             height="56"
+             decoding="async" />
         <div class="profile-encourage__row">
-            <img class="profile-encourage__mascot"
-                 src="@BrandImages.MarkSvg"
-                 alt=""
-                 width="56"
-                 height="56"
-                 decoding="async" />
             <div class="profile-encourage__copy">
                 <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
                 @if (!string.IsNullOrWhiteSpace(_tip.Href))
@@ -31,7 +31,7 @@
                 }
             </div>
         </div>
-    </aside>
+    </div>
 }
 
 @code {

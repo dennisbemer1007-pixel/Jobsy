@@ -6,7 +6,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
 {
-    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r8";
+    private const string OutDir = "/opt/cursor/artifacts/logo-chat-final-r9";
     private static readonly Guid SampleVacancyId = IllustratedPagesApiStub.SampleVacancyId;
 
     private const string LongOpeningReply =
@@ -42,13 +42,13 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Render_logo_chat_final_r8_viewport_captures()
+    public async Task Render_logo_chat_final_r9_viewport_captures()
     {
         Directory.CreateDirectory(OutDir);
         var vacancyPath = $"/vacancies/{SampleVacancyId:D}?encouragePreview=wist-cv-vs-passport";
 
-        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-1440", width: 1440, height: 900);
-        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-390", width: 390, height: 844, mobile: true);
+        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-1440", width: 1440, height: 900, maxLines: 3);
+        await CaptureApplySentPanelAsync(vacancyPath, "vacancy-apply-sent-390", width: 390, height: 844, mobile: true, maxLines: 4);
 
         IllustratedPagesApiStub.MockInterviewReplyOverride = LongOpeningReply;
         try
@@ -92,54 +92,53 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         });
     }
 
-    private async Task CaptureApplySentPanelAsync(string path, string name, int width, int height, bool mobile = false)
+    private async Task CaptureApplySentPanelAsync(
+        string path,
+        string name,
+        int width,
+        int height,
+        bool mobile = false,
+        int maxLines = 4)
     {
         await using var context = await NewCandidateContextAsync(width, height, mobile);
         var page = await OpenVacancyAsync(context, path + "#apply");
         await page.Locator(".apply-panel--success").WaitForAsync(new() { Timeout = 60_000 });
         var copy = page.Locator(".apply-panel--success .profile-encourage__copy");
         await copy.WaitForAsync(new() { Timeout = 30_000 });
-        await page.WaitForFunctionAsync(
+        var layout = await page.EvaluateAsync<double[]>(
             """
             () => {
-              const row = document.querySelector('.apply-panel--success .profile-encourage__row');
-              return row && getComputedStyle(row).display === 'grid';
-            }
-            """,
-            null,
-            new() { Timeout = 30_000 });
-
-        var layoutDebug = await page.EvaluateAsync<string>(
-            """
-            () => {
-              const bubble = document.querySelector('.apply-panel--success .profile-encourage__copy');
-              if (!bubble) return 'no-bubble';
-              const cs = getComputedStyle(bubble);
-              return `display=${cs.display} width=${cs.width} maxW=${cs.maxWidth} flex=${cs.flex} gridCol=${cs.gridColumn}`;
-            }
-            """);
-        var metrics = await page.EvaluateAsync<double[]>(
-            """
-            () => {
+              const panel = document.querySelector('.apply-panel--success');
               const root = document.querySelector('.apply-panel--success .profile-encourage');
               const bubble = document.querySelector('.apply-panel--success .profile-encourage__copy');
-              const mascot = document.querySelector('.apply-panel--success .profile-encourage__mascot');
-              if (!root || !bubble || !mascot) return [0, 0, 0, 0];
+              if (!panel || !root || !bubble) return [0, 0, 0, 0, 0];
+              const p = panel.getBoundingClientRect();
               const r = root.getBoundingClientRect();
               const b = bubble.getBoundingClientRect();
-              const m = mascot.getBoundingClientRect();
-              const rs = getComputedStyle(root);
-              const gap = parseFloat(getComputedStyle(root.querySelector('.profile-encourage__row')).columnGap) || 12;
-              const pl = parseFloat(rs.paddingLeft) || 0;
-              const pr = parseFloat(rs.paddingRight) || 0;
-              const available = r.width - pl - pr - m.width - gap;
-              const ratio = available > 0 ? b.width / available : 0;
-              return [r.width, b.width, available, ratio];
+              const cardRatio = r.width > 0 ? b.width / r.width : 0;
+              const panelRatio = p.width > 0 ? r.width / p.width : 0;
+              return [p.width, r.width, b.width, cardRatio, panelRatio];
             }
             """);
-        Assert.True(metrics[0] > 0 && metrics[1] > 0 && metrics[2] > 0);
-        Assert.True(metrics[3] >= 0.92,
-            $"Encourage bubble should fill the track beside the mascot ({layoutDebug}; root={metrics[0]:F1} bubble={metrics[1]:F1} track={metrics[2]:F1} ratio={metrics[3]:P0}).");
+        Assert.True(layout[0] > 0 && layout[1] > 0 && layout[2] > 0);
+        Assert.True(layout[3] >= 0.75,
+            $"White speech bubble (.profile-encourage__copy) must fill the grey card (panel={layout[0]:F1} card={layout[1]:F1} bubble={layout[2]:F1} cardRatio={layout[3]:P0}).");
+
+        var lineCount = await page.EvaluateAsync<int>(
+            """
+            () => {
+              const text = document.querySelector('.apply-panel--success .profile-encourage__text');
+              if (!text) return 99;
+              const rects = [...text.getClientRects()].filter(r => r.width > 0 && r.height > 0);
+              if (rects.length > 0) return rects.length;
+              const style = getComputedStyle(text);
+              const lh = parseFloat(style.lineHeight);
+              if (!Number.isFinite(lh) || lh <= 0) return 99;
+              return Math.max(1, Math.round(text.getBoundingClientRect().height / lh));
+            }
+            """);
+        Assert.True(lineCount <= maxLines,
+            $"Nudge copy should wrap to at most {maxLines} lines at this viewport (actual {lineCount}).");
 
         var noOverlap = await page.EvaluateAsync<bool>(
             """
@@ -152,8 +151,8 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
               const c = close.getBoundingClientRect();
               const t = text.getBoundingClientRect();
               const closeInCardCorner = Math.abs(r.right - c.right) <= 12 && c.top - r.top <= 14;
-              const disjoint = c.right <= t.left + 2 || c.bottom <= t.top + 2 || c.left >= t.right - 2;
-              return closeInCardCorner && disjoint;
+              const overlap = c.left < t.right - 2 && c.right > t.left + 2 && c.bottom > t.top + 2 && c.top < t.bottom - 2;
+              return closeInCardCorner && !overlap;
             }
             """);
         Assert.True(noOverlap, "Close control must sit in the card corner without overlapping nudge text.");
@@ -161,10 +160,9 @@ public sealed class LogoChatFinalScreenshotTests : IAsyncLifetime
         var mark = page.Locator(".apply-panel--success .profile-encourage__mascot");
         var src = await mark.GetAttributeAsync("src") ?? "";
         Assert.Contains("lobsy-merkteken", src, StringComparison.OrdinalIgnoreCase);
-        await page.ScreenshotAsync(new()
+        await page.Locator(".apply-panel--success .profile-encourage").ScreenshotAsync(new()
         {
             Path = Path.Combine(OutDir, name + ".png"),
-            FullPage = false,
         });
     }
 
