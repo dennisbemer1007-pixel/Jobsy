@@ -34,6 +34,7 @@ public sealed class AdminFlagsEvidenceBunitTests : BunitContext
         Services.AddSingleton(new JobsyApiClient(http));
         Services.AddSingleton(new Jobsy.Web.Navigation.BottomNavRefreshService());
         Services.AddSingleton<Jobsy.Core.Features.IFeatureFlags>(new AlwaysOffFlags());
+        AdminEditorBunitServices.AddUserFacingError(Services);
 
         var cut = Render<PlatformSettingsEditor>(p => p
             .Add(x => x.GroupKeys, PlatformSettingsCatalog.FeaturesGroupKeys));
