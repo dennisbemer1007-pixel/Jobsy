@@ -396,11 +396,6 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
     }
 
-    private static async Task<bool> WorkStatusSelectionVisibleAsync(IPage page)
-        => await page.Locator(".work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed=\"true\"]").CountAsync() > 0
-           || await page.EvaluateAsync<bool>(
-               "() => !!document.querySelector('.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed=\"true\"]')");
-
     private static async Task<string> TargetSelectorAsync(ILocator target)
     {
         return await target.EvaluateAsync<string>(
