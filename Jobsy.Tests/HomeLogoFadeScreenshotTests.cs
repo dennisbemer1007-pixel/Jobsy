@@ -51,6 +51,15 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Capture_home_logo_and_illustration_fades_r11()
+    {
+        Directory.CreateDirectory(OutDir);
+
+        await CaptureCropAsync(390, 844, ".pub-landing__step-art--2", "crop-step-art-2-390-r11", mobile: true, scroll: true);
+        await AssertStep2LeftBandPixelsAsync(390, 844);
+    }
+
+    [Fact]
     public async Task Capture_home_logo_and_illustration_fades_r10()
     {
         Directory.CreateDirectory(OutDir);
@@ -582,6 +591,41 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
         Assert.True(leftQuarterBlue >= 24, $"Leftmost circle not fully in frame (hits={leftQuarterBlue}).");
 
         AssertStep2SideBandQuality(image);
+    }
+
+    private async Task AssertStep2LeftBandPixelsAsync(int w, int h)
+    {
+        await using var context = await NewContextAsync(w, h, mobile: true);
+        var page = await OpenHomeAsync(context);
+        var loc = page.Locator(".pub-landing__step-art--2").First;
+        await loc.ScrollIntoViewIfNeededAsync();
+        await page.WaitForTimeoutAsync(600);
+        var bytes = await loc.ScreenshotAsync(new() { Type = ScreenshotType.Png });
+        using var image = Image.Load<Rgb24>(bytes);
+
+        AssertStep2LeftColumnsClean(image);
+        AssertStep2SideBandQuality(image);
+    }
+
+    private static void AssertStep2LeftColumnsClean(Image<Rgb24> image)
+    {
+        var xMax = Math.Min(40, image.Width - 1);
+        var y0 = (int)(image.Height * 0.08);
+        var y1 = (int)(image.Height * 0.55);
+        for (var x = 0; x <= xMax; x++)
+        {
+            var blueHits = 0;
+            for (var y = y0; y < y1; y++)
+            {
+                if (IsDnaCirclePixel(image[x, y]))
+                {
+                    blueHits++;
+                }
+            }
+
+            Assert.True(blueHits < 6, $"Sliced blue circle visible at column x={x} ({blueHits} blue pixels).");
+        }
+
     }
 
     private static void AssertStep2SideBandQuality(Image<Rgb24> image)
