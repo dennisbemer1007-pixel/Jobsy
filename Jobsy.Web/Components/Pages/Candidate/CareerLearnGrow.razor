@@ -8,13 +8,16 @@
 @using Jobsy.Web.Localization
 @using Jobsy.Web.Media
 @using Jobsy.Web.Models
+@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.UwvFeatures
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject IFeatureFlags FeatureFlags
+@inject IUwvFeaturesMockupGate UwvFeaturesMockupGate
 
 <PageTitle>@Culture["Training.LearnGrow.NavLearn"] · Lobsy</PageTitle>
 
-@if (!_enabled)
+@if (!_enabled && !UwvFeaturesMockupGate.IsEnabled)
 {
     return;
 }
@@ -65,11 +68,11 @@
         {
             <p class="state-message">@Culture["Common.Loading"]</p>
         }
-        else if (_page is null)
+        else if (_page is null && !UwvFeaturesMockupGate.IsEnabled)
         {
             <p class="state-message">@Culture["Common.Error"]</p>
         }
-        else
+        else if (_page is not null)
         {
             <div class="opl-layout">
                 <div class="opl-main">
@@ -162,6 +165,11 @@
                 </div>
             </div>
         }
+
+        @if (UwvFeaturesMockupGate.IsEnabled)
+        {
+            <UwvWorkshopsPartnersBlock />
+        }
     </main>
 </div>
 
@@ -207,9 +215,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners);
+        _enabled = await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners)
+                   || UwvFeaturesMockupGate.IsEnabled;
         if (!_enabled)
         {
+            return;
+        }
+
+        if (UwvFeaturesMockupGate.IsEnabled && !await FeatureFlags.IsEnabledAsync(PlatformFeature.TrainingPartners))
+        {
+            _loading = false;
             return;
         }
 

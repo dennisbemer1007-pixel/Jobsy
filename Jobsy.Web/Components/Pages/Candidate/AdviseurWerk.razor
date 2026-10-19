@@ -1,0 +1,22 @@
+@page "/candidate/adviseur-werk"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Components.UwvMockups
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IUwvFeaturesMockupGate UwvGate
+
+<PageTitle>@UwvMockupCopy.Adviseur.Title(Culture.Language) · Lobsy</PageTitle>
+
+@if (!UwvGate.IsEnabled)
+{
+    <div class="panel-page"><p class="state-message">@Culture["Common.Error"]</p></div>
+}
+else
+{
+    <div class="journey-page panel-page panel-page--cand-ill uwv-adviseur-page">
+        <UwvAdviseurSharePanel />
+    </div>
+}

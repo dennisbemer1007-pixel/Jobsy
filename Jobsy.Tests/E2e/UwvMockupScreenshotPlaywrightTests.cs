@@ -3,11 +3,10 @@ using Microsoft.Playwright;
 namespace Jobsy.Tests.E2e;
 
 /// <summary>
-/// Captures UWV werkmap mockup PNGs (r3) into <c>uwv-mockups-r3/</c> at repo root or JOBSY_UWV_MOCKUP_ARTIFACTS.
-/// Run: JOBSY_UWV_MOCKUP_SCREENSHOTS=1 dotnet test --filter FullyQualifiedName~UwvMockupScreenshotPlaywrightTests
+/// Captures UWV werkmap blocks on real candidate routes (flag <c>Features:UwvFeaturesMockup</c>).
 /// </summary>
 [Collection("PlaywrightSmoke")]
-public sealed class UwvMockupScreenshotPlaywrightTests
+public sealed class UwvMockupScreenshotPlaywrightTests : IAsyncLifetime
 {
     private const string EnvRun = "JOBSY_UWV_MOCKUP_SCREENSHOTS";
 
@@ -16,45 +15,77 @@ public sealed class UwvMockupScreenshotPlaywrightTests
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS"))
-            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r3"))
+            ? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "uwv-mockups-r4"))
             : Environment.GetEnvironmentVariable("JOBSY_UWV_MOCKUP_ARTIFACTS")!;
+
+    private IllustratedPagesWebFactory? _web;
+    private IPlaywright? _playwright;
+    private IBrowser? _browser;
+    private string _baseUrl = "";
 
     private static readonly (string FileSlug, string Path, int Width, int Height, bool FullPage)[] Captures =
     [
-        ("01-carriere-kansberoepen-nl-1440", "/preview/uwv-mockups/carriere?lang=nl", 1440, 900, true),
-        ("01-carriere-kansberoepen-nl-1920", "/preview/uwv-mockups/carriere?lang=nl&viewport=1920", 1920, 1080, true),
-        ("01-carriere-kansberoepen-nl-390", "/preview/uwv-mockups/carriere?lang=nl", 390, 844, true),
-        ("01-carriere-kansberoepen-en-1440", "/preview/uwv-mockups/carriere?lang=en", 1440, 900, true),
-        ("01-carriere-kansberoepen-en-390", "/preview/uwv-mockups/carriere?lang=en", 390, 844, true),
-        ("02-banenkaart-kanslaag-nl-1440", "/preview/uwv-mockups/banenkaart?lang=nl", 1440, 900, false),
-        ("02-banenkaart-kanslaag-nl-390", "/preview/uwv-mockups/banenkaart?lang=nl", 390, 844, false),
-        ("02-banenkaart-kanslaag-en-1440", "/preview/uwv-mockups/banenkaart?lang=en", 1440, 900, false),
-        ("02-banenkaart-kanslaag-en-390", "/preview/uwv-mockups/banenkaart?lang=en", 390, 844, false),
-        ("03-workshops-omscholen-nl-1440", "/preview/uwv-mockups/workshops?lang=nl", 1440, 900, true),
-        ("03-workshops-omscholen-nl-390", "/preview/uwv-mockups/workshops?lang=nl", 390, 844, true),
-        ("03-workshops-omscholen-en-1440", "/preview/uwv-mockups/workshops?lang=en", 1440, 900, true),
-        ("03-workshops-omscholen-en-390", "/preview/uwv-mockups/workshops?lang=en", 390, 844, true),
-        ("04-ondernemer-intro-nl-1440", "/preview/uwv-mockups/ondernemer-intro?lang=nl", 1440, 900, true),
-        ("04-ondernemer-intro-nl-390", "/preview/uwv-mockups/ondernemer-intro?lang=nl", 390, 844, true),
-        ("04-ondernemer-intro-en-1440", "/preview/uwv-mockups/ondernemer-intro?lang=en", 1440, 900, true),
-        ("04-ondernemer-intro-en-390", "/preview/uwv-mockups/ondernemer-intro?lang=en", 390, 844, true),
-        ("04-ondernemer-vraag-nl-1440", "/preview/uwv-mockups/ondernemer-question?lang=nl", 1440, 900, true),
-        ("04-ondernemer-vraag-nl-390", "/preview/uwv-mockups/ondernemer-question?lang=nl", 390, 844, true),
-        ("04-ondernemer-vraag-en-1440", "/preview/uwv-mockups/ondernemer-question?lang=en", 1440, 900, true),
-        ("04-ondernemer-vraag-en-390", "/preview/uwv-mockups/ondernemer-question?lang=en", 390, 844, true),
-        ("04-ondernemer-result-nl-1440", "/preview/uwv-mockups/ondernemer-result?lang=nl", 1440, 900, true),
-        ("04-ondernemer-result-nl-390", "/preview/uwv-mockups/ondernemer-result?lang=nl", 390, 844, true),
-        ("04-ondernemer-result-en-1440", "/preview/uwv-mockups/ondernemer-result?lang=en", 1440, 900, true),
-        ("04-ondernemer-result-en-390", "/preview/uwv-mockups/ondernemer-result?lang=en", 390, 844, true),
-        ("05-drijfveren-wat-drijft-jou-nl-1440", "/preview/uwv-mockups/drijfveren?lang=nl", 1440, 900, true),
-        ("05-drijfveren-wat-drijft-jou-nl-390", "/preview/uwv-mockups/drijfveren?lang=nl", 390, 844, true),
-        ("05-drijfveren-wat-drijft-jou-en-1440", "/preview/uwv-mockups/drijfveren?lang=en", 1440, 900, true),
-        ("05-drijfveren-wat-drijft-jou-en-390", "/preview/uwv-mockups/drijfveren?lang=en", 390, 844, true),
-        ("06-adviseur-share-nl-1440", "/preview/uwv-mockups/adviseur?lang=nl", 1440, 900, true),
-        ("06-adviseur-share-nl-390", "/preview/uwv-mockups/adviseur?lang=nl", 390, 844, true),
-        ("06-adviseur-share-en-1440", "/preview/uwv-mockups/adviseur?lang=en", 1440, 900, true),
-        ("06-adviseur-share-en-390", "/preview/uwv-mockups/adviseur?lang=en", 390, 844, true),
+        ("01-carriere-kansberoepen-nl-1440", "/carriere?uwv=1", 1440, 900, true),
+        ("01-carriere-kansberoepen-nl-1920", "/carriere?uwv=1", 1920, 1080, true),
+        ("01-carriere-kansberoepen-nl-390", "/carriere?uwv=1", 390, 844, true),
+        ("01-carriere-kansberoepen-en-1440", "/carriere?uwv=1", 1440, 900, true),
+        ("01-carriere-kansberoepen-en-390", "/carriere?uwv=1", 390, 844, true),
+        ("02-banenkaart-kanslaag-nl-1440", "/banenkaart", 1440, 900, false),
+        ("02-banenkaart-kanslaag-nl-390", "/banenkaart", 390, 844, false),
+        ("02-banenkaart-kanslaag-en-1440", "/banenkaart", 1440, 900, false),
+        ("02-banenkaart-kanslaag-en-390", "/banenkaart", 390, 844, false),
+        ("03-workshops-omscholen-nl-1440", "/carriere/leren", 1440, 900, true),
+        ("03-workshops-omscholen-nl-390", "/carriere/leren", 390, 844, true),
+        ("03-workshops-omscholen-en-1440", "/carriere/leren", 1440, 900, true),
+        ("03-workshops-omscholen-en-390", "/carriere/leren", 390, 844, true),
+        ("04-ondernemer-intro-nl-1440", "/candidate/ondernemerscheck?stap=intro", 1440, 900, true),
+        ("04-ondernemer-intro-nl-390", "/candidate/ondernemerscheck?stap=intro", 390, 844, true),
+        ("04-ondernemer-intro-en-1440", "/candidate/ondernemerscheck?stap=intro", 1440, 900, true),
+        ("04-ondernemer-intro-en-390", "/candidate/ondernemerscheck?stap=intro", 390, 844, true),
+        ("04-ondernemer-vraag-nl-1440", "/candidate/ondernemerscheck?stap=question", 1440, 900, true),
+        ("04-ondernemer-vraag-nl-390", "/candidate/ondernemerscheck?stap=question", 390, 844, true),
+        ("04-ondernemer-vraag-en-1440", "/candidate/ondernemerscheck?stap=question", 1440, 900, true),
+        ("04-ondernemer-vraag-en-390", "/candidate/ondernemerscheck?stap=question", 390, 844, true),
+        ("04-ondernemer-result-nl-1440", "/candidate/ondernemerscheck?stap=result", 1440, 900, true),
+        ("04-ondernemer-result-nl-390", "/candidate/ondernemerscheck?stap=result", 390, 844, true),
+        ("04-ondernemer-result-en-1440", "/candidate/ondernemerscheck?stap=result", 1440, 900, true),
+        ("04-ondernemer-result-en-390", "/candidate/ondernemerscheck?stap=result", 390, 844, true),
+        ("05-drijfveren-wat-drijft-jou-nl-1440", "/candidate/wat-drijft-jou", 1440, 900, true),
+        ("05-drijfveren-wat-drijft-jou-nl-390", "/candidate/wat-drijft-jou", 390, 844, true),
+        ("05-drijfveren-wat-drijft-jou-en-1440", "/candidate/wat-drijft-jou", 1440, 900, true),
+        ("05-drijfveren-wat-drijft-jou-en-390", "/candidate/wat-drijft-jou", 390, 844, true),
+        ("06-adviseur-share-nl-1440", "/candidate/adviseur-werk", 1440, 900, true),
+        ("06-adviseur-share-nl-390", "/candidate/adviseur-werk", 390, 844, true),
+        ("06-adviseur-share-en-1440", "/candidate/adviseur-werk", 1440, 900, true),
+        ("06-adviseur-share-en-390", "/candidate/adviseur-werk", 390, 844, true),
     ];
+
+    public async ValueTask InitializeAsync()
+    {
+        if (!ShouldRun)
+        {
+            return;
+        }
+
+        Microsoft.Playwright.Program.Main(["install", "chromium"]);
+        _playwright = await Playwright.CreateAsync();
+        _browser = await _playwright.Chromium.LaunchAsync(new() { Headless = true });
+        Environment.SetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP", "1");
+        _web = new IllustratedPagesWebFactory();
+        _ = _web.ServerAddress;
+        _baseUrl = _web.ServerAddress;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_browser is not null)
+        {
+            await _browser.DisposeAsync();
+        }
+
+        _playwright?.Dispose();
+        _web?.Dispose();
+    }
 
     [Fact]
     public async Task Capture_uwv_mockup_screens()
@@ -64,34 +95,50 @@ public sealed class UwvMockupScreenshotPlaywrightTests
             return;
         }
 
-        var baseUrl = await KbE2e.TryReadyBaseUrlAsync()
-                      ?? throw new InvalidOperationException("Set JOBSY_E2E_BASE_URL to a running Jobsy.Web instance.");
-
         Directory.CreateDirectory(OutDir);
-        var exit = Microsoft.Playwright.Program.Main(["install", "chromium"]);
-        Assert.Equal(0, exit);
-
-        using var playwright = await Playwright.CreateAsync();
-        await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
         foreach (var cap in Captures)
         {
-            await using var context = await browser.NewContextAsync(new()
-            {
-                ViewportSize = new() { Width = cap.Width, Height = cap.Height },
-                DeviceScaleFactor = 1,
-            });
+            var lang = cap.FileSlug.Contains("-en-", StringComparison.Ordinal) ? "en" : "nl";
+            await using var context = await _browser!.NewContextAsync(KbE2e.ContextFor(cap.Width, cap.Height));
             await PlaywrightCookieConsent.AcceptAsync(context);
             var page = await context.NewPageAsync();
-            page.SetDefaultTimeout(60_000);
+            page.SetDefaultTimeout(90_000);
+
+            if (lang == "en")
+            {
+                await page.GotoAsync(_baseUrl.TrimEnd('/') + "/taal/en?returnUrl=" + Uri.EscapeDataString(cap.Path));
+            }
+
+            await page.GotoAsync(_baseUrl.TrimEnd('/') + "/__test/sign-in?role=candidate&return=" + Uri.EscapeDataString(cap.Path));
+            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
             await PlaywrightCookieConsent.AcceptOnPageAsync(page);
-            await page.GotoAsync(baseUrl.TrimEnd('/') + cap.Path, new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await page.WaitForSelectorAsync("[data-uwv-screen]", new() { Timeout = 30_000 });
             await page.EvaluateAsync("""
                 () => {
                   document.querySelectorAll('.cookie-consent, .cookie-banner, [data-testid="cookie-consent"]').forEach(el => el.remove());
                 }
                 """);
+
+            if (cap.Path.Contains("banenkaart", StringComparison.Ordinal))
+            {
+                await page.WaitForSelectorAsync("[data-testid='uwv-kansberoepen-toggle'], .jobsy-discovery", new() { Timeout = 60_000 });
+            }
+            else if (cap.Path.StartsWith("/carriere?", StringComparison.Ordinal)
+                     || cap.Path.Equals("/carriere", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.WaitForSelectorAsync("[data-testid='uwv-carriere-sections'], .career-page--illustrated", new() { Timeout = 60_000 });
+            }
+            else if (cap.Path.StartsWith("/carriere/leren", StringComparison.OrdinalIgnoreCase))
+            {
+                await page.WaitForSelectorAsync(".uwv-partners, .opl-page", new() { Timeout = 60_000 });
+            }
+            else
+            {
+                await page.WaitForSelectorAsync("main.app-main", new() { Timeout = 60_000 });
+            }
+
+            await Task.Delay(1500);
             var path = Path.Combine(OutDir, cap.FileSlug + ".png");
             await page.ScreenshotAsync(new() { Path = path, FullPage = cap.FullPage });
         }
@@ -102,8 +149,8 @@ public sealed class UwvMockupScreenshotPlaywrightTests
     private static async Task BuildPerScreenContactSheetsAsync(string dir)
     {
         var pngs = Directory.GetFiles(dir, "*.png")
-            .Where(p => !p.Contains("contact-sheet", StringComparison.OrdinalIgnoreCase))
-            .Select(p => Path.GetFileName(p)!)
+            .Where(p => !p.Contains("contact-", StringComparison.OrdinalIgnoreCase))
+            .Select(Path.GetFileName!)
             .OrderBy(p => p, StringComparer.Ordinal)
             .ToList();
         if (pngs.Count == 0)
@@ -111,25 +158,16 @@ public sealed class UwvMockupScreenshotPlaywrightTests
             return;
         }
 
-        var groups = pngs
-            .GroupBy(f =>
-            {
-                var parts = f.Split('-');
-                return parts.Length >= 2 ? $"{parts[0]}-{parts[1]}" : parts[0];
-            })
-            .OrderBy(g => g.Key, StringComparer.Ordinal);
-
         var scriptPath = Path.Combine(dir, "_build_contact_sheets.py");
         await File.WriteAllTextAsync(scriptPath, """
+            import re
             import sys
             from pathlib import Path
             from PIL import Image
 
             out_dir = Path(sys.argv[1])
             files = sorted(out_dir.glob("*.png"))
-            files = [f for f in files if "contact-sheet" not in f.name]
-
-            import re
+            files = [f for f in files if "contact-" not in f.name]
 
             def screen_key(name: str) -> str:
                 stem = name.replace(".png", "")
@@ -169,14 +207,13 @@ public sealed class UwvMockupScreenshotPlaywrightTests
                     sheet.save(out, optimize=True)
             """);
 
-        var psi = new System.Diagnostics.ProcessStartInfo
+        using var proc = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
             FileName = "python3",
             Arguments = $"\"{scriptPath}\" \"{dir}\"",
-            RedirectStandardError = true,
             RedirectStandardOutput = true,
-        };
-        using var proc = System.Diagnostics.Process.Start(psi);
+            RedirectStandardError = true,
+        });
         if (proc is not null)
         {
             await proc.WaitForExitAsync();

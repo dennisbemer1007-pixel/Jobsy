@@ -8,6 +8,7 @@
 @inject Jobsy.Web.RegionHosting.RegionHostState RegionHost
 @inject MatchVacancyService MatchVacancies
 @inject CandidateMatchProfileService MatchProfile
+@inject IUwvFeaturesMockupGate UwvFeaturesMockupGate
 @implements IAsyncDisposable
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Media
@@ -15,7 +16,9 @@
 @using Jobsy.Core.ValueObjects
 @using Jobsy.Web.Components.Discovery
 @using Jobsy.Web.Components.KandidaatBanen
+@using Jobsy.Web.Components.UwvFeatures
 @using Jobsy.Web.KandidaatBanen
+@using Jobsy.Web.UwvFeatures
 @using Jobsy.Web.Components.Match
 @using Jobsy.Web.Hosting
 @using Jobsy.Web.Models
@@ -133,6 +136,10 @@
                         <p class="kb-filter-bar__count-sub muted">@ResultCountSubtitle</p>
                     }
                 </div>
+                @if (_uwvMockup)
+                {
+                    <UwvKansberoepenMapToggle />
+                }
                 @if (!_isCandidate || _openForWork)
                 {
                     <a class="kb-match-button kb-match-button--icon jobsy-action--match kb-filter-bar__match"
@@ -234,6 +241,10 @@
                         <span class="jobsy-action__badge" data-testid="kb-filters-badge">@ActiveFilterCount</span>
                     }
                 </button>
+                @if (_uwvMockup)
+                {
+                    <UwvKansberoepenMapToggle />
+                }
                 @if (!_isCandidate || _openForWork)
                 {
                     <a class="kb-match-button jobsy-action--match kb-panel-head__match"
@@ -1036,6 +1047,7 @@
     private const int HighlightCarouselCap = 8;
     private int _visibleCardCount = VacancyCardPageSize;
     private bool _filtersOpen;
+    private bool _uwvMockup;
     private bool _legendOpen;
     private bool _branchMenuOpen;
     private bool _categoryMenuOpen;
@@ -1649,6 +1661,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _uwvMockup = UwvFeaturesMockupGate.IsEnabled;
         Culture.Changed += OnCultureChanged;
         Navigation.LocationChanged += OnLocationChanged;
         ApplyWorkTypeFromQuery();
@@ -3141,6 +3154,19 @@
 
     private async Task ResolveLaunchOriginAsync()
     {
+        if (_uwvMockup)
+        {
+            _origin = new OriginPoint { Latitude = 52.0128, Longitude = 4.3612 };
+            _addressQuery = Culture.Language.StartsWith("en", StringComparison.OrdinalIgnoreCase)
+                ? "Delft area (sample)"
+                : "Regio Delft (voorbeeld)";
+            _selectedTransport = KbMapStart.DefaultTransport;
+            _maxTravelMinutes = KbMapStart.DefaultMaxTravelMinutes;
+            _showStartPrompt = false;
+            _startPromptDismissed = true;
+            return;
+        }
+
         KbMapStart.OriginPoint? urlOrigin = null;
         if (_origin is not null)
         {

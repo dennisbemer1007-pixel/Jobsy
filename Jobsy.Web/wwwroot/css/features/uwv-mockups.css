@@ -143,21 +143,32 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 
 .uwv-kans__item--rich {
   display: grid;
-  grid-template-columns: 88px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 14px;
+  align-items: start;
   padding: 14px 16px;
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--surface) 92%, var(--accent-soft));
   border: 1px solid var(--border);
 }
 
-.uwv-kans__thumb {
-  border-radius: var(--radius-sm);
-  min-height: 88px;
-  background-size: cover;
-  background-position: center;
-  mask-image: radial-gradient(ellipse 95% 95% at 50% 55%, #000 55%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 95% 95% at 50% 55%, #000 55%, transparent 100%);
+.uwv-sector-icon,
+.uwv-kans__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+  color: var(--brand);
+  flex: none;
+}
+
+.uwv-sector-icon svg,
+.uwv-kans__icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
 .uwv-kans__head {
@@ -253,21 +264,17 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 
 .uwv-omscholen__sector--rich {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
+  align-items: start;
   padding: 12px;
   border-radius: var(--radius);
   background: var(--surface);
   border: 1px solid var(--border);
 }
 
-.uwv-omscholen__sector-art {
-  min-height: 72px;
-  border-radius: var(--radius-sm);
-  background-size: cover;
-  background-position: center;
-  mask-image: radial-gradient(ellipse 92% 92% at 50% 60%, #000 50%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 92% 92% at 50% 60%, #000 50%, transparent 100%);
+.uwv-omscholen__sector-icon {
+  margin-top: 2px;
 }
 
 .uwv-omscholen__sector-body h3 {
@@ -378,18 +385,41 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 
 /* Adviseur full page + A4 preview */
 .uwv-adviseur-page {
-  min-height: calc(100vh - 8rem);
   background:
     radial-gradient(ellipse 120% 80% at 50% -10%, color-mix(in srgb, var(--gold-soft) 55%, transparent), transparent 55%),
     var(--bg);
 }
 
 .uwv-adviseur--full {
-  max-width: 920px;
+  max-width: min(1120px, 100%);
   margin: 0 auto;
-  padding: 1.25rem 1rem 2.5rem;
+  padding: 1rem 1rem 2rem;
   display: grid;
   gap: 1.25rem;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  align-items: start;
+}
+
+.uwv-adviseur__intro,
+.uwv-adviseur__pick,
+.uwv-adviseur__actions {
+  grid-column: 1;
+}
+
+.uwv-adviseur__preview-wrap {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+
+@media (max-width: 899px) {
+  .uwv-adviseur--full {
+    grid-template-columns: 1fr;
+  }
+
+  .uwv-adviseur__preview-wrap {
+    grid-column: 1;
+    grid-row: auto;
+  }
 }
 
 .uwv-adviseur__pick {
@@ -462,8 +492,8 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
 .uwv-a4-preview {
   margin: 0 auto;
   max-width: 420px;
-  min-height: 520px;
-  padding: 1.25rem 1.35rem 1.5rem;
+  min-height: 0;
+  padding: 1.25rem 1.35rem 1.25rem;
   border-radius: 4px;
   background: #fff;
   box-shadow:
@@ -557,35 +587,36 @@ body:has(.uwv-mockup-shell .jobsy-discovery) {
   gap: 10px;
 }
 
-/* Ondernemer test — full shell + workshop art */
-.uwv-ondernemer-test {
-  --uwv-ondernemer-art: url("/images/candidate-illustrated/bedrijvenkaart-hero-door-desktop.jpg?v=20261019-04");
+/* Ondernemer test — illustrated intro + wide question/result shell */
+.uwv-ondernemer-intro-page {
+  padding-bottom: 2rem;
 }
 
-.uwv-ondernemer-test .test-shell__scene {
-  overflow: visible;
+.uwv-ondernemer-intro-card {
+  margin-top: -0.5rem;
 }
 
-.uwv-ondernemer-test .test-shell__scene .test-dive-scene,
-.uwv-ondernemer-test .test-shell__scene .test-dive-scene__bg.journey-scene {
-  overflow: visible;
-  background: transparent !important;
+.uwv-ondernemer-intro-card .detail-card {
+  max-width: 40rem;
 }
 
-.uwv-ondernemer-test .test-shell__scene .test-dive-scene__bg.journey-scene::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: var(--uwv-ondernemer-art);
-  background-size: cover;
-  background-position: center 85%;
-  mask-image: radial-gradient(ellipse 90% 85% at 50% 88%, #000 35%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 85% at 50% 88%, #000 35%, transparent 100%);
-  pointer-events: none;
+.uwv-ondernemer-test__shell {
+  max-width: min(52rem, 100%);
+  margin: 0 auto;
+  padding: 1rem 1rem 2.5rem;
+  box-sizing: border-box;
 }
 
 .uwv-ondernemer-test .test-shell__layout {
   max-width: none;
+}
+
+.uwv-ondernemer-test .test-shell__scene {
+  display: none;
+}
+
+.career-uwv-sections {
+  margin-top: 0.5rem;
 }
 
 .uwv-ondernemer-test--intro,

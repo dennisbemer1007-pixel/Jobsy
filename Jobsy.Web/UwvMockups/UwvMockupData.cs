@@ -44,7 +44,7 @@ public sealed record UwvKansCard(
     string ProspectEn,
     string RouteNl,
     string RouteEn,
-    string ImageUrl,
+    string SectorIcon,
     bool Baangarantie,
     int VacancyCount);
 
@@ -71,7 +71,7 @@ public static class UwvMockupData
             "Strong hiring outlook in the region",
             "MBO logistiek · BBL mogelijk",
             "MBO logistics · apprenticeship available",
-            CandidateIllustratedImages.SpotJobLogistiek,
+            "logistiek",
             Baangarantie: true,
             VacancyCount: 12),
         new(
@@ -81,7 +81,7 @@ public static class UwvMockupData
             "Steady demand, including retraining routes",
             "Technische opleiding · erkend leerbedrijf",
             "Technical training · recognised learning company",
-            CandidateIllustratedImages.SpotJobLogistiek,
+            "techniek",
             Baangarantie: false,
             VacancyCount: 6),
         new(
@@ -91,7 +91,7 @@ public static class UwvMockupData
             "Growing sector, short retraining paths",
             "BBL zorg · baangarantie-route (voorbeeld)",
             "Care apprenticeship · job-guarantee route (sample)",
-            CandidateIllustratedImages.SpotJobZorg,
+            "zorg",
             Baangarantie: true,
             VacancyCount: 8),
     ];
@@ -161,12 +161,12 @@ public static class UwvMockupData
             "HR assistant training · part-time available"),
     ];
 
-    public static IReadOnlyList<(UwvOmscholenSector Sector, string ImageUrl)> OmscholenSectors { get; } =
+    public static IReadOnlyList<(UwvOmscholenSector Sector, string SectorIcon)> OmscholenSectors { get; } =
     [
-        (new("IT", "IT", "Helpdesk / junior developer", "Help desk / junior developer", true), CandidateIllustratedImages.SpotInclusiefKantoor),
-        (new("Zorg", "Care", "Zorgondersteuner met BBL", "Care support with apprenticeship", true), CandidateIllustratedImages.SpotJobZorg),
-        (new("Onderwijs", "Education", "Onderwijsassistent", "Teaching assistant", false), CandidateIllustratedImages.SpotOpleiding),
-        (new("Bouw en techniek", "Construction and engineering", "Installatie / elektro", "Installation / electrical", true), CandidateIllustratedImages.SpotJobLogistiek),
+        (new("IT", "IT", "Helpdesk / junior developer", "Help desk / junior developer", true), "it"),
+        (new("Zorg", "Care", "Zorgondersteuner met BBL", "Care support with apprenticeship", true), "zorg"),
+        (new("Onderwijs", "Education", "Onderwijsassistent", "Teaching assistant", false), "onderwijs"),
+        (new("Bouw en techniek", "Construction and engineering", "Installatie / elektro", "Installation / electrical", true), "techniek"),
     ];
 
     public static IReadOnlyList<UwvLeerbaan> Leerbanen { get; } =

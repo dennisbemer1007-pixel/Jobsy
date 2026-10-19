@@ -1,6 +1,8 @@
+@using Jobsy.Web.Localization
 @using Jobsy.Web.UwvMockups
+@inject CultureState Culture
 
-<section class="detail-card uwv-block uwv-drijfveren" aria-labelledby="@_titleId">
+<section class="detail-card career-card uwv-block uwv-drijfveren" aria-labelledby="@_titleId">
     <p class="uwv-block__eyebrow">
         <i class="uwv-block__dot" aria-hidden="true"></i>
         @UwvMockupCopy.Drijfveren.SectionTitle(Lang)
@@ -20,6 +22,6 @@
 </section>
 
 @code {
-    [Parameter] public string? Lang { get; set; }
+    private string Lang => Culture.Language;
     private readonly string _titleId = "uwv-drijfveren-" + Guid.NewGuid().ToString("N")[..8];
 }

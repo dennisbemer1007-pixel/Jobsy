@@ -1,0 +1,18 @@
+@using Jobsy.Web.Navigation
+@namespace Jobsy.Web.Components.UwvFeatures
+
+<span class="uwv-sector-icon @CssClass" aria-hidden="true">
+    @((MarkupString)(Kind switch
+    {
+        "logistiek" or "techniek" or "bouw" => NavIcons.Career,
+        "zorg" => NavIcons.Profile,
+        "it" or "kantoor" => NavIcons.Search,
+        "onderwijs" => NavIcons.Compass,
+        _ => NavIcons.Career
+    }))
+</span>
+
+@code {
+    [Parameter] public string Kind { get; set; } = "default";
+    [Parameter] public string? CssClass { get; set; }
+}

@@ -1,5 +1,7 @@
 using Jobsy.Core.Authorization;
 using Jobsy.Core.Features;
+using Jobsy.Web.UwvFeatures;
+using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
@@ -9,7 +11,6 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -35,17 +36,25 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         builder.UseEnvironment("Development");
         builder.ConfigureAppConfiguration((_, config) =>
         {
+            var uwvMock = string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP"), "1", StringComparison.Ordinal);
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ApiBaseUrl"] = "http://api.test/",
                 ["Landing:ForceVariant"] = "on",
                 ["CLOUDFLARE_ORIGIN_SECRET"] = "",
-                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem
+                ["JobsyAuth:Jwt:PrivateKeyPem"] = Jobsy.Core.Security.JobsyAccessToken.DevelopmentPrivateKeyPem,
+                ["Features:UwvFeaturesMockup"] = uwvMock ? "true" : "false"
             });
         });
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IHostedService>();
+            services.RemoveAll<IUwvFeaturesMockupGate>();
+            services.AddSingleton<IUwvFeaturesMockupGate>(sp =>
+            {
+                var cfg = sp.GetRequiredService<IConfiguration>();
+                return new UwvFeaturesMockupGate(cfg);
+            });
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
             services.AddSingleton<IFeatureFlags>(new PassportOnFlags());

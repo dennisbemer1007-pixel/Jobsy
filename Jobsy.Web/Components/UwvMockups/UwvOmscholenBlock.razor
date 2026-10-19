@@ -1,6 +1,9 @@
+@using Jobsy.Web.Components.UwvFeatures
+@using Jobsy.Web.Localization
 @using Jobsy.Web.UwvMockups
+@inject CultureState Culture
 
-<section class="detail-card uwv-block uwv-omscholen" aria-labelledby="@_titleId">
+<section class="detail-card career-card uwv-block uwv-omscholen" aria-labelledby="@_titleId">
     <p class="uwv-block__eyebrow">
         <i class="uwv-block__dot" aria-hidden="true"></i>
         @UwvMockupCopy.Omscholen.Title(Lang)
@@ -9,10 +12,10 @@
     <p class="uwv-block__lead">@UwvMockupCopy.Omscholen.Lead(Lang)</p>
 
     <div class="uwv-omscholen__sectors">
-        @foreach (var (sector, imageUrl) in UwvMockupData.OmscholenSectors)
+        @foreach (var (sector, icon) in UwvMockupData.OmscholenSectors)
         {
             <article class="uwv-omscholen__sector uwv-omscholen__sector--rich">
-                <div class="uwv-omscholen__sector-art" style="@($"background-image:url('{imageUrl}')")" aria-hidden="true"></div>
+                <UwvSectorIcon Kind="@icon" CssClass="uwv-omscholen__sector-icon" />
                 <div class="uwv-omscholen__sector-body">
                     <h3>@(UwvMockupCopy.IsEnglish(Lang) ? sector.NameEn : sector.NameNl)</h3>
                     <p>@(UwvMockupCopy.IsEnglish(Lang) ? sector.DetailEn : sector.DetailNl)</p>
@@ -20,7 +23,7 @@
                     {
                         <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
                     }
-                    <a class="uwv-inline-link" href="/preview/uwv-mockups/banenkaart?lang=@Lang">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
+                    <a class="uwv-inline-link" href="/banenkaart">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
                 </div>
             </article>
         }
@@ -37,7 +40,7 @@
                         <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
                     </div>
                     <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? lb.CompanyEn : lb.CompanyNl)</p>
-                    <a class="uwv-inline-link" href="@($"{lb.MapHref}?lang={Lang}")">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
+                    <a class="uwv-inline-link" href="/banenkaart">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
                 </li>
             }
         </ul>
@@ -56,6 +59,6 @@
 </section>
 
 @code {
-    [Parameter] public string? Lang { get; set; }
+    private string Lang => Culture.Language;
     private readonly string _titleId = "uwv-omscholen-" + Guid.NewGuid().ToString("N")[..8];
 }

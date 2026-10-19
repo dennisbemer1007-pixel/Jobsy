@@ -1,0 +1,126 @@
+@page "/candidate/ondernemerscheck"
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Candidate")]
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Components.Candidate
+@using Jobsy.Web.Components.Candidate.Tests
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@using Jobsy.Web.UwvFeatures
+@using Jobsy.Web.UwvMockups
+@inject CultureState Culture
+@inject IUwvFeaturesMockupGate UwvGate
+@inject NavigationManager Navigation
+
+<PageTitle>@UwvMockupCopy.Ondernemer.TestName(Culture.Language) · Lobsy</PageTitle>
+
+@if (!UwvGate.IsEnabled)
+{
+    <div class="test-page journey-page"><p class="state-message">@Culture["Common.Error"]</p></div>
+}
+else if (_phase == "intro")
+{
+    <div class="journey-page panel-page--cand-ill uwv-ondernemer-intro-page">
+        <CandidateIllustratedHero Eyebrow="@(Culture.Format("TestFlow.Eyebrow.Intro", UwvMockupCopy.Ondernemer.TestName(Culture.Language)))"
+                                  Title="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
+                                  Lead="@IntroLead"
+                                  ArtUrl="@CandidateIllustratedImages.LearnGrowHeroWide"
+                                  ArtUrlMobileFigures="@CandidateIllustratedImages.LearnGrowHeroFiguresMobile"
+                                  ArtUrlMobileAtmosphere="@CandidateIllustratedImages.LearnGrowHeroMobileAtmosphere"
+                                  ArtPosition="68% center"
+                                  ArtPositionDesktop="right center"
+                                  CssClass="cand-hero--learn-grow cand-hero--with-art" />
+        <div class="opl-wrap uwv-ondernemer-intro-card">
+            <section class="detail-card career-card">
+                <p class="muted">@UwvMockupCopy.Ondernemer.IntroBenefit(Culture.Language)</p>
+                <p class="muted">@UwvMockupCopy.Ondernemer.IntroDuration(Culture.Language)</p>
+                <p>@UwvMockupCopy.Ondernemer.IntroLead(Culture.Language)</p>
+                <footer class="test-shell__footer">
+                    <button type="button" class="btn btn-primary" @onclick="StartQuestions">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Start" : "Begin")</button>
+                </footer>
+            </section>
+        </div>
+    </div>
+}
+else if (_phase == "question")
+{
+    <div class="journey-page uwv-ondernemer-test uwv-ondernemer-test--question">
+        <div class="uwv-ondernemer-test__shell">
+            <TestPageShell Kind="AssessmentKind.Career"
+                           Mode="TestPageShell.ShellMode.Question"
+                           H1="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
+                           TestName="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
+                           LevelName="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")"
+                           Answered="2"
+                           TargetCount="6"
+                           QuickScanVersion="1"
+                           ActiveDepth="TestDepthLevel.First"
+                           ShowDepthSegments="false"
+                           BubbleText="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Take your time" : "Neem je tijd")">
+                <ChildContent>
+                    <p class="uwv-test-q">@(UwvMockupCopy.IsEnglish(Culture.Language)
+                        ? "I like trying a small idea before committing to a big step."
+                        : "Ik probeer liever eerst een klein idee uit voordat ik een grote stap zet.")</p>
+                    <div class="uwv-test-scale" role="group" aria-label="Likert">
+                        @foreach (var label in ScaleLabels)
+                        {
+                            <button type="button" class="uwv-test-scale__btn" @onclick="ShowResult">@label</button>
+                        }
+                    </div>
+                </ChildContent>
+            </TestPageShell>
+        </div>
+    </div>
+}
+else
+{
+    <div class="journey-page uwv-ondernemer-test uwv-ondernemer-test--result">
+        <div class="uwv-ondernemer-test__shell">
+            <TestPageShell Kind="AssessmentKind.Career"
+                           Mode="TestPageShell.ShellMode.Done"
+                           H1="@UwvMockupCopy.Ondernemer.ResultTitle(Culture.Language)"
+                           Lead="@UwvMockupCopy.Ondernemer.ResultLead(Culture.Language)"
+                           TestName="@UwvMockupCopy.Ondernemer.TestName(Culture.Language)"
+                           LevelName="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Short" : "Kort")"
+                           Answered="6"
+                           TargetCount="6"
+                           QuickScanVersion="1"
+                           ActiveDepth="TestDepthLevel.First"
+                           ShowDepthSegments="false"
+                           BubbleText="@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Well done" : "Klaar")">
+                <ChildContent>
+                    <footer class="test-shell__footer">
+                        <a class="btn btn-primary" href="/candidate/ontdekkingsreis">@(UwvMockupCopy.IsEnglish(Culture.Language) ? "Back to discovery" : "Terug naar ontdekken")</a>
+                    </footer>
+                </ChildContent>
+            </TestPageShell>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "stap")] public string? Stap { get; set; }
+
+    private string _phase = "intro";
+
+    protected override void OnParametersSet()
+    {
+        _phase = (Stap ?? "intro").ToLowerInvariant() switch
+        {
+            "question" or "vraag" => "question",
+            "result" or "done" => "result",
+            _ => "intro"
+        };
+    }
+
+    private string IntroLead =>
+        $"{UwvMockupCopy.Ondernemer.IntroBenefit(Culture.Language)} · {UwvMockupCopy.Ondernemer.IntroDuration(Culture.Language)}";
+
+    private IEnumerable<string> ScaleLabels => UwvMockupCopy.IsEnglish(Culture.Language)
+        ? ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]
+        : ["Helemaal niet", "Niet", "Neutraal", "Wel", "Helemaal wel"];
+
+    private void StartQuestions() => Navigation.NavigateTo("/candidate/ondernemerscheck?stap=question");
+    private void ShowResult() => Navigation.NavigateTo("/candidate/ondernemerscheck?stap=result");
+}

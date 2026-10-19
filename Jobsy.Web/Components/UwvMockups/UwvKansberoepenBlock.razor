@@ -1,6 +1,9 @@
+@using Jobsy.Web.Components.UwvFeatures
+@using Jobsy.Web.Localization
 @using Jobsy.Web.UwvMockups
+@inject CultureState Culture
 
-<section class="detail-card uwv-block uwv-kans" aria-labelledby="@_titleId">
+<section class="detail-card career-card uwv-block uwv-kans" aria-labelledby="@_titleId">
     <p class="uwv-block__eyebrow">
         <i class="uwv-block__dot" aria-hidden="true"></i>
         @UwvMockupCopy.Kansberoepen.Title(Lang)
@@ -16,7 +19,7 @@
         @foreach (var job in UwvMockupData.Kansberoepen)
         {
             <li class="uwv-kans__item uwv-kans__item--rich">
-                <div class="uwv-kans__thumb" style="@($"background-image:url('{job.ImageUrl}')")" aria-hidden="true"></div>
+                <UwvSectorIcon Kind="@job.SectorIcon" CssClass="uwv-kans__icon" />
                 <div class="uwv-kans__body">
                     <div class="uwv-kans__head">
                         <h3>@(UwvMockupCopy.IsEnglish(Lang) ? job.TitleEn : job.TitleNl)</h3>
@@ -27,7 +30,7 @@
                     </div>
                     <p class="uwv-kans__prospect">@(UwvMockupCopy.IsEnglish(Lang) ? job.ProspectEn : job.ProspectNl)</p>
                     <p class="uwv-kans__route-line muted">@(UwvMockupCopy.IsEnglish(Lang) ? job.RouteEn : job.RouteNl)</p>
-                    <a class="uwv-kans__map-link" href="/preview/uwv-mockups/banenkaart?lang=@Lang">@UwvMockupCopy.Kansberoepen.VacanciesLink(Lang, job.VacancyCount)</a>
+                    <a class="uwv-kans__map-link" href="/banenkaart">@UwvMockupCopy.Kansberoepen.VacanciesLink(Lang, job.VacancyCount)</a>
                 </div>
             </li>
         }
@@ -35,6 +38,6 @@
 </section>
 
 @code {
-    [Parameter] public string? Lang { get; set; }
+    private string Lang => Culture.Language;
     private readonly string _titleId = "uwv-kans-title-" + Guid.NewGuid().ToString("N")[..8];
 }
