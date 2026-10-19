@@ -23,15 +23,15 @@ public sealed class UwvFeaturesTests
     }
 
     [Fact]
-    public void FeatureFlagSnapshot_uwv_features_off_by_default()
+    public void FeatureFlagSnapshot_uwv_features_on_by_default()
     {
         var snap = FeatureFlagSnapshot.Defaults;
-        Assert.False(snap.UwvFeaturesEnabled);
-        Assert.False(snap.IsEnabled(PlatformFeature.UwvFeatures));
+        Assert.True(snap.UwvFeaturesEnabled);
+        Assert.True(snap.IsEnabled(PlatformFeature.UwvFeatures));
     }
 
     [Fact]
-    public async Task PlatformFeatureService_round_trips_uwv_features()
+    public async Task PlatformFeatureService_uwv_features_on_by_default_without_config()
     {
         await using var db = CreateDb();
         var sut = new PlatformFeatureService(
@@ -39,11 +39,24 @@ public sealed class UwvFeaturesTests
             Options.Create(new JobsyFeatureOptions()),
             new ConfigurationBuilder().Build());
 
-        var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(UwvFeaturesEnabled: true));
-        Assert.True(updated.UwvFeaturesEnabled);
+        var snap = await sut.GetAsync();
+        Assert.True(snap.UwvFeaturesEnabled);
+    }
+
+    [Fact]
+    public async Task PlatformFeatureService_round_trips_uwv_features_off_via_admin()
+    {
+        await using var db = CreateDb();
+        var sut = new PlatformFeatureService(
+            db,
+            Options.Create(new JobsyFeatureOptions()),
+            new ConfigurationBuilder().Build());
+
+        var updated = await sut.UpdateAsync(new PlatformFeatureUpdate(UwvFeaturesEnabled: false));
+        Assert.False(updated.UwvFeaturesEnabled);
 
         var again = await sut.GetAsync();
-        Assert.True(again.UwvFeaturesEnabled);
+        Assert.False(again.UwvFeaturesEnabled);
     }
 
     [Fact]

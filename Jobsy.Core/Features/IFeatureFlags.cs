@@ -39,12 +39,13 @@ public sealed record FeatureFlagSnapshot(
     bool OccupationDayInLifeEnabled = true,
     bool TestEditModeEnabled = false,
     bool SamplePdfEnabled = false,
-    bool UwvFeaturesEnabled = false)
+    bool UwvFeaturesEnabled = true)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(
         EmployersEnabled: false,
         CandidatePassportEnabled: true,
-        CompanyMapInitiativeEnabled: true);
+        CompanyMapInitiativeEnabled: true,
+        UwvFeaturesEnabled: true);
 
     public bool IsEnabled(PlatformFeature feature) => feature switch
     {

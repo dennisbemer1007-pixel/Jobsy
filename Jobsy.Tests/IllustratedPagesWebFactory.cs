@@ -36,8 +36,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         builder.UseEnvironment("Development");
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            var uwvOn = string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES"), "1", StringComparison.Ordinal)
-                        || string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP"), "1", StringComparison.Ordinal);
+            var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ApiBaseUrl"] = "http://api.test/",
@@ -52,8 +51,7 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
             services.RemoveAll<IHostedService>();
             services.AddSingleton<IStartupFilter>(new IllustratedPagesStartupFilter());
             services.RemoveAll<IFeatureFlags>();
-            var uwvOn = string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES"), "1", StringComparison.Ordinal)
-                        || string.Equals(Environment.GetEnvironmentVariable("JOBSY_UWV_FEATURES_MOCKUP"), "1", StringComparison.Ordinal);
+            var uwvOn = ResolveUwvFeaturesForIllustratedTests();
             services.AddSingleton<IFeatureFlags>(new PassportOnFlags(uwvOn));
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory>(new StubHttpClientFactory(_emptyAppsAndLikes));
@@ -90,6 +88,25 @@ public sealed class IllustratedPagesWebFactory : WebWebApplicationFactory
         }
 
         base.Dispose(disposing);
+    }
+
+    /// <summary>Default ON; set <c>JOBSY_UWV_FEATURES=0</c> or <c>JOBSY_UWV_FEATURES_MOCKUP=0</c> to disable in illustrated e2e.</summary>
+    private static bool ResolveUwvFeaturesForIllustratedTests()
+    {
+        if (IsUwvFeaturesEnvDisabled("JOBSY_UWV_FEATURES")
+            || IsUwvFeaturesEnvDisabled("JOBSY_UWV_FEATURES_MOCKUP"))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool IsUwvFeaturesEnvDisabled(string name)
+    {
+        var raw = Environment.GetEnvironmentVariable(name);
+        return string.Equals(raw, "0", StringComparison.Ordinal)
+               || string.Equals(raw, "false", StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class PassportOnFlags(bool uwvFeaturesEnabled) : IFeatureFlags

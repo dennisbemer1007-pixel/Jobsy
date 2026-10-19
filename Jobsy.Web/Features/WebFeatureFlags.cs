@@ -82,7 +82,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.OccupationDayInLifeEnabled ?? true,
                 dto?.TestEditModeEnabled ?? false,
                 dto?.SamplePdfEnabled ?? false,
-                dto?.UwvFeaturesEnabled ?? false);
+                dto?.UwvFeaturesEnabled ?? true);
             _lastKnown = flags;
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;

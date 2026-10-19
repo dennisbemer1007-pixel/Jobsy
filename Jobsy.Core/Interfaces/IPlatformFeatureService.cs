@@ -67,7 +67,7 @@ public sealed record PlatformFeatureSnapshot(
     bool ReferenceVerificationEnabled = false,
     bool SensitiveExperienceEnabled = false,
     bool TrainingPartnersEnabled = false,
-    bool UwvFeaturesEnabled = false,
+    bool UwvFeaturesEnabled = true,
     bool TestJourneyIllustrationEnabled = false,
     bool OnboardingFinaleV2Enabled = false,
     bool OccupationDayInLifeEnabled = true,

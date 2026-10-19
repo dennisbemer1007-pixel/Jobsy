@@ -58,7 +58,7 @@ public static class FeatureFlagRegistry
             Def("ProactiveMatchingEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ProactiveMatching, pub, false),
             Def("FutureJobsForYouEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.FutureJobsForYou, pub, false),
             Def("HonestAdviceEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.HonestAdvice, pub, false),
-            Def("UwvFeaturesEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.UwvFeatures, pub, false, "Features:UwvFeatures"),
+            Def("UwvFeaturesEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.UwvFeatures, pub, true, "Features:UwvFeatures"),
             Def("PhoneVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false),
             Def("WhatsAppRemindersEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.WhatsAppReminders, pub, false),
             Def("ReferenceVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ReferenceVerification, pub, false),

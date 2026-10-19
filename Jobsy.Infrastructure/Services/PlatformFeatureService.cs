@@ -359,7 +359,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         => ResolveAdminBool(row, "TrainingPartnersEnabled", row?.TrainingPartnersEnabled ?? false, false, "Jobsy:TrainingPartnersEnabled");
 
     private bool ResolveUwvFeaturesEnabled(PlatformFeatureSettings? row)
-        => ResolveAdminBool(row, "UwvFeaturesEnabled", row?.UwvFeaturesEnabled ?? false, false, "Features:UwvFeatures");
+        => ResolveAdminBool(row, "UwvFeaturesEnabled", row?.UwvFeaturesEnabled ?? true, true, "Features:UwvFeatures");
 
     private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
     {
@@ -439,6 +439,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute;
         row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour;
         row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay;
+        row.UwvFeaturesEnabled = true;
     }
 
     private bool IsAllowedPublicOrigin(string origin)

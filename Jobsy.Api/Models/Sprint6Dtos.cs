@@ -367,7 +367,7 @@ public record PlatformFeatureDto(
     bool KandidatenkaartEnabled = false,
     bool SensitiveExperienceEnabled = false,
     bool TrainingPartnersEnabled = false,
-    bool UwvFeaturesEnabled = false,
+    bool UwvFeaturesEnabled = true,
     bool ReferenceVerificationEnabled = false,
     bool TestJourneyIllustrationEnabled = false,
     bool OnboardingFinaleV2Enabled = false,
