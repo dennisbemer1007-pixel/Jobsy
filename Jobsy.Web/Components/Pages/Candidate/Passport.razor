@@ -13,19 +13,32 @@
 @using Jobsy.Web.Features
 @using Jobsy.Web.Models
 @using Jobsy.Web.Navigation
+@using Jobsy.Web.Media
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Configuration
 @inject JobsyApiClient Api
 @inject CultureState Culture
 @inject NavigationManager Navigation
 @inject IJSRuntime Js
 @inject PersistentComponentState Persist
 @inject IFeatureFlags FeatureFlags
+@inject IConfiguration Configuration
 @implements IDisposable
 
 <PageTitle>@Culture["Passport.Title"] · Lobsy</PageTitle>
 
-<div class="panel-page passport-page passport-page--illustrated">
+<div class="panel-page passport-page passport-page--illustrated @PassportCompactMockupLayout.PageModifierClass(_compactLayout)">
+    @if (_compactLayout is not null)
+    {
+        <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r2.css?v=20261019-r2" />
+    }
+    @if (_compactLayout == "c")
+    {
+        <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r3.css?v=20261019-r3" />
+        <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r4.css?v=20261019-r4b" />
+        <link rel="stylesheet" href="css/features/paspoort-compact-mockup-r5.css?v=20261019-r5b" />
+    }
     <h1 class="visually-hidden">@Culture["Passport.Title"]</h1>
 
     @if (_loading)
@@ -38,11 +51,27 @@
     }
     else
     {
-        <CandidateKompasGreetingBand FirstName="@_firstName" />
+        @if (_compactLayout is not ("b" or "c"))
+        {
+            <CandidateKompasGreetingBand FirstName="@_firstName" />
+        }
 
-        <div class="passport-layout">
+        <div class="@(_compactLayout == "c" ? "passport-wide-canvas" : null)">
+            @if (_compactLayout == "c")
+            {
+                <div class="passport-margin-decor passport-margin-decor--left" aria-hidden="true">
+                    <img src="@BrandImages.MarkSvg"
+                         alt=""
+                         width="220"
+                         height="220"
+                         decoding="async" />
+                </div>
+            }
+            <div class="passport-layout @(_compactLayout == "c" ? "passport-layout--wide-mock" : null)">
             <div class="passport-layout__sidebar passport-layout__card passport-layout__card--desktop">
                 <PassportCard Compact="false"
+                              ShowHeaderGreeting="@(_compactLayout is "b" or "c")"
+                              HeaderGreetingTitle="@GreetingTitle()"
                               DisplayName="@_displayName"
                               Initials="@_initials"
                               MemberNumber="@_memberNumber"
@@ -85,27 +114,29 @@
                                   OnDownloadCv="DownloadLobsyCvAsync" />
                 </div>
 
-                <PassportOverview CompetenceProgress="@Arc(AssessmentKind.Competence)"
-                                  CareerProgress="@Arc(AssessmentKind.Career)"
-                                  CultureProgress="@Arc(AssessmentKind.Culture)"
-                                  ValuesProgress="@Arc(AssessmentKind.Values)"
-                                  CompletedCount="@LobsterStage"
-                                  Strongest="@_strongest"
-                                  StrongestStatus="@_strongestStatus"
-                                  WorkFit="@_workFit"
-                                  WorkFitStatus="@_workFitStatus"
-                                  CultureHome="@_cultureHome"
-                                  CultureHomeStatus="@_cultureHomeStatus"
-                                  Important="@_important"
-                                  ImportantStatus="@_importantStatus"
-                                  OnGoTests="() => SetTab(PassportTabs.Tests)" />
+                <div class="passport-home-stack @(_compactLayout == "c" ? "passport-home-stack--anchored-nudge" : null)">
+                    <PassportOverview CompetenceProgress="@Arc(AssessmentKind.Competence)"
+                                      CareerProgress="@Arc(AssessmentKind.Career)"
+                                      CultureProgress="@Arc(AssessmentKind.Culture)"
+                                      ValuesProgress="@Arc(AssessmentKind.Values)"
+                                      CompletedCount="@LobsterStage"
+                                      Strongest="@_strongest"
+                                      StrongestStatus="@_strongestStatus"
+                                      WorkFit="@_workFit"
+                                      WorkFitStatus="@_workFitStatus"
+                                      CultureHome="@_cultureHome"
+                                      CultureHomeStatus="@_cultureHomeStatus"
+                                      Important="@_important"
+                                      ImportantStatus="@_importantStatus"
+                                      OnGoTests="() => SetTab(PassportTabs.Tests)" />
 
-                @if (_encourageContext is not null)
-                {
-                    <ProfileEncouragementNudge ScreenKey="paspoort-home"
-                                               Context="_encourageContext"
-                                               PreviewTipId="@_encouragePreviewTipId" />
-                }
+                    @if (_encourageContext is not null)
+                    {
+                        <ProfileEncouragementNudge ScreenKey="paspoort-home"
+                                                   Context="_encourageContext"
+                                                   PreviewTipId="@_encouragePreviewTipId" />
+                    }
+                </div>
 
                 <FeatureVisible Feature="PlatformFeature.ReferenceVerification">
                     @if (_refVerificationEligible)
@@ -274,6 +305,17 @@
                     </article>
                 </div>
             </div>
+            </div>
+            @if (_compactLayout == "c")
+            {
+                <div class="passport-margin-decor passport-margin-decor--right" aria-hidden="true">
+                    <img src="@CandidateIllustratedImages.SpotVragen"
+                         alt=""
+                         width="480"
+                         height="360"
+                         decoding="async" />
+                </div>
+            }
         </div>
     }
 </div>
@@ -282,6 +324,7 @@
     private const string DnaPersistKey = "passport-dna";
     private const string KompasPersistKey = "passport-kompas";
 
+    private string? _compactLayout;
     private string _tab = PassportTabs.Dna;
     private string? _fitCheck;
     private string? _proofItem;
@@ -346,6 +389,7 @@
 
     protected override void OnInitialized()
     {
+        _compactLayout = PassportCompactMockupLayout.TryParse(Navigation.Uri, Configuration);
         Navigation.LocationChanged += OnLocationChanged;
         _listening = true;
         _persistSubscription = Persist.RegisterOnPersisting(PersistPassportState);
@@ -472,8 +516,37 @@
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
+        _compactLayout = PassportCompactMockupLayout.TryParse(Navigation.Uri, Configuration);
         ApplyTabFromUri();
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    private string GreetingTitle()
+    {
+        var name = string.IsNullOrWhiteSpace(_firstName) ? "" : _firstName.Trim();
+        var hour = DateTime.Now.Hour;
+        if (string.IsNullOrEmpty(name))
+        {
+            if (hour < 12)
+            {
+                return Culture["Kompas.Greeting.PlainMorning"];
+            }
+
+            if (hour < 18)
+            {
+                return Culture["Kompas.Greeting.PlainAfternoon"];
+            }
+
+            return Culture["Kompas.Greeting.PlainEvening"];
+        }
+
+        var key = hour switch
+        {
+            < 12 => "Kompas.Greeting.Morning",
+            < 18 => "Kompas.Greeting.Afternoon",
+            _ => "Kompas.Greeting.Evening"
+        };
+        return Culture.Format(key, name);
     }
 
     private void ApplyTabFromUri()

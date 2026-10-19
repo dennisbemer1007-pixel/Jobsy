@@ -1,0 +1,74 @@
+/* Paspoort compact mockup variant C (r4) — margin art + sidebar polish */
+
+.passport-page--compact-c .passport-layout__sidebar > .kompas-tip {
+  display: none;
+}
+
+.passport-page--compact-c .passport-margin-decor {
+  display: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.passport-page--compact-c .passport-margin-decor img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+@media (min-width: 1600px) {
+  .passport-page--compact-c .passport-wide-canvas {
+    overflow: visible;
+  }
+
+  /* Reset r3 fixed viewport-edge decor */
+  .passport-page--compact-c .passport-margin-decor,
+  .passport-page--compact-c .passport-margin-decor--left,
+  .passport-page--compact-c .passport-margin-decor--right {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    z-index: 0;
+    top: calc(var(--app-header-height, 4.25rem) + 2rem);
+    width: clamp(10rem, calc((100vw - min(1180px, calc(100vw - 2rem))) / 2 - 1rem), 16rem);
+    max-width: 16rem;
+    height: auto;
+    min-height: 0;
+    inset-block-end: auto;
+    opacity: 1;
+    background: none;
+    background-image: none;
+    filter: none;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .passport-page--compact-c .passport-margin-decor--left {
+    left: auto;
+    right: calc(100% + 0.5rem);
+    justify-content: flex-end;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 100%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 100%);
+  }
+
+  .passport-page--compact-c .passport-margin-decor--left img {
+    max-height: min(20rem, calc(100vh - var(--app-header-height, 4.25rem) - 5rem));
+    object-position: 100% center;
+    filter: sepia(0.06) saturate(1.05) brightness(1.02);
+  }
+
+  .passport-page--compact-c .passport-margin-decor--right {
+    left: calc(100% + 0.5rem);
+    right: auto;
+    justify-content: flex-start;
+    -webkit-mask-image: linear-gradient(to left, transparent 0%, #000 10%, #000 100%);
+    mask-image: linear-gradient(to left, transparent 0%, #000 10%, #000 100%);
+  }
+
+  .passport-page--compact-c .passport-margin-decor--right img {
+    max-height: min(22rem, calc(100vh - var(--app-header-height, 4.25rem) - 4rem));
+    object-position: 0% center;
+    border-radius: 12px;
+  }
+}

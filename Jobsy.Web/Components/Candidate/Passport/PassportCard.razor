@@ -8,6 +8,13 @@
 @inject CultureState Culture
 
 <aside class="passport-card @(Compact ?"passport-card--compact" : null)" aria-labelledby="passport-card-name">
+    @if (ShowHeaderGreeting && !Compact)
+    {
+        <div class="passport-card__greeting">
+            <h2 class="passport-card__greeting-title">@HeaderGreetingTitle</h2>
+            <p class="passport-card__greeting-lead">@Culture["Kompas.Greeting.Lead"]</p>
+        </div>
+    }
     <div class="passport-card__banner">
         <div class="passport-card__banner-text">
             <p class="passport-card__banner-title">@Culture["Passport.Banner"]</p>
@@ -187,6 +194,8 @@
 
 @code {
     [Parameter] public bool Compact { get; set; }
+    [Parameter] public bool ShowHeaderGreeting { get; set; }
+    [Parameter] public string HeaderGreetingTitle { get; set; } = "";
     [Parameter] public string DisplayName { get; set; } = "";
     [Parameter] public string Initials { get; set; } = "?";
     [Parameter] public string MemberNumber { get; set; } = "";

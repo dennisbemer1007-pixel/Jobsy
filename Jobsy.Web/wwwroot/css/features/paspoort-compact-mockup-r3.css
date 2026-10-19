@@ -1,0 +1,149 @@
+/* Paspoort compact layout mockup variant C (r3) — PO choice; loads on top of r2 */
+
+.passport-page--compact-c .passport-wide-canvas {
+  position: relative;
+  isolation: isolate;
+  width: min(1180px, calc(100vw - 2rem));
+  max-width: min(1180px, calc(100vw - 2rem));
+  margin-inline: auto;
+}
+
+.passport-page--compact-c.passport-page--illustrated .passport-layout,
+.passport-page--compact-c .passport-layout--wide-mock {
+  width: 100%;
+  max-width: 100%;
+  padding-inline: 0;
+  display: grid;
+  grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
+  gap: var(--space-4, 1rem);
+  align-items: start;
+}
+
+.passport-page--compact-c .passport-layout__margin-art {
+  display: none !important;
+}
+
+.passport-page--compact-c .passport-layout {
+  position: relative;
+  z-index: 1;
+}
+
+.passport-page--compact-c .passport-layout__main {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .passport-page--compact-c .passport-layout--wide-mock {
+    grid-template-columns: minmax(280px, 300px) minmax(0, 1fr);
+  }
+}
+
+/* Side margin art — soft vignette, no frame; only on very wide viewports */
+.passport-margin-decor {
+  display: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+@media (min-width: 1600px) {
+  .passport-page--compact-c .passport-margin-decor {
+    display: block;
+    position: fixed;
+    z-index: 0;
+    top: calc(var(--app-header-height, 4.25rem) + 0.35rem);
+    height: min(34rem, calc(100vh - var(--app-header-height, 4.25rem) - 2rem));
+    background-repeat: no-repeat;
+    opacity: 0.88;
+  }
+
+  .passport-page--compact-c .passport-margin-decor--right {
+    right: 0;
+    width: min(24vw, 20rem);
+    background-image: var(--passport-margin-art);
+    background-size: auto 102%;
+    background-position: 22% 40%;
+    opacity: 0.82;
+    -webkit-mask-image:
+      radial-gradient(ellipse 120% 88% at 72% 48%, #000 0%, #000 42%, transparent 78%),
+      linear-gradient(to left, #000 0%, transparent 92%);
+    mask-image:
+      radial-gradient(ellipse 120% 88% at 72% 48%, #000 0%, #000 42%, transparent 78%),
+      linear-gradient(to left, #000 0%, transparent 92%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .passport-page--compact-c .passport-margin-decor--left {
+    left: 0;
+    width: min(20vw, 16rem);
+    background-image: var(--passport-margin-lobster);
+    background-size: 92% auto;
+    background-position: 78% 62%;
+    opacity: 0.78;
+    filter: sepia(0.14) saturate(1.12) brightness(1.03);
+    -webkit-mask-image:
+      radial-gradient(ellipse 100% 82% at 28% 55%, #000 0%, #000 38%, transparent 72%),
+      linear-gradient(to right, #000 0%, transparent 90%);
+    mask-image:
+      radial-gradient(ellipse 100% 82% at 28% 55%, #000 0%, #000 38%, transparent 72%),
+      linear-gradient(to right, #000 0%, transparent 90%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+}
+
+/* Dit ben jij — four fact cards: 2×2 on laptop, one row on 1920 */
+.passport-page--compact-c .passport-overview {
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+@media (min-width: 1024px) {
+  .passport-page--compact-c .passport-overview {
+    flex-flow: row wrap;
+    align-items: flex-start;
+  }
+
+  .passport-page--compact-c .passport-overview__ring-block {
+    flex: 0 1 100%;
+    max-inline-size: 100%;
+  }
+
+  .passport-page--compact-c .passport-overview__stats {
+    flex: 1 1 100%;
+    min-inline-size: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem 0.65rem;
+  }
+}
+
+@media (min-width: 1800px) {
+  .passport-page--compact-c .passport-overview__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Wist je dat — stacked under overview, no side float / orphan gap */
+.passport-home-stack--anchored-nudge {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-items: stretch;
+}
+
+.passport-page--compact-c .passport-home-stack--anchored-nudge .passport-overview {
+  margin: 0;
+}
+
+.passport-page--compact-c .passport-home-stack--anchored-nudge .profile-encourage {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  align-self: stretch;
+}
+
+@media (min-width: 1024px) {
+  .passport-page--compact-c .passport-home-stack--inline-nudge {
+    flex-direction: column;
+  }
+}

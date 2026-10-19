@@ -1,0 +1,795 @@
+:root {
+  --pearl: #f7f4f0;
+  --surface: #fffcfa;
+  --bg: #f5f2ee;
+  --text: #122033;
+  --muted: #5a6a7d;
+  --border: #ddd5cc;
+  --brand: #0f2d5c;
+  --success: #15803d;
+  --success-soft: #ecfdf3;
+  --gold: #c9a227;
+  --gold-soft: #faf6e8;
+  --coral-deep: #d93a12;
+  --coral-soft: #ffe8e0;
+  --warn: #a65b00;
+  --font: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --header-h: 68px;
+  --r-md: 12px;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+}
+
+.mock {
+  min-height: 100vh;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--header-h);
+  padding: 0 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  color: var(--brand);
+  font-size: 1.05rem;
+}
+
+.app-header__brand img {
+  width: 28px;
+  height: 28px;
+}
+
+.app-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+  justify-content: center;
+  font-size: 0.82rem;
+}
+
+.app-header__nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+}
+
+.app-header__nav a.is-active {
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.app-header__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.app-header__user {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.mock-page {
+  padding: 0.65rem 0 1.25rem;
+}
+
+/* --- Variant A: slim greeting bar --- */
+.mock--a .slim-greet {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 84px;
+  max-height: 88px;
+  margin: 0 auto 0.75rem;
+  padding: 0.65rem 0 0.65rem 1.1rem;
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.mock--a .slim-greet__copy h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--brand);
+}
+
+.mock--a .slim-greet__copy p {
+  margin: 0.2rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  max-width: 28rem;
+  line-height: 1.35;
+}
+
+.mock--a .slim-greet__art {
+  flex: 0 0 min(240px, 34%);
+  background: url("www-images/candidate-illustrated/kompas-hero-wide.jpg") right center / cover no-repeat;
+  mask-image: linear-gradient(90deg, transparent, #000 28%);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 28%);
+}
+
+/* --- Variant B: greeting in passport --- */
+.mock--b .passport-card__greet {
+  padding: 0.65rem 1rem 0;
+}
+
+.mock--b .passport-card__greet h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--brand);
+}
+
+.mock--b .passport-card__greet p {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+/* --- Variant C: full-width canvas + margin art --- */
+.mock--c .mock-page {
+  padding-top: 0.35rem;
+}
+
+.mock--c .full-canvas {
+  display: grid;
+  grid-template-columns: minmax(280px, 300px) minmax(0, 1fr) minmax(200px, 260px);
+  gap: 1rem;
+  align-items: start;
+}
+
+.mock--c .margin-art {
+  position: sticky;
+  top: calc(var(--header-h) + 0.5rem);
+  min-height: 420px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--border));
+  background: var(--pearl);
+}
+
+.mock--c .margin-art__img {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  object-fit: cover;
+  object-position: 58% 42%;
+  display: block;
+  mask-image: linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 88%, transparent 100%);
+}
+
+.mock--c .margin-art__caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--pearl) 92%, #000));
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.mock--c .margin-art {
+  position: relative;
+}
+
+.mock--c .inline-greet {
+  display: none;
+}
+
+/* Layout shell widths */
+.mock-shell {
+  width: min(1100px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.mock--c .mock-shell {
+  width: min(1680px, calc(100% - 2.5rem));
+}
+
+.mock-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.mock--c .mock-layout {
+  display: contents;
+}
+
+.mock--c .passport-col {
+  grid-column: 1;
+}
+
+.mock--c .main-col {
+  grid-column: 2;
+}
+
+/* Passport card */
+.passport-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.passport-card__banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.65rem 1rem;
+  background: var(--brand);
+  color: #fff;
+}
+
+.passport-card__banner-title {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.passport-card__member {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  opacity: 0.92;
+}
+
+.passport-card__stamp {
+  border: 2px dashed color-mix(in srgb, #fff 55%, transparent);
+  border-radius: 999px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.58rem;
+  transform: rotate(8deg);
+  text-align: center;
+  max-width: 4.2rem;
+}
+
+.passport-card__identity {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  align-items: flex-start;
+}
+
+.passport-card__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+.passport-card__name {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pill--success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.chip {
+  display: inline-flex;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: var(--gold-soft);
+  color: var(--brand);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.passport-card__layers {
+  padding: 0 1rem 0.75rem;
+}
+
+.layer-bars {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+  margin-bottom: 0.35rem;
+}
+
+.layer-bars span {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand) 35%, var(--border));
+}
+
+.layer-bars span:nth-child(n + 4) {
+  background: var(--brand);
+}
+
+.layers-text {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.layers-text button {
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+}
+
+.passport-card__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.75rem;
+  padding: 0 1rem 0.85rem;
+  font-size: 0.78rem;
+}
+
+.passport-card__facts dt {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.passport-card__facts dd {
+  margin: 0.1rem 0 0;
+}
+
+.passport-card__facts .wide {
+  grid-column: 1 / -1;
+}
+
+.passport-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+
+.btn {
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--brand);
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+.tip-card {
+  margin-top: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.tip-card__art {
+  height: 72px;
+  background: url("www-images/candidate-illustrated/spots/dna.jpg") 30% 25% / cover no-repeat;
+}
+
+.tip-card__body {
+  padding: 0.65rem 0.85rem 0.85rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.tip-card__eyebrow {
+  margin: 0;
+  color: var(--coral-deep);
+  font-weight: 700;
+  font-size: 0.72rem;
+}
+
+/* Overview */
+.overview {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.overview--compact .overview__ring-wrap {
+  flex: 0 0 auto;
+}
+
+.overview__ring {
+  width: 96px;
+  height: 96px;
+}
+
+.overview__ring-wrap h2 {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+}
+
+.overview__ring-wrap p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.overview__stats {
+  flex: 1 1 16rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 0.65rem;
+}
+
+.stat {
+  border-left: 3px solid var(--border);
+  padding-left: 0.55rem;
+  min-height: 2.75rem;
+}
+
+.stat--brand {
+  border-color: var(--brand);
+}
+
+.stat--success {
+  border-color: var(--success);
+}
+
+.stat--gold {
+  border-color: var(--gold);
+}
+
+.stat--warn {
+  border-color: var(--warn);
+}
+
+.stat__label {
+  margin: 0;
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.stat__value {
+  margin: 0.1rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.stat__hint {
+  margin: 0.1rem 0 0;
+  font-size: 0.68rem;
+  color: var(--muted);
+}
+
+/* Nudge */
+.nudge {
+  margin-top: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--gold) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--border));
+}
+
+.nudge__mascot {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.nudge__text {
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.nudge__text strong {
+  display: block;
+  font-size: 0.82rem;
+  margin-bottom: 0.15rem;
+}
+
+.nudge--inline {
+  margin-top: 0;
+  flex: 1 1 14rem;
+  min-width: 12rem;
+}
+
+.overview-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+
+.mock--c .overview-row .overview {
+  flex: 1 1 22rem;
+}
+
+/* Tabs */
+.tabs {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tab.is-active {
+  background: var(--brand);
+  color: #fff;
+}
+
+.tab-pill {
+  background: var(--coral-soft);
+  color: var(--coral-deep);
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+}
+
+.tab.is-active .tab-pill {
+  background: color-mix(in srgb, #fff 22%, transparent);
+  color: #fff;
+}
+
+/* Tab panel */
+.tab-content {
+  margin-top: 0.55rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 0.85rem 1rem 1rem;
+}
+
+.tab-content h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+}
+
+.tab-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.tab-col {
+  padding: 0.65rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--gold) 6%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.tab-col h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  color: var(--brand);
+}
+
+.tab-col p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.privacy-hint {
+  width: 100%;
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin: 0 0 0.35rem;
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .app-header__nav {
+    display: none;
+  }
+
+  .mock-shell,
+  .mock--c .mock-shell {
+    width: calc(100% - 1rem);
+  }
+
+  .mock-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .mock--a .slim-greet {
+    display: none;
+  }
+
+  .mobile-hero--a {
+    min-height: 200px;
+    max-height: 220px;
+  }
+
+  .mobile-hero--a .mobile-hero__bg {
+    background: url("www-images/candidate-illustrated/mob-figures/kompas-mob-figures.png") 92% 95% / 58% auto no-repeat,
+      url("www-images/candidate-illustrated/kompas-hero-wide.jpg") 68% 42% / cover no-repeat;
+  }
+
+  .mock--c .full-canvas {
+    grid-template-columns: 1fr;
+  }
+
+  .mock--c .margin-art {
+    display: none;
+  }
+
+  .mock--b .passport-card__greet {
+    display: none;
+  }
+
+  .mobile-hero {
+    display: block;
+    position: relative;
+    min-height: 200px;
+    max-height: 220px;
+    margin-bottom: 0.65rem;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--gold) 30%, var(--border));
+  }
+
+  .mobile-hero__bg {
+    position: absolute;
+    inset: 0;
+    background: url("www-images/candidate-illustrated/kompas-hero-wide.jpg") 70% 55% / cover no-repeat;
+  }
+
+  .mobile-hero__fade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--pearl) 96%, transparent) 0%,
+      color-mix(in srgb, var(--pearl) 78%, transparent) 42%,
+      transparent 68%
+    );
+  }
+
+  .mobile-hero__copy {
+    position: relative;
+    z-index: 1;
+    padding: 1rem 1rem 0.75rem;
+    max-width: 70%;
+  }
+
+  .mobile-hero__copy h1 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--brand);
+  }
+
+  .mobile-hero__copy p {
+    margin: 0.35rem 0 0;
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+
+  .mock--b .mobile-hero__bg {
+    background: url("www-images/candidate-illustrated/mob-figures/kompas-mob-figures.png") 88% 92% / 55% auto no-repeat,
+      url("www-images/candidate-illustrated/kompas-hero-wide.jpg") 65% 40% / cover no-repeat;
+  }
+
+  .mock--b .mobile-hero__fade {
+    background: linear-gradient(160deg, var(--pearl) 0%, color-mix(in srgb, var(--pearl) 70%, transparent) 50%, transparent 72%);
+  }
+
+
+  .tip-card {
+    display: none;
+  }
+
+  .tab-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nudge--inline {
+    flex: 1 1 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .mobile-hero {
+    display: none !important;
+  }
+}
+
+.mock-label {
+  position: fixed;
+  bottom: 8px;
+  right: 10px;
+  z-index: 99;
+  font-size: 0.65rem;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  pointer-events: none;
+}
