@@ -10,6 +10,11 @@
   pointer-events: none;
 }
 
+/* The aria-hidden node itself must not capture taps (descendants-only rules are insufficient). */
+[aria-hidden="true"]:not(.kk-filter-scrim):not(.modal-backdrop):not([class*="scrim"]):not([class*="backdrop"]) {
+  pointer-events: none;
+}
+
 /* §decorative — shared class suffixes for art / hero bands / spots */
 [class*="__art"],
 [class*="__art"] *,
@@ -29,6 +34,8 @@
 .cand-hero__mob-figures-wrap,
 .cand-hero__mob-figures-wrap *,
 .ob-illustrated-step__hero-band,
+.ob-illustrated-step__mobile-cover,
+.ob-illustrated-step__mobile-cover::before,
 .ob-illustrated-step__mobile-cover-art,
 .ob-illustrated-step__mobile-cover-art *,
 .ob-illustrated-step__art,
@@ -86,7 +93,6 @@
 .cand-hero__copy,
 .ob-illustrated-step__body,
 .ob-illustrated-step__form,
-.ob-illustrated-step__mobile-cover-copy,
 .ob-illustrated-step__head,
 .ob-finale__hero-inner,
 .ob-finale__wrap,

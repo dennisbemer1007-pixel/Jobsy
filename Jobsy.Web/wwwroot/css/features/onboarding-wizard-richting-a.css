@@ -11,6 +11,7 @@
     min-height: 0 !important;
     flex: 1 1 auto !important;
     -webkit-overflow-scrolling: touch;
+    scroll-padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
   }
 
   .app-shell.app-shell--questionnaire:has(.ob-wizard--richting-a) .app-main > * {
@@ -40,6 +41,20 @@
     overflow-y: auto !important;
     display: block !important;
     min-height: 0 !important;
+    scroll-padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  .ob-wizard--richting-a .ob-wizard__main {
+    padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .ob-wizard--richting-a .ob-wizard__content.ob-wizard__content--illustrated {
+    scroll-padding-bottom: calc(var(--sticky-footer-h, 6.5rem) + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-nearby-panel--mobile,
+  .ob-wizard--richting-a footer.ob-wizard__footer[data-sticky-footer] .ob-nearby-panel__mobile-static {
+    pointer-events: none;
   }
 
   .ob-wizard--richting-a.ob-wizard,
@@ -474,6 +489,10 @@
 
   .ob-wizard--richting-a .work-status-field .lobsy-choice-tile,
   .ob-wizard--richting-a .work-status-chips .lobsy-choice-tile {
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+    touch-action: manipulation;
     min-height: 48px;
     padding: 0.35rem 0.75rem;
     border-radius: 999px;
