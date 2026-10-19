@@ -16,12 +16,12 @@
     "v": "20261018-23"
   },
   "css/app.min.css": {
-    "sha256": "4117be396379f11b305b36cf376178715e3561ef4daa3c0f6659ed0ddde33840",
-    "v": "20261019-10"
+    "sha256": "45cf9269caa2252fe7282c70d47f2dc804c9abec858df7b09b226ca495fd340d",
+    "v": "20261019-11"
   },
   "css/critical.css": {
-    "sha256": "64cbe72b150901710db5fa228468cbf99dc7d0364469b010b5c38bdc9ba75c5a",
-    "v": "20261018-23"
+    "sha256": "4b1e66308e9c4511e08c3f219aafc92961c860b2be639d0c4107d22a245680d4",
+    "v": "20261019-11"
   },
   "css/features/account-mfa.css": {
     "sha256": "77ffff1997179f77bc2086c352bb23b7cea454b05c0fc555a8bcf4e6371f3df3",
@@ -340,11 +340,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "a08bc82ffc5551a29a6838f1170a0d5e8e824e59503c2f8446dbc6ff923c2f37",
+    "sha256": "8f703250f2abaa3552214244eb144e645580f3e8212cb7b9d2ad68d162e1aa68",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "71b4c4d0930fa598a4fb34135d5a810117b7e27f83d9e306a12f7aa40eac1dd7",
+    "sha256": "d447ccb709c4a63c1bad9a154038abd2cee887643ade7607c169c66deadeb418",
     "v": "20261016-06"
   }
 }

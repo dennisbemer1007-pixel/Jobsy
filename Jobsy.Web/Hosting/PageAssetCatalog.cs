@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261019-10",
+        "css/app.min.css?v=20261019-11",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261019-01",
         "css/features/candidate-illustrated-decorative-layers.css?v=20261019-02",
