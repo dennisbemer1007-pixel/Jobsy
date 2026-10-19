@@ -54,13 +54,9 @@
 
     private bool UsesSingleMobileHeroArt => !string.IsNullOrWhiteSpace(ArtUrlMobile);
 
-    private bool IsProfessionBandHero =>
-        CssClass?.Contains("profession-band", StringComparison.OrdinalIgnoreCase) == true;
-
     private bool ShowMobileFiguresImage =>
         !UsesCompositeMobileHero
         && !UsesSingleMobileHeroArt
-        && !IsProfessionBandHero
         && !string.IsNullOrWhiteSpace(ResolvedMobileFigures);
 
     private bool ShowMediaLayer =>

@@ -8,7 +8,7 @@ namespace Jobsy.Tests;
 [Collection("PlaywrightSmoke")]
 public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
 {
-    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r6";
+    private const string ArtifactsDir = "/opt/cursor/artifacts/tips-build-r7";
     private IllustratedPagesWebFactory? _web;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
@@ -42,7 +42,8 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         var appId = IllustratedPagesApiStub.SampleApplicationId;
         var offerId = IllustratedPagesApiStub.SampleOfferApplicationId;
 
-        await CaptureReferenceSettingsAsync();
+        await CaptureReferencePageAsync("ref-instellingen-390", "/candidate/settings");
+        await CaptureReferencePageAsync("ref-bewaard-390", "/candidate/liked");
         await CaptureAsync("01-gesprek-gepland", $"/candidate/applications/{appId:D}/gesprek", "[data-testid='application-interview-page']");
         await CaptureAsync("02-aanbod-ontvangen", $"/candidate/applications/{offerId:D}/aanbod", "[data-testid='application-offer-page']");
         await CaptureAsync("03-paspoort-cv-tip", "/candidate/paspoort?tab=proof", "[data-testid='passport-education-tip']");
@@ -99,7 +100,7 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         Assert.True(File.Exists(file));
     }
 
-    private async Task CaptureReferenceSettingsAsync()
+    private async Task CaptureReferencePageAsync(string name, string path)
     {
         await using var context = await _browser!.NewContextAsync(new()
         {
@@ -112,11 +113,11 @@ public sealed class ContextualTipsBuildScreenshotTests : IAsyncLifetime
         var page = await context.NewPageAsync();
         page.SetDefaultTimeout(120_000);
         await page.GotoAsync(
-            $"{_web!.ServerAddress}/__test/sign-in?return=%2Fcandidate%2Fsettings",
+            $"{_web!.ServerAddress}/__test/sign-in?return={Uri.EscapeDataString(path)}",
             new() { WaitUntil = WaitUntilState.DOMContentLoaded });
-        await page.GotoAsync($"{_web.ServerAddress}/candidate/settings", new() { WaitUntil = WaitUntilState.NetworkIdle });
+        await page.GotoAsync($"{_web.ServerAddress}{path}", new() { WaitUntil = WaitUntilState.NetworkIdle });
         await page.WaitForTimeoutAsync(600);
-        var file = Path.Combine(ArtifactsDir, "ref-instellingen-390.png");
+        var file = Path.Combine(ArtifactsDir, $"{name}.png");
         await page.ScreenshotAsync(new() { Path = file, FullPage = true });
         Assert.True(File.Exists(file));
     }

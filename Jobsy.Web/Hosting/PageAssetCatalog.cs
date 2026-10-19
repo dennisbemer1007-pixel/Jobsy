@@ -37,8 +37,7 @@ public static class PageAssetCatalog
     [
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
-        "css/features/candidate-illustrated-app.css?v=20261018-94",
-        "css/features/candidate-illustrated-hero.css?v=20261018-02",
+        "css/features/candidate-illustrated-app.css?v=20261018-95",
         "css/features/kandidaat-banen.css?v=20261017-04",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
@@ -64,8 +63,7 @@ public static class PageAssetCatalog
         "css/features/reference-verification.css?v=20261018-16",
         "css/features/ontdekkingsreis.css?v=20261015-21",
         "css/features/tests.css?v=20261018-04",
-        "css/features/candidate-illustrated-app.css?v=20261018-94",
-        "css/features/candidate-illustrated-hero.css?v=20261018-02",
+        "css/features/candidate-illustrated-app.css?v=20261018-95",
         "css/features/carriere.css?v=20261018-03",
         "css/features/opleidingen.css?v=20261018-r12",
         "css/features/occupation-day.css?v=20261005-23",
@@ -73,7 +71,7 @@ public static class PageAssetCatalog
         "css/features/future-jobs.css?v=20261006-02",
         "css/features/proactive-matching.css?v=20261012-03",
         "css/features/candidate-hub.css?v=20261012-01",
-        "css/features/contextual-tips.css?v=20261018-07",
+        "css/features/contextual-tips.css?v=20261018-08",
     ];
 
     public static readonly string[] WerkgeverCss =
