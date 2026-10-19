@@ -40,7 +40,7 @@ internal static class FunctionalOnboardingInteractivityHelpers
 
     internal static async Task AssertWorkStatusChipTogglesAsync(IPage page)
     {
-        var chips = page.Locator(".work-status-chips .lobsy-choice-tile, .work-status-chips .work-status-chip");
+        var chips = page.Locator(".work-status-field .work-status-chips .lobsy-choice-tile");
         await chips.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
         await page.WaitForFunctionAsync(
             "() => document.documentElement.getAttribute('data-lobsy-circuit') === 'ready'",
@@ -48,21 +48,61 @@ internal static class FunctionalOnboardingInteractivityHelpers
             new() { Timeout = 90_000 });
         await page.WaitForTimeoutAsync(400);
 
+        var viewport = page.ViewportSize;
+        var mobile = viewport is not null && viewport.Width < 600;
         var selected = false;
-        var count = await chips.CountAsync();
-        for (var i = 0; i < count && !selected; i++)
+
+        for (var round = 0; round < 2 && !selected; round++)
         {
-            var chip = chips.Nth(i);
-            await chip.ScrollIntoViewIfNeededAsync();
-            await page.WaitForTimeoutAsync(200);
-            await chip.ClickAsync(new() { Timeout = 15_000, Force = true });
-            await page.WaitForTimeoutAsync(700);
-            selected = await WorkStatusSelectionVisibleAsync(page);
-            if (!selected)
+            if (round == 1)
             {
-                await chip.EvaluateAsync("el => el instanceof HTMLElement && el.click()");
-                await page.WaitForTimeoutAsync(700);
-                selected = await WorkStatusSelectionVisibleAsync(page);
+                var firstName = page.Locator("input[autocomplete=given-name]").First;
+                if (await firstName.CountAsync() > 0 && string.IsNullOrWhiteSpace(await firstName.InputValueAsync()))
+                {
+                    await firstName.FillAsync("Func");
+                    await page.WaitForTimeoutAsync(300);
+                }
+            }
+
+            var count = await chips.CountAsync();
+            for (var i = 0; i < count && !selected; i++)
+            {
+                var chip = chips.Nth(i);
+                await chip.ScrollIntoViewIfNeededAsync();
+                await page.WaitForTimeoutAsync(200);
+
+                try
+                {
+                    if (mobile)
+                    {
+                        await chip.TapAsync(new() { Timeout = 15_000 });
+                    }
+                    else
+                    {
+                        await chip.ClickAsync(new() { Timeout = 15_000 });
+                    }
+                }
+                catch (PlaywrightException)
+                {
+                    await chip.ClickAsync(new() { Timeout = 15_000, Force = true });
+                }
+
+                selected = await WaitForWorkStatusSelectedAsync(page, 25_000);
+                if (selected)
+                {
+                    break;
+                }
+
+                await chip.EvaluateAsync(
+                    """
+                    el => {
+                      if (!(el instanceof HTMLElement)) return;
+                      el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, pointerType: 'touch' }));
+                      el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, pointerType: 'touch' }));
+                      el.click();
+                    }
+                    """);
+                selected = await WaitForWorkStatusSelectedAsync(page, 12_000);
             }
         }
 
@@ -337,10 +377,29 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
     }
 
+    private static async Task<bool> WaitForWorkStatusSelectedAsync(IPage page, int timeoutMs)
+    {
+        try
+        {
+            await page.WaitForFunctionAsync(
+                """
+                () => !!document.querySelector(
+                  '.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed="true"]')
+                """,
+                null,
+                new() { Timeout = timeoutMs });
+            return true;
+        }
+        catch (TimeoutException)
+        {
+            return false;
+        }
+    }
+
     private static async Task<bool> WorkStatusSelectionVisibleAsync(IPage page)
-        => await page.Locator(".work-status-chips .is-selected, .work-status-chips [aria-pressed=\"true\"]").CountAsync() > 0
+        => await page.Locator(".work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed=\"true\"]").CountAsync() > 0
            || await page.EvaluateAsync<bool>(
-               "() => !!document.querySelector('.work-status-chips .is-selected, .work-status-chips [aria-pressed=\"true\"]')");
+               "() => !!document.querySelector('.work-status-chips .lobsy-choice-tile.is-selected, .work-status-chips [aria-pressed=\"true\"]')");
 
     private static async Task<string> TargetSelectorAsync(ILocator target)
     {
