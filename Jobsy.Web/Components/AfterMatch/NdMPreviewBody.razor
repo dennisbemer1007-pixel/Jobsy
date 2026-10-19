@@ -1,5 +1,6 @@
 @using Jobsy.Core.Contracts
 @using Jobsy.Core.Enums
+@using Jobsy.Web.Components
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
@@ -103,8 +104,12 @@
                     <div>
                         <span class="lbl">@Culture["AfterMatch.Screen07.EmailLabel"]</span>
                         <div class="mclient">
-                            <div class="mhead"><b>Lobsy</b></div>
-                            <div class="mail">
+                            <div class="mail ndm-mail-preview">
+                                <div class="mtop">
+                                    <span class="ndm-mail-logo"><LobsyMark /></span>
+                                    <span class="xs muted">@Culture["AfterMatch.Mail.PlannedTag"]</span>
+                                </div>
+                                <p class="xs muted ndm-mail-from"><b>Lobsy</b> &lt;gesprek@lobsy.nl&gt;</p>
                                 <h2>Morgen is je gesprek</h2>
                                 <p class="small">Hoi Sanne, nog even op een rij. Je kunt het.</p>
                             </div>

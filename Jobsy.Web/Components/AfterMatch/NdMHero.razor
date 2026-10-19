@@ -1,31 +1,39 @@
+@using Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
 @inject CultureState Culture
 
-<section class="band ndm-hero ndm-hero--strip">
-    <div class="ndm-hero__cream">
-        @if (!string.IsNullOrWhiteSpace(Eyebrow))
-        {
-            <span class="eyb">@Eyebrow</span>
-        }
-        else
-        {
-            <span class="eyb">@Culture["AfterMatch.Nav.Eyebrow"]</span>
-        }
-        <h1>@Title</h1>
-        @if (!string.IsNullOrWhiteSpace(Lead))
-        {
-            <p class="ndm-hero__lead">@Lead</p>
-        }
+@if (ShowArt)
+{
+    <CandidateIllustratedHero Eyebrow="@EffectiveEyebrow"
+                              CoralEyebrow="true"
+                              Title="@Title"
+                              Lead="@Lead"
+                              ArtUrl="/img/spots/gesprek.jpg"
+                              ArtPosition="right bottom"
+                              CssClass="ndm-cand-hero cand-hero--profession-band">
         @if (ChildContent is not null)
         {
             <div class="bact">@ChildContent</div>
         }
-    </div>
-    @if (ShowArt)
-    {
-        <div class="ndm-hero__art-band" style="--ndm-hero-art:url(/img/spots/gesprek.jpg)" aria-hidden="true"></div>
-    }
-</section>
+    </CandidateIllustratedHero>
+}
+else
+{
+    <section class="band ndm-hero ndm-hero--no-art">
+        <div class="bt">
+            <span class="eyb">@EffectiveEyebrow</span>
+            <h1>@Title</h1>
+            @if (!string.IsNullOrWhiteSpace(Lead))
+            {
+                <p>@Lead</p>
+            }
+            @if (ChildContent is not null)
+            {
+                <div class="bact">@ChildContent</div>
+            }
+        </div>
+    </section>
+}
 
 @code {
     [Parameter] public string Title { get; set; } = "";
@@ -33,4 +41,7 @@
     [Parameter] public string? Eyebrow { get; set; }
     [Parameter] public bool ShowArt { get; set; } = true;
     [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string EffectiveEyebrow =>
+        string.IsNullOrWhiteSpace(Eyebrow) ? Culture["AfterMatch.Nav.Eyebrow"] : Eyebrow;
 }

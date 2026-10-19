@@ -17,7 +17,7 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
 
     private static string OutDir =>
         string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS"))
-            ? "/opt/cursor/artifacts/nadematch-r8"
+            ? "/opt/cursor/artifacts/nadematch-r9"
             : Environment.GetEnvironmentVariable("JOBSY_NADMATCH_ARTIFACTS")!;
 
     private static string MockupRoot =>
@@ -65,7 +65,9 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         await using var browser = await playwright.Chromium.LaunchAsync(new() { Headless = true });
 
         var mobileWidths = new[] { (390, "mobiel"), (360, "mobiel-360") };
-        var expectedCaptures = Routes.Length + Routes.Count(r => r.Role == "kandidaat");
+        // kandidaat: 390/360 full + viewport-top each; werkgever: desktop full
+        var expectedCaptures = Routes.Count(r => r.Role == "werkgever")
+                               + Routes.Count(r => r.Role == "kandidaat") * 4;
 
         await using (var candidateCtx = await browser.NewContextAsync(KbE2e.ContextFor(390, 844)))
         {
@@ -125,6 +127,12 @@ public sealed class NaDeMatchScreenshotPlaywrightTests
         await page.WaitForTimeoutAsync(400);
         var file = Path.Combine(OutDir, $"{route.Id}-capture-{tag}.png");
         await page.ScreenshotAsync(new() { Path = file, FullPage = true });
+        if (tag is "mobiel" or "mobiel-360")
+        {
+            var topFile = Path.Combine(OutDir, $"{route.Id}-capture-{tag}-top.png");
+            await page.ScreenshotAsync(new() { Path = topFile, FullPage = false });
+        }
+
         if (tag is "mobiel" or "desktop")
         {
             CopyMockupSideBySide(route.Id, tag, file, compareDir);
