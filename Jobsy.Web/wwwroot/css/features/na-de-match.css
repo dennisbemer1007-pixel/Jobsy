@@ -68,12 +68,12 @@
 @media(max-width:600px){
 .ndm .band.ndm-hero--gesprek{display:block;position:relative;overflow:hidden;min-height:15rem;height:16.25rem;max-height:260px;margin-bottom:14px;border-radius:var(--rL);background-color:var(--cream);background-image:none}
 .ndm .band.ndm-hero--gesprek .ndm-hero__art{display:none!important}
-.ndm .band.ndm-hero--gesprek::after{content:"";position:absolute;right:0;bottom:0;width:58%;height:100%;background-color:var(--cream);background-image:url(/img/spots/gesprek.jpg);background-repeat:no-repeat;background-position:right bottom;background-size:contain;pointer-events:none;z-index:0}
-.ndm .band.ndm-hero--gesprek .bt{padding:18px 12px 14px 18px;max-width:42%;position:relative;z-index:1}
+.ndm .band.ndm-hero--gesprek::after{content:"";position:absolute;left:42%;right:0;bottom:0;height:100%;background-color:var(--cream);background-image:url(/img/spots/gesprek.jpg);background-repeat:no-repeat;background-position:right bottom;background-size:contain;pointer-events:none;z-index:0}
+.ndm .band.ndm-hero--gesprek .bt{padding:18px 12px 14px 18px;max-width:42%;position:relative;z-index:1;background:var(--cream)}
 .ndm .band.ndm-hero--gesprek .eyb{line-height:1.35;padding-top:2px}
 }
 @media(max-width:360px){
-.ndm .band.ndm-hero--gesprek::after{width:60%}
+.ndm .band.ndm-hero--gesprek::after{left:40%}
 .ndm .band.ndm-hero--gesprek .bt{max-width:40%}
 }
 @media(min-width:601px){
