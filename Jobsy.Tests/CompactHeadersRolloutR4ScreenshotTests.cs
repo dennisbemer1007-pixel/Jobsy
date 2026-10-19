@@ -158,7 +158,7 @@ public sealed class CompactHeadersRolloutR4ScreenshotTests : IAsyncLifetime
         return box is null ? 0 : (int)Math.Round(box.Height);
     }
 
-    private static async Task DismissBanenkaartStartPromptAsync(IPage page)
+    internal static async Task DismissBanenkaartStartPromptAsync(IPage page)
     {
         var later = page.Locator(".kb-start-prompt__later");
         if (await later.CountAsync() > 0)
@@ -168,7 +168,7 @@ public sealed class CompactHeadersRolloutR4ScreenshotTests : IAsyncLifetime
         }
     }
 
-    private static async Task WaitForBanenkaartMapReadyAsync(IPage page)
+    internal static async Task WaitForBanenkaartMapReadyAsync(IPage page)
     {
         await page.WaitForSelectorAsync(".map-stage.is-live #job-map canvas", new() { Timeout = 120_000 });
         await page.WaitForFunctionAsync(
@@ -248,7 +248,7 @@ public sealed class CompactHeadersRolloutR4ScreenshotTests : IAsyncLifetime
     }
 
     /// <summary>Samples the visible #job-map screenshot — reliable when WebGL readPixels is blank in headless.</summary>
-    private static async Task<bool> MapRegionHasNonUniformPixelsAsync(IPage page)
+    internal static async Task<bool> MapRegionHasNonUniformPixelsAsync(IPage page)
     {
         var map = page.Locator("#job-map");
         await map.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
