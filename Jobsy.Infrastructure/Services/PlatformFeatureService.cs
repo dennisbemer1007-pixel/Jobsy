@@ -387,6 +387,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private bool ResolveSamplePdfEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "SamplePdfEnabled", row?.SamplePdfEnabled ?? false, false, "JobsyFeatures:SamplePdf");
 
+    private bool ResolveTestDepthValueMockupEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestDepthValueMockupEnabled", row?.TestDepthValueMockupEnabled ?? true, true, "TestDepthValueMockupEnabled");
+
     private bool ResolveAdminBool(
         PlatformFeatureSettings? row,
         string key,
@@ -557,7 +560,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveResearchConsentEnabled(row),
             ResolveTestEditModeEnabled(row),
             ResolveSamplePdfEnabled(row),
-            row?.TestDepthValueMockupEnabled ?? false,
+            ResolveTestDepthValueMockupEnabled(row),
             AdminOverriddenFlagKeys: PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson).OrderBy(k => k, StringComparer.Ordinal).ToList(),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),

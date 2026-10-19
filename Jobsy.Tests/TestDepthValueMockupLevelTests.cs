@@ -5,8 +5,15 @@ using Jobsy.Core.Features;
 using Jobsy.Core.Reports;
 using Jobsy.Core.Reports.Competence;
 using Jobsy.Core.Rules;
+using Jobsy.Core.Entities;
+using Jobsy.Core.Options;
+using Jobsy.Infrastructure.Data;
+using Jobsy.Infrastructure.Services;
 using Jobsy.Web.Admin;
 using Jobsy.Web.Localization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Jobsy.Tests;
@@ -170,9 +177,11 @@ public sealed class TestDepthValueMockupLevelTests
     [Fact]
     public void TestDepthValueMockup_flag_is_admin_switchable_and_on_public_api()
     {
-        Assert.Contains(
+        var def = Assert.Single(
             FeatureFlagRegistry.All,
-            d => d.Key == "TestDepthValueMockupEnabled" && d.PlatformFeature == PlatformFeature.TestDepthValueMockup);
+            d => d.Key == "TestDepthValueMockupEnabled");
+        Assert.Equal(PlatformFeature.TestDepthValueMockup, def.PlatformFeature);
+        Assert.True(def.DefaultValue);
         Assert.Contains(
             PlatformSettingsCatalog.Entries.Select(e => e.Key),
             k => k == "TestDepthValueMockupEnabled");
@@ -180,6 +189,51 @@ public sealed class TestDepthValueMockupLevelTests
             FeatureFlagRegistry.PublicEndpointFlags.Select(d => d.Key),
             k => k == "TestDepthValueMockupEnabled");
     }
+
+    [Fact]
+    public void PlatformFeatureSettings_test_depth_mockup_defaults_on()
+    {
+        Assert.True(new PlatformFeatureSettings().TestDepthValueMockupEnabled);
+        Assert.True(FeatureFlagSnapshot.Defaults.TestDepthValueMockupEnabled);
+        Assert.True(FeatureFlagSnapshot.Defaults.IsEnabled(PlatformFeature.TestDepthValueMockup));
+    }
+
+    [Fact]
+    public async Task Admin_can_turn_test_depth_mockup_off()
+    {
+        await using var db = CreateFeatureDb();
+        var entry = PlatformSettingsCatalog.Entries.Single(e => e.Key == "TestDepthValueMockupEnabled");
+        var sut = CreateFeatureService(db);
+
+        var snap = await sut.GetAsync();
+        Assert.True(snap.TestDepthValueMockupEnabled);
+        Assert.True(entry.Read(snap) is true);
+
+        snap = await sut.UpdateAsync(entry.Write(false));
+        Assert.False(snap.TestDepthValueMockupEnabled);
+        Assert.False(entry.Read(snap) is true);
+
+        var again = await sut.GetAsync();
+        Assert.False(again.TestDepthValueMockupEnabled);
+    }
+
+    private static JobsyDbContext CreateFeatureDb()
+    {
+        var options = new DbContextOptionsBuilder<JobsyDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new JobsyDbContext(options);
+    }
+
+    private static PlatformFeatureService CreateFeatureService(JobsyDbContext db)
+        => new(
+            db,
+            Options.Create(new JobsyFeatureOptions()),
+            new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["PublicWebBaseUrl"] = "http://localhost:5201",
+                ["TestDepthValueMockupEnabled"] = "true"
+            }).Build());
 
     private sealed class FakeNormProvider(bool available) : INormProvider
     {

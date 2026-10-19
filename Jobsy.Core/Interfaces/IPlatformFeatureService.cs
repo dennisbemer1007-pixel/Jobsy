@@ -73,7 +73,7 @@ public sealed record PlatformFeatureSnapshot(
     bool ResearchConsentEnabled = false,
     bool TestEditModeEnabled = false,
     bool SamplePdfEnabled = false,
-    bool TestDepthValueMockupEnabled = false,
+    bool TestDepthValueMockupEnabled = true,
     IReadOnlyList<string>? AdminOverriddenFlagKeys = null,
     int CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute,
     int CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour,

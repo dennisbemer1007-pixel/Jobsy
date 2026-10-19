@@ -374,7 +374,7 @@ public record PlatformFeatureDto(
     bool ResearchConsentEnabled = false,
     bool TestEditModeEnabled = false,
     bool SamplePdfEnabled = false,
-    bool TestDepthValueMockupEnabled = false,
+    bool TestDepthValueMockupEnabled = true,
     IReadOnlyList<string>? AdminOverriddenFlagKeys = null,
     int CandidateApplyPerMinuteLimit = 5,
     int CandidateApplyPerHourLimit = 30,
