@@ -25,6 +25,7 @@
             <button type="button" class="mock-interview-modal__close" @onclick="Close" aria-label="@Culture["MockInterview.Close"]">×</button>
         </header>
 
+        <div class="mock-interview-modal__scroll">
         <p class="mock-interview-modal__disclaimer">
             @Culture["MockInterview.Disclaimer"]
             <a class="auth-link mock-interview-modal__disclaimer-link" href="/gebruiksvoorwaarden" target="_blank" rel="noopener">@Culture["MockInterview.DisclaimerLink"]</a>
@@ -104,6 +105,7 @@
         {
             <p class="state-message error">@_error</p>
         }
+        </div>
 
         <form class="mock-interview-compose" @onsubmit="SendAsync" @onsubmit:preventDefault="true">
             <label class="visually-hidden" for="mock-interview-input">@Culture["MockInterview.InputLabel"]</label>
