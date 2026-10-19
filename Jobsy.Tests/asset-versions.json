@@ -257,7 +257,7 @@
   },
   "js/app-core.js": {
     "sha256": "23d70028a91341308a5d33ecbd02a7abab5e75e41f661fd272721ac2d1e42d3b",
-    "v": "20261019-coach1"
+    "v": "20261019-13"
   },
   "js/app-extras.js": {
     "sha256": "02776c44aef505e9920ecf6d189199d584298445ed08665da8c5c0ff46821142",
@@ -340,11 +340,11 @@
     "v": "20261004-14"
   },
   "service-worker.js": {
-    "sha256": "de834ac73826e3baa91ec767f51cf0ccd972e6ded68f1f4d6da4fddef8cea569",
+    "sha256": "1b84f5841db725a315a7944f49ea1cd578d5afab1d6fc1c1b31840ac1f94ea03",
     "v": "20261016-06"
   },
   "service-worker.published.js": {
-    "sha256": "c51a11752c4fc0bb78afd5babf9d05c2c585568b4c42133353f61398312f8969",
+    "sha256": "eb382d9cc7151296d819a312a1b5361bb3e2f72c1f3867c10289c8c951bca774",
     "v": "20261016-06"
   }
 }
