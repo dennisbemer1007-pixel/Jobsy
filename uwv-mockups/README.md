@@ -11,11 +11,13 @@ Interactive preview routes live under `/preview/uwv-mockups/{screen}?lang=nl|en`
 | Drijfveren: Wat drijft jou | `drijfveren` | `05-drijfveren-wat-drijft-jou-*` |
 | Neem mee naar adviseur | `adviseur` | `06-adviseur-share-*` |
 
-Regenerate PNGs (Web on `:5201`):
+**33** screen PNGs + `00-contact-sheet.png` (incl. Ondernemer EN 1440/390).
+
+Regenerate (Web on `:5201`):
 
 ```bash
 JOBSY_UWV_MOCKUP_SCREENSHOTS=1 JOBSY_E2E_BASE_URL=http://127.0.0.1:5201 \
   dotnet test Jobsy.Tests/Jobsy.Tests.csproj --filter FullyQualifiedName~UwvMockupScreenshotPlaywrightTests
 ```
 
-Then rebuild `00-contact-sheet.png` with Pillow if needed (see agent capture script).
+Copy to agent store: `/cursor/stores/self/artifacts/uwv-mockups/`

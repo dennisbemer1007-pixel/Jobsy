@@ -9,29 +9,35 @@
     <p class="uwv-block__lead">@UwvMockupCopy.Omscholen.Lead(Lang)</p>
 
     <div class="uwv-omscholen__sectors">
-        @foreach (var sector in UwvMockupData.OmscholenSectors)
+        @foreach (var (sector, imageUrl) in UwvMockupData.OmscholenSectors)
         {
-            <article class="uwv-omscholen__sector">
-                <h3>@(UwvMockupCopy.IsEnglish(Lang) ? sector.NameEn : sector.NameNl)</h3>
-                <p>@(UwvMockupCopy.IsEnglish(Lang) ? sector.DetailEn : sector.DetailNl)</p>
-                @if (sector.HasBaangarantie)
-                {
-                    <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
-                }
+            <article class="uwv-omscholen__sector uwv-omscholen__sector--rich">
+                <div class="uwv-omscholen__sector-art" style="@($"background-image:url('{imageUrl}')")" aria-hidden="true"></div>
+                <div class="uwv-omscholen__sector-body">
+                    <h3>@(UwvMockupCopy.IsEnglish(Lang) ? sector.NameEn : sector.NameNl)</h3>
+                    <p>@(UwvMockupCopy.IsEnglish(Lang) ? sector.DetailEn : sector.DetailNl)</p>
+                    @if (sector.HasBaangarantie)
+                    {
+                        <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
+                    }
+                    <a class="uwv-inline-link" href="/preview/uwv-mockups/banenkaart?lang=@Lang">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
+                </div>
             </article>
         }
     </div>
 
     <div class="uwv-omscholen__leerbanen">
         <h3 class="uwv-omscholen__sub">@(UwvMockupCopy.IsEnglish(Lang) ? "Apprenticeships (BBL)" : "Leerbanen (BBL)")</h3>
-        <ul>
+        <ul class="uwv-leerbaan-cards">
             @foreach (var lb in UwvMockupData.Leerbanen)
             {
-                <li>
-                    <strong>@(UwvMockupCopy.IsEnglish(Lang) ? lb.TitleEn : lb.TitleNl)</strong>
-                    <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
+                <li class="uwv-leerbaan-card">
+                    <div class="uwv-leerbaan-card__head">
+                        <strong>@(UwvMockupCopy.IsEnglish(Lang) ? lb.TitleEn : lb.TitleNl)</strong>
+                        <span class="uwv-badge uwv-badge--guarantee">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
+                    </div>
                     <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? lb.CompanyEn : lb.CompanyNl)</p>
-                    <a class="uwv-inline-link" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Open on job map" : "Open op banenkaart")</a>
+                    <a class="uwv-inline-link" href="@($"{lb.MapHref}?lang={Lang}")">@UwvMockupCopy.Omscholen.MapLink(Lang)</a>
                 </li>
             }
         </ul>

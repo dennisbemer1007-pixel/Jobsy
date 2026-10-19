@@ -1,23 +1,15 @@
 @using Jobsy.Core.Enums
 @using Jobsy.Core.Rules
 @using Jobsy.Web.Components.Candidate.Tests
-@using Jobsy.Web.Media
 @using Jobsy.Web.UwvMockups
 
-<div class="test-page journey-page uwv-test-mock__shell">
-    <div class="uwv-test-mock__scene-art" aria-hidden="true">
-        <img src="@CandidateIllustratedImages.StepBanen"
-             alt=""
-             loading="eager"
-             decoding="async" />
-        <p class="uwv-test-mock__scene-bubble">@(UwvMockupCopy.IsEnglish(Lang) ? "Short deepening" : "Korte verdieping")</p>
-    </div>
+<div class="test-page journey-page uwv-ondernemer-test uwv-ondernemer-test--@Phase">
 @if (Phase == "intro")
 {
     <TestPageShell Kind="AssessmentKind.Career"
                    Mode="TestPageShell.ShellMode.Intro"
                    H1="@UwvMockupCopy.Ondernemer.TestName(Lang)"
-                   Lead="@UwvMockupCopy.Ondernemer.IntroLead(Lang)"
+                   Lead="@IntroLead"
                    TestName="@UwvMockupCopy.Ondernemer.TestName(Lang)"
                    Answered="0"
                    TargetCount="6"
@@ -25,7 +17,7 @@
                    ActiveDepth="TestDepthLevel.First"
                    DepthInteractive="false"
                    ShowDepthSegments="false"
-                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Short deepening" : "Korte verdieping")">
+                   BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Your own pace" : "In jouw tempo")">
         <ChildContent>
             <footer class="test-shell__footer">
                 <button type="button" class="btn btn-primary">@(UwvMockupCopy.IsEnglish(Lang) ? "Start" : "Begin")</button>
@@ -74,7 +66,6 @@ else
                    ShowDepthSegments="false"
                    BubbleText="@(UwvMockupCopy.IsEnglish(Lang) ? "Well done" : "Klaar")">
         <ChildContent>
-            <p class="test-shell__lead">@UwvMockupCopy.Ondernemer.ResultLead(Lang)</p>
             <footer class="test-shell__footer">
                 <a class="btn btn-primary" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "Back to discovery" : "Terug naar ontdekken")</a>
             </footer>
@@ -86,6 +77,9 @@ else
 @code {
     [Parameter] public string Phase { get; set; } = "intro";
     [Parameter] public string? Lang { get; set; }
+
+    private string IntroLead =>
+        $"{UwvMockupCopy.Ondernemer.IntroBenefit(Lang)} · {UwvMockupCopy.Ondernemer.IntroDuration(Lang)} · {UwvMockupCopy.Ondernemer.IntroLead(Lang)}";
 
     private IEnumerable<string> ScaleLabels => UwvMockupCopy.IsEnglish(Lang)
         ? ["Strongly disagree", "Disagree", "Neutral", "Agree", "Strongly agree"]

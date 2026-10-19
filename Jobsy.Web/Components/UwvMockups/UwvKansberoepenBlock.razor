@@ -15,15 +15,20 @@
     <ul class="uwv-kans__list">
         @foreach (var job in UwvMockupData.Kansberoepen)
         {
-            <li class="uwv-kans__item">
-                <div class="uwv-kans__head">
-                    <h3>@(UwvMockupCopy.IsEnglish(Lang) ? job.TitleEn : job.TitleNl)</h3>
-                    <span class="uwv-kans__prospect">@(UwvMockupCopy.IsEnglish(Lang) ? job.ProspectEn : job.ProspectNl)</span>
+            <li class="uwv-kans__item uwv-kans__item--rich">
+                <div class="uwv-kans__thumb" style="@($"background-image:url('{job.ImageUrl}')")" aria-hidden="true"></div>
+                <div class="uwv-kans__body">
+                    <div class="uwv-kans__head">
+                        <h3>@(UwvMockupCopy.IsEnglish(Lang) ? job.TitleEn : job.TitleNl)</h3>
+                        @if (job.Baangarantie)
+                        {
+                            <span class="uwv-badge uwv-badge--guarantee uwv-kans__badge">@(UwvMockupCopy.IsEnglish(Lang) ? "Job guarantee" : "Baangarantie")</span>
+                        }
+                    </div>
+                    <p class="uwv-kans__prospect">@(UwvMockupCopy.IsEnglish(Lang) ? job.ProspectEn : job.ProspectNl)</p>
+                    <p class="uwv-kans__route-line muted">@(UwvMockupCopy.IsEnglish(Lang) ? job.RouteEn : job.RouteNl)</p>
+                    <a class="uwv-kans__map-link" href="/preview/uwv-mockups/banenkaart?lang=@Lang">@UwvMockupCopy.Kansberoepen.VacanciesLink(Lang, job.VacancyCount)</a>
                 </div>
-                <p class="uwv-kans__route">
-                    <span class="uwv-kans__route-label">@(UwvMockupCopy.IsEnglish(Lang) ? "Training route" : "Opleidingsroute")</span>
-                    @(UwvMockupCopy.IsEnglish(Lang) ? job.RouteEn : job.RouteNl)
-                </p>
             </li>
         }
     </ul>

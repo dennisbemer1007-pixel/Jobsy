@@ -3,18 +3,32 @@
 <section class="detail-card uwv-block uwv-similar" aria-labelledby="@_titleId">
     <p class="uwv-block__eyebrow">
         <i class="uwv-block__dot" aria-hidden="true"></i>
-        @(UwvMockupCopy.IsEnglish(Lang) ? "Soft switch" : "Zachte switch")
+        @UwvMockupCopy.Similar.Eyebrow(Lang)
     </p>
     <h2 id="@_titleId" class="uwv-block__title">@UwvMockupCopy.Similar.Title(Lang)</h2>
     <p class="uwv-block__lead">@UwvMockupCopy.Similar.Lead(Lang)</p>
 
     <ul class="uwv-similar__list">
-        @foreach (var job in UwvMockupData.SimilarJobs)
+        @for (var i = 0; i < UwvMockupData.SimilarJobs.Count; i++)
         {
+            var job = UwvMockupData.SimilarJobs[i];
+            var open = _expandedIndex == i;
             <li class="uwv-similar__item">
                 <h3>@(UwvMockupCopy.IsEnglish(Lang) ? job.TitleEn : job.TitleNl)</h3>
                 <p>@(UwvMockupCopy.IsEnglish(Lang) ? job.WhyEn : job.WhyNl)</p>
-                <a class="uwv-inline-link" href="#">@(UwvMockupCopy.IsEnglish(Lang) ? "See training routes inline" : "Bekijk opleidingsroutes inline")</a>
+                <button type="button"
+                        class="uwv-similar__routes-btn @(open ? "is-open" : null)"
+                        aria-expanded="@(open ? "true" : "false")"
+                        @onclick="() => Toggle(i)">
+                    @UwvMockupCopy.Similar.RoutesToggle(Lang)
+                </button>
+                @if (open)
+                {
+                    <div class="uwv-similar__routes-panel">
+                        <p>@UwvMockupCopy.Similar.RoutesHint(Lang)</p>
+                        <p class="muted">@(UwvMockupCopy.IsEnglish(Lang) ? job.RouteEn : job.RouteNl)</p>
+                    </div>
+                }
             </li>
         }
     </ul>
@@ -23,4 +37,8 @@
 @code {
     [Parameter] public string? Lang { get; set; }
     private readonly string _titleId = "uwv-similar-" + Guid.NewGuid().ToString("N")[..8];
+    private int? _expandedIndex = 0;
+
+    private void Toggle(int index) =>
+        _expandedIndex = _expandedIndex == index ? null : index;
 }

@@ -31,17 +31,26 @@ public static class UwvMockupCopy
             "Sample data · source: UWV / CBS open data",
             lang);
         public static string Region(string? lang) => T("Regio Haaglanden (voorbeeld)", "Haaglanden region (sample)", lang);
+        public static string VacanciesLink(string? lang, int count) => IsEnglish(lang)
+            ? $"{count} vacancies on job map"
+            : $"{count} vacatures op banenkaart";
     }
 
     public static class Similar
     {
+        public static string Eyebrow(string? lang) => T("Ook iets voor jou", "Also worth a look", lang);
         public static string Title(string? lang) => T(
             "Beroepen die lijken op je huidige beroep",
             "Occupations similar to your current role",
             lang);
         public static string Lead(string? lang) => T(
-            "Zachte switches op basis van je competenties en huidige beroep (voorbeelddata).",
-            "Gentle switches based on your competencies and current occupation (sample data).",
+            "Rustige switches op basis van je competenties en huidige beroep (voorbeelddata).",
+            "Gentle options based on your competencies and current occupation (sample data).",
+            lang);
+        public static string RoutesToggle(string? lang) => T("Bekijk opleidingsroutes", "View training routes", lang);
+        public static string RoutesHint(string? lang) => T(
+            "Voorbeeldroute · MBO of BBL, afhankelijk van je startniveau.",
+            "Sample route · vocational training or apprenticeship, depending on your starting level.",
             lang);
     }
 
@@ -62,6 +71,7 @@ public static class UwvMockupCopy
             "Free independent advice at a Werkcentrum in your region.",
             lang);
         public static string WerkcentrumLink(string? lang) => T("werkcentrum.nl", "werkcentrum.nl", lang);
+        public static string MapLink(string? lang) => T("Bekijk op banenkaart", "View on job map", lang);
     }
 
     public static class Workshops
@@ -86,6 +96,11 @@ public static class UwvMockupCopy
     public static class Ondernemer
     {
         public static string TestName(string? lang) => T("Past ondernemen bij mij?", "Is self-employment for me?", lang);
+        public static string IntroBenefit(string? lang) => T(
+            "Helpt je bepalen of zelfstandig ondernemen bij je past.",
+            "Helps you see whether self-employment fits you.",
+            lang);
+        public static string IntroDuration(string? lang) => T("± 6 minuten", "± 6 minutes", lang);
         public static string IntroLead(string? lang) => T(
             "Korte verdieping na je andere tests. Geen cijfers, wel een rustig beeld in woorden.",
             "A short follow-up after your other tests. No numbers, just a calm picture in words.",
@@ -111,10 +126,15 @@ public static class UwvMockupCopy
     {
         public static string Title(string? lang) => T("Neem mee naar je adviseur werk", "Take this to your work adviser", lang);
         public static string Lead(string? lang) => T(
-            "Kies wat je wilt delen. Alleen onderschreven competenties komen op je paspoort (besluit 21).",
-            "Choose what to share. Only endorsed competencies appear on your passport (decision 21).",
+            "Kies wat je wilt delen. Je bepaalt wat er op je print staat.",
+            "Choose what to share. You decide what appears on your printout.",
+            lang);
+        public static string VerifiedNote(string? lang) => T(
+            "Alleen competenties die een referent heeft bevestigd",
+            "Only competencies a reference has confirmed",
             lang);
         public static string Print(string? lang) => T("Print / PDF", "Print / PDF", lang);
         public static string ShareLink(string? lang) => T("Deellink (48 uur)", "Share link (48 hours)", lang);
+        public static string PreviewTitle(string? lang) => T("Voorbeeld print", "Sample printout", lang);
     }
 }
