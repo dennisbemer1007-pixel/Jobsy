@@ -228,12 +228,14 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         ApplyAdminBoolUpdate(row, "ReferenceVerificationEnabled", update.ReferenceVerificationEnabled, v => row.ReferenceVerificationEnabled = v);
         ApplyAdminBoolUpdate(row, "SensitiveExperienceEnabled", update.SensitiveExperienceEnabled, v => row.SensitiveExperienceEnabled = v);
         ApplyAdminBoolUpdate(row, "TrainingPartnersEnabled", update.TrainingPartnersEnabled, v => row.TrainingPartnersEnabled = v);
+        ApplyAdminBoolUpdate(row, "UwvFeaturesEnabled", update.UwvFeaturesEnabled, v => row.UwvFeaturesEnabled = v);
         ApplyAdminBoolUpdate(row, "TestJourneyIllustrationEnabled", update.TestJourneyIllustrationEnabled, v => row.TestJourneyIllustrationEnabled = v);
         ApplyAdminBoolUpdate(row, "OnboardingFinaleV2Enabled", update.OnboardingFinaleV2Enabled, v => row.OnboardingFinaleV2Enabled = v);
         ApplyAdminBoolUpdate(row, "OccupationDayInLifeEnabled", update.OccupationDayInLifeEnabled, v => row.OccupationDayInLifeEnabled = v);
         ApplyAdminBoolUpdate(row, "ResearchConsentEnabled", update.ResearchConsentEnabled, v => row.ResearchConsentEnabled = v);
         ApplyAdminBoolUpdate(row, "TestEditModeEnabled", update.TestEditModeEnabled, v => row.TestEditModeEnabled = v);
         ApplyAdminBoolUpdate(row, "SamplePdfEnabled", update.SamplePdfEnabled, v => row.SamplePdfEnabled = v);
+        ApplyAdminBoolUpdate(row, "TestDepthValueMockupEnabled", update.TestDepthValueMockupEnabled, v => row.TestDepthValueMockupEnabled = v);
 
         if (update.ClearAdminFlagOverrideKeys is { Count: > 0 } clearKeys)
         {
@@ -357,6 +359,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
     private bool ResolveTrainingPartnersEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "TrainingPartnersEnabled", row?.TrainingPartnersEnabled ?? false, false, "Jobsy:TrainingPartnersEnabled");
 
+    private bool ResolveUwvFeaturesEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "UwvFeaturesEnabled", row?.UwvFeaturesEnabled ?? true, true, "Features:UwvFeatures");
+
     private bool ResolveReferenceVerificationEnabled(PlatformFeatureSettings? row)
     {
         var baseline = row?.ReferenceVerificationEnabled ?? false;
@@ -385,6 +390,9 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
 
     private bool ResolveSamplePdfEnabled(PlatformFeatureSettings? row)
         => ResolveAdminBool(row, "SamplePdfEnabled", row?.SamplePdfEnabled ?? false, false, "JobsyFeatures:SamplePdf");
+
+    private bool ResolveTestDepthValueMockupEnabled(PlatformFeatureSettings? row)
+        => ResolveAdminBool(row, "TestDepthValueMockupEnabled", row?.TestDepthValueMockupEnabled ?? true, true, "TestDepthValueMockupEnabled");
 
     private bool ResolveAdminBool(
         PlatformFeatureSettings? row,
@@ -435,6 +443,7 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
         row.CandidateApplyPerMinuteLimit = CandidateApplyRateLimitRules.DefaultPerMinute;
         row.CandidateApplyPerHourLimit = CandidateApplyRateLimitRules.DefaultPerHour;
         row.CandidateApplyPerDayLimit = CandidateApplyRateLimitRules.DefaultPerDay;
+        row.UwvFeaturesEnabled = true;
     }
 
     private bool IsAllowedPublicOrigin(string origin)
@@ -550,12 +559,14 @@ public sealed class PlatformFeatureService : IPlatformFeatureService
             ResolveReferenceVerificationEnabled(row),
             ResolveSensitiveExperienceEnabled(row),
             ResolveTrainingPartnersEnabled(row),
+            ResolveUwvFeaturesEnabled(row),
             ResolveTestJourneyIllustrationEnabled(row),
             ResolveOnboardingFinaleV2Enabled(row),
             ResolveOccupationDayInLifeEnabled(row),
             ResolveResearchConsentEnabled(row),
             ResolveTestEditModeEnabled(row),
             ResolveSamplePdfEnabled(row),
+            ResolveTestDepthValueMockupEnabled(row),
             AdminOverriddenFlagKeys: PlatformFeatureFlagOverrides.Parse(row?.AdminFlagOverridesJson).OrderBy(k => k, StringComparer.Ordinal).ToList(),
             CandidateApplyRateLimitRules.ResolvePerMinute(row?.CandidateApplyPerMinuteLimit),
             CandidateApplyRateLimitRules.ResolvePerHour(row?.CandidateApplyPerHourLimit),

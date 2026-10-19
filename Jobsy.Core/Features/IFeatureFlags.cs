@@ -38,12 +38,16 @@ public sealed record FeatureFlagSnapshot(
     bool OnboardingFinaleV2Enabled = false,
     bool OccupationDayInLifeEnabled = true,
     bool TestEditModeEnabled = false,
-    bool SamplePdfEnabled = false)
+    bool SamplePdfEnabled = false,
+    bool TestDepthValueMockupEnabled = true,
+    bool UwvFeaturesEnabled = true)
 {
     public static FeatureFlagSnapshot Defaults { get; } = new(
         EmployersEnabled: false,
         CandidatePassportEnabled: true,
-        CompanyMapInitiativeEnabled: true);
+        CompanyMapInitiativeEnabled: true,
+        TestDepthValueMockupEnabled: true,
+        UwvFeaturesEnabled: true);
 
     public bool IsEnabled(PlatformFeature feature) => feature switch
     {
@@ -70,6 +74,8 @@ public sealed record FeatureFlagSnapshot(
         PlatformFeature.ReferenceVerification => ReferenceVerificationEnabled,
         PlatformFeature.SensitiveExperience => SensitiveExperienceEnabled,
         PlatformFeature.TrainingPartners => TrainingPartnersEnabled,
+        PlatformFeature.TestDepthValueMockup => TestDepthValueMockupEnabled,
+        PlatformFeature.UwvFeatures => UwvFeaturesEnabled,
         _ => false
     };
 }

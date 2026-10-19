@@ -1,0 +1,69 @@
+@namespace Jobsy.Web.Components.Candidate.TestResult
+@using Jobsy.Core.Enums
+@using Jobsy.Core.Rules
+@using Jobsy.Web.Localization
+@using Jobsy.Web.Media
+@inject CultureState Culture
+
+@if (_visible)
+{
+    <header class="test-depth-reward test-depth-reward--@_variant" aria-labelledby="@_titleId">
+        <div class="test-depth-reward__layout">
+            <div class="test-depth-reward__inner">
+                <p class="test-depth-reward__kicker">@Culture["TestDepthValue.Reward.Kicker"]</p>
+                <h1 id="@_titleId" class="test-depth-reward__title">@_title</h1>
+                <p class="test-depth-reward__well-done">@Culture[_wellDoneKey]</p>
+                @if (!string.IsNullOrWhiteSpace(_lead))
+                {
+                    <p class="test-depth-reward__lead">@_lead</p>
+                }
+            </div>
+            <div class="test-depth-reward__figure test-depth-figure-art" style="@_artStyle" aria-hidden="true"></div>
+        </div>
+    </header>
+}
+
+@code {
+    [Parameter] public string? FirstName { get; set; }
+    [Parameter] public int AnsweredCount { get; set; }
+    [Parameter] public int QuickScanVersion { get; set; } = AssessmentTestVersions.V1;
+    [Parameter] public bool DeepCompleted { get; set; }
+
+    private readonly string _titleId = "test-depth-reward-" + Guid.NewGuid().ToString("N")[..8];
+    private bool _visible;
+    private string _title = "";
+    private string _lead = "";
+    private string _wellDoneKey = "TestDepthValue.Reward.WellDone.First";
+    private string _variant = "5";
+    private string _artStyle = "";
+
+    protected override void OnParametersSet()
+    {
+        var reached = TestDepthRules.Reached(AssessmentKind.Competence, AnsweredCount, QuickScanVersion);
+        _visible = DeepCompleted || reached is not null;
+        if (!_visible)
+        {
+            return;
+        }
+
+        _wellDoneKey = TestDepthValueRewardCopy.WellDoneKey(reached, DeepCompleted);
+        _variant = TestDepthValueRewardCopy.IllustrationVariant(reached, DeepCompleted);
+        var (url, pos) = TestDepthValueRewardArt.ForVariant(_variant);
+        _artStyle = TestDepthValueIllustratedArt.InlineFigure(url, pos);
+
+        var name = string.IsNullOrWhiteSpace(FirstName) ? null : FirstName.Trim();
+        _title = name is not null
+            ? Culture.Format("TestDepthValue.Reward.TitleNamed", name)
+            : Culture["TestDepthValue.Reward.TitleAnonymous"];
+
+        _lead = DeepCompleted
+            ? Culture["TestDepthValue.Reward.Lead.Bottom"]
+            : reached switch
+            {
+                TestDepthLevel.First => Culture["TestDepthValue.Reward.Lead.First"],
+                TestDepthLevel.Deeper => Culture["TestDepthValue.Reward.Lead.Deeper"],
+                TestDepthLevel.Full => Culture["TestDepthValue.Reward.Lead.Full"],
+                _ => ""
+            };
+    }
+}

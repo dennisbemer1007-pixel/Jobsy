@@ -70,7 +70,9 @@ public sealed class FeatureFlags : IFeatureFlags
                 snap.OnboardingFinaleV2Enabled,
                 snap.OccupationDayInLifeEnabled,
                 snap.TestEditModeEnabled,
-                snap.SamplePdfEnabled);
+                snap.SamplePdfEnabled,
+                snap.TestDepthValueMockupEnabled,
+                snap.UwvFeaturesEnabled);
             _cache.Set(CacheKey, flags, CacheTtl);
             return flags;
         }

@@ -320,6 +320,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("UwvFeaturesEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "UwvFeaturesEnabled",
+                Group: GroupPlatformMode,
+                TitleKey: "AdminSettings.UwvFeatures.Enabled.Title",
+                DescriptionKey: "AdminSettings.UwvFeatures.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.UwvFeaturesEnabled,
+                Write: v => new PlatformFeatureUpdate(UwvFeaturesEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("FutureJobsForYouEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -769,6 +782,19 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("TestDepthValueMockupEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "TestDepthValueMockupEnabled",
+                Group: GroupDemo,
+                TitleKey: "AdminSettings.TestDepthValueMockupEnabled.Title",
+                DescriptionKey: "AdminSettings.TestDepthValueMockupEnabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.TestDepthValueMockupEnabled,
+                Write: v => new PlatformFeatureUpdate(TestDepthValueMockupEnabled: ToBool(v)),
+                ShowOnDashboard: false));
+        }
+
         list.Add(new PlatformSettingDescriptor(
             Key: "AuthenticatorEnabled",
             Group: GroupDemo,
@@ -864,12 +890,14 @@ public static class PlatformSettingsCatalog
         bool? afterMatchEnabled = null;
         bool? sensitiveExperienceEnabled = null;
         bool? trainingPartnersEnabled = null;
+        bool? uwvFeaturesEnabled = null;
         bool? testJourneyIllustrationEnabled = null;
         bool? onboardingFinaleV2Enabled = null;
         bool? occupationDayInLifeEnabled = null;
         bool? researchConsentEnabled = null;
         bool? testEditModeEnabled = null;
         bool? samplePdfEnabled = null;
+        bool? testDepthValueMockupEnabled = null;
         IReadOnlyList<string>? clearAdminFlagOverrideKeys = null;
         bool? freeCandidateTestsEnabled = null;
         int? candidateApplyPerMinute = null;
@@ -958,6 +986,11 @@ public static class PlatformSettingsCatalog
                 trainingPartnersEnabled = p.TrainingPartnersEnabled;
             }
 
+            if (p.UwvFeaturesEnabled is not null)
+            {
+                uwvFeaturesEnabled = p.UwvFeaturesEnabled;
+            }
+
             if (p.SensitiveExperienceEnabled is not null)
             {
                 sensitiveExperienceEnabled = p.SensitiveExperienceEnabled;
@@ -991,6 +1024,11 @@ public static class PlatformSettingsCatalog
             if (p.SamplePdfEnabled is not null)
             {
                 samplePdfEnabled = p.SamplePdfEnabled;
+            }
+
+            if (p.TestDepthValueMockupEnabled is not null)
+            {
+                testDepthValueMockupEnabled = p.TestDepthValueMockupEnabled;
             }
 
             if (p.ClearAdminFlagOverrideKeys is not null)
@@ -1055,12 +1093,14 @@ public static class PlatformSettingsCatalog
             AfterMatchEnabled: afterMatchEnabled,
             SensitiveExperienceEnabled: sensitiveExperienceEnabled,
             TrainingPartnersEnabled: trainingPartnersEnabled,
+            UwvFeaturesEnabled: uwvFeaturesEnabled,
             TestJourneyIllustrationEnabled: testJourneyIllustrationEnabled,
             OnboardingFinaleV2Enabled: onboardingFinaleV2Enabled,
             OccupationDayInLifeEnabled: occupationDayInLifeEnabled,
             ResearchConsentEnabled: researchConsentEnabled,
             TestEditModeEnabled: testEditModeEnabled,
             SamplePdfEnabled: samplePdfEnabled,
+            TestDepthValueMockupEnabled: testDepthValueMockupEnabled,
             ClearAdminFlagOverrideKeys: clearAdminFlagOverrideKeys,
             CandidateApplyPerMinuteLimit: candidateApplyPerMinute,
             CandidateApplyPerHourLimit: candidateApplyPerHour,

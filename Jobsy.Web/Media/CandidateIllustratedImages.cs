@@ -35,6 +35,12 @@ public static class CandidateIllustratedImages
     public const string LearnGrowHeroWide = $"{Base}/leren-groeien-hero-wide.jpg?v={Version}";
     public const string LearnGrowHeroCompactC = $"{Base}/leren-groeien-hero-compact-c.jpg?v={Version}";
     public const string LearnGrowHeroBandC = $"{Base}/leren-groeien-hero-band-c.jpg?v={Version}";
+
+    /// <summary>UWV ondernemer intro: home / small-business scene (no portrait crop).</summary>
+    public const string OndernemerIntroHero = AccountMobileArt;
+
+    /// <summary>UWV ondernemer result — complete werkplaats vignette on cream (no edge crop).</summary>
+    public const string OndernemerResultScene = $"{Base}/ondernemer-result-vignette.png?v={Version}";
     public const string LearnGrowHeroFiguresMobile = $"{Base}/leren-groeien-hero-figures-mobile.png?v={Version}";
     public const string LearnGrowHeroMobileAtmosphere = $"{Base}/leren-groeien-hero-mobile-atmosphere.png?v={Version}";
     public const string InstellingenBand = $"{Base}/beschikbaarheid-profession-wide.jpg?v={Version}";
@@ -113,7 +119,8 @@ public static class CandidateIllustratedImages
     public const string SpotOpleiding = $"{Base}/opleiding.jpg?v={Version}";
     public const string SpotDroombaan = $"{Base}/droombaan.jpg?v={Version}";
 
-    public const string SpotJobZorg = $"{Base}/spots/job-zorg.jpg?v={Version}";
+    /// <summary>Care sector spot — full-figure scene (not portrait crop).</summary>
+    public const string SpotJobZorg = $"{Base}/spots/job-zorg-scene.jpg?v={Version}";
     public const string SpotJobLogistiek = $"{Base}/spots/job-logistiek.jpg?v={Version}";
     public const string SpotJobRetail = $"{Base}/spots/job-retail.jpg?v={Version}";
     public const string SpotJobDieren = $"{Base}/spots/job-dieren.jpg?v={Version}";

@@ -59,6 +59,7 @@ public static class FeatureFlagRegistry
             Def("ProactiveMatchingEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ProactiveMatching, pub, false),
             Def("FutureJobsForYouEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.FutureJobsForYou, pub, false),
             Def("HonestAdviceEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.HonestAdvice, pub, false),
+            Def("UwvFeaturesEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.UwvFeatures, pub, true, "Features:UwvFeatures"),
             Def("PhoneVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, null, pub, false),
             Def("WhatsAppRemindersEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.WhatsAppReminders, pub, false),
             Def("ReferenceVerificationEnabled", FeatureFlagAdminGroup.Kandidaat, PlatformFeature.ReferenceVerification, pub, false),
@@ -86,6 +87,7 @@ public static class FeatureFlagRegistry
             Def("FreeCandidateTestsEnabled", FeatureFlagAdminGroup.Tests, null, exposedOnPublicEndpoint: false, defaultValue: true),
             Def("TestEditModeEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:TestEditMode"),
             Def("SamplePdfEnabled", FeatureFlagAdminGroup.Tests, null, pub, false, "JobsyFeatures:SamplePdf"),
+            Def("TestDepthValueMockupEnabled", FeatureFlagAdminGroup.Tests, PlatformFeature.TestDepthValueMockup, pub, true, "TestDepthValueMockupEnabled"),
 
             Def("PassportPartnersEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.PassportPartners, pub, false),
             Def("AmbassadorsEnabled", FeatureFlagAdminGroup.Experimenteel, PlatformFeature.Ambassadors, pub, false),

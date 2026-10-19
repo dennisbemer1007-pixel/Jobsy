@@ -30,7 +30,7 @@ public static class DeepReportCapabilities
         [
             new(DeepReportCardKey.RadarVsNorm, "TestResult.Card.Radar", "TestResult.Card.Radar.Sub.Competence"),
             new(DeepReportCardKey.Comparison, "TestResult.Card.Comparison", "TestResult.Card.Comparison.Sub.Competence"),
-            new(DeepReportCardKey.Facets, "TestResult.Card.Facets", "TestResult.Card.Facets.Sub"),
+            new(DeepReportCardKey.Facets, "TestResult.Card.Facets.Competence", "TestResult.Card.Facets.Sub"),
             new(DeepReportCardKey.Occupations, "TestResult.Card.Occupations", "TestResult.Card.Occupations.Sub"),
             new(DeepReportCardKey.ActionPlan, "TestResult.Card.ActionPlan", "TestResult.Card.ActionPlan.Sub"),
             new(DeepReportCardKey.StrengthsPitfalls, "TestResult.Card.Strengths", "TestResult.Card.Strengths.Sub")

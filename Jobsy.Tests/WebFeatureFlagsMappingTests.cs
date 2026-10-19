@@ -37,4 +37,16 @@ public sealed class WebFeatureFlagsMappingTests
         Assert.True(employersOn.IsEnabled(PlatformFeature.CompanyMapInitiative));
         Assert.False(snap.EmployerFitQuestionnairesEnabled);
     }
+
+    [Fact]
+    public void FeatureFlagSnapshot_uwv_features_maps_platform_feature()
+    {
+        var snap = new FeatureFlagSnapshot(
+            EmployersEnabled: true,
+            CandidatePassportEnabled: true,
+            UwvFeaturesEnabled: true);
+
+        Assert.True(snap.UwvFeaturesEnabled);
+        Assert.True(snap.IsEnabled(PlatformFeature.UwvFeatures));
+    }
 }
