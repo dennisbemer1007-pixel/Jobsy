@@ -49,7 +49,7 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Capture_home_logo_and_illustration_fades_r2()
+    public async Task Capture_home_logo_and_illustration_fades_r3()
     {
         Directory.CreateDirectory(OutDir);
 
@@ -60,20 +60,20 @@ public sealed class HomeLogoFadeScreenshotTests : IAsyncLifetime
                      (390, 844, "390", true),
                  })
         {
-            await CaptureFullPageAsync(w, h, $"full-{slug}-r2", mobile);
-            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r2", mobile);
-            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r2", mobile);
+            await CaptureFullPageAsync(w, h, $"full-{slug}-r3", mobile);
+            await CaptureCropAsync(w, h, ".pub-header__brand", $"crop-header-logo-{slug}-r3", mobile);
+            await CaptureCropAsync(w, h, "#top.pub-landing__hero", $"crop-hero-edges-{slug}-r3", mobile);
             for (var i = 0; i < 3; i++)
             {
-                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r2", mobile, scroll: true);
+                await CaptureCropAsync(w, h, $".pub-landing__step-art--{i + 1}", $"crop-step-art-{i + 1}-{slug}-r3", mobile, scroll: true);
             }
 
             await AssertHeroCtasReceiveClicksAsync(w, h, mobile);
         }
 
-        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r2", scroll: true);
-        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r2", scroll: true);
-        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r2", mobile: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__kaart-ill-art", "crop-kaart-art-edges-1024-r3", scroll: true);
+        await CaptureCropAsync(1024, 768, ".pub-landing__emp-art", "crop-emp-art-edges-1024-r3", scroll: true);
+        await CaptureCropAsync(390, 844, ".pub-landing__hero-art-band", "crop-hero-mob-art-390-r3", mobile: true);
 
         var logoHeight = await MeasureLogoHeightAsync(1024, 768);
         Assert.InRange(logoHeight, 34, 42);

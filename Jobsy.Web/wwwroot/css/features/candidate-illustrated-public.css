@@ -111,7 +111,7 @@
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
   position: relative;
-  min-height: 520px;
+  min-height: 680px;
   padding: 0;
   overflow: hidden;
   background: color-mix(in srgb, var(--gold) 8%, var(--surface));
@@ -124,26 +124,17 @@
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: var(--pub-hero-art) no-repeat 56% top / min(1440px, 112%) auto;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 26%),
-    linear-gradient(180deg, #000 0%, #000 62%, transparent 100%),
-    linear-gradient(135deg, transparent 0%, #000 32%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 26%),
-    linear-gradient(180deg, #000 0%, #000 62%, transparent 100%),
-    linear-gradient(135deg, transparent 0%, #000 32%);
+  background: var(--pub-hero-art) no-repeat 60% top / auto 680px;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 10%),
+    linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 10%),
+    linear-gradient(180deg, #000 0%, #000 97%, transparent 100%);
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 0;
-  height: 110px;
-  background: linear-gradient(transparent, var(--pearl));
-  pointer-events: none;
+  display: none;
 }
 
 .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
@@ -221,8 +212,11 @@
 }
 
 .pub-theme .pub-landing__step-art--2 {
-  background-size: cover;
-  background-position: center 38%;
+  height: clamp(200px, 22vw, 225px);
+  background-size: contain;
+  background-position: center center;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 100%);
 }
 
 .pub-theme .pub-landing__step-body {
@@ -422,11 +416,11 @@
 
 @media (max-width: 1280px) {
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
-    min-height: 480px;
+    min-height: 600px;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
-    background-size: cover;
+    background-size: auto 600px;
     background-position: 58% top;
   }
 
@@ -441,7 +435,12 @@
 
 @media (max-width: 1024px) {
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated {
-    min-height: 440px;
+    min-height: 540px;
+  }
+
+  .pub-theme .pub-landing--calm .pub-landing__hero--illustrated::before {
+    background-size: auto 540px;
+    background-position: 58% top;
   }
 
   .pub-theme .pub-landing--calm .pub-landing__hero--illustrated .pub-landing__wrap {
