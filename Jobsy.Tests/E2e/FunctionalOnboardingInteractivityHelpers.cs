@@ -237,7 +237,15 @@ internal static class FunctionalOnboardingInteractivityHelpers
         }
 
         await later.ScrollIntoViewIfNeededAsync();
-        await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+        if (mobile)
+        {
+            await later.TapAsync(new() { Timeout = 30_000 });
+        }
+        else
+        {
+            await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
+        }
+
         await PollUntilBanenkaartUrlAsync(page, 240_000);
         await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
     }
