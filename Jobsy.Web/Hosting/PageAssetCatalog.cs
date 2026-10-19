@@ -27,7 +27,7 @@ public static class PageAssetCatalog
     public static readonly string[] BlazorCoreCss =
     [
         "css/tokens.css?v=20261018-06",
-        "css/app.min.css?v=20261018-24",
+        "css/app.min.css?v=20261019-10",
         "css/features/stijl-a.css?v=20261018-03",
         "css/features/form-fields.css?v=20261015-04",
         "css/features/nav-feedback.css?v=20261017-01",
@@ -38,7 +38,7 @@ public static class PageAssetCatalog
         "css/features/banenkaart.css?v=20261018-02",
         "css/features/banenkaart-illustrated.css?v=20261018-14",
         "css/features/candidate-illustrated-app.css?v=20261018-91",
-        "css/features/kandidaat-banen.css?v=20261017-04",
+        "css/features/kandidaat-banen.css?v=20261019-01",
         "css/features/match-desktop.css?v=20261018-02",
         "css/features/applications.css?v=20261004-10",
         "css/features/kb-external-vacancy.css?v=20261011-03",

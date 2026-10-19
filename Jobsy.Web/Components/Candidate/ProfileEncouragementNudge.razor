@@ -1,5 +1,6 @@
 @namespace Jobsy.Web.Components.Candidate
 @using Jobsy.Web.Localization
+@using Jobsy.Web.Media
 @using Jobsy.Web.Navigation
 @using Jobsy.Web.Components
 @inject CultureState Culture
@@ -7,23 +8,30 @@
 
 @if (_visible && _tip is not null)
 {
-    <aside class="profile-encourage"
-           data-testid="@($"profile-encourage-{ScreenKey}")"
-           data-encourage-tip="@_tip.Id"
-           role="note">
-        <LobsyCoachAvatar Class="profile-encourage__mascot" Language="@Culture.Language" Alt="" />
-        <div class="profile-encourage__copy">
-            <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
-            @if (!string.IsNullOrWhiteSpace(_tip.Href))
-            {
-                <a class="profile-encourage__link" href="@_tip.Href">@Culture[_tip.LinkKey]</a>
-            }
-        </div>
+    <div class="profile-encourage"
+         data-testid="@($"profile-encourage-{ScreenKey}")"
+         data-encourage-tip="@_tip.Id"
+         role="note">
         <button type="button"
                 class="profile-encourage__close"
                 aria-label="@Culture["Encourage.Dismiss"]"
                 @onclick="DismissAsync">×</button>
-    </aside>
+        <div class="profile-encourage__row">
+            <img class="profile-encourage__mascot"
+                 src="@BrandImages.MarkSvg"
+                 alt=""
+                 width="48"
+                 height="48"
+                 decoding="async" />
+            <div class="profile-encourage__body">
+                <p class="profile-encourage__text">@Culture[_tip.MessageKey]</p>
+                @if (!string.IsNullOrWhiteSpace(_tip.Href))
+                {
+                    <a class="profile-encourage__link" href="@_tip.Href">@Culture[_tip.LinkKey]</a>
+                }
+            </div>
+        </div>
+    </div>
 }
 
 @code {

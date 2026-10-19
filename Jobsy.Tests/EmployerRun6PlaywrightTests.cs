@@ -103,7 +103,7 @@ public class EmployerRun6PlaywrightTests
             """
             () => {
               const later = document.querySelector('[data-testid=pwa-later]');
-              const tab = document.querySelector('.lobsy-assistant-tab__btn');
+              const tab = document.querySelector('.lobsy-assistant-launcher__btn');
               const a = later.getBoundingClientRect();
               const b = tab.getBoundingClientRect();
               return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
@@ -190,13 +190,13 @@ public class EmployerRun6PlaywrightTests
                + "</style></head><body>"
                + "<div class=\"wg-shell wg-has-bottom-nav\">"
                + "<main class=\"wg-main\" style=\"height:640px\"></main>"
-               + "<div class=\"pwa-install-banner\" role=\"status\">"
+               + "<div class=\"pwa-install-banner\" role=\"status\" style=\"inset-inline-start:12px;inset-inline-end:auto;max-width:calc(100% - 88px)\">"
                + "<p class=\"pwa-install-banner__text\">Zet Lobsy op je startscherm.</p>"
                + "<div class=\"pwa-install-banner__actions\">"
                + "<button type=\"button\" class=\"btn-compact\" data-testid=\"pwa-later\">Later</button>"
                + "</div></div>"
-               + "<div class=\"lobsy-assistant-tab lobsy-assistant-tab--edge has-bottom-nav\">"
-               + "<button type=\"button\" class=\"lobsy-assistant-tab__btn\">Assistent</button>"
+               + "<div class=\"lobsy-assistant-launcher lobsy-assistant-launcher--business has-bottom-nav\">"
+               + "<button type=\"button\" class=\"lobsy-assistant-launcher__btn\" aria-label=\"Assistent\"></button>"
                + "</div></div></body></html>";
     }
 
