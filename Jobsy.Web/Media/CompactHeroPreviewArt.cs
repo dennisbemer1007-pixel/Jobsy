@@ -31,7 +31,7 @@ public static class CompactHeroPreviewArt
         if (artUrl.Contains("werkervaring-profession-wide", StringComparison.OrdinalIgnoreCase)
             || artUrl.Contains("sollicitaties", StringComparison.OrdinalIgnoreCase))
         {
-            return CandidateIllustratedImages.SollicitatiesHeroBandC;
+            return CandidateIllustratedImages.MobFiguresSollicitaties;
         }
 
         if (artUrl.Contains("vervoer-profession-wide", StringComparison.OrdinalIgnoreCase))

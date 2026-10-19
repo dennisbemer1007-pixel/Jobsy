@@ -44,7 +44,7 @@ public static class CandidateIllustratedImages
     public const string BedrijvenkaartHeroMobile = $"{Base}/bedrijvenkaart-hero-mobile.jpg?v={Version}";
     public const string BedrijvenkaartHeroDoorCrop = $"{Base}/bedrijvenkaart-hero-door-crop.jpg?v={Version}";
     public const string BedrijvenkaartHeroDoorDesktop = $"{Base}/bedrijvenkaart-hero-door-desktop.jpg?v={Version}";
-    public const string BedrijvenkaartHeroBandC = BedrijvenkaartHeroDoorDesktop;
+    public const string BedrijvenkaartHeroBandC = BedrijvenkaartHeroDesktopPng;
     public const string BedrijvenkaartHeroDesktopPng = $"{Base}/bedrijvenkaart-hero-desktop.png?v={Version}";
     public const string CompanyPublicHeroArtPng = $"{Base}/company-public-hero-art.png?v={Version}";
 

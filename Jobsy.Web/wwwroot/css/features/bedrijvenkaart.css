@@ -23,6 +23,20 @@
 }
 
 @media (min-width: 901px) {
+  .bk-page--compact-preview-c .bk-shell {
+    min-height: max(420px, calc(100dvh - 20rem));
+  }
+
+  .bk-page--compact-preview-c .bk-map-pane {
+    min-height: 420px;
+  }
+
+  .bk-page--compact-preview-c .bk-map-pane .job-map {
+    min-height: 420px;
+  }
+}
+
+@media (min-width: 901px) {
   .bk-page,
   .app-shell .pub-theme.pub-section.pp-company {
     --bk-gutter: clamp(1.5rem, 2.8vw, 2rem);

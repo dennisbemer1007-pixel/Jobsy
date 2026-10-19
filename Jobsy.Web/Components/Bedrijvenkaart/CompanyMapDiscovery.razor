@@ -206,50 +206,71 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _mapReady)
+        if (firstRender && !_mapReady)
+        {
+            try
+            {
+                if (RendererInfo.IsInteractive)
+                {
+                    await MapScripts.EnsureDiscoveryAsync(Js);
+                    var markers = _filteredList.Select(p => new Dictionary<string, object?>
+                    {
+                        ["id"] = p.CompanyId.ToString("D"),
+                        ["companyId"] = p.CompanyId.ToString("D"),
+                        ["title"] = p.Name,
+                        ["company"] = p.Name,
+                        ["lat"] = p.Latitude,
+                        ["lng"] = p.Longitude,
+                        ["openForInitiative"] = p.OpenForInitiative,
+                        ["isIntermediary"] = p.IsIntermediary,
+                        ["publicMapRadiusKm"] = p.IsIntermediary ? 5 : null,
+                        ["companyHref"] = p.PublicPath
+                    }).ToList();
+
+                    var options = new Dictionary<string, object?>
+                    {
+                        ["pinsUrl"] = $"api/company-map-initiative/pins?radiusKm={_radiusKm}",
+                        ["mapMode"] = "companies",
+                        ["preferFilledLocation"] = false
+                    };
+                    await Js.InvokeVoidAsync("jobMap.init", "bedrijvenkaart-map", markers, options);
+                    _mapReady = true;
+                    await InvalidateMapLayoutAsync();
+                }
+            }
+            catch
+            {
+                // Map stays as static pane in demo/offline mode.
+            }
+        }
+        else if (_mapReady && _mapLayoutPasses < 3)
+        {
+            _mapLayoutPasses++;
+            await InvalidateMapLayoutAsync();
+        }
+    }
+
+    private bool _mapReady;
+    private int _mapLayoutPasses;
+
+    private async Task InvalidateMapLayoutAsync()
+    {
+        if (!_mapReady)
         {
             return;
         }
 
         try
         {
-            if (!RendererInfo.IsInteractive)
-            {
-                return;
-            }
-
-            await MapScripts.EnsureDiscoveryAsync(Js);
-            var markers = _filteredList.Select(p => new Dictionary<string, object?>
-            {
-                ["id"] = p.CompanyId.ToString("D"),
-                ["companyId"] = p.CompanyId.ToString("D"),
-                ["title"] = p.Name,
-                ["company"] = p.Name,
-                ["lat"] = p.Latitude,
-                ["lng"] = p.Longitude,
-                ["openForInitiative"] = p.OpenForInitiative,
-                ["isIntermediary"] = p.IsIntermediary,
-                ["publicMapRadiusKm"] = p.IsIntermediary ? 5 : null,
-                ["companyHref"] = p.PublicPath
-            }).ToList();
-
-            var options = new Dictionary<string, object?>
-            {
-                ["pinsUrl"] = $"api/company-map-initiative/pins?radiusKm={_radiusKm}",
-                ["mapMode"] = "companies",
-                ["preferFilledLocation"] = false
-            };
-            await Js.InvokeVoidAsync("jobMap.init", "bedrijvenkaart-map", markers, options);
-            _mapReady = true;
+            await Js.InvokeVoidAsync("jobMap.invalidate");
+            await Task.Delay(120);
             await Js.InvokeVoidAsync("jobMap.invalidate");
         }
         catch
         {
-            // Map stays as static pane in demo/offline mode.
+            // ignore teardown races
         }
     }
-
-    private bool _mapReady;
 
     private void SelectPin(CompanyMapPinDto pin)
     {

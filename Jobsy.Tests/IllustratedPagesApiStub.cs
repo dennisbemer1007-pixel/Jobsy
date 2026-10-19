@@ -20,6 +20,9 @@ internal static class IllustratedPagesApiStub
     /// <summary>When true, /me/onboarding returns step 1 in progress (compact header preview captures).</summary>
     public static bool OnboardingWizardStep1Capture { get; set; }
 
+    /// <summary>When true, /me/onboarding returns step 7 with test consent (mini-tests compact header captures).</summary>
+    public static bool OnboardingWizardTestsStepCapture { get; set; }
+
     private static readonly JsonSerializerOptions Json = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -114,6 +117,22 @@ internal static class IllustratedPagesApiStub
                       "wizardVersion": 3,
                       "finishReached": false,
                       "steps": [{"step": 2, "completedAtUtc": null}]
+                    }
+                    """;
+            }
+
+            if (OnboardingWizardTestsStepCapture)
+            {
+                return """
+                    {
+                      "currentStep": 7,
+                      "startedAtUtc": "2026-01-15T08:00:00Z",
+                      "completedAtUtc": null,
+                      "isComplete": false,
+                      "shouldShow": true,
+                      "wizardVersion": 3,
+                      "finishReached": false,
+                      "steps": []
                     }
                     """;
             }
@@ -275,11 +294,14 @@ internal static class IllustratedPagesApiStub
 
         if (path.Contains("/me/profile", StringComparison.OrdinalIgnoreCase))
         {
-            return """
+            var testConsentLine = OnboardingWizardTestsStepCapture
+                ? "\n                  \"testAiConsentAt\": \"2026-10-01T12:00:00Z\","
+                : string.Empty;
+            return $$"""
                 {
                   "fullName": "Sanne de Vries",
                   "firstName": "Sanne",
-                  "lastName": "de Vries",
+                  "lastName": "de Vries",{{testConsentLine}}
                   "role": "Candidate",
                   "openForWork": true,
                   "preferences": {

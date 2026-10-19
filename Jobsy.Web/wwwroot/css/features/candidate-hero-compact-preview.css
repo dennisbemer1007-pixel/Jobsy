@@ -351,6 +351,26 @@
     overflow: visible !important;
   }
 
+  .panel-page--cand-ill.kb-apps > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
+    grid-template-columns: minmax(0, 58%) minmax(0, 42%) !important;
+    min-height: 210px !important;
+    height: 210px !important;
+    max-height: 210px !important;
+  }
+
+  .panel-page--cand-ill.kb-apps > header.cand-compact-hero .cand-compact-hero__copy {
+    max-width: none !important;
+    width: 100% !important;
+    align-self: center;
+  }
+
+  .panel-page--cand-ill.kb-apps > header.cand-compact-hero .cand-hero__lead {
+    max-width: 36rem;
+    text-wrap: nowrap !important;
+    white-space: nowrap !important;
+    line-height: 1.42;
+  }
+
   .panel-page--cand-ill.kb-apps > header.cand-compact-hero .cand-compact-hero__art,
   .panel-page--cand-ill.kb-saved > header.cand-compact-hero .cand-compact-hero__art,
   .panel-page--cand-ill.candidate-hub > header.cand-compact-hero .cand-compact-hero__art {
@@ -377,6 +397,27 @@
       linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
+  }
+
+  .panel-page--cand-ill.kb-apps > header.cand-compact-hero .cand-compact-hero__art {
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding-top: 0.65rem;
+    box-sizing: border-box;
+  }
+
+  .panel-page--cand-ill.kb-apps > header.cand-compact-hero .cand-compact-hero__art img {
+    width: auto !important;
+    max-width: 100%;
+    height: auto;
+    max-height: 178px;
+    min-height: 0;
+    object-fit: contain;
+    object-position: right bottom;
+    transform: translateY(6px) scale(0.9);
+    transform-origin: right bottom;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 6%, #000 18%, #000 94%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, transparent 6%, #000 18%, #000 94%, transparent 100%);
   }
 
   /* Instellingen: full-bleed band; copy aligned with .cand-settings (1.25rem). */
@@ -436,8 +477,9 @@
 
   .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
     display: grid !important;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 58%) minmax(0, 42%);
     grid-template-rows: 1fr;
+    min-height: 188px !important;
     inline-size: 100vw;
     max-inline-size: 100vw;
     width: 100vw;
@@ -474,11 +516,12 @@
   }
 
   .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-compact-hero__copy {
-    grid-area: 1 / 1;
+    grid-column: 1;
+    grid-row: 1;
     z-index: 2;
     align-self: center;
-    width: 55% !important;
-    max-width: min(55%, 32rem) !important;
+    width: 100% !important;
+    max-width: none !important;
     margin: 0 !important;
     padding-inline: 0 1.25rem !important;
     padding-block: clamp(0.85rem, 2vw, 1.15rem) !important;
@@ -499,14 +542,17 @@
 
   .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-compact-hero__art,
   .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-hero__compact-c-art {
-    grid-area: 1 / 1;
+    grid-column: 2;
+    grid-row: 1;
     position: relative !important;
     inset: auto !important;
     width: 100% !important;
     max-width: none !important;
     margin-inline-end: 0 !important;
     min-height: 168px;
-    display: block;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
     overflow: hidden;
     pointer-events: none;
   }
@@ -515,16 +561,18 @@
   .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-hero__compact-c-art img {
     display: block;
     inline-size: 100%;
-    block-size: 100%;
-    min-inline-size: 100%;
-    min-block-size: 168px;
-    max-block-size: 180px;
-    object-fit: cover;
-    object-position: right center;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 92%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 8%, #000 90%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 92%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 8%, #000 90%, transparent 100%);
+    block-size: auto;
+    width: auto !important;
+    max-inline-size: 100%;
+    min-block-size: 0;
+    max-block-size: 200px;
+    height: auto;
+    object-fit: contain;
+    object-position: center bottom;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 4%, #000 96%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 4%, #000 96%, transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
   }
@@ -610,6 +658,57 @@
   .bk-page.panel-page--cand-ill .bk-cand-hero.cand-compact-hero.cand-hero--compact-preview-c::after {
     display: block !important;
     content: "" !important;
+  }
+
+  /* Ontdekkingsreis overview: cream compact band; no full-viewport sea gradient on desktop. */
+  .journey.journey--compact-preview-c .journey-scene {
+    display: none !important;
+  }
+
+  .journey.journey--compact-preview-c {
+    background: var(--cand-compact-hero-page, var(--pearl, #f7f4f0));
+    min-height: auto;
+  }
+
+  .journey.journey--compact-preview-c > header.cand-compact-hero.cand-hero--compact-preview-c {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    padding-inline-start: max(
+      var(--cand-compact-hero-gutter),
+      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
+    );
+    padding-inline-end: max(
+      var(--cand-compact-hero-gutter),
+      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
+    );
+    box-sizing: border-box;
+    min-height: 168px !important;
+    height: auto !important;
+    max-height: none !important;
+    background-color: var(--cand-compact-hero-band) !important;
+  }
+
+  .journey.journey--compact-preview-c .journey-stage {
+    grid-template-columns: minmax(0, 15.5rem) minmax(0, min(42rem, 1fr));
+    max-width: var(--cand-compact-hero-max, 1100px);
+    margin-inline: auto;
+    width: min(100%, var(--cand-compact-hero-max, 1100px));
+    padding-inline: var(--cand-compact-hero-gutter, 1.25rem);
+    min-height: auto;
+    background: transparent;
+  }
+
+  .journey.journey--compact-preview-c .journey-overview > h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
   }
 
   @media (min-width: 1024px) {
@@ -1034,17 +1133,18 @@
   .bk-page--compact-preview-c .bk-page__hero-band > header.cand-hero--bk-single.cand-compact-hero .cand-hero__compact-c-art img {
     display: block;
     inline-size: 100%;
-    block-size: 100%;
-    min-inline-size: 100%;
-    min-block-size: 168px;
-    max-block-size: 180px;
-    width: 100% !important;
-    object-fit: cover;
-    object-position: right center;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 92%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 8%, #000 90%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 18%, #000 92%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 8%, #000 90%, transparent 100%);
+    block-size: auto;
+    min-inline-size: 0;
+    min-block-size: 0;
+    max-block-size: 188px;
+    width: auto !important;
+    max-inline-size: 100%;
+    object-fit: contain;
+    object-position: right bottom;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6%, #000 92%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 14%, #000 90%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6%, #000 92%, transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
   }
@@ -1054,9 +1154,13 @@
     content: none !important;
   }
 
-  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding):not(.cand-hero--bk-single) .cand-hero__copy,
+  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding):not(.cand-hero--bk-single):not(.cand-hero--profession-band) .cand-hero__copy,
   .passport-page--illustrated .cand-hero--compact-preview-c .cand-hero__copy {
     max-width: min(48%, 14.5rem);
+  }
+
+  .panel-page--cand-ill.kb-apps > header.cand-hero--profession-band.cand-compact-hero .cand-hero__copy {
+    max-width: none !important;
   }
 
   .ob-wizard--compact-preview-c .ob-wizard__content.ob-wizard__content--illustrated {
@@ -1128,7 +1232,7 @@
   }
 
   /* Default compact hero on illustrated app pages (sollicitaties, bewaard, …). */
-  .panel-page--cand-ill:not(.bk-page):not(.candidate-hub) > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
+  .panel-page--cand-ill:not(.bk-page):not(.candidate-hub):not(.kb-apps) > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
     min-height: 150px !important;
     height: 150px !important;
     max-height: 150px !important;
