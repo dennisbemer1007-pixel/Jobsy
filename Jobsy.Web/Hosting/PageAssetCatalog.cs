@@ -54,7 +54,7 @@ public static class PageAssetCatalog
         "css/features/onboarding-illustrated-step.css?v=20261019-r23",
         "css/features/onboarding-test-blocks.css?v=20261018-r2",
         "css/features/onboarding-wizard-mobile-bar.css?v=20261016-02",
-        "css/features/onboarding-wizard-richting-a.css?v=20261018-02",
+        "css/features/onboarding-wizard-richting-a.css?v=20261019-01",
         "css/features/onboarding-work-history.css?v=20261018-08",
         "css/features/questionnaire.css?v=20261004-10",
         "css/features/mijn-dna.css?v=20261004-10",
