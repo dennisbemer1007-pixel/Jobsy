@@ -2290,7 +2290,7 @@ window.jobsyCoachDock = window.jobsyCoachDock || {
       );
       for (var i = 0; i < nodes.length; i++) {
         var node = nodes[i];
-        if (!node || dock.contains(node)) continue;
+        if (!node || !dock || dock.contains(node)) continue;
         var style = window.getComputedStyle(node);
         if (style.display === "none" || style.visibility === "hidden") continue;
         var box = node.getBoundingClientRect();
