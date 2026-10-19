@@ -203,113 +203,40 @@ internal static class FunctionalOnboardingInteractivityHelpers
         await BeginKennismakenStepAsync(page, baseUrl);
         await VroegResultaatPlaywrightTests.FillStepsThroughTransportAsync(page, maxTravelMinutes: 30);
         await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-        await page.Locator("[data-testid=onboarding-nearby-panel-mobile], [data-testid=onboarding-nearby-panel-desktop], [data-testid=early-reward-nearby]").First
-            .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
-        if (await page.Locator("[data-testid=early-reward-nearby]").CountAsync() > 0)
+
+        var mobile = (page.ViewportSize?.Width ?? 1440) < 600;
+        if (mobile)
         {
-            await VroegResultaatPlaywrightTests.ClickNextAsync(page);
-            await page.WaitForTimeoutAsync(800);
+            await page.Locator("[data-testid=onboarding-nearby-panel-mobile]").WaitForAsync(new() { Timeout = 90_000 });
+        }
+        else
+        {
+            await page.Locator("[data-testid=onboarding-nearby-panel-desktop], [data-testid=onboarding-nearby-panel-mobile]").First
+                .WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
         }
 
         await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
-        await WaitForTestConsentStepAsync(page);
-        await ClickTestsLaterAndReachBanenkaartAsync(page);
-    }
-
-    internal static async Task ClickTestsLaterAndReachBanenkaartAsync(IPage page)
-    {
-        var viewport = page.ViewportSize;
-        var mobile = viewport is not null && viewport.Width < 600;
-        var later = page.GetByTestId("onboarding-tests-later").First;
-        await later.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 60_000 });
-
-        for (var attempt = 0; attempt < 3; attempt++)
-        {
-            await later.ScrollIntoViewIfNeededAsync();
-            await page.WaitForTimeoutAsync(300);
-
-            if (mobile)
-            {
-                await later.TapAsync(new() { Timeout = 30_000 });
-            }
-            else
-            {
-                await later.ClickAsync(new() { Timeout = 30_000 });
-            }
-
-            try
-            {
-                await page.WaitForURLAsync(
-                    u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-                    new() { Timeout = mobile ? 240_000 : 180_000, WaitUntil = WaitUntilState.DOMContentLoaded });
-                break;
-            }
-            catch (TimeoutException) when (attempt < 2)
-            {
-                if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
-                {
-                    break;
-                }
-
-                await page.WaitForFunctionAsync(
-                    """
-                    () => {
-                      const btn = document.querySelector('[data-testid=onboarding-tests-later]');
-                      return btn && !btn.disabled;
-                    }
-                    """,
-                    null,
-                    new() { Timeout = 90_000 });
-
-                await later.ClickAsync(new() { Force = true, Timeout = 30_000 });
-                await page.WaitForTimeoutAsync(4000);
-            }
-        }
-
-        if (!page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
-        {
-            if (await page.Locator(".ob-wizard__finish").CountAsync() > 0)
-            {
-                var baseUrl = new Uri(page.Url).GetLeftPart(UriPartial.Authority);
-                await page.GotoAsync($"{baseUrl}/banenkaart", new() { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 120_000 });
-            }
-            else
-            {
-                await page.WaitForURLAsync(
-                    u => u.ToString().Contains("/banenkaart", StringComparison.OrdinalIgnoreCase),
-                    new() { Timeout = 60_000, WaitUntil = WaitUntilState.DOMContentLoaded });
-            }
-        }
-
+        await page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" }).WaitForAsync(new() { Timeout = 60_000 });
+        await page.WaitForTimeoutAsync(1500);
+        await page.GetByTestId("onboarding-tests-later").First.ClickAsync(new() { Force = true, Timeout = 30_000 });
+        await PollUntilBanenkaartUrlAsync(page, 240_000);
         await page.Locator(".jobsy-discovery").WaitForAsync(new() { State = WaitForSelectorState.Attached, Timeout = 90_000 });
     }
 
-    private static async Task WaitForTestConsentStepAsync(IPage page)
+    private static async Task PollUntilBanenkaartUrlAsync(IPage page, int timeoutMs)
     {
-        var heading = page.GetByRole(AriaRole.Heading, new() { Name = "Nu even over jou" });
-        var later = page.GetByTestId("onboarding-tests-later");
-        for (var attempt = 0; attempt < 90; attempt++)
+        var started = Environment.TickCount64;
+        while (Environment.TickCount64 - started < timeoutMs)
         {
-            if (await heading.CountAsync() > 0 && await heading.First.IsVisibleAsync())
+            if (page.Url.Contains("/banenkaart", StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
 
-            if (await later.CountAsync() > 0 && await later.First.IsVisibleAsync())
-            {
-                return;
-            }
-
-            if (await page.Locator(".ob-wizard__consent input[type=checkbox]").CountAsync() > 0)
-            {
-                return;
-            }
-
-            await VroegResultaatPlaywrightTestsHelpers.NavigateToTestConsentWithoutStartingAsync(page);
-            await page.WaitForTimeoutAsync(1000);
+            await page.WaitForTimeoutAsync(500);
         }
 
-        await heading.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 30_000 });
+        throw new TimeoutException($"Expected /banenkaart within {timeoutMs}ms; still at {page.Url}");
     }
 
     internal static async Task ResolveHomeAddressAsync(IPage page, string query)
