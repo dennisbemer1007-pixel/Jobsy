@@ -465,6 +465,21 @@ public static class PlatformSettingsCatalog
                 ShowOnDashboard: false));
         }
 
+        if (FieldExists("CompanyMapInitiativeEnabled"))
+        {
+            list.Add(new PlatformSettingDescriptor(
+                Key: "CompanyMapInitiativeEnabled",
+                Group: GroupVacancies,
+                TitleKey: "AdminSettings.CompanyMapInitiative.Enabled.Title",
+                DescriptionKey: "AdminSettings.CompanyMapInitiative.Enabled.Desc",
+                Kind: PlatformSettingKind.Bool,
+                Read: s => s.CompanyMapInitiativeEnabled,
+                Write: v => new PlatformFeatureUpdate(CompanyMapInitiativeEnabled: ToBool(v)),
+                ImpactKey: "AdminSettings.CompanyMapInitiative.Enabled.ImpactOff",
+                ImpactLevel: PlatformSettingImpactLevel.Warn,
+                ShowOnDashboard: false));
+        }
+
         if (FieldExists("AfterMatchEnabled"))
         {
             list.Add(new PlatformSettingDescriptor(
@@ -845,6 +860,7 @@ public static class PlatformSettingsCatalog
         bool? matchCalibrationV1Enabled = null;
         bool? employerFitQuestionnairesEnabled = null;
         bool? kandidatenkaartEnabled = null;
+        bool? companyMapInitiativeEnabled = null;
         bool? afterMatchEnabled = null;
         bool? sensitiveExperienceEnabled = null;
         bool? trainingPartnersEnabled = null;
@@ -925,6 +941,11 @@ public static class PlatformSettingsCatalog
             if (p.KandidatenkaartEnabled is not null)
             {
                 kandidatenkaartEnabled = p.KandidatenkaartEnabled;
+            }
+
+            if (p.CompanyMapInitiativeEnabled is not null)
+            {
+                companyMapInitiativeEnabled = p.CompanyMapInitiativeEnabled;
             }
 
             if (p.AfterMatchEnabled is not null)
@@ -1030,6 +1051,7 @@ public static class PlatformSettingsCatalog
             MatchCalibrationV1Enabled: matchCalibrationV1Enabled,
             EmployerFitQuestionnairesEnabled: employerFitQuestionnairesEnabled,
             KandidatenkaartEnabled: kandidatenkaartEnabled,
+            CompanyMapInitiativeEnabled: companyMapInitiativeEnabled,
             AfterMatchEnabled: afterMatchEnabled,
             SensitiveExperienceEnabled: sensitiveExperienceEnabled,
             TrainingPartnersEnabled: trainingPartnersEnabled,

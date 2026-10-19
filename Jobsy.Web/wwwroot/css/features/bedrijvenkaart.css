@@ -1346,15 +1346,16 @@ textarea.bk-wg-input {
   position: relative;
   min-height: 0;
   max-height: 240px;
-  background: var(--bk-cream, #f6f0e8) url("/images/onboarding/finale-hero.jpg") right bottom / auto 88% no-repeat;
+  background-color: var(--bk-cream, #f6f0e8);
+  background-image: url("/images/candidate-illustrated/company-public-hero-art.png?v=20261019-04");
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: auto 100%;
 }
 
 .pp-company__hero-art::before {
-  content: "";
-  position: absolute;
-  inset: 0 38% 0 0;
-  background: linear-gradient(90deg, var(--bk-cream, #f6f0e8) 42%, transparent);
-  pointer-events: none;
+  display: none;
+  content: none;
 }
 
 .bk-card__row > div:not(.bk-card__avatar) {

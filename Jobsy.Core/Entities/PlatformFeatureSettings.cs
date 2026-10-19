@@ -169,6 +169,9 @@ public class PlatformFeatureSettings
     /// <summary>Paid employer kandidatenkaart (reverse banenkaart). Default false.</summary>
     public bool KandidatenkaartEnabled { get; set; }
 
+    /// <summary>Bedrijvenkaart and open-application initiative flows. Default true.</summary>
+    public bool CompanyMapInitiativeEnabled { get; set; } = true;
+
     /// <summary>Na de match: gesprek plannen en berichten. Default false.</summary>
     public bool AfterMatchEnabled { get; set; }
 

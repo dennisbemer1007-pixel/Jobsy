@@ -72,6 +72,7 @@ public sealed class WebFeatureFlags : IFeatureFlags
                 dto?.TestsV2Enabled ?? false,
                 dto?.EmployerFitQuestionnairesEnabled ?? false,
                 dto?.KandidatenkaartEnabled ?? false,
+                dto?.CompanyMapInitiativeEnabled ?? true,
                 dto?.AfterMatchEnabled ?? false,
                 dto?.ReferenceVerificationEnabled ?? false,
                 dto?.SensitiveExperienceEnabled ?? false,
@@ -156,6 +157,9 @@ public sealed class WebFeatureFlags : IFeatureFlags
 
         [JsonPropertyName("kandidatenkaartEnabled")]
         public bool KandidatenkaartEnabled { get; set; }
+
+        [JsonPropertyName("companyMapInitiativeEnabled")]
+        public bool CompanyMapInitiativeEnabled { get; set; } = true;
 
         [JsonPropertyName("afterMatchEnabled")]
         public bool AfterMatchEnabled { get; set; }

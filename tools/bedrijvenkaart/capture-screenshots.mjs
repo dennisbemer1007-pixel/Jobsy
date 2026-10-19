@@ -30,6 +30,7 @@ const r17Files = r16Files;
 const r18Files = r16Files;
 const r19Files = r16Files;
 const r20Files = r16Files;
+const r21Files = r16Files;
 const r15Files = new Set([
   "01-bedrijvenkaart-desktop.png",
   "01-bedrijvenkaart-mobiel-top.png",
@@ -117,7 +118,9 @@ const shots = captureOnly
               ? allShots.filter((s) => r19Files.has(s.file))
               : captureSet === "r20"
                 ? allShots.filter((s) => r20Files.has(s.file))
-                : allShots;
+                : captureSet === "r21"
+                  ? allShots.filter((s) => r21Files.has(s.file))
+                  : allShots;
 
 if (shots.length === 0) {
   throw new Error(`CAPTURE_ONLY=${captureOnly} matched no shots`);
@@ -304,8 +307,35 @@ async function captureHeroZooms(browserInstance) {
   }
 }
 
+async function captureCompanyHeaderZooms(browserInstance) {
+  for (const spec of [
+    { file: "02-company-header-desktop-2x.png", path: "/12345678", width: 1440, selector: ".pp-company__hero" },
+    { file: "02-company-header-mobiel-2x.png", path: "/12345678", width: 390, selector: ".pp-company__hero" },
+  ]) {
+    const context = await browserInstance.newContext({
+      viewport: { width: spec.width, height: spec.width <= 420 ? 844 : 900 },
+      deviceScaleFactor: 2,
+    });
+    await acceptCookies(context);
+    const page = await context.newPage();
+    await login(page, candidateEmail, spec.path);
+    await page.goto(`${baseUrl}${spec.path}`, { waitUntil: "domcontentloaded", timeout: 120_000 });
+    await waitReady(page, "Korenaar");
+    const hero = page.locator(spec.selector).first();
+    await hero.waitFor({ state: "visible", timeout: 45_000 });
+    await hero.screenshot({ path: join(outDir, spec.file) });
+    manifest.push({ file: spec.file, path: spec.path, ok: true, zoom: "2x" });
+    console.log("saved", spec.file);
+    await context.close();
+  }
+}
+
 if (captureSet === "r15" || captureSet === "r16" || captureSet === "r17" || captureSet === "r18" || captureSet === "r19" || captureSet === "r20") {
   await captureHeroZooms(browser);
+}
+
+if (captureSet === "r21") {
+  await captureCompanyHeaderZooms(browser);
 }
 
 await browser.close();

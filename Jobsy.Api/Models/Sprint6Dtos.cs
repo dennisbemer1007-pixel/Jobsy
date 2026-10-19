@@ -311,6 +311,8 @@ public record UpdatePlatformFeatureRequest(
     bool? MatchCalibrationV1Enabled = null,
     bool? EmployerFitQuestionnairesEnabled = null,
     bool? KandidatenkaartEnabled = null,
+    bool? CompanyMapInitiativeEnabled = null,
+    bool? AfterMatchEnabled = null,
     bool? SensitiveExperienceEnabled = null,
     bool? TrainingPartnersEnabled = null,
     bool? ReferenceVerificationEnabled = null,
