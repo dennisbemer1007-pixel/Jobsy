@@ -21,13 +21,16 @@
             <a href="@KbRoutes.Map" role="tab">@Culture["Kb.MapToggle.Jobs"]</a>
             <a href="@KbRoutes.CompanyMap" class="is-active" role="tab" aria-selected="true">@Culture["Kb.MapToggle.Companies"]</a>
         </div>
-        <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
-                                  Title="@Culture["Bk.Title"]"
-                                  Lead="@Culture["Bk.Lead"]"
-                                  ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
-                                  ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
-                                  ArtPosition="84% bottom"
-                                  CssClass="cand-hero--bk-single bk-cand-hero" />
+        @if (HeroCompactPreview.Variant != CandidateHeroCompactPreviewVariant.C)
+        {
+            <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
+                                      Title="@Culture["Bk.Title"]"
+                                      Lead="@Culture["Bk.Lead"]"
+                                      ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
+                                      ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
+                                      ArtPosition="84% bottom"
+                                      CssClass="cand-hero--bk-single bk-cand-hero" />
+        }
         @if (_weekMax > 0)
         {
             <div class="bk-week-dots" aria-live="polite">
@@ -39,6 +42,18 @@
             </div>
         }
     </div>
+    @if (HeroCompactPreview.Variant == CandidateHeroCompactPreviewVariant.C)
+    {
+        <div class="bk-page__hero-band">
+            <CandidateIllustratedHero Eyebrow="@Culture["Kb.MapToggle.Companies"]"
+                                      Title="@Culture["Bk.Title"]"
+                                      Lead="@Culture["Bk.Lead"]"
+                                      ArtUrl="@CandidateIllustratedImages.BedrijvenkaartHeroMobile"
+                                      ArtUrlDesktop="@CandidateIllustratedImages.BedrijvenkaartHeroDesktopPng"
+                                      ArtPosition="84% bottom"
+                                      CssClass="cand-hero--bk-single bk-cand-hero" />
+        </div>
+    }
 
     <div class="bk-page__frame">
     <p class="bk-info-banner">@Culture["Bk.InfoBanner"]</p>

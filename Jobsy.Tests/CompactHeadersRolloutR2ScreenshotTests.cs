@@ -185,7 +185,7 @@ public sealed class CompactHeadersRolloutR2ScreenshotTests : IAsyncLifetime
             (CompactHeadersRolloutScreenshotTests.HeroKind.CompactBand, "carriere") =>
                 ".career-page--compact-preview-c > header.cand-compact-hero",
             (CompactHeadersRolloutScreenshotTests.HeroKind.CompactBand, "bedrijvenkaart") =>
-                ".bk-page__hero-stack > header.cand-compact-hero",
+                ".bk-page__hero-band > header.cand-compact-hero",
             (CompactHeadersRolloutScreenshotTests.HeroKind.CompactBand, _) =>
                 ".panel-page--cand-ill > header.cand-compact-hero",
             _ => ".cand-compact-hero"

@@ -303,8 +303,7 @@
 
   /* Panel app pages: full-bleed #FAEBDB band, copy aligned to 1100px shell (paspoort r15 art fade). */
   .panel-page--cand-ill.kb-apps > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
-  .panel-page--cand-ill.kb-saved > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
-  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
+  .panel-page--cand-ill.kb-saved > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     inline-size: 100vw;
@@ -327,8 +326,7 @@
   }
 
   .panel-page--cand-ill.kb-apps > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before,
-  .panel-page--cand-ill.kb-saved > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before,
-  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before {
+  .panel-page--cand-ill.kb-saved > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before {
     background: linear-gradient(
       90deg,
       var(--cand-compact-hero-band) 0%,
@@ -359,12 +357,8 @@
     grid-column: 1 / -1;
     grid-row: 1;
     justify-self: stretch;
-    margin-inline-end: calc(
-      -1 * max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
-    );
-    width: calc(
-      100% + max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
-    ) !important;
+    margin-inline-end: calc(-1 * var(--cand-compact-hero-gutter));
+    width: calc(100% + var(--cand-compact-hero-gutter)) !important;
     max-width: none !important;
     min-height: 150px;
   }
@@ -383,6 +377,154 @@
       linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
     -webkit-mask-composite: source-in;
     mask-composite: intersect;
+  }
+
+  /* Instellingen: full-bleed band; copy aligned with .cand-settings (1.25rem). */
+  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    padding-inline-start: var(--cand-compact-hero-gutter) !important;
+    padding-inline-end: 0 !important;
+    box-sizing: border-box;
+    overflow: hidden;
+    background-color: var(--cand-compact-hero-band) !important;
+    background-image: none !important;
+    min-height: 165px !important;
+    height: 165px !important;
+    max-height: 165px !important;
+  }
+
+  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before {
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-hero-band) 0%,
+      var(--cand-compact-hero-band) 52%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 85%, transparent) 60%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 35%, transparent) 72%,
+      transparent 88%
+    );
+  }
+
+  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero .cand-compact-hero__copy {
+    padding-inline-start: 0 !important;
+  }
+
+  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero .cand-compact-hero__art img {
+    object-position: 84% 78%;
+  }
+
+  /* Bedrijvenkaart desktop: full-viewport cream band + paspoort/bewaard art fade. */
+  .bk-page--compact-preview-c .bk-page__hero-band {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-stack {
+    width: 100%;
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 0;
+    overflow: visible;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-stack .bk-map-toggle {
+    position: static !important;
+    align-self: flex-end;
+    width: min(100%, var(--bk-content-max, 76rem));
+    max-width: var(--bk-content-max, 76rem);
+    margin: 0.65rem auto 0.5rem;
+    padding-inline: var(--bk-gutter, 1.25rem);
+    box-sizing: border-box;
+    z-index: 8;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    width: 100vw;
+    max-width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    padding-inline-start: max(
+      var(--cand-compact-hero-gutter),
+      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
+    );
+    padding-inline-end: max(
+      var(--cand-compact-hero-gutter),
+      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
+    );
+    box-sizing: border-box;
+    overflow: hidden;
+    background-color: var(--cand-compact-hero-band) !important;
+    background-image: none !important;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before {
+    background: linear-gradient(
+      90deg,
+      var(--cand-compact-hero-band) 0%,
+      var(--cand-compact-hero-band) 52%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 85%, transparent) 60%,
+      color-mix(in srgb, var(--cand-compact-hero-band) 35%, transparent) 72%,
+      transparent 88%
+    );
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-compact-hero__copy {
+    grid-column: 1;
+    grid-row: 1;
+    z-index: 2;
+    width: auto !important;
+    max-width: min(48%, 22rem) !important;
+    margin: 0 !important;
+    padding-inline: 0 1rem !important;
+    padding-block: clamp(0.75rem, 1.8vw, 1.05rem) !important;
+    overflow: visible !important;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-compact-hero__art {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: stretch;
+    margin-inline-end: calc(
+      -1 * max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
+    );
+    width: calc(
+      100% + max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
+    ) !important;
+    max-width: none !important;
+    min-height: 150px;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-compact-hero__art img {
+    width: 112%;
+    max-width: none;
+    min-height: 150px;
+    object-fit: cover;
+    object-position: right center;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 12%, #000 26%, #000 94%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, transparent 12%, #000 26%, #000 94%, transparent 100%),
+      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
+
+  .bk-page--compact-preview-c .bk-week-dots {
+    width: min(100%, var(--bk-content-max, 76rem));
+    max-width: var(--bk-content-max, 76rem);
+    margin-inline: auto;
+    padding-inline: var(--bk-gutter, 1.25rem);
+    box-sizing: border-box;
   }
 
   .passport-page--compact-preview-c > header.cand-compact-hero--onboarding .cand-compact-hero__art,
@@ -447,7 +589,7 @@
 
   /* Desktop/tablet: fixed ~150px band on illustrated app pages (not onboarding wizard). */
   .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
-  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c,
+  .bk-page.panel-page--cand-ill .bk-page__hero-band > header.cand-compact-hero.cand-hero--compact-preview-c,
   .career-page--compact-preview-c > header.cand-compact-hero--page.cand-hero--profession-band {
     min-height: 150px !important;
     height: 150px !important;
@@ -640,11 +782,10 @@
     mask-composite: intersect;
   }
 
-  /* Illustrated app pages (sollicitaties, bewaard, instellingen, bedrijvenkaart): compact band on mobile. */
+  /* Illustrated app pages (sollicitaties, bewaard, instellingen): compact band on mobile. */
   .panel-page--cand-ill.kb-apps > header.cand-compact-hero,
   .panel-page--cand-ill.kb-saved > header.cand-compact-hero,
-  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero,
-  .bk-page--compact-preview-c .bk-page__hero-stack > header.cand-compact-hero {
+  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero {
     inline-size: 100vw;
     max-inline-size: 100vw;
     width: 100vw;
@@ -681,8 +822,11 @@
     background-image: none !important;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before,
-  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c::before {
+  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero {
+    padding-inline-start: var(--cand-compact-hero-gutter) !important;
+  }
+
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding)::before {
     content: "";
     display: block;
     position: absolute;
@@ -700,8 +844,7 @@
 
   .panel-page--cand-ill.kb-apps > header.cand-compact-hero .cand-hero__copy,
   .panel-page--cand-ill.kb-saved > header.cand-compact-hero .cand-hero__copy,
-  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero .cand-hero__copy,
-  .bk-page--compact-preview-c .bk-page__hero-stack > header.cand-compact-hero .cand-hero__copy {
+  .panel-page--cand-ill.candidate-hub > header.cand-compact-hero .cand-hero__copy {
     grid-area: 1 / 1;
     position: relative !important;
     inset: auto !important;
@@ -717,8 +860,7 @@
     min-height: 0 !important;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art,
-  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero .cand-hero__compact-c-art {
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art {
     grid-area: 1 / 1;
     position: relative !important;
     inset: auto !important;
@@ -730,8 +872,7 @@
     pointer-events: none;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img,
-  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero .cand-hero__compact-c-art img {
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img {
     display: block;
     inline-size: 100%;
     block-size: 100%;
@@ -862,7 +1003,7 @@
     mask-composite: intersect;
   }
 
-  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding) .cand-hero__copy,
+  .cand-hero--compact-preview-c.cand-compact-hero:not(.cand-compact-hero--onboarding):not(.cand-hero--bk-single) .cand-hero__copy,
   .passport-page--illustrated .cand-hero--compact-preview-c .cand-hero__copy {
     max-width: min(48%, 14.5rem);
   }
@@ -936,8 +1077,7 @@
   }
 
   /* Default compact hero on illustrated app pages (sollicitaties, bewaard, …). */
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding),
-  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c {
+  .panel-page--cand-ill:not(.bk-page) > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) {
     min-height: 150px !important;
     height: 150px !important;
     max-height: 150px !important;
@@ -962,72 +1102,6 @@
     z-index: 8;
   }
 
-  .bk-page--compact-preview-c .bk-page__hero-stack > header.cand-compact-hero {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    inline-size: 100vw;
-    max-inline-size: 100vw;
-    width: 100vw;
-    max-width: 100vw;
-    margin-inline: calc(50% - 50vw);
-    padding-inline-start: max(
-      var(--cand-compact-hero-gutter),
-      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
-    );
-    padding-inline-end: max(
-      var(--cand-compact-hero-gutter),
-      calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter))
-    );
-    box-sizing: border-box;
-    overflow: hidden;
-    background-color: var(--cand-compact-hero-band) !important;
-  }
-
-  .bk-page--compact-preview-c .bk-page__hero-stack > header.cand-compact-hero::before {
-    background: linear-gradient(
-      90deg,
-      var(--cand-compact-hero-band) 0%,
-      var(--cand-compact-hero-band) 52%,
-      color-mix(in srgb, var(--cand-compact-hero-band) 85%, transparent) 60%,
-      transparent 88%
-    );
-  }
-
-  .bk-page--compact-preview-c .bk-page__hero-stack > header.cand-compact-hero .cand-compact-hero__copy {
-    grid-column: 1;
-    grid-row: 1;
-    z-index: 2;
-    width: auto !important;
-    max-width: min(48%, 22rem) !important;
-    margin: 0 !important;
-    padding-inline: 0 1rem !important;
-    overflow: visible !important;
-  }
-
-  .bk-page--compact-preview-c .bk-page__hero-stack > header.cand-compact-hero .cand-compact-hero__art {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    margin-inline-end: calc(
-      -1 * max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
-    );
-    width: calc(
-      100% + max(var(--cand-compact-hero-gutter), calc((100vw - var(--cand-compact-hero-max)) / 2 + var(--cand-compact-hero-gutter)))
-    ) !important;
-    max-width: none !important;
-  }
-
-  .bk-page--compact-preview-c .bk-page__hero-stack > header.cand-compact-hero .cand-compact-hero__art img {
-    width: 112%;
-    object-fit: cover;
-    object-position: right center;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 12%, #000 26%, #000 94%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0%, transparent 12%, #000 26%, #000 94%, transparent 100%),
-      linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-composite: intersect;
-  }
-
   .bk-page--compact-preview-c .bk-week-dots {
     width: min(100%, var(--bk-content-max, 76rem));
     max-width: var(--bk-content-max, 76rem);
@@ -1046,12 +1120,75 @@
     content: "" !important;
   }
 
-  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img,
-  .bk-page.panel-page--cand-ill .bk-page__hero-stack > header.cand-compact-hero.cand-hero--compact-preview-c .cand-hero__compact-c-art img {
+  .panel-page--cand-ill > header.cand-compact-hero.cand-hero--compact-preview-c:not(.cand-compact-hero--onboarding) .cand-hero__compact-c-art img {
     min-height: 150px;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, transparent 10%, #000 24%, #000 92%, transparent 100%),
       linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
     mask-image: linear-gradient(to right, transparent 0%, transparent 10%, #000 24%, #000 92%, transparent 100%),
       linear-gradient(to bottom, transparent 0, #000 6px, #000 calc(100% - 14px), transparent 100%);
+  }
+
+  /* Bedrijvenkaart mobile: full-width copy on cream (no stacked art / ghost strip). */
+  .bk-page--compact-preview-c .bk-page__hero-band {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin-inline: 0;
+    background-color: var(--cand-compact-hero-band);
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero.cand-hero--compact-preview-c {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    margin-inline: 0 !important;
+    inline-size: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-block-end: 0;
+    padding: 0.65rem 1.25rem 0.75rem !important;
+    overflow: visible !important;
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero.cand-hero--compact-preview-c::before,
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero.cand-hero--compact-preview-c::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-compact-hero__art,
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-hero__compact-c-art {
+    display: none !important;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-compact-hero__copy,
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-hero__copy {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-hero__copy h1 {
+    white-space: normal !important;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+    font-size: 1.12rem;
+    line-height: 1.18;
+  }
+
+  .bk-page--compact-preview-c .bk-page__hero-band > header.cand-compact-hero .cand-hero__copy .cand-hero__lead {
+    overflow: visible;
+    max-width: none;
+    margin-top: 0.35rem;
+    font-size: 0.84rem;
+    line-height: 1.38;
   }
 }
